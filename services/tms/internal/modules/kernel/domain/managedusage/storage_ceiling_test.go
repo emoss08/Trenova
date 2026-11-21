@@ -58,6 +58,58 @@ func TestAStopThatIsNotTheCeilingIsHonouredWhateverTheLevel(t *testing.T) {
 	assert.Equal(t, managedusage.ReasonStopped, d.Reason)
 }
 
+func TestOnlyTheMetersOwnCeilingStopGivesWayToTheLiveLevel(t *testing.T) {
+	t.Parallel()
+
+	ceilingStop := sharedStorage(250_000_000_000, true)
+	hardCapped := sharedStorage(250_000_000_000, true)
+	hardCapped.HardCap = true
+	belowCeiling := sharedStorage(30_000_000_000, true)
+
+	cases := []struct {
+		name    string
+		overage bool
+		meter   managedusage.Meter
+		level   int64
+		allowed bool
+		reason  managedusage.Reason
+	}{
+		{
+			name:    "the ceiling stop, with the live level below the ceiling",
+			overage: true, meter: ceilingStop, level: 100_000_000_000,
+			allowed: true, reason: managedusage.ReasonWithin,
+		},
+		{
+			name:    "the ceiling stop, with the live level still at the ceiling",
+			overage: true, meter: ceilingStop, level: 250_000_000_000,
+			reason: managedusage.ReasonCeiling,
+		},
+		{
+			name:    "a hard cap past the allowance, whatever the live level",
+			overage: true, meter: hardCapped, level: 1_000,
+			reason: managedusage.ReasonCeiling,
+		},
+		{
+			name:    "overage turned off past the allowance, whatever the live level",
+			overage: false, meter: ceilingStop, level: 1_000,
+			reason: managedusage.ReasonCeiling,
+		},
+		{
+			name:    "a stop below the ceiling, such as an unpaid plan or a stop by staff",
+			overage: true, meter: belowCeiling, level: 1_000,
+			reason: managedusage.ReasonStopped,
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			d := managedusage.DecideAt(state(tc.overage, tc.meter), tc.meter.Meter, tc.level, 0)
+			assert.Equal(t, tc.allowed, d.Allowed)
+			assert.Equal(t, tc.reason, d.Reason)
+		})
+	}
+}
+
 func TestAStorageMeterWithoutACeilingIsUnaffected(t *testing.T) {
 	t.Parallel()
 

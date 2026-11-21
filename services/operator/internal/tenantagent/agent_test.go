@@ -133,7 +133,7 @@ func newRig(t *testing.T) *rig {
 				&systememail.Params{TMS: client, ControlPlane: lazy, Logger: logger},
 			),
 			Usage: usage.NewShared(
-				usage.SharedParams{ControlPlane: lazy, TMS: client, Now: c.Now},
+				usage.SharedParams{ControlPlane: lazy, TMS: client, Logger: logger, Now: c.Now},
 			),
 			EmailEvents: events,
 			SupportKeys: supportkeys.New(client, logger),

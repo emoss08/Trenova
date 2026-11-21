@@ -21,6 +21,7 @@ import (
 
 const (
 	hour         = int64(time.Hour / time.Second)
+	relayMargin  = int64(2 * time.Minute / time.Second)
 	MaxLookback  = 35 * 24 * time.Hour
 	stateTTL     = 30 * time.Second
 	cachedScopes = 10_000
@@ -122,15 +123,67 @@ func (s *Service) Decide(
 	if err != nil {
 		return managedusage.Decision{}, err
 	}
-	reader, isLevel := s.levelReader(meter)
-	if _, named := stateMeter(state, meter); !isLevel || !named {
+	m, named := stateMeter(state, meter)
+	if !named {
 		return managedusage.Decide(state, meter, requested), nil
 	}
-	level, err := reader.Level(ctx, scope)
-	if err != nil {
-		return managedusage.Decision{}, fmt.Errorf("read the level of %s: %w", meter, err)
+	if reader, isLevel := s.levelReader(meter); isLevel {
+		level, lerr := reader.Level(ctx, scope)
+		if lerr != nil {
+			return managedusage.Decision{}, fmt.Errorf("read the level of %s: %w", meter, lerr)
+		}
+		return managedusage.DecideAt(state, meter, level, requested), nil
 	}
-	return managedusage.DecideAt(state, meter, level, requested), nil
+	counter, counted := s.counter(meter)
+	if !counted || !limited(state, &m) {
+		return managedusage.Decide(state, meter, requested), nil
+	}
+	recent, err := s.countedSince(ctx, scope, counter, state)
+	if err != nil {
+		return managedusage.Decision{}, err
+	}
+	return managedusage.DecideAt(state, meter, m.Quantity+recent, requested), nil
+}
+
+func limited(state *managedusage.State, m *managedusage.Meter) bool {
+	return state.HasWindow() && (m.Ceiling > 0 || m.HardCap || !state.Overage)
+}
+
+func (s *Service) countedSince(
+	ctx context.Context,
+	scope managedscope.Scope,
+	counter managedusageports.HourlyCounter,
+	state *managedusage.State,
+) (int64, error) {
+	now := s.clock()
+	since := max(state.ReceivedAt-relayMargin, state.WindowStart)
+	if since >= now+1 {
+		return 0, nil
+	}
+	counts, err := counter.CountByHour(ctx, &managedusageports.HourCountRequest{
+		Scope: scope,
+		Since: since,
+		Until: now + 1,
+	})
+	if err != nil {
+		return 0, fmt.Errorf("count %s since the last usage answer: %w", counter.Meter(), err)
+	}
+	var total int64
+	for _, c := range counts {
+		total += c.Quantity
+	}
+	return total, nil
+}
+
+func (s *Service) counter(
+	meter platformcatalog.MeterKey,
+) (managedusageports.HourlyCounter, bool) {
+	for _, c := range s.counters {
+		if c.Meter() == meter {
+			return c, true
+		}
+	}
+	return nil, false
 }
 
 func (s *Service) Usage(

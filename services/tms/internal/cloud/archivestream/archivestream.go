@@ -162,6 +162,9 @@ type hashingReader struct {
 }
 
 func (r *hashingReader) Read(p []byte) (int, error) {
+	if len(p) == 0 {
+		return 0, nil
+	}
 	if room := r.expect.Bytes - r.bytes + 1; int64(len(p)) > room {
 		p = p[:max(room, 0)]
 	}

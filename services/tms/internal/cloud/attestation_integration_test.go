@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/cloud/app/archiveengine"
 	"github.com/emoss08/trenova/internal/cloud/domain/tenantarchive"
 	"github.com/emoss08/trenova/internal/cloud/ports/archiveports"
+	"github.com/emoss08/trenova/internal/infrastructure/config/aiauditconfig"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiaudit"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditintegrity"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
@@ -148,6 +149,53 @@ func TestAnArchiveStatesWhatItsSourceVerifiedAndAnImportReliesOnItOnlyWhenWhatAr
 			r.clear(t, stranger)
 		})
 
+	held := newInstallWithChain(t, false, destinationKey, holding(destinationKey, sourceKey))
+
+	t.Run("a trail this server verifies itself and that agrees with its archive is verified here",
+		func(t *testing.T) {
+			result := r.loadStated(t, held, statedCommand, nil)
+			assert.Equal(t, archiveports.SourceVerified, result.Trails.AuditSeals.Source)
+			assert.Empty(t, result.Trails.AuditSeals.Refused)
+			assert.Equal(t, archiveports.EstablishedHere, result.Trails.AuditSeals.Established)
+			assert.Equal(t, archiveports.EstablishedHere, result.Trails.AIAudit.Established)
+			status := verifyTrails(t, held, r.facts.tenant)
+			assert.Equal(t, audit.VerificationVerified, status.audit)
+			assert.Equal(t, aiaudit.VerificationVerified, status.ai)
+			r.clear(t, held)
+		})
+
+	t.Run("a trail this server verifies itself but that ends before what its archive states is not verified",
+		func(t *testing.T) {
+			result := r.loadStated(t, held, statedCommand, func(m *tenantarchive.Manifest) {
+				m.Trails.Audit.Links++
+				m.Trails.AIAudit.Links++
+			})
+			assert.Equal(t, archiveports.SourceVerified, result.Trails.AuditSeals.Source,
+				"every link that arrived verifies under the held key")
+			assert.Equal(t, archiveports.AttestationLinks, result.Trails.AuditSeals.Refused)
+			assert.Equal(t, archiveports.EstablishedNotVerified, result.Trails.AuditSeals.Established)
+			assert.Equal(t, archiveports.AttestationLinks, result.Trails.AIAudit.Refused)
+			assert.Equal(t, archiveports.EstablishedNotVerified, result.Trails.AIAudit.Established)
+			assert.Equal(t, []string{"links"}, held.query(t,
+				`SELECT metadata->'archive'->'auditSeals'->>'attestationRefused' FROM audit_entries
+                 WHERE organization_id = $1 AND action = 'organization.imported'`,
+				org), "the provenance entry records why")
+			status := verifyTrails(t, held, r.facts.tenant)
+			assert.Equal(t, audit.VerificationImported, status.audit)
+			assert.Equal(t, aiaudit.VerificationImported, status.ai)
+			r.clear(t, held)
+		})
+
+	t.Run("a trail this server verifies itself but sealed through a moment other than its archive states is not verified",
+		func(t *testing.T) {
+			result := r.loadStated(t, held, statedCommand, func(m *tenantarchive.Manifest) {
+				m.Trails.Audit.SealedThrough = m.Trails.Audit.SealedThrough.Add(time.Hour)
+			})
+			assert.Equal(t, archiveports.AttestationSealedThrough, result.Trails.AuditSeals.Refused)
+			assert.Equal(t, archiveports.EstablishedNotVerified, result.Trails.AuditSeals.Established)
+			r.clear(t, held)
+		})
+
 	mismatches := []struct {
 		name    string
 		state   func(*tenantarchive.Manifest)
@@ -264,5 +312,71 @@ UPDATE audit_seals SET prev_hash = repeat('0', 64) WHERE organization_id = '`+or
 		assert.Equal(t, archiveports.EstablishedNotVerified, result.Trails.AuditSeals.Established)
 		assert.Equal(t, audit.VerificationImported, verifyTrails(t, stranger, r.facts.tenant).audit)
 		r.clear(t, stranger)
+	})
+}
+
+const (
+	sameIDGenuine  = "6e1a3c1e-8c1f-4a39-9a43-5b0d7c4e2f10"
+	sameIDTampered = "6f1a3c1e-8c1f-4a39-9a43-5b0d7c4e2f10"
+)
+
+func chainNamed(id, secret string) *aiauditconfig.Config {
+	return &aiauditconfig.Config{Chain: aiauditconfig.ChainConfig{
+		Keys:        []aiauditconfig.ChainKey{{ID: id, Secret: secret}},
+		ActiveKeyID: id,
+	}}
+}
+
+func TestTwoInstallsWithTheSameKeyIDButDifferentSecretsAreNotTakenForOneKey(t *testing.T) {
+	const sharedID = "s20261121-0123456789ab"
+	src := newInstallWithChain(t, true, sourceKey,
+		chainNamed(sharedID, "the-source-install-chain-secret-not-a-real-one"))
+	r := &trailRig{src: src, facts: prepareSource(t, src), keys: archiveKeys(0x51)}
+	org := r.facts.tenant.OrganizationID.String()
+	genuine := export(t, src, r.facts.tenant, tenantarchive.PurposeFinal, sameIDGenuine, r.keys)
+	require.True(t, genuine.Manifest.Trails.Audit.Verified)
+
+	other := newInstallWithChain(t, false, destinationKey,
+		chainNamed(sharedID, "another-install-chain-secret-under-the-same-id"))
+
+	t.Run("a genuine move reads as verified at its source, never as broken", func(t *testing.T) {
+		result := r.loadStated(t, other, sameIDGenuine, nil)
+		for _, chain := range []archiveports.ChainResult{
+			result.Trails.AuditSeals,
+			result.Trails.AIAudit,
+		} {
+			assert.Equal(t, archiveports.SourceNotVerifiable, chain.Source)
+			assert.True(t, chain.KeyConflict, "a key of the same name signed none of it")
+			assert.Zero(t, chain.BrokenAt)
+			assert.Equal(t, archiveports.EstablishedAtSource, chain.Established)
+		}
+		assert.Equal(t, []string{"true"}, other.query(t,
+			`SELECT metadata->'archive'->'auditSeals'->>'keyConflict' FROM audit_entries
+             WHERE organization_id = $1 AND action = 'organization.imported'`, org))
+		status := verifyTrails(t, other, r.facts.tenant)
+		assert.Equal(t, audit.VerificationSourceVerified, status.audit)
+		assert.Equal(t, aiaudit.VerificationSourceVerified, status.ai)
+		r.clear(t, other)
+	})
+
+	src.exec(t, `DO $$ BEGIN SET LOCAL session_replication_role = replica;
+UPDATE audit_seals SET prev_hash = repeat('0', 64) WHERE organization_id = '`+org+`'
+    AND seq = (SELECT max(seq) FROM audit_seals WHERE organization_id = '`+org+`'); END $$`)
+	tampered := export(t, src, r.facts.tenant, tenantarchive.PurposeFinal, sameIDTampered, r.keys)
+
+	t.Run("a tampered chain is still caught, whatever its archive states", func(t *testing.T) {
+		require.False(t, tampered.Manifest.Trails.Audit.Verified,
+			"the source holds its own key and finds the break")
+		for _, state := range []func(*tenantarchive.Manifest){
+			nil,
+			func(m *tenantarchive.Manifest) { m.Trails.Audit.Verified = true },
+		} {
+			result := r.loadStated(t, other, sameIDTampered, state)
+			assert.Positive(t, result.Trails.AuditSeals.BrokenAt, "the linkage breaks")
+			assert.Equal(t, archiveports.SourceNotVerified, result.Trails.AuditSeals.Source)
+			assert.Equal(t, archiveports.EstablishedNotVerified, result.Trails.AuditSeals.Established)
+			assert.Equal(t, audit.VerificationImported, verifyTrails(t, other, r.facts.tenant).audit)
+			r.clear(t, other)
+		}
 	})
 }

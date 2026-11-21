@@ -5,9 +5,10 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
-	"os"
 	"strings"
 	"sync"
+
+	"github.com/emoss08/trenova/operator/internal/securefile"
 )
 
 type FileTokens struct {
@@ -32,7 +33,7 @@ func (f *FileTokens) Token(ctx context.Context) (string, error) {
 }
 
 func (f *FileTokens) Refresh(context.Context) (string, error) {
-	body, err := os.ReadFile(f.path)
+	body, err := securefile.ReadSupplied(f.path)
 	if errors.Is(err, fs.ErrNotExist) {
 		return "", fmt.Errorf("%w: %s does not exist", ErrNoToken, f.path)
 	}

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
@@ -16,8 +17,14 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
+	"github.com/maypok86/otter/v2"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
+)
+
+const (
+	recipientCacheSize = 100_000
+	recipientCacheTTL  = time.Hour
 )
 
 const recipientInOrganizationSQL = `SELECT EXISTS (
@@ -37,15 +44,25 @@ type Params struct {
 	Logger *zap.Logger
 }
 
+type recipientKey struct {
+	user         pulid.ID
+	organization pulid.ID
+}
+
 type repository struct {
-	db *postgres.Connection
-	l  *zap.Logger
+	db         *postgres.Connection
+	l          *zap.Logger
+	recipients *otter.Cache[recipientKey, struct{}]
 }
 
 func New(p Params) notificationports.NotificationRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.notification-repository"),
+		recipients: otter.Must(&otter.Options[recipientKey, struct{}]{
+			MaximumSize:      recipientCacheSize,
+			ExpiryCalculator: otter.ExpiryWriting[recipientKey, struct{}](recipientCacheTTL),
+		}),
 	}
 }
 
@@ -217,6 +234,10 @@ func (r *repository) requireRecipient(
 	if entity.TargetUserID == nil || entity.TargetUserID.IsNil() {
 		return nil
 	}
+	key := recipientKey{user: *entity.TargetUserID, organization: entity.OrganizationID}
+	if _, known := r.recipients.GetIfPresent(key); known {
+		return nil
+	}
 	held, err := keel.QueryValue[bool](
 		ctx,
 		r.db.Keel(ctx),
@@ -234,6 +255,7 @@ func (r *repository) requireRecipient(
 		)
 		return errRecipientOutside
 	}
+	r.recipients.Set(key, struct{}{})
 	return nil
 }
 

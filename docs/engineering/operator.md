@@ -49,6 +49,7 @@ operator ── values.Render(spec, base values) ──▶ Helm SDK: upgrade --i
 | `internal/tenantagent` | the tenant agent's loop |
 | `internal/runlock` | the tenant agent's lock file |
 | `internal/atomicfile` | write-then-rename with mode 0600 |
+| `internal/securefile` | reads a file the process keeps (plain, its own, 0600) or one staff supply read-only (plain, writable only by its owner), opened with `O_NOFOLLOW` and checked on the descriptor |
 | `internal/storage` | the instance's buckets: the documents and backups Secrets, fetched from `GET /v1/storage` when missing or incomplete, and the documents bucket's CORS rules for the instance's origin |
 | `internal/backup` | backups read from and asked of CloudNativePG: health for the status report, the base backup before an update, the final backup, and a restore's progress |
 | `internal/databases` | the instance's databases ([Database generations](#database-generations)): the gate before an apply that goes back to a kept database, stopping the others, retiring, and the `databases` list |
@@ -1237,11 +1238,18 @@ It reuses the operator's packages and links no Kubernetes or Helm
 **Identity.** Staff issue the server's enrolment bundle (`serverId`, `apiUrl`, certificate, key, CA
 bundle); it is installed at `<state-dir>/identity/enrolment.json` (or `--enrolment`). The certificate
 names `urn:trenova:shared-server:<id>` (`credential.KindSharedServer`). `credential.Manager` enrols
-onto a key the agent generates, keeps the identity in `<state-dir>/identity/identity.json` (0600 in a
-0700 directory; a file others can read, a link or anything but a plain file is refused, and so is
-an enrolment bundle others can read, since it holds a private key; a truncated identity is invalid
-and the agent enrols again from the bundle) and renews at two thirds of its life, exactly as
-the operator does with its Secret. A 401 makes it read the bundle again (`Recover`).
+onto a key the agent generates, keeps the identity in `<state-dir>/identity/identity.json` and
+renews at two thirds of its life, exactly as the operator does with its Secret; a truncated
+identity is invalid and the agent enrols again from the bundle. Files are read by one of two rules
+(`internal/securefile`, each opened with `O_NOFOLLOW` and checked with `fstat` on the descriptor,
+so nothing is swapped between the check and the read): a file the agent writes and keeps (the
+identity, each escrowed secret in `--secrets-dir`) must be a plain file owned by the agent's uid
+with no access for group or others, in a 0700 directory it owns, written atomically at 0600; a file
+staff supply read-only (`--enrolment`, `--tms-token-file`) must be a plain file nobody but its owner
+can write, and may be readable by everyone, because the shared server mounts it as a Compose file
+secret that keeps the host's `0444 root` mode inside a `0700 root` secrets directory, the only mode
+uid 65532 can read. A link is refused under either rule. Kubernetes' own mounts (the ServiceAccount
+token and CA, the base values ConfigMap) are links by design and are read as Kubernetes gives them. A 401 makes it read the bundle again (`Recover`).
 
 **The loop** (`tenantagent.Agent`), every `--poll` (15 s) with a fifth of jitter, never overlapping
 (one goroutine), and exponential backoff up to 5 minutes while iterations fail. Every shared-server
@@ -1283,7 +1291,10 @@ and never with a failed restore.
    read again), maps each tenant's app meters to its plan's meters with that tenant's allowances (the
    dedicated relay's mapping), posts `POST /v1/shared/usage` in chunks of 5,000, and writes each
    tenant's answer back with `PUT /managed/v1/tenants/usage`. A failed report is retried on the next
-   iteration;
+   iteration. An entry the answer refuses (any `code`, `not_placed`, `implausible` or one this agent
+   does not know) marks that tenant's hours in that report done: they are withheld from later reports
+   until they leave the look-back, every other tenant and later hour is relayed as usual, and the
+   refusal is logged with its code once per tenant per hour;
 7. every minute, the email events (`emailevents.Relay`): the TMS finds each event's tenant from its
    message, and acknowledged events are deleted.
 

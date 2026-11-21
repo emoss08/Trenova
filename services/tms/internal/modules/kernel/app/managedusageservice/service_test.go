@@ -335,6 +335,97 @@ func TestALevelMeterIsDecidedOnTheLiveLevelNotTheRelayedQuantity(t *testing.T) {
 	assert.Equal(t, managedusage.ReasonAllowance, d.Reason)
 }
 
+func countedState(quantity, ceiling int64, overage, hardCap bool) *managedusage.State {
+	return &managedusage.State{
+		WindowStart: now - 10*hour,
+		WindowEnd:   now + hour,
+		Overage:     overage,
+		ReceivedAt:  now - 600,
+		Meters: []managedusage.Meter{{
+			Meter:     platformcatalog.MeterShipmentsTotal,
+			Unit:      managedusage.UnitCount,
+			Quantity:  quantity,
+			Allowance: 100,
+			HardCap:   hardCap,
+			Ceiling:   ceiling,
+		}},
+	}
+}
+
+func TestACountedMeterAddsWhatWasMadeHereSinceTheLastAnswer(t *testing.T) {
+	t.Parallel()
+
+	made := &fakeCounter{
+		meter: platformcatalog.MeterShipmentsTotal,
+		counts: []managedusageports.HourCount{
+			{Hour: now - now%hour - hour, Quantity: 30},
+			{Hour: now - now%hour, Quantity: 15},
+		},
+	}
+	svc := newService(
+		&fakeRepo{state: countedState(950, 1000, true, false)},
+		[]managedusageports.HourlyCounter{made},
+		nil,
+	)
+
+	d, err := svc.Decide(t.Context(), instance, platformcatalog.MeterShipmentsTotal, 5)
+	require.NoError(t, err)
+	assert.True(t, d.Allowed, "950 relayed and 45 made here leave room for 5")
+	assert.Equal(t, int64(995), d.Used)
+	require.NotNil(t, made.req)
+	assert.Equal(t, now-600-120, made.req.Since,
+		"counted from just before the answer was received, so nothing made after it is missed")
+	assert.Equal(t, now+1, made.req.Until)
+
+	d, err = svc.Decide(t.Context(), instance, platformcatalog.MeterShipmentsTotal, 6)
+	require.NoError(t, err)
+	assert.False(t, d.Allowed, "the ceiling holds before the control plane hears of the hour")
+	assert.Equal(t, managedusage.ReasonCeiling, d.Reason)
+}
+
+func TestACountedMeterIsCountedFromTheWindowStartAtTheEarliest(t *testing.T) {
+	t.Parallel()
+
+	made := &fakeCounter{meter: platformcatalog.MeterShipmentsTotal}
+	state := countedState(0, 1000, true, false)
+	state.ReceivedAt = state.WindowStart - 5*hour
+	svc := newService(&fakeRepo{state: state}, []managedusageports.HourlyCounter{made}, nil)
+
+	_, err := svc.Decide(t.Context(), instance, platformcatalog.MeterShipmentsTotal, 1)
+	require.NoError(t, err)
+	require.NotNil(t, made.req)
+	assert.Equal(t, state.WindowStart, made.req.Since)
+}
+
+func TestACountedMeterWithNoLimitIsNotCounted(t *testing.T) {
+	t.Parallel()
+
+	made := &fakeCounter{meter: platformcatalog.MeterShipmentsTotal}
+	svc := newService(
+		&fakeRepo{state: countedState(5000, 0, true, false)},
+		[]managedusageports.HourlyCounter{made},
+		nil,
+	)
+	d, err := svc.Decide(t.Context(), instance, platformcatalog.MeterShipmentsTotal, 1)
+	require.NoError(t, err)
+	assert.True(t, d.Allowed)
+	assert.Nil(t, made.req, "overage with no ceiling limits nothing, so nothing is counted")
+
+	capped := &fakeCounter{
+		meter:  platformcatalog.MeterShipmentsTotal,
+		counts: []managedusageports.HourCount{{Hour: now - now%hour, Quantity: 3}},
+	}
+	svc = newService(
+		&fakeRepo{state: countedState(98, 0, true, true)},
+		[]managedusageports.HourlyCounter{capped},
+		nil,
+	)
+	d, err = svc.Decide(t.Context(), instance, platformcatalog.MeterShipmentsTotal, 1)
+	require.NoError(t, err)
+	assert.False(t, d.Allowed, "a hard cap counts what was made here too")
+	assert.Equal(t, managedusage.ReasonAllowance, d.Reason)
+}
+
 func TestALevelMeterTheStateDoesNotNameIsNotRead(t *testing.T) {
 	t.Parallel()
 

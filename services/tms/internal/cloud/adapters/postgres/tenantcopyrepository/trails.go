@@ -211,13 +211,69 @@ func (t *trailRun) refuseFutureEntries() error {
 	return nil
 }
 
+type keyUse struct {
+	verified  int64
+	firstFail int64
+}
+
 type linkCheck struct {
 	links    int64
 	missing  bool
+	conflict bool
 	unsigned bool
 	brokenAt int64
 	gapped   bool
 	latest   int64
+	uses     map[string]*keyUse
+}
+
+func (c *linkCheck) breakAt(seq int64) {
+	if c.brokenAt == 0 || seq < c.brokenAt {
+		c.brokenAt = seq
+	}
+}
+
+func (c *linkCheck) signed(keyID string, seq int64, ok bool) {
+	if c.uses == nil {
+		c.uses = make(map[string]*keyUse)
+	}
+	use := c.uses[keyID]
+	if use == nil {
+		use = new(keyUse)
+		c.uses[keyID] = use
+	}
+	if ok {
+		use.verified++
+	} else if use.firstFail == 0 {
+		use.firstFail = seq
+	}
+}
+
+func (c *linkCheck) settleKeys() {
+	for _, use := range c.uses {
+		switch {
+		case use.firstFail == 0:
+		case use.verified > 0:
+			c.breakAt(use.firstFail)
+		default:
+			c.missing = true
+			c.conflict = true
+		}
+	}
+}
+
+func (c *linkCheck) heldRefusal(
+	att *tenantarchive.TrailAttestation,
+	through func(*tenantarchive.TrailAttestation) archiveports.AttestationRefusal,
+) archiveports.AttestationRefusal {
+	switch {
+	case att == nil:
+		return ""
+	case c.links != att.Links:
+		return archiveports.AttestationLinks
+	default:
+		return through(att)
+	}
 }
 
 func (c *linkCheck) source(restoring bool) archiveports.SourceCheck {
@@ -266,7 +322,7 @@ func established(
 	refused archiveports.AttestationRefusal,
 ) archiveports.Established {
 	switch {
-	case source == archiveports.SourceVerified:
+	case source == archiveports.SourceVerified && refused == "":
 		return archiveports.EstablishedHere
 	case source == archiveports.SourceNotVerifiable && refused == "":
 		return archiveports.EstablishedAtSource
@@ -279,8 +335,9 @@ func (c *linkCheck) result() archiveports.ChainResult {
 	return archiveports.ChainResult{
 		Links:      c.links,
 		BrokenAt:   c.brokenAt,
-		KeyMissing: c.missing,
-		Unsigned:   c.unsigned,
+		KeyMissing:  c.missing,
+		KeyConflict: c.conflict,
+		Unsigned:    c.unsigned,
 	}
 }
 
@@ -323,20 +380,26 @@ func (t *trailRun) checkSeals() (*sealCheck, error) {
 		}
 		linked := (out.links == 0 && seal.Seq > 1) || seal.PrevHash == prev
 		ok, missing := t.keys.checkSeal(seal)
-		if seal.Unsigned() {
-			out.unsigned = true
-		}
-		if missing {
+		switch {
+		case missing:
 			out.missing = true
+		case seal.Unsigned():
+			out.unsigned = true
+			if !ok {
+				out.breakAt(seal.Seq)
+			}
+		default:
+			out.signed(seal.HashKeyID, seal.Seq, ok)
 		}
-		if (!linked || (!missing && !ok)) && out.brokenAt == 0 {
-			out.brokenAt = seal.Seq
+		if !linked {
+			out.breakAt(seal.Seq)
 		}
 		prev = seal.Hash
 		out.links++
 		out.last = seal
 		return nil
 	})
+	out.settleKeys()
 	return out, err
 }
 
@@ -353,14 +416,21 @@ func (t *trailRun) auditSeals() (archiveports.ChainResult, *audit.Seal, error) {
 	result.Source = checked.source(t.req.Restoring)
 	att := t.req.Manifest.AuditAttestation()
 	result.Attestation = attestationOf(att)
-	if result.Source != archiveports.SourceVerified {
-		if result.Refused, err = t.auditAttestation(checked, att); err != nil {
-			return result, nil, err
-		}
+	if result.Source == archiveports.SourceVerified {
+		result.Refused = checked.heldRefusal(att, func(
+			att *tenantarchive.TrailAttestation,
+		) archiveports.AttestationRefusal {
+			if checked.last.ToTS != att.SealedThrough.Unix() {
+				return archiveports.AttestationSealedThrough
+			}
+			return ""
+		})
+	} else if result.Refused, err = t.auditAttestation(checked, att); err != nil {
+		return result, nil, err
 	}
 	result.Established = established(result.Source, result.Refused)
 	switch {
-	case t.req.Restoring && result.Source == archiveports.SourceVerified:
+	case t.req.Restoring && result.Established == archiveports.EstablishedHere:
 		result.Outcome = archiveports.ChainKept
 		result.KeyID = checked.last.HashKeyID
 		return result, checked.last, nil
@@ -593,14 +663,19 @@ func (t *trailRun) checkEvents() (*eventCheck, error) {
 			out.unsigned = true
 		}
 		key, missing := t.keys.eventKey(event)
-		intact := linked
-		if missing {
+		switch {
+		case missing:
 			out.missing = true
-		} else if ok, verr := aiaudit.VerifyHash(event, key); verr != nil || !ok {
-			intact = false
+		case event.Keyed():
+			ok, verr := aiaudit.VerifyHash(event, key)
+			out.signed(event.HashKeyID, event.Seq, verr == nil && ok)
+		default:
+			if ok, verr := aiaudit.VerifyHash(event, key); verr != nil || !ok {
+				out.breakAt(event.Seq)
+			}
 		}
-		if !intact && out.brokenAt == 0 {
-			out.brokenAt = event.Seq
+		if !linked {
+			out.breakAt(event.Seq)
 		}
 		prev = event.Hash
 		if out.links == 0 {
@@ -610,6 +685,7 @@ func (t *trailRun) checkEvents() (*eventCheck, error) {
 		out.last = event
 		return nil
 	})
+	out.settleKeys()
 	return out, err
 }
 
@@ -626,14 +702,21 @@ func (t *trailRun) aiChain() (archiveports.ChainResult, error) {
 	result.Source = checked.source(t.req.Restoring)
 	att := t.req.Manifest.AIAuditAttestation()
 	result.Attestation = attestationOf(att)
-	if result.Source != archiveports.SourceVerified {
-		if result.Refused, err = t.aiAttestation(checked, att); err != nil {
-			return result, err
-		}
+	if result.Source == archiveports.SourceVerified {
+		result.Refused = checked.heldRefusal(att, func(
+			att *tenantarchive.TrailAttestation,
+		) archiveports.AttestationRefusal {
+			if checked.latest >= att.SealedThrough.Unix() {
+				return archiveports.AttestationDatedAfter
+			}
+			return ""
+		})
+	} else if result.Refused, err = t.aiAttestation(checked, att); err != nil {
+		return result, err
 	}
 	result.Established = established(result.Source, result.Refused)
 	switch {
-	case t.req.Restoring && result.Source == archiveports.SourceVerified:
+	case t.req.Restoring && result.Established == archiveports.EstablishedHere:
 		result.Outcome = archiveports.ChainKept
 		result.KeyID = checked.last.HashKeyID
 		return result, nil
@@ -851,6 +934,9 @@ func chainMetadata(c *archiveports.ChainResult, manifestSHA256 string) map[strin
 	}
 	if c.KeyMissing {
 		out["keyMissing"] = true
+	}
+	if c.KeyConflict {
+		out["keyConflict"] = true
 	}
 	if c.Unsigned {
 		out["unsigned"] = true

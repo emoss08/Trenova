@@ -59,7 +59,7 @@ func decide(s *State, meter platformcatalog.MeterKey, level *int64, requested in
 		m.Quantity = *level
 	}
 	stoppedAtCeiling := m.Stopped && m.Ceiling > 0 && relayed >= m.Ceiling
-	if stoppedAtCeiling && level != nil {
+	if level != nil && ownCeilingStop(s, &m, relayed) && *level < m.Ceiling {
 		m.Stopped = false
 	}
 	d.Managed = true
@@ -83,4 +83,12 @@ func decide(s *State, meter platformcatalog.MeterKey, level *int64, requested in
 		d.Reason = ReasonWithin
 	}
 	return d
+}
+
+func ownCeilingStop(s *State, m *Meter, relayed int64) bool {
+	if !m.Stopped || m.Ceiling <= 0 || relayed < m.Ceiling {
+		return false
+	}
+	capped := m.HardCap || !s.Overage
+	return !capped || relayed < m.Allowance
 }

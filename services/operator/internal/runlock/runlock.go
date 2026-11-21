@@ -18,7 +18,7 @@ type Lock struct {
 
 func Acquire(dir string) (*Lock, error) {
 	path := filepath.Join(dir, "tenant-agent.lock")
-	f, err := os.OpenFile(path, os.O_CREATE|os.O_RDWR, fileMode)
+	f, err := os.OpenFile(path, os.O_CREATE|os.O_RDWR|syscall.O_NOFOLLOW, fileMode)
 	if err != nil {
 		return nil, fmt.Errorf("open the lock file: %w", err)
 	}

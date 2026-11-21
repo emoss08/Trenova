@@ -146,11 +146,22 @@ type ChainResult struct {
 	Source      SourceCheck        `json:"source,omitempty"`
 	Established Established        `json:"established,omitempty"`
 	KeyMissing  bool               `json:"keyMissing,omitempty"`
+	KeyConflict bool               `json:"keyConflict,omitempty"`
 	Unsigned    bool               `json:"unsigned,omitempty"`
 	Marked      int64              `json:"marked,omitempty"`
 	Attested    int64              `json:"attested,omitempty"`
 	Attestation *Attestation       `json:"attestation,omitempty"`
 	Refused     AttestationRefusal `json:"attestationRefused,omitempty"`
+}
+
+func (c *ChainResult) keyPhrase() string {
+	if c.KeyConflict {
+		return "is signed with a different key under the same name as one this server holds"
+	}
+	if c.KeyMissing {
+		return "names a key this server does not hold"
+	}
+	return "does not agree with what its archive states"
 }
 
 func (c *ChainResult) Unverified() bool {
@@ -190,14 +201,16 @@ func (r *TrailResult) RestoreNote() string {
 			))
 		case chain.result.Marked > 0:
 			notes = append(notes, fmt.Sprintf(
-				"the %s names a key this server does not hold, so its %d links were signed again here and are marked as not verified at their source",
+				"the %s %s, so its %d links were signed again here and are marked as not verified at their source",
 				chain.name,
+				chain.result.keyPhrase(),
 				chain.result.Marked,
 			))
 		case chain.result.Attested > 0:
 			notes = append(notes, fmt.Sprintf(
-				"the %s names a key this server does not hold, so its %d links were signed again here and are marked as verified at their source, as the archive states",
+				"the %s %s, so its %d links were signed again here and are marked as verified at their source, as the archive states",
 				chain.name,
+				chain.result.keyPhrase(),
 				chain.result.Attested,
 			))
 		}

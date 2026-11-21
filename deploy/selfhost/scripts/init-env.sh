@@ -67,6 +67,13 @@ scope_key_id() {
   printf 'k%s' "$(date -u +%Y%m%d)"
 }
 
+# The AI audit chain key's id names this install's key wherever its history is
+# moved to, so it is unique per install: a date and 48 random bits (1 to 40 of
+# letters, digits, '.', '_' and '-').
+audit_key_id() {
+  printf 'selfhost-%s-%s' "$(date -u +%Y%m%d)" "$(openssl rand -hex 6)"
+}
+
 scope_key() {
   openssl rand -base64 32 | tr -d '\n'
 }
@@ -221,9 +228,9 @@ done
 set_value TRENOVA_DATABASE_RLS_SCOPEKEYID "$(scope_key_id)"
 set_value TRENOVA_DATABASE_RLS_SCOPEKEY "$(scope_key)"
 
-audit_key_id="selfhost-$(date -u +%Y%m%d)"
-set_value TRENOVA_AI_AUDIT_CHAIN_KEYS "${audit_key_id}:$(secret)"
-set_value TRENOVA_AI_AUDIT_CHAIN_ACTIVE_KEY_ID "${audit_key_id}"
+chain_key_id="$(audit_key_id)"
+set_value TRENOVA_AI_AUDIT_CHAIN_KEYS "${chain_key_id}:$(secret)"
+set_value TRENOVA_AI_AUDIT_CHAIN_ACTIVE_KEY_ID "${chain_key_id}"
 
 if [ -n "${domain}" ]; then
   set_value DOMAIN "${domain}"

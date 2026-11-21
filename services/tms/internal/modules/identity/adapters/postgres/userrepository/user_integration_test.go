@@ -598,6 +598,41 @@ func TestTheSystemActorBelongsToItsOwnBusinessUnitAndNeverSignsIn(t *testing.T) 
 	require.ErrorIs(t, err, ErrSystemActorNeedsTenant)
 }
 
+func TestTheSystemActorIsReadOnceAndOnlyACommittedOneIsKept(t *testing.T) {
+	f := newUserFixture(t)
+	bu := f.data.BusinessUnit.ID
+
+	_, cached := f.repo.systemActors.GetIfPresent(bu)
+	require.False(t, cached)
+	first, err := f.repo.SystemActorID(context.Background(), bu)
+	require.NoError(t, err)
+	kept, cached := f.repo.systemActors.GetIfPresent(bu)
+	require.True(t, cached, "a tenant's system actor never changes once made")
+	assert.Equal(t, first, kept)
+	again, err := f.repo.SystemActorID(context.Background(), bu)
+	require.NoError(t, err)
+	assert.Equal(t, first, again)
+
+	unknown := pulid.MustNew("bu_")
+	_, err = f.repo.SystemActorID(context.Background(), unknown)
+	require.True(t, errortypes.IsNotFoundError(err), "%v", err)
+	_, cached = f.repo.systemActors.GetIfPresent(unknown)
+	assert.False(t, cached, "a tenant made a moment later must resolve, so a miss is never kept")
+
+	other := seedtest.SeedAdditionalTenant(t, f.ctx, f.db, "SC")
+	fresh := New(Params{DB: f.conn, Logger: zap.NewNop()}).(*repository)
+	require.NoError(t, f.conn.Transact(
+		dbscope.WithSystem(f.ctx, "read the system actor inside a caller's transaction"),
+		kernelports.TxOptions{ReadOnly: true},
+		func(ctx context.Context) error {
+			_, rerr := fresh.SystemActorID(ctx, other.BusinessUnit.ID)
+			return rerr
+		},
+	))
+	_, cached = fresh.systemActors.GetIfPresent(other.BusinessUnit.ID)
+	assert.False(t, cached, "a read inside a caller's transaction may not be committed, so it is not kept")
+}
+
 func TestReservedNamesAreNeverFreeForAPerson(t *testing.T) {
 	f := newUserFixture(t)
 

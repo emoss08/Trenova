@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/operator/internal/atomicfile"
 	"github.com/emoss08/trenova/operator/internal/escrow"
 	"github.com/emoss08/trenova/operator/internal/instanceapi"
+	"github.com/emoss08/trenova/operator/internal/securefile"
 )
 
 const dirMode = 0o700
@@ -76,7 +77,7 @@ func (s *Store) Ensure(ctx context.Context) error {
 func (s *Store) read() (map[string][]byte, error) {
 	out := make(map[string][]byte, len(escrow.Keys))
 	for _, key := range escrow.Keys {
-		body, err := os.ReadFile(filepath.Join(s.dir, key))
+		body, err := securefile.ReadOwn(filepath.Join(s.dir, key))
 		if errors.Is(err, fs.ErrNotExist) {
 			continue
 		}
@@ -94,6 +95,9 @@ func (s *Store) write(v instanceapi.InstanceSecrets) error {
 	}
 	if err := os.Chmod(s.dir, dirMode); err != nil {
 		return fmt.Errorf("restrict the secrets directory: %w", err)
+	}
+	if err := securefile.CheckOwnDir(s.dir); err != nil {
+		return fmt.Errorf("the secrets directory: %w", err)
 	}
 	for key, value := range escrow.ToData(nil, v) {
 		if err := atomicfile.Write(filepath.Join(s.dir, key), value); err != nil {

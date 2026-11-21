@@ -28,9 +28,12 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
+	"github.com/maypok86/otter/v2"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
+
+const systemActorCacheSize = 50_000
 
 const (
 	membershipScopeReason     = "read the memberships row-level security shows a person: their own in every organization and everyone's in the organization they are working in"
@@ -61,10 +64,11 @@ type Params struct {
 }
 
 type repository struct {
-	db     *postgres.Connection
-	l      *zap.Logger
-	quota  platformplanports.QuotaGuard
-	shared bool
+	db           *postgres.Connection
+	l            *zap.Logger
+	quota        platformplanports.QuotaGuard
+	shared       bool
+	systemActors *otter.Cache[pulid.ID, pulid.ID]
 }
 
 func New(p Params) tenantports.UserRepository {
@@ -73,6 +77,9 @@ func New(p Params) tenantports.UserRepository {
 		l:      p.Logger.Named("postgres.user-repository"),
 		quota:  quotaservice.OrUnlimited(p.Quota),
 		shared: p.Managed.SharedTenancy(),
+		systemActors: otter.Must(&otter.Options[pulid.ID, pulid.ID]{
+			MaximumSize: systemActorCacheSize,
+		}),
 	}
 }
 
@@ -771,9 +778,14 @@ func (ur *repository) SystemActorID(
 	if businessUnitID.IsNil() {
 		return pulid.Nil, ErrSystemActorNeedsTenant
 	}
+	if actor, ok := ur.systemActors.GetIfPresent(businessUnitID); ok {
+		return actor, nil
+	}
 
 	ctx = dbscope.WithSystem(ctx, systemActorScopeReason)
+	caller := ctx
 	return dbtx.Read(ctx, ur.db, func(ctx context.Context) (pulid.ID, error) {
+		committed := !keel.InTx(caller, ur.db.Keel(caller))
 		sa := tenantdb.SystemActors
 		actor, err := sa.AllTenants().
 			Pick(sa.UserID).
@@ -786,6 +798,9 @@ func (ur *repository) SystemActorID(
 				err,
 				businessUnitID.String(),
 			)
+		}
+		if committed {
+			ur.systemActors.Set(businessUnitID, actor.UserID)
 		}
 
 		return actor.UserID, nil

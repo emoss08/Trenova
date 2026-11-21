@@ -66,6 +66,20 @@ an organization under its own tenant scope, so the dedicated readings stay insta
 allowance's `ceiling` stops an action whatever the overage setting. Plan and storage notices go to the
 administrators of the scope they concern.
 
+A limit holds on this server, not only once the control plane answers. A level meter (storage) is
+decided on its live level; the control plane's `stopped` gives way to it only when the stop is that
+meter's own ceiling and the level is now below it, and every other stop (a hard cap or overage off
+past the allowance, an unpaid plan, a stop by staff) is honoured. A counted meter (shipments) with a
+ceiling or a hard cap is decided on the relayed quantity plus what this server counted since two
+minutes before that answer arrived (`managedusageservice.Service.Decide`; the relay reads the
+current hour too, so the overlap only ever refuses early, by at most two minutes of work). Every
+path that makes a shipment (`shipmentrepository.Create`, `BulkDuplicate` for the whole batch,
+recurring generation) asks inside the transaction that inserts it, so concurrent requests overshoot
+by at most the requests in flight. A document is recorded under a transaction-scoped lock on its
+scope's storage (`documentrepository.holdStorage`), so concurrent uploads never store a byte past
+the ceiling; a refused upload's object is removed at once (`documentservice` on a failed record
+write, `documentuploadjobs.discardRefusedUpload` in the finalize workflow).
+
 On a shared server an email address is still unique across the server, so the refusal of a taken
 address or username is generic (`tenant.EmailAddressTakenError`) and never says it belongs to
 another company.
@@ -751,8 +765,15 @@ verified.**
   unsealed), seals them in the archive with one seal signed by the source's key, from the last
   seal's end through `sealedThrough` (the snapshot's moment, past every entry and AI row it holds),
   and carries the chain head moved to it (`tenantcopyrepository/snapshottrails.go`: the seal and
-  head go into the archive through two session temporary tables that the `COPY` of `audit_seals`
-  and `audit_chain_heads` reads beside the tenant's rows). That seal is never written into the live
+  the moved head are each one JSON row, bound with `set_config(..., true)` inside the snapshot's
+  transaction, that the `COPY` of `audit_seals` reads `UNION ALL` beside the tenant's rows and that
+  replaces the head in the `COPY` of `audit_chain_heads`, through `jsonb_populate_record` of the
+  table's own row type; each row must name exactly the planned columns, so a migration that adds
+  one fails instead of shifting a value). The archive session keeps no session state at all (no
+  temporary table, no session setting, no session lock): on a shared server it reaches PostgreSQL
+  through PgBouncer in transaction mode, where two statements outside one transaction can land on
+  different server connections; `txpool_integration_test.go` takes the export through a pool that
+  moves every statement outside a transaction to another connection. That seal is never written into the live
   chain: a live seal through "now" would race audit writes still in flight (an entry is dated
   before its transaction commits, which is why the hourly sealer keeps a ten-minute lag) and the
   source's own chain would then report entries added to a sealed hour. The live chain is untouched,
@@ -775,7 +796,8 @@ verified.**
 - **The statement is as trustworthy as the archive, and no more.** Anyone holding an archive key
   can write `verified: true`, which is why the state's words say "as its archive states". A
   statement never upgrades history to `Verified`, and it is believed only when this server cannot
-  verify the chain itself (the source's key is not held here) and its own key-free checks of what
+  verify the chain itself (the source's key is not held here, or a key of the same id signed none
+  of it) and its own key-free checks of what
   arrived agree: the number of links equals `links`; every link names the hash of the one before it
   and an unsigned link's SHA-256 recomputes (a break is `not_verified`, never attested); audit
   seals are contiguous (each window starts where the one before ended); the last seal ends at
@@ -783,15 +805,25 @@ verified.**
   (no unsealed tail); no AI row was recorded at or after `sealedThrough`, every AI checkpoint holds
   its row's hash and the AI head names the last row. Anything short of that (`attestationRefused`:
   `absent`, `not_verified_at_source`, `links`, `broken`, `windows`, `sealed_through`, `dated_after`,
-  `unsealed_tail`, `checkpoints`) leaves the history "imported, not verified at its source".
+  `unsealed_tail`, `checkpoints`) leaves the history "imported, not verified at its source". When
+  this server does verify the chain itself, a statement the archive carries must still agree on
+  `links` and (audit) `sealedThrough`, or (AI) no row recorded at or after it: a chain cut short at
+  its end with its seals and entries dropped together verifies link by link, and only the statement
+  shows it; a disagreement is `not_verified` with the reason in `attestationRefused`.
   `attestation_integration_test.go` takes each mismatch, a forged `verified: true` (believed as the
   archive's statement, never as `Verified`) and a forged statement over a chain that breaks.
 
 - The source check of each chain is `verified` (every link verifies under a key this server holds
   and links to the one before it), `not_verifiable` (a link names a key this server does not hold,
-  or, on an import, is unsigned) or `not_verified` (a link does not verify under a key this server
-  holds, or breaks the chain). It is recorded in `TrailResult` and the provenance entry with
-  `brokenAt`, `keyMissing`, `unsigned`, the number of links, how many were marked either way, what
+  a key id this server holds signed none of the chain's links under it (`keyConflict`: another
+  install chose the same id for another secret), or, on an import, is unsigned) or `not_verified`
+  (a link does not verify under a key that verifies other links of the chain, or breaks the chain).
+  Key ids are unique per install (a date and random hex: `s<YYYYMMDD>-<12 hex>` on a shared server,
+  `selfhost-<YYYYMMDD>-<12 hex>` from `deploy/selfhost/scripts/init-env.sh`), so a conflict is a
+  misconfiguration, never a forger's way to "verified at its source": the attested state still
+  needs every structural check above, and a source holding its own key states `verified: false`
+  for a chain it finds tampered. It is recorded in `TrailResult` and the provenance entry with
+  `brokenAt`, `keyMissing`, `keyConflict`, `unsigned`, the number of links, how many were marked either way, what
   was `established` (`verified_here`, `verified_at_source`, `not_verified`), the `attestation` it
   relied on (`sealedThrough`, `verified`, `links` and the manifest's SHA-256) and, when it was not
   believed, why (`attestationRefused`).

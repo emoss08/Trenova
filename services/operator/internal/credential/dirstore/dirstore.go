@@ -13,15 +13,12 @@ import (
 
 	"github.com/emoss08/trenova/operator/internal/atomicfile"
 	"github.com/emoss08/trenova/operator/internal/credential"
+	"github.com/emoss08/trenova/operator/internal/securefile"
 )
 
 const (
 	IdentityFile = "identity.json"
 	dirMode      = 0o700
-)
-
-var ErrInsecure = errors.New(
-	"the credential directory or its files are readable by others, or are not plain files and directories",
 )
 
 type identityFile struct {
@@ -61,37 +58,22 @@ func New(p Params) (Store, error) {
 		return Store{}, fmt.Errorf("read the credential directory: %w", err)
 	}
 	if !info.IsDir() {
-		return Store{}, fmt.Errorf("%w: %s", ErrInsecure, p.Dir)
+		return Store{}, fmt.Errorf("%w: %s is not a directory", securefile.ErrInsecure, p.Dir)
 	}
 	if err = os.Chmod(p.Dir, dirMode); err != nil {
 		return Store{}, fmt.Errorf("restrict the credential directory: %w", err)
 	}
+	if err = securefile.CheckOwnDir(p.Dir); err != nil {
+		return Store{}, fmt.Errorf("the credential directory: %w", err)
+	}
 	return Store{dir: p.Dir, enrolment: p.Enrolment}, nil
 }
 
-func private(path string) (bool, error) {
-	info, err := os.Lstat(path)
-	if errors.Is(err, fs.ErrNotExist) {
-		return false, nil
-	}
-	if err != nil {
-		return false, err
-	}
-	if !info.Mode().IsRegular() || info.Mode().Perm()&0o077 != 0 {
-		return false, fmt.Errorf("%w: %s", ErrInsecure, path)
-	}
-	return true, nil
-}
-
 func (s Store) Bundle(context.Context) (credential.Bundle, bool, error) {
-	present, err := private(s.enrolment)
-	if err != nil {
-		return credential.Bundle{}, false, fmt.Errorf("read the enrolment bundle: %w", err)
-	}
-	if !present {
+	body, err := securefile.ReadSupplied(s.enrolment)
+	if errors.Is(err, fs.ErrNotExist) {
 		return credential.Bundle{}, false, nil
 	}
-	body, err := os.ReadFile(s.enrolment)
 	if err != nil {
 		return credential.Bundle{}, false, fmt.Errorf("read the enrolment bundle: %w", err)
 	}
@@ -104,14 +86,10 @@ func (s Store) Bundle(context.Context) (credential.Bundle, bool, error) {
 
 func (s Store) Load(context.Context) (credential.Identity, bool, error) {
 	path := filepath.Join(s.dir, IdentityFile)
-	present, err := private(path)
-	if err != nil {
-		return credential.Identity{}, false, fmt.Errorf("read the identity: %w", err)
-	}
-	if !present {
+	body, err := securefile.ReadOwn(path)
+	if errors.Is(err, fs.ErrNotExist) {
 		return credential.Identity{}, false, nil
 	}
-	body, err := os.ReadFile(path)
 	if err != nil {
 		return credential.Identity{}, false, fmt.Errorf("read the identity: %w", err)
 	}

@@ -3,6 +3,7 @@
 package notificationrepository
 
 import (
+	"errors"
 	"testing"
 	"time"
 
@@ -71,4 +72,43 @@ func TestNotifiedUsers_NamesOnlyThePeopleToldOfThatEventSinceItHappened(t *testi
 	})
 	require.NoError(t, err)
 	assert.Empty(t, later, "a notification sent before the event does not count")
+}
+
+func TestARecipientIsCheckedOnceAndAnotherTenantsPersonIsNeverWritten(t *testing.T) {
+	ctx, db, cleanup := seedtest.SetupTestDB(t)
+	t.Cleanup(cleanup)
+	data := seedtest.SeedFullTestData(t, ctx, db)
+	other := seedtest.SeedAdditionalTenant(t, ctx, db, "NR")
+	ctx = data.Ctx(ctx)
+	repo := New(Params{DB: postgres.WrapDB(db), Logger: zap.NewNop()}).(*repository)
+
+	buID := data.BusinessUnit.ID
+	notice := func(target pulid.ID) *notification.Notification {
+		return &notification.Notification{
+			OrganizationID: data.Organization.ID,
+			BusinessUnitID: &buID,
+			TargetUserID:   &target,
+			EventType:      "audit.alert.RoleChanged",
+			Priority:       notification.PriorityHigh,
+			Channel:        notification.ChannelUser,
+			Title:          "Role changed",
+			Message:        "A role was assigned",
+			DeliveryStatus: notification.DeliveryStatusPending,
+			Source:         "auditalertservice",
+		}
+	}
+
+	_, err := repo.Create(ctx, notice(other.User.ID))
+	require.True(t, errors.Is(err, errRecipientOutside), "%v", err)
+	_, cached := repo.recipients.GetIfPresent(
+		recipientKey{user: other.User.ID, organization: data.Organization.ID})
+	assert.False(t, cached, "a refusal is never kept")
+
+	_, err = repo.Create(ctx, notice(data.User.ID))
+	require.NoError(t, err)
+	_, cached = repo.recipients.GetIfPresent(
+		recipientKey{user: data.User.ID, organization: data.Organization.ID})
+	assert.True(t, cached, "a person's business unit never changes, so the answer is kept")
+	_, err = repo.Create(ctx, notice(data.User.ID))
+	require.NoError(t, err)
 }

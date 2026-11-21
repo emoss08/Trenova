@@ -2,6 +2,7 @@ package documentrepository
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
@@ -12,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/identity/app/quotaservice"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/managedscope"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -22,7 +24,10 @@ import (
 	"go.uber.org/zap"
 )
 
-const defaultReconciliationLimit = 100
+const (
+	defaultReconciliationLimit = 100
+	storageLockPrefix          = "document-storage:"
+)
 
 var documentErrors = dberror.Mapping{Entity: "Document"}
 
@@ -32,19 +37,22 @@ type Params struct {
 	DB     *postgres.Connection
 	Logger *zap.Logger
 	Quota  platformplanports.QuotaGuard
+	Scopes *managedscope.Resolver
 }
 
 type repository struct {
-	db    *postgres.Connection
-	l     *zap.Logger
-	quota platformplanports.QuotaGuard
+	db     *postgres.Connection
+	l      *zap.Logger
+	quota  platformplanports.QuotaGuard
+	scopes *managedscope.Resolver
 }
 
 func New(p Params) documentports.DocumentRepository {
 	return &repository{
-		db:    p.DB,
-		l:     p.Logger.Named("postgres.document-repository"),
-		quota: quotaservice.OrUnlimited(p.Quota),
+		db:     p.DB,
+		l:      p.Logger.Named("postgres.document-repository"),
+		quota:  quotaservice.OrUnlimited(p.Quota),
+		scopes: p.Scopes,
 	}
 }
 
@@ -302,6 +310,9 @@ func (r *repository) Create(
 	entity *document.Document,
 ) (*document.Document, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*document.Document, error) {
+		if err := r.holdStorage(ctx, entity); err != nil {
+			return nil, err
+		}
 		err := quotatx.Run(ctx, r.db, r.quota, func(c context.Context) error {
 			return documentdb.Documents.Create(c, r.db.Keel(c), entity)
 		}, documentQuotaRequests(entity)...)
@@ -626,6 +637,23 @@ func (r *repository) DeleteByLineageIDs(
 
 		return documentErrors.Map(err, "")
 	})
+}
+
+func (r *repository) holdStorage(ctx context.Context, entity *document.Document) error {
+	if !quotaservice.Enforcing(r.quota) {
+		return nil
+	}
+	scope, err := r.scopes.ForTenant(dbscope.Tenant{
+		OrganizationID: entity.OrganizationID,
+		BusinessUnitID: entity.BusinessUnitID,
+	})
+	if err != nil {
+		return err
+	}
+	if err = keel.LockKey(ctx, r.db.Keel(ctx), storageLockPrefix+scope.Key()); err != nil {
+		return fmt.Errorf("hold the storage allowance while the document is recorded: %w", err)
+	}
+	return nil
 }
 
 func documentQuotaRequests(entity *document.Document) []platformplanports.QuotaRequest {

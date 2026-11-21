@@ -2,12 +2,39 @@ package archivestream_test
 
 import (
 	"bytes"
+	"crypto/sha256"
+	"encoding/hex"
 	"io"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/cloud/archivestream"
 	"github.com/stretchr/testify/require"
 )
+
+func TestAZeroLengthReadIsNotAChangedPart(t *testing.T) {
+	t.Parallel()
+
+	body := []byte("a stored part")
+	digest := sha256.Sum256(body)
+	sum := archivestream.Sum{Bytes: int64(len(body)), SHA256: hex.EncodeToString(digest[:])}
+	r, err := archivestream.NewReader(bytes.NewReader(body), sum, &archivestream.Options{
+		Part: "documents/0001",
+	})
+	require.NoError(t, err)
+	defer r.Close()
+
+	n, err := r.Read(nil)
+	require.NoError(t, err, "io.Reader allows a zero-length read")
+	require.Zero(t, n)
+	n, err = r.Read([]byte{})
+	require.NoError(t, err)
+	require.Zero(t, n)
+
+	read, err := io.ReadAll(r)
+	require.NoError(t, err)
+	require.Equal(t, body, read)
+	require.NoError(t, archivestream.Verify(bytes.NewReader(body), sum))
+}
 
 func compressed(t *testing.T, plain int64) ([]byte, archivestream.Sum) {
 	t.Helper()

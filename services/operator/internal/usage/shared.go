@@ -3,7 +3,9 @@ package usage
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"slices"
+	"sync"
 	"time"
 
 	"github.com/google/uuid"
@@ -26,15 +28,26 @@ type SharedTMS interface {
 	PutTenantUsage(ctx context.Context, tenants []tms.TenantUsage) (tms.TenantUsageAnswer, error)
 }
 
+type tenantHour struct {
+	instance uuid.UUID
+	hour     int64
+}
+
 type SharedRelay struct {
-	cp  SharedControlPlane
-	tms SharedTMS
-	now func() time.Time
+	cp     SharedControlPlane
+	tms    SharedTMS
+	logger *slog.Logger
+	now    func() time.Time
+
+	mu      sync.Mutex
+	refused map[tenantHour]instanceapi.SharedEntryRefusedCode
+	logged  map[uuid.UUID]int64
 }
 
 type SharedParams struct {
 	ControlPlane SharedControlPlane
 	TMS          SharedTMS
+	Logger       *slog.Logger
 	Now          func() time.Time
 }
 
@@ -43,12 +56,20 @@ func NewShared(p SharedParams) *SharedRelay {
 	if now == nil {
 		now = time.Now
 	}
-	return &SharedRelay{cp: p.ControlPlane, tms: p.TMS, now: now}
+	return &SharedRelay{
+		cp:      p.ControlPlane,
+		tms:     p.TMS,
+		logger:  p.Logger,
+		now:     now,
+		refused: make(map[tenantHour]instanceapi.SharedEntryRefusedCode),
+		logged:  make(map[uuid.UUID]int64),
+	}
 }
 
 type SharedResult struct {
 	Readings      int
 	Dropped       int
+	Withheld      int
 	Answered      int
 	RefusedByCP   []string
 	RefusedByTMS  []string
@@ -60,33 +81,37 @@ func (r *SharedRelay) Run(
 	ctx context.Context,
 	tenants []instanceapi.SharedTenant,
 ) (SharedResult, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
 	mappings := make(map[uuid.UUID]mapping, len(tenants))
 	for i := range tenants {
 		mappings[tenants[i].InstanceId] = newMapping(tenants[i].Allowances)
 	}
-	to := r.now().UTC().Truncate(time.Hour)
-	held, err := r.tms.TenantReadings(ctx, to.Add(-Lookback), to)
+	now := r.now().UTC()
+	to := now.Truncate(time.Hour)
+	from := to.Add(-Lookback)
+	r.forgetBefore(from)
+	held, err := r.tms.TenantReadings(ctx, from, to)
 	if err != nil {
 		return SharedResult{}, err
 	}
 
 	var result SharedResult
-	readings := r.mapReadings(held, mappings, &result)
+	readings := r.withhold(r.mapReadings(held, mappings, &result), &result)
 	result.Readings = len(readings)
 
 	var ack instanceapi.SharedUsageAck
-	refused := make(map[string]struct{})
+	refused := make(map[uuid.UUID]instanceapi.SharedEntryRefusedCode)
 	for _, chunk := range chunks(readings, MaxSharedReadings) {
 		ack, err = r.cp.ReportSharedUsage(ctx, instanceapi.SharedUsageReport{Readings: chunk})
 		if err != nil {
 			return result, err
 		}
-		for _, e := range ack.Refused {
-			refused[e.InstanceId.String()] = struct{}{}
-		}
+		r.markRefused(chunk, ack.Refused, refused)
 	}
-	for id := range refused {
-		result.RefusedByCP = append(result.RefusedByCP, id)
+	for id, code := range refused {
+		result.RefusedByCP = append(result.RefusedByCP, id.String())
+		r.logRefusal(id, code, now)
 	}
 	slices.Sort(result.RefusedByCP)
 
@@ -104,6 +129,75 @@ func (r *SharedRelay) Run(
 		result.RefusedByTMS = append(result.RefusedByTMS, e.InstanceID)
 	}
 	return result, nil
+}
+
+func (r *SharedRelay) forgetBefore(from time.Time) {
+	cutoff := from.Unix()
+	for key := range r.refused {
+		if key.hour < cutoff {
+			delete(r.refused, key)
+		}
+	}
+	for id, hour := range r.logged {
+		if hour < cutoff {
+			delete(r.logged, id)
+		}
+	}
+}
+
+func (r *SharedRelay) withhold(
+	readings []instanceapi.SharedUsageReading,
+	result *SharedResult,
+) []instanceapi.SharedUsageReading {
+	if len(r.refused) == 0 {
+		return readings
+	}
+	kept := readings[:0]
+	for _, rd := range readings {
+		if _, done := r.refused[tenantHour{instance: rd.InstanceId, hour: rd.Hour.Unix()}]; done {
+			result.Withheld++
+			continue
+		}
+		kept = append(kept, rd)
+	}
+	return kept
+}
+
+func (r *SharedRelay) markRefused(
+	chunk []instanceapi.SharedUsageReading,
+	entries []instanceapi.SharedEntryRefused,
+	refused map[uuid.UUID]instanceapi.SharedEntryRefusedCode,
+) {
+	if len(entries) == 0 {
+		return
+	}
+	codes := make(map[uuid.UUID]instanceapi.SharedEntryRefusedCode, len(entries))
+	for _, e := range entries {
+		codes[e.InstanceId] = e.Code
+		refused[e.InstanceId] = e.Code
+	}
+	for _, rd := range chunk {
+		if code, ok := codes[rd.InstanceId]; ok {
+			r.refused[tenantHour{instance: rd.InstanceId, hour: rd.Hour.Unix()}] = code
+		}
+	}
+}
+
+func (r *SharedRelay) logRefusal(
+	id uuid.UUID,
+	code instanceapi.SharedEntryRefusedCode,
+	now time.Time,
+) {
+	hour := now.Truncate(time.Hour).Unix()
+	if last, ok := r.logged[id]; ok && last == hour {
+		return
+	}
+	r.logged[id] = hour
+	r.logger.Warn(
+		"the control plane refused a tenant's usage readings; those hours are not reported again",
+		"instanceId", id.String(),
+		"code", string(code),
+	)
 }
 
 func (r *SharedRelay) mapReadings(

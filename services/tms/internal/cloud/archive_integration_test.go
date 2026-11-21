@@ -31,6 +31,7 @@ import (
 	"github.com/emoss08/trenova/internal/cloud/ports/cloudtenantports"
 	"github.com/emoss08/trenova/internal/infrastructure/config/aiauditconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/databaseconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/aiauditrepository"
 	"github.com/emoss08/trenova/internal/modules/agent/app/aiauditkeyring"
@@ -168,15 +169,16 @@ func (b *memoryBucket) clone() *memoryBucket {
 }
 
 type install struct {
-	ctx     context.Context
-	admin   *keel.DB
-	conn    *postgres.Connection
-	rows    archiveports.Rows
-	store   *objectstoretest.Store
-	cipher  *encryptionservice.Service
-	engine  *archiveengine.Engine
-	buckets *memoryBucket
-	chain   *aiauditconfig.Config
+	ctx      context.Context
+	admin    *keel.DB
+	conn     *postgres.Connection
+	database *databaseconfig.Config
+	rows     archiveports.Rows
+	store    *objectstoretest.Store
+	cipher   *encryptionservice.Service
+	engine   *archiveengine.Engine
+	buckets  *memoryBucket
+	chain    *aiauditconfig.Config
 }
 
 func chainFor(key string) *aiauditconfig.Config {
@@ -215,13 +217,14 @@ func newInstallWithChain(
 	ctx = t.Context()
 	conn, dbCfg := enforcedConnection(t, admin, dsn, &statementCounter{})
 	in := &install{
-		ctx:     ctx,
-		admin:   admin,
-		conn:    conn,
-		store:   objectstoretest.New(),
-		cipher:  encryptionservice.NewWithKeyManager(encryptionservice.NewLocalKeyManager(key)),
-		buckets: newBucket(),
-		chain:   chain,
+		ctx:      ctx,
+		admin:    admin,
+		conn:     conn,
+		database: dbCfg,
+		store:    objectstoretest.New(),
+		cipher:   encryptionservice.NewWithKeyManager(encryptionservice.NewLocalKeyManager(key)),
+		buckets:  newBucket(),
+		chain:    chain,
 	}
 	in.rows = tenantcopyrepository.New(tenantcopyrepository.Params{
 		DB: conn, App: &appconfig.Config{Name: "archive-test"}, Database: dbCfg,

@@ -281,6 +281,7 @@ func (a *Agent) iterate(ctx context.Context) error {
 			a.p.Logger.Info("usage reported",
 				"readings", result.Readings,
 				"dropped", result.Dropped,
+				"withheld", result.Withheld,
 				"answered", result.Answered,
 				"refusedByControlPlane", len(result.RefusedByCP),
 				"refusedByTMS", len(result.RefusedByTMS))

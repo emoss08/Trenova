@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"maps"
+	"slices"
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/keel"
@@ -22,10 +24,13 @@ const (
 	archiveSealsTable = "audit_seals"
 	archiveHeadsTable = "audit_chain_heads"
 
-	createArchiveSeals = `CREATE TEMP TABLE IF NOT EXISTS archive_audit_seals
-    (LIKE public.audit_seals INCLUDING DEFAULTS)`
-	createArchiveHeads = `CREATE TEMP TABLE IF NOT EXISTS archive_audit_chain_heads
-    (LIKE public.audit_chain_heads INCLUDING DEFAULTS)`
+	tailSealSetting = "trenova.archive_tail_seal"
+	tailHeadSetting = "trenova.archive_tail_head"
+
+	setTailSQL = "SELECT set_config($1, $2, true)"
+
+	movedHeadSQL = `SELECT (to_jsonb(h) || $3::jsonb)::text FROM public.audit_chain_heads h
+WHERE h.organization_id = $1 AND h.business_unit_id = $2`
 
 	sealStatsSQL = `SELECT count(*)::bigint, COALESCE(min(seq), 0)::bigint FROM public.audit_seals
 WHERE organization_id = $1 AND business_unit_id = $2`
@@ -42,21 +47,6 @@ FROM public.ai_audit_events WHERE organization_id = $1 AND business_unit_id = $2
 
 	eventHashSQL = `SELECT hash FROM public.ai_audit_events
 WHERE organization_id = $1 AND business_unit_id = $2 AND seq = $3`
-
-	insertArchiveSealSQL = `INSERT INTO pg_temp.archive_audit_seals
-    (organization_id, business_unit_id, seq, from_ts, to_ts, row_count, class_digests, prev_hash,
-     hash, hash_key_id, hash_version, sealed_at)
-VALUES ($1, $2, $3, $4, $5, $6, $7::jsonb, $8, $9, NULLIF($10, ''), $11, $12)`
-
-	copyArchiveHeadSQL = `INSERT INTO pg_temp.archive_audit_chain_heads
-SELECT * FROM public.audit_chain_heads WHERE organization_id = $1 AND business_unit_id = $2`
-
-	newArchiveHeadSQL = `INSERT INTO pg_temp.archive_audit_chain_heads
-    (organization_id, business_unit_id, created_at, updated_at)
-VALUES ($1, $2, $3, $3)`
-
-	moveArchiveHeadSQL = `UPDATE pg_temp.archive_audit_chain_heads SET
-    last_seq = $1, last_hash = $2, sealed_through = $3, hash_key_id = NULLIF($4, ''), updated_at = $5`
 )
 
 type chainHead struct {
@@ -65,22 +55,19 @@ type chainHead struct {
 	sealedThrough int64
 }
 
-type snapshotTrails struct {
-	ctx    context.Context
-	tx     pgx.Tx
-	db     *keel.DB
-	keys   *trailKeys
-	tenant dbscope.Tenant
-	at     int64
-}
+var ErrTailRowShape = errors.New(
+	"the archive's last audit seal does not match its table's columns",
+)
 
-func prepareTrailTables(ctx context.Context, conn *pgx.Conn) error {
-	for _, statement := range []string{createArchiveSeals, createArchiveHeads} {
-		if _, err := conn.Exec(ctx, statement); err != nil {
-			return fmt.Errorf("prepare the archive's audit trail statement: %w", err)
-		}
-	}
-	return nil
+type snapshotTrails struct {
+	ctx        context.Context
+	tx         pgx.Tx
+	db         *keel.DB
+	keys       *trailKeys
+	tenant     dbscope.Tenant
+	at         int64
+	sealsTable *archiveplan.PlannedTable
+	headsTable *archiveplan.PlannedTable
 }
 
 type trailBounds struct {
@@ -101,8 +88,15 @@ func (s *snapshot) readTrails(ctx context.Context, at int64) error {
 	db := s.repo.db.Keel(ctx)
 	joined, done := keel.JoinTx(ctx, db, s.conn)
 	defer done(false)
+	seals, sealsCarried := s.plan.Table(archiveSealsTable)
+	heads, headsCarried := s.plan.Table(archiveHeadsTable)
+	if !sealsCarried || !headsCarried {
+		return fmt.Errorf("%w: the plan carries no %s or %s", ErrTailRowShape,
+			archiveSealsTable, archiveHeadsTable)
+	}
 	run := &snapshotTrails{
 		ctx: joined, tx: s.tx, db: db, keys: s.repo.keys, tenant: s.tenant, at: at,
+		sealsTable: seals, headsTable: heads,
 	}
 	bounds := new(trailBounds)
 	if err := run.row(entryBoundsSQL, &bounds.firstEntry, &bounds.lastEntry); err != nil {
@@ -234,29 +228,137 @@ func (t *snapshotTrails) sealTail(
 	next.ClassDigests = digest.Classes
 	next.SealedAt = t.at
 	t.keys.signSeal(next, audit.OriginHere)
-	classes, err := sonic.ConfigStd.Marshal(next.ClassDigests)
+	sealRow, err := tailRow(t.sealsTable, tailSealRow(next))
 	if err != nil {
-		return false, fmt.Errorf("encode the archive's last audit seal: %w", err)
+		return false, err
 	}
-	if _, err = t.tx.Exec(t.ctx, insertArchiveSealSQL, next.OrganizationID.String(),
-		next.BusinessUnitID.String(), next.Seq, next.FromTS, next.ToTS, next.RowCount,
-		string(classes), next.PrevHash, next.Hash, next.HashKeyID, next.HashVersion,
-		next.SealedAt); err != nil {
-		return false, fmt.Errorf("seal the archive's audit entries after its last seal: %w", err)
+	headRow, err := t.movedHead(next, head)
+	if err != nil {
+		return false, err
 	}
-	org, bu := t.tenant.OrganizationID.String(), t.tenant.BusinessUnitID.String()
-	statement, args := copyArchiveHeadSQL, []any{org, bu}
-	if head == nil {
-		statement, args = newArchiveHeadSQL, []any{org, bu, t.at}
-	}
-	if _, err = t.tx.Exec(t.ctx, statement, args...); err != nil {
-		return false, fmt.Errorf("carry the archive's audit chain head: %w", err)
-	}
-	if _, err = t.tx.Exec(t.ctx, moveArchiveHeadSQL, next.Seq, next.Hash, next.ToTS,
-		next.HashKeyID, t.at); err != nil {
-		return false, fmt.Errorf("move the archive's audit chain head to its last seal: %w", err)
+	for _, setting := range [][2]string{{tailSealSetting, sealRow}, {tailHeadSetting, headRow}} {
+		if _, err = t.tx.Exec(t.ctx, setTailSQL, setting[0], setting[1]); err != nil {
+			return false, fmt.Errorf("hold the archive's last audit seal for its copy: %w", err)
+		}
 	}
 	return true, nil
+}
+
+func tailSealRow(seal *audit.Seal) map[string]any {
+	return map[string]any{
+		"organization_id":     seal.OrganizationID.String(),
+		"business_unit_id":    seal.BusinessUnitID.String(),
+		"seq":                 seal.Seq,
+		"from_ts":             seal.FromTS,
+		"to_ts":               seal.ToTS,
+		"row_count":           seal.RowCount,
+		"class_digests":       seal.ClassDigests,
+		"prev_hash":           seal.PrevHash,
+		"hash":                seal.Hash,
+		"hash_key_id":         nullIfEmpty(seal.HashKeyID),
+		"hash_version":        seal.HashVersion,
+		"sealed_at":           seal.SealedAt,
+		"source_prev_hash":    nil,
+		"source_hash":         nil,
+		"source_hash_key_id":  nil,
+		"source_hash_version": nil,
+		"resealed_at":         nil,
+	}
+}
+
+func headMove(seal *audit.Seal, at int64) map[string]any {
+	return map[string]any{
+		"last_seq":       seal.Seq,
+		"last_hash":      seal.Hash,
+		"sealed_through": seal.ToTS,
+		"hash_key_id":    nullIfEmpty(seal.HashKeyID),
+		"updated_at":     at,
+	}
+}
+
+func newHeadRow(seal *audit.Seal, at int64) map[string]any {
+	row := map[string]any{
+		"organization_id":              seal.OrganizationID.String(),
+		"business_unit_id":             seal.BusinessUnitID.String(),
+		"last_verified_seq":            int64(0),
+		"last_verified_at":             nil,
+		"last_verification_status":     nil,
+		"last_verification_failed_seq": nil,
+		"last_verification_detail":     nil,
+		"verify_cursor_seq":            int64(0),
+		"version":                      int64(0),
+		"created_at":                   at,
+	}
+	maps.Copy(row, headMove(seal, at))
+	return row
+}
+
+func nullIfEmpty(value string) any {
+	if value == "" {
+		return nil
+	}
+	return value
+}
+
+func (t *snapshotTrails) movedHead(seal *audit.Seal, head *chainHead) (string, error) {
+	if head == nil {
+		return tailRow(t.headsTable, newHeadRow(seal, t.at))
+	}
+	move, err := sonic.ConfigStd.Marshal(headMove(seal, t.at))
+	if err != nil {
+		return "", fmt.Errorf("encode the archive's audit chain head: %w", err)
+	}
+	var moved string
+	if err = t.tx.QueryRow(t.ctx, movedHeadSQL, t.tenant.OrganizationID.String(),
+		t.tenant.BusinessUnitID.String(), string(move)).Scan(&moved); err != nil {
+		return "", fmt.Errorf("read the archive's audit chain head: %w", err)
+	}
+	var row map[string]any
+	if err = sonic.ConfigStd.UnmarshalFromString(moved, &row); err != nil {
+		return "", fmt.Errorf("read the archive's audit chain head: %w", err)
+	}
+	if err = coversColumns(t.headsTable, row); err != nil {
+		return "", err
+	}
+	return moved, nil
+}
+
+func tailRow(table *archiveplan.PlannedTable, row map[string]any) (string, error) {
+	if err := coversColumns(table, row); err != nil {
+		return "", err
+	}
+	body, err := sonic.ConfigStd.Marshal(row)
+	if err != nil {
+		return "", fmt.Errorf("encode the archive's %s row: %w", table.Name, err)
+	}
+	return string(body), nil
+}
+
+func coversColumns(table *archiveplan.PlannedTable, row map[string]any) error {
+	missing := make([]string, 0)
+	for _, column := range table.Columns {
+		if _, ok := row[column]; !ok {
+			missing = append(missing, column)
+		}
+	}
+	extra := make([]string, 0)
+	for column := range row {
+		if !slices.Contains(table.Columns, column) {
+			extra = append(extra, column)
+		}
+	}
+	if len(missing) == 0 && len(extra) == 0 {
+		return nil
+	}
+	slices.Sort(missing)
+	slices.Sort(extra)
+	return fmt.Errorf(
+		"%w: %s: the archive's own row has no value for %v and values for columns the table lacks %v",
+		ErrTailRowShape,
+		table.Name,
+		missing,
+		extra,
+	)
 }
 
 func (t *snapshotTrails) aiTrail(
@@ -288,11 +390,16 @@ func (s *snapshot) copyOutQuery(table *archiveplan.PlannedTable) string {
 	case archiveSealsTable:
 		return "COPY (SELECT " + columns + " FROM " + archiveplan.Qualified(table.Name) +
 			" a WHERE " + table.Where("a", s.tenant) + " UNION ALL SELECT " + columns +
-			" FROM pg_temp.archive_audit_seals a) TO STDOUT (FORMAT binary)"
+			" FROM " + heldRow(table.Name, tailSealSetting) + ") TO STDOUT (FORMAT binary)"
 	case archiveHeadsTable:
-		return "COPY (SELECT " + columns +
-			" FROM pg_temp.archive_audit_chain_heads a) TO STDOUT (FORMAT binary)"
+		return "COPY (SELECT " + columns + " FROM " + heldRow(table.Name, tailHeadSetting) +
+			") TO STDOUT (FORMAT binary)"
 	default:
 		return table.CopyOut(s.tenant)
 	}
+}
+
+func heldRow(table, setting string) string {
+	return "jsonb_populate_record(NULL::" + archiveplan.Qualified(table) + ", current_setting(" +
+		archiveplan.QuoteLiteral(setting) + ")::jsonb) a"
 }

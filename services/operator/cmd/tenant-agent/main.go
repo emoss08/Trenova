@@ -127,7 +127,9 @@ func run(ctx context.Context, cfg *config, logger *slog.Logger) error {
 			ControlPlane: cp,
 			Logger:       logger,
 		}),
-		Usage:       usage.NewShared(usage.SharedParams{ControlPlane: paced, TMS: tmsClient}),
+		Usage: usage.NewShared(
+			usage.SharedParams{ControlPlane: paced, TMS: tmsClient, Logger: logger},
+		),
 		EmailEvents: events,
 		SupportKeys: supportkeys.New(tmsClient, logger),
 		Version:     cfg.version,

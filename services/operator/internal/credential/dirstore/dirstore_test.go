@@ -18,6 +18,8 @@ import (
 	"github.com/emoss08/trenova/operator/internal/controlplanetest"
 	"github.com/emoss08/trenova/operator/internal/credential"
 	"github.com/emoss08/trenova/operator/internal/credential/dirstore"
+	"github.com/emoss08/trenova/operator/internal/securefile"
+	"github.com/emoss08/trenova/operator/internal/tms"
 )
 
 func enrolled(t *testing.T, lifetime time.Duration) (dirstore.Store, *credential.Manager, string) {
@@ -74,7 +76,7 @@ func TestAnIdentityOthersCanReadIsRefused(t *testing.T) {
 	require.NoError(t, os.Chmod(filepath.Join(dir, dirstore.IdentityFile), 0o644))
 
 	_, _, err := store.Load(t.Context())
-	require.ErrorIs(t, err, dirstore.ErrInsecure)
+	require.ErrorIs(t, err, securefile.ErrInsecure)
 }
 
 func TestARenewedCertificateReplacesTheStoredOne(t *testing.T) {
@@ -109,16 +111,79 @@ func current(m *credential.Manager) *credential.Identity {
 	return &ident
 }
 
-func TestABundleOthersCanReadIsRefused(t *testing.T) {
+func TestABundleOthersCanWriteIsRefused(t *testing.T) {
 	t.Parallel()
 	dir := filepath.Join(t.TempDir(), "identity")
 	enrolment := filepath.Join(t.TempDir(), "enrolment.json")
-	require.NoError(t, os.WriteFile(enrolment, []byte("{}"), 0o644))
+	require.NoError(t, os.WriteFile(enrolment, []byte("{}"), 0o600))
+	require.NoError(t, os.Chmod(enrolment, 0o666))
 	store, err := dirstore.New(dirstore.Params{Dir: dir, Enrolment: enrolment})
 	require.NoError(t, err)
 
 	_, _, err = store.Bundle(t.Context())
-	require.ErrorIs(t, err, dirstore.ErrInsecure, "the bundle holds a private key")
+	require.ErrorIs(t, err, securefile.ErrInsecure, "anyone could swap the server's identity")
+}
+
+func TestABundleThatIsALinkIsRefused(t *testing.T) {
+	t.Parallel()
+	target := filepath.Join(t.TempDir(), "enrolment.json")
+	require.NoError(t, os.WriteFile(target, []byte("{}"), 0o444))
+	link := filepath.Join(t.TempDir(), "enrolment.json")
+	require.NoError(t, os.Symlink(target, link))
+	store, err := dirstore.New(dirstore.Params{Dir: filepath.Join(t.TempDir(), "identity"), Enrolment: link})
+	require.NoError(t, err)
+
+	_, _, err = store.Bundle(t.Context())
+	require.ErrorIs(t, err, securefile.ErrInsecure)
+}
+
+func TestTheDocumentedSharedServerShapeStartsAndRestarts(t *testing.T) {
+	t.Parallel()
+	cp := controlplanetest.NewShared(t, uuid.New())
+	cp.SetLifetime(30 * 24 * time.Hour)
+	secrets := filepath.Join(t.TempDir(), "secrets")
+	require.NoError(t, os.Mkdir(secrets, 0o700))
+	enrolment := filepath.Join(secrets, "agent_enrolment")
+	body, err := sonic.Marshal(cp.Bundle(7 * 24 * time.Hour))
+	require.NoError(t, err)
+	require.NoError(t, os.WriteFile(enrolment, body, 0o444))
+	require.NoError(t, os.Chmod(enrolment, 0o444))
+	tokenFile := filepath.Join(secrets, "managed_token")
+	require.NoError(t, os.WriteFile(tokenFile, []byte("token\n"), 0o444))
+	require.NoError(t, os.Chmod(tokenFile, 0o444))
+	stateDir := filepath.Join(t.TempDir(), "trenova-tenant-agent")
+	require.NoError(t, os.Mkdir(stateDir, 0o700))
+
+	start := func() *credential.Manager {
+		store, serr := dirstore.New(dirstore.Params{
+			Dir:       filepath.Join(stateDir, "identity"),
+			Enrolment: enrolment,
+		})
+		require.NoError(t, serr)
+		transport := &credential.Transport{}
+		lazy := controlplane.NewLazy(&http.Client{Transport: transport, Timeout: 10 * time.Second})
+		creds := credential.NewManager(&credential.ManagerParams{
+			Store:     store,
+			Transport: transport,
+			Renewer:   lazy,
+			Logger:    slog.New(slog.NewTextHandler(io.Discard, nil)),
+		})
+		lazy.Locate(func() string { return creds.Current().APIURL })
+		require.NoError(t, creds.Start(t.Context()))
+		return creds
+	}
+	first := start()
+	second := start()
+	assert.Equal(t, current(first).Fingerprint(), current(second).Fingerprint(),
+		"a restart with the bundle still mounted keeps the identity it enrolled")
+
+	info, err := os.Stat(filepath.Join(stateDir, "identity", dirstore.IdentityFile))
+	require.NoError(t, err)
+	assert.Equal(t, os.FileMode(0o600), info.Mode().Perm())
+
+	token, err := tms.NewFileTokens(tokenFile).Token(t.Context())
+	require.NoError(t, err)
+	assert.Equal(t, "token", token)
 }
 
 func TestAnIdentityThatIsALinkIsRefused(t *testing.T) {
@@ -130,7 +195,7 @@ func TestAnIdentityThatIsALinkIsRefused(t *testing.T) {
 	require.NoError(t, os.Symlink(elsewhere, path))
 
 	_, _, err := store.Load(t.Context())
-	require.ErrorIs(t, err, dirstore.ErrInsecure, "a link is followed nowhere")
+	require.ErrorIs(t, err, securefile.ErrInsecure, "a link is followed nowhere")
 }
 
 func TestACredentialDirectoryThatIsALinkIsRefused(t *testing.T) {
@@ -140,7 +205,7 @@ func TestACredentialDirectoryThatIsALinkIsRefused(t *testing.T) {
 	require.NoError(t, os.Symlink(target, link))
 
 	_, err := dirstore.New(dirstore.Params{Dir: link})
-	require.ErrorIs(t, err, dirstore.ErrInsecure)
+	require.ErrorIs(t, err, securefile.ErrInsecure)
 }
 
 func TestATruncatedIdentityIsReportedInvalidSoTheBundleEnrolsAgain(t *testing.T) {

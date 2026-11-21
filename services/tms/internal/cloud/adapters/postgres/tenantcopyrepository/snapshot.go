@@ -49,11 +49,6 @@ func (r *repository) OpenSnapshot(
 }
 
 func (s *snapshot) open(ctx context.Context, req *archiveports.SnapshotRequest) error {
-	if req.Purpose.Importable() {
-		if err := prepareTrailTables(ctx, s.conn); err != nil {
-			return err
-		}
-	}
 	tx, err := s.conn.BeginTx(ctx, pgx.TxOptions{
 		IsoLevel:   pgx.RepeatableRead,
 		AccessMode: pgx.ReadOnly,
