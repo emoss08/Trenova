@@ -1,6 +1,6 @@
 //! `trenova-imaging certs`: the private CA, server certificate and client
 //! certificate a self-hosted install's TMS and one of its services (the
-//! imaging worker, PostgreSQL, Temporal) authenticate each other with.
+//! imaging worker, `PostgreSQL`, Temporal) authenticate each other with.
 //!
 //! It writes two directories, so each half can be mounted only where it is
 //! used: the server's (`ca.pem`, `server.pem`, `server-key.pem`) into the

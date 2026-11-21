@@ -257,15 +257,26 @@ jobs:
           set -euo pipefail
           # Only packages that actually carry integration-tagged files; the rest
           # already ran in the unit job and re-running them wastes minutes.
+          # internal/cloud builds a whole install per test and takes about 11
+          # minutes on a workstation, past go test's 10-minute default here: it
+          # runs beside the rest with its own timeout, and nothing else gets one.
+          slow=./internal/cloud
           mapfile -t packages < <(
             git grep -l 'go:build integration' -- '*_test.go' \
-              | xargs -n1 dirname | sort -u | sed 's|^|./|'
+              | xargs -n1 dirname | sort -u | sed 's|^|./|' | grep -vxF "$slow"
           )
-          printf 'integration packages: %d\n' "${#packages[@]}"
+          printf 'integration packages: %d and %s\n' "${#packages[@]}" "$slow"
           # Cap package parallelism: every process creates databases on the one
           # shared server, and the runner only has two cores anyway.
-          go test -p 4 -tags=integration,nomsgpack -coverprofile=coverage-integration.out \
-            -covermode=atomic "${packages[@]}"
+          go test -p 1 -timeout 25m -tags=integration,nomsgpack \
+            -coverprofile=coverage-integration-slow.out -covermode=atomic "$slow" &
+          slow_pid=$!
+          status=0
+          go test -p 3 -tags=integration,nomsgpack -coverprofile=coverage-integration.out \
+            -covermode=atomic "${packages[@]}" || status=$?
+          wait "$slow_pid" || status=$?
+          tail -n +2 coverage-integration-slow.out >> coverage-integration.out
+          exit "$status"
 
       - name: Plan guard
         working-directory: ./services/tms

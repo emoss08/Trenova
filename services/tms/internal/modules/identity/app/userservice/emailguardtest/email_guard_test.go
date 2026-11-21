@@ -72,6 +72,7 @@ func newFixture(t *testing.T, byUser func(actor, target pulid.ID) held) *fixture
 		BuID:   target.BusinessUnitID,
 		UserID: pulid.MustNew("usr_"),
 	}
+	identitytest.ExpectSystemActor(repo)
 	repo.On("GetByID", mock.Anything, mock.Anything).Return(target, nil)
 	repo.On("ListOrganizationMemberships", mock.Anything, mock.Anything, mock.Anything).
 		Return([]*tenant.OrganizationMembership{}, nil).Maybe()

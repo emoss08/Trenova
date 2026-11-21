@@ -24,6 +24,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/session"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/identitytest"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/iamports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/sessionports"
@@ -73,6 +74,7 @@ func setupUserHandler(t *testing.T, opts setupOptions) *userhandler.Handler {
 	if opts.userRepo == nil {
 		opts.userRepo = tenantportsmock.NewMockUserRepository(t)
 	}
+	identitytest.ExpectSystemActor(opts.userRepo)
 	if opts.roleRepo == nil {
 		opts.roleRepo = permissionportsmock.NewMockRoleRepository(t)
 	}
@@ -353,6 +355,26 @@ func TestUserHandler_Get_NotFound(t *testing.T) {
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
 	assert.Equal(t, http.StatusInternalServerError, ginCtx.ResponseCode())
+}
+
+func TestUserHandler_Get_AnswersForTheSystemActorAsForAnUnknownUser(t *testing.T) {
+	t.Parallel()
+
+	repo := tenantportsmock.NewMockUserRepository(t)
+	systemActor := identitytest.ExpectSystemActor(repo)
+
+	handler := setupUserHandler(t, setupOptions{userRepo: repo})
+
+	ginCtx := testutil.NewGinTestContext().
+		WithMethod(http.MethodGet).
+		WithPath("/api/v1/users/" + systemActor.String() + "/").
+		WithDefaultAuthContext()
+
+	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
+
+	assert.Equal(t, http.StatusNotFound, ginCtx.ResponseCode())
+	repo.AssertNotCalled(t, "GetByID", mock.Anything, mock.Anything)
 }
 
 func TestUserHandler_Me_Success(t *testing.T) {

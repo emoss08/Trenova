@@ -321,8 +321,9 @@ tasks:
       - |
         set -euo pipefail
         packages=$(git grep -l 'go:build integration' -- '*_test.go' \
-          | xargs -n1 dirname | sort -u | sed 's|^|./|')
+          | xargs -n1 dirname | sort -u | sed 's|^|./|' | grep -vxF ./internal/cloud)
         go test -p {{.GO_TEST_JOBS}} -tags={{.GO_TAGS_INTEGRATION}} $packages
+        go test -timeout 25m -tags={{.GO_TAGS_INTEGRATION}} ./internal/cloud
 
   db-plans:
     desc: "Plan guard: record every statement the integration suite sends, then explain each against a database with volume data (shipments=20000)"
@@ -341,8 +342,9 @@ tasks:
       - |
         set -euo pipefail
         packages=$(git grep -l 'go:build integration' -- '*_test.go' \
-          | xargs -n1 dirname | sort -u | sed 's|^|./|')
+          | xargs -n1 dirname | sort -u | sed 's|^|./|' | grep -vxF ./internal/cloud)
         go test -p {{.GO_TEST_JOBS}} -tags={{.GO_TAGS_INTEGRATION}} $packages
+        go test -timeout 25m -tags={{.GO_TAGS_INTEGRATION}} ./internal/cloud
       # The database settings reach trenova-db only, not the suite above.
       - >-
         TRENOVA_DATABASE_HOST=localhost TRENOVA_DATABASE_PORT={{.TEST_DB_PORT}}

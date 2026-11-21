@@ -69,6 +69,7 @@ func newHarness(t *testing.T, granted ...string) *harness {
 	t.Helper()
 
 	repo := tenantportsmock.NewMockUserRepository(t)
+	identitytest.ExpectSystemActor(repo)
 	audit := auditportsmock.NewMockAuditService(t)
 	roles := &recordingRoles{}
 	invites := &recordingInvites{}

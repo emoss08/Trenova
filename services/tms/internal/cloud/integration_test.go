@@ -11,10 +11,10 @@ import (
 	"fmt"
 	"maps"
 	"net/url"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
-	"sync/atomic"
 	"testing"
 	"time"
 
@@ -84,13 +84,31 @@ import (
 	"go.uber.org/zap/zaptest"
 )
 
+type measuredStatements struct{}
+
 type statementCounter struct {
-	n atomic.Int64
+	mu         sync.Mutex
+	statements []string
 }
 
-func (c *statementCounter) BeforeQuery(ctx context.Context, _ *keel.QueryEvent) context.Context {
-	c.n.Add(1)
+func (c *statementCounter) BeforeQuery(ctx context.Context, e *keel.QueryEvent) context.Context {
+	if ctx.Value(measuredStatements{}) == nil {
+		return ctx
+	}
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.statements = append(c.statements, e.Op+" "+e.Table)
 	return ctx
+}
+
+func (c *statementCounter) measure(ctx context.Context, run func(context.Context)) []string {
+	c.mu.Lock()
+	c.statements = nil
+	c.mu.Unlock()
+	run(context.WithValue(ctx, measuredStatements{}, true))
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	return slices.Clone(c.statements)
 }
 
 func (c *statementCounter) AfterQuery(context.Context, *keel.QueryEvent) {}
@@ -319,6 +337,8 @@ func newRigOn(t *testing.T, seeded bool) *rig {
 	}
 	ctx, admin, dsn, cleanup := setup(t)
 	t.Cleanup(cleanup)
+	ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), 5*time.Minute)
+	t.Cleanup(cancel)
 
 	r := &rig{
 		ctx:       ctx,
@@ -744,6 +764,7 @@ func TestRemovalDeletesEveryRowAndObjectOfTheTenantAndNothingOfAnother(t *testin
 
 	var suite testsuite.WorkflowTestSuite
 	env := suite.NewTestWorkflowEnvironment()
+	env.SetTestTimeout(2 * time.Minute)
 	env.SetWorkerOptions(worker.Options{Interceptors: []interceptor.WorkerInterceptor{
 		interceptors.NewTenantScopeInterceptor(),
 		interceptors.NewEntitlementInterceptor(refuseEveryPlan{}, nil, zap.NewNop()),
@@ -819,7 +840,7 @@ func TestRemovalDeletesEveryRowAndObjectOfTheTenantAndNothingOfAnother(t *testin
 
 func TestReadingsForEveryTenantAreABoundedNumberOfStatements(t *testing.T) {
 	r := newRig(t)
-	statementsFor := func(tenants int) int64 {
+	statementsFor := func(tenants int) []string {
 		ids := make([]pulid.ID, 0, tenants)
 		for i := range tenants {
 			id := fmt.Sprintf("%08x-8c1f-4a39-9a43-5b0d7c4e2f10", i+1)
@@ -829,17 +850,25 @@ func TestReadingsForEveryTenantAreABoundedNumberOfStatements(t *testing.T) {
 			ids = append(ids, r.tenant(t, id).OrganizationID)
 		}
 		hour := time.Now().Unix() - time.Now().Unix()%3600
-		before := r.counter.n.Load()
-		readings, err := r.usage.ReadingsForOrganizations(r.ctx, ids, hour-3600)
-		require.NoError(t, err)
-		require.Len(t, readings, tenants)
-		return r.counter.n.Load() - before
+		return r.counter.measure(r.ctx, func(ctx context.Context) {
+			readings, err := r.usage.ReadingsForOrganizations(ctx, ids, hour-3600)
+			require.NoError(t, err)
+			require.Len(t, readings, tenants)
+		})
 	}
 
+	expected := []string{
+		"select ai_usage_records",
+		"select shipments",
+		"select document_storage_totals",
+		"select organizations",
+		"select organizations",
+	}
 	two := statementsFor(2)
 	six := statementsFor(6)
-	assert.Equal(t, two, six, "the readings cost the same however many tenants they cover")
-	assert.LessOrEqual(t, six, int64(12))
+	assert.Equal(t, expected, two, "the readings for two tenants ran %v", two)
+	assert.Equal(t, expected, six,
+		"the readings cost the same however many tenants they cover; six tenants ran %v", six)
 }
 
 type refuseEveryPlan struct{}
