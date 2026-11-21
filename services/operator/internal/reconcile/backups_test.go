@@ -180,6 +180,7 @@ func newBackupWorldWith(
 		EmailEvents:    &fakeEmailEvents{},
 		Logs:           kept,
 		Telemetry:      &fakeTelemetry{},
+		Imports:        mustImporter(t, kube, logger),
 		Operator: &fakeOperator{status: selfupgrade.Status{
 			Version: "0.11.0", Phase: selfupgrade.PhaseCurrent,
 		}},
@@ -318,7 +319,7 @@ func listResult(list ...instanceapi.BackupEntry) backup.Result {
 func dailyBackup(phase instanceapi.BackupEntryPhase, started time.Time) instanceapi.BackupEntry {
 	e := instanceapi.BackupEntry{
 		Id: "20261114T030000", Phase: phase, StartedAt: started.UTC().Truncate(time.Second),
-		Origin: new(instanceapi.Scheduled),
+		Origin: new(instanceapi.BackupEntryOriginScheduled),
 	}
 	if phase == instanceapi.BackupEntryPhaseCompleted {
 		done := e.StartedAt.Add(4 * time.Minute)

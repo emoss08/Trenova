@@ -108,6 +108,15 @@ else they can reach.
   sign-in settings) must hold for it too, and a new sensitive resource must be classified in
   `supportaccess/policy.go` ([managed-mode.md](../managed-mode.md#support-access)).
 
+## A shared server's support entry names one tenant
+
+On a shared server the support keys are the server's, so a signature proves only that the control
+plane minted the assertion, not for which company. The audience (the tenant's instance) and `org`
+must name the same active tenant before any grant is looked up, and the grant must be that
+organization's (`supportaccessservice.admitTenant`). A new way to open a session for staff, or a
+new reader of the key set, keeps both checks; never compare `aud` with a server-wide value on a
+shared server. `TestSharedSupport_AGrantOfOneCompanyNeverOpensAnother` holds it.
+
 ## Stepping outside the tenant
 
 `dbscope.WithSystem` turns row-level security off for that context, so the query is all that stands

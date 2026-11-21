@@ -32,8 +32,13 @@ const (
 	overdueBatch     = 50
 )
 
-var errNotAvailable = errortypes.NewNotFoundError(
-	"Sending logs to Trenova support is available only on a Managed Trenova instance",
+var (
+	errNotAvailable = errortypes.NewNotFoundError(
+		"Sending logs to Trenova support is available only on a Managed Trenova instance",
+	)
+	errSharedServer = errortypes.NewBusinessError(
+		"Logs can't be sent to Trenova support from this server: it runs many companies, and its logs hold every company's activity",
+	)
 )
 
 type Params struct {
@@ -56,6 +61,7 @@ type Service struct {
 	notifier  supportlogports.Notifier
 	realtime  realtimeports.RealtimeService
 	enabled   bool
+	shared    bool
 	clock     timeutils.Clock
 	l         *zap.Logger
 }
@@ -69,6 +75,7 @@ func New(p Params) *Service {
 		notifier:  p.Notifier,
 		realtime:  p.Realtime,
 		enabled:   p.Managed.Enabled,
+		shared:    p.Managed.SharedTenancy(),
 		clock:     p.Clock,
 		l:         p.Logger.Named("service.support-logs"),
 	}
@@ -76,6 +83,7 @@ func New(p Params) *Service {
 
 type Overview struct {
 	Managed   bool
+	Available bool
 	InFlight  bool
 	Remaining int
 	Requests  []*supportlog.LogRequest
@@ -84,6 +92,9 @@ type Overview struct {
 func (s *Service) Overview(ctx context.Context) (*Overview, error) {
 	if !s.enabled {
 		return &Overview{Requests: []*supportlog.LogRequest{}}, nil
+	}
+	if s.shared {
+		return &Overview{Managed: true, Requests: []*supportlog.LogRequest{}}, nil
 	}
 
 	now := s.clock()
@@ -97,6 +108,7 @@ func (s *Service) Overview(ctx context.Context) (*Overview, error) {
 	}
 	return &Overview{
 		Managed:   true,
+		Available: true,
 		InFlight:  load.InFlight,
 		Remaining: load.Remaining(),
 		Requests:  requests,
@@ -114,6 +126,9 @@ func (s *Service) Request(
 ) (*supportlog.LogRequest, error) {
 	if !s.enabled {
 		return nil, errNotAvailable
+	}
+	if s.shared {
+		return nil, errSharedServer
 	}
 	if req.TenantInfo.UserID.IsNil() || supportaccess.IsPrincipalID(req.TenantInfo.UserID) {
 		return nil, errortypes.NewAuthorizationError(

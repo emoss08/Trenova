@@ -270,7 +270,14 @@ func (r *grantRepository) ListLive(
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*supportaccessports.LiveGrant, error) {
 		db := r.db.Keel(ctx)
 		g := supportaccessdb.Grants
-		grants, err := g.Where(live(req.Now), g.ExpiryRecordedAt.IsNull()).
+		where := []keel.Pred{live(req.Now), g.ExpiryRecordedAt.IsNull()}
+		if req.OrganizationIDs != nil {
+			if len(req.OrganizationIDs) == 0 {
+				return []*supportaccessports.LiveGrant{}, nil
+			}
+			where = append(where, g.OrganizationID.In(req.OrganizationIDs...))
+		}
+		grants, err := g.Where(where...).
 			AllTenants().
 			Order(g.ExpiresAt.Asc(), g.ID.Asc()).
 			Limit(req.Limit).

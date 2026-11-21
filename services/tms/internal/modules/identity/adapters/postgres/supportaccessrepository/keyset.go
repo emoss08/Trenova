@@ -18,6 +18,7 @@ import (
 const (
 	keySetReadReason  = "read the support assertion keys the control plane set for this instance"
 	keySetWriteReason = "record the support assertion keys the control plane set for this instance"
+	keySetClearReason = "remove the support assertion keys when the control plane turns support access off"
 	ledgerReason      = "record a support assertion as used before any tenant is known"
 	ledgerPruneBatch  = 100
 )
@@ -57,6 +58,18 @@ func (r *keySetRepository) Save(ctx context.Context, keys *supportaccess.KeySet)
 			keel.OnConflict(k.ID).Update(k.InstanceID, k.StaffDomain, k.Keys, k.ReceivedAt),
 		); err != nil {
 			return fmt.Errorf("record the support assertion keys: %w", err)
+		}
+		return nil
+	})
+}
+
+func (r *keySetRepository) Delete(ctx context.Context) error {
+	ctx = dbscope.WithSystem(ctx, keySetClearReason)
+	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
+		k := supportaccessdb.KeySets
+		if _, err := k.Where(k.ID.Eq(supportaccess.CurrentKeySetID)).
+			Delete(ctx, r.db.Keel(ctx)); err != nil {
+			return fmt.Errorf("remove the support assertion keys: %w", err)
 		}
 		return nil
 	})

@@ -67,6 +67,22 @@ func (c *Client) ReportSharedStatus(
 	)
 }
 
+func (c *Client) SharedStorage(ctx context.Context) (instanceapi.SharedStorage, error) {
+	res, err := c.api.GetSharedStorageWithResponse(ctx)
+	if err != nil {
+		return instanceapi.SharedStorage{}, fmt.Errorf("get the archive storage: %w", err)
+	}
+	if res.StatusCode() == http.StatusOK && res.JSON200 != nil {
+		return *res.JSON200, nil
+	}
+	return instanceapi.SharedStorage{}, failure(
+		res.HTTPResponse,
+		res.ApplicationproblemJSON401,
+		res.ApplicationproblemJSON403,
+		res.ApplicationproblemJSON429,
+	)
+}
+
 func (c *Client) ReportSharedUsage(
 	ctx context.Context,
 	report instanceapi.SharedUsageReport,

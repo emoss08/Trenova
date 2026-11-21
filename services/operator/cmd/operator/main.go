@@ -35,6 +35,7 @@ import (
 	"github.com/emoss08/trenova/operator/internal/emailevents"
 	"github.com/emoss08/trenova/operator/internal/escrow/escrowsecret"
 	"github.com/emoss08/trenova/operator/internal/health"
+	"github.com/emoss08/trenova/operator/internal/importer"
 	"github.com/emoss08/trenova/operator/internal/logs"
 	"github.com/emoss08/trenova/operator/internal/reconcile"
 	"github.com/emoss08/trenova/operator/internal/redact"
@@ -304,6 +305,15 @@ func newLoop(
 	if err != nil {
 		return nil, err
 	}
+	imports, err := importer.New(&importer.Params{
+		Kube:      c.kube,
+		Namespace: cfg.targetNamespace,
+		Release:   cfg.release,
+		Logger:    logger,
+	})
+	if err != nil {
+		return nil, err
+	}
 	return reconcile.New(&reconcile.Params{
 		ControlPlane: cp,
 		Credentials:  creds,
@@ -363,6 +373,7 @@ func newLoop(
 		Logs:        kept,
 		Telemetry:   telem,
 		Operator:    upgrader,
+		Imports:     imports,
 		Capacity:    cfg.capacity,
 		Base:        base,
 		Namespace:   cfg.namespace,

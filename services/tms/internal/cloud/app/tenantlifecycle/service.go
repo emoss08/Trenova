@@ -46,6 +46,7 @@ type Params struct {
 	Auditor        permissionports.SecurityAuditor
 	Workflows      kernelports.WorkflowStarter
 	Commands       cloudtenantports.Commands
+	Grants         cloudtenantports.LiveSupportGrants
 	Secrets        kernelports.SecretCipher
 	Scopes         *managedscope.Resolver
 	Clock          timeutils.Clock
@@ -67,6 +68,7 @@ type Service struct {
 	auditor        permissionports.SecurityAuditor
 	workflows      kernelports.WorkflowStarter
 	commands       cloudtenantports.Commands
+	grants         cloudtenantports.LiveSupportGrants
 	secrets        kernelports.SecretCipher
 	scopes         *managedscope.Resolver
 	clock          timeutils.Clock
@@ -90,6 +92,7 @@ func New(p Params) *Service {
 		auditor:        p.Auditor,
 		workflows:      p.Workflows,
 		commands:       p.Commands,
+		grants:         p.Grants,
 		secrets:        p.Secrets,
 		scopes:         p.Scopes,
 		clock:          p.Clock,

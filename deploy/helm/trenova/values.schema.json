@@ -2011,6 +2011,23 @@
       "type": "boolean",
       "description": "Stops every workload but PostgreSQL."
     },
+    "import": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Move to Managed: the release Job imports a tenant archive from the backups bucket in place of the bootstrap. The archive keys are never a value: keysSecret names the Secret the operator makes.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})?$"
+        },
+        "bucket": { "type": "string" },
+        "prefix": { "type": "string", "pattern": "^(imports/[0-9a-f-]{36}/)?$" },
+        "expectSha256": { "type": "string", "pattern": "^([0-9a-f]{64})?$" },
+        "keysSecret": { "type": "string" },
+        "settled": { "type": "boolean" },
+        "activeDeadlineSeconds": { "type": "integer", "minimum": 600 }
+      }
+    },
     "managed": {
       "type": "object",
       "additionalProperties": false,

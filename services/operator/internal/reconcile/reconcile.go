@@ -27,6 +27,7 @@ import (
 	"github.com/emoss08/trenova/operator/internal/instanceapi"
 	"github.com/emoss08/trenova/operator/internal/release"
 	"github.com/emoss08/trenova/operator/internal/selfupgrade"
+	"github.com/emoss08/trenova/operator/internal/supportkeys"
 	"github.com/emoss08/trenova/operator/internal/tms"
 	"github.com/emoss08/trenova/operator/internal/usage"
 	"github.com/emoss08/trenova/operator/internal/values"
@@ -45,10 +46,6 @@ const (
 	featureTimeout  = 30 * time.Second
 	emailTimeout    = 30 * time.Second
 	supportTimeout  = 30 * time.Second
-	maxGrants       = 100
-	maxGrantID      = 100
-	maxOrgName      = 200
-	maxStaffEmail   = 254
 	commandsTimeout = 2 * time.Minute
 
 	logRequestsTimeout = 30 * time.Second
@@ -56,7 +53,6 @@ const (
 )
 
 var (
-	organizationID       = regexp.MustCompile(`^org_[0-9A-HJKMNP-TV-Z]{26}$`)
 	systemEmailHeldShape = regexp.MustCompile(`^[0-9a-f]{64}$`)
 )
 
@@ -142,6 +138,19 @@ type Backups interface {
 	Run(ctx context.Context, in *backup.Input) backup.Result
 }
 
+type Imports interface {
+	Prepare(
+		ctx context.Context,
+		spec *instanceapi.InstanceSpec,
+		storage *values.Storage,
+	) (values.Import, error)
+	Observe(
+		ctx context.Context,
+		spec *instanceapi.InstanceSpec,
+		revision int,
+	) (*instanceapi.ImportStatus, error)
+}
+
 type Operator interface {
 	Converge(ctx context.Context, want string) selfupgrade.Status
 }
@@ -178,6 +187,9 @@ type Loop struct {
 	logs     LogRequests
 	telem    Telemetry
 	operator Operator
+	imports  Imports
+	imported bool
+	helmRev  int
 	located  values.Storage
 	connects databases.Connected
 	capacity values.Capacity
@@ -225,6 +237,7 @@ type Params struct {
 	Logs           LogRequests
 	Telemetry      Telemetry
 	Operator       Operator
+	Imports        Imports
 	Capacity       values.Capacity
 	Base           map[string]any
 	Namespace      string
@@ -268,6 +281,7 @@ func New(p *Params) (*Loop, error) {
 		logs:     p.Logs,
 		telem:    p.Telemetry,
 		operator: p.Operator,
+		imports:  p.Imports,
 		capacity: p.Capacity,
 		base:     p.Base,
 		ownNS:    p.Namespace,
@@ -304,6 +318,7 @@ func (p *Params) validate() error {
 		{"Logs", p.Logs == nil},
 		{"Telemetry", p.Telemetry == nil},
 		{"Operator", p.Operator == nil},
+		{"Imports", p.Imports == nil},
 		{"Base", p.Base == nil},
 		{"Namespace", p.Namespace == ""},
 		{"Logger", p.Logger == nil},
@@ -411,6 +426,7 @@ func (l *Loop) Tick(ctx context.Context) {
 	}
 	ready = report.Ready
 	l.heartbeat.Store(l.now().UnixNano())
+	report.Import = l.importStatus(ctx)
 	report.Administrator = l.administrator(ctx, report.Ready)
 	l.backupReport(ctx, &report)
 	l.databaseReport(ctx, &report)
@@ -492,9 +508,21 @@ func (l *Loop) waitCommands(reason string) {
 	l.logger.Info("the control plane's commands wait", "reason", reason)
 }
 
+func (l *Loop) importStatus(ctx context.Context) *instanceapi.ImportStatus {
+	if l.desired.Spec.Import == nil {
+		return nil
+	}
+	status, err := l.imports.Observe(ctx, &l.desired.Spec, l.helmRev)
+	if err != nil {
+		l.logger.Warn("cannot read where the import stands; the report leaves it out", "error", err)
+		return nil
+	}
+	return status
+}
+
 func (l *Loop) administrator(ctx context.Context, ready bool) *instanceapi.AdministratorStatus {
 	invite := l.desired.Spec.FirstAdministrator.Invite
-	if invite == nil || !ready ||
+	if invite == nil || !ready || l.imported || l.desired.Spec.Import != nil ||
 		l.desired.Spec.Lifecycle != instanceapi.Active {
 		l.invite = inviteAsked{}
 		return nil
@@ -666,50 +694,15 @@ func (l *Loop) supportGrants(ctx context.Context, ready bool) *[]instanceapi.Sup
 		)
 		return nil
 	}
-	out := make([]instanceapi.SupportGrant, 0, min(len(held), maxGrants))
-	seen := make(map[string]bool, len(held))
-	for i := range held {
-		if len(out) == maxGrants {
-			break
-		}
-		grant, ok := reportedGrant(&held[i])
-		if !ok || seen[grant.Id] {
-			l.logger.Warn(
-				"the TMS listed a support grant the contract cannot carry; it is left out",
-				"grant",
-				held[i].ID,
-			)
-			continue
-		}
-		seen[grant.Id] = true
-		out = append(out, grant)
+	out, dropped := supportkeys.Grants(held)
+	for _, id := range dropped {
+		l.logger.Warn(
+			"the TMS listed a support grant the contract cannot carry; it is left out",
+			"grant",
+			id,
+		)
 	}
 	return &out
-}
-
-func reportedGrant(g *tms.SupportGrant) (instanceapi.SupportGrant, bool) {
-	grant := instanceapi.SupportGrant{
-		Id:               g.ID,
-		OrganizationId:   g.OrganizationID,
-		OrganizationName: clip(strings.TrimSpace(g.OrganizationName), maxOrgName),
-		StaffEmail:       strings.ToLower(g.StaffEmail),
-		Scope:            instanceapi.SupportGrantScope(g.Scope),
-		ExpiresAt:        g.ExpiresAt.UTC(),
-	}
-	ok := grant.Id != "" && len(grant.Id) <= maxGrantID &&
-		organizationID.MatchString(grant.OrganizationId) &&
-		grant.OrganizationName != "" &&
-		len(grant.StaffEmail) <= maxStaffEmail &&
-		grant.Scope.Valid() && !grant.ExpiresAt.IsZero()
-	return grant, ok
-}
-
-func clip(s string, n int) string {
-	runes := []rune(s)
-	if len(runes) <= n {
-		return s
-	}
-	return string(runes[:n])
 }
 
 func (l *Loop) relayUsage(ctx context.Context, ready bool) {
@@ -783,6 +776,23 @@ func (l *Loop) converge(ctx context.Context) (instanceapi.StatusReport, bool) {
 	if err != nil {
 		return l.notReady(&report, err.Error()), true
 	}
+	imp, err := l.imports.Prepare(ctx, &l.desired.Spec, &located)
+	if err == nil {
+		err = values.ApplyImport(rendered.Values, &located, &imp)
+	}
+	if errors.Is(err, values.ErrInvalidSpec) {
+		return l.refuse(ctx, &report, instanceapi.RefusedRevisionCodeInvalid, err.Error()), true
+	}
+	if err != nil {
+		if l.handle(ctx, err) {
+			return report, false
+		}
+		return l.notReady(
+			&report,
+			"nothing is applied without the import's state: "+err.Error(),
+		), true
+	}
+	l.imported = imp.ImportedBefore
 	if err = l.escrow.Ensure(ctx); err != nil {
 		if l.handle(ctx, err) {
 			return report, false
@@ -945,6 +955,7 @@ func (l *Loop) observe(
 	if deployed.Exists {
 		v := deployed.AppVersion
 		report.Version = &v
+		l.helmRev = deployed.Revision
 	}
 	params := healthParams(deployed.Revision, vals)
 	l.telem.Observe(params)
@@ -1198,11 +1209,19 @@ func (l *Loop) shouldReport(r *instanceapi.StatusReport) bool {
 		str(r.Message) != str(l.last.Message) ||
 		!sameAdministrator(r.Administrator, l.last.Administrator) ||
 		!sameFeatures(r.Features, l.last.Features) ||
-		!sameGrants(r.SupportGrants, l.last.SupportGrants) ||
+		!supportkeys.SameGrants(r.SupportGrants, l.last.SupportGrants) ||
 		str(r.SystemEmailFingerprint) != str(l.last.SystemEmailFingerprint) ||
 		backupSummary(r) != backupSummary(&l.last) ||
 		refusedSummary(r.Refused) != refusedSummary(l.last.Refused) ||
+		importSummary(r.Import) != importSummary(l.last.Import) ||
 		operatorSummary(r.Operator) != operatorSummary(l.last.Operator)
+}
+
+func importSummary(i *instanceapi.ImportStatus) string {
+	if i == nil {
+		return ""
+	}
+	return i.Id.String() + "|" + string(i.State) + "|" + str(i.Reason)
 }
 
 func refusedSummary(r *instanceapi.RefusedRevision) string {
@@ -1236,23 +1255,6 @@ func operatorSummary(o *instanceapi.OperatorStatus) string {
 		out += "|" + u.Version + "/" + string(u.Phase)
 	}
 	return out
-}
-
-func sameGrants(held, last *[]instanceapi.SupportGrant) bool {
-	if held == nil {
-		return true
-	}
-	if last == nil || len(*held) != len(*last) {
-		return false
-	}
-	for i := range *held {
-		a, b := (*held)[i], (*last)[i]
-		if a.Id != b.Id || a.Scope != b.Scope || !a.ExpiresAt.Equal(b.ExpiresAt) ||
-			a.OrganizationName != b.OrganizationName || a.StaffEmail != b.StaffEmail {
-			return false
-		}
-	}
-	return true
 }
 
 func sameFeatures(held, last *[]string) bool {

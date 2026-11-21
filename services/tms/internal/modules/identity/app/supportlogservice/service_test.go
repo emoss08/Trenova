@@ -151,6 +151,10 @@ type rig struct {
 }
 
 func newRig(managed bool) *rig {
+	return newTenancyRig(&managedconfig.Config{Enabled: managed})
+}
+
+func newTenancyRig(cfg *managedconfig.Config) *rig {
 	r := &rig{
 		repo:     &memoryRepo{rows: map[pulid.ID]*supportlog.LogRequest{}},
 		audit:    &securityaudittest.Recorder{},
@@ -164,7 +168,7 @@ func newRig(managed bool) *rig {
 		Auditor:   r.audit,
 		Notifier:  r.notices,
 		Realtime:  r.realtime,
-		Managed:   &managedconfig.Config{Enabled: managed},
+		Managed:   cfg,
 		Clock:     func() int64 { return r.now },
 		Logger:    zap.NewNop(),
 	})
@@ -252,6 +256,28 @@ func TestRequest_RefusedOnASelfHostedInstance(t *testing.T) {
 	require.NoError(t, err)
 	assert.False(t, overview.Managed)
 	assert.Empty(t, overview.Requests)
+}
+
+func TestRequest_RefusedOnASharedServerBeforeAnythingIsQueued(t *testing.T) {
+	t.Parallel()
+
+	r := newTenancyRig(&managedconfig.Config{Enabled: true, Tenancy: managedconfig.TenancyShared})
+	_, err := r.svc.Request(t.Context(), &RequestLogsRequest{TenantInfo: admin(), Period: supportlog.PeriodHour})
+	require.Error(t, err)
+	var business *errortypes.BusinessError
+	require.ErrorAs(t, err, &business)
+	assert.Contains(t, business.Error(), "every company")
+	assert.Empty(t, r.repo.rows, "nothing is queued for the operator")
+	assert.Empty(t, r.actions())
+
+	overview, err := r.svc.Overview(t.Context())
+	require.NoError(t, err)
+	assert.True(t, overview.Managed)
+	assert.False(t, overview.Available, "the page does not offer it")
+
+	dedicated, err := newRig(true).svc.Overview(t.Context())
+	require.NoError(t, err)
+	assert.True(t, dedicated.Available)
 }
 
 func TestRequest_RefusedForASupportPrincipal(t *testing.T) {

@@ -293,7 +293,7 @@ func TestSupportKeySet_IsOneInstanceWideRow(t *testing.T) {
 		}},
 		ReceivedAt: f.now,
 	}
-	require.NoError(t, set.Normalize())
+	require.NoError(t, set.Normalize(false))
 	require.NoError(t, keys.Save(t.Context(), set))
 	set.StaffDomain = "staff.trenova.app"
 	require.NoError(t, keys.Save(t.Context(), set))
@@ -302,6 +302,54 @@ func TestSupportKeySet_IsOneInstanceWideRow(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, "staff.trenova.app", held.StaffDomain)
 	assert.Equal(t, "cp-1", held.Keys[0].KeyID)
+}
+
+func TestSupportKeySet_ASharedServerHoldsKeysWithoutAnInstanceAndCanDropThem(t *testing.T) {
+	f := newFixture(t)
+	keys := NewKeySetRepository(
+		Params{Entitlements: entitlementtest.Instance(), DB: f.conn, Logger: zap.NewNop()},
+	)
+	set := &supportaccess.KeySet{
+		StaffDomain: "trenova.app",
+		Keys: []supportaccess.SigningKey{{
+			KeyID: "cp-1", KeyType: "OKP", Curve: "Ed25519", Algorithm: "EdDSA", Use: "sig",
+			X: "11qYAYKxCrfVS_7TyWQHOg7hcvPapiMlrwIaaPcHURo",
+		}},
+		ReceivedAt: f.now,
+	}
+	require.NoError(t, set.Normalize(true))
+	require.NoError(t, keys.Save(t.Context(), set))
+	held, err := keys.Get(t.Context())
+	require.NoError(t, err)
+	assert.Empty(t, held.InstanceID)
+
+	require.NoError(t, keys.Delete(t.Context()))
+	require.NoError(t, keys.Delete(t.Context()), "removing keys that are gone changes nothing")
+	_, err = keys.Get(t.Context())
+	require.ErrorIs(t, err, supportaccess.ErrNoKeySet)
+}
+
+func TestSupportGrants_ThePageOfTenantsListsOnlyItsOrganizationsGrants(t *testing.T) {
+	f := newFixture(t)
+	repo := f.grants()
+	inA, err := f.create(t, f.a, "jane.doe@trenova.app")
+	require.NoError(t, err)
+	_, err = f.create(t, f.b, "sam.lee@trenova.app")
+	require.NoError(t, err)
+
+	live, err := repo.ListLive(t.Context(), &supportaccessports.ListLiveRequest{
+		Now: f.now, Limit: 10, OrganizationIDs: []pulid.ID{f.a.Organization.ID},
+	})
+	require.NoError(t, err)
+	require.Len(t, live, 1)
+	assert.Equal(t, inA.ID, live[0].Grant.ID)
+	assert.NotEmpty(t, live[0].OrganizationName)
+
+	none, err := repo.ListLive(t.Context(), &supportaccessports.ListLiveRequest{
+		Now: f.now, Limit: 10, OrganizationIDs: []pulid.ID{},
+	})
+	require.NoError(t, err)
+	assert.Empty(t, none)
 }
 
 func TestSupportGrants_TheInstanceWideListHoldsOnlyLiveGrantsOfEveryOrganization(t *testing.T) {

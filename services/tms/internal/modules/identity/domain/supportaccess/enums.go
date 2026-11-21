@@ -17,6 +17,13 @@ func (s Scope) String() string {
 	return string(s)
 }
 
+func (s Scope) ControlPlane() string {
+	if s == ScopeFull {
+		return "full"
+	}
+	return "read_only"
+}
+
 type Status string
 
 const (

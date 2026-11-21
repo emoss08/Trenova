@@ -21,19 +21,19 @@ import (
 
 // Defines values for BackupEntryOrigin.
 const (
-	Final     BackupEntryOrigin = "final"
-	Requested BackupEntryOrigin = "requested"
-	Scheduled BackupEntryOrigin = "scheduled"
+	BackupEntryOriginFinal     BackupEntryOrigin = "final"
+	BackupEntryOriginRequested BackupEntryOrigin = "requested"
+	BackupEntryOriginScheduled BackupEntryOrigin = "scheduled"
 )
 
 // Valid indicates whether the value is a known member of the BackupEntryOrigin enum.
 func (e BackupEntryOrigin) Valid() bool {
 	switch e {
-	case Final:
+	case BackupEntryOriginFinal:
 		return true
-	case Requested:
+	case BackupEntryOriginRequested:
 		return true
-	case Scheduled:
+	case BackupEntryOriginScheduled:
 		return true
 	default:
 		return false
@@ -190,6 +190,27 @@ func (e EmailEventProvider) Valid() bool {
 	}
 }
 
+// Defines values for ImportStatusState.
+const (
+	ImportDone      ImportStatusState = "done"
+	ImportImporting ImportStatusState = "importing"
+	ImportRefused   ImportStatusState = "refused"
+)
+
+// Valid indicates whether the value is a known member of the ImportStatusState enum.
+func (e ImportStatusState) Valid() bool {
+	switch e {
+	case ImportDone:
+		return true
+	case ImportImporting:
+		return true
+	case ImportRefused:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for InstanceSpecAiProvider.
 const (
 	Customer InstanceSpecAiProvider = "customer"
@@ -249,13 +270,13 @@ func (e InstanceSpecLifecycle) Valid() bool {
 
 // Defines values for InstanceSpecSchemaVersion.
 const (
-	N1 InstanceSpecSchemaVersion = 1
+	InstanceSpecSchemaVersionN1 InstanceSpecSchemaVersion = 1
 )
 
 // Valid indicates whether the value is a known member of the InstanceSpecSchemaVersion enum.
 func (e InstanceSpecSchemaVersion) Valid() bool {
 	switch e {
-	case N1:
+	case InstanceSpecSchemaVersionN1:
 		return true
 	default:
 		return false
@@ -441,13 +462,58 @@ func (e SharedArchiveCommandKind) Valid() bool {
 
 // Defines values for SharedArchiveCommandPurpose.
 const (
-	SharedArchiveFinal SharedArchiveCommandPurpose = "final"
+	SharedArchiveExport SharedArchiveCommandPurpose = "export"
+	SharedArchiveFinal  SharedArchiveCommandPurpose = "final"
+	SharedArchiveMove   SharedArchiveCommandPurpose = "move"
 )
 
 // Valid indicates whether the value is a known member of the SharedArchiveCommandPurpose enum.
 func (e SharedArchiveCommandPurpose) Valid() bool {
 	switch e {
+	case SharedArchiveExport:
+		return true
 	case SharedArchiveFinal:
+		return true
+	case SharedArchiveMove:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for SharedArchiveTargetAccess.
+const (
+	TargetRead  SharedArchiveTargetAccess = "read"
+	TargetWrite SharedArchiveTargetAccess = "write"
+)
+
+// Valid indicates whether the value is a known member of the SharedArchiveTargetAccess enum.
+func (e SharedArchiveTargetAccess) Valid() bool {
+	switch e {
+	case TargetRead:
+		return true
+	case TargetWrite:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for SharedArchiveTargetKind.
+const (
+	TargetArchive SharedArchiveTargetKind = "archive"
+	TargetImport  SharedArchiveTargetKind = "import"
+	TargetRestore SharedArchiveTargetKind = "restore"
+)
+
+// Valid indicates whether the value is a known member of the SharedArchiveTargetKind enum.
+func (e SharedArchiveTargetKind) Valid() bool {
+	switch e {
+	case TargetArchive:
+		return true
+	case TargetImport:
+		return true
+	case TargetRestore:
 		return true
 	default:
 		return false
@@ -472,6 +538,24 @@ func (e SharedArchiveWaitingReason) Valid() bool {
 	}
 }
 
+// Defines values for SharedCommandFailureKind.
+const (
+	SharedFailedArchive SharedCommandFailureKind = "archive"
+	SharedFailedImport  SharedCommandFailureKind = "import"
+)
+
+// Valid indicates whether the value is a known member of the SharedCommandFailureKind enum.
+func (e SharedCommandFailureKind) Valid() bool {
+	switch e {
+	case SharedFailedArchive:
+		return true
+	case SharedFailedImport:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for SharedEntryRefusedCode.
 const (
 	SharedEntryNotPlaced SharedEntryRefusedCode = "not_placed"
@@ -481,6 +565,54 @@ const (
 func (e SharedEntryRefusedCode) Valid() bool {
 	switch e {
 	case SharedEntryNotPlaced:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for SharedImportCommandKind.
+const (
+	SharedCommandImport SharedImportCommandKind = "import"
+)
+
+// Valid indicates whether the value is a known member of the SharedImportCommandKind enum.
+func (e SharedImportCommandKind) Valid() bool {
+	switch e {
+	case SharedCommandImport:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for SharedRestoreCommandKind.
+const (
+	SharedCommandRestore SharedRestoreCommandKind = "restore"
+)
+
+// Valid indicates whether the value is a known member of the SharedRestoreCommandKind enum.
+func (e SharedRestoreCommandKind) Valid() bool {
+	switch e {
+	case SharedCommandRestore:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for SharedRestoreReportState.
+const (
+	RestoreDone   SharedRestoreReportState = "done"
+	RestoreFailed SharedRestoreReportState = "failed"
+)
+
+// Valid indicates whether the value is a known member of the SharedRestoreReportState enum.
+func (e SharedRestoreReportState) Valid() bool {
+	switch e {
+	case RestoreDone:
+		return true
+	case RestoreFailed:
 		return true
 	default:
 		return false
@@ -624,16 +756,16 @@ func (e SpecPlacementRuntime) Valid() bool {
 
 // Defines values for SpecPlanBackup.
 const (
-	Nightly     SpecPlanBackup = "nightly"
-	PointInTime SpecPlanBackup = "point_in_time"
+	SpecPlanBackupNightly     SpecPlanBackup = "nightly"
+	SpecPlanBackupPointInTime SpecPlanBackup = "point_in_time"
 )
 
 // Valid indicates whether the value is a known member of the SpecPlanBackup enum.
 func (e SpecPlanBackup) Valid() bool {
 	switch e {
-	case Nightly:
+	case SpecPlanBackupNightly:
 		return true
-	case PointInTime:
+	case SpecPlanBackupPointInTime:
 		return true
 	default:
 		return false
@@ -730,6 +862,90 @@ func (e SystemEmailCredentialProvider) Valid() bool {
 	}
 }
 
+// Defines values for TenantArchiveEncryptionAlgorithm.
+const (
+	Aes256gcmStreamV1 TenantArchiveEncryptionAlgorithm = "aes256gcm_stream_v1"
+)
+
+// Valid indicates whether the value is a known member of the TenantArchiveEncryptionAlgorithm enum.
+func (e TenantArchiveEncryptionAlgorithm) Valid() bool {
+	switch e {
+	case Aes256gcmStreamV1:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for TenantArchiveEncryptionSegmentBytes.
+const (
+	N1048576e06 TenantArchiveEncryptionSegmentBytes = 1.048576e+06
+)
+
+// Valid indicates whether the value is a known member of the TenantArchiveEncryptionSegmentBytes enum.
+func (e TenantArchiveEncryptionSegmentBytes) Valid() bool {
+	switch e {
+	case N1048576e06:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for TenantArchiveManifestFormatVersion.
+const (
+	TenantArchiveManifestFormatVersionN1 TenantArchiveManifestFormatVersion = 1
+)
+
+// Valid indicates whether the value is a known member of the TenantArchiveManifestFormatVersion enum.
+func (e TenantArchiveManifestFormatVersion) Valid() bool {
+	switch e {
+	case TenantArchiveManifestFormatVersionN1:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for TenantArchiveManifestPurpose.
+const (
+	TenantArchiveManifestPurposeExport  TenantArchiveManifestPurpose = "export"
+	TenantArchiveManifestPurposeFinal   TenantArchiveManifestPurpose = "final"
+	TenantArchiveManifestPurposeMove    TenantArchiveManifestPurpose = "move"
+	TenantArchiveManifestPurposeNightly TenantArchiveManifestPurpose = "nightly"
+)
+
+// Valid indicates whether the value is a known member of the TenantArchiveManifestPurpose enum.
+func (e TenantArchiveManifestPurpose) Valid() bool {
+	switch e {
+	case TenantArchiveManifestPurposeExport:
+		return true
+	case TenantArchiveManifestPurposeFinal:
+		return true
+	case TenantArchiveManifestPurposeMove:
+		return true
+	case TenantArchiveManifestPurposeNightly:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for TenantArchiveTableEncoding.
+const (
+	PgCopyBinaryZstd TenantArchiveTableEncoding = "pg_copy_binary_zstd"
+)
+
+// Valid indicates whether the value is a known member of the TenantArchiveTableEncoding enum.
+func (e TenantArchiveTableEncoding) Valid() bool {
+	switch e {
+	case PgCopyBinaryZstd:
+		return true
+	default:
+		return false
+	}
+}
+
 // AdministratorStatus Where the first administrator's handoff stands on the instance, reported once the spec has
 // an `invite` and the instance answered for it.
 type AdministratorStatus struct {
@@ -738,6 +954,19 @@ type AdministratorStatus struct {
 
 	// SetUp Whether the first administrator has chosen a password or signed in.
 	SetUp bool `json:"setUp"`
+}
+
+// ArchiveKey One of a region's archive keys: a random 256-bit AES key that wraps each archive's own data
+// key (AES-256-GCM, `encryption.wrappedDataKey`). Never wraps tenant data itself.
+type ArchiveKey struct {
+	// Current Whether new archives are wrapped with it; exactly one is.
+	Current bool `json:"current"`
+
+	// Id The key's id, which a manifest's `encryption.keyId` names.
+	Id string `json:"id"`
+
+	// Key The 32-byte key, standard base64 with padding.
+	Key string `json:"key"`
 }
 
 // BackupEntry One base backup of the instance's database.
@@ -1006,6 +1235,29 @@ type FinalBackup struct {
 	SizeBytes *int64 `json:"sizeBytes,omitempty"`
 }
 
+// ImportStatus Where the spec's `import` stands, reported with every status report from the moment the
+// operator starts it until the spec no longer carries it.
+type ImportStatus struct {
+	// At When it reached this state.
+	At time.Time `json:"at"`
+
+	// Id The spec's `import.id`.
+	Id openapi_types.UUID `json:"id"`
+
+	// Reason One line a staff member can read; present only when `refused`.
+	Reason *string `json:"reason,omitempty"`
+
+	// State `importing` while it runs; `done` once the database holds the archive; `refused` when the
+	// archive did not match or the TMS refused it, with `reason`. Nothing is retried after a
+	// refusal: the control plane tears the instance down and the company stays where it was.
+	State ImportStatusState `json:"state"`
+}
+
+// ImportStatusState `importing` while it runs; `done` once the database holds the archive; `refused` when the
+// archive did not match or the TMS refused it, with `reason`. Nothing is retried after a
+// refusal: the control plane tears the instance down and the company stays where it was.
+type ImportStatusState string
+
 // InstanceSecrets defines model for InstanceSecrets.
 type InstanceSecrets struct {
 	// EncryptionKey The TMS's `security.encryption.key`.
@@ -1084,7 +1336,40 @@ type InstanceSpec struct {
 	FirstAdministrator SpecFirstAdministrator `json:"firstAdministrator"`
 
 	// Hostname Where the instance is served, at the root path.
-	Hostname   string             `json:"hostname"`
+	Hostname string `json:"hostname"`
+
+	// Import Make this instance's data from a tenant archive instead of bootstrapping it: a company that
+	// ran on a shared server is moving to a Trenova of its own (docs/decisions/0050-shared-
+	// trenova.md, "Moving to Managed"). Present only in the spec served to the company's new
+	// machine before its move switches, at a revision of its own; until the archive is copied and
+	// checked, `getSpec` answers `503` and the operator installs nothing. The switch's revision,
+	// above it, leaves `import` out: the operator then converges as for any instance and the
+	// company's people sign in at `hostname`. The archive was copied by the control plane into
+	// the instance's own backups bucket under `prefix`, in the tenant archive format
+	// (`TenantArchiveManifest`), and the release in `release` is the one the shared server ran
+	// when it took the archive (its manifest's `releaseVersion`), so the schema matches. Until
+	// the switch the control plane records this machine's status reports on the move alone
+	// (`import`, `appliedRevision`, `ready`, `version`): its usage reports are answered and not
+	// recorded, as the company's server still meters it.
+	//
+	// The operator, before the TMS's first start: reads `manifest.json` under `prefix` with the
+	// instance's own storage key (`getStorage`), checks its SHA-256 against `expectSha256` and
+	// every part against the manifest, and runs the TMS's import of the archive into the empty
+	// database in place of the first-install bootstrap: the organization, its business unit,
+	// users (the first administrator among them, who signs in with their password as before:
+	// no invitation is sent, and `firstAdministrator.invite` is absent) and documents come from
+	// the archive. It then reports `import` with `state: done` and `id`, and converges the rest
+	// of the spec as usual. The spec served with `import` is `lifecycle: suspended`, the hold a
+	// lapsed subscription uses: the operator runs the database and the import, reports them, and
+	// starts nothing that serves a person, so the new address answers nothing anyone can use
+	// until the switch's revision (`active`, without `import`) arrives. The control plane
+	// switches once the machine has applied the import's revision with `import.state: done`;
+	// it does not wait for `ready`. An
+	// archive that does not match, or an import the TMS refuses, is reported `state: refused`
+	// with a reason, and the operator leaves the database empty and never bootstraps it.
+	// Importing again after a restart is idempotent by `id`: an import already done is not run
+	// again.
+	Import     *SpecImport        `json:"import,omitempty"`
 	InstanceId openapi_types.UUID `json:"instanceId"`
 
 	// Kind `dedicated`: the instance has a machine of its own. Always `dedicated` here: a shared
@@ -1430,15 +1715,22 @@ type RestoreProgress struct {
 type RestoreProgressPhase string
 
 // SharedArchiveCommand Take an archive of the tenant alone: every table that carries it, in one consistent
-// snapshot, and its documents, in the tenant archive format. Write it where `getSharedStorage`
-// says for this `id`, then report it as the tenant's `lastArchive`. A `final` archive is taken
-// after the tenant is suspended for its removal: nothing changes it after.
+// (`REPEATABLE READ`) snapshot, and its documents, in the tenant archive format. Write it
+// where `getSharedStorage` says for this `id`, `manifest.json` last, then report it as the
+// tenant's `lastArchive`. An archive the server cannot take (a part it cannot write, a
+// snapshot that fails) is reported once in the tenant's `commandFailures` with why, and not
+// retried: the command stops being listed and Trenova asks again if it still needs one.
+// Trenova raises an alert for an archive not reported within 6 hours of `requestedAt`.
 type SharedArchiveCommand struct {
 	// Id The archive's ID; report it as `lastArchive.commandId`.
 	Id   openapi_types.UUID       `json:"id"`
 	Kind SharedArchiveCommandKind `json:"kind"`
 
-	// Purpose `final`: the archive the tenant's removal waits for.
+	// Purpose `final`: the archive the tenant's removal waits for; the tenant is already `suspended`,
+	// so nothing changes it after. `export`: the customer asked for an export of their data;
+	// the tenant is `active` and keeps working while it is taken (the snapshot makes it
+	// consistent). `move`: the tenant is moving to another server; it is already
+	// `suspended`, so the archive holds everything it will ever have here.
 	Purpose     SharedArchiveCommandPurpose `json:"purpose"`
 	RequestedAt time.Time                   `json:"requestedAt"`
 }
@@ -1446,7 +1738,11 @@ type SharedArchiveCommand struct {
 // SharedArchiveCommandKind defines model for SharedArchiveCommand.Kind.
 type SharedArchiveCommandKind string
 
-// SharedArchiveCommandPurpose `final`: the archive the tenant's removal waits for.
+// SharedArchiveCommandPurpose `final`: the archive the tenant's removal waits for; the tenant is already `suspended`,
+// so nothing changes it after. `export`: the customer asked for an export of their data;
+// the tenant is `active` and keeps working while it is taken (the snapshot makes it
+// consistent). `move`: the tenant is moving to another server; it is already
+// `suspended`, so the archive holds everything it will ever have here.
 type SharedArchiveCommandPurpose string
 
 // SharedArchiveReport The newest archive of the tenant the server took for an `archive` command, by its ID:
@@ -1468,10 +1764,20 @@ type SharedArchiveReport struct {
 	TakenAt time.Time `json:"takenAt"`
 }
 
-// SharedArchiveTarget Where one archive is kept, and the credential to write and read it with: the region's archive
+// SharedArchiveTarget Where one archive is kept, and the credential to reach it with: the region's archive
 // bucket's own key, scoped at the provider to that bucket.
 type SharedArchiveTarget struct {
-	AccessKeyId string             `json:"accessKeyId"`
+	// Access `write` for an `archive` command's new archive; `read` for the archive a `restore` or `import` reads.
+	Access      SharedArchiveTargetAccess `json:"access"`
+	AccessKeyId string                    `json:"accessKeyId"`
+
+	// ArchiveKeys The region's archive keys, absent for an `export` archive (written unencrypted). To
+	// write an archive, wrap its data key with the one key marked `current` and record that
+	// key's `id` in the manifest's `encryption.keyId`; to read one (a restore, an import, or
+	// pruning that needs to read), unwrap its data key with the key whose `id` its manifest
+	// names. Hold them only in memory, never log or store them; fetch again for a key id you
+	// do not hold.
+	ArchiveKeys *[]ArchiveKey      `json:"archiveKeys,omitempty"`
 	Bucket      string             `json:"bucket"`
 	CommandId   openapi_types.UUID `json:"commandId"`
 
@@ -1483,7 +1789,11 @@ type SharedArchiveTarget struct {
 	ExpiresAt  *time.Time         `json:"expiresAt,omitempty"`
 	InstanceId openapi_types.UUID `json:"instanceId"`
 
-	// Prefix `tenants/<instanceId>/archives/<commandId>/`: write every object of the archive under it.
+	// Kind The command's kind.
+	Kind SharedArchiveTargetKind `json:"kind"`
+
+	// Prefix The archive's prefix: `tenants/<instanceId>/archives/<commandId>/` to write an archive;
+	// the prefix of the command's `location` to read one.
 	Prefix string `json:"prefix"`
 
 	// Region The region requests are signed for.
@@ -1494,6 +1804,12 @@ type SharedArchiveTarget struct {
 	// request. Absent for the bucket's own key.
 	SessionToken *string `json:"sessionToken,omitempty"`
 }
+
+// SharedArchiveTargetAccess `write` for an `archive` command's new archive; `read` for the archive a `restore` or `import` reads.
+type SharedArchiveTargetAccess string
+
+// SharedArchiveTargetKind The command's kind.
+type SharedArchiveTargetKind string
 
 // SharedArchiveWaiting defines model for SharedArchiveWaiting.
 type SharedArchiveWaiting struct {
@@ -1509,6 +1825,18 @@ type SharedArchiveWaiting struct {
 // `unavailable`: the credential could not be given just now.
 type SharedArchiveWaitingReason string
 
+// SharedCommandFailure defines model for SharedCommandFailure.
+type SharedCommandFailure struct {
+	CommandId openapi_types.UUID       `json:"commandId"`
+	Kind      SharedCommandFailureKind `json:"kind"`
+
+	// Reason One line a staff member can read.
+	Reason string `json:"reason"`
+}
+
+// SharedCommandFailureKind defines model for SharedCommandFailure.Kind.
+type SharedCommandFailureKind string
+
 // SharedEntryRefused defines model for SharedEntryRefused.
 type SharedEntryRefused struct {
 	// Code `not_placed`: the instance is not a tenant placed on this server, or it was already
@@ -1521,11 +1849,92 @@ type SharedEntryRefused struct {
 // reported `removed`. Stop reporting it.
 type SharedEntryRefusedCode string
 
+// SharedImportCommand Make the tenant from an archive instead of from `firstAdministrator`: the tenant is moving
+// here from another shared server. Listed only on the tenant's first entry on this server,
+// with the tenant `suspended`, and only until the server reports the tenant held `suspended`
+// at the entry's `revision` (or reports the import in `commandFailures`). The server checks
+// the archive as a restore does (`expectSha256`, the tenant's `instanceId`, the schema, every
+// part), refuses it if any of the archive's ids already exists on the server, imports it in
+// one transaction (organization, business unit, users with their passwords and second
+// factors, every row and document: no invitation is issued), records the tenant at the
+// entry's `revision`, and reports it `suspended` with `appliedRevision` set. A refused import
+// leaves nothing of the tenant on the server and is reported once in `commandFailures`.
+type SharedImportCommand struct {
+	// ExpectSha256 The lowercase hex SHA-256 of the archive's `manifest.json`.
+	ExpectSha256 string `json:"expectSha256"`
+
+	// Id The import's ID; report a failure of it as `commandFailures[].commandId`.
+	Id   openapi_types.UUID      `json:"id"`
+	Kind SharedImportCommandKind `json:"kind"`
+
+	// Location The archive to import, `s3://<bucket>/tenants/<instanceId>/archives/<archiveId>/`.
+	Location    string    `json:"location"`
+	RequestedAt time.Time `json:"requestedAt"`
+}
+
+// SharedImportCommandKind defines model for SharedImportCommand.Kind.
+type SharedImportCommandKind string
+
 // SharedReportAck defines model for SharedReportAck.
 type SharedReportAck struct {
 	// Refused The report's entries that were not recorded, each once; empty when all were.
 	Refused []SharedEntryRefused `json:"refused"`
 }
+
+// SharedRestoreCommand Put the tenant back as an archive of it holds it. Listed only while the tenant is
+// `suspended` (its entry's `lifecycle`), and the tenant stays `suspended` through the restore
+// and after it: the control plane resumes it with a later revision once `lastRestore` says
+// `done`. The server: signs the tenant's people out and holds it suspended (as the entry
+// says); reads `manifest.json` from `location` with the `getSharedStorage` credential and
+// checks its SHA-256 against `expectSha256`, its `instanceId` against the tenant's, its
+// `schemaVersion` against the server's migration head and every part against the manifest;
+// only then, under one tenant-level lock, deletes every row and document of the tenant and
+// imports the archive's; and reports `lastRestore`. A check that fails before anything is
+// deleted is reported `failed` with the tenant untouched; a failure after the delete began
+// is reported `failed` and leaves the tenant suspended and incomplete, to be restored again
+// from the same or another archive.
+type SharedRestoreCommand struct {
+	// ExpectSha256 The lowercase hex SHA-256 of the archive's `manifest.json`; refuse an archive whose differs.
+	ExpectSha256 string `json:"expectSha256"`
+
+	// Id The restore's ID; report it as `lastRestore.commandId`.
+	Id   openapi_types.UUID       `json:"id"`
+	Kind SharedRestoreCommandKind `json:"kind"`
+
+	// Location The archive, `s3://<bucket>/<prefix>`: always an archive of this tenant, under
+	// `tenants/<instanceId>/archives/` or `tenants/<instanceId>/nightly/`.
+	Location    string    `json:"location"`
+	RequestedAt time.Time `json:"requestedAt"`
+
+	// TakenAt When the archive's snapshot was taken, as its manifest says.
+	TakenAt time.Time `json:"takenAt"`
+}
+
+// SharedRestoreCommandKind defines model for SharedRestoreCommand.Kind.
+type SharedRestoreCommandKind string
+
+// SharedRestoreReport The newest `restore` command the server finished for the tenant, done or failed. Report it
+// with every report until the command stops being listed; reporting it again changes nothing.
+type SharedRestoreReport struct {
+	// At When it finished.
+	At time.Time `json:"at"`
+
+	// CommandId The `restore` command's `id`.
+	CommandId openapi_types.UUID `json:"commandId"`
+
+	// Reason Present when `failed`: one line a staff member can read, starting with whether the
+	// tenant's data was untouched ("Nothing was changed: ...") or partly deleted ("The tenant
+	// is incomplete: ...").
+	Reason *string `json:"reason,omitempty"`
+
+	// State `done`: the tenant holds the archive's data, and stays `suspended` until the control
+	// plane resumes it. `failed`: see `reason`; the tenant stays `suspended`.
+	State SharedRestoreReportState `json:"state"`
+}
+
+// SharedRestoreReportState `done`: the tenant holds the archive's data, and stays `suspended` until the control
+// plane resumes it. `failed`: see `reason`; the tenant stays `suspended`.
+type SharedRestoreReportState string
 
 // SharedStatusReport defines model for SharedStatusReport.
 type SharedStatusReport struct {
@@ -1550,6 +1959,33 @@ type SharedStorage struct {
 
 	// Waiting The archive commands no credential could be given for now, with why; ask again in a minute.
 	Waiting []SharedArchiveWaiting `json:"waiting"`
+}
+
+// SharedSupport Trenova support access for every tenant on the server: the keys that sign the assertions
+// Trenova staff enter a tenant with, and the one email domain a grant may name. The same keys
+// and rotation as a dedicated instance's `SpecSupport`, served once for the whole server.
+// Absent when the control plane has no staff domain configured: support access is off, and
+// the server then refuses every assertion.
+//
+// A grant is made in the TMS by an administrator of one tenant, for that tenant's
+// organization alone, and is reported in that tenant's `supportGrants`. The assertion is the
+// one `SpecSupport` describes, with `aud` the **tenant's** `instanceId` and `org` the
+// tenant's organization on the server. The TMS accepts it only when every one of these holds:
+// the signature verifies under a key listed here with the header's `kid`; `iss` is
+// `trenova-control-plane`; `iat` and `exp` are no more than 60 seconds apart and `exp` has not
+// passed; `jti` was never used before on the server; `aud` is the `instanceId` of a tenant the
+// server holds `active`, **and that tenant's organization is `org`** (the pair names one
+// tenant: an assertion for one tenant never opens another on the same server, whatever `org`
+// it names); and a live grant of exactly that organization names `sub`. The session it opens
+// is in that organization alone. The staff member's browser posts it to
+// `https://<the server's hostname>/api/v1/support/enter`.
+type SharedSupport struct {
+	// Keys The keys whose assertions are accepted, newest first; the newest signs.
+	Keys []SupportKey `json:"keys"`
+
+	// StaffDomain The lower-case email domain of Trenova staff, the only one a grant may name: exactly this
+	// domain, never a subdomain of it.
+	StaffDomain string `json:"staffDomain"`
 }
 
 // SharedTenant One tenant as it should be: one organization (and its one business unit) of the server's
@@ -1581,8 +2017,12 @@ type SharedTenant struct {
 	Allowances []SpecAllowance `json:"allowances"`
 
 	// Commands What the server is asked to do for the tenant besides converging to this entry, oldest
-	// first: listed until the server reports it done (an `archive` as the tenant's
-	// `lastArchive`). Carry each out once, by `id`. Empty when there is none.
+	// first, once the tenant holds this entry's `lifecycle`. Each is listed until the server
+	// reports it done or failed: an `archive` as the tenant's `lastArchive` or in its
+	// `commandFailures`, a `restore` as its `lastRestore`, an `import` by the tenant held
+	// `suspended` at this `revision` or in its `commandFailures`. Carry each out once, by `id`:
+	// a command listed again after a restart of the server is not run twice. Empty when there
+	// is none.
 	Commands []SharedTenantCommand `json:"commands"`
 
 	// Features The TMS catalog features the tenant's organization has; every other is off for it.
@@ -1601,8 +2041,11 @@ type SharedTenant struct {
 	// keep every byte of the tenant's data, sign its people out, refuse its sign-ins with the
 	// suspended page that points at the console, refuse its API calls and run none of its
 	// background work; it is suspended while its subscription lapses, while Trenova staff hold
-	// it, or while its server takes its final archive. `removed`: its final archive is taken;
-	// delete the tenant's data and documents, then report it `removed`.
+	// it, while it is restored or moved, or while its server takes its final archive.
+	// `removed`: the tenant is not this server's any more (its final archive is taken, it moved
+	// to another server, or a move to this server failed): delete the tenant's data and
+	// documents from this server, then report it `removed`. Archives in the bucket are
+	// Trenova's to delete: never delete them for a removal.
 	Lifecycle SharedTenantLifecycle `json:"lifecycle"`
 
 	// OrganizationName The tenant's organization as it was named when it was ordered; the first install names it so.
@@ -1623,11 +2066,14 @@ type SharedTenantAiProvider string
 // keep every byte of the tenant's data, sign its people out, refuse its sign-ins with the
 // suspended page that points at the console, refuse its API calls and run none of its
 // background work; it is suspended while its subscription lapses, while Trenova staff hold
-// it, or while its server takes its final archive. `removed`: its final archive is taken;
-// delete the tenant's data and documents, then report it `removed`.
+// it, while it is restored or moved, or while its server takes its final archive.
+// `removed`: the tenant is not this server's any more (its final archive is taken, it moved
+// to another server, or a move to this server failed): delete the tenant's data and
+// documents from this server, then report it `removed`. Archives in the bucket are
+// Trenova's to delete: never delete them for a removal.
 type SharedTenantLifecycle string
 
-// SharedTenantCommand One command, told apart by `kind`. `archive` is the only kind now; a server that reads a
+// SharedTenantCommand One command, told apart by `kind`: `archive`, `restore` or `import`. A server that reads a
 // kind it does not know leaves it be and reports nothing of it.
 type SharedTenantCommand struct {
 	union json.RawMessage
@@ -1635,6 +2081,26 @@ type SharedTenantCommand struct {
 
 // SharedTenantList Every tenant placed on the server and not yet reported `removed`, ordered by `instanceId`.
 type SharedTenantList struct {
+	// Support Trenova support access for every tenant on the server: the keys that sign the assertions
+	// Trenova staff enter a tenant with, and the one email domain a grant may name. The same keys
+	// and rotation as a dedicated instance's `SpecSupport`, served once for the whole server.
+	// Absent when the control plane has no staff domain configured: support access is off, and
+	// the server then refuses every assertion.
+	//
+	// A grant is made in the TMS by an administrator of one tenant, for that tenant's
+	// organization alone, and is reported in that tenant's `supportGrants`. The assertion is the
+	// one `SpecSupport` describes, with `aud` the **tenant's** `instanceId` and `org` the
+	// tenant's organization on the server. The TMS accepts it only when every one of these holds:
+	// the signature verifies under a key listed here with the header's `kid`; `iss` is
+	// `trenova-control-plane`; `iat` and `exp` are no more than 60 seconds apart and `exp` has not
+	// passed; `jti` was never used before on the server; `aud` is the `instanceId` of a tenant the
+	// server holds `active`, **and that tenant's organization is `org`** (the pair names one
+	// tenant: an assertion for one tenant never opens another on the same server, whatever `org`
+	// it names); and a live grant of exactly that organization names `sub`. The session it opens
+	// is in that organization alone. The staff member's browser posts it to
+	// `https://<the server's hostname>/api/v1/support/enter`.
+	Support *SharedSupport `json:"support,omitempty"`
+
 	// SystemEmail The sender Trenova supplies for the instance's system email (invitations, password resets,
 	// notifications). Absent when Trenova supplies none: the operator then removes any the
 	// instance holds. The credential itself is never in the spec; the operator fetches it from
@@ -1681,12 +2147,21 @@ type SharedTenantStatus struct {
 
 	// AppliedRevision The newest revision the tenant holds everything of; absent before its first. The tenant
 	// is running once it is `active` on its desired revision.
-	AppliedRevision *int64             `json:"appliedRevision,omitempty"`
-	InstanceId      openapi_types.UUID `json:"instanceId"`
+	AppliedRevision *int64 `json:"appliedRevision,omitempty"`
+
+	// CommandFailures The `archive` and `import` commands listed for the tenant that the server could not carry
+	// out, each with why. Report each while the command is still listed; once recorded the
+	// command stops being listed, and reporting it again changes nothing.
+	CommandFailures *[]SharedCommandFailure `json:"commandFailures,omitempty"`
+	InstanceId      openapi_types.UUID      `json:"instanceId"`
 
 	// LastArchive The newest archive of the tenant the server took for an `archive` command, by its ID:
 	// reported once it is written whole. Reporting the same archive again changes nothing.
 	LastArchive *SharedArchiveReport `json:"lastArchive,omitempty"`
+
+	// LastRestore The newest `restore` command the server finished for the tenant, done or failed. Report it
+	// with every report until the command stops being listed; reporting it again changes nothing.
+	LastRestore *SharedRestoreReport `json:"lastRestore,omitempty"`
 
 	// Refused The newest revision of the tenant the server has read and will not apply as it is written,
 	// and why. The tenant stays as it was. Sent with every report while it stands.
@@ -1697,6 +2172,14 @@ type SharedTenantStatus struct {
 	// deleted after a `removed` revision, reported with that revision or a later one as
 	// `appliedRevision`.
 	State SharedTenantStatusState `json:"state"`
+
+	// SupportGrants Every live Trenova support access grant of this tenant's organization, as the TMS lists
+	// them now, in the shape a dedicated instance's status report lists its grants: the
+	// complete list, at most 100, every one naming the tenant's own organization. The control
+	// plane replaces what it holds for the tenant with exactly this list; an empty list says
+	// none is live; left out, the last list reported stands. A list naming more than one
+	// organization is refused with the report.
+	SupportGrants *[]SupportGrant `json:"supportGrants,omitempty"`
 }
 
 // SharedTenantStatusState `applying` while the server converges the tenant to a revision; `active` or `suspended`
@@ -1871,6 +2354,58 @@ type SpecFirstAdministrator struct {
 	OrganizationName string                   `json:"organizationName"`
 }
 
+// SpecImport Make this instance's data from a tenant archive instead of bootstrapping it: a company that
+// ran on a shared server is moving to a Trenova of its own (docs/decisions/0050-shared-
+// trenova.md, "Moving to Managed"). Present only in the spec served to the company's new
+// machine before its move switches, at a revision of its own; until the archive is copied and
+// checked, `getSpec` answers `503` and the operator installs nothing. The switch's revision,
+// above it, leaves `import` out: the operator then converges as for any instance and the
+// company's people sign in at `hostname`. The archive was copied by the control plane into
+// the instance's own backups bucket under `prefix`, in the tenant archive format
+// (`TenantArchiveManifest`), and the release in `release` is the one the shared server ran
+// when it took the archive (its manifest's `releaseVersion`), so the schema matches. Until
+// the switch the control plane records this machine's status reports on the move alone
+// (`import`, `appliedRevision`, `ready`, `version`): its usage reports are answered and not
+// recorded, as the company's server still meters it.
+//
+// The operator, before the TMS's first start: reads `manifest.json` under `prefix` with the
+// instance's own storage key (`getStorage`), checks its SHA-256 against `expectSha256` and
+// every part against the manifest, and runs the TMS's import of the archive into the empty
+// database in place of the first-install bootstrap: the organization, its business unit,
+// users (the first administrator among them, who signs in with their password as before:
+// no invitation is sent, and `firstAdministrator.invite` is absent) and documents come from
+// the archive. It then reports `import` with `state: done` and `id`, and converges the rest
+// of the spec as usual. The spec served with `import` is `lifecycle: suspended`, the hold a
+// lapsed subscription uses: the operator runs the database and the import, reports them, and
+// starts nothing that serves a person, so the new address answers nothing anyone can use
+// until the switch's revision (`active`, without `import`) arrives. The control plane
+// switches once the machine has applied the import's revision with `import.state: done`;
+// it does not wait for `ready`. An
+// archive that does not match, or an import the TMS refuses, is reported `state: refused`
+// with a reason, and the operator leaves the database empty and never bootstraps it.
+// Importing again after a restart is idempotent by `id`: an import already done is not run
+// again.
+type SpecImport struct {
+	// ArchiveKeys The archive keys of the region the archive was taken in, to unwrap its data key with (the
+	// one its manifest's `encryption.keyId` names). Served only: added by the control plane
+	// each time it serves the spec, opened from the keyring's seal, never stored in the spec's
+	// revision and never in the `ETag`'s digest input in the clear. Hold them only in memory
+	// while importing.
+	ArchiveKeys []ArchiveKey `json:"archiveKeys"`
+
+	// Bucket The instance's own backups bucket, as `getStorage` names it.
+	Bucket string `json:"bucket"`
+
+	// ExpectSha256 The lowercase hex SHA-256 of `manifest.json`'s exact bytes.
+	ExpectSha256 string `json:"expectSha256"`
+
+	// Id The import, which the status report's `import.id` names.
+	Id openapi_types.UUID `json:"id"`
+
+	// Prefix `imports/<id>/`: where in the bucket the archive's `manifest.json` and parts are.
+	Prefix string `json:"prefix"`
+}
+
 // SpecPlacement defines model for SpecPlacement.
 type SpecPlacement struct {
 	Country string `json:"country"`
@@ -2013,6 +2548,10 @@ type StatusReport struct {
 	// revision as `appliedRevision`. It is kept for the control plane's final backup retention
 	// (`account.finalBackupDays`) after the instance is torn down.
 	FinalBackup *FinalBackup `json:"finalBackup,omitempty"`
+
+	// Import Where the spec's `import` stands, reported with every status report from the moment the
+	// operator starts it until the spec no longer carries it.
+	Import *ImportStatus `json:"import,omitempty"`
 
 	// Message A short explanation when not ready.
 	Message *string `json:"message,omitempty"`
@@ -2157,6 +2696,135 @@ type TelemetrySample struct {
 	Parts []PartUsage `json:"parts"`
 }
 
+// TenantArchiveEncryption How the parts are encrypted; present on every archive but an `export`, absent on an export.
+// Each part is the STREAM construction over AES-256-GCM with the archive's data key: the object
+// starts with a random 7-byte nonce prefix, then segments of at most `segmentBytes` plaintext,
+// each sealed with the nonce `prefix || uint32 big-endian segment index || 0x01 for the last
+// segment, 0x00 otherwise` and the part's `key` (as the manifest names it, UTF-8) as additional
+// data. A part's `sizeBytes` and `sha256` are of these stored, encrypted bytes.
+type TenantArchiveEncryption struct {
+	Algorithm TenantArchiveEncryptionAlgorithm `json:"algorithm"`
+
+	// KeyId The `ArchiveKey.id` of the region archive key that wrapped the data key.
+	KeyId string `json:"keyId"`
+
+	// SegmentBytes The plaintext bytes of every segment but the last.
+	SegmentBytes TenantArchiveEncryptionSegmentBytes `json:"segmentBytes"`
+
+	// WrappedDataKey The 32-byte data key sealed with AES-256-GCM under the archive key: a random 12-byte
+	// nonce followed by the ciphertext and tag, standard base64 with padding; additional data
+	// the archive's `instanceId` (canonical text form), so a data key never unwraps for
+	// another tenant's archive.
+	WrappedDataKey string `json:"wrappedDataKey"`
+}
+
+// TenantArchiveEncryptionAlgorithm defines model for TenantArchiveEncryption.Algorithm.
+type TenantArchiveEncryptionAlgorithm string
+
+// TenantArchiveEncryptionSegmentBytes The plaintext bytes of every segment but the last.
+type TenantArchiveEncryptionSegmentBytes int
+
+// TenantArchiveManifest `manifest.json` at the root of a tenant archive's prefix: what the archive holds, written
+// last, at most 64 MiB. Every key it names is relative to the archive's prefix, and is unique
+// in it. Not served by any operation:
+// it is the format the TMS writes and the control plane reads (to list, deliver, copy and
+// restore archives).
+type TenantArchiveManifest struct {
+	// ContentSha256 The SHA-256, lowercase hex, of the content list: one line per part, the tables first in
+	// their order then the documents in theirs, each `<sha256>  <key>` (two spaces, as
+	// `sha256sum` writes it) ending in a newline.
+	ContentSha256 string `json:"contentSha256"`
+
+	// Documents Every document of the tenant, each copied from the tenant's object prefix.
+	Documents []TenantArchiveObject `json:"documents"`
+
+	// Encryption How the parts are encrypted; present on every archive but an `export`, absent on an export.
+	// Each part is the STREAM construction over AES-256-GCM with the archive's data key: the object
+	// starts with a random 7-byte nonce prefix, then segments of at most `segmentBytes` plaintext,
+	// each sealed with the nonce `prefix || uint32 big-endian segment index || 0x01 for the last
+	// segment, 0x00 otherwise` and the part's `key` (as the manifest names it, UTF-8) as additional
+	// data. A part's `sizeBytes` and `sha256` are of these stored, encrypted bytes.
+	Encryption *TenantArchiveEncryption `json:"encryption,omitempty"`
+
+	// FormatVersion The archive format's version. A reader refuses a version it does not know.
+	FormatVersion TenantArchiveManifestFormatVersion `json:"formatVersion"`
+
+	// InstanceId The tenant's instance in the control plane.
+	InstanceId openapi_types.UUID `json:"instanceId"`
+
+	// Omitted Present only on an `export` archive: every table or column left out because it holds a
+	// secret rather than the customer's data, each once.
+	Omitted          *[]TenantArchiveOmission `json:"omitted,omitempty"`
+	OrganizationName string                   `json:"organizationName"`
+
+	// Purpose Why it was taken; `nightly` for a nightly archive.
+	Purpose *TenantArchiveManifestPurpose `json:"purpose,omitempty"`
+
+	// ReleaseVersion The Trenova release that took it.
+	ReleaseVersion string `json:"releaseVersion"`
+
+	// SchemaVersion The TMS database's migration head when the snapshot was taken; an archive is imported only at the same one.
+	SchemaVersion string `json:"schemaVersion"`
+
+	// Tables Every table that carries the tenant, in the order they load in.
+	Tables []TenantArchiveTable `json:"tables"`
+
+	// TakenAt When its snapshot was taken.
+	TakenAt time.Time `json:"takenAt"`
+
+	// TotalSizeBytes Every part's `sizeBytes` together (the manifest itself not counted).
+	TotalSizeBytes int64 `json:"totalSizeBytes"`
+}
+
+// TenantArchiveManifestFormatVersion The archive format's version. A reader refuses a version it does not know.
+type TenantArchiveManifestFormatVersion int
+
+// TenantArchiveManifestPurpose Why it was taken; `nightly` for a nightly archive.
+type TenantArchiveManifestPurpose string
+
+// TenantArchiveObject defines model for TenantArchiveObject.
+type TenantArchiveObject struct {
+	// ContentType The document's media type, which its import restores. Omitted when it is
+	// `application/octet-stream`; absent means `application/octet-stream`. Optional within
+	// `formatVersion` 1: a reader ignores a field it does not know.
+	ContentType *string `json:"contentType,omitempty"`
+
+	// Key `documents/<the document's key under the tenant's object prefix>`.
+	Key       string `json:"key"`
+	Sha256    string `json:"sha256"`
+	SizeBytes int64  `json:"sizeBytes"`
+}
+
+// TenantArchiveOmission defines model for TenantArchiveOmission.
+type TenantArchiveOmission struct {
+	// Column The column left out; absent when the whole table is.
+	Column *string `json:"column,omitempty"`
+
+	// Reason Why, in words the customer reads (for example `password hashes`).
+	Reason string `json:"reason"`
+	Table  string `json:"table"`
+}
+
+// TenantArchiveTable defines model for TenantArchiveTable.
+type TenantArchiveTable struct {
+	// Encoding `pg_copy_binary_zstd`: PostgreSQL `COPY ... TO STDOUT (FORMAT binary)` of the tenant's rows, compressed with zstd.
+	Encoding TenantArchiveTableEncoding `json:"encoding"`
+
+	// Key `tables/<NNNN>-<table>.copy.zst`: its position in the load order, four digits from `0001`.
+	Key string `json:"key"`
+
+	// Name The table, schema-qualified (`public.shipments`).
+	Name string `json:"name"`
+	Rows int64  `json:"rows"`
+
+	// Sha256 Of the object's bytes as stored.
+	Sha256    string `json:"sha256"`
+	SizeBytes int64  `json:"sizeBytes"`
+}
+
+// TenantArchiveTableEncoding `pg_copy_binary_zstd`: PostgreSQL `COPY ... TO STDOUT (FORMAT binary)` of the tenant's rows, compressed with zstd.
+type TenantArchiveTableEncoding string
+
 // UsageAck defines model for UsageAck.
 type UsageAck struct {
 	Meters []MeterUsage `json:"meters"`
@@ -2285,6 +2953,74 @@ func (t *SharedTenantCommand) MergeSharedArchiveCommand(v SharedArchiveCommand) 
 	return err
 }
 
+// AsSharedRestoreCommand returns the union data inside the SharedTenantCommand as a SharedRestoreCommand
+func (t SharedTenantCommand) AsSharedRestoreCommand() (SharedRestoreCommand, error) {
+	var body SharedRestoreCommand
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromSharedRestoreCommand overwrites any union data inside the SharedTenantCommand as the provided SharedRestoreCommand
+func (t *SharedTenantCommand) FromSharedRestoreCommand(v SharedRestoreCommand) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	b, err = runtime.JSONMerge(b, []byte(`{"kind":"restore"}`))
+	t.union = b
+	return err
+}
+
+// MergeSharedRestoreCommand performs a merge with any union data inside the SharedTenantCommand, using the provided SharedRestoreCommand
+func (t *SharedTenantCommand) MergeSharedRestoreCommand(v SharedRestoreCommand) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	b, err = runtime.JSONMerge(b, []byte(`{"kind":"restore"}`))
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsSharedImportCommand returns the union data inside the SharedTenantCommand as a SharedImportCommand
+func (t SharedTenantCommand) AsSharedImportCommand() (SharedImportCommand, error) {
+	var body SharedImportCommand
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromSharedImportCommand overwrites any union data inside the SharedTenantCommand as the provided SharedImportCommand
+func (t *SharedTenantCommand) FromSharedImportCommand(v SharedImportCommand) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	b, err = runtime.JSONMerge(b, []byte(`{"kind":"import"}`))
+	t.union = b
+	return err
+}
+
+// MergeSharedImportCommand performs a merge with any union data inside the SharedTenantCommand, using the provided SharedImportCommand
+func (t *SharedTenantCommand) MergeSharedImportCommand(v SharedImportCommand) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	b, err = runtime.JSONMerge(b, []byte(`{"kind":"import"}`))
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
 func (t SharedTenantCommand) Discriminator() (string, error) {
 	var discriminator struct {
 		Discriminator string `json:"kind"`
@@ -2301,6 +3037,10 @@ func (t SharedTenantCommand) ValueByDiscriminator() (interface{}, error) {
 	switch discriminator {
 	case "archive":
 		return t.AsSharedArchiveCommand()
+	case "import":
+		return t.AsSharedImportCommand()
+	case "restore":
+		return t.AsSharedRestoreCommand()
 	default:
 		return nil, errors.New("unknown discriminator value: " + discriminator)
 	}
@@ -2584,33 +3324,52 @@ type ClientInterface interface {
 	// Corresponds with PUT /v1/shared/status (the `ReportSharedStatus` operationId).
 	ReportSharedStatus(ctx context.Context, body ReportSharedStatusJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// GetSharedStorage Where to keep each tenant archive asked for, and the credential to keep it with
+	// GetSharedStorage Where to keep or read each tenant archive a command names, and the credential for it
 	//
-	// For each `archive` command the tenants document lists, where to write the archive and the
-	// credential to write and read it with: the shared archive bucket of the tenant's region, the
-	// archive's own prefix in it (`tenants/<instanceId>/archives/<commandId>/`), and the bucket's
-	// own access key, which Trenova scopes at the provider to that bucket alone (read, write,
-	// list, delete and multipart uploads in it). Write every object of an archive under its
-	// prefix and nowhere else; the same key reads archives back (a restore) and lists and prunes
-	// a tenant's archives. Keep the key only in memory or in the server's own sealed secrets,
-	// never log it. When `sessionToken` and `expiresAt` are absent the key does not expire; fetch
-	// this again when a write is refused, in case Trenova replaced it. Report the archive as the
-	// tenant's `lastArchive` with its `location` (`s3://<bucket>/<prefix>`). A command whose region
-	// has no archive bucket recorded yet is listed in `waiting` with why; fetch again in a minute.
+	// For each `archive`, `restore` and `import` command the tenants document lists, where the
+	// archive is and the credential to reach it with: the shared archive bucket of the tenant's
+	// region, the archive's prefix in it, and the bucket's own access key, which Trenova scopes at
+	// the provider to that bucket alone (read, write, list, delete and multipart uploads in it).
+	//
+	// - An `archive` command's target has `access: write` and the prefix
+	//   `tenants/<instanceId>/archives/<commandId>/`: write every object of the archive under it
+	//   and nowhere else, `manifest.json` last, then report the archive as the tenant's
+	//   `lastArchive` with its `location` (`s3://<bucket>/<prefix>`).
+	// - A `restore` or `import` command's target has `access: read` and the prefix of the archive
+	//   the command's `location` names: read the archive from it, and write nothing.
+	//
+	// The same key lists and prunes a tenant's nightly archives
+	// (`tenants/<instanceId>/nightly/`), which need no command. Keep the key only in memory or in
+	// the server's own sealed secrets, never log it. When `sessionToken` and `expiresAt` are
+	// absent the key does not expire; fetch this again when a request is refused, in case Trenova
+	// replaced it. A command whose region has no archive bucket recorded yet is listed in
+	// `waiting` with why; fetch again in a minute.
 	//
 	// Corresponds with GET /v1/shared/storage (the `GetSharedStorage` operationId).
 	GetSharedStorage(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// ListSharedTenants The tenants this shared server should hold
 	//
-	// Every tenant placed on the calling server that the server has not yet reported `removed`,
-	// as it should be: each tenant's spec revision, what to do with it (`lifecycle`), its
-	// organization, plan, features, add-ons, allowances, first administrator and plan page, and
-	// the commands to run for it. One document for the whole server, ordered by `instanceId`;
-	// a server holds at most 1,000 tenants. Poll it every 15 seconds with `If-None-Match`: `304`
-	// while nothing in it changed. Converge every tenant listed and report each with
-	// `reportSharedStatus`; a tenant the server holds that is not listed is not this server's
-	// any more: keep its data and say nothing of it until a later document lists it.
+	// Every tenant the calling server should hold or let go of, as it should be: each tenant's
+	// spec revision, what to do with it (`lifecycle`), its organization, plan, features, add-ons,
+	// allowances, first administrator and plan page, and the commands to run for it. One
+	// document for the whole server, ordered by `instanceId`; a server holds at most 1,000
+	// tenants. Poll it every 15 seconds with `If-None-Match`: `304` while nothing in it changed.
+	// Converge every tenant listed and report each with `reportSharedStatus`; a tenant the server
+	// holds that is not listed is not this server's any more: keep its data and say nothing of it
+	// until a later document lists it.
+	//
+	// A tenant is listed on a server while it is placed there and not yet reported `removed`.
+	// While Trenova moves a tenant from one shared server to another it is listed on both: the
+	// server it is moving to lists it from the moment its archive is taken, `suspended`, with an
+	// `import` command, until the switch; from the switch the server it left lists it `removed`
+	// until that server reports it gone. A move that fails before the switch lists the tenant
+	// `removed` on the server it was moving to until that server reports it gone, and the tenant
+	// stays where it was.
+	//
+	// The document also carries, once for the whole server, the system email sender's
+	// fingerprint and Trenova support access (`support`): the keys whose assertions every
+	// tenant on the server accepts.
 	//
 	// Corresponds with GET /v1/shared/tenants (the `ListSharedTenants` operationId).
 	ListSharedTenants(ctx context.Context, params *ListSharedTenantsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -3109,19 +3868,26 @@ func (c *Client) ReportSharedStatus(ctx context.Context, body ReportSharedStatus
 	return c.Client.Do(req)
 }
 
-// GetSharedStorage Where to keep each tenant archive asked for, and the credential to keep it with
+// GetSharedStorage Where to keep or read each tenant archive a command names, and the credential for it
 //
-// For each `archive` command the tenants document lists, where to write the archive and the
-// credential to write and read it with: the shared archive bucket of the tenant's region, the
-// archive's own prefix in it (`tenants/<instanceId>/archives/<commandId>/`), and the bucket's
-// own access key, which Trenova scopes at the provider to that bucket alone (read, write,
-// list, delete and multipart uploads in it). Write every object of an archive under its
-// prefix and nowhere else; the same key reads archives back (a restore) and lists and prunes
-// a tenant's archives. Keep the key only in memory or in the server's own sealed secrets,
-// never log it. When `sessionToken` and `expiresAt` are absent the key does not expire; fetch
-// this again when a write is refused, in case Trenova replaced it. Report the archive as the
-// tenant's `lastArchive` with its `location` (`s3://<bucket>/<prefix>`). A command whose region
-// has no archive bucket recorded yet is listed in `waiting` with why; fetch again in a minute.
+// For each `archive`, `restore` and `import` command the tenants document lists, where the
+// archive is and the credential to reach it with: the shared archive bucket of the tenant's
+// region, the archive's prefix in it, and the bucket's own access key, which Trenova scopes at
+// the provider to that bucket alone (read, write, list, delete and multipart uploads in it).
+//
+//   - An `archive` command's target has `access: write` and the prefix
+//     `tenants/<instanceId>/archives/<commandId>/`: write every object of the archive under it
+//     and nowhere else, `manifest.json` last, then report the archive as the tenant's
+//     `lastArchive` with its `location` (`s3://<bucket>/<prefix>`).
+//   - A `restore` or `import` command's target has `access: read` and the prefix of the archive
+//     the command's `location` names: read the archive from it, and write nothing.
+//
+// The same key lists and prunes a tenant's nightly archives
+// (`tenants/<instanceId>/nightly/`), which need no command. Keep the key only in memory or in
+// the server's own sealed secrets, never log it. When `sessionToken` and `expiresAt` are
+// absent the key does not expire; fetch this again when a request is refused, in case Trenova
+// replaced it. A command whose region has no archive bucket recorded yet is listed in
+// `waiting` with why; fetch again in a minute.
 //
 // Corresponds with GET /v1/shared/storage (the `GetSharedStorage` operationId).
 func (c *Client) GetSharedStorage(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
@@ -3138,14 +3904,26 @@ func (c *Client) GetSharedStorage(ctx context.Context, reqEditors ...RequestEdit
 
 // ListSharedTenants The tenants this shared server should hold
 //
-// Every tenant placed on the calling server that the server has not yet reported `removed`,
-// as it should be: each tenant's spec revision, what to do with it (`lifecycle`), its
-// organization, plan, features, add-ons, allowances, first administrator and plan page, and
-// the commands to run for it. One document for the whole server, ordered by `instanceId`;
-// a server holds at most 1,000 tenants. Poll it every 15 seconds with `If-None-Match`: `304`
-// while nothing in it changed. Converge every tenant listed and report each with
-// `reportSharedStatus`; a tenant the server holds that is not listed is not this server's
-// any more: keep its data and say nothing of it until a later document lists it.
+// Every tenant the calling server should hold or let go of, as it should be: each tenant's
+// spec revision, what to do with it (`lifecycle`), its organization, plan, features, add-ons,
+// allowances, first administrator and plan page, and the commands to run for it. One
+// document for the whole server, ordered by `instanceId`; a server holds at most 1,000
+// tenants. Poll it every 15 seconds with `If-None-Match`: `304` while nothing in it changed.
+// Converge every tenant listed and report each with `reportSharedStatus`; a tenant the server
+// holds that is not listed is not this server's any more: keep its data and say nothing of it
+// until a later document lists it.
+//
+// A tenant is listed on a server while it is placed there and not yet reported `removed`.
+// While Trenova moves a tenant from one shared server to another it is listed on both: the
+// server it is moving to lists it from the moment its archive is taken, `suspended`, with an
+// `import` command, until the switch; from the switch the server it left lists it `removed`
+// until that server reports it gone. A move that fails before the switch lists the tenant
+// `removed` on the server it was moving to until that server reports it gone, and the tenant
+// stays where it was.
+//
+// The document also carries, once for the whole server, the system email sender's
+// fingerprint and Trenova support access (`support`): the keys whose assertions every
+// tenant on the server accepts.
 //
 // Corresponds with GET /v1/shared/tenants (the `ListSharedTenants` operationId).
 func (c *Client) ListSharedTenants(ctx context.Context, params *ListSharedTenantsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
@@ -4286,19 +5064,26 @@ type ClientWithResponsesInterface interface {
 	// Corresponds with PUT /v1/shared/status (the `ReportSharedStatus` operationId).
 	ReportSharedStatusWithResponse(ctx context.Context, body ReportSharedStatusJSONRequestBody, reqEditors ...RequestEditorFn) (*ReportSharedStatusResponse, error)
 
-	// GetSharedStorageWithResponse Where to keep each tenant archive asked for, and the credential to keep it with
+	// GetSharedStorageWithResponse Where to keep or read each tenant archive a command names, and the credential for it
 	//
-	// For each `archive` command the tenants document lists, where to write the archive and the
-	// credential to write and read it with: the shared archive bucket of the tenant's region, the
-	// archive's own prefix in it (`tenants/<instanceId>/archives/<commandId>/`), and the bucket's
-	// own access key, which Trenova scopes at the provider to that bucket alone (read, write,
-	// list, delete and multipart uploads in it). Write every object of an archive under its
-	// prefix and nowhere else; the same key reads archives back (a restore) and lists and prunes
-	// a tenant's archives. Keep the key only in memory or in the server's own sealed secrets,
-	// never log it. When `sessionToken` and `expiresAt` are absent the key does not expire; fetch
-	// this again when a write is refused, in case Trenova replaced it. Report the archive as the
-	// tenant's `lastArchive` with its `location` (`s3://<bucket>/<prefix>`). A command whose region
-	// has no archive bucket recorded yet is listed in `waiting` with why; fetch again in a minute.
+	// For each `archive`, `restore` and `import` command the tenants document lists, where the
+	// archive is and the credential to reach it with: the shared archive bucket of the tenant's
+	// region, the archive's prefix in it, and the bucket's own access key, which Trenova scopes at
+	// the provider to that bucket alone (read, write, list, delete and multipart uploads in it).
+	//
+	// - An `archive` command's target has `access: write` and the prefix
+	//   `tenants/<instanceId>/archives/<commandId>/`: write every object of the archive under it
+	//   and nowhere else, `manifest.json` last, then report the archive as the tenant's
+	//   `lastArchive` with its `location` (`s3://<bucket>/<prefix>`).
+	// - A `restore` or `import` command's target has `access: read` and the prefix of the archive
+	//   the command's `location` names: read the archive from it, and write nothing.
+	//
+	// The same key lists and prunes a tenant's nightly archives
+	// (`tenants/<instanceId>/nightly/`), which need no command. Keep the key only in memory or in
+	// the server's own sealed secrets, never log it. When `sessionToken` and `expiresAt` are
+	// absent the key does not expire; fetch this again when a request is refused, in case Trenova
+	// replaced it. A command whose region has no archive bucket recorded yet is listed in
+	// `waiting` with why; fetch again in a minute.
 	//
 	// Returns a wrapper object for the known response body format(s).
 	//
@@ -4307,14 +5092,26 @@ type ClientWithResponsesInterface interface {
 
 	// ListSharedTenantsWithResponse The tenants this shared server should hold
 	//
-	// Every tenant placed on the calling server that the server has not yet reported `removed`,
-	// as it should be: each tenant's spec revision, what to do with it (`lifecycle`), its
-	// organization, plan, features, add-ons, allowances, first administrator and plan page, and
-	// the commands to run for it. One document for the whole server, ordered by `instanceId`;
-	// a server holds at most 1,000 tenants. Poll it every 15 seconds with `If-None-Match`: `304`
-	// while nothing in it changed. Converge every tenant listed and report each with
-	// `reportSharedStatus`; a tenant the server holds that is not listed is not this server's
-	// any more: keep its data and say nothing of it until a later document lists it.
+	// Every tenant the calling server should hold or let go of, as it should be: each tenant's
+	// spec revision, what to do with it (`lifecycle`), its organization, plan, features, add-ons,
+	// allowances, first administrator and plan page, and the commands to run for it. One
+	// document for the whole server, ordered by `instanceId`; a server holds at most 1,000
+	// tenants. Poll it every 15 seconds with `If-None-Match`: `304` while nothing in it changed.
+	// Converge every tenant listed and report each with `reportSharedStatus`; a tenant the server
+	// holds that is not listed is not this server's any more: keep its data and say nothing of it
+	// until a later document lists it.
+	//
+	// A tenant is listed on a server while it is placed there and not yet reported `removed`.
+	// While Trenova moves a tenant from one shared server to another it is listed on both: the
+	// server it is moving to lists it from the moment its archive is taken, `suspended`, with an
+	// `import` command, until the switch; from the switch the server it left lists it `removed`
+	// until that server reports it gone. A move that fails before the switch lists the tenant
+	// `removed` on the server it was moving to until that server reports it gone, and the tenant
+	// stays where it was.
+	//
+	// The document also carries, once for the whole server, the system email sender's
+	// fingerprint and Trenova support access (`support`): the keys whose assertions every
+	// tenant on the server accepts.
 	//
 	// Returns a wrapper object for the known response body format(s).
 	//
@@ -5382,7 +6179,8 @@ func (r ReportSharedUsageResponse) ContentType() string {
 
 // GetSpecResponse200Headers the declared response headers of an HTTP 200 response for GetSpec
 type GetSpecResponse200Headers struct {
-	ETag *string
+	CacheControl *string
+	ETag         *string
 }
 
 // GetSpecResponse429Headers the declared response headers of an HTTP 429 response for GetSpec
@@ -6057,19 +6855,26 @@ func (c *ClientWithResponses) ReportSharedStatusWithResponse(ctx context.Context
 	return ParseReportSharedStatusResponse(rsp)
 }
 
-// GetSharedStorageWithResponse Where to keep each tenant archive asked for, and the credential to keep it with
+// GetSharedStorageWithResponse Where to keep or read each tenant archive a command names, and the credential for it
 //
-// For each `archive` command the tenants document lists, where to write the archive and the
-// credential to write and read it with: the shared archive bucket of the tenant's region, the
-// archive's own prefix in it (`tenants/<instanceId>/archives/<commandId>/`), and the bucket's
-// own access key, which Trenova scopes at the provider to that bucket alone (read, write,
-// list, delete and multipart uploads in it). Write every object of an archive under its
-// prefix and nowhere else; the same key reads archives back (a restore) and lists and prunes
-// a tenant's archives. Keep the key only in memory or in the server's own sealed secrets,
-// never log it. When `sessionToken` and `expiresAt` are absent the key does not expire; fetch
-// this again when a write is refused, in case Trenova replaced it. Report the archive as the
-// tenant's `lastArchive` with its `location` (`s3://<bucket>/<prefix>`). A command whose region
-// has no archive bucket recorded yet is listed in `waiting` with why; fetch again in a minute.
+// For each `archive`, `restore` and `import` command the tenants document lists, where the
+// archive is and the credential to reach it with: the shared archive bucket of the tenant's
+// region, the archive's prefix in it, and the bucket's own access key, which Trenova scopes at
+// the provider to that bucket alone (read, write, list, delete and multipart uploads in it).
+//
+//   - An `archive` command's target has `access: write` and the prefix
+//     `tenants/<instanceId>/archives/<commandId>/`: write every object of the archive under it
+//     and nowhere else, `manifest.json` last, then report the archive as the tenant's
+//     `lastArchive` with its `location` (`s3://<bucket>/<prefix>`).
+//   - A `restore` or `import` command's target has `access: read` and the prefix of the archive
+//     the command's `location` names: read the archive from it, and write nothing.
+//
+// The same key lists and prunes a tenant's nightly archives
+// (`tenants/<instanceId>/nightly/`), which need no command. Keep the key only in memory or in
+// the server's own sealed secrets, never log it. When `sessionToken` and `expiresAt` are
+// absent the key does not expire; fetch this again when a request is refused, in case Trenova
+// replaced it. A command whose region has no archive bucket recorded yet is listed in
+// `waiting` with why; fetch again in a minute.
 //
 // Returns a wrapper object for the known response body format(s).
 //
@@ -6084,14 +6889,26 @@ func (c *ClientWithResponses) GetSharedStorageWithResponse(ctx context.Context, 
 
 // ListSharedTenantsWithResponse The tenants this shared server should hold
 //
-// Every tenant placed on the calling server that the server has not yet reported `removed`,
-// as it should be: each tenant's spec revision, what to do with it (`lifecycle`), its
-// organization, plan, features, add-ons, allowances, first administrator and plan page, and
-// the commands to run for it. One document for the whole server, ordered by `instanceId`;
-// a server holds at most 1,000 tenants. Poll it every 15 seconds with `If-None-Match`: `304`
-// while nothing in it changed. Converge every tenant listed and report each with
-// `reportSharedStatus`; a tenant the server holds that is not listed is not this server's
-// any more: keep its data and say nothing of it until a later document lists it.
+// Every tenant the calling server should hold or let go of, as it should be: each tenant's
+// spec revision, what to do with it (`lifecycle`), its organization, plan, features, add-ons,
+// allowances, first administrator and plan page, and the commands to run for it. One
+// document for the whole server, ordered by `instanceId`; a server holds at most 1,000
+// tenants. Poll it every 15 seconds with `If-None-Match`: `304` while nothing in it changed.
+// Converge every tenant listed and report each with `reportSharedStatus`; a tenant the server
+// holds that is not listed is not this server's any more: keep its data and say nothing of it
+// until a later document lists it.
+//
+// A tenant is listed on a server while it is placed there and not yet reported `removed`.
+// While Trenova moves a tenant from one shared server to another it is listed on both: the
+// server it is moving to lists it from the moment its archive is taken, `suspended`, with an
+// `import` command, until the switch; from the switch the server it left lists it `removed`
+// until that server reports it gone. A move that fails before the switch lists the tenant
+// `removed` on the server it was moving to until that server reports it gone, and the tenant
+// stays where it was.
+//
+// The document also carries, once for the whole server, the system email sender's
+// fingerprint and Trenova support access (`support`): the keys whose assertions every
+// tenant on the server accepts.
 //
 // Returns a wrapper object for the known response body format(s).
 //
@@ -7195,6 +8012,13 @@ func ParseGetSpecResponse(rsp *http.Response) (*GetSpecResponse, error) {
 	switch {
 	case rsp.StatusCode == 200:
 		var headers GetSpecResponse200Headers
+		if values := rsp.Header.Values("Cache-Control"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Cache-Control", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.CacheControl = &value
+		}
 		if values := rsp.Header.Values("ETag"); len(values) > 0 {
 			var value string
 			if err := runtime.BindStyledParameterWithOptions("simple", "ETag", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {

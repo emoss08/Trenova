@@ -18,6 +18,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/instancebootstrapports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/sessionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/supportaccessports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/managedfeatures"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/managedscope"
@@ -428,6 +429,29 @@ type rig struct {
 	workflows *workflows
 	audit     *securityaudittest.Recorder
 	members   *members
+	grants    *liveGrants
+}
+
+type liveGrants struct {
+	mu    sync.Mutex
+	live  []*supportaccessports.LiveGrant
+	asked []supportaccessports.ListLiveRequest
+}
+
+func (g *liveGrants) ListLive(
+	_ context.Context,
+	req *supportaccessports.ListLiveRequest,
+) ([]*supportaccessports.LiveGrant, error) {
+	g.mu.Lock()
+	defer g.mu.Unlock()
+	g.asked = append(g.asked, *req)
+	out := make([]*supportaccessports.LiveGrant, 0)
+	for _, l := range g.live {
+		if slices.Contains(req.OrganizationIDs, l.Grant.OrganizationID) {
+			out = append(out, l)
+		}
+	}
+	return out, nil
 }
 
 func newRig(t *testing.T, shared bool) *rig {
@@ -454,6 +478,7 @@ func newRig(t *testing.T, shared bool) *rig {
 		audit:     &securityaudittest.Recorder{},
 		members:   &members{},
 		commands:  &commands{rows: map[string]tenantcommand.Command{}},
+		grants:    &liveGrants{},
 	}
 	r.svc = tenantlifecycle.New(tenantlifecycle.Params{
 		Config:         &managedconfig.Config{Enabled: true, Tenancy: tenancy},
@@ -470,6 +495,7 @@ func newRig(t *testing.T, shared bool) *rig {
 		Auditor:        r.audit,
 		Workflows:      r.workflows,
 		Commands:       r.commands,
+		Grants:         r.grants,
 		Secrets:        cipher{},
 		Scopes:         managedscope.NewResolver(shared),
 		Clock:          func() int64 { return now },

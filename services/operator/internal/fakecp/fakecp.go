@@ -785,7 +785,7 @@ func Spec(instanceID uuid.UUID) instanceapi.InstanceSpec {
 			Vcpu:                8,
 			MemoryGiB:           32,
 			DiskGiB:             200,
-			Backup:              instanceapi.PointInTime,
+			Backup:              instanceapi.SpecPlanBackupPointInTime,
 			BackupRetentionDays: 30,
 			Support:             instanceapi.BusinessHours,
 		},

@@ -12840,6 +12840,8 @@ type SupportLogRequest struct {
 type SupportLogRequests struct {
 	// False on a self-hosted install, where logs are never sent to Trenova and every list here is empty.
 	Managed bool `json:"managed"`
+	// False on a shared server, where one log holds every company's lines: logs are never sent from it, and a request is refused.
+	Available bool `json:"available"`
 	// True while a request from any organization on this instance waits or is being collected. A new request is refused until it finishes.
 	InFlight bool `json:"inFlight"`
 	// How many more requests the instance may make before the 24-hour limit.

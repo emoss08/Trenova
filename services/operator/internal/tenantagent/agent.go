@@ -34,6 +34,7 @@ const (
 	healthyFor         = 3
 	tmsComponent       = "tms"
 	maxMessage         = 500
+	maxFailures        = 20
 )
 
 var ErrNoDesired = errors.New("the control plane has not answered with the tenants yet")
@@ -44,11 +45,31 @@ type ControlPlane interface {
 		ctx context.Context,
 		report *instanceapi.SharedStatusReport,
 	) (instanceapi.SharedReportAck, error)
+	SharedStorage(ctx context.Context) (instanceapi.SharedStorage, error)
 }
 
 type TMS interface {
 	PutTenant(ctx context.Context, instanceID string, entry []byte) (tms.TenantStatus, error)
 	Tenants(ctx context.Context) ([]tms.TenantStatus, error)
+	StartArchive(
+		ctx context.Context,
+		instanceID string,
+		start *tms.ArchiveStart,
+	) (tms.TenantCommand, error)
+	StartRestore(
+		ctx context.Context,
+		instanceID string,
+		start *tms.RestoreStart,
+	) (tms.TenantCommand, error)
+	TenantCommand(
+		ctx context.Context,
+		instanceID, kind, commandID string,
+	) (tms.TenantCommand, error)
+	PutNightlyGrant(ctx context.Context, grant *tms.NightlyGrant) error
+}
+
+type SupportKeys interface {
+	SyncShared(ctx context.Context, desired *instanceapi.SharedSupport) error
 }
 
 type Credentials interface {
@@ -80,6 +101,7 @@ type Params struct {
 	SystemEmail  SystemEmail
 	Usage        Usage
 	EmailEvents  EmailEvents
+	SupportKeys  SupportKeys
 	Version      string
 	Logger       *slog.Logger
 	Now          func() time.Time
@@ -87,6 +109,7 @@ type Params struct {
 	UsageEvery   time.Duration
 	EventsEvery  time.Duration
 	StatusEvery  time.Duration
+	StorageEvery time.Duration
 	Concurrency  int
 }
 
@@ -99,6 +122,12 @@ type Agent struct {
 	desired  *instanceapi.SharedTenantList
 	sent     map[uuid.UUID]string
 	silenced map[uuid.UUID]struct{}
+	refusals map[string]refusal
+	asked    map[string]struct{}
+
+	storageAt time.Time
+	nightly   string
+	nightlyAt time.Time
 
 	lastReport   []byte
 	lastReportAt time.Time
@@ -111,7 +140,8 @@ type Agent struct {
 func New(p Params) (*Agent, error) {
 	switch {
 	case p.ControlPlane == nil, p.TMS == nil, p.Credentials == nil, p.Escrow == nil,
-		p.SystemEmail == nil, p.Usage == nil, p.EmailEvents == nil, p.Logger == nil:
+		p.SystemEmail == nil, p.Usage == nil, p.EmailEvents == nil, p.SupportKeys == nil,
+		p.Logger == nil:
 		return nil, errors.New("tenantagent: every dependency is required")
 	}
 	if p.Poll <= 0 {
@@ -126,6 +156,9 @@ func New(p Params) (*Agent, error) {
 	if p.StatusEvery <= 0 {
 		p.StatusEvery = DefaultStatusEvery
 	}
+	if p.StorageEvery <= 0 {
+		p.StorageEvery = DefaultStorageEvery
+	}
 	if p.Concurrency <= 0 {
 		p.Concurrency = DefaultConcurrency
 	}
@@ -138,6 +171,8 @@ func New(p Params) (*Agent, error) {
 		now:      now,
 		sent:     make(map[uuid.UUID]string),
 		silenced: make(map[uuid.UUID]struct{}),
+		refusals: make(map[string]refusal),
+		asked:    make(map[string]struct{}),
 	}, nil
 }
 
@@ -221,6 +256,9 @@ func (a *Agent) iterate(ctx context.Context) error {
 	if serr := a.p.SystemEmail.Sync(ctx, desired.SystemEmail); serr != nil {
 		errs = append(errs, fmt.Errorf("the system email sender: %w", serr))
 	}
+	if kerr := a.p.SupportKeys.SyncShared(ctx, desired.Support); kerr != nil {
+		errs = append(errs, fmt.Errorf("the support access keys: %w", kerr))
+	}
 
 	statuses, terr := a.p.TMS.Tenants(ctx)
 	if terr == nil {
@@ -287,9 +325,15 @@ func (a *Agent) fetch(ctx context.Context) (*instanceapi.SharedTenantList, error
 }
 
 type plan struct {
-	id     uuid.UUID
+	entry  *instanceapi.SharedTenant
 	body   []byte
 	digest string
+	target *command
+}
+
+type entryBody struct {
+	*instanceapi.SharedTenant
+	ImportTarget *tms.ArchiveTarget `json:"importTarget,omitempty"`
 }
 
 func (a *Agent) converge(
@@ -297,53 +341,137 @@ func (a *Agent) converge(
 	desired *instanceapi.SharedTenantList,
 	held []tms.TenantStatus,
 ) ([]tms.TenantStatus, error) {
+	a.forgetUnlisted(desired)
 	byID := make(map[string]tms.TenantStatus, len(held))
 	for _, s := range held {
 		byID[s.InstanceID] = s
 	}
-	plans := make([]plan, 0)
+	var (
+		plans   []plan
+		starts  []start
+		wanted  []targetKey
+		failed  []error
+		anyCmds bool
+	)
 	for i := range desired.Tenants {
 		entry := &desired.Tenants[i]
+		id := entry.InstanceId.String()
+		status := byID[id]
+		anyCmds = anyCmds || len(entry.Commands) > 0
 		body, err := sonic.Marshal(entry)
 		if err != nil {
 			return held, fmt.Errorf("encode the tenant %s: %w", entry.InstanceId, err)
 		}
 		sum := sha256.Sum256(body)
 		digest := hex.EncodeToString(sum[:])
-		if !needsApply(entry, byID[entry.InstanceId.String()], a.sent[entry.InstanceId] == digest) {
+		if needsApply(entry, status, a.sent[entry.InstanceId] == digest) {
+			pending, blocked, perr := a.pendingImport(ctx, entry, &status)
+			if perr != nil {
+				failed = append(failed, fmt.Errorf("tenant %s: %w", id, perr))
+				continue
+			}
+			if blocked {
+				continue
+			}
+			if pending != nil {
+				wanted = append(wanted, targetKey{instance: id, command: pending.id})
+			}
+			plans = append(plans, plan{entry: entry, body: body, digest: digest, target: pending})
+		}
+		next, nerr := a.nextCommand(ctx, entry, &status)
+		if nerr != nil {
+			failed = append(failed, fmt.Errorf("tenant %s: %w", id, nerr))
 			continue
 		}
-		plans = append(plans, plan{id: entry.InstanceId, body: body, digest: digest})
+		if next != nil {
+			wanted = append(wanted, targetKey{instance: id, command: next.id})
+			starts = append(starts, start{instance: entry.InstanceId, cmd: *next})
+		}
 	}
-	if len(plans) == 0 {
-		return held, nil
+	targets := a.targets(ctx, wanted, anyCmds)
+	applied, perr := a.apply(ctx, plans, targets, byID)
+	if perr != nil {
+		failed = append(failed, perr)
 	}
-
-	var mu sync.Mutex
-	group, gctx := errgroup.WithContext(ctx)
-	group.SetLimit(a.p.Concurrency)
-	failed := make([]error, 0)
-	for _, pl := range plans {
-		group.Go(func() error {
-			status, err := a.p.TMS.PutTenant(gctx, pl.id.String(), pl.body)
-			mu.Lock()
-			defer mu.Unlock()
-			if err != nil {
-				failed = append(failed, fmt.Errorf("tenant %s: %w", pl.id, err))
-				return nil
-			}
-			a.sent[pl.id] = pl.digest
-			byID[status.InstanceID] = status
-			return nil
-		})
+	if serr := a.startAll(ctx, starts, targets); serr != nil {
+		failed = append(failed, serr)
 	}
-	_ = group.Wait()
 	out := make([]tms.TenantStatus, 0, len(byID))
 	for _, s := range byID {
 		out = append(out, s)
 	}
-	a.p.Logger.Info("tenants applied", "asked", len(plans), "failed", len(failed))
+	if applied > 0 || len(failed) > 0 {
+		a.p.Logger.Info("tenants applied", "asked", applied, "failed", len(failed))
+	}
 	return out, errors.Join(failed...)
+}
+
+func (a *Agent) apply(
+	ctx context.Context,
+	plans []plan,
+	targets map[targetKey]instanceapi.SharedArchiveTarget,
+	byID map[string]tms.TenantStatus,
+) (int, error) {
+	ready := make([]plan, 0, len(plans))
+	for _, pl := range plans {
+		if pl.target != nil {
+			target, ok := a.targetFor(targets, pl.entry.InstanceId, *pl.target)
+			if !ok {
+				a.p.Logger.Info("a tenant made from an archive waits for its archive's location",
+					"instanceId", pl.entry.InstanceId, "command", pl.target.id)
+				continue
+			}
+			body, err := sonic.Marshal(entryBody{SharedTenant: pl.entry, ImportTarget: target})
+			if err != nil {
+				return 0, fmt.Errorf("encode the tenant %s: %w", pl.entry.InstanceId, err)
+			}
+			pl.body = body
+		}
+		ready = append(ready, pl)
+	}
+	if len(ready) == 0 {
+		return 0, nil
+	}
+	var mu sync.Mutex
+	group, gctx := errgroup.WithContext(ctx)
+	group.SetLimit(a.p.Concurrency)
+	failed := make([]error, 0)
+	for _, pl := range ready {
+		group.Go(func() error {
+			id := pl.entry.InstanceId
+			status, err := a.p.TMS.PutTenant(gctx, id.String(), pl.body)
+			mu.Lock()
+			defer mu.Unlock()
+			if err != nil {
+				if reason, refused := tms.Refused(err); refused && pl.target != nil {
+					a.refusals[pl.target.id] = refusal{
+						kind: tms.CommandImport, reason: reason, at: a.now().UTC(),
+					}
+					a.p.Logger.Warn(
+						"the TMS refused the import of a tenant; it is reported as failed",
+						"instanceId",
+						id,
+						"command",
+						pl.target.id,
+						"reason",
+						reason,
+					)
+					return nil
+				}
+				failed = append(failed, fmt.Errorf("tenant %s: %w", id, err))
+				return nil
+			}
+			a.sent[id] = pl.digest
+			byID[status.InstanceID] = status
+			if pl.target != nil {
+				a.p.Logger.Info("a tenant is being made from an archive",
+					"instanceId", id, "command", pl.target.id)
+			}
+			return nil
+		})
+	}
+	_ = group.Wait()
+	return len(ready), errors.Join(failed...)
 }
 
 func needsApply(entry *instanceapi.SharedTenant, held tms.TenantStatus, sent bool) bool {
@@ -409,9 +537,9 @@ func (a *Agent) tenantStatuses(
 	desired *instanceapi.SharedTenantList,
 	held []tms.TenantStatus,
 ) []instanceapi.SharedTenantStatus {
-	listed := make(map[string]struct{}, len(desired.Tenants))
+	listed := make(map[string]*instanceapi.SharedTenant, len(desired.Tenants))
 	for i := range desired.Tenants {
-		listed[desired.Tenants[i].InstanceId.String()] = struct{}{}
+		listed[desired.Tenants[i].InstanceId.String()] = &desired.Tenants[i]
 	}
 	out := make([]instanceapi.SharedTenantStatus, 0, len(held))
 	for _, s := range held {
@@ -419,18 +547,21 @@ func (a *Agent) tenantStatuses(
 		if err != nil {
 			continue
 		}
-		if _, ok := listed[s.InstanceID]; !ok {
+		entry, ok := listed[s.InstanceID]
+		if !ok {
 			continue
 		}
 		if _, quiet := a.silenced[id]; quiet {
 			continue
 		}
-		out = append(out, statusOf(id, &s))
+		status := a.statusOf(id, &s)
+		a.reportCommands(entry, &s, &status)
+		out = append(out, status)
 	}
 	return out
 }
 
-func statusOf(id uuid.UUID, s *tms.TenantStatus) instanceapi.SharedTenantStatus {
+func (a *Agent) statusOf(id uuid.UUID, s *tms.TenantStatus) instanceapi.SharedTenantStatus {
 	out := instanceapi.SharedTenantStatus{
 		InstanceId:      id,
 		AppliedRevision: s.AppliedRevision,
@@ -454,6 +585,10 @@ func statusOf(id uuid.UUID, s *tms.TenantStatus) instanceapi.SharedTenantStatus 
 				TakenAt:   s.LastArchive.TakenAt,
 			}
 		}
+	}
+	out.LastRestore = restoreReport(s.LastRestore)
+	if s.SupportGrants != nil {
+		out.SupportGrants = a.grantsOf(id, *s.SupportGrants)
 	}
 	if s.Refused != nil {
 		out.Refused = &instanceapi.SharedTenantRefusal{

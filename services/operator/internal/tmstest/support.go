@@ -21,11 +21,13 @@ type supportState struct {
 	puts     []tms.SupportKeys
 	grants   []tms.SupportGrant
 	grantErr bool
+	deletes  int
 }
 
 func (s *Server) routeSupport(mux *http.ServeMux) {
 	mux.HandleFunc("GET /managed/v1/support-access", s.getSupportKeys)
 	mux.HandleFunc("PUT /managed/v1/support-access", s.putSupportKeys)
+	mux.HandleFunc("DELETE /managed/v1/support-access", s.deleteSupportKeys)
 	mux.HandleFunc("GET /managed/v1/support-access/grants", s.getSupportGrants)
 }
 
@@ -106,7 +108,7 @@ func (s *Server) putSupportKeys(w http.ResponseWriter, r *http.Request) {
 }
 
 func validSupportKeys(in *tms.SupportKeys) bool {
-	if in.InstanceID == "" || !strings.Contains(in.StaffDomain, ".") ||
+	if !strings.Contains(in.StaffDomain, ".") ||
 		len(in.Keys) == 0 || len(in.Keys) > maxSupportKeys {
 		return false
 	}
@@ -119,6 +121,20 @@ func validSupportKeys(in *tms.SupportKeys) bool {
 		seen[k.Kid] = true
 	}
 	return true
+}
+
+func (s *Server) SupportKeyDeletes() int {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.support.deletes
+}
+
+func (s *Server) deleteSupportKeys(w http.ResponseWriter, _ *http.Request) {
+	s.mu.Lock()
+	s.support.keys = nil
+	s.support.deletes++
+	s.mu.Unlock()
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func (s *Server) getSupportGrants(w http.ResponseWriter, _ *http.Request) {

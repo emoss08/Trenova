@@ -122,14 +122,14 @@ func TestTheBackupListMapsEachPhaseAndOrigin(t *testing.T) {
 	final := got[1]
 	require.Equal(t, backup.FinalName(9), final.Id)
 	require.Equal(t, instanceapi.BackupEntryPhaseRunning, final.Phase)
-	require.Equal(t, instanceapi.Final, *final.Origin)
+	require.Equal(t, instanceapi.BackupEntryOriginFinal, *final.Origin)
 	require.Nil(t, final.CompletedAt)
 	require.Nil(t, final.RequestId)
 
 	daily := got[2]
 	require.Equal(t, "20261114T030000", daily.Id)
 	require.Equal(t, instanceapi.BackupEntryPhaseCompleted, daily.Phase)
-	require.Equal(t, instanceapi.Scheduled, *daily.Origin)
+	require.Equal(t, instanceapi.BackupEntryOriginScheduled, *daily.Origin)
 	require.Equal(t, now.Add(-9*time.Hour-10*time.Minute), daily.StartedAt)
 	require.Equal(t, now.Add(-9*time.Hour), *daily.CompletedAt)
 	require.Nil(t, daily.SizeBytes)
@@ -137,13 +137,13 @@ func TestTheBackupListMapsEachPhaseAndOrigin(t *testing.T) {
 
 	requested := got[3]
 	require.Equal(t, "20261112T101500", requested.Id)
-	require.Equal(t, instanceapi.Requested, *requested.Origin)
+	require.Equal(t, instanceapi.BackupEntryOriginRequested, *requested.Origin)
 	require.Equal(t, request, *requested.RequestId)
 
 	failed := got[4]
 	require.Equal(t, instanceapi.BackupEntryPhaseFailed, failed.Phase)
 	require.Equal(t, "trenova-postgres-daily-20261111030000", failed.Id)
-	require.Equal(t, instanceapi.Scheduled, *failed.Origin)
+	require.Equal(t, instanceapi.BackupEntryOriginScheduled, *failed.Origin)
 	require.Equal(t, now.Add(-3*24*time.Hour+time.Minute), *failed.CompletedAt)
 	require.Equal(t, "bucket unreachable", *failed.Message)
 }
@@ -220,9 +220,9 @@ func TestBackupsTheOperatorTakesAreListedWithTheirOrigin(t *testing.T) {
 		origins[e.Id] = e
 	}
 	requested := origins[backup.RequestName(id)]
-	require.Equal(t, instanceapi.Requested, *requested.Origin)
+	require.Equal(t, instanceapi.BackupEntryOriginRequested, *requested.Origin)
 	require.Equal(t, id, *requested.RequestId)
-	require.Equal(t, instanceapi.Final, *origins[backup.FinalName(4)].Origin)
+	require.Equal(t, instanceapi.BackupEntryOriginFinal, *origins[backup.FinalName(4)].Origin)
 }
 
 func TestAFailedListLeavesTheListOutAndTheHealthAsItWas(t *testing.T) {

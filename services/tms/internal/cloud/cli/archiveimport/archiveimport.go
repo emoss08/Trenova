@@ -34,6 +34,8 @@ const (
 	envSecret = "TRENOVA_IMPORT_SECRET_ACCESS_KEY" // #nosec G101 -- the name of an environment variable, not a credential.
 	envKeys   = "TRENOVA_IMPORT_ARCHIVE_KEYS"
 
+	maxReason = 500
+
 	ExitFailed  = 1
 	ExitRefused = 2
 
@@ -118,7 +120,8 @@ It prints one JSON line on standard output, and writes the same to
 Exit codes:
   0  the archive is imported, or was already imported under this id (a no-op)
   1  the import could not complete (storage or database unavailable); nothing
-     is left behind and running it again starts clean
+     is left behind and running it again starts clean. The status line then
+     says refused with why, for the operator to report if it gives up
   2  refused: the archive does not match, or this install cannot take it; the
      install is left empty and is never bootstrapped`,
 		RunE: func(cmd *cobra.Command, _ []string) error {
@@ -158,7 +161,7 @@ func run(cmd *cobra.Command, f *flags, build func(ctx context.Context) (*Deps, e
 	out := cmd.OutOrStdout()
 	report := func(state, reason string) {
 		line, _ := sonic.ConfigStd.Marshal(
-			Status{ID: f.id, State: state, At: time.Now().UTC(), Reason: reason},
+			Status{ID: f.id, State: state, At: time.Now().UTC(), Reason: clipReason(reason)},
 		)
 		fmt.Fprintln(out, string(line))
 		if f.statusFile != "" {
@@ -175,6 +178,7 @@ func run(cmd *cobra.Command, f *flags, build func(ctx context.Context) (*Deps, e
 		os.Exit(ExitRefused)
 	default:
 		fmt.Fprintln(cmd.ErrOrStderr(), err.Error())
+		report(StateRefused, err.Error())
 		os.Exit(ExitFailed)
 	}
 	return err
@@ -264,6 +268,14 @@ func importArchive(
 	}
 	report(StateDone, "")
 	return nil
+}
+
+func clipReason(reason string) string {
+	runes := []rune(reason)
+	if len(runes) <= maxReason {
+		return reason
+	}
+	return string(runes[:maxReason-1]) + "…"
 }
 
 func (f *flags) access() (*tenantarchive.Access, error) {

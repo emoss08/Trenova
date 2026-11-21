@@ -196,7 +196,7 @@ function SendLogsBody({ logs }: { logs: SupportLogs }) {
 
 /**
  * Sends the instance's logs for a chosen period to Trenova support. Shown only on a Managed
- * Trenova instance; the server holds every rule (one request at a time for the whole instance, a
+ * Trenova instance that is not a shared server (one log there holds every company's lines); the server holds every rule (one request at a time for the whole instance, a
  * daily limit), and the list moves through its states as the instance reports them.
  */
 export function SendLogsSection() {
@@ -218,7 +218,7 @@ export function SendLogsSection() {
       </SectionPanel>
     );
   }
-  if (!query.data.managed) {
+  if (!query.data.managed || !query.data.available) {
     return null;
   }
   return (

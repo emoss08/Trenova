@@ -1174,7 +1174,7 @@ var keySetsTable = schema.Table{
 	Doc:    `KeySet is what the control plane, through the operator, tells the instance about support access: which keys sign assertions, which instance this is (the assertions' audience), and the Trenova staff email domain grants are limited to.`,
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK, Label: `ID`, JSON: `id`},
-		{Name: "instance_id", Quoted: `"instance_id"`, Field: "InstanceID", Kind: schema.KindString, Flags: 0, Label: `Instance ID`, JSON: `instanceId`},
+		{Name: "instance_id", Quoted: `"instance_id"`, Field: "InstanceID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Instance ID`, JSON: `instanceId`},
 		{Name: "staff_domain", Quoted: `"staff_domain"`, Field: "StaffDomain", Kind: schema.KindString, Flags: 0, Label: `Staff Domain`, JSON: `staffDomain`},
 		{Name: "keys", Quoted: `"keys"`, Field: "Keys", Kind: schema.KindJSON, Flags: schema.FlagJSONB, Label: `Keys`, JSON: `keys`},
 		{Name: "received_at", Quoted: `"received_at"`, Field: "ReceivedAt", Kind: schema.KindInt64, Flags: 0, Label: `Received At`, JSON: `receivedAt`},
@@ -1636,6 +1636,9 @@ func valueKeySet(p unsafe.Pointer, c int32) any {
 	case 0:
 		return r.ID
 	case 1:
+		if r.InstanceID == "" {
+			return nil
+		}
 		return r.InstanceID
 	case 2:
 		return r.StaffDomain

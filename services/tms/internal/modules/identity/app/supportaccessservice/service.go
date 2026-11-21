@@ -47,6 +47,7 @@ type Params struct {
 	Auditor    permissionports.SecurityAuditor
 	AuthEvents iamports.AuthEventRecorder
 	Notifier   supportaccessports.Notifier
+	Tenants    supportaccessports.Tenants
 	Managed    *managedconfig.Config
 	Security   *securityconfig.Config
 	Clock      timeutils.Clock
@@ -66,7 +67,9 @@ type Service struct {
 	auditor    permissionports.SecurityAuditor
 	authEvents iamports.AuthEventRecorder
 	notifier   supportaccessports.Notifier
+	tenants    supportaccessports.Tenants
 	enabled    bool
+	shared     bool
 	maxAge     time.Duration
 	clock      timeutils.Clock
 	keyCache   *otter.Cache[string, cachedKeySet]
@@ -89,7 +92,9 @@ func New(p Params) *Service {
 		auditor:    p.Auditor,
 		authEvents: p.AuthEvents,
 		notifier:   p.Notifier,
+		tenants:    p.Tenants,
 		enabled:    p.Managed.Enabled,
+		shared:     p.Managed.SharedTenancy(),
 		maxAge:     p.Security.Session.MaxAge,
 		clock:      p.Clock,
 		keyCache: otter.Must(&otter.Options[string, cachedKeySet]{
@@ -451,7 +456,7 @@ func (s *Service) SetKeys(ctx context.Context, keys *supportaccess.KeySet) error
 	if !s.enabled {
 		return errNotAvailable
 	}
-	if err := keys.Normalize(); err != nil {
+	if err := keys.Normalize(s.shared); err != nil {
 		multiErr := errortypes.NewMultiError()
 		multiErr.Add("keys", errortypes.ErrInvalid, err.Error())
 		return multiErr
@@ -481,6 +486,18 @@ func (s *Service) SetKeys(ctx context.Context, keys *supportaccess.KeySet) error
 		zap.String("staffDomain", keys.StaffDomain),
 		zap.Strings("keyIDs", keyIDs),
 	)
+	return nil
+}
+
+func (s *Service) ClearKeys(ctx context.Context) error {
+	if !s.enabled {
+		return errNotAvailable
+	}
+	if err := s.keys.Delete(ctx); err != nil {
+		return err
+	}
+	s.keyCache.Invalidate(keySetKey)
+	s.l.Info("the control plane turned support access off; the support assertion keys were removed")
 	return nil
 }
 

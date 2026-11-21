@@ -1183,6 +1183,48 @@ which it keeps on uninstall, is created by its chart.
 - The contract: the operator's `api/instance.yaml` is a copy of the control plane's, and the
   control plane's CI compares the two, so a contract change lands in both.
 
+## Move to Managed: the import
+
+A spec carrying `import` (`SpecImport`) makes the instance's data from a tenant archive the control
+plane copied into its own backups bucket under `imports/<id>/`, instead of the first-install
+bootstrap (`internal/importer`, `values/import.go`, the chart's release Job). `getSpec` answers
+`503` until the import is listed; the loop waits for its `Retry-After` and installs nothing.
+
+- **Held, not stopped.** The spec is `lifecycle: suspended` until the switch. With `import` the
+  operator renders `stopped: true` (no workload serves a person) but `postgres.hibernate: false`,
+  and the chart runs the release Job while `import.id` is set even though the release is stopped:
+  migrations, roles, publication, then the `import` container in place of `bootstrap`. The import
+  runs whatever the lifecycle; the workloads follow the lifecycle.
+- **The keys.** `import.archiveKeys` (served only) are written by the operator into a Secret,
+  `<fullname>-import-keys` (`archiveKeys`, annotated with the import id), and reach the container as
+  `TRENOVA_IMPORT_ARCHIVE_KEYS` by `secretKeyRef`; the values Helm stores name only the Secret. The
+  bucket is read with the backup Secret (`backup.existingSecret`: `ACCESS_KEY_ID` and
+  `ACCESS_SECRET_KEY` by `secretKeyRef`, the key id passed as `$(…)` so the pod spec holds no value).
+  The Secret is deleted once the import settles, and whenever the spec no longer carries `import`.
+  Nothing logs the keys.
+- **The command.** `trenova db import-archive --id --endpoint <backup.endpointURL> --region
+  $(TRENOVA_IMPORT_REGION) --bucket --access-key-id $(…) --expect-sha256
+  --status-file /dev/termination-log`. The Job is annotated `trenova.app/import: <id>`; its
+  `podFailurePolicy` fails it at once on exit 2 (refused), exit 1 is retried within the Job's
+  `backoffLimit`, and `import.activeDeadlineSeconds` (3 hours) bounds it.
+- **The report.** `StatusReport.import` from the Job of the deployed Helm revision: `importing`
+  (with when the Job started) once it exists, `done` when it completes, `refused` when it fails,
+  with the reason from the container's termination message (the CLI's last `ImportStatus` line):
+  "The archive was refused: …" on exit 2, "The import could not complete: …" otherwise. It is sent
+  while the spec carries `import`, and always names the import's id.
+- **Once.** The settled outcome is recorded in the ConfigMap `<fullname>-import` (id, state, at,
+  reason). From then on the values carry `import: {id, settled: true}`, which runs neither the import
+  nor the bootstrap again; a refused or failed import runs again only under a new `import.id`; an
+  instance made by an import refuses any later import, and after the switch (no `import`) its
+  bootstrap values stay empty, so `trenova db bootstrap` is never run against it. No first
+  administrator invite is installed while the spec carries `import` or once the instance was
+  imported (the imported people sign in with their passwords).
+
+Tests: `values/import_test.go` (the chart's Job, the held values, no key in the manifest or values),
+`reconcile/import_test.go` (a `503`, then importing, done, the switch to active with workloads
+started and no invite; refused and failed with their reasons, never re-run, a new id runs),
+`importer/importer_test.go` (the keys' Secret and the log).
+
 ## The tenant agent
 
 `cmd/tenant-agent` runs a shared server: one Docker Compose service beside the TMS, many tenants.
@@ -1204,15 +1246,19 @@ the operator does with its Secret. A 401 makes it read the bundle again (`Recove
    (`escrowfile`, `--secrets-dir`, one 0600 file per key: `encryptionKey`, `rlsScopeKeyId`,
    `rlsScopeKey`, `mfaRecoveryCodePepper`, for the TMS's configuration to read);
 2. `GET /v1/shared/tenants` with `If-None-Match` (the last list is kept on 304 and on failure);
-3. bring the TMS to the list's system email sender (`systememail.Relay`);
+3. bring the TMS to the list's system email sender (`systememail.Relay`) and its support access
+   (`supportkeys.Relay.SyncShared`: the list's top-level `support`, staff domain and keys, as
+   `PUT /managed/v1/support-access` without an `instanceId` whenever the key ids or the domain
+   differ from what `GET` answers; `support` absent removes the keys with `DELETE`, so the server
+   refuses every assertion);
 4. `GET /managed/v1/tenants` (every page), then `PUT /managed/v1/tenants/{id}` with the entry's
    exact JSON for each tenant the TMS does not hold at that revision, or whose entry changed since
    it was last put (the digest of its bytes; the TMS also no-ops an unchanged digest), four at a
    time (`errgroup`); a tenant the TMS refused at that revision, one being removed, and a removed
-   one are not put again;
+   one are not put again; the commands are carried out in the same pass (see below);
 5. `PUT /v1/shared/status`: version (`--server-version`), ready and the `tms` component (whether
    the managed listener answered), and each listed tenant the TMS holds (applied revision, state,
-   administrator, last archive, refusal). It is sent when it changes and at least every minute; a
+   administrator, `lastArchive`, `lastRestore`, `commandFailures`, `supportGrants`, refusal). It is sent when it changes and at least every minute; a
    tenant the answer names `not_placed` is no longer reported until a later list names it; a
    tenant the control plane no longer lists is not reported;
 6. every `--usage-every` (15 minutes, the most the control plane allows): `usage.SharedRelay` reads
@@ -1228,6 +1274,46 @@ Telemetry runs beside the loop (`telemetryrelay.Relay`, one sample a minute): th
 (cores and use), memory and the disk holding `--data-path` (`hosttelemetry`, gopsutil), and the
 TMS's `GET /managed/v1/data-usage`; parts are left out (Compose has no replica counts to read).
 
+**Commands** (`tenantagent/commands.go`). Each entry's `commands` (the `SharedTenantCommand` union;
+an unknown kind is left be) are carried out oldest first, one at a time per tenant, and only once
+the TMS holds the entry's lifecycle at its revision (an import: on the tenant's first entry). The
+agent keeps no record of them: the TMS's routes are idempotent by command id, so for the first
+command the TMS status does not show settled (`lastArchive`/`lastRestore` naming it, a
+`commandFailures` entry, an applied revision for an import) it asks the TMS for it by id
+(`GET /managed/v1/tenants/{id}/archives|restores|imports/{commandId}`): found and running is polled,
+found and settled moves to the next, `404` is started. A restarted agent therefore never starts a
+command twice. To start one it needs the command's storage target: `GET /v1/shared/storage` is read
+when a command not yet asked for needs one, then at most once a minute while one waits (`waiting`,
+or no target), never otherwise. A target is used only when it names the same tenant and command id,
+the same kind, `write` for an archive and `read` for a restore or import, the prefix
+`tenants/<id>/archives/<commandId>/` for an archive and exactly the command's `location` for a
+restore or import, archive keys for every archive but an export and none for an export; anything
+else is logged (without the credential) and not used. Then: an `archive` is
+`POST .../archives {commandId, purpose, target}`, a `restore` `POST .../restores {commandId,
+expectSha256, target}`, an `import` the tenant's first `PUT` with `importTarget` (held back while
+no target fits, so the TMS never sees an import entry without its source). `423` (the tenant runs
+another command) waits; `400`/`409` is a refusal the agent holds in memory while the command is
+listed and reports as a `commandFailure` (archive, import) or as a failed `lastRestore` whose reason
+starts "Nothing was changed: "; a restore the TMS ran keeps the TMS's reason, which starts "Nothing
+was changed: " or "The tenant is incomplete: " (an unprefixed one is reported as incomplete, the
+safe reading). A later revision never carries the import again: the target is attached only while
+the TMS has no import command of that id.
+
+**The nightly grant.** The contract gives no target for nightly archives; each target's key is the
+region bucket's own key ("the same key lists and prunes a tenant's nightly archives"). So whenever
+the agent reads the storage it gives the TMS, with `PUT /managed/v1/tenants/archive-storage` (one
+grant per server: a shared server is in one region), the credential and archive keys of a target
+that carries keys (a write target first), when they differ from what it last gave (a SHA-256 kept in
+memory, so a restart gives it again once), and reads the storage at least hourly while any command
+is listed. A server with no command ever listed holds no grant and takes no nightly archive; see the
+contract problem in the control plane's step D notes.
+
+**Secrets.** Bucket credentials, session tokens and archive keys pass from the control plane to the
+TMS over the Compose network with the bearer token and nowhere else: never logged (targets and
+grants print as their bucket and prefix), never written to the state directory, never in a status
+report. `TestNoSecretTheAgentHandlesReachesItsLogsOrItsStateDirectory` runs every command kind and
+scans the logs, every report and every file under the state directory.
+
 **When things fail.** The control plane down: the last list is converged and reported again later;
 usage readings stay in the TMS and are re-read. The TMS down: the status says not ready with the
 reason, nothing is put, and the next iteration tries again. The process never exits on these; it
@@ -1241,15 +1327,19 @@ answers are whole states, and the control plane replaces each report.
 `/run/trenova/escrow`), `--tms-url` (`TMS_URL`, `http://api:8090`), `--tms-token-file`
 (`TMS_TOKEN_FILE`, `/run/secrets/managed_token`), `--data-path` (`DATA_PATH`), `--server-version`
 (`SERVER_VERSION`), `--health-addr` (`HEALTH_ADDR`, `:8081`, `/healthz` and `/livez`), `--poll`,
-`--usage-every`, `--log-level`. `--once` converges and reports once and exits (an init step);
+`--usage-every` (`USAGE_EVERY`), `--log-level` (`LOG_LEVEL`). `--once` converges and reports once and exits (an init step);
 `--healthcheck` asks a running agent's `/healthz` and exits 0 when healthy (the Compose healthcheck,
 no curl in the image). Logs are JSON and carry no secret: the token, keys and escrowed values are
 never logged.
 
-## Not in the operator yet
+**The image.** `deploy/Dockerfile.operator`, target `tenant-agent`: the same source stage and
+distroless `static-debian12:nonroot` base as the operator, the binary at
+`/usr/local/bin/trenova-tenant-agent`, user 65532, port 8081; it writes only its state and secrets
+directories, so it runs with a read-only root. `release.yml` publishes
+`ghcr.io/emoss08/trenova/tenant-agent` in the operator's job with the operator's tags (version,
+major.minor, `latest`), SBOM and provenance; `operator.yml` builds it in CI.
 
-- **Tenant archives.** The tenant agent does not call `GET /v1/shared/storage` or take archives;
-  the TMS reports an `archive` command as refused until the archive step lands.
+## Not in the operator yet
 
 - **Backup sizes.** The plugin's `Backup` status carries no size, so `finalBackup.sizeBytes` and
   each listed backup's `sizeBytes` are left out.

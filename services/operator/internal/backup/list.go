@@ -97,13 +97,13 @@ func origin(
 		if id := annotations[annotationReqID]; id != "" {
 			request = ptr(clip(id, maxRequestID))
 		}
-		return ptr(instanceapi.Requested), request
+		return ptr(instanceapi.BackupEntryOriginRequested), request
 	case originFinal:
-		return ptr(instanceapi.Final), nil
+		return ptr(instanceapi.BackupEntryOriginFinal), nil
 	}
 	for _, owner := range b.GetOwnerReferences() {
 		if owner.Kind == scheduledKind {
-			return ptr(instanceapi.Scheduled), nil
+			return ptr(instanceapi.BackupEntryOriginScheduled), nil
 		}
 	}
 	return nil, nil

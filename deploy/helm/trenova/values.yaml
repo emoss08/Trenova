@@ -28,6 +28,25 @@ storageDomain: ""
 # Cloud's operator stops a suspended or decommissioned instance this way.
 stopped: false
 
+# Move to Managed, which Trenova Cloud's operator sets: make this instance's
+# data from a tenant archive in its backups bucket instead of bootstrapping it.
+# While id is set and settled is false, the release Job (which then runs even
+# while stopped) imports the archive under prefix in place of the bootstrap;
+# once settled, neither runs. The region's archive keys are never a value:
+# keysSecret names a Secret the operator makes, holding archiveKeys, and
+# deletes when the import settles. The backups bucket is read with
+# backup.existingSecret.
+import:
+  id: ""
+  bucket: ""
+  # imports/<id>/
+  prefix: ""
+  expectSha256: ""
+  keysSecret: ""
+  settled: false
+  # How long the import may run, in seconds.
+  activeDeadlineSeconds: 10800
+
 # Trenova Cloud's managed mode: the API serves the operator's usage API on port
 # 8090, behind a bearer token the chart generates into the app Secret
 # (managedToken; with secrets.existingSecret, put it there). The operator turns

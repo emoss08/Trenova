@@ -89,3 +89,11 @@ func (c *Client) SupportGrants(ctx context.Context) ([]SupportGrant, error) {
 	}
 	return answer.Grants, nil
 }
+
+func (c *Client) DeleteSupportKeys(ctx context.Context) error {
+	u := c.base.JoinPath("managed", "v1", "support-access")
+	if _, err := c.do(ctx, http.MethodDelete, u, nil, http.StatusNoContent); err != nil {
+		return fmt.Errorf("remove the TMS's support access keys: %w", err)
+	}
+	return nil
+}

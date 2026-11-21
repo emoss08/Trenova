@@ -21,9 +21,11 @@ import (
 )
 
 type fakeSupportAccess struct {
-	set    *supportaccess.KeySet
-	held   *supportaccess.KeySet
-	grants []*supportaccessports.LiveGrant
+	shared  bool
+	cleared int
+	set     *supportaccess.KeySet
+	held    *supportaccess.KeySet
+	grants  []*supportaccessports.LiveGrant
 }
 
 func (f *fakeSupportAccess) LiveGrants(context.Context) ([]*supportaccessports.LiveGrant, error) {
@@ -31,12 +33,18 @@ func (f *fakeSupportAccess) LiveGrants(context.Context) ([]*supportaccessports.L
 }
 
 func (f *fakeSupportAccess) SetKeys(_ context.Context, keys *supportaccess.KeySet) error {
-	if err := keys.Normalize(); err != nil {
+	if err := keys.Normalize(f.shared); err != nil {
 		multiErr := errortypes.NewMultiError()
 		multiErr.Add("keys", errortypes.ErrInvalid, err.Error())
 		return multiErr
 	}
 	f.set = keys
+	return nil
+}
+
+func (f *fakeSupportAccess) ClearKeys(context.Context) error {
+	f.cleared++
+	f.set = nil
 	return nil
 }
 
@@ -46,12 +54,17 @@ func (f *fakeSupportAccess) KeySet(context.Context) (*supportaccess.KeySet, erro
 
 const supportKeyX = "11qYAYKxCrfVS_7TyWQHOg7hcvPapiMlrwIaaPcHURo"
 
-func serveSupport(t *testing.T, support *fakeSupportAccess, method, body, token string) *httptest.ResponseRecorder {
+func serveSupport(
+	t *testing.T,
+	support *fakeSupportAccess,
+	method, body, token string,
+) *httptest.ResponseRecorder {
 	t.Helper()
 	handler := api.NewManagedHandler(&api.ManagedHandlerParams{
 		Token:         managedToken,
 		Logger:        zap.NewNop(),
 		SupportAccess: support,
+		Shared:        support.shared,
 	})
 	req := httptest.NewRequest(method, "/managed/v1/support-access", strings.NewReader(body))
 	if token != "" {
@@ -108,12 +121,17 @@ func TestManagedSupportAccessRefusesAMissingToken(t *testing.T) {
 	assert.Nil(t, support.set)
 }
 
-func serveSupportGrants(t *testing.T, support *fakeSupportAccess, token string) *httptest.ResponseRecorder {
+func serveSupportGrants(
+	t *testing.T,
+	support *fakeSupportAccess,
+	token string,
+) *httptest.ResponseRecorder {
 	t.Helper()
 	handler := api.NewManagedHandler(&api.ManagedHandlerParams{
 		Token:         managedToken,
 		Logger:        zap.NewNop(),
 		SupportAccess: support,
+		Shared:        support.shared,
 	})
 	req := httptest.NewRequest(http.MethodGet, "/managed/v1/support-access/grants", nil)
 	if token != "" {
@@ -203,7 +221,11 @@ func TestManagedSupportGrantsAreNotServedWhenManagedModeIsOff(t *testing.T) {
 		Logger: zap.NewNop(),
 		LC:     off,
 	})
-	assert.Empty(t, off.hooks, "a self-hosted instance opens no operator listener, so no grants route")
+	assert.Empty(
+		t,
+		off.hooks,
+		"a self-hosted instance opens no operator listener, so no grants route",
+	)
 
 	on := &recordedLifecycle{}
 	api.StartManagedServer(api.ManagedServerParams{
@@ -230,5 +252,73 @@ func TestManagedSupportAccessAnswersTheKeyIDsItHolds(t *testing.T) {
 	require.NoError(t, sonic.Unmarshal(rec.Body.Bytes(), &out))
 	assert.Equal(t, []any{"cp-1"}, out["keyIds"])
 	assert.Equal(t, "inst_1", out["instanceId"])
-	assert.NotContains(t, rec.Body.String(), supportKeyX, "the answer names keys, it never carries one")
+	assert.NotContains(
+		t,
+		rec.Body.String(),
+		supportKeyX,
+		"the answer names keys, it never carries one",
+	)
+}
+
+func TestASharedServerHoldsOneKeySetThatNamesNoInstance(t *testing.T) {
+	t.Parallel()
+
+	key := `{"kid":"cp-1","kty":"OKP","crv":"Ed25519","alg":"EdDSA","use":"sig","x":"` + supportKeyX + `"}`
+	support := &fakeSupportAccess{shared: true}
+	rec := serveSupport(
+		t,
+		support,
+		http.MethodPut,
+		`{"staffDomain":"trenova.app","keys":[`+key+`]}`,
+		managedToken,
+	)
+	require.Equal(t, http.StatusNoContent, rec.Code, rec.Body.String())
+	require.NotNil(t, support.set)
+	assert.Empty(t, support.set.InstanceID)
+
+	named := &fakeSupportAccess{shared: true}
+	rec = serveSupport(t, named, http.MethodPut,
+		`{"instanceId":"inst_1","staffDomain":"trenova.app","keys":[`+key+`]}`, managedToken)
+	assert.Equal(
+		t,
+		http.StatusBadRequest,
+		rec.Code,
+		"each tenant's assertion names its own instance",
+	)
+	assert.Nil(t, named.set)
+
+	dedicated := &fakeSupportAccess{}
+	rec = serveSupport(
+		t,
+		dedicated,
+		http.MethodPut,
+		`{"staffDomain":"trenova.app","keys":[`+key+`]}`,
+		managedToken,
+	)
+	assert.Equal(
+		t,
+		http.StatusBadRequest,
+		rec.Code,
+		"a dedicated instance is its assertions' audience",
+	)
+}
+
+func TestTurningSupportAccessOffRemovesTheKeys(t *testing.T) {
+	t.Parallel()
+
+	support := &fakeSupportAccess{shared: true}
+	rec := serveSupport(t, support, http.MethodDelete, "", managedToken)
+	assert.Equal(t, http.StatusNoContent, rec.Code)
+	assert.Equal(t, 1, support.cleared)
+
+	rec = serveSupport(t, support, http.MethodDelete, "", "")
+	assert.Equal(t, http.StatusUnauthorized, rec.Code)
+	assert.Equal(t, 1, support.cleared)
+}
+
+func TestASharedServerReportsGrantsPerTenantNotFromTheInstanceRoute(t *testing.T) {
+	t.Parallel()
+
+	rec := serveSupportGrants(t, &fakeSupportAccess{shared: true}, managedToken)
+	assert.Equal(t, http.StatusConflict, rec.Code)
 }

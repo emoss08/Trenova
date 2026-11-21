@@ -90,7 +90,7 @@ func TestArchiveRoutesMapTheirRefusals(t *testing.T) {
 		err  error
 		code int
 	}{
-		{tenantlifecycle.ErrTenantBusy, http.StatusConflict},
+		{tenantlifecycle.ErrTenantBusy, http.StatusLocked},
 		{tenantlifecycle.ErrTenantState, http.StatusConflict},
 		{tenantlifecycle.ErrCommandConflict, http.StatusConflict},
 		{tenantlifecycle.ErrPurposeInvalid, http.StatusBadRequest},

@@ -69,7 +69,7 @@ type KeySet struct {
 	keel.Table `keel:"managed_support_access_states"`
 
 	ID          string       `json:"id"          keel:"id,pk"`
-	InstanceID  string       `json:"instanceId"  keel:"instance_id"`
+	InstanceID  string       `json:"instanceId"  keel:"instance_id,nullzero"`
 	StaffDomain string       `json:"staffDomain" keel:"staff_domain"`
 	Keys        []SigningKey `json:"keys"        keel:"keys,jsonb"`
 	ReceivedAt  int64        `json:"receivedAt"  keel:"received_at"`
@@ -78,9 +78,15 @@ type KeySet struct {
 // Normalize checks a delivered key set and returns it in its stored form. A delivery with no
 // key is refused rather than stored, so a broken delivery cannot silently replace working keys;
 // keys are retired by delivering a set without them.
-func (ks *KeySet) Normalize() error {
+func (ks *KeySet) Normalize(shared bool) error {
 	ks.InstanceID = strings.TrimSpace(ks.InstanceID)
-	if !instanceIDPattern.MatchString(ks.InstanceID) || len(ks.InstanceID) > maxInstanceID {
+	switch {
+	case shared && ks.InstanceID != "":
+		return errors.New(
+			"instanceId must be left out on a shared server: each assertion names its tenant's instance",
+		)
+	case !shared && (!instanceIDPattern.MatchString(ks.InstanceID) ||
+		len(ks.InstanceID) > maxInstanceID):
 		return errors.New("instanceId must be 1 to 100 letters, digits, dots, colons, dashes or underscores")
 	}
 	ks.StaffDomain = lowerASCII(strings.TrimSpace(ks.StaffDomain))

@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/cloud/domain/cloudtenant"
 	"github.com/emoss08/trenova/internal/cloud/domain/tenantcommand"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/supportaccessports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -117,6 +118,13 @@ type KeyPurge interface {
 
 type SearchPurge interface {
 	DeleteOrganizationDocuments(ctx context.Context, organizationID pulid.ID) (int, error)
+}
+
+type LiveSupportGrants interface {
+	ListLive(
+		ctx context.Context,
+		req *supportaccessports.ListLiveRequest,
+	) ([]*supportaccessports.LiveGrant, error)
 }
 
 var (

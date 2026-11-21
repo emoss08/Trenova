@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/cloud/jobs/tenantjobs"
 	"github.com/emoss08/trenova/internal/cloud/ports/cloudtenantports"
 	"github.com/emoss08/trenova/internal/infrastructure/config/managedconfig"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/supportaccessports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
 	"go.uber.org/fx"
 )
@@ -30,8 +31,9 @@ func SharedOptions() fx.Option {
 			tenantkeys.New,
 			tenantsearch.New,
 			tenantlifecycle.New,
+			liveSupportGrants,
 		),
-		fx.Decorate(instanceTags),
+		fx.Decorate(instanceTags, supportTenants),
 	)
 }
 
@@ -66,6 +68,23 @@ func instanceTags(
 ) emailports.InstanceTags {
 	if cfg.SharedTenancy() {
 		return tenantlifecycle.NewInstanceTags(tenants)
+	}
+	return configured
+}
+
+func liveSupportGrants(
+	grants supportaccessports.GrantRepository,
+) cloudtenantports.LiveSupportGrants {
+	return grants
+}
+
+func supportTenants(
+	cfg *managedconfig.Config,
+	configured supportaccessports.Tenants,
+	tenants cloudtenantports.Repository,
+) supportaccessports.Tenants {
+	if cfg.SharedTenancy() {
+		return tenantlifecycle.NewSupportTenants(tenants)
 	}
 	return configured
 }

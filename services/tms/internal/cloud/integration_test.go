@@ -19,6 +19,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/interceptors"
+	"github.com/emoss08/trenova/internal/testutil/entitlementtest"
 	"github.com/emoss08/trenova/internal/testutil/heavyslotstest"
 	"go.temporal.io/sdk/interceptor"
 	"go.temporal.io/sdk/worker"
@@ -44,6 +45,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/organizationmeter"
 	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/organizationrepository"
 	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/passwordresetrepository"
+	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/supportaccessrepository"
 	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/tenantbootstraprepository"
 	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/userrepository"
 	"github.com/emoss08/trenova/internal/modules/identity/app/firstadmininviteservice"
@@ -398,6 +400,9 @@ func newRigOn(t *testing.T, seeded bool) *rig {
 		Workflows: r.workflows,
 		Commands: cloudcommandrepository.New(cloudcommandrepository.Params{
 			DB: r.conn, Clock: clock,
+		}),
+		Grants: supportaccessrepository.NewGrantRepository(supportaccessrepository.Params{
+			Entitlements: entitlementtest.Instance(), DB: r.conn, Logger: logger,
 		}),
 		Secrets: encryptionservice.NewSecretCipher(encryptionservice.NewWithKeyManager(
 			encryptionservice.NewLocalKeyManager("lifecycle-test-key-not-a-real-secret"),

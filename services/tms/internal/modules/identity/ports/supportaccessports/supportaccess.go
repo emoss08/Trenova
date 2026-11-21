@@ -2,6 +2,7 @@ package supportaccessports
 
 import (
 	"context"
+	"errors"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/supportaccess"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
@@ -38,8 +39,9 @@ type ListLiveForStaffRequest struct {
 const MaxReportedGrants = 100
 
 type ListLiveRequest struct {
-	Now   int64
-	Limit int
+	Now             int64
+	Limit           int
+	OrganizationIDs []pulid.ID
 }
 
 type LiveGrant struct {
@@ -104,6 +106,19 @@ type GrantRepository interface {
 type KeySetRepository interface {
 	Get(ctx context.Context) (*supportaccess.KeySet, error)
 	Save(ctx context.Context, keys *supportaccess.KeySet) error
+	Delete(ctx context.Context) error
+}
+
+var ErrTenantNotHeld = errors.New("no tenant of this shared server has that instance id")
+
+type SupportTenant struct {
+	OrganizationID pulid.ID
+	BusinessUnitID pulid.ID
+	Active         bool
+}
+
+type Tenants interface {
+	Tenant(ctx context.Context, instanceID string) (*SupportTenant, error)
 }
 
 // AssertionLedger records accepted assertion ids. Use reports false when the id was already

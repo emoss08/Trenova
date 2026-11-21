@@ -12,6 +12,7 @@ env:
   CLIENT_IMAGE_NAME: emoss08/trenova/client
   IMAGING_IMAGE_NAME: emoss08/trenova/imaging
   OPERATOR_IMAGE_NAME: emoss08/trenova/operator
+  TENANT_AGENT_IMAGE_NAME: emoss08/trenova/tenant-agent
 
 jobs:
   verify-source:
@@ -346,7 +347,8 @@ jobs:
           sbom: true
           provenance: mode=max
 
-  # The Trenova Cloud operator (services/operator, its own module).
+  # The Trenova Cloud operator (services/operator, its own module), and the
+  # tenant agent built from the same module.
   build-and-push-operator:
     needs: verify-source
     name: Build and Push Operator Image
@@ -390,6 +392,32 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha,scope=operator
           cache-to: type=gha,scope=operator,mode=max
+          platforms: linux/amd64,linux/arm64
+          sbom: true
+          provenance: mode=max
+
+      # The tenant agent a shared server runs: the operator module's second
+      # binary, published with the operator's tags and provenance.
+      - name: Extract tenant agent metadata
+        id: agent-meta
+        uses: docker/metadata-action@c299e40c65443455700f0fdfc63efafe5b349051 # v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.TENANT_AGENT_IMAGE_NAME }}
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=raw,value=latest
+
+      - name: Build and push tenant agent image
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
+        with:
+          context: .
+          file: ./deploy/Dockerfile.operator
+          target: tenant-agent
+          push: true
+          tags: ${{ steps.agent-meta.outputs.tags }}
+          labels: ${{ steps.agent-meta.outputs.labels }}
+          cache-from: type=gha,scope=operator
           platforms: linux/amd64,linux/arm64
           sbom: true
           provenance: mode=max

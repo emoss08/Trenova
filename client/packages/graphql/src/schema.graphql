@@ -35183,6 +35183,10 @@ Sending the instance's logs to Trenova support, as this organization sees it.
 """
 type SupportLogRequests {
   """
+  False on a shared server, where one log holds every company's lines: logs are never sent from it, and a request is refused.
+  """
+  available: Boolean!
+  """
   True while a request from any organization on this instance waits or is being collected. A new request is refused until it finishes.
   """
   inFlight: Boolean!

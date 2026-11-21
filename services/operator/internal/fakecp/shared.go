@@ -22,6 +22,9 @@ type sharedState struct {
 	usage       []instanceapi.SharedUsageReport
 	answers     map[uuid.UUID]instanceapi.SharedTenantUsage
 	usageFail   int
+	support     *instanceapi.SharedSupport
+	storage     instanceapi.SharedStorage
+	storageAsks int
 }
 
 func newSharedState() sharedState {
@@ -32,6 +35,7 @@ func (s *Server) routeShared(mux *http.ServeMux) {
 	mux.HandleFunc("GET /v1/shared/tenants", s.sharedOnly(s.listSharedTenants))
 	mux.HandleFunc("PUT /v1/shared/status", s.sharedOnly(s.reportSharedStatus))
 	mux.HandleFunc("POST /v1/shared/usage", s.sharedOnly(s.reportSharedUsage))
+	mux.HandleFunc("GET /v1/shared/storage", s.sharedOnly(s.sharedStorage))
 }
 
 func (s *Server) sharedOnly(next http.HandlerFunc) http.HandlerFunc {
@@ -57,6 +61,42 @@ func (s *Server) SetSharedSystemEmail(e *instanceapi.SpecSystemEmail) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.shared.systemEmail = e
+}
+
+func (s *Server) SetSharedSupport(support *instanceapi.SharedSupport) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.shared.support = support
+}
+
+func (s *Server) SetSharedStorage(storage instanceapi.SharedStorage) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.shared.storage = storage
+}
+
+func (s *Server) SharedStorageAsks() int {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.shared.storageAsks
+}
+
+func (s *Server) sharedStorage(w http.ResponseWriter, _ *http.Request) {
+	s.mu.Lock()
+	s.shared.storageAsks++
+	out := instanceapi.SharedStorage{
+		Archives: slices.Clone(s.shared.storage.Archives),
+		Waiting:  slices.Clone(s.shared.storage.Waiting),
+	}
+	s.mu.Unlock()
+	if out.Archives == nil {
+		out.Archives = []instanceapi.SharedArchiveTarget{}
+	}
+	if out.Waiting == nil {
+		out.Waiting = []instanceapi.SharedArchiveWaiting{}
+	}
+	w.Header().Set("Cache-Control", "no-store")
+	write(w, out)
 }
 
 func (s *Server) SetSharedUsageAnswer(answer instanceapi.SharedTenantUsage) {
@@ -103,6 +143,7 @@ func (s *Server) listSharedTenants(w http.ResponseWriter, r *http.Request) {
 	list := instanceapi.SharedTenantList{
 		Tenants:     slices.Clone(s.shared.tenants),
 		SystemEmail: s.shared.systemEmail,
+		Support:     s.shared.support,
 	}
 	s.shared.listings++
 	s.mu.Unlock()

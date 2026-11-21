@@ -507,7 +507,7 @@ instance, and the dedicated routes answer 409 on a shared server:
 | Route | Body / query | Answer |
 |---|---|---|
 | `PUT /managed/v1/tenants/{instanceId}` | the control plane's `SharedTenant`, field for field (at most 256 KiB) | `200` the tenant's `SharedTenantStatus` (`instanceId`, `appliedRevision?`, `state`, `administrator?`, `lastArchive?`, `refused?`); `400` an entry for another instance or a revision below 1 |
-| `GET /managed/v1/tenants?after=&limit=` | cursor is the last `instanceId`; `limit` 1–200, default 100 | `200 {tenants: [SharedTenantStatus], next?}`; administrator facts are read for the page in one statement |
+| `GET /managed/v1/tenants?after=&limit=` | cursor is the last `instanceId`; `limit` 1–200, default 100 | `200 {tenants: [SharedTenantStatus], next?}`: each with `lastArchive`, `lastRestore` (once settled), `commandFailures` and, for a made tenant not being removed, `supportGrants` (its organization's live grants, an empty list when none); administrator facts, failures and grants are each read for the page in one statement |
 | `GET /managed/v1/tenants/readings?from=&to=&after=&limit=` | `from`, `to` RFC 3339 on the hour, `from` within 35 days | `200 {tenants: [{instanceId, readings: [{meter, hour, quantity}]}], next?}` for every made tenant that is active or suspended (storage is still kept for a suspended one); each meter is one statement for the whole page (`HourlyCounter.CountByHourForOrganizations`, `LevelReader.LevelsForOrganizations`), so a page costs the same however many tenants it holds |
 | `PUT /managed/v1/tenants/usage` | `{tenants: [{instanceId, window?, overage, meters}]}`, at most 1,000 (4 MiB) | `200 {applied, refused: [{instanceId, code, reason?}]}`; each entry becomes that organization scope's usage state |
 | archive, restore, import and storage routes | see [Commands, routes and secrets](#commands-routes-and-secrets) | |
@@ -519,7 +519,8 @@ What the existing routes do on a shared server:
 | `GET /readings`, `PUT /state`, `GET|PUT /features`, `PUT /first-administrator/invite` | 409 | they answer the instance scope, which a shared server does not have; the tenant routes replace them |
 | `GET /log-requests`, `PUT /log-requests/{id}`, `POST /support/log-pulls` | 409 | log bundles hold every tenant's lines; the instance API refuses them from a shared server |
 | `GET|PUT|DELETE /system-email`, `POST /system-email/events` | kept | one sender serves the server; each event is resolved to its tenant by its message |
-| `GET|PUT /support-access`, `GET /support-access/grants` | kept | instance-wide key set and grants; the control plane does not yet send a shared server support keys, so nothing sets them |
+| `GET|PUT|DELETE /support-access` | kept | the server's one key set and staff domain, which the tenant agent delivers from the tenants document's `support`; on a shared server the body carries no `instanceId` (one is refused), since each assertion names its tenant's instance |
+| `GET /support-access/grants` | 409 | each tenant's grants are reported in its own status (`GET /managed/v1/tenants`) |
 | `GET /data-usage` | kept | the server's database, documents and search totals, which the agent reports as its telemetry |
 
 `managed.instanceId` is not required on a shared server (it may name the server); `managed.token`
@@ -791,7 +792,7 @@ exists.
 
 Every start is idempotent by command id (a repeat answers the same command; the id reused for
 another tenant or kind is `409`); `409` also answers a tenant whose state does not allow the
-command or that already runs one. Failed `archive` and `import` commands are reported in the
+command, and `423` one that already runs another command (the agent waits and sends it again). Failed `archive` and `import` commands are reported in the
 tenant's `commandFailures` (30 days, newest first). The target's credentials and archive keys are
 secrets: they are sealed with the install's key (`SecretPurposeArchiveAccess`, the command id as
 the resource) into `cloud_tenant_commands.sealed_access`, erased when the command settles (a check
@@ -822,6 +823,61 @@ match, or the install is not empty), the database is left empty and is never boo
 The shared server's link to the control plane is `services/operator/cmd/tenant-agent`, a second
 binary of the operator module with no Kubernetes or Helm import (see
 [operator.md](operator.md#the-tenant-agent)). It reads the tenants (`GET /v1/shared/tenants`, ETag),
-puts each tenant the TMS does not hold at that revision, reports the server and its tenants
-(`PUT /v1/shared/status`), relays usage both ways every 15 minutes, and sends host telemetry, the
-escrowed secrets, the system email credential and its events as the operator does.
+puts each tenant the TMS does not hold at that revision, carries out each tenant's commands,
+delivers the server's support keys, reports the server and its tenants (`PUT /v1/shared/status`),
+relays usage both ways every 15 minutes, and sends host telemetry, the escrowed secrets, the system
+email credential and its events as the operator does.
+
+**Commands.** For each tenant, oldest first and one at a time, once the TMS holds the entry's
+lifecycle: the agent asks the TMS for the first unsettled command by id; a `404` is started with the
+storage target `GET /v1/shared/storage` names for exactly that tenant, command, kind, access and
+prefix (an archive through `POST .../archives`, a restore through `POST .../restores`, an import as
+the first entry's `importTarget`), a running one is polled, a settled one is skipped. It keeps no
+state that can drift: the TMS's routes are idempotent by command id, so a restarted agent finds what
+it started. A command the TMS refuses (`400`/`409`) is reported as a `commandFailure`, or for a
+restore as a failed `lastRestore` starting "Nothing was changed: ". The nightly grant
+(`PUT .../archive-storage`) is taken from a target that carries the region's keys, whenever the
+agent reads the storage.
+
+## Support access for a shared tenant
+
+The server holds one support key set and one staff domain (`managed_support_access_states`, whose
+`instance_id` is null on a shared server); grants, sessions, the grant's support principal, the
+replay ledger's use of an assertion and every audit entry are the tenant's organization's, exactly
+as on a dedicated instance: a grant is made in the tenant's own Trenova by its administrator, with
+the same page, durations, scopes and rules.
+
+`supportaccessservice.Enter` on a shared server (`managed.tenancy: shared`) accepts an assertion only
+when all of these hold, checked in this order, each a separate refusal (`supportaccess.RefusalReason`)
+that fails closed:
+
+1. the signature verifies under a delivered key with the header's `kid` (`unknown_key`,
+   `signature`, and the header and algorithm checks before them);
+2. `iss` is `trenova-control-plane` (`issuer`);
+3. `exp - iat` is at most 60 seconds and `exp` has not passed, with the dedicated check's 15-second
+   skew and no more (`lifetime`, `not_yet_valid`, `expired`); then the claim shapes the dedicated
+   check also refuses (`jti`, `sub` at the staff domain, `name`, `org`);
+4. `jti` was never used on the server (`support_assertion_uses`, `replayed`);
+5. `aud` is the instance id of a tenant this server holds `active` (`tenant`: unknown, not made,
+   suspended, restoring, removing, or not an instance id) and that tenant's organization is `org`
+   (`organization`); `supportaccessports.Tenants`, implemented on a shared server by
+   `tenantlifecycle.SupportTenants` from `cloud_tenants` and decorated in by `cloud.SharedOptions`
+   (on a dedicated install the core implementation knows no tenant and is never asked);
+6. a live grant of that organization names `sub` (`no_live_grant`).
+
+`VerifyTenantAssertion` does checks 1 to 3 against a key set that names no instance and hands the
+audience on; `VerifyAssertion` (dedicated) refuses a key set without an instance and keeps comparing
+`aud` to it, so neither tenancy can take the other's path. The session opened is the grant's:
+the grant's organization and business unit, its support principal, its scope's deny policy,
+assurance level 2, attribution to the staff member, ending with the grant. Every refusal answers
+the caller the same 403 page; when the assertion verified, the refusal is written to the security
+audit log of the organization `org` names (if it exists), so the company named sees the attempt
+and no other learns of it.
+
+## Logs on a shared server
+
+One log holds every company's lines, so no log leaves a shared server. The listener's log routes
+answer 409 (above); `supportLogRequests` answers `managed: true, available: false` and the Admin >
+Trenova support access page shows no "Send logs to Trenova support" section; `requestSupportLogs`
+is refused before anything is written or queued ("Logs can't be sent to Trenova support from this
+server: it runs many companies, and its logs hold every company's activity").

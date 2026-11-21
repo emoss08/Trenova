@@ -52,6 +52,7 @@ const (
 	RefusalNotConfigured  = RefusalReason("not_configured")
 	RefusalRateLimited    = RefusalReason("rate_limited")
 	RefusalOrganization   = RefusalReason("organization")
+	RefusalTenant         = RefusalReason("tenant")
 	RefusalSessionFailure = RefusalReason("session_failure")
 )
 
@@ -84,6 +85,7 @@ func ReasonOf(err error) RefusalReason {
 // Assertion is a verified support assertion.
 type Assertion struct {
 	ID             string
+	Audience       string
 	StaffEmail     string
 	StaffName      string
 	OrganizationID pulid.ID
@@ -113,6 +115,17 @@ func VerifyAssertion(token string, keys *KeySet, now time.Time) (*Assertion, err
 	if keys == nil || len(keys.Keys) == 0 || keys.InstanceID == "" {
 		return nil, refuse(RefusalNotConfigured, "")
 	}
+	return verifyAssertion(token, keys, now, false)
+}
+
+func VerifyTenantAssertion(token string, keys *KeySet, now time.Time) (*Assertion, error) {
+	if keys == nil || len(keys.Keys) == 0 || keys.InstanceID != "" {
+		return nil, refuse(RefusalNotConfigured, "")
+	}
+	return verifyAssertion(token, keys, now, true)
+}
+
+func verifyAssertion(token string, keys *KeySet, now time.Time, tenant bool) (*Assertion, error) {
 	token = strings.TrimSpace(token)
 	if token == "" || len(token) > MaxAssertionBytes || strings.Count(token, ".") != 2 {
 		return nil, refuse(RefusalMalformed, "")
@@ -150,14 +163,14 @@ func VerifyAssertion(token string, keys *KeySet, now time.Time) (*Assertion, err
 		return nil, refuse(RefusalClaims, "the claims are not a support assertion")
 	}
 
-	return claims.verify(keys, now)
+	return claims.verify(keys, now, tenant)
 }
 
-func (c *assertionClaims) verify(keys *KeySet, now time.Time) (*Assertion, error) {
+func (c *assertionClaims) verify(keys *KeySet, now time.Time, tenant bool) (*Assertion, error) {
 	if c.Issuer != AssertionIssuer {
 		return nil, refuse(RefusalIssuer, c.Issuer)
 	}
-	if c.Audience == "" || c.Audience != keys.InstanceID {
+	if !tenant && (c.Audience == "" || c.Audience != keys.InstanceID) {
 		return nil, refuse(RefusalAudience, c.Audience)
 	}
 	if !assertionIDPattern.MatchString(c.ID) {
@@ -194,6 +207,7 @@ func (c *assertionClaims) verify(keys *KeySet, now time.Time) (*Assertion, error
 
 	return &Assertion{
 		ID:             c.ID,
+		Audience:       c.Audience,
 		StaffEmail:     email,
 		StaffName:      name,
 		OrganizationID: orgID,

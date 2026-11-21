@@ -17,30 +17,44 @@ type tenantEntry struct {
 	Revision   int64  `json:"revision"`
 	Lifecycle  string `json:"lifecycle"`
 	Commands   []struct {
-		Kind string `json:"kind"`
+		Kind     string `json:"kind"`
+		ID       string `json:"id"`
+		Location string `json:"location"`
 	} `json:"commands"`
+	ImportTarget *tms.ArchiveTarget `json:"importTarget"`
 }
 
 type tenantState struct {
-	shared   bool
-	statuses map[string]tms.TenantStatus
-	entries  map[string][]byte
-	puts     map[string]int
-	refuse   map[string]string
-	readings map[string][]tms.TenantReading
-	asked    []time.Time
-	usage    [][]tms.TenantUsage
-	fail     int
+	shared    bool
+	statuses  map[string]tms.TenantStatus
+	entries   map[string][]byte
+	puts      map[string]int
+	refuse    map[string]string
+	readings  map[string][]tms.TenantReading
+	asked     []time.Time
+	usage     [][]tms.TenantUsage
+	fail      int
+	commands  map[string]*heldCommand
+	refuseCmd map[string]string
+	busy      map[string]bool
+	nightly   []tms.NightlyGrant
+	pending   map[string]tenantEntry
+	posted    map[string]int
 }
 
 func newTenantState() tenantState {
 	return tenantState{
-		shared:   true,
-		statuses: map[string]tms.TenantStatus{},
-		entries:  map[string][]byte{},
-		puts:     map[string]int{},
-		refuse:   map[string]string{},
-		readings: map[string][]tms.TenantReading{},
+		shared:    true,
+		statuses:  map[string]tms.TenantStatus{},
+		entries:   map[string][]byte{},
+		puts:      map[string]int{},
+		refuse:    map[string]string{},
+		readings:  map[string][]tms.TenantReading{},
+		commands:  map[string]*heldCommand{},
+		refuseCmd: map[string]string{},
+		busy:      map[string]bool{},
+		pending:   map[string]tenantEntry{},
+		posted:    map[string]int{},
 	}
 }
 
@@ -49,6 +63,7 @@ func (s *Server) routeTenants(mux *http.ServeMux) {
 	mux.HandleFunc("GET /managed/v1/tenants/readings", s.getTenantReadings)
 	mux.HandleFunc("PUT /managed/v1/tenants/usage", s.putTenantUsage)
 	mux.HandleFunc("PUT /managed/v1/tenants/{instanceId}", s.putTenant)
+	s.routeArchives(mux)
 }
 
 func (s *Server) SetDedicated() {
@@ -135,8 +150,11 @@ func (s *Server) putTenant(w http.ResponseWriter, r *http.Request) {
 	}
 	s.tenants.puts[entry.InstanceID]++
 	s.tenants.entries[entry.InstanceID] = body
-	status := s.tenants.statuses[entry.InstanceID]
+	status, known := s.tenants.statuses[entry.InstanceID]
 	status.InstanceID = entry.InstanceID
+	if s.importing(w, &entry, &status, known) {
+		return
+	}
 	if reason, refused := s.tenants.refuse[entry.InstanceID]; refused {
 		if status.State == "" {
 			status.State = "applying"
@@ -164,15 +182,6 @@ func (s *Server) putTenant(w http.ResponseWriter, r *http.Request) {
 	}
 	if status.State != "removed" && status.Administrator == nil {
 		status.Administrator = &tms.TenantAdministrator{}
-	}
-	for _, c := range entry.Commands {
-		if c.Kind == "archive" {
-			status.Refused = &tms.TenantRefusal{
-				Revision: entry.Revision,
-				Code:     "invalid",
-				Reason:   "this release does not take tenant archives",
-			}
-		}
 	}
 	s.tenants.statuses[entry.InstanceID] = status
 	writeJSON(w, status)

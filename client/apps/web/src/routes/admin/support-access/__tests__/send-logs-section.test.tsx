@@ -18,6 +18,7 @@ const NOV_15 = 1_794_744_000;
 function logs(overrides: Partial<SupportLogs> = {}): SupportLogs {
   return {
     managed: true,
+    available: true,
     inFlight: false,
     remainingToday: 5,
     requests: [],
@@ -138,6 +139,17 @@ describe("Send logs to Trenova support", () => {
 
   it("shows nothing on a self-hosted install", async () => {
     mocks.fetchSupportLogs.mockResolvedValue(logs({ managed: false }));
+
+    renderAccountingPage(<SendLogsSection />);
+
+    await waitFor(() => expect(mocks.fetchSupportLogs).toHaveBeenCalled());
+    await waitFor(() => expect(screen.queryByLabelText("Loading log requests")).toBeNull());
+    expect(screen.queryByRole("region")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Send logs" })).not.toBeInTheDocument();
+  });
+
+  it("shows nothing on a shared server, whose logs hold every company's lines", async () => {
+    mocks.fetchSupportLogs.mockResolvedValue(logs({ available: false }));
 
     renderAccountingPage(<SendLogsSection />);
 

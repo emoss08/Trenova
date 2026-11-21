@@ -32,6 +32,19 @@ type TenantArchive struct {
 	TakenAt   time.Time `json:"takenAt"`
 }
 
+type TenantRestore struct {
+	CommandID string    `json:"commandId"`
+	State     string    `json:"state"`
+	At        time.Time `json:"at"`
+	Reason    string    `json:"reason,omitempty"`
+}
+
+type TenantCommandFailure struct {
+	CommandID string `json:"commandId"`
+	Kind      string `json:"kind"`
+	Reason    string `json:"reason"`
+}
+
 type TenantRefusal struct {
 	Revision int64  `json:"revision"`
 	Code     string `json:"code"`
@@ -39,12 +52,15 @@ type TenantRefusal struct {
 }
 
 type TenantStatus struct {
-	InstanceID      string               `json:"instanceId"`
-	AppliedRevision *int64               `json:"appliedRevision,omitempty"`
-	State           string               `json:"state"`
-	Administrator   *TenantAdministrator `json:"administrator,omitempty"`
-	LastArchive     *TenantArchive       `json:"lastArchive,omitempty"`
-	Refused         *TenantRefusal       `json:"refused,omitempty"`
+	InstanceID      string                 `json:"instanceId"`
+	AppliedRevision *int64                 `json:"appliedRevision,omitempty"`
+	State           string                 `json:"state"`
+	Administrator   *TenantAdministrator   `json:"administrator,omitempty"`
+	LastArchive     *TenantArchive         `json:"lastArchive,omitempty"`
+	LastRestore     *TenantRestore         `json:"lastRestore,omitempty"`
+	CommandFailures []TenantCommandFailure `json:"commandFailures,omitempty"`
+	SupportGrants   *[]SupportGrant        `json:"supportGrants,omitempty"`
+	Refused         *TenantRefusal         `json:"refused,omitempty"`
 }
 
 type TenantReading struct {

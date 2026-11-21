@@ -258,8 +258,9 @@ func (h *Handler) commandProblem(w http.ResponseWriter, instanceID, commandID st
 		errors.Is(err, tenantarchive.ErrKeyInvalid),
 		errors.Is(err, tenantarchive.ErrKeyNotExpected):
 		managedroutes.WriteProblem(w, h.l, http.StatusBadRequest, err.Error())
+	case errors.Is(err, tenantlifecycle.ErrTenantBusy):
+		managedroutes.WriteProblem(w, h.l, http.StatusLocked, err.Error())
 	case errors.Is(err, tenantlifecycle.ErrCommandConflict),
-		errors.Is(err, tenantlifecycle.ErrTenantBusy),
 		errors.Is(err, tenantlifecycle.ErrTenantState):
 		managedroutes.WriteProblem(w, h.l, http.StatusConflict, err.Error())
 	default:

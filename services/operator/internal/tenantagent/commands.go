@@ -1,0 +1,520 @@
+package tenantagent
+
+import (
+	"context"
+	"crypto/sha256"
+	"encoding/hex"
+	"errors"
+	"fmt"
+	"strings"
+	"time"
+
+	"github.com/bytedance/sonic"
+	"github.com/google/uuid"
+
+	"github.com/emoss08/trenova/operator/internal/instanceapi"
+	"github.com/emoss08/trenova/operator/internal/tms"
+)
+
+const (
+	DefaultStorageEvery = time.Minute
+	nightlyRefresh      = time.Hour
+	restoreUntouched    = "Nothing was changed: "
+	restoreIncomplete   = "The tenant is incomplete: "
+)
+
+type command struct {
+	kind     string
+	id       string
+	purpose  string
+	location string
+	expect   string
+}
+
+func commandsOf(entry *instanceapi.SharedTenant) []command {
+	out := make([]command, 0, len(entry.Commands))
+	for _, raw := range entry.Commands {
+		kind, err := raw.Discriminator()
+		if err != nil {
+			continue
+		}
+		switch kind {
+		case tms.CommandArchive:
+			c, cerr := raw.AsSharedArchiveCommand()
+			if cerr == nil {
+				out = append(out, command{
+					kind: kind, id: c.Id.String(), purpose: string(c.Purpose),
+				})
+			}
+		case tms.CommandRestore:
+			c, cerr := raw.AsSharedRestoreCommand()
+			if cerr == nil {
+				out = append(out, command{
+					kind: kind, id: c.Id.String(), location: c.Location, expect: c.ExpectSha256,
+				})
+			}
+		case tms.CommandImport:
+			c, cerr := raw.AsSharedImportCommand()
+			if cerr == nil {
+				out = append(out, command{
+					kind: kind, id: c.Id.String(), location: c.Location, expect: c.ExpectSha256,
+				})
+			}
+		}
+	}
+	return out
+}
+
+type refusal struct {
+	kind   string
+	reason string
+	at     time.Time
+}
+
+type targetKey struct {
+	instance string
+	command  string
+}
+
+type start struct {
+	instance uuid.UUID
+	cmd      command
+}
+
+func (a *Agent) forgetUnlisted(desired *instanceapi.SharedTenantList) {
+	listed := make(map[string]struct{})
+	for i := range desired.Tenants {
+		for _, c := range commandsOf(&desired.Tenants[i]) {
+			listed[c.id] = struct{}{}
+		}
+	}
+	for id := range a.refusals {
+		if _, ok := listed[id]; !ok {
+			delete(a.refusals, id)
+		}
+	}
+	for id := range a.asked {
+		if _, ok := listed[id]; !ok {
+			delete(a.asked, id)
+		}
+	}
+}
+
+func settled(c command, held *tms.TenantStatus, refused map[string]refusal) bool {
+	if _, ok := refused[c.id]; ok {
+		return true
+	}
+	for _, f := range held.CommandFailures {
+		if f.CommandID == c.id {
+			return true
+		}
+	}
+	switch c.kind {
+	case tms.CommandArchive:
+		return held.LastArchive != nil && held.LastArchive.CommandID == c.id
+	case tms.CommandRestore:
+		return held.LastRestore != nil && held.LastRestore.CommandID == c.id
+	case tms.CommandImport:
+		return held.AppliedRevision != nil
+	default:
+		return true
+	}
+}
+
+func holdsLifecycle(entry *instanceapi.SharedTenant, held *tms.TenantStatus) bool {
+	if held.AppliedRevision == nil || *held.AppliedRevision < entry.Revision {
+		return false
+	}
+	switch entry.Lifecycle {
+	case instanceapi.SharedTenantActive, instanceapi.SharedTenantSuspended:
+		return held.State == string(entry.Lifecycle)
+	case instanceapi.SharedTenantRemoved:
+		return false
+	default:
+		return false
+	}
+}
+
+func (a *Agent) pendingImport(
+	ctx context.Context,
+	entry *instanceapi.SharedTenant,
+	held *tms.TenantStatus,
+) (pending *command, blocked bool, err error) {
+	for _, c := range commandsOf(entry) {
+		if c.kind != tms.CommandImport {
+			continue
+		}
+		if _, refused := a.refusals[c.id]; refused && held.AppliedRevision == nil {
+			return nil, true, nil
+		}
+		if settled(c, held, a.refusals) {
+			continue
+		}
+		_, gerr := a.p.TMS.TenantCommand(ctx, entry.InstanceId.String(), c.kind, c.id)
+		switch {
+		case errors.Is(gerr, tms.ErrCommandNotFound):
+			return &c, false, nil
+		case gerr != nil:
+			return nil, false, gerr
+		default:
+			return nil, false, nil
+		}
+	}
+	return nil, false, nil
+}
+
+func (a *Agent) nextCommand(
+	ctx context.Context,
+	entry *instanceapi.SharedTenant,
+	held *tms.TenantStatus,
+) (*command, error) {
+	if !holdsLifecycle(entry, held) {
+		return nil, nil
+	}
+	id := entry.InstanceId.String()
+	for _, c := range commandsOf(entry) {
+		if c.kind == tms.CommandImport || settled(c, held, a.refusals) {
+			continue
+		}
+		got, err := a.p.TMS.TenantCommand(ctx, id, c.kind, c.id)
+		switch {
+		case errors.Is(err, tms.ErrCommandNotFound):
+			return &c, nil
+		case err != nil:
+			return nil, err
+		case got.Settled():
+			continue
+		default:
+			a.p.Logger.Debug("a tenant command is running",
+				"instanceId", id, "command", c.id, "kind", c.kind,
+				"phase", got.Progress.Phase, "bytes", got.Progress.Bytes)
+			return nil, nil
+		}
+	}
+	return nil, nil
+}
+
+func (a *Agent) storageDue(wanted []targetKey, commandsListed bool) bool {
+	now := a.now()
+	for _, k := range wanted {
+		if _, ok := a.asked[k.command]; !ok {
+			return true
+		}
+	}
+	if len(wanted) > 0 && now.Sub(a.storageAt) >= a.p.StorageEvery {
+		return true
+	}
+	return commandsListed && now.Sub(a.nightlyAt) >= nightlyRefresh &&
+		now.Sub(a.storageAt) >= a.p.StorageEvery
+}
+
+func (a *Agent) targets(
+	ctx context.Context,
+	wanted []targetKey,
+	commandsListed bool,
+) map[targetKey]instanceapi.SharedArchiveTarget {
+	if !a.storageDue(wanted, commandsListed) {
+		return nil
+	}
+	a.storageAt = a.now()
+	for _, k := range wanted {
+		a.asked[k.command] = struct{}{}
+	}
+	storage, err := a.p.ControlPlane.SharedStorage(ctx)
+	if err != nil {
+		a.p.Logger.Warn("cannot read where the archives go; the commands wait", "error", err)
+		return nil
+	}
+	for _, w := range storage.Waiting {
+		a.p.Logger.Info("the control plane has no archive credential for a command yet",
+			"instanceId", w.InstanceId, "command", w.CommandId, "reason", w.Reason)
+	}
+	out := make(map[targetKey]instanceapi.SharedArchiveTarget, len(storage.Archives))
+	for _, t := range storage.Archives {
+		out[targetKey{instance: t.InstanceId.String(), command: t.CommandId.String()}] = t
+	}
+	a.deliverNightly(ctx, storage.Archives)
+	return out
+}
+
+func (a *Agent) targetFor(
+	targets map[targetKey]instanceapi.SharedArchiveTarget,
+	instanceID uuid.UUID,
+	c command,
+) (*tms.ArchiveTarget, bool) {
+	t, ok := targets[targetKey{instance: instanceID.String(), command: c.id}]
+	if !ok {
+		return nil, false
+	}
+	if why := mismatch(&t, instanceID, c); why != "" {
+		a.p.Logger.Warn(
+			"the control plane's archive target does not fit its command; it is not used",
+			"instanceId",
+			instanceID,
+			"command",
+			c.id,
+			"kind",
+			c.kind,
+			"why",
+			why,
+		)
+		return nil, false
+	}
+	return convertTarget(&t), true
+}
+
+func mismatch(t *instanceapi.SharedArchiveTarget, instanceID uuid.UUID, c command) string {
+	keys := t.ArchiveKeys != nil && len(*t.ArchiveKeys) > 0
+	switch {
+	case t.InstanceId != instanceID || t.CommandId.String() != c.id:
+		return "it names another tenant or command"
+	case string(t.Kind) != c.kind:
+		return "it is for another kind of command"
+	case c.kind == tms.CommandArchive && t.Access != instanceapi.TargetWrite,
+		c.kind != tms.CommandArchive && t.Access != instanceapi.TargetRead:
+		return "its access does not fit the command"
+	case c.kind == tms.CommandArchive &&
+		t.Prefix != "tenants/"+instanceID.String()+"/archives/"+c.id+"/":
+		return "its prefix is not the command's archive"
+	case c.kind != tms.CommandArchive && !samePlace(t.Bucket, t.Prefix, c.location):
+		return "its prefix is not the archive the command names"
+	case c.kind == tms.CommandArchive && c.purpose == string(instanceapi.SharedArchiveExport) && keys:
+		return "an export is written without archive keys"
+	case !(c.kind == tms.CommandArchive && c.purpose == string(instanceapi.SharedArchiveExport)) &&
+		!keys:
+		return "it carries no archive keys"
+	default:
+		return ""
+	}
+}
+
+func samePlace(bucket, prefix, location string) bool {
+	slash := func(s string) string { return strings.TrimSuffix(s, "/") + "/" }
+	return bucket != "" && prefix != "" && slash("s3://"+bucket+"/"+prefix) == slash(location)
+}
+
+func convertTarget(t *instanceapi.SharedArchiveTarget) *tms.ArchiveTarget {
+	out := &tms.ArchiveTarget{
+		InstanceID:      t.InstanceId.String(),
+		CommandID:       t.CommandId.String(),
+		Kind:            string(t.Kind),
+		Access:          string(t.Access),
+		Endpoint:        t.Endpoint,
+		Region:          t.Region,
+		Bucket:          t.Bucket,
+		Prefix:          t.Prefix,
+		AccessKeyID:     t.AccessKeyId,
+		SecretAccessKey: t.SecretAccessKey,
+		ExpiresAt:       t.ExpiresAt,
+		ArchiveKeys:     archiveKeys(t.ArchiveKeys),
+	}
+	if t.SessionToken != nil {
+		out.SessionToken = *t.SessionToken
+	}
+	return out
+}
+
+func archiveKeys(keys *[]instanceapi.ArchiveKey) []tms.ArchiveKey {
+	if keys == nil {
+		return nil
+	}
+	out := make([]tms.ArchiveKey, 0, len(*keys))
+	for _, k := range *keys {
+		out = append(out, tms.ArchiveKey{ID: k.Id, Key: k.Key, Current: k.Current})
+	}
+	return out
+}
+
+func (a *Agent) deliverNightly(ctx context.Context, targets []instanceapi.SharedArchiveTarget) {
+	grant := nightlyFrom(targets)
+	if grant == nil {
+		return
+	}
+	body, err := sonic.Marshal(grant)
+	if err != nil {
+		return
+	}
+	sum := sha256.Sum256(body)
+	digest := hex.EncodeToString(sum[:])
+	if digest == a.nightly {
+		a.nightlyAt = a.now()
+		return
+	}
+	if err = a.p.TMS.PutNightlyGrant(ctx, grant); err != nil {
+		a.p.Logger.Warn("cannot give the TMS the nightly archive grant; it is sent again later",
+			"bucket", grant.Bucket, "error", err)
+		return
+	}
+	a.nightly, a.nightlyAt = digest, a.now()
+	ids := make([]string, 0, len(grant.ArchiveKeys))
+	for _, k := range grant.ArchiveKeys {
+		ids = append(ids, k.ID)
+	}
+	a.p.Logger.Info("the nightly archive grant was given to the TMS",
+		"bucket", grant.Bucket, "archiveKeyIds", ids, "expires", grant.ExpiresAt != nil)
+}
+
+func nightlyFrom(targets []instanceapi.SharedArchiveTarget) *tms.NightlyGrant {
+	var picked *instanceapi.SharedArchiveTarget
+	for i := range targets {
+		t := &targets[i]
+		if t.ArchiveKeys == nil || len(*t.ArchiveKeys) == 0 {
+			continue
+		}
+		if picked == nil ||
+			(picked.Access != instanceapi.TargetWrite && t.Access == instanceapi.TargetWrite) {
+			picked = t
+		}
+	}
+	if picked == nil {
+		return nil
+	}
+	grant := &tms.NightlyGrant{
+		Endpoint:        picked.Endpoint,
+		Region:          picked.Region,
+		Bucket:          picked.Bucket,
+		AccessKeyID:     picked.AccessKeyId,
+		SecretAccessKey: picked.SecretAccessKey,
+		ExpiresAt:       picked.ExpiresAt,
+		ArchiveKeys:     archiveKeys(picked.ArchiveKeys),
+	}
+	if picked.SessionToken != nil {
+		grant.SessionToken = *picked.SessionToken
+	}
+	return grant
+}
+
+func (a *Agent) startAll(
+	ctx context.Context,
+	starts []start,
+	targets map[targetKey]instanceapi.SharedArchiveTarget,
+) error {
+	var errs []error
+	for _, s := range starts {
+		target, ok := a.targetFor(targets, s.instance, s.cmd)
+		if !ok {
+			continue
+		}
+		if err := a.startOne(ctx, s, target); err != nil {
+			errs = append(errs, err)
+		}
+	}
+	return errors.Join(errs...)
+}
+
+func (a *Agent) startOne(ctx context.Context, s start, target *tms.ArchiveTarget) error {
+	id := s.instance.String()
+	var err error
+	switch s.cmd.kind {
+	case tms.CommandArchive:
+		_, err = a.p.TMS.StartArchive(ctx, id, &tms.ArchiveStart{
+			CommandID: s.cmd.id, Purpose: s.cmd.purpose, Target: *target,
+		})
+	case tms.CommandRestore:
+		_, err = a.p.TMS.StartRestore(ctx, id, &tms.RestoreStart{
+			CommandID: s.cmd.id, ExpectSHA256: s.cmd.expect, Target: *target,
+		})
+	default:
+		return nil
+	}
+	return a.started(id, s.cmd, err)
+}
+
+func (a *Agent) started(instanceID string, c command, err error) error {
+	if err == nil {
+		a.p.Logger.Info("a tenant command was started",
+			"instanceId", instanceID, "command", c.id, "kind", c.kind, "purpose", c.purpose)
+		return nil
+	}
+	if errors.Is(err, tms.ErrTenantBusy) {
+		a.p.Logger.Info("a tenant command waits for the tenant's running one",
+			"instanceId", instanceID, "command", c.id, "kind", c.kind)
+		return nil
+	}
+	if reason, ok := tms.Refused(err); ok {
+		a.refusals[c.id] = refusal{kind: c.kind, reason: reason, at: a.now().UTC()}
+		a.p.Logger.Warn("the TMS refused a tenant command; it is reported as failed",
+			"instanceId", instanceID, "command", c.id, "kind", c.kind, "reason", reason)
+		return nil
+	}
+	return fmt.Errorf("tenant %s command %s: %w", instanceID, c.id, err)
+}
+
+func (a *Agent) reportCommands(
+	entry *instanceapi.SharedTenant,
+	held *tms.TenantStatus,
+	out *instanceapi.SharedTenantStatus,
+) {
+	failures := make([]instanceapi.SharedCommandFailure, 0, len(held.CommandFailures))
+	seen := map[string]bool{}
+	add := func(id, kind, reason string) {
+		parsed, err := uuid.Parse(id)
+		if err != nil || seen[id] || len(failures) == maxFailures ||
+			(kind != tms.CommandArchive && kind != tms.CommandImport) {
+			return
+		}
+		seen[id] = true
+		if strings.TrimSpace(reason) == "" {
+			reason = "the command could not be completed"
+		}
+		failures = append(failures, instanceapi.SharedCommandFailure{
+			CommandId: parsed,
+			Kind:      instanceapi.SharedCommandFailureKind(kind),
+			Reason:    clip(reason, maxMessage),
+		})
+	}
+	for _, c := range commandsOf(entry) {
+		r, ok := a.refusals[c.id]
+		if !ok {
+			continue
+		}
+		if c.kind == tms.CommandRestore {
+			if parsed, err := uuid.Parse(c.id); err == nil {
+				reason := clip(
+					restoreUntouched+"the server refused to start the restore: "+r.reason,
+					maxMessage,
+				)
+				out.LastRestore = &instanceapi.SharedRestoreReport{
+					CommandId: parsed,
+					State:     instanceapi.RestoreFailed,
+					At:        r.at,
+					Reason:    &reason,
+				}
+			}
+			continue
+		}
+		add(c.id, r.kind, r.reason)
+	}
+	for _, f := range held.CommandFailures {
+		add(f.CommandID, f.Kind, f.Reason)
+	}
+	if len(failures) > 0 {
+		out.CommandFailures = &failures
+	}
+}
+
+func restoreReport(r *tms.TenantRestore) *instanceapi.SharedRestoreReport {
+	if r == nil || (r.State != string(instanceapi.RestoreDone) &&
+		r.State != string(instanceapi.RestoreFailed)) {
+		return nil
+	}
+	parsed, err := uuid.Parse(r.CommandID)
+	if err != nil {
+		return nil
+	}
+	out := &instanceapi.SharedRestoreReport{
+		CommandId: parsed,
+		State:     instanceapi.SharedRestoreReportState(r.State),
+		At:        r.At.UTC(),
+	}
+	if r.State == string(instanceapi.RestoreFailed) {
+		reason := r.Reason
+		if !strings.HasPrefix(reason, restoreUntouched) &&
+			!strings.HasPrefix(reason, restoreIncomplete) {
+			reason = restoreIncomplete + reason
+		}
+		reason = clip(reason, maxMessage)
+		out.Reason = &reason
+	}
+	return out
+}

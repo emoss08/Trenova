@@ -150,6 +150,15 @@ type CommandFailure struct {
 	Reason    string `json:"reason"`
 }
 
+type SupportGrant struct {
+	ID               string    `json:"id"`
+	OrganizationID   string    `json:"organizationId"`
+	OrganizationName string    `json:"organizationName"`
+	StaffEmail       string    `json:"staffEmail"`
+	Scope            string    `json:"scope"`
+	ExpiresAt        time.Time `json:"expiresAt"`
+}
+
 type Status struct {
 	InstanceID      string           `json:"instanceId"`
 	AppliedRevision *int64           `json:"appliedRevision,omitempty"`
@@ -158,6 +167,7 @@ type Status struct {
 	LastArchive     *Archive         `json:"lastArchive,omitempty"`
 	LastRestore     *Restore         `json:"lastRestore,omitempty"`
 	CommandFailures []CommandFailure `json:"commandFailures,omitempty"`
+	SupportGrants   *[]SupportGrant  `json:"supportGrants,omitempty"`
 	Refused         *Refusal         `json:"refused,omitempty"`
 }
 

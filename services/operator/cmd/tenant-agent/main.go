@@ -23,6 +23,7 @@ import (
 	"github.com/emoss08/trenova/operator/internal/escrow/escrowfile"
 	"github.com/emoss08/trenova/operator/internal/hosttelemetry"
 	"github.com/emoss08/trenova/operator/internal/runlock"
+	"github.com/emoss08/trenova/operator/internal/supportkeys"
 	"github.com/emoss08/trenova/operator/internal/systememail"
 	"github.com/emoss08/trenova/operator/internal/telemetryrelay"
 	"github.com/emoss08/trenova/operator/internal/tenantagent"
@@ -127,6 +128,7 @@ func run(ctx context.Context, cfg *config, logger *slog.Logger) error {
 		}),
 		Usage:       usage.NewShared(usage.SharedParams{ControlPlane: cp, TMS: tmsClient}),
 		EmailEvents: events,
+		SupportKeys: supportkeys.New(tmsClient, logger),
 		Version:     cfg.version,
 		Logger:      logger,
 		Poll:        cfg.poll,

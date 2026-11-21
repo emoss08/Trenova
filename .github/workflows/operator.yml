@@ -123,6 +123,15 @@ jobs:
           tags: trenova-operator:ci
           cache-from: type=gha,scope=operator
           cache-to: type=gha,scope=operator,mode=max
+      - name: Build the tenant agent image
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
+        with:
+          context: .
+          file: ./deploy/Dockerfile.operator
+          target: tenant-agent
+          load: true
+          tags: trenova-tenant-agent:ci
+          cache-from: type=gha,scope=operator
       - name: Build the control plane stub image
         uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
         with:

@@ -758,6 +758,8 @@ feature list. The operator calls, with the bearer `managed.token`:
 ```
 
 - `instanceId` is the instance's id in the control plane, the audience every assertion must name.
+  A shared server leaves it out (one is refused): each assertion names its tenant's instance, which
+  the server checks against its tenants ([shared-tenancy.md](shared-tenancy.md#support-access-for-a-shared-tenant)).
 - `staffDomain` is the one email domain grants may name; lower-cased, no subdomain is accepted.
 - `keys` holds one to four Ed25519 JSON Web Keys with distinct `kid`s. To rotate, deliver the
   old and the new key together, start signing with the new one, then deliver the set without the
@@ -769,8 +771,12 @@ wrong, `401` for a wrong token, `500` with no detail. `GET /managed/v1/support-a
 `{"instanceId", "staffDomain", "keyIds": [...], "receivedAt"}` (never a key), with an empty
 `keyIds` before the first delivery, so the operator can deliver only when what it holds differs.
 
-The set is one row, `managed_support_access_states` (`id = 'current'`, a global table), read
-through a 30-second one-entry cache like the feature list. Until a set arrives every entry is
+`DELETE /managed/v1/support-access` removes the set (`204`, also when none is held); the tenant
+agent sends it when the tenants document carries no `support`, so the server refuses every
+assertion. The operator of a dedicated instance never sends it.
+
+The set is one row, `managed_support_access_states` (`id = 'current'`, a global table; `instance_id`
+null on a shared server), read through a 30-second one-entry cache like the feature list. Until a set arrives every entry is
 refused and the grants page says support access is not available.
 
 The control plane puts the set in the spec as `support` (`instanceId`, `staffDomain`, `keys`),
@@ -783,7 +789,8 @@ nothing and the instance keeps what it holds.
 ### The live grants (instance to operator to control plane)
 
 `GET /managed/v1/support-access/grants`, bearer `managed.token`, exists only on the managed
-listener, which a self-hosted instance never opens. It answers every live grant on the instance,
+listener, which a self-hosted instance never opens, and answers 409 on a shared server, which
+reports each tenant's grants in that tenant's status instead. It answers every live grant on the instance,
 across organizations, soonest to expire first, at most 100 (`supportaccessports.MaxReportedGrants`;
 an organization holds at most 5):
 

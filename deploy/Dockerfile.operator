@@ -1,6 +1,9 @@
-# The Trenova Cloud operator (services/operator) and, as a separate target, the
-# control plane stub its CI install runs against. Build from the repository
-# root: docker build -f deploy/Dockerfile.operator --target operator .
+# The Trenova Cloud operator (services/operator), the tenant agent a shared
+# server runs beside its TMS (target tenant-agent, the same module's second
+# binary), and, as a separate target, the control plane stub its CI install runs
+# against. Build from the repository root:
+#   docker build -f deploy/Dockerfile.operator --target operator .
+#   docker build -f deploy/Dockerfile.operator --target tenant-agent .
 #
 # The operator module is not in go.work: Helm and client-go would raise the
 # versions of dependencies it shares with the TMS in workspace builds.
@@ -20,6 +23,10 @@ FROM source AS build-operator
 ARG GO_BUILD_JOBS=
 RUN go build ${GO_BUILD_JOBS:+-p ${GO_BUILD_JOBS}} -trimpath -ldflags="-s -w" -o /out/trenova-operator ./cmd/operator
 
+FROM source AS build-tenant-agent
+ARG GO_BUILD_JOBS=
+RUN go build ${GO_BUILD_JOBS:+-p ${GO_BUILD_JOBS}} -trimpath -ldflags="-s -w" -o /out/trenova-tenant-agent ./cmd/tenant-agent
+
 FROM source AS build-stub
 RUN go build -trimpath -ldflags="-s -w" -o /out/controlplane-stub ./cmd/controlplane-stub
 
@@ -28,6 +35,15 @@ COPY --from=build-operator /out/trenova-operator /usr/local/bin/trenova-operator
 USER 65532:65532
 EXPOSE 8081
 ENTRYPOINT ["/usr/local/bin/trenova-operator"]
+
+# Its state directory (/var/lib/trenova-tenant-agent: the server's identity and
+# the run lock) and the escrow directory are volumes Compose mounts; nothing
+# else is written. HEALTHCHECK is Compose's, with --healthcheck.
+FROM gcr.io/distroless/static-debian12:nonroot@sha256:afa5c872c891853ca7fcf1f12c3edb23f7eeef36189728842dd51042ff57f7ab AS tenant-agent
+COPY --from=build-tenant-agent /out/trenova-tenant-agent /usr/local/bin/trenova-tenant-agent
+USER 65532:65532
+EXPOSE 8081
+ENTRYPOINT ["/usr/local/bin/trenova-tenant-agent"]
 
 FROM gcr.io/distroless/static-debian12:nonroot@sha256:afa5c872c891853ca7fcf1f12c3edb23f7eeef36189728842dd51042ff57f7ab AS controlplane-stub
 COPY --from=build-stub /out/controlplane-stub /usr/local/bin/controlplane-stub

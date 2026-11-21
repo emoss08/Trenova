@@ -34,6 +34,47 @@ info:
     the server reports it `removed`. Every tenant is one organization of the server's TMS, and its
     `instanceId` names it in every call.
 
+    **The tenant archive.** One format holds one tenant's data, for every use: a customer's data
+    export, the nightly backup, a restore, a move to another shared server, a move to a Trenova of
+    the customer's own, and the final archive taken before a tenant is removed. Archives live in
+    the shared archive bucket of the tenant's region, which `getSharedStorage` names with the
+    bucket's key:
+
+    - `tenants/<instanceId>/archives/<archiveId>/`: an archive the control plane asked for with an
+      `archive` command (`<archiveId>` is the command's `id`);
+    - `tenants/<instanceId>/nightly/<YYYY-MM-DD>/`: the nightly archive the server takes of each
+      active tenant on its own (the UTC day it was taken), keeping the newest
+      `plan.backupRetentionDays` and deleting older ones whole.
+
+    Each archive's prefix holds `manifest.json` (a `TenantArchiveManifest`) and the parts it
+    names, at keys relative to the prefix: one object per table under `tables/`, in the order the
+    tables can be loaded in (a table after every table it references), and the tenant's documents
+    under `documents/`. An archive is **complete only when `manifest.json` exists**: write every
+    part first and the manifest last, as one object; an archive without one is a partial write the
+    control plane shows as incomplete and never restores, imports or delivers. Never write
+    anything else under an archive's prefix, and never write `export.tar` there: the control
+    plane writes it under a customer export's archive. An archive's SHA-256 (`lastArchive.sha256`,
+    a command's `expectSha256`) is the lowercase hex SHA-256 of `manifest.json`'s exact bytes; the
+    manifest in turn holds every part's SHA-256, so the one digest proves the whole archive.
+
+    **Encryption and the region's archive key.** Archives of purpose `final` and `move`, and the
+    nightly ones, hold everything of the tenant and are encrypted part by part
+    (`TenantArchiveManifest.encryption`): each archive gets a fresh random 256-bit data key, the
+    data key is wrapped with the region's **archive key** and written, wrapped, in the manifest
+    with the id of the archive key that wrapped it. Columns the TMS encrypts with its install's key
+    are decrypted on export and re-encrypted with the destination's key on import, so inside an
+    archive they are protected by the archive's own encryption alone. Archives of purpose `export`
+    are the customer's readable copy: not encrypted, and without what is a secret rather than the
+    customer's data (password hashes, second-factor secrets and recovery codes, API key hashes,
+    sessions and tokens, integration credentials, webhook secrets), each left-out table or column
+    listed in the manifest's `omitted`. The control plane never decrypts a part: it lists
+    archives, reads manifests (plaintext JSON with no tenant data in it but the organization's
+    name), verifies sizes and SHA-256 of the stored bytes, copies objects and deletes them. The
+    archive keys reach a shared server only in `getSharedStorage` (`archiveKeys`), and a dedicated
+    instance importing an archive only in its served spec's `import.archiveKeys`. A region keeps
+    every archive key it has had until the archives each wrapped have expired: losing one loses
+    every archive it wrapped.
+
     **Errors** are RFC 9457 problem details with a `code`. `401 unauthenticated` means the
     certificate is unknown, revoked or names an instance or server that is gone; do not retry with
     it. `403 forbidden` means the certificate's identity may not call the operation.
@@ -60,8 +101,12 @@ paths:
             ETag:
               description: |
                 Opaque, quoted: it changes when the revision or what the control plane adds when
-                serving (`account`, `support`, `systemEmail`) changes. Send it back as
-                `If-None-Match`.
+                serving (`account`, `support`, `systemEmail`, and an import's archive keys by id)
+                changes. Send it back as `If-None-Match`.
+              schema:
+                type: string
+            Cache-Control:
+              description: "`no-store`: a spec that carries an import carries the region's archive keys."
               schema:
                 type: string
           content:
@@ -76,8 +121,11 @@ paths:
           $ref: "#/components/responses/Forbidden"
         "503":
           description: |
-            The desired spec names no release yet: it was written before staff set its channel.
-            Retry after `Retry-After`; the rollout writes a revision that names one.
+            The desired spec names no release yet: it was written before staff set its channel; or
+            the instance is a company's own machine for a move to Managed whose archive is still
+            being copied into its bucket, so there is nothing it may install yet (it must not start
+            the TMS, which would bootstrap an empty database). Retry after `Retry-After`; the
+            rollout, or the move once its copy is checked, makes a spec to serve.
           headers:
             Retry-After:
               description: Seconds to wait.
@@ -487,14 +535,26 @@ paths:
       x-identity: [shared_server]
       summary: The tenants this shared server should hold
       description: |
-        Every tenant placed on the calling server that the server has not yet reported `removed`,
-        as it should be: each tenant's spec revision, what to do with it (`lifecycle`), its
-        organization, plan, features, add-ons, allowances, first administrator and plan page, and
-        the commands to run for it. One document for the whole server, ordered by `instanceId`;
-        a server holds at most 1,000 tenants. Poll it every 15 seconds with `If-None-Match`: `304`
-        while nothing in it changed. Converge every tenant listed and report each with
-        `reportSharedStatus`; a tenant the server holds that is not listed is not this server's
-        any more: keep its data and say nothing of it until a later document lists it.
+        Every tenant the calling server should hold or let go of, as it should be: each tenant's
+        spec revision, what to do with it (`lifecycle`), its organization, plan, features, add-ons,
+        allowances, first administrator and plan page, and the commands to run for it. One
+        document for the whole server, ordered by `instanceId`; a server holds at most 1,000
+        tenants. Poll it every 15 seconds with `If-None-Match`: `304` while nothing in it changed.
+        Converge every tenant listed and report each with `reportSharedStatus`; a tenant the server
+        holds that is not listed is not this server's any more: keep its data and say nothing of it
+        until a later document lists it.
+
+        A tenant is listed on a server while it is placed there and not yet reported `removed`.
+        While Trenova moves a tenant from one shared server to another it is listed on both: the
+        server it is moving to lists it from the moment its archive is taken, `suspended`, with an
+        `import` command, until the switch; from the switch the server it left lists it `removed`
+        until that server reports it gone. A move that fails before the switch lists the tenant
+        `removed` on the server it was moving to until that server reports it gone, and the tenant
+        stays where it was.
+
+        The document also carries, once for the whole server, the system email sender's
+        fingerprint and Trenova support access (`support`): the keys whose assertions every
+        tenant on the server accepts.
       parameters:
         - name: If-None-Match
           in: header
@@ -609,19 +669,26 @@ paths:
     get:
       operationId: getSharedStorage
       x-identity: [shared_server]
-      summary: Where to keep each tenant archive asked for, and the credential to keep it with
+      summary: Where to keep or read each tenant archive a command names, and the credential for it
       description: |
-        For each `archive` command the tenants document lists, where to write the archive and the
-        credential to write and read it with: the shared archive bucket of the tenant's region, the
-        archive's own prefix in it (`tenants/<instanceId>/archives/<commandId>/`), and the bucket's
-        own access key, which Trenova scopes at the provider to that bucket alone (read, write,
-        list, delete and multipart uploads in it). Write every object of an archive under its
-        prefix and nowhere else; the same key reads archives back (a restore) and lists and prunes
-        a tenant's archives. Keep the key only in memory or in the server's own sealed secrets,
-        never log it. When `sessionToken` and `expiresAt` are absent the key does not expire; fetch
-        this again when a write is refused, in case Trenova replaced it. Report the archive as the
-        tenant's `lastArchive` with its `location` (`s3://<bucket>/<prefix>`). A command whose region
-        has no archive bucket recorded yet is listed in `waiting` with why; fetch again in a minute.
+        For each `archive`, `restore` and `import` command the tenants document lists, where the
+        archive is and the credential to reach it with: the shared archive bucket of the tenant's
+        region, the archive's prefix in it, and the bucket's own access key, which Trenova scopes at
+        the provider to that bucket alone (read, write, list, delete and multipart uploads in it).
+
+        - An `archive` command's target has `access: write` and the prefix
+          `tenants/<instanceId>/archives/<commandId>/`: write every object of the archive under it
+          and nowhere else, `manifest.json` last, then report the archive as the tenant's
+          `lastArchive` with its `location` (`s3://<bucket>/<prefix>`).
+        - A `restore` or `import` command's target has `access: read` and the prefix of the archive
+          the command's `location` names: read the archive from it, and write nothing.
+
+        The same key lists and prunes a tenant's nightly archives
+        (`tenants/<instanceId>/nightly/`), which need no command. Keep the key only in memory or in
+        the server's own sealed secrets, never log it. When `sessionToken` and `expiresAt` are
+        absent the key does not expire; fetch this again when a request is refused, in case Trenova
+        replaced it. A command whose region has no archive bucket recorded yet is listed in
+        `waiting` with why; fetch again in a minute.
       responses:
         "200":
           description: The archives to write.
@@ -1118,6 +1185,99 @@ components:
           $ref: "#/components/schemas/SpecAccount"
         support:
           $ref: "#/components/schemas/SpecSupport"
+        import:
+          $ref: "#/components/schemas/SpecImport"
+
+    SpecImport:
+      type: object
+      description: |
+        Make this instance's data from a tenant archive instead of bootstrapping it: a company that
+        ran on a shared server is moving to a Trenova of its own (docs/decisions/0050-shared-
+        trenova.md, "Moving to Managed"). Present only in the spec served to the company's new
+        machine before its move switches, at a revision of its own; until the archive is copied and
+        checked, `getSpec` answers `503` and the operator installs nothing. The switch's revision,
+        above it, leaves `import` out: the operator then converges as for any instance and the
+        company's people sign in at `hostname`. The archive was copied by the control plane into
+        the instance's own backups bucket under `prefix`, in the tenant archive format
+        (`TenantArchiveManifest`), and the release in `release` is the one the shared server ran
+        when it took the archive (its manifest's `releaseVersion`), so the schema matches. Until
+        the switch the control plane records this machine's status reports on the move alone
+        (`import`, `appliedRevision`, `ready`, `version`): its usage reports are answered and not
+        recorded, as the company's server still meters it.
+
+        The operator, before the TMS's first start: reads `manifest.json` under `prefix` with the
+        instance's own storage key (`getStorage`), checks its SHA-256 against `expectSha256` and
+        every part against the manifest, and runs the TMS's import of the archive into the empty
+        database in place of the first-install bootstrap: the organization, its business unit,
+        users (the first administrator among them, who signs in with their password as before:
+        no invitation is sent, and `firstAdministrator.invite` is absent) and documents come from
+        the archive. It then reports `import` with `state: done` and `id`, and converges the rest
+        of the spec as usual. The spec served with `import` is `lifecycle: suspended`, the hold a
+        lapsed subscription uses: the operator runs the database and the import, reports them, and
+        starts nothing that serves a person, so the new address answers nothing anyone can use
+        until the switch's revision (`active`, without `import`) arrives. The control plane
+        switches once the machine has applied the import's revision with `import.state: done`;
+        it does not wait for `ready`. An
+        archive that does not match, or an import the TMS refuses, is reported `state: refused`
+        with a reason, and the operator leaves the database empty and never bootstraps it.
+        Importing again after a restart is idempotent by `id`: an import already done is not run
+        again.
+      required: [id, bucket, prefix, expectSha256, archiveKeys]
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: The import, which the status report's `import.id` names.
+        archiveKeys:
+          type: array
+          maxItems: 20
+          description: |
+            The archive keys of the region the archive was taken in, to unwrap its data key with (the
+            one its manifest's `encryption.keyId` names). Served only: added by the control plane
+            each time it serves the spec, opened from the keyring's seal, never stored in the spec's
+            revision and never in the `ETag`'s digest input in the clear. Hold them only in memory
+            while importing.
+          items:
+            $ref: "#/components/schemas/ArchiveKey"
+        bucket:
+          type: string
+          description: The instance's own backups bucket, as `getStorage` names it.
+        prefix:
+          type: string
+          maxLength: 200
+          description: "`imports/<id>/`: where in the bucket the archive's `manifest.json` and parts are."
+        expectSha256:
+          type: string
+          pattern: "^[0-9a-f]{64}$"
+          description: The lowercase hex SHA-256 of `manifest.json`'s exact bytes.
+
+    ImportStatus:
+      type: object
+      description: |
+        Where the spec's `import` stands, reported with every status report from the moment the
+        operator starts it until the spec no longer carries it.
+      required: [id, state, at]
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: The spec's `import.id`.
+        state:
+          type: string
+          enum: [importing, done, refused]
+          x-enum-varnames: [ImportImporting, ImportDone, ImportRefused]
+          description: |
+            `importing` while it runs; `done` once the database holds the archive; `refused` when the
+            archive did not match or the TMS refused it, with `reason`. Nothing is retried after a
+            refusal: the control plane tears the instance down and the company stays where it was.
+        at:
+          type: string
+          format: date-time
+          description: When it reached this state.
+        reason:
+          type: string
+          maxLength: 500
+          description: One line a staff member can read; present only when `refused`.
 
     SpecSupport:
       type: object
@@ -1564,6 +1724,8 @@ components:
             $ref: "#/components/schemas/DatabaseState"
         refused:
           $ref: "#/components/schemas/RefusedRevision"
+        import:
+          $ref: "#/components/schemas/ImportStatus"
         capabilities:
           type: array
           description: >
@@ -2249,6 +2411,45 @@ components:
             $ref: "#/components/schemas/SharedTenant"
         systemEmail:
           $ref: "#/components/schemas/SpecSystemEmail"
+        support:
+          $ref: "#/components/schemas/SharedSupport"
+
+    SharedSupport:
+      type: object
+      description: |
+        Trenova support access for every tenant on the server: the keys that sign the assertions
+        Trenova staff enter a tenant with, and the one email domain a grant may name. The same keys
+        and rotation as a dedicated instance's `SpecSupport`, served once for the whole server.
+        Absent when the control plane has no staff domain configured: support access is off, and
+        the server then refuses every assertion.
+
+        A grant is made in the TMS by an administrator of one tenant, for that tenant's
+        organization alone, and is reported in that tenant's `supportGrants`. The assertion is the
+        one `SpecSupport` describes, with `aud` the **tenant's** `instanceId` and `org` the
+        tenant's organization on the server. The TMS accepts it only when every one of these holds:
+        the signature verifies under a key listed here with the header's `kid`; `iss` is
+        `trenova-control-plane`; `iat` and `exp` are no more than 60 seconds apart and `exp` has not
+        passed; `jti` was never used before on the server; `aud` is the `instanceId` of a tenant the
+        server holds `active`, **and that tenant's organization is `org`** (the pair names one
+        tenant: an assertion for one tenant never opens another on the same server, whatever `org`
+        it names); and a live grant of exactly that organization names `sub`. The session it opens
+        is in that organization alone. The staff member's browser posts it to
+        `https://<the server's hostname>/api/v1/support/enter`.
+      required: [staffDomain, keys]
+      properties:
+        staffDomain:
+          type: string
+          maxLength: 253
+          description: |
+            The lower-case email domain of Trenova staff, the only one a grant may name: exactly this
+            domain, never a subdomain of it.
+        keys:
+          type: array
+          minItems: 1
+          maxItems: 4
+          description: The keys whose assertions are accepted, newest first; the newest signs.
+          items:
+            $ref: "#/components/schemas/SupportKey"
 
     SharedTenant:
       type: object
@@ -2281,8 +2482,11 @@ components:
             keep every byte of the tenant's data, sign its people out, refuse its sign-ins with the
             suspended page that points at the console, refuse its API calls and run none of its
             background work; it is suspended while its subscription lapses, while Trenova staff hold
-            it, or while its server takes its final archive. `removed`: its final archive is taken;
-            delete the tenant's data and documents, then report it `removed`.
+            it, while it is restored or moved, or while its server takes its final archive.
+            `removed`: the tenant is not this server's any more (its final archive is taken, it moved
+            to another server, or a move to this server failed): delete the tenant's data and
+            documents from this server, then report it `removed`. Archives in the bucket are
+            Trenova's to delete: never delete them for a removal.
         organizationName:
           type: string
           minLength: 1
@@ -2333,8 +2537,12 @@ components:
           maxItems: 20
           description: |
             What the server is asked to do for the tenant besides converging to this entry, oldest
-            first: listed until the server reports it done (an `archive` as the tenant's
-            `lastArchive`). Carry each out once, by `id`. Empty when there is none.
+            first, once the tenant holds this entry's `lifecycle`. Each is listed until the server
+            reports it done or failed: an `archive` as the tenant's `lastArchive` or in its
+            `commandFailures`, a `restore` as its `lastRestore`, an `import` by the tenant held
+            `suspended` at this `revision` or in its `commandFailures`. Carry each out once, by `id`:
+            a command listed again after a restart of the server is not run twice. Empty when there
+            is none.
           items:
             $ref: "#/components/schemas/SharedTenantCommand"
 
@@ -2362,22 +2570,29 @@ components:
 
     SharedTenantCommand:
       description: |
-        One command, told apart by `kind`. `archive` is the only kind now; a server that reads a
+        One command, told apart by `kind`: `archive`, `restore` or `import`. A server that reads a
         kind it does not know leaves it be and reports nothing of it.
       oneOf:
         - $ref: "#/components/schemas/SharedArchiveCommand"
+        - $ref: "#/components/schemas/SharedRestoreCommand"
+        - $ref: "#/components/schemas/SharedImportCommand"
       discriminator:
         propertyName: kind
         mapping:
           archive: "#/components/schemas/SharedArchiveCommand"
+          restore: "#/components/schemas/SharedRestoreCommand"
+          import: "#/components/schemas/SharedImportCommand"
 
     SharedArchiveCommand:
       type: object
       description: |
         Take an archive of the tenant alone: every table that carries it, in one consistent
-        snapshot, and its documents, in the tenant archive format. Write it where `getSharedStorage`
-        says for this `id`, then report it as the tenant's `lastArchive`. A `final` archive is taken
-        after the tenant is suspended for its removal: nothing changes it after.
+        (`REPEATABLE READ`) snapshot, and its documents, in the tenant archive format. Write it
+        where `getSharedStorage` says for this `id`, `manifest.json` last, then report it as the
+        tenant's `lastArchive`. An archive the server cannot take (a part it cannot write, a
+        snapshot that fails) is reported once in the tenant's `commandFailures` with why, and not
+        retried: the command stops being listed and Trenova asks again if it still needs one.
+        Trenova raises an alert for an archive not reported within 6 hours of `requestedAt`.
       required: [kind, id, purpose, requestedAt]
       properties:
         kind:
@@ -2390,9 +2605,92 @@ components:
           description: The archive's ID; report it as `lastArchive.commandId`.
         purpose:
           type: string
-          enum: [final]
-          x-enum-varnames: [SharedArchiveFinal]
-          description: "`final`: the archive the tenant's removal waits for."
+          enum: [final, export, move]
+          x-enum-varnames: [SharedArchiveFinal, SharedArchiveExport, SharedArchiveMove]
+          description: |
+            `final`: the archive the tenant's removal waits for; the tenant is already `suspended`,
+            so nothing changes it after. `export`: the customer asked for an export of their data;
+            the tenant is `active` and keeps working while it is taken (the snapshot makes it
+            consistent). `move`: the tenant is moving to another server; it is already
+            `suspended`, so the archive holds everything it will ever have here.
+        requestedAt:
+          type: string
+          format: date-time
+
+    SharedRestoreCommand:
+      type: object
+      description: |
+        Put the tenant back as an archive of it holds it. Listed only while the tenant is
+        `suspended` (its entry's `lifecycle`), and the tenant stays `suspended` through the restore
+        and after it: the control plane resumes it with a later revision once `lastRestore` says
+        `done`. The server: signs the tenant's people out and holds it suspended (as the entry
+        says); reads `manifest.json` from `location` with the `getSharedStorage` credential and
+        checks its SHA-256 against `expectSha256`, its `instanceId` against the tenant's, its
+        `schemaVersion` against the server's migration head and every part against the manifest;
+        only then, under one tenant-level lock, deletes every row and document of the tenant and
+        imports the archive's; and reports `lastRestore`. A check that fails before anything is
+        deleted is reported `failed` with the tenant untouched; a failure after the delete began
+        is reported `failed` and leaves the tenant suspended and incomplete, to be restored again
+        from the same or another archive.
+      required: [kind, id, location, expectSha256, takenAt, requestedAt]
+      properties:
+        kind:
+          type: string
+          enum: [restore]
+          x-enum-varnames: [SharedCommandRestore]
+        id:
+          type: string
+          format: uuid
+          description: The restore's ID; report it as `lastRestore.commandId`.
+        location:
+          type: string
+          maxLength: 1024
+          description: |
+            The archive, `s3://<bucket>/<prefix>`: always an archive of this tenant, under
+            `tenants/<instanceId>/archives/` or `tenants/<instanceId>/nightly/`.
+        expectSha256:
+          type: string
+          pattern: "^[0-9a-f]{64}$"
+          description: The lowercase hex SHA-256 of the archive's `manifest.json`; refuse an archive whose differs.
+        takenAt:
+          type: string
+          format: date-time
+          description: When the archive's snapshot was taken, as its manifest says.
+        requestedAt:
+          type: string
+          format: date-time
+
+    SharedImportCommand:
+      type: object
+      description: |
+        Make the tenant from an archive instead of from `firstAdministrator`: the tenant is moving
+        here from another shared server. Listed only on the tenant's first entry on this server,
+        with the tenant `suspended`, and only until the server reports the tenant held `suspended`
+        at the entry's `revision` (or reports the import in `commandFailures`). The server checks
+        the archive as a restore does (`expectSha256`, the tenant's `instanceId`, the schema, every
+        part), refuses it if any of the archive's ids already exists on the server, imports it in
+        one transaction (organization, business unit, users with their passwords and second
+        factors, every row and document: no invitation is issued), records the tenant at the
+        entry's `revision`, and reports it `suspended` with `appliedRevision` set. A refused import
+        leaves nothing of the tenant on the server and is reported once in `commandFailures`.
+      required: [kind, id, location, expectSha256, requestedAt]
+      properties:
+        kind:
+          type: string
+          enum: [import]
+          x-enum-varnames: [SharedCommandImport]
+        id:
+          type: string
+          format: uuid
+          description: The import's ID; report a failure of it as `commandFailures[].commandId`.
+        location:
+          type: string
+          maxLength: 1024
+          description: The archive to import, `s3://<bucket>/tenants/<instanceId>/archives/<archiveId>/`.
+        expectSha256:
+          type: string
+          pattern: "^[0-9a-f]{64}$"
+          description: The lowercase hex SHA-256 of the archive's `manifest.json`.
         requestedAt:
           type: string
           format: date-time
@@ -2452,6 +2750,29 @@ components:
           $ref: "#/components/schemas/AdministratorStatus"
         lastArchive:
           $ref: "#/components/schemas/SharedArchiveReport"
+        lastRestore:
+          $ref: "#/components/schemas/SharedRestoreReport"
+        commandFailures:
+          type: array
+          maxItems: 20
+          description: |
+            The `archive` and `import` commands listed for the tenant that the server could not carry
+            out, each with why. Report each while the command is still listed; once recorded the
+            command stops being listed, and reporting it again changes nothing.
+          items:
+            $ref: "#/components/schemas/SharedCommandFailure"
+        supportGrants:
+          type: array
+          maxItems: 100
+          description: |
+            Every live Trenova support access grant of this tenant's organization, as the TMS lists
+            them now, in the shape a dedicated instance's status report lists its grants: the
+            complete list, at most 100, every one naming the tenant's own organization. The control
+            plane replaces what it holds for the tenant with exactly this list; an empty list says
+            none is live; left out, the last list reported stands. A list naming more than one
+            organization is refused with the report.
+          items:
+            $ref: "#/components/schemas/SupportGrant"
         refused:
           $ref: "#/components/schemas/SharedTenantRefusal"
 
@@ -2484,6 +2805,224 @@ components:
           type: string
           format: date-time
           description: When its snapshot was taken.
+
+    SharedRestoreReport:
+      type: object
+      description: |
+        The newest `restore` command the server finished for the tenant, done or failed. Report it
+        with every report until the command stops being listed; reporting it again changes nothing.
+      required: [commandId, state, at]
+      properties:
+        commandId:
+          type: string
+          format: uuid
+          description: The `restore` command's `id`.
+        state:
+          type: string
+          enum: [done, failed]
+          x-enum-varnames: [RestoreDone, RestoreFailed]
+          description: |
+            `done`: the tenant holds the archive's data, and stays `suspended` until the control
+            plane resumes it. `failed`: see `reason`; the tenant stays `suspended`.
+        at:
+          type: string
+          format: date-time
+          description: When it finished.
+        reason:
+          type: string
+          maxLength: 500
+          description: |
+            Present when `failed`: one line a staff member can read, starting with whether the
+            tenant's data was untouched ("Nothing was changed: ...") or partly deleted ("The tenant
+            is incomplete: ...").
+
+    SharedCommandFailure:
+      type: object
+      required: [commandId, kind, reason]
+      properties:
+        commandId:
+          type: string
+          format: uuid
+        kind:
+          type: string
+          enum: [archive, import]
+          x-enum-varnames: [SharedFailedArchive, SharedFailedImport]
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 500
+          description: One line a staff member can read.
+
+    TenantArchiveManifest:
+      type: object
+      description: |
+        `manifest.json` at the root of a tenant archive's prefix: what the archive holds, written
+        last, at most 64 MiB. Every key it names is relative to the archive's prefix, and is unique
+        in it. Not served by any operation:
+        it is the format the TMS writes and the control plane reads (to list, deliver, copy and
+        restore archives).
+      required: [formatVersion, schemaVersion, releaseVersion, instanceId, organizationName, takenAt,
+                 tables, documents, totalSizeBytes, contentSha256]
+      properties:
+        formatVersion:
+          type: integer
+          enum: [1]
+          description: The archive format's version. A reader refuses a version it does not know.
+        schemaVersion:
+          type: string
+          maxLength: 64
+          description: The TMS database's migration head when the snapshot was taken; an archive is imported only at the same one.
+        releaseVersion:
+          type: string
+          maxLength: 64
+          description: The Trenova release that took it.
+        instanceId:
+          type: string
+          format: uuid
+          description: The tenant's instance in the control plane.
+        organizationName:
+          type: string
+          maxLength: 200
+        takenAt:
+          type: string
+          format: date-time
+          description: When its snapshot was taken.
+        tables:
+          type: array
+          maxItems: 2000
+          description: Every table that carries the tenant, in the order they load in.
+          items:
+            $ref: "#/components/schemas/TenantArchiveTable"
+        documents:
+          type: array
+          maxItems: 400000
+          description: Every document of the tenant, each copied from the tenant's object prefix.
+          items:
+            $ref: "#/components/schemas/TenantArchiveObject"
+        totalSizeBytes:
+          type: integer
+          format: int64
+          minimum: 0
+          description: Every part's `sizeBytes` together (the manifest itself not counted).
+        contentSha256:
+          type: string
+          pattern: "^[0-9a-f]{64}$"
+          description: |
+            The SHA-256, lowercase hex, of the content list: one line per part, the tables first in
+            their order then the documents in theirs, each `<sha256>  <key>` (two spaces, as
+            `sha256sum` writes it) ending in a newline.
+        purpose:
+          type: string
+          enum: [final, export, move, nightly]
+          description: Why it was taken; `nightly` for a nightly archive.
+        encryption:
+          $ref: "#/components/schemas/TenantArchiveEncryption"
+        omitted:
+          type: array
+          maxItems: 500
+          description: |
+            Present only on an `export` archive: every table or column left out because it holds a
+            secret rather than the customer's data, each once.
+          items:
+            $ref: "#/components/schemas/TenantArchiveOmission"
+
+    TenantArchiveEncryption:
+      type: object
+      description: |
+        How the parts are encrypted; present on every archive but an `export`, absent on an export.
+        Each part is the STREAM construction over AES-256-GCM with the archive's data key: the object
+        starts with a random 7-byte nonce prefix, then segments of at most `segmentBytes` plaintext,
+        each sealed with the nonce `prefix || uint32 big-endian segment index || 0x01 for the last
+        segment, 0x00 otherwise` and the part's `key` (as the manifest names it, UTF-8) as additional
+        data. A part's `sizeBytes` and `sha256` are of these stored, encrypted bytes.
+      required: [algorithm, segmentBytes, keyId, wrappedDataKey]
+      properties:
+        algorithm:
+          type: string
+          enum: [aes256gcm_stream_v1]
+        segmentBytes:
+          type: integer
+          enum: [1048576]
+          description: The plaintext bytes of every segment but the last.
+        keyId:
+          type: string
+          maxLength: 64
+          description: The `ArchiveKey.id` of the region archive key that wrapped the data key.
+        wrappedDataKey:
+          type: string
+          description: |
+            The 32-byte data key sealed with AES-256-GCM under the archive key: a random 12-byte
+            nonce followed by the ciphertext and tag, standard base64 with padding; additional data
+            the archive's `instanceId` (canonical text form), so a data key never unwraps for
+            another tenant's archive.
+
+    TenantArchiveOmission:
+      type: object
+      required: [table, reason]
+      properties:
+        table:
+          type: string
+          maxLength: 128
+        column:
+          type: string
+          maxLength: 128
+          description: The column left out; absent when the whole table is.
+        reason:
+          type: string
+          maxLength: 200
+          description: Why, in words the customer reads (for example `password hashes`).
+
+    TenantArchiveTable:
+      type: object
+      required: [name, rows, key, sizeBytes, sha256, encoding]
+      properties:
+        name:
+          type: string
+          maxLength: 128
+          description: The table, schema-qualified (`public.shipments`).
+        rows:
+          type: integer
+          format: int64
+          minimum: 0
+        key:
+          type: string
+          maxLength: 300
+          description: "`tables/<NNNN>-<table>.copy.zst`: its position in the load order, four digits from `0001`."
+        sizeBytes:
+          type: integer
+          format: int64
+          minimum: 0
+        sha256:
+          type: string
+          pattern: "^[0-9a-f]{64}$"
+          description: Of the object's bytes as stored.
+        encoding:
+          type: string
+          enum: [pg_copy_binary_zstd]
+          description: "`pg_copy_binary_zstd`: PostgreSQL `COPY ... TO STDOUT (FORMAT binary)` of the tenant's rows, compressed with zstd."
+
+    TenantArchiveObject:
+      type: object
+      required: [key, sizeBytes, sha256]
+      properties:
+        key:
+          type: string
+          maxLength: 1024
+          description: "`documents/<the document's key under the tenant's object prefix>`."
+        sizeBytes:
+          type: integer
+          format: int64
+          minimum: 0
+        sha256:
+          type: string
+          pattern: "^[0-9a-f]{64}$"
+        contentType:
+          type: string
+          maxLength: 255
+          description: |
+            The document's media type, which its import restores. Omitted when it is
+            `application/octet-stream`; absent means `application/octet-stream`. Optional within
+            `formatVersion` 1: a reader ignores a field it does not know.
 
     SharedTenantRefusal:
       type: object
@@ -2622,9 +3161,9 @@ components:
     SharedArchiveTarget:
       type: object
       description: |
-        Where one archive is kept, and the credential to write and read it with: the region's archive
+        Where one archive is kept, and the credential to reach it with: the region's archive
         bucket's own key, scoped at the provider to that bucket.
-      required: [instanceId, commandId, endpoint, region, bucket, prefix, accessKeyId, secretAccessKey]
+      required: [instanceId, commandId, kind, access, endpoint, region, bucket, prefix, accessKeyId, secretAccessKey]
       properties:
         instanceId:
           type: string
@@ -2632,6 +3171,28 @@ components:
         commandId:
           type: string
           format: uuid
+        kind:
+          type: string
+          enum: [archive, restore, import]
+          x-enum-varnames: [TargetArchive, TargetRestore, TargetImport]
+          description: The command's kind.
+        archiveKeys:
+          type: array
+          maxItems: 20
+          description: |
+            The region's archive keys, absent for an `export` archive (written unencrypted). To
+            write an archive, wrap its data key with the one key marked `current` and record that
+            key's `id` in the manifest's `encryption.keyId`; to read one (a restore, an import, or
+            pruning that needs to read), unwrap its data key with the key whose `id` its manifest
+            names. Hold them only in memory, never log or store them; fetch again for a key id you
+            do not hold.
+          items:
+            $ref: "#/components/schemas/ArchiveKey"
+        access:
+          type: string
+          enum: [write, read]
+          x-enum-varnames: [TargetWrite, TargetRead]
+          description: "`write` for an `archive` command's new archive; `read` for the archive a `restore` or `import` reads."
         endpoint:
           type: string
           description: The S3 API's URL, such as `https://s3.bhs.io.cloud.ovh.net`.
@@ -2642,7 +3203,9 @@ components:
           type: string
         prefix:
           type: string
-          description: "`tenants/<instanceId>/archives/<commandId>/`: write every object of the archive under it."
+          description: |
+            The archive's prefix: `tenants/<instanceId>/archives/<commandId>/` to write an archive;
+            the prefix of the command's `location` to read one.
         accessKeyId:
           type: string
         secretAccessKey:
@@ -2658,6 +3221,24 @@ components:
           description: |
             When a temporary credential stops working; absent for the bucket's own key, which does not
             expire.
+
+    ArchiveKey:
+      type: object
+      description: |
+        One of a region's archive keys: a random 256-bit AES key that wraps each archive's own data
+        key (AES-256-GCM, `encryption.wrappedDataKey`). Never wraps tenant data itself.
+      required: [id, key, current]
+      properties:
+        id:
+          type: string
+          maxLength: 64
+          description: The key's id, which a manifest's `encryption.keyId` names.
+        key:
+          type: string
+          description: The 32-byte key, standard base64 with padding.
+        current:
+          type: boolean
+          description: Whether new archives are wrapped with it; exactly one is.
 
     SharedArchiveWaiting:
       type: object

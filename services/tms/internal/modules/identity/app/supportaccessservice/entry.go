@@ -59,7 +59,11 @@ func (s *Service) Enter(ctx context.Context, req *EnterRequest) (*EnterResult, e
 	}
 
 	now := s.clock()
-	assertion, err := supportaccess.VerifyAssertion(req.Assertion, keys, time.Unix(now, 0))
+	verify := supportaccess.VerifyAssertion
+	if s.shared {
+		verify = supportaccess.VerifyTenantAssertion
+	}
+	assertion, err := verify(req.Assertion, keys, time.Unix(now, 0))
 	if err != nil {
 		s.logRefusal(err, nil)
 		return nil, err
@@ -75,6 +79,11 @@ func (s *Service) Enter(ctx context.Context, req *EnterRequest) (*EnterResult, e
 	}
 	if !first {
 		return nil, s.refuseVerified(ctx, assertion, supportaccess.RefusalReplayed)
+	}
+	if s.shared {
+		if err = s.admitTenant(ctx, assertion); err != nil {
+			return nil, err
+		}
 	}
 
 	grant, err := s.grants.FindLiveForEntry(ctx, &supportaccessports.FindLiveGrantRequest{
@@ -141,6 +150,22 @@ func (s *Service) Enter(ctx context.Context, req *EnterRequest) (*EnterResult, e
 		ExpiresAt: sess.ExpiresAt,
 		Grant:     grant,
 	}, nil
+}
+
+func (s *Service) admitTenant(ctx context.Context, assertion *supportaccess.Assertion) error {
+	held, err := s.tenants.Tenant(ctx, assertion.Audience)
+	switch {
+	case errors.Is(err, supportaccessports.ErrTenantNotHeld):
+		return s.refuseVerified(ctx, assertion, supportaccess.RefusalTenant)
+	case err != nil:
+		return err
+	case !held.Active:
+		return s.refuseVerified(ctx, assertion, supportaccess.RefusalTenant)
+	case held.OrganizationID != assertion.OrganizationID:
+		return s.refuseVerified(ctx, assertion, supportaccess.RefusalOrganization)
+	default:
+		return nil
+	}
 }
 
 func (s *Service) openSession(
@@ -282,6 +307,7 @@ func (s *Service) logRefusal(err error, assertion *supportaccess.Assertion) {
 	if assertion != nil {
 		fields = append(fields,
 			zap.String("assertionID", assertion.ID),
+			zap.String("audience", assertion.Audience),
 			zap.String("staffEmail", assertion.StaffEmail),
 			zap.String("organizationID", assertion.OrganizationID.String()),
 		)

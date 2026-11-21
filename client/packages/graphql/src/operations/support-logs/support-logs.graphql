@@ -1,6 +1,7 @@
 query SupportLogRequests {
   supportLogRequests {
     managed
+    available
     inFlight
     remainingToday
     requests {

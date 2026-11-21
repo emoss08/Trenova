@@ -1,8 +1,8 @@
 package tenantagent_test
 
 import (
+	"bytes"
 	"context"
-	"io"
 	"log/slog"
 	"net/http"
 	"os"
@@ -25,6 +25,7 @@ import (
 	"github.com/emoss08/trenova/operator/internal/escrow"
 	"github.com/emoss08/trenova/operator/internal/escrow/escrowfile"
 	"github.com/emoss08/trenova/operator/internal/instanceapi"
+	"github.com/emoss08/trenova/operator/internal/supportkeys"
 	"github.com/emoss08/trenova/operator/internal/systememail"
 	"github.com/emoss08/trenova/operator/internal/tenantagent"
 	"github.com/emoss08/trenova/operator/internal/tms"
@@ -51,20 +52,41 @@ func (c *clock) Advance(d time.Duration) {
 	c.now = c.now.Add(d)
 }
 
+type syncBuffer struct {
+	mu  sync.Mutex
+	buf bytes.Buffer
+}
+
+func (b *syncBuffer) Write(p []byte) (int, error) {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	return b.buf.Write(p)
+}
+
+func (b *syncBuffer) String() string {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	return b.buf.String()
+}
+
 type rig struct {
 	cp      *controlplanetest.Server
 	tms     *tmstest.Server
 	agent   *tenantagent.Agent
 	clock   *clock
 	secrets string
+	state   string
+	logs    *syncBuffer
 	creds   *credential.Manager
 	store   dirstore.Store
+	build   func() *tenantagent.Agent
 }
 
 func newRig(t *testing.T) *rig {
 	t.Helper()
 	ctx := t.Context()
-	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
+	logs := &syncBuffer{}
+	logger := slog.New(slog.NewTextHandler(logs, &slog.HandlerOptions{Level: slog.LevelDebug}))
 	cp := controlplanetest.NewShared(t, uuid.New())
 	state := t.TempDir()
 	bundle, err := sonic.Marshal(cp.Bundle(7 * 24 * time.Hour))
@@ -101,31 +123,38 @@ func newRig(t *testing.T) *rig {
 	require.NoError(t, err)
 
 	c := &clock{now: time.Date(2026, 11, 20, 14, 10, 0, 0, time.UTC)}
-	agent, err := tenantagent.New(tenantagent.Params{
-		ControlPlane: lazy,
-		TMS:          client,
-		Credentials:  creds,
-		Escrow:       escrowed,
-		SystemEmail: systememail.New(
-			&systememail.Params{TMS: client, ControlPlane: lazy, Logger: logger},
-		),
-		Usage: usage.NewShared(
-			usage.SharedParams{ControlPlane: lazy, TMS: client, Now: c.Now},
-		),
-		EmailEvents: events,
-		Version:     "0.15.0",
-		Logger:      logger,
-		Now:         c.Now,
-	})
-	require.NoError(t, err)
+	build := func() *tenantagent.Agent {
+		agent, berr := tenantagent.New(tenantagent.Params{
+			ControlPlane: lazy,
+			TMS:          client,
+			Credentials:  creds,
+			Escrow:       escrowed,
+			SystemEmail: systememail.New(
+				&systememail.Params{TMS: client, ControlPlane: lazy, Logger: logger},
+			),
+			Usage: usage.NewShared(
+				usage.SharedParams{ControlPlane: lazy, TMS: client, Now: c.Now},
+			),
+			EmailEvents: events,
+			SupportKeys: supportkeys.New(client, logger),
+			Version:     "0.15.0",
+			Logger:      logger,
+			Now:         c.Now,
+		})
+		require.NoError(t, berr)
+		return agent
+	}
 	return &rig{
 		cp:      cp,
 		tms:     fakeTMS,
-		agent:   agent,
+		agent:   build(),
 		clock:   c,
 		secrets: secrets,
+		state:   state,
+		logs:    logs,
 		creds:   creds,
 		store:   store,
+		build:   build,
 	}
 }
 

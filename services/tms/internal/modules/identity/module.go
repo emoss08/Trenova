@@ -141,6 +141,7 @@ func SharedOptions() fx.Option {
 			func(p *supportaccessservice.Principals) supportaccessports.Principals { return p },
 			func(p *supportaccessservice.Principals) supportaccessports.ModelCalls { return p },
 			supportaccessservice.New,
+			supportaccessservice.NewNoTenants,
 			supportlogrepository.New,
 			supportlogservice.NewValidator,
 			supportlogservice.New,

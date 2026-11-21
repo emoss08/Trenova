@@ -20056,7 +20056,7 @@ export type SupportAccessActionsQuery = { auditEntries: { edges: Array<{ node: {
 export type SupportLogRequestsQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type SupportLogRequestsQuery = { supportLogRequests: { managed: boolean, inFlight: boolean, remainingToday: number, requests: Array<{ id: string, period: SupportLogPeriod, status: SupportLogRequestStatus, requestedByName: string, requestedAt: number, finishedAt: number | null, failureMessage: string | null }> } };
+export type SupportLogRequestsQuery = { supportLogRequests: { managed: boolean, available: boolean, inFlight: boolean, remainingToday: number, requests: Array<{ id: string, period: SupportLogPeriod, status: SupportLogRequestStatus, requestedByName: string, requestedAt: number, finishedAt: number | null, failureMessage: string | null }> } };
 
 export type RequestSupportLogsMutationVariables = Exact<{
   input: RequestSupportLogsInput;

@@ -17,8 +17,6 @@ const (
 	managedSupportPath       = "/managed/v1/support-access"
 	managedSupportGrantsPath = "/managed/v1/support-access/grants"
 	managedMaxSupport        = 16 << 10
-	managedScopeReadOnly     = "read_only"
-	managedScopeFull         = "full"
 )
 
 // ManagedSupportAccess takes the control plane's support assertion keys, this instance's id and
@@ -26,12 +24,13 @@ const (
 // operator reports back.
 type ManagedSupportAccess interface {
 	SetKeys(ctx context.Context, keys *supportaccess.KeySet) error
+	ClearKeys(ctx context.Context) error
 	KeySet(ctx context.Context) (*supportaccess.KeySet, error)
 	LiveGrants(ctx context.Context) ([]*supportaccessports.LiveGrant, error)
 }
 
 type managedSupportKeys struct {
-	InstanceID  string                     `json:"instanceId"`
+	InstanceID  string                     `json:"instanceId,omitempty"`
 	StaffDomain string                     `json:"staffDomain"`
 	Keys        []supportaccess.SigningKey `json:"keys"`
 }
@@ -59,7 +58,8 @@ type managedSupportGrants struct {
 func (h *managedHandler) routeSupportAccess(mux *http.ServeMux) {
 	mux.HandleFunc("GET "+managedSupportPath, h.heldSupportKeys)
 	mux.HandleFunc("PUT "+managedSupportPath, h.setSupportKeys)
-	mux.HandleFunc("GET "+managedSupportGrantsPath, h.liveSupportGrants)
+	mux.HandleFunc("DELETE "+managedSupportPath, h.clearSupportKeys)
+	mux.HandleFunc("GET "+managedSupportGrantsPath, h.dedicatedOnly(h.liveSupportGrants))
 }
 
 func (h *managedHandler) setSupportKeys(w http.ResponseWriter, r *http.Request) {
@@ -73,7 +73,7 @@ func (h *managedHandler) setSupportKeys(w http.ResponseWriter, r *http.Request) 
 		h.problem(
 			w,
 			http.StatusBadRequest,
-			"the body must be {instanceId, staffDomain, keys} with keys a list of Ed25519 JWKs",
+			"the body must be {instanceId, staffDomain, keys} with keys a list of Ed25519 JWKs; a shared server leaves instanceId out",
 		)
 		return
 	}
@@ -89,6 +89,15 @@ func (h *managedHandler) setSupportKeys(w http.ResponseWriter, r *http.Request) 
 		return
 	case err != nil:
 		h.l.Error("cannot record the support access keys from the operator", zap.Error(err))
+		h.problem(w, http.StatusInternalServerError, "")
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (h *managedHandler) clearSupportKeys(w http.ResponseWriter, r *http.Request) {
+	if err := h.support.ClearKeys(r.Context()); err != nil {
+		h.l.Error("cannot remove the support access keys", zap.Error(err))
 		h.problem(w, http.StatusInternalServerError, "")
 		return
 	}
@@ -129,16 +138,9 @@ func (h *managedHandler) liveSupportGrants(w http.ResponseWriter, r *http.Reques
 			OrganizationID:   grant.OrganizationID.String(),
 			OrganizationName: live.OrganizationName,
 			StaffEmail:       grant.StaffEmail,
-			Scope:            managedScope(grant.Scope),
+			Scope:            grant.Scope.ControlPlane(),
 			ExpiresAt:        time.Unix(grant.ExpiresAt, 0).UTC().Format(time.RFC3339),
 		})
 	}
 	h.json(w, http.StatusOK, out)
-}
-
-func managedScope(scope supportaccess.Scope) string {
-	if scope == supportaccess.ScopeFull {
-		return managedScopeFull
-	}
-	return managedScopeReadOnly
 }

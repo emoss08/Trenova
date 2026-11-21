@@ -188,6 +188,14 @@ func (c *Lazy) ReportSharedStatus(
 	return api.ReportSharedStatus(ctx, report)
 }
 
+func (c *Lazy) SharedStorage(ctx context.Context) (instanceapi.SharedStorage, error) {
+	api, err := c.client()
+	if err != nil {
+		return instanceapi.SharedStorage{}, err
+	}
+	return api.SharedStorage(ctx)
+}
+
 func (c *Lazy) ReportSharedUsage(
 	ctx context.Context,
 	report instanceapi.SharedUsageReport,

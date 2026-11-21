@@ -271,6 +271,31 @@ func (k *keyStore) Save(_ context.Context, keys *supportaccess.KeySet) error {
 	return nil
 }
 
+func (k *keyStore) Delete(context.Context) error {
+	k.mu.Lock()
+	defer k.mu.Unlock()
+	k.held = nil
+	return nil
+}
+
+type tenantStore struct {
+	mu   sync.Mutex
+	held map[string]supportaccessports.SupportTenant
+}
+
+func (s *tenantStore) Tenant(
+	_ context.Context,
+	instanceID string,
+) (*supportaccessports.SupportTenant, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	t, ok := s.held[instanceID]
+	if !ok {
+		return nil, supportaccessports.ErrTenantNotHeld
+	}
+	return &t, nil
+}
+
 type ledger struct {
 	mu   sync.Mutex
 	used map[string]bool
@@ -417,12 +442,26 @@ type rig struct {
 	audit      *securityaudittest.Recorder
 	events     *authEvents
 	notices    *notices
+	tenants    *tenantStore
 	clock      *clock
 	signer     ed25519.PrivateKey
 	public     ed25519.PublicKey
 }
 
 func newRig(t *testing.T, managed bool) *rig {
+	t.Helper()
+	return newTenancyRig(t, &managedconfig.Config{Enabled: managed})
+}
+
+func newSharedRig(t *testing.T) *rig {
+	t.Helper()
+	return newTenancyRig(
+		t,
+		&managedconfig.Config{Enabled: true, Tenancy: managedconfig.TenancyShared},
+	)
+}
+
+func newTenancyRig(t *testing.T, managedCfg *managedconfig.Config) *rig {
 	t.Helper()
 	pub, priv, err := ed25519.GenerateKey(rand.Reader)
 	require.NoError(t, err)
@@ -434,11 +473,11 @@ func newRig(t *testing.T, managed bool) *rig {
 		audit:    &securityaudittest.Recorder{},
 		events:   &authEvents{},
 		notices:  &notices{},
+		tenants:  &tenantStore{held: map[string]supportaccessports.SupportTenant{}},
 		clock:    &clock{now: 1_800_000_000},
 		signer:   priv,
 		public:   pub,
 	}
-	managedCfg := &managedconfig.Config{Enabled: managed}
 	r.principals = NewPrincipals(PrincipalsParams{
 		Grants:   r.grants,
 		Registry: permissioncatalog.NewRegistry(),
@@ -454,6 +493,7 @@ func newRig(t *testing.T, managed bool) *rig {
 		Auditor:    r.audit,
 		AuthEvents: r.events,
 		Notifier:   r.notices,
+		Tenants:    r.tenants,
 		Managed:    managedCfg,
 		Security:   &securityconfig.Config{Session: securityconfig.SessionConfig{MaxAge: 12 * time.Hour}},
 		Clock:      r.clock.Now,

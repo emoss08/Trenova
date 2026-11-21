@@ -35,6 +35,7 @@ func requirePersonTo(authCtx *authctx.AuthContext, refusal string) error {
 func logOverviewToModel(o *supportlogservice.Overview) *gqlmodel.SupportLogRequests {
 	out := &gqlmodel.SupportLogRequests{
 		Managed:        o.Managed,
+		Available:      o.Available,
 		InFlight:       o.InFlight,
 		RemainingToday: o.Remaining,
 		Requests:       make([]*gqlmodel.SupportLogRequest, 0, len(o.Requests)),

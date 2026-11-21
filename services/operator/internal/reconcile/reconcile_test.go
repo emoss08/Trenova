@@ -36,6 +36,7 @@ import (
 	"github.com/emoss08/trenova/operator/internal/escrow"
 	"github.com/emoss08/trenova/operator/internal/escrow/escrowsecret"
 	"github.com/emoss08/trenova/operator/internal/health"
+	"github.com/emoss08/trenova/operator/internal/importer"
 	"github.com/emoss08/trenova/operator/internal/instanceapi"
 	"github.com/emoss08/trenova/operator/internal/reconcile"
 	"github.com/emoss08/trenova/operator/internal/release"
@@ -260,6 +261,7 @@ func newWorldWith(
 	t *testing.T,
 	spec instanceapi.InstanceSpec,
 	relay func(relayParams) reconcile.Usage,
+	options ...func(*reconcile.Params),
 ) *world {
 	t.Helper()
 	cp := controlplanetest.New(t, spec)
@@ -332,7 +334,7 @@ func newWorldWith(
 		Logger: logger, Now: func() time.Time { return w.now },
 	})
 	require.NoError(t, err)
-	w.loop, err = reconcile.New(&reconcile.Params{
+	params := &reconcile.Params{
 		ControlPlane: client,
 		Credentials:  creds,
 		Charts:       release.NewSource(release.SourceParams{Path: chartDir}),
@@ -358,6 +360,7 @@ func newWorldWith(
 		EmailEvents:    w.events,
 		Logs:           w.logs,
 		Telemetry:      w.telem,
+		Imports:        mustImporter(t, kube, logger),
 		Operator:       w.operator,
 		Base:           map[string]any{"clamav": map[string]any{"enabled": true}},
 		Namespace:      "trenova-system",
@@ -366,9 +369,22 @@ func newWorldWith(
 		Poll:           15 * time.Second,
 		Report:         time.Minute,
 		UsageEvery:     15 * time.Minute,
-	})
+	}
+	for _, option := range options {
+		option(params)
+	}
+	w.loop, err = reconcile.New(params)
 	require.NoError(t, err)
 	return w
+}
+
+func mustImporter(t *testing.T, kube *fake.Clientset, logger *slog.Logger) *importer.Importer {
+	t.Helper()
+	imp, err := importer.New(&importer.Params{
+		Kube: kube, Namespace: "trenova", Release: "trenova", Logger: logger,
+	})
+	require.NoError(t, err)
+	return imp
 }
 
 type noStorage struct{}

@@ -8,6 +8,8 @@ import (
 	"github.com/emoss08/trenova/internal/cloud/app/tenantlifecycle"
 	"github.com/emoss08/trenova/internal/cloud/domain/cloudtenant"
 	"github.com/emoss08/trenova/internal/cloud/jobs/tenantjobs/tenantjobscontract"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/supportaccess"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/supportaccessports"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/managedfeatures"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/managedusage"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
@@ -321,6 +323,37 @@ func TestListPagesEveryTenant(t *testing.T) {
 	require.ErrorIs(t, err, tenantlifecycle.ErrCursorInvalid)
 }
 
+func TestEachTenantListsItsOwnLiveSupportGrantsInOneRead(t *testing.T) {
+	t.Parallel()
+	r := newRig(t, true)
+	_, err := r.svc.Apply(t.Context(), instanceA, entry(instanceA, 1), nil)
+	require.NoError(t, err)
+	_, err = r.svc.Apply(t.Context(), instanceB, entry(instanceB, 1), nil)
+	require.NoError(t, err)
+	orgA := r.tenants.rows[instanceA].OrganizationID
+	r.grants.live = []*supportaccessports.LiveGrant{{
+		Grant: &supportaccess.Grant{
+			ID: pulid.MustNew("sag_"), OrganizationID: orgA, StaffEmail: "dana@trenova.app",
+			Scope: supportaccess.ScopeFull, ExpiresAt: now + 3600,
+		},
+		OrganizationName: "Acme Freight",
+	}}
+
+	r.grants.asked = nil
+	page, err := r.svc.List(t.Context(), "", 10)
+	require.NoError(t, err)
+	require.Len(t, page.Tenants, 2)
+	require.Len(t, r.grants.asked, 1, "one read for the whole page")
+	assert.Len(t, r.grants.asked[0].OrganizationIDs, 2)
+	a, b := page.Tenants[0], page.Tenants[1]
+	require.NotNil(t, a.SupportGrants)
+	require.Len(t, *a.SupportGrants, 1)
+	assert.Equal(t, orgA.String(), (*a.SupportGrants)[0].OrganizationID)
+	assert.Equal(t, "full", (*a.SupportGrants)[0].Scope)
+	require.NotNil(t, b.SupportGrants, "a tenant with none says so with an empty list")
+	assert.Empty(t, *b.SupportGrants)
+}
+
 func TestReadingsAreAskedOncePerPageForEveryMeteredTenant(t *testing.T) {
 	t.Parallel()
 	r := newRig(t, true)
@@ -421,4 +454,30 @@ func TestTheInstanceTagIsTheTenantsInstance(t *testing.T) {
 	tag, err = tags.InstanceTag(t.Context(), pagination.TenantInfo{OrgID: pulid.MustNew("org_")})
 	require.NoError(t, err)
 	assert.Empty(t, tag)
+}
+
+func TestSupportEntryFindsOnlyAMadeTenantAndWhetherItIsActive(t *testing.T) {
+	t.Parallel()
+	r := newRig(t, true)
+	_, err := r.svc.Apply(t.Context(), instanceA, entry(instanceA, 1), nil)
+	require.NoError(t, err)
+	tenants := tenantlifecycle.NewSupportTenants(r.tenants)
+
+	held, err := tenants.Tenant(t.Context(), instanceA)
+	require.NoError(t, err)
+	assert.Equal(t, r.tenants.rows[instanceA].OrganizationID, held.OrganizationID)
+	assert.True(t, held.Active)
+
+	suspended := entry(instanceA, 2)
+	suspended.Lifecycle = cloudtenant.LifecycleSuspended
+	_, err = r.svc.Apply(t.Context(), instanceA, suspended, nil)
+	require.NoError(t, err)
+	held, err = tenants.Tenant(t.Context(), instanceA)
+	require.NoError(t, err)
+	assert.False(t, held.Active)
+
+	for _, id := range []string{instanceB, "not-an-instance"} {
+		_, err = tenants.Tenant(t.Context(), id)
+		require.ErrorIs(t, err, supportaccessports.ErrTenantNotHeld, id)
+	}
 }
