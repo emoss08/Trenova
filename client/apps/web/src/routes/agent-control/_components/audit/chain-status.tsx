@@ -153,6 +153,14 @@ export function ChainStatusHeader() {
               )}
         </Callout>
       )}
+      {status.lastVerificationStatus === "ImportedUnverified" && (
+        <Callout tone="w">
+          {status.detail ??
+            t(
+              "Rows of this trail came from an archive whose own signatures could not be checked where they were made. Every row verifies under this server's keys.",
+            )}
+        </Callout>
+      )}
       {status.lastVerificationStatus === "KeyMissing" && (
         <Callout tone="w">
           {t(

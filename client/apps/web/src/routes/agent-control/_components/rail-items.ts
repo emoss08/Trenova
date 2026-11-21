@@ -216,7 +216,9 @@ export function buildRailItems(
           ? t("Failed verification")
           : verification === "KeyMissing"
             ? t("Signing key missing")
-            : "",
+            : verification === "ImportedUnverified"
+              ? t("Imported history not verified")
+              : "",
       attention: verification === "Mismatch" || verification === "KeyMissing",
       children: [
         { view: "trail", label: t("Trail") },

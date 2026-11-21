@@ -108,6 +108,15 @@ func (s *Service) Patch(ctx context.Context, req *PatchUserRequest) (*tenant.Use
 		zap.String("userID", req.UserID.String()),
 	)
 
+	if err := accountguard.RequirePeople(
+		ctx,
+		s.repo,
+		req.TenantInfo.BuID,
+		req.UserID,
+	); err != nil {
+		return nil, err
+	}
+
 	user, err := s.repo.GetByID(ctx, tenantports.GetUserByIDRequest{
 		TenantInfo:         req.TenantInfo,
 		LookupUserID:       req.UserID,

@@ -3,6 +3,7 @@ package notificationrepository
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
@@ -17,6 +18,16 @@ import (
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
+)
+
+const recipientInOrganizationSQL = `SELECT EXISTS (
+    SELECT 1 FROM users u
+    JOIN organizations o ON o.business_unit_id = u.business_unit_id
+    WHERE u.id = $1 AND o.id = $2
+)`
+
+var errRecipientOutside = errors.New(
+	"a notification's recipient must be a person of the notification's organization",
 )
 
 type Params struct {
@@ -199,10 +210,40 @@ func (r *repository) createOrAbsorb(
 	})
 }
 
+func (r *repository) requireRecipient(
+	ctx context.Context,
+	entity *notification.Notification,
+) error {
+	if entity.TargetUserID == nil || entity.TargetUserID.IsNil() {
+		return nil
+	}
+	held, err := keel.QueryValue[bool](
+		ctx,
+		r.db.Keel(ctx),
+		recipientInOrganizationSQL,
+		entity.TargetUserID.String(),
+		entity.OrganizationID.String(),
+	)
+	if err != nil {
+		return fmt.Errorf("check the notification's recipient: %w", err)
+	}
+	if !held {
+		r.l.Error("refused a notification whose recipient is not of its organization",
+			zap.String("organizationId", entity.OrganizationID.String()),
+			zap.String("eventType", entity.EventType),
+		)
+		return errRecipientOutside
+	}
+	return nil
+}
+
 func (r *repository) insert(
 	ctx context.Context,
 	entity *notification.Notification,
 ) (*notification.Notification, error) {
+	if err := r.requireRecipient(ctx, entity); err != nil {
+		return nil, err
+	}
 	if err := notificationdb.Notifications.Create(ctx, r.db.Keel(ctx), entity); err != nil {
 		if !keel.IsUnique(err, openSubjectConstraint) {
 			r.l.Error("failed to create notification", zap.Error(err))

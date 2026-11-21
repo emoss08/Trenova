@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/accounttemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
+	"github.com/emoss08/trenova/internal/modules/identity/app/accountguard"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/iam"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/passwordreset"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -200,6 +201,15 @@ func (s *Service) RequestResetForUser(ctx context.Context, req AdminResetRequest
 		zap.String("operation", "RequestResetForUser"),
 		zap.String("targetUserId", req.TargetUserID.String()),
 	)
+
+	if err := accountguard.RequirePeople(
+		ctx,
+		s.ur,
+		req.Actor.BuID,
+		req.TargetUserID,
+	); err != nil {
+		return err
+	}
 
 	user, err := s.ur.GetByID(ctx, tenantports.GetUserByIDRequest{
 		TenantInfo:   req.Actor,

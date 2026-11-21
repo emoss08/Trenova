@@ -136,6 +136,7 @@ describe("auditOutcomeAttrs", () => {
   it("tones the chain's verification by how bad it is", () => {
     expect(verificationTone("Verified")).toBe("success");
     expect(verificationTone("KeyMissing")).toBe("warning");
+    expect(verificationTone("ImportedUnverified")).toBe("warning");
     expect(verificationTone("Mismatch")).toBe("danger");
     expect(verificationTone(null)).toBe("muted");
   });

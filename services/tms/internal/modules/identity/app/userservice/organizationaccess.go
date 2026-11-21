@@ -4,6 +4,7 @@ import (
 	"context"
 	"maps"
 
+	"github.com/emoss08/trenova/internal/modules/identity/app/accountguard"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -75,6 +76,9 @@ func (s *Service) EndUserAccess(
 	tenantInfo pagination.TenantInfo,
 	userID pulid.ID,
 ) error {
+	if err := accountguard.RequirePeople(ctx, s.repo, tenantInfo.BuID, userID); err != nil {
+		return err
+	}
 	return s.endAllSessions(ctx, tenantInfo, userID)
 }
 

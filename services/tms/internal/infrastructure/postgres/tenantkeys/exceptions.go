@@ -1,27 +1,26 @@
 package tenantkeys
 
 const (
-	userWithoutUnit = "the table has organization_id and no business_unit_id, and users has no " +
-		"organization_id, so no column pair can hold the person to the row's tenant"
-	unitMayBeEmpty = "the table's business_unit_id may be empty (a row written before the person " +
-		"or tenant is known), and a composite key is not checked for a row whose business unit is empty"
-	heldByDetection = "; held instead by the tenant removal's cross-tenant count, the archive's " +
-		"tenant refusal and the nightly trenova_tenancy_archive_refusals_total metric"
+	unitMayBeEmpty = "the table's business_unit_id may be empty, and a composite key is not " +
+		"checked for a row whose business unit is empty"
+	heldByDetection = "; held instead by the tenant removal's cross-tenant count, the archive " +
+		"export's tenant refusal, the archive import's within-tenant reference check and the " +
+		"nightly trenova_tenancy_archive_refusals_total metric"
 )
 
 var exceptions = map[string]string{
-	"mfa_authenticators_user_id_fkey": userWithoutUnit + "; written only for the signed-in " +
-		"person (the policy admits trenova_rls.user_id())" + heldByDetection,
-	"fk_mfa_recovery_codes_user": userWithoutUnit + "; written only for the signed-in person " +
-		"(the policy admits trenova_rls.user_id())" + heldByDetection,
-	"fk_user_role_assignments_user": userWithoutUnit + "; the role service assigns only " +
-		"members of the organization" + heldByDetection,
-	"fk_user_role_assignments_assigned_by": userWithoutUnit + "; the assigner is the " +
-		"session's own person" + heldByDetection,
-	"auth_events_user_id_fkey":              unitMayBeEmpty + heldByDetection,
-	"auth_events_identity_provider_id_fkey": unitMayBeEmpty + heldByDetection,
-	"fk_notifications_target_user_id":       unitMayBeEmpty + heldByDetection,
-	"risk_decisions_user_id_fkey":           unitMayBeEmpty + heldByDetection,
+	"auth_events_user_id_fkey": unitMayBeEmpty + " (a sign-in attempt that matched no " +
+		"organization, or a throttled one, is recorded before any tenant is known); " +
+		"autheventservice names a person only together with that person's own organization " +
+		"and business unit (authservice.authAttempt.forUser) or the session's" + heldByDetection,
+	"auth_events_identity_provider_id_fkey": unitMayBeEmpty + "; no writer sets the column " +
+		"(autheventservice never fills identity_provider_id)" + heldByDetection,
+	"fk_notifications_target_user_id": unitMayBeEmpty + " (the column is nullable); every " +
+		"producer writes through notificationrepository.insert, which writes a recipient only " +
+		"when that person is of the notification's organization's business unit" +
+		heldByDetection,
+	"risk_decisions_user_id_fkey": unitMayBeEmpty + " (organization_id may be empty too); no " +
+		"code writes the table, it is only read" + heldByDetection,
 }
 
 func Exceptions() map[string]string {

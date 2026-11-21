@@ -23,6 +23,7 @@ import (
 	"github.com/emoss08/trenova/internal/testutil/permchangetest"
 	"github.com/emoss08/trenova/internal/testutil/permtest"
 	"github.com/emoss08/trenova/internal/testutil/rbactest"
+	"github.com/emoss08/trenova/internal/testutil/securityaudittest"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/tenantedvalidation"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -288,10 +289,12 @@ func (f *integrationFixture) actorID() pulid.ID { return f.data.User.ID }
 func (f *integrationFixture) addUser(t *testing.T, username string) pulid.ID {
 	t.Helper()
 
-	return seedtest.NewUser(f.orgID(), f.data.BusinessUnit.ID).
+	user := seedtest.NewUser(f.orgID(), f.data.BusinessUnit.ID).
 		WithUsername(username).
 		WithEmail(username+"@example.com").
-		Build(t, f.ctx, f.db).ID
+		Build(t, f.ctx, f.db)
+	seedtest.Join(t, f.ctx, f.db, user)
+	return user.ID
 }
 
 func (f *integrationFixture) addRole(t *testing.T, role *rbac.Role) *rbac.Role {
@@ -331,6 +334,7 @@ func setupIntegrationService(t *testing.T) *integrationFixture {
 		roleRepo:   roleRepo,
 		rbacRepo:   &rbactest.Repository{},
 		notifier:   &permchangetest.Recorder{},
+		auditor:    &securityaudittest.Recorder{},
 		permEngine: permEngine,
 		validator: &Validator{
 			validator: tenantedvalidation.NewBuilder[*rbac.Role]().

@@ -40,7 +40,7 @@ func (k *Keyring) Sign(seal *audit.Seal) {
 
 func (k *Keyring) Check(seal *audit.Seal) (ok, keyMissing bool) {
 	var secret []byte
-	if seal.HashVersion != audit.SealHashVersionUnsigned {
+	if !seal.Unsigned() {
 		var found bool
 		if secret, found = k.keys[seal.HashKeyID]; !found {
 			return false, true

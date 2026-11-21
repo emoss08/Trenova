@@ -12,10 +12,26 @@ import (
 const sealDomain = "trenova.audit-seal/v1"
 
 func (s *Seal) Sign(keyID string, secret []byte) {
-	if keyID != "" {
+	s.sign(keyID, secret, false)
+}
+
+func (s *Seal) SignImported(keyID string, secret []byte) {
+	s.sign(keyID, secret, true)
+}
+
+func (s *Seal) sign(keyID string, secret []byte, imported bool) {
+	switch {
+	case keyID != "" && imported:
+		s.HashKeyID = keyID
+		s.HashVersion = SealHashVersionImported
+	case keyID != "":
 		s.HashKeyID = keyID
 		s.HashVersion = SealHashVersionSigned
-	} else {
+	case imported:
+		s.HashKeyID = ""
+		s.HashVersion = SealHashVersionImportedUnsigned
+		secret = nil
+	default:
 		s.HashKeyID = ""
 		s.HashVersion = SealHashVersionUnsigned
 		secret = nil
@@ -23,9 +39,19 @@ func (s *Seal) Sign(keyID string, secret []byte) {
 	s.Hash = s.ComputeHash(secret)
 }
 
+func (s *Seal) Unsigned() bool {
+	return s.HashVersion == SealHashVersionUnsigned ||
+		s.HashVersion == SealHashVersionImportedUnsigned
+}
+
+func (s *Seal) Imported() bool {
+	return s.HashVersion == SealHashVersionImported ||
+		s.HashVersion == SealHashVersionImportedUnsigned
+}
+
 func (s *Seal) ComputeHash(secret []byte) string {
 	message := s.message()
-	if s.HashVersion == SealHashVersionUnsigned {
+	if s.Unsigned() {
 		sum := sha256.Sum256([]byte(message))
 		return hex.EncodeToString(sum[:])
 	}

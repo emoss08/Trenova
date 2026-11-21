@@ -3519,6 +3519,7 @@ var enumVerificationStatus = [...]schema.EnumValue{
 	{Value: `Verified`, Label: `Verification Verified`},
 	{Value: `Mismatch`, Label: `Verification Mismatch`},
 	{Value: `KeyMissing`, Label: `Verification Key Missing`, Doc: `VerificationKeyMissing is a chain holding rows signed with a key that is no longer configured, so they cannot be checked.`},
+	{Value: `ImportedUnverified`, Label: `Verification Imported`},
 }
 
 // ExportFormatCol is a column of aiaudit.ExportFormat values.

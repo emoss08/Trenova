@@ -180,6 +180,20 @@ func (b *UserBuilder) Build(t *testing.T, ctx context.Context, db *keel.DB) *ten
 	return b.user
 }
 
+func Join(t *testing.T, ctx context.Context, db *keel.DB, user *tenant.User) {
+	t.Helper()
+
+	err := tenantdb.OrganizationMemberships.Create(systemContext(ctx), db,
+		&tenant.OrganizationMembership{
+			BusinessUnitID: user.BusinessUnitID,
+			UserID:         user.ID,
+			OrganizationID: user.CurrentOrganizationID,
+			GrantedByID:    user.ID,
+			IsDefault:      true,
+		})
+	require.NoError(t, err, "failed to add the test user to its organization")
+}
+
 type StateBuilder struct {
 	state *usstate.UsState
 }

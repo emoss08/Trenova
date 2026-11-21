@@ -4,6 +4,7 @@ import (
 	"context"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/modules/identity/app/accountguard"
 	"github.com/emoss08/trenova/internal/modules/identity/app/userservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
@@ -298,6 +299,9 @@ func coveredBy(memberships []*tenant.OrganizationMembership, organizationID puli
 }
 
 func (s *Service) member(ctx context.Context, actor *Actor, userID pulid.ID) (*tenant.User, error) {
+	if err := accountguard.RequirePeople(ctx, s.users, actor.BusinessUnitID, userID); err != nil {
+		return nil, err
+	}
 	return s.users.GetTenantMember(ctx, tenantports.GetTenantMemberRequest{
 		UserID:     userID,
 		TenantInfo: actor.TenantInfo(),

@@ -446,7 +446,7 @@ func assertFieldError(t *testing.T, err error, field string, code errortypes.Err
 	multiErr, ok := errors.AsType[*errortypes.MultiError](err)
 	require.True(t, ok, "expected a field error, got %v", err)
 	for _, item := range multiErr.Errors {
-		if item.Field == field && item.Code == code {
+		if item.Field() == field && item.Code == code {
 			return
 		}
 	}

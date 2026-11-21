@@ -38,6 +38,7 @@ func newRoleFixture(t *testing.T) *roleFixture {
 	t.Cleanup(cleanup)
 
 	data := seedtest.SeedFullTestData(t, ctx, db)
+	seedtest.Join(t, ctx, db, data.User)
 
 	return &roleFixture{
 		ctx: data.Ctx(ctx),

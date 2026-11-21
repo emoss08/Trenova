@@ -79,14 +79,15 @@ func (r *repository) RecordVerification(
 			h.UpdatedAt.To(req.At),
 			h.Version.ToExpr(h.Version),
 		}
-		if req.Status == aiaudit.VerificationVerified {
+		switch {
+		case req.Status.Holds():
 			sets = append(sets,
 				h.LastVerifiedSeq.To(req.VerifiedSeq),
 				h.LastVerificationFailedSeq.ToNull(),
 			)
-		} else if req.FailedSeq != nil {
+		case req.FailedSeq != nil:
 			sets = append(sets, h.LastVerificationFailedSeq.To(*req.FailedSeq))
-		} else {
+		default:
 			sets = append(sets, h.LastVerificationFailedSeq.ToNull())
 		}
 

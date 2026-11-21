@@ -2959,6 +2959,7 @@ var mFAAuthenticatorsTable = schema.Table{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "user_id", Quoted: `"user_id"`, Field: "UserID", Kind: schema.KindString, Flags: 0, Label: `User ID`, JSON: `userId`},
 		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagTenant, Label: `Organization ID`, JSON: `organizationId`},
+		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
 		{Name: "type", Quoted: `"type"`, Field: "Type", Kind: schema.KindString, Flags: 0, Label: `Type`, JSON: `type`, Enum: enumMFAAuthenticatorType[:]},
 		{Name: "name", Quoted: `"name"`, Field: "Name", Kind: schema.KindString, Flags: 0, Label: `Name`, JSON: `name`},
 		{Name: "credential_id", Quoted: `"credential_id"`, Field: "CredentialID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Credential ID`, JSON: `credentialId`},
@@ -2971,15 +2972,15 @@ var mFAAuthenticatorsTable = schema.Table{
 		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, JSON: `updatedAt`},
 	},
 	PK:         []int32{0},
-	Tenant:     []int32{2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12},
-	Update:     []int32{1, 3, 4, 5, 6, 7, 8, 9, 10, 12},
+	Tenant:     []int32{2, 3},
+	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13},
+	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13},
+	Update:     []int32{1, 4, 5, 6, 7, 8, 9, 10, 11, 13},
 	Returning:  nil,
 	Version:    -1,
 	AutoID:     0,
-	AutoCreate: 11,
-	AutoUpdate: 12,
+	AutoCreate: 12,
+	AutoUpdate: 13,
 	IDPrefix:   "mfa_",
 	New:        newMFAAuthenticator,
 	NewN:       newNMFAAuthenticator,
@@ -2996,6 +2997,7 @@ type MFAAuthenticatorsTable struct {
 	ID             keelkinds.PulidIDCol
 	UserID         keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
+	BusinessUnitID keelkinds.PulidIDCol
 	Type           MFAAuthenticatorTypeCol
 	Name           keel.StringCol
 	CredentialID   keel.StringCol
@@ -3014,16 +3016,17 @@ var MFAAuthenticators = &MFAAuthenticatorsTable{
 	ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &mFAAuthenticatorsRef, Index: 0}}},
 	UserID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &mFAAuthenticatorsRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &mFAAuthenticatorsRef, Index: 2}}},
-	Type:           MFAAuthenticatorTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &mFAAuthenticatorsRef, Index: 3}}},
-	Name:           keel.StringCol{Col: keel.Col{Ref: &mFAAuthenticatorsRef, Index: 4}},
-	CredentialID:   keel.StringCol{Col: keel.Col{Ref: &mFAAuthenticatorsRef, Index: 5}},
-	SecretCipher:   keel.StringCol{Col: keel.Col{Ref: &mFAAuthenticatorsRef, Index: 6}},
-	Enabled:        keel.BoolCol{Col: keel.Col{Ref: &mFAAuthenticatorsRef, Index: 7}},
-	VerifiedAt:     keel.Int64Col{Col: keel.Col{Ref: &mFAAuthenticatorsRef, Index: 8}},
-	LastUsedAt:     keel.Int64Col{Col: keel.Col{Ref: &mFAAuthenticatorsRef, Index: 9}},
-	LastUsedStep:   keel.Int64Col{Col: keel.Col{Ref: &mFAAuthenticatorsRef, Index: 10}},
-	CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: &mFAAuthenticatorsRef, Index: 11}},
-	UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: &mFAAuthenticatorsRef, Index: 12}},
+	BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &mFAAuthenticatorsRef, Index: 3}}},
+	Type:           MFAAuthenticatorTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &mFAAuthenticatorsRef, Index: 4}}},
+	Name:           keel.StringCol{Col: keel.Col{Ref: &mFAAuthenticatorsRef, Index: 5}},
+	CredentialID:   keel.StringCol{Col: keel.Col{Ref: &mFAAuthenticatorsRef, Index: 6}},
+	SecretCipher:   keel.StringCol{Col: keel.Col{Ref: &mFAAuthenticatorsRef, Index: 7}},
+	Enabled:        keel.BoolCol{Col: keel.Col{Ref: &mFAAuthenticatorsRef, Index: 8}},
+	VerifiedAt:     keel.Int64Col{Col: keel.Col{Ref: &mFAAuthenticatorsRef, Index: 9}},
+	LastUsedAt:     keel.Int64Col{Col: keel.Col{Ref: &mFAAuthenticatorsRef, Index: 10}},
+	LastUsedStep:   keel.Int64Col{Col: keel.Col{Ref: &mFAAuthenticatorsRef, Index: 11}},
+	CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: &mFAAuthenticatorsRef, Index: 12}},
+	UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: &mFAAuthenticatorsRef, Index: 13}},
 }
 
 // BuildMFAAuthenticators builds the table of mfa_authenticators for ref. Generated relation and alias methods call it.
@@ -3033,16 +3036,17 @@ func BuildMFAAuthenticators(r *keel.Ref) *MFAAuthenticatorsTable {
 		ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		UserID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		Type:           MFAAuthenticatorTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		Name:           keel.StringCol{Col: keel.Col{Ref: r, Index: 4}},
-		CredentialID:   keel.StringCol{Col: keel.Col{Ref: r, Index: 5}},
-		SecretCipher:   keel.StringCol{Col: keel.Col{Ref: r, Index: 6}},
-		Enabled:        keel.BoolCol{Col: keel.Col{Ref: r, Index: 7}},
-		VerifiedAt:     keel.Int64Col{Col: keel.Col{Ref: r, Index: 8}},
-		LastUsedAt:     keel.Int64Col{Col: keel.Col{Ref: r, Index: 9}},
-		LastUsedStep:   keel.Int64Col{Col: keel.Col{Ref: r, Index: 10}},
-		CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 11}},
-		UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 12}},
+		BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		Type:           MFAAuthenticatorTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		Name:           keel.StringCol{Col: keel.Col{Ref: r, Index: 5}},
+		CredentialID:   keel.StringCol{Col: keel.Col{Ref: r, Index: 6}},
+		SecretCipher:   keel.StringCol{Col: keel.Col{Ref: r, Index: 7}},
+		Enabled:        keel.BoolCol{Col: keel.Col{Ref: r, Index: 8}},
+		VerifiedAt:     keel.Int64Col{Col: keel.Col{Ref: r, Index: 9}},
+		LastUsedAt:     keel.Int64Col{Col: keel.Col{Ref: r, Index: 10}},
+		LastUsedStep:   keel.Int64Col{Col: keel.Col{Ref: r, Index: 11}},
+		CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 12}},
+		UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 13}},
 	}
 }
 
@@ -3440,24 +3444,26 @@ func ptrMFAAuthenticator(p unsafe.Pointer, c int32) any {
 	case 2:
 		return (*string)(unsafe.Pointer(&r.OrganizationID))
 	case 3:
-		return (*string)(unsafe.Pointer(&r.Type))
+		return (*string)(unsafe.Pointer(&r.BusinessUnitID))
 	case 4:
-		return &r.Name
+		return (*string)(unsafe.Pointer(&r.Type))
 	case 5:
-		return &r.CredentialID
+		return &r.Name
 	case 6:
-		return &r.SecretCipher
+		return &r.CredentialID
 	case 7:
-		return &r.Enabled
+		return &r.SecretCipher
 	case 8:
-		return &r.VerifiedAt
+		return &r.Enabled
 	case 9:
-		return &r.LastUsedAt
+		return &r.VerifiedAt
 	case 10:
-		return &r.LastUsedStep
+		return &r.LastUsedAt
 	case 11:
-		return &r.CreatedAt
+		return &r.LastUsedStep
 	case 12:
+		return &r.CreatedAt
+	case 13:
 		return &r.UpdatedAt
 	}
 	return nil
@@ -3473,36 +3479,38 @@ func valueMFAAuthenticator(p unsafe.Pointer, c int32) any {
 	case 2:
 		return string(r.OrganizationID)
 	case 3:
-		return string(r.Type)
+		return string(r.BusinessUnitID)
 	case 4:
-		return r.Name
+		return string(r.Type)
 	case 5:
+		return r.Name
+	case 6:
 		if r.CredentialID == "" {
 			return nil
 		}
 		return r.CredentialID
-	case 6:
+	case 7:
 		if r.SecretCipher == "" {
 			return nil
 		}
 		return r.SecretCipher
-	case 7:
-		return r.Enabled
 	case 8:
+		return r.Enabled
+	case 9:
 		if r.VerifiedAt == 0 {
 			return nil
 		}
 		return r.VerifiedAt
-	case 9:
+	case 10:
 		if r.LastUsedAt == 0 {
 			return nil
 		}
 		return r.LastUsedAt
-	case 10:
-		return r.LastUsedStep
 	case 11:
-		return r.CreatedAt
+		return r.LastUsedStep
 	case 12:
+		return r.CreatedAt
+	case 13:
 		return r.UpdatedAt
 	}
 	return nil
@@ -3520,20 +3528,21 @@ var mFARecoveryCodesTable = schema.Table{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "user_id", Quoted: `"user_id"`, Field: "UserID", Kind: schema.KindString, Flags: 0, Label: `User ID`, JSON: `userId`},
 		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagTenant, Label: `Organization ID`, JSON: `organizationId`},
+		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
 		{Name: "code_hash", Quoted: `"code_hash"`, Field: "CodeHash", Kind: schema.KindString, Flags: 0, Label: `Code Hash`},
 		{Name: "hash_version", Quoted: `"hash_version"`, Field: "HashVersion", Kind: schema.KindInt16, Flags: 0, Label: `Hash Version`},
 		{Name: "used_at", Quoted: `"used_at"`, Field: "UsedAt", Kind: schema.KindInt64, Flags: schema.FlagNullZero, Label: `Used At`, JSON: `usedAt`},
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, JSON: `createdAt`},
 	},
 	PK:         []int32{0},
-	Tenant:     []int32{2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6},
-	Update:     []int32{1, 3, 4, 5},
+	Tenant:     []int32{2, 3},
+	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7},
+	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7},
+	Update:     []int32{1, 4, 5, 6},
 	Returning:  nil,
 	Version:    -1,
 	AutoID:     0,
-	AutoCreate: 6,
+	AutoCreate: 7,
 	AutoUpdate: -1,
 	IDPrefix:   "mrc_",
 	New:        newMFARecoveryCode,
@@ -3551,6 +3560,7 @@ type MFARecoveryCodesTable struct {
 	ID             keelkinds.PulidIDCol
 	UserID         keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
+	BusinessUnitID keelkinds.PulidIDCol
 	CodeHash       keel.StringCol
 	HashVersion    keel.Int16Col
 	UsedAt         keel.Int64Col
@@ -3563,10 +3573,11 @@ var MFARecoveryCodes = &MFARecoveryCodesTable{
 	ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &mFARecoveryCodesRef, Index: 0}}},
 	UserID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &mFARecoveryCodesRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &mFARecoveryCodesRef, Index: 2}}},
-	CodeHash:       keel.StringCol{Col: keel.Col{Ref: &mFARecoveryCodesRef, Index: 3}},
-	HashVersion:    keel.Int16Col{Col: keel.Col{Ref: &mFARecoveryCodesRef, Index: 4}},
-	UsedAt:         keel.Int64Col{Col: keel.Col{Ref: &mFARecoveryCodesRef, Index: 5}},
-	CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: &mFARecoveryCodesRef, Index: 6}},
+	BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &mFARecoveryCodesRef, Index: 3}}},
+	CodeHash:       keel.StringCol{Col: keel.Col{Ref: &mFARecoveryCodesRef, Index: 4}},
+	HashVersion:    keel.Int16Col{Col: keel.Col{Ref: &mFARecoveryCodesRef, Index: 5}},
+	UsedAt:         keel.Int64Col{Col: keel.Col{Ref: &mFARecoveryCodesRef, Index: 6}},
+	CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: &mFARecoveryCodesRef, Index: 7}},
 }
 
 // BuildMFARecoveryCodes builds the table of mfa_recovery_codes for ref. Generated relation and alias methods call it.
@@ -3576,10 +3587,11 @@ func BuildMFARecoveryCodes(r *keel.Ref) *MFARecoveryCodesTable {
 		ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		UserID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		CodeHash:       keel.StringCol{Col: keel.Col{Ref: r, Index: 3}},
-		HashVersion:    keel.Int16Col{Col: keel.Col{Ref: r, Index: 4}},
-		UsedAt:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 5}},
-		CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 6}},
+		BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		CodeHash:       keel.StringCol{Col: keel.Col{Ref: r, Index: 4}},
+		HashVersion:    keel.Int16Col{Col: keel.Col{Ref: r, Index: 5}},
+		UsedAt:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 6}},
+		CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 7}},
 	}
 }
 
@@ -3977,12 +3989,14 @@ func ptrMFARecoveryCode(p unsafe.Pointer, c int32) any {
 	case 2:
 		return (*string)(unsafe.Pointer(&r.OrganizationID))
 	case 3:
-		return &r.CodeHash
+		return (*string)(unsafe.Pointer(&r.BusinessUnitID))
 	case 4:
-		return &r.HashVersion
+		return &r.CodeHash
 	case 5:
-		return &r.UsedAt
+		return &r.HashVersion
 	case 6:
+		return &r.UsedAt
+	case 7:
 		return &r.CreatedAt
 	}
 	return nil
@@ -3998,15 +4012,17 @@ func valueMFARecoveryCode(p unsafe.Pointer, c int32) any {
 	case 2:
 		return string(r.OrganizationID)
 	case 3:
-		return r.CodeHash
+		return string(r.BusinessUnitID)
 	case 4:
-		return r.HashVersion
+		return r.CodeHash
 	case 5:
+		return r.HashVersion
+	case 6:
 		if r.UsedAt == 0 {
 			return nil
 		}
 		return r.UsedAt
-	case 6:
+	case 7:
 		return r.CreatedAt
 	}
 	return nil

@@ -39,6 +39,12 @@ func (s *Service) beginImport(
 	if source.Location.String() != command.Location {
 		return refuse(reasonImportPlace)
 	}
+	if err := s.requireServerBucket(ctx, &source.Location); err != nil {
+		if refusal, ok := tenantarchive.RefusalOf(err); ok {
+			return refuse(refusal.Reason)
+		}
+		return err
+	}
 	if err := s.busy(ctx, t.InstanceID, command.ID); errors.Is(err, ErrTenantBusy) {
 		return refuse(reasonImportRunning)
 	} else if err != nil {

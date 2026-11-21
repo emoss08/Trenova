@@ -148,6 +148,15 @@ func (s *Service) BulkUpdateStatus(
 		zap.String("status", req.Status.String()),
 	)
 
+	if err := accountguard.RequirePeople(
+		ctx,
+		s.repo,
+		req.TenantInfo.BuID,
+		req.UserIDs...,
+	); err != nil {
+		return nil, err
+	}
+
 	if req.Status != domaintypes.StatusActive &&
 		slices.Contains(req.UserIDs, req.TenantInfo.UserID) {
 		return nil, errortypes.NewValidationError(
@@ -245,6 +254,14 @@ func (s *Service) GetByID(
 	ctx context.Context,
 	req tenantports.GetUserByIDRequest,
 ) (*tenant.User, error) {
+	if err := accountguard.RequirePeople(
+		ctx,
+		s.repo,
+		req.TenantInfo.BuID,
+		req.LookupUserID,
+	); err != nil {
+		return nil, err
+	}
 	return s.repo.GetByID(ctx, req)
 }
 
@@ -252,6 +269,14 @@ func (s *Service) GetByIDs(
 	ctx context.Context,
 	req tenantports.GetUsersByIDsRequest,
 ) ([]*tenant.User, error) {
+	ids, err := accountguard.WithoutSystemActor(ctx, s.repo, req.TenantInfo.BuID, req.UserIDs)
+	if err != nil {
+		return nil, err
+	}
+	if len(ids) == 0 {
+		return []*tenant.User{}, nil
+	}
+	req.UserIDs = ids
 	return s.repo.GetByIDs(ctx, req)
 }
 
@@ -561,6 +586,9 @@ func (s *Service) GetProfilePictureURL(
 	userID pulid.ID,
 	variant string,
 ) (string, error) {
+	if err := accountguard.RequirePeople(ctx, s.repo, tenantInfo.BuID, userID); err != nil {
+		return "", err
+	}
 	user, err := s.repo.GetByID(ctx, tenantports.GetUserByIDRequest{
 		TenantInfo:   tenantInfo,
 		LookupUserID: userID,
@@ -839,6 +867,9 @@ func (s *Service) ListOrganizationMemberships(
 	ctx context.Context,
 	userID, businessUnitID pulid.ID,
 ) ([]*tenant.OrganizationMembership, error) {
+	if err := accountguard.RequirePeople(ctx, s.repo, businessUnitID, userID); err != nil {
+		return nil, err
+	}
 	return s.repo.ListOrganizationMemberships(ctx, userID, businessUnitID)
 }
 
@@ -849,6 +880,9 @@ func (s *Service) ReplaceOrganizationMemberships(
 ) ([]*tenant.OrganizationMembership, error) {
 	if len(organizationIDs) == 0 {
 		return nil, tenant.NewNoOrganizationMembershipsError()
+	}
+	if err := accountguard.RequirePeople(ctx, s.repo, businessUnitID, userID); err != nil {
+		return nil, err
 	}
 
 	previous, err := s.repo.ListOrganizationMemberships(ctx, userID, businessUnitID)

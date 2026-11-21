@@ -308,7 +308,7 @@ func (f *FakeLedger) RecordVerification(
 	head.LastVerificationDetail = req.Detail
 	at := req.At
 	head.LastVerifiedAt = &at
-	if req.Status == aiaudit.VerificationVerified {
+	if req.Status.Holds() {
 		head.LastVerifiedSeq = req.VerifiedSeq
 	}
 
@@ -771,7 +771,7 @@ type FakeAudit struct {
 	Entries []*auditports.LogActionParams
 }
 
-func (f *FakeAudit) LogAction(_ context.Context, 
+func (f *FakeAudit) LogAction(_ context.Context,
 	params *auditports.LogActionParams,
 	_ ...auditports.LogOption,
 ) error {

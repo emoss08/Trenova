@@ -123,6 +123,72 @@ func (_c *MockSealRepository_AppendSeal_Call) RunAndReturn(run func(ctx context.
 	return _c
 }
 
+// ImportedThrough provides a mock function for the type MockSealRepository
+func (_mock *MockSealRepository) ImportedThrough(ctx context.Context, tenant pagination.TenantInfo) (int64, error) {
+	ret := _mock.Called(ctx, tenant)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ImportedThrough")
+	}
+
+	var r0 int64
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.TenantInfo) (int64, error)); ok {
+		return returnFunc(ctx, tenant)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.TenantInfo) int64); ok {
+		r0 = returnFunc(ctx, tenant)
+	} else {
+		r0 = ret.Get(0).(int64)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, pagination.TenantInfo) error); ok {
+		r1 = returnFunc(ctx, tenant)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockSealRepository_ImportedThrough_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ImportedThrough'
+type MockSealRepository_ImportedThrough_Call struct {
+	*mock.Call
+}
+
+// ImportedThrough is a helper method to define mock.On call
+//   - ctx context.Context
+//   - tenant pagination.TenantInfo
+func (_e *MockSealRepository_Expecter) ImportedThrough(ctx any, tenant any) *MockSealRepository_ImportedThrough_Call {
+	return &MockSealRepository_ImportedThrough_Call{Call: _e.mock.On("ImportedThrough", ctx, tenant)}
+}
+
+func (_c *MockSealRepository_ImportedThrough_Call) Run(run func(ctx context.Context, tenant pagination.TenantInfo)) *MockSealRepository_ImportedThrough_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 pagination.TenantInfo
+		if args[1] != nil {
+			arg1 = args[1].(pagination.TenantInfo)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockSealRepository_ImportedThrough_Call) Return(n int64, err error) *MockSealRepository_ImportedThrough_Call {
+	_c.Call.Return(n, err)
+	return _c
+}
+
+func (_c *MockSealRepository_ImportedThrough_Call) RunAndReturn(run func(ctx context.Context, tenant pagination.TenantInfo) (int64, error)) *MockSealRepository_ImportedThrough_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // DeleteSealsBefore provides a mock function for the type MockSealRepository
 func (_mock *MockSealRepository) DeleteSealsBefore(ctx context.Context, before int64) (int64, error) {
 	ret := _mock.Called(ctx, before)

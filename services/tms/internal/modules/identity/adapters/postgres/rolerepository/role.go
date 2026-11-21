@@ -2,12 +2,14 @@ package rolerepository
 
 import (
 	"context"
+	"errors"
 
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/entitlementports"
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/tenantbootstrap"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac/rbacdb"
@@ -36,6 +38,8 @@ const (
 	roleClosureRoleColumn    = "id"
 	alreadyAssignedMessage   = "Role is already assigned to this user"
 	alreadyAssignedFieldName = "roleId"
+	unknownUserFieldName     = "userId"
+	unknownUserLabel         = "User ID"
 	heldRolesName            = "held"
 	heldUserColumn           = "user_id"
 	heldRoleColumn           = "role_id"
@@ -491,6 +495,18 @@ func (r *repository) CreateAssignment(
 		db := r.db.Keel(ctx)
 		ura := rbacdb.UserRoleAssignments
 
+		businessUnitID, err := tenantbootstrap.LockMember(ctx, db, tenantbootstrap.MemberRequest{
+			UserID:         assignment.UserID,
+			OrganizationID: assignment.OrganizationID,
+		})
+		if errors.Is(err, tenantbootstrap.ErrNotAMember) {
+			return unknownUser()
+		}
+		if err != nil {
+			return err
+		}
+		assignment.BusinessUnitID = businessUnitID
+
 		existing, err := forTenant(
 			ctx,
 			ura.Query(),
@@ -543,6 +559,15 @@ func (r *repository) CreateAssignment(
 		assignment.ID = existing.ID
 		return nil
 	})
+}
+
+func unknownUser() error {
+	return errortypes.NewValidationError(
+		unknownUserFieldName,
+		errortypes.ErrInvalidReference,
+		"{0} does not exist in your organization",
+		unknownUserLabel,
+	)
 }
 
 func alreadyAssigned() error {

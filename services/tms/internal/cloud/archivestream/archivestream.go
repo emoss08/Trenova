@@ -162,9 +162,18 @@ type hashingReader struct {
 }
 
 func (r *hashingReader) Read(p []byte) (int, error) {
+	if room := r.expect.Bytes - r.bytes + 1; int64(len(p)) > room {
+		p = p[:max(room, 0)]
+	}
+	if len(p) == 0 {
+		return 0, ErrStoredBytesChanged
+	}
 	n, err := r.src.Read(p)
 	r.hash.Write(p[:n])
 	r.bytes += int64(n)
+	if r.bytes > r.expect.Bytes {
+		return n, ErrStoredBytesChanged
+	}
 	if errors.Is(err, io.EOF) && !r.matches() {
 		return n, ErrStoredBytesChanged
 	}

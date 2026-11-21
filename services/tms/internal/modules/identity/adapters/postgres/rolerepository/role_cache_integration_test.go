@@ -23,6 +23,7 @@ func TestRoleResolutionIsServedFromTheResultCacheUntilARoleChanges(t *testing.T)
 	t.Cleanup(cleanup)
 
 	data := seedtest.SeedFullTestData(t, ctx, db)
+	seedtest.Join(t, ctx, db, data.User)
 	cached := cachetest.Open(t, ctx, dsn)
 	repo := New(
 		Params{

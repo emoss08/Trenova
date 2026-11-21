@@ -198,6 +198,7 @@ func (s *Service) BeginTOTPEnrollment(
 	authenticator := &iam.MFAAuthenticator{
 		UserID:         usr.ID,
 		OrganizationID: req.TenantInfo.OrgID,
+		BusinessUnitID: req.TenantInfo.BuID,
 		Type:           iam.MFAAuthenticatorTypeTOTP,
 		Name:           defaultAuthenticatorName,
 		SecretCipher:   cipher,
@@ -372,6 +373,14 @@ func (s *Service) RegenerateRecoveryCodes(
 func (s *Service) ResetUserMFA(ctx context.Context, req *sessionports.ResetUserMFARequest) error {
 	if req.TargetUserID.IsNil() {
 		return errortypes.NewValidationError("userId", errortypes.ErrRequired, "User is required")
+	}
+	if err := accountguard.RequirePeople(
+		ctx,
+		s.users,
+		req.TenantInfo.BuID,
+		req.TargetUserID,
+	); err != nil {
+		return err
 	}
 
 	if _, err := s.users.GetByID(ctx, tenantports.GetUserByIDRequest{
@@ -612,6 +621,7 @@ func (s *Service) newRecoveryCodes(
 		hashed = append(hashed, &iam.MFARecoveryCode{
 			UserID:         tenantInfo.UserID,
 			OrganizationID: tenantInfo.OrgID,
+			BusinessUnitID: tenantInfo.BuID,
 			CodeHash:       s.hashRecoveryCode(totputils.NormalizeRecoveryCode(code)),
 			HashVersion:    iam.RecoveryCodeHashHMAC,
 		})

@@ -132,6 +132,19 @@ func (l *Location) String() string {
 	return "s3://" + l.Bucket + "/" + l.Prefix
 }
 
+func (l *Location) SameBucket(other *Location) bool {
+	return other != nil && l.Bucket == other.Bucket &&
+		strings.EqualFold(endpointHost(l.Endpoint), endpointHost(other.Endpoint))
+}
+
+func endpointHost(endpoint string) string {
+	host := strings.TrimSpace(endpoint)
+	if _, rest, found := strings.Cut(host, "://"); found {
+		host = rest
+	}
+	return strings.TrimSuffix(strings.TrimSuffix(host, "/"), ".")
+}
+
 func (l *Location) Key(name string) string {
 	return l.Prefix + name
 }

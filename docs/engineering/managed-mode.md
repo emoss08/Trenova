@@ -909,7 +909,15 @@ the audit log by principal.
 A grant's end ends its sessions: revoking deletes them at once and every request reads the grant
 (`requireLiveSupport`), so a revoked or expired grant refuses the next request on any process and
 an open event stream ends at the session watch's next check; managed mode turned off answers every
-support request with no grant at all. A grant whose organization's plan has ended is refused like
+support request with no grant at all. Support turned off by the control plane (the support keys
+removed with `DELETE`) ends a live session the same way: `RequireLive` reads the server's key set
+uncached with the grant on every request, so the next request on any process is refused. A
+suspended tenant's requests are refused at the plan guard on the next request and its sessions
+are deleted by `CloudTenantSessionsWorkflow`; a removed tenant's sessions are deleted by the
+removal's first step. The hourly expiry sweep (`RecordExpiries`) records each grant on its own: a
+grant it cannot record is logged and tried again on the next run while the others are recorded,
+and the run fails (for the schedule's retry) only when every grant of the page failed. The sweep
+only records an end that already took effect: sessions never outlive their grant. A grant whose organization's plan has ended is refused like
 every other session by the plan guard. Extending a grant does not lengthen a session already open:
 it ends at the end it was opened with, and staff enter again (the grants page says so beside an
 extended grant). A presigned download link handed out during a session lives out its own short

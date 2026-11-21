@@ -722,6 +722,7 @@ enum AIAuditPurpose {
 }
 
 enum AIAuditVerificationStatus {
+  ImportedUnverified
   KeyMissing
   Mismatch
   Verified
@@ -7766,6 +7767,7 @@ type AuditReviewList {
 
 enum AuditVerificationStatus {
   Broken
+  ImportedUnverified
   KeyMissing
   Verified
 }

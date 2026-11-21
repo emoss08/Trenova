@@ -22,7 +22,9 @@ const (
 	// HashVersionUnsigned is a plain SHA-256 chain, written when no key is
 	// configured. It still shows a row changed by mistake, but not one
 	// rewritten by somebody able to recompute the chain.
-	HashVersionUnsigned int16 = 2
+	HashVersionUnsigned         int16 = 2
+	HashVersionImported         int16 = 3
+	HashVersionImportedUnsigned int16 = 4
 
 	chainDomain = "trenova.ai-audit/v1"
 	costScale   = 6
@@ -216,12 +218,12 @@ func CanonicalBytes(e *AIAuditEvent) ([]byte, error) {
 func ComputeHash(e *AIAuditEvent, key *ChainKey) (string, error) {
 	var mac hash.Hash
 	switch e.HashVersion {
-	case HashVersionSigned:
+	case HashVersionSigned, HashVersionImported:
 		if key == nil || len(key.Secret) == 0 || key.ID != e.HashKeyID {
 			return "", ErrChainKeyRequired
 		}
 		mac = hmac.New(sha256.New, key.Secret)
-	case HashVersionUnsigned:
+	case HashVersionUnsigned, HashVersionImportedUnsigned:
 		mac = sha256.New()
 	default:
 		return "", fmt.Errorf("%w: %d", ErrUnknownHashVer, e.HashVersion)
@@ -252,11 +254,26 @@ func writeHeader(mac hash.Hash, e *AIAuditEvent) {
 // Seal links a row to the one before it and signs it: with the key when one
 // is given, as an unsigned SHA-256 link when it is nil.
 func Seal(e *AIAuditEvent, prevHash string, key *ChainKey) error {
+	return seal(e, prevHash, key, false)
+}
+
+func SealImported(e *AIAuditEvent, prevHash string, key *ChainKey) error {
+	return seal(e, prevHash, key, true)
+}
+
+func seal(e *AIAuditEvent, prevHash string, key *ChainKey, imported bool) error {
 	e.PrevHash = prevHash
-	if key != nil {
+	switch {
+	case key != nil && imported:
+		e.HashVersion = HashVersionImported
+		e.HashKeyID = key.ID
+	case key != nil:
 		e.HashVersion = HashVersionSigned
 		e.HashKeyID = key.ID
-	} else {
+	case imported:
+		e.HashVersion = HashVersionImportedUnsigned
+		e.HashKeyID = ""
+	default:
 		e.HashVersion = HashVersionUnsigned
 		e.HashKeyID = ""
 	}
@@ -268,6 +285,14 @@ func Seal(e *AIAuditEvent, prevHash string, key *ChainKey) error {
 	e.Hash = sum
 
 	return nil
+}
+
+func (e *AIAuditEvent) Keyed() bool {
+	return e.HashVersion == HashVersionSigned || e.HashVersion == HashVersionImported
+}
+
+func (e *AIAuditEvent) Imported() bool {
+	return e.HashVersion == HashVersionImported || e.HashVersion == HashVersionImportedUnsigned
 }
 
 // VerifyHash reports whether a row still hashes to what it recorded.

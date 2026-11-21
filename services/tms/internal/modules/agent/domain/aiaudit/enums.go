@@ -231,6 +231,7 @@ const (
 	// VerificationKeyMissing is a chain holding rows signed with a key that is
 	// no longer configured, so they cannot be checked.
 	VerificationKeyMissing = VerificationStatus("KeyMissing")
+	VerificationImported   = VerificationStatus("ImportedUnverified")
 )
 
 func AllVerificationStatuses() []VerificationStatus {
@@ -238,12 +239,18 @@ func AllVerificationStatuses() []VerificationStatus {
 		VerificationVerified,
 		VerificationMismatch,
 		VerificationKeyMissing,
+		VerificationImported,
 	}
+}
+
+func (s VerificationStatus) Holds() bool {
+	return s == VerificationVerified || s == VerificationImported
 }
 
 func (s VerificationStatus) IsValid() bool {
 	switch s {
-	case VerificationVerified, VerificationMismatch, VerificationKeyMissing:
+	case VerificationVerified, VerificationMismatch, VerificationKeyMissing,
+		VerificationImported:
 		return true
 	default:
 		return false

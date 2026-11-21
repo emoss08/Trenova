@@ -98,6 +98,14 @@ type stubUserRepo struct {
 	updateErr  error
 	findCalled int
 	updateInTx bool
+	system     pulid.ID
+}
+
+func (r *stubUserRepo) SystemActorID(_ context.Context, _ pulid.ID) (pulid.ID, error) {
+	if r.system.IsNil() {
+		return pulid.Nil, errortypes.NewNotFoundError("System actor not found")
+	}
+	return r.system, nil
 }
 
 func (r *stubUserRepo) GetByID(

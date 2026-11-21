@@ -98,9 +98,10 @@ func TestRecoveryCodeHashVersionDefaultsToKeyedForNewRows(t *testing.T) {
 	_, err := keel.Exec(
 		ctx,
 		db,
-		`INSERT INTO mfa_recovery_codes (id, user_id, organization_id, code_hash) VALUES ('mrc_default', $1, $2, 'digest')`,
+		`INSERT INTO mfa_recovery_codes (id, user_id, organization_id, business_unit_id, code_hash) VALUES ('mrc_default', $1, $2, $3, 'digest')`,
 		data.User.ID.String(),
 		data.Organization.ID.String(),
+		data.BusinessUnit.ID.String(),
 	)
 	require.NoError(t, err)
 

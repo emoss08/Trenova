@@ -12,13 +12,20 @@ const (
 	VerificationVerified   = VerificationStatus("Verified")
 	VerificationBroken     = VerificationStatus("Broken")
 	VerificationKeyMissing = VerificationStatus("KeyMissing")
+	VerificationImported   = VerificationStatus("ImportedUnverified")
 )
 
 const (
-	SealHashVersionSigned   int16 = 1
-	SealHashVersionUnsigned int16 = 2
-	SealWindowSeconds             = int64(3600)
+	SealHashVersionSigned           int16 = 1
+	SealHashVersionUnsigned         int16 = 2
+	SealHashVersionImported         int16 = 3
+	SealHashVersionImportedUnsigned int16 = 4
+	SealWindowSeconds                     = int64(3600)
 )
+
+func (s VerificationStatus) Holds() bool {
+	return s == VerificationVerified || s == VerificationImported
+}
 
 type ChainHead struct {
 	keel.Table `keel:"audit_chain_heads"`

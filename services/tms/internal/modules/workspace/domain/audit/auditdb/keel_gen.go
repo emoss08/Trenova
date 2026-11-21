@@ -4555,6 +4555,7 @@ var enumVerificationStatus = [...]schema.EnumValue{
 	{Value: `Verified`, Label: `Verification Verified`},
 	{Value: `Broken`, Label: `Verification Broken`},
 	{Value: `KeyMissing`, Label: `Verification Key Missing`},
+	{Value: `ImportedUnverified`, Label: `Verification Imported`},
 }
 
 // AlertKindCol is a column of audit.AlertKind values.

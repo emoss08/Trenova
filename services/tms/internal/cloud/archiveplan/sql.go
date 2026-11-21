@@ -175,7 +175,7 @@ func (p *Plan) OutsideQueries(tenant dbscope.Tenant, batch int) []string {
 }
 
 func (p *Plan) DanglingQueries(tenant dbscope.Tenant, batch int) []string {
-	return p.referenceQueries(p.ForeignKeys, tenant, batch, false)
+	return p.referenceQueries(p.ForeignKeys, tenant, batch, true)
 }
 
 func (p *Plan) referenceQueries(

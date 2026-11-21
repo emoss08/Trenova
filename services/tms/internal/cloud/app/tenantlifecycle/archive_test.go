@@ -46,6 +46,11 @@ func target(prefix string, keys bool) *tenantarchive.Access {
 	return access
 }
 
+func withServerBucket(t *testing.T, r *rig) {
+	t.Helper()
+	require.NoError(t, r.svc.SetNightlyGrant(t.Context(), nightlyStorage(), time.Time{}))
+}
+
 func made(t *testing.T, r *rig, lifecycle cloudtenant.Lifecycle) {
 	t.Helper()
 	e := entry(instanceA, 1)
@@ -57,6 +62,7 @@ func made(t *testing.T, r *rig, lifecycle cloudtenant.Lifecycle) {
 func TestAFinalArchiveWaitsForTheTenantToBeSuspended(t *testing.T) {
 	t.Parallel()
 	r := newRig(t, true)
+	withServerBucket(t, r)
 	made(t, r, cloudtenant.LifecycleActive)
 	req := &tenantlifecycle.ArchiveRequest{
 		CommandID: archiveID,
@@ -99,6 +105,7 @@ func TestAFinalArchiveWaitsForTheTenantToBeSuspended(t *testing.T) {
 func TestAnArchiveIsRecordedForTheStatusAndItsSecretsAreErased(t *testing.T) {
 	t.Parallel()
 	r := newRig(t, true)
+	withServerBucket(t, r)
 	made(t, r, cloudtenant.LifecycleSuspended)
 	_, err := r.svc.StartArchive(t.Context(), instanceA, &tenantlifecycle.ArchiveRequest{
 		CommandID: archiveID,
@@ -130,6 +137,7 @@ func TestAnArchiveIsRecordedForTheStatusAndItsSecretsAreErased(t *testing.T) {
 func TestARestoreHoldsTheTenantSuspendedAndReportsHowItEnded(t *testing.T) {
 	t.Parallel()
 	r := newRig(t, true)
+	withServerBucket(t, r)
 	made(t, r, cloudtenant.LifecycleActive)
 	req := &tenantlifecycle.RestoreRequest{
 		CommandID:    restoreID,
@@ -185,6 +193,7 @@ func TestARestoreHoldsTheTenantSuspendedAndReportsHowItEnded(t *testing.T) {
 func TestAnImportMakesTheTenantFromTheArchiveInsteadOfBootstrapping(t *testing.T) {
 	t.Parallel()
 	r := newRig(t, true)
+	withServerBucket(t, r)
 	prefix := tenantarchive.CommandPrefix(instanceA, archiveID)
 	e := entry(instanceA, 1)
 	e.Lifecycle = cloudtenant.LifecycleSuspended
@@ -232,6 +241,7 @@ func TestAnImportMakesTheTenantFromTheArchiveInsteadOfBootstrapping(t *testing.T
 func TestAFailedImportIsReportedOnceAsACommandFailure(t *testing.T) {
 	t.Parallel()
 	r := newRig(t, true)
+	withServerBucket(t, r)
 	prefix := tenantarchive.CommandPrefix(instanceA, archiveID)
 	e := entry(instanceA, 1)
 	e.Commands = []cloudtenant.Command{{
@@ -346,6 +356,7 @@ func TestRemovingTheNightlyStorageStopsNightlyArchives(t *testing.T) {
 func TestAStorageOrKeyFailureIsReportedWithItsCode(t *testing.T) {
 	t.Parallel()
 	r := newRig(t, true)
+	withServerBucket(t, r)
 	made(t, r, cloudtenant.LifecycleSuspended)
 	req := &tenantlifecycle.RestoreRequest{
 		CommandID:    restoreID,
@@ -365,4 +376,72 @@ func TestAStorageOrKeyFailureIsReportedWithItsCode(t *testing.T) {
 	assert.Equal(t, restoreID, failure.CommandID)
 	assert.Equal(t, "restore", failure.Kind)
 	assert.Equal(t, string(tenantarchive.RefusalKeyAbsent), failure.Code)
+}
+
+func TestACommandGoesOnlyToTheServersOwnBucket(t *testing.T) {
+	t.Parallel()
+	r := newRig(t, true)
+	made(t, r, cloudtenant.LifecycleSuspended)
+	archive := &tenantlifecycle.ArchiveRequest{
+		CommandID: archiveID,
+		Purpose:   tenantarchive.PurposeFinal,
+		Access:    target(tenantarchive.CommandPrefix(instanceA, archiveID), true),
+	}
+	restore := &tenantlifecycle.RestoreRequest{
+		CommandID:    restoreID,
+		ExpectSHA256: strings.Repeat("b", 64),
+		Access:       target("tenants/"+instanceA+"/nightly/2026-11-19/", true),
+	}
+
+	_, err := r.svc.StartArchive(t.Context(), instanceA, archive)
+	refusal, ok := tenantarchive.RefusalOf(err)
+	require.True(t, ok, "a server without its own bucket takes no archive: %v", err)
+	assert.Equal(t, tenantarchive.RefusalLocation, refusal.Code)
+	_, err = r.svc.StartRestore(t.Context(), instanceA, restore)
+	refusal, ok = tenantarchive.RefusalOf(err)
+	require.True(t, ok, "nor a restore: %v", err)
+	assert.Equal(t, tenantarchive.RefusalLocation, refusal.Code)
+	assert.Empty(t, r.commands.rows, "nothing was recorded")
+
+	withServerBucket(t, r)
+	elsewhere := target(tenantarchive.CommandPrefix(instanceA, archiveID), true)
+	elsewhere.Location.Bucket = "someone-elses-archives"
+	archive.Access = elsewhere
+	_, err = r.svc.StartArchive(t.Context(), instanceA, archive)
+	refusal, ok = tenantarchive.RefusalOf(err)
+	require.True(t, ok, "another bucket at an allowed host is refused: %v", err)
+	assert.Equal(t, tenantarchive.RefusalLocation, refusal.Code)
+	otherHost := target(tenantarchive.CommandPrefix(instanceA, archiveID), true)
+	otherHost.Location.Endpoint = "https://objects.other.test"
+	archive.Access = otherHost
+	_, err = r.svc.StartArchive(t.Context(), instanceA, archive)
+	_, ok = tenantarchive.RefusalOf(err)
+	require.True(t, ok, "the same bucket name at another endpoint is refused: %v", err)
+	assert.Empty(t, r.commands.rows)
+
+	archive.Access = target(tenantarchive.CommandPrefix(instanceA, archiveID), true)
+	_, err = r.svc.StartArchive(t.Context(), instanceA, archive)
+	require.NoError(t, err, "the server's own bucket is accepted")
+}
+
+func TestAnImportFromAnotherBucketIsRefused(t *testing.T) {
+	t.Parallel()
+	r := newRig(t, true)
+	withServerBucket(t, r)
+	prefix := tenantarchive.CommandPrefix(instanceA, archiveID)
+	e := entry(instanceA, 1)
+	e.Lifecycle = cloudtenant.LifecycleSuspended
+	e.FirstAdministrator.Invite = nil
+	e.Commands = []cloudtenant.Command{{
+		Kind: cloudtenant.CommandImport, ID: importID, Location: "s3://elsewhere/" + prefix,
+		ExpectSHA256: strings.Repeat("c", 64), RequestedAt: time.Unix(now, 0).UTC(),
+	}}
+	source := target(prefix, true)
+	source.Location.Bucket = "elsewhere"
+	status, err := r.svc.Apply(t.Context(), instanceA, e, source)
+	require.NoError(t, err)
+	require.NotNil(t, status.Refused, "an import from another bucket is refused")
+	assert.Zero(t, r.bootstrap.calls)
+	assert.NotContains(t, r.workflows.started,
+		archivejobscontract.WorkflowID(tenantcommand.KindImport, importID))
 }

@@ -108,3 +108,47 @@ func current(m *credential.Manager) *credential.Identity {
 	ident := m.Current()
 	return &ident
 }
+
+func TestABundleOthersCanReadIsRefused(t *testing.T) {
+	t.Parallel()
+	dir := filepath.Join(t.TempDir(), "identity")
+	enrolment := filepath.Join(t.TempDir(), "enrolment.json")
+	require.NoError(t, os.WriteFile(enrolment, []byte("{}"), 0o644))
+	store, err := dirstore.New(dirstore.Params{Dir: dir, Enrolment: enrolment})
+	require.NoError(t, err)
+
+	_, _, err = store.Bundle(t.Context())
+	require.ErrorIs(t, err, dirstore.ErrInsecure, "the bundle holds a private key")
+}
+
+func TestAnIdentityThatIsALinkIsRefused(t *testing.T) {
+	t.Parallel()
+	store, _, dir := enrolled(t, 30*24*time.Hour)
+	path := filepath.Join(dir, dirstore.IdentityFile)
+	elsewhere := filepath.Join(t.TempDir(), "swapped.json")
+	require.NoError(t, os.Rename(path, elsewhere))
+	require.NoError(t, os.Symlink(elsewhere, path))
+
+	_, _, err := store.Load(t.Context())
+	require.ErrorIs(t, err, dirstore.ErrInsecure, "a link is followed nowhere")
+}
+
+func TestACredentialDirectoryThatIsALinkIsRefused(t *testing.T) {
+	t.Parallel()
+	target := t.TempDir()
+	link := filepath.Join(t.TempDir(), "identity")
+	require.NoError(t, os.Symlink(target, link))
+
+	_, err := dirstore.New(dirstore.Params{Dir: link})
+	require.ErrorIs(t, err, dirstore.ErrInsecure)
+}
+
+func TestATruncatedIdentityIsReportedInvalidSoTheBundleEnrolsAgain(t *testing.T) {
+	t.Parallel()
+	store, _, dir := enrolled(t, 30*24*time.Hour)
+	require.NoError(t, os.WriteFile(filepath.Join(dir, dirstore.IdentityFile), []byte(`{"kind":`), 0o600))
+
+	_, ok, err := store.Load(t.Context())
+	require.ErrorIs(t, err, credential.ErrIdentityInvalid)
+	assert.False(t, ok)
+}

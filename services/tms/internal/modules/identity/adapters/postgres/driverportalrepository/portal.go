@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/tenantbootstrap"
 	"github.com/emoss08/trenova/internal/modules/identity/app/quotaservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
@@ -309,8 +310,7 @@ func (r *portalAccessRepository) ActivatePortalAccess(
 			return nil, fmt.Errorf("create portal user membership: %w", err)
 		}
 
-		if err = rbacdb.UserRoleAssignments.Create(ctx, db, &rbac.UserRoleAssignment{
-			ID:             pulid.MustNew("ura_"),
+		if err = tenantbootstrap.AssignRole(ctx, db, tenantbootstrap.RoleAssignmentParams{
 			UserID:         req.User.ID,
 			OrganizationID: invitation.OrganizationID,
 			RoleID:         role.ID,

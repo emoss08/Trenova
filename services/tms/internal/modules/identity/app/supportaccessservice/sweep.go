@@ -16,6 +16,7 @@ const expirySweepBatch = 200
 
 type ExpirySweepResult struct {
 	Recorded int `json:"recorded"`
+	Failed   int `json:"failed"`
 }
 
 // RecordExpiries writes, once per grant, the security entry saying a grant ended on its own, and
@@ -31,17 +32,22 @@ func (s *Service) RecordExpiries(ctx context.Context, now int64) (*ExpirySweepRe
 	if err != nil {
 		return nil, err
 	}
+	var lastErr error
 	for _, grant := range grants {
 		tenantInfo := pagination.TenantInfo{OrgID: grant.OrganizationID, BuID: grant.BusinessUnitID}
 		scoped := dbscope.WithTenant(ctx, tenantInfo.DBTenant())
 
 		marked, markErr := s.grants.MarkExpiryRecorded(scoped, grant, now)
 		if markErr != nil {
-			return result, fmt.Errorf(
-				"record the expiry of support grant %s: %w",
-				grant.ID,
-				markErr,
+			result.Failed++
+			lastErr = markErr
+			s.l.Error(
+				"cannot record the expiry of a support grant; the other grants are recorded and this one is tried again on the next run",
+				zap.String("grantID", grant.ID.String()),
+				zap.String("organizationID", grant.OrganizationID.String()),
+				zap.Error(markErr),
 			)
+			continue
 		}
 		if !marked {
 			continue
@@ -64,6 +70,13 @@ func (s *Service) RecordExpiries(ctx context.Context, now int64) (*ExpirySweepRe
 		result.Recorded++
 	}
 
+	if result.Failed > 0 && result.Failed == len(grants) {
+		return result, fmt.Errorf(
+			"record the expiry of %d support grants: %w",
+			result.Failed,
+			lastErr,
+		)
+	}
 	if result.Recorded > 0 {
 		s.l.Info(
 			"recorded support grants that ended on their own",

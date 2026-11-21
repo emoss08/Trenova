@@ -134,6 +134,15 @@ sweep over many tenants resolves the actor per tenant inside its loop. Nothing a
 username, an address) ever decides who the system actor is; reserved names are refused in one
 place (`tenant.IsReservedUsername`, `IsReservedEmailAddress`).
 
+## Roles go to members
+
+A role is assigned only to a live member of the organization: the write locks the membership
+(`tenantbootstrap.LockMember`, `FOR SHARE`) in the same transaction as the insert, and answers a
+non-member, another tenant's person and the system actor exactly as an unknown user. Every writer
+of `user_role_assignments` goes through it (`rolerepository.CreateAssignment`,
+`tenantbootstrap.AssignRole`), and the row carries its organization's business unit, so the
+database refuses another tenant's person too.
+
 ## An id from input is the caller's to prove
 
 A foreign key checks that a row exists, not that it is the caller's: row-level security does not
@@ -168,7 +177,10 @@ business unit, so that one constraint is what keeps a forged or buggy row from n
 tenant; the catalog test in `internal/cloud/boundaries_integration_test.go` fails on a new
 organization-naming column that has none. Archive keys and chain keys never leave an install: an
 imported audit trail is signed again under this install's chain key with the source's values kept
-beside it, never by importing the source's key.
+beside it, never by importing the source's key, and a trail this server could not verify where it
+was signed is marked so in what the hash covers (hash version 3 or 4), so every verifier reports it
+as imported and not verified rather than valid. A new reader of chain validity shows that state;
+a new writer of a chain never signs imported links as ordinary ones.
 
 ## What ships
 

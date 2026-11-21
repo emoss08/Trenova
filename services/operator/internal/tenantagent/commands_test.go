@@ -387,6 +387,48 @@ func TestARestartedAgentDoesNotStartACommandTwice(t *testing.T) {
 	assert.Zero(t, r.tms.CommandPosts(restore.String()))
 }
 
+func TestACommandWaitsWhileTheServerHasNoBucketOfItsOwn(t *testing.T) {
+	r := newRig(t)
+	id, archive, imported := uuid.New(), uuid.New(), uuid.New()
+	newcomer := uuid.New()
+	prefix := "tenants/" + newcomer.String() + "/archives/" + uuid.NewString() + "/"
+	entry := tenant(id, 1, instanceapi.SharedTenantSuspended)
+	entry.Commands = []instanceapi.SharedTenantCommand{
+		archiveCommand(archive, instanceapi.SharedArchiveFinal),
+	}
+	made := tenant(newcomer, 1, instanceapi.SharedTenantSuspended)
+	made.Commands = []instanceapi.SharedTenantCommand{
+		importCommand(imported, "s3://"+archiveBucket+"/"+prefix),
+	}
+	r.cp.SetSharedTenants([]instanceapi.SharedTenant{entry, made})
+	withoutNightly := storage(
+		writeTarget(id, archive, true),
+		readTarget(newcomer, imported, instanceapi.TargetImport, prefix),
+	)
+	withoutNightly.Nightly = nil
+	r.cp.SetSharedStorage(withoutNightly)
+
+	r.iterate(t)
+	r.iterate(t)
+	assert.Zero(t, r.tms.CommandPosts(archive.String()),
+		"no command is started without the server's own bucket")
+	assert.Zero(t, r.tms.TenantPuts(newcomer.String()),
+		"a tenant made from an archive waits too")
+	assert.Nil(t, r.reported(t, id).CommandFailures, "waiting is not a failure")
+
+	r.cp.SetSharedStorage(storage(
+		writeTarget(id, archive, true),
+		readTarget(newcomer, imported, instanceapi.TargetImport, prefix),
+	))
+	r.cp.BumpStorageRevision()
+	r.clock.Advance(time.Minute)
+	r.iterate(t)
+	r.iterate(t)
+	r.iterate(t)
+	assert.Equal(t, 1, r.tms.CommandStarts(archive.String()))
+	assert.Equal(t, 1, r.tms.CommandStarts(imported.String()))
+}
+
 func TestATargetForAnotherCommandIsNeverUsed(t *testing.T) {
 	r := newRig(t)
 	id, cmd, other := uuid.New(), uuid.New(), uuid.New()

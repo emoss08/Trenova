@@ -117,6 +117,7 @@ type Outcome struct {
 	Purpose tenantarchive.Purpose `json:"purpose,omitempty"`
 	Tenant  *TenantView           `json:"tenant,omitempty"`
 	owner   pulid.ID
+	note    string
 }
 
 type TenantView struct {
@@ -314,6 +315,7 @@ func (a *Activities) RunRestoreLoadActivity(
 		CommandID: cmd.CommandID,
 		SHA256:    outcome.SHA256,
 		Rows:      outcome.Rows,
+		Note:      outcome.note,
 	}); err != nil {
 		return nil, err
 	}
@@ -395,6 +397,15 @@ func (a *Activities) load(
 	if err != nil {
 		return nil, err
 	}
+	if trails := result.Trails; trails != nil &&
+		(trails.AuditSeals.Unverified() || trails.AIAudit.Unverified() || trails.Tail != nil) {
+		a.l.Warn(
+			"a tenant's audit history was loaded from an archive that could not be verified where it was signed; it is marked so",
+			zap.String("commandId", cmd.CommandID),
+			zap.String("instanceId", cmd.InstanceID),
+			zap.Any("trails", trails),
+		)
+	}
 	return &Outcome{
 		SHA256: result.ManifestSHA256,
 		Rows:   result.Rows,
@@ -403,5 +414,6 @@ func (a *Activities) load(
 			BusinessUnitID: result.Tenant.BusinessUnitID,
 		},
 		owner: result.Owner,
+		note:  result.Trails.RestoreNote(),
 	}, nil
 }

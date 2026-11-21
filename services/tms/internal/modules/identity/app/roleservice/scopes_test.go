@@ -33,7 +33,7 @@ func scopeErrorFields(t *testing.T, err error) []string {
 	require.True(t, errors.As(err, &multiErr), "expected field errors, got %v", err)
 	fields := make([]string, 0, len(multiErr.Errors))
 	for _, e := range multiErr.Errors {
-		fields = append(fields, e.Field)
+		fields = append(fields, e.Field())
 	}
 	return fields
 }

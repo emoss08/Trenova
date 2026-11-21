@@ -3224,19 +3224,20 @@ var userRoleAssignmentsTable = schema.Table{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "user_id", Quoted: `"user_id"`, Field: "UserID", Kind: schema.KindString, Flags: 0, Label: `User ID`, JSON: `userId`},
 		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagTenant, Label: `Organization ID`, JSON: `organizationId`},
+		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
 		{Name: "role_id", Quoted: `"role_id"`, Field: "RoleID", Kind: schema.KindString, Flags: 0, Label: `Role ID`, JSON: `roleId`},
 		{Name: "expires_at", Quoted: `"expires_at"`, Field: "ExpiresAt", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Expires At`, JSON: `expiresAt`},
 		{Name: "assigned_by", Quoted: `"assigned_by"`, Field: "AssignedBy", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Assigned By`, JSON: `assignedBy`},
 		{Name: "assigned_at", Quoted: `"assigned_at"`, Field: "AssignedAt", Kind: schema.KindInt64, Flags: 0, Label: `Assigned At`, JSON: `assignedAt`},
 	},
 	Relations: []schema.Relation{
-		{Name: "Role", Alias: "r", Kind: schema.BelongsTo, Local: []int32{3}, Remote: []int32{0}, Label: `Role`, JSON: `role`},
+		{Name: "Role", Alias: "r", Kind: schema.BelongsTo, Local: []int32{4}, Remote: []int32{0}, Label: `Role`, JSON: `role`},
 	},
 	PK:           []int32{0},
-	Tenant:       []int32{2},
-	Select:       []int32{0, 1, 2, 3, 4, 5, 6},
-	Insert:       []int32{0, 1, 2, 3, 4, 5, 6},
-	Update:       []int32{1, 3, 4, 5, 6},
+	Tenant:       []int32{2, 3},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7},
+	Update:       []int32{1, 4, 5, 6, 7},
 	Returning:    nil,
 	Version:      -1,
 	AutoID:       0,
@@ -3260,6 +3261,7 @@ type UserRoleAssignmentsTable struct {
 	ID             keelkinds.PulidIDCol
 	UserID         keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
+	BusinessUnitID keelkinds.PulidIDCol
 	RoleID         keelkinds.PulidIDCol
 	ExpiresAt      keel.Int64Col
 	AssignedBy     keelkinds.PulidIDCol
@@ -3272,10 +3274,11 @@ var UserRoleAssignments = &UserRoleAssignmentsTable{
 	ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &userRoleAssignmentsRef, Index: 0}}},
 	UserID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &userRoleAssignmentsRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &userRoleAssignmentsRef, Index: 2}}},
-	RoleID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &userRoleAssignmentsRef, Index: 3}}},
-	ExpiresAt:      keel.Int64Col{Col: keel.Col{Ref: &userRoleAssignmentsRef, Index: 4}},
-	AssignedBy:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &userRoleAssignmentsRef, Index: 5}}},
-	AssignedAt:     keel.Int64Col{Col: keel.Col{Ref: &userRoleAssignmentsRef, Index: 6}},
+	BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &userRoleAssignmentsRef, Index: 3}}},
+	RoleID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &userRoleAssignmentsRef, Index: 4}}},
+	ExpiresAt:      keel.Int64Col{Col: keel.Col{Ref: &userRoleAssignmentsRef, Index: 5}},
+	AssignedBy:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &userRoleAssignmentsRef, Index: 6}}},
+	AssignedAt:     keel.Int64Col{Col: keel.Col{Ref: &userRoleAssignmentsRef, Index: 7}},
 }
 
 // BuildUserRoleAssignments builds the table of user_role_assignments for ref. Generated relation and alias methods call it.
@@ -3285,10 +3288,11 @@ func BuildUserRoleAssignments(r *keel.Ref) *UserRoleAssignmentsTable {
 		ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		UserID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		RoleID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		ExpiresAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 4}},
-		AssignedBy:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
-		AssignedAt:     keel.Int64Col{Col: keel.Col{Ref: r, Index: 6}},
+		BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		RoleID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		ExpiresAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 5}},
+		AssignedBy:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		AssignedAt:     keel.Int64Col{Col: keel.Col{Ref: r, Index: 7}},
 	}
 }
 
@@ -3689,12 +3693,14 @@ func ptrUserRoleAssignment(p unsafe.Pointer, c int32) any {
 	case 2:
 		return (*string)(unsafe.Pointer(&r.OrganizationID))
 	case 3:
-		return (*string)(unsafe.Pointer(&r.RoleID))
+		return (*string)(unsafe.Pointer(&r.BusinessUnitID))
 	case 4:
-		return &r.ExpiresAt
+		return (*string)(unsafe.Pointer(&r.RoleID))
 	case 5:
-		return (*string)(unsafe.Pointer(&r.AssignedBy))
+		return &r.ExpiresAt
 	case 6:
+		return (*string)(unsafe.Pointer(&r.AssignedBy))
+	case 7:
 		return &r.AssignedAt
 	}
 	return nil
@@ -3710,18 +3716,20 @@ func valueUserRoleAssignment(p unsafe.Pointer, c int32) any {
 	case 2:
 		return string(r.OrganizationID)
 	case 3:
-		return string(r.RoleID)
+		return string(r.BusinessUnitID)
 	case 4:
+		return string(r.RoleID)
+	case 5:
 		if r.ExpiresAt == nil {
 			return nil
 		}
 		return *r.ExpiresAt
-	case 5:
+	case 6:
 		if r.AssignedBy == "" {
 			return nil
 		}
 		return string(r.AssignedBy)
-	case 6:
+	case 7:
 		return r.AssignedAt
 	}
 	return nil

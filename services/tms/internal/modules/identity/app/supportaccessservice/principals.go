@@ -34,6 +34,7 @@ type PrincipalsParams struct {
 	fx.In
 
 	Grants   supportaccessports.GrantRepository
+	Keys     supportaccessports.KeySetRepository
 	Registry *permissioncatalog.Registry
 	Managed  *managedconfig.Config
 }
@@ -42,6 +43,7 @@ type PrincipalsParams struct {
 // depends on nothing that depends on the engine.
 type Principals struct {
 	grants   supportaccessports.GrantRepository
+	keys     supportaccessports.KeySetRepository
 	registry *permissioncatalog.Registry
 	enabled  bool
 	cache    *otter.Cache[pulid.ID, principalGrant]
@@ -60,6 +62,7 @@ var _ supportaccessports.Principals = (*Principals)(nil)
 func NewPrincipals(p PrincipalsParams) *Principals {
 	return &Principals{
 		grants:   p.Grants,
+		keys:     p.Keys,
 		registry: p.Registry,
 		enabled:  p.Managed.Enabled,
 		cache: otter.Must(&otter.Options[pulid.ID, principalGrant]{
@@ -189,8 +192,9 @@ func (p *Principals) cachedGrant(principalID pulid.ID) (*supportaccess.Grant, bo
 	return cached.grant, true
 }
 
-// RequireLive reads the grant of a support session, uncached, and returns
-// supportaccess.ErrGrantNotFound unless it is live and bound to that session's principal.
+// RequireLive reads the grant of a support session and the server's support keys, uncached, and
+// returns supportaccess.ErrGrantNotFound unless the grant is live, bound to that session's
+// principal, and the control plane has not turned support access off.
 func (p *Principals) RequireLive(
 	ctx context.Context,
 	req *supportaccessports.RequireLiveRequest,
@@ -217,6 +221,12 @@ func (p *Principals) RequireLive(
 	if grant.ID != req.GrantID || !grant.LiveAt(req.Now) {
 		p.cache.Invalidate(req.PrincipalUserID)
 		return supportaccess.ErrGrantNotFound
+	}
+	if _, err = p.keys.Get(ctx); errors.Is(err, supportaccess.ErrNoKeySet) {
+		p.cache.Invalidate(req.PrincipalUserID)
+		return supportaccess.ErrGrantNotFound
+	} else if err != nil {
+		return err
 	}
 	p.cache.Set(req.PrincipalUserID, principalGrant{grant: grant})
 	return nil

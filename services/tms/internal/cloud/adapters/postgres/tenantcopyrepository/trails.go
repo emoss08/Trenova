@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/cloud/domain/tenantarchive"
 	"github.com/emoss08/trenova/internal/cloud/ports/archiveports"
 	"github.com/emoss08/trenova/internal/infrastructure/config/aiauditconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/auditdigest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiaudit"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiaudit/aiauditdb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -26,6 +27,8 @@ const (
 	ActionImported = "organization.imported"
 	ActionRestored = "organization.restored"
 	provenanceName = "Trenova"
+
+	reasonFutureEntries = "the archive's audit log holds entries dated at or after the moment it is loaded, which no archive taken earlier can hold"
 
 	resealSealsSQL = `UPDATE public.audit_seals s SET
     source_prev_hash = COALESCE(s.source_prev_hash, s.prev_hash),
@@ -65,17 +68,26 @@ WHERE s.organization_id = $1 AND s.business_unit_id = $2
     AND e.organization_id = s.organization_id AND e.business_unit_id = s.business_unit_id
     AND e.seq = s.to_seq`
 
-	auditHeadSQL = `UPDATE public.audit_chain_heads SET
-    last_hash = $3, hash_key_id = NULLIF($4, ''), last_verified_seq = 0, last_verified_at = NULL,
-    last_verification_status = NULL, last_verification_failed_seq = NULL,
-    last_verification_detail = NULL, verify_cursor_seq = 0
-WHERE organization_id = $1 AND business_unit_id = $2 AND last_seq = $5`
+	auditHeadSQL = `INSERT INTO public.audit_chain_heads
+    (organization_id, business_unit_id, last_seq, last_hash, sealed_through, hash_key_id)
+VALUES ($1, $2, $3, $4, $5, NULLIF($6, ''))
+ON CONFLICT (organization_id, business_unit_id) DO UPDATE SET
+    last_seq = EXCLUDED.last_seq, last_hash = EXCLUDED.last_hash,
+    sealed_through = EXCLUDED.sealed_through, hash_key_id = EXCLUDED.hash_key_id,
+    last_verified_seq = 0, last_verified_at = NULL, last_verification_status = NULL,
+    last_verification_failed_seq = NULL, last_verification_detail = NULL, verify_cursor_seq = 0`
 
 	aiHeadSQL = `UPDATE public.ai_audit_chain_heads SET
     last_hash = $3, hash_key_id = NULLIF($4, ''), last_verified_seq = 0, last_verified_at = NULL,
     last_verification_status = NULL, last_verification_failed_seq = NULL,
     last_verification_detail = NULL
 WHERE organization_id = $1 AND business_unit_id = $2 AND last_seq = $5`
+
+	futureEntriesSQL = `SELECT count(*) FROM public.audit_entries
+WHERE organization_id = $1 AND business_unit_id = $2 AND "timestamp" >= $3`
+
+	firstEntrySQL = `SELECT COALESCE(min("timestamp"), 0) FROM public.audit_entries
+WHERE organization_id = $1 AND business_unit_id = $2`
 )
 
 var provenanceTables = []string{
@@ -102,17 +114,21 @@ func newTrailKeys(cfg *aiauditconfig.Config) *trailKeys {
 	return out
 }
 
-func (k *trailKeys) signSeal(seal *audit.Seal) {
-	if k.active == nil {
-		seal.Sign("", nil)
+func (k *trailKeys) signSeal(seal *audit.Seal, imported bool) {
+	keyID, secret := "", []byte(nil)
+	if k.active != nil {
+		keyID, secret = k.active.ID, k.active.Secret
+	}
+	if imported {
+		seal.SignImported(keyID, secret)
 		return
 	}
-	seal.Sign(k.active.ID, k.active.Secret)
+	seal.Sign(keyID, secret)
 }
 
 func (k *trailKeys) checkSeal(seal *audit.Seal) (ok, missing bool) {
 	var secret []byte
-	if seal.HashVersion != audit.SealHashVersionUnsigned {
+	if !seal.Unsigned() {
 		key, found := k.keys[seal.HashKeyID]
 		if !found {
 			return false, true
@@ -123,7 +139,7 @@ func (k *trailKeys) checkSeal(seal *audit.Seal) (ok, missing bool) {
 }
 
 func (k *trailKeys) eventKey(event *aiaudit.AIAuditEvent) (key *aiaudit.ChainKey, missing bool) {
-	if event.HashVersion != aiaudit.HashVersionSigned {
+	if !event.Keyed() {
 		return nil, false
 	}
 	key, found := k.keys[event.HashKeyID]
@@ -150,9 +166,18 @@ func (l *load) Trails(
 	run := &trailRun{
 		l: l, ctx: joined, db: db, req: req, keys: l.repo.keys, tenant: l.tenant,
 	}
+	if err := run.refuseFutureEntries(); err != nil {
+		return nil, err
+	}
 	result := new(archiveports.TrailResult)
-	var err error
-	if result.AuditSeals, err = run.auditSeals(); err != nil {
+	var (
+		last *audit.Seal
+		err  error
+	)
+	if result.AuditSeals, last, err = run.auditSeals(); err != nil {
+		return nil, err
+	}
+	if result.Tail, err = run.sealTail(last); err != nil {
 		return nil, err
 	}
 	if result.AIAudit, err = run.aiChain(); err != nil {
@@ -164,11 +189,48 @@ func (l *load) Trails(
 	return result, nil
 }
 
-type sealCheck struct {
+func (t *trailRun) refuseFutureEntries() error {
+	var later int64
+	if err := t.l.tx.QueryRow(t.ctx, futureEntriesSQL, t.tenant.OrganizationID.String(),
+		t.tenant.BusinessUnitID.String(), t.req.At).Scan(&later); err != nil {
+		return fmt.Errorf("check the imported audit log's dates: %w", err)
+	}
+	if later > 0 {
+		return tenantarchive.Refuse(tenantarchive.RefusalManifest, reasonFutureEntries)
+	}
+	return nil
+}
+
+type linkCheck struct {
 	links    int64
 	missing  bool
+	unsigned bool
 	brokenAt int64
-	last     *audit.Seal
+}
+
+func (c *linkCheck) source(restoring bool) archiveports.SourceCheck {
+	switch {
+	case c.brokenAt != 0:
+		return archiveports.SourceNotVerified
+	case c.missing, c.unsigned && !restoring:
+		return archiveports.SourceNotVerifiable
+	default:
+		return archiveports.SourceVerified
+	}
+}
+
+func (c *linkCheck) result() archiveports.ChainResult {
+	return archiveports.ChainResult{
+		Links:      c.links,
+		BrokenAt:   c.brokenAt,
+		KeyMissing: c.missing,
+		Unsigned:   c.unsigned,
+	}
+}
+
+type sealCheck struct {
+	linkCheck
+	last *audit.Seal
 }
 
 func (t *trailRun) eachSeal(fn func(*audit.Seal) error) error {
@@ -201,6 +263,9 @@ func (t *trailRun) checkSeals() (*sealCheck, error) {
 	err := t.eachSeal(func(seal *audit.Seal) error {
 		linked := (out.links == 0 && seal.Seq > 1) || seal.PrevHash == prev
 		ok, missing := t.keys.checkSeal(seal)
+		if seal.Unsigned() {
+			out.unsigned = true
+		}
 		switch {
 		case missing:
 			out.missing = true
@@ -215,26 +280,27 @@ func (t *trailRun) checkSeals() (*sealCheck, error) {
 	return out, err
 }
 
-func (t *trailRun) auditSeals() (archiveports.ChainResult, error) {
+func (t *trailRun) auditSeals() (archiveports.ChainResult, *audit.Seal, error) {
 	checked, err := t.checkSeals()
 	if err != nil {
-		return archiveports.ChainResult{}, err
+		return archiveports.ChainResult{}, nil, err
 	}
-	result := archiveports.ChainResult{Links: checked.links}
-	switch {
-	case checked.links == 0:
+	result := checked.result()
+	if checked.links == 0 {
 		result.Outcome = archiveports.ChainEmpty
-		return result, nil
-	case t.req.Restoring && !checked.missing && checked.brokenAt == 0:
+		return result, nil, nil
+	}
+	result.Source = checked.source(t.req.Restoring)
+	switch {
+	case t.req.Restoring && result.Source == archiveports.SourceVerified:
 		result.Outcome = archiveports.ChainKept
 		result.KeyID = checked.last.HashKeyID
-		return result, nil
-	case t.req.Restoring && checked.brokenAt != 0:
+		return result, checked.last, nil
+	case t.req.Restoring && result.Source == archiveports.SourceNotVerified:
 		result.Outcome = archiveports.ChainBroken
-		result.BrokenAt = checked.brokenAt
-		return result, nil
+		return result, checked.last, nil
 	}
-	return t.resealSeals(result)
+	return t.resealSeals(result, result.Source != archiveports.SourceVerified)
 }
 
 type sealBatch struct {
@@ -255,7 +321,8 @@ func (b *sealBatch) add(seal *audit.Seal) {
 
 func (t *trailRun) resealSeals(
 	result archiveports.ChainResult,
-) (archiveports.ChainResult, error) {
+	unverified bool,
+) (archiveports.ChainResult, *audit.Seal, error) {
 	prev := ""
 	var last *audit.Seal
 	batch := new(sealBatch)
@@ -278,7 +345,11 @@ func (t *trailRun) resealSeals(
 			seal.PrevHash = prev
 		}
 		first = false
-		t.keys.signSeal(seal)
+		imported := unverified || seal.Imported()
+		t.keys.signSeal(seal, imported)
+		if imported {
+			result.Marked++
+		}
 		prev = seal.Hash
 		last = seal
 		batch.add(seal)
@@ -291,15 +362,73 @@ func (t *trailRun) resealSeals(
 		err = flush()
 	}
 	if err != nil {
-		return result, err
+		return result, nil, err
 	}
-	if _, err = t.l.tx.Exec(t.ctx, auditHeadSQL, t.tenant.OrganizationID.String(),
-		t.tenant.BusinessUnitID.String(), last.Hash, last.HashKeyID, last.Seq); err != nil {
-		return result, fmt.Errorf("move the audit chain head to the signed seals: %w", err)
+	if err = t.moveAuditHead(last); err != nil {
+		return result, nil, err
 	}
 	result.Outcome = archiveports.ChainResealed
 	result.KeyID = last.HashKeyID
-	return result, nil
+	return result, last, nil
+}
+
+func (t *trailRun) moveAuditHead(last *audit.Seal) error {
+	if _, err := t.l.tx.Exec(t.ctx, auditHeadSQL, t.tenant.OrganizationID.String(),
+		t.tenant.BusinessUnitID.String(), last.Seq, last.Hash, last.ToTS,
+		last.HashKeyID); err != nil {
+		return fmt.Errorf("move the audit chain head to the signed seals: %w", err)
+	}
+	return nil
+}
+
+func (t *trailRun) sealTail(last *audit.Seal) (*archiveports.TailSeal, error) {
+	from := int64(0)
+	next := &audit.Seal{
+		OrganizationID: t.tenant.OrganizationID,
+		BusinessUnitID: t.tenant.BusinessUnitID,
+		Seq:            1,
+		ToTS:           t.req.At,
+		SealedAt:       t.req.At,
+	}
+	if last != nil {
+		from = last.ToTS
+		next.Seq = last.Seq + 1
+		next.PrevHash = last.Hash
+	} else if err := t.l.tx.QueryRow(t.ctx, firstEntrySQL, t.tenant.OrganizationID.String(),
+		t.tenant.BusinessUnitID.String()).Scan(&from); err != nil {
+		return nil, fmt.Errorf("find the imported audit log's first entry: %w", err)
+	}
+	if from <= 0 || from >= t.req.At {
+		return nil, nil //nolint:nilnil // no tail: the source sealed everything it archived
+	}
+	digest, err := auditdigest.Compute(t.ctx, t.db, auditdigest.Window{
+		OrganizationID: t.tenant.OrganizationID,
+		BusinessUnitID: t.tenant.BusinessUnitID,
+		From:           from,
+		To:             t.req.At,
+	})
+	if err != nil {
+		return nil, err
+	}
+	if digest.RowCount == 0 {
+		return nil, nil //nolint:nilnil // no tail: no entry lies after the last imported seal
+	}
+	next.FromTS = from
+	next.RowCount = digest.RowCount
+	next.ClassDigests = digest.Classes
+	t.keys.signSeal(next, true)
+	if err = auditdb.Seals.Create(t.ctx, t.db, next); err != nil {
+		return nil, fmt.Errorf("seal the imported audit log's unsealed entries: %w", err)
+	}
+	if err = t.moveAuditHead(next); err != nil {
+		return nil, err
+	}
+	return &archiveports.TailSeal{
+		Seq:  next.Seq,
+		From: from,
+		To:   t.req.At,
+		Rows: digest.RowCount,
+	}, nil
 }
 
 func (t *trailRun) eachEvent(fn func(*aiaudit.AIAuditEvent) error) error {
@@ -327,10 +456,8 @@ func (t *trailRun) eachEvent(fn func(*aiaudit.AIAuditEvent) error) error {
 }
 
 type eventCheck struct {
-	links    int64
-	missing  bool
-	brokenAt int64
-	last     *aiaudit.AIAuditEvent
+	linkCheck
+	last *aiaudit.AIAuditEvent
 }
 
 func (t *trailRun) checkEvents() (*eventCheck, error) {
@@ -338,6 +465,9 @@ func (t *trailRun) checkEvents() (*eventCheck, error) {
 	prev := aiaudit.GenesisHash
 	err := t.eachEvent(func(event *aiaudit.AIAuditEvent) error {
 		linked := (out.links == 0 && event.Seq > 1) || event.PrevHash == prev
+		if !event.Keyed() {
+			out.unsigned = true
+		}
 		key, missing := t.keys.eventKey(event)
 		if missing {
 			out.missing = true
@@ -358,21 +488,22 @@ func (t *trailRun) aiChain() (archiveports.ChainResult, error) {
 	if err != nil {
 		return archiveports.ChainResult{}, err
 	}
-	result := archiveports.ChainResult{Links: checked.links}
-	switch {
-	case checked.links == 0:
+	result := checked.result()
+	if checked.links == 0 {
 		result.Outcome = archiveports.ChainEmpty
 		return result, nil
-	case t.req.Restoring && !checked.missing && checked.brokenAt == 0:
+	}
+	result.Source = checked.source(t.req.Restoring)
+	switch {
+	case t.req.Restoring && result.Source == archiveports.SourceVerified:
 		result.Outcome = archiveports.ChainKept
 		result.KeyID = checked.last.HashKeyID
 		return result, nil
-	case t.req.Restoring && checked.brokenAt != 0:
+	case t.req.Restoring && result.Source == archiveports.SourceNotVerified:
 		result.Outcome = archiveports.ChainBroken
-		result.BrokenAt = checked.brokenAt
 		return result, nil
 	}
-	return t.resealEvents(result)
+	return t.resealEvents(result, result.Source != archiveports.SourceVerified)
 }
 
 type eventBatch struct {
@@ -393,6 +524,7 @@ func (b *eventBatch) add(event *aiaudit.AIAuditEvent) {
 
 func (t *trailRun) resealEvents(
 	result archiveports.ChainResult,
+	unverified bool,
 ) (archiveports.ChainResult, error) {
 	active := t.keys.active
 	prev := aiaudit.GenesisHash
@@ -418,7 +550,12 @@ func (t *trailRun) resealEvents(
 			link = event.PrevHash
 		}
 		first = false
-		if serr := aiaudit.Seal(event, link, active); serr != nil {
+		sign := aiaudit.Seal
+		if unverified || event.Imported() {
+			sign = aiaudit.SealImported
+			result.Marked++
+		}
+		if serr := sign(event, link, active); serr != nil {
 			return fmt.Errorf("sign AI audit row %d again: %w", event.Seq, serr)
 		}
 		prev = event.Hash
@@ -460,6 +597,28 @@ func (t *trailRun) provenance(result *archiveports.TrailResult) error {
 			rows[name] = table.Rows
 		}
 	}
+	archive := map[string]any{
+		"manifestSha256":   t.req.ManifestSHA256,
+		"sourceInstanceId": m.InstanceID,
+		"purpose":          string(m.Purpose),
+		"takenAt":          m.TakenAt.UTC().Format(time.RFC3339),
+		"releaseVersion":   m.ReleaseVersion,
+		"schemaVersion":    m.SchemaVersion,
+		"loadedAt":         time.Unix(t.req.At, 0).UTC().Format(time.RFC3339),
+		"signedHereFrom":   t.req.At,
+		"rows":             rows,
+		"auditSeals":       chainMetadata(&result.AuditSeals),
+		"aiAuditChain":     chainMetadata(&result.AIAudit),
+	}
+	if result.Tail != nil {
+		archive["auditTail"] = map[string]any{
+			"seq":    result.Tail.Seq,
+			"from":   result.Tail.From,
+			"to":     result.Tail.To,
+			"rows":   result.Tail.Rows,
+			"source": string(archiveports.SourceNotVerifiable),
+		}
+	}
 	entry := &audit.Entry{
 		OrganizationID: t.tenant.OrganizationID,
 		BusinessUnitID: t.tenant.BusinessUnitID,
@@ -474,20 +633,7 @@ func (t *trailRun) provenance(result *archiveports.TrailResult) error {
 		ActorName:      provenanceName,
 		Comment:        comment,
 		Critical:       true,
-		Metadata: map[string]any{
-			"archive": map[string]any{
-				"manifestSha256":   t.req.ManifestSHA256,
-				"sourceInstanceId": m.InstanceID,
-				"purpose":          string(m.Purpose),
-				"takenAt":          m.TakenAt.UTC().Format(time.RFC3339),
-				"releaseVersion":   m.ReleaseVersion,
-				"schemaVersion":    m.SchemaVersion,
-				"loadedAt":         time.Unix(t.req.At, 0).UTC().Format(time.RFC3339),
-				"rows":             rows,
-				"auditSeals":       chainMetadata(&result.AuditSeals),
-				"aiAuditChain":     chainMetadata(&result.AIAudit),
-			},
-		},
+		Metadata:       map[string]any{"archive": archive},
 	}
 	if err := auditdb.Entries.Create(t.ctx, t.db, entry); err != nil {
 		return fmt.Errorf("record where the tenant's history came from: %w", err)
@@ -497,6 +643,19 @@ func (t *trailRun) provenance(result *archiveports.TrailResult) error {
 
 func chainMetadata(c *archiveports.ChainResult) map[string]any {
 	out := map[string]any{"outcome": string(c.Outcome), "links": c.Links}
+	if c.Source != "" {
+		out["source"] = string(c.Source)
+		out["sourceVerified"] = c.Source == archiveports.SourceVerified
+	}
+	if c.KeyMissing {
+		out["keyMissing"] = true
+	}
+	if c.Unsigned {
+		out["unsigned"] = true
+	}
+	if c.Marked > 0 {
+		out["markedNotVerified"] = c.Marked
+	}
 	if c.KeyID != "" {
 		out["keyId"] = c.KeyID
 	}

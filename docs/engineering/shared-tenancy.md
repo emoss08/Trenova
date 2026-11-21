@@ -459,7 +459,12 @@ person can pick. It has an unusable password, a username `system-<13 characters 
 unit id>` and an address under `system.trenova.invalid`; `FindByEmail` and `FindByIDForLogin` (every
 sign-in, SSO link, MFA, invite and password reset lookup), the SCIM email lookup, people lists and
 the instance bootstrap's user count leave it out (`tenantbootstrap.NotSystemActor`), it holds no
-membership or role and is not a seat. `system_actors` is append-only for the tenant role.
+membership or role and is not a seat. No request from a person reads, changes, deactivates,
+credentials or grants it: every user-management operation of `userservice` (get, list by ids,
+patch, status, memberships, ending access, avatar), the MFA reset, the administrator's reset link
+and the directory's member lookup ask `accountguard.RequirePeople` first and answer as for an
+unknown user, and a role is assigned only to a live member of the organization
+(`tenantbootstrap.LockMember`), which the system actor never is. `system_actors` is append-only for the tenant role.
 Reserved usernames and addresses (`tenant.IsReservedUsername`, `tenant.IsReservedEmailAddress`:
 `system`, `trenova`, `support`, `root`, the system actor and support principal shapes, any address
 under `.invalid`, whatever the letter case) are refused for a person by `FindIdentityConflicts`
@@ -524,10 +529,13 @@ that names another tenant's record fails with a foreign-key violation of the key
 the model's message is the same as for a record that does not exist.
 `internal/cloud/tenantkeys_integration_test.go` inserts, for every such key, a row naming a record
 of another tenant (refused, by that constraint) and one naming a record of its own (accepted).
-Eight keys cannot carry the tenant: the people of `mfa_authenticators`, `mfa_recovery_codes` and
-`user_role_assignments` (organization only, and `users` has no organization) and the keys of
-`auth_events`, `notifications` and `risk_decisions` (business unit may be empty); each is listed
-with its reason in `tenantkeys/exceptions.go`. For those, before it deletes anything, and again
+Four keys cannot carry the tenant, all because the referring row's business unit may be empty:
+`auth_events.user_id` and `auth_events.identity_provider_id`, `notifications.target_user_id` and
+`risk_decisions.user_id`; each is listed with its true reason and its writers in
+`tenantkeys/exceptions.go`. Role assignments and second factors carry their organization's
+business unit (`20261231023770`…`20261231023810`): the person keys are
+`(user_id, business_unit_id) → users` and `(assigned_by, business_unit_id) → users`, and the
+organization key `(organization_id, business_unit_id) → organizations(id, business_unit_id)`. For those, before it deletes anything, and again
 before the organization's and business unit's cascades, the purge counts, for every foreign key
 from a tenant table to a table of the tenant (and to `organizations` and `business_units`) whose
 columns do not carry the tenant, the child rows of another business unit that refer to a row of the
@@ -727,8 +735,33 @@ unpeppered SHA-256 or bcrypt and keep working.
 
 **Audit seals and the AI audit chain** are HMACs under the install's chain keys
 (`aiAudit.chain`), which never leave an install. Inside the load transaction, after the counts and
-foreign keys are checked and before it commits, the archive load signs them again under the
-destination's active chain key (`tenantcopyrepository/trails.go`):
+foreign keys are checked and before it commits, the archive load first verifies each chain as it
+arrived, then signs it again under the destination's active chain key
+(`tenantcopyrepository/trails.go`). **A chain this server signs says truthfully what it could verify
+about what it imported:**
+
+- The source check of each chain is `verified` (every link verifies under a key this server holds
+  and links to the one before it), `not_verifiable` (a link names a key this server does not hold,
+  or, on an import, is unsigned) or `not_verified` (a link does not verify under a key this server
+  holds, or breaks the chain). It is recorded in `TrailResult` and the provenance entry with
+  `brokenAt`, `keyMissing`, `unsigned`, the number of links and how many were marked.
+- A link signed again from a chain that was not `verified` carries hash version 3 (signed here) or
+  4 (plain SHA-256 on an install without a key): imported, not verified at its source
+  (`audit.SealHashVersionImported`, `aiaudit.HashVersionImported`). The version is part of what
+  each hash covers, so stripping the mark breaks the chain; a link that already carried it keeps
+  it through later moves. A `verified` chain is signed again as ordinary links.
+- The verifications report a chain that holds such links and otherwise verifies as
+  `ImportedUnverified`, never `Verified`, with the last such seal or row in the detail; it is not
+  an alarm (no critical audit entry or notice). Broken and missing-key states take precedence. The
+  audit log page's seal chip and banner, AI Control's chain status, its rail item and the AI audit
+  export's `chain.hashVersions` legend (each row carries `hash_version`) show it. The audit
+  verification finds the marked seals through the partial index `idx_audit_seals_imported`.
+- Entries the source never sealed (written after its last seal) are sealed in the same
+  transaction by one seal marked as imported, from the last imported seal's end (or the first entry)
+  to the moment of the load, and the head's `sealed_through` moves there, so the hourly sealer never
+  vouches for imported entries. An archive whose audit log holds an entry dated at or after the
+  load is refused (`manifest`): everything imported lies before the provenance entry, inside the
+  imported, marked windows.
 
 - `audit_seals`: in `seq` order, each seal's `prev_hash` is the new hash of the seal before it (the
   first retained seal keeps its link when older seals have aged out) and its hash is the
@@ -745,26 +778,37 @@ destination's active chain key (`tenantcopyrepository/trails.go`):
   `source_hash`, `source_hash_key_id`, `source_hash_version`, `resealed_at`; on `ai_audit_seals`
   `source_head_hash`, `source_hash_key_id`), the first signer's values kept through later moves,
   so a dispute can still be checked against the install that signed them while its key exists.
-- A **restore** first verifies every seal and row under this install's keys: when all verify they
-  are kept as they are (`kept`); when one names a key this install does not hold they are signed
-  again as above; when one names a key this install holds and does not verify, nothing is signed
-  again (`broken`, with the sequence), so the verification reports the break it was carrying
-  instead of hiding it. An **import** always signs again: another install's key id can collide
-  with one configured here.
+- A **restore** keeps a `verified` chain as it is (`kept`); one that names a key this install does
+  not hold is signed again and marked; one that does not verify is not signed again (`broken`,
+  with the sequence), so the verification reports the break it was carrying instead of hiding it.
+  Either case is the restore's outcome too: `lastRestore.reason` on a done restore says, in one
+  line, which chain was marked or restored broken and how many unsealed entries were sealed as
+  imported (the control plane's contract carries a reason only for a failed restore, so the agent
+  reports a done restore without it; the TMS keeps it on the tenant and in the `restored` ledger
+  event, and the activity logs it at warn). An **import** always signs again, as ordinary links
+  only when the chain verified under a key this server holds (a move between servers that share a
+  chain key).
 - One provenance entry is written in the same transaction: `audit_entries` action
   `organization.imported` or `organization.restored`, category `Security`, critical, actor
   "Trenova", with `metadata.archive` = `manifestSha256`, `sourceInstanceId`, `purpose`, `takenAt`,
   `releaseVersion`, `schemaVersion`, `loadedAt`, `rows` (per audit table: `audit_entries`,
   `audit_seals`, `audit_chain_heads`, `auth_events`, `ai_audit_events`, `ai_audit_seals`,
-  `ai_audit_chain_heads`) and each chain's outcome (`kept`, `resealed`, `broken`, `empty`) with
-  its key id. The hourly sealer seals it with the next hour, so it is the first record of the
-  trail's segment signed here and anyone reading the log sees where the history before it came
-  from.
+  `ai_audit_chain_heads`), `signedHereFrom` (the load's moment), each chain's outcome (`kept`,
+  `resealed`, `broken`, `empty`) with its key id and source check, and the tail seal when there was
+  one. The hourly sealer seals it natively with the next window, so it is the first record of the
+  trail's segment signed here. An archive cannot pre-supply it: a provenance-shaped row the
+  archive carried is dated before the load and lies inside the imported windows, sealed as
+  imported when the source was not verified.
 
 The round-trip test signs a trail on the source under one key, imports it into a database with
-another, runs `auditintegrity.Verifier` and `aiauditverify.Verifier` there (both `Verified`),
-changes one imported audit entry and one AI row (`Broken`, `Mismatch`), restores onto that server
-(signed again, `Verified`) and restores onto the source (signatures kept).
+another, runs `auditintegrity.Verifier` and `aiauditverify.Verifier` there (both
+`ImportedUnverified`), changes one imported audit entry and one AI row (`Broken`, `Mismatch`),
+restores onto that server (signed again and marked, `ImportedUnverified`) and restores onto the
+source (signatures kept, `Verified`). `trails_integration_test.go` holds the rest: a genuine archive
+into a server holding the source key (`Verified`), rows altered after sealing (`Broken`), seals a
+forger made again under an unknown key (`ImportedUnverified`, and `Broken` once the mark is
+stripped), a planted provenance row (inside the marked windows), a restore with the key missing
+(marked, with its note) and an archive dated after the load (refused).
 
 **An export** (purpose `export`, the customer's copy) is not encrypted and leaves out
 `mfa_recovery_codes`, `mfa_authenticators`, `scim_tokens` and every column that is a credential:
@@ -809,8 +853,9 @@ and the rows load in **one transaction**: parents first, each table's binary row
 temporary stage (`COPY ... FROM` is refused on a table under row-level security) and inserted with
 `INSERT ... SELECT` under the system role's policy, the stage dropped at once unless a cycle needs
 it, staged cycle columns restored, sequences advanced, foreign recovery codes marked; then per-table counts equal the
-manifest's, every foreign key of every carried table resolves (one batched anti-join per 80
-constraints) and every document is in storage, and only then it commits. Any failure rolls the
+manifest's, every foreign key of every carried table resolves to a row of the tenant itself
+(one batched anti-join per 80 constraints, the parent filtered by the tenant as the export's
+outside check is; a hit refuses with `reference`, naming each table, columns and count) and every document is in storage, and only then it commits. Any failure rolls the
 transaction back (a killed process aborts it the same way) and deletes the documents written; the
 next attempt also clears the tenant's prefixes first. One transaction is right for a shared tenant:
 the WAL is the same either way, `COPY` takes `ROW EXCLUSIVE` locks that do not conflict with other
@@ -871,6 +916,15 @@ same way.
 | `PUT /managed/v1/tenants/{instanceId}` | the entry, plus `importTarget` (`kind import`, `access read`) when its first entry carries an `import` command | as before |
 | `PUT /managed/v1/tenants/archive-storage` | `{endpoint, region, bucket, prefix: "tenants/", accessKeyId, secretAccessKey, sessionToken?, expiresAt?, archiveKeys}` (exactly one `current`) | `200 {expiresAt}`; `400` naming the rule (prefix, endpoint, keys) and never the credential |
 | `DELETE /managed/v1/tenants/archive-storage` | | `204`; the sealed nightly storage is deleted and nightly archives stop (logged at info, as the support keys' removal is) |
+
+An archive, restore or import target must be in the server's own bucket: the bucket and endpoint
+host of the nightly storage the TMS holds (`tenantlifecycle.requireServerBucket`). While it holds
+none, every such command is refused (`location`, "this server holds no nightly archive storage
+…"); the contract names the server's bucket as `nightly` on every answer once it is recorded, and
+lists commands as `waiting` (`no_bucket`) before, so a server without one takes no archive. The
+agent likewise starts no archive, restore or import while `nightly` is absent and logs the
+command as waiting. A dedicated instance's `trenova db import-archive` is unaffected: its endpoint
+and bucket are the operator's configuration.
 
 The target's endpoint must be an `https` URL or a bare host; the archive bucket adapter
 (`archivebucket`, `CheckEndpoint` for the nightly storage when it is delivered, `Open` for every

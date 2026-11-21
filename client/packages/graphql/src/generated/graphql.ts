@@ -114,6 +114,7 @@ export type AiAuditPurpose =
   | 'Live';
 
 export type AiAuditVerificationStatus =
+  | 'ImportedUnverified'
   | 'KeyMissing'
   | 'Mismatch'
   | 'Verified';
@@ -1881,6 +1882,7 @@ export type AuditRetentionClass =
 
 export type AuditVerificationStatus =
   | 'Broken'
+  | 'ImportedUnverified'
   | 'KeyMissing'
   | 'Verified';
 

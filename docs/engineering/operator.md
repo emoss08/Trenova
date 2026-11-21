@@ -1238,7 +1238,9 @@ It reuses the operator's packages and links no Kubernetes or Helm
 bundle); it is installed at `<state-dir>/identity/enrolment.json` (or `--enrolment`). The certificate
 names `urn:trenova:shared-server:<id>` (`credential.KindSharedServer`). `credential.Manager` enrols
 onto a key the agent generates, keeps the identity in `<state-dir>/identity/identity.json` (0600 in a
-0700 directory; a file others can read is refused) and renews at two thirds of its life, exactly as
+0700 directory; a file others can read, a link or anything but a plain file is refused, and so is
+an enrolment bundle others can read, since it holds a private key; a truncated identity is invalid
+and the agent enrols again from the bundle) and renews at two thirds of its life, exactly as
 the operator does with its Secret. A 401 makes it read the bundle again (`Recover`).
 
 **The loop** (`tenantagent.Agent`), every `--poll` (15 s) with a fifth of jitter, never overlapping

@@ -1,10 +1,13 @@
 package archiveplan_test
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/cloud/archiveplan"
 	"github.com/emoss08/trenova/internal/cloud/domain/tenantarchive"
+	"github.com/emoss08/trenova/pkg/dbscope"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -206,6 +209,35 @@ func TestOnlyAKeyByIDAloneIsCheckedForRowsOutsideTheTenant(t *testing.T) {
 	}
 	assert.Contains(t, outside, "fk_invoices_approved_by",
 		"a business unit that may be empty leaves the key unchecked for that row")
+}
+
+func TestTheLoadCheckFindsReferencesToRowsOutsideTheTenant(t *testing.T) {
+	t.Parallel()
+
+	cat := catalog()
+	cat.Tables["invoices"].Columns = append(cat.Tables["invoices"].Columns,
+		col("posted_by_id", true))
+	cat.ForeignKeys = append(cat.ForeignKeys,
+		fk("fk_invoices_posted_by", "invoices", "users", "posted_by_id"))
+	plan, err := archiveplan.Build(
+		&archiveplan.Input{Catalog: cat, Purpose: tenantarchive.PurposeFinal},
+	)
+	require.NoError(t, err)
+
+	tenant := dbscope.Tenant{
+		OrganizationID: pulid.MustNew("org_"),
+		BusinessUnitID: pulid.MustNew("bu_"),
+	}
+	queries := strings.Join(plan.DanglingQueries(tenant, 80), "\n")
+	start := strings.Index(queries, "'fk_invoices_posted_by'")
+	require.GreaterOrEqual(t, start, 0)
+	statement := queries[start:]
+	if end := strings.Index(statement, "UNION ALL"); end >= 0 {
+		statement = statement[:end]
+	}
+	assert.Contains(t, statement, `p."organization_id" = '`+tenant.OrganizationID.String()+`'`,
+		"a parent row of another tenant does not satisfy the reference")
+	assert.Contains(t, statement, `c."organization_id" = '`+tenant.OrganizationID.String()+`'`)
 }
 
 func TestAGlobalReferenceWithoutANaturalKeyIsRefused(t *testing.T) {

@@ -78,7 +78,7 @@ func (v *Verifier) VerifyAll(ctx context.Context, heartbeat func(string)) (*Veri
 			)
 			continue
 		}
-		if verified.LastVerificationStatus != audit.VerificationVerified {
+		if !verified.LastVerificationStatus.Holds() {
 			result.Broken++
 		}
 	}
@@ -111,6 +111,13 @@ func (v *Verifier) VerifyTenant(ctx context.Context, head *audit.ChainHead) (*au
 		}
 	}
 
+	importedThrough := int64(0)
+	if status == audit.VerificationVerified {
+		if importedThrough, err = v.seals.ImportedThrough(ctx, tenant); err != nil {
+			return nil, err
+		}
+	}
+
 	now := v.now().Unix()
 	head.LastVerifiedAt = &now
 	head.LastVerificationStatus = status
@@ -118,10 +125,17 @@ func (v *Verifier) VerifyTenant(ctx context.Context, head *audit.ChainHead) (*au
 	head.LastVerificationFailedSeq = nil
 	if status == audit.VerificationVerified {
 		head.LastVerifiedSeq = head.LastSeq
+		if importedThrough > 0 {
+			head.LastVerificationStatus = audit.VerificationImported
+			head.LastVerificationDetail = fmt.Sprintf(
+				"seals up to %d hold history imported from an archive whose own signatures could not be checked where they were made; every seal verifies under this server's keys",
+				importedThrough,
+			)
+		}
 	} else {
 		head.LastVerificationFailedSeq = &failedSeq
 	}
-	v.metrics.Audit.RecordVerification(string(status))
+	v.metrics.Audit.RecordVerification(string(head.LastVerificationStatus))
 
 	if err = v.seals.RecordVerification(ctx, head); err != nil {
 		return nil, err

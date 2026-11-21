@@ -2,7 +2,7 @@ WITH RECURSIVE held (user_id, role_id, parent_role_ids) AS (
   SELECT ura.user_id, r.id, r.parent_role_ids
   FROM user_role_assignments ura
   JOIN roles r ON r.business_unit_id = $1 AND r.organization_id = $5 AND r.id = ura.role_id
-  WHERE ura.organization_id = $5 AND (ura.expires_at IS NULL OR ura.expires_at > $6)
+  WHERE ura.organization_id = $5 AND ura.business_unit_id = $1 AND (ura.expires_at IS NULL OR ura.expires_at > $6)
   UNION SELECT h2.user_id, parent_role.id, parent_role.parent_role_ids
   FROM roles parent_role
   JOIN held h2 ON (parent_role.id = ANY(h2.parent_role_ids))

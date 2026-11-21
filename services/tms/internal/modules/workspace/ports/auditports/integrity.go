@@ -60,6 +60,7 @@ type SealRepository interface {
 	) ([]*audit.Seal, error)
 	RecordVerification(ctx context.Context, head *audit.ChainHead) error
 	DeleteSealsBefore(ctx context.Context, before int64) (int64, error)
+	ImportedThrough(ctx context.Context, tenant pagination.TenantInfo) (int64, error)
 }
 
 type ExportRepository interface {

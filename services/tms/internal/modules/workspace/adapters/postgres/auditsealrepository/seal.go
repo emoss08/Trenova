@@ -7,37 +7,19 @@ import (
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/auditdigest"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit/auditdb"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/jackc/pgx/v5"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
 
-const digestSQL = `
-SELECT r.retention_class,
-	count(*)::bigint,
-	encode(sha256(convert_to(string_agg(r.row_hash, '' ORDER BY r."timestamp", r.id), 'UTF8')), 'hex')
-FROM (
-	SELECT e.retention_class, e."timestamp", e.id,
-		encode(sha256(convert_to(jsonb_build_array(
-			e.id, e.organization_id, e.business_unit_id, e."timestamp", e.resource, e.resource_id,
-			e.operation, e.action, e.category, e.retention_class, e.channel, e.principal_type,
-			e.principal_id, e.user_id, e.api_key_id, e.actor_name, e.ai_run_id, e.entity_ref,
-			e.correlation_id, e.trace_id, e.ip_address, e.user_agent, e.comment, e.changes,
-			e.previous_state, e.current_state, e.metadata, e.sensitive_data, e.critical
-		)::text, 'UTF8')), 'hex') AS row_hash
-	FROM audit_entries e
-	WHERE e.organization_id = $1
-		AND e.business_unit_id = $2
-		AND e."timestamp" >= $3
-		AND e."timestamp" < $4
-) r
-GROUP BY r.retention_class`
+const importedThroughSQL = `SELECT COALESCE(max(seq), 0)::bigint FROM audit_seals
+WHERE organization_id = $1 AND business_unit_id = $2 AND hash_version IN (3, 4)`
 
 type Params struct {
 	fx.In
@@ -96,26 +78,22 @@ func (r *repository) Digest(
 ) (*auditports.SealComputation, error) {
 	ctx = tenantContext(ctx, tenant)
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*auditports.SealComputation, error) {
-		out := &auditports.SealComputation{
+		digest, err := auditdigest.Compute(ctx, r.db.Keel(ctx), auditdigest.Window{
+			OrganizationID: tenant.OrganizationID,
+			BusinessUnitID: tenant.BusinessUnitID,
+			From:           from,
+			To:             to,
+		})
+		if err != nil {
+			return nil, err
+		}
+		return &auditports.SealComputation{
 			TenantKey:    tenant,
 			FromTS:       from,
 			ToTS:         to,
-			ClassDigests: make(map[string]audit.ClassDigest, len(audit.RetentionClasses)),
-		}
-		err := keel.QueryRows(ctx, r.db.Keel(ctx), func(row pgx.CollectableRow) error {
-			var class, digest string
-			var count int64
-			if err := row.Scan(&class, &count, &digest); err != nil {
-				return err
-			}
-			out.ClassDigests[class] = audit.ClassDigest{Count: count, Digest: digest}
-			out.RowCount += count
-			return nil
-		}, digestSQL, tenant.OrganizationID.String(), tenant.BusinessUnitID.String(), from, to)
-		if err != nil {
-			return nil, fmt.Errorf("digest audit entries: %w", err)
-		}
-		return out, nil
+			RowCount:     digest.RowCount,
+			ClassDigests: digest.Classes,
+		}, nil
 	})
 }
 
@@ -198,6 +176,29 @@ func (r *repository) RecordVerification(ctx context.Context, head *audit.ChainHe
 			return fmt.Errorf("record audit chain verification: %w", err)
 		}
 		return nil
+	})
+}
+
+func (r *repository) ImportedThrough(
+	ctx context.Context,
+	tenant pagination.TenantInfo,
+) (int64, error) {
+	ctx = tenantContext(ctx, auditports.TenantKey{
+		OrganizationID: tenant.OrgID,
+		BusinessUnitID: tenant.BuID,
+	})
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int64, error) {
+		seq, err := keel.QueryValue[int64](
+			ctx,
+			r.db.Keel(ctx),
+			importedThroughSQL,
+			tenant.OrgID.String(),
+			tenant.BuID.String(),
+		)
+		if err != nil {
+			return 0, fmt.Errorf("read the imported audit seals: %w", err)
+		}
+		return seq, nil
 	})
 }
 

@@ -16,6 +16,7 @@ type UserRoleAssignment struct {
 	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:ura_"`
 	UserID         pulid.ID `json:"userId"         keel:"user_id"`
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,tenant"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,tenant"`
 	RoleID         pulid.ID `json:"roleId"         keel:"role_id"`
 	ExpiresAt      *int64   `json:"expiresAt"      keel:"expires_at"`
 	AssignedBy     pulid.ID `json:"assignedBy"     keel:"assigned_by,nullzero"`

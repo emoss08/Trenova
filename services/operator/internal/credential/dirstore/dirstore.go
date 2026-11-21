@@ -20,7 +20,9 @@ const (
 	dirMode      = 0o700
 )
 
-var ErrInsecure = errors.New("the credential directory or its files are readable by others")
+var ErrInsecure = errors.New(
+	"the credential directory or its files are readable by others, or are not plain files and directories",
+)
 
 type identityFile struct {
 	Kind         string `json:"kind"`
@@ -54,17 +56,42 @@ func New(p Params) (Store, error) {
 	if err := os.MkdirAll(p.Dir, dirMode); err != nil {
 		return Store{}, fmt.Errorf("make the credential directory: %w", err)
 	}
-	if err := os.Chmod(p.Dir, dirMode); err != nil {
+	info, err := os.Lstat(p.Dir)
+	if err != nil {
+		return Store{}, fmt.Errorf("read the credential directory: %w", err)
+	}
+	if !info.IsDir() {
+		return Store{}, fmt.Errorf("%w: %s", ErrInsecure, p.Dir)
+	}
+	if err = os.Chmod(p.Dir, dirMode); err != nil {
 		return Store{}, fmt.Errorf("restrict the credential directory: %w", err)
 	}
 	return Store{dir: p.Dir, enrolment: p.Enrolment}, nil
 }
 
-func (s Store) Bundle(context.Context) (credential.Bundle, bool, error) {
-	body, err := os.ReadFile(s.enrolment)
+func private(path string) (bool, error) {
+	info, err := os.Lstat(path)
 	if errors.Is(err, fs.ErrNotExist) {
+		return false, nil
+	}
+	if err != nil {
+		return false, err
+	}
+	if !info.Mode().IsRegular() || info.Mode().Perm()&0o077 != 0 {
+		return false, fmt.Errorf("%w: %s", ErrInsecure, path)
+	}
+	return true, nil
+}
+
+func (s Store) Bundle(context.Context) (credential.Bundle, bool, error) {
+	present, err := private(s.enrolment)
+	if err != nil {
+		return credential.Bundle{}, false, fmt.Errorf("read the enrolment bundle: %w", err)
+	}
+	if !present {
 		return credential.Bundle{}, false, nil
 	}
+	body, err := os.ReadFile(s.enrolment)
 	if err != nil {
 		return credential.Bundle{}, false, fmt.Errorf("read the enrolment bundle: %w", err)
 	}
@@ -77,15 +104,12 @@ func (s Store) Bundle(context.Context) (credential.Bundle, bool, error) {
 
 func (s Store) Load(context.Context) (credential.Identity, bool, error) {
 	path := filepath.Join(s.dir, IdentityFile)
-	info, err := os.Stat(path)
-	if errors.Is(err, fs.ErrNotExist) {
-		return credential.Identity{}, false, nil
-	}
+	present, err := private(path)
 	if err != nil {
 		return credential.Identity{}, false, fmt.Errorf("read the identity: %w", err)
 	}
-	if info.Mode().Perm()&0o077 != 0 {
-		return credential.Identity{}, false, fmt.Errorf("%w: %s", ErrInsecure, path)
+	if !present {
+		return credential.Identity{}, false, nil
 	}
 	body, err := os.ReadFile(path)
 	if err != nil {

@@ -189,6 +189,16 @@ func chainFor(key string) *aiauditconfig.Config {
 
 func newInstall(t *testing.T, seeded bool, key string) *install {
 	t.Helper()
+	return newInstallWithChain(t, seeded, key, chainFor(key))
+}
+
+func newInstallWithChain(
+	t *testing.T,
+	seeded bool,
+	key string,
+	chain *aiauditconfig.Config,
+) *install {
+	t.Helper()
 	var (
 		ctx     context.Context
 		admin   *keel.DB
@@ -211,7 +221,7 @@ func newInstall(t *testing.T, seeded bool, key string) *install {
 		store:   objectstoretest.New(),
 		cipher:  encryptionservice.NewWithKeyManager(encryptionservice.NewLocalKeyManager(key)),
 		buckets: newBucket(),
-		chain:   chainFor(key),
+		chain:   chain,
 	}
 	in.rows = tenantcopyrepository.New(tenantcopyrepository.Params{
 		DB: conn, App: &appconfig.Config{Name: "archive-test"}, Database: dbCfg,
@@ -363,19 +373,7 @@ func writeTrails(t *testing.T, in *install, tenant dbscope.Tenant) {
 			Critical:       true,
 		}))
 	}
-	sealer := auditintegrity.NewSealer(&auditintegrity.SealerParams{
-		Seals:   in.auditSeals(),
-		Keyring: auditintegrity.NewKeyring(in.chain),
-		Metrics: metricstest.Disabled(),
-		Now:     func() time.Time { return now },
-		Logger:  zap.NewNop(),
-	})
-	cutoff := auditintegrity.Cutoff(now)
-	sealed, err := sealer.SealTenant(in.ctx, auditports.TenantKey{
-		OrganizationID: tenant.OrganizationID, BusinessUnitID: tenant.BusinessUnitID,
-	}, cutoff-int64((72*time.Hour).Seconds()), cutoff)
-	require.NoError(t, err)
-	require.Positive(t, sealed)
+	sealThroughNow(t, in, in.chain, tenant)
 
 	info := pagination.TenantInfo{OrgID: tenant.OrganizationID, BuID: tenant.BusinessUnitID}
 	ring := in.aiKeyring()
@@ -393,7 +391,7 @@ func writeTrails(t *testing.T, in *install, tenant dbscope.Tenant) {
 				Purpose:       aiaudit.PurposeLive,
 			})
 		}
-		_, err = in.aiLedger().
+		_, err := in.aiLedger().
 			Append(tenantContext(in, tenant), &aiauditports.AppendAIAuditEventsRequest{
 				TenantInfo: info,
 				Events:     events,
@@ -403,6 +401,29 @@ func writeTrails(t *testing.T, in *install, tenant dbscope.Tenant) {
 			})
 		require.NoError(t, err)
 	}
+}
+
+func sealThroughNow(
+	t *testing.T,
+	in *install,
+	chain *aiauditconfig.Config,
+	tenant dbscope.Tenant,
+) {
+	t.Helper()
+	now := time.Now()
+	sealer := auditintegrity.NewSealer(&auditintegrity.SealerParams{
+		Seals:   in.auditSeals(),
+		Keyring: auditintegrity.NewKeyring(chain),
+		Metrics: metricstest.Disabled(),
+		Now:     func() time.Time { return now },
+		Logger:  zap.NewNop(),
+	})
+	cutoff := now.Unix() + 1
+	sealed, err := sealer.SealTenant(in.ctx, auditports.TenantKey{
+		OrganizationID: tenant.OrganizationID, BusinessUnitID: tenant.BusinessUnitID,
+	}, auditintegrity.Cutoff(now)-int64((72*time.Hour).Seconds()), cutoff)
+	require.NoError(t, err)
+	require.Positive(t, sealed)
 }
 
 type trailStatus struct {
@@ -514,20 +535,22 @@ func prepareSource(t *testing.T, src *install) *sourceFacts {
 	src.exec(t, `DELETE FROM mfa_authenticators WHERE user_id = $1`, facts.user)
 	src.exec(
 		t,
-		`INSERT INTO mfa_authenticators (id, user_id, organization_id, type, name, secret_cipher, enabled, verified_at)
-VALUES ($1, $2, $3, 'totp', 'Phone', $4, true, 1790000000)`,
+		`INSERT INTO mfa_authenticators (id, user_id, organization_id, business_unit_id, type, name, secret_cipher, enabled, verified_at)
+VALUES ($1, $2, $3, $4, 'totp', 'Phone', $5, true, 1790000000)`,
 		pulid.MustNew("mfa_").String(),
 		facts.user,
 		facts.tenant.OrganizationID.String(),
+		facts.tenant.BusinessUnitID.String(),
 		sealed,
 	)
 	src.exec(
 		t,
-		`INSERT INTO mfa_recovery_codes (id, user_id, organization_id, code_hash, hash_version)
-VALUES ($1, $2, $3, $4, 2)`,
+		`INSERT INTO mfa_recovery_codes (id, user_id, organization_id, business_unit_id, code_hash, hash_version)
+VALUES ($1, $2, $3, $4, $5, 2)`,
 		pulid.MustNew("mrc_").String(),
 		facts.user,
 		facts.tenant.OrganizationID.String(),
+		facts.tenant.BusinessUnitID.String(),
 		strings.Repeat("e", 64),
 	)
 
@@ -1045,9 +1068,16 @@ SELECT $1, $2, $3, 'another-name', 'another@stranger.test', 'Another', 'x', 'Act
 			assert.Equal(t, archiveports.ChainResealed, result.Trails.AuditSeals.Outcome)
 			assert.Equal(t, archiveports.ChainResealed, result.Trails.AIAudit.Outcome)
 			assert.Equal(t, "destination-chain", result.Trails.AuditSeals.KeyID)
+			assert.Equal(t, archiveports.SourceNotVerifiable, result.Trails.AuditSeals.Source,
+				"another server's key is not held here")
+			assert.True(t, result.Trails.AuditSeals.KeyMissing)
+			assert.Equal(t, result.Trails.AuditSeals.Links, result.Trails.AuditSeals.Marked)
+			assert.Equal(t, result.Trails.AIAudit.Links, result.Trails.AIAudit.Marked)
+			assert.Nil(t, result.Trails.Tail, "the source sealed everything it archived")
 			status := verifyTrails(t, dst, facts.tenant)
-			assert.Equal(t, audit.VerificationVerified, status.audit)
-			assert.Equal(t, aiaudit.VerificationVerified, status.ai)
+			assert.Equal(t, audit.VerificationImported, status.audit,
+				"history this server could not verify is never reported as verified")
+			assert.Equal(t, aiaudit.VerificationImported, status.ai)
 			org := facts.tenant.OrganizationID.String()
 			assert.Equal(t, []string{"0"}, dst.query(t,
 				`SELECT count(*)::text FROM audit_seals WHERE organization_id = $1
@@ -1210,9 +1240,9 @@ WHERE organization_id = '`+org+`' AND source_key = 'usage:archive:0:1'; END $$`)
 		assert.Equal(t, withProvenance(before, 1), dst.counts(t, facts.tenant))
 		assert.Equal(t, strangerBefore, dst.counts(t, strangerTenant))
 		status := verifyTrails(t, dst, facts.tenant)
-		assert.Equal(t, audit.VerificationVerified, status.audit,
-			"a restore onto a server that did not sign the trail signs it again")
-		assert.Equal(t, aiaudit.VerificationVerified, status.ai)
+		assert.Equal(t, audit.VerificationImported, status.audit,
+			"a restore onto a server that does not hold the trail's key marks it as not verified at its source")
+		assert.Equal(t, aiaudit.VerificationImported, status.ai)
 		assert.Equal(
 			t,
 			[]string{"2"},

@@ -54,9 +54,15 @@ type testDeps struct {
 	svc         *Service
 }
 
+var testSystemActorID = pulid.MustNew("usr_")
+
 func setupTest(t *testing.T) *testDeps {
 	t.Helper()
 	repo := tenantportsmock.NewMockUserRepository(t)
+	repo.EXPECT().
+		SystemActorID(mock.Anything, mock.Anything).
+		Return(testSystemActorID, nil).
+		Maybe()
 	roleRepo := permissionportsmock.NewMockRoleRepository(t)
 	sessionRepo := sessionportsmock.NewMockSessionRepository(t)
 	permissions := permissionportsmock.NewMockPermissionEngine(t)
@@ -1005,4 +1011,52 @@ func TestChangeMyPassword_KeepsTheCurrentCookieWorkingWhenTheAuditFails(t *testi
 	require.Error(t, err)
 	assert.Nil(t, result)
 	f.deps.sessionRepo.AssertNotCalled(t, "Update", mock.Anything, mock.Anything, mock.Anything)
+}
+
+func TestUserManagementAnswersForTheSystemActorAsForAnUnknownUser(t *testing.T) {
+	t.Parallel()
+
+	deps := setupTest(t)
+	tenantInfo := pagination.TenantInfo{
+		OrgID:  pulid.MustNew("org_"),
+		BuID:   pulid.MustNew("bu_"),
+		UserID: pulid.MustNew("usr_"),
+	}
+	unknown := func(t *testing.T, err error) {
+		t.Helper()
+		require.Error(t, err)
+		assert.True(t, errortypes.IsNotFoundError(err), err.Error())
+	}
+
+	_, err := deps.svc.GetByID(t.Context(), tenantports.GetUserByIDRequest{
+		TenantInfo: tenantInfo, LookupUserID: testSystemActorID,
+	})
+	unknown(t, err)
+	_, err = deps.svc.Patch(t.Context(), &PatchUserRequest{
+		TenantInfo: tenantInfo, UserID: testSystemActorID,
+	})
+	unknown(t, err)
+	_, err = deps.svc.BulkUpdateStatus(t.Context(), &tenantports.BulkUpdateUserStatusRequest{
+		TenantInfo: tenantInfo,
+		UserIDs:    []pulid.ID{testSystemActorID},
+		Status:     domaintypes.StatusInactive,
+	})
+	unknown(t, err)
+	_, err = deps.svc.ListOrganizationMemberships(t.Context(), testSystemActorID, tenantInfo.BuID)
+	unknown(t, err)
+	_, err = deps.svc.ReplaceOrganizationMemberships(t.Context(), tenantInfo.UserID,
+		testSystemActorID, tenantInfo.OrgID, tenantInfo.BuID, []pulid.ID{tenantInfo.OrgID})
+	unknown(t, err)
+	unknown(t, deps.svc.EndUserAccess(t.Context(), tenantInfo, testSystemActorID))
+	_, err = deps.svc.GetProfilePictureURL(t.Context(), tenantInfo, testSystemActorID, "")
+	unknown(t, err)
+
+	people, err := deps.svc.GetByIDs(t.Context(), tenantports.GetUsersByIDsRequest{
+		TenantInfo: tenantInfo, UserIDs: []pulid.ID{testSystemActorID},
+	})
+	require.NoError(t, err)
+	assert.Empty(t, people, "a list never holds the system actor")
+	deps.repo.AssertNotCalled(t, "GetByID", mock.Anything, mock.Anything)
+	deps.repo.AssertNotCalled(t, "GetByIDs", mock.Anything, mock.Anything)
+	deps.repo.AssertNotCalled(t, "BulkUpdateStatus", mock.Anything, mock.Anything)
 }

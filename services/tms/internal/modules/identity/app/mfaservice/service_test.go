@@ -206,6 +206,7 @@ func newHarness(t *testing.T) *harness {
 	users.On("FindByIDForLogin", mock.Anything, usr.ID).Return(usr, nil).Maybe()
 	users.On("ListOrganizationMemberships", mock.Anything, mock.Anything, mock.Anything).
 		Return([]*tenant.OrganizationMembership{}, nil).Maybe()
+	users.On("SystemActorID", mock.Anything, mock.Anything).Return(systemActorID, nil).Maybe()
 	held := &heldPermissions{}
 	sessions := sessionportsmock.NewMockSessionRepository(t)
 	repo := &memoryRepo{}
@@ -628,4 +629,24 @@ func TestResetUserMFAKeepsEverythingWhenTheEpochCannotAdvance(t *testing.T) {
 	active, err := h.svc.HasActiveFactor(t.Context(), h.user.ID)
 	require.NoError(t, err)
 	assert.True(t, active)
+}
+
+var systemActorID = pulid.MustNew("usr_")
+
+func TestResetUserMFAAnswersForTheSystemActorAsForAnUnknownUser(t *testing.T) {
+	t.Parallel()
+
+	h := newHarness(t)
+	err := h.svc.ResetUserMFA(t.Context(), &sessionports.ResetUserMFARequest{
+		TenantInfo: pagination.TenantInfo{
+			OrgID:  h.tenant.OrgID,
+			BuID:   h.tenant.BuID,
+			UserID: h.admin,
+		},
+		TargetUserID: systemActorID,
+	})
+
+	require.Error(t, err)
+	assert.True(t, errortypes.IsNotFoundError(err), err.Error())
+	h.users.AssertNotCalled(t, "GetByID", mock.Anything, mock.Anything)
 }

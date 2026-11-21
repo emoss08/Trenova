@@ -41,6 +41,31 @@ func TestAPartReadsBackWithinItsExpansionBound(t *testing.T) {
 	require.Equal(t, int64(8<<20), n)
 }
 
+type counting struct {
+	src  io.Reader
+	read int64
+}
+
+func (c *counting) Read(p []byte) (int, error) {
+	n, err := c.src.Read(p)
+	c.read += int64(n)
+	return n, err
+}
+
+func TestAStoredObjectLongerThanItsManifestSaysStopsAtTheDeclaredSize(t *testing.T) {
+	t.Parallel()
+
+	declared := archivestream.Sum{Bytes: 1 << 10, SHA256: "unused"}
+	endless := &counting{src: zeros{}}
+	r, err := archivestream.NewReader(endless, declared, &archivestream.Options{Part: "documents/0001"})
+	require.NoError(t, err)
+	defer r.Close()
+	_, err = io.Copy(io.Discard, r)
+	require.ErrorIs(t, err, archivestream.ErrStoredBytesChanged)
+	require.LessOrEqual(t, endless.read, int64(1<<10)+1,
+		"an uncompressed part is never read past the size its manifest declares")
+}
+
 func TestAPartThatDecompressesWithoutLimitIsRefused(t *testing.T) {
 	t.Parallel()
 

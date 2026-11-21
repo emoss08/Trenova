@@ -17,6 +17,7 @@ const (
 	DefaultStorageEvery = time.Minute
 	restoreUntouched    = "Nothing was changed: "
 	restoreIncomplete   = "The tenant is incomplete: "
+	waitingNoBucket     = string(instanceapi.SharedArchiveNoBucket)
 )
 
 type command struct {
@@ -194,7 +195,22 @@ func (a *Agent) targetFor(
 	if !ok {
 		return nil, false
 	}
-	if why := mismatch(&t, instanceID, c, a.heldNightly()); why != "" {
+	nightly := a.heldNightly()
+	if nightly == nil {
+		a.p.Logger.Info(
+			"a tenant command waits: an archive, restore or import goes only to the server's own bucket, and the control plane names none",
+			"instanceId",
+			instanceID,
+			"command",
+			c.id,
+			"kind",
+			c.kind,
+			"reason",
+			waitingNoBucket,
+		)
+		return nil, false
+	}
+	if why := mismatch(&t, instanceID, c, nightly); why != "" {
 		a.p.Logger.Warn(
 			"the control plane's archive target does not fit its command; it is not used",
 			"instanceId",
@@ -222,8 +238,7 @@ func mismatch(
 		return "it names another tenant or command"
 	case !httpsEndpoint(t.Endpoint):
 		return "its endpoint is not an https URL"
-	case nightly != nil &&
-		(t.Bucket != nightly.Bucket || !sameEndpoint(t.Endpoint, nightly.Endpoint)):
+	case t.Bucket != nightly.Bucket || !sameEndpoint(t.Endpoint, nightly.Endpoint):
 		return "it names another bucket than the server's own"
 	case string(t.Kind) != c.kind:
 		return "it is for another kind of command"

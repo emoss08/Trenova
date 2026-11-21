@@ -79,7 +79,7 @@ func (k *Keyring) Signer() aiauditports.AIAuditSigner {
 // KeyFor is the key a stored row needs to be checked, and whether that key
 // is missing from configuration.
 func (k *Keyring) KeyFor(event *aiaudit.AIAuditEvent) (*aiaudit.ChainKey, bool) {
-	if event.HashVersion != aiaudit.HashVersionSigned {
+	if !event.Keyed() {
 		return nil, false
 	}
 

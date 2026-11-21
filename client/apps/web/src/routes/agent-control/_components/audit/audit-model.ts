@@ -366,6 +366,8 @@ export function verificationLabel(
       return t("Mismatch");
     case "KeyMissing":
       return t("Key missing");
+    case "ImportedUnverified":
+      return t("Imported, not verified at its source");
     case null:
       return t("Not yet verified");
   }
@@ -420,6 +422,7 @@ export function verificationTone(status: AiAuditVerificationStatus | null): Tone
     case "Mismatch":
       return "danger";
     case "KeyMissing":
+    case "ImportedUnverified":
       return "warning";
     case null:
       return "muted";

@@ -69,16 +69,26 @@ type RoleAssignmentParams struct {
 }
 
 func AssignRole(ctx context.Context, db *keel.DB, params RoleAssignmentParams) error {
+	businessUnitID, err := LockMember(ctx, db, MemberRequest{
+		UserID:         params.UserID,
+		OrganizationID: params.OrganizationID,
+		Now:            params.AssignedAt,
+	})
+	if err != nil {
+		return fmt.Errorf("assign role %s to user %s: %w", params.RoleID, params.UserID, err)
+	}
+
 	assignment := &rbac.UserRoleAssignment{
 		ID:             pulid.MustNew("ura_"),
 		UserID:         params.UserID,
 		OrganizationID: params.OrganizationID,
+		BusinessUnitID: businessUnitID,
 		RoleID:         params.RoleID,
 		AssignedBy:     params.AssignedBy,
 		AssignedAt:     params.AssignedAt,
 	}
 
-	if err := rbacdb.UserRoleAssignments.Create(ctx, db, assignment); err != nil {
+	if err = rbacdb.UserRoleAssignments.Create(ctx, db, assignment); err != nil {
 		return fmt.Errorf("assign role %s to user %s: %w", params.RoleID, params.UserID, err)
 	}
 

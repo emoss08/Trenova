@@ -3,7 +3,9 @@ package archiveports
 import (
 	"context"
 	"errors"
+	"fmt"
 	"io"
+	"strings"
 
 	"github.com/emoss08/trenova/internal/cloud/archiveplan"
 	"github.com/emoss08/trenova/internal/cloud/domain/tenantarchive"
@@ -80,16 +82,82 @@ const (
 	ChainBroken   = ChainOutcome("broken")
 )
 
+type SourceCheck string
+
+const (
+	SourceVerified      = SourceCheck("verified")
+	SourceNotVerified   = SourceCheck("not_verified")
+	SourceNotVerifiable = SourceCheck("not_verifiable")
+)
+
 type ChainResult struct {
-	Outcome  ChainOutcome `json:"outcome"`
-	Links    int64        `json:"links"`
-	KeyID    string       `json:"keyId,omitempty"`
-	BrokenAt int64        `json:"brokenAt,omitempty"`
+	Outcome    ChainOutcome `json:"outcome"`
+	Links      int64        `json:"links"`
+	KeyID      string       `json:"keyId,omitempty"`
+	BrokenAt   int64        `json:"brokenAt,omitempty"`
+	Source     SourceCheck  `json:"source,omitempty"`
+	KeyMissing bool         `json:"keyMissing,omitempty"`
+	Unsigned   bool         `json:"unsigned,omitempty"`
+	Marked     int64        `json:"marked,omitempty"`
+}
+
+func (c *ChainResult) Unverified() bool {
+	return c.Marked > 0 || c.Outcome == ChainBroken
+}
+
+type TailSeal struct {
+	Seq  int64 `json:"seq"`
+	From int64 `json:"from"`
+	To   int64 `json:"to"`
+	Rows int64 `json:"rows"`
 }
 
 type TrailResult struct {
 	AuditSeals ChainResult `json:"auditSeals"`
 	AIAudit    ChainResult `json:"aiAudit"`
+	Tail       *TailSeal   `json:"tail,omitempty"`
+}
+
+const maxRestoreNote = 500
+
+func (r *TrailResult) RestoreNote() string {
+	if r == nil {
+		return ""
+	}
+	notes := make([]string, 0, 3)
+	for _, chain := range []struct {
+		name   string
+		result *ChainResult
+	}{{"audit log", &r.AuditSeals}, {"AI audit trail", &r.AIAudit}} {
+		switch {
+		case chain.result.Outcome == ChainBroken:
+			notes = append(notes, fmt.Sprintf(
+				"the %s does not verify from link %d and was restored as it was, so its verification reports the break",
+				chain.name,
+				chain.result.BrokenAt,
+			))
+		case chain.result.Marked > 0:
+			notes = append(notes, fmt.Sprintf(
+				"the %s names a key this server does not hold, so its %d links were signed again here and are marked as not verified at their source",
+				chain.name,
+				chain.result.Marked,
+			))
+		}
+	}
+	if r.Tail != nil {
+		notes = append(notes, fmt.Sprintf(
+			"%d audit log entries written after the archive's last seal are marked as not verified at their source",
+			r.Tail.Rows,
+		))
+	}
+	if len(notes) == 0 {
+		return ""
+	}
+	note := "Restored, but " + strings.Join(notes, "; ") + "."
+	if len(note) > maxRestoreNote {
+		note = note[:maxRestoreNote]
+	}
+	return note
 }
 
 type LoadRequest struct {

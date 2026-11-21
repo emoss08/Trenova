@@ -20,9 +20,17 @@ type fakeUsers struct {
 	tenantports.UserRepository
 
 	user        *tenant.User
+	systemActor pulid.ID
 	memberships []*tenant.OrganizationMembership
 	updated     []tenantports.UpdateUserColumnsRequest
 	replaced    []tenantports.ReplaceOrganizationMembershipsRequest
+}
+
+func (f *fakeUsers) SystemActorID(_ context.Context, _ pulid.ID) (pulid.ID, error) {
+	if f.systemActor.IsNil() {
+		return pulid.Nil, errortypes.NewNotFoundError("System actor not found")
+	}
+	return f.systemActor, nil
 }
 
 func (f *fakeUsers) GetTenantMember(
@@ -248,4 +256,23 @@ func TestUpdate_WithholdsProfileChangesForASharedAccount(t *testing.T) {
 	assert.Equal(t, "ada@example.com", result.User.EmailAddress)
 	assert.Empty(t, h.users.updated)
 	assert.Empty(t, h.auditor.Changes())
+}
+
+func TestADirectoryNeverReachesTheSystemActor(t *testing.T) {
+	t.Parallel()
+
+	system := &tenant.User{
+		ID:     pulid.MustNew("usr_"),
+		Status: domaintypes.StatusActive,
+	}
+	users := &fakeUsers{user: system, systemActor: system.ID}
+	svc := &Service{users: users}
+	actor := Actor{OrganizationID: pulid.MustNew("org_"), BusinessUnitID: pulid.MustNew("bu_")}
+
+	_, err := svc.member(t.Context(), &actor, system.ID)
+	require.Error(t, err)
+	assert.True(t, isMissing(err), "it answers as for an unknown person")
+	require.NoError(t, svc.Revoke(t.Context(), &AccessRequest{Actor: actor, UserID: system.ID}),
+		"a revoke of nobody is a no-op")
+	assert.Empty(t, users.updated, "the system actor is never deactivated")
 }

@@ -578,7 +578,7 @@ func (r *importRun) verify(ctx context.Context, load archiveports.Load) error {
 		}
 		return tenantarchive.Refuse(
 			tenantarchive.RefusalReference,
-			"after the load the tenant's rows refer to records that are not there: "+strings.Join(
+			"after the load the tenant's rows refer to records that are not the tenant's: "+strings.Join(
 				names,
 				", ",
 			),

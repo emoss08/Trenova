@@ -34,6 +34,9 @@ func (s *Service) StartRestore(
 	if err := req.Access.CheckRead(instanceID); err != nil {
 		return nil, err
 	}
+	if err := s.requireServerBucket(ctx, &req.Access.Location); err != nil {
+		return nil, err
+	}
 	var (
 		cmd    *tenantcommand.Command
 		tenant *cloudtenant.Tenant
@@ -108,6 +111,7 @@ type RestoreResult struct {
 	SHA256    string
 	Rows      int64
 	Documents int
+	Note      string
 }
 
 func (s *Service) FinishRestore(ctx context.Context, result *RestoreResult) error {
@@ -147,7 +151,7 @@ func (s *Service) FinishRestore(ctx context.Context, result *RestoreResult) erro
 		t.State = state
 		t.LastRestoreState = cloudtenant.RestoreDone
 		t.LastRestoreAt = now
-		t.LastRestoreReason = ""
+		t.LastRestoreReason = result.Note
 		t.UpdatedAt = now
 		if err = s.tenants.Save(ctx, t); err != nil {
 			return err
@@ -162,7 +166,9 @@ func (s *Service) FinishRestore(ctx context.Context, result *RestoreResult) erro
 			InstanceID: t.InstanceID,
 			Kind:       cloudtenant.EventRestored,
 			Revision:   t.Desired.Revision,
-			Detail:     map[string]any{"rows": result.Rows, "documents": result.Documents},
+			Detail: map[string]any{
+				"rows": result.Rows, "documents": result.Documents, "note": result.Note,
+			},
 			OccurredAt: now,
 		})
 	})

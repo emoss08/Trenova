@@ -45,6 +45,9 @@ func (s *Service) StartArchive(
 	if req.Access.Location.Prefix != tenantarchive.CommandPrefix(instanceID, req.CommandID) {
 		return nil, tenantarchive.ErrLocationInvalid
 	}
+	if err := s.requireServerBucket(ctx, &req.Access.Location); err != nil {
+		return nil, err
+	}
 	var (
 		cmd    *tenantcommand.Command
 		tenant *cloudtenant.Tenant

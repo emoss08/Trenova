@@ -37,11 +37,12 @@ const (
 )
 
 type grantStore struct {
-	mu     sync.Mutex
-	calls  int
-	grants map[pulid.ID]*supportaccess.Grant
-	users  map[pulid.ID]string
-	orgs   map[pulid.ID]pulid.ID
+	mu       sync.Mutex
+	calls    int
+	markFail map[pulid.ID]error
+	grants   map[pulid.ID]*supportaccess.Grant
+	users    map[pulid.ID]string
+	orgs     map[pulid.ID]pulid.ID
 }
 
 func newGrantStore() *grantStore {
@@ -238,6 +239,9 @@ func (s *grantStore) MarkExpiryRecorded(_ context.Context, grant *supportaccess.
 	s.touch()
 	s.mu.Lock()
 	defer s.mu.Unlock()
+	if err := s.markFail[grant.ID]; err != nil {
+		return false, err
+	}
 	g, ok := s.grants[grant.ID]
 	if !ok || g.ExpiryRecordedAt != nil || g.RevokedAt != nil {
 		return false, nil
@@ -480,6 +484,7 @@ func newTenancyRig(t *testing.T, managedCfg *managedconfig.Config) *rig {
 	}
 	r.principals = NewPrincipals(PrincipalsParams{
 		Grants:   r.grants,
+		Keys:     r.keys,
 		Registry: permissioncatalog.NewRegistry(),
 		Managed:  managedCfg,
 	})

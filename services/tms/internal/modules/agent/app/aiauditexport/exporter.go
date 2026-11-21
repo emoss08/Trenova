@@ -235,13 +235,21 @@ type exportRange struct {
 }
 
 type exportChain struct {
-	KeyID         string `json:"keyId"`
-	Signed        bool   `json:"signed"`
-	HashAlgorithm string `json:"hashAlgorithm"`
-	FirstSeq      int64  `json:"firstSeq"`
-	LastSeq       int64  `json:"lastSeq"`
-	SnapshotSeq   int64  `json:"snapshotSeq"`
-	Complete      bool   `json:"complete"`
+	KeyID         string            `json:"keyId"`
+	Signed        bool              `json:"signed"`
+	HashAlgorithm string            `json:"hashAlgorithm"`
+	FirstSeq      int64             `json:"firstSeq"`
+	LastSeq       int64             `json:"lastSeq"`
+	SnapshotSeq   int64             `json:"snapshotSeq"`
+	Complete      bool              `json:"complete"`
+	HashVersions  map[string]string `json:"hashVersions"`
+}
+
+var hashVersions = map[string]string{
+	"1": "signed here with the chain key named in hash_key_id",
+	"2": "linked with plain SHA-256: no chain key was configured",
+	"3": "signed here with the chain key named in hash_key_id; imported from an archive whose own signatures could not be checked where they were made",
+	"4": "linked with plain SHA-256; imported from an archive whose own signatures could not be checked where they were made",
 }
 
 func (x *Exporter) header(spec *ExportSpec, stats *ExportStats) *exportHeader {
@@ -273,6 +281,7 @@ func (x *Exporter) header(spec *ExportSpec, stats *ExportStats) *exportHeader {
 			LastSeq:       stats.LastSeq,
 			SnapshotSeq:   export.SnapshotSeq,
 			Complete:      stats.Complete,
+			HashVersions:  hashVersions,
 		},
 		Columns: exportColumnNames(),
 	}

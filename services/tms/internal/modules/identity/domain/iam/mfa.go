@@ -17,6 +17,7 @@ type MFARecoveryCode struct {
 	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:mrc_"`
 	UserID         pulid.ID `json:"userId"         keel:"user_id"`
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,tenant"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,tenant"`
 	CodeHash       string   `json:"-"              keel:"code_hash"`
 	HashVersion    int16    `json:"-"              keel:"hash_version"`
 	UsedAt         int64    `json:"usedAt"         keel:"used_at,nullzero"`

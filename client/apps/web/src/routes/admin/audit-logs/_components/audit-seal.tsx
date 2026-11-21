@@ -69,6 +69,9 @@ export function AuditSealChip() {
   } else if (data.lastVerificationStatus === "KeyMissing") {
     tone = "warning";
     label = t("A sealing key is missing");
+  } else if (data.lastVerificationStatus === "ImportedUnverified") {
+    tone = "warning";
+    label = t("Sealed · imported history not verified at its source");
   }
   const Icon = TONE_ICON[tone];
 
@@ -114,6 +117,21 @@ export function AuditSealAlert() {
           {data.lastVerificationDetail ||
             t(
               "An entry or seal no longer matches what was sealed. Investigate before relying on it.",
+            )}
+        </AlertDescription>
+      </Alert>
+    );
+  }
+
+  if (data?.lastVerificationStatus === "ImportedUnverified") {
+    return (
+      <Alert size="sm" variant="warning">
+        <AlertTriangleIcon />
+        <AlertTitle>{t("Part of this audit log was imported and not verified at its source")}</AlertTitle>
+        <AlertDescription>
+          {data.lastVerificationDetail ||
+            t(
+              "This history came from an archive whose own seals could not be checked where they were made. Everything sealed here verifies.",
             )}
         </AlertDescription>
       </Alert>

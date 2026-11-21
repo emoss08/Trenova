@@ -65,6 +65,15 @@ describe("AuditSealChip", () => {
     expect(await screen.findByText("A sealing key is missing")).toBeInTheDocument();
   });
 
+  it("says imported history was not verified at its source rather than calling it verified", async () => {
+    mocks.status.mockResolvedValue(chainStatus({ lastVerificationStatus: "ImportedUnverified" }));
+    renderWithClient(<AuditSealChip />);
+
+    expect(
+      await screen.findByText("Sealed · imported history not verified at its source"),
+    ).toBeInTheDocument();
+  });
+
   it("warns when seals are not signed with a key", async () => {
     mocks.status.mockResolvedValue(chainStatus({ signed: false }));
     renderWithClient(<AuditSealChip />);
@@ -86,6 +95,23 @@ describe("AuditSealAlert", () => {
     expect(await screen.findByText("The audit log failed verification")).toBeInTheDocument();
     expect(
       screen.getByText("Operational entries sealed by seal 4 have been changed"),
+    ).toBeInTheDocument();
+  });
+
+  it("says which history was imported without being verified at its source", async () => {
+    mocks.status.mockResolvedValue(
+      chainStatus({
+        lastVerificationStatus: "ImportedUnverified",
+        lastVerificationDetail: "seals up to 12 hold history imported from an archive",
+      }),
+    );
+    renderWithClient(<AuditSealAlert />);
+
+    expect(
+      await screen.findByText("Part of this audit log was imported and not verified at its source"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("seals up to 12 hold history imported from an archive"),
     ).toBeInTheDocument();
   });
 

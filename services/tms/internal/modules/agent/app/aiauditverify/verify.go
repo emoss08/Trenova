@@ -136,7 +136,7 @@ func (v *Verifier) VerifyTenant(
 	v.metrics.RecordVerification(string(result.Status))
 	v.publish(ctx, tenantInfo)
 
-	if result.Status != aiaudit.VerificationVerified {
+	if !result.Status.Holds() {
 		v.alarm(ctx, result)
 	}
 
@@ -210,14 +210,21 @@ func (v *Verifier) walk(
 	if result.VerifiedSeq != head.LastSeq || cursor.expectedPrev != head.LastHash {
 		return fail(result, head.LastSeq, "the chain head does not name the chain's last row"), nil
 	}
+	if cursor.importedThrough > 0 {
+		result.Status = aiaudit.VerificationImported
+		result.Detail = "rows up to " + strconv.FormatInt(cursor.importedThrough, 10) +
+			" were imported from an archive whose own signatures could not be checked where " +
+			"they were made; every row verifies under this server's keys"
+	}
 
 	return result, nil
 }
 
 type chainCursor struct {
-	expectedPrev string
-	expectedSeq  int64
-	signedFrom   int64
+	expectedPrev    string
+	expectedSeq     int64
+	signedFrom      int64
+	importedThrough int64
 }
 
 func (v *Verifier) verifyPage(
@@ -235,8 +242,11 @@ func (v *Verifier) verifyPage(
 			return true
 		}
 
-		if cursor.signedFrom == 0 && row.HashVersion == aiaudit.HashVersionSigned {
+		if cursor.signedFrom == 0 && row.Keyed() {
 			cursor.signedFrom = row.Seq
+		}
+		if row.Imported() {
+			cursor.importedThrough = row.Seq
 		}
 		cursor.expectedPrev = row.Hash
 		cursor.expectedSeq = row.Seq + 1
@@ -259,7 +269,7 @@ func (v *Verifier) rowEndsChain(
 
 		return true
 	}
-	if cursor.signedFrom != 0 && row.HashVersion != aiaudit.HashVersionSigned {
+	if cursor.signedFrom != 0 && !row.Keyed() {
 		fail(result, row.Seq, "the row is unsigned though row "+
 			strconv.FormatInt(cursor.signedFrom, 10)+" before it was signed")
 
