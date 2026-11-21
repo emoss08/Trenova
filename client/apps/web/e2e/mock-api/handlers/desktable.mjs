@@ -15,7 +15,7 @@ const THREAD = "athr_desk_table";
 const ARTIFACT_ID = "aart_acme_in_transit";
 const SLUG = "acme-shipments-in-transit";
 const TITLE = "Shipments";
-const AGENT = { id: "agd_mock_dispatch_desk", name: "Dispatch Desk", icon: "", accent: "teal" };
+const AGENT = { id: "agd_dispatch", name: "Dispatch desk", icon: "", accent: "" };
 const QUESTION = "Which Acme Foods shipments are in transit or delayed right now?";
 const STAGES = [
   "paged",
@@ -178,7 +178,7 @@ function thread(state) {
     businessUnitId: "bu_mock",
     organizationId: "org_mock",
     userId: "usr_mock",
-    agentDefinitionId: "",
+    agentDefinitionId: AGENT.id,
     title: QUESTION,
     status: "Active",
     lastMessageAt: list.at(-1).createdAt,

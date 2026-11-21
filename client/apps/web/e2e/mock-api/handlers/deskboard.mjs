@@ -7,7 +7,7 @@
 import { deskBudget } from "./desktable.mjs";
 
 const THREAD = "athr_desk_board";
-const AGENT = { id: "agd_mock_dispatch_desk", name: "Dispatch Desk", icon: "", accent: "teal" };
+const AGENT = { id: "agd_dispatch", name: "Dispatch desk", icon: "", accent: "" };
 const HOUR = 3600;
 const MIN = 60;
 

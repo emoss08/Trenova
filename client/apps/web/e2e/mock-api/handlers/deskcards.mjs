@@ -302,11 +302,20 @@ const DISPATCH_AGENT = {
   delegates: [],
 };
 
+/** The agent the Desk report conversation is with. */
+const BILLING_AGENT = {
+  ...DISPATCH_AGENT,
+  id: "agd_mock_billing_desk",
+  name: "Billing desk",
+  description: "Runs revenue and billing reports for the billing team.",
+  template: "BillingAssistant",
+};
+
 export const DESK_CARD_HANDLERS = {
   MyAgents: () => ({
     myAgents: {
-      edges: [{ node: DISPATCH_AGENT }],
-      totalCount: 1,
+      edges: [{ node: DISPATCH_AGENT }, { node: BILLING_AGENT }],
+      totalCount: 2,
       pageInfo: { hasNextPage: false, endCursor: null, hasPreviousPage: false, startCursor: null },
     },
   }),

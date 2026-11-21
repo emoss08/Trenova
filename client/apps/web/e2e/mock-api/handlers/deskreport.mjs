@@ -13,7 +13,7 @@ const RUN_ARTIFACT = "aart_revenue_run";
 const PREVIEW_ARTIFACT = "aart_revenue_preview";
 const RUN_SLUG = "revenue-by-customer";
 const PREVIEW_SLUG = "revenue-by-customer-preview";
-const AGENT = { id: "agd_mock_billing_desk", name: "Billing Desk", icon: "", accent: "violet" };
+const AGENT = { id: "agd_mock_billing_desk", name: "Billing desk", icon: "", accent: "violet" };
 const QUESTION = "Run revenue by customer for the last 30 days.";
 const STAGES = [
   "finished",
