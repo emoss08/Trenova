@@ -155,10 +155,9 @@ export function ChainStatusHeader() {
       )}
       {status.lastVerificationStatus === "ImportedUnverified" && (
         <Callout tone="w">
-          {status.detail ??
-            t(
-              "Rows of this trail came from an archive whose own signatures could not be checked where they were made. Every row verifies under this server's keys.",
-            )}
+          {t(
+            "Some rows came from an archive whose original signatures could not be checked on the system that made them. They were linked into this chain again here, and every row verifies.",
+          )}
         </Callout>
       )}
       {status.lastVerificationStatus === "KeyMissing" && (
@@ -218,11 +217,18 @@ function ChainSentence({ status, pending }: { status: AIAuditChainStatus; pendin
                   { d: (children) => <b className="t-d">{children}</b> },
                   when,
                 )
-            : rt(
-                "It was last checked {0} and <w>could not be checked</w> past a key that is no longer configured.",
-                { w: (children) => <b className="t-w">{children}</b> },
-                when,
-              )}{" "}
+            : status.lastVerificationStatus === "ImportedUnverified"
+              ? rt(
+                  "It was last checked {0}: every row verifies through #{1}, and <w>some were imported without being verified at their source</w>.",
+                  { w: (children) => <b className="t-w">{children}</b> },
+                  when,
+                  status.lastVerifiedSeq.toLocaleString(),
+                )
+              : rt(
+                  "It was last checked {0} and <w>could not be checked</w> past a key that is no longer configured.",
+                  { w: (children) => <b className="t-w">{children}</b> },
+                  when,
+                )}{" "}
       {unsealed > 0
         ? t(
             "{0, plural, one {The newest row is sealed at the next check.} other {The # newest rows are sealed at the next check.}}",

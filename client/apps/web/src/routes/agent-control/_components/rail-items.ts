@@ -217,7 +217,7 @@ export function buildRailItems(
           : verification === "KeyMissing"
             ? t("Signing key missing")
             : verification === "ImportedUnverified"
-              ? t("Imported history not verified")
+              ? t("Imported, not verified at its source")
               : "",
       attention: verification === "Mismatch" || verification === "KeyMissing",
       children: [

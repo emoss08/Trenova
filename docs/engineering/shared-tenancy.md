@@ -751,8 +751,9 @@ about what it imported:**
   each hash covers, so stripping the mark breaks the chain; a link that already carried it keeps
   it through later moves. A `verified` chain is signed again as ordinary links.
 - The verifications report a chain that holds such links and otherwise verifies as
-  `ImportedUnverified`, never `Verified`, with the last such seal or row in the detail; it is not
-  an alarm (no critical audit entry or notice). Broken and missing-key states take precedence. The
+  `ImportedUnverified`, never `Verified`, and leave the detail empty: the status is the whole fact,
+  and the client says it in a translated sentence (a stored English detail would reach every
+  language untranslated). It is not an alarm (no critical audit entry or notice). Broken and missing-key states take precedence. The
   audit log page's seal chip and banner, AI Control's chain status, its rail item and the AI audit
   export's `chain.hashVersions` legend (each row carries `hash_version`) show it. The audit
   verification finds the marked seals through the partial index `idx_audit_seals_imported`.

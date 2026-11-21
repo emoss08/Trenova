@@ -98,20 +98,17 @@ describe("AuditSealAlert", () => {
     ).toBeInTheDocument();
   });
 
-  it("says which history was imported without being verified at its source", async () => {
-    mocks.status.mockResolvedValue(
-      chainStatus({
-        lastVerificationStatus: "ImportedUnverified",
-        lastVerificationDetail: "seals up to 12 hold history imported from an archive",
-      }),
-    );
+  it("says imported history was sealed again here though its source could not be checked", async () => {
+    mocks.status.mockResolvedValue(chainStatus({ lastVerificationStatus: "ImportedUnverified" }));
     renderWithClient(<AuditSealAlert />);
 
     expect(
       await screen.findByText("Part of this audit log was imported and not verified at its source"),
     ).toBeInTheDocument();
     expect(
-      screen.getByText("seals up to 12 hold history imported from an archive"),
+      screen.getByText(
+        "Some entries came from an archive whose original seals could not be checked on the system that made them. They were sealed again here, and every seal verifies.",
+      ),
     ).toBeInTheDocument();
   });
 

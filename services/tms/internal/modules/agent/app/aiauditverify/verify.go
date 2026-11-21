@@ -210,21 +210,18 @@ func (v *Verifier) walk(
 	if result.VerifiedSeq != head.LastSeq || cursor.expectedPrev != head.LastHash {
 		return fail(result, head.LastSeq, "the chain head does not name the chain's last row"), nil
 	}
-	if cursor.importedThrough > 0 {
+	if cursor.imported {
 		result.Status = aiaudit.VerificationImported
-		result.Detail = "rows up to " + strconv.FormatInt(cursor.importedThrough, 10) +
-			" were imported from an archive whose own signatures could not be checked where " +
-			"they were made; every row verifies under this server's keys"
 	}
 
 	return result, nil
 }
 
 type chainCursor struct {
-	expectedPrev    string
-	expectedSeq     int64
-	signedFrom      int64
-	importedThrough int64
+	expectedPrev string
+	expectedSeq  int64
+	signedFrom   int64
+	imported     bool
 }
 
 func (v *Verifier) verifyPage(
@@ -246,7 +243,7 @@ func (v *Verifier) verifyPage(
 			cursor.signedFrom = row.Seq
 		}
 		if row.Imported() {
-			cursor.importedThrough = row.Seq
+			cursor.imported = true
 		}
 		cursor.expectedPrev = row.Hash
 		cursor.expectedSeq = row.Seq + 1

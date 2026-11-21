@@ -131705,6 +131705,15 @@
       "routes/admin"
     ]
   },
+  "Imported, not verified at its source": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Importing the same statement again will record this row afresh.": {
     "sites": 1,
     "scope": [
@@ -139523,6 +139532,15 @@
     ]
   },
   "It was last checked {0} and is <k>intact</k> through #{1}.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "It was last checked {0}: every row verifies through #{1}, and <w>some were imported without being verified at their source</w>.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -201749,6 +201767,15 @@
       "go/other"
     ]
   },
+  "Part of this audit log was imported and not verified at its source": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Part of this change is hidden by your data access.": {
     "sites": 1,
     "scope": [
@@ -247344,6 +247371,15 @@
       "routes/admin"
     ]
   },
+  "Sealed · imported history not verified at its source": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Sealed · not verified yet": {
     "sites": 1,
     "scope": [
@@ -263741,6 +263777,15 @@
       "apps/web/lib"
     ]
   },
+  "Some entries came from an archive whose original seals could not be checked on the system that made them. They were sealed again here, and every seal verifies.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Some items could not be indexed; they are listed below": {
     "sites": 1,
     "scope": [
@@ -263811,6 +263856,15 @@
     ],
     "areas": [
       "template/notification.dash.credential_renewal_requested"
+    ]
+  },
+  "Some rows came from an archive whose original signatures could not be checked on the system that made them. They were linked into this chain again here, and every row verifies.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Some selected pay events are no longer payable — they may be settled, held, or voided. Refresh and try again.": {
@@ -370333,7 +370387,7 @@
     ]
   },
   "{0} does not exist in your organization": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -376818,7 +376872,7 @@
     ]
   },
   "{0} not found within your organization": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "go"
     ],

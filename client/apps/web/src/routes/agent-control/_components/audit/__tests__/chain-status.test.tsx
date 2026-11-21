@@ -221,6 +221,25 @@ describe("ChainStatusHeader", () => {
     ).toBeInTheDocument();
   });
 
+  it("says imported rows verify here though their source could not be checked, without naming a missing key", async () => {
+    fetchAIAuditChainStatus.mockResolvedValue(
+      chainStatus({ lastVerificationStatus: "ImportedUnverified", lastVerifiedSeq: 1_204 }),
+    );
+    renderStrip();
+
+    expect(await screen.findByText("Imported, not verified at its source")).toBeInTheDocument();
+    expect(
+      screen.getByText("some were imported without being verified at their source"),
+    ).toHaveClass("t-w");
+    expect(screen.getByText(/every row verifies through #1,204/)).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "Some rows came from an archive whose original signatures could not be checked on the system that made them. They were linked into this chain again here, and every row verifies.",
+      ),
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/no longer configured/)).toBeNull();
+  });
+
   it("asks for a missing key back", async () => {
     fetchAIAuditChainStatus.mockResolvedValue(
       chainStatus({ lastVerificationStatus: "KeyMissing" }),

@@ -127,12 +127,13 @@ export function AuditSealAlert() {
     return (
       <Alert size="sm" variant="warning">
         <AlertTriangleIcon />
-        <AlertTitle>{t("Part of this audit log was imported and not verified at its source")}</AlertTitle>
+        <AlertTitle>
+          {t("Part of this audit log was imported and not verified at its source")}
+        </AlertTitle>
         <AlertDescription>
-          {data.lastVerificationDetail ||
-            t(
-              "This history came from an archive whose own seals could not be checked where they were made. Everything sealed here verifies.",
-            )}
+          {t(
+            "Some entries came from an archive whose original seals could not be checked on the system that made them. They were sealed again here, and every seal verifies.",
+          )}
         </AlertDescription>
       </Alert>
     );

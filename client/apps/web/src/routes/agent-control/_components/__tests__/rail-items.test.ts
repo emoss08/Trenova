@@ -317,6 +317,10 @@ describe("buildRailItems", () => {
     expect(audit("Verified")).toMatchObject({ status: "", attention: false });
     expect(audit("Mismatch")).toMatchObject({ status: "Failed verification", attention: true });
     expect(audit("KeyMissing")).toMatchObject({ status: "Signing key missing", attention: true });
+    expect(audit("ImportedUnverified")).toMatchObject({
+      status: "Imported, not verified at its source",
+      attention: false,
+    });
   });
 
   // Retrieval sits beside Memory: both are what agents read back, and the

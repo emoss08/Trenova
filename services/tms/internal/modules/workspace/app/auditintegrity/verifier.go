@@ -127,10 +127,6 @@ func (v *Verifier) VerifyTenant(ctx context.Context, head *audit.ChainHead) (*au
 		head.LastVerifiedSeq = head.LastSeq
 		if importedThrough > 0 {
 			head.LastVerificationStatus = audit.VerificationImported
-			head.LastVerificationDetail = fmt.Sprintf(
-				"seals up to %d hold history imported from an archive whose own signatures could not be checked where they were made; every seal verifies under this server's keys",
-				importedThrough,
-			)
 		}
 	} else {
 		head.LastVerificationFailedSeq = &failedSeq
