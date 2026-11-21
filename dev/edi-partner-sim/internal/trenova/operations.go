@@ -100,7 +100,7 @@ func (c *Client) Shipment(ctx context.Context, id string) (*Shipment, error) {
 		return nil, err
 	}
 	if out.Shipment == nil {
-		return nil, fmt.Errorf("shipment %s: %w", id, ErrNotFound)
+		return nil, fmt.Errorf("the shipment: %w", ErrNotFound)
 	}
 	return out.Shipment, nil
 }
@@ -135,7 +135,7 @@ type Tractor struct {
 	InProgressMoveID string `json:"inProgressMoveId"`
 }
 
-func (c *Client) FreeTractors(ctx context.Context, limit int) ([]Tractor, error) {
+func (c *Client) AvailableTractors(ctx context.Context, limit int) ([]Tractor, error) {
 	var out struct {
 		Tractors struct {
 			Edges []struct {
@@ -151,13 +151,13 @@ func (c *Client) FreeTractors(ctx context.Context, limit int) ([]Tractor, error)
 	if err != nil {
 		return nil, err
 	}
-	free := make([]Tractor, 0, len(out.Tractors.Edges))
+	crewed := make([]Tractor, 0, len(out.Tractors.Edges))
 	for _, edge := range out.Tractors.Edges {
-		if edge.Node.InProgressMoveID == "" && edge.Node.PrimaryWorkerID != "" {
-			free = append(free, edge.Node)
+		if edge.Node.PrimaryWorkerID != "" {
+			crewed = append(crewed, edge.Node)
 		}
 	}
-	return free, nil
+	return crewed, nil
 }
 
 func (c *Client) Assign(ctx context.Context, moveID, workerID, tractorID string) error {

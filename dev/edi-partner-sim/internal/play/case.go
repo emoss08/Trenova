@@ -124,6 +124,9 @@ func (e *Env) RunScenario(
 	}
 	run.report.Took = Duration(time.Since(run.started))
 	run.report.Conversations = run.conversations(ctx)
+	for _, c := range run.order {
+		e.fleet.park(c.shipment())
+	}
 	run.post(ctx, run.report.Status)
 	return run.report
 }
@@ -146,7 +149,7 @@ func (r *caseRun) fail(index int, err error) {
 }
 
 func (r *caseRun) within(step time.Duration) time.Duration {
-	return r.scenario.WithinOf(step)
+	return time.Duration(float64(r.scenario.WithinOf(step)) * r.env.scale)
 }
 
 func (r *caseRun) group(name string) []*Conversation {
@@ -211,8 +214,14 @@ func (r *caseRun) send(ctx context.Context, send *scenario.Send) (string, error)
 			seeds = append(seeds, r.base+send.Seed+offset)
 		}
 		conversations = r.start(send.As, seeds)
+		for _, c := range conversations {
+			c.Need = send.Load
+		}
 	} else {
 		conversations = r.group(send.Of)
+	}
+	if len(conversations) > 0 {
+		variation.Need = conversations[0].Need
 	}
 	messages, err := r.env.SendTender(ctx, r.party, conversations, variation)
 	if err != nil {
@@ -395,8 +404,7 @@ func (r *caseRun) conversations(ctx context.Context) []*ConversationReport {
 		r.snapshot(ctx, c)
 		report := &ConversationReport{Name: c.Name, Key: c.Key, Seed: c.Seed}
 		c.mu.Lock()
-		report.InstanceID, report.TransferID = c.instanceID, c.transferID
-		report.ShipmentID, report.States = c.shipmentID, c.states
+		report.States = c.states
 		c.mu.Unlock()
 		if c.Key != "" {
 			r.env.Watch.Read(func(view simclient.View) {

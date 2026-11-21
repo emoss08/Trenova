@@ -71,7 +71,7 @@ describe("MyDotIntelligence", () => {
     expect(await screen.findByText("Your organization has no DOT number")).toBeInTheDocument();
     expect(screen.getByText("Open organization settings").closest("a")).toHaveAttribute(
       "href",
-      "/admin/organization-settings",
+      "/admin/organization-settings?tab=operations",
     );
     expect(mocks.fetchMyCarrierIntelligence).toHaveBeenCalledWith(false, expect.anything());
   });

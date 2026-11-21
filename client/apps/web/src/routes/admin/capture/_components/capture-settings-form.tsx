@@ -1,178 +1,134 @@
-import { FormSaveDock } from "@/components/form-save-dock";
 import { InputField } from "@/components/fields/input-field";
 import { NumberField } from "@/components/fields/number-field";
 import { SwitchField } from "@/components/fields/switch-field";
-import { useOptimisticMutation } from "@/hooks/use-optimistic-mutation";
+import { SettingsForm } from "@/components/settings/settings-form";
+import { SettingsReveal } from "@/components/settings/settings-reveal";
+import { SettingsSection, SettingsSections } from "@/components/settings/settings-section";
+import { usePermission } from "@/hooks/use-permission";
 import { capture } from "@/lib/queries/capture";
 import { documentControl } from "@/lib/queries/document-control";
-import { usePermission } from "@/hooks/use-permission";
 import { documentControlService } from "@/services/document-control";
 import { documentControlSchema, type DocumentControl } from "@/types/document-control";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@trenova/shared/components/ui/card";
-import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { useCallback } from "react";
-import { FormProvider, useForm, useWatch } from "react-hook-form";
+import { useFormContext, useWatch } from "react-hook-form";
+import { useCaptureTabs, type CaptureTab } from "../capture-tabs";
 
-/**
- * The organization's capture settings. They live on the document settings, as
- * the rest of how documents are handled does, so saving here saves that record.
- * Whoever may read but not update them sees them held, with nothing to save.
- */
-export default function CaptureSettingsForm() {
+const save = (values: DocumentControl) => documentControlService.update(values);
+
+/** Whether people may scan and print at all, and what changes once they can. */
+function CaptureSettings({ readOnly }: { readOnly: boolean }) {
   const t = useT();
-  const { data } = useSuspenseQuery({ ...documentControl.get() });
-  const { allowed: canUpdate } = usePermission(Resource.DocumentControl, Operation.Update);
-  const readOnly = !canUpdate;
-
-  const form = useForm<DocumentControl>({
-    resolver: zodResolver(documentControlSchema),
-    defaultValues: data,
-  });
-  const { control, handleSubmit, reset } = form;
+  const { control } = useFormContext<DocumentControl>();
   const enabled = useWatch({ control, name: "enableCapture" });
-  const captureHeld = readOnly || !enabled;
-
-  const { mutateAsync } = useOptimisticMutation({
-    queryKey: documentControl.get._def,
-    mutationFn: async (values: DocumentControl) => documentControlService.update(values),
-    resourceName: "Capture settings",
-    resetForm: reset,
-    form,
-    invalidateQueries: [documentControl.get._def, capture.access._def],
-  });
-
-  const onSubmit = useCallback(
-    async (values: DocumentControl) => {
-      if (!canUpdate) {
-        return;
-      }
-      await mutateAsync(values);
-    },
-    [canUpdate, mutateAsync],
-  );
 
   return (
-    <FormProvider {...form}>
-      <Form onSubmit={handleSubmit(onSubmit)}>
-        <div className="flex flex-col gap-4">
-          {readOnly && (
-            <Alert variant="info" size="sm">
-              <AlertDescription>
-                {t("You can view these settings but not change them.")}
-              </AlertDescription>
-            </Alert>
+    <SettingsSections>
+      {readOnly ? (
+        <Alert variant="info" size="sm" className="mb-5">
+          <AlertDescription>
+            {t("You can view these settings but not change them.")}
+          </AlertDescription>
+        </Alert>
+      ) : null}
+
+      <SettingsSection
+        title={t("Availability")}
+        description={t("Whether people can scan and print into Trenova with Trenova Capture.")}
+      >
+        <SwitchField
+          control={control}
+          name="enableCapture"
+          label={t("Scanning and printing")}
+          description={t(
+            "Turning it off stops every paired computer until it is turned on again; nothing is unpaired.",
           )}
-          <Card>
-            <CardHeader>
-              <CardTitle>{t("Availability")}</CardTitle>
-              <CardDescription>
-                {t(
-                  "Whether people can scan and print into Trenova with Trenova Capture. Turning it off stops every paired computer until it is turned on again; nothing is unpaired.",
-                )}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="max-w-prose">
-              <FormGroup cols={1}>
-                <FormControl className="min-h-[3em]">
-                  <SwitchField
-                    control={control}
-                    name="enableCapture"
-                    label={t("Turn on scanning and printing into Trenova")}
-                    position="left"
-                    disabled={readOnly}
-                  />
-                </FormControl>
-              </FormGroup>
-            </CardContent>
-          </Card>
+          disabled={readOnly}
+        />
+      </SettingsSection>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>{t("Filing")}</CardTitle>
-              <CardDescription>
-                {t("What happens to a stack once it is read, and how long unfiled pages are kept.")}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="max-w-prose">
-              <FormGroup cols={1}>
-                <FormControl className="min-h-[3em]">
-                  <SwitchField
-                    control={control}
-                    name="captureAutoFileCoverSheets"
-                    label={t("File documents behind a cover sheet on their own")}
-                    description={t(
-                      "A document that follows a Trenova cover sheet is filed onto the sheet's record without waiting in Intake. Anything else still waits for a person.",
-                    )}
-                    position="left"
-                    disabled={captureHeld}
-                  />
-                </FormControl>
-                <FormControl>
-                  <NumberField
-                    control={control}
-                    name="captureRetentionDays"
-                    label={t("Keep unfiled pages for (days)")}
-                    description={t(
-                      "Between 1 and 365. Pages not filed by then are deleted, and their owner is reminded a week before.",
-                    )}
-                    disabled={captureHeld}
-                  />
-                </FormControl>
-              </FormGroup>
-            </CardContent>
-          </Card>
+      <SettingsReveal show={enabled}>
+        <SettingsSection
+          title={t("Filing")}
+          description={t("What happens to a stack once it is read, and how long unfiled pages wait.")}
+        >
+          <SwitchField
+            control={control}
+            name="captureAutoFileCoverSheets"
+            label={t("File behind cover sheets on their own")}
+            description={t(
+              "A document that follows a Trenova cover sheet goes onto the sheet's record without waiting in Intake. Anything else still waits for a person.",
+            )}
+            disabled={readOnly}
+          />
+          <NumberField
+            control={control}
+            name="captureRetentionDays"
+            label={t("Keep unfiled pages for")}
+            description={t(
+              "From 1 to 365 days. Pages nobody files by then are deleted, and whoever scanned them is reminded a week before.",
+            )}
+            sideText={t("days")}
+            min={1}
+            max={365}
+            required={t("Enter how many days to keep unfiled pages")}
+            disabled={readOnly}
+          />
+        </SettingsSection>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>{t("Trenova Capture versions")}</CardTitle>
-              <CardDescription>
-                {t("Which versions of the companion may connect, and whether it updates itself.")}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="max-w-prose">
-              <FormGroup cols={1}>
-                <FormControl>
-                  <InputField
-                    control={control}
-                    name="captureMinAgentVersion"
-                    label={t("Oldest version allowed")}
-                    placeholder="1.0.0"
-                    description={t(
-                      "A computer running anything older is asked to update before it can scan. Leave blank to allow any version.",
-                    )}
-                    disabled={readOnly}
-                  />
-                </FormControl>
-                <FormControl className="min-h-[3em]">
-                  <SwitchField
-                    control={control}
-                    name="captureAllowAutoUpdate"
-                    label={t("Let Trenova Capture update itself")}
-                    description={t(
-                      "Installs new versions when they are released. Turn off where software is rolled out by IT.",
-                    )}
-                    position="left"
-                    disabled={readOnly}
-                  />
-                </FormControl>
-              </FormGroup>
-            </CardContent>
-          </Card>
+        <SettingsSection
+          title={t("Desktop app")}
+          description={t("Which versions of Trenova Capture may connect, and how they update.")}
+        >
+          <InputField
+            control={control}
+            name="captureMinAgentVersion"
+            label={t("Oldest version allowed")}
+            description={t(
+              "A computer on an older version must update before it can scan. Leave empty to allow any version.",
+            )}
+            placeholder="1.0.0"
+            maxLength={20}
+            disabled={readOnly}
+          />
+          <SwitchField
+            control={control}
+            name="captureAllowAutoUpdate"
+            label={t("Update on its own")}
+            description={t(
+              "New versions install as they are released. Turn off where IT rolls out software.",
+            )}
+            disabled={readOnly}
+          />
+        </SettingsSection>
+      </SettingsReveal>
+    </SettingsSections>
+  );
+}
 
-          {canUpdate && <FormSaveDock />}
-        </div>
-      </Form>
-    </FormProvider>
+/**
+ * The organization's capture settings. They live on the document settings, as the rest of
+ * how documents are handled does, so saving here saves that record; the Document extraction
+ * page sends these back as it read them. Whoever may read but not update them sees them held,
+ * with nothing to save.
+ */
+export default function CaptureSettingsForm() {
+  const { data } = useSuspenseQuery({ ...documentControl.get() });
+  const { allowed: canUpdate } = usePermission(Resource.DocumentControl, Operation.Update);
+  const tabs = useCaptureTabs().filter((tab) => tab.value === "settings");
+
+  return (
+    <SettingsForm<DocumentControl, CaptureTab>
+      values={data}
+      schema={documentControlSchema}
+      queryKey={documentControl.get._def}
+      save={save}
+      refresh={[capture.access._def]}
+      resourceName="Capture settings"
+      tabs={tabs}
+      content={() => <CaptureSettings readOnly={!canUpdate} />}
+    />
   );
 }

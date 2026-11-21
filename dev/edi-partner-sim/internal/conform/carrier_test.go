@@ -10,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/edi-partner-sim/internal/acknowledge"
 	"github.com/emoss08/trenova/edi-partner-sim/internal/partner"
 	"github.com/emoss08/trenova/pkg/lading"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -286,7 +287,7 @@ func TestACarrierPartnerIsTenderedAndReadBack(t *testing.T) {
 		if got := strings.Join(names, ","); got != want {
 			t.Fatalf("seed %d steps %s, want %s\n%s", c.Seed, got, want, b.String())
 		}
-		if ack := c.Steps[0].Ack; ack == nil || ack.Code != partner.AckAccepted {
+		if ack := c.Steps[0].Ack; ack == nil || ack.Code != acknowledge.Accepted {
 			t.Fatalf("seed %d: the carrier's 997 for the 204: %+v", c.Seed, ack)
 		}
 	}

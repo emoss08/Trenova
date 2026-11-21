@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/jobs/documentaiextractionjobs"
 	"github.com/emoss08/trenova/internal/modules/documents/jobs/documentanalysis"
 	"github.com/emoss08/trenova/internal/modules/documents/jobs/documentextractionjobs/documentextractioncontract"
+	"github.com/emoss08/trenova/internal/modules/documents/jobs/documentextractionjobs/documentintelligencecontract"
 	"github.com/emoss08/trenova/internal/modules/documents/jobs/documentextractionsupport"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentaiextractionports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
@@ -748,4 +749,422 @@ func TestShipmentDraftDataFromAIExtract_MatchesTheProductionDraftShape(t *testin
 
 	empty := documentaiextractionjobs.ShipmentDraftDataFromAIExtract(nil)
 	assert.NotNil(t, empty["fields"])
+}
+
+type countingRouter struct {
+	asyncRouteOnlyAIDocumentService
+
+	routes *int
+	answer *documentaiextractionports.AIRouteResult
+}
+
+func (r countingRouter) RouteDocument(
+	ctx context.Context,
+	req *documentaiextractionports.AIRouteRequest,
+) (*documentaiextractionports.AIRouteResult, error) {
+	*r.routes++
+	if r.answer != nil {
+		return r.answer, nil
+	}
+	return r.asyncRouteOnlyAIDocumentService.RouteDocument(ctx, req)
+}
+
+func enrichmentPayload(
+	control *documentcontrol.DocumentControl,
+	text string,
+) *documentanalysis.EnrichmentPayload {
+	doc := &document.Document{
+		ID:                pulid.MustNew("doc_"),
+		ProcessingProfile: document.ProcessingProfileRateConfirmationImport,
+		OrganizationID:    control.OrganizationID,
+		BusinessUnitID:    control.BusinessUnitID,
+		OriginalName:      "upload.txt",
+		ResourceType:      "shipment",
+	}
+	extracted := &documentanalysis.ExtractionResult{
+		Text:      text,
+		PageCount: 1,
+		Pages:     []*documentanalysis.PageExtractionResult{{PageNumber: 1, Text: text}},
+	}
+	features := documentanalysis.ExtractDocumentFeatures(doc.OriginalName, extracted.Pages, text)
+	fingerprint := documentanalysis.DetectProviderFingerprint(doc.OriginalName, text, features)
+	classification := documentanalysis.ClassifyDocumentWithControl(
+		doc.OriginalName,
+		text,
+		control,
+		features,
+		fingerprint,
+	)
+
+	return &documentanalysis.EnrichmentPayload{
+		Payload:        &documentintelligencecontract.ProcessDocumentIntelligencePayload{},
+		Document:       doc,
+		Control:        control,
+		Extracted:      extracted,
+		Features:       features,
+		Fingerprint:    fingerprint,
+		Classification: classification,
+		Intelligence:   documentanalysis.AnalyzeDocument(classification, extracted),
+	}
+}
+
+func enrichmentActivities(routes *int) *Activities {
+	return &Activities{
+		logger:            zap.NewNop(),
+		cfg:               &aiconfig.Config{DocumentExtraction: true},
+		aiDocumentService: countingRouter{routes: routes},
+	}
+}
+
+/*
+"Ask AI when unsure" off means the model is never asked what a document is.
+A rate confirmation the wording recognizes is still read with AI when "Read
+with AI" is on: reading is its own switch, and the kind it needs was settled
+without the model.
+*/
+func TestEnrichWithAI_AsksNoModelToClassifyWhenAskAIIsOff(t *testing.T) {
+	t.Parallel()
+
+	control := documentcontrol.NewDefaultDocumentControl(
+		pulid.MustNew("org_"),
+		pulid.MustNew("bu_"),
+	)
+	control.EnableAIAssistedClassification = false
+	routes := 0
+
+	result, err := enrichmentActivities(&routes).enrichWithAI(
+		t.Context(),
+		enrichmentPayload(control, rateConfirmationText),
+	)
+
+	require.NoError(t, err)
+	assert.Zero(t, routes)
+	assert.True(t, result.EnqueueAsyncAI)
+	assert.Equal(
+		t,
+		documentanalysis.AIAcceptanceStatusPending,
+		result.AIDiagnostics.AcceptanceStatus,
+	)
+	assert.Empty(t, result.AIDiagnostics.RejectionReason)
+	assert.Equal(t, documentanalysis.KindRateConfirmation, result.Classification.Kind)
+	assert.NotEqual(t, "ai", result.Classification.Source)
+	assert.Equal(
+		t,
+		documentanalysis.ClassificationSettledByRule,
+		result.Classification.Settlement.SettledBy,
+	)
+	assert.Empty(t, result.Classification.Settlement.ModelKind)
+	assert.Nil(t, result.Signature)
+}
+
+func TestEnrichWithAI_ReadsNothingWithAIWhenBothAISwitchesAreOff(t *testing.T) {
+	t.Parallel()
+
+	control := documentcontrol.NewDefaultDocumentControl(
+		pulid.MustNew("org_"),
+		pulid.MustNew("bu_"),
+	)
+	control.EnableAIAssistedClassification = false
+	control.EnableAIAssistedExtraction = false
+	routes := 0
+
+	result, err := enrichmentActivities(&routes).enrichWithAI(
+		t.Context(),
+		enrichmentPayload(control, rateConfirmationText),
+	)
+
+	require.NoError(t, err)
+	assert.Zero(t, routes)
+	assert.False(t, result.EnqueueAsyncAI)
+	assert.Equal(
+		t,
+		documentanalysis.AIAcceptanceStatusNotAttempted,
+		result.AIDiagnostics.AcceptanceStatus,
+	)
+	assert.Equal(t, "ai_assisted_extraction_disabled", result.AIDiagnostics.RejectionReason)
+}
+
+func TestEnrichWithAI_LeavesAnUnrecognizedKindAloneWhenAskAIIsOff(t *testing.T) {
+	t.Parallel()
+
+	control := documentcontrol.NewDefaultDocumentControl(
+		pulid.MustNew("org_"),
+		pulid.MustNew("bu_"),
+	)
+	control.EnableAIAssistedClassification = false
+	routes := 0
+
+	result, err := enrichmentActivities(&routes).enrichWithAI(
+		t.Context(),
+		enrichmentPayload(control, billOfLadingText),
+	)
+
+	require.NoError(t, err)
+	assert.Zero(t, routes)
+	assert.False(t, result.EnqueueAsyncAI)
+	assert.Equal(
+		t,
+		documentanalysis.AIAcceptanceStatusNotAttempted,
+		result.AIDiagnostics.AcceptanceStatus,
+	)
+	assert.Equal(t, "ai_assisted_classification_disabled", result.AIDiagnostics.RejectionReason)
+}
+
+/*
+"Ask AI when unsure" sits under "Recognize document kinds": with recognition
+off nothing is classified, by wording or by a model.
+*/
+func TestEnrichWithAI_AsksNoModelToClassifyWhenRecognitionIsOff(t *testing.T) {
+	t.Parallel()
+
+	control := documentcontrol.NewDefaultDocumentControl(
+		pulid.MustNew("org_"),
+		pulid.MustNew("bu_"),
+	)
+	control.EnableAutoClassification = false
+	routes := 0
+
+	result, err := enrichmentActivities(&routes).enrichWithAI(
+		t.Context(),
+		enrichmentPayload(control, rateConfirmationText),
+	)
+
+	require.NoError(t, err)
+	assert.Zero(t, routes)
+	assert.False(t, result.EnqueueAsyncAI)
+	assert.Equal(t, documentanalysis.KindOther, result.Classification.Kind)
+	assert.Equal(t, "ai_assisted_classification_disabled", result.AIDiagnostics.RejectionReason)
+}
+
+func TestEnrichWithAI_AsksTheModelWhenAskAIIsOn(t *testing.T) {
+	t.Parallel()
+
+	control := documentcontrol.NewDefaultDocumentControl(
+		pulid.MustNew("org_"),
+		pulid.MustNew("bu_"),
+	)
+	routes := 0
+
+	result, err := enrichmentActivities(&routes).enrichWithAI(
+		t.Context(),
+		enrichmentPayload(control, rateConfirmationText),
+	)
+
+	require.NoError(t, err)
+	assert.Equal(t, 1, routes)
+	assert.True(t, result.EnqueueAsyncAI)
+	assert.Equal(t, documentanalysis.KindRateConfirmation, result.Classification.Kind)
+	assert.Equal(
+		t,
+		documentanalysis.ClassificationSettledByRule,
+		result.Classification.Settlement.SettledBy,
+	)
+	assert.Equal(
+		t,
+		documentanalysis.KindRateConfirmation,
+		result.Classification.Settlement.ModelKind,
+	)
+}
+
+func TestEnrichWithAI_RoutesButDoesNotReadWhenReadWithAIIsOff(t *testing.T) {
+	t.Parallel()
+
+	control := documentcontrol.NewDefaultDocumentControl(
+		pulid.MustNew("org_"),
+		pulid.MustNew("bu_"),
+	)
+	control.EnableAIAssistedExtraction = false
+	routes := 0
+
+	result, err := enrichmentActivities(&routes).enrichWithAI(
+		t.Context(),
+		enrichmentPayload(control, rateConfirmationText),
+	)
+
+	require.NoError(t, err)
+	assert.Equal(t, 1, routes)
+	assert.False(t, result.EnqueueAsyncAI)
+	assert.Equal(t, "ai_assisted_extraction_disabled", result.AIDiagnostics.RejectionReason)
+}
+
+const unrecognizedText = "Weekly fleet newsletter\nSafety reminders for the winter season"
+
+func modelAnswer(kind string, confidence float64) *documentaiextractionports.AIRouteResult {
+	return &documentaiextractionports.AIRouteResult{
+		ShouldExtract:    kind == documentanalysis.KindRateConfirmation,
+		DocumentKind:     kind,
+		Confidence:       confidence,
+		Signals:          []string{"model signal"},
+		ReviewStatus:     "Ready",
+		ClassifierSource: "ai",
+		Reason:           "model reason",
+	}
+}
+
+func settleWith(
+	t *testing.T,
+	text string,
+	answer *documentaiextractionports.AIRouteResult,
+) (*documentanalysis.EnrichmentPayload, *documentanalysis.EnrichmentResult) {
+	t.Helper()
+
+	control := documentcontrol.NewDefaultDocumentControl(
+		pulid.MustNew("org_"),
+		pulid.MustNew("bu_"),
+	)
+	routes := 0
+	activities := enrichmentActivities(&routes)
+	activities.aiDocumentService = countingRouter{routes: &routes, answer: answer}
+	payload := enrichmentPayload(control, text)
+
+	result, err := activities.enrichWithAI(t.Context(), payload)
+
+	require.NoError(t, err)
+	require.Equal(t, 1, routes)
+	return payload, result
+}
+
+func TestEnrichWithAI_ConfidentRuleKindStandsWhenTheModelDisagrees(t *testing.T) {
+	t.Parallel()
+
+	payload, result := settleWith(
+		t,
+		rateConfirmationText,
+		modelAnswer(documentanalysis.KindBillOfLading, 0.97),
+	)
+
+	require.GreaterOrEqual(
+		t,
+		payload.Classification.Confidence,
+		documentanalysis.ClassificationConfidentThreshold,
+	)
+	assert.Equal(t, documentanalysis.KindRateConfirmation, result.Classification.Kind)
+	assert.Equal(t, documentanalysis.KindRateConfirmation, result.DocumentIntelligence.Kind)
+	assert.Equal(t, "deterministic", result.Classification.Source)
+	assert.Equal(t, &documentanalysis.ClassificationSettlement{
+		SettledBy:       documentanalysis.ClassificationSettledByRule,
+		RuleKind:        documentanalysis.KindRateConfirmation,
+		RuleConfidence:  payload.Classification.Confidence,
+		ModelKind:       documentanalysis.KindBillOfLading,
+		ModelConfidence: 0.97,
+	}, result.Classification.Settlement)
+	assert.True(t, result.EnqueueAsyncAI)
+	assert.Empty(t, result.AIDiagnostics.RejectionReason)
+	assert.Equal(
+		t,
+		documentanalysis.AIAcceptanceStatusPending,
+		result.AIDiagnostics.AcceptanceStatus,
+	)
+}
+
+func TestEnrichWithAI_ConfidentModelKindSettlesAnUnsureRule(t *testing.T) {
+	t.Parallel()
+
+	payload, result := settleWith(
+		t,
+		unrecognizedText,
+		modelAnswer(documentanalysis.KindRateConfirmation, 0.91),
+	)
+
+	assert.Equal(t, documentanalysis.KindOther, payload.Classification.Kind)
+	assert.Equal(t, documentanalysis.KindRateConfirmation, result.Classification.Kind)
+	assert.InDelta(t, 0.91, result.Classification.Confidence, 1e-9)
+	assert.Equal(t, "ai", result.Classification.Source)
+	assert.Equal(t, "model reason", result.Classification.Reason)
+	assert.Equal(t, documentanalysis.KindRateConfirmation, result.DocumentIntelligence.Kind)
+	assert.Equal(t, &documentanalysis.ClassificationSettlement{
+		SettledBy:       documentanalysis.ClassificationSettledByModel,
+		RuleKind:        documentanalysis.KindOther,
+		RuleConfidence:  payload.Classification.Confidence,
+		ModelKind:       documentanalysis.KindRateConfirmation,
+		ModelConfidence: 0.91,
+	}, result.Classification.Settlement)
+	assert.Same(t, result.DocumentIntelligence, result.AIDiagnostics.FallbackAnalysis)
+	assert.True(t, result.EnqueueAsyncAI)
+	assert.Empty(t, result.AIDiagnostics.RejectionReason)
+}
+
+func TestEnrichWithAI_UnsureRuleKindStandsWhenTheModelIsUnsure(t *testing.T) {
+	t.Parallel()
+
+	payload, result := settleWith(
+		t,
+		unrecognizedText,
+		modelAnswer(documentanalysis.KindRateConfirmation, 0.6),
+	)
+
+	assert.Equal(t, documentanalysis.KindOther, result.Classification.Kind)
+	assert.Equal(t, documentanalysis.KindOther, result.DocumentIntelligence.Kind)
+	assert.Equal(t, "deterministic", result.Classification.Source)
+	assert.Equal(t, &documentanalysis.ClassificationSettlement{
+		SettledBy:       documentanalysis.ClassificationSettledByRule,
+		RuleKind:        documentanalysis.KindOther,
+		RuleConfidence:  payload.Classification.Confidence,
+		ModelKind:       documentanalysis.KindRateConfirmation,
+		ModelConfidence: 0.6,
+	}, result.Classification.Settlement)
+	assert.False(t, result.EnqueueAsyncAI)
+	assert.Equal(t, "classified_non_rate_confirmation", result.AIDiagnostics.RejectionReason)
+}
+
+func TestEnrichWithAI_ModelSettledNonRateConfirmationIsNotReadWithAI(t *testing.T) {
+	t.Parallel()
+
+	_, result := settleWith(
+		t,
+		unrecognizedText,
+		modelAnswer(documentanalysis.KindBillOfLading, 0.88),
+	)
+
+	assert.Equal(t, documentanalysis.KindBillOfLading, result.Classification.Kind)
+	assert.False(t, result.EnqueueAsyncAI)
+	assert.Equal(t, "ai_routed_non_rate_confirmation", result.AIDiagnostics.RejectionReason)
+}
+
+func TestEnrichWithAI_ModelDeclineCountsWhenItAnsweredTheSettledKind(t *testing.T) {
+	t.Parallel()
+
+	answer := modelAnswer(documentanalysis.KindRateConfirmation, 0.95)
+	answer.ShouldExtract = false
+
+	_, result := settleWith(t, rateConfirmationText, answer)
+
+	assert.Equal(t, documentanalysis.KindRateConfirmation, result.Classification.Kind)
+	assert.False(t, result.EnqueueAsyncAI)
+	assert.Equal(t, "ai_route_declined_extraction", result.AIDiagnostics.RejectionReason)
+}
+
+func TestAnalyzeExtraction_PersistsTheModelSettledKind(t *testing.T) {
+	t.Parallel()
+
+	control := documentcontrol.NewDefaultDocumentControl(
+		pulid.MustNew("org_"),
+		pulid.MustNew("bu_"),
+	)
+	routes := 0
+	activities := enrichmentActivities(&routes)
+	activities.aiDocumentService = countingRouter{
+		routes: &routes,
+		answer: modelAnswer(documentanalysis.KindRateConfirmation, 0.93),
+	}
+	payload := enrichmentPayload(control, unrecognizedText)
+
+	outcome, err := activities.analyzeExtraction(
+		t.Context(),
+		payload.Payload,
+		payload.Document,
+		control,
+		payload.Extracted,
+	)
+
+	require.NoError(t, err)
+	assert.Equal(t, 1, routes)
+	assert.Equal(t, documentanalysis.KindRateConfirmation, outcome.Classification.Kind)
+	assert.Equal(t, documentanalysis.KindRateConfirmation, outcome.Intelligence.Kind)
+	assert.Equal(
+		t,
+		documentanalysis.ClassificationSettledByModel,
+		outcome.Intelligence.Settlement.SettledBy,
+	)
+	assert.True(t, outcome.EnqueueAsyncAI)
 }

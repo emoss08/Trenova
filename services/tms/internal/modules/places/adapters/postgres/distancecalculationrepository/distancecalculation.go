@@ -3,6 +3,7 @@ package distancecalculationrepository
 import (
 	"context"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -47,10 +48,6 @@ func (r *repository) CreateRun(ctx context.Context, entity *distancecalculation.
 func (r *repository) UpdateMoveDistance(ctx context.Context, move *shipment.ShipmentMove) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		sm := shipmentdb.ShipmentMoves
-		distance := sm.Distance.ToNull()
-		if move.Distance != nil {
-			distance = sm.Distance.To(*move.Distance)
-		}
 		calculatedAt := sm.DistanceCalculatedAt.ToNull()
 		if move.DistanceCalculatedAt != nil {
 			calculatedAt = sm.DistanceCalculatedAt.To(*move.DistanceCalculatedAt)
@@ -59,7 +56,10 @@ func (r *repository) UpdateMoveDistance(ctx context.Context, move *shipment.Ship
 		affected, err := sm.Where(sm.ID.Eq(move.ID)).Update(
 			ctx,
 			r.db.Keel(ctx),
-			distance,
+			optionalDistance(sm.Distance, move.Distance),
+			optionalDistance(sm.PayDistance, move.PayDistance),
+			optionalDistance(sm.BillingDistance, move.BillingDistance),
+			optionalDistance(sm.FuelDistance, move.FuelDistance),
 			sm.DistanceSource.To(move.DistanceSource),
 			sm.DistanceProvider.To(move.DistanceProvider),
 			calculatedAt,
@@ -77,4 +77,11 @@ func (r *repository) UpdateMoveDistance(ctx context.Context, move *shipment.Ship
 
 		return dberror.CheckAffected(affected, "ShipmentMove", move.ID.String())
 	})
+}
+
+func optionalDistance(col keel.Float64Col, value *float64) keel.Assignment {
+	if value == nil {
+		return col.ToNull()
+	}
+	return col.To(*value)
 }

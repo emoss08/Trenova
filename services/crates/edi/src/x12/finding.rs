@@ -185,6 +185,10 @@ finding_kinds! {
     ElementTooLong => Element, "5", "5", Error;
     /// The element holds a character its type or the character set does not allow (AK403 6).
     InvalidCharacter => Element, "6", "6", Error;
+    /// The element holds a character outside the X12 basic and extended character sets, such
+    /// as an accented letter or a curly quote; partners send them, so it is a warning unless the
+    /// guide raises it (AK403 6).
+    CharacterOutsideCharacterSet => Element, "6", "6", Warning;
     /// A number with implied decimal places (`N2`) is written with a decimal point, which the
     /// standard does not allow but many partners send (AK403 6).
     ExplicitDecimalInImpliedNumber => Element, "6", "6", Warning;
@@ -207,6 +211,9 @@ finding_kinds! {
     FixedValueMismatch => Element, "I12", "7", Error;
     /// A value to be written held a separator, which was written as a space.
     ValueContainsSeparator => Element, "", "", Warning;
+    /// A value to be written held characters outside the X12 character set, which were
+    /// written as their closest ASCII form or left out.
+    ValueWrittenInCharacterSet => Element, "", "", Warning;
     /// A transaction set has so many findings that the rest were not reported.
     FindingsTruncated => Transaction, "", "", Info;
 }
@@ -352,7 +359,10 @@ mod tests {
     #[test]
     fn every_segment_and_element_finding_has_a_997_code() {
         for kind in FindingKind::ALL {
-            let written_only = *kind == FindingKind::ValueContainsSeparator;
+            let written_only = matches!(
+                kind,
+                FindingKind::ValueContainsSeparator | FindingKind::ValueWrittenInCharacterSet
+            );
             if matches!(kind.level(), Level::Segment | Level::Element) && !written_only {
                 assert!(!kind.code().is_empty(), "{kind:?}");
                 assert!(!kind.code_997().is_empty(), "{kind:?}");

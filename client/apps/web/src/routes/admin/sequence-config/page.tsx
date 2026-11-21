@@ -1,6 +1,5 @@
+import { SettingsPage } from "@/components/settings/settings-page";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { LazyComponent } from "@trenova/shared/components/error-boundary";
-import { PageLayout } from "@/components/navigation/sidebar-layout";
 import { lazy } from "react";
 import { SequenceConfigSkeleton } from "./skeleton";
 
@@ -10,15 +9,12 @@ export function SequenceConfigPage() {
   const t = useT();
 
   return (
-    <PageLayout
-      pageHeaderProps={{
-        title: t("Sequence configuration"),
-        description: t("Configure sequence generation formats for shipments and billing workflows"),
-      }}
+    <SettingsPage
+      title={t("Sequence configuration")}
+      description={t("How the numbers on shipments, invoices, journals and settlements are written")}
+      skeleton={<SequenceConfigSkeleton />}
     >
-      <LazyComponent fallback={<SequenceConfigSkeleton />}>
-        <SequenceConfigForm />
-      </LazyComponent>
-    </PageLayout>
+      <SequenceConfigForm />
+    </SettingsPage>
   );
 }

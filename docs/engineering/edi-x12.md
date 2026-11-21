@@ -22,7 +22,8 @@ Read this before changing the crate, `pkg/x12`, `edix12inspect`, the inbound pip
 | `src/x12/element.rs`, `guide/syntax.rs` | element checks (type, length, codes, dates, times, implied decimals) and syntax notes `P R E C L` |
 | `src/x12/finding.rs` | every finding kind, its level, its 999/997/TA1 codes and default severity (`finding_kinds!`) |
 | `src/x12/read.rs` | `x12.read`: the whole reading in one call |
-| `src/x12/ack.rs`, `src/x12/write.rs` | `x12.acknowledge` (997/999 from a reading) and `x12.write` (ISA padding, counts, separator cleaning) |
+| `src/x12/ack.rs`, `src/x12/write.rs` | `x12.acknowledge` (997/999 from a reading) and `x12.write` (character set, ISA padding, counts, separator cleaning) |
+| `src/x12/charset.rs`, `charset/table.rs` | the X12 character set and `fold`, which writes text in it: each character outside it as its closest ASCII form, or dropped |
 | `src/x12/guide/` | the guide model, the compact text form, the base guides, compiling, and `check` for partner guides |
 | `src/x12/guide/data/` | `envelope.dict`, `004010.dict`, `005010.dict`; guides for 004010 204, 210, 214, 990, 997 and 005010 999 |
 | `tests/x12_properties.rs`, `fuzz/` | proptest (write then read round trips; any text reads); cargo-fuzz targets `x12_read`, `x12_guide`, `dispatch` |
@@ -36,7 +37,7 @@ Read this before changing the crate, `pkg/x12`, `edix12inspect`, the inbound pip
 | `edi.version` | the module version and its operations |
 | `x12.read` | separators, envelopes, segments, loop placement, findings and an acknowledgment verdict per group, for a whole file or a fragment |
 | `x12.acknowledge` | a complete 997 or 999 interchange per group, from what `x12.read` found |
-| `x12.write` | X12 text from segments: ISA widths, SE01/GE01/IEA01 counts, trailing empty elements trimmed, a separator inside a value written as a space (with a finding) |
+| `x12.write` | X12 text from segments: every value in the X12 character set (with a finding), ISA widths, SE01/GE01/IEA01 counts, trailing empty elements trimmed, a separator inside a value written as a space (with a finding) |
 | `x12.guides`, `x12.guide` | the base guides, and one guide in full |
 | `x12.checkGuide` | a partner guide's problems, including where it widens its base |
 
@@ -164,3 +165,23 @@ runs the three targets. The Go host's tests run with the TMS.
 - **Partner guides narrow.** Never accept a partner guide `x12.checkGuide` reports as widening
   its base.
 - **Acknowledgments never have templates**, and an acknowledgment is never built in Go.
+- **Only the X12 character set goes on the wire.** X12.6's basic and extended sets together are
+  printable ASCII (U+0020 to U+007E); a partner's translator rejects anything else with AK403
+  code 6. Records hold names as people typed them (Peñasco, Société Générale, an en dash, `½`,
+  curly quotes), so every value is folded by `charset::fold` before it is written: an accented
+  letter or typographic mark becomes its closest ASCII form (`ñ` n, `ß` ss, `Æ` AE, `–` -, `½`
+  1/2, a non-breaking space a space), and a character with none (CJK, emoji, combining marks,
+  controls) is dropped. A Lading map folds in `write_elements`, before the element's length
+  check, and reports a `written-in-character-set` warning naming the element; when only the
+  folding pushed a value past the element's maximum it is cut to the maximum, and a value that
+  folds to nothing is written as absent, so a required element is reported missing.
+  `x12.write` folds too (`valueWrittenInCharacterSet`), before it pads or cuts the ISA and before
+  it replaces separators, since a fold can produce one (`›` becomes `>`). There is no
+  per-partner character set: the guide model has none, and printable ASCII is what every
+  partner's translator takes. Reading is liberal: a character outside the set in an `AN` or `ID`
+  element is `characterOutsideCharacterSet`, AK403 6 as a **warning**, so the transaction is
+  accepted with errors, not rejected; a partner's guide raises it with
+  `severity character-outside-character-set error`. Lading's `clean()` folds the same way. The
+  fold's table is generated from Unicode's NFKD with marks removed plus hand entries
+  (`charset/table.rs` says which); it adds about 14 KB to `edi.wasm`, where a normalization
+  crate would carry every script's decompositions only to drop most of them.

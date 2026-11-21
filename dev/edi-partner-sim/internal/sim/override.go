@@ -6,6 +6,7 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/emoss08/trenova/edi-partner-sim/internal/acknowledge"
 	"github.com/emoss08/trenova/edi-partner-sim/internal/oracle"
 	"github.com/emoss08/trenova/edi-partner-sim/internal/partner"
 	"github.com/emoss08/trenova/edi-partner-sim/internal/transcript"
@@ -79,7 +80,7 @@ func (p *peer) takeOverride(set, key string) (AckOverride, bool) {
 func (s *Server) applyOverrides(
 	p *peer,
 	j *oracle.Judgement,
-	plan []partner.AckInput,
+	plan []acknowledge.Input,
 ) (withhold bool) {
 	keys := map[string]string{}
 	for _, ic := range j.Interchanges {
@@ -102,7 +103,7 @@ func (s *Server) applyOverrides(
 			case OverrideWithhold:
 				withhold = true
 			case OverrideReject:
-				transaction.Code = partner.AckRejected
+				transaction.Code = acknowledge.Rejected
 			}
 		}
 	}

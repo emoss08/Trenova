@@ -1,187 +1,124 @@
-import { useT } from "@trenova/shared/i18n/use-t";
+import { SettingRow, settingRowDescriptionClass } from "@/components/fields/field-components";
 import { InputField } from "@/components/fields/input-field";
 import { NumberField } from "@/components/fields/number-field";
+import { SegmentedField } from "@/components/fields/segmented-field";
 import { SelectField } from "@/components/fields/select-field";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@trenova/shared/components/ui/card";
-import { FormControl, FormGroup } from "@trenova/shared/components/ui/form";
-import { Label } from "@trenova/shared/components/ui/label";
-import { cn } from "@trenova/shared/lib/utils";
+import { ToggleChipsField } from "@/components/fields/toggle-chips-field";
+import { SettingsSection } from "@/components/settings/settings-section";
+import { useErrorSurface } from "@/hooks/use-error-surface";
 import {
   locationCodeComponents,
-  type LocationCodeComponent,
+  MAX_LOCATION_CODE_LENGTH,
   type SequenceConfigDocument,
 } from "@/types/sequence-config";
+import { useT } from "@trenova/shared/i18n/use-t";
+import { useFormContext, useFormState } from "react-hook-form";
 import {
-  Building07Icon,
-  type IconComponent,
-  Mail01Icon,
-  Map01Icon,
-  Tag01Icon,
-} from "@trenova/shared/components/icons";
-import { Controller, useFormContext } from "react-hook-form";
-import { casingOptions, separatorOptions } from "./sequence-config-constants";
-import { defineLabels } from "@trenova/shared/i18n/labels";
+  casingLabels,
+  locationComponentLabels,
+  locationSeparatorChoices,
+  sequenceDescriptions,
+  sequenceTitles,
+} from "./sequence-config-constants";
+import { SequencePreview } from "./sequence-preview";
 
-const componentLabels: Record<LocationCodeComponent, string> = defineLabels({
-  name: "Name",
-  city: "City",
-  state: "State",
-  postal_code: "Postal Code",
-});
-
-const componentIcons: Record<LocationCodeComponent, IconComponent> = {
-  name: Tag01Icon,
-  city: Building07Icon,
-  state: Map01Icon,
-  postal_code: Mail01Icon,
-};
-
-const componentDescriptions: Record<LocationCodeComponent, string> = defineLabels({
-  name: "Location name",
-  city: "City of address",
-  state: "State of address",
-  postal_code: "ZIP / postal code",
-});
-
-export function LocationCodeStrategySection({ index }: { index: number }) {
+/**
+ * How a new location's code is built: parts of its name and address cut to a width, then a
+ * counter. The code under the title is the one the sample location would get.
+ */
+export function LocationCodeSection({ index, now }: { index: number; now: Date }) {
   const t = useT();
-
   const { control } = useFormContext<SequenceConfigDocument>();
+  const strategy = `configs.${index}.locationCodeStrategy` as const;
+
+  // The server refuses a strategy as a whole; that refusal is said here, above its settings.
+  useErrorSurface(control, strategy);
+  const { errors } = useFormState({ control, name: strategy });
+  const refusal = errors.configs?.[index]?.locationCodeStrategy?.root?.message;
 
   return (
-    <Card>
-      <CardHeader className="border-b pb-3">
-        <CardTitle>{t("Code strategy")}</CardTitle>
-        <CardDescription>
-          {t(
-            "Derive readable components from location attributes, then append a sequence. The combined length cannot exceed 32 characters.",
-          )}
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="pt-4 pb-4">
-        <FormGroup cols={2}>
-          <FormControl cols="full">
-            <Controller
-              control={control}
-              name={`configs.${index}.locationCodeStrategy.components`}
-              render={({ field, fieldState }) => {
-                const selected = field.value ?? [];
-                return (
-                  <div className="space-y-2">
-                    <Label className={fieldState.error ? "text-destructive" : ""}>
-                      {t("Components")}
-                    </Label>
-                    <div className="grid gap-2 sm:grid-cols-2">
-                      {locationCodeComponents.map((component) => {
-                        const Icon = componentIcons[component];
-                        const isSelected = selected.includes(component);
-                        return (
-                          <button
-                            key={component}
-                            type="button"
-                            onClick={() => {
-                              field.onChange(
-                                isSelected
-                                  ? selected.filter((value) => value !== component)
-                                  : [...selected, component],
-                              );
-                            }}
-                            aria-pressed={isSelected}
-                            className={cn(
-                              "group flex items-center gap-3 rounded-md border px-3 py-2 text-left text-sm transition-colors",
-                              isSelected
-                                ? "border-info-border bg-info-subtle text-info-foreground"
-                                : "border-input bg-background text-foreground hover:bg-muted",
-                            )}
-                          >
-                            <span
-                              className={cn(
-                                "flex size-7 shrink-0 items-center justify-center rounded-md border",
-                                isSelected
-                                  ? "border-info-border bg-info-subtle text-info-foreground"
-                                  : "border-border bg-muted/50 text-muted-foreground",
-                              )}
-                            >
-                              <Icon className="size-4" aria-hidden />
-                            </span>
-                            <span className="flex min-w-0 flex-1 flex-col">
-                              <span className="truncate leading-tight font-medium">
-                                {componentLabels[component]}
-                              </span>
-                              <span className="text-2xs text-muted-foreground truncate">
-                                {componentDescriptions[component]}
-                              </span>
-                            </span>
-                          </button>
-                        );
-                      })}
-                    </div>
-                    <p className="text-2xs text-muted-foreground">
-                      {t("Components are applied in the order they are selected.")}
-                    </p>
-                  </div>
-                );
-              }}
-            />
-          </FormControl>
-          <FormControl>
-            <NumberField
-              control={control}
-              name={`configs.${index}.locationCodeStrategy.componentWidth`}
-              label={t("Component width")}
-              description={t("Characters drawn from each selected attribute (1–10).")}
-              min={1}
-              max={10}
-            />
-          </FormControl>
-          <FormControl>
-            <NumberField
-              control={control}
-              name={`configs.${index}.locationCodeStrategy.sequenceDigits`}
-              label={t("Sequence digits")}
-              description={t("Width of the zero-padded counter (1–10).")}
-              min={1}
-              max={10}
-            />
-          </FormControl>
-          <FormControl>
-            <SelectField
-              control={control}
-              name={`configs.${index}.locationCodeStrategy.separator`}
-              label={t("Separator")}
-              description={t("Inserted between the prefix and the sequence.")}
-              options={separatorOptions}
-              placeholder={t("Select separator")}
-            />
-          </FormControl>
-          <FormControl>
-            <SelectField
-              control={control}
-              name={`configs.${index}.locationCodeStrategy.casing`}
-              label={t("Casing")}
-              description={t("Applied to the derived prefix.")}
-              options={casingOptions}
-              placeholder={t("Select casing")}
-            />
-          </FormControl>
-          <FormControl cols="full">
-            <InputField
-              control={control}
-              name={`configs.${index}.locationCodeStrategy.fallbackPrefix`}
-              label={t("Fallback prefix")}
-              description={t("Used when the location name cannot produce a usable prefix.")}
-              placeholder={t("LOC")}
-              maxLength={10}
-            />
-          </FormControl>
-        </FormGroup>
-      </CardContent>
-    </Card>
+    <SettingsSection
+      title={sequenceTitles.location_code}
+      description={sequenceDescriptions.location_code}
+    >
+      <SequencePreview index={index} now={now} />
+      {refusal ? (
+        <p role="alert" className="px-3.5 py-2.5 text-xs text-danger-foreground">
+          {refusal}
+        </p>
+      ) : null}
+      <SettingRow
+        label={t("Parts")}
+        controlSize="auto"
+        description={
+          <p className={settingRowDescriptionClass}>
+            {t("What the code is built from, in the order you choose them.")}
+          </p>
+        }
+      >
+        <ToggleChipsField
+          control={control}
+          name={`${strategy}.components`}
+          label={t("Parts")}
+          options={locationCodeComponents.map((component) => ({
+            value: component,
+            label: locationComponentLabels[component],
+          }))}
+          required
+        />
+      </SettingRow>
+      <NumberField
+        control={control}
+        name={`${strategy}.componentWidth`}
+        label={t("Characters per part")}
+        description={t(
+          "How much of each part is kept. Spaces and punctuation are left out first.",
+        )}
+        min={1}
+        max={10}
+        required
+      />
+      <NumberField
+        control={control}
+        name={`${strategy}.sequenceDigits`}
+        label={t("Counter digits")}
+        description={t(
+          "How many digits the counter is padded to. The whole code can be at most {0} characters.",
+          MAX_LOCATION_CODE_LENGTH,
+        )}
+        sideText={t("digits")}
+        min={1}
+        max={10}
+        required
+      />
+      <SelectField
+        control={control}
+        name={`${strategy}.separator`}
+        label={t("Separator")}
+        description={t("The character between the parts and before the counter.")}
+        options={locationSeparatorChoices}
+        clearable={false}
+      />
+      <SegmentedField
+        control={control}
+        name={`${strategy}.casing`}
+        label={t("Letter case")}
+        options={[
+          { value: "upper", label: casingLabels.upper },
+          { value: "lower", label: casingLabels.lower },
+        ]}
+        fullWidth={false}
+        required
+      />
+      <InputField
+        control={control}
+        name={`${strategy}.fallbackPrefix`}
+        label={t("Fallback")}
+        description={t("Used in place of a part the location does not have, such as a ZIP code.")}
+        placeholder={t("e.g. LOC")}
+        maxLength={MAX_LOCATION_CODE_LENGTH}
+        required
+      />
+    </SettingsSection>
   );
 }

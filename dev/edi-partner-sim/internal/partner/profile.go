@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"slices"
 	"time"
+
+	"github.com/emoss08/trenova/edi-partner-sim/internal/partner/geo"
 )
 
 type Profile struct {
@@ -34,6 +36,7 @@ type Profile struct {
 	start       time.Time       `yaml:"-"`
 	origins     []resolvedParty `yaml:"-"`
 	billTo      resolvedParty   `yaml:"-"`
+	oneRange    bool            `yaml:"-"`
 }
 
 type Pattern struct {
@@ -108,7 +111,7 @@ type NotePlan struct {
 
 type resolvedParty struct {
 	party Party
-	city  city
+	city  geo.City
 }
 
 func (p *Profile) validate(check *problems, zone *time.Location) {
@@ -268,7 +271,7 @@ func resolveParty(check *problems, path string, def PartyDef) (resolvedParty, bo
 	check.required(path+".code", def.Code)
 	check.required(path+".name", def.Name)
 	check.required(path+".street", def.Street)
-	place, ok := findCity(def.City, def.State)
+	place, ok := geo.Find(def.City, def.State)
 	if !ok {
 		check.add(path+".city", "%s, %s is not in the simulator's city table", def.City, def.State)
 		return resolvedParty{}, false

@@ -26385,6 +26385,18 @@ func init() {
 				Column: "distance_metadata",
 			},
 			{
+				Name:   "payDistance",
+				Column: "pay_distance",
+			},
+			{
+				Name:   "billingDistance",
+				Column: "billing_distance",
+			},
+			{
+				Name:   "fuelDistance",
+				Column: "fuel_distance",
+			},
+			{
 				Name:   "version",
 				Column: "version",
 			},

@@ -309,12 +309,7 @@ func (s *Effects) EmitStatusChangeEvent(
 	if original == nil || updated == nil || original.Status == updated.Status {
 		return
 	}
-	s.RecordShipmentEvent(ctx, shipmenteventservice.BuildStatusChanged(
-		TenantRefForShipment(updated),
-		updated,
-		original.Status,
-		actor,
-	))
+	s.RecordShipmentEvent(ctx, shipmenteventports.StatusChanged(updated, original.Status, actor))
 }
 
 // EmitUpdatedEvent records an edit that did not change the status. A status

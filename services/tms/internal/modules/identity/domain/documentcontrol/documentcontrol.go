@@ -56,7 +56,7 @@ func NewDefaultDocumentControl(orgID, buID pulid.ID) *DocumentControl {
 		EnableShipmentDraftExtraction:   true,
 		EnableAIAssistedClassification:  true,
 		EnableAIAssistedExtraction:      true,
-		ShipmentDraftAllowedResources:   []string{"shipment"},
+		ShipmentDraftAllowedResources:   []string{ShipmentDraftResourceShipment},
 		EnableFullTextIndexing:          true,
 		EnableCapture:                   true,
 		CaptureAutoFileCoverSheets:      true,
@@ -97,12 +97,13 @@ func (dc *DocumentControl) Validate(multiErr *errortypes.MultiError) {
 		),
 		validation.Field(
 			&dc.ShipmentDraftAllowedResources,
+			validation.When(
+				dc.EnableShipmentDraftExtraction,
+				validation.Required.Error("Choose at least one kind of record to draft from"),
+			),
 			validation.Each(validation.By(func(value any) error {
 				resourceType, ok := value.(string)
-				if !ok {
-					return errors.New("invalid resource type")
-				}
-				if !isAllowedDocumentControlResource(resourceType) {
+				if !ok || !slices.Contains(AllShipmentDraftResources(), resourceType) {
 					return errors.New("unsupported resource type")
 				}
 				return nil
@@ -111,25 +112,51 @@ func (dc *DocumentControl) Validate(multiErr *errortypes.MultiError) {
 	))
 }
 
-func isAllowedDocumentControlResource(resourceType string) bool {
-	switch normalizeDocumentControlResource(resourceType) {
-	case "shipment", "trailer", "tractor", "worker":
-		return true
-	default:
-		return false
+const (
+	ShipmentDraftResourceShipment = "shipment"
+	ShipmentDraftResourceTrailer  = "trailer"
+	ShipmentDraftResourceTractor  = "tractor"
+	ShipmentDraftResourceWorker   = "worker"
+)
+
+func AllShipmentDraftResources() []string {
+	return []string{
+		ShipmentDraftResourceShipment,
+		ShipmentDraftResourceTrailer,
+		ShipmentDraftResourceTractor,
+		ShipmentDraftResourceWorker,
 	}
+}
+
+func (dc *DocumentControl) Normalize() {
+	normalized := make([]string, 0, len(dc.ShipmentDraftAllowedResources))
+	for _, value := range dc.ShipmentDraftAllowedResources {
+		resource := canonicalDocumentControlResource(value)
+		if !slices.Contains(normalized, resource) {
+			normalized = append(normalized, resource)
+		}
+	}
+	dc.ShipmentDraftAllowedResources = normalized
+}
+
+func (dc *DocumentControl) AsksAIToClassify() bool {
+	return dc.EnableDocumentIntelligence &&
+		dc.EnableAutoClassification &&
+		dc.EnableAIAssistedClassification
+}
+
+func (dc *DocumentControl) ReadsWithAI() bool {
+	return dc.EnableDocumentIntelligence && dc.EnableAIAssistedExtraction
 }
 
 func (dc *DocumentControl) AllowsShipmentDraftResource(resourceType string) bool {
-	normalized := normalizeDocumentControlResource(resourceType)
-	values := make([]string, 0, len(dc.ShipmentDraftAllowedResources))
-	for _, value := range dc.ShipmentDraftAllowedResources {
-		values = append(values, normalizeDocumentControlResource(value))
-	}
-	return slices.Contains(values, normalized)
+	return slices.Contains(
+		dc.ShipmentDraftAllowedResources,
+		canonicalDocumentControlResource(resourceType),
+	)
 }
 
-func normalizeDocumentControlResource(resourceType string) string {
+func canonicalDocumentControlResource(resourceType string) string {
 	normalized := strings.ToLower(strings.TrimSpace(resourceType))
 	switch normalized {
 	// Each of these is a shipment arriving by another road: an import, a
@@ -138,7 +165,7 @@ func normalizeDocumentControlResource(resourceType string) string {
 	// them on the paperwork that becomes shipments, and making them opt in
 	// again per channel is asking the same question twice.
 	case "shipment_import", "inbound_message", "assistant_thread":
-		return "shipment"
+		return ShipmentDraftResourceShipment
 	default:
 		return normalized
 	}
@@ -162,10 +189,11 @@ func (dc *DocumentControl) GetBusinessUnitID() pulid.ID {
 
 func (dc *DocumentControl) BeforeCreate(_ context.Context) error {
 	if len(dc.ShipmentDraftAllowedResources) == 0 {
-		dc.ShipmentDraftAllowedResources = []string{"shipment"}
+		dc.ShipmentDraftAllowedResources = []string{ShipmentDraftResourceShipment}
 	}
+	dc.Normalize()
 	if dc.CaptureRetentionDays == 0 {
-		dc.CaptureRetentionDays = 30
+		dc.CaptureRetentionDays = DefaultCaptureRetentionDays
 	}
 
 	return nil

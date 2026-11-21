@@ -448,7 +448,11 @@ func legDistances(
 }
 
 func singleLegDistance(move *shipment.ShipmentMove) (decimal.Decimal, bool) {
-	if move == nil || move.IsCanceled() || move.Distance == nil || *move.Distance < 0 {
+	if move == nil || move.IsCanceled() {
+		return decimal.Zero, false
+	}
+	billed := move.BilledDistance()
+	if billed == nil || *billed < 0 {
 		return decimal.Zero, false
 	}
 	stops := 0
@@ -460,7 +464,7 @@ func singleLegDistance(move *shipment.ShipmentMove) (decimal.Decimal, bool) {
 	if stops != 2 {
 		return decimal.Zero, false
 	}
-	return decimal.NewFromFloat(*move.Distance), true
+	return decimal.NewFromFloat(*billed), true
 }
 
 func buildAccessorials(

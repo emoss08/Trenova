@@ -1243,7 +1243,7 @@ mod check_tests {
             })
             .collect();
         assert!(failed.is_empty(), "{}", failed.join("\n"));
-        assert_eq!(report.tests.len(), 71);
+        assert_eq!(report.tests.len(), 77);
     }
 
     /// Asserts the program has no finding as severe as `least`, or more.

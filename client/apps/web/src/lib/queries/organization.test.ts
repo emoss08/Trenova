@@ -4,8 +4,6 @@ import { organization } from "./organization";
 
 const organizationServiceMocks = vi.hoisted(() => ({
   getBranding: vi.fn(),
-  getMicrosoftSSOConfig: vi.fn(),
-  getOktaSSOConfig: vi.fn(),
   getTenantLoginMetadata: vi.fn(),
   listAccessPolicies: vi.fn(),
   listAuthEvents: vi.fn(),

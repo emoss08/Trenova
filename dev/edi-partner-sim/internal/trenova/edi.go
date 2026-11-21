@@ -19,6 +19,7 @@ type Partner struct {
 	Name               string         `json:"name"`
 	Description        string         `json:"description,omitempty"`
 	DefaultTransportID string         `json:"defaultTransportId,omitempty"`
+	CustomerID         string         `json:"customerId,omitempty"`
 	Timezone           string         `json:"timezone"`
 	Country            string         `json:"country"`
 	ContactName        string         `json:"contactName"`
@@ -42,15 +43,23 @@ type Profile struct {
 	Version        int64             `json:"version"`
 }
 
-func (c *Client) FindPartner(ctx context.Context, code string) (*Partner, error) {
+func (c *Client) Partners(ctx context.Context, search string) ([]Partner, error) {
 	var found page[Partner]
-	query := url.Values{"query": {code}, "limit": {"100"}}
+	query := url.Values{"query": {search}, "limit": {"100"}}
 	if err := c.get(ctx, listPath("/edi/partners/", query), &found); err != nil {
 		return nil, err
 	}
-	for index := range found.Results {
-		if strings.EqualFold(found.Results[index].Code, code) {
-			return c.Partner(ctx, found.Results[index].ID)
+	return found.Results, nil
+}
+
+func (c *Client) FindPartner(ctx context.Context, code string) (*Partner, error) {
+	found, err := c.Partners(ctx, code)
+	if err != nil {
+		return nil, err
+	}
+	for index := range found {
+		if strings.EqualFold(found[index].Code, code) {
+			return c.Partner(ctx, found[index].ID)
 		}
 	}
 	return nil, nil

@@ -5,7 +5,7 @@ description: >
   AS2, and Meadowridge's 997s reconcile them.
 within: 4m
 steps:
-  - send: { set: "204", as: t1 }
+  - send: { set: "204", as: t1, load: { oneRange: true } }
   - expect: { ack: t1, accepted: true }
   - expect: { wire: "990", about: t1, elements: { B1-04: A } }
   - trenova: { dispatch: t1 }

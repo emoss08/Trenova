@@ -34,6 +34,17 @@ func TestDataRetention_Validate(t *testing.T) {
 			AuditSecurityRetentionDays: 729,
 			AIAuditRetentionPeriod:     DefaultAIAuditRetentionDays,
 		}, true},
+		{"driver files kept under three years fail", &DataRetention{
+			DriverQualificationRetentionPeriod: 1094,
+			AIAuditRetentionPeriod:             DefaultAIAuditRetentionDays,
+		}, true},
+		{"driver files kept three years pass", &DataRetention{
+			DriverQualificationRetentionPeriod: 1095,
+			AIAuditRetentionPeriod:             DefaultAIAuditRetentionDays,
+		}, false},
+		{"unset driver file retention passes", &DataRetention{
+			AIAuditRetentionPeriod: DefaultAIAuditRetentionDays,
+		}, false},
 		{"missing AI audit trail retention fails", validRetention(120, 0), true},
 		{"AI audit trail kept under a year fails", validRetention(120, 364), true},
 		{"AI audit trail kept a year passes", validRetention(120, MinAIAuditRetentionDays), false},
@@ -117,4 +128,34 @@ func TestDataRetention_GetBusinessUnitID(t *testing.T) {
 	buID := pulid.MustNew("bu_")
 	dr := &DataRetention{BusinessUnitID: buID}
 	assert.Equal(t, buID, dr.GetBusinessUnitID())
+}
+
+func TestDataRetention_DriverQualificationFloor_NamesTheFieldAndMessage(t *testing.T) {
+	t.Parallel()
+
+	dr := validRetention(120, DefaultAIAuditRetentionDays)
+	dr.DriverQualificationRetentionPeriod = 1094
+	multiErr := errortypes.NewMultiError()
+	dr.Validate(multiErr)
+
+	require.Len(t, multiErr.Errors, 1)
+	assert.Equal(t, "driverQualificationRetentionPeriod", multiErr.Errors[0].Field())
+	assert.Equal(
+		t,
+		"Driver qualification files must be kept for at least 1,095 days (three years) after employment ends",
+		multiErr.Errors[0].Message,
+	)
+}
+
+func TestDataRetention_DriverQualificationRetentionDays(t *testing.T) {
+	t.Parallel()
+
+	var missing *DataRetention
+	assert.Equal(t, 1095, missing.DriverQualificationRetentionDays())
+	assert.Equal(t, 1095, (&DataRetention{}).DriverQualificationRetentionDays())
+	assert.Equal(
+		t,
+		1500,
+		(&DataRetention{DriverQualificationRetentionPeriod: 1500}).DriverQualificationRetentionDays(),
+	)
 }

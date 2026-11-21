@@ -24,6 +24,9 @@ const (
 	DefaultAIAuditRetentionDays       = 2555
 	MinAIAuditRetentionDays           = 365
 
+	DefaultDriverQualificationRetentionDays = 1095
+	MinDriverQualificationRetentionDays     = 1095
+
 	MinAuditAccessRetentionDays      = 90
 	MinAuditOperationalRetentionDays = 730
 	MinAuditFinancialRetentionDays   = 2555
@@ -65,7 +68,7 @@ type DataRetention struct {
 func (dr *DataRetention) BeforeCreate(_ context.Context) error {
 	dr.applyAuditDefaults()
 	if dr.DriverQualificationRetentionPeriod == 0 {
-		dr.DriverQualificationRetentionPeriod = 1095
+		dr.DriverQualificationRetentionPeriod = DefaultDriverQualificationRetentionDays
 	}
 	if dr.AgentEvalCaseRetentionPeriod == 0 {
 		dr.AgentEvalCaseRetentionPeriod = 365
@@ -113,8 +116,8 @@ func (dr *DataRetention) Validate(multiErr *errortypes.MultiError) {
 			validation.Min(0).Error("EDI message retention period cannot be negative"),
 		),
 		validation.Field(&dr.DriverQualificationRetentionPeriod,
-			validation.Min(0).
-				Error("Driver qualification retention period cannot be negative"),
+			validation.Min(MinDriverQualificationRetentionDays).
+				Error("Driver qualification files must be kept for at least 1,095 days (three years) after employment ends"),
 		),
 		validation.Field(&dr.AgentEvalCaseRetentionPeriod,
 			validation.Min(0).Error("Agent evaluation case retention period cannot be negative"),
@@ -187,6 +190,14 @@ func (dr *DataRetention) AuditRetentionDays(class string) int {
 		"Security":    dr.AuditSecurityRetentionDays,
 	}[class]
 	return min(max(chosen, floor), MaxAuditRetentionDays)
+}
+
+func (dr *DataRetention) DriverQualificationRetentionDays() int {
+	if dr == nil || dr.DriverQualificationRetentionPeriod <= 0 {
+		return DefaultDriverQualificationRetentionDays
+	}
+
+	return dr.DriverQualificationRetentionPeriod
 }
 
 func (dr *DataRetention) AICorrectionRetentionDays() int {

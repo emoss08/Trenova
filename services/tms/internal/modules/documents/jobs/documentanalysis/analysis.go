@@ -24,6 +24,7 @@ func AnalyzeDocument(
 		ClassifierSource:     classification.Source,
 		ProviderFingerprint:  classification.ProviderFingerprint,
 		ClassificationReason: classification.Reason,
+		Settlement:           classification.Settlement,
 		Conflicts:            []*ReviewConflict{},
 		Fields:               make(map[string]*ReviewField),
 		Stops:                []*IntelligenceStop{},

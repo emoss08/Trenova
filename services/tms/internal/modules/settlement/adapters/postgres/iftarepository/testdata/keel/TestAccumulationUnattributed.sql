@@ -1,5 +1,5 @@
 WITH inp (id, loaded, distance, completed_at) AS (
-  SELECT sm.id, sm.loaded, CASE WHEN sm.distance_units = $9 THEN (sm.distance / $10::double precision) ELSE sm.distance END, coalesce(max(coalesce(s.actual_departure, s.actual_arrival)), sm.updated_at)
+  SELECT sm.id, sm.loaded, CASE WHEN sm.distance_units = $9 THEN (coalesce(sm.fuel_distance, sm.distance) / $10::double precision) ELSE coalesce(sm.fuel_distance, sm.distance) END, coalesce(max(coalesce(s.actual_departure, s.actual_arrival)), sm.updated_at)
   FROM shipment_moves sm
   LEFT JOIN stops s ON s.business_unit_id = $2 AND s.organization_id = $3 AND s.shipment_move_id = sm.id
   WHERE sm.business_unit_id = $2 AND sm.organization_id = $3 AND sm.status = 'Completed' AND (sm.id = ANY(ARRAY((
@@ -11,7 +11,7 @@ WITH inp (id, loaded, distance, completed_at) AS (
     FROM shipment_moves done_move
     WHERE done_move.business_unit_id = $2 AND done_move.organization_id = $3 AND done_move.status = 'Completed' AND done_move.updated_at >= $7 AND done_move.updated_at < $8
   ))))
-  GROUP BY sm.id, sm.loaded, sm.distance, sm.distance_units, sm.updated_at
+  GROUP BY sm.id, sm.loaded, sm.distance, sm.fuel_distance, sm.distance_units, sm.updated_at
   HAVING coalesce(max(coalesce(s.actual_departure, s.actual_arrival)), sm.updated_at) >= $11 AND coalesce(max(coalesce(s.actual_departure, s.actual_arrival)), sm.updated_at) < $12
 )
 SELECT i.id, round(CAST(i.distance AS numeric), $4)

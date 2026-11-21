@@ -42,6 +42,30 @@ func TestKeepStoredWhereZeroWritesDisabledCapabilityFlags(t *testing.T) {
 	assert.Equal(t, int64(4), org.Version)
 }
 
+func TestKeepStoredWhereZeroClearsOptionalFieldsTheSettingsWrite(t *testing.T) {
+	t.Parallel()
+
+	o := tenantdb.Organizations
+	stored := &tenant.Organization{
+		Name:         "Acme Logistics",
+		LoginSlug:    "acme",
+		AddressLine2: "Suite 200",
+		TaxID:        "12-3456789",
+		BucketName:   "org-01",
+		Locale:       "en",
+		Version:      4,
+	}
+	org := &tenant.Organization{Name: "Acme Logistics", Version: 4}
+
+	keepStoredWhereZero(org, stored, o.LoginSlug, o.AddressLine2, o.TaxID)
+
+	assert.Empty(t, org.LoginSlug)
+	assert.Empty(t, org.AddressLine2)
+	assert.Empty(t, org.TaxID)
+	assert.Equal(t, "org-01", org.BucketName)
+	assert.Equal(t, "en", org.Locale)
+}
+
 // TestBrokerageDependencyStatusSetsMatchDomainPredicates keeps the SQL-side
 // status lists in step with the domain predicates they mirror; a predicate that
 // changes meaning without the list following it would silently narrow or widen

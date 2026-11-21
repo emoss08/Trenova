@@ -1,16 +1,21 @@
 package invoicepostingservice
 
 import (
+	"context"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoiceaction"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentevent"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenteventports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
 	"github.com/emoss08/trenova/internal/testutil/mocks/billingqueueportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmenteventportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -78,10 +83,21 @@ func TestMarkInvoicedLegsKeepsEachShipmentsAdditionalCharges(t *testing.T) {
 		Return(nil, nil).
 		Once()
 
+	events := shipmenteventportsmock.NewMockShipmentEventService(t)
+	var recorded *shipmenteventports.RecordShipmentEventParams
+	events.EXPECT().
+		Record(mock.Anything, mock.Anything).
+		RunAndReturn(func(_ context.Context, params *shipmenteventports.RecordShipmentEventParams) error {
+			recorded = params
+			return nil
+		}).
+		Once()
+
 	svc := &Service{
 		l:                zap.NewNop(),
 		shipmentRepo:     repo,
 		billingQueueRepo: billingQueueRepo,
+		eventService:     events,
 		rec: invoiceaction.NewRecorder(
 			invoiceaction.RecorderParams{Logger: zap.NewNop()},
 		),
@@ -97,8 +113,20 @@ func TestMarkInvoicedLegsKeepsEachShipmentsAdditionalCharges(t *testing.T) {
 		},
 	}
 
-	legs, err := svc.markInvoicedLegs(t.Context(), entity, 1_789_339_461, tenantInfo)
+	legs, err := svc.markInvoicedLegs(
+		t.Context(),
+		entity,
+		1_789_339_461,
+		tenantInfo,
+		kernelports.AuditActor{},
+	)
 	require.NoError(t, err)
+
+	require.NotNil(t, recorded, "the shipment's followers hear it was invoiced")
+	assert.Equal(t, shipmentevent.TypeStatusChanged, recorded.Type)
+	assert.Equal(t, shipmentID, recorded.ShipmentID)
+	assert.Equal(t, string(shipmentvocab.StatusReadyToInvoice), recorded.Metadata["previousStatus"])
+	assert.Equal(t, string(shipmentvocab.StatusInvoiced), recorded.Metadata["newStatus"])
 
 	require.Len(t, legs, 1)
 	require.NotNil(t, persisted)

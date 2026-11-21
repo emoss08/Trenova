@@ -7,8 +7,6 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/places/domain/distancecontrol"
 	"github.com/emoss08/trenova/internal/modules/places/domain/distancecontrol/distancecontroldb"
-	"github.com/emoss08/trenova/internal/modules/places/domain/distanceprofile"
-	"github.com/emoss08/trenova/internal/modules/places/domain/distanceprofile/distanceprofiledb"
 	"github.com/emoss08/trenova/internal/modules/places/ports/distancecontrolports"
 	"github.com/emoss08/trenova/internal/modules/places/ports/distanceprofileports"
 	"github.com/emoss08/trenova/pkg/dberror"
@@ -19,8 +17,6 @@ import (
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
-
-const shortestRoutingType = "shortest"
 
 var distanceControlErrors = dberror.Mapping{Entity: "DistanceControl"}
 
@@ -96,7 +92,6 @@ func (r *repository) EnsureDefault(
 				tenantInfo.OrgID,
 				tenantInfo.BuID,
 				practical.ID,
-				r.shortestProfileID(ctx),
 			)
 			dc := distancecontroldb.DistanceControls
 			if _, err = dc.CreateOrSkip(
@@ -143,19 +138,4 @@ func (r *repository) ResolveProfile(
 		return "", err
 	}
 	return control.ProfileIDForPurpose(purpose), nil
-}
-
-func (r *repository) shortestProfileID(ctx context.Context) pulid.ID {
-	dp := distanceprofiledb.DistanceProfiles
-	entity, err := dp.Pick(dp.ID).
-		Where(
-			dp.Status.Eq(distanceprofile.StatusActive),
-			dp.RoutingType.Lower().Eq(shortestRoutingType),
-		).
-		Order(dp.IsDefault.Desc(), dp.UpdatedAt.Desc()).
-		First(ctx, r.db.Keel(ctx))
-	if err != nil {
-		return ""
-	}
-	return entity.ID
 }

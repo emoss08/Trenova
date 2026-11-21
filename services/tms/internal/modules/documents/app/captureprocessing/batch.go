@@ -261,21 +261,12 @@ func (p *BatchProcessor) suggestFromContent(
 	item *capture.CaptureItem,
 	pages []*capture.CapturePage,
 ) {
-	pdf, err := p.service.AssembleItem(ctx, tenantInfo, item, pages)
-	if err != nil {
-		p.l.Warn(
-			"could not assemble an item to read it",
-			zap.String("itemId", item.ID.String()),
-			zap.Error(err),
-		)
-
-		return
-	}
-
 	analysis, err := p.analyzer.Analyze(ctx, &captureports.CaptureAnalysisRequest{
 		TenantInfo: tenantInfo,
 		FileName:   item.ID.String() + ".pdf",
-		PDF:        pdf,
+		Assemble: func(ctx context.Context) ([]byte, error) {
+			return p.service.AssembleItem(ctx, tenantInfo, item, pages)
+		},
 	})
 	if err != nil {
 		p.l.Warn(

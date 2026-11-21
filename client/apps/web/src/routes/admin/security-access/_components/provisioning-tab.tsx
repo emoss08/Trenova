@@ -1,0 +1,180 @@
+import { useSearchValue } from "@trenova/shared/hooks/use-search-state";
+import { useT } from "@trenova/shared/i18n/use-t";
+import { directoryIdParser } from "@/routes/admin/security-access/security-access-state";
+import { organization } from "@/lib/queries/organization";
+import { organizationService } from "@/services/organization";
+import type { SCIMDirectory } from "@trenova/shared/types/iam";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Users01Icon } from "@trenova/shared/components/icons";
+import { useCallback, useEffect, useState } from "react";
+import { AuditTimeline } from "./provisioning/audit-timeline";
+import { emptyDirectory } from "./provisioning/constants";
+import { DirectoryDetailHeader } from "./provisioning/directory-detail-header";
+import { SCIMDirectoryPanel, type SCIMDirectoryPanelMode } from "./provisioning/directory-panel";
+import { DirectoryRail } from "./provisioning/directory-rail";
+import { MappingsPanelController } from "./provisioning/mappings-panel";
+import { SCIMTokenPanel } from "./provisioning/scim-token-panel";
+import { EmptyState } from "./security-access/shared";
+import { useSecurityAccess } from "./security-access/use-security-access";
+
+export function ProvisioningTab({
+  organizationId,
+  isActive,
+}: {
+  organizationId: string;
+  isActive: boolean;
+}) {
+  const t = useT();
+
+  const queryClient = useQueryClient();
+  const access = useSecurityAccess();
+  const auditQuery = useQuery({
+    ...organization.provisioningAudit(organizationId),
+    enabled: access.provisioningAudit,
+  });
+  const [directoryPanelMode, setDirectoryPanelMode] = useState<SCIMDirectoryPanelMode>("create");
+  const [directoryPanelOpen, setDirectoryPanelOpen] = useState(false);
+  const [editingDirectory, setEditingDirectory] = useState<SCIMDirectory | null>(null);
+  const [directories, setDirectories] = useState<SCIMDirectory[]>([]);
+  const [directoryId, setDirectoryId] = useSearchValue("directoryId", directoryIdParser);
+
+  const selectedDirectory = directories.find((directory) => directory.id === directoryId);
+
+  useEffect(() => {
+    if (isActive && !directoryId && directories[0]?.id) {
+      void setDirectoryId(directories[0].id);
+    }
+  }, [directories, directoryId, isActive, setDirectoryId]);
+
+  const invalidateProvisioning = useCallback(async () => {
+    await Promise.all([
+      queryClient.invalidateQueries({
+        queryKey: organization.scimDirectories(organizationId).queryKey,
+      }),
+      queryClient.invalidateQueries({
+        queryKey: ["scim-tokens", organizationId, directoryId],
+      }),
+      queryClient.invalidateQueries({
+        queryKey: ["scim-mappings", organizationId, directoryId],
+      }),
+      queryClient.invalidateQueries({
+        queryKey: organization.provisioningAudit(organizationId).queryKey,
+      }),
+    ]);
+  }, [directoryId, organizationId, queryClient]);
+
+  const handleDirectorySaved = useCallback(
+    async (saved: SCIMDirectory) => {
+      void setDirectoryId(saved.id);
+      await invalidateProvisioning();
+    },
+    [invalidateProvisioning, setDirectoryId],
+  );
+
+  const handleDirectoryDeleted = useCallback(
+    async (deletedDirectoryId: string) => {
+      const remainingDirectory = directories.find(
+        (directory) => directory.id !== deletedDirectoryId,
+      );
+      void setDirectoryId(remainingDirectory?.id ?? null);
+      await invalidateProvisioning();
+    },
+    [directories, invalidateProvisioning, setDirectoryId],
+  );
+
+  const { mutate: deleteDirectory, isPending: isDeletingDirectory } = useMutation({
+    mutationFn: async (directoryId: string) =>
+      organizationService.deleteSCIMDirectory(organizationId, directoryId),
+    onSuccess: async (_data, deletedDirectoryId) => {
+      await handleDirectoryDeleted(deletedDirectoryId);
+    },
+  });
+
+  const addDirectory = useCallback(() => {
+    setDirectoryPanelMode("create");
+    setEditingDirectory(emptyDirectory);
+    setDirectoryPanelOpen(true);
+  }, []);
+
+  const editDirectory = useCallback((directory: SCIMDirectory) => {
+    setDirectoryPanelMode("edit");
+    setEditingDirectory(directory);
+    setDirectoryPanelOpen(true);
+  }, []);
+
+  const auditTimeline = access.provisioningAudit ? (
+    <AuditTimeline records={auditQuery.data ?? []} isLoading={auditQuery.isLoading} />
+  ) : null;
+
+  if (!access.scimDirectories.read) {
+    return <ContentOuter>{auditTimeline}</ContentOuter>;
+  }
+
+  return (
+    <TabOuter>
+      <RailOuter>
+        <DirectoryRail
+          organizationId={organizationId}
+          onAdd={addDirectory}
+          onDirectoriesChange={setDirectories}
+        />
+      </RailOuter>
+
+      <ContentOuter>
+        <DirectoryDetailHeader
+          directory={selectedDirectory}
+          isDeleting={isDeletingDirectory}
+          onEdit={editDirectory}
+          onDelete={deleteDirectory}
+        />
+        {selectedDirectory ? (
+          <>
+            <SCIMTokenPanel
+              organizationId={organizationId}
+              directoryId={selectedDirectory.id}
+              onProvisioningChange={invalidateProvisioning}
+            />
+            <MappingsPanelController
+              organizationId={organizationId}
+              directoryId={selectedDirectory.id}
+              onProvisioningChange={invalidateProvisioning}
+            />
+          </>
+        ) : (
+          <EmptyState
+            icon={<Users01Icon />}
+            label={t("Select a directory")}
+            description={t(
+              "Choose or create a SCIM directory before managing tokens and group mappings.",
+            )}
+          />
+        )}
+        {auditTimeline}
+      </ContentOuter>
+      <SCIMDirectoryPanel
+        organizationId={organizationId}
+        mode={directoryPanelMode}
+        open={directoryPanelOpen}
+        directory={editingDirectory}
+        onOpenChange={setDirectoryPanelOpen}
+        onSaved={handleDirectorySaved}
+      />
+    </TabOuter>
+  );
+}
+
+function ContentOuter({ children }: { children: React.ReactNode }) {
+  return <div className="flex min-w-0 flex-col gap-8">{children}</div>;
+}
+
+function TabOuter({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="grid items-start gap-x-12 gap-y-8 xl:grid-cols-[18rem_minmax(0,1fr)]">
+      {children}
+    </div>
+  );
+}
+
+function RailOuter({ children }: { children: React.ReactNode }) {
+  return <div className="h-full">{children}</div>;
+}

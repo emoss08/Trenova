@@ -46,7 +46,7 @@ const AuditExportsTable = lazy(() => import("./_components/audit-exports-table")
 const AuditLegalHoldsTable = lazy(() => import("./_components/audit-legal-holds-table"));
 const AuditAlertPolicies = lazy(() => import("./_components/audit-alert-policies"));
 
-const SIGN_IN_ACTIVITY_SEARCH = { tab: "security", securityTab: "activity", activityView: "auth" };
+const SIGN_IN_ACTIVITY_SEARCH = { tab: "activity", activityView: "auth" };
 const AI_AUDIT_SEARCH = { tab: "audit", audit: "trail" };
 
 const RANGE_FIELD = "timestamp";
@@ -226,7 +226,7 @@ export function AuditLogsPage() {
                 variant="ghost"
                 size="sm"
                 nativeButton={false}
-                render={<Link to="/admin/organization-settings" search={SIGN_IN_ACTIVITY_SEARCH} />}
+                render={<Link to="/admin/security-access" search={SIGN_IN_ACTIVITY_SEARCH} />}
               >
                 <Key01Icon aria-hidden />
                 {t("Sign-in activity")}

@@ -45,15 +45,15 @@ type Result struct {
 	Partner       string             `json:"partner"`
 	Role          string             `json:"role"`
 	Code          string             `json:"code"`
-	PartnerID     string             `json:"partnerId,omitempty"`
-	ProfileID     string             `json:"profileId,omitempty"`
+	PartnerID     string             `json:"-"`
+	ProfileID     string             `json:"-"`
 	Transport     string             `json:"transport,omitempty"`
 	InboundURL    string             `json:"inboundUrl,omitempty"`
-	ProjectID     string             `json:"projectId,omitempty"`
-	VersionID     string             `json:"versionId,omitempty"`
+	ProjectID     string             `json:"-"`
+	VersionID     string             `json:"-"`
 	VersionNumber int64              `json:"versionNumber,omitempty"`
-	CarrierID     string             `json:"carrierId,omitempty"`
-	CustomerID    string             `json:"customerId,omitempty"`
+	CarrierID     string             `json:"-"`
+	CustomerID    string             `json:"-"`
 	CustomerLabel string             `json:"customerLabel,omitempty"`
 	Unchanged     bool               `json:"unchanged,omitempty"`
 	Readiness     *trenova.Readiness `json:"readiness,omitempty"`
@@ -98,9 +98,11 @@ func (o *Options) provision(ctx context.Context, def *partner.Definition, result
 	}
 	if record.DefaultTransportID != profile.ID {
 		record.DefaultTransportID = profile.ID
-		if _, err = o.Trenova.UpdatePartner(ctx, record); err != nil {
-			return fmt.Errorf("make the profile the partner's transport: %w", err)
+		updated, updateErr := o.Trenova.UpdatePartner(ctx, record)
+		if updateErr != nil {
+			return fmt.Errorf("make the profile the partner's transport: %w", updateErr)
 		}
+		record.Version = updated.Version
 		result.note("made the %s profile the partner's default transport", profile.Method)
 	}
 	if err = o.connect(ctx, &info, profile, result); err != nil {
@@ -111,7 +113,7 @@ func (o *Options) provision(ctx context.Context, def *partner.Definition, result
 			return err
 		}
 	}
-	if err = o.customer(ctx, def, result); err != nil {
+	if err = o.customer(ctx, def, record, result); err != nil {
 		return err
 	}
 	return o.project(ctx, def, record, result)
@@ -158,6 +160,7 @@ func (o *Options) partner(
 	}
 	wanted.ID, wanted.Version = existing.ID, existing.Version
 	wanted.DefaultTransportID = existing.DefaultTransportID
+	wanted.CustomerID = existing.CustomerID
 	wanted.DefaultTransport = existing.DefaultTransport
 	updated, err := o.Trenova.UpdatePartner(ctx, wanted)
 	if err != nil {

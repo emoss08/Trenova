@@ -388,12 +388,24 @@ each refs as ref {
   guide puts it.
 - **Element values convert by the element's type:** a `Date` or `DateTime` into a `DT` is
   `CCYYMMDD` (`YYMMDD` when the element holds six); a `Time` or `DateTime` into a `TM` is
-  `HHMM`; a `DateTime` is written in its own zone. A `Decimal` or `Money` into an `Nn` is
+  `HHMM`, whatever the element's maximum, unless the guide's minimum length for that element
+  demands more: a minimum of 6 or 7 writes `HHMMSS`, and 8 writes `HHMMSSDD` (`DD` is `00`).
+  Seconds are dropped, never rounded (04:53:59 is `0453`), so a guide that wants seconds says so
+  with `06 length 6..6`. Reading is liberal: `HHMM`, `HHMMSS` and `HHMMSSDD` all read, to the
+  second. A `DateTime` is written in its own zone. A `Decimal` or `Money` into an `Nn` is
   shifted by its places with no point (`1250.50` into an `N2` is `125050`); into an `R` it keeps
   its point and drops trailing zeros. A `Code` or `Text` into an `ID` must be one of the
   element's codes (`code-not-in-list` for a literal, a runtime finding otherwise). Text that is
   too long for its element is an error at runtime; when the document field's maximum is longer
   than the element's, the checker warns (`may-exceed-length`) and offers `.truncate(n)`.
+- **Every value is written in the X12 character set** (printable ASCII), whatever the map did:
+  `Peñasco` is written `Penasco`, an en dash `-`, `½` `1/2`, curly quotes straight, and what has
+  no ASCII form (CJK, emoji) is left out. The run reports a `written-in-character-set` warning
+  naming the element, so the studio shows what changed. The element's length is checked on the
+  folded text; when only the folding pushed it past the maximum (`.truncate(30)` on a name with
+  an `Æ`), it is cut to the maximum. A value that folds to nothing is written as absent, so a
+  required element is reported missing. See "The rules that bite" in
+  [edi-x12.md](edi-x12.md).
 - A mandatory element no assignment fills, or a mandatory segment no block writes, is an error
   (`x12-mandatory-unwritten`). What the map writes is read back against the guide before it is
   sent; any finding is the message's.
@@ -574,7 +586,7 @@ Every function is also a method on its first argument: `postal.zip5()` is `zip5(
 
 | Area | Functions |
 |---|---|
-| Text | `trim`, `upper`, `lower`, `titleCase`, `take(n)`, `drop(n)`, `truncate(n)`, `pad(n, with: " ", left: false)`, `replace(old, new)`, `split(sep)`, `join(list, sep)`, `digits`, `letters`, `clean` (removes characters X12 can't carry and the partner's separators), `startsWith`, `endsWith`, `contains`, `matches(pattern)`, `length`, `isBlank` |
+| Text | `trim`, `upper`, `lower`, `titleCase`, `take(n)`, `drop(n)`, `truncate(n)`, `pad(n, with: " ", left: false)`, `replace(old, new)`, `split(sep)`, `join(list, sep)`, `digits`, `letters`, `clean` (the text as the writer puts it on the wire: accents and typographic marks as plain ASCII, `Peñasco – ½` as `Penasco - 1/2`; characters with no ASCII form and the partner's separators removed; spaces collapsed), `startsWith`, `endsWith`, `contains`, `matches(pattern)`, `length`, `isBlank` |
 | Numbers | `round(places = 0)`, `floor`, `ceil`, `abs`, `min`, `max`, `int(x)`, `decimal(x)`, `text(x)` |
 | Money | `money(amount, currency)`, `amount(money)`, `currency(money)` |
 | Measures | `weight(value, code)`, `length(value, code)`, `volume(value, code)`, `temperature(value, scale)`, `in(measure, unit)` (`weight.in(kg)`), `value(measure, unit)` |

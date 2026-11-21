@@ -28,6 +28,13 @@ export const locationCodeComponents = ["name", "city", "state", "postal_code"] a
 
 export const locationCodeComponentSchema = z.enum(locationCodeComponents);
 
+export const sequenceSeparators = ["-", "_", "/", "."] as const;
+
+export const yearDigitChoices = [2, 4] as const;
+
+/** The longest location code the server issues, separators and counter included. */
+export const MAX_LOCATION_CODE_LENGTH = 32;
+
 const defaultLocationCodeStrategy = {
   components: ["name", "city", "state"],
   componentWidth: 3,
@@ -37,71 +44,65 @@ const defaultLocationCodeStrategy = {
   fallbackPrefix: "LOC",
 } as const;
 
-function normalizeLocationCodeStrategy(value: unknown) {
-  if (!value || typeof value !== "object") {
-    return defaultLocationCodeStrategy;
-  }
+/** What the server keeps of a name: its letters and digits, as `NormalizeIdentifier` does. */
+export function identifierCharacters(value: string): string {
+  return value.replace(/[^\p{L}\p{Nd}]/gu, "");
+}
 
-  const input = value as Record<string, unknown>;
-  const components = Array.isArray(input.components)
-    ? input.components
-    : defaultLocationCodeStrategy.components;
-  const componentWidth =
-    typeof input.componentWidth === "number" && input.componentWidth > 0
-      ? input.componentWidth
-      : typeof input.prefixLength === "number" && input.prefixLength > 0
-        ? input.prefixLength
-        : defaultLocationCodeStrategy.componentWidth;
-  const sequenceDigits =
-    typeof input.sequenceDigits === "number" && input.sequenceDigits > 0
-      ? input.sequenceDigits
-      : defaultLocationCodeStrategy.sequenceDigits;
-  const separator =
-    typeof input.separator === "string" ? input.separator : defaultLocationCodeStrategy.separator;
-  const casing = input.casing === "lower" ? "lower" : defaultLocationCodeStrategy.casing;
-  const fallbackPrefix =
-    typeof input.fallbackPrefix === "string" && input.fallbackPrefix.trim()
-      ? input.fallbackPrefix
-      : defaultLocationCodeStrategy.fallbackPrefix;
-
-  return {
-    components,
-    componentWidth,
-    sequenceDigits,
-    separator,
-    casing,
-    fallbackPrefix,
-  };
+/** The length of the longest code a strategy can issue, as the server measures it. */
+export function locationCodeLength(strategy: {
+  components: readonly unknown[];
+  componentWidth: number;
+  sequenceDigits: number;
+  separator: string;
+}): number {
+  return (
+    strategy.components.length * strategy.componentWidth +
+    strategy.sequenceDigits +
+    strategy.components.length * strategy.separator.length
+  );
 }
 
 export const locationCodeStrategySchema = z
   .preprocess(
-    normalizeLocationCodeStrategy,
+    (value) => value ?? defaultLocationCodeStrategy,
     z.object({
-      components: z.array(locationCodeComponentSchema).min(1),
+      components: z.array(locationCodeComponentSchema).min(1, {
+        error: () => translate("Choose at least one part to build the code from"),
+      }),
       componentWidth: z.number().int().min(1).max(10),
       sequenceDigits: z.number().int().min(1).max(10),
       separator: z.string().max(2),
       casing: z.enum(["upper", "lower"]),
-      fallbackPrefix: z.string().min(1).max(32),
+      fallbackPrefix: z.string().max(MAX_LOCATION_CODE_LENGTH),
     }),
   )
-  .refine((data) => !data.separator || ["-", "_", "/", "."].includes(data.separator), {
-    path: ["separator"],
-    error: () => translate("Separator must be one of '-', '_', '/', '.', or blank"),
-  })
-  .refine(
-    (data) =>
-      data.components.length * data.componentWidth +
-        data.sequenceDigits +
-        Math.max(data.components.length, 0) * (data.separator ? data.separator.length : 0) <=
-      32,
-    {
-      path: ["sequenceDigits"],
-      error: () =>
-        translate("Components, separators, and sequence digits must fit within 32 characters"),
-    },
-  );
+  .superRefine((data, ctx) => {
+    if (data.separator && !(sequenceSeparators as readonly string[]).includes(data.separator)) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["separator"],
+        message: translate("Choose a hyphen, underscore, slash, period or none"),
+      });
+    }
+    if (identifierCharacters(data.fallbackPrefix.trim()) === "") {
+      ctx.addIssue({
+        code: "custom",
+        path: ["fallbackPrefix"],
+        message: translate("Enter a fallback with at least one letter or digit"),
+      });
+    }
+    if (locationCodeLength(data) > MAX_LOCATION_CODE_LENGTH) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["sequenceDigits"],
+        message: translate(
+          "A code can be at most {0} characters with its separators and counter. Use fewer parts or shorter ones.",
+          MAX_LOCATION_CODE_LENGTH,
+        ),
+      });
+    }
+  });
 
 export const sequenceConfigSchema = z
   .object({
@@ -109,12 +110,9 @@ export const sequenceConfigSchema = z
     organizationId: optionalStringSchema,
     businessUnitId: optionalStringSchema,
     sequenceType: sequenceTypeSchema,
-    prefix: z
-      .string()
-      .min(1, { error: () => translate("Prefix is required") })
-      .max(20),
+    prefix: z.string().max(20),
     includeYear: z.boolean(),
-    yearDigits: z.number().int().min(2).max(4),
+    yearDigits: z.number().int().min(0).max(4),
     includeMonth: z.boolean(),
     includeWeekNumber: z.boolean(),
     includeDay: z.boolean(),
@@ -133,24 +131,48 @@ export const sequenceConfigSchema = z
     createdAt: timestampSchema,
     updatedAt: timestampSchema,
   })
-  .refine(
-    (data) =>
-      !data.includeRandomDigits || (data.randomDigitsCount >= 1 && data.randomDigitsCount <= 10),
-    {
-      path: ["randomDigitsCount"],
-      error: () =>
-        translate(
-          "Random digits count must be between 1 and 10 when include random digits is enabled",
-        ),
-    },
-  )
-  .refine((data) => !data.useSeparators || ["-", "_", "/", "."].includes(data.separatorChar), {
-    path: ["separatorChar"],
-    error: () => translate("Separator must be one of '-', '_', '/', '.'"),
-  })
-  .refine((data) => !data.allowCustomFormat || data.customFormat.trim().length > 0, {
-    path: ["customFormat"],
-    error: () => translate("Custom format is required when custom format is enabled"),
+  .superRefine((data, ctx) => {
+    if (data.prefix.trim() === "") {
+      ctx.addIssue({
+        code: "custom",
+        path: ["prefix"],
+        message: translate("Enter a prefix"),
+      });
+    }
+    if (
+      data.includeYear &&
+      !(yearDigitChoices as readonly number[]).includes(data.yearDigits)
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["yearDigits"],
+        message: translate("Choose a two- or four-digit year"),
+      });
+    }
+    if (data.includeRandomDigits && (data.randomDigitsCount < 1 || data.randomDigitsCount > 10)) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["randomDigitsCount"],
+        message: translate("Add between 1 and 10 random digits"),
+      });
+    }
+    if (
+      data.useSeparators &&
+      !(sequenceSeparators as readonly string[]).includes(data.separatorChar)
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["separatorChar"],
+        message: translate("Choose a hyphen, underscore, slash or period"),
+      });
+    }
+    if (data.allowCustomFormat && data.customFormat.trim() === "") {
+      ctx.addIssue({
+        code: "custom",
+        path: ["customFormat"],
+        message: translate("Write the pattern, or turn off your own pattern"),
+      });
+    }
   });
 
 export const sequenceConfigDocumentSchema = z.object({

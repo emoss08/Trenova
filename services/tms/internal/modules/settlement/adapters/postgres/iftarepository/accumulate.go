@@ -61,12 +61,12 @@ func newAccumulationSource(req *iftaports.AccumulateMilesRequest) accumulationSo
 		inputMovesCTE,
 		[]string{"id", "loaded", "distance", "completed_at"},
 		sm.LeftJoin(stp, stp.ShipmentMoveID.EqCol(sm.ID)).
-			Pick(sm.ID, sm.Loaded, inMiles(sm.Distance, sm.DistanceUnits), completedAt).
+			Pick(sm.ID, sm.Loaded, movecompletion.FuelTaxMiles(sm), completedAt).
 			Where(
 				sm.Status.Eq(shipmentvocab.MoveStatusCompleted),
 				movecompletion.Candidate(sm, req.Start, req.End),
 			).
-			Group(sm.ID, sm.Loaded, sm.Distance, sm.DistanceUnits, sm.UpdatedAt).
+			Group(sm.ID, sm.Loaded, sm.Distance, sm.FuelDistance, sm.DistanceUnits, sm.UpdatedAt).
 			Having(completedAt.Gte(req.Start), completedAt.Lt(req.End)),
 	)
 

@@ -1,7 +1,6 @@
-import { PageLayout } from "@/components/navigation/sidebar-layout";
+import { SettingsPage } from "@/components/settings/settings-page";
 import { dataRetention } from "@/lib/queries/data-retention";
 import type { RoutePrefetch } from "@/lib/route-prefetch";
-import { LazyComponent } from "@trenova/shared/components/error-boundary";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { lazy } from "react";
 import { DataRetentionSkeleton } from "./skeleton";
@@ -14,17 +13,14 @@ export function DataRetentionPage() {
   const t = useT();
 
   return (
-    <PageLayout
-      pageHeaderProps={{
-        title: t("Data retention"),
-        description: t(
-          "How long each kind of record is kept before the nightly purge jobs remove it.",
-        ),
-      }}
+    <SettingsPage
+      title={t("Data retention")}
+      description={t(
+        "How long each kind of record is kept. Anything older is removed for good by the nightly purges.",
+      )}
+      skeleton={<DataRetentionSkeleton />}
     >
-      <LazyComponent fallback={<DataRetentionSkeleton />}>
-        <DataRetentionForm />
-      </LazyComponent>
-    </PageLayout>
+      <DataRetentionForm />
+    </SettingsPage>
   );
 }

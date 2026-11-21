@@ -912,10 +912,6 @@ before converting: other work may have changed them.
   GET /organizations/:id/branding
   DELETE /organizations/:id/branding/:image
   POST /organizations/:id/branding/:image
-  GET /organizations/:id/microsoft-sso
-  PUT /organizations/:id/microsoft-sso
-  GET /organizations/:id/okta-sso
-  PUT /organizations/:id/okta-sso
 ## apikeyhandler
   GET /api-keys/
   POST /api-keys/

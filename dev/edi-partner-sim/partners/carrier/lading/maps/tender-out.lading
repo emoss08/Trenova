@@ -48,13 +48,13 @@ L11 when exists poNumber { 01 <- poNumber, 02 <- "PO" }
   0310 {
     N1 {
       01 <- if stop.type == Pickup then "SH" else "CN"
-      02 <- (stop.name ?? stop.location.label ?? "").upper()
+      02 <- (stop.name ?? stop.location.label ?? "").upper().truncate(60)
       03 <- if exists stop.code then "93" else none
       04 <- stop.code
     }
-    N3 { 01 <- stop.address.line1.upper(), 02 <- stop.address.line2.upper() }
+    N3 { 01 <- stop.address.line1.upper().truncate(55), 02 <- stop.address.line2.upper().truncate(55) }
     N4 {
-      01 <- stop.address.city.upper()
+      01 <- stop.address.city.upper().truncate(30)
       02 <- stop.address.state
       03 <- stop.address.postal
       04 <- stop.address.country ?? "US"

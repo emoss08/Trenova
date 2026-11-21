@@ -159,8 +159,10 @@ func (s *Service) resolveForShipment(
 	hazmatTypes := hazmatTypesForShipment(entity)
 	pcRequests := make([]pcmiler.RouteRequest, 0, len(entity.Moves))
 	pcTargets := make(map[string]pcmilerMoveTarget, len(entity.Moves))
+	moves := orderedMoves(entity.Moves)
+	purposes := newPurposePlan()
 
-	for idx, move := range orderedMoves(entity.Moves) {
+	for idx, move := range moves {
 		if move == nil {
 			continue
 		}
@@ -198,6 +200,16 @@ func (s *Service) resolveForShipment(
 			hazmatTypes,
 			pcRuntimeByPurpose,
 		)
+		purposeReq := &purposeRequest{
+			plan:        purposes,
+			entity:      entity,
+			move:        move,
+			index:       idx,
+			signature:   signature,
+			control:     control,
+			hazmatTypes: hazmatTypes,
+			runtimes:    pcRuntimeByPurpose,
+		}
 		if runtime.profile != nil {
 			storedDistance, storedOK, storedErr := s.storedMileage(
 				ctx,
@@ -237,6 +249,9 @@ func (s *Service) resolveForShipment(
 				resp.Moves = append(resp.Moves, moveResult(move, idx, warnings))
 				resp.TotalDistance = addDistance(resp.TotalDistance, storedDistance.Distance)
 				s.incrementStoredMileageHit(ctx, entity, storedDistance.ID)
+				if pcRequests, err = s.queuePurposeDistances(ctx, purposeReq, pcRequests); err != nil {
+					return nil, err
+				}
 				continue
 			}
 			if runtime.ready {
@@ -249,6 +264,9 @@ func (s *Service) resolveForShipment(
 						options: runtime.options,
 					}
 					pcRequests = append(pcRequests, route)
+					if pcRequests, err = s.queuePurposeDistances(ctx, purposeReq, pcRequests); err != nil {
+						return nil, err
+					}
 					continue
 				}
 			}
@@ -260,6 +278,7 @@ func (s *Service) resolveForShipment(
 	}
 
 	if len(pcRequests) == 0 {
+		purposes.finish(moves, resp)
 		return resp, nil
 	}
 
@@ -276,11 +295,16 @@ func (s *Service) resolveForShipment(
 			resp.Moves = append(resp.Moves, moveResult(target.move, target.index, nil))
 			resp.TotalDistance = addDistance(resp.TotalDistance, distance)
 		}
+		sortMoveResults(resp)
+		purposes.finish(moves, resp)
 		return resp, nil
 	}
 
 	resolvedRoutes := make(map[string]struct{}, len(pcResults))
 	for _, result := range pcResults {
+		if s.recordPurposeResult(ctx, purposes, entity, control, hazmatTypes, result) {
+			continue
+		}
 		target, ok := pcTargets[result.RouteID]
 		if !ok || target.move == nil {
 			continue
@@ -334,11 +358,16 @@ func (s *Service) resolveForShipment(
 		resp.TotalDistance = addDistance(resp.TotalDistance, distance)
 	}
 
+	sortMoveResults(resp)
+	purposes.finish(moves, resp)
+
+	return resp, nil
+}
+
+func sortMoveResults(resp *shipmentdistanceports.DistanceCalculationResponse) {
 	sort.SliceStable(resp.Moves, func(i, j int) bool {
 		return resp.Moves[i].MoveIndex < resp.Moves[j].MoveIndex
 	})
-
-	return resp, nil
 }
 
 type pcmilerMoveTarget struct {
@@ -499,7 +528,15 @@ func (s *Service) RecalculateMoveJurisdictionMiles(
 	ctx context.Context,
 	req shipmentdistanceports.RecalculateMoveJurisdictionMilesRequest, //nolint:gocritic // the DistanceCalculationService port passes the request by value
 ) ([]*shipment.ShipmentMoveJurisdictionMile, error) {
-	move, err := s.jurisdictionMove(ctx, &req)
+	return s.recalculateMoveJurisdictionMiles(ctx, &req, make(map[string]pcmilerRuntime, 1))
+}
+
+func (s *Service) recalculateMoveJurisdictionMiles(
+	ctx context.Context,
+	req *shipmentdistanceports.RecalculateMoveJurisdictionMilesRequest,
+	runtimes map[string]pcmilerRuntime,
+) ([]*shipment.ShipmentMoveJurisdictionMile, error) {
+	move, err := s.jurisdictionMove(ctx, req)
 	if err != nil {
 		return nil, err
 	}
@@ -513,9 +550,9 @@ func (s *Service) RecalculateMoveJurisdictionMiles(
 		ctx,
 		entity,
 		control,
-		movePurpose(move),
+		distancecontrol.PurposeFuel,
 		hazmatTypes,
-		make(map[string]pcmilerRuntime, 1),
+		runtimes,
 	)
 	if !runtime.ready {
 		return nil, errortypes.NewBusinessError(
@@ -573,6 +610,9 @@ func (s *Service) RecalculateMoveJurisdictionMiles(
 	move.JurisdictionMiles = rows
 	move.JurisdictionMilesDirty = true
 	if err = s.jurisdictionMileRepo.ReplaceForMove(ctx, move); err != nil {
+		return nil, err
+	}
+	if err = s.storeFuelDistance(ctx, control, move, result.Distance, runtime.options); err != nil {
 		return nil, err
 	}
 	s.enqueueStoredMileageCandidate(
@@ -706,8 +746,8 @@ func (s *Service) logJurisdictionRun(ctx context.Context, params jurisdictionRun
 		}
 	} else if params.result != nil {
 		comparison := params.result.Distance
-		if move.Distance != nil {
-			comparison = *move.Distance
+		if fuel := move.FuelTaxDistance(); fuel != nil {
+			comparison = *fuel
 		}
 		attribution, sum := jurisdictionAttribution(comparison, move.DistanceUnits, params.rows)
 		run.ResponseSummary = map[string]any{
@@ -799,6 +839,9 @@ func (s *Service) logRuns(
 				"distance_profile_id":     result.DistanceProfileID,
 				"distance_profile_name":   result.DistanceProfileName,
 				"warnings":                result.Warnings,
+				"payDistance":             result.PayDistance,
+				"billingDistance":         result.BillingDistance,
+				"fuelDistance":            result.FuelDistance,
 				"jurisdictionCount":       len(rows),
 				"jurisdictionSum":         jurisdictionSum,
 				"jurisdictionAttribution": attribution,
@@ -844,9 +887,8 @@ func (s *Service) runtimeForPurpose(
 	}
 	pcClient, options, profile, ready := s.pcmilerRuntime(ctx, entity, control, purpose)
 	options.Hazmat = hazmatTypes
-	if purposeCapturesJurisdictions(purpose) {
-		options.StateReport = control != nil && control.CaptureJurisdictionMiles
-	}
+	options.StateReport = control != nil && control.CaptureJurisdictionMiles &&
+		purposeCapturesJurisdictions(control, purpose)
 	runtime := pcmilerRuntime{
 		options: options,
 		profile: profile,
@@ -859,9 +901,15 @@ func (s *Service) runtimeForPurpose(
 	return runtime
 }
 
-func purposeCapturesJurisdictions(purpose string) bool {
-	return purpose == distancecontrol.PurposeLoadedMove ||
-		purpose == distancecontrol.PurposeEmptyMove
+func purposeCapturesJurisdictions(control *distancecontrol.DistanceControl, purpose string) bool {
+	switch purpose {
+	case distancecontrol.PurposeFuel:
+		return true
+	case distancecontrol.PurposeLoadedMove, distancecontrol.PurposeEmptyMove:
+		return control.FuelDistanceProfileID == control.ProfileIDForPurpose(purpose)
+	default:
+		return false
+	}
 }
 
 func firstReadyRuntime(cache map[string]pcmilerRuntime) pcmilerRuntime {
@@ -1227,6 +1275,19 @@ func buildPCMilerRoute(
 	options pcmiler.RouteOptions,
 	signature string,
 ) (pcmiler.RouteRequest, bool) {
+	route, ok := pcmilerRoute(move, options, signature)
+	if !ok {
+		return pcmiler.RouteRequest{}, false
+	}
+	move.DistanceRouteSignature = signature
+	return route, true
+}
+
+func pcmilerRoute(
+	move *shipment.ShipmentMove,
+	options pcmiler.RouteOptions,
+	routeID string,
+) (pcmiler.RouteRequest, bool) {
 	stops := orderedStops(move.Stops)
 	if len(stops) < 2 {
 		return pcmiler.RouteRequest{}, false
@@ -1240,9 +1301,8 @@ func buildPCMilerRoute(
 		pcStops = append(pcStops, locationToPCMilerStop(stop.Location, options))
 	}
 
-	move.DistanceRouteSignature = signature
 	return pcmiler.RouteRequest{
-		RouteID: signature,
+		RouteID: routeID,
 		Stops:   pcStops,
 		Options: options,
 	}, true

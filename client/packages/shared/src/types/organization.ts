@@ -28,25 +28,70 @@ export const switchOrganizationResponseSchema = userSchema;
 
 export type SwitchOrganizationResponse = z.infer<typeof switchOrganizationResponseSchema>;
 
-export const organizationSettingsSchema = z.object({
+/** The values the server keeps when an organization is made before anyone has filled it in. */
+const PLACEHOLDER_SCAC = "TBDX";
+const PLACEHOLDER_DOT_NUMBER = "0";
+const PLACEHOLDER_CITY = "Pending";
+const PLACEHOLDER_POSTAL_CODE = "00000";
+
+const LOGIN_SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+
+const organizationSettingsFields = z.object({
   id: z.string().min(1, { error: () => translate("Organization ID is required") }),
   version: z.number(),
   createdAt: z.number(),
   updatedAt: z.number(),
   bucketName: z.string().nullish(),
   businessUnitId: z.string().nullish(),
-  loginSlug: z.string().nullish(),
+  loginSlug: z
+    .string()
+    .max(100, { error: () => translate("Sign-in address must be 100 characters or fewer") })
+    .regex(LOGIN_SLUG_PATTERN, {
+      error: () =>
+        translate("Sign-in address may only contain lowercase letters, numbers, and hyphens"),
+    })
+    .or(z.literal(""))
+    .nullish(),
 
-  name: z.string().min(1, { error: () => translate("Name is required") }),
-  scacCode: z.string().min(1, { error: () => translate("SCAC code is required") }),
-  dotNumber: z.string().min(1, { error: () => translate("DOT number is required") }),
+  name: z
+    .string()
+    .min(1, { error: () => translate("Name is required") })
+    .max(100, { error: () => translate("Name must be 100 characters or fewer") }),
+  scacCode: z
+    .string()
+    .min(1, { error: () => translate("SCAC code is required") })
+    .length(4, { error: () => translate("SCAC code must be 4 characters") })
+    .refine((value) => value.trim().toUpperCase() !== PLACEHOLDER_SCAC, {
+      error: () => translate("Enter your company's SCAC code"),
+    }),
+  dotNumber: z
+    .string()
+    .min(1, { error: () => translate("DOT number is required") })
+    .max(8, { error: () => translate("DOT number must be between 1 and 8 digits") })
+    .regex(/^\d+$/, { error: () => translate("DOT number must be numeric") })
+    .refine((value) => value !== PLACEHOLDER_DOT_NUMBER, {
+      error: () => translate("Enter your company's DOT number"),
+    }),
   logoUrl: z.string().nullish(),
   iconUrl: z.string().nullish(),
-  addressLine1: z.string().min(1, { error: () => translate("Address line 1 is required") }),
+  addressLine1: z
+    .string()
+    .min(1, { error: () => translate("Address line 1 is required") })
+    .max(150, { error: () => translate("Address line 1 must be 150 characters or fewer") }),
   addressLine2: z.string().nullish(),
-  city: z.string().min(1, { error: () => translate("City is required") }),
+  city: z
+    .string()
+    .min(1, { error: () => translate("City is required") })
+    .refine((value) => value !== PLACEHOLDER_CITY, {
+      error: () => translate("Enter the city of your registered address"),
+    }),
   stateId: z.string().min(1, { error: () => translate("State is required") }),
-  postalCode: z.string().min(1, { error: () => translate("Postal code is required") }),
+  postalCode: z
+    .string()
+    .min(1, { error: () => translate("ZIP code is required") })
+    .refine((value) => value !== PLACEHOLDER_POSTAL_CODE, {
+      error: () => translate("Enter the ZIP code of your registered address"),
+    }),
   timezone: z.string().min(1, { error: () => translate("Timezone is required") }),
   taxId: z.string().nullish(),
   brokerageEnabled: capabilityFlagSchema,
@@ -61,13 +106,32 @@ export const organizationSettingsSchema = z.object({
     .nullish(),
 });
 
+/**
+ * What the settings form accepts: the organization validator's rules
+ * (`tenant.Organization.Validate` and the service's operating-capability rule), so a save the
+ * server would refuse is refused before it is sent, on the field the server names.
+ */
+export const organizationSettingsSchema = organizationSettingsFields.superRefine((values, ctx) => {
+  if (values.brokerageEnabled || values.assetOperationsEnabled) {
+    return;
+  }
+
+  const message = translate(
+    "Turn on brokerage or asset operations. An organization with neither cannot move freight.",
+  );
+  ctx.addIssue({ code: "custom", path: ["brokerageEnabled"], message });
+  ctx.addIssue({ code: "custom", path: ["assetOperationsEnabled"], message });
+});
+
 export type OrganizationSettings = z.infer<typeof organizationSettingsSchema>;
 
 // What the server may hold, as opposed to what the settings form accepts. An
 // organization made for a managed instance starts with only its name: the address is
 // blank until an administrator fills it in. Reading it with the form's rules would
 // refuse the response, and the settings page that fixes it could never load.
-export const storedOrganizationSettingsSchema = organizationSettingsSchema.extend({
+export const storedOrganizationSettingsSchema = organizationSettingsFields.extend({
+  name: z.string(),
+  loginSlug: z.string().nullish(),
   scacCode: z.string(),
   dotNumber: z.string(),
   addressLine1: z.string(),
@@ -101,44 +165,6 @@ export const organizationBrandingSchema = z.object({
 });
 
 export type OrganizationBranding = z.infer<typeof organizationBrandingSchema>;
-
-export const microsoftSSOConfigSchema = z.object({
-  organizationId: z.string().optional().default(""),
-  enabled: z.boolean().default(false),
-  enforceSso: z.boolean().default(false),
-  tenantId: z.string().optional().default(""),
-  clientId: z.string().optional().default(""),
-  clientSecret: z.string().optional().default(""),
-  redirectUrl: z.string().optional().default(""),
-  allowedDomains: z
-    .array(z.string())
-    .nullish()
-    .transform((value) => value ?? []),
-  secretConfigured: z.boolean().default(false),
-});
-
-export type MicrosoftSSOConfig = z.infer<typeof microsoftSSOConfigSchema>;
-
-export const oktaSSOConfigSchema = z.object({
-  organizationId: z.string().optional().default(""),
-  enabled: z.boolean().default(false),
-  enforceSso: z.boolean().default(false),
-  issuerUrl: z.string().optional().default(""),
-  clientId: z.string().optional().default(""),
-  clientSecret: z.string().optional().default(""),
-  redirectUrl: z.string().optional().default(""),
-  scopes: z
-    .array(z.string())
-    .nullish()
-    .transform((value) => value ?? ["openid", "profile", "email"]),
-  allowedDomains: z
-    .array(z.string())
-    .nullish()
-    .transform((value) => value ?? []),
-  secretConfigured: z.boolean().default(false),
-});
-
-export type OktaSSOConfig = z.infer<typeof oktaSSOConfigSchema>;
 
 export const tenantLoginMetadataSchema = z.object({
   organizationId: z.string(),

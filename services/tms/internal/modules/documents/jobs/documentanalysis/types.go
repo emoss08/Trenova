@@ -172,6 +172,7 @@ type ClassificationResult struct {
 	Source              string
 	ProviderFingerprint string
 	Reason              string
+	Settlement          *ClassificationSettlement
 }
 
 type DocumentFeatureSet struct {
@@ -241,6 +242,7 @@ type DocumentIntelligenceAnalysis struct {
 	ClassifierSource     string
 	ProviderFingerprint  string
 	ClassificationReason string
+	Settlement           *ClassificationSettlement
 	Conflicts            []*ReviewConflict
 	Fields               map[string]*ReviewField
 	Stops                []*IntelligenceStop
@@ -297,7 +299,7 @@ func (a *DocumentIntelligenceAnalysis) ToMap() map[string]any {
 		})
 	}
 
-	return map[string]any{
+	data := map[string]any{
 		"kind":                 a.Kind,
 		"overallConfidence":    a.OverallConfidence,
 		"reviewStatus":         a.ReviewStatus,
@@ -311,6 +313,10 @@ func (a *DocumentIntelligenceAnalysis) ToMap() map[string]any {
 		"stops":                stops,
 		"rawExcerpt":           a.RawExcerpt,
 	}
+	if a.Settlement != nil {
+		data["classificationSettlement"] = a.Settlement.ToMap()
+	}
+	return data
 }
 
 type AIAcceptanceStatus string

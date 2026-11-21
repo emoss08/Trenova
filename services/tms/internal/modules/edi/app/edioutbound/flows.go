@@ -441,37 +441,45 @@ func (s *Service) DecideTender(
 	return true, sent, err
 }
 
-// AcknowledgeFlowMessage tells the flow that sent a message how the partner acknowledged it.
+type FlowAcknowledgment struct {
+	TenantInfo pagination.TenantInfo
+	Message    *edimessage.EDIMessage
+	Accepted   bool
+	Detail     string
+}
+
 func (s *Service) AcknowledgeFlowMessage(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
-	message *edimessage.EDIMessage,
-	accepted bool,
-) error {
-	if message == nil || message.FlowInstanceID.IsNil() {
-		return nil
+	ack *FlowAcknowledgment,
+) (*edilading.Dispatched, error) {
+	message := ack.Message
+	if message == nil || message.FlowInstanceID.IsNil() || message.TransactionControlNumber == "" {
+		return &edilading.Dispatched{}, nil
 	}
 	instance, err := s.flowRepo.GetInstance(ctx, ladingports.GetFlowInstanceRequest{
-		TenantInfo: tenantInfo,
+		TenantInfo: ack.TenantInfo,
 		ID:         message.FlowInstanceID,
 	})
+	if errortypes.IsNotFoundError(err) {
+		return &edilading.Dispatched{}, nil
+	}
 	if err != nil {
-		return err
+		return nil, err
 	}
 	dispatched, err := s.flows.DispatchTo(ctx, instance, &edilading.DispatchRequest{
-		TenantInfo: tenantInfo,
+		TenantInfo: ack.TenantInfo,
 		Event: lading.FlowEvent{
 			Kind:     lading.EventAck,
 			Control:  message.TransactionControlNumber,
-			Accepted: accepted,
+			Accepted: ack.Accepted,
 		},
 		MessageID: message.ID,
+		AckDetail: ack.Detail,
 	})
-	if err != nil {
-		return err
+	if errors.Is(err, edilading.ErrNoProject) || errors.Is(err, edilading.ErrNoActiveVersion) {
+		return &edilading.Dispatched{}, nil
 	}
-	_, err = s.ExecuteFlowActions(ctx, tenantInfo, dispatched, nil)
-	return err
+	return dispatched, err
 }
 
 func (s *Service) ListFlowInstances(

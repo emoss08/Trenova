@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/sliceutils"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -84,30 +85,42 @@ func (s *Service) validate(
 	multiErr := errortypes.NewMultiError()
 	entity.Validate(multiErr)
 	profileFields := map[string]pulid.ID{
-		"loadedMoveDistanceProfileId":                  entity.LoadedMoveDistanceProfileID,
-		"emptyMoveDistanceProfileId":                   entity.EmptyMoveDistanceProfileID,
-		"payDistanceProfileId":                         entity.PayDistanceProfileID,
-		"billingDistanceProfileId":                     entity.BillingDistanceProfileID,
-		"fuelDistanceProfileId":                        entity.FuelDistanceProfileID,
-		"etaOutOfRouteDistanceProfileId":               entity.EtaOutOfRouteDistanceProfileID,
-		"distanceCalculatorShortestDistanceProfileId":  entity.DistanceCalculatorShortestDistanceProfileID,
-		"distanceCalculatorPracticalDistanceProfileId": entity.DistanceCalculatorPracticalDistanceProfileID,
+		"loadedMoveDistanceProfileId":    entity.LoadedMoveDistanceProfileID,
+		"emptyMoveDistanceProfileId":     entity.EmptyMoveDistanceProfileID,
+		"payDistanceProfileId":           entity.PayDistanceProfileID,
+		"billingDistanceProfileId":       entity.BillingDistanceProfileID,
+		"fuelDistanceProfileId":          entity.FuelDistanceProfileID,
+		"etaOutOfRouteDistanceProfileId": entity.EtaOutOfRouteDistanceProfileID,
+	}
+	ids := make([]pulid.ID, 0, len(profileFields))
+	for _, id := range profileFields {
+		if !id.IsNil() {
+			ids = append(ids, id)
+		}
+	}
+	profiles, err := s.distanceProfileRepo.GetByIDs(
+		ctx,
+		distanceprofileports.GetDistanceProfilesByIDsRequest{
+			TenantInfo: pagination.TenantInfo{
+				OrgID: entity.OrganizationID,
+				BuID:  entity.BusinessUnitID,
+			},
+			DistanceProfileIDs: sliceutils.Dedupe(ids),
+		},
+	)
+	if err != nil {
+		return err
+	}
+	byID := make(map[pulid.ID]*distanceprofile.DistanceProfile, len(profiles))
+	for _, profile := range profiles {
+		byID[profile.ID] = profile
 	}
 	for field, id := range profileFields {
 		if id.IsNil() {
 			continue
 		}
-		profile, err := s.distanceProfileRepo.GetByID(
-			ctx,
-			distanceprofileports.GetDistanceProfileByIDRequest{
-				ID: id,
-				TenantInfo: pagination.TenantInfo{
-					OrgID: entity.OrganizationID,
-					BuID:  entity.BusinessUnitID,
-				},
-			},
-		)
-		if err != nil {
+		profile, ok := byID[id]
+		if !ok {
 			multiErr.Add(
 				field,
 				errortypes.ErrInvalid,

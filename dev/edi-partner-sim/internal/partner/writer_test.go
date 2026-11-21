@@ -82,52 +82,6 @@ func TestWriterPadsTheISA(t *testing.T) {
 	}
 }
 
-func TestAcknowledgmentRejectsByTheRules(t *testing.T) {
-	t.Parallel()
-
-	ack := Acknowledgment{
-		Sends:  Ack997,
-		Reject: RejectRules{When: RejectErrors, Sets: []string{"210"}},
-	}
-	cases := []struct {
-		set              string
-		errors, warnings int
-		want             string
-	}{
-		{"990", 0, 0, AckAccepted},
-		{"990", 0, 2, AckAcceptedWithErrors},
-		{"214", 1, 0, AckRejected},
-		{"210", 0, 0, AckRejected},
-	}
-	for _, c := range cases {
-		if got := ack.Decide(c.set, c.errors, c.warnings); got != c.want {
-			t.Errorf("Decide(%s, %d, %d) = %s, want %s", c.set, c.errors, c.warnings, got, c.want)
-		}
-	}
-	built, err := ack.Build(
-		AckInput{GroupID: "GF", GroupControl: "12", Transactions: []AckTransaction{
-			{Set: "990", Control: "0001", Code: AckAccepted},
-			{Set: "990", Control: "0002", Code: AckRejected, Notes: []SegmentNote{{
-				ID: "B1", Position: 2, Code: "8",
-				Elements: []ElementNote{{Position: 4, Reference: "558", Code: "7", Copy: "X"}},
-			}}},
-		}},
-	)
-	if err != nil {
-		t.Fatal(err)
-	}
-	var ids []string
-	for _, segment := range built.Segments {
-		ids = append(ids, segment.ID)
-	}
-	if got := strings.Join(ids, " "); got != "AK1 AK2 AK5 AK2 AK3 AK4 AK5 AK9" {
-		t.Fatalf("the 997 is %s", got)
-	}
-	if code := built.Segments[len(built.Segments)-1].Elements[0][0]; code != AckPartial {
-		t.Errorf("AK901 is %s, want P for one of two accepted", code)
-	}
-}
-
 func TestWriterKeepsEachVersionInItsOwnInterchange(t *testing.T) {
 	t.Parallel()
 

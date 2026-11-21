@@ -19,7 +19,7 @@ type Decision struct {
 	Code     string
 	Errors   int
 	Warnings int
-	Notes    []partner.SegmentNote
+	Notes    []SegmentNote
 }
 
 func Decide(
@@ -36,31 +36,31 @@ func Decide(
 	return Decision{
 		Set:      rep.Set,
 		Control:  rep.ControlNumber,
-		Code:     rules.Decide(rep.Set, errs, warns),
+		Code:     Code(rules, rep.Set, errs, warns),
 		Errors:   errs,
 		Warnings: warns,
 		Notes:    Notes(rep.Findings, rules.Sends),
 	}
 }
 
-func Plan(rules *partner.Acknowledgment, j *oracle.Judgement) []partner.AckInput {
+func Plan(rules *partner.Acknowledgment, j *oracle.Judgement) []Input {
 	if rules.Sends == partner.AckNone {
 		return nil
 	}
-	var inputs []partner.AckInput
+	var inputs []Input
 	for _, ic := range j.Interchanges {
 		for _, g := range ic.Groups {
 			if g.FunctionalID == acknowledgmentGroup || len(g.Reports) == 0 {
 				continue
 			}
-			input := partner.AckInput{
+			input := Input{
 				GroupID:      g.FunctionalID,
 				GroupControl: g.ControlNumber,
 				Version:      g.Version,
 			}
 			for _, rep := range g.Reports {
 				decision := Decide(rules, ic, g, rep)
-				input.Transactions = append(input.Transactions, partner.AckTransaction{
+				input.Transactions = append(input.Transactions, InputTransaction{
 					Set:     decision.Set,
 					Control: decision.Control,
 					Code:    decision.Code,
@@ -85,8 +85,8 @@ func Count(findings []oracle.Finding) (errs, warns int) {
 	return errs, warns
 }
 
-func Notes(findings []oracle.Finding, sends partner.AckSet) []partner.SegmentNote {
-	var notes []partner.SegmentNote
+func Notes(findings []oracle.Finding, sends partner.AckSet) []SegmentNote {
+	var notes []SegmentNote
 	index := map[int]int{}
 	for i := range findings {
 		f := &findings[i]
@@ -98,7 +98,7 @@ func Notes(findings []oracle.Finding, sends partner.AckSet) []partner.SegmentNot
 		if !ok {
 			at = len(notes)
 			index[f.SegmentIndex] = at
-			notes = append(notes, partner.SegmentNote{
+			notes = append(notes, SegmentNote{
 				ID:       f.SegmentID,
 				Position: f.SegmentIndex,
 				Loop:     f.LoopID,
@@ -110,7 +110,7 @@ func Notes(findings []oracle.Finding, sends partner.AckSet) []partner.SegmentNot
 			note.Code = f.Code
 			continue
 		}
-		note.Elements = append(note.Elements, partner.ElementNote{
+		note.Elements = append(note.Elements, ElementNote{
 			Position:  f.ElementPos,
 			Component: f.ComponentPos,
 			Code:      elementCode(f.Code, sends),

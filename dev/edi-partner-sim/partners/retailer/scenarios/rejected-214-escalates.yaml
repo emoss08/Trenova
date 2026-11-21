@@ -1,6 +1,6 @@
 name: a 214 Tamberlane rejects with IK5 R escalates at once
 steps:
-  - send: { set: "204", as: t1 }
+  - send: { set: "204", as: t1, load: { maxWeight: 43500 } }
   - expect: { ack: t1 }
   - trenova: { decide: t1, decision: accept }
   - expect: { wire: "990", about: t1 }

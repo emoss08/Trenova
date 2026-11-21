@@ -662,15 +662,6 @@
       "routes/admin"
     ]
   },
-  "0oa...": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "1 And 1": {
     "sites": 1,
     "scope": [
@@ -1552,7 +1543,7 @@
       "apps/web/lib"
     ]
   },
-  "300 reads well and keeps a page small.": {
+  "300 DPI reads well and keeps a page small.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -5061,6 +5052,15 @@
       "go/other"
     ]
   },
+  "A character between the pieces, so the number reads in parts.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "A charge": {
     "sites": 2,
     "scope": [
@@ -5352,6 +5352,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "A code can be at most {0} characters with its separators and counter. Use fewer parts or shorter ones.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/types"
     ]
   },
   "A code is required": {
@@ -5710,7 +5719,7 @@
       "routes/admin"
     ]
   },
-  "A computer running anything older is asked to update before it can scan. Leave blank to allow any version.": {
+  "A computer on an older version must update before it can scan. Leave empty to allow any version.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -6863,7 +6872,7 @@
       "go/other"
     ]
   },
-  "A document that follows a Trenova cover sheet is filed onto the sheet's record without waiting in Intake. Anything else still waits for a person.": {
+  "A document that follows a Trenova cover sheet goes onto the sheet's record without waiting in Intake. Anything else still waits for a person.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -8146,6 +8155,15 @@
     ],
     "areas": [
       "routes/rate-agreement"
+    ]
+  },
+  "A last digit that catches a mistyped number.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "A late arrival voids detention entirely. Common in shipper-favorable rate confirmations — verify before selecting.": {
@@ -9765,6 +9783,15 @@
       "rules/tariff"
     ]
   },
+  "A period cannot be negative": {
+    "sites": 3,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/organization"
+    ]
+  },
   "A period cannot close while a discrepancy is still open.": {
     "sites": 1,
     "scope": [
@@ -10375,15 +10402,6 @@
       "go/other"
     ]
   },
-  "A preset simply sets the two switches below. Adjust either one on its own for a combination the presets do not cover.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "A preview needs a version, unsaved content, or a template kind": {
     "sites": 1,
     "scope": [
@@ -10490,6 +10508,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "A profile that is not offered stays here, but nobody can pick it.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "A profile with this name already exists": {
@@ -10946,6 +10973,15 @@
       "packages/shared/types"
     ]
   },
+  "A rate confirmation that is read becomes a draft shipment to review.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "A rate increase request is required": {
     "sites": 1,
     "scope": [
@@ -11228,6 +11264,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "A recognized document is given the matching type from your list.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "A record": {
@@ -13568,6 +13613,15 @@
       "go/other"
     ]
   },
+  "A stop with no postal code is matched by its city and state instead of skipped.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "A stop's arrival was recorded, by the driver, by a geofence, or by a dispatcher.": {
     "sites": 1,
     "scope": [
@@ -15677,15 +15731,6 @@
       "routes/edi"
     ]
   },
-  "AI": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/organization"
-    ]
-  },
   "AI & Automation": {
     "sites": 3,
     "scope": [
@@ -15741,6 +15786,15 @@
       "go/other"
     ]
   },
+  "AI and agents": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/organization"
+    ]
+  },
   "AI audit event": {
     "sites": 1,
     "scope": [
@@ -15769,24 +15823,6 @@
     ],
     "areas": [
       "apps/web/config"
-    ]
-  },
-  "AI audit trail retention must be a whole number of days": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/organization"
-    ]
-  },
-  "AI audit trail retention must be at least 365 days": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/organization"
     ]
   },
   "AI audit trail retention period is required": {
@@ -15856,24 +15892,6 @@
       "go/other"
     ]
   },
-  "AI correction retention must be a whole number of days": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/organization"
-    ]
-  },
-  "AI correction retention must be at least 30 days": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/organization"
-    ]
-  },
   "AI correction retention period cannot be negative": {
     "sites": 1,
     "scope": [
@@ -15893,6 +15911,15 @@
     ]
   },
   "AI corrections": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/organization"
+    ]
+  },
+  "AI corrections are kept for at least 30 days": {
     "sites": 1,
     "scope": [
       "ts"
@@ -15928,6 +15955,15 @@
       "routes/organization"
     ]
   },
+  "AI feedback is kept for at least 30 days": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/organization"
+    ]
+  },
   "AI feedback maintenance": {
     "sites": 1,
     "scope": [
@@ -15935,15 +15971,6 @@
     ],
     "areas": [
       "go/other"
-    ]
-  },
-  "AI feedback retention must be at least 30 days": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/organization"
     ]
   },
   "AI feedback retention period cannot be negative": {
@@ -16025,6 +16052,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "AI reading": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "AI tune-ups": {
@@ -17380,7 +17416,7 @@
       "routes/admin"
     ]
   },
-  "Access changes, refused requests and other security events.": {
+  "Access changes, refused requests and other security events. At least 730 days.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -19715,7 +19751,7 @@
     ]
   },
   "Active": {
-    "sites": 93,
+    "sites": 91,
     "scope": [
       "go",
       "ts"
@@ -21267,6 +21303,15 @@
       "routes/pay-profile"
     ]
   },
+  "Add between 1 and 10 random digits": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/types"
+    ]
+  },
   "Add carrier": {
     "sites": 2,
     "scope": [
@@ -21788,6 +21833,15 @@
     ],
     "areas": [
       "routes/reports"
+    ]
+  },
+  "Add missing types": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Add move": {
@@ -22409,24 +22463,6 @@
       "routes/settlement-workspace"
     ]
   },
-  "Add this redirect URL to your Entra ID app under Authentication > Redirect URIs.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Add this redirect URL to your Okta app under Sign-in redirect URIs.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Add tier": {
     "sites": 3,
     "scope": [
@@ -22627,6 +22663,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Add {0} to the pattern": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Add “{0}” to your locations in {1}, so a stop can be booked there. Its code is assigned when it is saved.": {
@@ -23054,14 +23099,13 @@
     ]
   },
   "Address Line 1": {
-    "sites": 11,
+    "sites": 10,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "go/other",
-      "routes/admin",
       "routes/auth",
       "routes/carrier",
       "routes/worker"
@@ -23129,7 +23173,7 @@
     ]
   },
   "Address line 1": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "go",
       "ts"
@@ -23137,6 +23181,7 @@
     "areas": [
       "apps/dash/_components",
       "go/other",
+      "routes/admin",
       "routes/factoring-company"
     ]
   },
@@ -23153,12 +23198,14 @@
     ]
   },
   "Address line 1 must be 150 characters or fewer": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
-      "go"
+      "go",
+      "ts"
     ],
     "areas": [
-      "go/other"
+      "go/other",
+      "packages/shared/types"
     ]
   },
   "Address line 1 must be 150 characters or less": {
@@ -24100,7 +24147,7 @@
     ]
   },
   "Advanced": {
-    "sites": 6,
+    "sites": 5,
     "scope": [
       "ts"
     ],
@@ -24575,15 +24622,6 @@
       "apps/web/lib"
     ]
   },
-  "Agent evaluation case retention cannot be negative": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/organization"
-    ]
-  },
   "Agent evaluation case retention period cannot be negative": {
     "sites": 1,
     "scope": [
@@ -24591,15 +24629,6 @@
     ],
     "areas": [
       "go/other"
-    ]
-  },
-  "Agent evaluation cases": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/organization"
     ]
   },
   "Agent evaluations": {
@@ -26600,24 +26629,6 @@
       "routes/worker"
     ]
   },
-  "All users will be required to sign in with Entra ID.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "All users will be required to sign in with Okta.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "All versions": {
     "sites": 1,
     "scope": [
@@ -26886,15 +26897,6 @@
       "routes/admin"
     ]
   },
-  "Allow custom format": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Allow declines": {
     "sites": 1,
     "scope": [
@@ -26956,42 +26958,6 @@
     ],
     "areas": [
       "routes/shipment-control"
-    ]
-  },
-  "Allow shipment drafts to be generated for shipment documents.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Allow shipment-draft style extraction on tractor-linked documents.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Allow shipment-draft style extraction on trailer-linked documents.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Allow shipment-draft style extraction on worker-linked documents.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Allow this partner record to receive load tenders from the connected organization.": {
@@ -27057,24 +27023,6 @@
       "routes/fiscal-year"
     ]
   },
-  "Allow users to sign in with a \"Continue with Microsoft Entra ID\" button.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Allow users to sign in with a \"Continue with Okta\" button.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Allowance": {
     "sites": 1,
     "scope": [
@@ -27106,15 +27054,6 @@
   },
   "Allowed domains": {
     "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Allowed email domains": {
-    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -28006,6 +27945,24 @@
     "areas": [
       "apps/web/rules",
       "rules/allocation"
+    ]
+  },
+  "An AI model reads each rate confirmation, so its draft holds more of the load.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "An AI model settles the kind when the wording alone does not.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "An AI provider with this name already exists": {
@@ -32021,6 +31978,15 @@
       "api/handlers"
     ]
   },
+  "Anything outside the placeholders is written as it is.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Anything reviewers should know about this run, e.g. an off-cycle correction.": {
     "sites": 2,
     "scope": [
@@ -32134,15 +32100,6 @@
       "routes/settlement-dispute"
     ]
   },
-  "Append a Luhn-computed check digit for validation.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Append a detailed breakdown of each shipment (origin, destination, dates, charges) in the email body below the invoice summary.": {
     "sites": 1,
     "scope": [
@@ -32150,42 +32107,6 @@
     ],
     "areas": [
       "routes/customer"
-    ]
-  },
-  "Append random digits for collision avoidance.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Append the ISO week number for weekly grouping.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Append the current month as a 2-digit number.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Append the day of the month as 2 digits.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Applicability": {
@@ -32205,15 +32126,6 @@
     ],
     "areas": [
       "go/other"
-    ]
-  },
-  "Application (client) ID": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Application client ID": {
@@ -32483,15 +32395,6 @@
     "areas": [
       "go/other",
       "routes/invoice"
-    ]
-  },
-  "Applied to the derived prefix.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Applied to the editor": {
@@ -35396,6 +35299,15 @@
       "apps/web/lib"
     ]
   },
+  "Arrival estimates": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Arrival projections": {
     "sites": 2,
     "scope": [
@@ -36009,6 +35921,15 @@
       "routes/desk"
     ]
   },
+  "Ask AI when unsure": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Ask Nova": {
     "sites": 8,
     "scope": [
@@ -36049,7 +35970,7 @@
       "apps/web/components"
     ]
   },
-  "Ask PC*Miler for the state-by-state mileage report on every move route. Needed for IFTA returns.": {
+  "Ask PC*Miler for each move's miles by state or province.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -37150,6 +37071,15 @@
       "routes/admin"
     ]
   },
+  "Asset runs its own fleet, brokerage buys capacity, hybrid does both.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Asset, liability, equity, revenue and expense classification": {
     "sites": 1,
     "scope": [
@@ -37332,15 +37262,6 @@
     ],
     "areas": [
       "routes/shipment"
-    ]
-  },
-  "Assign active PC*Miler profiles to each mileage purpose. These mappings determine routing behavior for shipment moves, rating workflows, and calculator requests.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Assign and resolve bank receipt work items": {
@@ -38802,15 +38723,6 @@
       "routes/leave-control"
     ]
   },
-  "At least {0, plural, one {# day} other {# days}}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/organization"
-    ]
-  },
   "At least {0}": {
     "sites": 2,
     "scope": [
@@ -39726,13 +39638,12 @@
     ]
   },
   "Audit": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/lib",
-      "routes/organization"
+      "apps/web/lib"
     ]
   },
   "Audit Legal Hold": {
@@ -39828,12 +39739,13 @@
     ]
   },
   "Audit trail": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/agent-control"
+      "routes/agent-control",
+      "routes/organization"
     ]
   },
   "Auth secret is required": {
@@ -39900,15 +39812,6 @@
     "areas": [
       "apps/dash/routes",
       "routes/auth"
-    ]
-  },
-  "Authentication policy": {
-    "sites": 2,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Authentication required": {
@@ -40451,15 +40354,6 @@
     ],
     "areas": [
       "apps/web/components"
-    ]
-  },
-  "Auto-create Stored Mileage": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Auto-execute confidence threshold": {
@@ -43864,15 +43758,6 @@
       "routes/admin"
     ]
   },
-  "Between 1 and 365. Pages not filed by then are deleted, and their owner is reminded a week before.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Between 10 and 500 characters, kept with the amendment as the record of why it exists.": {
     "sites": 1,
     "scope": [
@@ -43889,15 +43774,6 @@
     ],
     "areas": [
       "routes/ifta-return"
-    ]
-  },
-  "Between 30 and 95. Higher is sharper and larger.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Between dates": {
@@ -44601,6 +44477,15 @@
       "go/other"
     ]
   },
+  "Billed Miles": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Billed as rated": {
     "sites": 2,
     "scope": [
@@ -44637,6 +44522,15 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "Billed distance cannot be negative": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Billed in {0}": {
@@ -45124,11 +45018,13 @@
     ]
   },
   "Billing distance profile is required": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
-      "go"
+      "go",
+      "ts"
     ],
     "areas": [
+      "apps/web/types",
       "go/other"
     ]
   },
@@ -45962,6 +45858,15 @@
       "apps/web/lib"
     ]
   },
+  "Black and white keeps a page of text smallest.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Blackout": {
     "sites": 1,
     "scope": [
@@ -46008,6 +45913,33 @@
       "routes/reports"
     ]
   },
+  "Blank files after": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/organization"
+    ]
+  },
+  "Blank old inbound files": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/organization"
+    ]
+  },
+  "Blank old message payloads": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/organization"
+    ]
+  },
   "Blank pages": {
     "sites": 1,
     "scope": [
@@ -46015,6 +45947,33 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "Blank payloads after": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/organization"
+    ]
+  },
+  "Blanks the raw X12 and payload snapshots of sent and received messages once they pass a set age. A blanked message can no longer be replayed. Off keeps every payload.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/organization"
+    ]
+  },
+  "Blanks the raw contents of inbound EDI files once they pass a set age. Off keeps every file whole.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/organization"
     ]
   },
   "Blind carbon copy recipients. Other recipients will not see these addresses — useful for internal archiving or compliance.": {
@@ -46768,13 +46727,12 @@
     ]
   },
   "Both": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/lib",
-      "routes/admin"
+      "apps/web/lib"
     ]
   },
   "Both 'from' and 'to' version parameters are required and must be positive": {
@@ -46967,12 +46925,13 @@
     ]
   },
   "Branding": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/lib"
+      "apps/web/lib",
+      "routes/admin"
     ]
   },
   "Breadcrumb": {
@@ -46982,15 +46941,6 @@
     ],
     "areas": [
       "apps/web/components"
-    ]
-  },
-  "Break each move's routed distance down by state or province so IFTA returns can attribute miles to the jurisdictions they were driven in.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Break time remaining cannot be negative": {
@@ -48117,6 +48067,15 @@
       "go/other"
     ]
   },
+  "Business unit code": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Business unit id is required": {
     "sites": 1,
     "scope": [
@@ -48151,15 +48110,6 @@
     ],
     "areas": [
       "routes/desk"
-    ]
-  },
-  "Buys capacity": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "By": {
@@ -48829,24 +48779,6 @@
     ],
     "areas": [
       "go/other"
-    ]
-  },
-  "Calculator practical": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Calculator shortest": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Calendar": {
@@ -51186,15 +51118,6 @@
       "go/other"
     ]
   },
-  "Captured cases and their replays, which keep a redacted copy of what the agent was given. Kept forever, they last until they expire or their conversation is deleted.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/organization"
-    ]
-  },
   "Captured documents cannot be filed onto that kind of record": {
     "sites": 1,
     "scope": [
@@ -51717,15 +51640,6 @@
     ],
     "areas": [
       "go/other"
-    ]
-  },
-  "Carrier Settlement Number": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Carrier Settlements": {
@@ -52648,6 +52562,15 @@
       "routes/carrier-settlement"
     ]
   },
+  "Carrier settlement numbers": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Carrier settlement paid": {
     "sites": 3,
     "scope": [
@@ -53357,6 +53280,15 @@
       "routes/osha"
     ]
   },
+  "Cases captured before {0} and their replays are permanently deleted in the next nightly purge.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/organization"
+    ]
+  },
   "Cases failed": {
     "sites": 1,
     "scope": [
@@ -53545,15 +53477,6 @@
     ],
     "areas": [
       "routes/accounting-dashboard"
-    ]
-  },
-  "Casing": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Catalog id is required": {
@@ -55171,7 +55094,7 @@
       "routes/desk"
     ]
   },
-  "Changes to invoices, rates, accounting and settlements.": {
+  "Changes to invoices, rates, accounting and settlements. At least 2,555 days, seven years.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -55189,7 +55112,7 @@
       "apps/web/components"
     ]
   },
-  "Changes to shipments, equipment, people and settings.": {
+  "Changes to shipments, equipment, people and settings. At least 730 days.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -55473,7 +55396,7 @@
       "go/other"
     ]
   },
-  "Characters drawn from each selected attribute (1–10).": {
+  "Characters per part": {
     "sites": 1,
     "scope": [
       "ts"
@@ -56005,7 +55928,7 @@
     ]
   },
   "Check": {
-    "sites": 8,
+    "sites": 9,
     "scope": [
       "go",
       "ts"
@@ -56014,6 +55937,7 @@
       "apps/web/components",
       "apps/web/lib",
       "go/other",
+      "routes/admin",
       "routes/carrier-settlement",
       "routes/ifta-return"
     ]
@@ -56302,7 +56226,7 @@
     ]
   },
   "Check digit": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -57413,6 +57337,24 @@
       "go/other"
     ]
   },
+  "Choose a hyphen, underscore, slash or period": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/types"
+    ]
+  },
+  "Choose a hyphen, underscore, slash, period or none": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/types"
+    ]
+  },
   "Choose a kind": {
     "sites": 1,
     "scope": [
@@ -57832,6 +57774,15 @@
       "go/other"
     ]
   },
+  "Choose a two- or four-digit year": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/types"
+    ]
+  },
   "Choose a type": {
     "sites": 1,
     "scope": [
@@ -58136,6 +58087,17 @@
       "go/other"
     ]
   },
+  "Choose at least one kind of record to draft from": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/types",
+      "go/other"
+    ]
+  },
   "Choose at least one measure to plot.": {
     "sites": 1,
     "scope": [
@@ -58152,6 +58114,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Choose at least one part to build the code from": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/types"
     ]
   },
   "Choose at least one proposal": {
@@ -58383,6 +58354,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Choose how uploaded documents are read, filed and drafted into shipments": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Choose none, over, short or damaged": {
@@ -60017,15 +59997,6 @@
       "go/other"
     ]
   },
-  "City of address": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "City of residence.": {
     "sites": 1,
     "scope": [
@@ -60457,15 +60428,6 @@
       "routes/pay-profile"
     ]
   },
-  "Classification and extraction": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Classification confidence": {
     "sites": 1,
     "scope": [
@@ -60545,15 +60507,6 @@
     ],
     "areas": [
       "apps/web/components"
-    ]
-  },
-  "Classify uploaded documents into supported kinds as they are processed.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Classifying document": {
@@ -61244,7 +61197,7 @@
     ]
   },
   "Client ID": {
-    "sites": 6,
+    "sites": 5,
     "scope": [
       "go",
       "ts"
@@ -61278,7 +61231,7 @@
     ]
   },
   "Client ID is required": {
-    "sites": 6,
+    "sites": 4,
     "scope": [
       "go",
       "ts"
@@ -61344,7 +61297,7 @@
     ]
   },
   "Client secret": {
-    "sites": 4,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -61354,7 +61307,7 @@
     ]
   },
   "Client secret is required": {
-    "sites": 5,
+    "sites": 3,
     "scope": [
       "go",
       "ts"
@@ -61362,15 +61315,6 @@
     "areas": [
       "go/other",
       "packages/shared/types"
-    ]
-  },
-  "Client secret value": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Clock": {
@@ -62770,15 +62714,6 @@
       "routes/capture"
     ]
   },
-  "Code strategy": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Codes": {
     "sites": 1,
     "scope": [
@@ -63422,33 +63357,6 @@
     ]
   },
   "Comma-separated domains allowed to authenticate. Leave blank to allow any domain.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Comma-separated list of OIDC scopes.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Comma-separated list. Leave blank to allow all Entra ID account domains.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Comma-separated list. Leave blank to allow all Okta account domains.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -64997,42 +64905,6 @@
       "packages/shared/components"
     ]
   },
-  "Component width": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Components": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Components are applied in the order they are selected.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Components, separators, and sequence digits must fit within 32 characters": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/types"
-    ]
-  },
   "Composed by {0} from your records.": {
     "sites": 1,
     "scope": [
@@ -65179,7 +65051,7 @@
     ]
   },
   "Computers": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -65634,12 +65506,11 @@
     ]
   },
   "Configure how documents are read, classified, extracted, and drafted into shipments": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/admin",
       "routes/section-index"
     ]
   },
@@ -65671,12 +65542,11 @@
     ]
   },
   "Configure mileage storage behavior and distance profile assignments": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/admin",
       "routes/section-index"
     ]
   },
@@ -65727,12 +65597,11 @@
     ]
   },
   "Configure sequence generation formats for shipments and billing workflows": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/admin",
       "routes/section-index"
     ]
   },
@@ -65762,15 +65631,6 @@
     ],
     "areas": [
       "routes/edi"
-    ]
-  },
-  "Configure when lane mileage is reused, how new mileage candidates are captured, and which units are stored for this business unit.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Configure which document types are required for each resource type": {
@@ -67127,15 +66987,6 @@
       "go/other"
     ]
   },
-  "Consolidation Number": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Consolidation Priority": {
     "sites": 1,
     "scope": [
@@ -67143,6 +66994,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Consolidation numbers": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Consolidation settings": {
@@ -67536,15 +67396,6 @@
     ],
     "areas": [
       "routes/invoice-approval"
-    ]
-  },
-  "Context components": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Context for reviewers — what the advance covered, e.g. a lumper fee or breakdown repair.": {
@@ -68054,15 +67905,6 @@
       "routes/customer"
     ]
   },
-  "Control how users authenticate to this tenant.": {
-    "sites": 2,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Control number": {
     "sites": 4,
     "scope": [
@@ -68088,24 +67930,6 @@
     ],
     "areas": [
       "routes/customer"
-    ]
-  },
-  "Control whether document extraction is active for this tenant. When this is disabled, extraction and shipment-draft workflows remain off even if a provider is configured.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Control whether extracted text is indexed for document search and retrieval experiences.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Control whether multiple shipments for this customer can share trailer space": {
@@ -68153,115 +67977,7 @@
       "go/other"
     ]
   },
-  "Controls carrier settlement numbering for paying carriers on brokered loads.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Controls consolidation number generation for grouped shipment operations.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Controls driver settlement numbering for pay period settlements.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Controls generated PRO numbers for shipment creation and tracking.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Controls generated location codes assigned during location creation.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Controls how PC*Miler chooses roads for calculated distance.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Controls invoice identifier generation for billing documents.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Controls invoice run numbering for batches of invoices billed together.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Controls journal batch numbering for accounting posting groups.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Controls journal entry numbering for posted ledger entries.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Controls manual journal request numbering before approval and posting.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Controls order number generation for commercial orders above shipments.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Controls schedule of accounts numbering for invoices submitted to a factor.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -68313,15 +68029,6 @@
     ],
     "areas": [
       "routes/service-failure-reason-code"
-    ]
-  },
-  "Controls work order identifier generation for operational workflows.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Conversation": {
@@ -68465,7 +68172,7 @@
     ]
   },
   "Copied": {
-    "sites": 24,
+    "sites": 23,
     "scope": [
       "ts"
     ],
@@ -68564,7 +68271,7 @@
     ]
   },
   "Copy": {
-    "sites": 21,
+    "sites": 20,
     "scope": [
       "ts"
     ],
@@ -69095,24 +68802,6 @@
       "routes/admin"
     ]
   },
-  "Copy this value into your Entra ID app registration.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Copy this value into your Okta application configuration.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Copy trace id": {
     "sites": 2,
     "scope": [
@@ -69204,15 +68893,6 @@
       "go/other"
     ]
   },
-  "Core business identifiers and operational settings that define your organization profile in the system.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Core identifiers and ownership used to route documents for this trading partner.": {
     "sites": 1,
     "scope": [
@@ -69241,15 +68921,6 @@
     ]
   },
   "Core responsibility": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Core structure": {
     "sites": 1,
     "scope": [
       "ts"
@@ -69527,6 +69198,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Corrections from before {0} are permanently deleted in the next nightly purge.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/organization"
     ]
   },
   "Corrections people here made for this sender": {
@@ -71426,6 +71106,15 @@
       "routes/desk"
     ]
   },
+  "Counter": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Counter decision time cannot exceed 1440 minutes": {
     "sites": 1,
     "scope": [
@@ -71442,6 +71131,15 @@
     ],
     "areas": [
       "apps/web/types"
+    ]
+  },
+  "Counter digits": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Counter of {0} refused": {
@@ -72965,15 +72663,6 @@
     ],
     "areas": [
       "routes/carrier-invoice-matching"
-    ]
-  },
-  "Create missing document types during auto-association when a mapping does not exist yet.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Create new hold reasons": {
@@ -75372,32 +75061,12 @@
     ]
   },
   "Custom format is required when custom format is enabled": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
-      "go",
-      "ts"
+      "go"
     ],
     "areas": [
-      "apps/web/types",
       "go/other"
-    ]
-  },
-  "Custom format template": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Custom format tokens": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Custom indices take manually entered weekly prices — ideal for Canadian FCA or contract-dictated pegs": {
@@ -76966,13 +76635,24 @@
       "go/other"
     ]
   },
-  "DOT number must be numeric": {
+  "DOT number must be between 1 and 8 digits": {
     "sites": 1,
     "scope": [
-      "go"
+      "ts"
     ],
     "areas": [
-      "go/other"
+      "packages/shared/types"
+    ]
+  },
+  "DOT number must be numeric": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "go/other",
+      "packages/shared/types"
     ]
   },
   "DOT number must contain only digits": {
@@ -77501,7 +77181,7 @@
     ]
   },
   "Data": {
-    "sites": 5,
+    "sites": 4,
     "scope": [
       "go",
       "ts"
@@ -77509,8 +77189,7 @@
     "areas": [
       "apps/web/components",
       "go/other",
-      "routes/desk",
-      "routes/organization"
+      "routes/desk"
     ]
   },
   "Data & Integrations": {
@@ -77772,15 +77451,6 @@
     ],
     "areas": [
       "go/other"
-    ]
-  },
-  "Date components": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Date configuration": {
@@ -78075,7 +77745,7 @@
     ]
   },
   "Day": {
-    "sites": 9,
+    "sites": 11,
     "scope": [
       "go",
       "ts"
@@ -80417,15 +80087,6 @@
       "routes/random-testing"
     ]
   },
-  "Default practical routing profile for the distance calculator.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Default profile": {
     "sites": 1,
     "scope": [
@@ -81153,6 +80814,15 @@
       "routes/osha"
     ]
   },
+  "Delete cases after": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/organization"
+    ]
+  },
   "Delete comment request is required": {
     "sites": 1,
     "scope": [
@@ -81359,6 +81029,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Delete old evaluation cases": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/organization"
     ]
   },
   "Delete one of the person's change alerts they no longer want.": {
@@ -81681,15 +81360,14 @@
     ]
   },
   "Deleted": {
-    "sites": 4,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
       "routes/admin",
-      "routes/desk",
-      "routes/organization"
+      "routes/desk"
     ]
   },
   "Deleted comments cannot be edited": {
@@ -81763,6 +81441,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Deletes captured agent cases and their replays, which hold a redacted copy of what the agent was given, once they pass a set age. Off keeps them until they expire or their conversation is deleted.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/organization"
     ]
   },
   "Deletes every page not already filed": {
@@ -82948,15 +82635,6 @@
       "go/other"
     ]
   },
-  "Derive readable components from location attributes, then append a sequence. The combined length cannot exceed 32 characters.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Desc": {
     "sites": 2,
     "scope": [
@@ -83575,6 +83253,15 @@
     ],
     "areas": [
       "routes/settings"
+    ]
+  },
+  "Desktop app": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Desktop must be off, urgent or all": {
@@ -85162,6 +84849,15 @@
       "go/other"
     ]
   },
+  "Digits after the counter that make a number hard to guess.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Dimension": {
     "sites": 3,
     "scope": [
@@ -85331,15 +85027,6 @@
       "routes/edi"
     ]
   },
-  "Directory (tenant) ID": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Directory ID is required": {
     "sites": 1,
     "scope": [
@@ -85410,24 +85097,6 @@
     ],
     "areas": [
       "routes/agent-control"
-    ]
-  },
-  "Disable password login and require all users to sign in with Entra ID.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Disable password login and require all users to sign in with Okta.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Disabled": {
@@ -87117,15 +86786,6 @@
       "routes/admin"
     ]
   },
-  "Distance profile assignments": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Distance profile is required": {
     "sites": 1,
     "scope": [
@@ -87209,11 +86869,12 @@
     ]
   },
   "Distance unit": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/admin",
       "routes/hazmat-segregation-rule"
     ]
   },
@@ -88181,6 +87842,15 @@
       "go/other"
     ]
   },
+  "Document kinds": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Document lineage does not belong to the selected resource": {
     "sites": 1,
     "scope": [
@@ -88473,12 +88143,13 @@
     ]
   },
   "Document types": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/config",
+      "routes/admin",
       "routes/desk",
       "routes/document-type"
     ]
@@ -88879,15 +88550,6 @@
     ],
     "areas": [
       "routes/carrier-settlement"
-    ]
-  },
-  "Domain restrictions": {
-    "sites": 2,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Domains": {
@@ -89480,6 +89142,15 @@
       "routes/ifta-return"
     ]
   },
+  "Draft from": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Draft generation failed": {
     "sites": 1,
     "scope": [
@@ -89551,6 +89222,15 @@
     ],
     "areas": [
       "routes/inbox"
+    ]
+  },
+  "Draft shipments": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Draft signals": {
@@ -90470,15 +90150,6 @@
       "go/other"
     ]
   },
-  "Driver Settlement Number": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Driver Settlements": {
     "sites": 1,
     "scope": [
@@ -90679,6 +90350,15 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "Driver files": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/organization"
     ]
   },
   "Driver form submissions appear here once Samsara reports them for this worker.": {
@@ -91047,16 +90727,27 @@
       "routes/worker"
     ]
   },
-  "Driver qualification management": {
+  "Driver qualification files": {
     "sites": 1,
     "scope": [
-      "go"
+      "ts"
     ],
     "areas": [
-      "go/other"
+      "routes/organization"
     ]
   },
-  "Driver qualification retention period cannot be negative": {
+  "Driver qualification files must be kept for at least 1,095 days (three years) after employment ends": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "go/other",
+      "routes/organization"
+    ]
+  },
+  "Driver qualification management": {
     "sites": 1,
     "scope": [
       "go"
@@ -91108,6 +90799,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Driver settlement numbers": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Driver settlement paid": {
@@ -93311,15 +93011,6 @@
       "go/other"
     ]
   },
-  "EDI inbound file retention cannot be negative": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/organization"
-    ]
-  },
   "EDI inbound file retention period cannot be negative": {
     "sites": 1,
     "scope": [
@@ -93409,15 +93100,6 @@
     ],
     "areas": [
       "go/other"
-    ]
-  },
-  "EDI message retention cannot be negative": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/organization"
     ]
   },
   "EDI message retention period cannot be negative": {
@@ -93884,15 +93566,6 @@
       "go/other"
     ]
   },
-  "ETA out-of-route": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "ETA risk threshold cannot be negative": {
     "sites": 2,
     "scope": [
@@ -93944,11 +93617,13 @@
     ]
   },
   "ETA/out-of-route distance profile is required": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
-      "go"
+      "go",
+      "ts"
     ],
     "areas": [
+      "apps/web/types",
       "go/other"
     ]
   },
@@ -94954,6 +94629,24 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Each upload is read so it can be filed, filled in and drafted into a shipment.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "Each upload is sorted into a kind, such as a proof of delivery, as it is read.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Each waiting change. Range over it: Tool is what the agent asked to do and Rationale is why.": {
@@ -97172,15 +96865,6 @@
       "apps/web/components"
     ]
   },
-  "Embed a 2- or 4-digit year token.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Embed an organization's stale retrieval sources until the outbox drains": {
     "sites": 1,
     "scope": [
@@ -97188,42 +96872,6 @@
     ],
     "areas": [
       "go/other"
-    ]
-  },
-  "Embed operational identity fields resolved at generation time.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Embed period context to make values self-describing.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Embed the business unit's code, resolved from the organization.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Embed the origin location's code, resolved from the shipment.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Embedding": {
@@ -97974,22 +97622,24 @@
       "routes/dispatch-console"
     ]
   },
-  "Empty move": {
+  "Empty move distance profile is required": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/types",
+      "go/other"
+    ]
+  },
+  "Empty moves": {
     "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
       "routes/admin"
-    ]
-  },
-  "Empty move distance profile is required": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Empty object": {
@@ -98037,24 +97687,6 @@
       "routes/desk"
     ]
   },
-  "Enable AI-assisted classification": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Enable AI-assisted extraction": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Enable DOT compliance enforcement": {
     "sites": 1,
     "scope": [
@@ -98073,15 +97705,6 @@
       "routes/admin"
     ]
   },
-  "Enable Entra ID sign-in": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Enable Google maps": {
     "sites": 1,
     "scope": [
@@ -98092,24 +97715,6 @@
     ]
   },
   "Enable OANDA FX": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Enable OCR": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Enable Okta sign-in": {
     "sites": 1,
     "scope": [
       "ts"
@@ -98224,60 +97829,6 @@
     ],
     "areas": [
       "routes/dispatch-control"
-    ]
-  },
-  "Enable automatic classification": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Enable automatic document type association": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Enable automatic document type creation": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Enable document extraction": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Enable full-text indexing": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Enable shipment draft extraction": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Enable these Postmark triggers:": {
@@ -99401,15 +98952,6 @@
       "routes/admin"
     ]
   },
-  "Enter SCAC code": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Enter ZIP code": {
     "sites": 2,
     "scope": [
@@ -99491,6 +99033,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Enter a fallback with at least one letter or digit": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/types"
     ]
   },
   "Enter a full web address": {
@@ -99648,6 +99199,15 @@
       "routes/factoring-company"
     ]
   },
+  "Enter a prefix": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/types"
+    ]
+  },
   "Enter a prompt to keep": {
     "sites": 1,
     "scope": [
@@ -99779,6 +99339,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Enter a whole number of days": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/organization"
     ]
   },
   "Enter a whole number of sheets": {
@@ -100028,6 +99597,115 @@
       "apps/web/types"
     ]
   },
+  "Enter how many days to keep AI corrections": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/organization"
+    ]
+  },
+  "Enter how many days to keep AI feedback": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/organization"
+    ]
+  },
+  "Enter how many days to keep driver qualification files": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/organization"
+    ]
+  },
+  "Enter how many days to keep evaluation cases": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/organization"
+    ]
+  },
+  "Enter how many days to keep financial changes": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/organization"
+    ]
+  },
+  "Enter how many days to keep inbound file contents": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/organization"
+    ]
+  },
+  "Enter how many days to keep message payloads": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/organization"
+    ]
+  },
+  "Enter how many days to keep operational changes": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/organization"
+    ]
+  },
+  "Enter how many days to keep reads and downloads": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/organization"
+    ]
+  },
+  "Enter how many days to keep security entries": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/organization"
+    ]
+  },
+  "Enter how many days to keep the AI audit trail": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/organization"
+    ]
+  },
+  "Enter how many days to keep unfiled pages": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/types",
+      "routes/admin"
+    ]
+  },
   "Enter how many hours a load may go without a check call": {
     "sites": 1,
     "scope": [
@@ -100238,12 +99916,14 @@
     ]
   },
   "Enter the ZIP code of your registered address": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
-      "go"
+      "go",
+      "ts"
     ],
     "areas": [
-      "go/other"
+      "go/other",
+      "packages/shared/types"
     ]
   },
   "Enter the address you sign in with and we'll send you a link to choose a new password.": {
@@ -100292,12 +99972,14 @@
     ]
   },
   "Enter the city of your registered address": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
-      "go"
+      "go",
+      "ts"
     ],
     "areas": [
-      "go/other"
+      "go/other",
+      "packages/shared/types"
     ]
   },
   "Enter the client secret that goes with this client ID": {
@@ -100733,12 +100415,23 @@
     ]
   },
   "Enter your company's DOT number": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
-      "go"
+      "go",
+      "ts"
     ],
     "areas": [
-      "go/other"
+      "go/other",
+      "packages/shared/types"
+    ]
+  },
+  "Enter your company's SCAC code": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/types"
     ]
   },
   "Enter your current password": {
@@ -101005,6 +100698,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Entries from before {0} are permanently deleted in the next nightly purge.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/organization"
     ]
   },
   "Entries per day.": {
@@ -102764,6 +102466,15 @@
       "routes/fleet-safety"
     ]
   },
+  "Events from before {0} are permanently deleted in the next nightly purge, up to the last point the trail was sealed, so what is left still verifies.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/organization"
+    ]
+  },
   "Events in window": {
     "sites": 3,
     "scope": [
@@ -103424,6 +103135,15 @@
     ],
     "areas": [
       "routes/ifta-return"
+    ]
+  },
+  "Every computer that can scan into Trenova, who uses it and what it can reach. Revoke one to stop it at once.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Every contract and shipment fits ({0, plural, one {# distinct set of values} other {# distinct sets of values}} checked)": {
@@ -110840,15 +110560,6 @@
       "go/other"
     ]
   },
-  "Factoring Schedule Number": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Factoring Schedule of Accounts": {
     "sites": 1,
     "scope": [
@@ -111022,6 +110733,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Factoring schedule numbers": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Factoring schedule sent": {
@@ -111708,24 +111428,6 @@
     ],
     "areas": [
       "routes/reports"
-    ]
-  },
-  "Failed to encrypt Entra ID client secret": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Failed to encrypt Okta client secret": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Failed to encrypt document": {
@@ -112974,6 +112676,15 @@
       "rules/tariff"
     ]
   },
+  "Fallback": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Fallback analysis": {
     "sites": 1,
     "scope": [
@@ -112993,15 +112704,6 @@
     ]
   },
   "Fallback only": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Fallback prefix": {
     "sites": 1,
     "scope": [
       "ts"
@@ -113400,6 +113102,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Feedback from before {0} is permanently deleted in the next nightly purge.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/organization"
     ]
   },
   "Feeds the classification suggestion; first aid alone does not make a case recordable.": {
@@ -113874,6 +113585,15 @@
       "go/other"
     ]
   },
+  "File behind cover sheets on their own": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "File between 1 and {0} documents at a time": {
     "sites": 1,
     "scope": [
@@ -113908,15 +113628,6 @@
     ],
     "areas": [
       "routes/intake"
-    ]
-  },
-  "File documents behind a cover sheet on their own": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "File envelope was parsed and transactions are being processed.": {
@@ -114191,6 +113902,15 @@
       "go/other"
     ]
   },
+  "File under a document type": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "File was pulled from the partner mailbox and is awaiting processing.": {
     "sites": 1,
     "scope": [
@@ -114427,6 +114147,24 @@
       "routes/desk"
     ]
   },
+  "Files of drivers who have left are flagged for review once they pass this age. They are never deleted. At least 1,095 days, three years after employment ends, the federal minimum under 49 CFR 391.51.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/organization"
+    ]
+  },
+  "Files of drivers who left before {0} are flagged for review in the next nightly check.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/organization"
+    ]
+  },
   "Files page ranges of an email attachment as separate documents": {
     "sites": 1,
     "scope": [
@@ -114434,6 +114172,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Files received before {0} are blanked in the next nightly purge. This cannot be undone.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/organization"
     ]
   },
   "Files received from partner mailboxes and their processing state": {
@@ -114446,7 +114193,7 @@
     ]
   },
   "Filing": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
@@ -114673,6 +114420,15 @@
     ],
     "areas": [
       "routes/billing-queue"
+    ]
+  },
+  "Fills {C} in the pattern with a digit that catches a mistyped number.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Filter": {
@@ -115228,22 +114984,15 @@
       "routes/organization"
     ]
   },
-  "Financial changes are kept for at least 2,555 days": {
-    "sites": 1,
+  "Financial changes are kept for at least 2,555 days (seven years)": {
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
+      "go/other",
       "routes/organization"
-    ]
-  },
-  "Financial changes are kept for at least 2,555 days (seven years)": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Financial costs": {
@@ -117992,15 +117741,6 @@
       "go/other"
     ]
   },
-  "Forever": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/organization"
-    ]
-  },
   "Forfeit balance": {
     "sites": 1,
     "scope": [
@@ -119567,6 +119307,24 @@
       "routes/billing-control"
     ]
   },
+  "From 1 to 365 days. Pages nobody files by then are deleted, and whoever scanned them is reminded a week before.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "From 1 to 500. Every so many pages starts a new document.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "From 1 to 72 hours. Leave empty to use the window set in dispatch controls.": {
     "sites": 1,
     "scope": [
@@ -119574,6 +119332,15 @@
     ],
     "areas": [
       "routes/customer"
+    ]
+  },
+  "From 30 to 95. Higher is sharper and larger.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "From 5 minutes to a week, counted from when the exception is raised.": {
@@ -120150,6 +119917,15 @@
       "go/other"
     ]
   },
+  "Fuel Tax Miles": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Fuel Terms": {
     "sites": 1,
     "scope": [
@@ -120291,11 +120067,13 @@
     ]
   },
   "Fuel distance profile is required": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
-      "go"
+      "go",
+      "ts"
     ],
     "areas": [
+      "apps/web/types",
       "go/other"
     ]
   },
@@ -120608,6 +120386,15 @@
     "areas": [
       "apps/web/rules",
       "rules/tariff"
+    ]
+  },
+  "Fuel tax distance cannot be negative": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Fuel tax paid at the pump": {
@@ -121727,7 +121514,7 @@
     ]
   },
   "General": {
-    "sites": 10,
+    "sites": 9,
     "scope": [
       "go",
       "ts"
@@ -121735,7 +121522,6 @@
     "areas": [
       "api/handlers",
       "apps/web/config",
-      "routes/admin",
       "routes/agent-control",
       "routes/customer",
       "routes/pto-policy",
@@ -122010,15 +121796,6 @@
     ],
     "areas": [
       "go/other"
-    ]
-  },
-  "Generate reviewable shipment drafts for supported document kinds such as rate confirmations.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Generate settlements": {
@@ -122940,6 +122717,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Gives your people a sign-in page of their own, such as /login/acme-logistics.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Giving up {0}{1}": {
@@ -128123,6 +127909,15 @@
       "routes/agent-control"
     ]
   },
+  "How an upload is recognized as a rate confirmation, a bill of lading or another kind.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "How and when this carrier is paid for completed loads.": {
     "sites": 1,
     "scope": [
@@ -128157,6 +127952,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "How closely a rate confirmation is read for its stops, dates and rate.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "How delivered shipments are marked ready to bill and moved into the billing queue.": {
@@ -128586,6 +128390,15 @@
       "routes/shipment-control"
     ]
   },
+  "How long a driver's qualification file is held after the driver leaves. Old files are only flagged for review; nothing here ever deletes one.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/organization"
+    ]
+  },
   "How long a load may go without word from the carrier, from 1 to 72 hours. A customer can set its own window.": {
     "sites": 1,
     "scope": [
@@ -128670,13 +128483,21 @@
     ]
   },
   "How long each kind of record is kept before the nightly purge jobs remove it.": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/organization",
       "routes/section-index"
+    ]
+  },
+  "How long each kind of record is kept. Anything older is removed for good by the nightly purges.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/organization"
     ]
   },
   "How long each pay period runs. Weekly is the norm for asset carriers.": {
@@ -128772,11 +128593,12 @@
     ]
   },
   "How many": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/admin",
       "routes/inbox",
       "routes/worker"
     ]
@@ -128886,7 +128708,16 @@
       "go/other"
     ]
   },
-  "How many digits of the year to embed in the code.": {
+  "How many digits the counter is padded to with zeros.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "How many digits the counter is padded to. The whole code can be at most {0} characters.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -129197,6 +129028,15 @@
       "routes/leave-control"
     ]
   },
+  "How much of each part is kept. Spaces and punctuation are left out first.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "How much of the result the sample covers.": {
     "sites": 1,
     "scope": [
@@ -129360,6 +129200,33 @@
       "routes/customer"
     ]
   },
+  "How old a captured case is when it and its replays are deleted.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/organization"
+    ]
+  },
+  "How old a message is when its payload is blanked.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/organization"
+    ]
+  },
+  "How old a received file is when its contents are blanked.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/organization"
+    ]
+  },
   "How one message becomes a Trenova document, or the reverse": {
     "sites": 1,
     "scope": [
@@ -129415,6 +129282,15 @@
     ]
   },
   "How stale or missing intelligence is treated when a carrier is used.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "How tariffs and rate tables read distance.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -129612,6 +129488,15 @@
       "routes/driver-settlement"
     ]
   },
+  "How the numbers on shipments, invoices, journals and settlements are written": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "How the offer reaches the carrier.": {
     "sites": 1,
     "scope": [
@@ -129628,6 +129513,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "How the organization is named and where its day starts and ends.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "How the payable was remitted — defaults to the carrier's preferred method.": {
@@ -129894,6 +129788,15 @@
       "routes/dispatch-control"
     ]
   },
+  "How your people sign in and are provisioned, the policies they meet, and what happened": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "How {0} counts": {
     "sites": 1,
     "scope": [
@@ -129987,7 +129890,7 @@
       "packages/shared/types"
     ]
   },
-  "Hyphen (-)": {
+  "Hyphen ( - )": {
     "sites": 1,
     "scope": [
       "ts"
@@ -130769,7 +130672,7 @@
     ]
   },
   "Identity provider": {
-    "sites": 4,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -132920,15 +132823,6 @@
       "api/handlers"
     ]
   },
-  "Inbound file contents": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/organization"
-    ]
-  },
   "Inbound files": {
     "sites": 1,
     "scope": [
@@ -133146,78 +133040,6 @@
     ],
     "areas": [
       "routes/reports"
-    ]
-  },
-  "Include Business Unit Code": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Include Check Digit": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Include Day": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Include ISO Week Number": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Include Location Code": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Include Month": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Include Random Digits": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Include Year": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Include a tracking link in each email": {
@@ -134151,15 +133973,6 @@
       "routes/fuel-management"
     ]
   },
-  "Insert a delimiter between each token segment.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Insert {0}": {
     "sites": 1,
     "scope": [
@@ -134167,15 +133980,6 @@
     ],
     "areas": [
       "routes/agent-control"
-    ]
-  },
-  "Inserted between the prefix and the sequence.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Inside Trenova": {
@@ -134486,15 +134290,6 @@
     ],
     "areas": [
       "apps/web/components"
-    ]
-  },
-  "Installs new versions when they are released. Turn off where software is rolled out by IT.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Installs the configured row-level security scope signing key": {
@@ -136675,14 +136470,12 @@
     ]
   },
   "Invoice Number": {
-    "sites": 5,
+    "sites": 4,
     "scope": [
-      "go",
-      "ts"
+      "go"
     ],
     "areas": [
-      "go/other",
-      "routes/admin"
+      "go/other"
     ]
   },
   "Invoice Run": {
@@ -136701,15 +136494,6 @@
     ],
     "areas": [
       "go/other"
-    ]
-  },
-  "Invoice Run Number": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Invoice Runs": {
@@ -137289,6 +137073,15 @@
       "routes/desk"
     ]
   },
+  "Invoice numbers": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Invoice other amount must equal the sum of accessorial lines": {
     "sites": 1,
     "scope": [
@@ -137433,6 +137226,15 @@
     "areas": [
       "apps/web/config",
       "routes/invoice-register"
+    ]
+  },
+  "Invoice run numbers": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Invoice run with this number already exists in your organization": {
@@ -138617,7 +138419,7 @@
     ]
   },
   "Issuer URL is required": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "go",
       "ts"
@@ -140503,15 +140305,6 @@
       "go/other"
     ]
   },
-  "Journal Batch Number": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Journal Batches": {
     "sites": 1,
     "scope": [
@@ -140546,15 +140339,6 @@
     ],
     "areas": [
       "go/other"
-    ]
-  },
-  "Journal Entry Number": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Journal Entry {0}": {
@@ -140611,6 +140395,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Journal batch numbers": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Journal details": {
@@ -140705,6 +140498,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Journal entry numbers": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Journal entry posted": {
@@ -141206,14 +141008,22 @@
     ]
   },
   "Jurisdiction mileage": {
-    "sites": 5,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/config",
-      "routes/admin",
       "routes/ifta-jurisdiction-mileage"
+    ]
+  },
+  "Jurisdiction miles": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Jurisdiction miles do not match move distance": {
@@ -141548,15 +141358,6 @@
       "apps/web/components"
     ]
   },
-  "Keep forever": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/organization"
-    ]
-  },
   "Keep guide": {
     "sites": 1,
     "scope": [
@@ -141659,6 +141460,15 @@
     ],
     "areas": [
       "routes/formula-template"
+    ]
+  },
+  "Keep new mileage": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Keep notes under 2000 characters": {
@@ -142203,13 +142013,31 @@
       "go/other"
     ]
   },
-  "Keep unfiled pages for (days)": {
+  "Keep unfiled pages for": {
     "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Keep unfiled pages for at least 1 day": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/types"
+    ]
+  },
+  "Keep unfiled pages for at most 365 days": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/types"
     ]
   },
   "Keep watching the web and come back when something new appears": {
@@ -142469,7 +142297,7 @@
     ]
   },
   "Kept": {
-    "sites": 10,
+    "sites": 9,
     "scope": [
       "ts"
     ],
@@ -142477,8 +142305,7 @@
       "apps/web/lib",
       "routes/agent-control",
       "routes/desk",
-      "routes/detention-intelligence",
-      "routes/organization"
+      "routes/detention-intelligence"
     ]
   },
   "Kept after driver pay": {
@@ -142533,15 +142360,6 @@
     ],
     "areas": [
       "routes/agent-control"
-    ]
-  },
-  "Kept for": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/organization"
     ]
   },
   "Kept for its history only": {
@@ -142957,7 +142775,7 @@
     ]
   },
   "Kilometers": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -143203,15 +143021,6 @@
     "areas": [
       "go/other",
       "routes/desk"
-    ]
-  },
-  "LOC": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "LOW": {
@@ -145493,6 +145302,15 @@
       "routes/worker-checklist-template"
     ]
   },
+  "Lay the number out yourself with placeholders instead of the pieces below.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Layout": {
     "sites": 2,
     "scope": [
@@ -145632,15 +145450,6 @@
     "areas": [
       "apps/web/lib",
       "go/other"
-    ]
-  },
-  "Leading literal text included in every generated value.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Learn from their work": {
@@ -146906,15 +146715,6 @@
       "routes/worker"
     ]
   },
-  "Legal headquarters location used for correspondence and compliance.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Legal hold change": {
     "sites": 1,
     "scope": [
@@ -147186,15 +146986,6 @@
       "apps/web/components"
     ]
   },
-  "Let Trenova Capture update itself": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Let a blocked sender's mail reach the Triage queue again on the source it arrives on. Name the sender by one of their messages: their mail since the block sits under Ignored, which inbox_list_inbound_messages finds with status Ignored or a query naming the sender. Messages already ignored stay settled; inbox_reopen_inbound_message returns any that still matter to the queue.": {
     "sites": 1,
     "scope": [
@@ -147401,6 +147192,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Letter case": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Letters, digits, dashes and underscores only": {
@@ -148073,15 +147873,6 @@
       "api/handlers"
     ]
   },
-  "Limit structured shipment-draft generation to the resources where operators should be able to review a draft and create a shipment from it.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Limit this policy to one customer's freight. Specificity +16.": {
     "sites": 1,
     "scope": [
@@ -148107,24 +147898,6 @@
     ],
     "areas": [
       "routes/agent-control"
-    ]
-  },
-  "Limit which email domains can sign in with Entra ID.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Limit which email domains can sign in with Okta.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Limit {0}": {
@@ -149654,12 +149427,11 @@
     ]
   },
   "Live preview": {
-    "sites": 4,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/admin",
       "routes/detention-policy",
       "routes/reports"
     ]
@@ -150312,22 +150084,24 @@
       "routes/ifta-jurisdiction-mileage"
     ]
   },
-  "Loaded move": {
+  "Loaded move distance profile is required": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/types",
+      "go/other"
+    ]
+  },
+  "Loaded moves": {
     "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
       "routes/admin"
-    ]
-  },
-  "Loaded move distance profile is required": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Loading": {
@@ -150581,6 +150355,15 @@
       "routes/accounting-dashboard"
     ]
   },
+  "Loading computers": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Loading connection requests.": {
     "sites": 1,
     "scope": [
@@ -150615,15 +150398,6 @@
     ],
     "areas": [
       "routes/home"
-    ]
-  },
-  "Loading data retention settings": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/organization"
     ]
   },
   "Loading data...": {
@@ -151297,6 +151071,15 @@
       "routes/agent-control"
     ]
   },
+  "Loading scan profiles": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Loading schedule...": {
     "sites": 1,
     "scope": [
@@ -151333,6 +151116,15 @@
       "routes/admin"
     ]
   },
+  "Loading security and access": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Loading security briefing": {
     "sites": 1,
     "scope": [
@@ -151352,13 +151144,12 @@
     ]
   },
   "Loading settings": {
-    "sites": 4,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components",
-      "routes/admin"
+      "apps/web/components"
     ]
   },
   "Loading settlements": {
@@ -152943,15 +152734,6 @@
       "go/other"
     ]
   },
-  "Location Code": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Location Details": {
     "sites": 1,
     "scope": [
@@ -153029,6 +152811,15 @@
       "go/other"
     ]
   },
+  "Location code": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Location code cannot be changed": {
     "sites": 1,
     "scope": [
@@ -153036,6 +152827,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Location codes": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Location does not exist in your organization": {
@@ -153104,15 +152904,6 @@
     ],
     "areas": [
       "go/other"
-    ]
-  },
-  "Location name": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Location names and addresses": {
@@ -153588,15 +153379,6 @@
       "routes/inbox"
     ]
   },
-  "Login URL": {
-    "sites": 2,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Login slug may only contain lowercase letters, numbers, and hyphens": {
     "sites": 1,
     "scope": [
@@ -153622,6 +153404,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Logo and icon": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Logs are already being sent to Trenova support. Wait until that request has finished": {
@@ -153925,6 +153716,15 @@
     ],
     "areas": [
       "routes/carrier-sourcing"
+    ]
+  },
+  "Look up a lane's stored mileage before asking PC*Miler.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Look up a {0}": {
@@ -155705,15 +155505,6 @@
       "routes/worker"
     ]
   },
-  "Manage automatic routing, document type assignment, and optional AI-assisted extraction. AI toggles here depend on Nova, which runs on the provider chosen for it in Agent Control.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Manage business-unit routing policy used by distance calculations": {
     "sites": 2,
     "scope": [
@@ -155827,12 +155618,11 @@
     ]
   },
   "Manage your organization profile, compliance, and security settings": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/admin",
       "routes/section-index"
     ]
   },
@@ -155990,15 +155780,6 @@
       "routes/manual-journal"
     ]
   },
-  "Manual Journal Request": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Manual Miles": {
     "sites": 1,
     "scope": [
@@ -156124,6 +155905,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Manual journal request numbers": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Manual journal request workflow and approvals": {
@@ -156359,15 +156149,6 @@
     ],
     "areas": [
       "routes/shipment"
-    ]
-  },
-  "Map detected document kinds to existing document types automatically.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Map driver form template fields onto shipment and stop data.": {
@@ -157381,15 +157162,6 @@
       "routes/worker"
     ]
   },
-  "Marks this organization as running its own fleet. Recorded for reporting today — it does not hide anything yet.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Marks {0} shipments invoiced": {
     "sites": 1,
     "scope": [
@@ -157433,15 +157205,6 @@
     ],
     "areas": [
       "go/other"
-    ]
-  },
-  "Master switch for reading, classifying, extracting, and indexing uploaded documents.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Match": {
@@ -157696,6 +157459,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Match by city": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Match carrier invoices and build carrier settlements.": {
@@ -158978,15 +158750,6 @@
       "go/other"
     ]
   },
-  "May be billed by PC*Miler as an additional transaction per route. Routes calculated before this is on have no jurisdiction breakdown until they are recalculated.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "May move before it runs": {
     "sites": 1,
     "scope": [
@@ -159171,6 +158934,33 @@
     "areas": [
       "routes/insights",
       "routes/reports"
+    ]
+  },
+  "Measures the miles drivers and carriers paid by the mile are paid for.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "Measures the miles fuel tax returns are filed on, and routes the jurisdiction breakdown.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "Measures the miles rating, fuel surcharges and invoices bill customers for.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Measures to pivot": {
@@ -159944,15 +159734,6 @@
       "go/other"
     ]
   },
-  "Message payloads": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/organization"
-    ]
-  },
   "Message stream": {
     "sites": 1,
     "scope": [
@@ -160330,7 +160111,7 @@
     ]
   },
   "Microsoft Entra ID": {
-    "sites": 4,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -160338,15 +160119,6 @@
       "apps/web/components",
       "routes/admin",
       "routes/agent-control"
-    ]
-  },
-  "Microsoft Entra ID SSO configuration is required": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Microsoft Entra app": {
@@ -160432,6 +160204,15 @@
       "routes/dispatch-control"
     ]
   },
+  "Mileage": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Mileage Goal": {
     "sites": 1,
     "scope": [
@@ -160468,6 +160249,15 @@
       "go/other"
     ]
   },
+  "Mileage kept from earlier routes, so a lane already routed is not sent to PC*Miler again.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Mileage mismatch": {
     "sites": 1,
     "scope": [
@@ -160478,7 +160268,7 @@
     ]
   },
   "Miles": {
-    "sites": 10,
+    "sites": 11,
     "scope": [
       "go",
       "ts"
@@ -160545,6 +160335,15 @@
     "areas": [
       "routes/ifta-jurisdiction-mileage",
       "routes/section-index"
+    ]
+  },
+  "Miles by state or province, which fuel tax returns are filed from.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Miles cannot be negative": {
@@ -162711,7 +162510,7 @@
     ]
   },
   "Month": {
-    "sites": 5,
+    "sites": 7,
     "scope": [
       "go",
       "ts"
@@ -165469,7 +165268,7 @@
     ]
   },
   "Name must be 100 characters or fewer": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go",
       "ts"
@@ -168671,6 +168470,15 @@
       "routes/factoring-company"
     ]
   },
+  "New versions install as they are released. Turn off where IT rolls out software.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "New worker": {
     "sites": 1,
     "scope": [
@@ -169122,6 +168930,15 @@
     ],
     "areas": [
       "routes/freight-outlook"
+    ]
+  },
+  "Next number: {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Next open period": {
@@ -170207,7 +170024,7 @@
     ]
   },
   "No active organization found for this session.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -179853,14 +179670,13 @@
     ]
   },
   "Not configured": {
-    "sites": 4,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/lib",
-      "packages/shared/components",
-      "routes/admin"
+      "packages/shared/components"
     ]
   },
   "Not confirmed": {
@@ -186295,15 +186111,6 @@
       "routes/customer"
     ]
   },
-  "Number of random digits to append (1–10).": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Number within": {
     "sites": 1,
     "scope": [
@@ -186348,6 +186155,15 @@
     "areas": [
       "routes/home",
       "routes/insights"
+    ]
+  },
+  "Numbers will repeat. The counter starts again at 1 every month, so a number needs both the year and the month to stay unique.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "OANDA FXDS": {
@@ -187498,24 +187314,6 @@
     ]
   },
   "Okta": {
-    "sites": 2,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Okta SSO configuration is required": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Okta domain": {
     "sites": 1,
     "scope": [
       "ts"
@@ -192794,6 +192592,15 @@
       "routes/agent-control"
     ]
   },
+  "Open Reading": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Open Reports": {
     "sites": 1,
     "scope": [
@@ -196672,14 +196479,12 @@
     ]
   },
   "Order Number": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
-      "go",
-      "ts"
+      "go"
     ],
     "areas": [
-      "go/other",
-      "routes/admin"
+      "go/other"
     ]
   },
   "Order charge contains an unknown allocation": {
@@ -196873,6 +196678,15 @@
       "go/other"
     ]
   },
+  "Order numbers": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Order on the case": {
     "sites": 1,
     "scope": [
@@ -197023,7 +196837,7 @@
     ]
   },
   "Organization": {
-    "sites": 35,
+    "sites": 36,
     "scope": [
       "go",
       "ts"
@@ -197084,15 +196898,6 @@
       "go/other"
     ]
   },
-  "Organization branding": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Organization default": {
     "sites": 9,
     "scope": [
@@ -197106,15 +196911,6 @@
       "routes/detention-policy",
       "routes/factoring-company",
       "routes/reports"
-    ]
-  },
-  "Organization details": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Organization does not have asset operations enabled. Cover this shipment move with a carrier instead of assigning a driver": {
@@ -199093,15 +198889,6 @@
       "go/other"
     ]
   },
-  "Override auto-composition with a token template.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Override calculated distances between location pairs for routing and billing adjustments": {
     "sites": 2,
     "scope": [
@@ -199836,6 +199623,15 @@
       "go/other"
     ]
   },
+  "PC*Miler may bill this as an extra transaction per route. Routes calculated before it is on have no breakdown until they are recalculated.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "PC*Miler profile name": {
     "sites": 1,
     "scope": [
@@ -200174,6 +199970,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "PRO numbers": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "PRO or BOL number": {
@@ -201141,6 +200946,15 @@
       "go/other"
     ]
   },
+  "Paid Miles": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Paid a lumper, tolls, or a scale out of pocket? Submit it with a photo of the receipt and get it back on your next settlement.": {
     "sites": 1,
     "scope": [
@@ -201193,6 +201007,15 @@
     ],
     "areas": [
       "routes/factoring-company"
+    ]
+  },
+  "Paid distance cannot be negative": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Paid invoices": {
@@ -201405,11 +201228,12 @@
     ]
   },
   "Paired computers": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/admin",
       "routes/capture"
     ]
   },
@@ -202334,6 +202158,15 @@
       "routes/edi"
     ]
   },
+  "Parts": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Party ID": {
     "sites": 3,
     "scope": [
@@ -202621,15 +202454,6 @@
       "go/other"
     ]
   },
-  "Password login will be disabled": {
-    "sites": 2,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Password must be 72 bytes or fewer": {
     "sites": 4,
     "scope": [
@@ -202909,15 +202733,6 @@
       "routes/edi"
     ]
   },
-  "Paste a new client secret": {
-    "sites": 2,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Paste an API key": {
     "sites": 1,
     "scope": [
@@ -203015,24 +202830,6 @@
     ],
     "areas": [
       "routes/agent-control"
-    ]
-  },
-  "Paste these values from your Microsoft Entra ID app registration.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Paste these values from your Okta application settings.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Pasted text.txt": {
@@ -203146,6 +202943,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Pattern": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Pattern detection": {
@@ -203827,11 +203633,13 @@
     ]
   },
   "Pay distance profile is required": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
-      "go"
+      "go",
+      "ts"
     ],
     "areas": [
+      "apps/web/types",
       "go/other"
     ]
   },
@@ -204185,6 +203993,15 @@
       "routes/settlement-workspace"
     ]
   },
+  "Pay, billing and fuel": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Payables and expense": {
     "sites": 1,
     "scope": [
@@ -204265,6 +204082,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Payloads from before {0} are blanked in the next nightly purge, and those messages can no longer be replayed.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/organization"
     ]
   },
   "Payment": {
@@ -205237,6 +205063,15 @@
       "routes/carrier"
     ]
   },
+  "People can find a document by the words inside it, not only its name.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "People can still sign in with a password, which goes around your identity provider's checks. Enforce single sign-on once everyone has signed in through it.": {
     "sites": 1,
     "scope": [
@@ -206102,7 +205937,7 @@
       "routes/ifta-tax-rate"
     ]
   },
-  "Period (.)": {
+  "Period ( . )": {
     "sites": 1,
     "scope": [
       "ts"
@@ -208916,6 +208751,15 @@
       "routes/desk"
     ]
   },
+  "Placeholders": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Places": {
     "sites": 1,
     "scope": [
@@ -209433,15 +209277,6 @@
     ],
     "areas": [
       "go/other"
-    ]
-  },
-  "Platform availability": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Platform catalog and entitlement metadata administration": {
@@ -210996,14 +210831,12 @@
     ]
   },
   "Postal Code": {
-    "sites": 6,
+    "sites": 5,
     "scope": [
-      "go",
-      "ts"
+      "go"
     ],
     "areas": [
-      "go/other",
-      "routes/admin"
+      "go/other"
     ]
   },
   "Postal Code is required": {
@@ -211034,17 +210867,8 @@
       "routes/worker"
     ]
   },
-  "Postal code fallback": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Postal code is required": {
-    "sites": 8,
+    "sites": 7,
     "scope": [
       "go",
       "ts"
@@ -211654,15 +211478,6 @@
       "apps/web/lib"
     ]
   },
-  "Practical calculator distance profile is required": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Praise and milestones recorded for workers": {
     "sites": 1,
     "scope": [
@@ -211916,7 +211731,7 @@
     ]
   },
   "Prefix": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
@@ -211944,13 +211759,11 @@
     ]
   },
   "Prefix is required": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
-      "go",
-      "ts"
+      "go"
     ],
     "areas": [
-      "apps/web/types",
       "go/other"
     ]
   },
@@ -213503,15 +213316,6 @@
       "routes/admin"
     ]
   },
-  "Primary sequence components and delimiter behavior.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Primary waterfall for the Dallas–Atlanta contract freight": {
     "sites": 1,
     "scope": [
@@ -213938,14 +213742,13 @@
     ]
   },
   "Pro Number": {
-    "sites": 4,
+    "sites": 3,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "go/other",
-      "routes/admin",
       "routes/shipment"
     ]
   },
@@ -214228,7 +214031,7 @@
     ]
   },
   "Profile": {
-    "sites": 13,
+    "sites": 16,
     "scope": [
       "go",
       "ts"
@@ -214238,6 +214041,7 @@
       "apps/dash/routes",
       "apps/web/lib",
       "go/other",
+      "routes/admin",
       "routes/carrier",
       "routes/edi",
       "routes/organization",
@@ -214310,7 +214114,7 @@
     ]
   },
   "Profile details": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -214389,60 +214193,6 @@
     ],
     "areas": [
       "routes/worker"
-    ]
-  },
-  "Profile used by customer billing mileage workflows.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Profile used by driver pay mileage workflows.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Profile used by fuel mileage workflows.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Profile used when calculating mileage for empty repositioning moves.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Profile used when calculating mileage for loaded shipment moves.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Profile used when measuring ETA out-of-route variance.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Profile version not found": {
@@ -214835,6 +214585,15 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "Proofs of delivery and bills of lading": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Propane": {
@@ -216713,15 +216472,6 @@
     ],
     "areas": [
       "go/other"
-    ]
-  },
-  "Purged with replays": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/organization"
     ]
   },
   "Purpose": {
@@ -218753,8 +218503,8 @@
       "go/other"
     ]
   },
-  "Random digits count": {
-    "sites": 1,
+  "Random digits": {
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -218781,13 +218531,11 @@
     ]
   },
   "Random digits count must be between 1 and 10 when include random digits is enabled": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
-      "go",
-      "ts"
+      "go"
     ],
     "areas": [
-      "apps/web/types",
       "go/other"
     ]
   },
@@ -219647,6 +219395,15 @@
     ],
     "areas": [
       "routes/carrier-settlement"
+    ]
+  },
+  "Rate confirmations uploaded to these records become drafts.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Rate confirmed": {
@@ -220559,7 +220316,7 @@
     ]
   },
   "Rating": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "go",
       "ts"
@@ -220568,6 +220325,7 @@
       "apps/web/components",
       "apps/web/lib",
       "go/other",
+      "routes/admin",
       "routes/billing-control"
     ]
   },
@@ -220623,6 +220381,24 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Rating distance unit is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Rating distance unit must be Miles or Kilometers": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Rating formulas: templates, their schema and testing an expression.": {
@@ -220707,7 +220483,7 @@
       "routes/worker"
     ]
   },
-  "Ratings of AI output, with the question and answer each person saw.": {
+  "Ratings of AI answers, with the question and answer each person saw. At least 30 days.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -220770,15 +220546,6 @@
       "routes/edi"
     ]
   },
-  "Raw X12 and payload snapshots of delivered and inbound messages. A blanked message can no longer be replayed.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/organization"
-    ]
-  },
   "Raw X12 purged": {
     "sites": 1,
     "scope": [
@@ -220795,15 +220562,6 @@
     ],
     "areas": [
       "routes/edi"
-    ]
-  },
-  "Raw content blanked": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/organization"
     ]
   },
   "Raw dwell minutes cannot be negative": {
@@ -220840,15 +220598,6 @@
     ],
     "areas": [
       "routes/desk"
-    ]
-  },
-  "Raw inbound EDI files. The record of each file stays.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/organization"
     ]
   },
   "Raw payload": {
@@ -221811,6 +221560,15 @@
       "routes/agent-control"
     ]
   },
+  "Read scanned pages": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Read security entries, check the audit log's seals and receive security alerts": {
     "sites": 1,
     "scope": [
@@ -221836,15 +221594,6 @@
     ],
     "areas": [
       "routes/inbox"
-    ]
-  },
-  "Read text from scanned pages, photos, and faxes that carry no text of their own.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Read the Tariff reference": {
@@ -221982,6 +221731,15 @@
       "routes/admin"
     ]
   },
+  "Read uploaded documents": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Read what a turn means for the conversation's chapters": {
     "sites": 1,
     "scope": [
@@ -222007,6 +221765,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Read with AI": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Read with Nova": {
@@ -222211,13 +221978,14 @@
     ]
   },
   "Reading": {
-    "sites": 3,
+    "sites": 5,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
-      "apps/web/lib"
+      "apps/web/lib",
+      "routes/admin"
     ]
   },
   "Reading 2 pages": {
@@ -224702,6 +224470,15 @@
     ],
     "areas": [
       "api/graphql"
+    ]
+  },
+  "Recognize document kinds": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Recognize revenue and expense from non-cash posting events": {
@@ -227210,15 +226987,6 @@
       "packages/shared/types"
     ]
   },
-  "Redirect URL (OAuth callback)": {
-    "sites": 2,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Redirect URL cannot be longer than 500 characters": {
     "sites": 1,
     "scope": [
@@ -227229,7 +226997,7 @@
     ]
   },
   "Redirect URL is required": {
-    "sites": 3,
+    "sites": 1,
     "scope": [
       "go"
     ],
@@ -228288,12 +228056,13 @@
     ]
   },
   "Regulatory": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/lib"
+      "apps/web/lib",
+      "routes/admin"
     ]
   },
   "Regulatory code reference": {
@@ -228303,24 +228072,6 @@
     ],
     "areas": [
       "routes/hazmat-segregation-rule"
-    ]
-  },
-  "Regulatory compliance": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Regulatory identifiers required for operations and reporting.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Regulatory indicators that affect placarding, reporting, and special handling.": {
@@ -230927,15 +230678,6 @@
       "apps/web/lib"
     ]
   },
-  "Removes before": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/organization"
-    ]
-  },
   "Removes inbound messages settled more than six months ago.": {
     "sites": 1,
     "scope": [
@@ -231616,15 +231358,6 @@
       "routes/admin",
       "routes/agent-control",
       "routes/policies"
-    ]
-  },
-  "Replace <code>{0}</code> with your organization's login slug from General settings.": {
-    "sites": 2,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Replace API key": {
@@ -232836,15 +232569,6 @@
       "go/other"
     ]
   },
-  "Representative sample — actual values increment sequentially.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Reprint": {
     "sites": 1,
     "scope": [
@@ -233600,24 +233324,6 @@
     ],
     "areas": [
       "go/other"
-    ]
-  },
-  "Require Entra ID SSO": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Require Okta SSO": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Require PO number": {
@@ -234870,12 +234576,11 @@
     ]
   },
   "Reset to default": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/admin",
       "routes/reports"
     ]
   },
@@ -236531,12 +236236,13 @@
     ]
   },
   "Retention": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
       "routes/admin",
+      "routes/organization",
       "routes/worker"
     ]
   },
@@ -237244,6 +236950,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Reuse stored mileage": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Revenue": {
@@ -240281,6 +239996,24 @@
       "routes/agent-control"
     ]
   },
+  "Routes a move that carries freight.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "Routes a move that repositions without freight.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Routes shown": {
     "sites": 1,
     "scope": [
@@ -240288,6 +240021,15 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "Routes the legs arrival times and dispatch suggestions are estimated over.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Routes the withheld amount into the driver's active escrow account and stops automatically at the account's funding target.": {
@@ -240300,7 +240042,7 @@
     ]
   },
   "Routing": {
-    "sites": 6,
+    "sites": 7,
     "scope": [
       "go",
       "ts"
@@ -242026,7 +241768,7 @@
       "routes/desk"
     ]
   },
-  "Runs its own fleet": {
+  "Runs its own fleet: shows driver and equipment features, and lets drivers be assigned to shipments.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -242263,12 +242005,14 @@
     ]
   },
   "SCAC code must be 4 characters": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
-      "go"
+      "go",
+      "ts"
     ],
     "areas": [
-      "go/other"
+      "go/other",
+      "packages/shared/types"
     ]
   },
   "SCAC code must be four letters": {
@@ -243821,7 +243565,7 @@
     ]
   },
   "Save changes": {
-    "sites": 37,
+    "sites": 32,
     "scope": [
       "ts"
     ],
@@ -243837,7 +243581,6 @@
       "routes/formula-template",
       "routes/fuel-management",
       "routes/holiday",
-      "routes/organization",
       "routes/reports",
       "routes/shipment",
       "routes/worker"
@@ -243924,6 +243667,15 @@
       "routes/factoring-company",
       "routes/manual-journal",
       "routes/worker"
+    ]
+  },
+  "Save each PC*Miler result as stored mileage for the lane.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Save filter preset": {
@@ -246092,13 +245844,12 @@
     ]
   },
   "Scan settings": {
-    "sites": 5,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
-      "routes/admin",
       "routes/desk"
     ]
   },
@@ -246220,17 +245971,18 @@
     ]
   },
   "Scanning": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
-      "apps/web/lib"
+      "apps/web/lib",
+      "routes/admin"
     ]
   },
   "Scanning and printing": {
-    "sites": 3,
+    "sites": 5,
     "scope": [
       "ts"
     ],
@@ -247141,7 +246893,7 @@
     ]
   },
   "Scopes": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -247557,15 +247309,6 @@
       "routes/shipment"
     ]
   },
-  "Search and retrieval": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Search artifacts": {
     "sites": 1,
     "scope": [
@@ -247620,6 +247363,15 @@
     "areas": [
       "apps/web/components",
       "routes/carrier-invoice-matching"
+    ]
+  },
+  "Search by content": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Search by entry number": {
@@ -249039,7 +248791,7 @@
     ]
   },
   "Security": {
-    "sites": 7,
+    "sites": 6,
     "scope": [
       "go",
       "ts"
@@ -249059,6 +248811,16 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Security & access": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/config",
+      "routes/admin"
     ]
   },
   "Security Audit Log": {
@@ -250763,15 +250525,6 @@
       "routes/accounting-control"
     ]
   },
-  "Select casing": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Select category": {
     "sites": 1,
     "scope": [
@@ -251776,15 +251529,6 @@
       "routes/tractor"
     ]
   },
-  "Select separator": {
-    "sites": 2,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Select service type": {
     "sites": 1,
     "scope": [
@@ -251871,11 +251615,12 @@
     ]
   },
   "Select state": {
-    "sites": 8,
+    "sites": 9,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/admin",
       "routes/jurisdiction-rule",
       "routes/jurisdiction-rule-override",
       "routes/rate-agreement",
@@ -254767,21 +254512,12 @@
     ]
   },
   "Separator": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
-      "routes/admin"
-    ]
-  },
-  "Separator character": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
       "routes/admin"
     ]
   },
@@ -254813,31 +254549,21 @@
     ]
   },
   "Separator must be one of '-', '_', '/', '.'": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
-      "go",
-      "ts"
+      "go"
     ],
     "areas": [
-      "apps/web/types",
       "go/other"
     ]
   },
-  "Separator must be one of '-', '_', '/', '.', or blank": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/types"
-    ]
-  },
   "Separators": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/admin",
       "routes/desk"
     ]
   },
@@ -254851,14 +254577,13 @@
     ]
   },
   "Sequence": {
-    "sites": 4,
+    "sites": 3,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "go/other",
-      "routes/admin",
       "routes/shipment"
     ]
   },
@@ -254906,24 +254631,6 @@
     ],
     "areas": [
       "go/other"
-    ]
-  },
-  "Sequence configuration sections": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Sequence digits": {
-    "sites": 2,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Sequence digits is required": {
@@ -255706,15 +255413,6 @@
       "go/other"
     ]
   },
-  "Service provider": {
-    "sites": 2,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Service type": {
     "sites": 9,
     "scope": [
@@ -256147,6 +255845,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Set how mileage is routed, kept and reused": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Set in Billing control": {
@@ -256749,15 +256456,6 @@
     ],
     "areas": [
       "routes/edi"
-    ]
-  },
-  "Settings people pick from when they start a scan. The scanner is asked for each; one it cannot do is noted on the stack, not refused.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Settings sections": {
@@ -257803,24 +257501,6 @@
       "routes/desk"
     ]
   },
-  "Share this URL with your users for Entra ID SSO sign-in.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Share this URL with your users for Okta SSO sign-in.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Share this device's location": {
     "sites": 1,
     "scope": [
@@ -258240,7 +257920,7 @@
     ]
   },
   "Shipment": {
-    "sites": 52,
+    "sites": 51,
     "scope": [
       "go",
       "ts"
@@ -258251,7 +257931,6 @@
       "apps/web/lib",
       "go/other",
       "packages/shared/components",
-      "routes/admin",
       "routes/billing-queue",
       "routes/desk",
       "routes/inbox",
@@ -258998,15 +258677,6 @@
       "apps/web/components"
     ]
   },
-  "Shipment draft extraction": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Shipment draft extraction failed.": {
     "sites": 1,
     "scope": [
@@ -259042,6 +258712,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Shipment drafts": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Shipment duplication started": {
@@ -259881,7 +259560,7 @@
     ]
   },
   "Shipments": {
-    "sites": 28,
+    "sites": 30,
     "scope": [
       "go",
       "ts"
@@ -259892,6 +259571,7 @@
       "apps/web/hooks",
       "apps/web/lib",
       "go/other",
+      "routes/admin",
       "routes/billing-queue",
       "routes/desk",
       "routes/formula-template",
@@ -260460,24 +260140,6 @@
     ],
     "areas": [
       "apps/web/lib"
-    ]
-  },
-  "Shortest calculator distance profile is required": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Shortest-route profile for shortest-path calculator requests.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Should have left with nobody on it": {
@@ -261578,6 +261240,15 @@
       "routes/review-template"
     ]
   },
+  "Shown to your people, and on the documents and emails you send.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Shown to your team on comments, approvals and assignments.": {
     "sites": 1,
     "scope": [
@@ -261651,7 +261322,7 @@
       "routes/home"
     ]
   },
-  "Shows carriers, routing guides, tendering, and carrier settlements. Turning this off hides them from menus and navigation; it does not restrict permissions or API access.": {
+  "Shows carriers, routing guides, tendering and carrier settlements.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -261964,6 +261635,33 @@
       "routes/settings"
     ]
   },
+  "Sign-in address": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "Sign-in address may only contain lowercase letters, numbers, and hyphens": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/types"
+    ]
+  },
+  "Sign-in address must be 100 characters or fewer": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/types"
+    ]
+  },
   "Sign-in and risk events appear here once people authenticate.": {
     "sites": 1,
     "scope": [
@@ -262240,7 +261938,7 @@
       "apps/web/components"
     ]
   },
-  "Signed events recording each AI decision, cut only where the chain was sealed. Seven years is what most audits of AI decisions ask for.": {
+  "Signed events recording each AI decision. At least 365 days; seven years, 2,555 days, is what most audits of AI decisions ask for.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -263178,7 +262876,7 @@
       "routes/dispatch-control"
     ]
   },
-  "Slash (/)": {
+  "Slash ( / )": {
     "sites": 1,
     "scope": [
       "ts"
@@ -265887,6 +265585,15 @@
       "routes/admin"
     ]
   },
+  "Splitting": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Splitting...": {
     "sites": 1,
     "scope": [
@@ -267643,7 +267350,7 @@
     ]
   },
   "State": {
-    "sites": 41,
+    "sites": 40,
     "scope": [
       "go",
       "ts"
@@ -267755,15 +267462,6 @@
     ],
     "areas": [
       "go/other"
-    ]
-  },
-  "State of address": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "State only": {
@@ -269784,15 +269482,6 @@
       "apps/web/lib"
     ]
   },
-  "Store extracted text in the search index so operators can find documents by content.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Store this key securely. It will not be displayed again.": {
     "sites": 1,
     "scope": [
@@ -269803,33 +269492,6 @@
     ]
   },
   "Stored Mileage": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Stored distance units": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Stored distance units are required": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Stored distance units must be Miles or Kilometers": {
     "sites": 1,
     "scope": [
       "go"
@@ -269901,7 +269563,7 @@
       "routes/agent-control"
     ]
   },
-  "Stored mileage policy": {
+  "Stored mileage": {
     "sites": 1,
     "scope": [
       "ts"
@@ -270826,15 +270488,6 @@
       "routes/edi"
     ]
   },
-  "Successful PC*Miler results are buffered for the scheduled stored mileage upsert job.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Such as: a duplicate of yesterday's report": {
     "sites": 1,
     "scope": [
@@ -271022,6 +270675,15 @@
       "go/other"
     ]
   },
+  "Suite or unit": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Suite revision is invalid": {
     "sites": 1,
     "scope": [
@@ -271088,12 +270750,11 @@
     ]
   },
   "Suite/unit": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/admin",
       "routes/auth"
     ]
   },
@@ -272939,7 +272600,7 @@
       "routes/reports"
     ]
   },
-  "Tailors the menus to the freight this organization actually moves. This controls visibility only — it hides features from menus and navigation. It does not restrict permissions or API access, and it never changes existing records.": {
+  "Tailors the menus to the freight this organization moves. It only hides features from menus and navigation: it never restricts permissions or API access, and never changes existing records.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -273783,6 +273444,24 @@
     ],
     "areas": [
       "routes/formula-template"
+    ]
+  },
+  "Tariffs and rate tables read kilometers.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
+  "Tariffs and rate tables read miles.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
     ]
   },
   "Tariffs read this matrix as tables.{0}, so its code is fixed once a version is published": {
@@ -274866,15 +274545,6 @@
       "routes/agent-control"
     ]
   },
-  "Tenant ID is required": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Tenant is required": {
     "sites": 1,
     "scope": [
@@ -274882,24 +274552,6 @@
     ],
     "areas": [
       "go/other"
-    ]
-  },
-  "Tenant login URL": {
-    "sites": 2,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Tenant login slug": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Tenant slug": {
@@ -276115,6 +275767,15 @@
       "rules/tariff"
     ]
   },
+  "Text is read from scans, photos and faxes that carry none of their own.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Text is written in double quotes": {
     "sites": 2,
     "scope": [
@@ -277199,6 +276860,15 @@
       "go/other"
     ]
   },
+  "The AI audit trail is kept for at least 365 days": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/organization"
+    ]
+  },
   "The AI provider neither deferred the extraction nor returned a result": {
     "sites": 1,
     "scope": [
@@ -277725,6 +277395,15 @@
     ],
     "areas": [
       "routes/trailer"
+    ]
+  },
+  "The USDOT number, up to eight digits.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "The USDOT registration is not active with FMCSA.": {
@@ -280619,6 +280298,15 @@
       "apps/web/components"
     ]
   },
+  "The character between the parts and before the counter.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "The charge amount.": {
     "sites": 1,
     "scope": [
@@ -280966,6 +280654,15 @@
       "routes/fiscal-year"
     ]
   },
+  "The code each new location is given, built from its name and address.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "The code is incorrect or has already been used": {
     "sites": 1,
     "scope": [
@@ -281018,6 +280715,15 @@
     ],
     "areas": [
       "routes/shipment-type"
+    ]
+  },
+  "The code of the shipment's first stop, before the counter.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "The code {0} is not in the base's list": {
@@ -282485,6 +282191,15 @@
       "routes/billing-queue"
     ]
   },
+  "The day of the month, as two digits.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "The day of the month, in the date-time's own offset.": {
     "sites": 2,
     "scope": [
@@ -283044,6 +282759,24 @@
     "areas": [
       "apps/web/rules",
       "rules/tariff"
+    ]
+  },
+  "The distance profile PC*Miler routes each kind of trip with.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "The distance profile each kind of mileage is measured with.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "The dock's share": {
@@ -285279,6 +285012,15 @@
       "routes/dispatch-console"
     ]
   },
+  "The first code for a location named Acme Warehouse in Dallas, TX 75201. Press a part to change it.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "The first copy of this interchange was processed already": {
     "sites": 1,
     "scope": [
@@ -285460,6 +285202,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "The first number this month. The counter starts again at 1 every month. Press a part to change it.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "The first of each month at 8:00 AM": {
@@ -285868,6 +285619,15 @@
     ],
     "areas": [
       "routes/fuel-card"
+    ]
+  },
+  "The four-letter Standard Carrier Alpha Code.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "The freight billed, one row per commodity.": {
@@ -286479,6 +286239,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "The identifiers your organization is registered under.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "The identity of the server Trenova runs on, such as its IAM role. Nothing is stored.": {
@@ -287665,6 +287434,15 @@
       "edi/lading"
     ]
   },
+  "The legal headquarters, printed on your invoices and used for correspondence and compliance.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "The legs and charges of a {0} order cannot be modified": {
     "sites": 1,
     "scope": [
@@ -287712,6 +287490,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "The letters every number starts with.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "The liability for what the factor advanced, until the customer pays.": {
@@ -289343,6 +289130,15 @@
       "routes/pay-advance"
     ]
   },
+  "The month the number is issued, as two digits.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "The month, 1 to 12, in the date-time's own offset.": {
     "sites": 2,
     "scope": [
@@ -290135,6 +289931,105 @@
       "go/other"
     ]
   },
+  "The number a group of consolidated shipments is given.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "The number a manual journal entry carries while it waits for approval.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "The number each batch of invoices billed together is given.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "The number each batch of journal entries is posted under.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "The number each commercial order is given, whether entered or created with a shipment.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "The number each driver pay settlement is given.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "The number each maintenance work order is given.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "The number each new shipment is given, on its paperwork and in tracking.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "The number each posted journal entry is given.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "The number each schedule of invoices sent to a factoring company is given.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "The number each settlement paying a carrier for a brokered load is given.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "The number of a measure in a unit: weight.value(lb)": {
     "sites": 2,
     "scope": [
@@ -290162,6 +290057,15 @@
     ],
     "areas": [
       "routes/customer"
+    ]
+  },
+  "The number printed on each invoice you send.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "The number printed on the card or certificate.": {
@@ -290549,6 +290453,24 @@
     ],
     "areas": [
       "routes/detention-policy"
+    ]
+  },
+  "The organization's federal tax identification number.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "The organization's home timezone, for times that have no place of their own.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "The organization's timezone": {
@@ -293359,6 +293281,15 @@
       "routes/desk"
     ]
   },
+  "The raw contents of EDI traffic. A purge blanks the contents for good but keeps each file and message record and its details.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/organization"
+    ]
+  },
   "The raw file was not kept.": {
     "sites": 1,
     "scope": [
@@ -295058,6 +294989,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "The scanner is asked for each setting; one it cannot do is noted on the stack, not refused.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "The scanner is busy with another job": {
@@ -297943,6 +297883,17 @@
       "edi/lading"
     ]
   },
+  "The text in the X12 character set: accents and typographic marks written as plain ASCII, characters with no ASCII form and the partner's separators removed, spaces collapsed": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/edi",
+      "edi/lading"
+    ]
+  },
   "The text in upper case.": {
     "sites": 2,
     "scope": [
@@ -297966,17 +297917,6 @@
     ]
   },
   "The text with every old replaced by new": {
-    "sites": 2,
-    "scope": [
-      "go",
-      "ts"
-    ],
-    "areas": [
-      "apps/web/edi",
-      "edi/lading"
-    ]
-  },
-  "The text without characters X12 cannot carry or the partner's separators": {
     "sites": 2,
     "scope": [
       "go",
@@ -298782,6 +298722,15 @@
       "routes/trailer"
     ]
   },
+  "The unit a tariff's distance and its rate table rows are in.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "The unit is count or bytes": {
     "sites": 1,
     "scope": [
@@ -299330,6 +299279,24 @@
       "go/other"
     ]
   },
+  "The week of the year, in place of the month.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "The week takes the month's place while it is on.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "The weekly monitoring digest": {
     "sites": 1,
     "scope": [
@@ -299691,6 +299658,15 @@
     ],
     "areas": [
       "packages/shared/lib"
+    ]
+  },
+  "The year the number is issued.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "The year this pricing applies to; set up next year's plan as a new row instead of editing this one.": {
@@ -300192,13 +300168,12 @@
     ]
   },
   "Then": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components",
-      "routes/organization"
+      "apps/web/components"
     ]
   },
   "Then it stops for the day and says so": {
@@ -311009,24 +310984,6 @@
       "routes/agent-control"
     ]
   },
-  "To configure SSO, create an OIDC application in the <a>Okta admin console</a>, copy the redirect URL below into the app's sign-in redirect URIs, then paste the credentials here.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "To configure SSO, register an app in <a>Microsoft Entra ID</a>, copy the redirect URL below into the app's authentication settings, then paste the credentials here.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "To currency is required": {
     "sites": 2,
     "scope": [
@@ -311517,12 +311474,11 @@
     ]
   },
   "Tokens": {
-    "sites": 6,
+    "sites": 5,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/admin",
       "routes/agent-control"
     ]
   },
@@ -313568,7 +313524,7 @@
     ]
   },
   "Tractor": {
-    "sites": 36,
+    "sites": 35,
     "scope": [
       "go",
       "ts"
@@ -313578,7 +313534,6 @@
       "apps/web/config",
       "apps/web/lib",
       "go/other",
-      "routes/admin",
       "routes/desk",
       "routes/fuel-card",
       "routes/fuel-purchase",
@@ -313820,7 +313775,7 @@
     ]
   },
   "Tractors": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "go",
       "ts"
@@ -313951,7 +313906,7 @@
     ]
   },
   "Trailer": {
-    "sites": 21,
+    "sites": 20,
     "scope": [
       "go",
       "ts"
@@ -313962,7 +313917,6 @@
       "apps/web/config",
       "apps/web/lib",
       "go/other",
-      "routes/admin",
       "routes/desk",
       "routes/reports",
       "routes/shipment",
@@ -314236,7 +314190,7 @@
     ]
   },
   "Trailers": {
-    "sites": 6,
+    "sites": 7,
     "scope": [
       "go",
       "ts"
@@ -315225,15 +315179,6 @@
     ],
     "areas": [
       "routes/capture"
-    ]
-  },
-  "Trenova Capture versions": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Trenova Capture {0}": {
@@ -317131,6 +317076,15 @@
       "go/other"
     ]
   },
+  "Turn on brokerage or asset operations. An organization with neither cannot move freight.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/types"
+    ]
+  },
   "Turn on if the employer reported any accidents; the count is asked next.": {
     "sites": 1,
     "scope": [
@@ -317159,15 +317113,6 @@
       "apps/web/lib"
     ]
   },
-  "Turn on scanning and printing into Trenova": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Turn on when the employer's testing history reports a violation.": {
     "sites": 1,
     "scope": [
@@ -317184,6 +317129,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Turn rate confirmations into shipments your team reviews before they are created.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Turn security alerts on or off and set their thresholds": {
@@ -317333,6 +317287,15 @@
       "packages/shared/types"
     ]
   },
+  "Turning it off stops every paired computer until it is turned on again; nothing is unpaired.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Turning off...": {
     "sites": 1,
     "scope": [
@@ -317434,6 +317397,15 @@
     ],
     "areas": [
       "packages/shared/lib"
+    ]
+  },
+  "Two digits (26) or the whole year (2026).": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Two dimensions cannot share a position": {
@@ -318843,7 +318815,7 @@
       "routes/inbox"
     ]
   },
-  "Underscore (_)": {
+  "Underscore ( _ )": {
     "sites": 1,
     "scope": [
       "ts"
@@ -319246,15 +319218,6 @@
     ],
     "areas": [
       "go/other"
-    ]
-  },
-  "Unit used when storing reusable local mileage records.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Unit, driver & place": {
@@ -320424,13 +320387,12 @@
     ]
   },
   "Unsaved changes": {
-    "sites": 7,
+    "sites": 6,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
-      "routes/admin",
       "routes/agent-control",
       "routes/desk",
       "routes/edi",
@@ -321168,6 +321130,15 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "Update on its own": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Update password": {
@@ -322016,6 +321987,15 @@
       "go/other"
     ]
   },
+  "Uploaded documents are not read, so these settings do nothing until reading is turned on.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Uploaded file": {
     "sites": 1,
     "scope": [
@@ -322527,24 +322507,6 @@
       "go/other"
     ]
   },
-  "Use an AI provider for structured extraction on supported document kinds.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Use an AI provider to improve document-kind routing when deterministic classification is insufficient.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Use an absolute folder such as /incoming, without ..": {
     "sites": 1,
     "scope": [
@@ -322740,24 +322702,6 @@
       "apps/web/lib"
     ]
   },
-  "Use separators": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Use stored mileage": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Use street-level addresses for more precise routing.": {
     "sites": 1,
     "scope": [
@@ -322777,12 +322721,13 @@
     ]
   },
   "Use the default": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "routes/admin"
     ]
   },
   "Use the document feeder": {
@@ -322947,15 +322892,6 @@
       "routes/worker"
     ]
   },
-  "Use tokens like {P}, {Y}, {M}, {S}. See Tokens reference above.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Use verified or disputed; a row cannot be actively marked unverified": {
     "sites": 1,
     "scope": [
@@ -323096,15 +323032,6 @@
       "routes/fuel-purchase"
     ]
   },
-  "Used for tenant sign-in URLs such as /login/acme-logistics.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Used for {0}'s invoice cases in place of your organization's.": {
     "sites": 1,
     "scope": [
@@ -323121,6 +323048,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "Used in place of a part the location does not have, such as a ZIP code.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Used in the API keys table and audit trail.": {
@@ -323175,15 +323111,6 @@
     ],
     "areas": [
       "apps/dash/_components"
-    ]
-  },
-  "Used when the location name cannot produce a usable prefix.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Used when the request is made or chased by phone.": {
@@ -323491,24 +323418,6 @@
       "routes/admin"
     ]
   },
-  "Users without an Entra ID account linked to an allowed domain will be locked out. Ensure all users have Entra ID accounts before enabling this.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Users without an Okta account linked to an allowed domain will be locked out. Ensure all users have Okta accounts before enabling this.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Uses the agreement's: {0}": {
     "sites": 1,
     "scope": [
@@ -323753,15 +323662,6 @@
     ],
     "areas": [
       "routes/billing-queue"
-    ]
-  },
-  "Validation helpers and custom formatting overrides.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Validation issues": {
@@ -329914,7 +329814,7 @@
     ]
   },
   "Week": {
-    "sites": 10,
+    "sites": 12,
     "scope": [
       "go",
       "ts"
@@ -330478,6 +330378,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "What AI and agents record as they work. Records older than their period are permanently deleted each night and cannot be recovered.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/organization"
     ]
   },
   "What Desk remembers": {
@@ -331451,7 +331360,7 @@
       "routes/billing-control"
     ]
   },
-  "What happens to a stack once it is read, and how long unfiled pages are kept.": {
+  "What happens to a stack once it is read, and how long unfiled pages wait.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -331934,7 +331843,7 @@
       "go/other"
     ]
   },
-  "What it is for, so people pick the right one": {
+  "What it is for, so people pick the right one.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -332289,6 +332198,15 @@
       "routes/admin"
     ]
   },
+  "What people see when they pick a profile.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "What people wrote": {
     "sites": 1,
     "scope": [
@@ -332574,6 +332492,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "What the code is built from, in the order you choose them.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "What the company pays each pay period; never deducted, but carried so a total-compensation statement shows what the job is worth.": {
@@ -333502,7 +333429,7 @@
       "routes/insights"
     ]
   },
-  "What was read from a document beside what a person confirmed, used to measure extraction accuracy.": {
+  "What was read from a document beside what a person confirmed, used to measure reading accuracy. At least 30 days.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -334237,15 +334164,6 @@
       "routes/dispatch-control"
     ]
   },
-  "When enabled, calculations check stored lane mileage before calling PC*Miler.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "When enabled, late-performance evaluation only applies to stops explicitly marked as appointment stops. Open stops remain operationally scheduled but do not count as late exceptions.": {
     "sites": 1,
     "scope": [
@@ -334480,6 +334398,15 @@
       "routes/billing-control"
     ]
   },
+  "When no type matches, one is added so the document is still filed.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "When occurrences land, and how far ahead the shipment is booked": {
     "sites": 1,
     "scope": [
@@ -334523,15 +334450,6 @@
     ],
     "areas": [
       "go/other"
-    ]
-  },
-  "When postal-code matching is unavailable, fall back to city and state lane keys.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "When rehired": {
@@ -336153,6 +336071,15 @@
       "routes/osha"
     ]
   },
+  "Whether Trenova reads the documents your team uploads.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Whether `at` falls on a Saturday or a Sunday.": {
     "sites": 2,
     "scope": [
@@ -336584,7 +336511,7 @@
       "rules/tariff"
     ]
   },
-  "Whether people can scan and print into Trenova with Trenova Capture. Turning it off stops every paired computer until it is turned on again; nothing is unpaired.": {
+  "Whether people can scan and print into Trenova with Trenova Capture.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -337430,6 +337357,15 @@
       "routes/formula-library"
     ]
   },
+  "Which of your document types an upload is filed under.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Which overdue invoices should I chase today, most urgent first?": {
     "sites": 1,
     "scope": [
@@ -337655,7 +337591,7 @@
       "go/other"
     ]
   },
-  "Which versions of the companion may connect, and whether it updates itself.": {
+  "Which versions of Trenova Capture may connect, and how they update.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -337863,6 +337799,15 @@
     ],
     "areas": [
       "routes/detention-intelligence"
+    ]
+  },
+  "Who did what across the organization. Entries older than their period are permanently deleted each night, unless a legal hold covers them, and cannot be recovered.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/organization"
     ]
   },
   "Who gave it is required": {
@@ -338271,7 +338216,7 @@
       "routes/policies"
     ]
   },
-  "Who viewed, downloaded or exported a record.": {
+  "Who viewed, downloaded or exported a record. At least 90 days.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -339268,15 +339213,6 @@
       "go/other"
     ]
   },
-  "Width of the zero-padded counter (1–10).": {
-    "sites": 2,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Width {0}": {
     "sites": 1,
     "scope": [
@@ -340093,15 +340029,6 @@
       "routes/dispatch-console"
     ]
   },
-  "Work Order Number": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Work anniversaries and recent starters inside the window. Only whole years count, and only for people still here.": {
     "sites": 1,
     "scope": [
@@ -340163,6 +340090,15 @@
     ],
     "areas": [
       "routes/settlement-control"
+    ]
+  },
+  "Work order numbers": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Work out a shipment's move miles again from its stops through the organization's distance profile and routing provider, and save them. Use it after its stops changed and the miles on the board look wrong. It changes the miles only; the charges follow them the next time the shipment is rated.": {
@@ -340329,7 +340265,7 @@
     ]
   },
   "Worker": {
-    "sites": 29,
+    "sites": 28,
     "scope": [
       "go",
       "ts"
@@ -340779,7 +340715,7 @@
     ]
   },
   "Workers": {
-    "sites": 13,
+    "sites": 14,
     "scope": [
       "go",
       "ts"
@@ -341979,6 +341915,15 @@
       "go/other"
     ]
   },
+  "Write the pattern, or turn off your own pattern": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/types"
+    ]
+  },
   "Write the profile": {
     "sites": 1,
     "scope": [
@@ -342051,6 +341996,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Write your own pattern": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Write {0} on your payment so it is applied to this invoice.": {
@@ -342680,7 +342634,7 @@
     ]
   },
   "Year": {
-    "sites": 19,
+    "sites": 21,
     "scope": [
       "go",
       "ts"
@@ -343782,6 +343736,15 @@
       "routes/admin"
     ]
   },
+  "You don't have access to any part of scanning and printing.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "You don't have access to shipments": {
     "sites": 1,
     "scope": [
@@ -344765,6 +344728,15 @@
       "routes/desk"
     ]
   },
+  "Your business unit's code, after the prefix.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Your carrier": {
     "sites": 1,
     "scope": [
@@ -345192,7 +345164,7 @@
       "routes/home"
     ]
   },
-  "Your icon marks this organization in the sidebar, and your logo heads the documents and emails you send. Select either in the preview to change it.": {
+  "Your icon marks this organization in the sidebar, and your logo heads the documents and emails you send. Select either in the preview to change it; it is saved as soon as you place it.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -345618,6 +345590,15 @@
       "go/other"
     ]
   },
+  "Your organization's profile, branding and how it operates": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Your organization's rule": {
     "sites": 1,
     "scope": [
@@ -345769,6 +345750,15 @@
     ],
     "areas": [
       "apps/dash/routes"
+    ]
+  },
+  "Your people sign in at /login/{0}.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Your permissions could not be read; try again": {
@@ -346570,17 +346560,8 @@
       "routes/onboarding"
     ]
   },
-  "ZIP / postal code": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "ZIP code": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
@@ -346591,12 +346572,14 @@
     ]
   },
   "ZIP code is required": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
-      "go"
+      "go",
+      "ts"
     ],
     "areas": [
-      "go/other"
+      "go/other",
+      "packages/shared/types"
     ]
   },
   "ZIP code needs 5 digits.": {
@@ -349279,15 +349262,6 @@
       "go/other"
     ]
   },
-  "company.com, contractor.com": {
-    "sites": 2,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "completed {0}": {
     "sites": 2,
     "scope": [
@@ -350814,6 +350788,15 @@
       "routes/ifta-tax-rate"
     ]
   },
+  "e.g. INV": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "e.g. Invoice date is Oct 3": {
     "sites": 1,
     "scope": [
@@ -350875,6 +350858,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "e.g. LOC": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "e.g. Left a voicemail with HR": {
@@ -351109,15 +351101,6 @@
     ],
     "areas": [
       "routes/benefits"
-    ]
-  },
-  "e.g. PRO": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "e.g. Receipt shows two products; reefer fuel entered separately": {
@@ -355407,15 +355390,6 @@
     ]
   },
   "openid email profile": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "openid, profile, email": {
     "sites": 1,
     "scope": [
       "ts"
@@ -363044,6 +363018,15 @@
       "routes/shipment"
     ]
   },
+  "{0, plural, one {# profile} other {# profiles}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "{0, plural, one {# proposal} other {# proposals}}": {
     "sites": 1,
     "scope": [
@@ -367377,6 +367360,17 @@
       "edi/x12"
     ]
   },
+  "{0} ({1}) holds {2} (U+{3}), a character outside the X12 character set": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/edi",
+      "edi/x12"
+    ]
+  },
   "{0} ({1}) holds {2}, which is not one of its codes": {
     "sites": 2,
     "scope": [
@@ -370745,15 +370739,6 @@
     "areas": [
       "apps/web/components",
       "routes/dispatch-console"
-    ]
-  },
-  "{0} enabled": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "{0} ended without returning a value": {
@@ -381147,6 +381132,17 @@
       "apps/web/hooks"
     ]
   },
+  "{0} was left out: {1} has no characters the X12 character set can carry": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/edi",
+      "edi/lading"
+    ]
+  },
   "{0} was never sent to {1}, so there is nothing to send again": {
     "sites": 1,
     "scope": [
@@ -381253,6 +381249,28 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "{0} was written in the X12 character set and cut to its {3} characters: {1} became {2}": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/edi",
+      "edi/lading"
+    ]
+  },
+  "{0} was written in the X12 character set: {1} became {2}": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/edi",
+      "edi/lading"
     ]
   },
   "{0} watch": {
@@ -381803,15 +381821,6 @@
     ],
     "areas": [
       "routes/desk"
-    ]
-  },
-  "{0} · OpenID connect": {
-    "sites": 2,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "{0} · Pay date {1}": {
@@ -384157,6 +384166,17 @@
     ]
   },
   "{0}{1} held a separator, which was written as a space": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/edi",
+      "edi/x12"
+    ]
+  },
+  "{0}{1} held characters outside the X12 character set, which were written as their closest ASCII form or left out": {
     "sites": 2,
     "scope": [
       "go",

@@ -229,7 +229,7 @@ func TestAShipperStatusAndInvoiceCarryWhatTheTMSWrites(t *testing.T) {
 		},
 	}
 	var kinds []string
-	for _, doc := range statuses(load, tender, func(string) bool { return true }) {
+	for _, doc := range statuses(load, tender, func(string) bool { return true }, nil) {
 		status, ok := doc.document.(shipmentStatus)
 		if !ok {
 			t.Fatalf("%s is a %T", doc.name, doc.document)
@@ -255,7 +255,7 @@ func TestAShipperStatusAndInvoiceCarryWhatTheTMSWrites(t *testing.T) {
 		t.Errorf("the statuses are %s, want %s", got, want)
 	}
 
-	billed := invoice(load, tender, time.UTC).document.(freightInvoice)
+	billed := invoice(load, tender, time.UTC, nil).document.(freightInvoice)
 	if billed.Key != "KVW-1001" || billed.Payment != "ThirdParty" {
 		t.Errorf("%sedioutbound/document.go:freightInvoiceKey and "+
 			"edipayloadbuild/payload.go:shipmentFreightTerms: key %q payment %q",
@@ -279,7 +279,7 @@ func TestAShipperStatusAndInvoiceCarryWhatTheTMSWrites(t *testing.T) {
 	}
 
 	tender.PONumber = "   "
-	unordered := invoice(load, tender, time.UTC).document.(freightInvoice)
+	unordered := invoice(load, tender, time.UTC, nil).document.(freightInvoice)
 	if got, ok := unordered.Refs[refPurchaseOrder]; ok {
 		t.Errorf("%sladingdoc/outbound.go:invoiceRefs: a tender without a PO quotes %q",
 			tmsEDI, got)

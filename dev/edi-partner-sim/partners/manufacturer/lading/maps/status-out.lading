@@ -17,7 +17,7 @@ L11 when exists shipperReference { 01 <- shipperReference, 02 <- "PO" }
       06 <- event.at
       07 <- event.at.zoneCode()
     }
-    MS1 when exists event.city { 01 <- event.city.upper(), 02 <- event.state, 03 <- event.country ?? "US" }
+    MS1 when exists event.city { 01 <- event.city.upper().truncate(30), 02 <- event.state, 03 <- event.country ?? "US" }
   }
   L11 when exists event.stop { 01 <- text(event.stop), 02 <- "QN" }
 }

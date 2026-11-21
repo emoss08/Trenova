@@ -1,8 +1,13 @@
 {
   "Configure carrier pay periods, cost accrual triggers, batch automation, invoice-match tolerance, and AP posting accounts": "Configure los períodos de pago de los transportistas, los activadores de devengo de costos, la automatización de lotes, la tolerancia de cotejo de facturas y las cuentas de contabilización de cuentas por pagar",
   "Configure case formatting rules for data entry across the system": "Configure las reglas de formato de mayúsculas para la introducción de datos en todo el sistema",
+  "Configure how documents are read, classified, extracted, and drafted into shipments": "Configura cómo se leen, clasifican y extraen los documentos y cómo se convierten en borradores de envío",
+  "Configure mileage storage behavior and distance profile assignments": "Configure el comportamiento de almacenamiento de millaje y las asignaciones de perfiles de distancia",
   "Configure organization policy for credits, rebills, write-offs, and invoice adjustment review.": "Configure la política de la organización para abonos, refacturaciones, cancelaciones y revisión de ajustes de facturas.",
+  "Configure sequence generation formats for shipments and billing workflows": "Configure los formatos de generación de secuencias para los flujos de trabajo de envíos y facturación",
   "Every page in {0} you can open.": "Todas las páginas de {0} que puede abrir.",
+  "How long each kind of record is kept before the nightly purge jobs remove it.": "Cuánto tiempo se conserva cada tipo de registro antes de que los procesos nocturnos de depuración lo eliminen.",
+  "Manage your organization profile, compliance, and security settings": "Gestione el perfil, el cumplimiento normativo y los ajustes de seguridad de su organización",
   "No pages you can open here": "No hay páginas que pueda abrir aquí",
   "None of the pages here are open to you. An administrator can grant access or turn this part of Trenova on.": "Ninguna de las páginas de aquí está disponible para usted. Un administrador puede darle acceso o activar esta parte de Trenova."
 }

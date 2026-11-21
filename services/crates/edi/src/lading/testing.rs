@@ -749,7 +749,12 @@ impl<'p> Runner<'p> {
                     document: Some(written),
                     outcomes: output.outcomes,
                     rejected: !invalid.is_empty(),
-                    warnings: Vec::new(),
+                    warnings: output
+                        .findings
+                        .iter()
+                        .filter(|finding| finding.severity == "warning")
+                        .map(|finding| finding.message.english())
+                        .collect(),
                     x12: output.transaction,
                     invalid,
                     not_sent: false,

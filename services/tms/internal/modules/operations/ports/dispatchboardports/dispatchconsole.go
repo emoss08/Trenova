@@ -64,6 +64,7 @@ type BoardMove struct {
 	MoveCount             int                      `json:"moveCount"`
 	Loaded                bool                     `json:"loaded"`
 	Distance              *float64                 `json:"distance"`
+	PaidDistance          *float64                 `json:"paidDistance"`
 	CustomerID            pulid.ID                 `json:"customerId"`
 	CustomerName          string                   `json:"customerName"`
 	ServiceTypeID         pulid.ID                 `json:"serviceTypeId"`

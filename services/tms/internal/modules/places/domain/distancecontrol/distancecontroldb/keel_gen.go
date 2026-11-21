@@ -27,7 +27,7 @@ var distanceControlsTable = schema.Table{
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
 		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`, JSON: `organizationId`},
 		{Name: "store_mileage", Quoted: `"store_mileage"`, Field: "StoreMileage", Kind: schema.KindBool, Flags: 0, Label: `Store Mileage`, JSON: `storeMileage`},
-		{Name: "stored_distance_units", Quoted: `"stored_distance_units"`, Field: "StoredDistanceUnits", Kind: schema.KindString, Flags: 0, Label: `Stored Distance Units`, JSON: `storedDistanceUnits`},
+		{Name: "rating_distance_unit", Quoted: `"rating_distance_unit"`, Field: "RatingDistanceUnit", Kind: schema.KindString, Flags: 0, Label: `Rating Distance Unit`, JSON: `ratingDistanceUnit`},
 		{Name: "postal_code_fallback_to_city", Quoted: `"postal_code_fallback_to_city"`, Field: "PostalCodeFallbackToCity", Kind: schema.KindBool, Flags: 0, Label: `Postal Code Fallback To City`, JSON: `postalCodeFallbackToCity`},
 		{Name: "auto_create_stored_mileage", Quoted: `"auto_create_stored_mileage"`, Field: "AutoCreateStoredMileage", Kind: schema.KindBool, Flags: 0, Label: `Auto Create Stored Mileage`, JSON: `autoCreateStoredMileage`},
 		{Name: "loaded_move_distance_profile_id", Quoted: `"loaded_move_distance_profile_id"`, Field: "LoadedMoveDistanceProfileID", Kind: schema.KindString, Flags: 0, Label: `Loaded Move Distance Profile ID`, JSON: `loadedMoveDistanceProfileId`},
@@ -36,8 +36,6 @@ var distanceControlsTable = schema.Table{
 		{Name: "billing_distance_profile_id", Quoted: `"billing_distance_profile_id"`, Field: "BillingDistanceProfileID", Kind: schema.KindString, Flags: 0, Label: `Billing Distance Profile ID`, JSON: `billingDistanceProfileId`},
 		{Name: "fuel_distance_profile_id", Quoted: `"fuel_distance_profile_id"`, Field: "FuelDistanceProfileID", Kind: schema.KindString, Flags: 0, Label: `Fuel Distance Profile ID`, JSON: `fuelDistanceProfileId`},
 		{Name: "eta_out_of_route_distance_profile_id", Quoted: `"eta_out_of_route_distance_profile_id"`, Field: "EtaOutOfRouteDistanceProfileID", Kind: schema.KindString, Flags: 0, Label: `ETA Out Of Route Distance Profile ID`, JSON: `etaOutOfRouteDistanceProfileId`},
-		{Name: "distance_calculator_shortest_distance_profile_id", Quoted: `"distance_calculator_shortest_distance_profile_id"`, Field: "DistanceCalculatorShortestDistanceProfileID", Kind: schema.KindString, Flags: 0, Label: `Distance Calculator Shortest Distance Profile ID`, JSON: `distanceCalculatorShortestDistanceProfileId`},
-		{Name: "distance_calculator_practical_distance_profile_id", Quoted: `"distance_calculator_practical_distance_profile_id"`, Field: "DistanceCalculatorPracticalDistanceProfileID", Kind: schema.KindString, Flags: 0, Label: `Distance Calculator Practical Distance Profile ID`, JSON: `distanceCalculatorPracticalDistanceProfileId`},
 		{Name: "capture_jurisdiction_miles", Quoted: `"capture_jurisdiction_miles"`, Field: "CaptureJurisdictionMiles", Kind: schema.KindBool, Flags: 0, Label: `Capture Jurisdiction Miles`, JSON: `captureJurisdictionMiles`},
 		{Name: "version", Quoted: `"version"`, Field: "Version", Kind: schema.KindInt64, Flags: schema.FlagVersion, Label: `Version`, JSON: `version`},
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, JSON: `createdAt`},
@@ -45,14 +43,14 @@ var distanceControlsTable = schema.Table{
 	},
 	PK:         []int32{0, 1, 2},
 	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 18},
+	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
+	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
+	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 16},
 	Returning:  nil,
-	Version:    16,
+	Version:    14,
 	AutoID:     0,
-	AutoCreate: 17,
-	AutoUpdate: 18,
+	AutoCreate: 15,
+	AutoUpdate: 16,
 	IDPrefix:   "dc_",
 	New:        newDistanceControl,
 	NewN:       newNDistanceControl,
@@ -66,25 +64,23 @@ var distanceControlsRef = keel.Ref{Table: &distanceControlsTable}
 // DistanceControlsTable is the table of distancecontrol.DistanceControl.
 type DistanceControlsTable struct {
 	keel.TableBase
-	ID                                           keelkinds.PulidIDCol
-	BusinessUnitID                               keelkinds.PulidIDCol
-	OrganizationID                               keelkinds.PulidIDCol
-	StoreMileage                                 keel.BoolCol
-	StoredDistanceUnits                          keel.StringCol
-	PostalCodeFallbackToCity                     keel.BoolCol
-	AutoCreateStoredMileage                      keel.BoolCol
-	LoadedMoveDistanceProfileID                  keelkinds.PulidIDCol
-	EmptyMoveDistanceProfileID                   keelkinds.PulidIDCol
-	PayDistanceProfileID                         keelkinds.PulidIDCol
-	BillingDistanceProfileID                     keelkinds.PulidIDCol
-	FuelDistanceProfileID                        keelkinds.PulidIDCol
-	EtaOutOfRouteDistanceProfileID               keelkinds.PulidIDCol
-	DistanceCalculatorShortestDistanceProfileID  keelkinds.PulidIDCol
-	DistanceCalculatorPracticalDistanceProfileID keelkinds.PulidIDCol
-	CaptureJurisdictionMiles                     keel.BoolCol
-	Version                                      keel.Int64Col
-	CreatedAt                                    keel.Int64Col
-	UpdatedAt                                    keel.Int64Col
+	ID                             keelkinds.PulidIDCol
+	BusinessUnitID                 keelkinds.PulidIDCol
+	OrganizationID                 keelkinds.PulidIDCol
+	StoreMileage                   keel.BoolCol
+	RatingDistanceUnit             keel.StringCol
+	PostalCodeFallbackToCity       keel.BoolCol
+	AutoCreateStoredMileage        keel.BoolCol
+	LoadedMoveDistanceProfileID    keelkinds.PulidIDCol
+	EmptyMoveDistanceProfileID     keelkinds.PulidIDCol
+	PayDistanceProfileID           keelkinds.PulidIDCol
+	BillingDistanceProfileID       keelkinds.PulidIDCol
+	FuelDistanceProfileID          keelkinds.PulidIDCol
+	EtaOutOfRouteDistanceProfileID keelkinds.PulidIDCol
+	CaptureJurisdictionMiles       keel.BoolCol
+	Version                        keel.Int64Col
+	CreatedAt                      keel.Int64Col
+	UpdatedAt                      keel.Int64Col
 }
 
 // DistanceControls references the distance_controls table.
@@ -94,7 +90,7 @@ var DistanceControls = &DistanceControlsTable{
 	BusinessUnitID:                 keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &distanceControlsRef, Index: 1}}},
 	OrganizationID:                 keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &distanceControlsRef, Index: 2}}},
 	StoreMileage:                   keel.BoolCol{Col: keel.Col{Ref: &distanceControlsRef, Index: 3}},
-	StoredDistanceUnits:            keel.StringCol{Col: keel.Col{Ref: &distanceControlsRef, Index: 4}},
+	RatingDistanceUnit:             keel.StringCol{Col: keel.Col{Ref: &distanceControlsRef, Index: 4}},
 	PostalCodeFallbackToCity:       keel.BoolCol{Col: keel.Col{Ref: &distanceControlsRef, Index: 5}},
 	AutoCreateStoredMileage:        keel.BoolCol{Col: keel.Col{Ref: &distanceControlsRef, Index: 6}},
 	LoadedMoveDistanceProfileID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &distanceControlsRef, Index: 7}}},
@@ -103,12 +99,10 @@ var DistanceControls = &DistanceControlsTable{
 	BillingDistanceProfileID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &distanceControlsRef, Index: 10}}},
 	FuelDistanceProfileID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &distanceControlsRef, Index: 11}}},
 	EtaOutOfRouteDistanceProfileID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &distanceControlsRef, Index: 12}}},
-	DistanceCalculatorShortestDistanceProfileID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &distanceControlsRef, Index: 13}}},
-	DistanceCalculatorPracticalDistanceProfileID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &distanceControlsRef, Index: 14}}},
-	CaptureJurisdictionMiles:                     keel.BoolCol{Col: keel.Col{Ref: &distanceControlsRef, Index: 15}},
-	Version:                                      keel.Int64Col{Col: keel.Col{Ref: &distanceControlsRef, Index: 16}},
-	CreatedAt:                                    keel.Int64Col{Col: keel.Col{Ref: &distanceControlsRef, Index: 17}},
-	UpdatedAt:                                    keel.Int64Col{Col: keel.Col{Ref: &distanceControlsRef, Index: 18}},
+	CaptureJurisdictionMiles:       keel.BoolCol{Col: keel.Col{Ref: &distanceControlsRef, Index: 13}},
+	Version:                        keel.Int64Col{Col: keel.Col{Ref: &distanceControlsRef, Index: 14}},
+	CreatedAt:                      keel.Int64Col{Col: keel.Col{Ref: &distanceControlsRef, Index: 15}},
+	UpdatedAt:                      keel.Int64Col{Col: keel.Col{Ref: &distanceControlsRef, Index: 16}},
 }
 
 // BuildDistanceControls builds the table of distance_controls for ref. Generated relation and alias methods call it.
@@ -119,7 +113,7 @@ func BuildDistanceControls(r *keel.Ref) *DistanceControlsTable {
 		BusinessUnitID:                 keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:                 keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
 		StoreMileage:                   keel.BoolCol{Col: keel.Col{Ref: r, Index: 3}},
-		StoredDistanceUnits:            keel.StringCol{Col: keel.Col{Ref: r, Index: 4}},
+		RatingDistanceUnit:             keel.StringCol{Col: keel.Col{Ref: r, Index: 4}},
 		PostalCodeFallbackToCity:       keel.BoolCol{Col: keel.Col{Ref: r, Index: 5}},
 		AutoCreateStoredMileage:        keel.BoolCol{Col: keel.Col{Ref: r, Index: 6}},
 		LoadedMoveDistanceProfileID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 7}}},
@@ -128,12 +122,10 @@ func BuildDistanceControls(r *keel.Ref) *DistanceControlsTable {
 		BillingDistanceProfileID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 10}}},
 		FuelDistanceProfileID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 11}}},
 		EtaOutOfRouteDistanceProfileID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 12}}},
-		DistanceCalculatorShortestDistanceProfileID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 13}}},
-		DistanceCalculatorPracticalDistanceProfileID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 14}}},
-		CaptureJurisdictionMiles:                     keel.BoolCol{Col: keel.Col{Ref: r, Index: 15}},
-		Version:                                      keel.Int64Col{Col: keel.Col{Ref: r, Index: 16}},
-		CreatedAt:                                    keel.Int64Col{Col: keel.Col{Ref: r, Index: 17}},
-		UpdatedAt:                                    keel.Int64Col{Col: keel.Col{Ref: r, Index: 18}},
+		CaptureJurisdictionMiles:       keel.BoolCol{Col: keel.Col{Ref: r, Index: 13}},
+		Version:                        keel.Int64Col{Col: keel.Col{Ref: r, Index: 14}},
+		CreatedAt:                      keel.Int64Col{Col: keel.Col{Ref: r, Index: 15}},
+		UpdatedAt:                      keel.Int64Col{Col: keel.Col{Ref: r, Index: 16}},
 	}
 }
 
@@ -533,7 +525,7 @@ func ptrDistanceControl(p unsafe.Pointer, c int32) any {
 	case 3:
 		return &r.StoreMileage
 	case 4:
-		return &r.StoredDistanceUnits
+		return &r.RatingDistanceUnit
 	case 5:
 		return &r.PostalCodeFallbackToCity
 	case 6:
@@ -551,16 +543,12 @@ func ptrDistanceControl(p unsafe.Pointer, c int32) any {
 	case 12:
 		return (*string)(unsafe.Pointer(&r.EtaOutOfRouteDistanceProfileID))
 	case 13:
-		return (*string)(unsafe.Pointer(&r.DistanceCalculatorShortestDistanceProfileID))
-	case 14:
-		return (*string)(unsafe.Pointer(&r.DistanceCalculatorPracticalDistanceProfileID))
-	case 15:
 		return &r.CaptureJurisdictionMiles
-	case 16:
+	case 14:
 		return &r.Version
-	case 17:
+	case 15:
 		return &r.CreatedAt
-	case 18:
+	case 16:
 		return &r.UpdatedAt
 	}
 	return nil
@@ -578,7 +566,7 @@ func valueDistanceControl(p unsafe.Pointer, c int32) any {
 	case 3:
 		return r.StoreMileage
 	case 4:
-		return r.StoredDistanceUnits
+		return r.RatingDistanceUnit
 	case 5:
 		return r.PostalCodeFallbackToCity
 	case 6:
@@ -596,16 +584,12 @@ func valueDistanceControl(p unsafe.Pointer, c int32) any {
 	case 12:
 		return string(r.EtaOutOfRouteDistanceProfileID)
 	case 13:
-		return string(r.DistanceCalculatorShortestDistanceProfileID)
-	case 14:
-		return string(r.DistanceCalculatorPracticalDistanceProfileID)
-	case 15:
 		return r.CaptureJurisdictionMiles
-	case 16:
+	case 14:
 		return r.Version
-	case 17:
+	case 15:
 		return r.CreatedAt
-	case 18:
+	case 16:
 		return r.UpdatedAt
 	}
 	return nil

@@ -57,10 +57,11 @@ func resolveBandedRate(
 }
 
 func moveDistance(move *shipment.ShipmentMove) decimal.Decimal {
-	if move == nil || move.Distance == nil {
+	paid := move.PaidDistance()
+	if paid == nil {
 		return decimal.Zero
 	}
-	return decimal.NewFromFloat(*move.Distance)
+	return decimal.NewFromFloat(*paid)
 }
 
 func shipmentLinehaul(sp *shipment.Shipment) decimal.Decimal {

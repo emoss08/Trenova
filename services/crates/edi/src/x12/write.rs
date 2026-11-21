@@ -3,14 +3,20 @@
 //! The writer is the one place that knows how text is laid out: separators between elements
 //! and components, the terminator and line ending after each segment, trailing empty elements
 //! left off, the ISA's elements padded to their fixed widths, and the counts in SE01, GE01 and
-//! IEA01 taken from what was written. X12 has no escape, so a value holding a separator has the
-//! separator replaced with a space, and the writer says so.
+//! IEA01 taken from what was written. Every value is first brought into the X12 character set
+//! ([`super::charset`]): an accented letter or typographic mark is written as its ASCII form and
+//! anything with none is left out, before the ISA is padded or cut, so its widths apply to what
+//! is written. X12 has no escape, so a value holding a separator has the separator replaced with
+//! a space. The writer reports each change.
+
+use std::borrow::Cow;
 
 use serde::{Deserialize, Serialize};
 use trenova_module_kit::message;
 use trenova_module_kit::message::{Arg, Message};
 use trenova_module_kit::ops::RequestError;
 
+use super::charset;
 use super::finding::{Finding, FindingKind};
 use super::separators::{Separators, WireSeparators};
 
@@ -161,6 +167,20 @@ fn clean(
     position: usize,
     findings: &mut Vec<Finding>,
 ) -> String {
+    let folded = charset::fold(value);
+    if let Cow::Owned(_) = folded {
+        findings.push(written_finding(
+            FindingKind::ValueWrittenInCharacterSet,
+            Message::with(
+                message!("{0}{1} held characters outside the X12 character set, which were written as their closest ASCII form or left out"),
+                [Arg::from(id), Arg::from(format!("{position:02}"))],
+            ),
+            index,
+            id,
+            position,
+        ));
+    }
+    let value = folded.as_ref();
     let mut reserved = vec![separators.element, separators.segment, separators.component];
     reserved.extend(separators.repetition);
     let had = value
@@ -377,6 +397,80 @@ mod tests {
             written.findings[0].kind,
             FindingKind::ValueContainsSeparator
         );
+    }
+
+    #[test]
+    fn writes_values_in_the_x12_character_set_before_padding_the_isa() {
+        let request = WriteRequest {
+            separators: None,
+            segments: vec![
+                segment(&[
+                    "ISA",
+                    "00",
+                    "",
+                    "00",
+                    "",
+                    "ZZ",
+                    "SOCIÉTÉ",
+                    "ZZ",
+                    "GROẞHANDELSGESELLSCHAFT",
+                    "260107",
+                    "1200",
+                    "",
+                    "00401",
+                    "7",
+                    "0",
+                    "T",
+                    "",
+                ]),
+                segment(&["N1", "SH", "Société Générale – ½ “Dock”"]),
+                segment(&["N3", "北京"]),
+                segment(&["MS1", "PEÑASCO", "TX"]),
+                vec![
+                    Element::from("C3"),
+                    Element::Components(vec![String::from("Ünit"), String::from("2")]),
+                ],
+                segment(&["N9", "ZZ", "a › b"]),
+            ],
+            counts: false,
+        };
+        let written = write(&request).expect("text");
+        let lines: Vec<&str> = written.text.split('~').collect();
+        assert_eq!(
+            lines[0],
+            "ISA*00*          *00*          *ZZ*SOCIETE        *ZZ*GROSSHANDELSGES*260107*1200*^*00401*000000007*0*T*>"
+        );
+        assert_eq!(lines[1], "N1*SH*Societe Generale - 1/2 \"Dock\"");
+        assert_eq!(lines[2], "N3");
+        assert_eq!(lines[3], "MS1*PENASCO*TX");
+        assert_eq!(lines[4], "C3*Unit>2");
+        assert_eq!(
+            lines[5], "N9*ZZ*a   b",
+            "a folded > is the component separator"
+        );
+        assert!(written.text.is_ascii());
+        let kinds: Vec<(FindingKind, Option<u32>)> = written
+            .findings
+            .iter()
+            .map(|finding| (finding.kind, finding.element))
+            .collect();
+        assert_eq!(
+            kinds,
+            [
+                (FindingKind::ValueWrittenInCharacterSet, Some(6)),
+                (FindingKind::ValueWrittenInCharacterSet, Some(8)),
+                (FindingKind::ElementTooLong, Some(8)),
+                (FindingKind::ValueWrittenInCharacterSet, Some(2)),
+                (FindingKind::ValueWrittenInCharacterSet, Some(1)),
+                (FindingKind::ValueWrittenInCharacterSet, Some(1)),
+                (FindingKind::ValueWrittenInCharacterSet, Some(1)),
+                (FindingKind::ValueWrittenInCharacterSet, Some(2)),
+                (FindingKind::ValueContainsSeparator, Some(2)),
+            ]
+        );
+        assert!(written.findings.iter().all(|finding| finding.severity
+            == crate::x12::finding::Severity::Warning
+            || finding.kind == FindingKind::ElementTooLong));
     }
 
     #[test]

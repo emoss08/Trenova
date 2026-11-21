@@ -8,6 +8,8 @@ import (
 	"slices"
 	"strconv"
 	"time"
+
+	"github.com/emoss08/trenova/edi-partner-sim/internal/partner/geo"
 )
 
 var unPattern = regexp.MustCompile(`^(UN|NA)[0-9]{4}$`)
@@ -90,8 +92,8 @@ func (g *generator) places() ([]resolvedParty, []resolvedParty) {
 	}
 	deliveries := make([]resolvedParty, 0, count-pickups)
 	for len(deliveries) < count-pickups {
-		cityIndex := g.rng.IntN(len(cities))
-		place := cities[cityIndex]
+		cityIndex := g.rng.IntN(len(geo.Cities))
+		place := geo.Cities[cityIndex]
 		if taken[place.Name] {
 			continue
 		}
@@ -104,14 +106,14 @@ func (g *generator) places() ([]resolvedParty, []resolvedParty) {
 
 func (g *generator) consignee(nameIndex, cityIndex int) resolvedParty {
 	p := g.profile
-	place := cities[cityIndex]
+	place := geo.Cities[cityIndex]
 	code := fmt.Sprintf("%s%02d%02d", p.Consignees.Code, nameIndex, cityIndex)
 	fixed := rand.New(rand.NewPCG(hash64(code), 0))
 	street := fmt.Sprintf(
 		"%d %s %s",
 		100+fixed.IntN(9_800),
-		streetNames[fixed.IntN(len(streetNames))],
-		streetKinds[fixed.IntN(len(streetKinds))],
+		geo.StreetNames[fixed.IntN(len(geo.StreetNames))],
+		geo.StreetKinds[fixed.IntN(len(geo.StreetKinds))],
 	)
 	return resolvedParty{
 		party: Party{
@@ -128,17 +130,17 @@ func (g *generator) consignee(nameIndex, cityIndex int) resolvedParty {
 	}
 }
 
-func nearestFirst(from city, places []resolvedParty) []resolvedParty {
+func nearestFirst(from geo.City, places []resolvedParty) []resolvedParty {
 	remaining := slices.Clone(places)
 	ordered := make([]resolvedParty, 0, len(places))
 	current := from
 	for len(remaining) > 0 {
 		best := 0
 		for index := range remaining {
-			if roadMiles(
+			if geo.RoadMiles(
 				current,
 				remaining[index].city,
-			) < roadMiles(
+			) < geo.RoadMiles(
 				current,
 				remaining[best].city,
 			) {
@@ -185,7 +187,7 @@ func (g *generator) stops(load *Load, origins, deliveries []resolvedParty) {
 	}
 }
 
-func (g *generator) contact(stop *Stop, name string, place city) {
+func (g *generator) contact(stop *Stop, name string, place geo.City) {
 	if !g.chance(g.profile.Contact) {
 		return
 	}
@@ -268,9 +270,14 @@ func (g *generator) compatible() []CommodityDef {
 	if g.cold == nil {
 		return g.profile.Commodities
 	}
+	middle := (g.cold.MinF + g.cold.MaxF) / 2
 	var out []CommodityDef
 	for _, commodity := range g.profile.Commodities {
-		if commodity.Temperature == nil || g.cold.overlaps(TempRange{
+		held := TempRange{MinF: middle, MaxF: middle}
+		if !g.profile.oneRange {
+			held = *g.cold
+		}
+		if commodity.Temperature == nil || held.overlaps(TempRange{
 			MinF: commodity.Temperature.Min,
 			MaxF: commodity.Temperature.Max,
 		}) {
@@ -340,7 +347,7 @@ func (g *generator) schedule(load *Load, origins, deliveries []resolvedParty) {
 	miles := 0
 	for index := range load.Stops {
 		if index > 0 {
-			leg := roadMiles(places[index-1].city, places[index].city)
+			leg := geo.RoadMiles(places[index-1].city, places[index].city)
 			miles += leg
 			drive := time.Duration(float64(leg)/float64(p.Window.Mph)*float64(time.Hour)) +
 				time.Duration(p.Window.DwellHours)*time.Hour

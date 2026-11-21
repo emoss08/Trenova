@@ -5,7 +5,7 @@ description: >
   invoice as a 210, and Tamberlane's 999s reconcile each of them.
 within: 4m
 steps:
-  - send: { set: "204", as: t1 }
+  - send: { set: "204", as: t1, load: { maxWeight: 43500 } }
   - expect: { ack: t1, accepted: true }
   - expect: { wire: "999", about: t1, count: 1 }
   - trenova: { decide: t1, decision: accept }

@@ -20,6 +20,7 @@ import {
   settingsColumnClass,
   settingsFillClass,
   settingsListClass,
+  settingsReadoutClass,
   settingsScrollBodyClass,
   settingsSectionClass,
   settingsSectionHeadClass,
@@ -37,9 +38,17 @@ import {
 /**
  * `input` is any single-line control (`InputField`, `NumberField`, `SelectField`, an
  * autocomplete, a segmented control); `checkbox` is a `CheckboxField`; `image` is an upload with
- * its preview; `callout` is an inline `Alert` the form always shows among its fields.
+ * its preview; `preview` is a tall picture the form draws of its own result (the branding
+ * preview); `callout` is an inline `Alert` the form always shows among its fields.
  */
-export type SettingsFieldKind = "input" | "textarea" | "switch" | "checkbox" | "image" | "callout";
+export type SettingsFieldKind =
+  | "input"
+  | "textarea"
+  | "switch"
+  | "checkbox"
+  | "image"
+  | "preview"
+  | "callout";
 
 export type SettingsFieldSpec =
   | SettingsFieldKind
@@ -146,6 +155,11 @@ function CalloutSkeleton() {
   );
 }
 
+/** The height of the branding preview's frame (`h-80`), so the form lands where the outline was. */
+function PreviewSkeleton() {
+  return <Skeleton className="h-80 w-full rounded-lg" />;
+}
+
 function FieldSkeleton({ field, switches }: { field: ResolvedField; switches: "left" | "right" }) {
   switch (field.kind) {
     case "switch":
@@ -156,6 +170,8 @@ function FieldSkeleton({ field, switches }: { field: ResolvedField; switches: "l
       return <CheckboxFieldSkeleton outlined={field.outlined} />;
     case "image":
       return <ImageFieldSkeleton />;
+    case "preview":
+      return <PreviewSkeleton />;
     case "callout":
       return <CalloutSkeleton />;
     case "input":
@@ -334,20 +350,31 @@ export function SettingsListSectionSkeleton({ section }: { section: SettingsSect
         ))}
       </div>
       <div className={settingsListClass}>
-        {rows.map((field, index) => (
-          <div
-            key={index}
-            data-slot="field-skeleton"
-            data-kind={field.kind}
-            className="flex min-h-12 items-center gap-6 px-3.5 py-2.5"
-          >
-            <div className="flex min-w-0 flex-1 flex-col gap-1.5">
-              <Skeleton className="h-3.5 w-44" />
-              <Skeleton className="h-3 w-3/5" />
+        {rows.map((field, index) =>
+          field.kind === "preview" ? (
+            <div
+              key={index}
+              data-slot="field-skeleton"
+              data-kind={field.kind}
+              className={settingsReadoutClass}
+            >
+              <PreviewSkeleton />
             </div>
-            <RowControlSkeleton field={field} />
-          </div>
-        ))}
+          ) : (
+            <div
+              key={index}
+              data-slot="field-skeleton"
+              data-kind={field.kind}
+              className="flex min-h-12 items-center gap-6 px-3.5 py-2.5"
+            >
+              <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+                <Skeleton className="h-3.5 w-44" />
+                <Skeleton className="h-3 w-3/5" />
+              </div>
+              <RowControlSkeleton field={field} />
+            </div>
+          ),
+        )}
       </div>
     </div>
   );

@@ -35,7 +35,8 @@ export const MY_DOT_PROFILE_SECTIONS = [
   "company",
 ] as const satisfies readonly CarrierIntelProfileSectionId[];
 
-const ORGANIZATION_SETTINGS_HREF = appPath("/admin/organization-settings");
+/** The DOT number is set on organization settings' Operations tab. */
+const ORGANIZATION_SETTINGS_HREF = `${appPath("/admin/organization-settings")}?tab=operations`;
 
 function IntegrationsButton() {
   const t = useT();

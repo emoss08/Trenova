@@ -6,6 +6,12 @@ rule "an invoice Ashgrove can pay" {
   require exists bol else hold "Ashgrove needs the BOL on every invoice"
 }
 
+/// Ashgrove's guide carries a reference of at most 30 characters, and a cut one matches nothing.
+rule "references Ashgrove's guide can carry" {
+  require (bol ?? "").length() <= 30
+    else hold "Ashgrove's guide takes a BOL of at most 30 characters: shorten it before sending"
+}
+
 test "a complete invoice goes out" {
   given freightInvoice { number: "INV-5001", date: @2026-02-16, key: "1000037", bol: "646458", total: $1_418.75 }
   expect no holds
@@ -14,4 +20,9 @@ test "a complete invoice goes out" {
 test "an invoice without the BOL is held" {
   given freightInvoice { number: "INV-5001", date: @2026-02-16, key: "1000037", total: $1_418.75 }
   expect held "Ashgrove needs the BOL on every invoice"
+}
+
+test "a BOL longer than Ashgrove's guide takes is held" {
+  given freightInvoice { number: "INV-5001", date: @2026-02-16, key: "1000037", bol: "8100798987-REISSUED-AFTER-RECONSIGNMENT", total: $1_418.75 }
+  expect held "Ashgrove's guide takes a BOL of at most 30 characters: shorten it before sending"
 }

@@ -1,0 +1,9 @@
+name: a tender over Tamberlane's van limit is held for a planner
+description: >
+  The tender weighs more than the 43,500 lb Trenova takes from Tamberlane automatically. It is
+  acknowledged, held for a planner with the reason, and no 990 goes out on its own.
+steps:
+  - send: { set: "204", as: t1, load: { minWeight: 44000 } }
+  - expect: { ack: t1, accepted: true }
+  - expect: { flow: t1, status: Held, why: "Over 43,500 lb" }
+  - expect: { wire: "990", about: t1, none: true, within: 30s }

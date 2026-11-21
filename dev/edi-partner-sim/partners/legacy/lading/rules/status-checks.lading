@@ -6,6 +6,12 @@ rule "a status quotes the BOL" {
   require exists bol else hold "Ashgrove needs the BOL on every status: add it before sending"
 }
 
+/// Ashgrove's guide carries a BOL of at most 30 characters, and a cut BOL matches nothing.
+rule "a BOL Ashgrove's guide can carry" {
+  require (bol ?? "").length() <= 30
+    else hold "Ashgrove's guide takes a BOL of at most 30 characters: shorten it before sending"
+}
+
 test "a delivery with its BOL goes out" {
   given shipmentStatus { key: "1000037", bol: "646458", events: [{ kind: Delivered, at: @2026-02-13T14:40Z }] }
   expect no holds
@@ -15,4 +21,9 @@ test "a delivery with its BOL goes out" {
 test "an arrival is never sent" {
   given shipmentStatus { key: "1000037", bol: "646458", events: [{ kind: ArrivedDelivery, at: @2026-02-13T14:40Z }] }
   expect no sent
+}
+
+test "a BOL longer than Ashgrove's guide takes is held" {
+  given shipmentStatus { key: "1000037", bol: "8100798987-REISSUED-AFTER-RECONSIGNMENT", events: [{ kind: Delivered, at: @2026-02-13T14:40Z }] }
+  expect held "Ashgrove's guide takes a BOL of at most 30 characters: shorten it before sending"
 }

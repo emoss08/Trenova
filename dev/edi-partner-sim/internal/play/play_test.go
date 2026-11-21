@@ -126,9 +126,7 @@ func TestHappyPathPassesAgainstTheFakeTrenova(t *testing.T) {
 	report := r.run(t, "happy")
 	s := scenarioOf(t, report, "happy")
 	if s.Status != StatusPassed || !report.Passed() {
-		var buf bytes.Buffer
-		s.Write(&buf)
-		t.Fatalf("happy path %s: %+v\n%s\n%s", s.Status, s.Failures, buf.String(), r.out)
+		t.Fatalf("happy path %s: %+v\n%+v\n%s", s.Status, s.Failures, s.Steps, r.out)
 	}
 	if len(s.Conversations) != 1 {
 		t.Fatalf("conversations: %d", len(s.Conversations))
@@ -151,8 +149,8 @@ func TestHappyPathPassesAgainstTheFakeTrenova(t *testing.T) {
 	if from["partner"] == 0 || from["trenova"] < 5 {
 		t.Fatalf("the wire log holds both sides: %v", from)
 	}
-	if len(c.States) == 0 || c.ShipmentID == "" {
-		t.Fatalf("state snapshots: %+v, shipment %q", c.States, c.ShipmentID)
+	if len(c.States) == 0 {
+		t.Fatalf("state snapshots: %+v", c.States)
 	}
 	setup := report.Partners[0].Provision
 	if setup.Failure != "" || setup.InboundURL == "" || setup.VersionNumber == 0 {
@@ -272,6 +270,28 @@ func TestAWaitEndsAtItsDeadline(t *testing.T) {
 	}
 }
 
+func TestTheDeadlineScaleShortensEveryWaitAndEachScenarioIsReportedAsItEnds(t *testing.T) {
+	r := newRig(t)
+	r.options.Scale = 0.25
+	var finished []string
+	r.options.OnScenario = func(partner string, s *ScenarioReport) {
+		finished = append(finished, partner+"/"+s.Slug+" "+s.Status)
+	}
+	report := r.run(t, "never-escalates")
+	s := scenarioOf(t, report, "never-escalates")
+	wait := s.Steps[len(s.Steps)-1]
+	if s.Status != StatusFailed || time.Duration(wait.Took) >= time.Second {
+		t.Fatalf("a 1s wait at ×0.25: %s after %s", s.Status, wait.Took)
+	}
+	if len(finished) != 1 || !strings.HasSuffix(finished[0], "never-escalates failed") {
+		t.Fatalf("the scenarios reported as they ended: %v", finished)
+	}
+	if report.Scale != 0.25 || report.Waiting.Expected != 1 ||
+		report.Waiting.Failed != wait.Took {
+		t.Fatalf("the run's waiting: ×%g %+v", report.Scale, report.Waiting)
+	}
+}
+
 func TestAPartnerRejectionEscalates(t *testing.T) {
 	r := newRig(t)
 	report := r.run(t, "rejected")
@@ -328,12 +348,6 @@ func TestAPartnerThatCannotCertifyStopsWithWhy(t *testing.T) {
 	if len(p.Provision.FailingTests) != 1 ||
 		!strings.Contains(p.Provision.FailingTests[0], "expected held") {
 		t.Fatalf("the failing tests: %v", p.Provision.FailingTests)
-	}
-	var summary bytes.Buffer
-	report.WriteSummary(&summary)
-	if !strings.Contains(summary.String(), "failing test:") ||
-		!strings.Contains(summary.String(), "FAIL") {
-		t.Fatalf("the summary:\n%s", summary.String())
 	}
 }
 

@@ -323,3 +323,20 @@ func TestComputeMovePayOverrideIgnoresOtherComponents(t *testing.T) {
 	_, gross := computeMovePay(input)
 	assert.Equal(t, int64(6000+10000), gross)
 }
+
+func TestComputeMovePayPaysThePaidDistance(t *testing.T) {
+	profile := testProfile(&driverpay.PayProfileComponent{
+		Kind:     driverpay.ComponentKindLinehaul,
+		Method:   driverpay.CalcMethodPerLoadedMile,
+		Rate:     decimal.RequireFromString("0.50"),
+		IsActive: true,
+	})
+	move := loadedMove(500, 2)
+	move.PayDistance = decPtr(520)
+
+	components, gross := computeMovePay(calcInput(profile, move))
+
+	require.Len(t, components, 1)
+	assert.Equal(t, int64(26000), gross)
+	assert.Equal(t, "520", moveDistance(move).String())
+}

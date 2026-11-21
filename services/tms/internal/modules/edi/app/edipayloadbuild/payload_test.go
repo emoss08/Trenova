@@ -725,6 +725,29 @@ func TestBuildShipmentEventStatusPayload_CodesTheStopThatMoved(t *testing.T) {
 			code:   "D1",
 			stopID: deliveryID,
 		},
+		{
+			name:   "a driver committed to the move dispatches the load from its pickup",
+			event:  shipmentevent.Event{Type: shipmentevent.TypeDriverAssigned, MoveID: moveID},
+			code:   "P1",
+			stopID: pickupID,
+		},
+		{
+			name:   "a carrier covering the move dispatches the load",
+			event:  shipmentevent.Event{Type: shipmentevent.TypeCarrierAssigned, MoveID: moveID},
+			code:   "P1",
+			stopID: pickupID,
+		},
+		{
+			name: "a shipment saved as assigned is dispatched",
+			event: shipmentevent.Event{
+				Type: shipmentevent.TypeStatusChanged,
+				Metadata: map[string]any{
+					"newStatus": string(shipmentvocab.StatusPartiallyAssigned),
+				},
+			},
+			code:   "P1",
+			stopID: pickupID,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

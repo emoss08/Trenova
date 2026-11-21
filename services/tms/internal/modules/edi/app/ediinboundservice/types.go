@@ -32,6 +32,13 @@ type parsedInterchange struct {
 	usage               string
 	groups              []parsedGroup
 	transactions        []parsedTransaction
+	interchangeAcks     []interchangeAck
+}
+
+type interchangeAck struct {
+	controlNumber string
+	code          string
+	note          string
 }
 
 type parsedGroup struct {
@@ -73,6 +80,7 @@ type acknowledgmentEntry struct {
 	originalTransactionSet    string
 	originalControlNumber     string
 	acknowledgmentCode        string
+	syntaxErrors              []string
 	diagnostics               []edipayload.AcknowledgmentDiagnostic
 	groupAcknowledgmentCode   string
 	originalFunctionalGroupID string

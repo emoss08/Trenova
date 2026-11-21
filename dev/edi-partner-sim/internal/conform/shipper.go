@@ -8,6 +8,7 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/edi-partner-sim/internal/partner"
+	"github.com/emoss08/trenova/edi-partner-sim/internal/partner/spoken"
 	"github.com/emoss08/trenova/pkg/lading"
 )
 
@@ -63,7 +64,7 @@ func (r *runner) shipper(ctx context.Context, s *subject, c *Case) {
 		})
 		return
 	}
-	c.Variation, c.Title = variation.String(), variation.Describe()
+	c.Variation, c.Title = variation.String(), spoken.Variation(variation)
 	controls := partner.Controls{
 		Interchange: partner.NewCounter(int64(c.Seed % 999_999_999)),
 		Group:       partner.NewCounter(int64(c.Seed % 999_999_999)),
@@ -113,9 +114,11 @@ func (r *runner) answer(
 			plan = append(plan, doc)
 		}
 	}
-	add(responseSet, responses(tender.Key, sentAt.Add(respondIn), zone)...)
-	add(statusSet, statuses(load, tender, s.sendsOn(statusSet))...)
-	add(invoiceSet, invoice(load, tender, s.def.Partner.Location()))
+	v := newVariety(s.def.Name(), s.guides, c.Seed)
+	built := v.shipment(tender)
+	add(responseSet, responses(tender.Key, sentAt.Add(respondIn), zone, v)...)
+	add(statusSet, statuses(load, built, s.sendsOn(statusSet), v)...)
+	add(invoiceSet, invoice(load, built, s.def.Partner.Location(), v))
 	var index uint64
 	for i := range plan {
 		r.write(ctx, s, c, plan[i], controlFor(c.Seed, index))

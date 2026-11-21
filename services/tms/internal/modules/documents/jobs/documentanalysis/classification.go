@@ -15,16 +15,16 @@ func ClassifyDocumentWithControl(
 	fingerprint *ProviderFingerprint,
 ) *ClassificationResult {
 	if control == nil || !control.EnableAutoClassification {
-		return &ClassificationResult{
+		return settledByRule(&ClassificationResult{
 			Kind:           KindOther,
 			Confidence:     0,
 			Signals:        []string{"auto classification disabled"},
 			ReviewRequired: true,
 			Source:         "disabled",
 			Reason:         "automatic classification disabled by document controls",
-		}
+		})
 	}
-	return classifyDocumentWithFeatures(name, text, features, fingerprint)
+	return settledByRule(classifyDocumentWithFeatures(name, text, features, fingerprint))
 }
 
 func classifyDocumentWithFeatures(

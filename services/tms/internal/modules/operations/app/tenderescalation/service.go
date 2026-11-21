@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/shopspring/decimal"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -61,17 +62,7 @@ func (s *Service) Escalate(
 		s.notifyEscalationStopped(ctx, tenantInfo, exhausted, "no carrier is left to ask")
 		return
 	}
-	sell := sh.TotalChargeAmount.Decimal
-	for _, offer := range offers {
-		ceiling := tender.RateCeiling(
-			sell,
-			policy.CounterMarginFloor,
-			offer.RateMethod == shipmentvocab.CarrierRateMethodPerMile,
-			move.Distance,
-		)
-		offer.Rate = tender.EscalationRate(offer.Rate, policy.EscalationRateIncrease, ceiling)
-		offer.OfferTTLSeconds = policy.EscalationOfferTTLSecs
-	}
+	escalateOffers(offers, sh.TotalChargeAmount.Decimal, move.PaidDistance(), &policy)
 
 	from := exhausted.ID
 	next := &tender.Tender{
@@ -94,6 +85,24 @@ func (s *Service) Escalate(
 	}
 
 	s.announceEscalation(ctx, tenantInfo, exhausted, created, &policy)
+}
+
+func escalateOffers(
+	offers []*tender.TenderOffer,
+	sell decimal.Decimal,
+	paidDistance *float64,
+	policy *dispatchcontrol.TenderPolicy,
+) {
+	for _, offer := range offers {
+		ceiling := tender.RateCeiling(
+			sell,
+			policy.CounterMarginFloor,
+			offer.RateMethod == shipmentvocab.CarrierRateMethodPerMile,
+			paidDistance,
+		)
+		offer.Rate = tender.EscalationRate(offer.Rate, policy.EscalationRateIncrease, ceiling)
+		offer.OfferTTLSeconds = policy.EscalationOfferTTLSecs
+	}
 }
 
 func (s *Service) announceEscalation(

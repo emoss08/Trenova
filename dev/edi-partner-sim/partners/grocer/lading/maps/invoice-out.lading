@@ -18,10 +18,10 @@ N9 when exists refs["PO"] { 01 <- "PO", 02 <- refs["PO"] }
 
 when exists billTo {
   0100 {
-    N1 { 01 <- "BT", 02 <- billTo.name }
-    N3 when exists billTo.address { 01 <- billTo.address.line1, 02 <- billTo.address.line2 }
+    N1 { 01 <- "BT", 02 <- billTo.name.truncate(60) }
+    N3 when exists billTo.address { 01 <- billTo.address.line1.truncate(55), 02 <- billTo.address.line2.truncate(55) }
     N4 when exists billTo.address {
-      01 <- billTo.address.city
+      01 <- billTo.address.city.truncate(30)
       02 <- billTo.address.state
       03 <- billTo.address.postal
       04 <- billTo.address.country

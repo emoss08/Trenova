@@ -514,7 +514,7 @@ func (s *Service) buildAssignment(
 		RateQuoteID:           req.RateQuoteID,
 		Accessorials:          accessorials,
 	}
-	entity.SyncTotals(move.Distance)
+	entity.SyncTotals(move.PaidDistance())
 
 	return entity
 }

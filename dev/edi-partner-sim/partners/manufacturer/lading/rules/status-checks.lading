@@ -13,6 +13,12 @@ rule "no status from the future" {
   }
 }
 
+/// Kestrel's guide carries a BOL of at most 30 characters, and a cut BOL matches nothing.
+rule "a BOL Kestrel's guide can carry" {
+  require (bol ?? "").length() <= 30
+    else hold "Kestrel's guide takes a BOL of at most 30 characters: shorten it before sending"
+}
+
 test "a status with its BOL goes out" {
   given now = @2026-04-26T20:00Z
   given shipmentStatus {
@@ -52,4 +58,10 @@ test "a dispatch among other statuses is left out of the 214" {
   expect sent
   expect x12 contains "LX*1~AT7*X3*"
   expect no rejects
+}
+
+test "a BOL longer than Kestrel's guide takes is held" {
+  given now = @2026-04-26T20:00Z
+  given shipmentStatus { key: "KVW-100037", bol: "8100798987-REISSUED-AFTER-RECONSIGNMENT", events: [{ kind: Delivered, at: @2026-04-26T19:30Z }] }
+  expect held "Kestrel's guide takes a BOL of at most 30 characters: shorten it before sending"
 }

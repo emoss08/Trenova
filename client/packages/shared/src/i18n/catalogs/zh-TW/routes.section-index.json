@@ -1,8 +1,13 @@
 {
   "Configure carrier pay periods, cost accrual triggers, batch automation, invoice-match tolerance, and AP posting accounts": "設定承運業者的薪資期間、成本計提觸發條件、批次自動化、發票比對容差，以及應付帳款過帳科目",
   "Configure case formatting rules for data entry across the system": "設定全系統資料輸入的大小寫格式規則",
+  "Configure how documents are read, classified, extracted, and drafted into shipments": "設定文件的讀取、分類、擷取方式，以及如何轉為貨件草稿",
+  "Configure mileage storage behavior and distance profile assignments": "設定里程儲存行為與距離設定檔指派",
   "Configure organization policy for credits, rebills, write-offs, and invoice adjustment review.": "設定組織在貸記、重新開單、沖銷與發票調整審查方面的政策。",
+  "Configure sequence generation formats for shipments and billing workflows": "設定貨運與帳務工作流程的序號產生格式",
   "Every page in {0} you can open.": "您可以開啟的{0}所有頁面。",
+  "How long each kind of record is kept before the nightly purge jobs remove it.": "每種紀錄在夜間清除作業移除前保留的時間。",
+  "Manage your organization profile, compliance, and security settings": "管理貴組織的設定檔、法規遵循與安全性設定",
   "No pages you can open here": "這裡沒有您可以開啟的頁面",
   "None of the pages here are open to you. An administrator can grant access or turn this part of Trenova on.": "這裡的頁面都無法供您開啟。管理員可以授予存取權限，或啟用 Trenova 的這個區域。"
 }

@@ -182,11 +182,7 @@ func (a *Activities) finalizeProcessDocumentIntelligence(
 		return err
 	}
 	a.recordDetectedSignature(ctx, p.Document, p.TenantInfo, p.Signature)
-	indexedText := p.Extracted.Text
-	if !p.Control.EnableFullTextIndexing {
-		indexedText = ""
-	}
-	a.support.SyncSearchProjection(ctx, p.Document, indexedText)
+	a.support.SyncSearchProjection(ctx, p.Document, p.Extracted.Text)
 	inboundmessageports.AnnounceDocumentAttached(ctx, a.triage, p.Document)
 
 	return a.maybeApplyAsyncAIEnqueueFailure(ctx, p)
@@ -424,6 +420,10 @@ func (a *Activities) enrichWithAI(
 		}, nil
 	}
 
+	if !payload.Control.AsksAIToClassify() {
+		return enrichWithoutRouting(payload, diagnostics), nil
+	}
+
 	tenantInfo := pagination.TenantInfo{
 		OrgID:  payload.Document.OrganizationID,
 		BuID:   payload.Document.BusinessUnitID,
@@ -510,57 +510,94 @@ func (a *Activities) enrichWithAI(
 		}, nil
 	}
 
-	routedClassification := payload.Classification
-	routedClassification.Kind = documentaiextractionjobs.NormalizeRoutedKind(route.DocumentKind)
-	routedClassification.Confidence = route.Confidence
-	routedClassification.Signals = sliceutils.DedupeStrings(
-		append(payload.Classification.Signals, route.Signals...),
-	)
-	routedClassification.ReviewRequired = documentaiextractionjobs.NormalizeAIReviewStatus(
-		route.ReviewStatus,
-	) != documentanalysis.ReviewStatusReady
-	routedClassification.Source = documentaiextractionjobs.NormalizeClassifierSource(
-		route.ClassifierSource,
-	)
-	routedClassification.ProviderFingerprint = stringutils.FirstNonEmpty(
-		route.ProviderFingerprint,
-		documentanalysis.ProviderName(payload.Fingerprint),
-	)
-	routedClassification.Reason = stringutils.FirstNonEmpty(
-		route.Reason,
-		payload.Classification.Reason,
-	)
-	routedAnalysis := documentanalysis.AnalyzeDocument(routedClassification, payload.Extracted)
-
-	if !strings.EqualFold(routedClassification.Kind, documentanalysis.KindRateConfirmation) ||
-		!payload.Control.EnableAIAssistedExtraction ||
-		!route.ShouldExtract {
-		switch {
-		case !strings.EqualFold(routedClassification.Kind, documentanalysis.KindRateConfirmation):
-			diagnostics.RejectionReason = "ai_routed_non_rate_confirmation"
-		case !payload.Control.EnableAIAssistedExtraction:
-			diagnostics.RejectionReason = "ai_assisted_extraction_disabled"
-		case !route.ShouldExtract:
-			diagnostics.RejectionReason = "ai_route_declined_extraction"
-		}
-		return &documentanalysis.EnrichmentResult{
-			Classification:       routedClassification,
-			DocumentIntelligence: routedAnalysis,
-			AIDiagnostics:        diagnostics,
-			Signature:            route.Signature,
-			EnqueueAsyncAI:       false,
-		}, nil
+	modelClassification := &documentanalysis.ClassificationResult{
+		Kind:       documentaiextractionjobs.NormalizeRoutedKind(route.DocumentKind),
+		Confidence: route.Confidence,
+		Signals: sliceutils.DedupeStrings(
+			append(append([]string{}, payload.Classification.Signals...), route.Signals...),
+		),
+		ReviewRequired: documentaiextractionjobs.NormalizeAIReviewStatus(
+			route.ReviewStatus,
+		) != documentanalysis.ReviewStatusReady,
+		Source: documentaiextractionjobs.NormalizeClassifierSource(route.ClassifierSource),
+		ProviderFingerprint: stringutils.FirstNonEmpty(
+			route.ProviderFingerprint,
+			documentanalysis.ProviderName(payload.Fingerprint),
+		),
+		Reason: stringutils.FirstNonEmpty(route.Reason, payload.Classification.Reason),
 	}
-
-	diagnostics.AcceptanceStatus = documentanalysis.AIAcceptanceStatusPending
-	diagnostics.RejectionReason = ""
-	return &documentanalysis.EnrichmentResult{
-		Classification:       routedClassification,
-		DocumentIntelligence: routedAnalysis,
+	settled := documentanalysis.SettleClassification(payload.Classification, modelClassification)
+	settledAnalysis := documentanalysis.AnalyzeDocument(settled, payload.Extracted)
+	diagnostics.FallbackAnalysis = settledAnalysis
+	result := &documentanalysis.EnrichmentResult{
+		Classification:       settled,
+		DocumentIntelligence: settledAnalysis,
 		AIDiagnostics:        diagnostics,
 		Signature:            route.Signature,
-		EnqueueAsyncAI:       true,
-	}, nil
+	}
+
+	diagnostics.RejectionReason = readingRejection(
+		payload.Control,
+		settled,
+		modelClassification,
+		route,
+	)
+	if diagnostics.RejectionReason == "" {
+		diagnostics.AcceptanceStatus = documentanalysis.AIAcceptanceStatusPending
+		result.EnqueueAsyncAI = true
+	}
+
+	return result, nil
+}
+
+const (
+	rejectionRoutedNonRateConfirmation     = "ai_routed_non_rate_confirmation"
+	rejectionClassifiedNonRateConfirmation = "classified_non_rate_confirmation"
+	rejectionRouteDeclinedExtraction       = "ai_route_declined_extraction"
+)
+
+func readingRejection(
+	control *documentcontrol.DocumentControl,
+	settled, model *documentanalysis.ClassificationResult,
+	route *documentaiextractionports.AIRouteResult,
+) string {
+	switch {
+	case !strings.EqualFold(settled.Kind, documentanalysis.KindRateConfirmation):
+		if settled.Settlement.SettledBy == documentanalysis.ClassificationSettledByModel {
+			return rejectionRoutedNonRateConfirmation
+		}
+		return rejectionClassifiedNonRateConfirmation
+	case !control.ReadsWithAI():
+		return documentaiextractionjobs.FailureAIExtractionDisabled
+	case strings.EqualFold(model.Kind, settled.Kind) && !route.ShouldExtract:
+		return rejectionRouteDeclinedExtraction
+	default:
+		return ""
+	}
+}
+
+const rejectionAIClassificationDisabled = "ai_assisted_classification_disabled"
+
+func enrichWithoutRouting(
+	payload *documentanalysis.EnrichmentPayload,
+	diagnostics *documentanalysis.AIDiagnostics,
+) *documentanalysis.EnrichmentResult {
+	result := &documentanalysis.EnrichmentResult{
+		Classification:       payload.Classification,
+		DocumentIntelligence: payload.Intelligence,
+		AIDiagnostics:        diagnostics,
+	}
+	switch {
+	case !strings.EqualFold(payload.Classification.Kind, documentanalysis.KindRateConfirmation):
+		diagnostics.RejectionReason = rejectionAIClassificationDisabled
+	case !payload.Control.ReadsWithAI():
+		diagnostics.RejectionReason = documentaiextractionjobs.FailureAIExtractionDisabled
+	default:
+		diagnostics.AcceptanceStatus = documentanalysis.AIAcceptanceStatusPending
+		result.EnqueueAsyncAI = true
+	}
+
+	return result
 }
 
 func (a *Activities) runWithHeartbeat(

@@ -44,6 +44,8 @@ type ApplyDocumentAIExtractionPayload struct {
 	Completion  *documentanalysis.AsyncAIExtractionCompletion `json:"completion"`
 }
 
+const FailureAIExtractionDisabled = "ai_assisted_extraction_disabled"
+
 // submitAIExtraction records the extraction and submits it to the model once.
 // It returns the completion when there is nothing to wait for: the extraction
 // was superseded or already settled, or the router answered inline. A nil
@@ -76,6 +78,20 @@ func (a *Activities) submitAIExtraction( //nolint:funlen // async submission wit
 			Status:          documentaiextractionports.AIBackgroundExtractionStatusFailed,
 			FailureCode:     "stale_extraction",
 			FailureMessage:  "document extraction has been superseded",
+			AcceptanceState: string(documentanalysis.AIAcceptanceStatusRejected),
+		}, nil
+	}
+
+	control, err := a.support.GetDocumentControl(ctx, doc.OrganizationID, doc.BusinessUnitID)
+	if err != nil {
+		return nil, err
+	}
+	if !control.ReadsWithAI() {
+		return &documentanalysis.AsyncAIExtractionCompletion{
+			ExtractedAt:     payload.ExtractedAt,
+			Status:          documentaiextractionports.AIBackgroundExtractionStatusFailed,
+			FailureCode:     FailureAIExtractionDisabled,
+			FailureMessage:  "AI reading was turned off before the document was sent to the model",
 			AcceptanceState: string(documentanalysis.AIAcceptanceStatusRejected),
 		}, nil
 	}
@@ -453,11 +469,7 @@ func (a *Activities) ApplyDocumentAIExtractionResultActivity(
 		return nil, err
 	}
 
-	indexedText := content.ContentText
-	if !control.EnableFullTextIndexing {
-		indexedText = ""
-	}
-	a.support.SyncSearchProjection(ctx, doc, indexedText)
+	a.support.SyncSearchProjection(ctx, doc, content.ContentText)
 	a.markExtractionApplied(ctx, payload, tenantInfo)
 
 	return &documentanalysis.ProcessDocumentAIExtractionResult{
@@ -652,6 +664,7 @@ func analysisFromMap(data map[string]any) *documentanalysis.DocumentIntelligence
 		ClassifierSource:     sliceutils.StringValue(data["classifierSource"]),
 		ProviderFingerprint:  sliceutils.StringValue(data["providerFingerprint"]),
 		ClassificationReason: sliceutils.StringValue(data["classificationReason"]),
+		Settlement:           settlementFromMap(data["classificationSettlement"]),
 		RawExcerpt:           sliceutils.StringValue(data["rawExcerpt"]),
 		Fields:               map[string]*documentanalysis.ReviewField{},
 		Stops:                []*documentanalysis.IntelligenceStop{},
@@ -724,6 +737,20 @@ func analysisFromMap(data map[string]any) *documentanalysis.DocumentIntelligence
 	}
 
 	return analysis
+}
+
+func settlementFromMap(raw any) *documentanalysis.ClassificationSettlement {
+	data, ok := raw.(map[string]any)
+	if !ok {
+		return nil
+	}
+	return &documentanalysis.ClassificationSettlement{
+		SettledBy:       sliceutils.StringValue(data["settledBy"]),
+		RuleKind:        sliceutils.StringValue(data["ruleKind"]),
+		RuleConfidence:  floatutils.FloatValue(data["ruleConfidence"]),
+		ModelKind:       sliceutils.StringValue(data["modelKind"]),
+		ModelConfidence: floatutils.FloatValue(data["modelConfidence"]),
+	}
 }
 
 func (a *Activities) updateShipmentDraftFromIntelligence(

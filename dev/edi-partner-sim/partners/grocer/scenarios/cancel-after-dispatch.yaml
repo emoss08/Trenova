@@ -1,6 +1,6 @@
 name: a cancellation after dispatch is held for the truck-ordered-not-used bill
 steps:
-  - send: { set: "204", as: t1 }
+  - send: { set: "204", as: t1, load: { oneRange: true } }
   - expect: { ack: t1 }
   - expect: { wire: "990", about: t1 }
   - trenova: { dispatch: t1 }

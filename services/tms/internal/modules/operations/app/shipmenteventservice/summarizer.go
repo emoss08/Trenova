@@ -93,30 +93,6 @@ func BuildShipmentUpdated(
 	}
 }
 
-// BuildStatusChanged emits a status transition event.
-// Selects severity based on the new status.
-func BuildStatusChanged(
-	tenant TenantRef,
-	sh *shipment.Shipment,
-	previous shipmentvocab.Status,
-	actor kernelports.AuditActor,
-) *shipmenteventports.RecordShipmentEventParams {
-	return &shipmenteventports.RecordShipmentEventParams{
-		OrganizationID: tenant.OrganizationID,
-		BusinessUnitID: tenant.BusinessUnitID,
-		ShipmentID:     sh.ID,
-		Type:           shipmentevent.TypeStatusChanged,
-		Severity:       severityForShipmentStatus(sh.Status),
-		Summary:        "Status updated",
-		Metadata: map[string]any{
-			"proNumber":      sh.ProNumber,
-			"previousStatus": string(previous),
-			"newStatus":      string(sh.Status),
-		},
-		Actor: actor,
-	}
-}
-
 // BuildShipmentCanceled emits a cancellation event.
 func BuildShipmentCanceled(
 	tenant TenantRef,
@@ -439,24 +415,6 @@ func classifyMoveStatus(
 		return shipmentevent.TypeMoveStatusChanged, shipmentevent.SeverityMuted, "Move status updated"
 	}
 	return shipmentevent.TypeMoveStatusChanged, shipmentevent.SeverityMuted, "Move status updated"
-}
-
-// severityForShipmentStatus picks a feed severity for a shipment status value.
-func severityForShipmentStatus(status shipmentvocab.Status) shipmentevent.Severity {
-	switch status {
-	case shipmentvocab.StatusCanceled, shipmentvocab.StatusDelayed:
-		return shipmentevent.SeverityDanger
-	case shipmentvocab.StatusInTransit, shipmentvocab.StatusReadyToInvoice:
-		return shipmentevent.SeverityBrand
-	case shipmentvocab.StatusCompleted, shipmentvocab.StatusInvoiced:
-		return shipmentevent.SeveritySuccess
-	case shipmentvocab.StatusNew,
-		shipmentvocab.StatusPartiallyAssigned,
-		shipmentvocab.StatusAssigned,
-		shipmentvocab.StatusPartiallyCompleted:
-		return shipmentevent.SeverityMuted
-	}
-	return shipmentevent.SeverityMuted
 }
 
 func assignmentMetadata(assignment *shipment.Assignment, driverName string) map[string]any {

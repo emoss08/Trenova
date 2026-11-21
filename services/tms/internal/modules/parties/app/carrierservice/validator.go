@@ -46,27 +46,17 @@ func NewValidator(p ValidatorParams) *Validator {
 				"Carrier with this SCAC already exists in your organization",
 				func(c *carrier.Carrier) any { return c.SCAC },
 			).
-			WithReferenceCheck(
+			WithOptionalReferenceCheck(
 				"stateId",
 				"us_states",
 				"State does not exist",
-				func(c *carrier.Carrier) pulid.ID {
-					if c.StateID == nil {
-						return ""
-					}
-					return *c.StateID
-				},
+				func(c *carrier.Carrier) pulid.ID { return pulid.ConvertFromPtr(c.StateID) },
 			).
-			WithReferenceCheck(
+			WithOptionalReferenceCheck(
 				"remitStateId",
 				"us_states",
 				"Remit state does not exist",
-				func(c *carrier.Carrier) pulid.ID {
-					if c.RemitStateID == nil {
-						return ""
-					}
-					return *c.RemitStateID
-				},
+				func(c *carrier.Carrier) pulid.ID { return pulid.ConvertFromPtr(c.RemitStateID) },
 			).
 			Build(),
 	}

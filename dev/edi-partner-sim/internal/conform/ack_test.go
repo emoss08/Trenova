@@ -3,6 +3,7 @@ package conform
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/edi-partner-sim/internal/acknowledge"
 	"github.com/emoss08/trenova/edi-partner-sim/internal/partner"
 )
 
@@ -20,7 +21,7 @@ func TestDecideAgreesWithTheRejectRules(t *testing.T) {
 		for _, set := range []string{"990", "214"} {
 			for errs := range 3 {
 				for warns := range 3 {
-					got := a.Decide(set, errs, warns)
+					got := acknowledge.Code(&a, set, errs, warns)
 					if want := expectedAck(rule, set, errs, warns); got != want {
 						t.Errorf("%+v %s %d/%d: Decide %s, rules %s",
 							rule, set, errs, warns, got, want)

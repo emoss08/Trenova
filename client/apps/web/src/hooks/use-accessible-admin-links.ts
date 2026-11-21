@@ -46,6 +46,10 @@ export function useAccessibleAdminLinks(): SidebarLink[] {
           return false;
         }
 
+        if (link.anyResources) {
+          return link.anyResources.some((resource) => hasPermission(resource, Operation.Read));
+        }
+
         if (link.resource) {
           return hasPermission(link.resource, link.requiredOperation ?? Operation.Read);
         }

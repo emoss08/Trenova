@@ -15,6 +15,7 @@ use crate::lading::syntax::ast::Expr;
 use crate::lading::types::Dim;
 use crate::lading::tz::{ZONES, Zone, days_from_civil, valid_date, weekday};
 use crate::lading::values::ZoneValue;
+use crate::x12::charset;
 
 /// One argument: a value, or a lambda's parameter and body.
 #[derive(Debug, Clone)]
@@ -653,17 +654,14 @@ fn title_case(text: &str) -> String {
     out
 }
 
+/// The text as the writer would put it on the wire ([`charset::fold`]: accents and typographic
+/// marks as ASCII, what has no ASCII form left out), the partner's separators as spaces, and
+/// runs of spaces collapsed and trimmed.
 fn clean(interp: &Interp<'_>, text: &str) -> String {
     let separators: Vec<char> = interp.program.partner_separators().into_iter().collect();
-    text.chars()
-        .map(|c| {
-            if c.is_control() || separators.contains(&c) {
-                ' '
-            } else {
-                c
-            }
-        })
-        .filter(|c| c.is_ascii() || c.is_alphanumeric() || *c == ' ')
+    charset::fold(text)
+        .chars()
+        .map(|c| if separators.contains(&c) { ' ' } else { c })
         .collect::<String>()
         .split_whitespace()
         .collect::<Vec<_>>()

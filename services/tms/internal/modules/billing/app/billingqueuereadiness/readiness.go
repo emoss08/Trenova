@@ -566,8 +566,11 @@ func contractAccessorial(
 func freightBasis(shp *shipment.Shipment) string {
 	miles := 0.0
 	for _, move := range shp.Moves {
-		if move != nil && move.Loaded && move.Distance != nil {
-			miles += *move.Distance
+		if move == nil || !move.Loaded {
+			continue
+		}
+		if billed := move.BilledDistance(); billed != nil {
+			miles += *billed
 		}
 	}
 	detail := shp.RatingDetail

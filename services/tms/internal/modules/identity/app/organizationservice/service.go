@@ -4,31 +4,22 @@ package organizationservice
 import (
 	"bytes"
 	"context"
-	"fmt"
 	"mime/multipart"
-	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/kernel/domain/objectkey"
-
-	"github.com/emoss08/trenova/internal/infrastructure/config/securityconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/storageconfig"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/contentscanports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/sso"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
-	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
-	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/objectkey"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
-	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/fileutils"
-	"github.com/emoss08/trenova/shared/httpsafe"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
@@ -38,33 +29,25 @@ import (
 type Params struct {
 	fx.In
 
-	Logger         *zap.Logger
-	DB             kernelports.Transactor
-	Repo           tenantports.OrganizationRepository
-	SSORepo        tenantports.SSOConfigRepository
-	AuditService   auditports.AuditService
-	Storage        kernelports.Client
-	SecurityConfig *securityconfig.Config
-	StorageConfig  *storageconfig.Config
-	Validator      *Validator
-	Encryption     *encryptionservice.Service
-	Features       platformcatalogports.FeatureGate
-	ContentGate    contentscanports.Gate
-	PlanFields     permissionports.PlanFieldKeeper
+	Logger        *zap.Logger
+	DB            kernelports.Transactor
+	Repo          tenantports.OrganizationRepository
+	AuditService  auditports.AuditService
+	Storage       kernelports.Client
+	StorageConfig *storageconfig.Config
+	Validator     *Validator
+	ContentGate   contentscanports.Gate
+	PlanFields    permissionports.PlanFieldKeeper
 }
 
 type service struct {
 	l            *zap.Logger
 	db           kernelports.Transactor
 	repo         tenantports.OrganizationRepository
-	ssoRepo      tenantports.SSOConfigRepository
 	auditService auditports.AuditService
 	storage      kernelports.Client
 	storageCfg   *storageconfig.Config
 	v            *Validator
-	enc          *encryptionservice.Service
-	features     platformcatalogports.FeatureGate
-	issuers      httpsafe.Policy
 	contentGate  contentscanports.Gate
 	planFields   permissionports.PlanFieldKeeper
 }
@@ -74,14 +57,10 @@ func New(p Params) tenantports.OrganizationService {
 		l:            p.Logger.Named("service.organization"),
 		db:           p.DB,
 		repo:         p.Repo,
-		ssoRepo:      p.SSORepo,
 		storage:      p.Storage,
 		auditService: p.AuditService,
 		storageCfg:   p.StorageConfig,
 		v:            p.Validator,
-		enc:          p.Encryption,
-		features:     p.Features,
-		issuers:      p.SecurityConfig.SSOIssuerPolicy(),
 		contentGate:  p.ContentGate,
 		planFields:   p.PlanFields,
 	}
@@ -422,305 +401,6 @@ func (s *service) validateBrandImageFile(file *multipart.FileHeader) error {
 	}
 
 	return multiErr.Err()
-}
-
-func (s *service) GetMicrosoftSSOConfig(
-	ctx context.Context,
-	organizationID pulid.ID,
-) (*tenantports.MicrosoftSSOConfig, error) {
-	entity, err := s.ssoRepo.GetByOrganizationID(ctx, organizationID, sso.SSOProviderAzureAD)
-	if err != nil {
-		if errortypes.IsNotFoundError(err) {
-			return &tenantports.MicrosoftSSOConfig{
-				OrganizationID: organizationID.String(),
-			}, nil
-		}
-
-		return nil, err
-	}
-
-	return mapMicrosoftSSOConfig(entity), nil
-}
-
-//nolint:nestif // existing validation flow mirrors business rule nesting
-func (s *service) UpsertMicrosoftSSOConfig(
-	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
-	cfg *tenantports.MicrosoftSSOConfig,
-) (*tenantports.MicrosoftSSOConfig, error) {
-	if cfg == nil {
-		return nil, errortypes.NewValidationError(
-			"config",
-			errortypes.ErrRequired,
-			"Microsoft Entra ID SSO configuration is required",
-		)
-	}
-	if err := platformcatalogports.RequireFeature(
-		ctx,
-		s.features,
-		platformcatalog.FeatureIdentity,
-	); err != nil {
-		return nil, err
-	}
-
-	tenantID := strings.TrimSpace(cfg.TenantID)
-	clientID := strings.TrimSpace(cfg.ClientID)
-	redirectURL := strings.TrimSpace(cfg.RedirectURL)
-
-	existing, err := s.ssoRepo.GetByOrganizationID(ctx, tenantInfo.OrgID, sso.SSOProviderAzureAD)
-	if err != nil && !errortypes.IsNotFoundError(err) {
-		return nil, err
-	}
-
-	rawClientSecret := strings.TrimSpace(cfg.ClientSecret)
-	clientSecret := rawClientSecret
-	if rawClientSecret == "" && !errortypes.IsNotFoundError(err) {
-		clientSecret = existing.OIDCClientSecret
-	}
-
-	if cfg.Enabled {
-		multiErr := errortypes.NewMultiError()
-		if tenantID == "" {
-			multiErr.Add("tenantId", errortypes.ErrRequired, "Tenant ID is required")
-		}
-		if clientID == "" {
-			multiErr.Add("clientId", errortypes.ErrRequired, "Client ID is required")
-		}
-		if clientSecret == "" {
-			multiErr.Add("clientSecret", errortypes.ErrRequired, "Client secret is required")
-		}
-		if redirectURL == "" {
-			multiErr.Add("redirectUrl", errortypes.ErrRequired, "Redirect URL is required")
-		}
-		if multiErr.HasErrors() {
-			return nil, multiErr
-		}
-	}
-
-	if rawClientSecret != "" {
-		clientSecret, err = s.enc.EncryptStringWithAAD(clientSecret, ssoSecretAAD(
-			tenantInfo,
-			string(sso.SSOProviderAzureAD),
-		))
-		if err != nil {
-			return nil, errortypes.NewBusinessError("Failed to encrypt Entra ID client secret").
-				WithInternal(err)
-		}
-	}
-
-	entity := &sso.SSOConfig{
-		OrganizationID:   tenantInfo.OrgID,
-		BusinessUnitID:   tenantInfo.BuID,
-		Name:             "Microsoft Entra ID",
-		Provider:         sso.SSOProviderAzureAD,
-		Protocol:         sso.SSOProtocolOIDC,
-		Enabled:          cfg.Enabled,
-		EnforceSSO:       cfg.EnforceSSO,
-		AutoProvision:    false,
-		AllowedDomains:   cfg.AllowedDomains,
-		AttributeMap:     map[string]string{"email": "email"},
-		OIDCIssuerURL:    microsoftIssuerURL(tenantID),
-		OIDCClientID:     clientID,
-		OIDCClientSecret: clientSecret,
-		OIDCRedirectURL:  redirectURL,
-		OIDCScopes:       []string{"openid", "profile", "email"},
-	}
-
-	saved, err := s.ssoRepo.Save(ctx, entity)
-	if err != nil {
-		return nil, err
-	}
-
-	return mapMicrosoftSSOConfig(saved), nil
-}
-
-func mapMicrosoftSSOConfig(entity *sso.SSOConfig) *tenantports.MicrosoftSSOConfig {
-	if entity == nil {
-		return nil
-	}
-
-	allowedDomains := entity.AllowedDomains
-	if allowedDomains == nil {
-		allowedDomains = []string{}
-	}
-
-	return &tenantports.MicrosoftSSOConfig{
-		OrganizationID:   entity.OrganizationID.String(),
-		Enabled:          entity.Enabled,
-		EnforceSSO:       entity.EnforceSSO,
-		TenantID:         microsoftTenantIDFromIssuer(entity.OIDCIssuerURL),
-		ClientID:         entity.OIDCClientID,
-		RedirectURL:      entity.OIDCRedirectURL,
-		AllowedDomains:   allowedDomains,
-		SecretConfigured: strings.TrimSpace(entity.OIDCClientSecret) != "",
-	}
-}
-
-func microsoftIssuerURL(tenantID string) string {
-	return fmt.Sprintf("https://login.microsoftonline.com/%s/v2.0", tenantID)
-}
-
-func ssoSecretAAD(tenantInfo pagination.TenantInfo, provider string) encryptionservice.AAD {
-	return encryptionservice.AAD{
-		Purpose:        encryptionservice.PurposeIAMOIDCClientSecret,
-		OrganizationID: tenantInfo.OrgID,
-		BusinessUnitID: tenantInfo.BuID,
-		ResourceID:     provider,
-	}
-}
-
-func (s *service) GetOktaSSOConfig(
-	ctx context.Context,
-	organizationID pulid.ID,
-) (*tenantports.OktaSSOConfig, error) {
-	entity, err := s.ssoRepo.GetByOrganizationID(ctx, organizationID, sso.SSOProviderOkta)
-	if err != nil {
-		if errortypes.IsNotFoundError(err) {
-			return &tenantports.OktaSSOConfig{
-				OrganizationID: organizationID.String(),
-				Scopes:         []string{"openid", "profile", "email"},
-			}, nil
-		}
-
-		return nil, err
-	}
-
-	return mapOktaSSOConfig(entity), nil
-}
-
-//nolint:nestif // existing validation flow mirrors business rule nesting
-func (s *service) UpsertOktaSSOConfig(
-	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
-	cfg *tenantports.OktaSSOConfig,
-) (*tenantports.OktaSSOConfig, error) {
-	if cfg == nil {
-		return nil, errortypes.NewValidationError(
-			"config",
-			errortypes.ErrRequired,
-			"Okta SSO configuration is required",
-		)
-	}
-	if err := platformcatalogports.RequireFeature(
-		ctx,
-		s.features,
-		platformcatalog.FeatureIdentity,
-	); err != nil {
-		return nil, err
-	}
-
-	issuerURL := strings.TrimSpace(cfg.IssuerURL)
-	clientID := strings.TrimSpace(cfg.ClientID)
-	redirectURL := strings.TrimSpace(cfg.RedirectURL)
-
-	existing, err := s.ssoRepo.GetByOrganizationID(ctx, tenantInfo.OrgID, sso.SSOProviderOkta)
-	if err != nil && !errortypes.IsNotFoundError(err) {
-		return nil, err
-	}
-
-	rawClientSecret := strings.TrimSpace(cfg.ClientSecret)
-	clientSecret := rawClientSecret
-	if rawClientSecret == "" && !errortypes.IsNotFoundError(err) {
-		clientSecret = existing.OIDCClientSecret
-	}
-
-	if cfg.Enabled {
-		multiErr := errortypes.NewMultiError()
-		if issuerURL == "" {
-			multiErr.Add("issuerUrl", errortypes.ErrRequired, "Issuer URL is required")
-		}
-		sso.ValidateOIDCIssuerURL(multiErr, "issuerUrl", issuerURL, s.issuers)
-		if clientID == "" {
-			multiErr.Add("clientId", errortypes.ErrRequired, "Client ID is required")
-		}
-		if clientSecret == "" {
-			multiErr.Add("clientSecret", errortypes.ErrRequired, "Client secret is required")
-		}
-		if redirectURL == "" {
-			multiErr.Add("redirectUrl", errortypes.ErrRequired, "Redirect URL is required")
-		}
-		if multiErr.HasErrors() {
-			return nil, multiErr
-		}
-	}
-
-	if rawClientSecret != "" {
-		clientSecret, err = s.enc.EncryptStringWithAAD(clientSecret, ssoSecretAAD(
-			tenantInfo,
-			string(sso.SSOProviderOkta),
-		))
-		if err != nil {
-			return nil, errortypes.NewBusinessError("Failed to encrypt Okta client secret").
-				WithInternal(err)
-		}
-	}
-
-	scopes := cfg.Scopes
-	if len(scopes) == 0 {
-		scopes = []string{"openid", "profile", "email"}
-	}
-
-	entity := &sso.SSOConfig{
-		OrganizationID:   tenantInfo.OrgID,
-		BusinessUnitID:   tenantInfo.BuID,
-		Name:             "Okta",
-		Provider:         sso.SSOProviderOkta,
-		Protocol:         sso.SSOProtocolOIDC,
-		Enabled:          cfg.Enabled,
-		EnforceSSO:       cfg.EnforceSSO,
-		AutoProvision:    false,
-		AllowedDomains:   cfg.AllowedDomains,
-		AttributeMap:     map[string]string{"email": "email"},
-		OIDCIssuerURL:    issuerURL,
-		OIDCClientID:     clientID,
-		OIDCClientSecret: clientSecret,
-		OIDCRedirectURL:  redirectURL,
-		OIDCScopes:       scopes,
-	}
-
-	saved, err := s.ssoRepo.Save(ctx, entity)
-	if err != nil {
-		return nil, err
-	}
-
-	return mapOktaSSOConfig(saved), nil
-}
-
-func mapOktaSSOConfig(entity *sso.SSOConfig) *tenantports.OktaSSOConfig {
-	if entity == nil {
-		return nil
-	}
-
-	allowedDomains := entity.AllowedDomains
-	if allowedDomains == nil {
-		allowedDomains = []string{}
-	}
-
-	scopes := entity.OIDCScopes
-	if scopes == nil {
-		scopes = []string{"openid", "profile", "email"}
-	}
-
-	return &tenantports.OktaSSOConfig{
-		OrganizationID:   entity.OrganizationID.String(),
-		Enabled:          entity.Enabled,
-		EnforceSSO:       entity.EnforceSSO,
-		IssuerURL:        entity.OIDCIssuerURL,
-		ClientID:         entity.OIDCClientID,
-		RedirectURL:      entity.OIDCRedirectURL,
-		Scopes:           scopes,
-		AllowedDomains:   allowedDomains,
-		SecretConfigured: strings.TrimSpace(entity.OIDCClientSecret) != "",
-	}
-}
-
-func microsoftTenantIDFromIssuer(issuerURL string) string {
-	parts := strings.Split(strings.Trim(strings.TrimSpace(issuerURL), "/"), "/")
-	if len(parts) < 2 {
-		return ""
-	}
-
-	return parts[len(parts)-2]
 }
 
 // keepPlanFields keeps an update from changing the organization's settings

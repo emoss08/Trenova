@@ -8,6 +8,7 @@ import (
 	"sync"
 
 	"github.com/emoss08/trenova/edi-partner-sim/internal/trenova"
+	"github.com/emoss08/trenova/shared/stringutils"
 )
 
 const (
@@ -273,8 +274,5 @@ func firstText(values ...string) string {
 }
 
 func prefix(value string, length int) string {
-	if len(value) > length {
-		return value[:length]
-	}
-	return value
+	return stringutils.TruncateRunes(value, length)
 }

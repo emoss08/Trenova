@@ -69,26 +69,6 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		h.pm.RequirePermission(permission.ResourceOrganization.String(), permission.OpUpdate),
 		h.deleteBrandImage,
 	)
-	api.GET(
-		"/:id/microsoft-sso",
-		h.pm.RequirePermission(permission.ResourceIdentityProvider.String(), permission.OpRead),
-		h.getMicrosoftSSOConfig,
-	)
-	api.PUT(
-		"/:id/microsoft-sso",
-		h.pm.RequirePermission(permission.ResourceIdentityProvider.String(), permission.OpUpdate),
-		h.upsertMicrosoftSSOConfig,
-	)
-	api.GET(
-		"/:id/okta-sso",
-		h.pm.RequirePermission(permission.ResourceIdentityProvider.String(), permission.OpRead),
-		h.getOktaSSOConfig,
-	)
-	api.PUT(
-		"/:id/okta-sso",
-		h.pm.RequirePermission(permission.ResourceIdentityProvider.String(), permission.OpUpdate),
-		h.upsertOktaSSOConfig,
-	)
 }
 
 // @Summary Get an organization
@@ -315,110 +295,6 @@ func (h *Handler) deleteBrandImage(c *gin.Context) {
 	}
 
 	helpers.JSON(c, http.StatusOK, updatedEntity)
-}
-
-func (h *Handler) getMicrosoftSSOConfig(c *gin.Context) {
-	authCtx := authctx.GetAuthContext(c)
-
-	orgID, err := currentOrganizationParam(c, authCtx)
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	resp, err := h.service.GetMicrosoftSSOConfig(c.Request.Context(), orgID)
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	helpers.JSON(c, http.StatusOK, resp)
-}
-
-func (h *Handler) upsertMicrosoftSSOConfig(c *gin.Context) {
-	authCtx := authctx.GetAuthContext(c)
-
-	orgID, err := currentOrganizationParam(c, authCtx)
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	req := new(tenantports.MicrosoftSSOConfig)
-	if err = authctx.BindJSON(c, authCtx, req); err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	req.OrganizationID = orgID.String()
-
-	resp, err := h.service.UpsertMicrosoftSSOConfig(
-		c.Request.Context(),
-		pagination.TenantInfo{
-			OrgID:  orgID,
-			BuID:   authCtx.BusinessUnitID,
-			UserID: authCtx.UserID,
-		},
-		req,
-	)
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	helpers.JSON(c, http.StatusOK, resp)
-}
-
-func (h *Handler) getOktaSSOConfig(c *gin.Context) {
-	authCtx := authctx.GetAuthContext(c)
-
-	orgID, err := currentOrganizationParam(c, authCtx)
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	resp, err := h.service.GetOktaSSOConfig(c.Request.Context(), orgID)
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	helpers.JSON(c, http.StatusOK, resp)
-}
-
-func (h *Handler) upsertOktaSSOConfig(c *gin.Context) {
-	authCtx := authctx.GetAuthContext(c)
-
-	orgID, err := currentOrganizationParam(c, authCtx)
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	req := new(tenantports.OktaSSOConfig)
-	if err = authctx.BindJSON(c, authCtx, req); err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	req.OrganizationID = orgID.String()
-
-	resp, err := h.service.UpsertOktaSSOConfig(
-		c.Request.Context(),
-		pagination.TenantInfo{
-			OrgID:  orgID,
-			BuID:   authCtx.BusinessUnitID,
-			UserID: authCtx.UserID,
-		},
-		req,
-	)
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	helpers.JSON(c, http.StatusOK, resp)
 }
 
 func currentOrganizationParam(c *gin.Context, authCtx *authctx.AuthContext) (pulid.ID, error) {

@@ -10,6 +10,7 @@ export const dataRetentionSchema = z.object({
   auditSecurityRetentionDays: z.number().default(730),
   ediInboundFileRetentionPeriod: z.number().default(0),
   ediMessageRetentionPeriod: z.number().default(0),
+  driverQualificationRetentionPeriod: z.number().default(1095),
   agentEvalCaseRetentionPeriod: z.number().default(365),
   aiFeedbackRetentionPeriod: z.number().default(730),
   aiAuditRetentionPeriod: z.number().default(2555),
@@ -28,6 +29,7 @@ export type UpdateDataRetentionRequest = {
   auditSecurityRetentionDays: number;
   ediInboundFileRetentionPeriod: number;
   ediMessageRetentionPeriod: number;
+  driverQualificationRetentionPeriod: number;
   agentEvalCaseRetentionPeriod: number;
   aiFeedbackRetentionPeriod: number;
   aiAuditRetentionPeriod: number;

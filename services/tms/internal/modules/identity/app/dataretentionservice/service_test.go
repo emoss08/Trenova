@@ -248,3 +248,65 @@ func TestUpdate_RecordsTheChangeAsASecurityEntry(t *testing.T) {
 	assert.NotNil(t, change.Before)
 	assert.NotNil(t, change.After)
 }
+
+func TestUpdate_SavesTheDriverQualificationRetentionItWasGiven(t *testing.T) {
+	t.Parallel()
+
+	svc, repo := newTestService(t)
+	getFindsNothing(repo)
+	saved := upsertReturnsEntity(repo)
+
+	_, err := svc.Update(t.Context(), &UpdateDataRetentionRequest{
+		TenantInfo:                         testTenant(),
+		AuditOperationalRetentionDays:      730,
+		DriverQualificationRetentionPeriod: intPtr(1500),
+	})
+
+	require.NoError(t, err)
+	assert.Equal(t, 1500, saved.DriverQualificationRetentionPeriod)
+}
+
+func TestUpdate_KeepsTheCurrentDriverQualificationRetentionWhenNotSent(t *testing.T) {
+	t.Parallel()
+
+	svc, repo := newTestService(t)
+	repo.EXPECT().
+		Get(mock.Anything, mock.AnythingOfType("tenantports.GetDataRetentionRequest")).
+		Return(&dataretention.DataRetention{DriverQualificationRetentionPeriod: 1800}, nil).
+		Once()
+	saved := upsertReturnsEntity(repo)
+
+	_, err := svc.Update(t.Context(), &UpdateDataRetentionRequest{TenantInfo: testTenant()})
+
+	require.NoError(t, err)
+	assert.Equal(t, 1800, saved.DriverQualificationRetentionPeriod)
+}
+
+func TestUpdate_RefusesDriverQualificationFilesKeptUnderThreeYears(t *testing.T) {
+	t.Parallel()
+
+	svc, repo := newTestService(t)
+	getFindsNothing(repo)
+
+	_, err := svc.Update(t.Context(), &UpdateDataRetentionRequest{
+		TenantInfo:                         testTenant(),
+		DriverQualificationRetentionPeriod: intPtr(1094),
+	})
+
+	var multiErr *errortypes.MultiError
+	require.ErrorAs(t, err, &multiErr)
+	require.Len(t, multiErr.Errors, 1)
+	assert.Equal(t, "driverQualificationRetentionPeriod", multiErr.Errors[0].Field())
+}
+
+func TestGet_DefaultsDriverQualificationRetentionToThreeYearsWhenNothingIsSaved(t *testing.T) {
+	t.Parallel()
+
+	svc, repo := newTestService(t)
+	getFindsNothing(repo)
+
+	entity, err := svc.Get(t.Context(), testTenant())
+
+	require.NoError(t, err)
+	assert.Equal(t, 1095, entity.DriverQualificationRetentionPeriod)
+}

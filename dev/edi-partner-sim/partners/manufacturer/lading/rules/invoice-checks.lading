@@ -12,6 +12,14 @@ rule "an invoice has lines" {
   require not lines.isEmpty else reject "An invoice to Kestrel needs at least one line"
 }
 
+/// Kestrel's guide carries a reference of at most 30 characters, and a cut one matches nothing.
+rule "references Kestrel's guide can carry" {
+  require (bol ?? "").length() <= 30
+    else hold "Kestrel's guide takes a BOL of at most 30 characters: shorten it before sending"
+  require (refs["PO"] ?? "").length() <= 30
+    else hold "Kestrel's guide takes a PO of at most 30 characters: shorten it before sending"
+}
+
 test "a complete invoice goes out" {
   given freightInvoice {
     number: "INV-2001"
@@ -36,4 +44,9 @@ test "an invoice without the BOL is held" {
     lines: [{ sequence: 1, description: "Linehaul", amount: $1_029.41 }]
   }
   expect held "Kestrel needs the BOL on every invoice"
+}
+
+test "a PO longer than Kestrel's guide takes is held" {
+  given freightInvoice { number: "INV-2001", date: @2026-04-28, key: "KVW-100037", bol: "8100798987", total: $1_029.41, billTo: { name: "Kestrel Valve Works Accounts Payable" }, lines: [{ sequence: 1, description: "Linehaul", amount: $1_029.41 }], refs: ["PO": "4500012345-RELEASE-0042-AMENDED-TWICE"] }
+  expect held "Kestrel's guide takes a PO of at most 30 characters: shorten it before sending"
 }

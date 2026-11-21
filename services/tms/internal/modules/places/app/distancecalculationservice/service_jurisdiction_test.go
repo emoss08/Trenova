@@ -288,7 +288,7 @@ func newResolveFixture(t *testing.T) *resolveFixture {
 	buID := pulid.MustNew("bu_")
 	profile := distanceprofile.NewDefault(orgID, buID)
 	profile.ID = pulid.MustNew("dp_")
-	control := distancecontrol.NewDefault(orgID, buID, profile.ID, profile.ID)
+	control := distancecontrol.NewDefault(orgID, buID, profile.ID)
 	control.CaptureJurisdictionMiles = true
 
 	controlRepo := distancecontrolportsmock.NewMockDistanceControlRepository(t)

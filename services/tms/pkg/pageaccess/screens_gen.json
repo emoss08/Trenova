@@ -1022,7 +1022,7 @@
       "name": "Drift findings",
       "requires": [
         {
-          "resource": "accounting_sync",
+          "resource": "accounting_reconciliation",
           "operation": "read"
         }
       ],
@@ -1076,7 +1076,7 @@
       "name": "Payments from the books",
       "requires": [
         {
-          "resource": "accounting_sync",
+          "resource": "accounting_reconciliation",
           "operation": "read"
         }
       ],
@@ -3074,108 +3074,8 @@
           "operation": "read"
         }
       ],
-      "operations": [
-        "AuthEventsTable",
-        "BulkEditFields",
-        "DataTableAggregates",
-        "DataTableFacets",
-        "DataTableInsightFields",
-        "ExportTableView",
-        "ExternalIdentitiesTable",
-        "MFAAuthenticatorsTable",
-        "MyBulkEdit",
-        "MyTableLayout",
-        "PreviewBulkEdit",
-        "ResetMyTableLayout",
-        "RiskDecisionsTable",
-        "SCIMGroupRoleMappingsTable",
-        "SaveMyTableLayout",
-        "ScheduleTableView",
-        "StartBulkEdit",
-        "UndoMyBulkEdit"
-      ],
-      "rest": [
-        {
-          "method": "GET",
-          "path": "/permissions/bundles"
-        },
-        {
-          "method": "GET",
-          "path": "/permissions/operations"
-        },
-        {
-          "method": "GET",
-          "path": "/permissions/resources"
-        },
-        {
-          "method": "POST",
-          "path": "/roles/"
-        },
-        {
-          "method": "DELETE",
-          "path": "/roles/:param"
-        },
-        {
-          "method": "GET",
-          "path": "/roles/:param"
-        },
-        {
-          "method": "PUT",
-          "path": "/roles/:param"
-        },
-        {
-          "method": "POST",
-          "path": "/roles/:param/assignments"
-        },
-        {
-          "method": "GET",
-          "path": "/roles/:param/impact"
-        },
-        {
-          "method": "DELETE",
-          "path": "/roles/assignments/:param"
-        },
-        {
-          "method": "GET",
-          "path": "/roles/constraints"
-        },
-        {
-          "method": "POST",
-          "path": "/roles/constraints"
-        },
-        {
-          "method": "DELETE",
-          "path": "/roles/constraints/:param"
-        },
-        {
-          "method": "PUT",
-          "path": "/roles/constraints/:param"
-        },
-        {
-          "method": "GET",
-          "path": "/roles/hierarchy"
-        },
-        {
-          "method": "POST",
-          "path": "/roles/hierarchy"
-        },
-        {
-          "method": "DELETE",
-          "path": "/roles/hierarchy/:param"
-        },
-        {
-          "method": "GET",
-          "path": "/roles/preflight"
-        },
-        {
-          "method": "GET",
-          "path": "/tables/"
-        },
-        {
-          "method": "POST",
-          "path": "/tables/:param/compose/"
-        }
-      ]
+      "operations": [],
+      "rest": []
     },
     {
       "path": "/admin/plan",
@@ -3404,6 +3304,113 @@
         {
           "method": "GET",
           "path": "/roles/preflight"
+        }
+      ]
+    },
+    {
+      "path": "/admin/security-access",
+      "name": "Security & access",
+      "requires": [],
+      "operations": [
+        "AuthEventsTable",
+        "BulkEditFields",
+        "DataTableAggregates",
+        "DataTableFacets",
+        "DataTableInsightFields",
+        "ExportTableView",
+        "ExternalIdentitiesTable",
+        "MFAAuthenticatorsTable",
+        "MyBulkEdit",
+        "MyTableLayout",
+        "PreviewBulkEdit",
+        "ResetMyTableLayout",
+        "RiskDecisionsTable",
+        "SCIMGroupRoleMappingsTable",
+        "SaveMyTableLayout",
+        "ScheduleTableView",
+        "StartBulkEdit",
+        "UndoMyBulkEdit"
+      ],
+      "rest": [
+        {
+          "method": "GET",
+          "path": "/permissions/bundles"
+        },
+        {
+          "method": "GET",
+          "path": "/permissions/operations"
+        },
+        {
+          "method": "GET",
+          "path": "/permissions/resources"
+        },
+        {
+          "method": "POST",
+          "path": "/roles/"
+        },
+        {
+          "method": "DELETE",
+          "path": "/roles/:param"
+        },
+        {
+          "method": "GET",
+          "path": "/roles/:param"
+        },
+        {
+          "method": "PUT",
+          "path": "/roles/:param"
+        },
+        {
+          "method": "POST",
+          "path": "/roles/:param/assignments"
+        },
+        {
+          "method": "GET",
+          "path": "/roles/:param/impact"
+        },
+        {
+          "method": "DELETE",
+          "path": "/roles/assignments/:param"
+        },
+        {
+          "method": "GET",
+          "path": "/roles/constraints"
+        },
+        {
+          "method": "POST",
+          "path": "/roles/constraints"
+        },
+        {
+          "method": "DELETE",
+          "path": "/roles/constraints/:param"
+        },
+        {
+          "method": "PUT",
+          "path": "/roles/constraints/:param"
+        },
+        {
+          "method": "GET",
+          "path": "/roles/hierarchy"
+        },
+        {
+          "method": "POST",
+          "path": "/roles/hierarchy"
+        },
+        {
+          "method": "DELETE",
+          "path": "/roles/hierarchy/:param"
+        },
+        {
+          "method": "GET",
+          "path": "/roles/preflight"
+        },
+        {
+          "method": "GET",
+          "path": "/tables/"
+        },
+        {
+          "method": "POST",
+          "path": "/tables/:param/compose/"
         }
       ]
     },

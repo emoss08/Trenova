@@ -223,9 +223,36 @@ func boardMove(
 			DestinationState:  "IL",
 			OriginWindowStart: pickup,
 			Distance:          &distance,
+			PaidDistance:      &distance,
 			Revenue:           &revenue,
 		},
 	}
+}
+
+func TestRankCarrierMatches_QuotesAPerMilePostingOnThePaidDistance(t *testing.T) {
+	t.Parallel()
+
+	posting := &carriercapacity.Posting{
+		AvailableFrom: now,
+		AvailableTo:   now + 24*3600,
+		OriginState:   &usstate.UsState{Abbreviation: "NE"},
+		RateMethod:    carriercapacity.RateMethodPerMile,
+		Rate:          decimal.NewNullDecimal(decimal.RequireFromString("2.50")),
+	}
+	move := boardMove("NE", now+3600, 400)
+	paid := 440.0
+	move.PaidDistance = &paid
+
+	matches := rankCarrierMatches(
+		[]*dispatchconsoleservice.BoardMove{move},
+		[]*carriercapacity.Posting{posting},
+		nil,
+		1,
+	)
+
+	require.Len(t, matches, 1)
+	require.True(t, matches[0].Quote.Valid)
+	assert.Equal(t, "1100", matches[0].Quote.Decimal.String(), "$2.50 x 440 paid mi")
 }
 
 func TestRankCarrierMatches_PrefersPostingsOnTheLaneAndQuotesThem(t *testing.T) {

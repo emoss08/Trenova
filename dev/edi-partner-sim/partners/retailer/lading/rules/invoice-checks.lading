@@ -13,6 +13,14 @@ rule "an invoice has lines" {
   require not lines.isEmpty else reject "An invoice to Tamberlane needs at least one line"
 }
 
+/// Tamberlane's guide carries a reference of at most 30 characters, and a cut one matches nothing.
+rule "references Tamberlane's guide can carry" {
+  require (bol ?? "").length() <= 30
+    else hold "Tamberlane's guide takes a BOL of at most 30 characters: shorten it before sending"
+  require (refs["PO"] ?? "").length() <= 30
+    else hold "Tamberlane's guide takes a PO of at most 30 characters: shorten it before sending"
+}
+
 test "a complete invoice goes out" {
   given freightInvoice {
     number: "INV-3001"
@@ -39,4 +47,9 @@ test "an invoice without the PO is held" {
     lines: [{ sequence: 1, description: "Linehaul", amount: $3_713.35 }]
   }
   expect held "Tamberlane needs the PO on every invoice"
+}
+
+test "a PO longer than Tamberlane's guide takes is held" {
+  given freightInvoice { number: "INV-3001", date: @2026-06-05, key: "TS10000004", bol: "0719744701", total: $3_713.35, billTo: { name: "Tamberlane Stores Freight Payable" }, lines: [{ sequence: 1, description: "Linehaul", amount: $3_713.35 }], refs: ["PO": "4500012345-RELEASE-0042-AMENDED-TWICE"] }
+  expect held "Tamberlane's guide takes a PO of at most 30 characters: shorten it before sending"
 }

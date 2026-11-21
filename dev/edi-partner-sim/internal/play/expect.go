@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/emoss08/trenova/edi-partner-sim/internal/acknowledge"
 	"github.com/emoss08/trenova/edi-partner-sim/internal/journal"
 	"github.com/emoss08/trenova/edi-partner-sim/internal/oracle"
 	"github.com/emoss08/trenova/edi-partner-sim/internal/partner"
@@ -305,7 +306,7 @@ func (e *Env) expectAck(
 					describeFindings(allFindings(&ack)))
 				return true
 			}
-			if m.Ack.Code == partner.AckRejected || m.Ack.Code == partner.AckPartial {
+			if m.Ack.Code == acknowledge.Rejected || m.Ack.Code == acknowledge.Partial {
 				rejected = true
 			}
 		}
@@ -547,8 +548,8 @@ func (e *Env) expectState(
 		c.mu.Unlock()
 		if shipmentID != "" {
 			c.noteEvent(runlog.Event{Label: "A shipment was built", Tone: runlog.ToneBad})
-			return "", failf(SourceExpect, "shipment", "%s has shipment %s; the scenario "+
-				"expects none", c.Key, shipmentID)
+			return "", failf(SourceExpect, "shipment", "%s has a shipment; the scenario "+
+				"expects none", c.Key)
 		}
 		c.noteEvent(runlog.Event{Label: "No shipment built"})
 		return "no shipment", nil
@@ -592,7 +593,7 @@ func (e *Env) expectState(
 		if len(problems) == 0 {
 			return "", failure(SourceTrenova, "shipment", err)
 		}
-		return "", failf(SourceExpect, "shipment", "shipment %s: %s", shipmentID,
+		return "", failf(SourceExpect, "shipment", "%s's shipment: %s", c.Key,
 			strings.Join(problems, "; "))
 	}
 	c.noteEvent(runlog.Event{Label: "Shipment " + strings.ToLower(status)})

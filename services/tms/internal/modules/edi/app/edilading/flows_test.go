@@ -270,3 +270,59 @@ func TestOpens_IsWhetherAStepLeavesAnythingAnInstanceMustHold(t *testing.T) {
 		})
 	}
 }
+
+func TestApply_AClosedInstanceLeftWithWorkReopensAndAFinishedOneCloses(t *testing.T) {
+	t.Parallel()
+
+	req := &DispatchRequest{
+		Program: &Program{
+			Project: &ladingproject.LadingProject{ID: pulid.MustNew("ldp_")},
+			Version: &ladingproject.LadingVersion{ID: pulid.MustNew("ldv_")},
+		},
+		Event: lading.FlowEvent{Kind: lading.EventTrenova},
+	}
+	pending := &lading.FlowStep{State: []byte(
+		`{"load":{"exists":true,"state":"invoiced"},"pending":[{"id":"s3","set":"210","control":"0007","due":1,"resends":0}]}`,
+	)}
+	done := &lading.FlowStep{
+		State: []byte(`{"load":{"exists":true,"state":"invoiced"},"pending":[]}`),
+	}
+
+	closed := &ladingproject.FlowInstance{Status: ladingproject.FlowInstanceStatusClosed}
+	apply(closed, req, pending)
+	require.Equal(t, ladingproject.FlowInstanceStatusOpen, closed.Status)
+
+	apply(closed, req, done)
+	require.Equal(t, ladingproject.FlowInstanceStatusClosed, closed.Status)
+}
+
+func TestApply_AnEscalationFromARejectedAckCarriesTheAcknowledgmentsCodes(t *testing.T) {
+	t.Parallel()
+
+	req := &DispatchRequest{
+		Program: &Program{
+			Project: &ladingproject.LadingProject{ID: pulid.MustNew("ldp_")},
+			Version: &ladingproject.LadingVersion{ID: pulid.MustNew("ldv_")},
+		},
+		Event:     lading.FlowEvent{Kind: lading.EventAck, Control: "0042"},
+		AckDetail: "acknowledgment code R; syntax error codes 5",
+	}
+	step := &lading.FlowStep{
+		State: []byte(`{"load":{"exists":true,"state":"dispatched"},"pending":[]}`),
+		Actions: []lading.FlowAction{{
+			Kind: lading.ActionEscalate,
+			Message: &wasmmodule.Message{
+				Template: "The partner rejected {0} {1}: {2}",
+				Args:     []any{"214", "0042", ""},
+			},
+		}},
+	}
+	instance := &ladingproject.FlowInstance{Status: ladingproject.FlowInstanceStatusOpen}
+
+	apply(instance, req, step)
+
+	require.Equal(t, ladingproject.FlowInstanceStatusEscalated, instance.Status)
+	require.NotNil(t, instance.Reason)
+	require.Contains(t, instance.Reason.String(), "syntax error codes 5")
+	require.Contains(t, step.Actions[0].Message.String(), "syntax error codes 5")
+}

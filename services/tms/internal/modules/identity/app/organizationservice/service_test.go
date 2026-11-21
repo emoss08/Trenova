@@ -8,7 +8,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config/securityconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/storageconfig"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
@@ -669,7 +668,6 @@ func TestNew(t *testing.T) {
 		Logger:         zap.NewNop(),
 		Repo:           repo,
 		Storage:        &noopStorageClient{},
-		SecurityConfig: &securityconfig.Config{},
 		StorageConfig:  &storageconfig.Config{},
 		Validator:      NewValidator(ValidatorParams{DB: pgstubtest.NewConnection(t)}),
 		PlanFields:     plantest.Keeper(nil),

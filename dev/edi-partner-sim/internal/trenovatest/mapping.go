@@ -235,6 +235,29 @@ func (f *Fake) referenceGraphQL(
 			map[string]any{"node": map[string]any{"id": "trk_1", "primaryWorkerId": "wrk_1",
 				"inProgressMoveId": nil}},
 		}}
+	case strings.Contains(query, "updateCustomer("):
+		profile, _ := input["billingProfile"].(map[string]any)
+		option := f.option("CUSTOMER", fmt.Sprint(variables["id"]))
+		if option == nil || profile == nil || input["code"] == nil {
+			reply(w, map[string]any{"errors": []any{map[string]any{"message": "bad customer"}}})
+			return true
+		}
+		option["ediInvoice"] = profile["ediInvoiceEnabled"] == true &&
+			profile["emailInvoiceEnabled"] == false
+		f.created["CUSTOMER_UPDATE"]++
+		data["updateCustomer"] = map[string]any{"id": option["id"]}
+	case strings.Contains(query, "customer("):
+		option := f.option("CUSTOMER", fmt.Sprint(variables["id"]))
+		if option == nil {
+			data["customer"] = nil
+			break
+		}
+		meta, _ := option["meta"].(map[string]any)
+		edi := option["ediInvoice"] == true
+		data["customer"] = map[string]any{"status": "Active", "code": meta["code"],
+			"name": option["label"], "version": 0, "billingProfile": map[string]any{
+				"ediInvoiceEnabled": edi, "emailInvoiceEnabled": !edi,
+				"autoSendInvoiceOnGeneration": true, "documentTypes": nil}}
 	case strings.Contains(query, "createCustomer("):
 		id := f.id("cus")
 		f.remember("CUSTOMER", map[string]any{"id": id, "label": input["name"],
@@ -279,4 +302,13 @@ func (f *Fake) selectOptions(input map[string]any) []any {
 		}
 	}
 	return edges
+}
+
+func (f *Fake) option(resource, id string) map[string]any {
+	for _, option := range f.options[resource] {
+		if option["id"] == id {
+			return option
+		}
+	}
+	return nil
 }

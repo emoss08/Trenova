@@ -33,6 +33,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/editenderports"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/editransportports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
 	"github.com/emoss08/trenova/pkg/dberror"
@@ -50,6 +51,7 @@ type Params struct {
 	fx.In
 
 	Logger              *zap.Logger
+	DB                  kernelports.Transactor
 	InboundFileRepo     edimessageports.EDIInboundFileRepository
 	PartnerRepo         edipartnerports.EDIPartnerRepository
 	MessageRepo         edimessageports.EDIMessageRepository
@@ -76,6 +78,7 @@ type Params struct {
 
 type Service struct {
 	l                   *zap.Logger
+	db                  kernelports.Transactor
 	inboundFileRepo     edimessageports.EDIInboundFileRepository
 	partnerRepo         edipartnerports.EDIPartnerRepository
 	messageRepo         edimessageports.EDIMessageRepository
@@ -103,6 +106,7 @@ func New(p Params) *Service {
 	return &Service{
 		contentGate:         p.ContentGate,
 		l:                   p.Logger.Named("service.edi-inbound"),
+		db:                  p.DB,
 		metrics:             ediMetrics,
 		watchtower:          p.Watchtower,
 		publisher:           p.Publisher,
@@ -294,7 +298,7 @@ func (s *Service) processInboundFile(
 		return nil, err
 	}
 
-	warnings := make([]string, 0)
+	warnings := s.routeInterchangeAcknowledgments(ctx, file, partner, interchange)
 	failures := 0
 	processed := 0
 	tendered := false

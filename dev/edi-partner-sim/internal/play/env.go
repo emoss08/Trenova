@@ -10,7 +10,6 @@ import (
 	"slices"
 	"strings"
 	"sync"
-	"sync/atomic"
 
 	"github.com/emoss08/trenova/edi-partner-sim/internal/identity"
 	"github.com/emoss08/trenova/edi-partner-sim/internal/partner"
@@ -41,6 +40,8 @@ type Options struct {
 	IdentityDir string
 	KeepGoing   bool
 	Verbose     bool
+	Scale       float64
+	OnScenario  func(partner string, report *ScenarioReport)
 	Out         io.Writer
 	HTTPClient  *http.Client
 }
@@ -48,6 +49,7 @@ type Options struct {
 type Party struct {
 	Def   *partner.Definition
 	Setup *provision.Result
+	Happy *partner.LoadNeed
 }
 
 func (p *Party) Name() string {
@@ -69,17 +71,27 @@ type Env struct {
 	root      string
 	out       io.Writer
 	verbose   bool
-	resources resources
+	fleet     fleet
 	template  shipmentTemplate
 	mapper    *provision.Mapper
 	api       string
 	email     string
 	progress  *progress
+	scale     float64
+	finished  func(partner string, report *ScenarioReport)
 }
 
 func Open(ctx context.Context, o *Options) (*Env, error) {
 	if o.Run < 1 || o.Run > MaxRun {
 		return nil, fmt.Errorf("the run is a number from 1 to %d, not %d", MaxRun, o.Run)
+	}
+	scale := o.Scale
+	if scale == 0 {
+		scale = 1
+	}
+	if scale < 0 {
+		return nil, fmt.Errorf("the deadline scale multiplies every wait; %v is not above 0",
+			o.Scale)
 	}
 	out := o.Out
 	if out == nil {
@@ -124,6 +136,8 @@ func Open(ctx context.Context, o *Options) (*Env, error) {
 		api:       o.API,
 		email:     o.Email,
 		mapper:    provision.NewMapper(client),
+		scale:     scale,
+		finished:  o.OnScenario,
 	}, nil
 }
 
@@ -174,31 +188,11 @@ func (e *Env) Provision(ctx context.Context, def *partner.Definition) *Party {
 			e.logf("    failing test: %s", test)
 		}
 	}
-	return &Party{Def: def, Setup: setup}
+	return &Party{Def: def, Setup: setup, Happy: happyNeed(def)}
 }
 
 func SeedOf(run uint64, offset uint64) uint64 {
 	return run*runStride + offset
-}
-
-type resources struct {
-	next atomic.Uint64
-}
-
-var errNoResources = errors.New("the tenant has no available tractor with a driver that is " +
-	"not already on a move in progress")
-
-func (e *Env) pair(ctx context.Context) (string, string, error) {
-	tractors, err := e.Trenova.FreeTractors(ctx, resourceLimit)
-	if err != nil {
-		return "", "", err
-	}
-	if len(tractors) == 0 {
-		return "", "", errNoResources
-	}
-	turn := e.resources.next.Add(1) - 1
-	tractor := tractors[turn%uint64(len(tractors))]
-	return tractor.PrimaryWorkerID, tractor.ID, nil
 }
 
 type shipmentTemplate struct {

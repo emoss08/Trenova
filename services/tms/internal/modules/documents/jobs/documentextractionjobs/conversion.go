@@ -204,34 +204,61 @@ func (a *Activities) PlanDocumentExtractionActivity(
 	if err != nil {
 		return nil, err
 	}
-	if !control.EnableDocumentIntelligence {
+	gate, err := a.gateReading(ctx, control, tenantInfo)
+	if err != nil {
+		return nil, err
+	}
+	if gate.switchedOff {
 		a.metrics.Document.RecordExtraction("skipped", "", "control_disabled")
 		return stoppedPlan(ExtractionRouteSkip, doc), nil
 	}
+	if gate.unavailable != nil {
+		if err = a.markExtractionUnavailable(ctx, doc, gate.unavailable); err != nil {
+			return nil, err
+		}
+		return stoppedPlan(ExtractionRouteStopped, doc), nil
+	}
 
-	return a.planConversion(ctx, doc, control, tenantInfo)
+	return a.planConversion(ctx, doc, gate, tenantInfo)
 }
 
-func (a *Activities) planConversion(
+type readingGate struct {
+	switchedOff bool
+	unavailable *extractionUnavailable
+	ocr         bool
+}
+
+func (g *readingGate) open() bool {
+	return !g.switchedOff && g.unavailable == nil
+}
+
+func (a *Activities) gateReading(
 	ctx context.Context,
-	doc *document.Document,
 	control *documentcontrol.DocumentControl,
 	tenantInfo pagination.TenantInfo,
-) (*PlanDocumentExtractionResult, error) {
+) (*readingGate, error) {
+	if !control.EnableDocumentIntelligence {
+		return &readingGate{switchedOff: true}, nil
+	}
+
 	availability, err := a.aiDocumentService.ExtractionAvailability(ctx, tenantInfo)
 	if err != nil {
 		return nil, err
 	}
 	if !availability.Available() {
-		if err = a.markExtractionUnavailable(
-			ctx,
-			doc,
-			modelUnavailable(availability),
-		); err != nil {
-			return nil, err
-		}
-		return stoppedPlan(ExtractionRouteStopped, doc), nil
+		return &readingGate{unavailable: modelUnavailable(availability)}, nil
 	}
+
+	return &readingGate{ocr: control.EnableOCR}, nil
+}
+
+func (a *Activities) planConversion(
+	ctx context.Context,
+	doc *document.Document,
+	gate *readingGate,
+	tenantInfo pagination.TenantInfo,
+) (*PlanDocumentExtractionResult, error) {
+	var err error
 
 	format := conversionFormatOf(doc.FileType, doc.OriginalName)
 	switch format {
@@ -271,7 +298,7 @@ func (a *Activities) planConversion(
 
 	return &PlanDocumentExtractionResult{
 		Route:                    ExtractionRouteDocling,
-		OCR:                      control.EnableOCR,
+		OCR:                      gate.ocr,
 		ConversionTimeoutSeconds: int64(a.conversionCfg.GetConversionTimeout().Seconds()),
 	}, nil
 }
@@ -1140,8 +1167,8 @@ func (a *Activities) analyzeExtraction(
 
 	return &documentanalysis.ExtractionPipelineOutcome{
 		Extracted:      extracted,
-		Classification: classification,
-		Intelligence:   intelligence,
+		Classification: result.Classification,
+		Intelligence:   result.DocumentIntelligence,
 		AIDiagnostics:  result.AIDiagnostics,
 		Signature:      result.Signature,
 		EnqueueAsyncAI: result.EnqueueAsyncAI,

@@ -1,6 +1,6 @@
 name: a cancellation before dispatch cancels the run
 steps:
-  - send: { set: "204", as: t1 }
+  - send: { set: "204", as: t1, load: { oneRange: true } }
   - expect: { ack: t1 }
   - expect: { wire: "990", about: t1 }
   - send: { set: "204", variation: cancel, of: t1 }

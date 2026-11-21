@@ -1,20 +1,28 @@
+import { SettingsPageSkeleton } from "@/components/settings/settings-page";
+import type { SettingsSectionSpec } from "@/components/settings-form-skeleton";
 import {
-  SettingsFormSkeleton,
-  type SettingsSectionSpec,
-} from "@/components/settings-form-skeleton";
+  useDocumentIntelligenceTabs,
+  type DocumentIntelligenceTab,
+} from "./document-intelligence-tabs";
 
-const dependentSwitch = { kind: "switch", nested: true } as const;
+/**
+ * Each tab's sections as the form draws them, one row to a setting. Rows that wait on a
+ * switch are drawn closed, as they stand with that switch off, and the notices that depend
+ * on saved values or the server are left out, since the outline cannot know either.
+ */
+const TAB_SECTIONS: Record<DocumentIntelligenceTab, readonly SettingsSectionSpec[]> = {
+  reading: [{ title: "sm", description: 1, fields: ["switch"] }],
+  filing: [
+    { title: "md", description: 1, fields: ["switch"] },
+    { title: "md", description: 1, fields: ["switch"] },
+  ],
+  drafts: [
+    { title: "md", description: 1, fields: ["switch"] },
+    { title: "sm", description: 1, fields: ["switch"] },
+  ],
+};
 
-const sections: readonly SettingsSectionSpec[] = [
-  { fields: ["switch", dependentSwitch] },
-  { title: "lg", fields: ["switch", dependentSwitch, "switch", dependentSwitch, "switch"] },
-  {
-    title: "lg",
-    fields: ["switch", { kind: "checkbox", nested: true, outlined: true, count: 4 }],
-  },
-  { fields: ["switch"] },
-];
-
+/** The form's tab row and the open tab's sections. */
 export function DocumentIntelligenceSkeleton() {
-  return <SettingsFormSkeleton sections={sections} />;
+  return <SettingsPageSkeleton tabs={useDocumentIntelligenceTabs()} sections={TAB_SECTIONS} />;
 }

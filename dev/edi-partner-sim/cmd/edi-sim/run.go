@@ -12,6 +12,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/edi-partner-sim/internal/play"
+	"github.com/emoss08/trenova/edi-partner-sim/internal/play/playtext"
 )
 
 const (
@@ -105,6 +106,8 @@ func runRun(ctx context.Context, args []string, stdout, stderr io.Writer) int {
 	set.StringVar(&scenarios, "scenario", "", "only these scenarios (file names, comma separated)")
 	set.BoolVar(&f.options.KeepGoing, "keep-going", false,
 		"run every scenario and partner after a failure")
+	set.Float64Var(&f.options.Scale, "deadline-scale", 1,
+		"multiply every wait a scenario states, such as 0.3 for a quick pass")
 	set.StringVar(&f.report, "report", "run-report.json", "where to write the JSON report")
 	if err := set.Parse(args); err != nil {
 		if errors.Is(err, flag.ErrHelp) {
@@ -123,20 +126,19 @@ func runRun(ctx context.Context, args []string, stdout, stderr io.Writer) int {
 		fmt.Fprintf(stderr, "run: %v\n", err)
 		return exitUsage
 	}
+	f.options.OnScenario = func(_ string, s *play.ScenarioReport) {
+		if f.options.Verbose {
+			playtext.Scenario(stdout, s)
+		}
+		playtext.Line(stdout, s)
+	}
 	report, err := play.Run(ctx, &f.options)
 	if report == nil {
 		fmt.Fprintf(stderr, "run: %v\n", err)
 		return exitFailed
 	}
-	if f.options.Verbose {
-		for _, p := range report.Partners {
-			for _, s := range p.Scenarios {
-				s.Write(stdout)
-			}
-		}
-	}
 	fmt.Fprintln(stdout)
-	report.WriteSummary(stdout)
+	playtext.Summary(stdout, report)
 	if f.report != "" {
 		if writeErr := report.WriteJSON(f.report); writeErr != nil {
 			fmt.Fprintf(stderr, "run: %v\n", writeErr)

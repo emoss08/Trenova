@@ -9,6 +9,12 @@ rule "a status quotes the BOL and the drop" {
   }
 }
 
+/// Meadowridge's guide carries a BOL of at most 30 characters, and a cut BOL matches nothing.
+rule "a BOL Meadowridge's guide can carry" {
+  require (bol ?? "").length() <= 30
+    else hold "Meadowridge's guide takes a BOL of at most 30 characters: shorten it before sending"
+}
+
 test "a drop's delivery goes out" {
   given shipmentStatus { key: "MF1000008", bol: "5861735303", events: [{ kind: Delivered, at: @2026-06-09T14:50Z, stop: 2 }] }
   expect no holds
@@ -23,4 +29,9 @@ test "a status without its drop is held" {
 test "a delay is never sent" {
   given shipmentStatus { key: "MF1000008", bol: "5861735303", events: [{ kind: Delayed, at: @2026-06-09T14:50Z, stop: 2 }] }
   expect no sent
+}
+
+test "a BOL longer than Meadowridge's guide takes is held" {
+  given shipmentStatus { key: "MF1000008", bol: "8100798987-REISSUED-AFTER-RECONSIGNMENT", events: [{ kind: Delivered, at: @2026-06-09T14:50Z, stop: 2 }] }
+  expect held "Meadowridge's guide takes a BOL of at most 30 characters: shorten it before sending"
 }

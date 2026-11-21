@@ -32,6 +32,10 @@ var flowShipmentEvents = []shipmentevent.Type{
 	shipmentevent.TypeMoveDeparted,
 	shipmentevent.TypeStopArrived,
 	shipmentevent.TypeStopDeparted,
+	shipmentevent.TypeDriverAssigned,
+	shipmentevent.TypeDriverUnassigned,
+	shipmentevent.TypeCarrierAssigned,
+	shipmentevent.TypeCarrierUnassigned,
 }
 
 func FlowShipmentEvent(eventType shipmentevent.Type) bool {
@@ -47,6 +51,25 @@ func statusShipmentEvent(event *shipmentevent.Event) bool {
 		return !event.FromStopActual()
 	}
 	return false
+}
+
+func dispatchShipmentEvent(event *shipmentevent.Event) bool {
+	//nolint:exhaustive // Only a committed driver or carrier dispatches a load.
+	switch event.Type {
+	case shipmentevent.TypeDriverAssigned, shipmentevent.TypeCarrierAssigned:
+		return true
+	case shipmentevent.TypeStatusChanged:
+		newStatus, _ := event.Metadata["newStatus"].(string)
+		status := shipmentvocab.Status(newStatus)
+		return status == shipmentvocab.StatusAssigned ||
+			status == shipmentvocab.StatusPartiallyAssigned
+	}
+	return false
+}
+
+func firstDispatch(previous, current *lading.LoadState) bool {
+	return current.State == lading.LoadDispatched &&
+		(!previous.Exists || previous.State == "" || previous.State == lading.LoadOpen)
 }
 
 // HasShipmentFlows is whether any partner's flow follows the shipment.
@@ -101,18 +124,52 @@ func (s *Service) NotifyShipmentEvent(ctx context.Context, req *NotifyShipmentEv
 	var failures []error
 	notified := map[pulid.ID]bool{}
 	for _, instance := range instances {
-		if err = s.tellLoad(ctx, req.TenantInfo, instance, load); err != nil {
+		previous, stateErr := flowLoad(instance)
+		if stateErr != nil {
+			failures = append(failures, stateErr)
+			continue
+		}
+		if err = s.tellLoad(ctx, req.TenantInfo, instance, previous, load); err != nil {
 			failures = append(failures, err)
 		}
-		if !statusShipmentEvent(event) || notified[instance.EDIPartnerID] {
+		if notified[instance.EDIPartnerID] {
+			continue
+		}
+		idempotencyKey := ""
+		switch {
+		case statusShipmentEvent(event):
+			idempotencyKey = fmt.Sprintf("flow-214:%s:%s", instance.EDIPartnerID, event.ID)
+		case dispatchShipmentEvent(event) && firstDispatch(previous, load):
+			idempotencyKey = fmt.Sprintf(
+				"flow-dispatched:%s:%s",
+				instance.EDIPartnerID,
+				event.ShipmentID,
+			)
+		default:
 			continue
 		}
 		notified[instance.EDIPartnerID] = true
-		if err = s.sendShipmentStatus(ctx, req.TenantInfo, instance, event); err != nil {
+		if err = s.sendShipmentStatus(
+			ctx,
+			req.TenantInfo,
+			instance,
+			event,
+			idempotencyKey,
+		); err != nil {
 			failures = append(failures, err)
 		}
 	}
 	return errors.Join(failures...)
+}
+
+func flowLoad(instance *ladingproject.FlowInstance) (*lading.LoadState, error) {
+	var summary lading.FlowSummary
+	if len(instance.State) > 0 {
+		if err := sonic.Unmarshal(instance.State, &summary); err != nil {
+			return nil, fmt.Errorf("read flow state: %w", err)
+		}
+	}
+	return &summary.Load, nil
 }
 
 func (s *Service) loadState(
@@ -133,7 +190,9 @@ func (s *Service) loadState(
 // LoadStateOf is the state a flow sees a load in, from its shipment's status.
 func LoadStateOf(status shipmentvocab.Status) string {
 	switch status {
-	case shipmentvocab.StatusInTransit,
+	case shipmentvocab.StatusPartiallyAssigned,
+		shipmentvocab.StatusAssigned,
+		shipmentvocab.StatusInTransit,
 		shipmentvocab.StatusDelayed,
 		shipmentvocab.StatusPartiallyCompleted:
 		return lading.LoadDispatched
@@ -143,9 +202,7 @@ func LoadStateOf(status shipmentvocab.Status) string {
 		return lading.LoadInvoiced
 	case shipmentvocab.StatusCanceled:
 		return lading.LoadCancelled
-	case shipmentvocab.StatusNew,
-		shipmentvocab.StatusPartiallyAssigned,
-		shipmentvocab.StatusAssigned:
+	case shipmentvocab.StatusNew:
 	}
 	return lading.LoadOpen
 }
@@ -154,15 +211,10 @@ func (s *Service) tellLoad(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	instance *ladingproject.FlowInstance,
+	previous *lading.LoadState,
 	load *lading.LoadState,
 ) error {
-	var summary lading.FlowSummary
-	if len(instance.State) > 0 {
-		if err := sonic.Unmarshal(instance.State, &summary); err != nil {
-			return fmt.Errorf("read flow state: %w", err)
-		}
-	}
-	if summary.Load.Exists == load.Exists && summary.Load.State == load.State {
+	if previous.Exists == load.Exists && previous.State == load.State {
 		return nil
 	}
 	dispatched, err := s.flows.DispatchTo(ctx, instance, &edilading.DispatchRequest{
@@ -184,6 +236,7 @@ func (s *Service) sendShipmentStatus(
 	tenantInfo pagination.TenantInfo,
 	instance *ladingproject.FlowInstance,
 	event *shipmentevent.Event,
+	idempotencyKey string,
 ) error {
 	request := &GenerateEDIDocumentRequest{
 		TenantInfo:      tenantInfo,
@@ -192,7 +245,7 @@ func (s *Service) sendShipmentStatus(
 		ShipmentEventID: event.ID,
 		TransactionSet:  edidocument.TransactionSet214,
 		Direction:       edidocument.DocumentDirectionOutbound,
-		IdempotencyKey:  fmt.Sprintf("flow-214:%s:%s", instance.EDIPartnerID, event.ID),
+		IdempotencyKey:  idempotencyKey,
 	}
 	o, err := s.resolveOutbound(ctx, previewRequest(request))
 	if err != nil {
@@ -236,8 +289,12 @@ func (s *Service) AttachFlowShipment(ctx context.Context, transfer *editransfer.
 	}
 	for _, instance := range instances {
 		attached, attachErr := s.flows.Attach(ctx, instance, "", transfer.TargetShipmentID)
+		var previous *lading.LoadState
 		if attachErr == nil {
-			attachErr = s.tellLoad(ctx, tenantInfo, attached, &lading.LoadState{
+			previous, attachErr = flowLoad(attached)
+		}
+		if attachErr == nil {
+			attachErr = s.tellLoad(ctx, tenantInfo, attached, previous, &lading.LoadState{
 				Exists: true,
 				State:  lading.LoadOpen,
 			})

@@ -1,5 +1,5 @@
 {
-  "version": "sha256:6b6d9c3ad919ee21ff29a65f7a1ff8880dbb4fc4b9c16847e87fc193ba59faf3",
+  "version": "sha256:8630ac247b51d3bb6341d7c24ee54567c29c835096258dbc5dbaa19aaa8db1f1",
   "screens": [
     {
       "path": "/",
@@ -1650,7 +1650,7 @@
       "name": "Drift findings",
       "requires": [
         {
-          "resource": "accounting_sync",
+          "resource": "accounting_reconciliation",
           "operation": "read"
         }
       ],
@@ -1716,7 +1716,7 @@
       "name": "Payments from the books",
       "requires": [
         {
-          "resource": "accounting_sync",
+          "resource": "accounting_reconciliation",
           "operation": "read"
         }
       ],
@@ -5059,216 +5059,11 @@
           "operation": "read"
         }
       ],
-      "operations": [
-        "AuthEventsTable",
-        "BulkEditFields",
-        "DataTableAggregates",
-        "DataTableFacets",
-        "DataTableInsightFields",
-        "ExportTableView",
-        "ExternalIdentitiesTable",
-        "MFAAuthenticatorsTable",
-        "MyBulkEdit",
-        "MyTableLayout",
-        "PreviewBulkEdit",
-        "ResetMyTableLayout",
-        "RiskDecisionsTable",
-        "SCIMGroupRoleMappingsTable",
-        "SaveMyTableLayout",
-        "ScheduleTableView",
-        "StartBulkEdit",
-        "UndoMyBulkEdit"
-      ],
-      "endpoints": [
-        {
-          "method": "GET",
-          "path": "/permissions/bundles",
-          "requires": []
-        },
-        {
-          "method": "GET",
-          "path": "/permissions/operations",
-          "requires": []
-        },
-        {
-          "method": "GET",
-          "path": "/permissions/resources",
-          "requires": []
-        },
-        {
-          "method": "POST",
-          "path": "/roles/",
-          "requires": [
-            {
-              "resource": "role",
-              "operation": "create"
-            }
-          ]
-        },
-        {
-          "method": "DELETE",
-          "path": "/roles/:param",
-          "requires": [
-            {
-              "resource": "role",
-              "operation": "delete"
-            }
-          ]
-        },
-        {
-          "method": "GET",
-          "path": "/roles/:param",
-          "requires": [
-            {
-              "resource": "role",
-              "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "PUT",
-          "path": "/roles/:param",
-          "requires": [
-            {
-              "resource": "role",
-              "operation": "update"
-            }
-          ]
-        },
-        {
-          "method": "POST",
-          "path": "/roles/:param/assignments",
-          "requires": [
-            {
-              "resource": "user",
-              "operation": "assign"
-            }
-          ]
-        },
-        {
-          "method": "GET",
-          "path": "/roles/:param/impact",
-          "requires": [
-            {
-              "resource": "role",
-              "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "DELETE",
-          "path": "/roles/assignments/:param",
-          "requires": [
-            {
-              "resource": "user",
-              "operation": "unassign"
-            }
-          ]
-        },
-        {
-          "method": "GET",
-          "path": "/roles/constraints",
-          "requires": [
-            {
-              "resource": "role",
-              "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "POST",
-          "path": "/roles/constraints",
-          "requires": [
-            {
-              "resource": "role",
-              "operation": "update"
-            }
-          ]
-        },
-        {
-          "method": "DELETE",
-          "path": "/roles/constraints/:param",
-          "requires": [
-            {
-              "resource": "role",
-              "operation": "update"
-            }
-          ]
-        },
-        {
-          "method": "PUT",
-          "path": "/roles/constraints/:param",
-          "requires": [
-            {
-              "resource": "role",
-              "operation": "update"
-            }
-          ]
-        },
-        {
-          "method": "GET",
-          "path": "/roles/hierarchy",
-          "requires": [
-            {
-              "resource": "role",
-              "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "POST",
-          "path": "/roles/hierarchy",
-          "requires": [
-            {
-              "resource": "role",
-              "operation": "update"
-            }
-          ]
-        },
-        {
-          "method": "DELETE",
-          "path": "/roles/hierarchy/:param",
-          "requires": [
-            {
-              "resource": "role",
-              "operation": "update"
-            }
-          ]
-        },
-        {
-          "method": "GET",
-          "path": "/roles/preflight",
-          "requires": [
-            {
-              "resource": "role",
-              "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "GET",
-          "path": "/tables/",
-          "requires": []
-        },
-        {
-          "method": "POST",
-          "path": "/tables/:param/compose/",
-          "requires": []
-        }
-      ],
-      "reads": [
-        "auth_event",
-        "external_identity",
-        "mfa_authenticator",
-        "risk_decision"
-      ],
-      "references": [
-        "report",
-        "role"
-      ],
-      "declared": [
-        "user"
-      ]
+      "operations": [],
+      "endpoints": [],
+      "reads": [],
+      "references": [],
+      "declared": []
     },
     {
       "path": "/admin/plan",
@@ -5703,6 +5498,221 @@
       "reads": [],
       "references": [],
       "declared": []
+    },
+    {
+      "path": "/admin/security-access",
+      "name": "Security \u0026 access",
+      "requires": [],
+      "operations": [
+        "AuthEventsTable",
+        "BulkEditFields",
+        "DataTableAggregates",
+        "DataTableFacets",
+        "DataTableInsightFields",
+        "ExportTableView",
+        "ExternalIdentitiesTable",
+        "MFAAuthenticatorsTable",
+        "MyBulkEdit",
+        "MyTableLayout",
+        "PreviewBulkEdit",
+        "ResetMyTableLayout",
+        "RiskDecisionsTable",
+        "SCIMGroupRoleMappingsTable",
+        "SaveMyTableLayout",
+        "ScheduleTableView",
+        "StartBulkEdit",
+        "UndoMyBulkEdit"
+      ],
+      "endpoints": [
+        {
+          "method": "GET",
+          "path": "/permissions/bundles",
+          "requires": []
+        },
+        {
+          "method": "GET",
+          "path": "/permissions/operations",
+          "requires": []
+        },
+        {
+          "method": "GET",
+          "path": "/permissions/resources",
+          "requires": []
+        },
+        {
+          "method": "POST",
+          "path": "/roles/",
+          "requires": [
+            {
+              "resource": "role",
+              "operation": "create"
+            }
+          ]
+        },
+        {
+          "method": "DELETE",
+          "path": "/roles/:param",
+          "requires": [
+            {
+              "resource": "role",
+              "operation": "delete"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/roles/:param",
+          "requires": [
+            {
+              "resource": "role",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "PUT",
+          "path": "/roles/:param",
+          "requires": [
+            {
+              "resource": "role",
+              "operation": "update"
+            }
+          ]
+        },
+        {
+          "method": "POST",
+          "path": "/roles/:param/assignments",
+          "requires": [
+            {
+              "resource": "user",
+              "operation": "assign"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/roles/:param/impact",
+          "requires": [
+            {
+              "resource": "role",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "DELETE",
+          "path": "/roles/assignments/:param",
+          "requires": [
+            {
+              "resource": "user",
+              "operation": "unassign"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/roles/constraints",
+          "requires": [
+            {
+              "resource": "role",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "POST",
+          "path": "/roles/constraints",
+          "requires": [
+            {
+              "resource": "role",
+              "operation": "update"
+            }
+          ]
+        },
+        {
+          "method": "DELETE",
+          "path": "/roles/constraints/:param",
+          "requires": [
+            {
+              "resource": "role",
+              "operation": "update"
+            }
+          ]
+        },
+        {
+          "method": "PUT",
+          "path": "/roles/constraints/:param",
+          "requires": [
+            {
+              "resource": "role",
+              "operation": "update"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/roles/hierarchy",
+          "requires": [
+            {
+              "resource": "role",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "POST",
+          "path": "/roles/hierarchy",
+          "requires": [
+            {
+              "resource": "role",
+              "operation": "update"
+            }
+          ]
+        },
+        {
+          "method": "DELETE",
+          "path": "/roles/hierarchy/:param",
+          "requires": [
+            {
+              "resource": "role",
+              "operation": "update"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/roles/preflight",
+          "requires": [
+            {
+              "resource": "role",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/tables/",
+          "requires": []
+        },
+        {
+          "method": "POST",
+          "path": "/tables/:param/compose/",
+          "requires": []
+        }
+      ],
+      "reads": [
+        "auth_event",
+        "external_identity",
+        "mfa_authenticator",
+        "risk_decision"
+      ],
+      "references": [
+        "report",
+        "role"
+      ],
+      "declared": [
+        "user"
+      ]
     },
     {
       "path": "/admin/sequence-configs",

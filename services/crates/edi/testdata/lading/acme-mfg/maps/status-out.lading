@@ -33,6 +33,11 @@ test "an arrival at the consignee writes the AT7 and MS1" {
   expect x12 contains "LX*1~AT7*X1*NS***20260304*1352*ET~MS1*COLUMBUS*OH*US~L11*2*QN~"
 }
 
+test "a time is written without its seconds when the guide does not ask for them" {
+  given shipmentStatus { key: "AM-1", events: [{ kind: ArrivedPickup, at: @2026-03-04T04:53:10Z }] }
+  expect x12 contains "LX*1~AT7*X3*NS***20260304*0453*UT~"
+}
+
 test "an appointment is never sent to Acme" {
   given shipmentStatus { key: "AM-1", events: [{ kind: AppointmentSet, at: @2026-03-04T14:30Z }] }
   expect no sent
@@ -63,4 +68,28 @@ test "a country Acme's guide does not take is refused" {
     events: [{ kind: ArrivedPickup, at: @2026-03-04T14:30Z, city: "Monterrey", state: "NL", country: "MX" }]
   }
   expect rejected
+}
+
+test "a city with accents is written in the X12 character set, with a warning" {
+  given shipmentStatus {
+    key: "AM-1"
+    events: [{ kind: ArrivedPickup, at: @2026-03-04T14:30Z, city: "Peñasco", state: "TX" }]
+  }
+  expect x12 contains "MS1*PENASCO*TX*US~"
+  expect warned "MS101 was written in the X12 character set: PEÑASCO became PENASCO"
+}
+
+test "a value folding lengthened is cut to the element's maximum" {
+  given shipmentStatus {
+    key: "AM-1"
+    events: [{ kind: ArrivedPickup, at: @2026-03-04T14:30Z, city: "Ærøskøbing Østre Havnekaj Nord", state: "ON", country: "CA" }]
+  }
+  expect x12 contains "MS1*AEROSKOBING OSTRE HAVNEKAJ NOR*ON*CA~"
+  expect warned "cut to its 30 characters"
+}
+
+test "a value with no character X12 can carry is left out, and the element it was required in is missing" {
+  given shipmentStatus { key: "AM-1", bol: "北京", events: [{ kind: ArrivedPickup, at: @2026-03-04T14:30Z }] }
+  expect rejected
+  expect warned "L1101 was left out"
 }

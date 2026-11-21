@@ -48,12 +48,40 @@ The partner generates and sends a 204 over its own transport (`POST /control/<p>
 | `seed`, `count` | the seed offset and how many tenders go in one send (packed as the partner batches) |
 | `sparse` | drop every optional segment |
 | `delta` | `ratePercent`, `addStop`, `move: { stop: 0, by: 24h }` (stop 0 is the last) |
+| `load` | an original's needs from the load it draws (below); later variations keep them |
 
 After an SFTP partner's send the runner asks Trenova to poll the profile, as a person would.
 
+### What a scenario needs from the load
+
+A seed draws a load from `generate/204.yaml`'s ranges, and a partner's Lading rules hold some
+of what it draws (a retailer load over its van limit, crossing reefer ranges). A scenario whose
+expectation depends on such a property states it instead of trusting its seed:
+
+```yaml
+- send: { set: "204", as: t1, load: { maxWeight: 43500 } }      # a load the rules take
+- send: { set: "204", as: t1, load: { minWeight: 44000 } }      # one they hold for a planner
+```
+
+| Key | Narrows the draw to |
+|---|---|
+| `minWeight`, `maxWeight` | a gross weight in that range (lb), within the partner's own |
+| `stops` | exactly that many stops, within the partner's range |
+| `hazmat` | `true`: a hazardous line on the first pickup; `false`: no hazardous commodity |
+| `oneRange` | temperature-controlled lines one reefer setting holds (no crossing ranges) |
+
+Every other property is drawn as the seed would draw it. A need the partner's generator
+cannot meet (`maxWeight: 5000` for loads of 9,000 lb and up, `hazmat: true` for a partner with
+no hazardous commodity) stops the run before it starts, naming the file and the step. The
+need belongs to the conversation: a change, replacement or cancellation of `t1` varies the
+same load. `edi-sim soak` draws its loads with the partner's happy path's needs.
+`internal/partner/need_test.go` plays every shipped scenario's tenders, across runs, through
+the partner's Lading rules and fails when one would be held, declined or rejected against the
+scenario's expectation.
+
 ## expect
 
-Each expectation waits up to its `within` (or the scenario's) and fails with what it saw.
+Each expectation waits up to its `within` (or the scenario's) and fails with what it saw `edi-sim run --deadline-scale 0.3` multiplies every wait for a quick pass.
 
 **`wire: <set>`, `about: <conversation>`**: a transaction Trenova sent that the partner received
 (or, for `997`/`999`/`TA1`, Trenova's acknowledgment of something the partner sent). Every

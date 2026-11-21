@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentsearchprojection"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentsearchprojectionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
@@ -17,32 +18,39 @@ import (
 type Params struct {
 	fx.In
 
-	Logger  *zap.Logger
-	Repo    documentsearchprojectionports.DocumentSearchProjectionRepository
-	Indexer retrievalports.RetrievalIndexer
+	Logger   *zap.Logger
+	Repo     documentsearchprojectionports.DocumentSearchProjectionRepository
+	Indexer  retrievalports.RetrievalIndexer
+	Controls tenantports.DocumentControlRepository
 }
 
 type Service struct {
-	logger  *zap.Logger
-	repo    documentsearchprojectionports.DocumentSearchProjectionRepository
-	indexer retrievalports.RetrievalIndexer
+	logger   *zap.Logger
+	repo     documentsearchprojectionports.DocumentSearchProjectionRepository
+	indexer  retrievalports.RetrievalIndexer
+	controls tenantports.DocumentControlRepository
 }
 
 var _ documentsearchprojectionports.DocumentSearchProjectionService = (*Service)(nil)
 
 func New(p Params) documentsearchprojectionports.DocumentSearchProjectionService {
 	return &Service{
-		logger:  p.Logger.Named("service.document-search-projection"),
-		repo:    p.Repo,
-		indexer: p.Indexer,
+		logger:   p.Logger.Named("service.document-search-projection"),
+		repo:     p.Repo,
+		indexer:  p.Indexer,
+		controls: p.Controls,
 	}
 }
 
 func (s *Service) Upsert(ctx context.Context, doc *document.Document, contentText string) error {
 	if !doc.OwnedByConversation() {
-		if _, err := s.repo.Upsert(
+		indexedText, err := s.indexedText(ctx, doc, contentText)
+		if err != nil {
+			return err
+		}
+		if _, err = s.repo.Upsert(
 			ctx,
-			documentsearchprojection.Build(doc, contentText),
+			documentsearchprojection.Build(doc, indexedText),
 		); err != nil {
 			return err
 		}
@@ -51,6 +59,26 @@ func (s *Service) Upsert(ctx context.Context, doc *document.Document, contentTex
 	s.markStale(ctx, doc)
 
 	return nil
+}
+
+func (s *Service) indexedText(
+	ctx context.Context,
+	doc *document.Document,
+	contentText string,
+) (string, error) {
+	if contentText == "" {
+		return "", nil
+	}
+
+	control, err := s.controls.GetOrCreate(ctx, doc.OrganizationID, doc.BusinessUnitID)
+	if err != nil {
+		return "", err
+	}
+	if !control.EnableFullTextIndexing {
+		return "", nil
+	}
+
+	return contentText, nil
 }
 
 func (s *Service) Delete(

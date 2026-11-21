@@ -72,6 +72,15 @@ type GetEDIOutboundMessageForAckRequest struct {
 	TransactionControlNumber string                     `json:"transactionControlNumber"`
 }
 
+type ListUnacknowledgedOutboundMessagesRequest struct {
+	TenantInfo               pagination.TenantInfo      `json:"tenantInfo"`
+	PartnerID                pulid.ID                   `json:"partnerId"`
+	InterchangeControlNumber string                     `json:"interchangeControlNumber"`
+	GroupControlNumber       string                     `json:"groupControlNumber"`
+	TransactionSet           edidocument.TransactionSet `json:"transactionSet"`
+	Limit                    int                        `json:"limit"`
+}
+
 type LinkEDIMessageFlowRequest struct {
 	ID             pulid.ID              `json:"id"`
 	TenantInfo     pagination.TenantInfo `json:"tenantInfo"`
@@ -296,6 +305,10 @@ type EDIMessageRepository interface {
 		ctx context.Context,
 		req *GetEDIOutboundMessageForAckRequest,
 	) (*edimessage.EDIMessage, error)
+	ListUnacknowledgedOutboundMessages(
+		ctx context.Context,
+		req *ListUnacknowledgedOutboundMessagesRequest,
+	) ([]*edimessage.EDIMessage, error)
 	UpdateMessageAcknowledgment(
 		ctx context.Context,
 		req *UpdateEDIMessageAcknowledgmentRequest,

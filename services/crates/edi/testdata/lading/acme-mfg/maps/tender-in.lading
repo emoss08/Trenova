@@ -119,6 +119,12 @@ test "a tender pasted as text is read too" {
   expect otherCharges == $90.00
 }
 
+test "a tender with accented text is read as sent, not refused" {
+  given text "ISA*00*          *00*          *01*007912345      *ZZ*TRNVLOGISTICS  *260302*0815*^*00401*000000700*0*T*>~GS*SM*ACMEMFG*TRENOVA*20260302*0815*700*X*004010~ST*204*0001~B2**TRNV**AM-50001**CC~B2A*00*LT~N1*BT*ACME MANUFACTURING CO*93*ACME-AP~N3*1 INDUSTRIAL PKWY~N1*SH*ACME PLANT 3*93*ACME-P3~N3*400 CAMIÑO REAL – DOCK ½~S5*1*LD~G62*69*20260310*U*0700~N1*SH*ACME PLANT 3*93*ACME-P3~S5*2*UL~G62*53*20260311*U*0900~N1*CN*ACME DC 9*93*ACME-DC9~L3*20000*G***90000*******L~SE*15*0001~GE*1*700~IEA*1*000000700~"
+  expect no rejects
+  expect payment == Collect
+}
+
 property "everything Acme has tendered still reads" {
   vary file in samples "samples/tender-*.x12"
   expect no rejects

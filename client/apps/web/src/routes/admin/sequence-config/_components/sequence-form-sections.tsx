@@ -1,362 +1,227 @@
-import { useT } from "@trenova/shared/i18n/use-t";
 import { InputField } from "@/components/fields/input-field";
 import { NumberField } from "@/components/fields/number-field";
+import { SegmentedField } from "@/components/fields/segmented-field";
 import { SelectField } from "@/components/fields/select-field";
 import { SwitchField } from "@/components/fields/switch-field";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@trenova/shared/components/ui/card";
+  SettingsNested,
+  SettingsReadout,
+  SettingsSection,
+} from "@/components/settings/settings-section";
+import { SettingsReveal } from "@/components/settings/settings-reveal";
+import type { SequenceConfigDocument, SequenceType } from "@/types/sequence-config";
+import { useT } from "@trenova/shared/i18n/use-t";
+import { useFormContext, useWatch } from "react-hook-form";
 import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@trenova/shared/components/ui/collapsible";
-import { FormControl, FormGroup } from "@trenova/shared/components/ui/form";
-import { Label } from "@trenova/shared/components/ui/label";
-import { cn } from "@trenova/shared/lib/utils";
-import type { SequenceConfigDocument } from "@/types/sequence-config";
-import { ChevronDownIcon } from "@trenova/shared/components/icons";
-import { useState, type ReactNode } from "react";
-import { Controller, useFormContext, useWatch } from "react-hook-form";
-import { separatorOptions, yearDigitsOptions } from "./sequence-config-constants";
+  drawsRecordCodes,
+  patternTokenLabels,
+  patternTokens,
+  recordCodeTokens,
+  separatorChoices,
+  sequenceDescriptions,
+  sequenceTitles,
+  yearDigitOptions,
+} from "./sequence-config-constants";
+import { SequencePreview } from "./sequence-preview";
 
-type SectionProps = { index: number };
+type SectionProps = { index: number; type: SequenceType; now: Date };
 
-function SectionCard({
-  title,
-  description,
-  children,
-}: {
-  title: string;
-  description: string;
-  children: ReactNode;
-}) {
-  return (
-    <Card>
-      <CardHeader className="border-b pb-3">
-        <CardTitle>{title}</CardTitle>
-        <CardDescription>{description}</CardDescription>
-      </CardHeader>
-      <CardContent className="pt-4 pb-4">
-        <FormGroup cols={2}>{children}</FormGroup>
-      </CardContent>
-    </Card>
-  );
-}
-
-export function CoreStructureSection({ index }: SectionProps) {
+/**
+ * One numbering sequence: its next number at the top, then its settings in the order the
+ * pieces appear in the number. A sequence written as a pattern shows the pattern and the
+ * settings its placeholders read instead of the pieces it replaces.
+ */
+export function SequenceSection({ index, type, now }: SectionProps) {
   const t = useT();
-
   const { control } = useFormContext<SequenceConfigDocument>();
-  const useSeparators = useWatch({
+  const path = `configs.${index}` as const;
+  const [custom, year, week, separators, random] = useWatch({
     control,
-    name: `configs.${index}.useSeparators`,
+    name: [
+      `${path}.allowCustomFormat`,
+      `${path}.includeYear`,
+      `${path}.includeWeekNumber`,
+      `${path}.useSeparators`,
+      `${path}.includeRandomDigits`,
+    ],
   });
+  const codes = drawsRecordCodes(type);
+
+  const yearDigits = (
+    <SegmentedField
+      control={control}
+      name={`${path}.yearDigits`}
+      label={t("Year digits")}
+      description={t("Two digits (26) or the whole year (2026).")}
+      options={yearDigitOptions}
+      fullWidth={false}
+      required
+    />
+  );
 
   return (
-    <SectionCard
-      title={t("Core structure")}
-      description={t("Primary sequence components and delimiter behavior.")}
-    >
-      <FormControl>
+    <SettingsSection title={sequenceTitles[type]} description={sequenceDescriptions[type]}>
+      <SequencePreview index={index} now={now} />
+      <InputField
+        control={control}
+        name={`${path}.prefix`}
+        label={t("Prefix")}
+        description={t("The letters every number starts with.")}
+        placeholder={t("e.g. INV")}
+        maxLength={20}
+        required
+      />
+      <SwitchField
+        control={control}
+        name={`${path}.allowCustomFormat`}
+        label={t("Write your own pattern")}
+        description={t("Lay the number out yourself with placeholders instead of the pieces below.")}
+      />
+      <SettingsNested show={custom}>
         <InputField
           control={control}
-          name={`configs.${index}.prefix`}
-          label={t("Prefix")}
-          placeholder={t("e.g. PRO")}
-          description={t("Leading literal text included in every generated value.")}
-          maxLength={20}
+          name={`${path}.customFormat`}
+          label={t("Pattern")}
+          description={t("Anything outside the placeholders is written as it is.")}
+          placeholder={t("{P}-{Y}{M}-{S}")}
+          required={custom}
         />
-      </FormControl>
-      <FormControl>
-        <NumberField
-          control={control}
-          name={`configs.${index}.sequenceDigits`}
-          label={t("Sequence digits")}
-          description={t("Width of the zero-padded counter (1–10).")}
-          min={1}
-          max={10}
-        />
-      </FormControl>
-      <FormControl>
+        <PatternTokens index={index} type={type} />
+        {yearDigits}
+      </SettingsNested>
+      <SettingsReveal show={!custom} className="divide-y divide-border">
+        {codes ? (
+          <SwitchField
+            control={control}
+            name={`${path}.includeBusinessUnitCode`}
+            label={t("Business unit code")}
+            description={t("Your business unit's code, after the prefix.")}
+          />
+        ) : null}
         <SwitchField
           control={control}
-          name={`configs.${index}.useSeparators`}
-          label={t("Use separators")}
-          description={t("Insert a delimiter between each token segment.")}
-          position="left"
-          outlined
+          name={`${path}.includeYear`}
+          label={t("Year")}
+          description={t("The year the number is issued.")}
         />
-      </FormControl>
-      {useSeparators ? (
-        <FormControl>
+        <SettingsNested show={year}>{yearDigits}</SettingsNested>
+        <SwitchField
+          control={control}
+          name={`${path}.includeMonth`}
+          label={t("Month")}
+          description={
+            week
+              ? t("The week takes the month's place while it is on.")
+              : t("The month the number is issued, as two digits.")
+          }
+          disabled={week}
+        />
+        <SwitchField
+          control={control}
+          name={`${path}.includeWeekNumber`}
+          label={t("Week")}
+          description={t("The week of the year, in place of the month.")}
+        />
+        <SwitchField
+          control={control}
+          name={`${path}.includeDay`}
+          label={t("Day")}
+          description={t("The day of the month, as two digits.")}
+        />
+        {codes ? (
+          <SwitchField
+            control={control}
+            name={`${path}.includeLocationCode`}
+            label={t("Location code")}
+            description={t("The code of the shipment's first stop, before the counter.")}
+          />
+        ) : null}
+        <SwitchField
+          control={control}
+          name={`${path}.useSeparators`}
+          label={t("Separators")}
+          description={t("A character between the pieces, so the number reads in parts.")}
+        />
+        <SettingsNested show={separators}>
           <SelectField
             control={control}
-            name={`configs.${index}.separatorChar`}
-            label={t("Separator character")}
-            options={separatorOptions}
-            placeholder={t("Select separator")}
+            name={`${path}.separatorChar`}
+            label={t("Separator")}
+            options={separatorChoices}
+            required={separators}
           />
-        </FormControl>
-      ) : null}
-    </SectionCard>
-  );
-}
-
-export function DateComponentsSection({ index }: SectionProps) {
-  const t = useT();
-
-  const { control } = useFormContext<SequenceConfigDocument>();
-  const includeYear = useWatch({
-    control,
-    name: `configs.${index}.includeYear`,
-  });
-
-  return (
-    <SectionCard
-      title={t("Date components")}
-      description={t("Embed period context to make values self-describing.")}
-    >
-      <FormControl cols="full">
-        <div className="grid gap-3 sm:grid-cols-2">
-          <SwitchField
-            control={control}
-            name={`configs.${index}.includeYear`}
-            label={t("Include Year")}
-            description={t("Embed a 2- or 4-digit year token.")}
-            position="left"
-            outlined
-          />
-          <SwitchField
-            control={control}
-            name={`configs.${index}.includeMonth`}
-            label={t("Include Month")}
-            description={t("Append the current month as a 2-digit number.")}
-            position="left"
-            outlined
-          />
-          <SwitchField
-            control={control}
-            name={`configs.${index}.includeWeekNumber`}
-            label={t("Include ISO Week Number")}
-            description={t("Append the ISO week number for weekly grouping.")}
-            position="left"
-            outlined
-          />
-          <SwitchField
-            control={control}
-            name={`configs.${index}.includeDay`}
-            label={t("Include Day")}
-            description={t("Append the day of the month as 2 digits.")}
-            position="left"
-            outlined
-          />
-        </div>
-      </FormControl>
-      {includeYear ? (
-        <FormControl cols="full">
-          <Controller
-            control={control}
-            name={`configs.${index}.yearDigits`}
-            render={({ field, fieldState }) => (
-              <div className="space-y-1.5">
-                <Label className={fieldState.error ? "text-destructive" : ""}>
-                  {t("Year digits")}
-                </Label>
-                <div className="grid grid-cols-2 gap-2">
-                  {yearDigitsOptions.map((option) => {
-                    const isActive = field.value === option.value;
-                    return (
-                      <button
-                        key={option.value}
-                        type="button"
-                        onClick={() => field.onChange(option.value)}
-                        aria-pressed={isActive}
-                        className={cn(
-                          "flex flex-col items-start gap-0.5 rounded-md border px-3 py-2 text-left text-sm transition-colors",
-                          isActive
-                            ? "border-info-border bg-info-subtle text-info-foreground"
-                            : "border-input bg-background text-foreground hover:bg-muted",
-                        )}
-                      >
-                        <span className="leading-none font-medium">{t(option.label)}</span>
-                        <span className="text-2xs text-muted-foreground">{option.example}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-                {fieldState.error?.message ? (
-                  <p className="text-destructive text-xs">{fieldState.error.message}</p>
-                ) : (
-                  <p className="text-2xs text-muted-foreground">
-                    {t("How many digits of the year to embed in the code.")}
-                  </p>
-                )}
-              </div>
-            )}
-          />
-        </FormControl>
-      ) : null}
-    </SectionCard>
-  );
-}
-
-export function ContextComponentsSection({ index }: SectionProps) {
-  const t = useT();
-
-  const { control } = useFormContext<SequenceConfigDocument>();
-
-  return (
-    <SectionCard
-      title={t("Context components")}
-      description={t("Embed operational identity fields resolved at generation time.")}
-    >
-      <FormControl>
-        <SwitchField
+        </SettingsNested>
+      </SettingsReveal>
+      <NumberField
+        control={control}
+        name={`${path}.sequenceDigits`}
+        label={t("Counter digits")}
+        description={t("How many digits the counter is padded to with zeros.")}
+        sideText={t("digits")}
+        min={1}
+        max={10}
+        required
+      />
+      <SwitchField
+        control={control}
+        name={`${path}.includeRandomDigits`}
+        label={t("Random digits")}
+        description={t("Digits after the counter that make a number hard to guess.")}
+      />
+      <SettingsNested show={random}>
+        <NumberField
           control={control}
-          name={`configs.${index}.includeLocationCode`}
-          label={t("Include Location Code")}
-          description={t("Embed the origin location's code, resolved from the shipment.")}
-          position="left"
-          outlined
+          name={`${path}.randomDigitsCount`}
+          label={t("How many")}
+          sideText={t("digits")}
+          min={1}
+          max={10}
+          required={random}
         />
-      </FormControl>
-      <FormControl>
-        <SwitchField
-          control={control}
-          name={`configs.${index}.includeBusinessUnitCode`}
-          label={t("Include Business Unit Code")}
-          description={t("Embed the business unit's code, resolved from the organization.")}
-          position="left"
-          outlined
-        />
-      </FormControl>
-    </SectionCard>
+      </SettingsNested>
+      <SwitchField
+        control={control}
+        name={`${path}.includeCheckDigit`}
+        label={t("Check digit")}
+        description={
+          custom
+            ? t("Fills {C} in the pattern with a digit that catches a mistyped number.")
+            : t("A last digit that catches a mistyped number.")
+        }
+      />
+    </SettingsSection>
   );
 }
 
-export function AdvancedSection({ index }: SectionProps) {
+/** The placeholders a pattern can use; pressing one adds it to the end of the pattern. */
+function PatternTokens({ index, type }: { index: number; type: SequenceType }) {
   const t = useT();
-
-  const { control } = useFormContext<SequenceConfigDocument>();
-  const includeRandomDigits = useWatch({
-    control,
-    name: `configs.${index}.includeRandomDigits`,
-  });
-  const includeCheckDigit = useWatch({
-    control,
-    name: `configs.${index}.includeCheckDigit`,
-  });
-  const allowCustomFormat = useWatch({
-    control,
-    name: `configs.${index}.allowCustomFormat`,
-  });
-
-  const enabledCount =
-    Number(Boolean(includeRandomDigits)) +
-    Number(Boolean(includeCheckDigit)) +
-    Number(Boolean(allowCustomFormat));
-
-  const [open, setOpen] = useState(enabledCount > 0);
+  const { getValues, setValue } = useFormContext<SequenceConfigDocument>();
+  const name = `configs.${index}.customFormat` as const;
+  const tokens = drawsRecordCodes(type) ? [...patternTokens, ...recordCodeTokens] : patternTokens;
 
   return (
-    <Card>
-      <Collapsible open={open} onOpenChange={setOpen}>
-        <CollapsibleTrigger
-          render={(props) => (
+    <SettingsReadout>
+      <ul aria-label={t("Placeholders")} className="flex flex-wrap gap-1">
+        {tokens.map((letter) => (
+          <li key={letter}>
             <button
-              {...props}
               type="button"
-              className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left"
+              aria-label={t("Add {0} to the pattern", patternTokenLabels[letter])}
+              onClick={() =>
+                setValue(name, `${getValues(name)}{${letter}}`, {
+                  shouldDirty: true,
+                  shouldValidate: true,
+                })
+              }
+              className="ui-focus-ring inline-flex h-6 items-center gap-1.5 rounded-badge border border-border pr-2.5 pl-1.5 text-xs text-muted-foreground transition-colors hover:border-border-strong hover:text-foreground"
             >
-              <div className="flex flex-col gap-0.5">
-                <span className="text-base leading-snug font-medium">{t("Advanced")}</span>
-                <span className="text-muted-foreground text-sm">
-                  {t("Validation helpers and custom formatting overrides.")}
-                </span>
-              </div>
-              <div className="flex items-center gap-2">
-                {enabledCount > 0 ? (
-                  <span className="bg-muted text-foreground rounded-badge px-2 py-0.5 text-xs font-medium">
-                    {t("{0} enabled", enabledCount)}
-                  </span>
-                ) : null}
-                <ChevronDownIcon
-                  className={cn(
-                    "text-muted-foreground size-4 transition-transform",
-                    open && "rotate-180",
-                  )}
-                />
-              </div>
+              <code className="font-mono text-foreground">{`{${letter}}`}</code>
+              {patternTokenLabels[letter]}
             </button>
-          )}
-        />
-        <CollapsibleContent>
-          <div className="border-t px-4 pt-4 pb-4">
-            <FormGroup cols={2}>
-              <FormControl>
-                <SwitchField
-                  control={control}
-                  name={`configs.${index}.includeRandomDigits`}
-                  label={t("Include Random Digits")}
-                  description={t("Append random digits for collision avoidance.")}
-                  position="left"
-                  outlined
-                />
-              </FormControl>
-              {includeRandomDigits ? (
-                <FormControl>
-                  <NumberField
-                    control={control}
-                    name={`configs.${index}.randomDigitsCount`}
-                    label={t("Random digits count")}
-                    description={t("Number of random digits to append (1–10).")}
-                    min={1}
-                    max={10}
-                  />
-                </FormControl>
-              ) : null}
-              <FormControl>
-                <SwitchField
-                  control={control}
-                  name={`configs.${index}.includeCheckDigit`}
-                  label={t("Include Check Digit")}
-                  description={t("Append a Luhn-computed check digit for validation.")}
-                  position="left"
-                  outlined
-                />
-              </FormControl>
-              <FormControl>
-                <SwitchField
-                  control={control}
-                  name={`configs.${index}.allowCustomFormat`}
-                  label={t("Allow custom format")}
-                  description={t("Override auto-composition with a token template.")}
-                  position="left"
-                  outlined
-                />
-              </FormControl>
-              {allowCustomFormat ? (
-                <FormControl cols="full">
-                  <InputField
-                    control={control}
-                    name={`configs.${index}.customFormat`}
-                    label={t("Custom format template")}
-                    placeholder={t("{P}-{Y}{M}-{S}")}
-                    description={t(
-                      "Use tokens like {P}, {Y}, {M}, {S}. See Tokens reference above.",
-                    )}
-                  />
-                </FormControl>
-              ) : null}
-            </FormGroup>
-          </div>
-        </CollapsibleContent>
-      </Collapsible>
-    </Card>
+          </li>
+        ))}
+      </ul>
+    </SettingsReadout>
   );
 }

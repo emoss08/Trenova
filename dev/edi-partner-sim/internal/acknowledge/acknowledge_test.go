@@ -1,6 +1,7 @@
 package acknowledge
 
 import (
+	"strings"
 	"testing"
 	"time"
 
@@ -67,15 +68,15 @@ func TestPlanAcknowledgesEveryDocumentGroupButAcks(t *testing.T) {
 	if len(plan) != 1 || plan[0].GroupControl != "101" || len(plan[0].Transactions) != 2 {
 		t.Fatalf("plan %+v", plan)
 	}
-	if plan[0].Transactions[0].Code != partner.AckAccepted ||
-		plan[0].Transactions[1].Code != partner.AckRejected {
+	if plan[0].Transactions[0].Code != Accepted ||
+		plan[0].Transactions[1].Code != Rejected {
 		t.Fatalf("codes %+v", plan[0].Transactions)
 	}
-	built, err := rules.Build(plan[0])
+	built, err := Build(rules, plan[0])
 	if err != nil {
 		t.Fatalf("build: %v", err)
 	}
-	if TransactionCode(built) != partner.AckAccepted {
+	if TransactionCode(built) != Accepted {
 		t.Fatalf("the first AK5 says %s", TransactionCode(built))
 	}
 	if Plan(&partner.Acknowledgment{Sends: partner.AckNone}, judgement) != nil {
@@ -137,5 +138,52 @@ func TestAWrittenTA1IsReadBack(t *testing.T) {
 	if len(read) != 1 || read[0].Control != "000000077" || read[0].Code != partner.TA1Rejected ||
 		read[0].Note != "001" {
 		t.Fatalf("read back %+v from\n%s", read, written.Bytes)
+	}
+}
+
+func TestAcknowledgmentRejectsByTheRules(t *testing.T) {
+	t.Parallel()
+
+	ack := &partner.Acknowledgment{
+		Sends:  partner.Ack997,
+		Reject: partner.RejectRules{When: partner.RejectErrors, Sets: []string{"210"}},
+	}
+	cases := []struct {
+		set              string
+		errors, warnings int
+		want             string
+	}{
+		{"990", 0, 0, Accepted},
+		{"990", 0, 2, AcceptedWithErrors},
+		{"214", 1, 0, Rejected},
+		{"210", 0, 0, Rejected},
+	}
+	for _, c := range cases {
+		if got := Code(ack, c.set, c.errors, c.warnings); got != c.want {
+			t.Errorf("Code(%s, %d, %d) = %s, want %s", c.set, c.errors, c.warnings, got, c.want)
+		}
+	}
+	built, err := Build(
+		ack,
+		Input{GroupID: "GF", GroupControl: "12", Transactions: []InputTransaction{
+			{Set: "990", Control: "0001", Code: Accepted},
+			{Set: "990", Control: "0002", Code: Rejected, Notes: []SegmentNote{{
+				ID: "B1", Position: 2, Code: "8",
+				Elements: []ElementNote{{Position: 4, Reference: "558", Code: "7", Copy: "X"}},
+			}}},
+		}},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var ids []string
+	for _, segment := range built.Segments {
+		ids = append(ids, segment.ID)
+	}
+	if got := strings.Join(ids, " "); got != "AK1 AK2 AK5 AK2 AK3 AK4 AK5 AK9" {
+		t.Fatalf("the 997 is %s", got)
+	}
+	if code := built.Segments[len(built.Segments)-1].Elements[0][0]; code != Partial {
+		t.Errorf("AK901 is %s, want P for one of two accepted", code)
 	}
 }

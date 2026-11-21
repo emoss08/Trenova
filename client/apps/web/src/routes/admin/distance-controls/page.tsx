@@ -1,6 +1,5 @@
+import { SettingsPage } from "@/components/settings/settings-page";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { PageLayout } from "@/components/navigation/sidebar-layout";
-import { LazyComponent } from "@trenova/shared/components/error-boundary";
 import { lazy } from "react";
 import { DistanceControlSkeleton } from "./skeleton";
 
@@ -10,15 +9,12 @@ export function DistanceControlsPage() {
   const t = useT();
 
   return (
-    <PageLayout
-      pageHeaderProps={{
-        title: t("Distance control"),
-        description: t("Configure mileage storage behavior and distance profile assignments"),
-      }}
+    <SettingsPage
+      title={t("Distance control")}
+      description={t("Set how mileage is routed, kept and reused")}
+      skeleton={<DistanceControlSkeleton />}
     >
-      <LazyComponent fallback={<DistanceControlSkeleton />}>
-        <DistanceControlForm />
-      </LazyComponent>
-    </PageLayout>
+      <DistanceControlForm />
+    </SettingsPage>
   );
 }

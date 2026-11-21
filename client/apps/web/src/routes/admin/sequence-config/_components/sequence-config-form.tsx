@@ -1,83 +1,52 @@
-import { useSearchValue } from "@trenova/shared/hooks/use-search-state";
-import { useT } from "@trenova/shared/i18n/use-t";
-import { FormSaveDock } from "@/components/form-save-dock";
-import { Form } from "@trenova/shared/components/ui/form";
-import { useOptimisticMutation } from "@/hooks/use-optimistic-mutation";
+import { SettingsForm } from "@/components/settings/settings-form";
+import { SettingsSections } from "@/components/settings/settings-section";
 import { sequenceConfig } from "@/lib/queries/sequence-config";
 import { sequenceConfigService } from "@/services/sequence-config";
-import {
-  sequenceConfigDocumentSchema,
-  sequenceTypes,
-  type SequenceConfigDocument,
-  type SequenceType,
-} from "@/types/sequence-config";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { sequenceConfigDocumentSchema, type SequenceConfigDocument } from "@/types/sequence-config";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { searchLiteral } from "@trenova/shared/lib/router/search-codec";
-import { useCallback, useMemo } from "react";
-import { FormProvider, useForm } from "react-hook-form";
-import { SequenceConfigPanel } from "./sequence-config-panel";
-import { SequenceConfigSidebar } from "./sequence-config-sidebar";
+import { useState } from "react";
+import { prepareSequenceConfigs } from "../sequence-config-submit";
+import {
+  indexBySequence,
+  sequenceConfigTabs,
+  TAB_SEQUENCES,
+  type SequenceConfigTab,
+} from "../sequence-config-tabs";
+import { LocationCodeSection } from "./location-code-sections";
+import { SequenceSection } from "./sequence-form-sections";
 
-const sectionParser = searchLiteral(sequenceTypes)
-  .withOptions({ history: "push" })
-  .withDefault(sequenceTypes[0]);
-
+/**
+ * The numbering of every record Trenova issues a number to: one document, saved once, with
+ * a tab for each part of the business and a section for each sequence in it.
+ */
 export default function SequenceConfigForm() {
-  const t = useT();
-
-  const { data } = useSuspenseQuery({
-    ...sequenceConfig.get(),
-  });
-
-  const form = useForm({
-    resolver: zodResolver(sequenceConfigDocumentSchema),
-    defaultValues: data,
-  });
-
-  const { handleSubmit, reset } = form;
-
-  const { mutateAsync } = useOptimisticMutation({
-    queryKey: sequenceConfig.get._def,
-    mutationFn: async (values: SequenceConfigDocument) => sequenceConfigService.update(values),
-    resourceName: "Sequence Configuration",
-    resetForm: reset,
-    form,
-    invalidateQueries: [sequenceConfig.get._def],
-  });
-
-  const onSubmit = useCallback(
-    async (values: SequenceConfigDocument) => {
-      await mutateAsync(values);
-    },
-    [mutateAsync],
-  );
-
-  const [section, setSection] = useSearchValue("section", sectionParser);
-
-  const indexByType = useMemo(() => {
-    const map = {} as Record<SequenceType, number>;
-    for (const type of sequenceTypes) {
-      map[type] = data.configs.findIndex((cfg) => cfg.sequenceType === type);
-    }
-    return map;
-  }, [data.configs]);
-
-  const activeIndex = indexByType[section];
+  const { data } = useSuspenseQuery({ ...sequenceConfig.get() });
+  const positions = indexBySequence(data.configs);
+  // One moment for every sample on the page, so they agree with one another.
+  const [now] = useState(() => new Date());
 
   return (
-    <FormProvider {...form}>
-      <Form onSubmit={handleSubmit(onSubmit)}>
-        <div className="flex gap-6 pb-20">
-          <SequenceConfigSidebar value={section} onChange={setSection} indexByType={indexByType} />
-
-          {activeIndex >= 0 ? (
-            <SequenceConfigPanel index={activeIndex} sequenceType={section} />
-          ) : null}
-        </div>
-
-        <FormSaveDock saveButtonContent={t("Save changes")} />
-      </Form>
-    </FormProvider>
+    <SettingsForm<SequenceConfigDocument, SequenceConfigTab>
+      values={data}
+      schema={sequenceConfigDocumentSchema}
+      queryKey={sequenceConfig.get._def}
+      save={(values) => sequenceConfigService.update(values)}
+      resourceName="Sequence Configuration"
+      prepare={prepareSequenceConfigs}
+      tabs={sequenceConfigTabs(data.configs)}
+      content={(tab) => (
+        <SettingsSections>
+          {TAB_SEQUENCES[tab].map((type) => {
+            const index = positions[type];
+            if (index === undefined) return null;
+            return type === "location_code" ? (
+              <LocationCodeSection key={type} index={index} now={now} />
+            ) : (
+              <SequenceSection key={type} index={index} type={type} now={now} />
+            );
+          })}
+        </SettingsSections>
+      )}
+    />
   );
 }

@@ -21,6 +21,14 @@ rule "an invoice has lines" {
   require not lines.isEmpty else reject "An invoice to Meadowridge needs at least one line"
 }
 
+/// Meadowridge's guide carries a reference of at most 30 characters, and a cut one matches nothing.
+rule "references Meadowridge's guide can carry" {
+  require (bol ?? "").length() <= 30
+    else hold "Meadowridge's guide takes a BOL of at most 30 characters: shorten it before sending"
+  require (refs["PO"] ?? "").length() <= 30
+    else hold "Meadowridge's guide takes a PO of at most 30 characters: shorten it before sending"
+}
+
 test "linehaul, stop-offs and a lumper go out" {
   given freightInvoice {
     number: "INV-4001"
@@ -67,4 +75,9 @@ test "a charge Meadowridge does not pay is held" {
     ]
   }
   expect held "Meadowridge pays no TON charge: change the code or take the line off"
+}
+
+test "a PO longer than Meadowridge's guide takes is held" {
+  given freightInvoice { number: "INV-4001", date: @2026-06-12, key: "MF1000008", bol: "5861735303", total: $5_906.86, billTo: { name: "Meadowridge Fresh Markets Transportation" }, lines: [{ sequence: 1, description: "Linehaul", amount: $5_906.86 }], refs: ["PO": "4500012345-RELEASE-0042-AMENDED-TWICE"] }
+  expect held "Meadowridge's guide takes a PO of at most 30 characters: shorten it before sending"
 }

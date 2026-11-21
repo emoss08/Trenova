@@ -30485,6 +30485,27 @@ type ShipmentMove {
   distanceUnits: String
   "Distance providers may return provider-specific route details, so this remains intentionally open-ended."
   distanceMetadata: JSON
+  """
+  The move routed with the distance control's pay profile, in the move's distance
+  units: what drivers and carriers paid by the mile are paid on. Null when the pay
+  profile is the one the move was routed with, or the distance was entered by hand;
+  the move's distance is then the paid distance.
+  """
+  payDistance: Float
+  """
+  The move routed with the distance control's billing profile, in the move's
+  distance units: what rating and invoices bill by the mile. Null when the billing
+  profile is the one the move was routed with, or the distance was entered by hand;
+  the move's distance is then the billed distance.
+  """
+  billingDistance: Float
+  """
+  The move routed with the distance control's fuel profile, in the move's distance
+  units: what fuel tax returns check the jurisdiction breakdown against. Null when
+  the fuel profile is the one the move was routed with, or the distance was entered
+  by hand; the move's distance then stands for it.
+  """
+  fuelDistance: Float
   version: Int!
   createdAt: Timestamp!
   updatedAt: Timestamp!

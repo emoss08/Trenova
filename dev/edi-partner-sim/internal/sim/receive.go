@@ -178,10 +178,10 @@ func (s *Server) settleLinks(ack journal.Message, links []ackLink) {
 }
 
 var ackSeverity = map[string]int{
-	partner.AckAccepted:           1,
-	partner.AckAcceptedWithErrors: 2,
-	partner.AckPartial:            3,
-	partner.AckRejected:           4,
+	acknowledge.Accepted:           1,
+	acknowledge.AcceptedWithErrors: 2,
+	acknowledge.Partial:            3,
+	acknowledge.Rejected:           4,
 }
 
 func worse(a, b string) string {
@@ -242,7 +242,7 @@ func (s *Server) acknowledgeGroups(
 	ack := &journal.Ack{Set: string(rules.Sends), Status: journal.AckNone}
 	var transactions []partner.Transaction
 	for _, input := range plan {
-		built, err := rules.Build(input)
+		built, err := acknowledge.Build(rules, input)
 		if err != nil {
 			s.logger.Error(
 				"an acknowledgment could not be built",
@@ -323,7 +323,7 @@ func (s *Server) answerTenders(
 		for _, g := range ic.Groups {
 			for _, rep := range g.Reports {
 				if rep.Set != "204" ||
-					decisions[g.ControlNumber+"/"+rep.ControlNumber] == partner.AckRejected {
+					decisions[g.ControlNumber+"/"+rep.ControlNumber] == acknowledge.Rejected {
 					continue
 				}
 				tender, err := reply.ReadTender(rep, p.def.Partner.Location())
