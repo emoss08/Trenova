@@ -205,6 +205,18 @@ prune cut at. The result is stored on the chain head, and `aiAuditChainStatus` r
 
 The all-tenant run (`VerifyAIAuditTenantsWorkflow`) continues as new every 200 tenants.
 
+### Imported chains
+
+A tenant archive carries the chain as it was signed. Inside the archive load, an import (and a
+restore onto an install that does not hold the signing key) signs every row again in `seq` order
+under this install's active key, moves each seal and the head to the new hashes, and keeps the
+values the rows arrived with in `source_prev_hash`, `source_hash`, `source_hash_key_id` and
+`source_hash_version` (`source_head_hash` on seals). `ai_audit_events_append_only` allows that
+`UPDATE` only inside an archive load (`trenova_archive_loading()`). A restore onto the install
+that signed the chain verifies it and keeps it; a row that names a configured key and does not
+verify is left as it is, so the break stays visible. See "The tenant archive" in
+[shared-tenancy.md](shared-tenancy.md#the-tenant-archive).
+
 ## Retention
 
 `PruneAIAuditWorkflow` (the `ai-audit-retention-purge` schedule, daily at 04:13 UTC) deletes

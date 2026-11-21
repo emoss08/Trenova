@@ -11,6 +11,7 @@ const (
 	HeavyJobImport     = HeavyJob("import")
 	HeavyJobPreview    = HeavyJob("preview")
 	HeavyJobRemoval    = HeavyJob("removal")
+	HeavyJobArchive    = HeavyJob("archive")
 )
 
 type HeavyJobSlots interface {

@@ -425,6 +425,16 @@ configured, which is not tampering). The audit log page shows the status to read
 `security_audit_log:read`. Retention deletes past a sealed hour are expected: seals of hours
 whose entries have all aged out are removed with them.
 
+A tenant moved in from a tenant archive (an import or a restore, see "The tenant archive" in
+[shared-tenancy.md](shared-tenancy.md#the-tenant-archive)) arrives with seals signed by another
+install's key. The archive load signs them again under this install's active key, keeping each
+seal's entry counts and digests and the values it arrived with (`source_hash`, `source_prev_hash`,
+`source_hash_key_id`, `source_hash_version`, `resealed_at`), and writes an
+`organization.imported` or `organization.restored` entry naming the archive (its manifest SHA-256,
+the source instance, per-table row counts), so verification passes, still catches a changed
+entry, and the log says where its history came from. A restore onto the install that signed the
+seals keeps them as they are.
+
 ## Exports
 
 `auditexportservice` writes a date range (at most 400 days) of the trail to CSV or JSONL on

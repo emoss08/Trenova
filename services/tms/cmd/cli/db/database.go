@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/keel"
+	"github.com/emoss08/trenova/internal/bootstrap/cloudcli"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/spf13/cobra"
@@ -36,4 +37,5 @@ func init() {
 		BoolVar(&dryRun, "dry-run", false, "Preview changes without applying them")
 	DbCmd.PersistentFlags().BoolVar(&force, "force", false, "Force operation without confirmation")
 	DbCmd.PersistentFlags().BoolVar(&verbose, "verbose", false, "Show detailed output")
+	DbCmd.AddCommand(cloudcli.ImportArchive(func() *config.Config { return cfg }))
 }

@@ -1,6 +1,7 @@
 package core
 
 import (
+	"github.com/emoss08/trenova/internal/bootstrap/envelopes"
 	"github.com/emoss08/trenova/internal/bootstrap/infrastructure"
 	"github.com/emoss08/trenova/internal/bootstrap/modules"
 	apimodule "github.com/emoss08/trenova/internal/bootstrap/modules/api"
@@ -81,6 +82,7 @@ func Options() fx.Option {
 		settlement.SharedOptions(),
 		agent.SharedOptions(),
 		cloud.SharedOptions(),
+		fx.Provide(envelopes.Provide),
 		apimodule.AgentReadModule,
 		turnstream.Module,
 		completionrouter.Module,

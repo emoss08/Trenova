@@ -33,6 +33,10 @@ type Params struct {
 	Logger         *zap.Logger
 }
 
+func Head() string {
+	return schema.Version
+}
+
 func requireAtStartup(p Params) error {
 	ctx, cancel := context.WithTimeout(context.Background(), DefaultWait)
 	defer cancel()

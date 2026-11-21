@@ -60,7 +60,7 @@ func TestApplyMakesATenantOnceAndAnswersItsState(t *testing.T) {
 	t.Parallel()
 	r := newRig(t, true)
 
-	status, err := r.svc.Apply(t.Context(), instanceA, entry(instanceA, 1))
+	status, err := r.svc.Apply(t.Context(), instanceA, entry(instanceA, 1), nil)
 	require.NoError(t, err)
 	assert.Equal(t, cloudtenant.StateActive, status.State)
 	require.NotNil(t, status.AppliedRevision)
@@ -91,7 +91,7 @@ func TestApplyMakesATenantOnceAndAnswersItsState(t *testing.T) {
 		assert.Equal(t, instanceA, change.Metadata["controlPlaneInstanceId"])
 	}
 
-	_, err = r.svc.Apply(t.Context(), instanceA, entry(instanceA, 1))
+	_, err = r.svc.Apply(t.Context(), instanceA, entry(instanceA, 1), nil)
 	require.NoError(t, err)
 	assert.Equal(t, 1, r.bootstrap.calls, "the same revision applies nothing again")
 	assert.Len(t, r.tenants.kinds(), 2)
@@ -101,7 +101,7 @@ func TestApplyRefusesOutsideASharedServer(t *testing.T) {
 	t.Parallel()
 	r := newRig(t, false)
 
-	_, err := r.svc.Apply(t.Context(), instanceA, entry(instanceA, 1))
+	_, err := r.svc.Apply(t.Context(), instanceA, entry(instanceA, 1), nil)
 	require.ErrorIs(t, err, tenantlifecycle.ErrNotShared)
 }
 
@@ -109,7 +109,7 @@ func TestApplyRefusesAnEntryAddressedToAnotherInstance(t *testing.T) {
 	t.Parallel()
 	r := newRig(t, true)
 
-	_, err := r.svc.Apply(t.Context(), instanceB, entry(instanceA, 1))
+	_, err := r.svc.Apply(t.Context(), instanceB, entry(instanceA, 1), nil)
 	require.ErrorIs(t, err, cloudtenant.ErrInstanceIDMismatch)
 }
 
@@ -119,7 +119,7 @@ func TestATakenAddressRefusesTheEntryWithoutNamingTheHolder(t *testing.T) {
 	e := entry(instanceA, 1)
 	r.admins.taken[e.FirstAdministrator.Email] = true
 
-	status, err := r.svc.Apply(t.Context(), instanceA, e)
+	status, err := r.svc.Apply(t.Context(), instanceA, e, nil)
 	require.NoError(t, err)
 	assert.Equal(t, cloudtenant.StateApplying, status.State)
 	require.NotNil(t, status.Refused)
@@ -129,7 +129,7 @@ func TestATakenAddressRefusesTheEntryWithoutNamingTheHolder(t *testing.T) {
 	assert.Equal(t, 0, r.bootstrap.calls)
 
 	delete(r.admins.taken, e.FirstAdministrator.Email)
-	status, err = r.svc.Apply(t.Context(), instanceA, entry(instanceA, 2))
+	status, err = r.svc.Apply(t.Context(), instanceA, entry(instanceA, 2), nil)
 	require.NoError(t, err)
 	assert.Equal(t, cloudtenant.StateActive, status.State)
 	assert.Nil(t, status.Refused, "a later revision that can be applied clears the refusal")
@@ -138,13 +138,13 @@ func TestATakenAddressRefusesTheEntryWithoutNamingTheHolder(t *testing.T) {
 func TestTheIdentityOfAMadeTenantCannotChange(t *testing.T) {
 	t.Parallel()
 	r := newRig(t, true)
-	_, err := r.svc.Apply(t.Context(), instanceA, entry(instanceA, 1))
+	_, err := r.svc.Apply(t.Context(), instanceA, entry(instanceA, 1), nil)
 	require.NoError(t, err)
 
 	renamed := entry(instanceA, 2)
 	renamed.OrganizationName = "Acme Logistics"
 	renamed.FirstAdministrator.OrganizationName = "Acme Logistics"
-	status, err := r.svc.Apply(t.Context(), instanceA, renamed)
+	status, err := r.svc.Apply(t.Context(), instanceA, renamed, nil)
 	require.NoError(t, err)
 	require.NotNil(t, status.Refused)
 	assert.Equal(t, int64(2), status.Refused.Revision)
@@ -154,7 +154,7 @@ func TestTheIdentityOfAMadeTenantCannotChange(t *testing.T) {
 func TestSuspendAndResume(t *testing.T) {
 	t.Parallel()
 	r := newRig(t, true)
-	_, err := r.svc.Apply(t.Context(), instanceA, entry(instanceA, 1))
+	_, err := r.svc.Apply(t.Context(), instanceA, entry(instanceA, 1), nil)
 	require.NoError(t, err)
 	held, _ := r.tenants.Get(t.Context(), instanceA)
 	scope := held.OrganizationID.String()
@@ -162,7 +162,7 @@ func TestSuspendAndResume(t *testing.T) {
 
 	suspended := entry(instanceA, 2)
 	suspended.Lifecycle = cloudtenant.LifecycleSuspended
-	status, err := r.svc.Apply(t.Context(), instanceA, suspended)
+	status, err := r.svc.Apply(t.Context(), instanceA, suspended, nil)
 	require.NoError(t, err)
 	assert.Equal(t, cloudtenant.StateSuspended, status.State)
 	assert.Equal(t, managedfeatures.LifecycleSuspended, r.features.lifecycles[scope])
@@ -172,7 +172,7 @@ func TestSuspendAndResume(t *testing.T) {
 	assert.Equal(t, "organization.suspended", changes[len(changes)-1].Action)
 
 	resumed := entry(instanceA, 3)
-	status, err = r.svc.Apply(t.Context(), instanceA, resumed)
+	status, err = r.svc.Apply(t.Context(), instanceA, resumed, nil)
 	require.NoError(t, err)
 	assert.Equal(t, cloudtenant.StateActive, status.State)
 	assert.Equal(t, managedfeatures.LifecycleActive, r.features.lifecycles[scope])
@@ -187,12 +187,12 @@ func TestSuspendAndResume(t *testing.T) {
 func TestAStaleRevisionChangesNothing(t *testing.T) {
 	t.Parallel()
 	r := newRig(t, true)
-	_, err := r.svc.Apply(t.Context(), instanceA, entry(instanceA, 5))
+	_, err := r.svc.Apply(t.Context(), instanceA, entry(instanceA, 5), nil)
 	require.NoError(t, err)
 
 	old := entry(instanceA, 4)
 	old.Lifecycle = cloudtenant.LifecycleSuspended
-	status, err := r.svc.Apply(t.Context(), instanceA, old)
+	status, err := r.svc.Apply(t.Context(), instanceA, old, nil)
 	require.NoError(t, err)
 	assert.Equal(t, cloudtenant.StateActive, status.State)
 	assert.Equal(t, int64(5), *status.AppliedRevision)
@@ -201,13 +201,13 @@ func TestAStaleRevisionChangesNothing(t *testing.T) {
 func TestTheSameRevisionWithAMovedPlanEndIsApplied(t *testing.T) {
 	t.Parallel()
 	r := newRig(t, true)
-	_, err := r.svc.Apply(t.Context(), instanceA, entry(instanceA, 1))
+	_, err := r.svc.Apply(t.Context(), instanceA, entry(instanceA, 1), nil)
 	require.NoError(t, err)
 
 	ending := entry(instanceA, 1)
 	ends := time.Unix(now+30*86400, 0).UTC()
 	ending.Account.EndsAt = &ends
-	_, err = r.svc.Apply(t.Context(), instanceA, ending)
+	_, err = r.svc.Apply(t.Context(), instanceA, ending, nil)
 	require.NoError(t, err)
 	held, _ := r.tenants.Get(t.Context(), instanceA)
 	assert.Equal(t, ends.Unix(), r.features.lists[held.OrganizationID.String()].PlanEndsAt)
@@ -216,12 +216,12 @@ func TestTheSameRevisionWithAMovedPlanEndIsApplied(t *testing.T) {
 func TestANewInviteIsInstalledAndAnExpiredOneIsNot(t *testing.T) {
 	t.Parallel()
 	r := newRig(t, true)
-	_, err := r.svc.Apply(t.Context(), instanceA, entry(instanceA, 1))
+	_, err := r.svc.Apply(t.Context(), instanceA, entry(instanceA, 1), nil)
 	require.NoError(t, err)
 
 	reissued := entry(instanceA, 2)
 	reissued.FirstAdministrator.Invite.TokenSHA256 = tokenB
-	_, err = r.svc.Apply(t.Context(), instanceA, reissued)
+	_, err = r.svc.Apply(t.Context(), instanceA, reissued, nil)
 	require.NoError(t, err)
 
 	expired := entry(instanceA, 3)
@@ -229,12 +229,12 @@ func TestANewInviteIsInstalledAndAnExpiredOneIsNot(t *testing.T) {
 		TokenSHA256: strings.Repeat("c", 64),
 		ExpiresAt:   time.Unix(now-60, 0).UTC(),
 	}
-	_, err = r.svc.Apply(t.Context(), instanceA, expired)
+	_, err = r.svc.Apply(t.Context(), instanceA, expired, nil)
 	require.NoError(t, err)
 	assert.Equal(t, []string{tokenA, tokenB}, r.invites.installed)
 }
 
-func TestAnArchiveCommandIsReportedAsNotSupported(t *testing.T) {
+func TestAnArchiveCommandInTheEntryIsAppliedWithoutARefusal(t *testing.T) {
 	t.Parallel()
 	r := newRig(t, true)
 	e := entry(instanceA, 1)
@@ -244,22 +244,21 @@ func TestAnArchiveCommandIsReportedAsNotSupported(t *testing.T) {
 		RequestedAt: time.Unix(now, 0).UTC(),
 	}}
 
-	status, err := r.svc.Apply(t.Context(), instanceA, e)
+	status, err := r.svc.Apply(t.Context(), instanceA, e, nil)
 	require.NoError(t, err)
 	assert.Equal(t, cloudtenant.StateSuspended, status.State)
-	require.NotNil(t, status.Refused)
-	assert.Contains(t, status.Refused.Reason, "archive")
+	assert.Nil(t, status.Refused)
 }
 
 func TestRemovalWaitsForAFinalArchive(t *testing.T) {
 	t.Parallel()
 	r := newRig(t, true)
-	_, err := r.svc.Apply(t.Context(), instanceA, entry(instanceA, 1))
+	_, err := r.svc.Apply(t.Context(), instanceA, entry(instanceA, 1), nil)
 	require.NoError(t, err)
 
 	removed := entry(instanceA, 2)
 	removed.Lifecycle = cloudtenant.LifecycleRemoved
-	status, err := r.svc.Apply(t.Context(), instanceA, removed)
+	status, err := r.svc.Apply(t.Context(), instanceA, removed, nil)
 	require.NoError(t, err)
 	assert.Equal(t, cloudtenant.StateActive, status.State)
 	require.NotNil(t, status.Refused)
@@ -273,7 +272,7 @@ func TestRemovalWaitsForAFinalArchive(t *testing.T) {
 func TestRemovalStartsOnceTheFinalArchiveIsRecorded(t *testing.T) {
 	t.Parallel()
 	r := newRig(t, true)
-	_, err := r.svc.Apply(t.Context(), instanceA, entry(instanceA, 1))
+	_, err := r.svc.Apply(t.Context(), instanceA, entry(instanceA, 1), nil)
 	require.NoError(t, err)
 	held, _ := r.tenants.Get(t.Context(), instanceA)
 	held.LastArchiveCommandID, held.LastArchivePurpose = instanceB, cloudtenant.ArchivePurposeFinal
@@ -281,17 +280,17 @@ func TestRemovalStartsOnceTheFinalArchiveIsRecorded(t *testing.T) {
 
 	removed := entry(instanceA, 2)
 	removed.Lifecycle = cloudtenant.LifecycleRemoved
-	status, err := r.svc.Apply(t.Context(), instanceA, removed)
+	status, err := r.svc.Apply(t.Context(), instanceA, removed, nil)
 	require.NoError(t, err)
 	assert.Equal(t, cloudtenant.StateApplying, status.State, "removing is reported as applying")
 	assert.Equal(t, []string{tenantjobscontract.RemovalWorkflowID(instanceA)}, r.workflows.started)
 
-	_, err = r.svc.Apply(t.Context(), instanceA, removed)
+	_, err = r.svc.Apply(t.Context(), instanceA, removed, nil)
 	require.NoError(t, err)
 	assert.Len(t, r.workflows.started, 2, "a repeated entry makes sure the removal runs")
 
 	require.NoError(t, r.svc.FinishRemoval(t.Context(), instanceA, map[string]any{"rows": 10}))
-	status, err = r.svc.Apply(t.Context(), instanceA, removed)
+	status, err = r.svc.Apply(t.Context(), instanceA, removed, nil)
 	require.NoError(t, err)
 	assert.Equal(t, cloudtenant.StateRemoved, status.State)
 	assert.Equal(t, int64(2), *status.AppliedRevision)
@@ -301,9 +300,9 @@ func TestRemovalStartsOnceTheFinalArchiveIsRecorded(t *testing.T) {
 func TestListPagesEveryTenant(t *testing.T) {
 	t.Parallel()
 	r := newRig(t, true)
-	_, err := r.svc.Apply(t.Context(), instanceA, entry(instanceA, 1))
+	_, err := r.svc.Apply(t.Context(), instanceA, entry(instanceA, 1), nil)
 	require.NoError(t, err)
-	_, err = r.svc.Apply(t.Context(), instanceB, entry(instanceB, 1))
+	_, err = r.svc.Apply(t.Context(), instanceB, entry(instanceB, 1), nil)
 	require.NoError(t, err)
 
 	first, err := r.svc.List(t.Context(), "", 1)
@@ -325,9 +324,9 @@ func TestListPagesEveryTenant(t *testing.T) {
 func TestReadingsAreAskedOncePerPageForEveryMeteredTenant(t *testing.T) {
 	t.Parallel()
 	r := newRig(t, true)
-	_, err := r.svc.Apply(t.Context(), instanceA, entry(instanceA, 1))
+	_, err := r.svc.Apply(t.Context(), instanceA, entry(instanceA, 1), nil)
 	require.NoError(t, err)
-	_, err = r.svc.Apply(t.Context(), instanceB, entry(instanceB, 1))
+	_, err = r.svc.Apply(t.Context(), instanceB, entry(instanceB, 1), nil)
 	require.NoError(t, err)
 	a, _ := r.tenants.Get(t.Context(), instanceA)
 	hour := now - now%3600
@@ -359,7 +358,7 @@ func TestReadingsAreAskedOncePerPageForEveryMeteredTenant(t *testing.T) {
 func TestUsageAnswersReachEachTenantsScopeAndNameStrangers(t *testing.T) {
 	t.Parallel()
 	r := newRig(t, true)
-	_, err := r.svc.Apply(t.Context(), instanceA, entry(instanceA, 1))
+	_, err := r.svc.Apply(t.Context(), instanceA, entry(instanceA, 1), nil)
 	require.NoError(t, err)
 	held, _ := r.tenants.Get(t.Context(), instanceA)
 
@@ -388,7 +387,7 @@ func TestUsageAnswersReachEachTenantsScopeAndNameStrangers(t *testing.T) {
 func TestSessionsOfASuspendedTenantAreEnded(t *testing.T) {
 	t.Parallel()
 	r := newRig(t, true)
-	_, err := r.svc.Apply(t.Context(), instanceA, entry(instanceA, 1))
+	_, err := r.svc.Apply(t.Context(), instanceA, entry(instanceA, 1), nil)
 	require.NoError(t, err)
 	held, _ := r.tenants.Get(t.Context(), instanceA)
 	r.members.ids = []pulid.ID{held.AdminUserID}
@@ -408,7 +407,7 @@ func TestSessionsOfASuspendedTenantAreEnded(t *testing.T) {
 func TestTheInstanceTagIsTheTenantsInstance(t *testing.T) {
 	t.Parallel()
 	r := newRig(t, true)
-	_, err := r.svc.Apply(t.Context(), instanceA, entry(instanceA, 1))
+	_, err := r.svc.Apply(t.Context(), instanceA, entry(instanceA, 1), nil)
 	require.NoError(t, err)
 	held, _ := r.tenants.Get(t.Context(), instanceA)
 

@@ -6,6 +6,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/bootstrap/envelopes"
+
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider/aiproviderdb"
@@ -138,7 +140,7 @@ func TestRewrapMovesStoredSecretsToTheActiveKey(t *testing.T) {
 	})
 	opts := enveloperewrapservice.Options{OrganizationID: tenant.OrgID, BatchSize: 1}
 
-	report, err := service.Run(ctx, envelopeSources(false), opts)
+	report, err := service.Run(ctx, envelopes.Sources(false), opts)
 	require.NoError(t, err)
 	assert.Zero(t, report.Failed())
 	assert.Zero(t, report.Remaining())
@@ -197,7 +199,7 @@ func TestRewrapMovesStoredSecretsToTheActiveKey(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, "carrier-key", carrier)
 
-	again, err := service.Run(ctx, envelopeSources(false), opts)
+	again, err := service.Run(ctx, envelopes.Sources(false), opts)
 	require.NoError(t, err)
 	for _, source := range again.Sources {
 		assert.Zero(t, source.Rewrapped, source.Name)

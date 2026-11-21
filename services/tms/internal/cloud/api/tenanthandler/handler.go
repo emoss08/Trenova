@@ -11,6 +11,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/managedroutes"
 	"github.com/emoss08/trenova/internal/cloud/app/tenantlifecycle"
 	"github.com/emoss08/trenova/internal/cloud/domain/cloudtenant"
+	"github.com/emoss08/trenova/internal/cloud/domain/tenantarchive"
+	"github.com/emoss08/trenova/internal/cloud/domain/tenantcommand"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -31,6 +33,7 @@ type Lifecycle interface {
 		ctx context.Context,
 		instanceID string,
 		desired *cloudtenant.Desired,
+		source *tenantarchive.Access,
 	) (*cloudtenant.Status, error)
 	List(ctx context.Context, after string, limit int) (*tenantlifecycle.StatusPage, error)
 	Readings(
@@ -41,6 +44,27 @@ type Lifecycle interface {
 		ctx context.Context,
 		entries []tenantlifecycle.TenantUsage,
 	) (*tenantlifecycle.UsageAnswer, error)
+	StartArchive(
+		ctx context.Context,
+		instanceID string,
+		req *tenantlifecycle.ArchiveRequest,
+	) (*tenantcommand.View, error)
+	StartRestore(
+		ctx context.Context,
+		instanceID string,
+		req *tenantlifecycle.RestoreRequest,
+	) (*tenantcommand.View, error)
+	Command(
+		ctx context.Context,
+		instanceID, commandID string,
+		kind tenantcommand.Kind,
+	) (*tenantcommand.View, error)
+	SetNightlyGrant(ctx context.Context, access *tenantarchive.Access, expiresAt time.Time) error
+}
+
+type EntryBody struct {
+	cloudtenant.Desired
+	ImportTarget *Target `json:"importTarget,omitempty"`
 }
 
 type Params struct {
@@ -78,6 +102,7 @@ func (h *Handler) RouteManaged(mux *http.ServeMux) {
 	mux.HandleFunc("GET "+ReadingsPath, h.sharedOnly(h.readings))
 	mux.HandleFunc("PUT "+UsagePath, h.sharedOnly(h.setUsage))
 	mux.HandleFunc("PUT "+TenantPath, h.sharedOnly(h.apply))
+	h.routeArchives(mux)
 }
 
 func (h *Handler) sharedOnly(next http.HandlerFunc) http.HandlerFunc {
@@ -95,8 +120,8 @@ func (h *Handler) apply(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	var desired cloudtenant.Desired
-	if err := sonic.Unmarshal(body, &desired); err != nil {
+	var entry EntryBody
+	if err := sonic.Unmarshal(body, &entry); err != nil {
 		managedroutes.WriteProblem(
 			w,
 			h.l,
@@ -105,7 +130,17 @@ func (h *Handler) apply(w http.ResponseWriter, r *http.Request) {
 		)
 		return
 	}
-	status, err := h.lifecycle.Apply(r.Context(), r.PathValue("instanceId"), &desired)
+	desired := entry.Desired
+	var source *tenantarchive.Access
+	if entry.ImportTarget != nil {
+		access, aerr := entry.importAccess(r.PathValue("instanceId"))
+		if aerr != nil {
+			managedroutes.WriteProblem(w, h.l, http.StatusBadRequest, aerr.Error())
+			return
+		}
+		source = access
+	}
+	status, err := h.lifecycle.Apply(r.Context(), r.PathValue("instanceId"), &desired, source)
 	switch {
 	case errors.Is(err, cloudtenant.ErrInstanceIDMismatch),
 		errors.Is(err, cloudtenant.ErrRevisionInvalid):
@@ -221,4 +256,12 @@ func (h *Handler) limit(w http.ResponseWriter, r *http.Request) (int, bool) {
 		return 0, false
 	}
 	return n, true
+}
+
+func (e *EntryBody) importAccess(instanceID string) (*tenantarchive.Access, error) {
+	command := e.ImportCommand()
+	if command == nil {
+		return nil, errTargetFor
+	}
+	return e.ImportTarget.commandAccess(instanceID, command.ID, tenantcommand.KindImport)
 }

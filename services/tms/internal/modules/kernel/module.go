@@ -40,6 +40,7 @@ func SharedOptions() fx.Option {
 			versionservice.New,
 			encryptionservice.New,
 			encryptionservice.NewSecretCipher,
+			encryptionservice.NewBlobCipher,
 			usstaterepository.New,
 			settingversionrepository.New,
 			recordvisibilityrepository.New,

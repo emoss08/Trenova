@@ -4,7 +4,9 @@ import (
 	"bytes"
 	"context"
 	"io"
+	"slices"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -17,12 +19,17 @@ type Store struct {
 	mu       sync.Mutex
 	objects  map[string][]byte
 	metadata map[string]map[string]string
+	types    map[string]string
 	attempts int
 	versions int
 }
 
 func New() *Store {
-	return &Store{objects: map[string][]byte{}, metadata: map[string]map[string]string{}}
+	return &Store{
+		objects:  map[string][]byte{},
+		metadata: map[string]map[string]string{},
+		types:    map[string]string{},
+	}
 }
 
 func (s *Store) Upload(
@@ -46,6 +53,7 @@ func (s *Store) Upload(
 	s.versions++
 	s.objects[params.Key] = body
 	s.metadata[params.Key] = params.Metadata
+	s.types[params.Key] = params.ContentType
 	return &kernelports.FileInfo{
 		Key:          params.Key,
 		Size:         int64(len(body)),
@@ -64,9 +72,10 @@ func (s *Store) Download(_ context.Context, key string) (*kernelports.DownloadRe
 		return nil, kernelports.ErrObjectNotFound
 	}
 	return &kernelports.DownloadResult{
-		Body:     io.NopCloser(bytes.NewReader(body)),
-		Size:     int64(len(body)),
-		Metadata: s.metadata[key],
+		Body:        io.NopCloser(bytes.NewReader(body)),
+		ContentType: s.types[key],
+		Size:        int64(len(body)),
+		Metadata:    s.metadata[key],
 	}, nil
 }
 
@@ -74,6 +83,8 @@ func (s *Store) Delete(_ context.Context, key string) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	delete(s.objects, key)
+	delete(s.metadata, key)
+	delete(s.types, key)
 	return nil
 }
 
@@ -89,9 +100,20 @@ func (s *Store) Exists(_ context.Context, key string) (bool, error) {
 }
 
 func (s *Store) Put(key string, body []byte) {
+	s.PutTyped(key, "", body)
+}
+
+func (s *Store) PutTyped(key, contentType string, body []byte) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.objects[key] = body
+	s.types[key] = contentType
+}
+
+func (s *Store) ContentType(key string) string {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.types[key]
 }
 
 func (s *Store) Object(key string) ([]byte, bool) {
@@ -109,6 +131,60 @@ func (s *Store) Keys() []string {
 		keys = append(keys, key)
 	}
 	return keys
+}
+
+func (s *Store) ListPrefix(
+	_ context.Context,
+	prefix string,
+	fn func(kernelports.ListedObject) error,
+) error {
+	s.mu.Lock()
+	listed := make([]kernelports.ListedObject, 0)
+	for key, body := range s.objects {
+		if strings.HasPrefix(key, prefix) {
+			listed = append(listed, kernelports.ListedObject{Key: key, Size: int64(len(body))})
+		}
+	}
+	s.mu.Unlock()
+	slices.SortFunc(listed, func(a, b kernelports.ListedObject) int {
+		return strings.Compare(a.Key, b.Key)
+	})
+	for _, object := range listed {
+		if err := fn(object); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (s *Store) DeletePrefix(_ context.Context, prefix string) (int64, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	var n int64
+	for key := range s.objects {
+		if strings.HasPrefix(key, prefix) {
+			delete(s.objects, key)
+			delete(s.metadata, key)
+			delete(s.types, key)
+			n++
+		}
+	}
+	return n, nil
+}
+
+func (s *Store) GetFileInfo(_ context.Context, key string) (*kernelports.FileInfo, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	body, ok := s.objects[key]
+	if !ok {
+		return nil, kernelports.ErrObjectNotFound
+	}
+	return &kernelports.FileInfo{
+		Key:         key,
+		Size:        int64(len(body)),
+		ContentType: s.types[key],
+		Metadata:    s.metadata[key],
+	}, nil
 }
 
 func (s *Store) Attempts() int {

@@ -60,6 +60,29 @@ func TestBuildPlanIncludesBusinessUnitTablesOnlyWhenTheUnitIsExclusive(t *testin
 	assert.Equal(t, buID, plan.targets[0].Value)
 }
 
+func TestATableWhosePartiesNameTheUnitIsPurgedByTheFirstPartysUnit(t *testing.T) {
+	t.Parallel()
+
+	buID := pulid.MustNew("bu_")
+	transfers := tenantTable{
+		Name: "edi_load_tender_transfers", PartyBU: "source_business_unit_id",
+	}
+	input := &planInput{
+		Tables:         []tenantTable{transfers},
+		OrganizationID: pulid.MustNew("org_"),
+		BusinessUnitID: buID,
+	}
+	assert.Empty(t, buildPlan(input).targets, "not while another organization shares the unit")
+
+	input.ExclusiveBU = true
+	plan := buildPlan(input)
+	require.Len(t, plan.targets, 1)
+	assert.Equal(t, "source_business_unit_id", plan.targets[0].Column)
+	assert.Equal(t, buID, plan.targets[0].Value)
+	assert.Contains(t, RemainingQuery([]tenantTable{transfers}),
+		`FROM "edi_load_tender_transfers" WHERE "source_business_unit_id" = $2`)
+}
+
 func TestBuildPlanOrdersChildrenBeforeParents(t *testing.T) {
 	t.Parallel()
 

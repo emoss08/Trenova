@@ -2,12 +2,16 @@ package tenantlifecycle_test
 
 import (
 	"context"
+	"encoding/base64"
+	"errors"
 	"slices"
+	"strings"
 	"sync"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/cloud/app/tenantlifecycle"
 	"github.com/emoss08/trenova/internal/cloud/domain/cloudtenant"
+	"github.com/emoss08/trenova/internal/cloud/domain/tenantcommand"
 	"github.com/emoss08/trenova/internal/cloud/ports/cloudtenantports"
 	"github.com/emoss08/trenova/internal/infrastructure/config/managedconfig"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/session"
@@ -304,7 +308,115 @@ func (w *workflows) StartWorkflow(
 	return nil, nil
 }
 
+type commands struct {
+	mu    sync.Mutex
+	rows  map[string]tenantcommand.Command
+	grant *tenantcommand.Grant
+}
+
+func (c *commands) Get(_ context.Context, id string) (*tenantcommand.Command, error) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	cmd, ok := c.rows[id]
+	if !ok {
+		return nil, cloudtenantports.ErrCommandNotFound
+	}
+	return &cmd, nil
+}
+
+func (c *commands) Create(
+	_ context.Context,
+	cmd *tenantcommand.Command,
+) (*tenantcommand.Command, bool, error) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if held, ok := c.rows[cmd.CommandID]; ok {
+		return &held, false, nil
+	}
+	c.rows[cmd.CommandID] = *cmd
+	return cmd, true, nil
+}
+
+func (c *commands) Save(_ context.Context, cmd *tenantcommand.Command) error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.rows[cmd.CommandID] = *cmd
+	return nil
+}
+
+func (c *commands) Open(_ context.Context, instanceID string) ([]*tenantcommand.Command, error) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	out := make([]*tenantcommand.Command, 0)
+	for _, cmd := range c.rows {
+		if cmd.InstanceID == instanceID && !cmd.State.Settled() {
+			out = append(out, &cmd)
+		}
+	}
+	return out, nil
+}
+
+func (c *commands) Failures(_ context.Context, ids []string) ([]*tenantcommand.Command, error) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	out := make([]*tenantcommand.Command, 0)
+	for _, cmd := range c.rows {
+		if slices.Contains(ids, cmd.InstanceID) && cmd.State == tenantcommand.StateFailed &&
+			cmd.Kind != tenantcommand.KindRestore {
+			out = append(out, &cmd)
+		}
+	}
+	return out, nil
+}
+
+func (c *commands) Progress(_ context.Context, id string, p *tenantcommand.Progress) error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	cmd := c.rows[id]
+	cmd.Progress = *p
+	c.rows[id] = cmd
+	return nil
+}
+
+func (c *commands) SetGrant(_ context.Context, g *tenantcommand.Grant) error {
+	c.grant = g
+	return nil
+}
+
+func (c *commands) Grant(context.Context, string) (*tenantcommand.Grant, error) {
+	if c.grant == nil {
+		return nil, cloudtenantports.ErrGrantMissing
+	}
+	return c.grant, nil
+}
+
+type cipher struct{}
+
+func (cipher) Seal(
+	_ context.Context,
+	plain string,
+	scope *kernelports.SecretScope,
+) (string, error) {
+	return "sealed:" + scope.ResourceID + ":" + base64.StdEncoding.EncodeToString(
+		[]byte(plain),
+	), nil
+}
+
+func (cipher) Open(
+	_ context.Context,
+	sealed string,
+	scope *kernelports.SecretScope,
+) (string, error) {
+	body, ok := strings.CutPrefix(sealed, "sealed:"+scope.ResourceID+":")
+	if !ok {
+		return "", errors.New("sealed for another resource")
+	}
+	plain, err := base64.StdEncoding.DecodeString(body)
+	return string(plain), err
+}
+
 type rig struct {
+	commands  *commands
 	svc       *tenantlifecycle.Service
 	tenants   *tenants
 	admins    *administrators
@@ -341,6 +453,7 @@ func newRig(t *testing.T, shared bool) *rig {
 		workflows: &workflows{},
 		audit:     &securityaudittest.Recorder{},
 		members:   &members{},
+		commands:  &commands{rows: map[string]tenantcommand.Command{}},
 	}
 	r.svc = tenantlifecycle.New(tenantlifecycle.Params{
 		Config:         &managedconfig.Config{Enabled: true, Tenancy: tenancy},
@@ -356,6 +469,8 @@ func newRig(t *testing.T, shared bool) *rig {
 		Sessions:       r.sessions,
 		Auditor:        r.audit,
 		Workflows:      r.workflows,
+		Commands:       r.commands,
+		Secrets:        cipher{},
 		Scopes:         managedscope.NewResolver(shared),
 		Clock:          func() int64 { return now },
 		Logger:         zap.NewNop(),

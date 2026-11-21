@@ -110,25 +110,12 @@ func TestTenderRecipients_LiveInTheirSourceShipmentsBusinessUnit(t *testing.T) {
 
 	foreign := tender.Recipient(transfer)
 	foreign.RecipientOrganizationID = elsewhere.Organization.ID
-	require.NoError(
-		t,
-		editenderchangedb.TenderRecipients.Create(tender.Source.Ctx, tender.Admin, foreign),
-	)
-
-	repo := editenderrecipientrepository.New(editenderrecipientrepository.Params{
-		DB:     dbtest.NewRLSConnection(t, tender.Admin, tender.DSN),
-		Logger: zap.NewNop(),
-	})
-	other := editest.TenantOf(tender.Ctx, elsewhere.Info())
-	_, err = repo.GetTenderRecipientByID(other.Ctx, editenderports.GetEDITenderRecipientByIDRequest{
-		ID:         foreign.ID,
-		TenantInfo: other.Info,
-	})
+	err = editenderchangedb.TenderRecipients.Create(tender.Source.Ctx, tender.Admin, foreign)
 	require.Error(t, err)
-	assert.True(
+	assert.Equal(
 		t,
-		errortypes.IsNotFoundError(err),
-		"an organization of another business unit never reads a recipient row, even one naming it: %v",
-		err,
+		"fk_edi_tender_recipients_recipient_org",
+		dberror.ExtractConstraintName(err),
+		"a recipient names an organization of its own business unit, never another tenant's",
 	)
 }

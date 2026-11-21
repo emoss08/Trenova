@@ -584,6 +584,16 @@ managed:
   # `page`). Absolute http or https URLs; empty leaves the item out.
   supportUrl: ""
   newSupportRequestUrl: ""
+  # Tenant archives on a shared server (internal/cloud). Each active tenant is archived once a
+  # night, starting at nightlyAt (UTC, HH:MM) and for at most windowHours: 07:00 UTC is 2 or 3 am
+  # on the US East coast and 11 pm or midnight on the West coast. concurrency tenants are archived
+  # at once (the archive heavy-job slot bounds the server behind it). One archive or import may
+  # hold its database snapshot or load transaction for at most maxDuration.
+  archive:
+    nightlyAt: "07:00"
+    windowHours: 4
+    concurrency: 2
+    maxDuration: 3h
 
 # Limits that keep one organization from crowding the others on a server many organizations
 # share. Each is bounded per organization with an instance cap behind it. A switch is auto,
@@ -633,6 +643,11 @@ tenantLimits:
     removal: # a removed shared-server tenant's batched deletes, object prefix and search deletes
       perOrganization: 1
       total: 1
+      hold: 30m
+      wait: 15s
+    archive: # a shared-server tenant's archive or import: export, nightly, restore and move
+      perOrganization: 1
+      total: 2
       hold: 30m
       wait: 15s
   # Calls at once one organization may hold on the built-in embedding service, inside the

@@ -6,8 +6,9 @@ import (
 )
 
 const (
-	RecoveryCodeHashSHA256 int16 = 1
-	RecoveryCodeHashHMAC   int16 = 2
+	RecoveryCodeHashForeign int16 = 0
+	RecoveryCodeHashSHA256  int16 = 1
+	RecoveryCodeHashHMAC    int16 = 2
 )
 
 type MFARecoveryCode struct {

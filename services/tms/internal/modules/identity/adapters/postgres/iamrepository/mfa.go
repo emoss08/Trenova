@@ -62,17 +62,21 @@ func (r *mfaRepository) GetTOTP(
 	ctx context.Context,
 	userID pulid.ID,
 ) (*iam.MFAAuthenticator, error) {
-	return dbtx.Read(personScope(ctx), r.db, func(ctx context.Context) (*iam.MFAAuthenticator, error) {
-		entity, err := userTOTP(ctx, userID).First(ctx, r.db.Keel(ctx))
-		if dberror.IsNotFoundError(err) {
-			return nil, nil
-		}
-		if err != nil {
-			return nil, fmt.Errorf("get totp authenticator: %w", err)
-		}
+	return dbtx.Read(
+		personScope(ctx),
+		r.db,
+		func(ctx context.Context) (*iam.MFAAuthenticator, error) {
+			entity, err := userTOTP(ctx, userID).First(ctx, r.db.Keel(ctx))
+			if dberror.IsNotFoundError(err) {
+				return nil, nil
+			}
+			if err != nil {
+				return nil, fmt.Errorf("get totp authenticator: %w", err)
+			}
 
-		return entity, nil
-	})
+			return entity, nil
+		},
+	)
 }
 
 func (r *mfaRepository) ReplacePendingTOTP(
@@ -251,7 +255,7 @@ func (r *mfaRepository) CountUnusedRecoveryCodes(
 	return dbtx.Read(personScope(ctx), r.db, func(ctx context.Context) (int, error) {
 		rc := iamdb.MFARecoveryCodes
 		count, err := userRecoveryCodes(ctx, userID).
-			Where(rc.UsedAt.IsNull()).
+			Where(rc.UsedAt.IsNull(), rc.HashVersion.Ne(iam.RecoveryCodeHashForeign)).
 			Count(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return 0, fmt.Errorf("count recovery codes: %w", err)
@@ -268,7 +272,7 @@ func (r *mfaRepository) CountLegacyRecoveryCodes(
 	return dbtx.Read(personScope(ctx), r.db, func(ctx context.Context) (int, error) {
 		rc := iamdb.MFARecoveryCodes
 		count, err := userRecoveryCodes(ctx, userID).
-			Where(rc.UsedAt.IsNull(), rc.HashVersion.Eq(iam.RecoveryCodeHashSHA256)).
+			Where(rc.UsedAt.IsNull(), rc.HashVersion.Ne(iam.RecoveryCodeHashHMAC)).
 			Count(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return 0, fmt.Errorf("count legacy recovery codes: %w", err)

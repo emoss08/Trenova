@@ -1,4 +1,4 @@
-package encryption
+package envelopes
 
 import (
 	"testing"
@@ -15,7 +15,7 @@ func TestEnvelopeSourcesAreComplete(t *testing.T) {
 	t.Parallel()
 
 	tenant := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
-	sources := envelopeSources(true)
+	sources := Sources(true)
 	columns := make([]kernelports.EnvelopeColumn, 0, len(sources.Columns)+len(sources.Objects))
 	columns = append(columns, sources.Columns...)
 	for _, object := range sources.Objects {
@@ -60,5 +60,5 @@ func TestEnvelopeSourcesAreComplete(t *testing.T) {
 	assert.Contains(t, names, "AI provider API key")
 	assert.Contains(t, names, "AI provider previous API key")
 	assert.Contains(t, names, "document files")
-	assert.Len(t, envelopeSources(false).Objects, 0)
+	assert.Len(t, Sources(false).Objects, 0)
 }

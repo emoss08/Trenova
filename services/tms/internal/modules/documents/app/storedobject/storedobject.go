@@ -288,7 +288,7 @@ func Write(
 
 	metadata := make(map[string]string, len(req.Metadata)+1)
 	maps.Copy(metadata, req.Metadata)
-	metadata["crypto_mode"] = encryptionservice.CryptoModeBlobV1
+	metadata[kernelports.CryptoModeMetadataKey] = kernelports.CryptoModeBlobV1
 
 	info, err := storage.Upload(ctx, &kernelports.UploadParams{
 		Key:         req.Key,

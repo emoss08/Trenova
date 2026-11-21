@@ -7,11 +7,14 @@ import (
 
 	"github.com/emoss08/keel/schema"
 	"github.com/emoss08/trenova/internal/cloud/domain/cloudtenant/cloudtenantdb"
+	"github.com/emoss08/trenova/internal/cloud/domain/tenantcommand/tenantcommanddb"
 )
 
 // All returns every table keel gen generated, in name order.
 func All() []*schema.Table {
 	return []*schema.Table{
+		tenantcommanddb.GrantsSchema(),
+		tenantcommanddb.CommandsSchema(),
 		cloudtenantdb.EventsSchema(),
 		cloudtenantdb.TenantsSchema(),
 	}

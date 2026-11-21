@@ -7,11 +7,14 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/cloud/api/tenanthandler"
 	"github.com/emoss08/trenova/internal/cloud/app/tenantlifecycle"
 	"github.com/emoss08/trenova/internal/cloud/domain/cloudtenant"
+	"github.com/emoss08/trenova/internal/cloud/domain/tenantarchive"
+	"github.com/emoss08/trenova/internal/cloud/domain/tenantcommand"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
@@ -22,9 +25,13 @@ const instanceID = "5d1a3c1e-8c1f-4a39-9a43-5b0d7c4e2f10"
 type lifecycle struct {
 	shared   bool
 	applied  *cloudtenant.Desired
+	source   *tenantarchive.Access
 	path     string
 	readings *tenantlifecycle.ReadingsRequest
 	usage    []tenantlifecycle.TenantUsage
+	archive  *tenantlifecycle.ArchiveRequest
+	restore  *tenantlifecycle.RestoreRequest
+	grant    *tenantarchive.Access
 	err      error
 }
 
@@ -34,8 +41,9 @@ func (l *lifecycle) Apply(
 	_ context.Context,
 	id string,
 	d *cloudtenant.Desired,
+	source *tenantarchive.Access,
 ) (*cloudtenant.Status, error) {
-	l.path, l.applied = id, d
+	l.path, l.applied, l.source = id, d, source
 	if l.err != nil {
 		return nil, l.err
 	}
@@ -70,6 +78,64 @@ func (l *lifecycle) SetUsage(
 		Applied: len(entries),
 		Refused: []tenantlifecycle.UsageRefused{},
 	}, l.err
+}
+
+func (l *lifecycle) StartArchive(
+	_ context.Context,
+	id string,
+	req *tenantlifecycle.ArchiveRequest,
+) (*tenantcommand.View, error) {
+	l.path, l.archive = id, req
+	if l.err != nil {
+		return nil, l.err
+	}
+	return &tenantcommand.View{
+		CommandID:  req.CommandID,
+		InstanceID: id,
+		Kind:       tenantcommand.KindArchive,
+		Purpose:    string(req.Purpose),
+		State:      tenantcommand.StateQueued,
+		Location:   req.Access.Location.String(),
+	}, nil
+}
+
+func (l *lifecycle) StartRestore(
+	_ context.Context,
+	id string,
+	req *tenantlifecycle.RestoreRequest,
+) (*tenantcommand.View, error) {
+	l.path, l.restore = id, req
+	if l.err != nil {
+		return nil, l.err
+	}
+	return &tenantcommand.View{
+		CommandID:  req.CommandID,
+		InstanceID: id,
+		Kind:       tenantcommand.KindRestore,
+		State:      tenantcommand.StateQueued,
+	}, nil
+}
+
+func (l *lifecycle) Command(
+	_ context.Context,
+	id, commandID string,
+	kind tenantcommand.Kind,
+) (*tenantcommand.View, error) {
+	l.path = id
+	if l.err != nil {
+		return nil, l.err
+	}
+	return &tenantcommand.View{CommandID: commandID, InstanceID: id, Kind: kind,
+		State: tenantcommand.StateRunning}, nil
+}
+
+func (l *lifecycle) SetNightlyGrant(
+	_ context.Context,
+	access *tenantarchive.Access,
+	_ time.Time,
+) error {
+	l.grant = access
+	return l.err
 }
 
 func serve(t *testing.T, l *lifecycle, method, target, body string) *httptest.ResponseRecorder {

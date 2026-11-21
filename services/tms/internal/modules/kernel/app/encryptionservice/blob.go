@@ -13,10 +13,12 @@ import (
 	"fmt"
 	"io"
 	"math"
+
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 )
 
 const (
-	CryptoModeBlobV1 = "blob_v1"
+	CryptoModeBlobV1 = kernelports.CryptoModeBlobV1
 	BlobChunkSize    = 64 << 10
 
 	blobMagic           = "TRNBLOB"
@@ -340,19 +342,47 @@ func (s *Service) OpenBlob(
 	sealedSize int64,
 	aad AAD,
 ) (*OpenedBlob, error) {
+	opened, _, err := s.OpenBlobAny(ctx, src, sealedSize, []AAD{aad})
+	return opened, err
+}
+
+func (s *Service) OpenBlobAny(
+	ctx context.Context,
+	src io.Reader,
+	sealedSize int64,
+	aads []AAD,
+) (*OpenedBlob, int, error) {
 	if s.keyManager == nil {
-		return nil, ErrKeyManagerDisabled
+		return nil, -1, ErrKeyManagerDisabled
 	}
 	if sealedSize >= 0 {
 		src = &sizedReader{src: src, remaining: sealedSize}
 	}
 	header, err := readBlobHeader(src)
 	if err != nil {
-		return nil, err
+		return nil, -1, err
 	}
-	if subtle.ConstantTimeCompare(header.aadHash, blobAADHash(aad)) != 1 {
-		return nil, ErrBlobAAD
+	matched := -1
+	for i := range aads {
+		if subtle.ConstantTimeCompare(header.aadHash, blobAADHash(aads[i])) == 1 {
+			matched = i
+			break
+		}
 	}
+	if matched < 0 {
+		return nil, -1, ErrBlobAAD
+	}
+	opened, err := s.openWithHeader(ctx, src, sealedSize, header, aads[matched])
+	return opened, matched, err
+}
+
+func (s *Service) openWithHeader(
+	ctx context.Context,
+	src io.Reader,
+	sealedSize int64,
+	header *blobHeader,
+	aad AAD,
+) (*OpenedBlob, error) {
 	dek, err := s.keyManager.UnwrapKey(ctx, header.wrapped, aad)
 	if err != nil {
 		if IsKeyRefused(err) {

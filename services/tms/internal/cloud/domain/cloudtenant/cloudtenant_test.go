@@ -170,18 +170,47 @@ func TestOnlyAFinalArchiveLetsATenantBeRemoved(t *testing.T) {
 	assert.True(t, tenant.HasFinalArchive())
 }
 
-func TestArchiveCommandsAreFound(t *testing.T) {
+func TestAnImportCommandIsFoundAndMustNameItsArchive(t *testing.T) {
 	t.Parallel()
 
 	e := entry()
 	e.Commands = []cloudtenant.Command{
 		{Kind: "restart", ID: "7d1a3c1e-8c1f-4a39-9a43-5b0d7c4e2f10"},
 		{
-			Kind:    cloudtenant.CommandArchive,
-			ID:      "8d1a3c1e-8c1f-4a39-9a43-5b0d7c4e2f10",
-			Purpose: "final",
+			Kind:         cloudtenant.CommandImport,
+			ID:           "8d1a3c1e-8c1f-4a39-9a43-5b0d7c4e2f10",
+			Location:     "s3://archives/tenants/x/archives/y/",
+			ExpectSHA256: strings.Repeat("ab", 32),
 		},
 	}
-	require.Len(t, e.ArchiveCommands(), 1)
+	require.NotNil(t, e.ImportCommand())
+	assert.Equal(t, "8d1a3c1e-8c1f-4a39-9a43-5b0d7c4e2f10", e.ImportCommand().ID)
 	assert.Nil(t, e.Refusal())
+
+	e.Commands[1].ExpectSHA256 = "not-a-digest"
+	require.NotNil(t, e.Refusal())
+	assert.Contains(t, e.Refusal().Reason, "import command")
+
+	e.Commands[1].ExpectSHA256 = strings.Repeat("ab", 32)
+	e.Commands = append(e.Commands, e.Commands[1])
+	require.NotNil(t, e.Refusal())
+	assert.Contains(t, e.Refusal().Reason, "at most one import")
+}
+
+func TestARestoringTenantIsReportedSuspendedWithItsRestore(t *testing.T) {
+	t.Parallel()
+
+	tenant := &cloudtenant.Tenant{
+		InstanceID:           "7d1a3c1e-8c1f-4a39-9a43-5b0d7c4e2f10",
+		State:                cloudtenant.StateRestoring,
+		LastRestoreCommandID: "8d1a3c1e-8c1f-4a39-9a43-5b0d7c4e2f10",
+		LastRestoreState:     cloudtenant.RestoreFailed,
+		LastRestoreAt:        1_790_000_000,
+		LastRestoreReason:    "the archive's part tables/0001-x.copy.zst does not match its manifest",
+	}
+	status := tenant.Status(nil)
+	assert.Equal(t, cloudtenant.StateSuspended, status.State)
+	require.NotNil(t, status.LastRestore)
+	assert.Equal(t, cloudtenant.RestoreFailed, status.LastRestore.State)
+	assert.Equal(t, tenant.LastRestoreReason, status.LastRestore.Reason)
 }

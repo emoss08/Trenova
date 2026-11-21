@@ -24,6 +24,7 @@ import (
 	"go.temporal.io/sdk/worker"
 
 	"github.com/emoss08/keel"
+	"github.com/emoss08/trenova/internal/cloud/adapters/postgres/cloudcommandrepository"
 	"github.com/emoss08/trenova/internal/cloud/adapters/postgres/cloudtenantrepository"
 	"github.com/emoss08/trenova/internal/cloud/adapters/postgres/tenantpeoplerepository"
 	"github.com/emoss08/trenova/internal/cloud/adapters/postgres/tenantpurgerepository"
@@ -41,6 +42,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/aiusagemeter"
 	"github.com/emoss08/trenova/internal/modules/documents/adapters/postgres/documentmeter"
 	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/organizationmeter"
+	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/organizationrepository"
 	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/passwordresetrepository"
 	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/tenantbootstraprepository"
 	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/userrepository"
@@ -48,9 +50,12 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/app/planservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/quotaservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/session"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/sessionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/adapters/postgres/managedfeaturesrepository"
 	"github.com/emoss08/trenova/internal/modules/kernel/adapters/postgres/managedusagerepository"
+	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/managedfeaturesservice"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/managedusageservice"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/managedscope"
@@ -60,6 +65,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmentmeter"
 	"github.com/emoss08/trenova/internal/testutil/metricstest"
 	"github.com/emoss08/trenova/internal/testutil/securityaudittest"
+	"github.com/emoss08/trenova/internal/testutil/seededtest"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -238,7 +244,7 @@ func enforcedConnection(
 	admin *keel.DB,
 	dsn string,
 	counter *statementCounter,
-) *postgres.Connection {
+) (*postgres.Connection, *databaseconfig.Config) {
 	t.Helper()
 	suffix := strings.ToLower(pulid.MustNew("r").String())
 	appRole, systemRole, password := "cloud_app_"+suffix, "cloud_sys_"+suffix, randomSecret(t)
@@ -294,12 +300,21 @@ func enforcedConnection(
 	require.NoError(t, err)
 	lc.RequireStart()
 	t.Cleanup(lc.RequireStop)
-	return conn
+	return conn, dbCfg
 }
 
 func newRig(t *testing.T) *rig {
 	t.Helper()
-	ctx, admin, dsn, cleanup := seedtest.SetupTestDBWithDSN(t)
+	return newRigOn(t, false)
+}
+
+func newRigOn(t *testing.T, seeded bool) *rig {
+	t.Helper()
+	setup := seedtest.SetupTestDBWithDSN
+	if seeded {
+		setup = seededtest.SetupTestDBWithDSN
+	}
+	ctx, admin, dsn, cleanup := setup(t)
 	t.Cleanup(cleanup)
 
 	r := &rig{
@@ -312,7 +327,7 @@ func newRig(t *testing.T) *rig {
 		keys:      &purgedKeys{},
 		search:    &purgedSearch{},
 	}
-	r.conn = enforcedConnection(t, admin, dsn, r.counter)
+	r.conn, _ = enforcedConnection(t, admin, dsn, r.counter)
 	logger := zap.NewNop()
 	clock := func() int64 { return time.Now().Unix() }
 	scopes := managedscope.NewResolver(true)
@@ -381,9 +396,15 @@ func newRig(t *testing.T) *rig {
 		Sessions:  r.sessions,
 		Auditor:   audit,
 		Workflows: r.workflows,
-		Scopes:    scopes,
-		Clock:     clock,
-		Logger:    logger,
+		Commands: cloudcommandrepository.New(cloudcommandrepository.Params{
+			DB: r.conn, Clock: clock,
+		}),
+		Secrets: encryptionservice.NewSecretCipher(encryptionservice.NewWithKeyManager(
+			encryptionservice.NewLocalKeyManager("lifecycle-test-key-not-a-real-secret"),
+		)),
+		Scopes: scopes,
+		Clock:  clock,
+		Logger: logger,
 	})
 	return r
 }
@@ -440,7 +461,7 @@ func tokenOf(id string) string {
 
 func (r *rig) apply(t *testing.T, e *cloudtenant.Desired) *cloudtenant.Status {
 	t.Helper()
-	status, err := r.svc.Apply(r.ctx, e.InstanceID, e)
+	status, err := r.svc.Apply(r.ctx, e.InstanceID, e, nil)
 	require.NoError(t, err)
 	return status
 }
@@ -476,7 +497,7 @@ func TestTwoConcurrentAppliesMakeOneTenant(t *testing.T) {
 	errs := make([]error, 2)
 	for i := range 2 {
 		wg.Go(func() {
-			statuses[i], errs[i] = r.svc.Apply(r.ctx, instanceA, e)
+			statuses[i], errs[i] = r.svc.Apply(r.ctx, instanceA, e, nil)
 		})
 	}
 	wg.Wait()
@@ -608,11 +629,93 @@ func TestSuspensionRefusesEveryRequestAndEndsSessionsWhileAnotherTenantIsServed(
 	require.NoError(t, admit(a, true), "resuming restores the tenant")
 }
 
+type missingOrganizations struct{}
+
+func (missingOrganizations) GetByID(context.Context, pulid.ID) (*tenant.Organization, error) {
+	return nil, errortypes.NewNotFoundError("not cached")
+}
+
+func (r *rig) organizationNamed(t *testing.T, name string) dbscope.Tenant {
+	t.Helper()
+	type row struct {
+		ID pulid.ID `db:"id"`
+		BU pulid.ID `db:"business_unit_id"`
+	}
+	rows, err := keel.QueryAll(r.ctx, r.admin, pgx.RowToStructByName[row],
+		"SELECT id, business_unit_id FROM organizations WHERE name = $1", name)
+	require.NoError(t, err)
+	require.Len(t, rows, 1, name)
+	return dbscope.Tenant{OrganizationID: rows[0].ID, BusinessUnitID: rows[0].BU}
+}
+
+func (r *rig) purgeAll(t *testing.T, tenant dbscope.Tenant, unit bool) {
+	t.Helper()
+	for range 200 {
+		result, err := r.purge.PurgeRows(r.ctx, &cloudtenantports.PurgeRowsRequest{
+			Tenant: tenant, BatchSize: 2000,
+		})
+		require.NoError(t, err)
+		if result.Complete || result.Deleted == 0 {
+			break
+		}
+	}
+	deleted, err := r.purge.DeleteOrganization(r.ctx, tenant)
+	require.NoError(t, err)
+	require.True(t, deleted.Deleted, "%s is gone: %s", tenant.OrganizationID, deleted.BlockedBy)
+	if unit {
+		_, err = r.purge.DeleteBusinessUnit(r.ctx, tenant)
+		require.NoError(t, err)
+	}
+}
+
+func (r *rig) naming(t *testing.T, org pulid.ID) map[string]int64 {
+	t.Helper()
+	columns, err := keel.QueryAll(r.ctx, r.admin, pgx.RowTo[string], `
+SELECT format('SELECT %L::text AS name, count(*)::bigint AS n FROM %I WHERE %I = $1', c.relname || '.' || a.attname, c.relname, a.attname)
+FROM pg_catalog.pg_class c
+JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace
+JOIN pg_catalog.pg_attribute a ON a.attrelid = c.oid AND a.attnum > 0 AND NOT a.attisdropped
+WHERE n.nspname = 'public' AND c.relkind IN ('r', 'p') AND NOT c.relispartition
+  AND a.attname LIKE '%organization_id'
+  AND NOT EXISTS (SELECT 1 FROM trenova_rls.global_tables g WHERE g.table_name = c.relname)
+ORDER BY 1`)
+	require.NoError(t, err)
+	type count struct {
+		Name string `db:"name"`
+		N    int64  `db:"n"`
+	}
+	out := map[string]int64{}
+	for _, query := range columns {
+		rows, qerr := keel.QueryAll(
+			r.ctx,
+			r.admin,
+			pgx.RowToStructByName[count],
+			query,
+			org.String(),
+		)
+		require.NoError(t, qerr, query)
+		for _, c := range rows {
+			if c.N > 0 {
+				out[c.Name] = c.N
+			}
+		}
+	}
+	return out
+}
+
 func TestRemovalDeletesEveryRowAndObjectOfTheTenantAndNothingOfAnother(t *testing.T) {
-	r := newRig(t)
+	r := newRigOn(t, true)
+	r.purgeAll(t, r.organizationNamed(t, "Trenova Transportation"), false)
+	full := r.organizationNamed(t, "Trenova Logistics")
 	r.apply(t, entry(instanceA, "a@a.test", 1, platformcatalog.FeatureAccounting))
 	r.apply(t, entry(instanceB, "b@b.test", 1, platformcatalog.FeatureAccounting))
 	a, b := r.tenant(t, instanceA), r.tenant(t, instanceB)
+	made := scopeOf(a)
+	a.OrganizationID, a.BusinessUnitID = full.OrganizationID, full.BusinessUnitID
+	require.NoError(t, r.tenants.Save(r.ctx, a))
+	r.purgeAll(t, made, true)
+	a = r.tenant(t, instanceA)
+	assert.Positive(t, r.remaining(t, a)["shipments"], "tenant A holds the whole seeded company")
 	for _, key := range []string{
 		a.OrganizationID.String() + "/documents/1.pdf",
 		"reports/" + a.OrganizationID.String() + "/run/1/report.pdf",
@@ -624,6 +727,7 @@ func TestRemovalDeletesEveryRowAndObjectOfTheTenantAndNothingOfAnother(t *testin
 	beforeA, beforeB := r.remaining(t, a), r.remaining(t, b)
 	assert.Positive(t, beforeA["user_organization_memberships"])
 	assert.Equal(t, int64(1), beforeA["organizations"])
+	namingB := r.naming(t, b.OrganizationID)
 
 	a.LastArchiveCommandID = "7d1a3c1e-8c1f-4a39-9a43-5b0d7c4e2f10"
 	a.LastArchivePurpose = cloudtenant.ArchivePurposeFinal
@@ -662,6 +766,16 @@ func TestRemovalDeletesEveryRowAndObjectOfTheTenantAndNothingOfAnother(t *testin
 		assert.Zerof(t, n, "%s still holds %d rows of the removed tenant", table, n)
 	}
 	assert.Equal(t, beforeB, r.remaining(t, b), "nothing of the other tenant is touched")
+	assert.Empty(t, r.naming(t, a.OrganizationID),
+		"no row anywhere names the removed organization")
+	assert.Equal(t, namingB, r.naming(t, b.OrganizationID))
+	survivor, err := organizationrepository.New(organizationrepository.Params{
+		DB: r.conn, Logger: zap.NewNop(), Cache: missingOrganizations{},
+	}).GetByID(dbscope.WithValidTenant(r.ctx, scopeOf(b)), tenantports.GetOrganizationByIDRequest{
+		TenantInfo: pagination.TenantInfo{OrgID: b.OrganizationID, BuID: b.BusinessUnitID},
+	})
+	require.NoError(t, err, "the other tenant's organization still reads through its repository")
+	assert.Equal(t, b.OrganizationID, survivor.ID)
 	assert.Equal(t, 0, r.objects.count(a.OrganizationID.String()+"/"))
 	assert.Equal(t, 0, r.objects.count("reports/"+a.OrganizationID.String()+"/"))
 	assert.Equal(t, 1, r.objects.count(b.OrganizationID.String()+"/"))

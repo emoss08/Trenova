@@ -113,3 +113,12 @@ type Client interface {
 type PrefixDeleter interface {
 	DeletePrefix(ctx context.Context, prefix string) (int64, error)
 }
+
+type ListedObject struct {
+	Key  string
+	Size int64
+}
+
+type PrefixLister interface {
+	ListPrefix(ctx context.Context, prefix string, fn func(ListedObject) error) error
+}

@@ -39,7 +39,20 @@ const (
 
 	catalogTablesQuery = `SELECT c.relname AS table_name,
        bool_or(a.attname = 'organization_id') AS has_org,
-       bool_or(a.attname = 'business_unit_id') AS has_bu
+       bool_or(a.attname = 'business_unit_id') AS has_bu,
+       COALESCE(min(a.attname::text) FILTER (
+           WHERE a.attname LIKE '%\_business\_unit\_id'
+             AND EXISTS (
+                 SELECT 1
+                 FROM pg_catalog.pg_attribute o
+                 WHERE o.attrelid = c.oid
+                   AND NOT o.attisdropped
+                   AND o.attname = left(a.attname, -length('business_unit_id')) || 'organization_id'
+             )
+             AND NOT EXISTS (
+                 SELECT 1 FROM trenova_rls.global_tables g WHERE g.table_name = c.relname
+             )
+       ), '') AS party_bu
 FROM pg_catalog.pg_class c
 JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace
 JOIN pg_catalog.pg_attribute a ON a.attrelid = c.oid
@@ -48,8 +61,8 @@ WHERE n.nspname = 'public'
   AND NOT c.relispartition
   AND a.attnum > 0
   AND NOT a.attisdropped
-  AND a.attname IN ('organization_id', 'business_unit_id')
-GROUP BY c.relname
+  AND (a.attname IN ('organization_id', 'business_unit_id') OR a.attname LIKE '%\_business\_unit\_id')
+GROUP BY c.oid, c.relname
 ORDER BY c.relname`
 
 	catalogForeignKeysQuery = `SELECT con.conname AS constraint_name,
@@ -243,7 +256,7 @@ func (p *purgeRun) clearDependents(ctx context.Context, target purgeTarget) erro
 			p.batches++
 			affected, err := p.repo.deleteReferencing(ctx, fk, target, p.batchSize)
 			if err != nil {
-				if protectedByRule(err) || dberror.IsForeignKeyConstraintViolation(err) {
+				if protectedByRule(err) || referenceViolation(err) {
 					break
 				}
 				return fmt.Errorf(
@@ -281,7 +294,7 @@ func (p *purgeRun) drain(ctx context.Context, target purgeTarget) (bool, error) 
 		}
 
 		switch {
-		case dberror.ExtractCode(err) == pgerrcode.ForeignKeyViolation:
+		case referenceViolation(err):
 			if fixes >= maxReferenceFixes {
 				return false, nil
 			}
@@ -293,6 +306,8 @@ func (p *purgeRun) drain(ctx context.Context, target purgeTarget) (bool, error) 
 			if !resolved {
 				return false, nil
 			}
+		case keel.IsNotNull(err):
+			return false, nil
 		case protectedByRule(err):
 			p.repo.l.Info(
 				"a table's own rules refuse a direct delete; its rows go with the organization's cascade",
@@ -321,7 +336,7 @@ func (p *purgeRun) resolveReference(
 	if fk.selfReferencing() {
 		affected, err := p.repo.deleteAll(ctx, target)
 		if err != nil {
-			if dberror.IsForeignKeyConstraintViolation(err) || protectedByRule(err) {
+			if referenceViolation(err) || protectedByRule(err) {
 				return false, nil
 			}
 			return false, fmt.Errorf("purge %s: %w", target.Table, err)
@@ -330,13 +345,16 @@ func (p *purgeRun) resolveReference(
 		return true, nil
 	}
 
-	if _, childIsTarget := p.plan.byTable[fk.ChildTable]; childIsTarget || Kept(fk.ChildTable) {
+	if Kept(fk.ChildTable) {
 		return false, nil
+	}
+	if _, childIsTarget := p.plan.byTable[fk.ChildTable]; childIsTarget {
+		return p.detach(ctx, fk, target)
 	}
 
 	affected, err := p.repo.deleteReferencing(ctx, fk, target, p.batchSize)
 	if err != nil {
-		if dberror.IsForeignKeyConstraintViolation(err) || protectedByRule(err) {
+		if referenceViolation(err) || protectedByRule(err) {
 			return false, nil
 		}
 		return false, fmt.Errorf(
@@ -348,6 +366,33 @@ func (p *purgeRun) resolveReference(
 	}
 	p.record(fk.ChildTable, affected)
 	return affected > 0, nil
+}
+
+func (p *purgeRun) detach(
+	ctx context.Context,
+	fk *foreignKey,
+	target purgeTarget,
+) (bool, error) {
+	detached := false
+	for p.batches < p.maxBatches {
+		p.batches++
+		affected, err := p.repo.nullReferencing(ctx, fk, target, p.batchSize)
+		if err != nil {
+			if keel.IsNotNull(err) || protectedByRule(err) ||
+				referenceViolation(err) {
+				return detached, nil
+			}
+			return false, fmt.Errorf("detach %s from %s: %w", fk.ChildTable, target.Table, err)
+		}
+		if p.beat != nil {
+			p.beat()
+		}
+		detached = detached || affected > 0
+		if affected < int64(p.batchSize) {
+			return detached, nil
+		}
+	}
+	return detached, nil
 }
 
 func (p *purgeRun) record(table string, affected int64) {
@@ -420,6 +465,33 @@ func (r *repository) deleteReferencing(
 	return r.exec(ctx, sql, target.Value.String(), limit)
 }
 
+func (r *repository) nullReferencing(
+	ctx context.Context,
+	fk *foreignKey,
+	target purgeTarget,
+	limit int,
+) (int64, error) {
+	own := make([]string, 0, len(fk.ChildColumns))
+	for _, c := range fk.ChildColumns {
+		if c != organizationColumn && c != businessUnitColumn {
+			own = append(own, quoteIdent(c)+" = NULL")
+		}
+	}
+	if len(own) == 0 || len(fk.ChildColumns) != len(fk.ParentColumns) {
+		return 0, nil
+	}
+	child := quoteIdent(fk.ChildTable)
+	sql := "UPDATE " + child + " SET " + strings.Join(own, ", ") +
+		" WHERE (tableoid, ctid) IN (SELECT c.tableoid, c.ctid FROM " + child + " c WHERE (" +
+		joinedColumns(
+			fk.ChildColumns,
+			"c",
+		) + ") IN (SELECT " + joinedColumns(fk.ParentColumns, "p") +
+		" FROM " + quoteIdent(fk.ParentTable) + " p WHERE p." + quoteIdent(target.Column) +
+		" = $1) LIMIT $2)"
+	return r.exec(ctx, sql, target.Value.String(), limit)
+}
+
 func (r *repository) exec(ctx context.Context, sql string, args ...any) (int64, error) {
 	ctx = dbscope.WithSystem(ctx, purgeReason)
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int64, error) {
@@ -468,7 +540,7 @@ func (r *repository) DeleteOrganization(
 		case err == nil:
 			result.Deleted = true
 			return result, nil
-		case dberror.IsForeignKeyConstraintViolation(err) || protectedByRule(err):
+		case referenceViolation(err) || protectedByRule(err):
 			result.BlockedBy = dberror.ExtractConstraintName(err)
 			return result, nil
 		default:
@@ -511,7 +583,7 @@ func (r *repository) DeleteBusinessUnit(
 		case err == nil:
 			result.Deleted = true
 			return result, nil
-		case dberror.IsForeignKeyConstraintViolation(err) || protectedByRule(err):
+		case referenceViolation(err) || protectedByRule(err):
 			result.BlockedBy = dberror.ExtractConstraintName(err)
 			return result, nil
 		default:
@@ -592,6 +664,8 @@ func tenantFilter(t tenantTable, exclusiveBU bool) string {
 		return "\"organization_id\" = $1"
 	case t.HasBU && exclusiveBU:
 		return "\"business_unit_id\" = $2"
+	case t.PartyBU != "" && exclusiveBU:
+		return quoteIdent(t.PartyBU) + " = $2"
 	default:
 		return ""
 	}
@@ -613,6 +687,11 @@ func holdingTables(tables []tenantTable, holding []string) []tenantTable {
 		}
 	}
 	return out
+}
+
+func referenceViolation(err error) bool {
+	code := dberror.ExtractCode(err)
+	return code == pgerrcode.ForeignKeyViolation || code == pgerrcode.RestrictViolation
 }
 
 func protectedByRule(err error) bool {

@@ -116,6 +116,27 @@ a value proving access: a token looked up by hash, a realm the webhook verified.
 [row-level-security.md](../row-level-security.md). A use that exists for a sweep or at startup takes
 no input from a caller; keep it that way.
 
+## An archive carries one tenant and no install secret
+
+A tenant archive (`internal/cloud`, [shared-tenancy.md](../shared-tenancy.md#the-tenant-archive))
+reads and writes every table of one tenant under the system role, so the tenant filter in each
+statement is the only wall: review that a new table shape is classified by `archiveplan` (the
+catalog test runs the plan on the real schema), that an export refuses rows that refer to another
+organization, that a new sealed column or object is in `internal/bootstrap/envelopes` (or it
+travels as the source install's ciphertext and is unreadable on the destination), that a new
+per-install keyed hash is handled on import, and that a new route or workflow keeps the archive
+target sealed and out of history and logs.
+
+A column that names an organization other than the row's own `organization_id` (a counterparty,
+a recipient, a membership's user) must be held to the row's business unit by a composite foreign
+key (`(<column>, business_unit_id) REFERENCES organizations(id, business_unit_id)`), a check or a
+trigger, as `20261231023600` does for in-network EDI and memberships. Each tenant has its own
+business unit, so that one constraint is what keeps a forged or buggy row from naming another
+tenant; the catalog test in `internal/cloud/boundaries_integration_test.go` fails on a new
+organization-naming column that has none. Archive keys and chain keys never leave an install: an
+imported audit trail is signed again under this install's chain key with the source's values kept
+beside it, never by importing the source's key.
+
 ## What ships
 
 - The operator runs only charts the release workflow signed, and published charts pin every image

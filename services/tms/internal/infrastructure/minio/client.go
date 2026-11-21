@@ -355,6 +355,31 @@ func (c *Client) DeletePrefix(ctx context.Context, prefix string) (int64, error)
 	return deleted, nil
 }
 
+func (c *Client) ListPrefix(
+	ctx context.Context,
+	prefix string,
+	fn func(kernelports.ListedObject) error,
+) error {
+	prefix = strings.TrimLeft(prefix, "/")
+	if prefix == "" || !strings.HasSuffix(prefix, "/") {
+		return ErrUnsafePrefix
+	}
+	listCtx, cancel := context.WithCancel(ctx)
+	defer cancel()
+	for object := range c.client.ListObjects(listCtx, c.bucket, minio.ListObjectsOptions{
+		Prefix:    prefix,
+		Recursive: true,
+	}) {
+		if object.Err != nil {
+			return fmt.Errorf("list objects under %s: %w", prefix, object.Err)
+		}
+		if err := fn(kernelports.ListedObject{Key: object.Key, Size: object.Size}); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func (c *Client) GetPresignedURL(
 	ctx context.Context,
 	params *kernelports.PresignedURLParams,

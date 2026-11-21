@@ -5,6 +5,7 @@ import (
 	"errors"
 
 	"github.com/emoss08/trenova/internal/cloud/domain/cloudtenant"
+	"github.com/emoss08/trenova/internal/cloud/domain/tenantcommand"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -116,4 +117,22 @@ type KeyPurge interface {
 
 type SearchPurge interface {
 	DeleteOrganizationDocuments(ctx context.Context, organizationID pulid.ID) (int, error)
+}
+
+var (
+	ErrCommandNotFound = errors.New("no command by that id is on this server")
+	ErrGrantMissing    = errors.New(
+		"the server holds no unexpired nightly archive location; the tenant agent delivers it",
+	)
+)
+
+type Commands interface {
+	Get(ctx context.Context, commandID string) (*tenantcommand.Command, error)
+	Create(ctx context.Context, cmd *tenantcommand.Command) (*tenantcommand.Command, bool, error)
+	Save(ctx context.Context, cmd *tenantcommand.Command) error
+	Open(ctx context.Context, instanceID string) ([]*tenantcommand.Command, error)
+	Failures(ctx context.Context, instanceIDs []string) ([]*tenantcommand.Command, error)
+	Progress(ctx context.Context, commandID string, progress *tenantcommand.Progress) error
+	SetGrant(ctx context.Context, grant *tenantcommand.Grant) error
+	Grant(ctx context.Context, name string) (*tenantcommand.Grant, error)
 }

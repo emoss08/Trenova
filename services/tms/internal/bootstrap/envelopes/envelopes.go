@@ -1,4 +1,4 @@
-package encryption
+package envelopes
 
 import (
 	"slices"
@@ -17,7 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/app/integrationservice"
 )
 
-func envelopeSources(includeObjects bool) *kernelports.EnvelopeSources {
+func Sources(includeObjects bool) *kernelports.EnvelopeSources {
 	sources := &kernelports.EnvelopeSources{
 		Columns: slices.Concat(
 			accountingconnectionkit.EnvelopeColumns(),
@@ -38,4 +38,8 @@ func envelopeSources(includeObjects bool) *kernelports.EnvelopeSources {
 		)
 	}
 	return sources
+}
+
+func Provide() *kernelports.EnvelopeSources {
+	return Sources(true)
 }

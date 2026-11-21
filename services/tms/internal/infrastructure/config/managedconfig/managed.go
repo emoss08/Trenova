@@ -4,7 +4,9 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
+	"strconv"
 	"strings"
+	"time"
 	"unicode"
 
 	"github.com/google/uuid"
@@ -16,6 +18,11 @@ const (
 	minTokenLength   = 32
 	maxModelLength   = 200
 	maxSupportURLLen = 2048
+
+	defaultNightlyAt          = "07:00"
+	defaultWindowHours        = 4
+	defaultArchiveConcurrency = 2
+	defaultArchiveDuration    = 3 * time.Hour
 )
 
 var (
@@ -43,6 +50,9 @@ var (
 	ErrSharedTenancyNotManaged = errors.New(
 		"managed.tenancy shared requires managed.enabled",
 	)
+	ErrArchiveNightlyInvalid = errors.New(
+		"managed.archive.nightlyAt must be a UTC time of day as HH:MM",
+	)
 	ErrSupportURLInvalid = fmt.Errorf(
 		"managed.supportUrl and managed.newSupportRequestUrl must each be empty or an http or https URL with a host, no user information, fragment or space, at most %d characters",
 		maxSupportURLLen,
@@ -66,6 +76,14 @@ type Config struct {
 	Embedding            Embedding `mapstructure:"embedding"`
 	SupportURL           string    `mapstructure:"supportUrl"`
 	NewSupportRequestURL string    `mapstructure:"newSupportRequestUrl"`
+	Archive              Archive   `mapstructure:"archive"`
+}
+
+type Archive struct {
+	NightlyAt   string        `mapstructure:"nightlyAt"`
+	WindowHours int           `mapstructure:"windowHours" validate:"omitempty,min=1,max=20"`
+	Concurrency int           `mapstructure:"concurrency" validate:"omitempty,min=1,max=16"`
+	MaxDuration time.Duration `mapstructure:"maxDuration"`
 }
 
 type Support struct {
@@ -90,7 +108,40 @@ func Defaults() map[string]any {
 		"embedding.model":      "",
 		"supportUrl":           "",
 		"newSupportRequestUrl": "",
+		"archive.nightlyAt":    defaultNightlyAt,
+		"archive.windowHours":  defaultWindowHours,
+		"archive.concurrency":  defaultArchiveConcurrency,
+		"archive.maxDuration":  defaultArchiveDuration,
 	}
+}
+
+func (a *Archive) NightlyCron() string {
+	at, err := time.Parse("15:04", strings.TrimSpace(a.NightlyAt))
+	if err != nil {
+		at, _ = time.Parse("15:04", defaultNightlyAt)
+	}
+	return strconv.Itoa(at.Minute()) + " " + strconv.Itoa(at.Hour()) + " * * *"
+}
+
+func (a *Archive) Window() time.Duration {
+	if a.WindowHours <= 0 {
+		return defaultWindowHours * time.Hour
+	}
+	return time.Duration(a.WindowHours) * time.Hour
+}
+
+func (a *Archive) Workers() int {
+	if a.Concurrency <= 0 {
+		return defaultArchiveConcurrency
+	}
+	return a.Concurrency
+}
+
+func (a *Archive) Duration() time.Duration {
+	if a.MaxDuration <= 0 {
+		return defaultArchiveDuration
+	}
+	return a.MaxDuration
 }
 
 func (c *Config) GetHost() string {
@@ -161,6 +212,11 @@ func (c *Config) Validate() error {
 	}
 	if !validSupportURL(c.SupportURL) || !validSupportURL(c.NewSupportRequestURL) {
 		return ErrSupportURLInvalid
+	}
+	if at := strings.TrimSpace(c.Archive.NightlyAt); at != "" {
+		if _, err := time.Parse("15:04", at); err != nil {
+			return ErrArchiveNightlyInvalid
+		}
 	}
 	return c.Embedding.validate()
 }

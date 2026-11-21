@@ -125,7 +125,7 @@ func (s *Service) startRemoval(ctx context.Context, t *cloudtenant.Tenant) {
 		id:       tenantjobscontract.RemovalWorkflowID(t.InstanceID),
 		workflow: tenantjobscontract.RemovalWorkflowName,
 		reuse:    enums.WORKFLOW_ID_REUSE_POLICY_ALLOW_DUPLICATE_FAILED_ONLY,
-		payload:  payloadOf(t),
+		args:     payloadOf(t),
 		summary:  "Remove a shared-server tenant's data and documents",
 	})
 }
@@ -135,7 +135,7 @@ func (s *Service) startSessions(ctx context.Context, t *cloudtenant.Tenant) {
 		id:       tenantjobscontract.SessionsWorkflowID(t.InstanceID, t.AppliedRevision),
 		workflow: tenantjobscontract.SessionsWorkflowName,
 		reuse:    enums.WORKFLOW_ID_REUSE_POLICY_ALLOW_DUPLICATE_FAILED_ONLY,
-		payload:  payloadOf(t),
+		args:     payloadOf(t),
 		summary:  "Sign a suspended shared-server tenant's people out",
 	})
 }
@@ -144,7 +144,7 @@ type startRequest struct {
 	id       string
 	workflow string
 	reuse    enums.WorkflowIdReusePolicy
-	payload  *tenantjobscontract.TenantPayload
+	args     any
 	summary  string
 }
 
@@ -154,7 +154,7 @@ func (s *Service) start(ctx context.Context, req *startRequest) {
 		TaskQueue:             temporaltype.TaskQueueSystem.String(),
 		WorkflowIDReusePolicy: req.reuse,
 		StaticSummary:         req.summary,
-	}, req.workflow, req.payload)
+	}, req.workflow, req.args)
 	if err == nil || temporal.IsWorkflowExecutionAlreadyStartedError(err) {
 		return
 	}

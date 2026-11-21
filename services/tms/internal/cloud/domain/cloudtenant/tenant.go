@@ -15,6 +15,7 @@ const (
 	StateActive    = State("active")
 	StateSuspended = State("suspended")
 	StateRemoving  = State("removing")
+	StateRestoring = State("restoring")
 	StateRemoved   = State("removed")
 )
 
@@ -39,6 +40,11 @@ type Tenant struct {
 	LastArchiveSizeBytes int64    `json:"lastArchiveSizeBytes" keel:"last_archive_size_bytes,nullzero"`
 	LastArchiveSHA256    string   `json:"lastArchiveSha256"    keel:"last_archive_sha256,nullzero"`
 	LastArchiveTakenAt   int64    `json:"lastArchiveTakenAt"   keel:"last_archive_taken_at,nullzero"`
+	LastRestoreCommandID string   `json:"lastRestoreCommandId" keel:"last_restore_command_id,nullzero"`
+	LastRestoreState     string   `json:"lastRestoreState"     keel:"last_restore_state,nullzero"`
+	LastRestoreAt        int64    `json:"lastRestoreAt"        keel:"last_restore_at,nullzero"`
+	LastRestoreReason    string   `json:"lastRestoreReason"    keel:"last_restore_reason,nullzero"`
+	ImportedAt           int64    `json:"importedAt"           keel:"imported_at,nullzero"`
 	RefusedRevision      int64    `json:"refusedRevision"      keel:"refused_revision,nullzero"`
 	RefusedCode          string   `json:"refusedCode"          keel:"refused_code,nullzero"`
 	RefusedReason        string   `json:"refusedReason"        keel:"refused_reason,nullzero"`
@@ -69,6 +75,10 @@ const (
 	EventResumed   = EventKind("resumed")
 	EventRemoving  = EventKind("removing")
 	EventRemoved   = EventKind("removed")
+	EventArchived  = EventKind("archived")
+	EventRestoring = EventKind("restoring")
+	EventRestored  = EventKind("restored")
+	EventImported  = EventKind("imported")
 )
 
 type Refusal struct {
@@ -116,18 +126,39 @@ type Archive struct {
 	TakenAt   time.Time `json:"takenAt"`
 }
 
+type Restore struct {
+	CommandID string    `json:"commandId"`
+	State     string    `json:"state"`
+	At        time.Time `json:"at"`
+	Reason    string    `json:"reason,omitempty"`
+}
+
+const (
+	RestoreRunning = "running"
+	RestoreDone    = "done"
+	RestoreFailed  = "failed"
+)
+
 type Administrator struct {
 	InviteTokenSHA256 string `json:"inviteTokenSha256,omitempty"`
 	SetUp             bool   `json:"setUp"`
 }
 
+type CommandFailure struct {
+	CommandID string `json:"commandId"`
+	Kind      string `json:"kind"`
+	Reason    string `json:"reason"`
+}
+
 type Status struct {
-	InstanceID      string         `json:"instanceId"`
-	AppliedRevision *int64         `json:"appliedRevision,omitempty"`
-	State           State          `json:"state"`
-	Administrator   *Administrator `json:"administrator,omitempty"`
-	LastArchive     *Archive       `json:"lastArchive,omitempty"`
-	Refused         *Refusal       `json:"refused,omitempty"`
+	InstanceID      string           `json:"instanceId"`
+	AppliedRevision *int64           `json:"appliedRevision,omitempty"`
+	State           State            `json:"state"`
+	Administrator   *Administrator   `json:"administrator,omitempty"`
+	LastArchive     *Archive         `json:"lastArchive,omitempty"`
+	LastRestore     *Restore         `json:"lastRestore,omitempty"`
+	CommandFailures []CommandFailure `json:"commandFailures,omitempty"`
+	Refused         *Refusal         `json:"refused,omitempty"`
 }
 
 func (t *Tenant) Status(admin *Administrator) *Status {
@@ -137,8 +168,12 @@ func (t *Tenant) Status(admin *Administrator) *Status {
 		Administrator: admin,
 		Refused:       t.Refusal(),
 	}
-	if t.State == StateRemoving {
+	switch t.State {
+	case StateRemoving:
 		out.State = StateApplying
+	case StateRestoring:
+		out.State = StateSuspended
+	case StateApplying, StateActive, StateSuspended, StateRemoved:
 	}
 	if t.AppliedRevision > 0 {
 		applied := t.AppliedRevision
@@ -153,5 +188,17 @@ func (t *Tenant) Status(admin *Administrator) *Status {
 			TakenAt:   time.Unix(t.LastArchiveTakenAt, 0).UTC(),
 		}
 	}
+	if t.LastRestoreCommandID != "" && t.LastRestoreState != RestoreRunning {
+		out.LastRestore = &Restore{
+			CommandID: t.LastRestoreCommandID,
+			State:     t.LastRestoreState,
+			At:        time.Unix(t.LastRestoreAt, 0).UTC(),
+			Reason:    t.LastRestoreReason,
+		}
+	}
 	return out
+}
+
+func (t *Tenant) Restoring() bool {
+	return t.State == StateRestoring
 }

@@ -156,7 +156,11 @@ tenants and the days they were busy: their policy lets a tenant append marks for
 key and read none ([backend/data-access.md](backend/data-access.md#rollups)).
 `schemalint` fails on a table with neither, on a tenant policy that does not read
 the scope, on a view that is not `security_invoker`, and on a new
-`SECURITY DEFINER` function.
+`SECURITY DEFINER` function. The two allowed are `trenova_rls.claims()` and
+`audit_partitions.ensure_partitions`, which creates empty monthly partitions for the roles that
+bypass row-level security (a tenant archive import needs the months its audit trail covers) and
+reads no tenant's rows. `public.trenova_archive_loading()` is true only inside a tenant archive
+load by such a role; the triggers that stamp history on insert leave archived values alone then.
 
 **A request or job** gets its scope from the session, API key or capture device
 (HTTP and GraphQL) or from its input (Temporal: a `TenantInfo`, an

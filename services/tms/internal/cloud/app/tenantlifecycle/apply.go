@@ -7,6 +7,8 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/cloud/domain/cloudtenant"
+	"github.com/emoss08/trenova/internal/cloud/domain/tenantarchive"
+	"github.com/emoss08/trenova/internal/cloud/domain/tenantcommand"
 	"github.com/emoss08/trenova/internal/cloud/ports/cloudtenantports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/instancebootstrap"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
@@ -28,8 +30,7 @@ const (
 
 	reasonIdentityFixed = "organizationName and the first administrator's name and email cannot change after the tenant is made"
 	reasonEmailTaken    = "the first administrator's email address cannot be used on this server"
-	reasonNoArchive     = "this release does not take tenant archives, so the server holds no final archive of the tenant and does not remove it"
-	reasonArchives      = "this release does not take tenant archives; the archive command waits for a release that can"
+	reasonNoArchive     = "the server holds no final archive of the tenant, so it does not remove it; take an archive of purpose final first"
 )
 
 var errEmailTaken = errors.New("the first administrator's email address is taken on this server")
@@ -40,12 +41,14 @@ type applied struct {
 	previous      cloudtenant.State
 	startSessions bool
 	startRemoval  bool
+	importCmd     *tenantcommand.Command
 }
 
 func (s *Service) Apply(
 	ctx context.Context,
 	instanceID string,
 	desired *cloudtenant.Desired,
+	source *tenantarchive.Access,
 ) (*cloudtenant.Status, error) {
 	if !s.shared {
 		return nil, ErrNotShared
@@ -75,6 +78,7 @@ func (s *Service) Apply(
 				received:   received,
 				refusal:    refusal,
 				now:        now,
+				source:     source,
 			}, out)
 		},
 	)
@@ -96,6 +100,7 @@ type applyInput struct {
 	received   *managedfeatures.Received
 	refusal    *cloudtenant.Refusal
 	now        int64
+	source     *tenantarchive.Access
 }
 
 func (s *Service) apply(ctx context.Context, in *applyInput, out *applied) error {
@@ -133,11 +138,18 @@ func (s *Service) apply(ctx context.Context, in *applyInput, out *applied) error
 		return s.refuse(ctx, t, refusal, in.now)
 	}
 
+	if t.Restoring() {
+		return s.holdWhileRestoring(ctx, t, in)
+	}
+
 	if in.desired.Lifecycle == cloudtenant.LifecycleRemoved {
 		return s.beginRemoval(ctx, t, in, out)
 	}
 
 	if !t.Made() {
+		if command := in.desired.ImportCommand(); command != nil {
+			return s.beginImport(ctx, t, in, command, out)
+		}
 		taken, terr := s.administrators.EmailTaken(ctx, in.desired.FirstAdministrator.Email)
 		if terr != nil {
 			return terr
@@ -304,9 +316,6 @@ func (s *Service) converge(
 	t.State = state
 	t.AppliedRevision = in.desired.Revision
 	t.Refuse(nil)
-	if len(in.desired.ArchiveCommands()) > 0 {
-		t.Refuse(cloudtenant.Invalid(in.desired.Revision, reasonArchives))
-	}
 	if err := s.tenants.Save(ctx, t); err != nil {
 		return err
 	}
@@ -333,7 +342,8 @@ func (s *Service) converge(
 
 func (s *Service) installInvite(ctx context.Context, t *cloudtenant.Tenant, in *applyInput) error {
 	invite := in.desired.FirstAdministrator.Invite
-	if invite == nil || invite.TokenSHA256 == t.InviteSHA256 || invite.ExpiresAt.Unix() <= in.now {
+	if invite == nil || t.ImportedAt > 0 || invite.TokenSHA256 == t.InviteSHA256 ||
+		invite.ExpiresAt.Unix() <= in.now {
 		return nil
 	}
 	install := &instancebootstrapports.FirstAdministratorInvite{
@@ -426,6 +436,20 @@ func (s *Service) afterApply(ctx context.Context, out *applied) {
 	if out.startRemoval {
 		s.startRemoval(ctx, out.tenant)
 	}
+	if out.importCmd != nil {
+		s.startCommand(ctx, out.importCmd, nil)
+	}
+}
+
+func (s *Service) holdWhileRestoring(
+	ctx context.Context,
+	t *cloudtenant.Tenant,
+	in *applyInput,
+) error {
+	if in.desired.Lifecycle == cloudtenant.LifecycleRemoved {
+		return s.refuse(ctx, t, cloudtenant.Invalid(in.desired.Revision, reasonRestoring), in.now)
+	}
+	return nil
 }
 
 func receivedOf(

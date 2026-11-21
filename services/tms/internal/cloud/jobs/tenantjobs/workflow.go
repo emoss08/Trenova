@@ -99,41 +99,14 @@ func CloudTenantRemovalWorkflow(
 		return nil, err
 	}
 
-	rows, err := purgeUntilStalled(ctx, payload)
+	purged, err := PurgeTenant(ctx, payload)
+	if purged != nil {
+		out.Rows, out.Org, out.Unit, out.Stores, out.Left = purged.Rows, purged.Org, purged.Unit,
+			purged.Stores, purged.Left
+	}
 	if err != nil {
-		return nil, err
-	}
-	out.Rows += rows
-
-	out.Org = new(cloudtenantports.DeleteResult)
-	if err = workflow.ExecuteActivity(step, a.DeleteOrganizationActivity, payload).
-		Get(ctx, out.Org); err != nil {
-		return nil, err
-	}
-
-	if rows, err = purgeUntilStalled(ctx, payload); err != nil {
-		return nil, err
-	}
-	out.Rows += rows
-
-	out.Unit = new(cloudtenantports.DeleteResult)
-	if err = workflow.ExecuteActivity(step, a.DeleteBusinessUnitActivity, payload).
-		Get(ctx, out.Unit); err != nil {
-		return nil, err
-	}
-
-	out.Stores = new(StoresResult)
-	if err = workflow.ExecuteActivity(step, a.PurgeStoresActivity, payload).
-		Get(ctx, out.Stores); err != nil {
-		return nil, err
-	}
-
-	verify := workflow.WithActivityOptions(ctx, verifyOptions)
-	if err = workflow.ExecuteActivity(verify, a.VerifyRemovedActivity, payload).
-		Get(ctx, &out.Left); err != nil {
 		return out, err
 	}
-
 	if err = workflow.ExecuteActivity(step, a.FinishRemovalActivity, &FinishInput{
 		Payload:  payload,
 		Rows:     out.Rows,
@@ -143,6 +116,50 @@ func CloudTenantRemovalWorkflow(
 		return nil, err
 	}
 	return out, nil
+}
+
+type PurgeOutcome struct {
+	Rows   int64                          `json:"rows"`
+	Org    *cloudtenantports.DeleteResult `json:"organization"`
+	Unit   *cloudtenantports.DeleteResult `json:"unit"`
+	Stores *StoresResult                  `json:"stores"`
+	Left   []cloudtenantports.TableCount  `json:"left"`
+}
+
+func PurgeTenant(
+	ctx workflow.Context,
+	payload *tenantjobscontract.TenantPayload,
+) (*PurgeOutcome, error) {
+	var a *Activities
+	out := new(PurgeOutcome)
+	step := workflow.WithActivityOptions(ctx, stepOptions)
+	rows, err := purgeUntilStalled(ctx, payload)
+	out.Rows += rows
+	if err != nil {
+		return out, err
+	}
+	out.Org = new(cloudtenantports.DeleteResult)
+	if err = workflow.ExecuteActivity(step, a.DeleteOrganizationActivity, payload).
+		Get(ctx, out.Org); err != nil {
+		return out, err
+	}
+	if rows, err = purgeUntilStalled(ctx, payload); err != nil {
+		return out, err
+	}
+	out.Rows += rows
+	out.Unit = new(cloudtenantports.DeleteResult)
+	if err = workflow.ExecuteActivity(step, a.DeleteBusinessUnitActivity, payload).
+		Get(ctx, out.Unit); err != nil {
+		return out, err
+	}
+	out.Stores = new(StoresResult)
+	if err = workflow.ExecuteActivity(step, a.PurgeStoresActivity, payload).
+		Get(ctx, out.Stores); err != nil {
+		return out, err
+	}
+	verify := workflow.WithActivityOptions(ctx, verifyOptions)
+	err = workflow.ExecuteActivity(verify, a.VerifyRemovedActivity, payload).Get(ctx, &out.Left)
+	return out, err
 }
 
 func purgeUntilStalled(

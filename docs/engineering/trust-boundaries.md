@@ -26,6 +26,23 @@ Every root resolver and route reaches a permission check or is listed with a rea
 Field resolvers are not covered by that lint: a field that crosses into another resource checks for
 itself or goes through the field guard (`gqlext`).
 
+The tenant archive routes on the managed listener (`internal/cloud/api/tenanthandler/archives.go`)
+take a `SharedArchiveTarget` that must name the path's tenant, the command and its kind, and
+reach only `tenants/<instanceId>/` of the bucket it names (or `imports/<id>/` for the dedicated
+CLI). Its credentials and archive keys are sealed with the install's key while the command runs
+and erased when it settles; they never reach logs, `cloud_tenants` or Temporal history. An
+archive's own integrity rests on `expectSha256` (the manifest's digest, which names every part's)
+and on AES-256-GCM per part: an archive is refused before anything is written if any byte differs.
+An archive load runs under the system role in one transaction, with `trenova.archive_load`
+believed only for roles that bypass row-level security. The same setting is the only thing that lets an
+imported AI audit chain be signed again; the source's signatures stay beside the new ones.
+
+Tenants on one shared server never share a row. In-network EDI (connections, tenders, shipment
+links, tender recipients and changes) and memberships connect organizations of one business unit,
+and each tenant has its own, so no company can link to, read or change another company's rows
+through them; the application never offers a partner in another business unit, and the database
+holds every such reference to the row's business unit (`20261231023600`).
+
 ## Callers with no identity
 
 These run before a tenant is known, so they use `dbscope.WithSystem` and the credential they present

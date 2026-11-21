@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/emoss08/trenova/internal/bootstrap/envelopes"
+
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/minio"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
@@ -142,7 +144,7 @@ func runRewrap(cmd *cobra.Command, _ []string) error {
 
 	report, err := service.Run(
 		ctx,
-		envelopeSources(!rewrapSkipObjects),
+		envelopes.Sources(!rewrapSkipObjects),
 		enveloperewrapservice.Options{
 			DryRun:         rewrapDryRun,
 			BatchSize:      rewrapBatchSize,

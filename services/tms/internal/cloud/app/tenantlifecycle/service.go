@@ -45,6 +45,8 @@ type Params struct {
 	Sessions       sessionports.SessionRepository
 	Auditor        permissionports.SecurityAuditor
 	Workflows      kernelports.WorkflowStarter
+	Commands       cloudtenantports.Commands
+	Secrets        kernelports.SecretCipher
 	Scopes         *managedscope.Resolver
 	Clock          timeutils.Clock
 	Logger         *zap.Logger
@@ -64,6 +66,8 @@ type Service struct {
 	sessions       sessionports.SessionRepository
 	auditor        permissionports.SecurityAuditor
 	workflows      kernelports.WorkflowStarter
+	commands       cloudtenantports.Commands
+	secrets        kernelports.SecretCipher
 	scopes         *managedscope.Resolver
 	clock          timeutils.Clock
 	l              *zap.Logger
@@ -85,6 +89,8 @@ func New(p Params) *Service {
 		sessions:       p.Sessions,
 		auditor:        p.Auditor,
 		workflows:      p.Workflows,
+		commands:       p.Commands,
+		secrets:        p.Secrets,
 		scopes:         p.Scopes,
 		clock:          p.Clock,
 		l:              p.Logger.Named("cloud.tenant-lifecycle"),

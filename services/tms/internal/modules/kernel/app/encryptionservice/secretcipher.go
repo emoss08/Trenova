@@ -115,6 +115,42 @@ func (c *SecretCipher) RewrapBlob(
 	}, nil
 }
 
+var _ kernelports.BlobCipher = (*SecretCipher)(nil)
+
+func NewBlobCipher(service *Service) kernelports.BlobCipher {
+	return &SecretCipher{service: service}
+}
+
+func (c *SecretCipher) OpenBlob(
+	ctx context.Context,
+	sealed io.Reader,
+	sealedSize int64,
+	scopes []kernelports.SecretScope,
+) (*kernelports.OpenedBlob, error) {
+	aads := make([]AAD, 0, len(scopes))
+	for i := range scopes {
+		aads = append(aads, aadFor(&scopes[i]))
+	}
+	opened, matched, err := c.service.OpenBlobAny(ctx, sealed, sealedSize, aads)
+	if err != nil {
+		return nil, err
+	}
+	return &kernelports.OpenedBlob{Body: opened, Size: opened.Size(), Scope: scopes[matched]}, nil
+}
+
+func (c *SecretCipher) SealBlob(
+	ctx context.Context,
+	plain io.Reader,
+	size int64,
+	scope *kernelports.SecretScope,
+) (*kernelports.SealedBlob, error) {
+	sealed, err := c.service.SealBlob(ctx, plain, size, aadFor(scope))
+	if err != nil {
+		return nil, err
+	}
+	return &kernelports.SealedBlob{Body: sealed, Size: sealed.Size()}, nil
+}
+
 func (a AAD) SecretScope() kernelports.SecretScope {
 	return kernelports.SecretScope{
 		Purpose:    kernelports.SecretPurpose(a.Purpose),

@@ -22,9 +22,10 @@ var keptTables = map[string]string{
 }
 
 type tenantTable struct {
-	Name   string `db:"table_name"`
-	HasOrg bool   `db:"has_org"`
-	HasBU  bool   `db:"has_bu"`
+	Name    string `db:"table_name"`
+	HasOrg  bool   `db:"has_org"`
+	HasBU   bool   `db:"has_bu"`
+	PartyBU string `db:"party_bu"`
 }
 
 type foreignKey struct {
@@ -113,6 +114,12 @@ func targetsOf(in *planInput) []purgeTarget {
 			out = append(out, purgeTarget{
 				Table:  table.Name,
 				Column: businessUnitColumn,
+				Value:  in.BusinessUnitID,
+			})
+		case table.PartyBU != "" && in.ExclusiveBU:
+			out = append(out, purgeTarget{
+				Table:  table.Name,
+				Column: table.PartyBU,
 				Value:  in.BusinessUnitID,
 			})
 		}

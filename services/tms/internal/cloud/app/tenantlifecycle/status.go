@@ -10,6 +10,7 @@ import (
 const (
 	DefaultPageSize = 100
 	MaxPageSize     = 200
+	maxFailures     = 20
 )
 
 type StatusPage struct {
@@ -71,6 +72,10 @@ func (s *Service) statuses(
 	if err != nil {
 		return nil, err
 	}
+	failures, err := s.failures(ctx, tenants)
+	if err != nil {
+		return nil, err
+	}
 	out := make([]*cloudtenant.Status, 0, len(tenants))
 	for _, t := range tenants {
 		var admin *cloudtenant.Administrator
@@ -80,7 +85,39 @@ func (s *Service) statuses(
 				admin.InviteTokenSHA256 = f.InviteToken
 			}
 		}
-		out = append(out, t.Status(admin))
+		status := t.Status(admin)
+		status.CommandFailures = failures[t.InstanceID]
+		out = append(out, status)
+	}
+	return out, nil
+}
+
+func (s *Service) failures(
+	ctx context.Context,
+	tenants []*cloudtenant.Tenant,
+) (map[string][]cloudtenant.CommandFailure, error) {
+	ids := make([]string, 0, len(tenants))
+	for _, t := range tenants {
+		ids = append(ids, t.InstanceID)
+	}
+	failed, err := s.commands.Failures(ctx, ids)
+	if err != nil {
+		return nil, err
+	}
+	out := make(map[string][]cloudtenant.CommandFailure, len(failed))
+	for _, cmd := range failed {
+		if len(out[cmd.InstanceID]) >= maxFailures {
+			continue
+		}
+		reason := cmd.Reason
+		if reason == "" {
+			reason = "the command could not be completed"
+		}
+		out[cmd.InstanceID] = append(out[cmd.InstanceID], cloudtenant.CommandFailure{
+			CommandID: cmd.CommandID,
+			Kind:      string(cmd.Kind),
+			Reason:    reason,
+		})
 	}
 	return out, nil
 }

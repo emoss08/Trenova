@@ -32,6 +32,8 @@ const (
 
 const (
 	CommandArchive       = "archive"
+	CommandRestore       = "restore"
+	CommandImport        = "import"
 	ArchivePurposeFinal  = "final"
 	maxFeatures          = 200
 	maxAddons            = 50
@@ -49,6 +51,7 @@ const (
 	maxAddonCodeLength   = 40
 	maxFeatureKeyLength  = 100
 	maxCommandKindLength = 40
+	maxLocationLength    = 1024
 )
 
 var (
@@ -103,10 +106,12 @@ type Account struct {
 }
 
 type Command struct {
-	Kind        string    `json:"kind"`
-	ID          string    `json:"id"`
-	Purpose     string    `json:"purpose,omitempty"`
-	RequestedAt time.Time `json:"requestedAt"`
+	Kind         string    `json:"kind"`
+	ID           string    `json:"id"`
+	Purpose      string    `json:"purpose,omitempty"`
+	Location     string    `json:"location,omitempty"`
+	ExpectSHA256 string    `json:"expectSha256,omitempty"`
+	RequestedAt  time.Time `json:"requestedAt"`
 }
 
 type Desired struct {
@@ -188,11 +193,22 @@ func (d *Desired) Refusal() *Refusal {
 	if len(d.Commands) > maxCommands {
 		add("commands must be at most %d", maxCommands)
 	}
+	imports := 0
 	for _, c := range d.Commands {
 		if !boundedText(c.Kind, maxCommandKindLength) || !ValidInstanceID(c.ID) {
 			add("each command names its kind and a lowercase UUID id")
 			break
 		}
+		if c.Kind == CommandImport {
+			imports++
+			if !tokenSHA256Pattern.MatchString(c.ExpectSHA256) ||
+				!boundedText(c.Location, maxLocationLength) {
+				add("an import command names its location and the archive's lowercase hex SHA-256")
+			}
+		}
+	}
+	if imports > 1 {
+		add("an entry carries at most one import command")
 	}
 
 	if len(problems) == 0 {
@@ -250,14 +266,13 @@ func (d *Desired) administratorProblems(add func(string, ...any)) {
 	}
 }
 
-func (d *Desired) ArchiveCommands() []Command {
-	out := make([]Command, 0)
-	for _, c := range d.Commands {
-		if c.Kind == CommandArchive {
-			out = append(out, c)
+func (d *Desired) ImportCommand() *Command {
+	for i := range d.Commands {
+		if d.Commands[i].Kind == CommandImport {
+			return &d.Commands[i]
 		}
 	}
-	return out
+	return nil
 }
 
 func (d *Desired) SameIdentity(held *Desired) bool {

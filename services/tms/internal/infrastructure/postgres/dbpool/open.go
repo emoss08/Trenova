@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -91,16 +92,12 @@ const (
 
 func KeelConfig(guard Guard, observers []keel.Observer) keel.Config {
 	cfg := keel.Config{
-		TenantColumns: []string{OrganizationColumn, BusinessUnitColumn},
-		Tenant:        tenantOf,
-		System:        systemOf,
-		NewID:         newID,
-		Now:           timeutils.Now,
-		JSON: &keel.JSONCodec{
-			Marshal:         sonic.Marshal,
-			Unmarshal:       sonic.Unmarshal,
-			UnmarshalNumber: sonic.Config{UseNumber: true}.Froze().Unmarshal,
-		},
+		TenantColumns:    []string{OrganizationColumn, BusinessUnitColumn},
+		Tenant:           tenantOf,
+		System:           systemOf,
+		NewID:            newID,
+		Now:              timeutils.Now,
+		JSON:             jsonCodec(),
 		Observers:        observers,
 		AfterConnect:     registerTypes,
 		ReadIsolation:    keel.RepeatableRead,
@@ -111,6 +108,30 @@ func KeelConfig(guard Guard, observers []keel.Observer) keel.Config {
 	}
 
 	return cfg
+}
+
+func jsonCodec() *keel.JSONCodec {
+	return &keel.JSONCodec{
+		Marshal:         sonic.Marshal,
+		Unmarshal:       sonic.Unmarshal,
+		UnmarshalNumber: sonic.Config{UseNumber: true}.Froze().Unmarshal,
+	}
+}
+
+func PrepareConn(ctx context.Context, conn *pgx.Conn) error {
+	codec := jsonCodec()
+	types := conn.TypeMap()
+	types.RegisterType(&pgtype.Type{
+		Name:  "json",
+		OID:   pgtype.JSONOID,
+		Codec: &pgtype.JSONCodec{Marshal: codec.Marshal, Unmarshal: codec.Unmarshal},
+	})
+	types.RegisterType(&pgtype.Type{
+		Name:  "jsonb",
+		OID:   pgtype.JSONBOID,
+		Codec: &pgtype.JSONBCodec{Marshal: codec.Marshal, Unmarshal: codec.Unmarshal},
+	})
+	return registerTypes(ctx, conn)
 }
 
 func registerTypes(ctx context.Context, conn *pgx.Conn) error {

@@ -85,7 +85,13 @@ func TestEveryProtectedTableHasTenantAndBypassPolicies(t *testing.T) {
 		ORDER BY c.relname`)
 	require.NoError(t, err)
 
-	assert.Empty(t, missing, "tables with incomplete policies: %s\n%s", strings.Join(missing, "; "), rlsGuidance)
+	assert.Empty(
+		t,
+		missing,
+		"tables with incomplete policies: %s\n%s",
+		strings.Join(missing, "; "),
+		rlsGuidance,
+	)
 }
 
 func TestTenantPoliciesNeverAdmitEveryRow(t *testing.T) {
@@ -205,6 +211,7 @@ func securityDefinerFunctions(t *testing.T, ctx context.Context, db *keel.DB) []
 		WHERE p.prosecdef
 			AND n.nspname NOT IN ('pg_catalog', 'information_schema')
 			AND NOT (n.nspname = 'trenova_rls' AND p.proname = 'claims')
+			AND NOT (n.nspname = 'audit_partitions' AND p.proname = 'ensure_partitions')
 			AND NOT EXISTS (
 				SELECT 1 FROM pg_depend d
 				WHERE d.objid = p.oid AND d.deptype = 'e'
