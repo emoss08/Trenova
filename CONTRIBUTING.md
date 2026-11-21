@@ -59,7 +59,8 @@ If you are submitting an approved pull request:
 
 ## Development Commands
 
-Run commands from the relevant module.
+To set up the local stack, follow the [local development guide](./docs/development.md). Run
+commands from the relevant module.
 
 For the TMS service:
 
