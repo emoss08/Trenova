@@ -22,6 +22,8 @@ import (
 
 var ErrUnsafePrefix = errors.New("a prefix delete needs a non-empty prefix that ends in a slash")
 
+const streamPartSize = 16 << 20
+
 type Params struct {
 	fx.In
 
@@ -208,6 +210,19 @@ func newMinioOptions(
 	}
 }
 
+func uploadOptions(params *kernelports.UploadParams) minio.PutObjectOptions {
+	opts := minio.PutObjectOptions{
+		ContentType: params.ContentType,
+	}
+	if len(params.Metadata) > 0 {
+		opts.UserMetadata = params.Metadata
+	}
+	if params.Size < 0 {
+		opts.PartSize = streamPartSize
+	}
+	return opts
+}
+
 func (c *Client) Upload(
 	ctx context.Context,
 	params *kernelports.UploadParams,
@@ -218,15 +233,14 @@ func (c *Client) Upload(
 		zap.Int64("size", params.Size),
 	)
 
-	opts := minio.PutObjectOptions{
-		ContentType: params.ContentType,
-	}
-
-	if len(params.Metadata) > 0 {
-		opts.UserMetadata = params.Metadata
-	}
-
-	info, err := c.client.PutObject(ctx, c.bucket, params.Key, params.Body, params.Size, opts)
+	info, err := c.client.PutObject(
+		ctx,
+		c.bucket,
+		params.Key,
+		params.Body,
+		params.Size,
+		uploadOptions(params),
+	)
 	if err != nil {
 		log.Error("failed to upload file", zap.Error(err))
 		return nil, fmt.Errorf("failed to upload file: %w", err)

@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/infrastructure/config/storageconfig"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	miniogo "github.com/minio/minio-go/v7"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -165,4 +166,28 @@ func TestNewStorageClientConfig(t *testing.T) {
 		require.NoError(t, err)
 		assert.False(t, got.autoCreateBucket)
 	})
+}
+
+func TestUploadOfUnknownSizeIsSentInBoundedParts(t *testing.T) {
+	t.Parallel()
+
+	stream := uploadOptions(&kernelports.UploadParams{Key: "k", Size: -1, ContentType: "text/csv"})
+	assert.Equal(t, uint64(streamPartSize), stream.PartSize)
+	assert.Equal(t, "text/csv", stream.ContentType)
+
+	_, bounded, _, err := miniogo.OptimalPartInfo(-1, stream.PartSize)
+	require.NoError(t, err)
+	assert.Equal(t, int64(streamPartSize), bounded)
+
+	_, unbounded, _, err := miniogo.OptimalPartInfo(-1, 0)
+	require.NoError(t, err)
+	assert.Greater(t, unbounded, int64(256<<20))
+
+	sized := uploadOptions(&kernelports.UploadParams{
+		Key:      "k",
+		Size:     1024,
+		Metadata: map[string]string{"a": "b"},
+	})
+	assert.Zero(t, sized.PartSize)
+	assert.Equal(t, map[string]string{"a": "b"}, sized.UserMetadata)
 }
