@@ -1,7 +1,6 @@
-import { PageLayout } from "@/components/navigation/sidebar-layout";
+import { SettingsPage } from "@/components/settings/settings-page";
 import { organization } from "@/lib/queries/organization";
 import type { RoutePrefetch } from "@/lib/route-prefetch";
-import { LazyComponent } from "@trenova/shared/components/error-boundary";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { lazy } from "react";
@@ -20,15 +19,12 @@ export function OrganizationSettingsPage() {
   const t = useT();
 
   return (
-    <PageLayout
-      pageHeaderProps={{
-        title: t("Organization settings"),
-        description: t("Manage your organization profile, compliance, and security settings"),
-      }}
+    <SettingsPage
+      title={t("Organization settings")}
+      description={t("Your organization's profile, branding and how it operates")}
+      skeleton={<OrganizationSettingsSkeleton />}
     >
-      <LazyComponent fallback={<OrganizationSettingsSkeleton />}>
-        <OrganizationSettingsForm />
-      </LazyComponent>
-    </PageLayout>
+      <OrganizationSettingsForm />
+    </SettingsPage>
   );
 }

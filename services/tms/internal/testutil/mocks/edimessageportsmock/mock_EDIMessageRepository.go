@@ -1531,6 +1531,74 @@ func (_c *MockEDIMessageRepository_PurgeRawX12Before_Call) RunAndReturn(run func
 	return _c
 }
 
+// ListUnacknowledgedOutboundMessages provides a mock function for the type MockEDIMessageRepository
+func (_mock *MockEDIMessageRepository) ListUnacknowledgedOutboundMessages(ctx context.Context, req *edimessageports.ListUnacknowledgedOutboundMessagesRequest) ([]*edimessage.EDIMessage, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListUnacknowledgedOutboundMessages")
+	}
+
+	var r0 []*edimessage.EDIMessage
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *edimessageports.ListUnacknowledgedOutboundMessagesRequest) ([]*edimessage.EDIMessage, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *edimessageports.ListUnacknowledgedOutboundMessagesRequest) []*edimessage.EDIMessage); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*edimessage.EDIMessage)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *edimessageports.ListUnacknowledgedOutboundMessagesRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockEDIMessageRepository_ListUnacknowledgedOutboundMessages_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListUnacknowledgedOutboundMessages'
+type MockEDIMessageRepository_ListUnacknowledgedOutboundMessages_Call struct {
+	*mock.Call
+}
+
+// ListUnacknowledgedOutboundMessages is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *edimessageports.ListUnacknowledgedOutboundMessagesRequest
+func (_e *MockEDIMessageRepository_Expecter) ListUnacknowledgedOutboundMessages(ctx any, req any) *MockEDIMessageRepository_ListUnacknowledgedOutboundMessages_Call {
+	return &MockEDIMessageRepository_ListUnacknowledgedOutboundMessages_Call{Call: _e.mock.On("ListUnacknowledgedOutboundMessages", ctx, req)}
+}
+
+func (_c *MockEDIMessageRepository_ListUnacknowledgedOutboundMessages_Call) Run(run func(ctx context.Context, req *edimessageports.ListUnacknowledgedOutboundMessagesRequest)) *MockEDIMessageRepository_ListUnacknowledgedOutboundMessages_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *edimessageports.ListUnacknowledgedOutboundMessagesRequest
+		if args[1] != nil {
+			arg1 = args[1].(*edimessageports.ListUnacknowledgedOutboundMessagesRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockEDIMessageRepository_ListUnacknowledgedOutboundMessages_Call) Return(eDIMessages []*edimessage.EDIMessage, err error) *MockEDIMessageRepository_ListUnacknowledgedOutboundMessages_Call {
+	_c.Call.Return(eDIMessages, err)
+	return _c
+}
+
+func (_c *MockEDIMessageRepository_ListUnacknowledgedOutboundMessages_Call) RunAndReturn(run func(ctx context.Context, req *edimessageports.ListUnacknowledgedOutboundMessagesRequest) ([]*edimessage.EDIMessage, error)) *MockEDIMessageRepository_ListUnacknowledgedOutboundMessages_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // UpdateMessageAcknowledgment provides a mock function for the type MockEDIMessageRepository
 func (_mock *MockEDIMessageRepository) UpdateMessageAcknowledgment(ctx context.Context, req *edimessageports.UpdateEDIMessageAcknowledgmentRequest) (*edimessage.EDIMessage, error) {
 	ret := _mock.Called(ctx, req)

@@ -438,5 +438,12 @@ mod tests {
         assert_eq!(read_date("260110"), read_date("20260110"));
         assert_eq!(read_time("0830"), Some(30_600));
         assert_eq!(read_time("2460"), None);
+        assert_eq!(read_time("0453"), Some(17_580));
+        assert_eq!(read_time("045310"), Some(17_590));
+        assert_eq!(read_time("04531099"), Some(17_590));
+        assert!(equal(
+            &decode_simple(ElementType::Time, "045310"),
+            &Value::Time(17_590)
+        ));
     }
 }

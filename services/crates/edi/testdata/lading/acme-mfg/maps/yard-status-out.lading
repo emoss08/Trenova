@@ -1,0 +1,24 @@
+map yardStatusOut
+  from shipmentStatus
+  to   acme.214.yard
+  use  common
+
+B10 { 01 <- proNumber ?? key, 02 <- key, 03 <- org.scac }
+
+0205 <- each events as event {
+  LX { 01 <- index + 1 }
+  0210 {
+    AT7 {
+      01 <- event.kind via statusCodes
+      02 <- event.reason ?? "NS"
+      05 <- event.at
+      06 <- event.at
+      07 <- event.at.zoneCode()
+    }
+  }
+}
+
+test "a guide that takes six characters for the time writes its seconds" {
+  given shipmentStatus { key: "AM-1", events: [{ kind: ArrivedPickup, at: @2026-03-04T04:53:10Z }] }
+  expect x12 contains "LX*1~AT7*X3*NS***20260304*045310*UT~"
+}

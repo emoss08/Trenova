@@ -39,6 +39,7 @@ type Conversation struct {
 	Key           string
 	Original      *partner.Load
 	Tendered      *partner.Load
+	Need          *partner.LoadNeed
 	TenderedCents int64
 	StartedAt     time.Time
 	LastSent      []string
@@ -107,6 +108,7 @@ func (e *Env) SendTender(
 			RatePercent: variation.Delta.RatePercent,
 			AddStop:     variation.Delta.AddStop,
 		},
+		Load: variation.Need,
 	}
 	if move := variation.Delta.Move; move != nil {
 		req.Delta.Move = &sim.MoveRequest{Stop: move.Stop, By: move.By.String()}
@@ -293,11 +295,11 @@ func (e *Env) approved(ctx context.Context, transferID string, within time.Durat
 		return current.Status != transferProcessing, nil
 	})
 	if err != nil {
-		return fmt.Errorf("the accepted transfer %s is still processing: %w", transferID, err)
+		return fmt.Errorf("the accepted transfer is still processing: %w", err)
 	}
 	if transfer.Status == transferFailed {
-		return fmt.Errorf("Trenova accepted transfer %s but could not build its shipment: %s",
-			transferID, firstNonEmpty(transfer.FailureReason, "no reason given"))
+		return fmt.Errorf("Trenova accepted the transfer but could not build its shipment: %s",
+			firstNonEmpty(transfer.FailureReason, "no reason given"))
 	}
 	return nil
 }
@@ -311,6 +313,7 @@ func (e *Env) Dispatch(ctx context.Context, c *Conversation, within time.Duratio
 	if err != nil {
 		return err
 	}
+	e.fleet.drive(shipmentID)
 	for _, move := range shipment.Moves {
 		if move.Assignment != nil && move.Assignment.ID != "" {
 			continue
@@ -377,19 +380,8 @@ func (e *Env) Deliver(ctx context.Context, c *Conversation, within time.Duration
 	if err != nil {
 		return err
 	}
-	for index, stop := range shipment.Stops() {
-		if stop.ActualArrival == nil {
-			if err = e.Trenova.RecordStop(ctx, stop.MoveID, stop.ID,
-				trenova.ActionArrive); err != nil {
-				return fmt.Errorf("arrive at stop %d: %w", index+1, err)
-			}
-		}
-		if stop.ActualDeparture == nil {
-			if err = e.Trenova.RecordStop(ctx, stop.MoveID, stop.ID,
-				trenova.ActionDepart); err != nil {
-				return fmt.Errorf("depart stop %d: %w", index+1, err)
-			}
-		}
+	if err = e.finishStops(ctx, shipment); err != nil {
+		return err
 	}
 	c.noteEvent(runlog.Event{Label: "Delivered", Detail: "every stop arrived and departed",
 		Who: e.email})
@@ -406,6 +398,12 @@ func (e *Env) Invoice(ctx context.Context, c *Conversation, within time.Duration
 	}
 	c.noteEvent(runlog.Event{Label: "Invoiced", Who: e.email})
 	return nil
+}
+
+func (c *Conversation) shipment() string {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	return c.shipmentID
 }
 
 func (e *Env) Release(ctx context.Context, c *Conversation, within time.Duration) error {
@@ -495,8 +493,8 @@ func (e *Env) bindTender(
 		return false
 	})
 	if err != nil {
-		return fmt.Errorf("no 204 for shipment %s (pro %s, bol %s) reached the carrier "+
-			"within %s: %w", shipment.ID, shipment.ProNumber, c.BOL, within, err)
+		return fmt.Errorf("no 204 for the shipment (pro %s, bol %s) reached the carrier "+
+			"within %s: %w", shipment.ProNumber, c.BOL, within, err)
 	}
 	return nil
 }

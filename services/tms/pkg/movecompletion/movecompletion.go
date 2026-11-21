@@ -30,3 +30,15 @@ func Candidate(sm *shipmentdb.ShipmentMovesTable, start, end int64) keel.Pred {
 		),
 	))))
 }
+
+const kilometersPerMile = 1.609344
+
+func FuelTaxMiles(sm *shipmentdb.ShipmentMovesTable) keel.Float64Expr {
+	distance := sm.FuelDistance.Coalesce(sm.Distance)
+	return keel.CaseFloat64().
+		When(
+			sm.DistanceUnits.Eq(shipmentvocab.JurisdictionDistanceUnitsKilometers),
+			distance.Div(keel.Float64(kilometersPerMile)),
+		).
+		Else(distance)
+}

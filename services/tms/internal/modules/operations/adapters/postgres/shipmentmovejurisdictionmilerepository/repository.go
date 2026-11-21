@@ -24,7 +24,6 @@ const (
 	completedMoveID    = "id"
 	completedMoveMiles = "miles"
 	completedAt        = "completed_at"
-	kilometersPerMile  = 1.609344
 )
 
 type Params struct {
@@ -140,14 +139,18 @@ func (r *repository) ListUnattributedMoves(
 				mc.Col(completedAt).Lt(req.End),
 			}
 
-			totals, err := keel.IntoOne[unattributedTotals](ctx, r.db.Keel(ctx), keel.RowsOf(mc.TableRef()).
-				With(mc).
-				Pick(
-					keel.Count(),
-					keel.CastNumeric(keel.NumericOf(mc.Col(completedMoveMiles).Sum()).Coalesce(0)).
-						RoundTo(2),
-				).
-				Where(inPeriod...))
+			totals, err := keel.IntoOne[unattributedTotals](
+				ctx,
+				r.db.Keel(ctx),
+				keel.RowsOf(mc.TableRef()).
+					With(mc).
+					Pick(
+						keel.Count(),
+						keel.CastNumeric(keel.NumericOf(mc.Col(completedMoveMiles).Sum()).Coalesce(0)).
+							RoundTo(2),
+					).
+					Where(inPeriod...),
+			)
 			if err != nil {
 				r.l.Error("failed to count unattributed moves", zap.Error(err))
 				return nil, fmt.Errorf("count unattributed moves: %w", err)
@@ -188,18 +191,21 @@ func completedMovesWithoutBreakdown(start, end int64) *keel.CTETable {
 		Where(
 			sm.Status.Eq(shipmentvocab.MoveStatusCompleted),
 			movecompletion.Candidate(sm, start, end),
-			sm.Distance.Gt(0),
+			sm.FuelDistance.Coalesce(sm.Distance).Gt(0),
 			keel.NotExists(jm.Where(jm.ShipmentMoveID.EqCol(sm.ID))),
 		).
-		Group(sm.ID, sm.OrganizationID, sm.BusinessUnitID, sm.Distance, sm.DistanceUnits, sm.UpdatedAt).
+		Group(
+			sm.ID,
+			sm.OrganizationID,
+			sm.BusinessUnitID,
+			sm.Distance,
+			sm.FuelDistance,
+			sm.DistanceUnits,
+			sm.UpdatedAt,
+		).
 		Pick(
 			sm.ID,
-			keel.CaseFloat64().
-				When(
-					sm.DistanceUnits.Eq(shipmentvocab.JurisdictionDistanceUnitsKilometers),
-					sm.Distance.Div(keel.Float64(kilometersPerMile)),
-				).
-				Else(sm.Distance),
+			movecompletion.FuelTaxMiles(sm),
 			movecompletion.At(sm, st),
 		)
 

@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentevent"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmenthold"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenteventports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -71,13 +72,12 @@ func TestBuildStatusChangedSeverity(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			tenant := newTenant(t)
 			sh := &shipment.Shipment{
 				ID:        pulid.MustNew("shp_"),
 				ProNumber: "PRO-1",
 				Status:    tc.status,
 			}
-			params := BuildStatusChanged(tenant, sh, shipmentvocab.StatusNew, userActor())
+			params := shipmenteventports.StatusChanged(sh, shipmentvocab.StatusNew, userActor())
 			assert.Equal(t, shipmentevent.TypeStatusChanged, params.Type)
 			assert.Equal(t, tc.expected, params.Severity)
 		})

@@ -49,7 +49,8 @@ func parseInterchange(
 	if len(reading.Interchanges) == 0 || reading.Interchanges[0].Header == nil {
 		return nil, errNoInterchange, nil
 	}
-	if reading.Summary.Transactions == 0 {
+	interchangeAcks := parseInterchangeAcks(inspection.Segments)
+	if reading.Summary.Transactions == 0 && len(interchangeAcks) == 0 {
 		return nil, errNoTransactions, nil
 	}
 
@@ -65,6 +66,7 @@ func parseInterchange(
 		version:           first.Header.Version,
 		usage:             first.Header.Usage,
 		transactions:      make([]parsedTransaction, 0, reading.Summary.Transactions),
+		interchangeAcks:   interchangeAcks,
 	}
 	for interchangeIndex := range reading.Interchanges {
 		for groupIndex := range reading.Interchanges[interchangeIndex].Groups {
@@ -224,6 +226,7 @@ func parseAcknowledgments(t *parsedTransaction) []acknowledgmentEntry {
 		case "AK5", "IK5":
 			if current != nil {
 				current.acknowledgmentCode = strings.TrimSpace(elementValue(segment, 1))
+				current.syntaxErrors = syntaxErrorCodes(segment)
 			}
 		case "AK3", "IK3":
 			if current != nil {
@@ -257,6 +260,37 @@ func parseAcknowledgments(t *parsedTransaction) []acknowledgmentEntry {
 		entries = append(entries, base)
 	}
 	return entries
+}
+
+const (
+	firstSyntaxErrorPosition = 2
+	lastSyntaxErrorPosition  = 6
+)
+
+func syntaxErrorCodes(segment *edix12inspect.X12Segment) []string {
+	var codes []string
+	for position := firstSyntaxErrorPosition; position <= lastSyntaxErrorPosition; position++ {
+		if code := strings.TrimSpace(elementValue(segment, position)); code != "" {
+			codes = append(codes, code)
+		}
+	}
+	return codes
+}
+
+func parseInterchangeAcks(segments []edix12inspect.X12Segment) []interchangeAck {
+	var acks []interchangeAck
+	for index := range segments {
+		segment := &segments[index]
+		if segment.SegmentID != "TA1" {
+			continue
+		}
+		acks = append(acks, interchangeAck{
+			controlNumber: strings.TrimSpace(elementValue(segment, 1)),
+			code:          strings.ToUpper(strings.TrimSpace(elementValue(segment, 4))),
+			note:          strings.TrimSpace(elementValue(segment, 5)),
+		})
+	}
+	return acks
 }
 
 func transactionSetFromCode(code string) edidocument.TransactionSet {

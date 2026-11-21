@@ -13,7 +13,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edipayload"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/editenderchange"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/editransfer"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/edimessageports"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/editenderports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
@@ -23,117 +22,6 @@ import (
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/zap"
 )
-
-func (s *Service) routeAcknowledgment(
-	ctx context.Context,
-	file *ediinboundfile.EDIInboundFile,
-	partner *edi.EDIPartner,
-	message *edimessage.EDIMessage,
-	transaction *parsedTransaction,
-) []string {
-	entries := parseAcknowledgments(transaction)
-	if len(entries) == 0 {
-		return []string{fmt.Sprintf(
-			"acknowledgment %s/%s does not reference any transactions",
-			transaction.set,
-			transaction.controlNumber,
-		)}
-	}
-	tenantInfo := pagination.TenantInfo{
-		OrgID: file.OrganizationID,
-		BuID:  file.BusinessUnitID,
-	}
-	warnings := make([]string, 0)
-	now := timeutils.NowUnix()
-	for index := range entries {
-		entry := &entries[index]
-		if entry.originalControlNumber == "" {
-			warnings = append(warnings, fmt.Sprintf(
-				"acknowledgment %s/%s is missing the original transaction control number",
-				transaction.set,
-				transaction.controlNumber,
-			))
-			continue
-		}
-		original, err := s.messageRepo.GetOutboundMessageForAck(
-			ctx,
-			&edimessageports.GetEDIOutboundMessageForAckRequest{
-				TenantInfo:               tenantInfo,
-				PartnerID:                partner.ID,
-				TransactionSet:           transactionSetFromCode(entry.originalTransactionSet),
-				GroupControlNumber:       entry.originalGroupControl,
-				TransactionControlNumber: entry.originalControlNumber,
-			},
-		)
-		if err != nil {
-			warnings = append(warnings, fmt.Sprintf(
-				"acknowledgment for control number %s could not be matched to an outbound message",
-				entry.originalControlNumber,
-			))
-			continue
-		}
-		ackStatus, ackError := acknowledgmentResolution(entry)
-		if _, err = s.messageRepo.UpdateMessageAcknowledgment(
-			ctx,
-			&edimessageports.UpdateEDIMessageAcknowledgmentRequest{
-				ID:            original.ID,
-				TenantInfo:    tenantInfo,
-				AckStatus:     ackStatus,
-				AckMessageID:  message.ID,
-				AckReceivedAt: &now,
-				AckLastError:  ackError,
-			},
-		); err != nil {
-			warnings = append(warnings, fmt.Sprintf(
-				"failed to record acknowledgment for message %s: %s",
-				original.ID,
-				err.Error(),
-			))
-			continue
-		}
-		if original.DeliverySentAt != nil && now >= *original.DeliverySentAt {
-			s.metrics.RecordAckLatency(string(ackStatus), float64(now-*original.DeliverySentAt))
-		}
-	}
-	return warnings
-}
-
-func acknowledgmentResolution(
-	entry *acknowledgmentEntry,
-) (status edimessage.MessageAcknowledgmentStatus, ackError string) {
-	code := entry.acknowledgmentCode
-	if code == "" {
-		code = entry.groupAcknowledgmentCode
-	}
-	switch code {
-	case "A":
-		return edimessage.MessageAcknowledgmentStatusAccepted, ""
-	case "E":
-		return edimessage.MessageAcknowledgmentStatusAcceptedWithErrors, acknowledgmentDetails(
-			code,
-			entry,
-		)
-	default:
-		return edimessage.MessageAcknowledgmentStatusRejected, acknowledgmentDetails(code, entry)
-	}
-}
-
-func acknowledgmentDetails(code string, entry *acknowledgmentEntry) string {
-	details := make([]string, 0, len(entry.diagnostics)+1)
-	details = append(details, "acknowledgment code "+stringutils.FirstNonEmpty(code, "missing"))
-	for _, diagnostic := range entry.diagnostics {
-		detail := diagnostic.Message
-		if diagnostic.ErrorCode != "" {
-			detail += " (code " + diagnostic.ErrorCode + ")"
-		}
-		if diagnostic.SegmentID != "" {
-			detail += " segment " + diagnostic.SegmentID
-		}
-		details = append(details, detail)
-	}
-
-	return joinDetails(details)
-}
 
 func (s *Service) routeTenderResponse(
 	ctx context.Context,

@@ -28,6 +28,7 @@ const (
 	serviceFailure214ResolvedAlias   = "sf_resolved"
 
 	defaultRecentFailuresLimit = 10
+	maxUnacknowledgedMessages  = 500
 	defaultBucketSeconds       = 3600
 )
 
@@ -35,8 +36,19 @@ var messageErrors = dberror.Mapping{Entity: "EDIMessage"}
 
 var (
 	errDeliveryRequestRequired = errors.New("EDI message delivery update request is required")
-	errAckRequestRequired      = errors.New("EDI message acknowledgment update request is required")
+	errAckRequestRequired      = errors.New(
+		"EDI message acknowledgment update request is required",
+	)
+	errUnacknowledgedScopeRequired = errors.New(
+		"an interchange or group control number is required to list unacknowledged messages",
+	)
 )
+
+var receivedAckStatuses = []edimessage.MessageAcknowledgmentStatus{
+	edimessage.MessageAcknowledgmentStatusAccepted,
+	edimessage.MessageAcknowledgmentStatusAcceptedWithErrors,
+	edimessage.MessageAcknowledgmentStatusRejected,
+}
 
 var pendingDeliveryStatuses = []edimessage.MessageDeliveryStatus{
 	edimessage.MessageDeliveryStatusQueued,
@@ -920,6 +932,41 @@ func (r *repository) GetOutboundMessageForAck(
 		}
 
 		return entity, nil
+	})
+}
+
+func (r *repository) ListUnacknowledgedOutboundMessages(
+	ctx context.Context,
+	req *edimessageports.ListUnacknowledgedOutboundMessagesRequest,
+) ([]*edimessage.EDIMessage, error) {
+	if req.InterchangeControlNumber == "" && req.GroupControlNumber == "" {
+		return nil, errUnacknowledgedScopeRequired
+	}
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*edimessage.EDIMessage, error) {
+		limit := req.Limit
+		if limit <= 0 || limit > maxUnacknowledgedMessages {
+			limit = maxUnacknowledgedMessages
+		}
+
+		m := edimessagedb.EDIMessages
+		return m.Omit(m.RawX12, m.PayloadSnapshot, m.Document, m.Lineage, m.Outcomes).
+			Where(
+				m.EDIPartnerID.Eq(req.PartnerID),
+				m.Direction.Eq(edidocument.DocumentDirectionOutbound),
+				keel.When(
+					req.InterchangeControlNumber != "",
+					m.InterchangeControlNumber.Eq(req.InterchangeControlNumber),
+				),
+				keel.When(
+					req.GroupControlNumber != "",
+					m.GroupControlNumber.Eq(req.GroupControlNumber),
+				),
+				keel.When(req.TransactionSet != "", m.TransactionSet.Eq(req.TransactionSet)),
+				keel.Or(m.AckStatus.IsNull(), m.AckStatus.NotIn(receivedAckStatuses...)),
+			).
+			Order(m.GeneratedAt.Desc()).
+			Limit(limit).
+			List(ctx, r.db.Keel(ctx))
 	})
 }
 

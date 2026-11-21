@@ -175,3 +175,42 @@ func TestShipment_RatingAsOfPrefersTheShipDateThenEntry(t *testing.T) {
 		ActualShipDate: int64Ptr(0),
 	}, now))
 }
+
+func TestShipment_RatingDistanceIsTheBilledDistance(t *testing.T) {
+	t.Parallel()
+
+	sp := &shipment.Shipment{Moves: []*shipment.ShipmentMove{
+		{
+			Status:          shipmentvocab.MoveStatusNew,
+			Distance:        floatPtr(400),
+			BillingDistance: floatPtr(380),
+			DistanceUnits:   "Miles",
+		},
+		{
+			Status:        shipmentvocab.MoveStatusNew,
+			Distance:      floatPtr(100),
+			DistanceUnits: "Miles",
+		},
+		{
+			Status:          shipmentvocab.MoveStatusCanceled,
+			Distance:        floatPtr(900),
+			BillingDistance: floatPtr(900),
+		},
+	}}
+
+	assert.Equal(t, "480", shipmentrating.Distance(sp).String())
+	assert.Equal(t, "480", shipmentrating.Miles(sp).String())
+}
+
+func TestShipment_RatingMilesConvertTheBilledKilometers(t *testing.T) {
+	t.Parallel()
+
+	sp := &shipment.Shipment{Moves: []*shipment.ShipmentMove{{
+		Status:          shipmentvocab.MoveStatusNew,
+		Distance:        floatPtr(200),
+		BillingDistance: floatPtr(160.9344),
+		DistanceUnits:   "Kilometers",
+	}}}
+
+	assert.Equal(t, "100", shipmentrating.Miles(sp).String())
+}

@@ -224,7 +224,15 @@ func (r *repository) Update(
 		if err != nil {
 			return nil, organizationErrors.Map(err, org.ID.String())
 		}
-		keepStoredWhereZero(org, stored, o.BrokerageEnabled, o.AssetOperationsEnabled)
+		keepStoredWhereZero(
+			org,
+			stored,
+			o.BrokerageEnabled,
+			o.AssetOperationsEnabled,
+			o.LoginSlug,
+			o.AddressLine2,
+			o.TaxID,
+		)
 
 		if err = o.Save(ctx, db, org); err != nil {
 			r.l.Error(

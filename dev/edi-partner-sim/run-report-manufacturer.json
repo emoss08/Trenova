@@ -1,0 +1,1889 @@
+{
+  "run": 13,
+  "api": "http://localhost:8080/api/v1",
+  "sim": "http://localhost:9210",
+  "startedAt": "2026-11-20T14:23:55.386862236Z",
+  "took": 297.682,
+  "partners": [
+    {
+      "name": "manufacturer",
+      "role": "shipper",
+      "provision": {
+        "partner": "manufacturer",
+        "role": "shipper",
+        "code": "EDISIM-MANUFACTURER",
+        "transport": "AS2",
+        "inboundUrl": "http://localhost:8080/api/v1/edi/as2/inbound/377898aeb4bd4a7b9ae5acbcd3b937c60905b4b694074aa4af3cdc460470b646/",
+        "versionNumber": 3,
+        "customerLabel": "Kestrel Valve Works (EDI Simulator) - SIMMANUFAC",
+        "readiness": {
+          "errors": 0,
+          "failing": 0,
+          "tests": 54,
+          "uncoveredFlowClauses": 0,
+          "ready": true
+        },
+        "notes": [
+          "partner EDISIM-MANUFACTURER is up to date",
+          "refreshed the AS2 communication profile with the simulator's keys",
+          "Trenova's connection test passed",
+          "gave the simulator the profile's inbound URL and Trenova's certificate",
+          "customer Kestrel Valve Works (EDI Simulator) bills the partner's tenders",
+          "started draft 3",
+          "saved 14 files and 12 samples to draft 3",
+          "tested version 3: 54 tests, 0 failing, 0 errors, 0 uncovered flow clauses",
+          "replayed tenderIn over 55 messages: 0 differ, 0 newly rejected",
+          "certified version 3",
+          "activated version 3"
+        ]
+      },
+      "scenarios": [
+        {
+          "name": "a cancellation after dispatch is held, and the load keeps moving",
+          "file": "partners/manufacturer/scenarios/cancel-after-dispatch.yaml",
+          "slug": "cancel-after-dispatch",
+          "seed": 13000,
+          "status": "failed",
+          "startedAt": "2026-11-20T14:24:02.437455242Z",
+          "took": 2.388,
+          "steps": [
+            {
+              "index": 0,
+              "kind": "send",
+              "text": "send 204 original as t1",
+              "status": "passed",
+              "note": "1 interchange(s), key KVW-113001",
+              "at": 0.022,
+              "took": 0.106,
+              "ended": "2026-11-20T14:24:02.565256567Z",
+              "keys": [
+                "KVW-113001"
+              ],
+              "matches": [
+                {
+                  "messageId": "manufacturer-000265",
+                  "key": "KVW-113001"
+                }
+              ]
+            },
+            {
+              "index": 1,
+              "kind": "expect",
+              "text": "expect 997 for t1",
+              "status": "passed",
+              "note": "ack A",
+              "at": 0.141,
+              "took": 1.274,
+              "ended": "2026-11-20T14:24:03.852389242Z",
+              "keys": [
+                "KVW-113001"
+              ],
+              "matches": [
+                {
+                  "messageId": "manufacturer-000266",
+                  "key": "KVW-113001"
+                }
+              ]
+            },
+            {
+              "index": 2,
+              "kind": "trenova",
+              "text": "trenova decide t1 accept",
+              "status": "failed",
+              "why": "Trenova accepted the transfer but could not build its shipment: validation failed:\n- moves[0].stops[0].scheduledWindowEnd: Scheduled window end must be before the next stop's scheduled window start",
+              "at": 1.416,
+              "took": 0.966,
+              "ended": "2026-11-20T14:24:04.819373175Z",
+              "keys": [
+                "KVW-113001"
+              ],
+              "events": [
+                {
+                  "key": "KVW-113001",
+                  "at": "2026-11-20T14:24:04.819372443Z",
+                  "label": "trenova decide t1 accept",
+                  "tone": "bad"
+                }
+              ]
+            },
+            {
+              "index": 3,
+              "kind": "expect",
+              "text": "expect wire 990 about t1",
+              "status": "skipped",
+              "at": 2.388,
+              "took": 0.000,
+              "ended": "0001-01-01T00:00:00Z"
+            },
+            {
+              "index": 4,
+              "kind": "trenova",
+              "text": "trenova dispatch t1",
+              "status": "skipped",
+              "at": 2.388,
+              "took": 0.000,
+              "ended": "0001-01-01T00:00:00Z"
+            },
+            {
+              "index": 5,
+              "kind": "send",
+              "text": "send 204 cancel of t1",
+              "status": "skipped",
+              "at": 2.388,
+              "took": 0.000,
+              "ended": "0001-01-01T00:00:00Z"
+            },
+            {
+              "index": 6,
+              "kind": "expect",
+              "text": "expect 997 for t1",
+              "status": "skipped",
+              "at": 2.388,
+              "took": 0.000,
+              "ended": "0001-01-01T00:00:00Z"
+            },
+            {
+              "index": 7,
+              "kind": "expect",
+              "text": "expect flow t1 held \"after dispatch\"",
+              "status": "skipped",
+              "at": 2.388,
+              "took": 0.000,
+              "ended": "0001-01-01T00:00:00Z"
+            },
+            {
+              "index": 8,
+              "kind": "expect",
+              "text": "expect shipment t1 assigned",
+              "status": "skipped",
+              "at": 2.388,
+              "took": 0.000,
+              "ended": "0001-01-01T00:00:00Z"
+            }
+          ],
+          "conversations": [
+            {
+              "name": "t1",
+              "key": "KVW-113001",
+              "seed": 13001,
+              "milestones": {
+                "ack": 1.392
+              },
+              "wire": [
+                {
+                  "messageId": "manufacturer-000265",
+                  "from": "partner",
+                  "purpose": "document",
+                  "sets": [
+                    "204"
+                  ],
+                  "state": "delivered",
+                  "at": "2026-11-20T14:24:02.469521966Z",
+                  "variation": "original",
+                  "ack": "received",
+                  "ackCode": "A",
+                  "x12": "ISA*00*          *00*          *ZZ*KESTRELVW      *ZZ*TRENOVA        *260318*1600*^*00401*095894981*0*T*\u003e~\nGS*SM*KESTRELVW*TRENOVA*20260318*1600*96127292*X*004010~\nST*204*0001~\nB2**TRNV**KVW-113001**PP~\nB2A*00*LT~\nL11*8100688364*BM~\nL11*4525088102*PO~\nN1*BT*KESTREL VALVE WORKS ACCOUNTS PAYABLE*93*KVW-AP~\nN3*500 E STATE ST~\nN4*ROCKFORD*IL*61104*US~\nN7**TBD*********TF****5300~\nS5*1*LD*19440*L*13*PC~\nG62*37*20260319*G*0600*CT~\nG62*38*20260319*L*0800*CT~\nAT8*G*L*19440*13~\nN1*SH*KESTREL FINISHED GOODS DC*93*KVW-JOL3~\nN3*3300 CHANNAHON RD~\nN4*JOLIET*IL*60436*US~\nG61*IC*SHIPPING*TE*8155553618~\nL5*1*CAST IRON GATE VALVES*88240*N~\nAT8*G*L*10778*8~\nL5*2*ACTUATOR KITS*61700*N~\nAT8*G*L*8662*5~\nS5*2*UL*6059*L*4*PC~\nL11*APT333413*AO~\nG62*53*20260319*G*0800*CT~\nG62*54*20260319*L*1000*CT~\nAT8*G*L*6059*4~\nN1*CN*MIDLAND FLUID SUPPLY CHICAGO*93*KVC-0006~\nN3*1260 INDUSTRIAL RD~\nN4*CHICAGO*IL*60632*US~\nS5*3*UL*8747*L*5*PC~\nG62*53*20260320*G*0700*CT~\nG62*54*20260320*L*0900*CT~\nAT8*G*L*8747*5~\nN1*CN*PRAIRIE INDUSTRIAL SUPPLY OMAHA*93*KVC-0529~\nN3*7682 ENTERPRISE BLVD~\nN4*OMAHA*NE*681174144*US~\nS5*4*UL*4634*L*4*PC~\nG62*53*20260320*G*1500*CT~\nG62*54*20260320*L*1700*CT~\nAT8*G*L*4634*4~\nN1*CN*MIDLAND FLUID SUPPLY WICHITA*93*KVC-0038~\nN3*3309 WAREHOUSE RD~\nN4*WICHITA*KS*672134751*US~\nG61*IC*RECEIVING*TE*3165554697~\nL3*19440*G*2.41*PM*220573******13*L~\nSE*46*0001~\nGE*1*96127292~\nIEA*1*095894981~\n"
+                },
+                {
+                  "messageId": "manufacturer-000266",
+                  "from": "trenova",
+                  "purpose": "ack",
+                  "sets": [
+                    "997"
+                  ],
+                  "state": "received",
+                  "at": "2026-11-20T14:24:03.851368544Z",
+                  "accepted": true,
+                  "x12": "ISA*00*          *00*          *ZZ*TRENOVA        *ZZ*KESTRELVW      *261120*1424*U*00401*000000056*0*T*\u003e~\nGS*FA*TRENOVA*KESTRELVW*20261120*1424*56*X*004010~\nST*997*0056~\nAK1*SM*96127292~\nAK2*204*0001~\nAK5*A~\nAK9*A*1*1*1~\nSE*6*0056~\nGE*1*56~\nIEA*1*000000056~\n"
+                }
+              ],
+              "states": [
+                {
+                  "step": 8,
+                  "at": "2.362s",
+                  "flowStatus": "Open"
+                },
+                {
+                  "step": 8,
+                  "at": "2.388s",
+                  "flowStatus": "Open"
+                }
+              ]
+            }
+          ],
+          "failures": [
+            {
+              "step": 2,
+              "source": "harness",
+              "rule": "step",
+              "message": "Trenova accepted the transfer but could not build its shipment: validation failed:\n- moves[0].stops[0].scheduledWindowEnd: Scheduled window end must be before the next stop's scheduled window start",
+              "replay": "edi-sim run --partner manufacturer --scenario cancel-after-dispatch --run 13"
+            }
+          ],
+          "replay": "edi-sim run --partner manufacturer --scenario cancel-after-dispatch --run 13"
+        },
+        {
+          "name": "a cancellation before dispatch cancels the load",
+          "file": "partners/manufacturer/scenarios/cancel-before-dispatch.yaml",
+          "slug": "cancel-before-dispatch",
+          "seed": 13040,
+          "status": "passed",
+          "startedAt": "2026-11-20T14:24:04.8414131Z",
+          "took": 62.987,
+          "steps": [
+            {
+              "index": 0,
+              "kind": "send",
+              "text": "send 204 original as t1",
+              "status": "passed",
+              "note": "1 interchange(s), key KVW-113041",
+              "at": 0.002,
+              "took": 0.041,
+              "ended": "2026-11-20T14:24:04.884373606Z",
+              "keys": [
+                "KVW-113041"
+              ],
+              "matches": [
+                {
+                  "messageId": "manufacturer-000267",
+                  "key": "KVW-113041"
+                }
+              ]
+            },
+            {
+              "index": 1,
+              "kind": "expect",
+              "text": "expect 997 for t1",
+              "status": "passed",
+              "note": "ack A",
+              "at": 0.044,
+              "took": 0.412,
+              "ended": "2026-11-20T14:24:05.297629964Z",
+              "keys": [
+                "KVW-113041"
+              ],
+              "matches": [
+                {
+                  "messageId": "manufacturer-000268",
+                  "key": "KVW-113041"
+                }
+              ]
+            },
+            {
+              "index": 2,
+              "kind": "trenova",
+              "text": "trenova decide t1 accept",
+              "status": "passed",
+              "at": 0.457,
+              "took": 1.020,
+              "ended": "2026-11-20T14:24:06.318877167Z",
+              "keys": [
+                "KVW-113041"
+              ],
+              "events": [
+                {
+                  "key": "KVW-113041",
+                  "at": "2026-11-20T14:24:06.302883381Z",
+                  "label": "Planner accepted",
+                  "tone": "trenova",
+                  "who": "admin@trenova.app"
+                }
+              ]
+            },
+            {
+              "index": 3,
+              "kind": "expect",
+              "text": "expect wire 990 about t1, B1-04: A",
+              "status": "passed",
+              "note": "990 0025",
+              "at": 1.479,
+              "took": 0.368,
+              "ended": "2026-11-20T14:24:06.688699933Z",
+              "keys": [
+                "KVW-113041"
+              ],
+              "matches": [
+                {
+                  "messageId": "manufacturer-000269",
+                  "groupControl": "25",
+                  "control": "0025",
+                  "key": "KVW-113041"
+                }
+              ]
+            },
+            {
+              "index": 4,
+              "kind": "send",
+              "text": "send 204 cancel of t1",
+              "status": "passed",
+              "note": "1 interchange(s), key KVW-113041",
+              "at": 1.849,
+              "took": 0.057,
+              "ended": "2026-11-20T14:24:06.747620325Z",
+              "keys": [
+                "KVW-113041"
+              ],
+              "matches": [
+                {
+                  "messageId": "manufacturer-000271",
+                  "key": "KVW-113041"
+                }
+              ]
+            },
+            {
+              "index": 5,
+              "kind": "expect",
+              "text": "expect 997 for t1",
+              "status": "passed",
+              "note": "ack A",
+              "at": 1.908,
+              "took": 0.640,
+              "ended": "2026-11-20T14:24:07.389253394Z",
+              "keys": [
+                "KVW-113041"
+              ],
+              "matches": [
+                {
+                  "messageId": "manufacturer-000272",
+                  "key": "KVW-113041"
+                }
+              ]
+            },
+            {
+              "index": 6,
+              "kind": "expect",
+              "text": "expect shipment t1 canceled",
+              "status": "passed",
+              "note": "shipment Canceled",
+              "at": 2.549,
+              "took": 0.425,
+              "ended": "2026-11-20T14:24:07.814890473Z",
+              "keys": [
+                "KVW-113041"
+              ],
+              "events": [
+                {
+                  "key": "KVW-113041",
+                  "at": "2026-11-20T14:24:07.733793084Z",
+                  "label": "Shipment canceled",
+                  "tone": "trenova"
+                }
+              ]
+            },
+            {
+              "index": 7,
+              "kind": "expect",
+              "text": "expect wire 214 about t1, within 1m, none",
+              "status": "passed",
+              "note": "no 214 within 1m0s",
+              "at": 2.975,
+              "took": 60.011,
+              "ended": "2026-11-20T14:25:07.82534815Z",
+              "keys": [
+                "KVW-113041"
+              ],
+              "events": [
+                {
+                  "key": "KVW-113041",
+                  "at": "2026-11-20T14:25:07.825293179Z",
+                  "label": "No 214 sent",
+                  "detail": "within 1m",
+                  "tone": "trenova"
+                }
+              ]
+            }
+          ],
+          "conversations": [
+            {
+              "name": "t1",
+              "key": "KVW-113041",
+              "seed": 13041,
+              "milestones": {
+                "ack": 0.453,
+                "answer": 1.844
+              },
+              "wire": [
+                {
+                  "messageId": "manufacturer-000267",
+                  "from": "partner",
+                  "purpose": "document",
+                  "sets": [
+                    "204"
+                  ],
+                  "state": "delivered",
+                  "at": "2026-11-20T14:24:04.844665856Z",
+                  "variation": "original",
+                  "ack": "received",
+                  "ackCode": "A",
+                  "x12": "ISA*00*          *00*          *ZZ*KESTRELVW      *ZZ*TRENOVA        *260317*1035*^*00401*095894982*0*T*\u003e~\nGS*SM*KESTRELVW*TRENOVA*20260317*1035*96127293*X*004010~\nST*204*0001~\nB2**TRNV**KVW-113041**PP~\nB2A*00*LT~\nL11*8100153571*BM~\nL11*4522430937*PO~\nN1*BT*KESTREL VALVE WORKS ACCOUNTS PAYABLE*93*KVW-AP~\nN3*500 E STATE ST~\nN4*ROCKFORD*IL*61104*US~\nN7**TBD*********TF****5300~\nS5*1*LD*9280*L*7*PC~\nG62*37*20260320*G*0800*CT~\nG62*38*20260320*L*1000*CT~\nAT8*G*L*9280*7~\nN1*SH*KESTREL VALVE WORKS PLANT 1*93*KVW-RFD1~\nN3*2750 SANDY HOLLOW RD~\nN4*ROCKFORD*IL*61109*US~\nL5*1*BUTTERFLY VALVE ASSEMBLIES*88260*N~\nAT8*G*L*2625*2~\nL5*2*BUTTERFLY VALVE ASSEMBLIES*88260*N~\nAT8*G*L*2813*1~\nL5*3*THREAD SEALANT ADHESIVE*04610*N~\nAT8*G*L*3842*4~\nS5*2*UL*9280*L*7*PC~\nL11*APT738524*AO~\nG62*53*20260321*G*0700*CT~\nG62*54*20260321*L*0900*CT~\nAT8*G*L*9280*7~\nN1*CN*PRAIRIE INDUSTRIAL SUPPLY ATLANTA*93*KVC-0500~\nN3*5889 INDUSTRIAL ST~\nN4*ATLANTA*GA*303188224*US~\nL3*9280*G*3.16*PM*239212******7*L~\nSE*32*0001~\nGE*1*96127293~\nIEA*1*095894982~\n"
+                },
+                {
+                  "messageId": "manufacturer-000268",
+                  "from": "trenova",
+                  "purpose": "ack",
+                  "sets": [
+                    "997"
+                  ],
+                  "state": "received",
+                  "at": "2026-11-20T14:24:05.296382066Z",
+                  "accepted": true,
+                  "x12": "ISA*00*          *00*          *ZZ*TRENOVA        *ZZ*KESTRELVW      *261120*1424*U*00401*000000057*0*T*\u003e~\nGS*FA*TRENOVA*KESTRELVW*20261120*1424*57*X*004010~\nST*997*0057~\nAK1*SM*96127293~\nAK2*204*0001~\nAK5*A~\nAK9*A*1*1*1~\nSE*6*0057~\nGE*1*57~\nIEA*1*000000057~\n"
+                },
+                {
+                  "messageId": "manufacturer-000269",
+                  "from": "trenova",
+                  "purpose": "document",
+                  "sets": [
+                    "990"
+                  ],
+                  "state": "received",
+                  "at": "2026-11-20T14:24:06.687407842Z",
+                  "accepted": true,
+                  "ack": "sent",
+                  "ackCode": "A",
+                  "x12": "ISA*00*          *00*          *ZZ*TRENOVA        *ZZ*KESTRELVW      *261120*0824*U*00401*000000025*0*T*\u003e~\nGS*GF*TRENOVA*KESTRELVW*20261120*0824*25*X*004010~\nST*990*0025~\nB1*TRNV*KVW-113041*20261120*A~\nSE*3*0025~\nGE*1*25~\nIEA*1*000000025~\n"
+                },
+                {
+                  "messageId": "manufacturer-000270",
+                  "from": "partner",
+                  "purpose": "ack",
+                  "sets": [
+                    "997"
+                  ],
+                  "state": "delivered",
+                  "at": "2026-11-20T14:24:06.687672369Z",
+                  "x12": "ISA*00*          *00*          *ZZ*KESTRELVW      *ZZ*TRENOVA        *261120*0824*^*00401*095894983*0*T*\u003e~\nGS*FA*KESTRELVW*TRENOVA*20261120*0824*96127294*X*004010~\nST*997*0001~\nAK1*GF*25~\nAK2*990*0025~\nAK5*A~\nAK9*A*1*1*1~\nSE*6*0001~\nGE*1*96127294~\nIEA*1*095894983~\n"
+                },
+                {
+                  "messageId": "manufacturer-000271",
+                  "from": "partner",
+                  "purpose": "document",
+                  "sets": [
+                    "204"
+                  ],
+                  "state": "delivered",
+                  "at": "2026-11-20T14:24:06.69195833Z",
+                  "variation": "cancel",
+                  "ack": "received",
+                  "ackCode": "A",
+                  "x12": "ISA*00*          *00*          *ZZ*KESTRELVW      *ZZ*TRENOVA        *260317*1635*^*00401*095894984*0*T*\u003e~\nGS*SM*KESTRELVW*TRENOVA*20260317*1635*96127295*X*004010~\nST*204*0001~\nB2**TRNV**KVW-113041**PP~\nB2A*01*LT~\nL11*8100153571*BM~\nL11*4522430937*PO~\nN1*BT*KESTREL VALVE WORKS ACCOUNTS PAYABLE*93*KVW-AP~\nN3*500 E STATE ST~\nN4*ROCKFORD*IL*61104*US~\nN7**TBD*********TF****5300~\nS5*1*LD*9280*L*7*PC~\nG62*37*20260320*G*0800*CT~\nG62*38*20260320*L*1000*CT~\nAT8*G*L*9280*7~\nN1*SH*KESTREL VALVE WORKS PLANT 1*93*KVW-RFD1~\nN3*2750 SANDY HOLLOW RD~\nN4*ROCKFORD*IL*61109*US~\nL5*1*BUTTERFLY VALVE ASSEMBLIES*88260*N~\nAT8*G*L*2625*2~\nL5*2*BUTTERFLY VALVE ASSEMBLIES*88260*N~\nAT8*G*L*2813*1~\nL5*3*THREAD SEALANT ADHESIVE*04610*N~\nAT8*G*L*3842*4~\nS5*2*UL*9280*L*7*PC~\nL11*APT738524*AO~\nG62*53*20260321*G*0700*CT~\nG62*54*20260321*L*0900*CT~\nAT8*G*L*9280*7~\nN1*CN*PRAIRIE INDUSTRIAL SUPPLY ATLANTA*93*KVC-0500~\nN3*5889 INDUSTRIAL ST~\nN4*ATLANTA*GA*303188224*US~\nL3*9280*G*3.16*PM*239212******7*L~\nSE*32*0001~\nGE*1*96127295~\nIEA*1*095894984~\n"
+                },
+                {
+                  "messageId": "manufacturer-000272",
+                  "from": "trenova",
+                  "purpose": "ack",
+                  "sets": [
+                    "997"
+                  ],
+                  "state": "received",
+                  "at": "2026-11-20T14:24:07.387812024Z",
+                  "accepted": true,
+                  "x12": "ISA*00*          *00*          *ZZ*TRENOVA        *ZZ*KESTRELVW      *261120*1424*U*00401*000000058*0*T*\u003e~\nGS*FA*TRENOVA*KESTRELVW*20261120*1424*58*X*004010~\nST*997*0058~\nAK1*SM*96127295~\nAK2*204*0001~\nAK5*A~\nAK9*A*1*1*1~\nSE*6*0058~\nGE*1*58~\nIEA*1*000000058~\n"
+                }
+              ],
+              "states": [
+                {
+                  "step": 7,
+                  "at": "1.461s",
+                  "flowStatus": "Open"
+                },
+                {
+                  "step": 7,
+                  "at": "2.892s",
+                  "flowStatus": "Open",
+                  "shipment": "shp_01M7WNFNG7BGCRBP17YNSCKQ74",
+                  "shipmentStatus": "Canceled",
+                  "stops": 2,
+                  "total": "2392.12"
+                },
+                {
+                  "step": 7,
+                  "at": "1m2.987s",
+                  "flowStatus": "Closed",
+                  "shipment": "shp_01M7WNFNG7BGCRBP17YNSCKQ74",
+                  "shipmentStatus": "Canceled",
+                  "stops": 2,
+                  "total": "2392.12"
+                }
+              ]
+            }
+          ],
+          "replay": "edi-sim run --partner manufacturer --scenario cancel-before-dispatch --run 13"
+        },
+        {
+          "name": "a planner's decline is answered with a 990 and no load is built",
+          "file": "partners/manufacturer/scenarios/declined.yaml",
+          "slug": "declined",
+          "seed": 13080,
+          "status": "passed",
+          "startedAt": "2026-11-20T14:25:07.868990462Z",
+          "took": 0.459,
+          "steps": [
+            {
+              "index": 0,
+              "kind": "send",
+              "text": "send 204 original as t1",
+              "status": "passed",
+              "note": "1 interchange(s), key KVW-113081",
+              "at": 0.000,
+              "took": 0.021,
+              "ended": "2026-11-20T14:25:07.890188586Z",
+              "keys": [
+                "KVW-113081"
+              ],
+              "matches": [
+                {
+                  "messageId": "manufacturer-000273",
+                  "key": "KVW-113081"
+                }
+              ]
+            },
+            {
+              "index": 1,
+              "kind": "expect",
+              "text": "expect 997 for t1",
+              "status": "passed",
+              "note": "ack A",
+              "at": 0.022,
+              "took": 0.182,
+              "ended": "2026-11-20T14:25:08.072293835Z",
+              "keys": [
+                "KVW-113081"
+              ],
+              "matches": [
+                {
+                  "messageId": "manufacturer-000274",
+                  "key": "KVW-113081"
+                }
+              ]
+            },
+            {
+              "index": 2,
+              "kind": "trenova",
+              "text": "trenova decide t1 decline",
+              "status": "passed",
+              "at": 0.204,
+              "took": 0.239,
+              "ended": "2026-11-20T14:25:08.312454046Z",
+              "keys": [
+                "KVW-113081"
+              ],
+              "events": [
+                {
+                  "key": "KVW-113081",
+                  "at": "2026-11-20T14:25:08.304667673Z",
+                  "label": "Planner declined",
+                  "detail": "No trucks in Rockford that day",
+                  "tone": "trenova",
+                  "who": "admin@trenova.app"
+                }
+              ]
+            },
+            {
+              "index": 3,
+              "kind": "expect",
+              "text": "expect wire 990 about t1, B1-04: D",
+              "status": "passed",
+              "note": "990 0026",
+              "at": 0.444,
+              "took": 0.000,
+              "ended": "2026-11-20T14:25:08.313211661Z",
+              "keys": [
+                "KVW-113081"
+              ],
+              "matches": [
+                {
+                  "messageId": "manufacturer-000275",
+                  "groupControl": "26",
+                  "control": "0026",
+                  "key": "KVW-113081"
+                }
+              ]
+            },
+            {
+              "index": 4,
+              "kind": "expect",
+              "text": "expect no shipment for t1",
+              "status": "passed",
+              "note": "no shipment",
+              "at": 0.445,
+              "took": 0.014,
+              "ended": "2026-11-20T14:25:08.327775597Z",
+              "keys": [
+                "KVW-113081"
+              ],
+              "events": [
+                {
+                  "key": "KVW-113081",
+                  "at": "2026-11-20T14:25:08.322470053Z",
+                  "label": "No shipment built",
+                  "tone": "trenova"
+                }
+              ]
+            }
+          ],
+          "conversations": [
+            {
+              "name": "t1",
+              "key": "KVW-113081",
+              "seed": 13081,
+              "milestones": {
+                "ack": 0.202,
+                "answer": 0.434
+              },
+              "wire": [
+                {
+                  "messageId": "manufacturer-000273",
+                  "from": "partner",
+                  "purpose": "document",
+                  "sets": [
+                    "204"
+                  ],
+                  "state": "delivered",
+                  "at": "2026-11-20T14:25:07.872053413Z",
+                  "variation": "original",
+                  "ack": "received",
+                  "ackCode": "A",
+                  "x12": "ISA*00*          *00*          *ZZ*KESTRELVW      *ZZ*TRENOVA        *260309*1605*^*00401*095894985*0*T*\u003e~\nGS*SM*KESTRELVW*TRENOVA*20260309*1605*96127296*X*004010~\nST*204*0001~\nB2**TRNV**KVW-113081**PP~\nB2A*00*LT~\nL11*8100539354*BM~\nN1*BT*KESTREL VALVE WORKS ACCOUNTS PAYABLE*93*KVW-AP~\nN3*500 E STATE ST~\nN4*ROCKFORD*IL*61104*US~\nN7**TBD*********TF****5300~\nS5*1*LD*14910*L*17*PC~\nL11*R6490737*P8~\nG62*37*20260312*G*0800*CT~\nG62*38*20260312*L*1000*CT~\nAT8*G*L*14910*17~\nN1*SH*KESTREL FINISHED GOODS DC*93*KVW-JOL3~\nN3*3300 CHANNAHON RD~\nN4*JOLIET*IL*60436*US~\nL5*1*BRASS BALL VALVES*88250*N~\nAT8*G*L*6486*6~\nL5*2*BRASS BALL VALVES*88250*N~\nAT8*G*L*8424*11~\nS5*2*UL*14910*L*17*PC~\nG62*53*20260312*G*1600*CT~\nG62*54*20260312*L*1800*CT~\nAT8*G*L*14910*17~\nNTE*DEL*DELIVER TO DOOR 14~\nN1*CN*TRI-STATE WATERWORKS LOUISVILLE*93*KVC-0323~\nN3*1064 ENTERPRISE AVE~\nN4*LOUISVILLE*KY*402130607*US~\nL3*14910*G*2.54*PM*77216******17*L~\nSE*30*0001~\nGE*1*96127296~\nIEA*1*095894985~\n"
+                },
+                {
+                  "messageId": "manufacturer-000274",
+                  "from": "trenova",
+                  "purpose": "ack",
+                  "sets": [
+                    "997"
+                  ],
+                  "state": "received",
+                  "at": "2026-11-20T14:25:08.071588333Z",
+                  "accepted": true,
+                  "x12": "ISA*00*          *00*          *ZZ*TRENOVA        *ZZ*KESTRELVW      *261120*1425*U*00401*000000059*0*T*\u003e~\nGS*FA*TRENOVA*KESTRELVW*20261120*1425*59*X*004010~\nST*997*0059~\nAK1*SM*96127296~\nAK2*204*0001~\nAK5*A~\nAK9*A*1*1*1~\nSE*6*0059~\nGE*1*59~\nIEA*1*000000059~\n"
+                },
+                {
+                  "messageId": "manufacturer-000275",
+                  "from": "trenova",
+                  "purpose": "document",
+                  "sets": [
+                    "990"
+                  ],
+                  "state": "received",
+                  "at": "2026-11-20T14:25:08.303186039Z",
+                  "accepted": true,
+                  "ack": "scheduled",
+                  "ackCode": "A",
+                  "x12": "ISA*00*          *00*          *ZZ*TRENOVA        *ZZ*KESTRELVW      *261120*0825*U*00401*000000026*0*T*\u003e~\nGS*GF*TRENOVA*KESTRELVW*20261120*0825*26*X*004010~\nST*990*0026~\nB1*TRNV*KVW-113081*20261120*D~\nN9*ZZ*No trucks in Rockford that day~\nSE*4*0026~\nGE*1*26~\nIEA*1*000000026~\n"
+                },
+                {
+                  "messageId": "manufacturer-000276",
+                  "from": "partner",
+                  "purpose": "ack",
+                  "sets": [
+                    "997"
+                  ],
+                  "state": "scheduled",
+                  "at": "2026-11-20T14:25:08.303301756Z",
+                  "x12": "ISA*00*          *00*          *ZZ*KESTRELVW      *ZZ*TRENOVA        *261120*0825*^*00401*095894986*0*T*\u003e~\nGS*FA*KESTRELVW*TRENOVA*20261120*0825*96127297*X*004010~\nST*997*0001~\nAK1*GF*26~\nAK2*990*0026~\nAK5*A~\nAK9*A*1*1*1~\nSE*6*0001~\nGE*1*96127297~\nIEA*1*095894986~\n"
+                }
+              ],
+              "states": [
+                {
+                  "step": 4,
+                  "at": "436ms",
+                  "flowStatus": "Open"
+                },
+                {
+                  "step": 4,
+                  "at": "453ms",
+                  "flowStatus": "Open"
+                },
+                {
+                  "step": 4,
+                  "at": "459ms",
+                  "flowStatus": "Open"
+                }
+              ]
+            }
+          ],
+          "replay": "edi-sim run --partner manufacturer --scenario declined --run 13"
+        },
+        {
+          "name": "a tender is accepted, delivered, invoiced and every document acknowledged",
+          "file": "partners/manufacturer/scenarios/happy-path.yaml",
+          "slug": "happy-path",
+          "seed": 13120,
+          "status": "failed",
+          "startedAt": "2026-11-20T14:25:08.332808656Z",
+          "took": 0.618,
+          "steps": [
+            {
+              "index": 0,
+              "kind": "send",
+              "text": "send 204 original as t1",
+              "status": "passed",
+              "note": "1 interchange(s), key KVW-113121",
+              "at": 0.000,
+              "took": 0.016,
+              "ended": "2026-11-20T14:25:08.349647664Z",
+              "keys": [
+                "KVW-113121"
+              ],
+              "matches": [
+                {
+                  "messageId": "manufacturer-000277",
+                  "key": "KVW-113121"
+                }
+              ]
+            },
+            {
+              "index": 1,
+              "kind": "expect",
+              "text": "expect 997 for t1, within 2m, accepted",
+              "status": "passed",
+              "note": "ack A",
+              "at": 0.017,
+              "took": 0.168,
+              "ended": "2026-11-20T14:25:08.517912364Z",
+              "keys": [
+                "KVW-113121"
+              ],
+              "matches": [
+                {
+                  "messageId": "manufacturer-000278",
+                  "key": "KVW-113121"
+                }
+              ]
+            },
+            {
+              "index": 2,
+              "kind": "trenova",
+              "text": "trenova decide t1 accept",
+              "status": "failed",
+              "why": "Trenova accepted the transfer but could not build its shipment: validation failed:\n- moves[0].stops[1].scheduledWindowEnd: Scheduled window end must be before the next stop's scheduled window start",
+              "at": 0.186,
+              "took": 0.432,
+              "ended": "2026-11-20T14:25:08.950694959Z",
+              "keys": [
+                "KVW-113121"
+              ],
+              "events": [
+                {
+                  "key": "KVW-113121",
+                  "at": "2026-11-20T14:25:08.950694593Z",
+                  "label": "trenova decide t1 accept",
+                  "tone": "bad"
+                }
+              ]
+            },
+            {
+              "index": 3,
+              "kind": "expect",
+              "text": "expect wire 990 about t1, B1-04: A",
+              "status": "skipped",
+              "at": 0.618,
+              "took": 0.000,
+              "ended": "0001-01-01T00:00:00Z"
+            },
+            {
+              "index": 4,
+              "kind": "expect",
+              "text": "expect shipment t1",
+              "status": "skipped",
+              "at": 0.618,
+              "took": 0.000,
+              "ended": "0001-01-01T00:00:00Z"
+            },
+            {
+              "index": 5,
+              "kind": "trenova",
+              "text": "trenova dispatch t1",
+              "status": "skipped",
+              "at": 0.618,
+              "took": 0.000,
+              "ended": "0001-01-01T00:00:00Z"
+            },
+            {
+              "index": 6,
+              "kind": "trenova",
+              "text": "trenova deliver t1",
+              "status": "skipped",
+              "at": 0.618,
+              "took": 0.000,
+              "ended": "0001-01-01T00:00:00Z"
+            },
+            {
+              "index": 7,
+              "kind": "advance",
+              "text": "advance t1 by 5m",
+              "status": "skipped",
+              "at": 0.618,
+              "took": 0.000,
+              "ended": "0001-01-01T00:00:00Z"
+            },
+            {
+              "index": 8,
+              "kind": "expect",
+              "text": "expect wire 214 about t1, statuses [X3, AF, X1, D1]",
+              "status": "skipped",
+              "at": 0.618,
+              "took": 0.000,
+              "ended": "0001-01-01T00:00:00Z"
+            },
+            {
+              "index": 9,
+              "kind": "trenova",
+              "text": "trenova invoice t1",
+              "status": "skipped",
+              "at": 0.618,
+              "took": 0.000,
+              "ended": "0001-01-01T00:00:00Z"
+            },
+            {
+              "index": 10,
+              "kind": "expect",
+              "text": "expect wire 210 about t1, total tendered",
+              "status": "skipped",
+              "at": 0.618,
+              "took": 0.000,
+              "ended": "0001-01-01T00:00:00Z"
+            },
+            {
+              "index": 11,
+              "kind": "expect",
+              "text": "expect every document about t1 reconciled, within 4m",
+              "status": "skipped",
+              "at": 0.618,
+              "took": 0.000,
+              "ended": "0001-01-01T00:00:00Z"
+            },
+            {
+              "index": 12,
+              "kind": "expect",
+              "text": "expect shipment t1 invoiced",
+              "status": "skipped",
+              "at": 0.618,
+              "took": 0.000,
+              "ended": "0001-01-01T00:00:00Z"
+            }
+          ],
+          "conversations": [
+            {
+              "name": "t1",
+              "key": "KVW-113121",
+              "seed": 13121,
+              "milestones": {
+                "ack": 0.184
+              },
+              "wire": [
+                {
+                  "messageId": "manufacturer-000277",
+                  "from": "partner",
+                  "purpose": "document",
+                  "sets": [
+                    "204"
+                  ],
+                  "state": "delivered",
+                  "at": "2026-11-20T14:25:08.333677104Z",
+                  "variation": "original",
+                  "ack": "received",
+                  "ackCode": "A",
+                  "x12": "ISA*00*          *00*          *ZZ*KESTRELVW      *ZZ*TRENOVA        *260331*1410*^*00401*095894987*0*T*\u003e~\nGS*SM*KESTRELVW*TRENOVA*20260331*1410*96127298*X*004010~\nST*204*0001~\nB2**TRNV**KVW-113121**PP~\nB2A*00*LT~\nL11*8100191683*BM~\nL11*4554771241*PO~\nN1*BT*KESTREL VALVE WORKS ACCOUNTS PAYABLE*93*KVW-AP~\nN3*500 E STATE ST~\nN4*ROCKFORD*IL*61104*US~\nN7**TBD*********RT**0040**5300~\nS5*1*LD*41690*L*24*PC~\nL11*R9933062*P8~\nG62*37*20260403*G*1000*CT~\nG62*38*20260403*L*1200*CT~\nAT8*G*L*41690*24~\nN1*SH*KESTREL VALVE WORKS PLANT 1*93*KVW-RFD1~\nN3*2750 SANDY HOLLOW RD~\nN4*ROCKFORD*IL*61109*US~\nL5*1*BRASS BALL VALVES*88250*N~\nAT8*G*L*19150*17~\nL5*2*BUTTERFLY VALVE ASSEMBLIES*88260*N~\nAT8*G*L*22540*7~\nS5*2*UL*17571*L*4*PC~\nG62*53*20260403*G*1300*CT~\nG62*54*20260403*L*1500*CT~\nAT8*G*L*17571*4~\nNTE*DEL*DELIVER TO DOOR 14~\nN1*CN*TRI-STATE WATERWORKS JOLIET*93*KVC-0321~\nN3*8950 RAILROAD AVE~\nN4*JOLIET*IL*60436*US~\nS5*3*UL*11679*L*6*PC~\nL11*APT853244*AO~\nG62*53*20260403*G*1500*CT~\nG62*54*20260403*L*1700*CT~\nAT8*G*L*11679*6~\nN1*CN*TRI-STATE WATERWORKS CHICAGO*93*KVC-0306~\nN3*4552 WAREHOUSE RD~\nN4*CHICAGO*IL*60632*US~\nG61*IC*RECEIVING*TE*7735559278~\nS5*4*UL*12440*L*14*PC~\nL11*APT457134*AO~\nG62*53*20260404*G*1600*CT~\nG62*54*20260404*L*1800*CT~\nAT8*G*L*12440*14~\nN1*CN*PRAIRIE INDUSTRIAL SUPPLY DENVER*93*KVC-0512~\nN3*3014 CENTRAL BLVD~\nN4*DENVER*CO*80216*US~\nL3*41690*G*3.33*PM*417597******24*L~\nSE*48*0001~\nGE*1*96127298~\nIEA*1*095894987~\n"
+                },
+                {
+                  "messageId": "manufacturer-000278",
+                  "from": "trenova",
+                  "purpose": "ack",
+                  "sets": [
+                    "997"
+                  ],
+                  "state": "received",
+                  "at": "2026-11-20T14:25:08.516987252Z",
+                  "accepted": true,
+                  "x12": "ISA*00*          *00*          *ZZ*TRENOVA        *ZZ*KESTRELVW      *261120*1425*U*00401*000000060*0*T*\u003e~\nGS*FA*TRENOVA*KESTRELVW*20261120*1425*60*X*004010~\nST*997*0060~\nAK1*SM*96127298~\nAK2*204*0001~\nAK5*A~\nAK9*A*1*1*1~\nSE*6*0060~\nGE*1*60~\nIEA*1*000000060~\n"
+                }
+              ],
+              "states": [
+                {
+                  "step": 12,
+                  "at": "613ms",
+                  "flowStatus": "Open"
+                },
+                {
+                  "step": 12,
+                  "at": "618ms",
+                  "flowStatus": "Open"
+                }
+              ]
+            }
+          ],
+          "failures": [
+            {
+              "step": 2,
+              "source": "harness",
+              "rule": "step",
+              "message": "Trenova accepted the transfer but could not build its shipment: validation failed:\n- moves[0].stops[1].scheduledWindowEnd: Scheduled window end must be before the next stop's scheduled window start",
+              "replay": "edi-sim run --partner manufacturer --scenario happy-path --run 13"
+            }
+          ],
+          "replay": "edi-sim run --partner manufacturer --scenario happy-path --run 13"
+        },
+        {
+          "name": "a rate change after acceptance is held for a planner, then released",
+          "file": "partners/manufacturer/scenarios/rate-change-held.yaml",
+          "slug": "rate-change-held",
+          "seed": 13160,
+          "status": "passed",
+          "startedAt": "2026-11-20T14:25:08.956331451Z",
+          "took": 8.292,
+          "steps": [
+            {
+              "index": 0,
+              "kind": "send",
+              "text": "send 204 original as t1",
+              "status": "passed",
+              "note": "1 interchange(s), key KVW-113161",
+              "at": 0.000,
+              "took": 0.018,
+              "ended": "2026-11-20T14:25:08.975122879Z",
+              "keys": [
+                "KVW-113161"
+              ],
+              "matches": [
+                {
+                  "messageId": "manufacturer-000279",
+                  "key": "KVW-113161"
+                }
+              ]
+            },
+            {
+              "index": 1,
+              "kind": "expect",
+              "text": "expect 997 for t1",
+              "status": "passed",
+              "note": "ack A",
+              "at": 0.019,
+              "took": 0.179,
+              "ended": "2026-11-20T14:25:09.154236326Z",
+              "keys": [
+                "KVW-113161"
+              ],
+              "matches": [
+                {
+                  "messageId": "manufacturer-000280",
+                  "key": "KVW-113161"
+                }
+              ]
+            },
+            {
+              "index": 2,
+              "kind": "trenova",
+              "text": "trenova decide t1 accept",
+              "status": "passed",
+              "at": 0.199,
+              "took": 0.691,
+              "ended": "2026-11-20T14:25:09.845983037Z",
+              "keys": [
+                "KVW-113161"
+              ],
+              "events": [
+                {
+                  "key": "KVW-113161",
+                  "at": "2026-11-20T14:25:09.838836829Z",
+                  "label": "Planner accepted",
+                  "detail": "mapped 1 of the partner's codes",
+                  "tone": "trenova",
+                  "who": "admin@trenova.app"
+                }
+              ]
+            },
+            {
+              "index": 3,
+              "kind": "expect",
+              "text": "expect wire 990 about t1, B1-04: A",
+              "status": "passed",
+              "note": "990 0027",
+              "at": 0.890,
+              "took": 0.000,
+              "ended": "2026-11-20T14:25:09.846855208Z",
+              "keys": [
+                "KVW-113161"
+              ],
+              "matches": [
+                {
+                  "messageId": "manufacturer-000281",
+                  "groupControl": "27",
+                  "control": "0027",
+                  "key": "KVW-113161"
+                }
+              ]
+            },
+            {
+              "index": 4,
+              "kind": "send",
+              "text": "send 204 change of t1, total +12%",
+              "status": "passed",
+              "note": "1 interchange(s), key KVW-113161",
+              "at": 0.891,
+              "took": 0.025,
+              "ended": "2026-11-20T14:25:09.872223371Z",
+              "keys": [
+                "KVW-113161"
+              ],
+              "matches": [
+                {
+                  "messageId": "manufacturer-000283",
+                  "key": "KVW-113161"
+                }
+              ]
+            },
+            {
+              "index": 5,
+              "kind": "expect",
+              "text": "expect 997 for t1",
+              "status": "passed",
+              "note": "ack A",
+              "at": 0.917,
+              "took": 0.263,
+              "ended": "2026-11-20T14:25:10.13606846Z",
+              "keys": [
+                "KVW-113161"
+              ],
+              "matches": [
+                {
+                  "messageId": "manufacturer-000284",
+                  "key": "KVW-113161"
+                }
+              ]
+            },
+            {
+              "index": 6,
+              "kind": "expect",
+              "text": "expect flow t1 held \"changed the rate\"",
+              "status": "passed",
+              "note": "Held \"Kestrel changed the rate on KVW-113161\"",
+              "at": 1.181,
+              "took": 0.015,
+              "ended": "2026-11-20T14:25:10.152611898Z",
+              "keys": [
+                "KVW-113161"
+              ],
+              "events": [
+                {
+                  "key": "KVW-113161",
+                  "at": "2026-11-20T14:25:10.152580307Z",
+                  "label": "Flow held",
+                  "detail": "Kestrel changed the rate on KVW-113161",
+                  "tone": "hold"
+                }
+              ]
+            },
+            {
+              "index": 7,
+              "kind": "trenova",
+              "text": "trenova release t1",
+              "status": "passed",
+              "at": 1.203,
+              "took": 0.153,
+              "ended": "2026-11-20T14:25:10.312280019Z",
+              "keys": [
+                "KVW-113161"
+              ],
+              "events": [
+                {
+                  "key": "KVW-113161",
+                  "at": "2026-11-20T14:25:10.245549578Z",
+                  "label": "Planner released",
+                  "tone": "trenova",
+                  "who": "admin@trenova.app"
+                }
+              ]
+            },
+            {
+              "index": 8,
+              "kind": "expect",
+              "text": "expect flow t1 open",
+              "status": "passed",
+              "note": "Open \"Kestrel changed the rate on KVW-113161\"",
+              "at": 1.357,
+              "took": 0.010,
+              "ended": "2026-11-20T14:25:10.322699115Z",
+              "keys": [
+                "KVW-113161"
+              ],
+              "events": [
+                {
+                  "key": "KVW-113161",
+                  "at": "2026-11-20T14:25:10.322678534Z",
+                  "label": "Flow open",
+                  "detail": "Kestrel changed the rate on KVW-113161",
+                  "tone": "trenova"
+                }
+              ]
+            },
+            {
+              "index": 9,
+              "kind": "trenova",
+              "text": "trenova dispatch t1",
+              "status": "passed",
+              "at": 1.367,
+              "took": 0.561,
+              "ended": "2026-11-20T14:25:10.884761251Z",
+              "keys": [
+                "KVW-113161"
+              ],
+              "events": [
+                {
+                  "key": "KVW-113161",
+                  "at": "2026-11-20T14:25:10.831915315Z",
+                  "label": "Dispatched",
+                  "tone": "trenova",
+                  "who": "admin@trenova.app"
+                }
+              ]
+            },
+            {
+              "index": 10,
+              "kind": "trenova",
+              "text": "trenova deliver t1",
+              "status": "passed",
+              "at": 1.929,
+              "took": 3.158,
+              "ended": "2026-11-20T14:25:14.024918186Z",
+              "keys": [
+                "KVW-113161"
+              ],
+              "events": [
+                {
+                  "key": "KVW-113161",
+                  "at": "2026-11-20T14:25:13.982194693Z",
+                  "label": "Delivered",
+                  "detail": "every stop arrived and departed",
+                  "tone": "trenova",
+                  "who": "admin@trenova.app"
+                }
+              ]
+            },
+            {
+              "index": 11,
+              "kind": "advance",
+              "text": "advance t1 by 5m",
+              "status": "passed",
+              "note": "t1: Open (Kestrel changed the rate on KVW-113161)",
+              "at": 5.089,
+              "took": 3.201,
+              "ended": "2026-11-20T14:25:17.226926771Z",
+              "keys": [
+                "KVW-113161"
+              ],
+              "gap": "advanced 5m"
+            },
+            {
+              "index": 12,
+              "kind": "expect",
+              "text": "expect wire 214 about t1, statuses [X3, AF]",
+              "status": "passed",
+              "note": "214 0006",
+              "at": 8.291,
+              "took": 0.000,
+              "ended": "2026-11-20T14:25:17.227804871Z",
+              "keys": [
+                "KVW-113161"
+              ],
+              "matches": [
+                {
+                  "messageId": "manufacturer-000285",
+                  "groupControl": "6",
+                  "control": "0006",
+                  "key": "KVW-113161"
+                }
+              ]
+            }
+          ],
+          "conversations": [
+            {
+              "name": "t1",
+              "key": "KVW-113161",
+              "seed": 13161,
+              "milestones": {
+                "ack": 0.196,
+                "answer": 0.858,
+                "status": 5.259
+              },
+              "wire": [
+                {
+                  "messageId": "manufacturer-000279",
+                  "from": "partner",
+                  "purpose": "document",
+                  "sets": [
+                    "204"
+                  ],
+                  "state": "delivered",
+                  "at": "2026-11-20T14:25:08.957231376Z",
+                  "variation": "original",
+                  "ack": "received",
+                  "ackCode": "A",
+                  "x12": "ISA*00*          *00*          *ZZ*KESTRELVW      *ZZ*TRENOVA        *260427*0925*^*00401*095894988*0*T*\u003e~\nGS*SM*KESTRELVW*TRENOVA*20260427*0925*96127299*X*004010~\nST*204*0001~\nB2**TRNV**KVW-113161**PP~\nB2A*00*LT~\nL11*8100318838*BM~\nL11*4552885305*PO~\nNTE*LOI*TARPS REQUIRED ON FLATBED~\nN1*BT*KESTREL VALVE WORKS ACCOUNTS PAYABLE*93*KVW-AP~\nN3*500 E STATE ST~\nN4*ROCKFORD*IL*61104*US~\nN7**TBD*********TF****5300~\nS5*1*LD*8040*L*9*PC~\nL11*R5429662*P8~\nG62*37*20260429*G*1300*CT~\nG62*38*20260429*L*1500*CT~\nAT8*G*L*8040*9~\nN1*SH*KESTREL FINISHED GOODS DC*93*KVW-JOL3~\nN3*3300 CHANNAHON RD~\nN4*JOLIET*IL*60436*US~\nL5*1*BRASS BALL VALVES*88250*N~\nAT8*G*L*5642*4~\nL5*2*ACTUATOR KITS*61700*N~\nAT8*G*L*2398*5~\nS5*2*UL*8040*L*9*PC~\nL11*APT951224*AO~\nG62*53*20260430*G*0700*CT~\nG62*54*20260430*L*0900*CT~\nAT8*G*L*8040*9~\nN1*CN*MIDLAND FLUID SUPPLY FORT WAYNE*93*KVC-0016~\nN3*9080 INDUSTRIAL AVE~\nN4*FORT WAYNE*IN*46803*US~\nG61*IC*RECEIVING*TE*2605559379~\nL3*8040*G*2.61*PM*48024******9*L~\nSE*33*0001~\nGE*1*96127299~\nIEA*1*095894988~\n"
+                },
+                {
+                  "messageId": "manufacturer-000280",
+                  "from": "trenova",
+                  "purpose": "ack",
+                  "sets": [
+                    "997"
+                  ],
+                  "state": "received",
+                  "at": "2026-11-20T14:25:09.152558495Z",
+                  "accepted": true,
+                  "x12": "ISA*00*          *00*          *ZZ*TRENOVA        *ZZ*KESTRELVW      *261120*1425*U*00401*000000061*0*T*\u003e~\nGS*FA*TRENOVA*KESTRELVW*20261120*1425*61*X*004010~\nST*997*0061~\nAK1*SM*96127299~\nAK2*204*0001~\nAK5*A~\nAK9*A*1*1*1~\nSE*6*0061~\nGE*1*61~\nIEA*1*000000061~\n"
+                },
+                {
+                  "messageId": "manufacturer-000281",
+                  "from": "trenova",
+                  "purpose": "document",
+                  "sets": [
+                    "990"
+                  ],
+                  "state": "received",
+                  "at": "2026-11-20T14:25:09.814830486Z",
+                  "accepted": true,
+                  "ack": "scheduled",
+                  "ackCode": "A",
+                  "x12": "ISA*00*          *00*          *ZZ*TRENOVA        *ZZ*KESTRELVW      *261120*0825*U*00401*000000027*0*T*\u003e~\nGS*GF*TRENOVA*KESTRELVW*20261120*0825*27*X*004010~\nST*990*0027~\nB1*TRNV*KVW-113161*20261120*A~\nSE*3*0027~\nGE*1*27~\nIEA*1*000000027~\n"
+                },
+                {
+                  "messageId": "manufacturer-000282",
+                  "from": "partner",
+                  "purpose": "ack",
+                  "sets": [
+                    "997"
+                  ],
+                  "state": "scheduled",
+                  "at": "2026-11-20T14:25:09.814993714Z",
+                  "x12": "ISA*00*          *00*          *ZZ*KESTRELVW      *ZZ*TRENOVA        *261120*0825*^*00401*095894989*0*T*\u003e~\nGS*FA*KESTRELVW*TRENOVA*20261120*0825*96127300*X*004010~\nST*997*0001~\nAK1*GF*27~\nAK2*990*0027~\nAK5*A~\nAK9*A*1*1*1~\nSE*6*0001~\nGE*1*96127300~\nIEA*1*095894989~\n"
+                },
+                {
+                  "messageId": "manufacturer-000283",
+                  "from": "partner",
+                  "purpose": "document",
+                  "sets": [
+                    "204"
+                  ],
+                  "state": "delivered",
+                  "at": "2026-11-20T14:25:09.848515621Z",
+                  "variation": "change rate +12%",
+                  "ack": "received",
+                  "ackCode": "A",
+                  "x12": "ISA*00*          *00*          *ZZ*KESTRELVW      *ZZ*TRENOVA        *260427*1225*^*00401*095894990*0*T*\u003e~\nGS*SM*KESTRELVW*TRENOVA*20260427*1225*96127301*X*004010~\nST*204*0001~\nB2**TRNV**KVW-113161**PP~\nB2A*04*LT~\nL11*8100318838*BM~\nL11*4552885305*PO~\nNTE*LOI*TARPS REQUIRED ON FLATBED~\nN1*BT*KESTREL VALVE WORKS ACCOUNTS PAYABLE*93*KVW-AP~\nN3*500 E STATE ST~\nN4*ROCKFORD*IL*61104*US~\nN7**TBD*********TF****5300~\nS5*1*LD*8040*L*9*PC~\nL11*R5429662*P8~\nG62*37*20260429*G*1300*CT~\nG62*38*20260429*L*1500*CT~\nAT8*G*L*8040*9~\nN1*SH*KESTREL FINISHED GOODS DC*93*KVW-JOL3~\nN3*3300 CHANNAHON RD~\nN4*JOLIET*IL*60436*US~\nL5*1*BRASS BALL VALVES*88250*N~\nAT8*G*L*5642*4~\nL5*2*ACTUATOR KITS*61700*N~\nAT8*G*L*2398*5~\nS5*2*UL*8040*L*9*PC~\nL11*APT951224*AO~\nG62*53*20260430*G*0700*CT~\nG62*54*20260430*L*0900*CT~\nAT8*G*L*8040*9~\nN1*CN*MIDLAND FLUID SUPPLY FORT WAYNE*93*KVC-0016~\nN3*9080 INDUSTRIAL AVE~\nN4*FORT WAYNE*IN*46803*US~\nG61*IC*RECEIVING*TE*2605559379~\nL3*8040*G*2.61*PM*53787******9*L~\nSE*33*0001~\nGE*1*96127301~\nIEA*1*095894990~\n"
+                },
+                {
+                  "messageId": "manufacturer-000284",
+                  "from": "trenova",
+                  "purpose": "ack",
+                  "sets": [
+                    "997"
+                  ],
+                  "state": "received",
+                  "at": "2026-11-20T14:25:10.135095088Z",
+                  "accepted": true,
+                  "x12": "ISA*00*          *00*          *ZZ*TRENOVA        *ZZ*KESTRELVW      *261120*1425*U*00401*000000062*0*T*\u003e~\nGS*FA*TRENOVA*KESTRELVW*20261120*1425*62*X*004010~\nST*997*0062~\nAK1*SM*96127301~\nAK2*204*0001~\nAK5*A~\nAK9*A*1*1*1~\nSE*6*0062~\nGE*1*62~\nIEA*1*000000062~\n"
+                },
+                {
+                  "messageId": "manufacturer-000285",
+                  "from": "trenova",
+                  "purpose": "document",
+                  "sets": [
+                    "214"
+                  ],
+                  "state": "received",
+                  "at": "2026-11-20T14:25:14.21535735Z",
+                  "accepted": true,
+                  "ack": "scheduled",
+                  "ackCode": "A",
+                  "x12": "ISA*00*          *00*          *ZZ*TRENOVA        *ZZ*KESTRELVW      *261120*0825*U*00401*000000006*0*T*\u003e~\nGS*QM*TRENOVA*KESTRELVW*20261120*0825*6*X*004010~\nST*214*0006~\nB10*S26110019182255*KVW-113161*TRNV~\nL11*8100318838*BM~\nL11*KVW-113161*PO~\nLX*1~\nAT7*X3*NS***20261120*0625*PT~\nMS1*JOLIET*IL*US~\nLX*2~\nAT7*AF*NS***20261120*0625*PT~\nMS1*JOLIET*IL*US~\nLX*3~\nAT7*X1*NS***20261120*0625*PT~\nMS1*FORT WAYNE*IN*US~\nL11*1*QN~\nLX*4~\nAT7*D1*NS***20261120*0625*PT~\nMS1*FORT WAYNE*IN*US~\nL11*1*QN~\nSE*19*0006~\nGE*1*6~\nIEA*1*000000006~\n"
+                },
+                {
+                  "messageId": "manufacturer-000286",
+                  "from": "partner",
+                  "purpose": "ack",
+                  "sets": [
+                    "997"
+                  ],
+                  "state": "scheduled",
+                  "at": "2026-11-20T14:25:14.215607098Z",
+                  "x12": "ISA*00*          *00*          *ZZ*KESTRELVW      *ZZ*TRENOVA        *261120*0825*^*00401*095894991*0*T*\u003e~\nGS*FA*KESTRELVW*TRENOVA*20261120*0825*96127302*X*004010~\nST*997*0001~\nAK1*QM*6~\nAK2*214*0006~\nAK5*A~\nAK9*A*1*1*1~\nSE*6*0001~\nGE*1*96127302~\nIEA*1*095894991~\n"
+                }
+              ],
+              "states": [
+                {
+                  "step": 12,
+                  "at": "883ms",
+                  "flowStatus": "Open"
+                },
+                {
+                  "step": 12,
+                  "at": "1.289s",
+                  "flowStatus": "Open",
+                  "flowWhy": "Kestrel changed the rate on KVW-113161",
+                  "shipment": "shp_01M7WNHKPKT1ET7MMMP5RY1TQ0",
+                  "shipmentStatus": "Delayed",
+                  "stops": 2,
+                  "total": "480.24"
+                },
+                {
+                  "step": 12,
+                  "at": "1.876s",
+                  "flowStatus": "Open",
+                  "flowWhy": "Kestrel changed the rate on KVW-113161",
+                  "shipment": "shp_01M7WNHKPKT1ET7MMMP5RY1TQ0",
+                  "shipmentStatus": "Delayed",
+                  "stops": 2,
+                  "total": "480.24"
+                },
+                {
+                  "step": 12,
+                  "at": "5.045s",
+                  "flowStatus": "Open",
+                  "flowWhy": "Kestrel changed the rate on KVW-113161",
+                  "shipment": "shp_01M7WNHKPKT1ET7MMMP5RY1TQ0",
+                  "shipmentStatus": "Completed",
+                  "stops": 2,
+                  "total": "480.24"
+                },
+                {
+                  "step": 12,
+                  "at": "8.292s",
+                  "flowStatus": "Open",
+                  "flowWhy": "Kestrel changed the rate on KVW-113161",
+                  "shipment": "shp_01M7WNHKPKT1ET7MMMP5RY1TQ0",
+                  "shipmentStatus": "Completed",
+                  "stops": 2,
+                  "total": "480.24"
+                }
+              ]
+            }
+          ],
+          "replay": "edi-sim run --partner manufacturer --scenario rate-change-held --run 13"
+        },
+        {
+          "name": "a 214 Kestrel rejects in its 997 escalates at once",
+          "file": "partners/manufacturer/scenarios/rejected-214-escalates.yaml",
+          "slug": "rejected-214-escalates",
+          "seed": 13200,
+          "status": "failed",
+          "startedAt": "2026-11-20T14:25:17.255722422Z",
+          "took": 182.880,
+          "steps": [
+            {
+              "index": 0,
+              "kind": "send",
+              "text": "send 204 original as t1",
+              "status": "passed",
+              "note": "1 interchange(s), key KVW-113201",
+              "at": 0.000,
+              "took": 0.035,
+              "ended": "2026-11-20T14:25:17.290878413Z",
+              "keys": [
+                "KVW-113201"
+              ],
+              "matches": [
+                {
+                  "messageId": "manufacturer-000287",
+                  "key": "KVW-113201"
+                }
+              ]
+            },
+            {
+              "index": 1,
+              "kind": "expect",
+              "text": "expect 997 for t1",
+              "status": "passed",
+              "note": "ack A",
+              "at": 0.037,
+              "took": 0.230,
+              "ended": "2026-11-20T14:25:17.522113528Z",
+              "keys": [
+                "KVW-113201"
+              ],
+              "matches": [
+                {
+                  "messageId": "manufacturer-000288",
+                  "key": "KVW-113201"
+                }
+              ]
+            },
+            {
+              "index": 2,
+              "kind": "trenova",
+              "text": "trenova decide t1 accept",
+              "status": "passed",
+              "at": 0.267,
+              "took": 0.679,
+              "ended": "2026-11-20T14:25:18.202009411Z",
+              "keys": [
+                "KVW-113201"
+              ],
+              "events": [
+                {
+                  "key": "KVW-113201",
+                  "at": "2026-11-20T14:25:18.190444733Z",
+                  "label": "Planner accepted",
+                  "detail": "mapped 1 of the partner's codes",
+                  "tone": "trenova",
+                  "who": "admin@trenova.app"
+                }
+              ]
+            },
+            {
+              "index": 3,
+              "kind": "expect",
+              "text": "expect wire 990 about t1",
+              "status": "passed",
+              "note": "990 0028",
+              "at": 0.947,
+              "took": 0.000,
+              "ended": "2026-11-20T14:25:18.202925818Z",
+              "keys": [
+                "KVW-113201"
+              ],
+              "matches": [
+                {
+                  "messageId": "manufacturer-000289",
+                  "groupControl": "28",
+                  "control": "0028",
+                  "key": "KVW-113201"
+                }
+              ]
+            },
+            {
+              "index": 4,
+              "kind": "acks",
+              "text": "acks reject 214 t1",
+              "status": "passed",
+              "note": "2 overrides queued",
+              "at": 0.948,
+              "took": 0.014,
+              "ended": "2026-11-20T14:25:18.218012014Z",
+              "keys": [
+                "KVW-113201"
+              ]
+            },
+            {
+              "index": 5,
+              "kind": "trenova",
+              "text": "trenova dispatch t1",
+              "status": "passed",
+              "at": 0.963,
+              "took": 0.466,
+              "ended": "2026-11-20T14:25:18.684991485Z",
+              "keys": [
+                "KVW-113201"
+              ],
+              "events": [
+                {
+                  "key": "KVW-113201",
+                  "at": "2026-11-20T14:25:18.604545912Z",
+                  "label": "Dispatched",
+                  "tone": "trenova",
+                  "who": "admin@trenova.app"
+                }
+              ]
+            },
+            {
+              "index": 6,
+              "kind": "trenova",
+              "text": "trenova arrive t1 stop 1",
+              "status": "passed",
+              "at": 1.430,
+              "took": 0.817,
+              "ended": "2026-11-20T14:25:19.503053929Z",
+              "keys": [
+                "KVW-113201"
+              ],
+              "events": [
+                {
+                  "key": "KVW-113201",
+                  "at": "2026-11-20T14:25:19.43815775Z",
+                  "label": "Arrived at stop 1",
+                  "tone": "trenova",
+                  "who": "admin@trenova.app"
+                }
+              ]
+            },
+            {
+              "index": 7,
+              "kind": "advance",
+              "text": "advance t1 by 5m",
+              "status": "passed",
+              "note": "t1: Open sent 214",
+              "at": 2.248,
+              "took": 3.760,
+              "ended": "2026-11-20T14:25:23.263662526Z",
+              "keys": [
+                "KVW-113201"
+              ],
+              "gap": "advanced 5m"
+            },
+            {
+              "index": 8,
+              "kind": "expect",
+              "text": "expect wire 214 about t1",
+              "status": "passed",
+              "note": "214 0007",
+              "at": 6.009,
+              "took": 0.000,
+              "ended": "2026-11-20T14:25:23.264906303Z",
+              "keys": [
+                "KVW-113201"
+              ],
+              "matches": [
+                {
+                  "messageId": "manufacturer-000291",
+                  "groupControl": "7",
+                  "control": "0007",
+                  "key": "KVW-113201"
+                }
+              ]
+            },
+            {
+              "index": 9,
+              "kind": "expect",
+              "text": "expect flow t1 escalated \"rejected\", within 3m",
+              "status": "failed",
+              "why": "the flow for KVW-113201 is Open (no reason); wanted Escalated because \"rejected\"",
+              "at": 6.010,
+              "took": 176.869,
+              "ended": "2026-11-20T14:28:20.11132964Z",
+              "keys": [
+                "KVW-113201"
+              ],
+              "events": [
+                {
+                  "key": "KVW-113201",
+                  "at": "2026-11-20T14:28:20.11126777Z",
+                  "label": "Flow open",
+                  "tone": "bad"
+                }
+              ]
+            }
+          ],
+          "conversations": [
+            {
+              "name": "t1",
+              "key": "KVW-113201",
+              "seed": 13201,
+              "milestones": {
+                "ack": 0.265,
+                "answer": 0.883,
+                "status": 5.933
+              },
+              "wire": [
+                {
+                  "messageId": "manufacturer-000287",
+                  "from": "partner",
+                  "purpose": "document",
+                  "sets": [
+                    "204"
+                  ],
+                  "state": "delivered",
+                  "at": "2026-11-20T14:25:17.256863392Z",
+                  "variation": "original",
+                  "ack": "received",
+                  "ackCode": "A",
+                  "x12": "ISA*00*          *00*          *ZZ*KESTRELVW      *ZZ*TRENOVA        *260408*0635*^*00401*095894992*0*T*\u003e~\nGS*SM*KESTRELVW*TRENOVA*20260408*0635*96127303*X*004010~\nST*204*0001~\nB2**TRNV**KVW-113201**TP~\nB2A*00*LT~\nL11*8100323062*BM~\nL11*4526192978*PO~\nN1*BT*KESTREL VALVE WORKS ACCOUNTS PAYABLE*93*KVW-AP~\nN3*500 E STATE ST~\nN4*ROCKFORD*IL*61104*US~\nN7**TBD*********TF****5300~\nS5*1*LD*21620*L*7*PC~\nG62*37*20260410*G*1300*CT~\nG62*38*20260410*L*1500*CT~\nAT8*G*L*21620*7~\nN1*SH*KESTREL VALVE WORKS PLANT 1*93*KVW-RFD1~\nN3*2750 SANDY HOLLOW RD~\nN4*ROCKFORD*IL*61109*US~\nL5*1*CAST IRON GATE VALVES*88240*N~\nAT8*G*L*9731*3~\nL5*2*CAST IRON GATE VALVES*88240*N~\nAT8*G*L*8605*1~\nL5*3*PIPE FLANGES AND FITTINGS*51140*N~\nAT8*G*L*3284*3~\nS5*2*UL*21620*L*7*PC~\nG62*53*20260411*G*0700*CT~\nG62*54*20260411*L*0900*CT~\nAT8*G*L*21620*7~\nNTE*DEL*DELIVER TO DOOR 14~\nN1*CN*HEARTLAND MECHANICAL COLUMBUS*93*KVC-0409~\nN3*5228 LOGISTICS PKWY~\nN4*COLUMBUS*OH*432195509*US~\nL3*21620*G*2.65*PM*111035******7*L~\nSE*32*0001~\nGE*1*96127303~\nIEA*1*095894992~\n"
+                },
+                {
+                  "messageId": "manufacturer-000288",
+                  "from": "trenova",
+                  "purpose": "ack",
+                  "sets": [
+                    "997"
+                  ],
+                  "state": "received",
+                  "at": "2026-11-20T14:25:17.52139445Z",
+                  "accepted": true,
+                  "x12": "ISA*00*          *00*          *ZZ*TRENOVA        *ZZ*KESTRELVW      *261120*1425*U*00401*000000063*0*T*\u003e~\nGS*FA*TRENOVA*KESTRELVW*20261120*1425*63*X*004010~\nST*997*0063~\nAK1*SM*96127303~\nAK2*204*0001~\nAK5*A~\nAK9*A*1*1*1~\nSE*6*0063~\nGE*1*63~\nIEA*1*000000063~\n"
+                },
+                {
+                  "messageId": "manufacturer-000289",
+                  "from": "trenova",
+                  "purpose": "document",
+                  "sets": [
+                    "990"
+                  ],
+                  "state": "received",
+                  "at": "2026-11-20T14:25:18.139454476Z",
+                  "accepted": true,
+                  "ack": "sent",
+                  "ackCode": "A",
+                  "x12": "ISA*00*          *00*          *ZZ*TRENOVA        *ZZ*KESTRELVW      *261120*0825*U*00401*000000028*0*T*\u003e~\nGS*GF*TRENOVA*KESTRELVW*20261120*0825*28*X*004010~\nST*990*0028~\nB1*TRNV*KVW-113201*20261120*A~\nSE*3*0028~\nGE*1*28~\nIEA*1*000000028~\n"
+                },
+                {
+                  "messageId": "manufacturer-000290",
+                  "from": "partner",
+                  "purpose": "ack",
+                  "sets": [
+                    "997"
+                  ],
+                  "state": "delivered",
+                  "at": "2026-11-20T14:25:18.139604941Z",
+                  "x12": "ISA*00*          *00*          *ZZ*KESTRELVW      *ZZ*TRENOVA        *261120*0825*^*00401*095894993*0*T*\u003e~\nGS*FA*KESTRELVW*TRENOVA*20261120*0825*96127304*X*004010~\nST*997*0001~\nAK1*GF*28~\nAK2*990*0028~\nAK5*A~\nAK9*A*1*1*1~\nSE*6*0001~\nGE*1*96127304~\nIEA*1*095894993~\n"
+                },
+                {
+                  "messageId": "manufacturer-000291",
+                  "from": "trenova",
+                  "purpose": "document",
+                  "sets": [
+                    "214"
+                  ],
+                  "state": "received",
+                  "at": "2026-11-20T14:25:23.189546303Z",
+                  "accepted": true,
+                  "ack": "sent",
+                  "ackCode": "R",
+                  "x12": "ISA*00*          *00*          *ZZ*TRENOVA        *ZZ*KESTRELVW      *261120*0825*U*00401*000000007*0*T*\u003e~\nGS*QM*TRENOVA*KESTRELVW*20261120*0825*7*X*004010~\nST*214*0007~\nB10*S26110020762586*KVW-113201*TRNV~\nL11*8100323062*BM~\nL11*KVW-113201*PO~\nLX*1~\nAT7*X3*NS***20261120*0625*PT~\nMS1*ROCKFORD*IL*US~\nSE*8*0007~\nGE*1*7~\nIEA*1*000000007~\n"
+                },
+                {
+                  "messageId": "manufacturer-000292",
+                  "from": "partner",
+                  "purpose": "ack",
+                  "sets": [
+                    "997"
+                  ],
+                  "state": "delivered",
+                  "at": "2026-11-20T14:25:23.189876576Z",
+                  "x12": "ISA*00*          *00*          *ZZ*KESTRELVW      *ZZ*TRENOVA        *261120*0825*^*00401*095894994*0*T*\u003e~\nGS*FA*KESTRELVW*TRENOVA*20261120*0825*96127305*X*004010~\nST*997*0001~\nAK1*QM*7~\nAK2*214*0007~\nAK5*R~\nAK9*R*1*1*0~\nSE*6*0001~\nGE*1*96127305~\nIEA*1*095894994~\n"
+                }
+              ],
+              "states": [
+                {
+                  "step": 9,
+                  "at": "935ms",
+                  "flowStatus": "Open"
+                },
+                {
+                  "step": 9,
+                  "at": "1.349s",
+                  "flowStatus": "Open",
+                  "shipment": "shp_01M7WNHVYBXBK3H8GXE5WN64BH",
+                  "shipmentStatus": "Delayed",
+                  "stops": 2,
+                  "total": "1110.35"
+                },
+                {
+                  "step": 9,
+                  "at": "2.182s",
+                  "flowStatus": "Open",
+                  "shipment": "shp_01M7WNHVYBXBK3H8GXE5WN64BH",
+                  "shipmentStatus": "Delayed",
+                  "stops": 2,
+                  "total": "1110.35"
+                },
+                {
+                  "step": 9,
+                  "at": "3m2.88s",
+                  "flowStatus": "Open",
+                  "shipment": "shp_01M7WNHVYBXBK3H8GXE5WN64BH",
+                  "shipmentStatus": "Delayed",
+                  "stops": 2,
+                  "total": "1110.35"
+                }
+              ]
+            }
+          ],
+          "failures": [
+            {
+              "step": 9,
+              "source": "expectation",
+              "rule": "flow",
+              "message": "the flow for KVW-113201 is Open (no reason); wanted Escalated because \"rejected\"",
+              "replay": "edi-sim run --partner manufacturer --scenario rejected-214-escalates --run 13"
+            }
+          ],
+          "replay": "edi-sim run --partner manufacturer --scenario rejected-214-escalates --run 13"
+        },
+        {
+          "name": "a tender no one answers escalates after two hours",
+          "file": "partners/manufacturer/scenarios/unanswered-escalates.yaml",
+          "slug": "unanswered-escalates",
+          "seed": 13240,
+          "status": "passed",
+          "startedAt": "2026-11-20T14:28:20.158147756Z",
+          "took": 32.861,
+          "steps": [
+            {
+              "index": 0,
+              "kind": "send",
+              "text": "send 204 original as t1",
+              "status": "passed",
+              "note": "1 interchange(s), key KVW-113241",
+              "at": 0.001,
+              "took": 0.019,
+              "ended": "2026-11-20T14:28:20.17786204Z",
+              "keys": [
+                "KVW-113241"
+              ],
+              "matches": [
+                {
+                  "messageId": "manufacturer-000293",
+                  "key": "KVW-113241"
+                }
+              ]
+            },
+            {
+              "index": 1,
+              "kind": "expect",
+              "text": "expect 997 for t1",
+              "status": "passed",
+              "note": "ack A",
+              "at": 0.020,
+              "took": 0.211,
+              "ended": "2026-11-20T14:28:20.388993802Z",
+              "keys": [
+                "KVW-113241"
+              ],
+              "matches": [
+                {
+                  "messageId": "manufacturer-000294",
+                  "key": "KVW-113241"
+                }
+              ]
+            },
+            {
+              "index": 2,
+              "kind": "expect",
+              "text": "expect flow t1 open",
+              "status": "passed",
+              "note": "Open ",
+              "at": 0.231,
+              "took": 0.006,
+              "ended": "2026-11-20T14:28:20.395627097Z",
+              "keys": [
+                "KVW-113241"
+              ],
+              "events": [
+                {
+                  "key": "KVW-113241",
+                  "at": "2026-11-20T14:28:20.395609949Z",
+                  "label": "Flow open",
+                  "tone": "trenova"
+                }
+              ]
+            },
+            {
+              "index": 3,
+              "kind": "advance",
+              "text": "advance t1 by 2h",
+              "status": "passed",
+              "note": "t1: Escalated (Kestrel tender KVW-113241 needs an answer)",
+              "at": 0.238,
+              "took": 2.551,
+              "ended": "2026-11-20T14:28:22.947337219Z",
+              "keys": [
+                "KVW-113241"
+              ],
+              "gap": "advanced 2h"
+            },
+            {
+              "index": 4,
+              "kind": "expect",
+              "text": "expect flow t1 escalated \"needs an answer\"",
+              "status": "passed",
+              "note": "Escalated \"Kestrel tender KVW-113241 needs an answer\"",
+              "at": 2.790,
+              "took": 0.007,
+              "ended": "2026-11-20T14:28:22.954769488Z",
+              "keys": [
+                "KVW-113241"
+              ],
+              "events": [
+                {
+                  "key": "KVW-113241",
+                  "at": "2026-11-20T14:28:22.954753241Z",
+                  "label": "Flow escalated",
+                  "detail": "Kestrel tender KVW-113241 needs an answer",
+                  "tone": "hold"
+                }
+              ]
+            },
+            {
+              "index": 5,
+              "kind": "expect",
+              "text": "expect wire 990 about t1, within 30s, none",
+              "status": "passed",
+              "note": "no 990 within 30s",
+              "at": 2.798,
+              "took": 30.063,
+              "ended": "2026-11-20T14:28:53.01649895Z",
+              "keys": [
+                "KVW-113241"
+              ],
+              "events": [
+                {
+                  "key": "KVW-113241",
+                  "at": "2026-11-20T14:28:53.016457066Z",
+                  "label": "No 990 sent",
+                  "detail": "within 30s",
+                  "tone": "trenova"
+                }
+              ]
+            }
+          ],
+          "conversations": [
+            {
+              "name": "t1",
+              "key": "KVW-113241",
+              "seed": 13241,
+              "milestones": {
+                "ack": 0.230
+              },
+              "wire": [
+                {
+                  "messageId": "manufacturer-000293",
+                  "from": "partner",
+                  "purpose": "document",
+                  "sets": [
+                    "204"
+                  ],
+                  "state": "delivered",
+                  "at": "2026-11-20T14:28:20.159331823Z",
+                  "variation": "original",
+                  "ack": "received",
+                  "ackCode": "A",
+                  "x12": "ISA*00*          *00*          *ZZ*KESTRELVW      *ZZ*TRENOVA        *260314*1345*^*00401*095894995*0*T*\u003e~\nGS*SM*KESTRELVW*TRENOVA*20260314*1345*96127306*X*004010~\nST*204*0001~\nB2**TRNV**KVW-113241**PP~\nB2A*00*LT~\nL11*8100400202*BM~\nN1*BT*KESTREL VALVE WORKS ACCOUNTS PAYABLE*93*KVW-AP~\nN3*500 E STATE ST~\nN4*ROCKFORD*IL*61104*US~\nN7**TBD*********TF****5300~\nS5*1*LD*34090*L*19*PC~\nL11*R2916291*P8~\nG62*37*20260316*G*0900*CT~\nG62*38*20260316*L*1100*CT~\nAT8*G*L*34090*19~\nN1*SH*KESTREL VALVE WORKS PLANT 2*93*KVW-PEO2~\nN3*1840 SW ADAMS ST~\nN4*PEORIA*IL*61604*US~\nL5*1*CORROSION INHIBITOR*48580*N~\nAT8*G*L*34090*19~\nLH1*PC*19*UN1760~\nLH2*8~\nLH3*CORROSIVE LIQUID NOS*D~\nS5*2*UL*17163*L*4*PC~\nL11*APT781825*AO~\nG62*53*20260317*G*0700*CT~\nG62*54*20260317*L*0900*CT~\nAT8*G*L*17163*4~\nN1*CN*ALLIED PROCESS EQUIPMENT MINNEAPOLIS*93*KVC-0127~\nN3*5140 AIRPORT RD~\nN4*MINNEAPOLIS*MN*55413*US~\nS5*3*UL*16927*L*15*PC~\nG62*53*20260318*G*0700*CT~\nG62*54*20260318*L*0900*CT~\nAT8*G*L*16927*15~\nN1*CN*CORNERSTONE PIPE AND VALVE WICHITA*93*KVC-0238~\nN3*4243 LAKE ST~\nN4*WICHITA*KS*67213*US~\nL3*34090*G*3.08*PM*333056******19*L~\nSE*38*0001~\nGE*1*96127306~\nIEA*1*095894995~\n"
+                },
+                {
+                  "messageId": "manufacturer-000294",
+                  "from": "trenova",
+                  "purpose": "ack",
+                  "sets": [
+                    "997"
+                  ],
+                  "state": "received",
+                  "at": "2026-11-20T14:28:20.388500829Z",
+                  "accepted": true,
+                  "x12": "ISA*00*          *00*          *ZZ*TRENOVA        *ZZ*KESTRELVW      *261120*1428*U*00401*000000064*0*T*\u003e~\nGS*FA*TRENOVA*KESTRELVW*20261120*1428*64*X*004010~\nST*997*0064~\nAK1*SM*96127306~\nAK2*204*0001~\nAK5*A~\nAK9*A*1*1*1~\nSE*6*0064~\nGE*1*64~\nIEA*1*000000064~\n"
+                }
+              ],
+              "states": [
+                {
+                  "step": 5,
+                  "at": "32.861s",
+                  "flowStatus": "Escalated",
+                  "flowWhy": "Kestrel tender KVW-113241 needs an answer"
+                }
+              ]
+            }
+          ],
+          "replay": "edi-sim run --partner manufacturer --scenario unanswered-escalates --run 13"
+        }
+      ]
+    }
+  ],
+  "failures": 3,
+  "deadlineScale": 1,
+  "waiting": {
+    "expectations": 271.346,
+    "expected": 34,
+    "actions": 18.695,
+    "acted": 19,
+    "failed": 178.268
+  }
+}

@@ -15,14 +15,6 @@ export const organization = createQueryKeys("organization", {
     queryKey: ["branding", organizationId],
     queryFn: async ({ signal }) => organizationService.getBranding(organizationId, { signal }),
   }),
-  microsoftSSO: (organizationId: string) => ({
-    queryKey: ["microsoft-sso", organizationId],
-    queryFn: async () => organizationService.getMicrosoftSSOConfig(organizationId),
-  }),
-  oktaSSO: (organizationId: string) => ({
-    queryKey: ["okta-sso", organizationId],
-    queryFn: async () => organizationService.getOktaSSOConfig(organizationId),
-  }),
   tenantLogin: (organizationSlug: string) => ({
     queryKey: ["tenant-login", organizationSlug],
     queryFn: async () => organizationService.getTenantLoginMetadata(organizationSlug),

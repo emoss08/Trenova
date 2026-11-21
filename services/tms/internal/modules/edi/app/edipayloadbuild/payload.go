@@ -596,6 +596,8 @@ func BuildTenderResponsePayload(transfer *editransfer.EDITransfer) edipayload.Do
 	}
 }
 
+const dispatchedStatusCode = "P1"
+
 func shipmentEventStatusCode(
 	event *shipmentevent.Event,
 	stop *shipment.Stop,
@@ -613,9 +615,13 @@ func shipmentEventStatusCode(
 		return stopStatusCode(stop, true, true)
 	case shipmentevent.TypeShipmentCanceled:
 		return "A7"
+	case shipmentevent.TypeDriverAssigned, shipmentevent.TypeCarrierAssigned:
+		return dispatchedStatusCode
 	case shipmentevent.TypeStatusChanged:
 		//nolint:exhaustive // Only statuses with EDI 214-specific codes need overrides.
 		switch shipmentvocab.Status(metadataString(event.Metadata, "newStatus")) {
+		case shipmentvocab.StatusAssigned, shipmentvocab.StatusPartiallyAssigned:
+			return dispatchedStatusCode
 		case shipmentvocab.StatusInTransit:
 			return "AF"
 		case shipmentvocab.StatusCompleted,
@@ -747,8 +753,10 @@ func shipmentEventStop(event *shipmentevent.Event, source *shipment.Shipment) *s
 	if fallback != nil {
 		return fallback
 	}
-	if len(source.Moves) > 0 && source.Moves[0] != nil && len(source.Moves[0].Stops) > 0 {
-		return source.Moves[0].Stops[0]
+	if len(source.Moves) > 0 && source.Moves[0] != nil {
+		if stops := source.Moves[0].ActiveStopsBySequence(); len(stops) > 0 {
+			return stops[0]
+		}
 	}
 	return nil
 }

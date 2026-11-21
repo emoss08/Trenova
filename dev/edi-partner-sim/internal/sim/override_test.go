@@ -5,8 +5,8 @@ import (
 	"strconv"
 	"testing"
 
+	"github.com/emoss08/trenova/edi-partner-sim/internal/acknowledge"
 	"github.com/emoss08/trenova/edi-partner-sim/internal/journal"
-	"github.com/emoss08/trenova/edi-partner-sim/internal/partner"
 )
 
 func TestAckOverridesRejectOrWithholdTheNextMatchingTransaction(t *testing.T) {
@@ -37,11 +37,11 @@ func TestAckOverridesRejectOrWithholdTheNextMatchingTransaction(t *testing.T) {
 		return h.message(got.ID)
 	}
 	other := answer(801, "KVW-100038")
-	if other.Ack == nil || other.Ack.Code != partner.AckAccepted {
+	if other.Ack == nil || other.Ack.Code != acknowledge.Accepted {
 		t.Fatalf("another load's 990 was overridden: %+v", other.Ack)
 	}
 	rejected := answer(802, "KVW-100037")
-	if rejected.Ack == nil || rejected.Ack.Code != partner.AckRejected ||
+	if rejected.Ack == nil || rejected.Ack.Code != acknowledge.Rejected ||
 		rejected.Ack.Status != journal.AckScheduled {
 		t.Fatalf("the first override: %+v", rejected.Ack)
 	}
@@ -50,7 +50,7 @@ func TestAckOverridesRejectOrWithholdTheNextMatchingTransaction(t *testing.T) {
 		t.Fatalf("the second override: %+v", withheld.Ack)
 	}
 	normal := answer(804, "KVW-100037")
-	if normal.Ack == nil || normal.Ack.Code != partner.AckAccepted {
+	if normal.Ack == nil || normal.Ack.Code != acknowledge.Accepted {
 		t.Fatalf("the overrides outlived their use: %+v", normal.Ack)
 	}
 	if _, err := h.sim.OverrideAcks("manufacturer", &AckOverrideRequest{

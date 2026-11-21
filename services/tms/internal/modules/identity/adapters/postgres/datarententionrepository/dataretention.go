@@ -113,6 +113,7 @@ func (r *repository) Upsert(
 			existing.AuditSecurityRetentionDays = entity.AuditSecurityRetentionDays
 			existing.EDIInboundFileRetentionPeriod = entity.EDIInboundFileRetentionPeriod
 			existing.EDIMessageRetentionPeriod = entity.EDIMessageRetentionPeriod
+			existing.DriverQualificationRetentionPeriod = entity.DriverQualificationRetentionPeriod
 			existing.AgentEvalCaseRetentionPeriod = entity.AgentEvalCaseRetentionPeriod
 			existing.AIFeedbackRetentionPeriod = entity.AIFeedbackRetentionPeriod
 			existing.AIAuditRetentionPeriod = entity.AIAuditRetentionPeriod
@@ -135,6 +136,7 @@ func (r *repository) Upsert(
 				dr.AuditSecurityRetentionDays,
 				dr.EDIInboundFileRetentionPeriod,
 				dr.EDIMessageRetentionPeriod,
+				dr.DriverQualificationRetentionPeriod,
 				dr.AgentEvalCaseRetentionPeriod,
 				dr.AIFeedbackRetentionPeriod,
 				dr.AIAuditRetentionPeriod,

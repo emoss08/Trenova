@@ -132,7 +132,9 @@ pub const FUNCTIONS: &[Function] = &[
         "clean",
         Receiver::Text,
         "clean(text: Text) -> Text",
-        message!("The text without characters X12 cannot carry or the partner's separators"),
+        message!(
+            "The text in the X12 character set: accents and typographic marks written as plain ASCII, characters with no ASCII form and the partner's separators removed, spaces collapsed"
+        ),
     ),
     f(
         "startsWith",

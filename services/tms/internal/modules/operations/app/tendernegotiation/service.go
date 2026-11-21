@@ -145,8 +145,8 @@ func (s *Service) evaluateCounter(
 	if sh.TotalChargeAmount.Valid {
 		terms.Sell = sh.TotalChargeAmount.Decimal
 	}
-	terms.Buy = shipment.CarrierBaseAmount(offer.RateMethod, rate, move.Distance)
-	terms.DistanceUnknown = tender.DistanceUnknown(offer.RateMethod, move.Distance)
+	terms.Buy = shipment.CarrierBaseAmount(offer.RateMethod, rate, move.PaidDistance())
+	terms.DistanceUnknown = tender.DistanceUnknown(offer.RateMethod, move.PaidDistance())
 	return tender.EvaluateCounter(terms)
 }
 

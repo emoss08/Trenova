@@ -7911,6 +7911,33 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalOJSON2map),
 			},
 			{
+				Name:     "payDistance",
+				ChildErr: errNoChild30,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ShipmentMove)
+					return obj.PayDistance, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOFloat2ᚖfloat64),
+			},
+			{
+				Name:     "billingDistance",
+				ChildErr: errNoChild30,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ShipmentMove)
+					return obj.BillingDistance, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOFloat2ᚖfloat64),
+			},
+			{
+				Name:     "fuelDistance",
+				ChildErr: errNoChild30,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ShipmentMove)
+					return obj.FuelDistance, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOFloat2ᚖfloat64),
+			},
+			{
 				Name:     "version",
 				NonNull:  true,
 				ChildErr: errNoChild2,

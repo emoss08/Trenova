@@ -1,6 +1,9 @@
 //! Runs a map that writes X12 from a document: each segment block becomes a segment of the
-//! loop instance it is written in, values convert by their element's type, and the segments
-//! are laid out in the guide's order inside the envelope Trenova writes.
+//! loop instance it is written in, values convert by their element's type and into the X12
+//! character set (with a warning when that changes them), and the segments are laid out in the
+//! guide's order inside the envelope Trenova writes.
+
+use std::borrow::Cow;
 
 use rust_decimal::{Decimal, RoundingStrategy};
 use serde::Serialize;
@@ -12,6 +15,7 @@ use super::value::{Value, decimal_text, display, local};
 use crate::lading::check::x12 as nav;
 use crate::lading::syntax::ast::{Block, ElementAssign, Stmt};
 use crate::lading::tz::civil_from_days;
+use crate::x12::charset;
 use crate::x12::guide::compiled::{CompiledGuide, NodeKind};
 use crate::x12::guide::model::{ElementDef, ElementType};
 use crate::x12::write::Element;
@@ -336,6 +340,14 @@ impl Interp<'_> {
             let Some(text) = text else {
                 continue;
             };
+            let element_label = format!(
+                "{id}{position:02}{}",
+                component.map_or_else(String::new, |component| format!("-{component:02}"))
+            );
+            let Some(text) = in_character_set(text, target, &element_label, &label, findings)
+            else {
+                continue;
+            };
             check_element(target, &text, &label, findings);
             match component {
                 Some(component) => {
@@ -356,7 +368,6 @@ impl Interp<'_> {
                 None => written[offset] = Element::Text(text),
             }
         }
-        let _ = id;
         Ok(written)
     }
 
@@ -509,9 +520,9 @@ pub fn element_text(value: &Value, def: &ElementDef, repetition: Option<char>) -
             date_element(local(*instant, *zone).0, def.max)
         }
         (Value::DateTime(instant, zone), ElementType::Time) => {
-            time_element(local(*instant, *zone).1, def.max)
+            time_element(local(*instant, *zone).1, def.min)
         }
-        (Value::Time(seconds), ElementType::Time) => time_element(*seconds, def.max),
+        (Value::Time(seconds), ElementType::Time) => time_element(*seconds, def.min),
         (number, ElementType::Numeric(places)) => {
             let amount = match number {
                 Value::Money(amount, _) => *amount,
@@ -552,13 +563,76 @@ fn date_element(days: i64, max: u32) -> String {
     }
 }
 
-fn time_element(seconds: u32, max: u32) -> String {
+/// A time as `HHMM`, or as `HHMMSS` or `HHMMSSDD` when the element's minimum demands them;
+/// what the element does not hold is dropped, never rounded.
+fn time_element(seconds: u32, min: u32) -> String {
     let (hours, minutes, rest) = (seconds / 3600, seconds / 60 % 60, seconds % 60);
-    if rest != 0 && max >= 6 {
-        format!("{hours:02}{minutes:02}{rest:02}")
-    } else {
-        format!("{hours:02}{minutes:02}")
+    match min {
+        8.. => format!("{hours:02}{minutes:02}{rest:02}00"),
+        6.. => format!("{hours:02}{minutes:02}{rest:02}"),
+        _ => format!("{hours:02}{minutes:02}"),
     }
+}
+
+/// `text` in the X12 character set ([`charset::fold`]), with a warning naming the element when
+/// that changed it; none when nothing of it is left, so the element is written as absent and a
+/// mandatory one is reported missing. When only the folding pushed it past the element's
+/// maximum (a `½` written as `1/2` in a value the map already cut to fit), it is cut to the
+/// maximum, so the length the map chose holds for what is written; a value too long before
+/// folding is left for [`check_element`] to report.
+fn in_character_set(
+    text: String,
+    def: &ElementDef,
+    element: &str,
+    path: &str,
+    findings: &mut Vec<RunFinding>,
+) -> Option<String> {
+    let changed = match charset::fold(&text) {
+        Cow::Owned(folded) => Some(folded),
+        Cow::Borrowed(_) => None,
+    };
+    let Some(mut folded) = changed else {
+        return Some(text);
+    };
+    let max = def.max as usize;
+    let cut = text.chars().count() <= max && folded.chars().count() > max;
+    if cut {
+        folded = folded.chars().take(max).collect();
+    }
+    let message = if folded.is_empty() {
+        Message::with(
+            message!("{0} was left out: {1} has no characters the X12 character set can carry"),
+            [Arg::from(element), Arg::from(text.as_str())],
+        )
+    } else if cut {
+        Message::with(
+            message!(
+                "{0} was written in the X12 character set and cut to its {3} characters: {1} became {2}"
+            ),
+            [
+                Arg::from(element),
+                Arg::from(text.as_str()),
+                Arg::from(folded.as_str()),
+                Arg::from(max),
+            ],
+        )
+    } else {
+        Message::with(
+            message!("{0} was written in the X12 character set: {1} became {2}"),
+            [
+                Arg::from(element),
+                Arg::from(text.as_str()),
+                Arg::from(folded.as_str()),
+            ],
+        )
+    };
+    findings.push(RunFinding {
+        severity: "warning",
+        code: "written-in-character-set",
+        message,
+        path: path.to_owned(),
+    });
+    (!folded.is_empty()).then_some(folded)
 }
 
 /// Reports a written value that does not fit its element.
@@ -601,6 +675,7 @@ mod tests {
 
     use super::element_text;
     use crate::lading::eval::value::Value;
+    use crate::lading::values::ZoneValue;
     use crate::x12::guide::model::{ElementDef, ElementType, Usage};
 
     fn def(kind: ElementType, min: u32, max: u32) -> ElementDef {
@@ -642,6 +717,61 @@ mod tests {
         assert_eq!(
             element_text(&Value::Int(7), &def(ElementType::Numeric(0), 3, 6), None).as_deref(),
             Some("007")
+        );
+    }
+
+    #[test]
+    fn times_are_hhmm_unless_the_element_demands_seconds() {
+        let time = Value::Time(4 * 3600 + 53 * 60 + 10);
+        let cases = [
+            (4, 4, "0453"),
+            (4, 8, "0453"),
+            (6, 6, "045310"),
+            (6, 8, "045310"),
+            (8, 8, "04531000"),
+        ];
+        for (min, max, expected) in cases {
+            assert_eq!(
+                element_text(&time, &def(ElementType::Time, min, max), None).as_deref(),
+                Some(expected),
+                "TM {min}..{max}"
+            );
+        }
+        assert_eq!(
+            element_text(
+                &Value::Time(23 * 3600 + 59 * 60 + 59),
+                &def(ElementType::Time, 4, 8),
+                None
+            )
+            .as_deref(),
+            Some("2359")
+        );
+        assert_eq!(
+            element_text(
+                &Value::Time(9 * 3600 + 5 * 60),
+                &def(ElementType::Time, 6, 6),
+                None
+            )
+            .as_deref(),
+            Some("090500")
+        );
+    }
+
+    #[test]
+    fn date_times_write_their_local_time_by_the_element_minimum() {
+        let instant = 20_463 * 86_400 + 4 * 3600 + 53 * 60 + 10;
+        let value = Value::DateTime(instant, ZoneValue::UTC);
+        assert_eq!(
+            element_text(&value, &def(ElementType::Time, 4, 8), None).as_deref(),
+            Some("0453")
+        );
+        assert_eq!(
+            element_text(&value, &def(ElementType::Time, 6, 6), None).as_deref(),
+            Some("045310")
+        );
+        assert_eq!(
+            element_text(&value, &def(ElementType::Date, 8, 8), None).as_deref(),
+            Some("20260110")
         );
     }
 }

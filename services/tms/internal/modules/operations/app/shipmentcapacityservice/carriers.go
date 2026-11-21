@@ -402,7 +402,7 @@ func rankCarrierMatches(
 		}
 
 		match := matchFromMove(move)
-		match.Quote = quoteFor(lane.posting, perf, move.Distance)
+		match.Quote = quoteFor(lane.posting, perf, move.PaidDistance)
 		match.MarginPercent = marginPercent(match.Revenue, match.Quote)
 		rounded := min(percent, fit)
 		match.FitPercent = &rounded

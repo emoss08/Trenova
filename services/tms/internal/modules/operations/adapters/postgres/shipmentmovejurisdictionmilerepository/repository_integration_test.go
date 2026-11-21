@@ -342,3 +342,25 @@ func TestListUnattributedMovesSkipsMovesWithoutDistance(t *testing.T) {
 	require.NoError(t, err)
 	assert.NotContains(t, page.MoveIDs, move.ID)
 }
+
+func TestListUnattributedMovesCountsTheFuelTaxDistance(t *testing.T) {
+	f := setup(t)
+	departed := completedAt + 50_000
+	move := f.insertCompletedMove(t, 120, departed)
+	fuel := 135.5
+	sm := shipmentdb.ShipmentMoves
+	_, err := sm.Where(sm.ID.Eq(move.ID)).Update(f.ctx, f.db, sm.FuelDistance.To(fuel))
+	require.NoError(t, err)
+
+	page, err := f.repo.ListUnattributedMoves(
+		f.ctx,
+		&shipmentdistanceports.UnattributedMovesRequest{
+			TenantInfo: f.tenantInfo,
+			Start:      departed - 100,
+			End:        departed + 100,
+		},
+	)
+	require.NoError(t, err)
+	assert.Equal(t, []pulid.ID{move.ID}, page.MoveIDs)
+	assert.Equal(t, "135.50", page.TotalMiles.StringFixed(2))
+}

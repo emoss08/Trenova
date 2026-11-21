@@ -148,3 +148,76 @@ func TestShipmentMove_ValidateAcceptsEveryCoverageType(t *testing.T) {
 		assert.True(t, multiErr.HasErrors())
 	})
 }
+
+func TestShipmentMove_PurposeDistancesFallBackToTheRoutedDistance(t *testing.T) {
+	t.Parallel()
+
+	routed, paid, billed, fuel := 500.0, 512.5, 480.25, 505.0
+
+	t.Run("a purpose routed with its own profile reads its own distance", func(t *testing.T) {
+		t.Parallel()
+
+		move := &ShipmentMove{
+			Distance:        &routed,
+			PayDistance:     &paid,
+			BillingDistance: &billed,
+			FuelDistance:    &fuel,
+		}
+
+		assert.Equal(t, &paid, move.PaidDistance())
+		assert.Equal(t, &billed, move.BilledDistance())
+		assert.Equal(t, &fuel, move.FuelTaxDistance())
+	})
+
+	t.Run("a purpose sharing the move's profile reads the move's distance", func(t *testing.T) {
+		t.Parallel()
+
+		move := &ShipmentMove{Distance: &routed}
+
+		assert.Equal(t, &routed, move.PaidDistance())
+		assert.Equal(t, &routed, move.BilledDistance())
+		assert.Equal(t, &routed, move.FuelTaxDistance())
+	})
+
+	t.Run("a move with no distance has none for any purpose", func(t *testing.T) {
+		t.Parallel()
+
+		var nilMove *ShipmentMove
+		assert.Nil(t, (&ShipmentMove{}).PaidDistance())
+		assert.Nil(t, nilMove.BilledDistance())
+	})
+
+	t.Run("clearing drops every purpose distance", func(t *testing.T) {
+		t.Parallel()
+
+		move := &ShipmentMove{
+			Distance:        &routed,
+			PayDistance:     &paid,
+			BillingDistance: &billed,
+			FuelDistance:    &fuel,
+		}
+		move.ClearPurposeDistances()
+
+		assert.Nil(t, move.PayDistance)
+		assert.Nil(t, move.BillingDistance)
+		assert.Nil(t, move.FuelDistance)
+	})
+}
+
+func TestShipmentMove_ValidateRejectsNegativePurposeDistances(t *testing.T) {
+	t.Parallel()
+
+	negative := -1.0
+	move := &ShipmentMove{
+		Status:          shipmentvocab.MoveStatusNew,
+		PayDistance:     &negative,
+		BillingDistance: &negative,
+		FuelDistance:    &negative,
+	}
+	multiErr := errortypes.NewMultiError()
+	move.Validate(multiErr)
+
+	assert.True(t, multiErr.HasErrorAt("payDistance"))
+	assert.True(t, multiErr.HasErrorAt("billingDistance"))
+	assert.True(t, multiErr.HasErrorAt("fuelDistance"))
+}

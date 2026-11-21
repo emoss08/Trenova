@@ -6,6 +6,8 @@ import (
 	"math/rand/v2"
 	"slices"
 	"time"
+
+	"github.com/emoss08/trenova/edi-partner-sim/internal/partner/geo"
 )
 
 type Kind string
@@ -21,9 +23,10 @@ const (
 var Kinds = []Kind{KindOriginal, KindChange, KindReplace, KindCancel, KindDuplicate}
 
 type Variation struct {
-	Kind   Kind  `yaml:"kind"`
-	Sparse bool  `yaml:"sparse"`
-	Delta  Delta `yaml:"delta"`
+	Kind   Kind      `yaml:"kind"`
+	Sparse bool      `yaml:"sparse"`
+	Delta  Delta     `yaml:"delta"`
+	Need   *LoadNeed `yaml:"load"`
 }
 
 type Delta struct {
@@ -51,6 +54,9 @@ func (v Variation) String() string {
 	if v.Delta.Move != nil {
 		text += fmt.Sprintf(" move stop %d by %s", v.Delta.Move.Stop, v.Delta.Move.By)
 	}
+	if v.Need != nil {
+		text += " (" + v.Need.String() + ")"
+	}
 	return text
 }
 
@@ -66,6 +72,9 @@ func (v Variation) validate(check *problems, path string) {
 			"%v would make the rate zero or negative",
 			v.Delta.RatePercent,
 		)
+	}
+	for _, problem := range v.Need.Problems() {
+		check.add(path+".load", "%s", problem)
 	}
 	if v.Delta.Move != nil && v.Delta.Move.Stop < 0 {
 		check.add(
@@ -107,9 +116,9 @@ func (p *Profile) addStop(load *Load) {
 	for index := range load.Stops {
 		taken[load.Stops[index].Party.City] = true
 	}
-	cityIndex := rng.IntN(len(cities))
-	for taken[cities[cityIndex].Name] {
-		cityIndex = (cityIndex + 1) % len(cities)
+	cityIndex := rng.IntN(len(geo.Cities))
+	for taken[geo.Cities[cityIndex].Name] {
+		cityIndex = (cityIndex + 1) % len(geo.Cities)
 	}
 	g := &generator{profile: p, rng: rng, zone: load.TenderedAt.Location()}
 	added := g.consignee(rng.IntN(len(p.Consignees.Names)), cityIndex)
@@ -127,8 +136,8 @@ func (p *Profile) addStop(load *Load) {
 		last.Weight -= stop.Weight
 		last.Pieces -= stop.Pieces
 	}
-	from, _ := findCity(last.Party.City, last.Party.State)
-	leg := roadMiles(from, added.city)
+	from, _ := geo.Find(last.Party.City, last.Party.State)
+	leg := geo.RoadMiles(from, added.city)
 	drive := time.Duration(float64(leg)/float64(p.Window.Mph)*float64(time.Hour)) +
 		time.Duration(p.Window.DwellHours)*time.Hour
 	start := workingHour(last.Window.Start.Add(drive).Truncate(time.Hour).Add(time.Hour))

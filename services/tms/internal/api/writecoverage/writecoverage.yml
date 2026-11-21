@@ -2260,13 +2260,6 @@ writes:
   "POST /api/v1/organizations/:id/branding/:image":
     exempt: infrastructure
     reason: "Moves file bytes from a browser into storage; an agent attaches documents that already exist (shipment_attach_document)."
-  "PUT /api/v1/organizations/:id/microsoft-sso":
-    exempt: security
-    reason: "Single sign-on decides who can sign in to the organization."
-  "PUT /api/v1/organizations/:id/okta-sso":
-    exempt: security
-    reason: "Single sign-on decides who can sign in to the organization."
-
   # orgholiday
   "mutation createOrgHoliday":
     exempt: configuration

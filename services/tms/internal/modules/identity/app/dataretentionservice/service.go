@@ -52,36 +52,38 @@ func (s *Service) Get(
 		return nil, err
 	}
 	return &dataretention.DataRetention{
-		OrganizationID:                tenantInfo.OrgID,
-		BusinessUnitID:                tenantInfo.BuID,
-		AuditAccessRetentionDays:      dataretention.MinAuditAccessRetentionDays,
-		AuditOperationalRetentionDays: dataretention.MinAuditOperationalRetentionDays,
-		AuditFinancialRetentionDays:   dataretention.MinAuditFinancialRetentionDays,
-		AuditSecurityRetentionDays:    dataretention.MinAuditSecurityRetentionDays,
-		AIFeedbackRetentionPeriod:     dataretention.DefaultAIFeedbackRetentionDays,
-		AgentEvalCaseRetentionPeriod:  dataretention.DefaultAgentEvalCaseRetentionDays,
-		AIAuditRetentionPeriod:        dataretention.DefaultAIAuditRetentionDays,
-		AICorrectionRetentionPeriod:   dataretention.DefaultAICorrectionRetentionDays,
+		OrganizationID:                     tenantInfo.OrgID,
+		BusinessUnitID:                     tenantInfo.BuID,
+		AuditAccessRetentionDays:           dataretention.MinAuditAccessRetentionDays,
+		AuditOperationalRetentionDays:      dataretention.MinAuditOperationalRetentionDays,
+		AuditFinancialRetentionDays:        dataretention.MinAuditFinancialRetentionDays,
+		AuditSecurityRetentionDays:         dataretention.MinAuditSecurityRetentionDays,
+		AIFeedbackRetentionPeriod:          dataretention.DefaultAIFeedbackRetentionDays,
+		DriverQualificationRetentionPeriod: dataretention.DefaultDriverQualificationRetentionDays,
+		AgentEvalCaseRetentionPeriod:       dataretention.DefaultAgentEvalCaseRetentionDays,
+		AIAuditRetentionPeriod:             dataretention.DefaultAIAuditRetentionDays,
+		AICorrectionRetentionPeriod:        dataretention.DefaultAICorrectionRetentionDays,
 	}, nil
 }
 
 type UpdateDataRetentionRequest struct {
-	TenantInfo                    pagination.TenantInfo  `json:"-"`
-	Actor                         kernelports.AuditActor `json:"-"`
-	AuditAccessRetentionDays      int                    `json:"auditAccessRetentionDays"`
-	AuditOperationalRetentionDays int                    `json:"auditOperationalRetentionDays"`
-	AuditFinancialRetentionDays   int                    `json:"auditFinancialRetentionDays"`
-	AuditSecurityRetentionDays    int                    `json:"auditSecurityRetentionDays"`
-	EDIInboundFileRetentionPeriod int                    `json:"ediInboundFileRetentionPeriod"`
-	EDIMessageRetentionPeriod     int                    `json:"ediMessageRetentionPeriod"`
-	AIFeedbackRetentionPeriod     int                    `json:"aiFeedbackRetentionPeriod"`
-	AgentEvalCaseRetentionPeriod  *int                   `json:"agentEvalCaseRetentionPeriod,omitempty"`
-	AIAuditRetentionPeriod        *int                   `json:"aiAuditRetentionPeriod,omitempty"`
-	AICorrectionRetentionPeriod   *int                   `json:"aiCorrectionRetentionPeriod,omitempty"`
+	TenantInfo                         pagination.TenantInfo  `json:"-"`
+	Actor                              kernelports.AuditActor `json:"-"`
+	AuditAccessRetentionDays           int                    `json:"auditAccessRetentionDays"`
+	AuditOperationalRetentionDays      int                    `json:"auditOperationalRetentionDays"`
+	AuditFinancialRetentionDays        int                    `json:"auditFinancialRetentionDays"`
+	AuditSecurityRetentionDays         int                    `json:"auditSecurityRetentionDays"`
+	EDIInboundFileRetentionPeriod      int                    `json:"ediInboundFileRetentionPeriod"`
+	EDIMessageRetentionPeriod          int                    `json:"ediMessageRetentionPeriod"`
+	AIFeedbackRetentionPeriod          int                    `json:"aiFeedbackRetentionPeriod"`
+	DriverQualificationRetentionPeriod *int                   `json:"driverQualificationRetentionPeriod,omitempty"`
+	AgentEvalCaseRetentionPeriod       *int                   `json:"agentEvalCaseRetentionPeriod,omitempty"`
+	AIAuditRetentionPeriod             *int                   `json:"aiAuditRetentionPeriod,omitempty"`
+	AICorrectionRetentionPeriod        *int                   `json:"aiCorrectionRetentionPeriod,omitempty"`
 }
 
 func (r *UpdateDataRetentionRequest) keepsCurrent() bool {
-	return r.AgentEvalCaseRetentionPeriod == nil || r.AIAuditRetentionPeriod == nil ||
+	return r.DriverQualificationRetentionPeriod == nil || r.AgentEvalCaseRetentionPeriod == nil || r.AIAuditRetentionPeriod == nil ||
 		r.AICorrectionRetentionPeriod == nil
 }
 
@@ -117,9 +119,13 @@ func (s *Service) Update(
 		AIFeedbackRetentionPeriod:     req.AIFeedbackRetentionPeriod,
 	}
 	if req.keepsCurrent() {
+		entity.DriverQualificationRetentionPeriod = current.DriverQualificationRetentionDays()
 		entity.AgentEvalCaseRetentionPeriod = current.AgentEvalCaseRetentionPeriod
 		entity.AIAuditRetentionPeriod = current.AIAuditRetentionDays()
 		entity.AICorrectionRetentionPeriod = current.AICorrectionRetentionDays()
+	}
+	if req.DriverQualificationRetentionPeriod != nil {
+		entity.DriverQualificationRetentionPeriod = *req.DriverQualificationRetentionPeriod
 	}
 	if req.AgentEvalCaseRetentionPeriod != nil {
 		entity.AgentEvalCaseRetentionPeriod = *req.AgentEvalCaseRetentionPeriod

@@ -119,9 +119,13 @@ func TestProvisioningIsIdempotent(t *testing.T) {
 		t.Fatalf("a second provisioning created again: %v", s.fake.Calls("POST"))
 	}
 	if first.CustomerID == "" || second.CustomerID != first.CustomerID ||
-		s.fake.Created("CUSTOMER") != 1 {
+		s.fake.Created("CUSTOMER") != 1 || s.fake.Created("CUSTOMER_UPDATE") != 1 {
 		t.Fatalf("the partner's customer: %q then %q, %d created", first.CustomerID,
 			second.CustomerID, s.fake.Created("CUSTOMER"))
+	}
+	linked, err := s.options.Trenova.Partner(context.Background(), first.PartnerID)
+	if err != nil || linked.CustomerID != first.CustomerID {
+		t.Fatalf("the partner is not linked to its customer: %v %+v", err, linked)
 	}
 	if saves := s.fake.Calls("PUT /edi/lading/versions/"); len(saves) != 1 {
 		t.Fatalf("a second provisioning saved the unchanged files: %v", saves)

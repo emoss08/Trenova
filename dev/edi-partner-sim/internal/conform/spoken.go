@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/edi-partner-sim/internal/partner"
 	"github.com/emoss08/trenova/edi-partner-sim/internal/partner/reply"
+	"github.com/emoss08/trenova/edi-partner-sim/internal/partner/spoken"
 )
 
 var statusPhrases = map[string]string{
@@ -54,9 +55,9 @@ func replyText(display string, r *reply.Reply, scenario reply.Scenario) string {
 		case scenario.Misfooted:
 			return whose + ", its lines not adding up to its total"
 		case scenario.DeltaCents > 0:
-			return whose + ", " + partner.Dollars(scenario.DeltaCents) + " over the tender"
+			return whose + ", " + spoken.Dollars(scenario.DeltaCents) + " over the tender"
 		case scenario.DeltaCents < 0:
-			return whose + ", " + partner.Dollars(scenario.DeltaCents) + " under the tender"
+			return whose + ", " + spoken.Dollars(scenario.DeltaCents) + " under the tender"
 		}
 		return whose + " at the tendered total"
 	}

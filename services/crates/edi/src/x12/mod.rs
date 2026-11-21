@@ -5,6 +5,7 @@
 //! and [`write`] turns segments into text. The rest are the parts those are built from.
 
 pub mod ack;
+pub mod charset;
 pub mod element;
 pub mod envelope;
 pub mod finding;

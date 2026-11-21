@@ -1,4 +1,4 @@
-import { SectionPanel } from "@/components/section-panel";
+import { SettingsSection } from "@/components/settings/settings-section";
 import { usePermission, usePermissions } from "@/hooks/use-permission";
 import { capturePixelTypeLabel, captureSeparatorLabel } from "@/lib/capture";
 import { deleteCaptureProfile, type CaptureProfile } from "@/lib/graphql/capture";
@@ -67,16 +67,16 @@ function ProfileRow({
   const t = useT();
 
   return (
-    <li className="flex items-start gap-3 px-3 py-3">
+    <li className="flex items-start gap-3 px-3.5 py-3">
       <div className="flex min-w-0 flex-1 flex-col gap-1">
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-sm font-medium">{profile.name}</span>
           {profile.isDefault && (
-            <Badge variant="neutral" appearance="outline">
-              {t("Default")}
-            </Badge>
+<Badge variant="info">{t("Default")}</Badge>
           )}
-          {profile.status === "Inactive" && <Badge variant="neutral">{t("Not offered")}</Badge>}
+          {profile.status === "Inactive" && <Badge variant="neutral" dot>
+              {t("Not offered")}
+            </Badge>}
         </div>
         <ProfileSummary profile={profile} />
         {profile.description !== "" && (
@@ -108,6 +108,22 @@ function ProfileRow({
         </div>
       )}
     </li>
+  );
+}
+
+/** The list while it is read: rows shaped as the profiles land. */
+function ProfilesLoading() {
+  const t = useT();
+
+  return (
+    <div aria-busy aria-label={t("Loading scan profiles")} className="divide-y divide-border">
+      {[0, 1, 2].map((row) => (
+        <div key={row} aria-hidden className="flex flex-col gap-1.5 px-3.5 py-3">
+          <Skeleton className="h-3.5 w-40" />
+          <Skeleton className="h-3 w-3/5" />
+        </div>
+      ))}
+    </div>
   );
 }
 
@@ -175,32 +191,27 @@ export function ProfilesPanel() {
   };
 
   const profiles = profilesQuery.data ?? [];
+  const createButton = canCreate ? (
+    <Button size="sm" onClick={openCreate}>
+      <PlusIcon className="size-3.5" />
+      {t("New scan profile")}
+    </Button>
+  ) : null;
 
   return (
     <>
-      <SectionPanel
+      <SettingsSection
         title={t("Scan profiles")}
-        count={profiles.length}
-        help={t(
+        description={t(
           "What people pick from when they start a scan. The default is used when nobody picks one.",
         )}
-        action={
-          canCreate ? (
-            <Button size="sm" onClick={openCreate}>
-              <PlusIcon className="size-3.5" />
-              {t("New scan profile")}
-            </Button>
-          ) : undefined
-        }
       >
         {profilesQuery.isPending ? (
-          <div className="flex flex-col gap-2 p-3" aria-busy="true">
-            <Skeleton className="h-12 w-full" />
-            <Skeleton className="h-12 w-full" />
-          </div>
+          <ProfilesLoading />
         ) : profilesQuery.isError ? (
           <ErrorState
             error={profilesQuery.error}
+            layout="compact"
             title={t("Scan profiles could not be loaded.")}
             onRetry={() => void profilesQuery.refetch()}
           />
@@ -210,6 +221,7 @@ export function ProfilesPanel() {
             description={t(
               "Without one, each computer scans with its scanner's own settings. Add a profile to set the resolution, color and splitting once for everybody.",
             )}
+            action={createButton}
             sketch={
               <div className="flex flex-col gap-2 px-6">
                 <GhostLine className="w-1/3" />
@@ -218,20 +230,30 @@ export function ProfilesPanel() {
             }
           />
         ) : (
-          <ul className="divide-border-subtle divide-y">
-            {profiles.map((profile) => (
-              <ProfileRow
-                key={profile.id}
-                profile={profile}
-                canUpdate={canUpdate}
-                canDelete={canDelete}
-                onEdit={openEdit}
-                onDelete={askDelete}
-              />
-            ))}
-          </ul>
+          <>
+            {createButton ? (
+              <div className="flex min-h-12 items-center gap-6 px-3.5 py-2.5">
+                <p className="min-w-0 flex-1 text-sm text-muted-foreground">
+                  {t("{0, plural, one {# profile} other {# profiles}}", profiles.length)}
+                </p>
+                {createButton}
+              </div>
+            ) : null}
+            <ul className="divide-y divide-border">
+              {profiles.map((profile) => (
+                <ProfileRow
+                  key={profile.id}
+                  profile={profile}
+                  canUpdate={canUpdate}
+                  canDelete={canDelete}
+                  onEdit={openEdit}
+                  onDelete={askDelete}
+                />
+              ))}
+            </ul>
+          </>
         )}
-      </SectionPanel>
+      </SettingsSection>
 
       <ProfilePanel
         mode={panelMode}

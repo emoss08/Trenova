@@ -17,7 +17,10 @@ const explanationRunes = 600
 func shipmentText(shp *shipment.Shipment) string {
 	lines := make([]string, 0, 16)
 	if shp.ServiceType != nil {
-		lines = append(lines, "Service: "+codeAndDescription(shp.ServiceType.Code, shp.ServiceType.Description))
+		lines = append(
+			lines,
+			"Service: "+codeAndDescription(shp.ServiceType.Code, shp.ServiceType.Description),
+		)
 	}
 	if shp.ShipmentType != nil {
 		lines = append(lines, "Shipment type: "+
@@ -81,7 +84,9 @@ func ratingText(shp *shipment.Shipment) []string {
 		}
 	}
 	if shp.RateOverrideAmount.Valid {
-		override := "Rate overridden to " + billingqueuereview.FormatMoney(shp.RateOverrideAmount.Decimal)
+		override := "Rate overridden to " + billingqueuereview.FormatMoney(
+			shp.RateOverrideAmount.Decimal,
+		)
 		if shp.RateOverrideReason != "" {
 			override += ": " + shp.RateOverrideReason
 		}
@@ -122,7 +127,9 @@ func stopText(move *shipment.ShipmentMove, stop *shipment.Stop) string {
 		text += " · departed " + timeutils.FormatInstantUTC(*stop.ActualDeparture)
 	}
 	if stop.ActualArrival != nil && stop.ActualDeparture != nil {
-		text += " · on site " + timeutils.FormatLongDurationMs((*stop.ActualDeparture-*stop.ActualArrival)*1000)
+		text += " · on site " + timeutils.FormatLongDurationMs(
+			(*stop.ActualDeparture-*stop.ActualArrival)*1000,
+		)
 	}
 	if stop.Pieces != nil {
 		text += " · " + strconv.FormatInt(*stop.Pieces, 10) + " pieces"
@@ -259,8 +266,8 @@ func distance(moves []*shipment.ShipmentMove) string {
 	total := 0.0
 	units := ""
 	for _, move := range moves {
-		if move.Distance != nil {
-			total += *move.Distance
+		if billed := move.BilledDistance(); billed != nil {
+			total += *billed
 			units = firstOf(units, move.DistanceUnits)
 		}
 	}

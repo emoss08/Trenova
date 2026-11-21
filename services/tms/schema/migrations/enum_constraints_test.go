@@ -45,6 +45,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/capturepairing"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/captureprofile"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/capturerequest"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/documentcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/subscription"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentsuggestion"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carriercapacity"
@@ -587,6 +588,10 @@ func TestEnumCheckConstraintsAcceptEveryDeclaredValue(t *testing.T) {
 		{
 			name:   "ck_accounting_briefs_trigger",
 			values: stringsOf(accountingbrief.Triggers()),
+		},
+		{
+			name:   "ck_document_controls_shipment_draft_allowed_resources",
+			values: documentcontrol.AllShipmentDraftResources(),
 		},
 	}
 

@@ -7,50 +7,57 @@ related:
 ---
 
 ## What it's for
-Document extraction decides what Trenova does with uploaded documents: whether it reads text
-from scanned pages, how it classifies them into document kinds and types, whether it extracts
-structured data with an AI provider, whether documents such as rate confirmations become
-reviewable shipment drafts, and whether their text is indexed for search. Docling reads every
-document: the page layout, tables and scanned text.
-The page is one settings form in four cards: **Platform availability**, **Classification and
-extraction**, **Shipment draft extraction** and **Search and retrieval**. When documents cannot
-be read, **Platform availability** says what is missing.
+Document extraction decides what Trenova does with uploaded documents: whether it reads them,
+including scanned pages, how it files them under your document types, and whether rate
+confirmations become reviewable shipment drafts. Docling reads every document: the page layout,
+tables and scanned text. It is one settings form, saved once, in tabs: **Reading** (whether
+documents are read at all, scanned pages and search by content), **Filing** (recognizing
+document kinds and filing them under document types) and **Shipment drafts** (drafting
+shipments from rate confirmations and reading them with AI). When documents cannot be read,
+**Reading** says what is missing. While reading is off, **Filing** and **Shipment drafts** say
+that their settings do nothing yet, and **Open Reading** takes you to the switch.
 
 Administrators use it to switch document processing on and choose how much of it is automatic.
+When a save is refused, the tab holding the setting to fix opens and is marked. The capture
+settings are on [Capture](/admin/capture).
 
 ## Tasks
 
 ### Turn document extraction on
-Keywords: enable OCR, document processing on
+Keywords: enable OCR, document processing on, full text search, index documents
 1. Open [Document extraction](/admin/document-intelligence).
-2. In **Platform availability**, turn on **Enable document extraction**. This is the master
-   switch; every other option on the page stays unavailable while it is off.
-3. Turn on **Enable OCR** to read scanned pages, photos and faxes that carry no text of their
-   own.
+2. On **Reading**, turn on **Read uploaded documents**. This is the master switch: nothing else
+   on the page acts while it is off.
+3. **Read scanned pages** and **Search by content** appear beneath it. Turn on **Read scanned
+   pages** to read scans, photos and faxes that carry no text of their own, and **Search by
+   content** so people can find a document by the words inside it.
 4. Select **Save changes** in the bar that appears at the bottom.
 
-### Choose how documents are classified and extracted
-Keywords: auto classify, document types, AI extraction
+### Choose how documents are filed
+Keywords: auto classify, document types, AI classification
 1. Open [Document extraction](/admin/document-intelligence).
-2. In **Classification and extraction**, turn on the options you want: **Enable automatic
-   classification**, **Enable AI-assisted classification**, **Enable automatic document type
-   association**, **Enable automatic document type creation** and **Enable AI-assisted
-   extraction**.
-3. Select **Save changes**.
-
-### Create shipment drafts from documents
-Keywords: rate confirmation to shipment, shipment draft, auto create shipment
-1. Open [Document extraction](/admin/document-intelligence).
-2. In **Shipment draft extraction**, turn on **Enable shipment draft extraction**.
-3. Tick the records whose documents may produce drafts: **Shipment**, **Trailer**, **Tractor**
-   or **Worker**.
+2. On **Filing**, under **Document kinds**, turn on **Recognize document kinds**. **Ask AI when
+   unsure** appears beneath it. With it on, a document whose wording does not clearly say what it
+   is goes to an AI model, and the model's answer decides the kind when the model is sure of it.
+   A document the wording recognizes clearly keeps that kind whatever the model says, and when
+   neither is sure the document keeps the kind its wording suggests. The kind decides the
+   document type it is filed under, whether it becomes a shipment draft and whether **Read with
+   AI** reads it. With it off, no model is asked what a document is.
+3. Under **Document types**, turn on **File under a document type** so a recognized document
+   gets the matching type from your list. **Add missing types** appears beneath it; turn it on
+   to add a type when none matches.
 4. Select **Save changes**.
 
-### Make document text searchable
-Keywords: full text search, index documents
+### Create shipment drafts from rate confirmations
+Keywords: rate confirmation to shipment, shipment draft, auto create shipment, AI extraction
 1. Open [Document extraction](/admin/document-intelligence).
-2. In **Search and retrieval**, turn on **Enable full-text indexing**.
-3. Select **Save changes**.
+2. On **Shipment drafts**, turn on **Draft shipments**.
+3. Under **Draft from**, tick the records whose uploaded rate confirmations may become drafts:
+   **Shipments**, **Trailers**, **Tractors** or **Workers**. At least one is needed while
+   drafting is on.
+4. Under **AI reading**, turn on **Read with AI** so an AI model reads each rate confirmation's
+   stops, dates and rate.
+5. Select **Save changes**.
 
 ## Notes
 Opening the page needs read access to document control. Every document Docling reads, and the

@@ -92,6 +92,7 @@ func (r *repository) ListBoardMoves(
 				moveCount(sm),
 				sm.Loaded,
 				sm.Distance,
+				sm.PayDistance.Coalesce(sm.Distance),
 				sp.CustomerID,
 				text(customerdb.Customers.Name),
 				text(sp.ServiceTypeID),

@@ -36,6 +36,9 @@ type ShipmentMove struct {
 	DistanceRoutingType    string                         `json:"distanceRoutingType"         keel:"distance_routing_type,nullzero"`
 	DistanceUnits          string                         `json:"distanceUnits"               keel:"distance_units,nullzero"`
 	DistanceMetadata       map[string]any                 `json:"distanceMetadata,omitempty"  keel:"distance_metadata,jsonb,nullzero"`
+	PayDistance            *float64                       `json:"payDistance"                 keel:"pay_distance,label=Paid Miles,format=distance"`
+	BillingDistance        *float64                       `json:"billingDistance"             keel:"billing_distance,label=Billed Miles,format=distance"`
+	FuelDistance           *float64                       `json:"fuelDistance"                keel:"fuel_distance,label=Fuel Tax Miles,format=distance"`
 	Version                int64                          `json:"version"                     keel:"version,version"`
 	CreatedAt              int64                          `json:"createdAt"                   keel:"created_at,autocreate"`
 	UpdatedAt              int64                          `json:"updatedAt"                   keel:"updated_at,autoupdate"`
@@ -77,6 +80,18 @@ func (sm *ShipmentMove) Validate(multiErr *errortypes.MultiError) {
 		validation.Field(
 			&sm.Distance,
 			validation.Min(0.0).Error("Distance cannot be negative"),
+		),
+		validation.Field(
+			&sm.PayDistance,
+			validation.Min(0.0).Error("Paid distance cannot be negative"),
+		),
+		validation.Field(
+			&sm.BillingDistance,
+			validation.Min(0.0).Error("Billed distance cannot be negative"),
+		),
+		validation.Field(
+			&sm.FuelDistance,
+			validation.Min(0.0).Error("Fuel tax distance cannot be negative"),
 		),
 		validation.Field(
 			&sm.DistanceSource,
@@ -161,6 +176,34 @@ func (m *ShipmentMove) IsNew() bool {
 
 func (m *ShipmentMove) IsCanceled() bool {
 	return m.Status == shipmentvocab.MoveStatusCanceled
+}
+
+func (m *ShipmentMove) PaidDistance() *float64 {
+	return m.purposeDistance(m.PayDistance)
+}
+
+func (m *ShipmentMove) BilledDistance() *float64 {
+	return m.purposeDistance(m.BillingDistance)
+}
+
+func (m *ShipmentMove) FuelTaxDistance() *float64 {
+	return m.purposeDistance(m.FuelDistance)
+}
+
+func (m *ShipmentMove) ClearPurposeDistances() {
+	m.PayDistance = nil
+	m.BillingDistance = nil
+	m.FuelDistance = nil
+}
+
+func (m *ShipmentMove) purposeDistance(distance *float64) *float64 {
+	if m == nil {
+		return nil
+	}
+	if distance != nil {
+		return distance
+	}
+	return m.Distance
 }
 
 func (m *ShipmentMove) JurisdictionMilesSumMiles() float64 {

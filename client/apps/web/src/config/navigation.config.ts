@@ -1587,6 +1587,25 @@ export const adminLinks: SidebarLink[] = [
     requiredOperation: Operation.Read,
   },
   {
+    href: "/admin/security-access",
+    title: "Security & access",
+    keywords: ["sso", "single sign-on", "scim", "provisioning", "two-factor", "mfa", "policies"],
+    group: "Organization",
+    // Each part of the page answers to its own permission; the entry is there for whoever may
+    // read one of them (`securityAccess` in use-security-access.ts says which reads which).
+    anyResources: [
+      Resource.Organization,
+      Resource.IdentityProvider,
+      Resource.SCIMDirectory,
+      Resource.ProvisioningAudit,
+      Resource.AccessPolicy,
+      Resource.AuthEvent,
+      Resource.RiskDecision,
+      Resource.ExternalIdentity,
+      Resource.MFAAuthenticator,
+    ],
+  },
+  {
     href: "/admin/accounting-control",
     title: "Accounting controls",
     group: "Organization",

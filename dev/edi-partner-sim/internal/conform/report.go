@@ -6,8 +6,8 @@ import (
 	"strings"
 
 	"github.com/bytedance/sonic"
+	"github.com/emoss08/trenova/edi-partner-sim/internal/acknowledge"
 	"github.com/emoss08/trenova/edi-partner-sim/internal/oracle"
-	"github.com/emoss08/trenova/edi-partner-sim/internal/partner"
 	"github.com/emoss08/trenova/shared/jsonutils"
 )
 
@@ -113,7 +113,7 @@ type AckElementNote struct {
 	Copy      string `json:"copy,omitempty"`
 }
 
-func ackNotesOf(notes []partner.SegmentNote) []AckNote {
+func ackNotesOf(notes []acknowledge.SegmentNote) []AckNote {
 	out := make([]AckNote, 0, len(notes))
 	for _, note := range notes {
 		written := AckNote{

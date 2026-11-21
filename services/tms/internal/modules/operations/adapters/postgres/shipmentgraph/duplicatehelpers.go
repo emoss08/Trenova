@@ -217,14 +217,17 @@ func duplicateMovesAndStops(
 
 	for _, sourceMove := range sourceMoves {
 		duplicatedMove := &shipment.ShipmentMove{
-			ID:             pulid.MustNew("sm_"),
-			BusinessUnitID: sourceMove.BusinessUnitID,
-			OrganizationID: sourceMove.OrganizationID,
-			ShipmentID:     parent.ID,
-			Status:         shipmentvocab.MoveStatusNew,
-			Loaded:         sourceMove.Loaded,
-			Sequence:       sourceMove.Sequence,
-			Distance:       intutils.ClonePointer(sourceMove.Distance),
+			ID:              pulid.MustNew("sm_"),
+			BusinessUnitID:  sourceMove.BusinessUnitID,
+			OrganizationID:  sourceMove.OrganizationID,
+			ShipmentID:      parent.ID,
+			Status:          shipmentvocab.MoveStatusNew,
+			Loaded:          sourceMove.Loaded,
+			Sequence:        sourceMove.Sequence,
+			Distance:        intutils.ClonePointer(sourceMove.Distance),
+			PayDistance:     intutils.ClonePointer(sourceMove.PayDistance),
+			BillingDistance: intutils.ClonePointer(sourceMove.BillingDistance),
+			FuelDistance:    intutils.ClonePointer(sourceMove.FuelDistance),
 		}
 
 		moveStops := duplicateStops(sourceMove.Stops, duplicatedMove.ID, offset, applyOffset)

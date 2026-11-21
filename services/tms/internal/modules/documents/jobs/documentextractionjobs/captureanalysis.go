@@ -3,6 +3,7 @@ package documentextractionjobs
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"io"
 
 	"github.com/emoss08/trenova/internal/modules/documents/jobs/documentaiextractionjobs"
@@ -43,12 +44,19 @@ func (c *CaptureAnalyzer) Analyze(
 		return nil, err
 	}
 
-	availability, err := a.aiDocumentService.ExtractionAvailability(ctx, req.TenantInfo)
+	gate, err := a.gateReading(ctx, control, req.TenantInfo)
 	if err != nil {
 		return nil, err
 	}
-	if !availability.Available() || !a.converter.Enabled() ||
-		int64(len(req.PDF)) > a.conversionCfg.GetMaxFileBytes() {
+	if !gate.open() || !a.converter.Enabled() {
+		return &captureports.CaptureAnalysis{}, nil
+	}
+
+	pdf, err := req.Assemble(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("assemble the captured document: %w", err)
+	}
+	if int64(len(pdf)) > a.conversionCfg.GetMaxFileBytes() {
 		return &captureports.CaptureAnalysis{}, nil
 	}
 
@@ -56,10 +64,10 @@ func (c *CaptureAnalyzer) Analyze(
 		FileName:    req.FileName,
 		ContentType: captureContentType,
 		Open: func(context.Context) (io.ReadCloser, error) {
-			return io.NopCloser(bytes.NewReader(req.PDF)), nil
+			return io.NopCloser(bytes.NewReader(pdf)), nil
 		},
-		Size: int64(len(req.PDF)),
-		OCR:  control.EnableOCR,
+		Size: int64(len(pdf)),
+		OCR:  gate.ocr,
 	}, false)
 	if err != nil {
 		return nil, err
@@ -91,6 +99,7 @@ func (c *CaptureAnalyzer) Analyze(
 		documentanalysis.AnalyzeDocument(classification, extracted),
 		classification,
 		extracted.Text,
+		control.EnableAutoDocumentTypeAssociate,
 	), nil
 }
 
@@ -98,6 +107,7 @@ func captureAnalysisOf(
 	intelligence *documentanalysis.DocumentIntelligenceAnalysis,
 	classification *documentanalysis.ClassificationResult,
 	text string,
+	associatesType bool,
 ) *captureports.CaptureAnalysis {
 	analysis := &captureports.CaptureAnalysis{
 		Kind:       intelligence.Kind,
@@ -106,6 +116,9 @@ func captureAnalysisOf(
 	}
 	if analysis.Confidence == 0 {
 		analysis.Confidence = classification.Confidence
+	}
+	if !associatesType {
+		return analysis
 	}
 	if inferred, ok := documentaiextractionjobs.InferDocumentType(intelligence.Kind); ok {
 		analysis.DocumentTypeCode = inferred.Code

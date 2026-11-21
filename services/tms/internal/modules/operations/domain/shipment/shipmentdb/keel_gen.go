@@ -6959,6 +6959,9 @@ var shipmentMovesTable = schema.Table{
 		{Name: "distance_routing_type", Quoted: `"distance_routing_type"`, Field: "DistanceRoutingType", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Distance Routing Type`, JSON: `distanceRoutingType`, Report: &reportDimString},
 		{Name: "distance_units", Quoted: `"distance_units"`, Field: "DistanceUnits", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Distance Units`, JSON: `distanceUnits`, Report: &reportDimString},
 		{Name: "distance_metadata", Quoted: `"distance_metadata"`, Field: "DistanceMetadata", Kind: schema.KindJSON, Flags: schema.FlagJSONB | schema.FlagNullZero, Label: `Distance Metadata`, JSON: `distanceMetadata`, Report: &reportDimJsonb},
+		{Name: "pay_distance", Quoted: `"pay_distance"`, Field: "PayDistance", Kind: schema.KindFloat64, Flags: schema.FlagNullable, Label: `Paid Miles`, JSON: `payDistance`, Report: &reportMeasureFloatDistance},
+		{Name: "billing_distance", Quoted: `"billing_distance"`, Field: "BillingDistance", Kind: schema.KindFloat64, Flags: schema.FlagNullable, Label: `Billed Miles`, JSON: `billingDistance`, Report: &reportMeasureFloatDistance},
+		{Name: "fuel_distance", Quoted: `"fuel_distance"`, Field: "FuelDistance", Kind: schema.KindFloat64, Flags: schema.FlagNullable, Label: `Fuel Tax Miles`, JSON: `fuelDistance`, Report: &reportMeasureFloatDistance},
 		{Name: "version", Quoted: `"version"`, Field: "Version", Kind: schema.KindInt64, Flags: schema.FlagVersion, Label: `Version`, JSON: `version`, Report: &reportMeasureIntegerHidden},
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, JSON: `createdAt`, Report: &reportDimEpoch},
 		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, JSON: `updatedAt`, Report: &reportDimEpoch},
@@ -6972,14 +6975,14 @@ var shipmentMovesTable = schema.Table{
 	},
 	PK:           []int32{0, 1, 2},
 	Tenant:       []int32{1, 2},
-	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19},
-	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19},
-	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 19},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 22},
 	Returning:    nil,
-	Version:      17,
+	Version:      20,
 	AutoID:       0,
-	AutoCreate:   18,
-	AutoUpdate:   19,
+	AutoCreate:   21,
+	AutoUpdate:   22,
 	IDPrefix:     "sm_",
 	New:          newShipmentMove,
 	NewN:         newNShipmentMove,
@@ -7013,6 +7016,9 @@ type ShipmentMovesTable struct {
 	DistanceRoutingType    keel.StringCol
 	DistanceUnits          keel.StringCol
 	DistanceMetadata       keel.JSONBCol
+	PayDistance            keel.Float64Col
+	BillingDistance        keel.Float64Col
+	FuelDistance           keel.Float64Col
 	Version                keel.Int64Col
 	CreatedAt              keel.Int64Col
 	UpdatedAt              keel.Int64Col
@@ -7038,9 +7044,12 @@ var ShipmentMoves = &ShipmentMovesTable{
 	DistanceRoutingType:    keel.StringCol{Col: keel.Col{Ref: &shipmentMovesRef, Index: 14}},
 	DistanceUnits:          keel.StringCol{Col: keel.Col{Ref: &shipmentMovesRef, Index: 15}},
 	DistanceMetadata:       keel.JSONBCol{Col: keel.Col{Ref: &shipmentMovesRef, Index: 16}},
-	Version:                keel.Int64Col{Col: keel.Col{Ref: &shipmentMovesRef, Index: 17}},
-	CreatedAt:              keel.Int64Col{Col: keel.Col{Ref: &shipmentMovesRef, Index: 18}},
-	UpdatedAt:              keel.Int64Col{Col: keel.Col{Ref: &shipmentMovesRef, Index: 19}},
+	PayDistance:            keel.Float64Col{Col: keel.Col{Ref: &shipmentMovesRef, Index: 17}},
+	BillingDistance:        keel.Float64Col{Col: keel.Col{Ref: &shipmentMovesRef, Index: 18}},
+	FuelDistance:           keel.Float64Col{Col: keel.Col{Ref: &shipmentMovesRef, Index: 19}},
+	Version:                keel.Int64Col{Col: keel.Col{Ref: &shipmentMovesRef, Index: 20}},
+	CreatedAt:              keel.Int64Col{Col: keel.Col{Ref: &shipmentMovesRef, Index: 21}},
+	UpdatedAt:              keel.Int64Col{Col: keel.Col{Ref: &shipmentMovesRef, Index: 22}},
 }
 
 // BuildShipmentMoves builds the table of shipment_moves for ref. Generated relation and alias methods call it.
@@ -7064,9 +7073,12 @@ func BuildShipmentMoves(r *keel.Ref) *ShipmentMovesTable {
 		DistanceRoutingType:    keel.StringCol{Col: keel.Col{Ref: r, Index: 14}},
 		DistanceUnits:          keel.StringCol{Col: keel.Col{Ref: r, Index: 15}},
 		DistanceMetadata:       keel.JSONBCol{Col: keel.Col{Ref: r, Index: 16}},
-		Version:                keel.Int64Col{Col: keel.Col{Ref: r, Index: 17}},
-		CreatedAt:              keel.Int64Col{Col: keel.Col{Ref: r, Index: 18}},
-		UpdatedAt:              keel.Int64Col{Col: keel.Col{Ref: r, Index: 19}},
+		PayDistance:            keel.Float64Col{Col: keel.Col{Ref: r, Index: 17}},
+		BillingDistance:        keel.Float64Col{Col: keel.Col{Ref: r, Index: 18}},
+		FuelDistance:           keel.Float64Col{Col: keel.Col{Ref: r, Index: 19}},
+		Version:                keel.Int64Col{Col: keel.Col{Ref: r, Index: 20}},
+		CreatedAt:              keel.Int64Col{Col: keel.Col{Ref: r, Index: 21}},
+		UpdatedAt:              keel.Int64Col{Col: keel.Col{Ref: r, Index: 22}},
 	}
 }
 
@@ -7513,10 +7525,16 @@ func ptrShipmentMove(p unsafe.Pointer, c int32) any {
 	case 16:
 		return &r.DistanceMetadata
 	case 17:
-		return &r.Version
+		return &r.PayDistance
 	case 18:
-		return &r.CreatedAt
+		return &r.BillingDistance
 	case 19:
+		return &r.FuelDistance
+	case 20:
+		return &r.Version
+	case 21:
+		return &r.CreatedAt
+	case 22:
 		return &r.UpdatedAt
 	}
 	return nil
@@ -7587,10 +7605,25 @@ func valueShipmentMove(p unsafe.Pointer, c int32) any {
 		}
 		return r.DistanceMetadata
 	case 17:
-		return r.Version
+		if r.PayDistance == nil {
+			return nil
+		}
+		return *r.PayDistance
 	case 18:
-		return r.CreatedAt
+		if r.BillingDistance == nil {
+			return nil
+		}
+		return *r.BillingDistance
 	case 19:
+		if r.FuelDistance == nil {
+			return nil
+		}
+		return *r.FuelDistance
+	case 20:
+		return r.Version
+	case 21:
+		return r.CreatedAt
+	case 22:
 		return r.UpdatedAt
 	}
 	return nil

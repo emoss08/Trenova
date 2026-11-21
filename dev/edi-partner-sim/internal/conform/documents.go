@@ -27,6 +27,7 @@ const (
 	refBillOfLading      = "BM"
 	refCarrierPRO        = "CN"
 	refPurchaseOrder     = "PO"
+	otherZone            = "America/Denver"
 )
 
 var payments = map[string]bool{
@@ -154,23 +155,27 @@ type party struct {
 }
 
 type invoiceLine struct {
-	Sequence    int64  `json:"sequence"`
-	Code        string `json:"code,omitempty"`
-	Description string `json:"description,omitempty"`
-	Amount      money  `json:"amount"`
+	Sequence    int64    `json:"sequence"`
+	Code        string   `json:"code,omitempty"`
+	Description string   `json:"description,omitempty"`
+	Amount      money    `json:"amount"`
+	Rate        string   `json:"rate,omitempty"`
+	Weight      *measure `json:"weight,omitempty"`
 }
 
 type freightInvoice struct {
-	Number    string            `json:"number"`
-	Date      string            `json:"date"`
-	Key       string            `json:"key,omitempty"`
-	BOL       string            `json:"bol,omitempty"`
-	ProNumber string            `json:"proNumber,omitempty"`
-	BillTo    *party            `json:"billTo,omitempty"`
-	Payment   string            `json:"payment,omitempty"`
-	Total     money             `json:"total"`
-	Lines     []invoiceLine     `json:"lines,omitempty"`
-	Refs      map[string]string `json:"refs,omitempty"`
+	Number       string            `json:"number"`
+	Date         string            `json:"date"`
+	DeliveryDate string            `json:"deliveryDate,omitempty"`
+	Key          string            `json:"key,omitempty"`
+	BOL          string            `json:"bol,omitempty"`
+	ProNumber    string            `json:"proNumber,omitempty"`
+	Weight       *measure          `json:"weight,omitempty"`
+	BillTo       *party            `json:"billTo,omitempty"`
+	Payment      string            `json:"payment,omitempty"`
+	Total        money             `json:"total"`
+	Lines        []invoiceLine     `json:"lines,omitempty"`
+	Refs         map[string]string `json:"refs,omitempty"`
 }
 
 type readStop struct {
@@ -302,8 +307,9 @@ func flowEventOf(kind string) string {
 	}
 }
 
-func responses(key string, respondedAt time.Time, zone string) []namedDocument {
-	when := at(respondedAt, zone)
+func responses(key string, respondedAt time.Time, zone string, v *variety) []namedDocument {
+	respondedAt = v.instant(respondedAt, location(zone))
+	when := at(respondedAt, v.zone(zone, otherZone))
 	return []namedDocument{
 		{
 			name: "990 accept",
@@ -323,9 +329,12 @@ func responses(key string, respondedAt time.Time, zone string) []namedDocument {
 		},
 		{name: "990 decline with a reason", text: "Write the 990 declining it, with a reason",
 			now: respondedAt, document: tenderResponse{
-				Key:         key,
-				Decision:    "Decline",
-				Reason:      "No trucks near the pickup on the requested date",
+				Key:      key,
+				Decision: "Decline",
+				Reason: v.text(
+					"No trucks near the pickup on the requested date",
+					declineReason,
+				),
 				RespondedAt: when,
 			}},
 	}
@@ -393,89 +402,176 @@ func statuses(
 	load *partner.Load,
 	tender *readTender,
 	sends func(event string) bool,
+	v *variety,
 ) []namedDocument {
 	var out []namedDocument
 	pro := proNumber(load.Seed)
 	stops := shipmentStops(load, tender)
 	final := finalStop(stops)
+	fallback := load.TenderedAt.Location().String()
 	for index := range load.Stops {
 		stop := &load.Stops[index]
-		for _, e := range stopEvents {
+		times := stopTimes(stop, v)
+		city := v.text(stop.Party.City, statusCity)
+		for event, e := range stopEvents {
 			code := stopStatusCode(stops[index].pickup, e.departed, index == final)
 			kind := statusKinds[code]
 			if !sends(flowEventOf(kind)) {
 				continue
 			}
 			sequence := stops[index].sequence
-			occurred := stop.Window.Start.Add(e.after)
+			occurred := times[event]
+			status := shipmentStatus{
+				Key:              shipmentKey(tender, pro),
+				BOL:              tender.BOL,
+				ProNumber:        pro,
+				ShipperReference: partnerReference(tender),
+				Weight:           wholePounds(tender.Weight),
+				Pieces:           tender.Pieces,
+				Refs:             partnerRefs(tender.BOL, pro),
+				Events: []statusEvent{{
+					Kind:  kind,
+					At:    at(occurred, v.zone(stop.Party.Zone, fallback)),
+					Stop:  &sequence,
+					City:  city,
+					State: stop.Party.State,
+				}},
+			}
+			if v.chance(2) {
+				status.Events[0].Country = "US"
+			}
 			out = append(out, namedDocument{
-				name: fmt.Sprintf("214 stop %d %s", sequence, e.name),
-				text: fmt.Sprintf(e.text, sequence),
-				document: shipmentStatus{
-					Key:              shipmentKey(tender, pro),
-					BOL:              tender.BOL,
-					ProNumber:        pro,
-					ShipperReference: partnerReference(tender),
-					Weight:           wholePounds(tender.Weight),
-					Pieces:           tender.Pieces,
-					Refs:             partnerRefs(tender.BOL, pro),
-					Events: []statusEvent{{
-						Kind:  kind,
-						At:    at(occurred, stop.Party.Zone),
-						Stop:  &sequence,
-						City:  stop.Party.City,
-						State: stop.Party.State,
-					}},
-				},
-				now: occurred.Add(time.Minute),
+				name:     fmt.Sprintf("214 stop %d %s", sequence, e.name),
+				text:     fmt.Sprintf(e.text, sequence),
+				document: status,
+				now:      occurred.Add(time.Minute),
 			})
 		}
 	}
 	return out
 }
 
-func invoice(load *partner.Load, tender *readTender, zone *time.Location) namedDocument {
+func stopTimes(stop *partner.Stop, v *variety) []time.Time {
+	arrived := v.instant(stop.Window.Start.Add(stopEvents[0].after), location(stop.Party.Zone))
+	dwell := stopEvents[1].after - stopEvents[0].after
+	if v != nil {
+		dwell = time.Duration(20+v.rng.IntN(160))*time.Minute +
+			time.Duration(v.rng.IntN(60))*time.Second
+	}
+	return []time.Time{arrived, arrived.Add(dwell)}
+}
+
+func invoice(
+	load *partner.Load,
+	tender *readTender,
+	zone *time.Location,
+	v *variety,
+) namedDocument {
 	last := load.Stops[len(load.Stops)-1].Window.End
-	issued := time.Date(last.Year(), last.Month(), last.Day()+1, 12, 0, 0, 0, zone)
+	issued := v.instant(time.Date(last.Year(), last.Month(), last.Day()+1, 12, 0, 0, 0, zone), zone)
 	total := cents(load.TotalCents)
 	if tender.Total != nil && tender.Total.Amount != "" {
 		total = money{Amount: tender.Total.Amount, Currency: currencyUSD}
 	}
 	pro := proNumber(load.Seed)
-	refs := partnerRefs(tender.BOL, pro)
+	bol := tender.BOL
+	refs := partnerRefs(bol, pro)
 	if po := purchaseOrder(tender); po != "" {
 		refs[refPurchaseOrder] = po
 	}
-	billTo := &party{Name: load.BillTo.Name}
-	if load.BillTo.Street != "" && load.BillTo.City != "" {
-		billTo.Address = &address{
-			Line1:   load.BillTo.Street,
-			City:    load.BillTo.City,
-			State:   load.BillTo.State,
-			Postal:  load.BillTo.Zip,
-			Country: load.BillTo.Country,
-		}
+	billed := freightInvoice{
+		Number:    fmt.Sprintf("INV-%06d", load.Seed%1_000_000),
+		Date:      day(issued, zone),
+		Key:       shipmentKey(tender, pro),
+		BOL:       bol,
+		ProNumber: pro,
+		BillTo:    billTo(load, v),
+		Payment:   freightTerms(tender.Payment),
+		Total:     total,
+		Lines:     invoiceLines(load, total, v),
+		Refs:      refs,
+	}
+	if v != nil && !v.chance(3) {
+		billed.Weight = pounds(load.Weight())
+	}
+	if v != nil && !v.chance(5) {
+		billed.DeliveryDate = day(last, zone)
 	}
 	return namedDocument{
-		name: "210",
-		text: "Write the 210 at the tendered total",
-		document: freightInvoice{
-			Number:    fmt.Sprintf("INV-%06d", load.Seed%1_000_000),
-			Date:      day(issued, zone),
-			Key:       shipmentKey(tender, pro),
-			BOL:       tender.BOL,
-			ProNumber: pro,
-			BillTo:    billTo,
-			Payment:   freightTerms(tender.Payment),
-			Total:     total,
-			Lines: []invoiceLine{{
-				Sequence:    1,
-				Code:        freightCode,
-				Description: "Linehaul",
-				Amount:      total,
-			}},
-			Refs: refs,
-		},
-		now: issued,
+		name:     "210",
+		text:     "Write the 210 at the tendered total",
+		document: billed,
+		now:      issued,
 	}
+}
+
+func billTo(load *partner.Load, v *variety) *party {
+	billed := &party{Name: v.text(load.BillTo.Name, invoiceName)}
+	if load.BillTo.Street == "" || load.BillTo.City == "" || v.chance(7) {
+		return billed
+	}
+	billed.Address = &address{
+		Line1:   v.text(load.BillTo.Street, invoiceStreet),
+		City:    v.text(load.BillTo.City, invoiceCity),
+		State:   load.BillTo.State,
+		Postal:  load.BillTo.Zip,
+		Country: load.BillTo.Country,
+	}
+	if v.chance(4) {
+		billed.Address.Line2 = v.text("SUITE 200", invoiceSuite)
+	}
+	return billed
+}
+
+func invoiceLines(load *partner.Load, total money, v *variety) []invoiceLine {
+	totalCents := centsOf(total.Amount)
+	extras, amounts := v.charges(totalCents)
+	linehaul := totalCents
+	for _, amount := range amounts {
+		linehaul -= amount
+	}
+	first := invoiceLine{
+		Sequence:    1,
+		Code:        freightCode,
+		Description: v.text("Linehaul", invoiceLineFor),
+		Amount:      total,
+	}
+	if v == nil {
+		return []invoiceLine{first}
+	}
+	first.Amount = cents(linehaul)
+	if !v.chance(3) {
+		first.Rate = decimal.New(load.RateCents, -2).String()
+	}
+	if v.chance(2) {
+		first.Weight = pounds(load.Weight())
+	}
+	if v.chance(10) {
+		first.Description = ""
+	}
+	lines := []invoiceLine{first}
+	for index, extra := range extras {
+		lines = append(lines, invoiceLine{
+			Sequence:    int64(index + 2),
+			Code:        extra.code,
+			Description: v.text(extra.description, invoiceLineFor),
+			Amount:      cents(amounts[index]),
+		})
+	}
+	return lines
+}
+
+func centsOf(amount string) int64 {
+	value, err := decimal.NewFromString(amount)
+	if err != nil {
+		return 0
+	}
+	return value.Shift(2).Round(0).IntPart()
+}
+
+func location(zone string) *time.Location {
+	if loaded, err := time.LoadLocation(zone); zone != "" && err == nil {
+		return loaded
+	}
+	return time.UTC
 }

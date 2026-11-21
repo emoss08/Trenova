@@ -223,3 +223,50 @@ func TestZip3TakesTheFirstThreeCharacters(t *testing.T) {
 	assert.Equal(t, "K1A", record.Zip3("k1a 0b1"))
 	assert.Equal(t, "12", record.Zip3("12"))
 }
+
+func TestBuildRatesTheBilledDistance(t *testing.T) {
+	t.Parallel()
+
+	entity := fullShipment()
+	entity.Moves[0].BillingDistance = new(790.0)
+	raw, err := record.Build(&record.Input{
+		Shipment:     entity,
+		Origin:       record.PlaceOf(entity.ShipperStop()),
+		Destination:  record.PlaceOf(entity.DeliveryStop()),
+		DistanceUnit: record.DistanceMiles,
+		Rating: record.Rating{
+			At:       time.Unix(1_772_000_000, 0).UTC(),
+			Mode:     record.ModeSell,
+			Currency: "USD",
+		},
+	})
+	require.NoError(t, err)
+
+	result, err := rules.EvaluateTariffs(t.Context(), &rules.TariffEvaluateRequest{
+		Context: &rules.TariffContext{},
+		Record:  raw,
+		Programs: []rules.TariffProgram{{
+			ID:     "probe",
+			Kind:   rules.TariffKindTariff,
+			Source: "tariff \"Probe\"\n\ncharge \"Miles\" (quantity: shipment.distance, rate: $1/mi)\n",
+		}},
+	})
+	require.NoError(t, err)
+	probe := result.Result("probe")
+	require.NotNil(t, probe)
+	require.Equal(t, rules.TariffRated, probe.Status, "%+v", probe.Error)
+	assert.Equal(t, "790", probe.Bill.Total.Value.String())
+
+	var decoded struct {
+		Shipment struct {
+			Distance any `json:"distance"`
+			Stops    []struct {
+				LegDistance any `json:"legDistance"`
+			} `json:"stops"`
+		} `json:"shipment"`
+	}
+	require.NoError(t, sonic.Unmarshal(raw, &decoded))
+	require.Len(t, decoded.Shipment.Stops, 2)
+	assert.Equal(t, decoded.Shipment.Distance, decoded.Shipment.Stops[1].LegDistance,
+		"the leg of a two-stop move is its billed distance")
+}

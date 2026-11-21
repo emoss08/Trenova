@@ -3,6 +3,7 @@ package tariff
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/modules/places/domain/distancecontrol"
 	"github.com/emoss08/trenova/internal/modules/places/ports/distancecontrolports"
 	"github.com/emoss08/trenova/internal/modules/rating/app/tariff/record"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -10,8 +11,6 @@ import (
 	"github.com/emoss08/trenova/pkg/rules"
 	"go.uber.org/fx"
 )
-
-const storedKilometers = "Kilometers"
 
 type SettingsParams struct {
 	fx.In
@@ -38,7 +37,7 @@ func (s *Settings) For(
 		}
 		return rules.TariffSettings{}, err
 	}
-	if control.StoredDistanceUnits == storedKilometers {
+	if control.RatingDistanceUnit == distancecontrol.RatingDistanceUnitKilometers {
 		return rules.TariffSettings{DistanceUnit: record.DistanceKilometers}, nil
 	}
 	return rules.TariffSettings{DistanceUnit: record.DistanceMiles}, nil

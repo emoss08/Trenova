@@ -89,8 +89,11 @@ func Distance(sp *shipment.Shipment) decimal.Decimal {
 	}
 
 	for _, move := range sp.Moves {
-		if move != nil && !move.IsCanceled() && move.Distance != nil {
-			total = total.Add(decimal.NewFromFloat(*move.Distance))
+		if move == nil || move.IsCanceled() {
+			continue
+		}
+		if billed := move.BilledDistance(); billed != nil {
+			total = total.Add(decimal.NewFromFloat(*billed))
 		}
 	}
 
@@ -395,10 +398,14 @@ func Miles(sp *shipment.Shipment) decimal.Decimal {
 		return total
 	}
 	for _, move := range sp.Moves {
-		if move == nil || move.IsCanceled() || move.Distance == nil {
+		if move == nil || move.IsCanceled() {
 			continue
 		}
-		distance := decimal.NewFromFloat(*move.Distance)
+		billed := move.BilledDistance()
+		if billed == nil {
+			continue
+		}
+		distance := decimal.NewFromFloat(*billed)
 		if move.DistanceUnits == distanceKilometers {
 			distance = distance.Div(kilometresPerMile)
 		}

@@ -1,53 +1,31 @@
+import { SettingsPageSkeleton } from "@/components/settings/settings-page";
+import type { SettingsSectionSpec } from "@/components/settings-form-skeleton";
 import {
-  SettingsSectionsSkeleton,
-  SkeletonRegion,
-  type SettingsSectionSpec,
-} from "@/components/settings-form-skeleton";
-import { Skeleton } from "@trenova/shared/components/ui/skeleton";
-import { useT } from "@trenova/shared/i18n/use-t";
+  useOrganizationSettingsTabs,
+  type OrganizationSettingsTab,
+} from "./organization-settings-tabs";
 
-const tabCount = 2;
-
-const generalSections: readonly SettingsSectionSpec[] = [
-  { title: "lg", fields: ["image"] },
-  { fields: [{ kind: "input", count: 3 }] },
-  {
-    title: "sm",
-    description: 2,
-    switches: "right",
-    fields: ["input", { kind: "switch", count: 2 }],
-  },
-  { fields: [{ kind: "input", count: 3 }] },
-  {
-    cols: 2,
-    fields: [
-      { kind: "input", full: true, count: 2 },
-      { kind: "input", count: 2 },
-      { kind: "input", full: true },
-    ],
-  },
-];
+const text = { kind: "input", narrow: false } as const;
+const code = { kind: "input", narrow: true } as const;
 
 /**
- * The settings tabs over the general tab's cards: branding, details, operating model, compliance
- * and the registered address.
+ * Each tab's sections as the form draws them, one row to a setting. The operating model is
+ * drawn as an organization whose plan includes brokerage sees it: the preset and both
+ * switches. The branding preview is drawn as one picture of its height.
  */
-export function OrganizationSettingsSkeleton() {
-  const t = useT();
+const TAB_SECTIONS: Record<OrganizationSettingsTab, readonly SettingsSectionSpec[]> = {
+  profile: [
+    { title: "sm", description: 1, fields: [text, text, text] },
+    { title: "md", description: 1, fields: [text, text, text, text, code] },
+  ],
+  branding: [{ title: "md", description: 2, fields: ["preview"] }],
+  operations: [
+    { title: "md", description: 2, fields: [text, "switch", "switch"] },
+    { title: "sm", description: 1, fields: [code, code, text] },
+  ],
+};
 
-  return (
-    <SkeletonRegion label={t("Loading settings")} className="flex flex-col gap-4">
-      <div className="flex w-fit items-center gap-x-0.5 py-1">
-        {Array.from({ length: tabCount }, (_, tab) => (
-          <div key={tab} className="flex h-9 items-center gap-1.5 px-2.5 sm:h-8">
-            <Skeleton className="size-4" />
-            <Skeleton className="h-3.5 w-14" />
-          </div>
-        ))}
-      </div>
-      <div className="flex flex-col gap-4 pb-10">
-        <SettingsSectionsSkeleton sections={generalSections} />
-      </div>
-    </SkeletonRegion>
-  );
+/** The form's tab row and the open tab's sections. */
+export function OrganizationSettingsSkeleton() {
+  return <SettingsPageSkeleton tabs={useOrganizationSettingsTabs()} sections={TAB_SECTIONS} />;
 }

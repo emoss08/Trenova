@@ -1,361 +1,47 @@
-import { useT } from "@trenova/shared/i18n/use-t";
-import { ExtractionNeedsProviderAlert } from "@/components/documents/extraction-needs-provider-alert";
-import { FormSaveDock } from "@/components/form-save-dock";
-import { SwitchField } from "@/components/fields/switch-field";
-import { Checkbox } from "@trenova/shared/components/ui/checkbox";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@trenova/shared/components/ui/card";
-import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form";
-import { Label } from "@trenova/shared/components/ui/label";
-import { useOptimisticMutation } from "@/hooks/use-optimistic-mutation";
+import { SettingsForm } from "@/components/settings/settings-form";
 import { documentControl } from "@/lib/queries/document-control";
 import { documentControlService } from "@/services/document-control";
-import {
-  documentControlResourceSchema,
-  documentControlSchema,
-  type DocumentControl,
-  type DocumentControlResource,
-} from "@/types/document-control";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { documentControlSchema, type DocumentControl } from "@/types/document-control";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { useCallback } from "react";
-import { FormProvider, useForm, useFormContext, useWatch } from "react-hook-form";
+import {
+  useDocumentIntelligenceTabs,
+  type DocumentIntelligenceTab,
+} from "../document-intelligence-tabs";
+import { DraftsTab } from "./drafts-tab";
+import { FilingTab } from "./filing-tab";
+import { ReadingTab } from "./reading-tab";
 
-const allowedResourceOptions: Array<{
-  value: DocumentControlResource;
-  label: string;
-  description: string;
-}> = [
-  {
-    value: documentControlResourceSchema.enum.shipment,
-    label: "Shipment",
-    description: "Allow shipment drafts to be generated for shipment documents.",
-  },
-  {
-    value: documentControlResourceSchema.enum.trailer,
-    label: "Trailer",
-    description: "Allow shipment-draft style extraction on trailer-linked documents.",
-  },
-  {
-    value: documentControlResourceSchema.enum.tractor,
-    label: "Tractor",
-    description: "Allow shipment-draft style extraction on tractor-linked documents.",
-  },
-  {
-    value: documentControlResourceSchema.enum.worker,
-    label: "Worker",
-    description: "Allow shipment-draft style extraction on worker-linked documents.",
-  },
-];
+const save = (values: DocumentControl) => documentControlService.update(values);
 
+/**
+ * Document extraction: what Trenova does with the documents an organization uploads, in one
+ * form saved once and split into a tab for each job: reading them, filing them and drafting
+ * shipments from rate confirmations. The capture settings on the same record are edited on
+ * the Capture page and saved here as they were read.
+ */
 export default function DocumentIntelligenceForm() {
-  const t = useT();
-
-  const { data } = useSuspenseQuery({
-    ...documentControl.get(),
-  });
-
-  const form = useForm<DocumentControl>({
-    resolver: zodResolver(documentControlSchema),
-    defaultValues: data,
-  });
-
-  const { handleSubmit, reset } = form;
-
-  const { mutateAsync } = useOptimisticMutation({
-    queryKey: documentControl.get._def,
-    mutationFn: async (values: DocumentControl) => documentControlService.update(values),
-    resourceName: "Document extraction",
-    resetForm: reset,
-    form,
-    invalidateQueries: [documentControl.get._def, documentControl.extractionStatus._def],
-  });
-
-  const onSubmit = useCallback(
-    async (values: DocumentControl) => {
-      await mutateAsync(values);
-    },
-    [mutateAsync],
-  );
+  const { data } = useSuspenseQuery({ ...documentControl.get() });
+  const tabs = useDocumentIntelligenceTabs();
 
   return (
-    <FormProvider {...form}>
-      <Form onSubmit={handleSubmit(onSubmit)}>
-        <div className="flex flex-col gap-4 pb-14">
-          <PlatformAvailabilityCard />
-          <ClassificationAndExtractionCard />
-          <ShipmentDraftCard />
-          <SearchCard />
-          <FormSaveDock saveButtonContent={t("Save changes")} />
-        </div>
-      </Form>
-    </FormProvider>
-  );
-}
-
-function PlatformAvailabilityCard() {
-  const t = useT();
-
-  const { control } = useFormContext<DocumentControl>();
-  const enabled = useWatch({
-    control,
-    name: "enableDocumentIntelligence",
-  });
-
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{t("Platform availability")}</CardTitle>
-        <CardDescription>
-          {t(
-            "Control whether document extraction is active for this tenant. When this is disabled, extraction and shipment-draft workflows remain off even if a provider is configured.",
-          )}
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="flex max-w-prose flex-col gap-4">
-        <ExtractionNeedsProviderAlert />
-        <FormGroup cols={1}>
-          <FormControl className="min-h-[3em]">
-            <SwitchField
-              control={control}
-              name="enableDocumentIntelligence"
-              label={t("Enable document extraction")}
-              description={t(
-                "Master switch for reading, classifying, extracting, and indexing uploaded documents.",
-              )}
-              position="left"
-            />
-          </FormControl>
-          <FormControl className="min-h-[3em] pl-10">
-            <SwitchField
-              control={control}
-              name="enableOcr"
-              label={t("Enable OCR")}
-              description={t(
-                "Read text from scanned pages, photos, and faxes that carry no text of their own.",
-              )}
-              position="left"
-              disabled={!enabled}
-            />
-          </FormControl>
-        </FormGroup>
-      </CardContent>
-    </Card>
-  );
-}
-
-function ClassificationAndExtractionCard() {
-  const t = useT();
-
-  const { control } = useFormContext<DocumentControl>();
-  const enabled = useWatch({
-    control,
-    name: "enableDocumentIntelligence",
-  });
-
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{t("Classification and extraction")}</CardTitle>
-        <CardDescription>
-          {t(
-            "Manage automatic routing, document type assignment, and optional AI-assisted extraction. AI toggles here depend on Nova, which runs on the provider chosen for it in Agent Control.",
-          )}
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="max-w-prose">
-        <FormGroup cols={1}>
-          <FormControl className="min-h-[3em]">
-            <SwitchField
-              control={control}
-              name="enableAutoClassification"
-              label={t("Enable automatic classification")}
-              description={t(
-                "Classify uploaded documents into supported kinds as they are processed.",
-              )}
-              position="left"
-              disabled={!enabled}
-            />
-          </FormControl>
-          <FormControl className="min-h-[3em] pl-10">
-            <SwitchField
-              control={control}
-              name="enableAiAssistedClassification"
-              label={t("Enable AI-assisted classification")}
-              description={t(
-                "Use an AI provider to improve document-kind routing when deterministic classification is insufficient.",
-              )}
-              position="left"
-              disabled={!enabled}
-            />
-          </FormControl>
-          <FormControl className="min-h-[3em]">
-            <SwitchField
-              control={control}
-              name="enableAutoDocumentTypeAssociate"
-              label={t("Enable automatic document type association")}
-              description={t(
-                "Map detected document kinds to existing document types automatically.",
-              )}
-              position="left"
-              disabled={!enabled}
-            />
-          </FormControl>
-          <FormControl className="min-h-[3em] pl-10">
-            <SwitchField
-              control={control}
-              name="enableAutoCreateDocumentTypes"
-              label={t("Enable automatic document type creation")}
-              description={t(
-                "Create missing document types during auto-association when a mapping does not exist yet.",
-              )}
-              position="left"
-              disabled={!enabled}
-            />
-          </FormControl>
-          <FormControl className="min-h-[3em]">
-            <SwitchField
-              control={control}
-              name="enableAiAssistedExtraction"
-              label={t("Enable AI-assisted extraction")}
-              description={t(
-                "Use an AI provider for structured extraction on supported document kinds.",
-              )}
-              position="left"
-              disabled={!enabled}
-            />
-          </FormControl>
-        </FormGroup>
-      </CardContent>
-    </Card>
-  );
-}
-
-function ShipmentDraftCard() {
-  const t = useT();
-
-  const { control, setValue } = useFormContext<DocumentControl>();
-  const enabled = useWatch({
-    control,
-    name: "enableDocumentIntelligence",
-  });
-  const shipmentDraftEnabled = useWatch({
-    control,
-    name: "enableShipmentDraftExtraction",
-  });
-  const selectedResources = useWatch({
-    control,
-    name: "shipmentDraftAllowedResources",
-  });
-
-  const toggleResource = useCallback(
-    (resource: DocumentControlResource, checked: boolean) => {
-      const current = selectedResources ?? [];
-      const next = checked
-        ? Array.from(new Set([...current, resource]))
-        : current.filter((value) => value !== resource);
-
-      setValue("shipmentDraftAllowedResources", next, {
-        shouldDirty: true,
-        shouldValidate: true,
-      });
-    },
-    [selectedResources, setValue],
-  );
-
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{t("Shipment draft extraction")}</CardTitle>
-        <CardDescription>
-          {t(
-            "Limit structured shipment-draft generation to the resources where operators should be able to review a draft and create a shipment from it.",
-          )}
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="max-w-prose">
-        <FormGroup cols={1}>
-          <FormControl className="min-h-[3em]">
-            <SwitchField
-              control={control}
-              name="enableShipmentDraftExtraction"
-              label={t("Enable shipment draft extraction")}
-              description={t(
-                "Generate reviewable shipment drafts for supported document kinds such as rate confirmations.",
-              )}
-              position="left"
-              disabled={!enabled}
-            />
-          </FormControl>
-          <div className="grid gap-2 pl-10">
-            {allowedResourceOptions.map((option) => {
-              const checked = (selectedResources ?? []).includes(option.value);
-
-              return (
-                <div
-                  key={option.value}
-                  className="border-border/80 flex items-start gap-3 rounded-md border p-3"
-                >
-                  <Checkbox
-                    checked={checked}
-                    disabled={!enabled || !shipmentDraftEnabled}
-                    onCheckedChange={(value) => toggleResource(option.value, value === true)}
-                    className="mt-0.5"
-                  />
-                  <div className="grid gap-1">
-                    <Label>{t(option.label)}</Label>
-                    <p className="text-2xs text-muted-foreground">{t(option.description)}</p>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </FormGroup>
-      </CardContent>
-    </Card>
-  );
-}
-
-function SearchCard() {
-  const t = useT();
-
-  const { control } = useFormContext<DocumentControl>();
-  const enabled = useWatch({
-    control,
-    name: "enableDocumentIntelligence",
-  });
-
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{t("Search and retrieval")}</CardTitle>
-        <CardDescription>
-          {t(
-            "Control whether extracted text is indexed for document search and retrieval experiences.",
-          )}
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="max-w-prose">
-        <FormGroup cols={1}>
-          <FormControl className="min-h-[3em]">
-            <SwitchField
-              control={control}
-              name="enableFullTextIndexing"
-              label={t("Enable full-text indexing")}
-              description={t(
-                "Store extracted text in the search index so operators can find documents by content.",
-              )}
-              position="left"
-              disabled={!enabled}
-            />
-          </FormControl>
-        </FormGroup>
-      </CardContent>
-    </Card>
+    <SettingsForm<DocumentControl, DocumentIntelligenceTab>
+      values={data}
+      schema={documentControlSchema}
+      queryKey={documentControl.get._def}
+      save={save}
+      resourceName="Document extraction"
+      tabs={tabs}
+      content={(tab, { selectTab }) => {
+        const openReading = () => selectTab("reading");
+        switch (tab) {
+          case "reading":
+            return <ReadingTab />;
+          case "filing":
+            return <FilingTab onOpenReading={openReading} />;
+          case "drafts":
+            return <DraftsTab onOpenReading={openReading} />;
+        }
+      }}
+    />
   );
 }

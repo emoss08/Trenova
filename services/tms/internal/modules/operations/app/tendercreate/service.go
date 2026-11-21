@@ -506,8 +506,7 @@ func (s *Service) screenGuideEntry(
 		return
 	}
 
-	if price.method == shipmentvocab.CarrierRateMethodPerMile &&
-		(screen.move.Distance == nil || *screen.move.Distance <= 0) {
+	if tender.DistanceUnknown(price.method, screen.move.PaidDistance()) {
 		entryErr.Add(
 			"rateMethod",
 			errortypes.ErrInvalid,
@@ -680,8 +679,7 @@ func (s *Service) screenSpotLine(
 	if rateMethod == "" {
 		rateMethod = shipmentvocab.CarrierRateMethodFlat
 	}
-	if rateMethod == shipmentvocab.CarrierRateMethodPerMile &&
-		(screen.move.Distance == nil || *screen.move.Distance <= 0) {
+	if tender.DistanceUnknown(rateMethod, screen.move.PaidDistance()) {
 		lineErr.Add(
 			"rateMethod",
 			errortypes.ErrInvalid,

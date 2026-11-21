@@ -188,3 +188,43 @@ func (s *GuideSet) Sets() []string {
 	slices.Sort(out)
 	return out
 }
+
+func (s *GuideSet) ElementMax(set, segment string, position int) int {
+	if s == nil {
+		return 0
+	}
+	for _, g := range s.guides {
+		if string(g.Set) != set {
+			continue
+		}
+		def := g.Segments[segment]
+		if def == nil {
+			return 0
+		}
+		limit := 0
+		for _, element := range def.Elements {
+			if element.Pos == position {
+				limit = element.Max
+			}
+		}
+		walkEntries(g.Structure, func(e *entry) {
+			if e.Seg != segment {
+				return
+			}
+			for _, override := range e.Elements {
+				if override.Pos == position && override.Max != nil {
+					limit = min(limit, *override.Max)
+				}
+			}
+		})
+		return limit
+	}
+	return 0
+}
+
+func walkEntries(entries []*entry, visit func(*entry)) {
+	for _, e := range entries {
+		visit(e)
+		walkEntries(e.Body, visit)
+	}
+}

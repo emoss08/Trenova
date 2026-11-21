@@ -1,7 +1,8 @@
 //! Checks one segment's elements against its definition.
 //!
 //! This is where AK403/IK403 codes come from: a mandatory element that is empty, a value too
-//! short or too long, a character its type does not allow, a code outside its list, a date or
+//! short or too long, a character its type does not allow (or, in an `AN` or `ID` element, one
+//! outside the X12 character set, a warning by default), a code outside its list, a date or
 //! time that does not exist, too many repetitions or components, an element the partner does
 //! not use, a value other than the one the partner fixes, and the syntax notes between elements.
 //!
@@ -12,6 +13,7 @@
 use trenova_module_kit::message;
 use trenova_module_kit::message::{Arg, Message};
 
+use super::charset;
 use super::finding::FindingKind;
 use super::guide::model::{ElementDef, ElementType, SegmentDef, Usage};
 use super::guide::syntax::SyntaxNote;
@@ -378,6 +380,18 @@ fn check_value(
         );
         return;
     }
+    if matches!(
+        element.kind,
+        ElementType::Alphanumeric | ElementType::Identifier
+    ) && let Some(bad) = value.chars().find(|character| !charset::is_x12(*character))
+    {
+        let code = format!("{:04X}", u32::from(bad));
+        check.push_with(
+            FindingKind::CharacterOutsideCharacterSet,
+            message!("{0} ({1}) holds {2} (U+{3}), a character outside the X12 character set"),
+            [Arg::from(bad.to_string()), Arg::from(code)],
+        );
+    }
     let Some(length) = check.length() else {
         return;
     };
@@ -661,6 +675,25 @@ mod tests {
             issues("x12.004010.204", "L3*1000*G***1500.00~"),
             [(FindingKind::ExplicitDecimalInImpliedNumber, 5, None)]
         );
+    }
+
+    #[test]
+    fn warns_about_a_character_outside_the_x12_character_set() {
+        assert_eq!(
+            issues("x12.004010.204", "N1*SH*Peñasco Société – “Dock”~"),
+            [(FindingKind::CharacterOutsideCharacterSet, 2, None)]
+        );
+        assert_eq!(
+            issues("x12.004010.204", "N3*1\u{A0}Main~"),
+            [(FindingKind::CharacterOutsideCharacterSet, 1, None)]
+        );
+        assert!(issues("x12.004010.204", "N1*SH*acme {dock} #4 [b] 50% @ $1~").is_empty());
+        assert_eq!(
+            FindingKind::CharacterOutsideCharacterSet.default_severity(),
+            crate::x12::finding::Severity::Warning
+        );
+        assert_eq!(FindingKind::CharacterOutsideCharacterSet.code(), "6");
+        assert_eq!(FindingKind::CharacterOutsideCharacterSet.code_997(), "6");
     }
 
     #[test]

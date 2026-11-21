@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/edi-partner-sim/internal/partner"
+	"github.com/emoss08/trenova/edi-partner-sim/internal/partner/spoken"
 )
 
 type Outcome string
@@ -133,9 +134,9 @@ func (s Scenario) Describe() string {
 	case s.Misfooted:
 		text = "Invoice whose lines do not add up to its total"
 	case s.DeltaCents > 0:
-		text = "Invoice " + partner.Dollars(s.DeltaCents) + " over the tender"
+		text = "Invoice " + spoken.Dollars(s.DeltaCents) + " over the tender"
 	case s.DeltaCents < 0:
-		text = "Invoice " + partner.Dollars(s.DeltaCents) + " under the tender"
+		text = "Invoice " + spoken.Dollars(s.DeltaCents) + " under the tender"
 	}
 	if s.Stray {
 		text += ", and a status for a load never tendered"

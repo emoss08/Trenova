@@ -1,115 +1,98 @@
-import type { LocationCodeStrategy, SequenceConfig, SequenceType } from "@/types/sequence-config";
-import {
-  BankNote01Icon,
-  BookOpen01Icon,
-  ClipboardEditIcon,
-  File06Icon,
-  HandshakeIcon,
-  type IconComponent,
-  InvoiceIcon,
-  LayersThree01Icon,
-  MarkerPin01Icon,
-  PackageIcon,
-  Rows03Icon,
-  Tool01Icon,
-  Truck01Icon,
-  Wallet02Icon,
-} from "@trenova/shared/components/icons";
+import type {
+  LocationCodeComponent,
+  LocationCodeStrategy,
+  SequenceConfig,
+  SequenceType,
+} from "@/types/sequence-config";
 import { defineLabels } from "@trenova/shared/i18n/labels";
 
+/** Each sequence by the records it numbers, as a section of the page names it. */
 export const sequenceTitles: Record<SequenceType, string> = defineLabels({
-  pro_number: "Pro Number",
-  consolidation: "Consolidation Number",
-  order: "Order Number",
-  invoice: "Invoice Number",
-  work_order: "Work Order Number",
-  journal_batch: "Journal Batch Number",
-  journal_entry: "Journal Entry Number",
-  manual_journal_request: "Manual Journal Request",
-  location_code: "Location Code",
-  driver_settlement: "Driver Settlement Number",
-  carrier_settlement: "Carrier Settlement Number",
-  invoice_run: "Invoice Run Number",
-  factoring_submission: "Factoring Schedule Number",
+  pro_number: "PRO numbers",
+  consolidation: "Consolidation numbers",
+  order: "Order numbers",
+  invoice: "Invoice numbers",
+  work_order: "Work order numbers",
+  journal_batch: "Journal batch numbers",
+  journal_entry: "Journal entry numbers",
+  manual_journal_request: "Manual journal request numbers",
+  location_code: "Location codes",
+  driver_settlement: "Driver settlement numbers",
+  carrier_settlement: "Carrier settlement numbers",
+  invoice_run: "Invoice run numbers",
+  factoring_submission: "Factoring schedule numbers",
 });
 
 export const sequenceDescriptions: Record<SequenceType, string> = defineLabels({
-  pro_number: "Controls generated PRO numbers for shipment creation and tracking.",
-  consolidation: "Controls consolidation number generation for grouped shipment operations.",
-  order: "Controls order number generation for commercial orders above shipments.",
-  invoice: "Controls invoice identifier generation for billing documents.",
-  work_order: "Controls work order identifier generation for operational workflows.",
-  journal_batch: "Controls journal batch numbering for accounting posting groups.",
-  journal_entry: "Controls journal entry numbering for posted ledger entries.",
-  manual_journal_request: "Controls manual journal request numbering before approval and posting.",
-  location_code: "Controls generated location codes assigned during location creation.",
-  driver_settlement: "Controls driver settlement numbering for pay period settlements.",
-  carrier_settlement:
-    "Controls carrier settlement numbering for paying carriers on brokered loads.",
-  invoice_run: "Controls invoice run numbering for batches of invoices billed together.",
-  factoring_submission:
-    "Controls schedule of accounts numbering for invoices submitted to a factor.",
+  pro_number: "The number each new shipment is given, on its paperwork and in tracking.",
+  consolidation: "The number a group of consolidated shipments is given.",
+  order: "The number each commercial order is given, whether entered or created with a shipment.",
+  invoice: "The number printed on each invoice you send.",
+  work_order: "The number each maintenance work order is given.",
+  journal_batch: "The number each batch of journal entries is posted under.",
+  journal_entry: "The number each posted journal entry is given.",
+  manual_journal_request: "The number a manual journal entry carries while it waits for approval.",
+  location_code: "The code each new location is given, built from its name and address.",
+  driver_settlement: "The number each driver pay settlement is given.",
+  carrier_settlement: "The number each settlement paying a carrier for a brokered load is given.",
+  invoice_run: "The number each batch of invoices billed together is given.",
+  factoring_submission: "The number each schedule of invoices sent to a factoring company is given.",
 });
 
-export const sequenceIcons: Record<SequenceType, IconComponent> = {
-  pro_number: Truck01Icon,
-  consolidation: LayersThree01Icon,
-  order: PackageIcon,
-  work_order: Tool01Icon,
-  invoice: InvoiceIcon,
-  journal_batch: BookOpen01Icon,
-  journal_entry: File06Icon,
-  manual_journal_request: ClipboardEditIcon,
-  location_code: MarkerPin01Icon,
-  driver_settlement: Wallet02Icon,
-  carrier_settlement: HandshakeIcon,
-  invoice_run: Rows03Icon,
-  factoring_submission: BankNote01Icon,
-};
+/**
+ * The only sequence whose numbers are drawn with a location and a business unit at hand:
+ * a PRO number comes from a shipment, whose first stop has a location. Every other number
+ * is drawn without them, so asking for either there stops the number being issued at all.
+ */
+export function drawsRecordCodes(type: SequenceType): boolean {
+  return type === "pro_number";
+}
 
-export type SidebarGroup = {
-  label: string;
-  items: SequenceType[];
-};
-
-export const sidebarGroups: SidebarGroup[] = [
-  { label: "Operations", items: ["pro_number", "consolidation", "order", "work_order"] },
-  { label: "Billing", items: ["invoice", "invoice_run", "factoring_submission"] },
-  { label: "Accounting", items: ["journal_batch", "journal_entry", "manual_journal_request"] },
-  { label: "Settlements", items: ["driver_settlement", "carrier_settlement"] },
-  { label: "Locations", items: ["location_code"] },
+export const separatorChoices = [
+  { label: "Hyphen ( - )", value: "-" },
+  { label: "Underscore ( _ )", value: "_" },
+  { label: "Slash ( / )", value: "/" },
+  { label: "Period ( . )", value: "." },
 ];
 
-export const separatorOptions = [
-  { label: "None", value: "" },
-  { label: "Hyphen (-)", value: "-" },
-  { label: "Underscore (_)", value: "_" },
-  { label: "Slash (/)", value: "/" },
-  { label: "Period (.)", value: "." },
-];
+/** A location code may join its parts with nothing at all. */
+export const locationSeparatorChoices = [{ label: "None", value: "" }, ...separatorChoices];
 
-export const casingOptions = [
-  { label: "Uppercase", value: "upper" },
-  { label: "Lowercase", value: "lower" },
-];
+export const casingLabels = defineLabels({ upper: "Uppercase", lower: "Lowercase" });
 
-export const yearDigitsOptions = [
-  { label: "2-digit year", value: 2, example: "e.g. 26" },
-  { label: "4-digit year", value: 4, example: "e.g. 2026" },
+export const yearDigitOptions = [
+  { label: "26", value: 2 },
+  { label: "2026", value: 4 },
 ] as const;
 
-export const tokenLegend = [
-  { token: "{P}", label: "Prefix" },
-  { token: "{Y}", label: "Year" },
-  { token: "{M}", label: "Month" },
-  { token: "{W}", label: "Week" },
-  { token: "{D}", label: "Day" },
-  { token: "{L}", label: "Location" },
-  { token: "{B}", label: "Business unit" },
-  { token: "{S}", label: "Sequence" },
-  { token: "{R}", label: "Random" },
-  { token: "{C}", label: "Check digit" },
-];
+export const locationComponentLabels: Record<LocationCodeComponent, string> = defineLabels({
+  name: "Name",
+  city: "City",
+  state: "State",
+  postal_code: "ZIP code",
+});
+
+/** The pattern's placeholders, by the letter between the braces, with what each stands for. */
+export const patternTokenLabels = defineLabels({
+  P: "Prefix",
+  Y: "Year",
+  M: "Month",
+  W: "Week",
+  D: "Day",
+  S: "Counter",
+  R: "Random digits",
+  C: "Check digit",
+  L: "Location code",
+  B: "Business unit code",
+});
+
+export type PatternToken = keyof typeof patternTokenLabels;
+
+/** The placeholders every pattern can use. */
+export const patternTokens: readonly PatternToken[] = ["P", "Y", "M", "W", "D", "S", "R", "C"];
+
+/** The placeholders a PRO number can also use, since a shipment carries both codes. */
+export const recordCodeTokens: readonly PatternToken[] = ["L", "B"];
 
 const defaultLocationCodeStrategy: LocationCodeStrategy = {
   components: ["name", "city", "state"],
@@ -120,22 +103,27 @@ const defaultLocationCodeStrategy: LocationCodeStrategy = {
   fallbackPrefix: "LOC",
 };
 
-const defaultPrefixes: Record<SequenceType, string> = {
-  pro_number: "PRO",
-  consolidation: "CON",
-  order: "ORD",
-  invoice: "INV",
-  work_order: "WO",
-  journal_batch: "JB",
-  journal_entry: "JE",
-  manual_journal_request: "MJR",
-  location_code: "LOC",
-  driver_settlement: "STL",
-  carrier_settlement: "CSTL",
-  invoice_run: "IRUN",
-  factoring_submission: "FS",
+type DefaultFormat = Pick<SequenceConfig, "prefix" | "sequenceDigits"> &
+  Partial<Pick<SequenceConfig, "includeRandomDigits" | "randomDigitsCount">>;
+
+/** The server's own defaults (`DefaultSequenceFormat`), so "Use the default" means the same. */
+const defaultFormats: Record<SequenceType, DefaultFormat> = {
+  pro_number: { prefix: "S", sequenceDigits: 4, includeRandomDigits: true, randomDigitsCount: 6 },
+  consolidation: { prefix: "C", sequenceDigits: 5 },
+  order: { prefix: "O", sequenceDigits: 5 },
+  invoice: { prefix: "INV", sequenceDigits: 6 },
+  work_order: { prefix: "WO", sequenceDigits: 6 },
+  journal_batch: { prefix: "JB", sequenceDigits: 6 },
+  journal_entry: { prefix: "JE", sequenceDigits: 6 },
+  manual_journal_request: { prefix: "MJR", sequenceDigits: 6 },
+  invoice_run: { prefix: "IRUN", sequenceDigits: 5 },
+  factoring_submission: { prefix: "FS", sequenceDigits: 5 },
+  driver_settlement: { prefix: "STL", sequenceDigits: 6 },
+  carrier_settlement: { prefix: "CSTL", sequenceDigits: 6 },
+  location_code: { prefix: "LOC", sequenceDigits: 3 },
 };
 
+/** A sequence put back to the server's default format, keeping its identity and version. */
 export function defaultConfigForType(
   type: SequenceType,
   base: Pick<
@@ -143,25 +131,28 @@ export function defaultConfigForType(
     "id" | "organizationId" | "businessUnitId" | "version" | "createdAt" | "updatedAt"
   >,
 ): SequenceConfig {
+  const format = defaultFormats[type];
+  const isLocation = type === "location_code";
+
   return {
     ...base,
     sequenceType: type,
-    prefix: defaultPrefixes[type],
-    includeYear: type !== "location_code",
+    prefix: format.prefix,
+    includeYear: !isLocation,
     yearDigits: 2,
-    includeMonth: false,
+    includeMonth: !isLocation,
     includeWeekNumber: false,
     includeDay: false,
-    sequenceDigits: type === "location_code" ? 3 : 6,
+    sequenceDigits: format.sequenceDigits,
     includeLocationCode: false,
-    includeRandomDigits: false,
-    randomDigitsCount: 0,
+    includeRandomDigits: format.includeRandomDigits ?? false,
+    randomDigitsCount: format.randomDigitsCount ?? 0,
     includeCheckDigit: false,
     includeBusinessUnitCode: false,
-    useSeparators: false,
-    separatorChar: "-",
+    useSeparators: isLocation,
+    separatorChar: isLocation ? "-" : "",
     allowCustomFormat: false,
     customFormat: "",
-    locationCodeStrategy: type === "location_code" ? { ...defaultLocationCodeStrategy } : null,
+    locationCodeStrategy: isLocation ? { ...defaultLocationCodeStrategy } : null,
   };
 }

@@ -12003,7 +12003,22 @@ type ShipmentMove struct {
 	DistanceRoutingType    *string                        `json:"distanceRoutingType,omitempty"`
 	DistanceUnits          *string                        `json:"distanceUnits,omitempty"`
 	// Distance providers may return provider-specific route details, so this remains intentionally open-ended.
-	DistanceMetadata  map[string]any              `json:"distanceMetadata,omitempty"`
+	DistanceMetadata map[string]any `json:"distanceMetadata,omitempty"`
+	// The move routed with the distance control's pay profile, in the move's distance
+	// units: what drivers and carriers paid by the mile are paid on. Null when the pay
+	// profile is the one the move was routed with, or the distance was entered by hand;
+	// the move's distance is then the paid distance.
+	PayDistance *float64 `json:"payDistance,omitempty"`
+	// The move routed with the distance control's billing profile, in the move's
+	// distance units: what rating and invoices bill by the mile. Null when the billing
+	// profile is the one the move was routed with, or the distance was entered by hand;
+	// the move's distance is then the billed distance.
+	BillingDistance *float64 `json:"billingDistance,omitempty"`
+	// The move routed with the distance control's fuel profile, in the move's distance
+	// units: what fuel tax returns check the jurisdiction breakdown against. Null when
+	// the fuel profile is the one the move was routed with, or the distance was entered
+	// by hand; the move's distance then stands for it.
+	FuelDistance      *float64                    `json:"fuelDistance,omitempty"`
 	Version           int                         `json:"version"`
 	CreatedAt         int                         `json:"createdAt"`
 	UpdatedAt         int                         `json:"updatedAt"`

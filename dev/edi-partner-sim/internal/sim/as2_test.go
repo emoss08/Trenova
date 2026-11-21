@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/edi-partner-sim/internal/acknowledge"
 	"github.com/emoss08/trenova/edi-partner-sim/internal/journal"
 	"github.com/emoss08/trenova/edi-partner-sim/internal/partner"
 	"github.com/emoss08/trenova/shared/smime"
@@ -72,7 +73,7 @@ func TestEveryAS2ShipperRoundTrips(t *testing.T) {
 				"ack.received",
 				func(m *journal.Message) bool { return m.ID == tender.ID },
 			)
-			if acked.Ack.Code != partner.AckAccepted || len(acked.Ack.Transactions) != 1 {
+			if acked.Ack.Code != acknowledge.Accepted || len(acked.Ack.Transactions) != 1 {
 				t.Fatalf("the tender's ack: %+v", acked.Ack)
 			}
 			ackMessage := h.message(acked.Ack.MessageID)
@@ -152,7 +153,7 @@ func TestTheAcknowledgmentWaitsForThePartnersDelay(t *testing.T) {
 		func(m *journal.Message) bool { return m.ID == received.ID },
 	)
 	if !scheduled.Ack.DueAt.Equal(startedAt.Add(45*time.Second)) ||
-		scheduled.Ack.Code != partner.AckRejected {
+		scheduled.Ack.Code != acknowledge.Rejected {
 		t.Fatalf("the scheduled ack: %+v", scheduled.Ack)
 	}
 	h.trenova.nothing(t)

@@ -62,6 +62,7 @@ func (s *Service) Update(
 		return nil, err
 	}
 
+	entity.Normalize()
 	if multiErr := s.validator.ValidateUpdate(ctx, entity); multiErr != nil {
 		return nil, multiErr
 	}

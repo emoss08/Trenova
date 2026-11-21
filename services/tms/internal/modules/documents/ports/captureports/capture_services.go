@@ -21,11 +21,12 @@ type CaptureQREncoder interface {
 }
 
 // CaptureAnalysisRequest is one proposed document to read before a person
-// files it.
+// files it. Assemble builds its PDF only once the organization's settings
+// allow it to be read.
 type CaptureAnalysisRequest struct {
 	TenantInfo pagination.TenantInfo
 	FileName   string
-	PDF        []byte
+	Assemble   func(ctx context.Context) ([]byte, error)
 }
 
 // CaptureAnalysis is what the document pipeline made of a proposed document.

@@ -6,6 +6,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/emoss08/trenova/edi-partner-sim/internal/acknowledge"
 	"github.com/emoss08/trenova/edi-partner-sim/internal/partner"
 	"github.com/emoss08/trenova/pkg/lading"
 )
@@ -135,12 +136,12 @@ func TestTheRetailerAcknowledgesUnder5010(t *testing.T) {
 	t.Parallel()
 
 	p := openPartner(t, "retailer").Partner
-	ack, err := p.Acknowledgment.Build(partner.AckInput{
+	ack, err := acknowledge.Build(&p.Acknowledgment, acknowledge.Input{
 		GroupID:      "GF",
 		GroupControl: "41",
 		Version:      "004010",
-		Transactions: []partner.AckTransaction{
-			{Set: "990", Control: "0001", Code: partner.AckAccepted},
+		Transactions: []acknowledge.InputTransaction{
+			{Set: "990", Control: "0001", Code: acknowledge.Accepted},
 		},
 	})
 	if err != nil {

@@ -9,6 +9,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentsearchprojection"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentsearchprojectionports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/documentcontrol"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -88,8 +90,39 @@ func (f *fakeIndexer) Reindex(
 	return nil
 }
 
+type fakeControls struct {
+	tenantports.DocumentControlRepository
+
+	fullText bool
+	reads    int
+}
+
+func (f *fakeControls) GetOrCreate(
+	_ context.Context,
+	orgID, buID pulid.ID,
+) (*documentcontrol.DocumentControl, error) {
+	f.reads++
+	control := documentcontrol.NewDefaultDocumentControl(orgID, buID)
+	control.EnableFullTextIndexing = f.fullText
+
+	return control, nil
+}
+
 func newTestService(repo *fakeProjectionRepo, indexer *fakeIndexer) *Service {
-	return New(Params{Logger: zap.NewNop(), Repo: repo, Indexer: indexer}).(*Service)
+	return newTestServiceWithControls(repo, indexer, &fakeControls{fullText: true})
+}
+
+func newTestServiceWithControls(
+	repo *fakeProjectionRepo,
+	indexer *fakeIndexer,
+	controls *fakeControls,
+) *Service {
+	return New(Params{
+		Logger:   zap.NewNop(),
+		Repo:     repo,
+		Indexer:  indexer,
+		Controls: controls,
+	}).(*Service)
 }
 
 func testDocument() *document.Document {
@@ -170,4 +203,51 @@ func TestUpsert_LeavesConversationFilesOutOfTheProjection(t *testing.T) {
 
 	assert.Empty(t, repo.upserted, "global search has no owner check to protect a private file")
 	assert.Equal(t, []pulid.ID{doc.ID}, indexer.stale, "agent retrieval checks the rule itself")
+}
+
+func TestUpsert_StoresTheTextWhenFullTextIndexingIsOn(t *testing.T) {
+	t.Parallel()
+
+	repo := &fakeProjectionRepo{}
+	svc := newTestServiceWithControls(repo, &fakeIndexer{}, &fakeControls{fullText: true})
+
+	require.NoError(t, svc.Upsert(t.Context(), testDocument(), "signed POD"))
+
+	require.Len(t, repo.upserted, 1)
+	assert.Equal(t, "signed POD", repo.upserted[0].ContentText)
+}
+
+/*
+Every caller that indexes a document, from extraction to promoting a version
+or attaching it to a shipment, passes the text it has. Whether that text is
+searchable is the organization's choice, so the projection drops it here,
+where every caller passes, rather than at each caller.
+*/
+func TestUpsert_DropsTheTextWhenFullTextIndexingIsOff(t *testing.T) {
+	t.Parallel()
+
+	repo := &fakeProjectionRepo{}
+	controls := &fakeControls{fullText: false}
+	doc := testDocument()
+	svc := newTestServiceWithControls(repo, &fakeIndexer{}, controls)
+
+	require.NoError(t, svc.Upsert(t.Context(), doc, "signed POD"))
+
+	require.Len(t, repo.upserted, 1)
+	assert.Empty(t, repo.upserted[0].ContentText)
+	assert.Equal(t, doc.ID, repo.upserted[0].ID)
+	assert.Equal(t, 1, controls.reads)
+}
+
+func TestUpsert_ReadsNoSettingsWhenThereIsNoText(t *testing.T) {
+	t.Parallel()
+
+	repo := &fakeProjectionRepo{}
+	controls := &fakeControls{fullText: false}
+	svc := newTestServiceWithControls(repo, &fakeIndexer{}, controls)
+
+	require.NoError(t, svc.Upsert(t.Context(), testDocument(), ""))
+
+	require.Len(t, repo.upserted, 1)
+	assert.Zero(t, controls.reads)
 }

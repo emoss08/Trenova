@@ -4,7 +4,7 @@ description: >
   own flow, and is answered with its own 990 once a planner accepts.
 within: 5m
 steps:
-  - send: { set: "204", as: b, count: 25 }
+  - send: { set: "204", as: b, count: 25, load: { maxWeight: 43500 } }
   - expect: { ack: b, accepted: true }
   - expect: { flow: b, status: Open, count: 1 }
   - trenova: { decide: b, decision: accept }

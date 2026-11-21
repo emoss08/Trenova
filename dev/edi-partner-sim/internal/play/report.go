@@ -2,15 +2,14 @@ package play
 
 import (
 	"fmt"
-	"io"
 	"os"
-	"strings"
 	"time"
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/edi-partner-sim/internal/oracle"
 	"github.com/emoss08/trenova/edi-partner-sim/internal/provision"
 	"github.com/emoss08/trenova/edi-partner-sim/internal/runlog"
+	"github.com/emoss08/trenova/edi-partner-sim/internal/scenario"
 )
 
 const (
@@ -36,6 +35,16 @@ type Report struct {
 	Took      Duration         `json:"took"`
 	Partners  []*PartnerReport `json:"partners"`
 	Failures  int              `json:"failures"`
+	Scale     float64          `json:"deadlineScale"`
+	Waiting   Waiting          `json:"waiting"`
+}
+
+type Waiting struct {
+	Expectations Duration `json:"expectations"`
+	Expected     int      `json:"expected"`
+	Actions      Duration `json:"actions"`
+	Acted        int      `json:"acted"`
+	Failed       Duration `json:"failed"`
 }
 
 type PartnerReport struct {
@@ -80,9 +89,6 @@ type ConversationReport struct {
 	Name       string      `json:"name"`
 	Key        string      `json:"key"`
 	Seed       uint64      `json:"seed,omitempty"`
-	InstanceID string      `json:"flowInstanceId,omitempty"`
-	TransferID string      `json:"transferId,omitempty"`
-	ShipmentID string      `json:"shipmentId,omitempty"`
 	Milestones Milestones  `json:"milestones"`
 	Wire       []WireEntry `json:"wire"`
 	States     []Snapshot  `json:"states,omitempty"`
@@ -160,12 +166,31 @@ func (r *Report) Passed() bool {
 }
 
 func (r *Report) tally() {
-	r.Failures = 0
+	r.Failures, r.Waiting = 0, Waiting{}
 	for _, p := range r.Partners {
 		r.Failures += len(p.Failures)
 		for _, s := range p.Scenarios {
 			r.Failures += len(s.Failures)
+			for _, step := range s.Steps {
+				r.Waiting.add(step)
+			}
 		}
+	}
+}
+
+func (w *Waiting) add(step *StepReport) {
+	switch step.Kind {
+	case scenario.KindExpect:
+		w.Expectations += step.Took
+		w.Expected++
+	case scenario.KindTrenova, scenario.KindAdvance:
+		w.Actions += step.Took
+		w.Acted++
+	default:
+		return
+	}
+	if step.Status == StatusFailed {
+		w.Failed += step.Took
 	}
 }
 
@@ -178,116 +203,6 @@ func (r *Report) WriteJSON(path string) error {
 		return fmt.Errorf("write %s: %w", path, err)
 	}
 	return nil
-}
-
-func (r *Report) WriteSummary(w io.Writer) {
-	fmt.Fprintf(w, "run %d against %s (simulator %s), %s\n", r.Run, r.API, r.Sim, r.Took)
-	for _, p := range r.Partners {
-		writePartner(w, p)
-	}
-	if r.Passed() {
-		fmt.Fprintln(w, "\nPASS")
-		return
-	}
-	fmt.Fprintf(w, "\nFAIL: %d failures\n", r.Failures)
-}
-
-func writePartner(w io.Writer, p *PartnerReport) {
-	passed, failed := 0, 0
-	for _, s := range p.Scenarios {
-		switch s.Status {
-		case StatusPassed:
-			passed++
-		case StatusFailed:
-			failed++
-		}
-	}
-	verdict := "pass"
-	if failed > 0 || len(p.Failures) > 0 {
-		verdict = "FAIL"
-	}
-	fmt.Fprintf(w, "\n%s (%s): %s\n", p.Name, p.Role, verdict)
-	if setup := p.Provision; setup != nil {
-		fmt.Fprintf(w, "  provisioned %s over %s", setup.Code, firstNonEmpty(setup.Transport, "?"))
-		if setup.VersionNumber > 0 {
-			fmt.Fprintf(w, ", Lading version %d", setup.VersionNumber)
-		}
-		if setup.Unchanged {
-			fmt.Fprint(w, " (unchanged)")
-		}
-		fmt.Fprintln(w)
-		for _, test := range setup.FailingTests {
-			fmt.Fprintf(w, "    failing test: %s\n", test)
-		}
-	}
-	for _, f := range p.Failures {
-		fmt.Fprintf(w, "  %s: %s\n", f.Source, f.Message)
-	}
-	if len(p.Scenarios) > 0 {
-		fmt.Fprintf(w, "  scenarios: %d run, %d passed, %d failed\n",
-			passed+failed, passed, failed)
-	}
-	for _, s := range p.Scenarios {
-		mark := "ok  "
-		switch s.Status {
-		case StatusFailed:
-			mark = "FAIL"
-		case StatusSkipped:
-			mark = "skip"
-		}
-		fmt.Fprintf(w, "  %s %-40s %8s  seed %d\n", mark, s.Slug, s.Took, s.Seed)
-		for _, f := range s.Failures {
-			text := ""
-			if f.Step >= 0 && f.Step < len(s.Steps) {
-				text = s.Steps[f.Step].Text
-			}
-			fmt.Fprintf(w, "       step %d %s\n       %s %s: %s\n", f.Step+1, text, f.Source,
-				f.Rule, f.Message)
-		}
-		if s.Status == StatusFailed {
-			fmt.Fprintf(w, "       replay: %s\n", s.Replay)
-		}
-	}
-}
-
-func (s *ScenarioReport) Write(w io.Writer) {
-	fmt.Fprintf(w, "\n== %s (%s), seed %d: %s\n", s.Name, s.Slug, s.Seed, s.Status)
-	for _, step := range s.Steps {
-		fmt.Fprintf(w, "  %2d %-7s %-60s %-7s %8s", step.Index+1, step.Kind,
-			truncate(step.Text, 60), step.Status, step.Took)
-		if step.Note != "" {
-			fmt.Fprintf(w, "  %s", step.Note)
-		}
-		fmt.Fprintln(w)
-	}
-	for _, c := range s.Conversations {
-		fmt.Fprintf(w, "  -- %s key %s", c.Name, firstNonEmpty(c.Key, "(none)"))
-		if c.InstanceID != "" {
-			fmt.Fprintf(w, " flow %s", c.InstanceID)
-		}
-		fmt.Fprintln(w)
-		for _, entry := range c.Wire {
-			accepted := ""
-			if entry.Accepted != nil && !*entry.Accepted {
-				accepted = " REJECTED BY ORACLE"
-			}
-			fmt.Fprintf(w, "     %s %-8s %-8s %-10s %-9s ack %s %s%s\n",
-				entry.At.Format("15:04:05.000"), entry.From, strings.Join(entry.Sets, ","),
-				entry.Purpose, entry.State, firstNonEmpty(entry.Ack, "-"), entry.AckCode, accepted)
-			for index := range entry.Findings {
-				f := &entry.Findings[index]
-				fmt.Fprintf(w, "        oracle %s %s %s: %s\n", f.Severity, f.SegmentID, f.Rule,
-					f.Message)
-			}
-		}
-	}
-}
-
-func truncate(text string, width int) string {
-	if len(text) <= width {
-		return text
-	}
-	return text[:width-1] + "…"
 }
 
 func firstNonEmpty(values ...string) string {

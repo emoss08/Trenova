@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/emoss08/trenova/edi-partner-sim/internal/partner"
 	"github.com/goccy/go-yaml"
 )
 
@@ -66,14 +67,15 @@ type Move struct {
 }
 
 type Send struct {
-	Set       string `yaml:"set"`
-	As        string `yaml:"as"`
-	Of        string `yaml:"of"`
-	Variation string `yaml:"variation"`
-	Seed      uint64 `yaml:"seed"`
-	Count     int    `yaml:"count"`
-	Sparse    bool   `yaml:"sparse"`
-	Delta     Delta  `yaml:"delta"`
+	Set       string            `yaml:"set"`
+	As        string            `yaml:"as"`
+	Of        string            `yaml:"of"`
+	Variation string            `yaml:"variation"`
+	Seed      uint64            `yaml:"seed"`
+	Count     int               `yaml:"count"`
+	Sparse    bool              `yaml:"sparse"`
+	Delta     Delta             `yaml:"delta"`
+	Load      *partner.LoadNeed `yaml:"load"`
 }
 
 type Expect struct {
@@ -358,6 +360,9 @@ func (c *checker) send(path string, send *Send, seeds map[uint64]string) {
 	if !slices.Contains(variations, variation) {
 		c.add(path+".variation", "%q is not one of %v", send.Variation, variations)
 	}
+	for _, problem := range send.Load.Problems() {
+		c.add(path+".load", "%s", problem)
+	}
 	if variation == "original" {
 		if !namePattern.MatchString(send.As) {
 			c.add(path+".as", "an original names its conversation (lowercase, such as t1)")
@@ -393,6 +398,10 @@ func (c *checker) send(path string, send *Send, seeds map[uint64]string) {
 	}
 	if send.Count > 1 {
 		c.add(path+".count", "only an original is batched")
+	}
+	if send.Load != nil {
+		c.add(path+".load", "only an original states its load; a %s keeps its original's",
+			variation)
 	}
 	c.known(path+".of", send.Of)
 	if send.Of == "" {

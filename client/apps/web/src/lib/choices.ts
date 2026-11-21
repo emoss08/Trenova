@@ -42,7 +42,9 @@ import type {
   ServiceIncidentType,
   TenderExhaustedAction,
 } from "@/types/dispatch-control";
+import type { DistanceControlUnit } from "@/types/distance-control";
 import type { DistanceProfile } from "@/types/distance-profile";
+import type { DocumentControlResource } from "@/types/document-control";
 import type { ResourceType } from "@/types/document-packet-rule";
 import type { EquipmentClass } from "@/types/equipment-type";
 import type { FiscalPeriodStatus, PeriodType } from "@/types/fiscal-period";
@@ -638,6 +640,15 @@ export const distanceProfileDistanceUnitChoices = [
     description: "Store and return mileage in kilometers.",
   },
 ] satisfies ReadonlyArray<GenericSelectOption<DistanceProfile["distanceUnits"]>>;
+
+export const distanceControlUnitChoices = [
+  { label: "Miles", value: "Miles", description: "Tariffs and rate tables read miles." },
+  {
+    label: "Kilometers",
+    value: "Kilometers",
+    description: "Tariffs and rate tables read kilometers.",
+  },
+] satisfies ReadonlyArray<GenericSelectOption<DistanceControlUnit>>;
 
 export const distanceProfileLocationGranularityChoices = [
   {
@@ -2709,3 +2720,11 @@ export const costRateSourceChoices = [
     description: "Posted expenses over the rolling window, per mile driven.",
   },
 ] satisfies ReadonlyArray<GenericSelectOption<CostRateSource>>;
+
+/** The records whose uploaded rate confirmations may become shipment drafts. */
+export const documentControlResourceChoices = [
+  { value: "shipment", label: "Shipments" },
+  { value: "trailer", label: "Trailers" },
+  { value: "tractor", label: "Tractors" },
+  { value: "worker", label: "Workers" },
+] satisfies ReadonlyArray<GenericSelectOption<DocumentControlResource>>;

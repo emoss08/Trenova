@@ -28,11 +28,40 @@ func CustomerCode(name string) string {
 func (o *Options) customer(
 	ctx context.Context,
 	def *partner.Definition,
+	record *trenova.Partner,
 	result *Result,
 ) error {
 	if def.Partner.Role == partner.RoleCarrier {
 		return nil
 	}
+	if err := o.findOrCreateCustomer(ctx, def, result); err != nil {
+		return err
+	}
+	changed, err := o.Trenova.EnableEDIInvoicing(ctx, result.CustomerID)
+	if err != nil {
+		return fmt.Errorf("bill customer %s's invoices by EDI: %w", result.CustomerLabel, err)
+	}
+	if changed {
+		result.note("set the customer to send its invoices by EDI")
+	}
+	if record.CustomerID == result.CustomerID {
+		return nil
+	}
+	record.CustomerID = result.CustomerID
+	updated, err := o.Trenova.UpdatePartner(ctx, record)
+	if err != nil {
+		return fmt.Errorf("link the partner to its customer: %w", err)
+	}
+	record.Version = updated.Version
+	result.note("linked the partner to its customer")
+	return nil
+}
+
+func (o *Options) findOrCreateCustomer(
+	ctx context.Context,
+	def *partner.Definition,
+	result *Result,
+) error {
 	code := CustomerCode(def.Name())
 	options, err := o.Trenova.SelectOptions(ctx, trenova.ResourceCustomer, code, searchLimit)
 	if err != nil {

@@ -1,0 +1,4 @@
+guide acme.214.yard from acme.214 "Acme Yard Status Guide v1.0"
+
+/// Acme's yard system records every status to the second.
+0205.0210.AT7 { 06 length 6..6 }

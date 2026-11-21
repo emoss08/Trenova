@@ -19,13 +19,14 @@ var (
 )
 
 type SendRequest struct {
-	Set       string       `json:"set"`
-	Seed      uint64       `json:"seed"`
-	With      []uint64     `json:"with,omitempty"`
-	Variation string       `json:"variation,omitempty"`
-	Sparse    bool         `json:"sparse,omitempty"`
-	Delta     DeltaRequest `json:"delta"`
-	Payload   string       `json:"payload,omitempty"`
+	Set       string            `json:"set"`
+	Seed      uint64            `json:"seed"`
+	With      []uint64          `json:"with,omitempty"`
+	Variation string            `json:"variation,omitempty"`
+	Sparse    bool              `json:"sparse,omitempty"`
+	Delta     DeltaRequest      `json:"delta"`
+	Load      *partner.LoadNeed `json:"load,omitempty"`
+	Payload   string            `json:"payload,omitempty"`
 }
 
 type DeltaRequest struct {
@@ -52,6 +53,11 @@ func (r *SendRequest) variation() (partner.Variation, error) {
 		Kind:   kind,
 		Sparse: r.Sparse,
 		Delta:  partner.Delta{RatePercent: r.Delta.RatePercent, AddStop: r.Delta.AddStop},
+		Need:   r.Load,
+	}
+	if problems := r.Load.Problems(); len(problems) > 0 {
+		return partner.Variation{}, fmt.Errorf("%w: load: %s", ErrInvalid,
+			strings.Join(problems, "; "))
 	}
 	if r.Delta.RatePercent <= -100 {
 		return partner.Variation{}, fmt.Errorf("%w: delta.ratePercent %v leaves no rate",

@@ -1,44 +1,24 @@
-import { SkeletonRegion } from "@/components/settings-form-skeleton";
-import { Card } from "@trenova/shared/components/ui/card";
-import { Skeleton } from "@trenova/shared/components/ui/skeleton";
-import { useT } from "@trenova/shared/i18n/use-t";
+import { SettingsPageSkeleton } from "@/components/settings/settings-page";
+import type { SettingsSectionSpec } from "@/components/settings-form-skeleton";
+import { useDataRetentionTabs, type DataRetentionTab } from "./data-retention-tabs";
 
-const GROUP_ROWS = [1, 2, 4] as const;
+const periods = (count: number) => ({ kind: "input", count, narrow: true }) as const;
 
+/**
+ * The one tab's sections as the form draws them, one row to a period. The purges that only
+ * run once they are given a period are drawn with their switch off, as a new organization's
+ * EDI purges stand, since the outline cannot know the saved values.
+ */
+const TAB_SECTIONS: Record<DataRetentionTab, readonly SettingsSectionSpec[]> = {
+  retention: [
+    { title: "sm", description: 2, fields: [periods(4)] },
+    { title: "sm", description: 2, fields: ["switch", "switch"] },
+    { title: "sm", description: 2, fields: [periods(1)] },
+    { title: "md", description: 2, fields: [periods(3), "switch"] },
+  ],
+};
+
+/** The form's sections, with no tab row since the page has one tab. */
 export function DataRetentionSkeleton() {
-  const t = useT();
-
-  return (
-    <SkeletonRegion label={t("Loading data retention settings")} className="flex flex-col gap-4">
-      <Card className="gap-0 py-0">
-        <div className="border-border grid grid-cols-[minmax(0,1fr)_12rem_9rem_10rem] gap-4 border-b px-4 py-2.5">
-          <Skeleton className="h-3 w-12" />
-          <Skeleton className="h-3 w-16" />
-          <Skeleton className="h-3 w-20" />
-          <Skeleton className="h-3 w-10" />
-        </div>
-        {GROUP_ROWS.map((rows, group) => (
-          <div key={group}>
-            <div className="bg-sunken px-4 py-2">
-              <Skeleton className="h-3 w-10" />
-            </div>
-            {Array.from({ length: rows }, (_, row) => (
-              <div
-                key={row}
-                className="border-border-subtle grid grid-cols-[minmax(0,1fr)_12rem_9rem_10rem] gap-4 border-b px-4 py-3 last:border-b-0"
-              >
-                <div className="flex flex-col gap-1.5">
-                  <Skeleton className="h-3.5 w-32" />
-                  <Skeleton className="h-3 w-3/4" />
-                </div>
-                <Skeleton className="h-8 w-44" />
-                <Skeleton className="mt-2 h-3 w-20" />
-                <Skeleton className="mt-2 h-3 w-16" />
-              </div>
-            ))}
-          </div>
-        ))}
-      </Card>
-    </SkeletonRegion>
-  );
+  return <SettingsPageSkeleton tabs={useDataRetentionTabs()} sections={TAB_SECTIONS} />;
 }

@@ -355,11 +355,11 @@ trail.
 
 ## Security briefing
 
-The Security tab of organization settings opens on a briefing:
+The security and access page opens on a briefing:
 `GET /organizations/:id/iam/security-briefing` (`iamhandler.getSecurityBriefing`,
-`securitybriefingservice`). The route needs only `organization` read, because the briefing is
-part of the settings page; each section is then gated by the read permission of the records
-it summarizes, checked in one `CheckBatch`, and a section the caller may not read is `null`
+`securitybriefingservice`). The route needs only `organization` read, which is what the
+page's Overview tab answers to; each section is then gated by the read permission of the
+records it summarizes, checked in one `CheckBatch`, and a section the caller may not read is `null`
 rather than an empty count:
 
 | Section | Needs read on |
@@ -597,9 +597,11 @@ Single sign-on, SCIM, access policies and the sign-in activity views each have t
 resource rather than riding on `organization`: `identity_provider`, `scim_directory`
 (directories, tokens and group mappings) and `access_policy` take read, create, update
 and delete; `provisioning_audit`, `auth_event`, `risk_decision`, `external_identity` and
-`mfa_authenticator` are read-only. The organization settings page shows each tab and
-control only to someone who holds its permission
-(`organization-settings/_components/security-access/use-security-access.ts`).
+`mfa_authenticator` are read-only. The security and access page (`/admin/security-access`)
+shows each tab and control only to someone who holds its permission
+(`routes/admin/security-access/_components/security-access/use-security-access.ts`); its route
+opens, and its admin link shows, for anyone who may read one of them (`anyOfGates` and the
+link's `anyResources`).
 
 ## Granting access
 

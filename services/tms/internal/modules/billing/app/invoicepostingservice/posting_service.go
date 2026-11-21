@@ -22,6 +22,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/orderports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenteventports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/factoringcompanyports"
@@ -49,6 +50,7 @@ type Params struct {
 	CustomerRepo        customerports.CustomerRepository
 	DB                  kernelports.Transactor
 	EDI                 *invoiceediservice.Service
+	EventService        shipmenteventports.ShipmentEventService
 	FactoringRepo       factoringcompanyports.FactoringCompanyRepository
 	FiscalPeriodRepo    fiscalperiodports.FiscalPeriodRepository
 	GLAccounts          glaccountports.GLAccountRepository
@@ -83,6 +85,7 @@ type Service struct {
 	customerRepo        customerports.CustomerRepository
 	db                  kernelports.Transactor
 	edi                 *invoiceediservice.Service
+	eventService        shipmenteventports.ShipmentEventService
 	factoringRepo       factoringcompanyports.FactoringCompanyRepository
 	fiscalPeriodRepo    fiscalperiodports.FiscalPeriodRepository
 	glAccounts          glaccountports.GLAccountRepository
@@ -122,6 +125,7 @@ func New(p Params) *Service {
 		customerRepo:        p.CustomerRepo,
 		db:                  p.DB,
 		edi:                 p.EDI,
+		eventService:        p.EventService,
 		factoringRepo:       p.FactoringRepo,
 		fiscalPeriodRepo:    p.FiscalPeriodRepo,
 		glAccounts:          p.GLAccounts,

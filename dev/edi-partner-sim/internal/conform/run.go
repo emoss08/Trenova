@@ -292,9 +292,10 @@ func (r *runner) write(
 	output := result.Output
 	step.X12 = output.Text
 	step.Status = StatusSent
-	r.writeFindings(c, step, output)
 	r.outcomes(c, step, output.Outcomes)
-	if step.Status == StatusHeld || step.Status == StatusDeclined {
+	held := step.Status == StatusHeld || step.Status == StatusDeclined
+	r.writeFindings(c, step, output, held)
+	if held {
 		step.Note = "Trenova would not send it: a rule held it"
 		return step
 	}
@@ -302,7 +303,7 @@ func (r *runner) write(
 	return step
 }
 
-func (r *runner) writeFindings(c *Case, step *Step, output *lading.WriteResult) {
+func (r *runner) writeFindings(c *Case, step *Step, output *lading.WriteResult, held bool) {
 	for i := range output.Findings {
 		f := &output.Findings[i]
 		step.Lading = append(step.Lading, LadingFinding{
@@ -312,7 +313,7 @@ func (r *runner) writeFindings(c *Case, step *Step, output *lading.WriteResult) 
 			Path:     f.Path,
 			Message:  f.Message.String(),
 		})
-		if f.Severity == lading.SeverityError {
+		if f.Severity == lading.SeverityError && !held {
 			c.fail(step, &Failure{
 				Source:  SourceLading,
 				Rule:    "write " + f.Code,
@@ -329,7 +330,7 @@ func (r *runner) writeFindings(c *Case, step *Step, output *lading.WriteResult) 
 			Path:     f.ElementRef,
 			Message:  f.Message.String(),
 		})
-		if f.IsError() {
+		if f.IsError() && !held {
 			ref := stringutils.FirstNonEmpty(f.ElementRef, f.SegmentID, f.Code)
 			c.fail(step, &Failure{
 				Source:  SourceLading,

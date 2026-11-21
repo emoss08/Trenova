@@ -2,6 +2,7 @@ package trenova
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/url"
 	"strings"
@@ -273,7 +274,65 @@ func (c *Client) TransferPayload(ctx context.Context, transferID string) (*Tende
 		return nil, err
 	}
 	if out.TenderPayload == nil {
-		return nil, fmt.Errorf("transfer %s carries no tender payload", transferID)
+		return nil, errors.New("the transfer carries no tender payload")
 	}
 	return out.TenderPayload, nil
+}
+
+const customerFields = `status code name addressLine1 addressLine2 city stateId postalCode
+	brokerVettingEnabled allowConsolidation exclusiveConsolidation consolidationPriority
+	statusUpdatePreference version`
+
+const billingProfileFields = `invoiceDelivery billingCycle billingCycleAnchorDay
+	billingCycleTimezone splitBy sectionBy invoiceDetail minConsolidatedAmount
+	maxShipmentsPerInvoice paymentTerm hasBillingControlOverrides creditLimit creditStatus
+	enforceCreditLimit autoCreditHold creditHoldReason autoSendInvoiceOnGeneration
+	sendPaymentReminders sendStatements emailInvoiceEnabled ediInvoiceEnabled
+	invoiceNumberFormat customerInvoicePrefix invoiceCopies revenueAccountId arAccountId
+	applyLateCharges lateChargeRate gracePeriodDays taxExempt taxExemptNumber
+	enforceCustomerBillingReq validateCustomerRates autoTransfer autoMarkReadyToBill
+	autoApprove autoBill countLateOnlyOnAppointmentStops autoApplyAccessorials billingCurrency
+	requirePONumber requireBOLNumber requireDeliveryNumber defaultBillerId billingNotes
+	fuelSurchargeMode fuelSurchargeProgramId factoringCompanyId`
+
+func (c *Client) EnableEDIInvoicing(ctx context.Context, customerID string) (bool, error) {
+	var out struct {
+		Customer map[string]any `json:"customer"`
+	}
+	err := c.GraphQL(ctx, `query EdiSimCustomerBilling($id: ID!) {
+  customer(id: $id) { `+customerFields+`
+    billingProfile { `+billingProfileFields+` documentTypes { id } } }
+}`, map[string]any{"id": customerID}, &out)
+	if err != nil {
+		return false, err
+	}
+	if out.Customer == nil {
+		return false, fmt.Errorf("the customer: %w", ErrNotFound)
+	}
+	profile, _ := out.Customer["billingProfile"].(map[string]any)
+	if profile == nil {
+		return false, errors.New("the customer has no billing profile")
+	}
+	if profile["ediInvoiceEnabled"] == true && profile["autoSendInvoiceOnGeneration"] == true &&
+		profile["emailInvoiceEnabled"] == false {
+		return false, nil
+	}
+	documentTypes, _ := profile["documentTypes"].([]any)
+	documentTypeIDs := make([]any, 0, len(documentTypes))
+	for _, raw := range documentTypes {
+		if documentType, ok := raw.(map[string]any); ok {
+			documentTypeIDs = append(documentTypeIDs, documentType["id"])
+		}
+	}
+	delete(profile, "documentTypes")
+	profile["documentTypeIds"] = documentTypeIDs
+	profile["ediInvoiceEnabled"] = true
+	profile["autoSendInvoiceOnGeneration"] = true
+	profile["emailInvoiceEnabled"] = false
+	input := out.Customer
+	input["billingProfile"] = profile
+	err = c.GraphQL(ctx, `mutation EdiSimUpdateCustomer($id: ID!, $input: CustomerInput!) {
+  updateCustomer(id: $id, input: $input) { id }
+}`, map[string]any{"id": customerID, "input": input}, nil)
+	return err == nil, err
 }

@@ -31,10 +31,23 @@ then plays `--count` seeded cases through `pkg/lading`, the wasm module the TMS 
   then stepped through the flow, from the instance the tender opened or, for a load the flow
   never saw, from none, so a flow's own reject or hold counts as it would in Trenova.
 
+What Trenova's side holds is drawn from the case's seed the way a real tenant's data varies
+(`internal/conform/variety.go`): event, response and invoice times carry seconds and land on
+local midnight, the last minute of a day, a daylight saving shift or a time whose UTC date is
+another day; a time is held in the stop's zone, the organisation's or UTC; names, streets,
+cities, BOLs, POs and notes come lowercase, title case, with accents, with one of the
+partner's separator characters, exactly at the partner guide's width or past it; a shipment
+may lack its BOL, weight or pieces and a bill-to its address; invoices add fuel, stop-off,
+detention and lumper lines with odd cents that sum to the total, a per-mile rate, a weight
+and a delivery date; and Trenova's tender to a carrier moves its windows and takes odd cents.
+Each varies once where Trenova holds it once: one BOL per shipment, one city per stop.
+
 Every message Trenova writes is judged by the oracle against the partner's `guide/` files, its
 envelope against `partner.yaml`, and the 997 or 999 the partner would answer against its reject
 rules. A message the map declares `not sent` is reported as not sent: nothing goes out and no
-acknowledgment is awaited. A message a rule holds is reported held and not judged.
+acknowledgment is awaited. A message a rule holds is reported held and not judged, even when
+the crate's own checks would also have stopped it: in Trenova both come back as reasons and
+nothing is sent.
 
 The summary gives each partner's cases passed and failed, the cases with a held message and the
 messages not sent, and each failing rule with the seeds it failed on and the command that
@@ -95,11 +108,15 @@ the judgement is stored with the file. Then the partner:
 
 ```json
 { "set": "204", "seed": 37, "with": [38, 39], "variation": "change", "sparse": false,
-  "delta": { "ratePercent": 12, "addStop": false, "move": { "stop": 0, "by": "24h" } } }
+  "delta": { "ratePercent": 12, "addStop": false, "move": { "stop": 0, "by": "24h" } },
+  "load": { "maxWeight": 43500 } }
 ```
 
 `variation` is `original` (default), `duplicate`, `change`, `replace` or `cancel`; `with` adds
-seeds to the same send, packed per the partner's batching. A partner that resends (`duplicates:
+seeds to the same send, packed per the partner's batching. `load` narrows what the seed draws
+(the [scenario format](partners/SCENARIO-FORMAT.md#what-a-scenario-needs-from-the-load) lists
+its keys); a later variation of a load must carry the same `load` as its original, or it varies
+a different load. A partner that resends (`duplicates:
 resend`, the legacy partner) answers `duplicate` with the original's exact bytes and control
 numbers; it refuses one for a seed it never sent. `{"payload": "ISA..."}` sends raw X12. The
 call returns once delivery finished, with each message, its MDN and its state.
@@ -224,6 +241,12 @@ are already active is left alone. When certification fails the run prints why (f
 errors) and skips that partner's scenarios. Last it gives the simulator the profile's inbound
 URL (`--trenova-public-url` when the simulator reaches Trenova at another host).
 
+`--deadline-scale 0.3` multiplies every wait a scenario states (its `within`s and the 3m
+default) for a quick pass; the scenarios keep their deadlines as written. A step that fails
+ends its scenario and the rest are reported skipped. Each scenario's result line prints as the
+scenario ends (with `-v`, its steps and wire first), and the summary ends with the time spent
+waiting on expectations and on Trenova actions, and how much of it went to steps that failed.
+
 Every load number is keyed by the run (`--run 1..899`, default the one after the last, kept in
 `.sim-run`), so runs never collide in Trenova; `--run N` replays a run's exact numbers. Waits
 follow the simulator's event stream and poll Trenova's API with backoff, each up to its
@@ -275,7 +298,7 @@ the simulator: AS2 URLs and async MDN returns; default `http://localhost:<the --
 
 `run`: `--api`, `--sim`, `--trenova-public-url`, `--email`, `--password`, `--partners`,
 `--partner`, `--scenario`, `--run`, `--run-file`, `--identity-dir`, `--trenova-cli`,
-`--trenova-dir`, `--keep-going`, `--report`, `-v`. `soak` takes the same connection, partner,
+`--trenova-dir`, `--keep-going`, `--deadline-scale`, `--report`, `-v`. `soak` takes the same connection, partner,
 run and CLI flags (`--api`, `--sim`, `--trenova-public-url`, `--email`, `--password`,
 `--partners`, `--partner`, `--run`, `--run-file`, `--identity-dir`, `--trenova-cli`,
 `--trenova-dir`, `-v`) and `--conversations`, `--rate`, `--concurrency`, `--within`, `--settle`,

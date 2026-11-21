@@ -1,6 +1,5 @@
+import { SettingsPage } from "@/components/settings/settings-page";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { LazyComponent } from "@trenova/shared/components/error-boundary";
-import { PageLayout } from "@/components/navigation/sidebar-layout";
 import { lazy } from "react";
 import { DocumentIntelligenceSkeleton } from "./skeleton";
 
@@ -10,17 +9,12 @@ export function DocumentIntelligencePage() {
   const t = useT();
 
   return (
-    <PageLayout
-      pageHeaderProps={{
-        title: t("Document extraction"),
-        description: t(
-          "Configure how documents are read, classified, extracted, and drafted into shipments",
-        ),
-      }}
+    <SettingsPage
+      title={t("Document extraction")}
+      description={t("Choose how uploaded documents are read, filed and drafted into shipments")}
+      skeleton={<DocumentIntelligenceSkeleton />}
     >
-      <LazyComponent fallback={<DocumentIntelligenceSkeleton />}>
-        <DocumentIntelligenceForm />
-      </LazyComponent>
-    </PageLayout>
+      <DocumentIntelligenceForm />
+    </SettingsPage>
   );
 }

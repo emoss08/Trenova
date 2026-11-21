@@ -13,6 +13,12 @@ export type SidebarLink = {
   includeBetaTag?: boolean;
   resource?: string;
   requiredOperation?: OperationType;
+  /**
+   * Shows the entry to someone who may read any one of these, for a page whose parts answer to
+   * different permissions and which shows each person the parts they may read. Used in place
+   * of `resource`.
+   */
+  anyResources?: readonly string[];
   capability?: OrganizationCapabilityType;
   /** Hides the entry when the organization's plan withholds it. */
   planFeature?: PlanFeatureKey;

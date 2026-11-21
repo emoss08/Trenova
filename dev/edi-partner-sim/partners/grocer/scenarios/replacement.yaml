@@ -3,7 +3,7 @@ description: >
   Meadowridge never sends a change (04); it replaces the whole tender (05). A replacement that
   moves the delivery a day and keeps the rate updates the run; one that raises the rate is held.
 steps:
-  - send: { set: "204", as: t1 }
+  - send: { set: "204", as: t1, load: { oneRange: true } }
   - expect: { ack: t1 }
   - expect: { wire: "990", about: t1, elements: { B1-04: A } }
   - send: { set: "204", variation: replace, of: t1, delta: { move: { stop: 0, by: 24h } } }

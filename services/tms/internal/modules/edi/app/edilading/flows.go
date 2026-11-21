@@ -61,6 +61,7 @@ type DispatchRequest struct {
 	TransferID  pulid.ID
 	MessageID   pulid.ID
 	ActorID     pulid.ID
+	AckDetail   string
 	Now         time.Time
 }
 
@@ -319,6 +320,7 @@ func apply(instance *ladingproject.FlowInstance, req *DispatchRequest, step *lad
 			instance.ResolvedAt = nil
 			instance.ResolvedByID = ""
 		case lading.ActionEscalate:
+			action.Message = withAckDetail(action.Message, req)
 			instance.Status = ladingproject.FlowInstanceStatusEscalated
 			instance.Reason = action.Message
 			instance.HeldAt = &now
@@ -327,10 +329,23 @@ func apply(instance *ladingproject.FlowInstance, req *DispatchRequest, step *lad
 		}
 	}
 	var summary lading.FlowSummary
-	if err := sonic.Unmarshal(step.State, &summary); err == nil &&
-		instance.Status == ladingproject.FlowInstanceStatusOpen && finished(&summary) && step.Wake == nil {
-		instance.Status = ladingproject.FlowInstanceStatusClosed
+	if err := sonic.Unmarshal(step.State, &summary); err != nil {
+		return
 	}
+	done := finished(&summary) && step.Wake == nil
+	switch {
+	case instance.Status == ladingproject.FlowInstanceStatusOpen && done:
+		instance.Status = ladingproject.FlowInstanceStatusClosed
+	case instance.Status == ladingproject.FlowInstanceStatusClosed && !done:
+		instance.Status = ladingproject.FlowInstanceStatusOpen
+	}
+}
+
+func withAckDetail(message *wasmmodule.Message, req *DispatchRequest) *wasmmodule.Message {
+	if message == nil || req.AckDetail == "" || req.Event.Kind != lading.EventAck {
+		return message
+	}
+	return &wasmmodule.Message{Template: "{0} ({1})", Args: []any{*message, req.AckDetail}}
 }
 
 func finished(summary *lading.FlowSummary) bool {

@@ -20,13 +20,9 @@ import {
   type SCIMGroupRoleMapping,
 } from "@trenova/shared/types/iam";
 import {
-  microsoftSSOConfigSchema,
-  oktaSSOConfigSchema,
   organizationBrandingSchema,
   storedOrganizationSettingsSchema,
   tenantLoginMetadataSchema,
-  type MicrosoftSSOConfig,
-  type OktaSSOConfig,
   type OrganizationBrandImage,
   type OrganizationBranding,
   type OrganizationSettings,
@@ -72,38 +68,6 @@ export class OrganizationService {
     );
 
     return safeParse(storedOrganizationSettingsSchema, response, "OrganizationSettings");
-  }
-
-  public async getMicrosoftSSOConfig(organizationId: string) {
-    const response = await api.get<MicrosoftSSOConfig>(
-      `${this.base_url}/${organizationId}/microsoft-sso`,
-    );
-
-    return safeParse(microsoftSSOConfigSchema, response, "MicrosoftSSOConfig");
-  }
-
-  public async upsertMicrosoftSSOConfig(organizationId: string, data: MicrosoftSSOConfig) {
-    const response = await api.put<MicrosoftSSOConfig>(
-      `${this.base_url}/${organizationId}/microsoft-sso`,
-      data,
-    );
-
-    return safeParse(microsoftSSOConfigSchema, response, "MicrosoftSSOConfig");
-  }
-
-  public async getOktaSSOConfig(organizationId: string) {
-    const response = await api.get<OktaSSOConfig>(`${this.base_url}/${organizationId}/okta-sso`);
-
-    return safeParse(oktaSSOConfigSchema, response, "OktaSSOConfig");
-  }
-
-  public async upsertOktaSSOConfig(organizationId: string, data: OktaSSOConfig) {
-    const response = await api.put<OktaSSOConfig>(
-      `${this.base_url}/${organizationId}/okta-sso`,
-      data,
-    );
-
-    return safeParse(oktaSSOConfigSchema, response, "OktaSSOConfig");
   }
 
   public async getTenantLoginMetadata(organizationSlug: string) {

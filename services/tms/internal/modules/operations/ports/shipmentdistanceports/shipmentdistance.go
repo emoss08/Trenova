@@ -28,6 +28,9 @@ type DistanceMoveResult struct {
 	DistanceUnits       string                   `json:"distanceUnits,omitempty"`
 	DistanceProfileID   string                   `json:"distanceProfileId,omitempty"`
 	DistanceProfileName string                   `json:"distanceProfileName,omitempty"`
+	PayDistance         *float64                 `json:"payDistance,omitempty"`
+	BillingDistance     *float64                 `json:"billingDistance,omitempty"`
+	FuelDistance        *float64                 `json:"fuelDistance,omitempty"`
 	Warnings            []string                 `json:"warnings,omitempty"`
 	JurisdictionMiles   []JurisdictionMileResult `json:"jurisdictionMiles,omitempty"`
 	CalculatedAt        int64                    `json:"calculatedAt"`

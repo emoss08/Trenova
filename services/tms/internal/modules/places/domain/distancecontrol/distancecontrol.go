@@ -19,39 +19,37 @@ var (
 )
 
 const (
-	PurposeLoadedMove                  = "LoadedMove"
-	PurposeEmptyMove                   = "EmptyMove"
-	PurposePay                         = "Pay"
-	PurposeBilling                     = "Billing"
-	PurposeFuel                        = "Fuel"
-	PurposeEtaOutOfRoute               = "EtaOutOfRoute"
-	PurposeDistanceCalculatorShortest  = "DistanceCalculatorShortest"
-	PurposeDistanceCalculatorPractical = "DistanceCalculatorPractical"
+	PurposeLoadedMove    = "LoadedMove"
+	PurposeEmptyMove     = "EmptyMove"
+	PurposePay           = "Pay"
+	PurposeBilling       = "Billing"
+	PurposeFuel          = "Fuel"
+	PurposeEtaOutOfRoute = "EtaOutOfRoute"
+
+	RatingDistanceUnitKilometers = "Kilometers"
 )
 
 type DistanceControl struct {
 	keel.Table `keel:"distance_controls"`
 
-	ID                                           pulid.ID `json:"id"                                           keel:"id,pk,autoid:dc_"`
-	BusinessUnitID                               pulid.ID `json:"businessUnitId"                               keel:"business_unit_id,pk,tenant"`
-	OrganizationID                               pulid.ID `json:"organizationId"                               keel:"organization_id,pk,tenant"`
-	StoreMileage                                 bool     `json:"storeMileage"                                 keel:"store_mileage"`
-	StoredDistanceUnits                          string   `json:"storedDistanceUnits"                          keel:"stored_distance_units"`
-	PostalCodeFallbackToCity                     bool     `json:"postalCodeFallbackToCity"                     keel:"postal_code_fallback_to_city"`
-	AutoCreateStoredMileage                      bool     `json:"autoCreateStoredMileage"                      keel:"auto_create_stored_mileage"`
-	LoadedMoveDistanceProfileID                  pulid.ID `json:"loadedMoveDistanceProfileId"                  keel:"loaded_move_distance_profile_id"`
-	EmptyMoveDistanceProfileID                   pulid.ID `json:"emptyMoveDistanceProfileId"                   keel:"empty_move_distance_profile_id"`
-	PayDistanceProfileID                         pulid.ID `json:"payDistanceProfileId"                         keel:"pay_distance_profile_id"`
-	BillingDistanceProfileID                     pulid.ID `json:"billingDistanceProfileId"                     keel:"billing_distance_profile_id"`
-	FuelDistanceProfileID                        pulid.ID `json:"fuelDistanceProfileId"                        keel:"fuel_distance_profile_id"`
-	EtaOutOfRouteDistanceProfileID               pulid.ID `json:"etaOutOfRouteDistanceProfileId"               keel:"eta_out_of_route_distance_profile_id"`
-	DistanceCalculatorShortestDistanceProfileID  pulid.ID `json:"distanceCalculatorShortestDistanceProfileId"  keel:"distance_calculator_shortest_distance_profile_id"`
-	DistanceCalculatorPracticalDistanceProfileID pulid.ID `json:"distanceCalculatorPracticalDistanceProfileId" keel:"distance_calculator_practical_distance_profile_id"`
-	CaptureJurisdictionMiles                     bool     `json:"captureJurisdictionMiles"                     keel:"capture_jurisdiction_miles"`
-	Version                                      int64    `json:"version"                                      keel:"version,version"`
-	CreatedAt                                    int64    `json:"createdAt"                                    keel:"created_at,autocreate"`
-	UpdatedAt                                    int64    `json:"updatedAt"                                    keel:"updated_at,autoupdate"`
-	SearchVector                                 string   `json:"-"`
+	ID                             pulid.ID `json:"id"                                           keel:"id,pk,autoid:dc_"`
+	BusinessUnitID                 pulid.ID `json:"businessUnitId"                               keel:"business_unit_id,pk,tenant"`
+	OrganizationID                 pulid.ID `json:"organizationId"                               keel:"organization_id,pk,tenant"`
+	StoreMileage                   bool     `json:"storeMileage"                                 keel:"store_mileage"`
+	RatingDistanceUnit             string   `json:"ratingDistanceUnit"                           keel:"rating_distance_unit"`
+	PostalCodeFallbackToCity       bool     `json:"postalCodeFallbackToCity"                     keel:"postal_code_fallback_to_city"`
+	AutoCreateStoredMileage        bool     `json:"autoCreateStoredMileage"                      keel:"auto_create_stored_mileage"`
+	LoadedMoveDistanceProfileID    pulid.ID `json:"loadedMoveDistanceProfileId"                  keel:"loaded_move_distance_profile_id"`
+	EmptyMoveDistanceProfileID     pulid.ID `json:"emptyMoveDistanceProfileId"                   keel:"empty_move_distance_profile_id"`
+	PayDistanceProfileID           pulid.ID `json:"payDistanceProfileId"                         keel:"pay_distance_profile_id"`
+	BillingDistanceProfileID       pulid.ID `json:"billingDistanceProfileId"                     keel:"billing_distance_profile_id"`
+	FuelDistanceProfileID          pulid.ID `json:"fuelDistanceProfileId"                        keel:"fuel_distance_profile_id"`
+	EtaOutOfRouteDistanceProfileID pulid.ID `json:"etaOutOfRouteDistanceProfileId"               keel:"eta_out_of_route_distance_profile_id"`
+	CaptureJurisdictionMiles       bool     `json:"captureJurisdictionMiles"                     keel:"capture_jurisdiction_miles"`
+	Version                        int64    `json:"version"                                      keel:"version,version"`
+	CreatedAt                      int64    `json:"createdAt"                                    keel:"created_at,autocreate"`
+	UpdatedAt                      int64    `json:"updatedAt"                                    keel:"updated_at,autoupdate"`
+	SearchVector                   string   `json:"-"`
 
 	BusinessUnit *tenant.BusinessUnit `json:"-"`
 	Organization *tenant.Organization `json:"-"`
@@ -59,33 +57,28 @@ type DistanceControl struct {
 
 func NewDefault(
 	orgID, buID pulid.ID,
-	practicalProfileID, shortestProfileID pulid.ID,
+	profileID pulid.ID,
 ) *DistanceControl {
-	if shortestProfileID.IsNil() {
-		shortestProfileID = practicalProfileID
-	}
 	return &DistanceControl{
-		OrganizationID:                               orgID,
-		BusinessUnitID:                               buID,
-		StoreMileage:                                 true,
-		StoredDistanceUnits:                          distanceprofile.DefaultDistanceUnits,
-		PostalCodeFallbackToCity:                     true,
-		AutoCreateStoredMileage:                      true,
-		LoadedMoveDistanceProfileID:                  practicalProfileID,
-		EmptyMoveDistanceProfileID:                   practicalProfileID,
-		PayDistanceProfileID:                         practicalProfileID,
-		BillingDistanceProfileID:                     practicalProfileID,
-		FuelDistanceProfileID:                        practicalProfileID,
-		EtaOutOfRouteDistanceProfileID:               practicalProfileID,
-		DistanceCalculatorShortestDistanceProfileID:  shortestProfileID,
-		DistanceCalculatorPracticalDistanceProfileID: practicalProfileID,
+		OrganizationID:                 orgID,
+		BusinessUnitID:                 buID,
+		StoreMileage:                   true,
+		RatingDistanceUnit:             distanceprofile.DefaultDistanceUnits,
+		PostalCodeFallbackToCity:       true,
+		AutoCreateStoredMileage:        true,
+		LoadedMoveDistanceProfileID:    profileID,
+		EmptyMoveDistanceProfileID:     profileID,
+		PayDistanceProfileID:           profileID,
+		BillingDistanceProfileID:       profileID,
+		FuelDistanceProfileID:          profileID,
+		EtaOutOfRouteDistanceProfileID: profileID,
 	}
 }
 
 func (d *DistanceControl) ApplyDefaults() {
-	d.StoredDistanceUnits = strings.TrimSpace(d.StoredDistanceUnits)
-	if d.StoredDistanceUnits == "" {
-		d.StoredDistanceUnits = distanceprofile.DefaultDistanceUnits
+	d.RatingDistanceUnit = strings.TrimSpace(d.RatingDistanceUnit)
+	if d.RatingDistanceUnit == "" {
+		d.RatingDistanceUnit = distanceprofile.DefaultDistanceUnits
 	}
 }
 
@@ -101,10 +94,6 @@ func (d *DistanceControl) ProfileIDForPurpose(purpose string) pulid.ID {
 		return d.FuelDistanceProfileID
 	case PurposeEtaOutOfRoute:
 		return d.EtaOutOfRouteDistanceProfileID
-	case PurposeDistanceCalculatorShortest:
-		return d.DistanceCalculatorShortestDistanceProfileID
-	case PurposeDistanceCalculatorPractical:
-		return d.DistanceCalculatorPracticalDistanceProfileID
 	default:
 		return d.LoadedMoveDistanceProfileID
 	}
@@ -114,8 +103,8 @@ func (d *DistanceControl) Validate(multiErr *errortypes.MultiError) {
 	multiErr.AddOzzoError(validation.ValidateStruct(
 		d,
 		validation.Field(
-			&d.StoredDistanceUnits,
-			validation.Required.Error("Stored distance units are required"),
+			&d.RatingDistanceUnit,
+			validation.Required.Error("Rating distance unit is required"),
 		),
 		validation.Field(
 			&d.LoadedMoveDistanceProfileID,
@@ -141,22 +130,14 @@ func (d *DistanceControl) Validate(multiErr *errortypes.MultiError) {
 			&d.EtaOutOfRouteDistanceProfileID,
 			validation.Required.Error("ETA/out-of-route distance profile is required"),
 		),
-		validation.Field(
-			&d.DistanceCalculatorShortestDistanceProfileID,
-			validation.Required.Error("Shortest calculator distance profile is required"),
-		),
-		validation.Field(
-			&d.DistanceCalculatorPracticalDistanceProfileID,
-			validation.Required.Error("Practical calculator distance profile is required"),
-		),
 	))
-	if d.StoredDistanceUnits != "" &&
-		d.StoredDistanceUnits != distanceprofile.DefaultDistanceUnits &&
-		d.StoredDistanceUnits != "Kilometers" {
+	if d.RatingDistanceUnit != "" &&
+		d.RatingDistanceUnit != distanceprofile.DefaultDistanceUnits &&
+		d.RatingDistanceUnit != RatingDistanceUnitKilometers {
 		multiErr.Add(
-			"storedDistanceUnits",
+			"ratingDistanceUnit",
 			errortypes.ErrInvalid,
-			"Stored distance units must be Miles or Kilometers",
+			"Rating distance unit must be Miles or Kilometers",
 		)
 	}
 }
@@ -172,7 +153,7 @@ func (d *DistanceControl) GetPostgresSearchConfig() domaintypes.PostgresSearchCo
 		UseSearchVector: false,
 		SearchableFields: []domaintypes.SearchableField{
 			{
-				Name:   "stored_distance_units",
+				Name:   "rating_distance_unit",
 				Type:   domaintypes.FieldTypeText,
 				Weight: domaintypes.SearchWeightA,
 			},

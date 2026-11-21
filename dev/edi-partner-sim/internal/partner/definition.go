@@ -149,8 +149,12 @@ func (d *Definition) Transaction(
 			set,
 		)
 	}
-	base := template.Load.Generate(d.Partner.Name, d.Partner.Location(), seed)
-	load, err := template.Load.apply(base, variation.Delta)
+	profile, err := template.Load.Narrow(variation.Need)
+	if err != nil {
+		return Transaction{}, nil, err
+	}
+	base := profile.Generate(d.Partner.Name, d.Partner.Location(), seed)
+	load, err := profile.apply(base, variation.Delta)
 	if err != nil {
 		return Transaction{}, nil, err
 	}

@@ -19,6 +19,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenteventports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
@@ -89,7 +90,7 @@ func (s *Service) Post( //nolint:funlen // legacy workflow
 		}
 		newlyPosted = true
 
-		legs, shipErr := s.markInvoicedLegs(txCtx, entity, now, req.TenantInfo)
+		legs, shipErr := s.markInvoicedLegs(txCtx, entity, now, req.TenantInfo, auditActor)
 		if shipErr != nil {
 			return shipErr
 		}
@@ -294,6 +295,7 @@ func (s *Service) markInvoicedLegs(
 	entity *invoice.Invoice,
 	now int64,
 	tenantInfo pagination.TenantInfo,
+	actor kernelports.AuditActor,
 ) ([]*shipment.Shipment, error) {
 	changes, err := s.planInvoicedLegs(ctx, entity, now, tenantInfo)
 	if err != nil {
@@ -304,6 +306,14 @@ func (s *Service) markInvoicedLegs(
 	for _, change := range changes {
 		if _, err = s.shipmentRepo.UpdateDerivedState(ctx, change.After); err != nil {
 			return nil, err
+		}
+		if change.Before.Status != change.After.Status {
+			if err = s.eventService.Record(
+				ctx,
+				shipmenteventports.StatusChanged(change.After, change.Before.Status, actor),
+			); err != nil {
+				return nil, err
+			}
 		}
 		legs = append(legs, change.After)
 	}

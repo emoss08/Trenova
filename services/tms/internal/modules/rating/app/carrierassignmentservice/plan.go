@@ -161,7 +161,7 @@ func (s *Service) planAssignToMove(
 	if err = move.EnsureAssignable(); err != nil {
 		return nil, err
 	}
-	if err = validatePerMileDistance(req.RateMethod, move.Distance); err != nil {
+	if err = validatePerMileDistance(req.RateMethod, move.PaidDistance()); err != nil {
 		return nil, err
 	}
 	if err = dispatchguard.EnsureNoDispatchHold(

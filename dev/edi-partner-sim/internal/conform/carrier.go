@@ -175,6 +175,9 @@ func (r *runner) carrier(ctx context.Context, s *subject, c *Case) {
 		})
 		return
 	}
+	if document, ok := offer.Document.(loadTender); ok {
+		offer.Document = newVariety(s.def.Name(), s.guides, c.Seed).tender(document)
+	}
 	c.Variation, c.Title = offer.Label, "Tender to "+s.def.Partner.Display
 	tender := r.write(ctx, s, c, namedDocument{
 		name:     "204 out",

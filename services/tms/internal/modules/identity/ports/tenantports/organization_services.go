@@ -39,31 +39,6 @@ type GetOrganizationsByIDsRequest struct {
 	IncludeBU       bool
 }
 
-type MicrosoftSSOConfig struct {
-	OrganizationID   string   `json:"organizationId"`
-	Enabled          bool     `json:"enabled"`
-	EnforceSSO       bool     `json:"enforceSso"`
-	TenantID         string   `json:"tenantId"`
-	ClientID         string   `json:"clientId"`
-	ClientSecret     string   `json:"clientSecret,omitempty"`
-	RedirectURL      string   `json:"redirectUrl"`
-	AllowedDomains   []string `json:"allowedDomains"`
-	SecretConfigured bool     `json:"secretConfigured"`
-}
-
-type OktaSSOConfig struct {
-	OrganizationID   string   `json:"organizationId"`
-	Enabled          bool     `json:"enabled"`
-	EnforceSSO       bool     `json:"enforceSso"`
-	IssuerURL        string   `json:"issuerUrl"`
-	ClientID         string   `json:"clientId"`
-	ClientSecret     string   `json:"clientSecret,omitempty"`
-	RedirectURL      string   `json:"redirectUrl"`
-	Scopes           []string `json:"scopes"`
-	AllowedDomains   []string `json:"allowedDomains"`
-	SecretConfigured bool     `json:"secretConfigured"`
-}
-
 type OrganizationService interface {
 	GetByID(
 		ctx context.Context,
@@ -85,22 +60,4 @@ type OrganizationService interface {
 	) (*tenant.Organization, error)
 	GetBranding(ctx context.Context, req GetBrandingRequest) (*Branding, error)
 	DeleteBrandImage(ctx context.Context, req DeleteBrandImageRequest) (*tenant.Organization, error)
-	GetMicrosoftSSOConfig(
-		ctx context.Context,
-		organizationID pulid.ID,
-	) (*MicrosoftSSOConfig, error)
-	UpsertMicrosoftSSOConfig(
-		ctx context.Context,
-		tenantInfo pagination.TenantInfo,
-		config *MicrosoftSSOConfig,
-	) (*MicrosoftSSOConfig, error)
-	GetOktaSSOConfig(
-		ctx context.Context,
-		organizationID pulid.ID,
-	) (*OktaSSOConfig, error)
-	UpsertOktaSSOConfig(
-		ctx context.Context,
-		tenantInfo pagination.TenantInfo,
-		config *OktaSSOConfig,
-	) (*OktaSSOConfig, error)
 }

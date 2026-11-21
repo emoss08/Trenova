@@ -227,12 +227,11 @@ func setupOrganizationHandler(
 	}
 
 	service := organizationservice.New(organizationservice.Params{
-		Logger:         logger,
-		DB:             dbtest.NopConnection{},
-		Repo:           repo,
-		Storage:        storageClient,
-		SecurityConfig: &cfg.Security,
-		StorageConfig:  &cfg.Storage,
+		Logger:        logger,
+		DB:            dbtest.NopConnection{},
+		Repo:          repo,
+		Storage:       storageClient,
+		StorageConfig: &cfg.Storage,
 		Validator: organizationservice.NewValidator(
 			organizationservice.ValidatorParams{DB: pgstubtest.NewConnection(t)},
 		),
@@ -676,20 +675,6 @@ func TestOrganizationHandler_RejectsAnotherOrganizationID(t *testing.T) {
 		{name: "get branding", method: http.MethodGet, path: "/branding"},
 		{name: "delete logo", method: http.MethodDelete, path: "/branding/logo"},
 		{name: "delete icon", method: http.MethodDelete, path: "/branding/icon"},
-		{name: "get microsoft sso", method: http.MethodGet, path: "/microsoft-sso"},
-		{
-			name:   "upsert microsoft sso",
-			method: http.MethodPut,
-			path:   "/microsoft-sso",
-			body:   map[string]any{"enabled": true},
-		},
-		{name: "get okta sso", method: http.MethodGet, path: "/okta-sso"},
-		{
-			name:   "upsert okta sso",
-			method: http.MethodPut,
-			path:   "/okta-sso",
-			body:   map[string]any{"enabled": true},
-		},
 	}
 
 	for _, tc := range cases {

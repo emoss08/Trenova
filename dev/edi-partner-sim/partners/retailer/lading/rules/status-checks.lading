@@ -38,6 +38,12 @@ rule "no status from the future" {
   }
 }
 
+/// Tamberlane's guide carries a BOL of at most 30 characters, and a cut BOL matches nothing.
+rule "a BOL Tamberlane's guide can carry" {
+  require (bol ?? "").length() <= 30
+    else hold "Tamberlane's guide takes a BOL of at most 30 characters: shorten it before sending"
+}
+
 test "a delivery with its BOL and place goes out" {
   given now = @2026-06-04T14:00Z
   given shipmentStatus { key: "TS10000004", bol: "0719744701", events: [{ kind: Delivered, at: @2026-06-04T12:40Z, city: "Memphis", state: "TN" }] }
@@ -75,4 +81,10 @@ property "every status Tamberlane takes goes out" {
   given shipmentStatus { key: "TS10000004", bol: "0719744701", events: [{ kind: kind, at: @2026-06-04T12:40Z, city: "Omaha", state: "NE" }] }
   expect no rejects
   expect no holds
+}
+
+test "a BOL longer than Tamberlane's guide takes is held" {
+  given now = @2026-06-04T14:00Z
+  given shipmentStatus { key: "TS10000004", bol: "8100798987-REISSUED-AFTER-RECONSIGNMENT", events: [{ kind: Delivered, at: @2026-06-04T12:40Z, city: "Memphis", state: "TN" }] }
+  expect held "Tamberlane's guide takes a BOL of at most 30 characters: shorten it before sending"
 }

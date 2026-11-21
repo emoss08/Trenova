@@ -1,6 +1,6 @@
 name: a tender with no 990 inside Tamberlane's hour escalates
 steps:
-  - send: { set: "204", as: t1 }
+  - send: { set: "204", as: t1, load: { maxWeight: 43500 } }
   - expect: { ack: t1 }
   - advance: { about: t1, by: 1h }
   - expect: { flow: t1, status: Escalated, why: re-tenders }

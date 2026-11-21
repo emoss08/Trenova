@@ -60,6 +60,7 @@ import { Route as AppAdminJurisdictionRulesRouteImport } from "./pages/_app/admi
 import { Route as AppAdminOrganizationSettingsRouteImport } from "./pages/_app/admin/organization-settings";
 import { Route as AppAdminPlanRouteImport } from "./pages/_app/admin/plan";
 import { Route as AppAdminRolesRouteImport } from "./pages/_app/admin/roles";
+import { Route as AppAdminSecurityAccessRouteImport } from "./pages/_app/admin/security-access";
 import { Route as AppAdminSequenceConfigsRouteImport } from "./pages/_app/admin/sequence-configs";
 import { Route as AppAdminServiceFailureReasonCodesRouteImport } from "./pages/_app/admin/service-failure-reason-codes";
 import { Route as AppAdminSettlementControlRouteImport } from "./pages/_app/admin/settlement-control";
@@ -500,6 +501,11 @@ const AppAdminPlanRoute = AppAdminPlanRouteImport.update({
 const AppAdminRolesRoute = AppAdminRolesRouteImport.update({
   id: "/roles",
   path: "/roles",
+  getParentRoute: () => AppAdminRoute,
+} as any);
+const AppAdminSecurityAccessRoute = AppAdminSecurityAccessRouteImport.update({
+  id: "/security-access",
+  path: "/security-access",
   getParentRoute: () => AppAdminRoute,
 } as any);
 const AppAdminSequenceConfigsRoute = AppAdminSequenceConfigsRouteImport.update({
@@ -1491,6 +1497,7 @@ export interface FileRoutesByFullPath {
   "/admin/organization-settings": typeof AppAdminOrganizationSettingsRoute;
   "/admin/plan": typeof AppAdminPlanRoute;
   "/admin/roles": typeof AppAdminRolesRoute;
+  "/admin/security-access": typeof AppAdminSecurityAccessRoute;
   "/admin/sequence-configs": typeof AppAdminSequenceConfigsRoute;
   "/admin/service-failure-reason-codes": typeof AppAdminServiceFailureReasonCodesRoute;
   "/admin/settlement-control": typeof AppAdminSettlementControlRoute;
@@ -1708,6 +1715,7 @@ export interface FileRoutesByTo {
   "/admin/organization-settings": typeof AppAdminOrganizationSettingsRoute;
   "/admin/plan": typeof AppAdminPlanRoute;
   "/admin/roles": typeof AppAdminRolesRoute;
+  "/admin/security-access": typeof AppAdminSecurityAccessRoute;
   "/admin/sequence-configs": typeof AppAdminSequenceConfigsRoute;
   "/admin/service-failure-reason-codes": typeof AppAdminServiceFailureReasonCodesRoute;
   "/admin/settlement-control": typeof AppAdminSettlementControlRoute;
@@ -1932,6 +1940,7 @@ export interface FileRoutesById {
   "/_app/admin/organization-settings": typeof AppAdminOrganizationSettingsRoute;
   "/_app/admin/plan": typeof AppAdminPlanRoute;
   "/_app/admin/roles": typeof AppAdminRolesRoute;
+  "/_app/admin/security-access": typeof AppAdminSecurityAccessRoute;
   "/_app/admin/sequence-configs": typeof AppAdminSequenceConfigsRoute;
   "/_app/admin/service-failure-reason-codes": typeof AppAdminServiceFailureReasonCodesRoute;
   "/_app/admin/settlement-control": typeof AppAdminSettlementControlRoute;
@@ -2153,6 +2162,7 @@ export interface FileRouteTypes {
     | "/admin/organization-settings"
     | "/admin/plan"
     | "/admin/roles"
+    | "/admin/security-access"
     | "/admin/sequence-configs"
     | "/admin/service-failure-reason-codes"
     | "/admin/settlement-control"
@@ -2370,6 +2380,7 @@ export interface FileRouteTypes {
     | "/admin/organization-settings"
     | "/admin/plan"
     | "/admin/roles"
+    | "/admin/security-access"
     | "/admin/sequence-configs"
     | "/admin/service-failure-reason-codes"
     | "/admin/settlement-control"
@@ -2593,6 +2604,7 @@ export interface FileRouteTypes {
     | "/_app/admin/organization-settings"
     | "/_app/admin/plan"
     | "/_app/admin/roles"
+    | "/_app/admin/security-access"
     | "/_app/admin/sequence-configs"
     | "/_app/admin/service-failure-reason-codes"
     | "/_app/admin/settlement-control"
@@ -3136,6 +3148,13 @@ declare module "@tanstack/react-router" {
       path: "/roles";
       fullPath: "/admin/roles";
       preLoaderRoute: typeof AppAdminRolesRouteImport;
+      parentRoute: typeof AppAdminRoute;
+    };
+    "/_app/admin/security-access": {
+      id: "/_app/admin/security-access";
+      path: "/security-access";
+      fullPath: "/admin/security-access";
+      preLoaderRoute: typeof AppAdminSecurityAccessRouteImport;
       parentRoute: typeof AppAdminRoute;
     };
     "/_app/admin/sequence-configs": {
@@ -4359,6 +4378,7 @@ interface AppAdminRouteChildren {
   AppAdminOrganizationSettingsRoute: typeof AppAdminOrganizationSettingsRoute;
   AppAdminPlanRoute: typeof AppAdminPlanRoute;
   AppAdminRolesRoute: typeof AppAdminRolesRoute;
+  AppAdminSecurityAccessRoute: typeof AppAdminSecurityAccessRoute;
   AppAdminSequenceConfigsRoute: typeof AppAdminSequenceConfigsRoute;
   AppAdminServiceFailureReasonCodesRoute: typeof AppAdminServiceFailureReasonCodesRoute;
   AppAdminSettlementControlRoute: typeof AppAdminSettlementControlRoute;
@@ -4408,6 +4428,7 @@ const AppAdminRouteChildren: AppAdminRouteChildren = {
   AppAdminOrganizationSettingsRoute: AppAdminOrganizationSettingsRoute,
   AppAdminPlanRoute: AppAdminPlanRoute,
   AppAdminRolesRoute: AppAdminRolesRoute,
+  AppAdminSecurityAccessRoute: AppAdminSecurityAccessRoute,
   AppAdminSequenceConfigsRoute: AppAdminSequenceConfigsRoute,
   AppAdminServiceFailureReasonCodesRoute:
     AppAdminServiceFailureReasonCodesRoute,

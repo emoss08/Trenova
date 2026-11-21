@@ -155,6 +155,7 @@ func run(
 		c := &play.Conversation{
 			Name:  "soak-" + strconv.Itoa(n+1),
 			Party: party,
+			Need:  party.Happy,
 			Seed:  play.SeedOf(env.Run, offset),
 			BOL:   fmt.Sprintf("SOAK%03d%04d", env.Run, n+1),
 		}
@@ -232,7 +233,7 @@ func phases(env *play.Env, within time.Duration, c *play.Conversation) []phase {
 				return env.TenderOut(ctx, c, soakTenderCents, within)
 			}}}
 	}
-	original := partner.Variation{Kind: partner.KindOriginal}
+	original := partner.Variation{Kind: partner.KindOriginal, Need: c.Need}
 	return []phase{
 		{kind: "send", name: "send", text: "send 204 original as " + c.Name,
 			run: func(ctx context.Context) error {

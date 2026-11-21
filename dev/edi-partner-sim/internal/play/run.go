@@ -49,6 +49,7 @@ func (e *Env) RunAll(ctx context.Context, o *Options) (*Report, error) {
 	}
 	started := time.Now()
 	report := &Report{
+		Scale:     e.scale,
 		Run:       e.Run,
 		API:       o.API,
 		Sim:       o.Sim,
@@ -76,6 +77,8 @@ func (e *Env) RunAll(ctx context.Context, o *Options) (*Report, error) {
 	return report, nil
 }
 
+const happyPathSlug = "happy-path"
+
 type plan struct {
 	def       *partner.Definition
 	scenarios []indexed
@@ -98,6 +101,9 @@ func planFor(def *partner.Definition, only []string) (plan, error) {
 	}
 	p := plan{def: def}
 	for index, s := range all {
+		if err = checkNeeds(def, s); err != nil {
+			return plan{}, err
+		}
 		if len(only) > 0 && !slices.Contains(only, s.Slug) && !slices.Contains(only, s.Name) {
 			continue
 		}
@@ -156,10 +162,12 @@ func (e *Env) runPartner(ctx context.Context, p *plan) *PartnerReport {
 			}
 			report.Scenarios = append(report.Scenarios, skipped)
 			e.PostScenario(ctx, skipped.LogScenario(p.def.Name()))
+			e.finish(p.def.Name(), skipped)
 			continue
 		}
 		result := e.RunScenario(ctx, party, s.scenario, s.index)
 		report.Scenarios = append(report.Scenarios, result)
+		e.finish(p.def.Name(), result)
 		if result.Status == StatusFailed {
 			failed = true
 		}
@@ -194,4 +202,41 @@ func partnerPassed(p *PartnerReport) bool {
 	return !slices.ContainsFunc(p.Scenarios, func(s *ScenarioReport) bool {
 		return s.Status == StatusFailed
 	})
+}
+
+func checkNeeds(def *partner.Definition, s *scenario.Scenario) error {
+	for index := range s.Steps {
+		send := s.Steps[index].Send
+		if send == nil || send.Load == nil {
+			continue
+		}
+		if err := def.CheckNeed(send.Set, send.Load); err != nil {
+			return fmt.Errorf("%s: steps[%d].send.load: %w", s.File, index, err)
+		}
+	}
+	return nil
+}
+
+func happyNeed(def *partner.Definition) *partner.LoadNeed {
+	all, err := scenario.Load(def.Dir)
+	if err != nil {
+		return nil
+	}
+	for _, s := range all {
+		if s.Slug != happyPathSlug {
+			continue
+		}
+		for index := range s.Steps {
+			if send := s.Steps[index].Send; send != nil {
+				return send.Load
+			}
+		}
+	}
+	return nil
+}
+
+func (e *Env) finish(partner string, report *ScenarioReport) {
+	if e.finished != nil {
+		e.finished(partner, report)
+	}
 }

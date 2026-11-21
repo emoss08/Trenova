@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ladingports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/internal/testutil/ediservicetest"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/mocks/customfieldportsmock"
@@ -119,6 +120,7 @@ func newInboundFixture(t *testing.T, rawContent string) *inboundFixture {
 	})
 	fixture.service = &Service{
 		l:                   zap.NewNop(),
+		db:                  dbtest.NopConnection{},
 		metrics:             documentmetrics.NewEDI(nil, zap.NewNop(), false),
 		inboundFileRepo:     fixture.inboundFileRepo,
 		partnerRepo:         fixture.partnerRepo,

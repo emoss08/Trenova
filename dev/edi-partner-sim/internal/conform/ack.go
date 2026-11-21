@@ -11,7 +11,7 @@ import (
 
 type acked struct {
 	ack    *Ack
-	notes  []partner.SegmentNote
+	notes  []acknowledge.SegmentNote
 	group  *oracle.Group
 	report *oracle.Report
 }
@@ -56,7 +56,7 @@ func checkAck(c *Case, step *Step, rules *partner.Acknowledgment, a acked) {
 				a.ack.Code, a.ack.Errors, a.ack.Warnings, a.ack.Expected),
 		})
 	}
-	if a.ack.Code == partner.AckRejected && a.ack.Errors == 0 {
+	if a.ack.Code == acknowledge.Rejected && a.ack.Errors == 0 {
 		c.fail(step, &Failure{
 			Source:  SourceAck,
 			Rule:    "acknowledgment.reject",
@@ -69,11 +69,11 @@ func checkAck(c *Case, step *Step, rules *partner.Acknowledgment, a acked) {
 	if rules.Sends == partner.AckNone {
 		return
 	}
-	built, err := rules.Build(partner.AckInput{
+	built, err := acknowledge.Build(rules, acknowledge.Input{
 		GroupID:      a.group.FunctionalID,
 		GroupControl: a.group.ControlNumber,
 		Version:      a.group.Version,
-		Transactions: []partner.AckTransaction{{
+		Transactions: []acknowledge.InputTransaction{{
 			Set:     a.report.Set,
 			Control: a.report.ControlNumber,
 			Code:    a.ack.Code,
@@ -96,28 +96,28 @@ func checkAck(c *Case, step *Step, rules *partner.Acknowledgment, a acked) {
 
 func expectedAck(rules partner.RejectRules, set string, errs, warns int) string {
 	if slices.Contains(rules.Sets, set) {
-		return partner.AckRejected
+		return acknowledge.Rejected
 	}
 	switch rules.When {
 	case partner.RejectNever:
 		if errs+warns > 0 {
-			return partner.AckAcceptedWithErrors
+			return acknowledge.AcceptedWithErrors
 		}
 	case partner.RejectAny:
 		if errs+warns > 0 {
-			return partner.AckRejected
+			return acknowledge.Rejected
 		}
 	case partner.RejectErrors:
 		if errs > 0 {
-			return partner.AckRejected
+			return acknowledge.Rejected
 		}
 		if warns > 0 {
-			return partner.AckAcceptedWithErrors
+			return acknowledge.AcceptedWithErrors
 		}
 	default:
 		if errs+warns > 0 {
-			return partner.AckAcceptedWithErrors
+			return acknowledge.AcceptedWithErrors
 		}
 	}
-	return partner.AckAccepted
+	return acknowledge.Accepted
 }

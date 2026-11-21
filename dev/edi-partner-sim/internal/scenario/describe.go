@@ -61,6 +61,9 @@ func describeSend(s *Send) string {
 		deltas = append(deltas, fmt.Sprintf("stop %d moved %s", s.Delta.Move.Stop,
 			ShortDuration(s.Delta.Move.By)))
 	}
+	if s.Load != nil {
+		deltas = append(deltas, "a load of "+s.Load.String())
+	}
 	if len(deltas) > 0 {
 		text += ", " + strings.Join(deltas, ", ")
 	}

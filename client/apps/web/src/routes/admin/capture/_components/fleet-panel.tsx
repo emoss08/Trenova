@@ -1,5 +1,6 @@
 import { CaptureDownloadPanel } from "@/components/capture/download-panel";
 import { DeviceList } from "@/components/capture/device-list";
+import { SettingsSection, SettingsSections } from "@/components/settings/settings-section";
 import { usePermission } from "@/hooks/use-permission";
 import {
   revokeCaptureDevice,
@@ -65,6 +66,23 @@ function FleetEmpty({
   return <EmptySheet title={title} description={description} action={action} sketch={sketch} />;
 }
 
+/** The list while it is read: rows shaped as the computers land. */
+function ComputersLoading() {
+  const t = useT();
+
+  return (
+    <div aria-busy aria-label={t("Loading computers")} className="divide-y divide-border">
+      {[0, 1, 2].map((row) => (
+        <div key={row} aria-hidden className="flex flex-col gap-1.5 px-3.5 py-3">
+          <Skeleton className="h-3.5 w-36" />
+          <Skeleton className="h-3 w-3/5" />
+          <Skeleton className="h-3 w-2/5" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
 /** Every computer paired in the organization, and a way to stop any of them. */
 export function FleetPanel() {
   const t = useT();
@@ -96,21 +114,28 @@ export function FleetPanel() {
   const devices = devicesQuery.data ?? [];
 
   return (
-    <div className="flex flex-col gap-4">
-      <CaptureDownloadPanel
-        whenMissing={
-          <Alert variant="info" size="sm">
-            <AlertDescription>
-              {t(
-                "No Trenova Capture installer is published yet, or this server does not serve one. Once it is, people download it from here and from My scanners.",
-              )}
-            </AlertDescription>
-          </Alert>
-        }
-      />
+    <SettingsSections>
+      <div className="pb-5">
+        <CaptureDownloadPanel
+          whenMissing={
+            <Alert variant="info" size="sm">
+              <AlertDescription>
+                {t(
+                  "No Trenova Capture installer is published yet, or this server does not serve one. Once it is, people download it from here and from My scanners.",
+                )}
+              </AlertDescription>
+            </Alert>
+          }
+        />
+      </div>
 
-      <section aria-label={t("Computers")} className="flex flex-col gap-3">
-        <div className="flex flex-wrap items-center gap-2">
+      <SettingsSection
+        title={t("Paired computers")}
+        description={t(
+          "Every computer that can scan into Trenova, who uses it and what it can reach. Revoke one to stop it at once.",
+        )}
+      >
+        <div className="flex flex-wrap items-center gap-2 px-3.5 py-2.5">
           <SegmentedControl<StatusFilter>
             aria-label={t("Which computers")}
             value={status}
@@ -144,10 +169,7 @@ export function FleetPanel() {
         </div>
 
         {devicesQuery.isPending ? (
-          <div className="flex flex-col gap-2" aria-busy="true">
-            <Skeleton className="h-16 w-full" />
-            <Skeleton className="h-16 w-full" />
-          </div>
+          <ComputersLoading />
         ) : devicesQuery.isError ? (
           <ErrorState
             error={devicesQuery.error}
@@ -167,13 +189,14 @@ export function FleetPanel() {
             <DeviceList
               devices={devices}
               showOwner
+              bordered={false}
               canRevoke={canRevoke}
               onRevoke={(device, reason) => revoke.mutateAsync({ device, reason })}
               revokingId={revoke.isPending ? revoke.variables?.device.id : undefined}
             />
           </div>
         )}
-      </section>
-    </div>
+      </SettingsSection>
+    </SettingsSections>
   );
 }
