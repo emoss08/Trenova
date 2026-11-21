@@ -147,7 +147,7 @@ type Imports interface {
 	Observe(
 		ctx context.Context,
 		spec *instanceapi.InstanceSpec,
-		revision int,
+		releaseJob string,
 	) (status *instanceapi.ImportStatus, reported bool, err error)
 }
 
@@ -189,7 +189,7 @@ type Loop struct {
 	operator Operator
 	imports  Imports
 	imported bool
-	helmRev  int
+	relJob   string
 	located  values.Storage
 	connects databases.Connected
 	capacity values.Capacity
@@ -512,7 +512,7 @@ func (l *Loop) importStatus(ctx context.Context) *instanceapi.ImportStatus {
 	if l.desired.Spec.Import == nil {
 		return nil
 	}
-	status, reported, err := l.imports.Observe(ctx, &l.desired.Spec, l.helmRev)
+	status, reported, err := l.imports.Observe(ctx, &l.desired.Spec, l.relJob)
 	if err != nil {
 		l.logger.Warn("cannot read where the import stands; the report leaves it out", "error", err)
 		return nil
@@ -823,18 +823,18 @@ func (l *Loop) apply(
 	if err != nil {
 		return l.notReady(&report, err.Error())
 	}
-	l.connects = connectedTo(deployed)
+	l.connects = connectedTo(&deployed)
 	gate := l.dbs.Gate(ctx, databases.GateInput{Spec: &l.desired.Spec, Connected: l.connects})
 	if gate.Refused != "" {
 		l.connects = databases.Connected{}
-		report = l.stay(ctx, &report, deployed, gate.Message)
+		report = l.stay(ctx, &report, &deployed, gate.Message)
 		report.Refused = l.refusal(gate.Refused, gate.Message)
 		return report
 	}
 	if gate.Hold {
-		return l.stay(ctx, &report, deployed, gate.Message)
+		return l.stay(ctx, &report, &deployed, gate.Message)
 	}
-	need, err := release.NeedsApply(deployed, ch, rendered.Values)
+	need, err := release.NeedsApply(&deployed, ch, rendered.Values)
 	if err != nil {
 		return l.notReady(&report, err.Error())
 	}
@@ -848,10 +848,10 @@ func (l *Loop) apply(
 			l.connects = databases.Connected{}
 			return l.notReady(&report, err.Error())
 		}
-		l.connects = connectedTo(deployed)
+		l.connects = connectedTo(&deployed)
 	}
 	l.applied = l.desired.Revision
-	return l.observe(ctx, &report, deployed, rendered.Values)
+	return l.observe(ctx, &report, &deployed, rendered.Values)
 }
 
 // stay keeps the deployed release, reports it as it runs and says why the
@@ -859,7 +859,7 @@ func (l *Loop) apply(
 func (l *Loop) stay(
 	ctx context.Context,
 	base *instanceapi.StatusReport,
-	deployed release.Deployed,
+	deployed *release.Deployed,
 	why string,
 ) instanceapi.StatusReport {
 	report := *base
@@ -898,7 +898,7 @@ func (l *Loop) refuse(
 	if err != nil {
 		report = l.notReady(&report, why)
 	} else {
-		report = l.stay(ctx, &report, deployed, why)
+		report = l.stay(ctx, &report, &deployed, why)
 	}
 	report.Refused = l.refusal(code, why)
 	return report
@@ -911,7 +911,7 @@ func (l *Loop) refusal(
 	return &instanceapi.RefusedRevision{Revision: l.desired.Revision, Code: code, Reason: trim(why)}
 }
 
-func connectedTo(d release.Deployed) databases.Connected {
+func connectedTo(d *release.Deployed) databases.Connected {
 	out := databases.Connected{Known: true, Exists: d.Exists}
 	if pg, ok := d.Config["postgres"].(map[string]any); ok && d.Exists {
 		out.Generation, _ = pg["generation"].(string)
@@ -929,13 +929,13 @@ func (l *Loop) hold(
 	if err != nil {
 		return l.notReady(&report, err.Error())
 	}
-	l.connects = connectedTo(deployed)
+	l.connects = connectedTo(&deployed)
 	if !deployed.Exists {
 		return l.notReady(&report, fmt.Sprintf(
 			"Trenova is installed once the operator runs %s: %s", op.Target, op.Message,
 		))
 	}
-	report = l.observe(ctx, &report, deployed, deployed.Config)
+	report = l.observe(ctx, &report, &deployed, deployed.Config)
 	held := trim(fmt.Sprintf(
 		"Trenova stays on %s until the operator runs %s: %s",
 		deployed.ChartVersion, op.Target, op.Message,
@@ -947,7 +947,7 @@ func (l *Loop) hold(
 func (l *Loop) observe(
 	ctx context.Context,
 	base *instanceapi.StatusReport,
-	deployed release.Deployed,
+	deployed *release.Deployed,
 	vals map[string]any,
 ) instanceapi.StatusReport {
 	report := *base
@@ -958,9 +958,9 @@ func (l *Loop) observe(
 	if deployed.Exists {
 		v := deployed.AppVersion
 		report.Version = &v
-		l.helmRev = deployed.Revision
+		l.relJob = deployed.ReleaseJob
 	}
-	params := healthParams(deployed.Revision, vals)
+	params := healthParams(deployed.ReleaseJob, vals)
 	l.telem.Observe(params)
 	comps, err := l.health.Check(ctx, params)
 	if err != nil {
@@ -991,7 +991,7 @@ func (l *Loop) observe(
 	return report
 }
 
-func healthParams(revision int, vals map[string]any) health.CheckParams {
+func healthParams(releaseJob string, vals map[string]any) health.CheckParams {
 	stopped, _ := vals["stopped"].(bool)
 	hibernated := false
 	generation := ""
@@ -1000,10 +1000,10 @@ func healthParams(revision int, vals map[string]any) health.CheckParams {
 		generation, _ = pg["generation"].(string)
 	}
 	return health.CheckParams{
-		HelmRevision: revision,
-		Stopped:      stopped,
-		Hibernated:   hibernated,
-		Generation:   generation,
+		ReleaseJob: releaseJob,
+		Stopped:    stopped,
+		Hibernated: hibernated,
+		Generation: generation,
 	}
 }
 
@@ -1057,7 +1057,7 @@ func (l *Loop) runningOn() (string, bool) {
 			l.logger.Warn("cannot read the release; the report leaves backups out", "error", err)
 			return "", false
 		}
-		c = connectedTo(deployed)
+		c = connectedTo(&deployed)
 	}
 	if !c.Exists {
 		return databases.Live(&l.desired.Spec), true

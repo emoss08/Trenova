@@ -131,7 +131,7 @@ func (i *Importer) Imported(ctx context.Context) (bool, error) {
 func (i *Importer) Observe(
 	ctx context.Context,
 	spec *instanceapi.InstanceSpec,
-	revision int,
+	releaseJob string,
 ) (status *instanceapi.ImportStatus, reported bool, err error) {
 	if spec.Import == nil {
 		return nil, false, nil
@@ -144,8 +144,11 @@ func (i *Importer) Observe(
 	if found && rec.id == id {
 		return rec.status(), true, nil
 	}
+	if releaseJob == "" {
+		return nil, false, nil
+	}
 	job, err := i.kube.BatchV1().Jobs(i.namespace).
-		Get(ctx, values.ReleaseJob(i.release, revision), metav1.GetOptions{})
+		Get(ctx, releaseJob, metav1.GetOptions{})
 	if apierrors.IsNotFound(err) {
 		return nil, false, nil
 	}

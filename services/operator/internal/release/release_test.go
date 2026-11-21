@@ -72,7 +72,7 @@ func TestInstallsThenOnlyUpgradesOnAChange(t *testing.T) {
 	d, err := r.Deployed()
 	require.NoError(t, err)
 	require.False(t, d.Exists)
-	need, err := release.NeedsApply(d, ch, vals("a.example.com"))
+	need, err := release.NeedsApply(&d, ch, vals("a.example.com"))
 	require.NoError(t, err)
 	require.True(t, need)
 
@@ -82,11 +82,11 @@ func TestInstallsThenOnlyUpgradesOnAChange(t *testing.T) {
 	require.Equal(t, helmrelease.StatusDeployed, d.Status)
 	require.Equal(t, 1, d.Revision)
 
-	need, err = release.NeedsApply(d, ch, vals("a.example.com"))
+	need, err = release.NeedsApply(&d, ch, vals("a.example.com"))
 	require.NoError(t, err)
 	require.False(t, need, "the same values and chart need nothing")
 
-	need, err = release.NeedsApply(d, ch, vals("b.example.com"))
+	need, err = release.NeedsApply(&d, ch, vals("b.example.com"))
 	require.NoError(t, err)
 	require.True(t, need)
 	require.NoError(t, r.Apply(t.Context(), ch, vals("b.example.com")))
@@ -105,7 +105,7 @@ func TestNumericValuesCompareByValue(t *testing.T) {
 	d, err := r.Deployed()
 	require.NoError(t, err)
 	v["tms"] = map[string]any{"api": map[string]any{"replicas": float64(2)}}
-	need, err := release.NeedsApply(d, ch, v)
+	need, err := release.NeedsApply(&d, ch, v)
 	require.NoError(t, err)
 	require.False(t, need)
 }
@@ -268,4 +268,45 @@ func TestAReleaseRemovedByHandAfterItDeployedIsLeftAlone(t *testing.T) {
 	d, err := r.Deployed()
 	require.NoError(t, err)
 	require.Equal(t, helmrelease.StatusUninstalled, d.Status, "it is not rolled back into existence")
+}
+
+func TestTheReleaseJobIsTheOneTheManifestNames(t *testing.T) {
+	t.Parallel()
+	manifest := `---
+# Source: trenova/templates/configmap.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: trenova-config
+  labels:
+    app.kubernetes.io/component: config
+---
+# Source: trenova/templates/release-job.yaml
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: trenova-release-4
+  labels:
+    app.kubernetes.io/component: release
+`
+	name, err := release.ReleaseJob(manifest)
+	require.NoError(t, err)
+	require.Equal(t, "trenova-release-4", name,
+		"a later revision that changed nothing the Job runs keeps the Job of revision 4")
+
+	name, err = release.ReleaseJob("---\napiVersion: v1\nkind: ConfigMap\nmetadata:\n  name: x\n")
+	require.NoError(t, err)
+	require.Empty(t, name, "a stopped release renders no Job")
+}
+
+func TestANewChartVersionIsAppliedEvenWithTheSameValues(t *testing.T) {
+	t.Parallel()
+	ch := &chart.Chart{Metadata: &chart.Metadata{Name: "trenova", Version: "0.13.1"}}
+	d := release.Deployed{
+		Exists: true, Status: helmrelease.StatusDeployed, ChartVersion: "0.13.0",
+		Config: vals("a.example.com"),
+	}
+	need, err := release.NeedsApply(&d, ch, vals("a.example.com"))
+	require.NoError(t, err)
+	require.True(t, need, "a release that carries every digest forward still moves the chart")
 }

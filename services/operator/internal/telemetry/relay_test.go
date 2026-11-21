@@ -210,11 +210,11 @@ func TestTheSampleCarriesWhatTheLoopObserved(t *testing.T) {
 	w := newRelay(t)
 
 	w.tick(t)
-	w.relay.Observe(health.CheckParams{HelmRevision: 3, Generation: "2"})
+	w.relay.Observe(health.CheckParams{ReleaseJob: "trenova-release-3", Generation: "2"})
 	w.tick(t)
 
 	require.Nil(t, w.src.params[0], "nothing is observed before the loop has read the release")
-	require.Equal(t, &health.CheckParams{HelmRevision: 3, Generation: "2"}, w.src.params[1])
+	require.Equal(t, &health.CheckParams{ReleaseJob: "trenova-release-3", Generation: "2"}, w.src.params[1])
 }
 
 func TestRunSamplesOnTheMinuteAndStopsCleanly(t *testing.T) {

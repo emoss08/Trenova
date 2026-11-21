@@ -38,7 +38,7 @@ const (
 
 var minute = time.Date(2026, 11, 16, 12, 30, 0, 0, time.UTC)
 
-func params() *health.CheckParams { return &health.CheckParams{HelmRevision: 1} }
+func params() *health.CheckParams { return &health.CheckParams{ReleaseJob: "trenova-release-1"} }
 
 func ptr[T any](v T) *T { return &v }
 

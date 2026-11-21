@@ -56,7 +56,7 @@ empty one fails validation instead of running with a default. */ -}}
 {{- $temporal := include "trenova.name" (dict "root" . "component" "temporal") -}}
 {{- $release := dict
   "app" (dict
-    "version" (.Values.tms.image.tag | default .Chart.AppVersion)
+    "version" (include "trenova.tmsVersion" .)
     "webBaseUrl" $origin
     "problemTypeBaseUri" (printf "%s/problems/" $origin))
   "platform" (dict "mode" .Values.tms.platformMode)

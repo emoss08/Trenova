@@ -86,7 +86,7 @@ func TestReadyWhenEverythingIsUpAndTheJobCompleted(t *testing.T) {
 			}},
 		},
 	)
-	comps, err := c.Check(t.Context(), health.CheckParams{HelmRevision: 3})
+	comps, err := c.Check(t.Context(), health.CheckParams{ReleaseJob: "trenova-release-3"})
 	require.NoError(t, err)
 	got := byName(comps)
 	require.Len(t, got, 4)
@@ -110,14 +110,14 @@ func TestExplainsWhatIsNotReady(t *testing.T) {
 			}},
 		},
 	)
-	comps, err := c.Check(t.Context(), health.CheckParams{HelmRevision: 3})
+	comps, err := c.Check(t.Context(), health.CheckParams{ReleaseJob: "trenova-release-3"})
 	require.NoError(t, err)
 	got := byName(comps)
 	require.Equal(t, "0 of 1 replicas available", got["worker"].Message)
 	require.Contains(t, got["postgres"].Message, "Setting up primary")
-	require.Equal(t, "waiting for the release Job of revision 3", got["release"].Message)
+	require.Equal(t, "waiting for the release Job trenova-release-3", got["release"].Message)
 
-	comps, err = c.Check(t.Context(), health.CheckParams{HelmRevision: 2})
+	comps, err = c.Check(t.Context(), health.CheckParams{ReleaseJob: "trenova-release-2"})
 	require.NoError(t, err)
 	require.Equal(t, "failed: BackoffLimitExceeded", byName(comps)["release"].Message)
 }
@@ -131,7 +131,7 @@ func TestStoppedAndHibernatedCountAsReady(t *testing.T) {
 			Status:     appsv1.DeploymentStatus{ObservedGeneration: 3},
 		},
 	)
-	comps, err := c.Check(t.Context(), health.CheckParams{HelmRevision: 4, Stopped: true, Hibernated: true})
+	comps, err := c.Check(t.Context(), health.CheckParams{Stopped: true, Hibernated: true})
 	require.NoError(t, err)
 	got := byName(comps)
 	require.Len(t, got, 2, "a stopped release has no Job to wait for")
@@ -167,7 +167,7 @@ func TestNamesWhyPostgresIsNotReady(t *testing.T) {
 			}},
 		}),
 	)
-	comps, err := c.Check(t.Context(), health.CheckParams{HelmRevision: 1, Stopped: true})
+	comps, err := c.Check(t.Context(), health.CheckParams{Stopped: true})
 	require.NoError(t, err)
 	require.Equal(t,
 		`pod trenova-postgres-1-initdb-new: bootstrap-controller ImagePullBackOff: Back-off pulling image "ghcr.io/emoss08/trenova/postgres:0.11.0"; Setting up primary (0 of 1 instances ready)`,
@@ -186,7 +186,7 @@ func TestNamesUnschedulablePodsAndPendingClaims(t *testing.T) {
 			}},
 		}),
 	)
-	comps, err := c.Check(t.Context(), health.CheckParams{HelmRevision: 1, Stopped: true})
+	comps, err := c.Check(t.Context(), health.CheckParams{Stopped: true})
 	require.NoError(t, err)
 	require.Contains(t, byName(comps)["postgres"].Message,
 		"pod trenova-postgres-1: Unschedulable: 0/1 nodes are available: pod has unbound immediate PersistentVolumeClaims.")
@@ -204,7 +204,7 @@ func TestNamesUnschedulablePodsAndPendingClaims(t *testing.T) {
 			Message: `storageclass.storage.k8s.io "fast" not found`,
 		},
 	)
-	comps, err = c.Check(t.Context(), health.CheckParams{HelmRevision: 1, Stopped: true})
+	comps, err = c.Check(t.Context(), health.CheckParams{Stopped: true})
 	require.NoError(t, err)
 	require.Contains(t, byName(comps)["postgres"].Message,
 		`volume claim trenova-postgres-1: ProvisioningFailed: storageclass.storage.k8s.io "fast" not found`)
@@ -242,7 +242,7 @@ func TestNamesTheLatestWarningWhenContainersAreStillCreating(t *testing.T) {
 			LastTimestamp: metav1.Unix(200, 0),
 		},
 	)
-	comps, err := c.Check(t.Context(), health.CheckParams{HelmRevision: 1, Stopped: true})
+	comps, err := c.Check(t.Context(), health.CheckParams{Stopped: true})
 	require.NoError(t, err)
 	require.Equal(t,
 		`pod trenova-api-abc: FailedMount: MountVolume.SetUp failed for volume "certs": secret "imaging-client" not found; 0 of 1 replicas available`,
@@ -271,7 +271,7 @@ func TestNamesCrashingContainersAndKeepsTheCauseWithinTheLimit(t *testing.T) {
 			}},
 		}),
 	)
-	comps, err := c.Check(t.Context(), health.CheckParams{HelmRevision: 1, Stopped: true})
+	comps, err := c.Check(t.Context(), health.CheckParams{Stopped: true})
 	require.NoError(t, err)
 	msg := byName(comps)["worker"].Message
 	require.True(t, strings.HasPrefix(msg, "pod trenova-worker-abc: worker CrashLoopBackOff: back-off"), msg)
@@ -302,7 +302,7 @@ func TestSaysHowACrashLoopingContainerLastEnded(t *testing.T) {
 			}},
 		}),
 	)
-	comps, err := c.Check(t.Context(), health.CheckParams{HelmRevision: 1, Stopped: true})
+	comps, err := c.Check(t.Context(), health.CheckParams{Stopped: true})
 	require.NoError(t, err)
 	require.Equal(t,
 		"pod trenova-docling-abc: docling CrashLoopBackOff, last exited 137 (OOMKilled); 0 of 1 replicas available",
@@ -325,7 +325,7 @@ func TestLeavesReadyComponentsAlone(t *testing.T) {
 			Phase: corev1.PodFailed, Reason: "Evicted", Message: "node was low on memory",
 		}),
 	)
-	comps, err := c.Check(t.Context(), health.CheckParams{HelmRevision: 1, Stopped: true})
+	comps, err := c.Check(t.Context(), health.CheckParams{Stopped: true})
 	require.NoError(t, err)
 	require.True(t, byName(comps)["api"].Ready)
 	require.Empty(t, byName(comps)["api"].Message)
@@ -351,7 +351,7 @@ func TestTrimsBetweenCharacters(t *testing.T) {
 			}},
 		}),
 	)
-	comps, err := c.Check(t.Context(), health.CheckParams{HelmRevision: 1, Stopped: true})
+	comps, err := c.Check(t.Context(), health.CheckParams{Stopped: true})
 	require.NoError(t, err)
 	msg := byName(comps)["worker"].Message
 	require.True(t, utf8.ValidString(msg))

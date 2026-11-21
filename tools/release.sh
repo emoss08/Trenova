@@ -74,8 +74,9 @@ if [[ "$VERSION" != v* ]]; then
     VERSION="v$VERSION"
 fi
 
-if ! [[ "$VERSION" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?$ ]]; then
-    print_error "Invalid version format. Use semantic versioning (e.g., 1.0.0, 1.0.0-beta.1)"
+# The release workflow, its manifest and the control plane take X.Y.Z alone.
+if ! [[ "$VERSION" =~ ^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]]; then
+    print_error "Invalid version format. Use X.Y.Z (e.g., 1.0.0)"
     exit 1
 fi
 
@@ -159,7 +160,8 @@ gh release create "$VERSION" \
 echo ""
 print_success "Release $VERSION created successfully!"
 echo ""
-echo "GitHub Actions is now building and pushing Docker images to ghcr.io"
+echo "GitHub Actions now builds the images whose inputs changed and tags the rest"
+echo "(docs/engineering/releases.md); the run's summary lists each image's decision."
 echo "Monitor progress at: $(gh repo view --json url -q .url)/actions"
 echo ""
 echo "Once complete, self-hosted installs can update by setting"

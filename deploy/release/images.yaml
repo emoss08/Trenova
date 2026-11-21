@@ -1,0 +1,150 @@
+# Every image a Trenova release publishes, and what each is built from: the
+# one list the release workflow (.github/workflows/release.yml) plans from and
+# tools/release/release.py reads (docs/engineering/releases.md).
+#
+# A release builds an image when a path under its inputs changed since the
+# previous release, when the previous release has no digest for it, or when a
+# re-run's `rebuild` names it; otherwise it tags the previous digest with this
+# release's tags and the image keeps the version it was built under.
+#
+#   repository  where it is published
+#   dockerfile  the Dockerfile, from the repository root
+#   context     the build context, from the repository root
+#   target      the stage to build (optional)
+#   platforms   what it is built for
+#   buildArgs   build arguments (optional)
+#   imageArgs   build arguments naming another image of this release, whose
+#               reference (<repository>:<version>@<digest>) is passed (optional)
+#   dependsOn   images built before it; it is rebuilt whenever one of them is
+#   lagging     its previous digest, before releases had a manifest, is the
+#               newest X.Y.Z tag on the registry, not the previous release's
+#   inputs      repository paths (a trailing / is a directory) that decide
+#               what it is: the Dockerfile, the context's dockerignore and
+#               every path the Dockerfile copies. `python3
+#               tools/release/release.py check-inputs` (CI, helm.yml) fails
+#               when a Dockerfile copies a path its entry does not list.
+#   pinned      not built here: the path in deploy/helm/trenova/values.yaml of
+#               the {repository, tag} the chart pins; the release records the
+#               tag's digest
+#
+# BuildKit reads <Dockerfile>.dockerignore beside a Dockerfile before the
+# context's .dockerignore, so imaging's context is its own allowlist.
+
+images:
+  tms:
+    repository: ghcr.io/emoss08/trenova/tms
+    dockerfile: deploy/Dockerfile.tms
+    context: .
+    target: tms
+    platforms: [linux/amd64]
+    inputs:
+      - shared/
+      - services/tms/
+      - deploy/Dockerfile.tms
+      - .dockerignore
+
+  # trenova-db applies the migrations before each rollout; the TMS image
+  # carries none of them.
+  tms-db:
+    repository: ghcr.io/emoss08/trenova/tms-db
+    dockerfile: deploy/Dockerfile.tms
+    context: .
+    target: trenova-db
+    platforms: [linux/amd64]
+    inputs:
+      - shared/
+      - services/tms/
+      - deploy/Dockerfile.tms
+      - .dockerignore
+
+  client:
+    repository: ghcr.io/emoss08/trenova/client
+    dockerfile: deploy/Dockerfile.client
+    context: .
+    platforms: [linux/amd64, linux/arm64]
+    buildArgs:
+      VITE_API_URL: /api/v1
+    inputs:
+      - client/
+      - deploy/Dockerfile.client
+      - deploy/Caddyfile
+      - .dockerignore
+
+  imaging:
+    repository: ghcr.io/emoss08/trenova/imaging
+    dockerfile: deploy/Dockerfile.imaging
+    context: services
+    target: runtime
+    platforms: [linux/amd64, linux/arm64]
+    buildArgs:
+      CARGO_BUILD_JOBS: "4"
+    inputs:
+      - services/imaging/
+      - services/crates/
+      - services/proto/
+      - services/vendor/
+      - services/.cargo/
+      - services/Cargo.toml
+      - services/Cargo.lock
+      - services/rust-toolchain.toml
+      - deploy/Dockerfile.imaging
+      - deploy/Dockerfile.imaging.dockerignore
+
+  # The Managed Trenova operator (services/operator, its own module), and the
+  # tenant agent a shared server runs, built from the same module.
+  operator:
+    repository: ghcr.io/emoss08/trenova/operator
+    dockerfile: deploy/Dockerfile.operator
+    context: .
+    target: operator
+    platforms: [linux/amd64, linux/arm64]
+    inputs:
+      - services/operator/
+      - deploy/Dockerfile.operator
+      - .dockerignore
+
+  tenant-agent:
+    repository: ghcr.io/emoss08/trenova/tenant-agent
+    dockerfile: deploy/Dockerfile.operator
+    context: .
+    target: tenant-agent
+    platforms: [linux/amd64, linux/arm64]
+    inputs:
+      - services/operator/
+      - deploy/Dockerfile.operator
+      - .dockerignore
+
+  postgres:
+    repository: ghcr.io/emoss08/trenova/postgres
+    dockerfile: deploy/Dockerfile.postgres
+    context: deploy
+    platforms: [linux/amd64]
+    lagging: true
+    inputs:
+      - deploy/Dockerfile.postgres
+
+  # The data export runner Managed Trenova runs for an instance
+  # (deploy/export-runner), built FROM this release's PostgreSQL image.
+  # linux/amd64 only: its build starts PostgreSQL to prove the recovery wait,
+  # which an emulated arm64 build cannot do in reasonable time.
+  export-runner:
+    repository: ghcr.io/emoss08/trenova/export-runner
+    dockerfile: deploy/export-runner/Dockerfile
+    context: deploy/export-runner
+    platforms: [linux/amd64]
+    dependsOn: [postgres]
+    imageArgs:
+      POSTGRES_IMAGE: postgres
+    inputs:
+      - deploy/export-runner/
+
+  # Built by its own repository; the chart pins its tag.
+  gtc:
+    repository: ghcr.io/emoss08/gtc
+    pinned: gtc.image
+
+  # Built by .github/workflows/embedding-image.yml when its Dockerfile or the
+  # tag the chart pins changes; the tag names the model and Ollama.
+  embedding:
+    repository: ghcr.io/emoss08/trenova/embedding
+    pinned: embedding.image

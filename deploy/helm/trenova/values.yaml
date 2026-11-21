@@ -114,7 +114,9 @@ secrets:
 tms:
   image:
     repository: ghcr.io/emoss08/trenova/tms
-    # Defaults to the chart's appVersion.
+    # Empty: a published chart runs the version and digest its release
+    # manifest gives this image (the release that last rebuilt it), as for
+    # every Trenova image; a chart from a checkout runs its appVersion.
     tag: ""
     pullPolicy: IfNotPresent
   # trenova-db: applies the migrations and reference seeds in the release Job.
@@ -340,10 +342,11 @@ bootstrap:
   dotNumber: ""
 
 postgres:
-  # The Trenova PostgreSQL image (PostGIS, pg_cron, pgvector). Its tag is
-  # published only when the image changes, so it lags the app version. A
-  # published chart names the newest image whatever this says: the release
-  # workflow sets it. This is the default for installs from a checkout.
+  # The Trenova PostgreSQL image (PostGIS, pg_cron, pgvector). It is rebuilt
+  # only when it changes, so its version lags the app's. A published chart
+  # names the version and digest its release manifest gives it whatever this
+  # says: the release workflow sets it. This is the default for installs from
+  # a checkout.
   image:
     repository: ghcr.io/emoss08/trenova/postgres
     tag: "0.11.0"

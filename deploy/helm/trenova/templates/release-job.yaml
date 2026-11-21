@@ -1,6 +1,6 @@
 {{- /*
-The release step, once per Helm revision (install, upgrade, rollback), in the
-order the database needs it:
+The release step, run whenever what it runs changes, in the order the database
+needs it:
 
   prepare        superuser: the owner, Temporal's and GTC's roles, the temporal databases
   migrate        trenova-db up, as the owner: migrations and reference seeds
@@ -21,26 +21,26 @@ region's archive keys from import.keysSecret, a Secret the operator makes and
 deletes once the import settles; neither is ever a value or an argument. The
 import writes its ImportStatus line to the termination log, where the operator
 reads it; exit code 2 (refused) fails the Job at once.
+
+When it runs: trenova.app/release-inputs is a hash of the Job's whole spec,
+which names its images by digest (tms-db's among them) and carries the
+checksums of the configuration and the scripts it runs. An upgrade that leaves
+the hash alone renders the Job that already ran, under its name, so Helm
+changes nothing and nothing runs again: a release that did not rebuild tms-db
+runs no migration. A new hash, or a Job of the same hash that failed, gets a
+new Job named after the revision; Helm deletes the one it replaces. A
+rollback applies the revision's stored Job, which runs only if it is not the
+Job already there. `helm template` has no cluster to look in and always names
+the Job after the revision.
 */ -}}
+{{- define "trenova.releaseJobSpec" }}
 {{- $import := .Values.import | default dict -}}
 {{- $importing := and $import.id (not $import.settled) -}}
-{{- if or (not .Values.stopped) $import.id }}
 {{- $c := dict "root" . "component" "release" -}}
 {{- $db := include "trenova.dbSecret" . -}}
 {{- $app := include "trenova.appSecret" . -}}
 {{- $superuser := printf "%s-superuser" (include "trenova.postgresCluster" .) -}}
-{{- $files := include "trenova.name" (dict "root" . "component" "files") -}}
-apiVersion: batch/v1
-kind: Job
-metadata:
-  name: {{ printf "%s-%d" (include "trenova.name" $c) .Release.Revision }}
-  labels:
-    {{- include "trenova.labels" $c | nindent 4 }}
-  {{- if $importing }}
-  annotations:
-    trenova.app/import: {{ $import.id | quote }}
-  {{- end }}
-spec:
+{{- $files := include "trenova.name" (dict "root" . "component" "files") }}
   backoffLimit: 4
   {{- if $importing }}
   activeDeadlineSeconds: {{ $import.activeDeadlineSeconds }}
@@ -59,6 +59,8 @@ spec:
       labels:
         {{- include "trenova.podLabels" $c | nindent 8 }}
       annotations:
+        {{- include "trenova.tmsChecksums" . | nindent 8 }}
+        checksum/files: {{ printf "%s\n%s\n%s" (.Files.Get "files/db-prepare.sh") (.Files.Get "files/db-publication.sh") (.Files.Get "files/gtc-sinks.yaml") | sha256sum }}
         {{- include "trenova.podAnnotations" (dict "root" .) | indent 8 }}
     spec:
       restartPolicy: Never
@@ -242,4 +244,37 @@ spec:
         - name: files
           configMap:
             name: {{ $files }}
+{{- end }}
+{{- define "trenova.jobFailed" -}}
+{{- range (dig "status" "conditions" list .) -}}
+{{- if and (eq (toString (get . "type")) "Failed") (eq (toString (get . "status")) "True") -}}
+failed
+{{- end -}}
+{{- end -}}
+{{- end -}}
+{{- $import := .Values.import | default dict -}}
+{{- $importing := and $import.id (not $import.settled) -}}
+{{- if or (not .Values.stopped) $import.id }}
+{{- $c := dict "root" . "component" "release" -}}
+{{- $spec := include "trenova.releaseJobSpec" . -}}
+{{- $inputs := sha256sum $spec | trunc 16 -}}
+{{- $name := printf "%s-%d" (include "trenova.name" $c) .Release.Revision -}}
+{{- range $job := get (lookup "batch/v1" "Job" .Release.Namespace "") "items" | default list -}}
+{{- $meta := get $job "metadata" | default dict -}}
+{{- if and (eq (dig "labels" "app.kubernetes.io/instance" "" $meta) $.Release.Name) (eq (dig "labels" "app.kubernetes.io/component" "" $meta) "release") (eq (dig "annotations" "trenova.app/release-inputs" "" $meta) $inputs) (not (include "trenova.jobFailed" $job)) -}}
+{{- $name = get $meta "name" -}}
+{{- end -}}
+{{- end }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ $name }}
+  labels:
+    {{- include "trenova.labels" $c | nindent 4 }}
+  annotations:
+    trenova.app/release-inputs: {{ $inputs | quote }}
+    {{- if $importing }}
+    trenova.app/import: {{ $import.id | quote }}
+    {{- end }}
+spec:{{ $spec }}
 {{- end }}

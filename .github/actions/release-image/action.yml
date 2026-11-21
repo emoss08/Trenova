@@ -1,0 +1,88 @@
+name: Build a release image
+description: >-
+  Builds and pushes one image of a Trenova release, as deploy/release/images.yaml
+  describes it, with the release's tags, an SBOM and max-mode provenance. Run
+  after actions/checkout of the release's commit; the plan is the release
+  workflow's plan job output (tools/release/release.py).
+
+inputs:
+  image:
+    description: The image's name in deploy/release/images.yaml
+    required: true
+  plan:
+    description: The plan, as JSON
+    required: true
+  registry:
+    description: The registry the images are pushed to
+    required: false
+    default: ghcr.io
+  username:
+    description: The registry user
+    required: true
+  password:
+    description: The registry token
+    required: true
+
+outputs:
+  digest:
+    description: The pushed image's digest
+    value: ${{ steps.build.outputs.digest }}
+
+runs:
+  using: composite
+  steps:
+    - name: Read the image's build
+      id: image
+      shell: bash
+      env:
+        IMAGE: ${{ inputs.image }}
+        PLAN: ${{ inputs.plan }}
+        GHCR_USER: ${{ inputs.username }}
+        GHCR_TOKEN: ${{ inputs.password }}
+      run: |
+        set -euo pipefail
+        printf '%s' "$PLAN" > "$RUNNER_TEMP/plan.json"
+        python3 tools/release/release.py image "$IMAGE" --plan "$RUNNER_TEMP/plan.json"
+
+    - name: Set up QEMU
+      if: steps.image.outputs.qemu == 'true'
+      uses: docker/setup-qemu-action@c7c53464625b32c7a7e944ae62b3e17d2b600130 # v3
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
+
+    - name: Log in to the Container registry
+      uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
+      with:
+        registry: ${{ inputs.registry }}
+        username: ${{ inputs.username }}
+        password: ${{ inputs.password }}
+
+    # The tags and labels name the release and its commit, also on a re-run
+    # dispatched on the release's tag.
+    - name: Extract metadata
+      id: meta
+      uses: docker/metadata-action@c299e40c65443455700f0fdfc63efafe5b349051 # v5
+      with:
+        images: ${{ steps.image.outputs.repository }}
+        tags: ${{ steps.image.outputs.tags }}
+        labels: |
+          org.opencontainers.image.version=${{ steps.image.outputs.version }}
+          org.opencontainers.image.revision=${{ steps.image.outputs.commit }}
+
+    - name: Build and push
+      id: build
+      uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
+      with:
+        context: ${{ steps.image.outputs.context }}
+        file: ${{ steps.image.outputs.dockerfile }}
+        target: ${{ steps.image.outputs.target }}
+        push: true
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+        cache-from: type=gha,scope=${{ steps.image.outputs.cache_scope }}
+        cache-to: type=gha,scope=${{ steps.image.outputs.cache_scope }},mode=max
+        platforms: ${{ steps.image.outputs.platforms }}
+        sbom: true
+        provenance: mode=max
+        build-args: ${{ steps.image.outputs.build_args }}

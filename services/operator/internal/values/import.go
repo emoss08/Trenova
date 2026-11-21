@@ -27,10 +27,6 @@ func ImportRecord(release string) string {
 	return Fullname(release) + "-import"
 }
 
-func ReleaseJob(release string, revision int) string {
-	return fmt.Sprintf("%s-release-%d", Fullname(release), revision)
-}
-
 func CheckImport(spec *instanceapi.SpecImport, storage *Storage) error {
 	id := spec.Id.String()
 	switch {

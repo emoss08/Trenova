@@ -10,7 +10,8 @@
 
 image:
   repository: ghcr.io/emoss08/trenova/operator
-  # Defaults to the chart's appVersion.
+  # Empty: a published chart runs the version and digest its release manifest
+  # gives the operator image; a chart from a checkout runs its appVersion.
   tag: ""
   pullPolicy: IfNotPresent
 imagePullSecrets: []

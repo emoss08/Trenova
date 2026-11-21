@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	"regexp"
 	"strconv"
 	"strings"
 	"sync"
@@ -59,10 +58,6 @@ const (
 	standbyRecheck = 15 * time.Second
 )
 
-var versionPattern = regexp.MustCompile(
-	`^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?$`,
-)
-
 type config struct {
 	namespace       string
 	targetNamespace string
@@ -83,7 +78,6 @@ type config struct {
 	storagePrivate  string
 	bucketCORS      bool
 	capacity        values.Capacity
-	version         string
 	helmChart       string
 	helmChartSpace  string
 	deployment      string
@@ -186,7 +180,6 @@ func run(logger *slog.Logger) error {
 		_ = srv.Shutdown(shutdown)
 	}()
 	logger.Info("operator started",
-		"version", cfg.version,
 		"targetNamespace", cfg.targetNamespace,
 		"release", cfg.release,
 		"chart", firstNonEmpty(cfg.chartPath, cfg.chartRef),
@@ -295,7 +288,6 @@ func newLoop(
 	upgrader, err := selfupgrade.New(&selfupgrade.Params{
 		Dynamic:            c.dyn,
 		Kube:               c.kube,
-		Version:            cfg.version,
 		HelmChartNamespace: cfg.helmChartSpace,
 		HelmChart:          cfg.helmChart,
 		Namespace:          cfg.namespace,
@@ -582,7 +574,6 @@ func load() (config, error) {
 		chartPath:       env("TRENOVA_OPERATOR_CHART_PATH", ""),
 		valuesFile:      env("TRENOVA_OPERATOR_VALUES_FILE", ""),
 		healthAddr:      env("TRENOVA_OPERATOR_HEALTH_ADDR", ":8081"),
-		version:         env("TRENOVA_OPERATOR_VERSION", ""),
 		helmChart:       env("TRENOVA_OPERATOR_HELMCHART", ""),
 		helmChartSpace:  env("TRENOVA_OPERATOR_HELMCHART_NAMESPACE", "kube-system"),
 		deployment:      env("TRENOVA_OPERATOR_DEPLOYMENT", "trenova-operator"),
@@ -594,12 +585,6 @@ func load() (config, error) {
 	if cfg.namespace == "" {
 		return config{}, errors.New(
 			"TRENOVA_OPERATOR_NAMESPACE is required (the operator's own namespace)",
-		)
-	}
-	if !versionPattern.MatchString(cfg.version) {
-		return config{}, fmt.Errorf(
-			"TRENOVA_OPERATOR_VERSION %q must be the operator's own release, such as 0.12.2",
-			cfg.version,
 		)
 	}
 	if !strings.HasPrefix(cfg.chartRef, "oci://") && cfg.chartPath == "" {

@@ -19,16 +19,20 @@ import (
 	"helm.sh/helm/v3/pkg/chart/loader"
 	"helm.sh/helm/v3/pkg/registry"
 	helmrelease "helm.sh/helm/v3/pkg/release"
+	"helm.sh/helm/v3/pkg/releaseutil"
 	"helm.sh/helm/v3/pkg/storage/driver"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/client-go/kubernetes"
+	"sigs.k8s.io/yaml"
 )
 
 const (
-	maxHistory     = 10
-	actionTimeout  = 10 * time.Minute
-	chartCacheSize = 2
+	maxHistory       = 10
+	actionTimeout    = 10 * time.Minute
+	chartCacheSize   = 2
+	componentLabel   = "app.kubernetes.io/component"
+	releaseComponent = "release"
 )
 
 type Source struct {
@@ -118,6 +122,7 @@ type Deployed struct {
 	AppVersion   string
 	Config       map[string]any
 	Revision     int
+	ReleaseJob   string
 }
 
 type Releaser struct {
@@ -183,6 +188,10 @@ func (r *Releaser) Deployed() (Deployed, error) {
 	if err != nil {
 		return Deployed{}, fmt.Errorf("read release %s: %w", r.name, err)
 	}
+	job, err := ReleaseJob(rel.Manifest)
+	if err != nil {
+		return Deployed{}, fmt.Errorf("read release %s: %w", r.name, err)
+	}
 	return Deployed{
 		Exists:       true,
 		Status:       rel.Info.Status,
@@ -190,10 +199,36 @@ func (r *Releaser) Deployed() (Deployed, error) {
 		AppVersion:   rel.Chart.Metadata.AppVersion,
 		Config:       rel.Config,
 		Revision:     rel.Version,
+		ReleaseJob:   job,
 	}, nil
 }
 
-func NeedsApply(d Deployed, ch *chart.Chart, vals map[string]any) (bool, error) {
+type manifestObject struct {
+	Kind     string `json:"kind"`
+	Metadata struct {
+		Name   string            `json:"name"`
+		Labels map[string]string `json:"labels"`
+	} `json:"metadata"`
+}
+
+// ReleaseJob is the name of the release Job a revision's manifest holds
+// (the chart's component "release"), or "" when it renders none (a stopped
+// release). The chart keeps the Job of an earlier revision while nothing it
+// runs changed, so its name is read here, never derived from the revision.
+func ReleaseJob(manifest string) (string, error) {
+	for _, doc := range releaseutil.SplitManifests(manifest) {
+		var obj manifestObject
+		if err := yaml.Unmarshal([]byte(doc), &obj); err != nil {
+			return "", fmt.Errorf("parse the release's manifest: %w", err)
+		}
+		if obj.Kind == "Job" && obj.Metadata.Labels[componentLabel] == releaseComponent {
+			return obj.Metadata.Name, nil
+		}
+	}
+	return "", nil
+}
+
+func NeedsApply(d *Deployed, ch *chart.Chart, vals map[string]any) (bool, error) {
 	if !d.Exists || d.Status != helmrelease.StatusDeployed ||
 		d.ChartVersion != ch.Metadata.Version {
 		return true, nil
@@ -212,7 +247,7 @@ func (r *Releaser) Apply(ctx context.Context, ch *chart.Chart, vals map[string]a
 	}
 	if d.Exists &&
 		(d.Status.IsPending() || d.Status == helmrelease.StatusFailed || removing(d.Status)) {
-		if d, err = r.recover(ctx, d); err != nil {
+		if d, err = r.recover(ctx, &d); err != nil {
 			return err
 		}
 	}
@@ -239,10 +274,10 @@ func (r *Releaser) Apply(ctx context.Context, ch *chart.Chart, vals map[string]a
 	return nil
 }
 
-func (r *Releaser) recover(ctx context.Context, d Deployed) (Deployed, error) {
+func (r *Releaser) recover(ctx context.Context, d *Deployed) (Deployed, error) {
 	history, err := action.NewHistory(r.cfg).Run(r.name)
 	if err != nil {
-		return d, fmt.Errorf("read the history of %s: %w", r.name, err)
+		return *d, fmt.Errorf("read the history of %s: %w", r.name, err)
 	}
 	deployedBefore := false
 	for _, rel := range history {
@@ -255,14 +290,14 @@ func (r *Releaser) recover(ctx context.Context, d Deployed) (Deployed, error) {
 		return r.removeUndeployed(ctx, d)
 	}
 	if d.Status == helmrelease.StatusFailed || removing(d.Status) {
-		return d, nil
+		return *d, nil
 	}
 	r.logger.Warn("rolling back an interrupted change", "release", r.name, "status", d.Status)
 	rb := action.NewRollback(r.cfg)
 	rb.Timeout = actionTimeout
 	rb.MaxHistory = maxHistory
 	if err = rb.Run(r.name); err != nil {
-		return d, fmt.Errorf("roll back the interrupted change to %s: %w", r.name, err)
+		return *d, fmt.Errorf("roll back the interrupted change to %s: %w", r.name, err)
 	}
 	return r.Deployed()
 }
@@ -271,7 +306,7 @@ func removing(s helmrelease.Status) bool {
 	return s == helmrelease.StatusUninstalling || s == helmrelease.StatusUninstalled
 }
 
-func (r *Releaser) removeUndeployed(ctx context.Context, d Deployed) (Deployed, error) {
+func (r *Releaser) removeUndeployed(ctx context.Context, d *Deployed) (Deployed, error) {
 	r.logger.Warn("removing a release that never deployed", "release", r.name, "status", d.Status)
 	if d.Status != helmrelease.StatusUninstalled {
 		un := action.NewUninstall(r.cfg)
@@ -280,16 +315,16 @@ func (r *Releaser) removeUndeployed(ctx context.Context, d Deployed) (Deployed, 
 		un.KeepHistory = true
 		un.DeletionPropagation = string(metav1.DeletePropagationForeground)
 		if _, err := un.Run(r.name); err != nil {
-			return d, fmt.Errorf("remove the undeployed release %s: %w", r.name, err)
+			return *d, fmt.Errorf("remove the undeployed release %s: %w", r.name, err)
 		}
 	}
 	if err := r.dropVolumes(ctx); err != nil {
-		return d, err
+		return *d, err
 	}
 	forget := action.NewUninstall(r.cfg)
 	forget.Timeout = actionTimeout
 	if _, err := forget.Run(r.name); err != nil {
-		return d, fmt.Errorf("forget the undeployed release %s: %w", r.name, err)
+		return *d, fmt.Errorf("forget the undeployed release %s: %w", r.name, err)
 	}
 	return Deployed{}, nil
 }

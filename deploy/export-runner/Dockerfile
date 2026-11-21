@@ -6,11 +6,12 @@
 #
 # It is built FROM the Trenova PostgreSQL image of the release it exports,
 # so the server that replays the backup and pg_dump are that release's
-# PostgreSQL, with its extensions (PostGIS, pg_cron, pgvector). It is tagged
-# with the release's version; the control plane runs <repository>:<version>
-# for an instance on that version. A release builds and pushes it
-# (.github/workflows/export-runner-image.yml, called by release.yml), from
-# the newest published PostgreSQL image that is not newer than the release.
+# PostgreSQL, with its extensions (PostGIS, pg_cron, pgvector). Every release
+# tags it with its version; the control plane runs <repository>:<version> for
+# an instance on that version. A release rebuilds it when this directory or
+# the PostgreSQL image changed, FROM the release's PostgreSQL image by digest,
+# and otherwise tags the previous digest (.github/workflows/release.yml,
+# deploy/release/images.yaml).
 #
 # By hand:
 #

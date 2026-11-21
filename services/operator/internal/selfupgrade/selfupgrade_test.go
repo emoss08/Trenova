@@ -47,16 +47,32 @@ func helmChart(version string, owners ...metav1.OwnerReference) *unstructured.Un
 	return hc
 }
 
+// deployment is the operator's own Deployment at a release, rolled out.
+func deployment(version string) *appsv1.Deployment {
+	one := int32(1)
+	return &appsv1.Deployment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: chartName, Namespace: ownNS, Generation: 1,
+			Annotations: map[string]string{selfupgrade.AnnotationVersion: version},
+		},
+		Spec: appsv1.DeploymentSpec{Replicas: &one},
+		Status: appsv1.DeploymentStatus{
+			ObservedGeneration: 1, Replicas: 1, UpdatedReplicas: 1,
+			ReadyReplicas: 1, AvailableReplicas: 1,
+		},
+	}
+}
+
 func newRig(t *testing.T, own string, objs ...runtime.Object) *rig {
 	t.Helper()
 	r := &rig{
 		dyn: dynamicfake.NewSimpleDynamicClientWithCustomListKinds(runtime.NewScheme(),
 			map[schema.GroupVersionResource]string{selfupgrade.HelmCharts: "HelmChartList"}, objs...),
-		kube: fake.NewClientset(),
+		kube: fake.NewClientset(deployment(own)),
 		now:  time.Date(2026, 11, 15, 9, 0, 0, 0, time.UTC),
 	}
 	up, err := selfupgrade.New(&selfupgrade.Params{
-		Dynamic: r.dyn, Kube: r.kube, Version: own, HelmChart: chartName,
+		Dynamic: r.dyn, Kube: r.kube, HelmChart: chartName,
 		Namespace: ownNS, Deployment: chartName, Logger: slog.New(slog.DiscardHandler),
 		Now: func() time.Time { return r.now },
 	})
@@ -71,6 +87,21 @@ func (r *rig) chart(t *testing.T) *unstructured.Unstructured {
 		Get(t.Context(), chartName, metav1.GetOptions{})
 	require.NoError(t, err)
 	return hc
+}
+
+// helmController does what k3s's helm-controller does once the HelmChart
+// asks for a version: the operator's Deployment is upgraded to it. A new
+// image rolls a new pod, which is not ready yet; the same image changes
+// nothing in the pod, and the Deployment stays rolled out.
+func (r *rig) helmController(t *testing.T, version string, newImage bool) {
+	t.Helper()
+	d := deployment(version)
+	if newImage {
+		d.Generation = 2
+		d.Status.Replicas = 2
+	}
+	_, err := r.kube.AppsV1().Deployments(ownNS).Update(t.Context(), d, metav1.UpdateOptions{})
+	require.NoError(t, err)
 }
 
 func asked(t *testing.T, hc *unstructured.Unstructured) string {
@@ -100,6 +131,7 @@ func TestAnOperatorOnItsReleaseChangesNothing(t *testing.T) {
 	st := r.up.Converge(t.Context(), "0.12.2")
 
 	assert.Equal(t, selfupgrade.PhaseCurrent, st.Phase)
+	assert.Equal(t, "0.12.2", st.Version)
 	assert.False(t, st.Holds())
 	assert.Equal(t, "0.12.2", asked(t, r.chart(t)))
 	assert.Empty(t, st.Message)
@@ -116,6 +148,7 @@ func TestANewReleaseUpgradesTheOperatorFirst(t *testing.T) {
 	hc := r.chart(t)
 	assert.Equal(t, "0.13.0", asked(t, hc))
 	assert.Equal(t, "2026-11-15T09:00:00Z", hc.GetAnnotations()[selfupgrade.AnnotationStarted])
+	assert.Equal(t, "0.12.2", hc.GetAnnotations()[selfupgrade.AnnotationFrom])
 
 	r.now = r.now.Add(time.Minute)
 	st = r.up.Converge(t.Context(), "0.13.0")
@@ -123,16 +156,50 @@ func TestANewReleaseUpgradesTheOperatorFirst(t *testing.T) {
 	assert.Contains(t, st.Message, "since 2026-11-15T09:00:00Z")
 }
 
+func TestAReleaseThatDidNotRebuildTheOperatorMovesItWithoutANewPod(t *testing.T) {
+	t.Parallel()
+	r := newRig(t, "0.13.0", helmChart("0.13.0"))
+	st := r.up.Converge(t.Context(), "0.13.1")
+	require.Equal(t, selfupgrade.PhaseUpgrading, st.Phase)
+
+	r.helmController(t, "0.13.1", false)
+	st = r.up.Converge(t.Context(), "0.13.1")
+
+	assert.Equal(t, selfupgrade.PhaseCurrent, st.Phase, "the same process now runs 0.13.1")
+	assert.Equal(t, "0.13.1", st.Version)
+	hc := r.chart(t)
+	assert.Equal(t, "0.13.1", asked(t, hc))
+	assert.NotContains(t, hc.GetAnnotations(), selfupgrade.AnnotationStarted)
+	assert.NotContains(t, hc.GetAnnotations(), selfupgrade.AnnotationFrom)
+}
+
+func TestWhileANewPodRollsTheOldOneStillRunsItsRelease(t *testing.T) {
+	t.Parallel()
+	r := newRig(t, "0.13.0", helmChart("0.13.0"))
+	r.up.Converge(t.Context(), "0.13.1")
+
+	r.helmController(t, "0.13.1", true)
+	st := r.up.Converge(t.Context(), "0.13.1")
+
+	assert.Equal(t, selfupgrade.PhaseUpgrading, st.Phase)
+	assert.Equal(t, "0.13.0", st.Version, "the pod answering is the one the roll replaces")
+	assert.Equal(t, "0.13.1", asked(t, r.chart(t)), "the move is not undone while it rolls")
+}
+
 func TestTheNewOperatorSettlesItsHelmChart(t *testing.T) {
 	t.Parallel()
 	hc := helmChart("0.13.0")
-	hc.SetAnnotations(map[string]string{selfupgrade.AnnotationStarted: "2026-11-15T08:59:00Z"})
+	hc.SetAnnotations(map[string]string{
+		selfupgrade.AnnotationStarted: "2026-11-15T08:59:00Z",
+		selfupgrade.AnnotationFrom:    "0.12.2",
+	})
 	r := newRig(t, "0.13.0", hc)
 
 	st := r.up.Converge(t.Context(), "0.13.0")
 
 	assert.Equal(t, selfupgrade.PhaseCurrent, st.Phase)
 	assert.NotContains(t, r.chart(t).GetAnnotations(), selfupgrade.AnnotationStarted)
+	assert.NotContains(t, r.chart(t).GetAnnotations(), selfupgrade.AnnotationFrom)
 }
 
 func TestAVersionTheRegistryDoesNotHaveIsReportedNotLoopedOn(t *testing.T) {
@@ -151,6 +218,7 @@ func TestAVersionTheRegistryDoesNotHaveIsReportedNotLoopedOn(t *testing.T) {
 	hc := r.chart(t)
 	assert.Equal(t, "0.12.2", asked(t, hc), "the operator it runs is asked for again")
 	assert.Equal(t, "0.13.0", hc.GetAnnotations()[selfupgrade.AnnotationFailed])
+	assert.NotContains(t, hc.GetAnnotations(), selfupgrade.AnnotationFrom)
 
 	st = r.up.Converge(t.Context(), "0.13.0")
 	assert.Equal(t, selfupgrade.PhaseFailed, st.Phase)
@@ -179,18 +247,16 @@ func TestANewOperatorThatNeverBecomesReadyIsRolledBack(t *testing.T) {
 	t.Parallel()
 	r := newRig(t, "0.12.2", helmChart("0.12.2"))
 	r.up.Converge(t.Context(), "0.13.0")
-	_, err := r.kube.AppsV1().Deployments(ownNS).Create(t.Context(), &appsv1.Deployment{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: chartName, Namespace: ownNS,
-			Labels: map[string]string{"app.kubernetes.io/version": "0.13.0"},
-		},
-		Status: appsv1.DeploymentStatus{Conditions: []appsv1.DeploymentCondition{{
-			Type:    appsv1.DeploymentProgressing,
-			Status:  corev1.ConditionFalse,
-			Reason:  "ProgressDeadlineExceeded",
-			Message: `ReplicaSet "trenova-operator-7d9" has timed out progressing.`,
-		}}},
-	}, metav1.CreateOptions{})
+	d := deployment("0.13.0")
+	d.Generation = 2
+	d.Status.Replicas = 2
+	d.Status.Conditions = []appsv1.DeploymentCondition{{
+		Type:    appsv1.DeploymentProgressing,
+		Status:  corev1.ConditionFalse,
+		Reason:  "ProgressDeadlineExceeded",
+		Message: `ReplicaSet "trenova-operator-7d9" has timed out progressing.`,
+	}}
+	_, err := r.kube.AppsV1().Deployments(ownNS).Update(t.Context(), d, metav1.UpdateOptions{})
 	require.NoError(t, err)
 
 	st := r.up.Converge(t.Context(), "0.13.0")
@@ -220,6 +286,7 @@ func TestAnOperatorNotInstalledByHelmControllerIsLeftAlone(t *testing.T) {
 	st := r.up.Converge(t.Context(), "0.11.0-ci")
 
 	assert.Equal(t, selfupgrade.PhaseUnmanaged, st.Phase)
+	assert.Equal(t, "0.0.0-dev", st.Version, "the version its Deployment names")
 	assert.False(t, st.Holds())
 }
 
@@ -236,12 +303,24 @@ func TestAVersionPinnedByTheNodesManifestIsReported(t *testing.T) {
 	assert.Equal(t, "0.12.2", asked(t, r.chart(t)), "the HelmChart names the version it runs")
 }
 
-func TestAnUpgraderWithoutItsVersionIsRefused(t *testing.T) {
+func TestADeploymentWithoutAVersionHoldsTheUpgrade(t *testing.T) {
+	t.Parallel()
+	r := newRig(t, "", helmChart("0.12.2"))
+
+	st := r.up.Converge(t.Context(), "0.12.2")
+
+	assert.Equal(t, selfupgrade.PhaseUpgrading, st.Phase)
+	assert.Contains(t, st.Message, selfupgrade.AnnotationVersion)
+	assert.Equal(t, "0.12.2", asked(t, r.chart(t)), "nothing is moved on a version it cannot read")
+}
+
+func TestAnUpgraderWithoutItsClientsIsRefused(t *testing.T) {
 	t.Parallel()
 	_, err := selfupgrade.New(&selfupgrade.Params{Logger: slog.New(slog.DiscardHandler)})
 	require.Error(t, err)
 	_, err = selfupgrade.New(&selfupgrade.Params{
-		Version: "0.12.2", HelmChart: chartName, Logger: slog.New(slog.DiscardHandler),
+		Kube: fake.NewClientset(), HelmChart: chartName, Namespace: ownNS, Deployment: chartName,
+		Logger: slog.New(slog.DiscardHandler),
 	})
-	require.Error(t, err, "a managed upgrader needs its clients")
+	require.Error(t, err, "a managed upgrader needs its dynamic client")
 }

@@ -1,18 +1,42 @@
 name: Release
 
+# A release builds only the images whose inputs changed since the previous
+# release (deploy/release/images.yaml) and gives every other image this
+# release's tags as aliases of the digest it already has, then publishes the
+# release manifest and the signed charts (docs/engineering/releases.md).
+#
+# A release is made by publishing a GitHub release for a vX.Y.Z tag on the
+# default branch. To run one again, for example to rebuild an image whose
+# inputs did not change, dispatch this workflow ON THE RELEASE'S TAG (the
+# chart's signature names the workflow at a tag, and the operator refuses any
+# other):
+#
+#   gh workflow run release.yml --ref v0.13.1 -f rebuild=imaging
+#
+# To retry a run whose jobs failed, use "Re-run failed jobs" on that run.
+
 on:
   release:
     types: [published]
+  workflow_dispatch:
+    inputs:
+      rebuild:
+        description: >-
+          Images to build even when their inputs did not change: comma-separated
+          names from deploy/release/images.yaml, or `all` (which also looks the
+          charts' third-party images up again)
+        type: string
+        default: ""
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref_name }}
+  cancel-in-progress: false
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAMESPACE: emoss08/trenova
-  TMS_IMAGE_NAME: emoss08/trenova/tms
-  TMS_DB_IMAGE_NAME: emoss08/trenova/tms-db
-  CLIENT_IMAGE_NAME: emoss08/trenova/client
-  IMAGING_IMAGE_NAME: emoss08/trenova/imaging
-  OPERATOR_IMAGE_NAME: emoss08/trenova/operator
-  TENANT_AGENT_IMAGE_NAME: emoss08/trenova/tenant-agent
 
 jobs:
   verify-source:
@@ -25,429 +49,185 @@ jobs:
       - name: Check the released commit
         env:
           DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+          GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
+          if ! [[ "$GITHUB_REF" =~ ^refs/tags/v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]]; then
+            echo "::error::$GITHUB_REF is not a release tag such as refs/tags/v0.13.1; dispatch a re-run with --ref v<version>."
+            exit 1
+          fi
           git fetch --no-tags origin "$DEFAULT_BRANCH"
           if ! git merge-base --is-ancestor "$GITHUB_SHA" FETCH_HEAD; then
             echo "::error::$GITHUB_SHA is not on $DEFAULT_BRANCH."
             exit 1
           fi
+          gh release view "$GITHUB_REF_NAME" --json tagName > /dev/null
 
-  detect-postgres-changes:
+  # Which images this release builds and which it carries forward, and why
+  # (the run's summary shows the table).
+  plan:
+    name: Plan the release
     needs: verify-source
-    name: Detect Postgres Image Changes
     runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: read
     outputs:
-      should_build: ${{ steps.detect.outputs.should_build }}
-      previous_tag: ${{ steps.detect.outputs.previous_tag }}
-
+      version: ${{ steps.plan.outputs.version }}
+      build: ${{ steps.plan.outputs.build }}
+      build_late: ${{ steps.plan.outputs.build_late }}
+      reuse: ${{ steps.plan.outputs.reuse }}
+      plan: ${{ steps.plan.outputs.plan }}
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           fetch-depth: 0
-
-      - name: Detect Postgres image changes
-        id: detect
-        shell: bash
+      - name: Plan
+        id: plan
         env:
+          REBUILD: ${{ inputs.rebuild }}
           GHCR_USER: ${{ github.actor }}
           GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
+          git fetch --force --tags origin
+          python3 tools/release/release.py plan --tag "$GITHUB_REF_NAME" --rebuild "${REBUILD:-}" \
+            --out "$RUNNER_TEMP/plan.json"
 
-          # Every chart names a published PostgreSQL image, so with none on
-          # GHCR (the package was deleted once) this release builds one,
-          # whatever the Dockerfile's history says.
-          published="$(python3 - "${REGISTRY}" "${IMAGE_NAMESPACE}/postgres" <<'PY'
-          import base64, json, os, re, sys, urllib.error, urllib.request
-
-          registry, repository = "https://" + sys.argv[1], sys.argv[2]
-
-          def get(url, auth):
-              request = urllib.request.Request(url, headers={
-                  "Authorization": auth, "User-Agent": "trenova-release"})
-              with urllib.request.urlopen(request, timeout=30) as response:
-                  return json.load(response)
-
-          basic = base64.b64encode(
-              f"{os.environ['GHCR_USER']}:{os.environ['GHCR_TOKEN']}".encode()).decode()
-          try:
-              token = get(f"{registry}/token?scope=repository:{repository}:pull",
-                          f"Basic {basic}")["token"]
-              tags = get(f"{registry}/v2/{repository}/tags/list?n=1000",
-                         f"Bearer {token}").get("tags") or []
-          except urllib.error.HTTPError as e:
-              if e.code not in (403, 404):
-                  raise
-              tags = []  # GHCR answers a missing repository with 403 or 404.
-          print(sum(1 for t in tags if re.fullmatch(r"\d+\.\d+\.\d+", t)))
-          PY
-          )"
-          if [[ "${published}" == 0 ]]; then
-            echo "No PostgreSQL image is published; building one."
-            echo "should_build=true" >> "${GITHUB_OUTPUT}"
-            echo "previous_tag=" >> "${GITHUB_OUTPUT}"
-            exit 0
-          fi
-
-          current_ref="${GITHUB_REF_NAME}"
-          previous_tag="$(git tag --sort=-v:refname | grep -v "^${current_ref}$" | head -n 1 || true)"
-
-          if [[ -z "${previous_tag}" ]]; then
-            echo "No previous tag found; building Postgres image."
-            echo "should_build=true" >> "${GITHUB_OUTPUT}"
-            echo "previous_tag=" >> "${GITHUB_OUTPUT}"
-            exit 0
-          fi
-
-          changed_files="$(git diff --name-only "${previous_tag}" "${current_ref}" -- deploy/Dockerfile.postgres)"
-          if [[ -n "${changed_files}" ]]; then
-            echo "Postgres image inputs changed since ${previous_tag}:"
-            echo "${changed_files}"
-            echo "should_build=true" >> "${GITHUB_OUTPUT}"
-          else
-            echo "Postgres image inputs did not change since ${previous_tag}; skipping Postgres image build."
-            echo "should_build=false" >> "${GITHUB_OUTPUT}"
-          fi
-          echo "previous_tag=${previous_tag}" >> "${GITHUB_OUTPUT}"
-
-  build-and-push-tms:
-    needs: verify-source
-    name: Build and Push TMS Image
+  # Every image the plan builds, at once. The export runner, built FROM this
+  # release's PostgreSQL image, waits for it (build-late).
+  build:
+    name: Build ${{ matrix.image }}
+    needs: plan
+    if: needs.plan.outputs.build != '[]'
     runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write
-
+    strategy:
+      fail-fast: false
+      matrix:
+        image: ${{ fromJSON(needs.plan.outputs.build) }}
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@c7c53464625b32c7a7e944ae62b3e17d2b600130 # v3
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
-
-      - name: Log in to Container Registry
-        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: ./.github/actions/release-image
         with:
+          image: ${{ matrix.image }}
+          plan: ${{ needs.plan.outputs.plan }}
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Extract metadata
-        id: meta
-        uses: docker/metadata-action@c299e40c65443455700f0fdfc63efafe5b349051 # v5
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.TMS_IMAGE_NAME }}
-          tags: |
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=raw,value=latest
-
-      - name: Build and push TMS image
-        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
-        with:
-          context: .
-          file: ./deploy/Dockerfile.tms
-          target: tms
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-          platforms: linux/amd64
-          sbom: true
-          provenance: mode=max
-
-      # trenova-db applies the migrations before each rollout; the TMS image
-      # carries none of them.
-      - name: Extract metadata (trenova-db)
-        id: meta-db
-        uses: docker/metadata-action@c299e40c65443455700f0fdfc63efafe5b349051 # v5
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.TMS_DB_IMAGE_NAME }}
-          tags: |
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=raw,value=latest
-
-      - name: Build and push trenova-db image
-        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
-        with:
-          context: .
-          file: ./deploy/Dockerfile.tms
-          target: trenova-db
-          push: true
-          tags: ${{ steps.meta-db.outputs.tags }}
-          labels: ${{ steps.meta-db.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-          platforms: linux/amd64
-          sbom: true
-          provenance: mode=max
-
-  build-and-push-client:
-    needs: verify-source
-    name: Build and Push Client Image
+  build-late:
+    name: Build ${{ matrix.image }}
+    needs: [plan, build]
+    if: >-
+      ${{ !cancelled()
+      && needs.plan.result == 'success'
+      && needs.plan.outputs.build_late != '[]'
+      && (needs.build.result == 'success' || needs.build.result == 'skipped') }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write
-
+    strategy:
+      fail-fast: false
+      matrix:
+        image: ${{ fromJSON(needs.plan.outputs.build_late) }}
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@c7c53464625b32c7a7e944ae62b3e17d2b600130 # v3
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
-
-      - name: Log in to Container Registry
-        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: ./.github/actions/release-image
         with:
+          image: ${{ matrix.image }}
+          plan: ${{ needs.plan.outputs.plan }}
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Extract metadata
-        id: meta
-        uses: docker/metadata-action@c299e40c65443455700f0fdfc63efafe5b349051 # v5
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.CLIENT_IMAGE_NAME }}
-          tags: |
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=raw,value=latest
-
-      - name: Build and push Client image
-        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
-        with:
-          context: .
-          file: ./deploy/Dockerfile.client
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-          platforms: linux/amd64,linux/arm64
-          sbom: true
-          provenance: mode=max
-          build-args: |
-            VITE_API_URL=/api/v1
-
-  build-and-push-imaging:
-    needs: verify-source
-    name: Build and Push Imaging Image
+  # An image the release does not rebuild gets the release's tags on the
+  # digest it already has: a registry write of seconds. The digest keeps its
+  # own SBOM and provenance, which name the commit it was built from.
+  alias:
+    name: Tag the images carried forward
+    needs: plan
+    if: needs.plan.outputs.reuse != '[]'
     runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write
-
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@c7c53464625b32c7a7e944ae62b3e17d2b600130 # v3
-
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
-
-      - name: Log in to Container Registry
-        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Extract metadata
-        id: meta
-        uses: docker/metadata-action@c299e40c65443455700f0fdfc63efafe5b349051 # v5
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGING_IMAGE_NAME }}
-          tags: |
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=raw,value=latest
-
-      # The build context is services/ (the Rust workspace and its contracts). The image
-      # carries an SBOM and provenance attestation.
-      - name: Build and push imaging image
-        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
-        with:
-          context: ./services
-          file: ./deploy/Dockerfile.imaging
-          target: runtime
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha,scope=imaging-release
-          cache-to: type=gha,scope=imaging-release,mode=max
-          platforms: linux/amd64,linux/arm64
-          sbom: true
-          provenance: mode=max
-          build-args: |
-            CARGO_BUILD_JOBS=4
-
-  build-and-push-postgres:
-    name: Build and Push Postgres Image
-    runs-on: ubuntu-latest
-    needs: detect-postgres-changes
-    if: needs.detect-postgres-changes.outputs.should_build == 'true'
-    permissions:
-      contents: read
-      packages: write
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@c7c53464625b32c7a7e944ae62b3e17d2b600130 # v3
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
-
-      - name: Log in to Container Registry
-        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Extract metadata
-        id: meta
-        uses: docker/metadata-action@c299e40c65443455700f0fdfc63efafe5b349051 # v5
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAMESPACE }}/postgres
-          tags: |
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=raw,value=latest
-
-      - name: Build and push Postgres image
-        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
-        with:
-          context: ./deploy
-          file: ./deploy/Dockerfile.postgres
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-          platforms: linux/amd64
-          sbom: true
-          provenance: mode=max
-
-  # The Trenova Cloud operator (services/operator, its own module), and the
-  # tenant agent built from the same module.
-  build-and-push-operator:
-    needs: verify-source
-    name: Build and Push Operator Image
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
-
       - name: Log in to the Container registry
         uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Tag them
+        env:
+          PLAN: ${{ needs.plan.outputs.plan }}
+        run: |
+          set -euo pipefail
+          printf '%s' "$PLAN" > "$RUNNER_TEMP/plan.json"
+          python3 tools/release/release.py aliases --plan "$RUNNER_TEMP/plan.json" --run
 
-      - name: Extract metadata
-        id: meta
-        uses: docker/metadata-action@c299e40c65443455700f0fdfc63efafe5b349051 # v5
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.OPERATOR_IMAGE_NAME }}
-          tags: |
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=raw,value=latest
-
-      - name: Build and push operator image
-        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
-        with:
-          context: .
-          file: ./deploy/Dockerfile.operator
-          target: operator
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha,scope=operator
-          cache-to: type=gha,scope=operator,mode=max
-          platforms: linux/amd64,linux/arm64
-          sbom: true
-          provenance: mode=max
-
-      # The tenant agent a shared server runs: the operator module's second
-      # binary, published with the operator's tags and provenance.
-      - name: Extract tenant agent metadata
-        id: agent-meta
-        uses: docker/metadata-action@c299e40c65443455700f0fdfc63efafe5b349051 # v5
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.TENANT_AGENT_IMAGE_NAME }}
-          tags: |
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=raw,value=latest
-
-      - name: Build and push tenant agent image
-        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
-        with:
-          context: .
-          file: ./deploy/Dockerfile.operator
-          target: tenant-agent
-          push: true
-          tags: ${{ steps.agent-meta.outputs.tags }}
-          labels: ${{ steps.agent-meta.outputs.labels }}
-          cache-from: type=gha,scope=operator
-          platforms: linux/amd64,linux/arm64
-          sbom: true
-          provenance: mode=max
-
-  # The Helm charts, versioned with the release, as OCI artifacts beside the
-  # images: oci://ghcr.io/emoss08/charts/trenova and trenova-operator.
-  # Published once every image they name exists.
-  publish-chart:
-    name: Publish Helm Chart
-    runs-on: ubuntu-latest
-    needs:
-      - detect-postgres-changes
-      - build-and-push-tms
-      - build-and-push-client
-      - build-and-push-imaging
-      - build-and-push-postgres
-      - build-and-push-operator
+  # The release manifest, once every image is on the registry: each image's
+  # digest and the version it was built under, read back from the registry
+  # and checked against the plan.
+  manifest:
+    name: Release manifest
+    needs: [plan, build, build-late, alias]
     if: >-
       ${{ !cancelled()
-      && needs.build-and-push-tms.result == 'success'
-      && needs.build-and-push-client.result == 'success'
-      && needs.build-and-push-imaging.result == 'success'
-      && needs.build-and-push-operator.result == 'success'
-      && (needs.build-and-push-postgres.result == 'success' || needs.build-and-push-postgres.result == 'skipped') }}
+      && needs.plan.result == 'success'
+      && (needs.build.result == 'success' || needs.build.result == 'skipped')
+      && (needs.build-late.result == 'success' || needs.build-late.result == 'skipped')
+      && (needs.alias.result == 'success' || needs.alias.result == 'skipped') }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read
+    outputs:
+      manifest: ${{ steps.manifest.outputs.manifest }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: Assemble and validate
+        id: manifest
+        env:
+          PLAN: ${{ needs.plan.outputs.plan }}
+          GHCR_USER: ${{ github.actor }}
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          printf '%s' "$PLAN" > "$RUNNER_TEMP/plan.json"
+          python3 tools/release/release.py manifest --plan "$RUNNER_TEMP/plan.json" \
+            --out "$RUNNER_TEMP/release-manifest.json"
+          {
+            echo "manifest<<EOF_MANIFEST"
+            cat "$RUNNER_TEMP/release-manifest.json"
+            echo "EOF_MANIFEST"
+          } >> "$GITHUB_OUTPUT"
+
+  # The Helm charts, versioned with the release, as OCI artifacts beside the
+  # images: oci://ghcr.io/emoss08/charts/trenova and trenova-operator. Each
+  # carries the release manifest, so it runs every Trenova image by the digest
+  # the manifest gives it, and image-digests.yaml for the third-party images
+  # it names; both are inside the chart's signature.
+  publish-chart:
+    name: Publish Helm Chart
+    needs: [plan, manifest]
+    if: ${{ !cancelled() && needs.manifest.result == 'success' }}
+    runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write
       # Keyless signing: the chart signature names this workflow at this tag.
       id-token: write
-
+    env:
+      CHART_SIGNER: '^https://github\.com/emoss08/[Tt]renova/\.github/workflows/release\.yml@refs/tags/v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$'
     steps:
       - name: Checkout repository
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
@@ -467,121 +247,70 @@ jobs:
           tar xzf /tmp/helm.tar.gz -C /tmp
           sudo mv /tmp/linux-amd64/helm /usr/local/bin/helm
 
-      # The PostgreSQL image is published only when it changes, by the release
-      # that changed it. A release that built one points the chart at it; any
-      # other release points it at the newest published tag, which is the
-      # image of the current Dockerfile. The chart never takes the tag from
-      # values.yaml, which no release updates: v0.11.1 published no chart
-      # because values.yaml still named 0.9.0, whose manifests GHCR had dropped.
-      - name: Point the chart at the current PostgreSQL image
+      - name: Log in to the registry
         env:
-          BUILT: ${{ needs.detect-postgres-changes.outputs.should_build }}
-          REPOSITORY: ${{ env.IMAGE_NAMESPACE }}/postgres
-          # GHCR refuses an anonymous token request from the runners (403), so
-          # the job's own token asks, as the next step's docker login does.
-          GHCR_USER: ${{ github.actor }}
           GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
-          python3 - "${GITHUB_REF_NAME#v}" <<'PY'
-          import base64, json, os, re, sys, urllib.request
+          echo "${GHCR_TOKEN}" | docker login "${REGISTRY}" -u "${{ github.actor }}" --password-stdin
+          echo "${GHCR_TOKEN}" | helm registry login "${REGISTRY}" -u "${{ github.actor }}" --password-stdin
 
-          def get(url, auth):
-              request = urllib.request.Request(url, headers={
-                  "Authorization": auth, "User-Agent": "trenova-release"})
-              with urllib.request.urlopen(request, timeout=30) as response:
-                  return json.load(response)
+      # The previous release's charts, signature checked, for the digests they
+      # pinned for third-party images: a floating tag (redis:8) that moved
+      # upstream between two releases is carried forward, so it restarts
+      # nothing. Without them (none, or unsigned) every tag is looked up.
+      - name: The previous release's charts
+        env:
+          PLAN: ${{ needs.plan.outputs.plan }}
+        run: |
+          set -euo pipefail
+          previous="$(jq -r '.previous // empty' <<< "$PLAN")"
+          mkdir -p "$RUNNER_TEMP/previous"
+          if [ -z "$previous" ]; then
+            echo "No previous release."
+            exit 0
+          fi
+          for chart in trenova trenova-operator; do
+            dir="$RUNNER_TEMP/pulled/$chart"
+            mkdir -p "$dir"
+            if ! helm pull "oci://${REGISTRY}/emoss08/charts/${chart}" --version "$previous" --prov -d "$dir"; then
+              echo "::warning::${chart} ${previous} could not be pulled; its third-party images are looked up again."
+              continue
+            fi
+            archive="$dir/${chart}-${previous}.tgz"
+            if ! cosign verify-blob --bundle "${archive}.prov" \
+              --certificate-oidc-issuer https://token.actions.githubusercontent.com \
+              --certificate-identity-regexp "${CHART_SIGNER}" "${archive}"; then
+              echo "::warning::${chart} ${previous} is not signed by this workflow; its third-party images are looked up again."
+              continue
+            fi
+            tar xzf "$archive" -C "$RUNNER_TEMP/previous"
+          done
 
-          def newest_published(repository):
-              registry = "https://" + os.environ["REGISTRY"]
-              basic = base64.b64encode(
-                  f"{os.environ['GHCR_USER']}:{os.environ['GHCR_TOKEN']}".encode()).decode()
-              token = get(f"{registry}/token?scope=repository:{repository}:pull",
-                          f"Basic {basic}")["token"]
-              tags = get(f"{registry}/v2/{repository}/tags/list?n=1000",
-                         f"Bearer {token}").get("tags") or []
-              versions = [t for t in tags if re.fullmatch(r"\d+\.\d+\.\d+", t)]
-              if not versions:
-                  sys.exit(f"no X.Y.Z tag published for {repository}")
-              return max(versions, key=lambda t: tuple(int(p) for p in t.split(".")))
-
-          version = sys.argv[1]
-          if os.environ["BUILT"] == "true":
-              tag, why = version, "built by this release"
-          else:
-              tag, why = newest_published(os.environ["REPOSITORY"]), "the newest published"
-          path = "deploy/helm/trenova/values.yaml"
-          text = open(path).read()
-          block = re.search(r"^postgres:\n(?:  .*\n|\n)*?    tag: \"[^\"]*\"", text, re.M)
-          if not block:
-              sys.exit("postgres.image.tag not found in values.yaml")
-          updated = re.sub(r'tag: "[^"]*"$', f'tag: "{tag}"', block.group(0), flags=re.M)
-          open(path, "w").write(text.replace(block.group(0), updated, 1))
-          print(f"postgres image {tag} ({why})")
-          PY
-          grep -n -A9 '^postgres:' deploy/helm/trenova/values.yaml
-
-      # Every image a chart names, resolved to the digest it has now, inside the
-      # chart and so inside its signature: a tag moved after this release changes
-      # nothing on an instance.
+      # The manifest into both charts, the third-party images' digests beside
+      # it, and the chart's PostgreSQL tag set to the manifest's: values.yaml in
+      # the repository names an older one, which no release updates.
       - name: Pin the charts' images
         env:
-          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          MANIFEST: ${{ needs.manifest.outputs.manifest }}
+          PLAN: ${{ needs.plan.outputs.plan }}
         run: |
           set -euo pipefail
-          version="${GITHUB_REF_NAME#v}"
-          echo "${GHCR_TOKEN}" | docker login "${REGISTRY}" -u "${{ github.actor }}" --password-stdin
-          for chart in trenova trenova-operator; do
-            yq -o=json "deploy/helm/${chart}/values.yaml" > "${RUNNER_TEMP}/${chart}-values.json"
-            python3 - "$version" "${RUNNER_TEMP}/${chart}-values.json" "deploy/helm/${chart}/image-digests.yaml" <<'PY'
-          import json, re, subprocess, sys
-
-          version, values, out = sys.argv[1:4]
-
-          def images(node):
-              if isinstance(node, dict):
-                  if "repository" in node and "tag" in node:
-                      yield node
-                  for child in node.values():
-                      yield from images(child)
-              elif isinstance(node, list):
-                  for child in node:
-                      yield from images(child)
-
-          pins = {}
-          for image in images(json.load(open(values))):
-              tag = image["tag"] or version
-              if "@" in tag:
-                  continue
-              ref = f'{image["repository"]}:{tag}'
-              digest = subprocess.check_output(
-                  ["docker", "buildx", "imagetools", "inspect", ref, "--format", "{{.Manifest.Digest}}"],
-                  text=True,
-              ).strip()
-              if not re.fullmatch(r"sha256:[0-9a-f]{64}", digest):
-                  sys.exit(f"{ref}: no digest ({digest!r})")
-              pins[ref] = digest
-          if not pins:
-              sys.exit("no image to pin")
-          with open(out, "w") as f:
-              for ref, digest in sorted(pins.items()):
-                  f.write(f'"{ref}": "{digest}"\n')
-          PY
-            cat "deploy/helm/${chart}/image-digests.yaml"
-          done
+          printf '%s' "$MANIFEST" > "$RUNNER_TEMP/release-manifest.json"
+          refresh=()
+          if [ "$(jq -r '.refreshPins' <<< "$PLAN")" = true ]; then refresh=(--refresh); fi
+          python3 tools/release/release.py pin-charts --manifest "$RUNNER_TEMP/release-manifest.json" \
+            --previous "$RUNNER_TEMP/previous" "${refresh[@]}"
+          grep -n -A9 '^postgres:' deploy/helm/trenova/values.yaml
 
       # The signature travels in the chart's own provenance layer: helm push takes
       # <archive>.prov from beside the archive, and the operator refuses a chart
       # without one (services/operator/internal/release/provenance.go, which holds
       # the same signer pattern).
       - name: Package, sign and push the charts
-        env:
-          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          CHART_SIGNER: '^https://github\.com/emoss08/[Tt]renova/\.github/workflows/release\.yml@refs/tags/v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$'
         run: |
           set -euo pipefail
           version="${GITHUB_REF_NAME#v}"
-          echo "${GHCR_TOKEN}" | helm registry login "${REGISTRY}" -u "${{ github.actor }}" --password-stdin
           helm lint deploy/helm/trenova --set domain=trenova.example.com --set storageDomain=storage.trenova.example.com
           helm lint deploy/helm/trenova-operator
           for chart in trenova trenova-operator; do
@@ -594,21 +323,22 @@ jobs:
             helm push "${archive}" "oci://${REGISTRY}/emoss08/charts"
           done
 
-  # The data export runner Managed Trenova runs for an instance on this
-  # release (deploy/export-runner), built on the release's PostgreSQL image
-  # once that is published.
-  export-runner:
-    name: Export Runner
-    needs:
-      - detect-postgres-changes
-      - build-and-push-postgres
-    if: >-
-      ${{ !cancelled()
-      && needs.detect-postgres-changes.result == 'success'
-      && (needs.build-and-push-postgres.result == 'success' || needs.build-and-push-postgres.result == 'skipped') }}
+  # Last: the control plane lists a release once its manifest is on the
+  # GitHub release, so it is uploaded only when the charts it names exist.
+  publish-manifest:
+    name: Publish the release manifest
+    needs: [manifest, publish-chart]
+    if: ${{ !cancelled() && needs.publish-chart.result == 'success' }}
+    runs-on: ubuntu-latest
     permissions:
-      contents: read
-      packages: write
-    uses: ./.github/workflows/export-runner-image.yml
-    with:
-      version: ${{ github.ref_name }}
+      contents: write
+    steps:
+      - name: Upload release-manifest.json
+        env:
+          MANIFEST: ${{ needs.manifest.outputs.manifest }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          printf '%s' "$MANIFEST" > "$RUNNER_TEMP/release-manifest.json"
+          gh release upload "$GITHUB_REF_NAME" "$RUNNER_TEMP/release-manifest.json" \
+            --repo "$GITHUB_REPOSITORY" --clobber

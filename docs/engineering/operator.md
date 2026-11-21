@@ -16,7 +16,7 @@ control plane (instance API, mutual TLS)
 operator ── values.Render(spec, base values) ──▶ Helm SDK: upgrade --install trenova@<version>
    │                                                    │
    ├── escrow.Ensure: the Secret trenova-escrow, from GET /v1/secrets when missing or incomplete
-   ├── health.Check: Deployments, StatefulSets, CNPG Cluster, the revision's release Job
+   ├── health.Check: Deployments, StatefulSets, CNPG Cluster, the deployed release's Job
    ├── TMS managed API (:8090, bearer token): GET /managed/v1/readings, PUT /managed/v1/state,
    │                                           PUT /managed/v1/first-administrator/invite,
    │                                           PUT /managed/v1/features,
@@ -110,10 +110,17 @@ applies is checked twice before Helm sees it.
   operator needs that egress when it pulls a version; a failed check leaves the deployed release
   running and reports the reason. `helm --verify` does not apply: the layer holds a Sigstore bundle,
   not a PGP signature. `chart.verify: false` turns the check off for a chart built in the cluster.
-- **The images.** At publish, the workflow resolves every image the chart names, third-party ones
-  included, into `image-digests.yaml` inside the chart and so inside the signature. The chart's image
-  helpers add the digest for a `repository:tag` listed there; an override to another repository or
-  tag finds no entry and is used as given.
+- **The images.** At publish, the workflow packages the release manifest
+  (`release-manifest.json`: every Trenova image's digest and the version it was built under) and
+  `image-digests.yaml` (every third-party image's digest) into the chart, and so inside the
+  signature. The chart runs a Trenova image as `<repository>:<its version>@<digest>` and a
+  third-party one as `<repository>:<tag>@<digest>`; an override to another repository or tag finds
+  no entry and is used as given ([releases.md](releases.md)).
+- **A release that changed little.** Moving to a release whose manifest carried an image's digest
+  forward renders that image's pods exactly as before, so Helm's upgrade restarts nothing but what
+  was rebuilt, and the release Job runs only when what it runs changed (its
+  `trenova.app/release-inputs` hash). `NeedsApply` still applies the new chart version; the report's
+  `version` is the deployed chart's appVersion, the release.
 
 The namespace the chart creates enforces the `baseline` Pod Security level, so even a workload the
 operator was tricked into creating cannot reach the node. Label a namespace you create yourself
@@ -240,7 +247,7 @@ first, and what the spec decides is merged over them:
 | (storage from `GET /v1/storage`) | `minio.enabled: false`; `storage.bucket`, `region`, `autoCreateBucket: false`, `storage.external` (`endpoint`, `useSSL`, `publicEndpoint`, `existingSecret: trenova-storage`); `backup.enabled`, `destinationPath`, `endpointURL`, `existingSecret: trenova-backup-storage`. Without storage (a `404`), none of these: MinIO and no backups |
 | `database` | `postgres.generation`, `postgres.restoredFrom` (`sourceGeneration`, `targetTime`): the instance runs on the database a restore made |
 | `restore` | `postgres.restore` (`generation`, `sourceGeneration`, `targetTime`): a database restored beside the live one; left out once `database` names it, refused without storage |
-| `release.version` | the chart version (and so every Trenova image tag) |
+| `release.version` | the chart version, whose release manifest pins every Trenova image by digest |
 | `plan.vcpu`, `memoryGiB`, `diskGiB` | every component's requests and limits, Redis's `maxMemory`, PostgreSQL's memory settings and volume |
 
 **Sizing** (`internal/values/size.go`). 2 GiB and 0.6 vCPU are left to k3s, CloudNativePG, the
@@ -596,7 +603,7 @@ minute per kind.
 
 | Figure | Source | When the source is down |
 |---|---|---|
-| `parts[]`: name, `ready`, `replicas`, `readyReplicas` | `health.Checker.Parts`, the same reading the status report's `components` come from (Deployments, StatefulSets, the CloudNativePG `Cluster`, the revision's release Job), so the names are exactly the report's | `parts` is empty |
+| `parts[]`: name, `ready`, `replicas`, `readyReplicas` | `health.Checker.Parts`, the same reading the status report's `components` come from (Deployments, StatefulSets, the CloudNativePG `Cluster`, the release Job the deployed release names), so the names are exactly the report's | `parts` is empty |
 | `parts[].restarts` | the restart counts of every container (init containers included) of the part's pods, summed over its copies | left out (the pod list failed) |
 | `parts[].startedAt` | when the newest running container (init containers left out) of the part's pods started; it moves forward whenever the part starts again, by a crash, a `restart` command, an update or a moved copy, which the counter above cannot show because a replaced pod counts from zero | left out (the pod list failed, or none of its containers runs) |
 | `parts[].cpuLimitMillicores`, `memoryLimitBytes` | the limits of the containers of the part's running pods, summed; left out when any container has none, or no pod runs | left out |
@@ -991,9 +998,17 @@ the report's message says why.
 **How.** k3s's helm-controller installs the operator from the `HelmChart` `kube-system/trenova-operator`
 (its release name is the chart's name). The operator patches that object's `spec.version` to V;
 helm-controller runs `helm upgrade` at V from the same OCI chart with the same values. The
-object's annotations record the move: `trenova.app/operator-upgrade-started`,
-`trenova.app/operator-upgrade-failed` and `-reason`. Once the operator at V runs, it clears them,
-and it rewrites `spec.version` to its own version if anything else moved it.
+object's annotations record the move: `trenova.app/operator-upgrade-started`, `-from` (the
+release it moved from), `trenova.app/operator-upgrade-failed` and `-reason`. Once the operator at
+V runs, it clears them, and it rewrites `spec.version` to its own version if anything else moved
+it.
+
+**Which version it runs.** Nothing in the operator's pod names a release: the chart puts it on the
+Deployment (`trenova.app/operator-version`), and the operator reads it there on every tick. While
+every pod of the Deployment is the current one, that is the version it runs; while a new pod rolls
+out, the running one is still on the version in `-from`. So a release that did not rebuild the
+operator's image moves its chart without a new pod, and the same process is on V a tick later; a
+release that did rebuild it rolls a new pod, watched as below.
 
 **Why the HelmChart is not in k3s's manifests directory.** k3s's deploy controller
 (`pkg/deploy/controller.go`) reads `/var/lib/rancher/k3s/server/manifests` every 15 seconds; on
@@ -1058,8 +1073,9 @@ and leaves its version alone; `selfUpgrade.enabled: false` turns the RBAC and th
 
 A component is ready when its Deployment or StatefulSet has every replica updated and available
 (stopped: none wanted and none left), the CloudNativePG cluster is healthy with every instance
-ready (hibernated: the hibernation condition is true), and the release Job of the deployed Helm
-revision completed. The report is ready when the desired revision is applied and every component
+ready (hibernated: the hibernation condition is true), and the release Job the deployed release's
+manifest names completed (`release.Deployed.ReleaseJob`: a revision that changed nothing the Job
+runs keeps an earlier revision's Job, so its name is read, never derived from the revision). The report is ready when the desired revision is applied and every component
 is ready; otherwise its message names the first one that is not.
 
 The chart's own readiness and liveness probes never use Kubernetes' 1-second default timeout: each
@@ -1384,8 +1400,9 @@ never logged.
 distroless `static-debian12:nonroot` base as the operator, the binary at
 `/usr/local/bin/trenova-tenant-agent`, user 65532, port 8081; it writes only its state and secrets
 directories, so it runs with a read-only root. `release.yml` publishes
-`ghcr.io/emoss08/trenova/tenant-agent` in the operator's job with the operator's tags (version,
-major.minor, `latest`), SBOM and provenance; `operator.yml` builds it in CI.
+`ghcr.io/emoss08/trenova/tenant-agent` with every release's tags (version, major.minor, `latest`),
+building it, with an SBOM and provenance, only when `services/operator` or its Dockerfile changed
+([releases.md](releases.md)); `operator.yml` builds it in CI.
 
 ## Not in the operator yet
 

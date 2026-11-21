@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"math"
 	"slices"
-	"strconv"
 	"strings"
 	"unicode"
 
@@ -69,10 +68,10 @@ func NewChecker(p *CheckerParams) *Checker {
 }
 
 type CheckParams struct {
-	HelmRevision int
-	Stopped      bool
-	Hibernated   bool
-	Generation   string
+	ReleaseJob string
+	Stopped    bool
+	Hibernated bool
+	Generation string
 }
 
 func (c *Checker) Check(ctx context.Context, p CheckParams) ([]Component, error) {
@@ -142,7 +141,7 @@ func (c *Checker) Parts(ctx context.Context, p CheckParams) ([]Part, error) {
 	}
 	found = append(found, c.postgres(ctx, p.Hibernated, p.Generation))
 	if !p.Stopped {
-		job, jerr := c.releaseJob(ctx, &list, p.HelmRevision)
+		job, jerr := c.releaseJob(ctx, &list, p.ReleaseJob)
 		if jerr != nil {
 			return nil, jerr
 		}
@@ -308,17 +307,20 @@ func hibernationApplied(obj *unstructured.Unstructured) bool {
 func (c *Checker) releaseJob(
 	ctx context.Context,
 	list *metav1.ListOptions,
-	revision int,
+	name string,
 ) (Part, error) {
 	comp := Component{Name: componentRelease}
+	if name == "" {
+		comp.Message = "the deployed release names no release Job"
+		return Part{Component: comp}, nil
+	}
 	jobs, err := c.kube.BatchV1().Jobs(c.namespace).List(ctx, *list)
 	if err != nil {
 		return Part{Component: comp}, fmt.Errorf("list jobs: %w", err)
 	}
-	suffix := "-" + strconv.Itoa(revision)
 	for i := range jobs.Items {
 		j := &jobs.Items[i]
-		if j.Labels[labelComponent] != componentRelease || !strings.HasSuffix(j.Name, suffix) {
+		if j.Labels[labelComponent] != componentRelease || j.Name != name {
 			continue
 		}
 		return Part{
@@ -327,7 +329,7 @@ func (c *Checker) releaseJob(
 			Pods:      labels.SelectorFromSet(labels.Set{labelJobName: j.Name}),
 		}, nil
 	}
-	comp.Message = "waiting for the release Job of revision " + strconv.Itoa(revision)
+	comp.Message = "waiting for the release Job " + name
 	return Part{Component: comp}, nil
 }
 

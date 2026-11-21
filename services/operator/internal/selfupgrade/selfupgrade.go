@@ -26,8 +26,15 @@ const (
 	AnnotationFailed  = "trenova.app/operator-upgrade-failed"
 	AnnotationReason  = "trenova.app/operator-upgrade-reason"
 	AnnotationStarted = "trenova.app/operator-upgrade-started"
+	// AnnotationFrom is the release the operator ran when it asked for the
+	// move: what it still runs while its Deployment rolls to the new one.
+	AnnotationFrom = "trenova.app/operator-upgrade-from"
+	// AnnotationVersion is on the operator's Deployment: the release its
+	// chart was installed at. A release that did not rebuild the operator
+	// changes it and nothing in the pod, so it is read, never baked into the
+	// pod's environment.
+	AnnotationVersion = "trenova.app/operator-version"
 
-	labelVersion       = "app.kubernetes.io/version"
 	addonKind          = "Addon"
 	jobVersionEnv      = "VERSION"
 	progressDeadline   = "ProgressDeadlineExceeded"
@@ -66,7 +73,7 @@ func (s Status) Holds() bool {
 type Upgrader struct {
 	dynamic    dynamic.Interface
 	kube       kubernetes.Interface
-	version    string
+	known      string
 	chartSpace string
 	chart      string
 	namespace  string
@@ -80,7 +87,6 @@ type Upgrader struct {
 type Params struct {
 	Dynamic            dynamic.Interface
 	Kube               kubernetes.Interface
-	Version            string
 	HelmChartNamespace string
 	HelmChart          string
 	Namespace          string
@@ -92,19 +98,14 @@ type Params struct {
 
 func New(p *Params) (*Upgrader, error) {
 	var missing []string
-	if strings.TrimSpace(p.Version) == "" {
-		missing = append(missing, "the operator's own version")
-	}
 	if p.Logger == nil {
 		missing = append(missing, "a logger")
 	}
-	if p.HelmChart != "" {
-		if p.Dynamic == nil || p.Kube == nil {
-			missing = append(missing, "Kubernetes clients")
-		}
-		if p.Namespace == "" || p.Deployment == "" {
-			missing = append(missing, "the operator's own namespace and Deployment")
-		}
+	if p.Kube == nil || (p.HelmChart != "" && p.Dynamic == nil) {
+		missing = append(missing, "Kubernetes clients")
+	}
+	if p.Namespace == "" || p.Deployment == "" {
+		missing = append(missing, "the operator's own namespace and Deployment")
 	}
 	if len(missing) > 0 {
 		return nil, fmt.Errorf("selfupgrade: the upgrader needs %s", strings.Join(missing, ", "))
@@ -124,7 +125,6 @@ func New(p *Params) (*Upgrader, error) {
 	return &Upgrader{
 		dynamic:    p.Dynamic,
 		kube:       p.Kube,
-		version:    p.Version,
 		chartSpace: space,
 		chart:      p.HelmChart,
 		namespace:  p.Namespace,
@@ -135,34 +135,59 @@ func New(p *Params) (*Upgrader, error) {
 	}, nil
 }
 
+// runningVersion is the release the operator runs: its Deployment's version once
+// every pod of the Deployment is the current one, which a release that did
+// not rebuild the operator reaches at once, without a new pod. While the
+// Deployment rolls to a new pod, the operator still runs the release it
+// moved from.
+func runningVersion(d *appsv1.Deployment, notes map[string]string) string {
+	version := d.Annotations[AnnotationVersion]
+	if health.Deployment(d).Ready {
+		return version
+	}
+	if from := notes[AnnotationFrom]; from != "" {
+		return from
+	}
+	return version
+}
+
 func (u *Upgrader) Converge(ctx context.Context, want string) Status {
-	st := Status{Version: u.version, Target: want, Phase: PhaseCurrent}
+	st := Status{Version: u.known, Target: want, Phase: PhaseCurrent}
+	d, derr := u.kube.AppsV1().Deployments(u.namespace).Get(ctx, u.deployment, metav1.GetOptions{})
 	if u.chart == "" {
-		st.Phase = PhaseUnmanaged
-		u.sayOnce(
-			ctx,
-			slog.LevelInfo,
-			"self-upgrade is off: the operator's version is left as it is",
-		)
-		return st
+		return u.unmanaged(ctx, st, d, derr,
+			"self-upgrade is off: the operator's version is left as it is")
 	}
 	hc, err := u.dynamic.Resource(HelmCharts).Namespace(u.chartSpace).
 		Get(ctx, u.chart, metav1.GetOptions{})
 	if apierrors.IsNotFound(err) {
-		st.Phase = PhaseUnmanaged
-		u.sayOnce(ctx, slog.LevelInfo, fmt.Sprintf(
+		return u.unmanaged(ctx, st, d, derr, fmt.Sprintf(
 			"no HelmChart %s/%s: k3s's helm-controller did not install this operator, so its version is left as it is",
 			u.chartSpace,
 			u.chart,
 		))
-		return st
 	}
 	if err != nil {
-		if want == u.version {
+		if want == u.known {
 			return st
 		}
 		return u.waiting(st, "cannot read the operator's HelmChart: "+err.Error())
 	}
+	notes := hc.GetAnnotations()
+	if derr != nil {
+		if want == u.known {
+			return st
+		}
+		return u.waiting(st, "cannot read the operator's Deployment: "+derr.Error())
+	}
+	running := runningVersion(d, notes)
+	if running == "" {
+		return u.waiting(st, fmt.Sprintf(
+			"the operator's Deployment %s/%s names no version (%s)",
+			u.namespace, u.deployment, AnnotationVersion,
+		))
+	}
+	u.known, st.Version = running, running
 	if addon := pinnedBy(hc); addon != "" {
 		st.Message = fmt.Sprintf(
 			"the node's manifest %s pins the operator's version, and k3s puts it back at every start",
@@ -171,9 +196,8 @@ func (u *Upgrader) Converge(ctx context.Context, want string) Status {
 		u.sayOnce(ctx, slog.LevelWarn, st.Message)
 	}
 	asked, _, _ := unstructured.NestedString(hc.Object, "spec", "version")
-	notes := hc.GetAnnotations()
-	if want == u.version {
-		u.settle(ctx, asked, notes)
+	if want == running {
+		u.settle(ctx, running, asked, notes)
 		return st
 	}
 	if notes[AnnotationFailed] == want {
@@ -186,38 +210,51 @@ func (u *Upgrader) Converge(ctx context.Context, want string) Status {
 	if asked != want {
 		started := u.now().UTC().Format(time.RFC3339)
 		if err = u.patch(ctx, want, map[string]any{
-			AnnotationStarted: started, AnnotationFailed: nil, AnnotationReason: nil,
+			AnnotationStarted: started, AnnotationFrom: running,
+			AnnotationFailed: nil, AnnotationReason: nil,
 		}); err != nil {
 			return u.waiting(st, "cannot ask helm-controller to upgrade the operator: "+err.Error())
 		}
-		u.logger.InfoContext(ctx, "upgrading the operator", "from", u.version, "to", want)
+		u.logger.InfoContext(ctx, "upgrading the operator", "from", running, "to", want)
 		return u.waiting(
 			st,
-			fmt.Sprintf("the operator is being upgraded from %s to %s", u.version, want),
+			fmt.Sprintf("the operator is being upgraded from %s to %s", running, want),
 		)
 	}
+	return u.watch(ctx, st, d, notes)
+}
+
+// watch follows a move helm-controller was asked for: it waits, or, once the
+// move failed or took too long, puts the HelmChart back on the release that
+// runs and records why.
+func (u *Upgrader) watch(
+	ctx context.Context,
+	st Status,
+	d *appsv1.Deployment,
+	notes map[string]string,
+) Status {
+	want, running := st.Target, st.Version
 	started, perr := time.Parse(time.RFC3339, notes[AnnotationStarted])
 	if perr != nil {
 		started = u.now()
-		_ = u.patch(
-			ctx,
-			want,
-			map[string]any{AnnotationStarted: started.UTC().Format(time.RFC3339)},
-		)
+		_ = u.patch(ctx, want, map[string]any{
+			AnnotationStarted: started.UTC().Format(time.RFC3339), AnnotationFrom: running,
+		})
 	}
-	reason := u.failure(ctx, want)
+	reason := u.failure(ctx, want, d)
 	if reason == "" && u.now().Sub(started) > u.deadline {
 		reason = fmt.Sprintf("the operator %s did not take over within %s", want, u.deadline)
 	}
 	if reason == "" {
 		return u.waiting(st, fmt.Sprintf(
 			"the operator is being upgraded from %s to %s (since %s)",
-			u.version, want, started.UTC().Format(time.RFC3339),
+			running, want, started.UTC().Format(time.RFC3339),
 		))
 	}
 	reason = health.Clean(reason, maxMessage)
-	if err = u.patch(ctx, u.version, map[string]any{
-		AnnotationFailed: want, AnnotationReason: reason, AnnotationStarted: nil,
+	if err := u.patch(ctx, running, map[string]any{
+		AnnotationFailed: want, AnnotationReason: reason,
+		AnnotationStarted: nil, AnnotationFrom: nil,
 	}); err != nil {
 		return u.waiting(
 			st,
@@ -225,18 +262,40 @@ func (u *Upgrader) Converge(ctx context.Context, want string) Status {
 		)
 	}
 	u.logger.ErrorContext(ctx, "the operator's upgrade failed; it stays on its version",
-		"version", u.version, "target", want, "reason", reason)
+		"version", running, "target", want, "reason", reason)
 	return u.failed(st, reason)
 }
 
-func (u *Upgrader) settle(ctx context.Context, asked string, notes map[string]string) {
+// unmanaged reports an operator that does not move itself, at the version
+// its Deployment names.
+func (u *Upgrader) unmanaged(
+	ctx context.Context,
+	st Status,
+	d *appsv1.Deployment,
+	derr error,
+	why string,
+) Status {
+	if derr == nil && d.Annotations[AnnotationVersion] != "" {
+		u.known = d.Annotations[AnnotationVersion]
+		st.Version = u.known
+	}
+	st.Phase = PhaseUnmanaged
+	u.sayOnce(ctx, slog.LevelInfo, why)
+	return st
+}
+
+func (u *Upgrader) settle(
+	ctx context.Context,
+	running, asked string,
+	notes map[string]string,
+) {
 	stale := notes[AnnotationStarted] != "" || notes[AnnotationFailed] != "" ||
-		notes[AnnotationReason] != ""
-	if asked == u.version && !stale {
+		notes[AnnotationReason] != "" || notes[AnnotationFrom] != ""
+	if asked == running && !stale {
 		return
 	}
-	if err := u.patch(ctx, u.version, map[string]any{
-		AnnotationStarted: nil, AnnotationFailed: nil, AnnotationReason: nil,
+	if err := u.patch(ctx, running, map[string]any{
+		AnnotationStarted: nil, AnnotationFailed: nil, AnnotationReason: nil, AnnotationFrom: nil,
 	}); err != nil {
 		u.logger.WarnContext(
 			ctx,
@@ -246,13 +305,13 @@ func (u *Upgrader) settle(ctx context.Context, asked string, notes map[string]st
 		)
 		return
 	}
-	if asked != u.version {
+	if asked != running {
 		u.logger.InfoContext(ctx, "the operator's HelmChart names the version it runs",
-			"was", asked, "version", u.version)
+			"was", asked, "version", running)
 	}
 }
 
-func (u *Upgrader) failure(ctx context.Context, want string) string {
+func (u *Upgrader) failure(ctx context.Context, want string, d *appsv1.Deployment) string {
 	job, err := u.kube.BatchV1().Jobs(u.chartSpace).
 		Get(ctx, "helm-install-"+u.chart, metav1.GetOptions{})
 	if err == nil && jobVersion(job) == want && job.Status.Succeeded == 0 {
@@ -267,8 +326,7 @@ func (u *Upgrader) failure(ctx context.Context, want string) string {
 			)
 		}
 	}
-	d, err := u.kube.AppsV1().Deployments(u.namespace).Get(ctx, u.deployment, metav1.GetOptions{})
-	if err != nil || d.Labels[labelVersion] != want {
+	if d.Annotations[AnnotationVersion] != want {
 		return ""
 	}
 	for _, c := range d.Status.Conditions {

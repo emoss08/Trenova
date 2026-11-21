@@ -4,6 +4,11 @@ metadata:
   name: {{ include "operator.name" . }}
   labels:
     {{- include "operator.labels" . | nindent 4 }}
+  annotations:
+    # The release the operator runs: read from here, never from the pod, so a
+    # release that did not rebuild the operator moves it without a restart
+    # (services/operator/internal/selfupgrade).
+    trenova.app/operator-version: {{ .Chart.Version | quote }}
 spec:
   # One operator runs the instance at a time: the pods take a Lease, and only
   # its holder reconciles. A new version starts beside the old one, which keeps
@@ -52,10 +57,6 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: spec.nodeName
-            # The operator follows the instance's release: this is the version
-            # it compares with the spec's, and the one its HelmChart names.
-            - name: TRENOVA_OPERATOR_VERSION
-              value: {{ .Chart.Version | quote }}
             - name: TRENOVA_OPERATOR_DEPLOYMENT
               value: {{ include "operator.name" . | quote }}
             - name: TRENOVA_OPERATOR_LEASE

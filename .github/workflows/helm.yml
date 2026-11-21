@@ -17,6 +17,15 @@ on:
       - "services/tms/internal/infrastructure/config/**"
       - "tools/helm/**"
       - ".github/workflows/helm.yml"
+      # The release's image list and what decides each image's inputs.
+      - "deploy/release/**"
+      - "deploy/export-runner/**"
+      - "deploy/*.dockerignore"
+      - ".dockerignore"
+      - "tools/release/**"
+      - ".github/workflows/release.yml"
+      - ".github/workflows/embedding-image.yml"
+      - ".github/actions/release-image/**"
   pull_request:
     branches:
       - master
@@ -33,6 +42,15 @@ on:
       - "services/tms/internal/infrastructure/config/**"
       - "tools/helm/**"
       - ".github/workflows/helm.yml"
+      # The release's image list and what decides each image's inputs.
+      - "deploy/release/**"
+      - "deploy/export-runner/**"
+      - "deploy/*.dockerignore"
+      - ".dockerignore"
+      - "tools/release/**"
+      - ".github/workflows/release.yml"
+      - ".github/workflows/embedding-image.yml"
+      - ".github/actions/release-image/**"
   workflow_dispatch:
 
 concurrency:
@@ -71,6 +89,14 @@ jobs:
           set -euo pipefail
           curl -fsSL "https://raw.githubusercontent.com/cloudnative-pg/cloudnative-pg/release-${CNPG_VERSION%.*}/releases/cnpg-${CNPG_VERSION}.yaml" -o "$RUNNER_TEMP/cnpg.yaml"
           python3 -I tools/helm/crd-schemas.py "$RUNNER_TEMP/cnpg.yaml" "$RUNNER_TEMP/schemas"
+
+      # Every image a release builds is in deploy/release/images.yaml with the
+      # paths it is built from; the release's plan is decided from them.
+      - name: The release's images and their inputs
+        run: |
+          set -euo pipefail
+          python3 -m unittest discover -s tools/release
+          python3 tools/release/release.py check-inputs
 
       - name: Chart version and CloudNativePG version agree
         run: |
@@ -168,6 +194,11 @@ jobs:
             echo "::error::primaryDomain rendered as a hostname the release does not serve"
             exit 1
           fi
+
+      # A release restarts only what it rebuilt: the workloads of three
+      # published releases compared (tools/helm/check-release-renders.py).
+      - name: A release restarts only what it rebuilt
+        run: python3 -I tools/helm/check-release-renders.py "$CHART" deploy/helm/trenova-operator
 
       - name: The symlinked files resolve
         run: |
@@ -280,14 +311,29 @@ jobs:
         run: helm test trenova -n trenova --logs --timeout 5m
 
       - name: Upgrade in place
-        # A second revision: its release Job runs every step again over the
-        # data the first left, and the generated secrets must survive.
+        # A second revision that changes what the release Job runs: it runs
+        # every step again over the data the first left, and the generated
+        # secrets must survive. A third that changes nothing leaves the Job
+        # and the pods as they are.
         run: |
           set -euo pipefail
           before="$(kubectl -n trenova get secret trenova-secrets -o jsonpath='{.data.encryptionKey}')"
           ca_before="$(kubectl -n trenova get secret trenova-temporal-server-tls -o jsonpath='{.data.ca\.crt}')"
+          first_job="$(kubectl -n trenova get jobs -l app.kubernetes.io/component=release -o jsonpath='{.items[*].metadata.name}')"
           helm upgrade trenova "$CHART" -n trenova -f "$CHART/ci/install-values.yaml" \
+            --set tms.release.activeDeadlineSeconds=3599 \
             --wait --wait-for-jobs --timeout 15m
+          kubectl -n trenova wait --for=delete "job/$first_job" --timeout=2m
+          second_job="$(kubectl -n trenova get jobs -l app.kubernetes.io/component=release -o jsonpath='{.items[*].metadata.name}')"
+          test "$second_job" != "$first_job" || { echo "::error::a change to the release Job did not run it again"; exit 1; }
+          api_generation="$(kubectl -n trenova get deploy trenova-api -o jsonpath='{.metadata.generation}')"
+          helm upgrade trenova "$CHART" -n trenova -f "$CHART/ci/install-values.yaml" \
+            --set tms.release.activeDeadlineSeconds=3599 \
+            --wait --wait-for-jobs --timeout 15m
+          test "$(kubectl -n trenova get jobs -l app.kubernetes.io/component=release -o jsonpath='{.items[*].metadata.name}')" = "$second_job" \
+            || { echo "::error::an upgrade that changed nothing ran the release Job again"; exit 1; }
+          test "$(kubectl -n trenova get deploy trenova-api -o jsonpath='{.metadata.generation}')" = "$api_generation" \
+            || { echo "::error::an upgrade that changed nothing rolled the API"; exit 1; }
           after="$(kubectl -n trenova get secret trenova-secrets -o jsonpath='{.data.encryptionKey}')"
           test "$before" = "$after" || { echo "::error::the upgrade replaced the encryption key"; exit 1; }
           ca_after="$(kubectl -n trenova get secret trenova-temporal-server-tls -o jsonpath='{.data.ca\.crt}')"

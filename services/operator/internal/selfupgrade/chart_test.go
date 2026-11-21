@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chart/loader"
 	"helm.sh/helm/v3/pkg/chartutil"
 	"helm.sh/helm/v3/pkg/engine"
@@ -152,10 +153,52 @@ func TestWithSelfUpgradeOffTheOperatorReachesNothingInHelmControllersNamespace(t
 	require.NotContains(t, operatorEnv(t, docs), envHelmChart)
 }
 
+const operatorDigest = "sha256:1111111111111111111111111111111111111111111111111111111111111111"
+
+func releaseManifest(version, operatorVersion string) string {
+	return `{"schemaVersion": 1, "version": "` + version + `", "migrations": false,
+  "commit": "0123456789abcdef0123456789abcdef01234567",
+  "images": {"operator": {"repository": "ghcr.io/emoss08/trenova/operator",
+    "version": "` + operatorVersion + `", "digest": "` + operatorDigest + `", "changed": false}}}`
+}
+
+func TestAReleaseThatDidNotRebuildTheOperatorLeavesItsPodAlone(t *testing.T) {
+	t.Parallel()
+	before := one(t, renderPublished(t, "0.13.0", releaseManifest("0.13.0", "0.13.0")),
+		"Deployment", releaseName)
+	after := one(t, renderPublished(t, "0.13.1", releaseManifest("0.13.1", "0.13.0")),
+		"Deployment", releaseName)
+
+	require.Equal(t, nested(before, "spec"), nested(after, "spec"),
+		"the pod template must not change with the release alone")
+	require.Equal(t, "0.13.1", nested(after, "metadata", "annotations", AnnotationVersion))
+	containers, _ := nested(after, "spec", "template", "spec", "containers").([]any)
+	container, _ := containers[0].(map[string]any)
+	require.Equal(t, "ghcr.io/emoss08/trenova/operator:0.13.0@"+operatorDigest, container["image"])
+
+	rebuilt := one(t, renderPublished(t, "0.13.1", releaseManifest("0.13.1", "0.13.1")),
+		"Deployment", releaseName)
+	require.NotEqual(t, nested(before, "spec"), nested(rebuilt, "spec"))
+}
+
+func renderPublished(t *testing.T, version, manifest string) []map[string]any {
+	t.Helper()
+	ch, err := loader.Load(operatorChart)
+	require.NoError(t, err)
+	ch.Metadata.Version, ch.Metadata.AppVersion = version, version
+	ch.Files = append(ch.Files, &chart.File{Name: "release-manifest.json", Data: []byte(manifest)})
+	return renderLoaded(t, ch, nil)
+}
+
 func renderOperatorChart(t *testing.T, values map[string]any) []map[string]any {
 	t.Helper()
 	ch, err := loader.Load(operatorChart)
 	require.NoError(t, err)
+	return renderLoaded(t, ch, values)
+}
+
+func renderLoaded(t *testing.T, ch *chart.Chart, values map[string]any) []map[string]any {
+	t.Helper()
 	vals, err := chartutil.ToRenderValues(ch, values, chartutil.ReleaseOptions{
 		Name: releaseName, Namespace: releaseNamespace, Revision: 1, IsInstall: true,
 	}, chartutil.DefaultCapabilities)

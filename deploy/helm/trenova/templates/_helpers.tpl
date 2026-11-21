@@ -124,19 +124,70 @@ helm.sh/chart: {{ printf "%s-%s" .root.Chart.Name .root.Chart.Version | replace 
 {{- .Chart.AppVersion -}}
 {{- end -}}
 
-{{/* An image reference. Call with (dict "root" $ "image" .Values.x.image). The
-tag defaults to the chart's appVersion; "<tag>@sha256:<digest>" pins a digest.
-A published chart carries image-digests.yaml, written by the release workflow:
-the digest of every image at the tag it names, inside the chart's signature. An
-override to another repository or tag finds no entry and is used as given. */}}
+{{/* The images of the release manifest a published chart carries
+(release-manifest.json, written by the release workflow and inside the chart's
+signature; docs/engineering/releases.md), as JSON: each Trenova image's
+repository, the version it was built under and its digest. {} for an
+unreleased chart. */}}
+{{- define "trenova.manifestImages" -}}
+{{- $raw := .Files.Get "release-manifest.json" -}}
+{{- if $raw -}}
+{{- $manifest := fromJson $raw -}}
+{{- if ne (toString (get $manifest "schemaVersion")) "1" -}}
+{{- fail (printf "release-manifest.json has schemaVersion %v; this chart reads 1" (get $manifest "schemaVersion")) -}}
+{{- end -}}
+{{- get $manifest "images" | toJson -}}
+{{- else -}}
+{}
+{{- end -}}
+{{- end -}}
+
+{{/* An image reference. Call with (dict "root" $ "image" .Values.x.image).
+
+A Trenova image the release manifest names, with no tag or the tag the manifest
+gives it, is <repository>:<the version it was built under>@<digest>: a release
+that did not rebuild it renders it exactly as the one before did, so its pods
+are left alone. Any other image is <repository>:<tag>, its tag defaulting to the
+chart's appVersion, with the digest image-digests.yaml (written by the release
+workflow, also inside the signature) gives that reference. "<tag>@sha256:…"
+pins a digest by hand. An override to another repository or tag finds no entry
+and is used as given. */}}
 {{- define "trenova.image" -}}
-{{- $ref := printf "%s:%s" .image.repository (.image.tag | default .root.Chart.AppVersion) -}}
+{{- $tag := toString (.image.tag | default "") -}}
+{{- $pinned := "" -}}
+{{- if not (contains "@" $tag) -}}
+{{- range $name, $e := (include "trenova.manifestImages" .root | fromJson) -}}
+{{- if and (not $pinned) (eq $e.repository $.image.repository) (or (not $tag) (eq $tag $e.version)) -}}
+{{- $pinned = printf "%s:%s@%s" $e.repository $e.version $e.digest -}}
+{{- end -}}
+{{- end -}}
+{{- end -}}
+{{- if $pinned -}}
+{{- $pinned -}}
+{{- else -}}
+{{- $ref := printf "%s:%s" .image.repository ($tag | default .root.Chart.AppVersion) -}}
 {{- $digest := get (.root.Files.Get "image-digests.yaml" | fromYaml) $ref -}}
 {{- if $digest -}}
 {{- printf "%s@%s" $ref $digest -}}
 {{- else -}}
 {{- $ref -}}
 {{- end -}}
+{{- end -}}
+{{- end -}}
+
+{{/* The version the TMS says it runs (app.version): its image's own version,
+from tms.image.tag or the release manifest, so a release that did not rebuild
+the TMS leaves its configuration, and with it its pods, as they were; the
+chart's appVersion for an unreleased chart. */}}
+{{- define "trenova.tmsVersion" -}}
+{{- $version := regexReplaceAll "@.*$" (toString (.Values.tms.image.tag | default "")) "" -}}
+{{- if not $version -}}
+{{- $tms := get (include "trenova.manifestImages" . | fromJson) "tms" -}}
+{{- if and $tms (eq (get $tms "repository") .Values.tms.image.repository) -}}
+{{- $version = get $tms "version" -}}
+{{- end -}}
+{{- end -}}
+{{- $version | default .Chart.AppVersion -}}
 {{- end -}}
 
 {{- define "trenova.pullPolicy" -}}

@@ -457,6 +457,8 @@ func TestSuspendingStopsTheWorkloads(t *testing.T) {
 	w := newWorld(t)
 	w.health.set(true)
 	w.loop.Tick(t.Context())
+	require.Equal(t, "trenova-release-1", w.health.last().ReleaseJob,
+		"the release Job is the one the deployed manifest names")
 
 	spec := controlplanetest.Spec(w.cp.InstanceID)
 	spec.Lifecycle = instanceapi.Suspended
@@ -468,7 +470,7 @@ func TestSuspendingStopsTheWorkloads(t *testing.T) {
 	p := w.health.last()
 	require.True(t, p.Stopped)
 	require.True(t, p.Hibernated)
-	require.Equal(t, 2, p.HelmRevision)
+	require.Empty(t, p.ReleaseJob, "a stopped release renders no release Job")
 	r := w.lastReport(t)
 	require.Equal(t, int64(2), *r.AppliedRevision)
 	require.True(t, r.Ready)

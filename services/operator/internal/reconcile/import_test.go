@@ -63,7 +63,7 @@ func (w *world) releaseJob(t *testing.T, id string) *batchv1.Job {
 	require.NoError(t, err)
 	job := &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:        values.ReleaseJob("trenova", deployed.Revision),
+			Name:        deployed.ReleaseJob,
 			Namespace:   "trenova",
 			Annotations: map[string]string{"trenova.app/import": id},
 		},

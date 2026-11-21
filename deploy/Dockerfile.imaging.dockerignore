@@ -1,8 +1,17 @@
-# Build context is services/; the image needs only the Rust workspace and its contracts.
-target
+# Build context is services/. The image is built from the Rust workspace and
+# its contracts alone: everything else is left out, so a change elsewhere in
+# services/ (the operator, the TMS) neither reaches the build nor counts as an
+# input of the image (deploy/release/images.yaml lists exactly these).
+*
+!imaging
+!crates
+!proto
+!vendor
+!.cargo
+!Cargo.toml
+!Cargo.lock
+!rust-toolchain.toml
 **/target
-tms
-postgres
 **/fuzz/corpus
 **/fuzz/artifacts
 **/.env*
