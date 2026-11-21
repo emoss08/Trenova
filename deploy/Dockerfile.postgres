@@ -1,4 +1,4 @@
-FROM postgis/postgis:18-3.6-alpine@sha256:c53a483fc274072dfa02cd491efa79f3c8ae0a10774a0ece6c9c53b6a632cdef
+FROM postgis/postgis:18-3.7-alpine@sha256:e1a18d273904ee86646d6d1379f318f74864a017b5aad710ed14a692212651cb
 
 # A tag can move, so each clone is checked against the commit it was pinned at.
 ARG PG_CRON_VERSION=v1.6.7
