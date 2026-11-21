@@ -22,6 +22,7 @@ import (
 	"github.com/emoss08/trenova/internal/testutil/mocks/invoiceportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/kernelportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/ladingportsmock"
+	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/lading"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -345,6 +346,7 @@ func newEDIWiredFixture(t *testing.T, status invoice.EDISendStatus) *ediWiredFix
 		ediPartnerRepo:              partners,
 		ediLadingProjects:           projects,
 		ediCommunicationProfileRepo: commProfiles,
+		features:                    plantest.AllFeatures(),
 	}
 
 	return f

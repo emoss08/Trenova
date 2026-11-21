@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/testutil/mocks/commodityportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/hazmatsegregationruleportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/validationtest"
 )
 
 func newTestShipmentValidator(t testing.TB) *shipmentvalidator.Validator {
@@ -16,6 +17,7 @@ func newTestShipmentValidator(t testing.TB) *shipmentvalidator.Validator {
 	assignmentRepo := operationstest.NewAssignmentRepository(t)
 
 	return shipmentvalidator.New(shipmentvalidator.Params{
+		Integrity:      validationtest.NewIntegrity(),
 		AssignmentRepo: assignmentRepo,
 		ControlRepo:    operationstest.NewControlRepository(t),
 		CustomerRepo:   operationstest.NewCustomerRepository(t),

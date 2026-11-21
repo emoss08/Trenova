@@ -40,7 +40,7 @@ You hold more tools than are loaded on this turn. The loaded ones are on this re
 
 What find_tools can load, by area of Trenova:
 - AI & agents (3 tools): agent run
-- Accounting (26 tools): accounting integration, accounting sync, fiscal period
+- Accounting (26 tools): accounting integration, accounting reconciliation, accounting sync, fiscal period
 - Desk (8 tools): desk
 
 What a change you call does:

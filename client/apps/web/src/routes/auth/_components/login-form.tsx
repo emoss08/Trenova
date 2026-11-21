@@ -226,7 +226,7 @@ export function LoginForm({
                 href={suspension.manageUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="ui-focus-ring text-auth-body rounded-sm text-sm font-medium underline underline-offset-2"
+                className="ui-focus-ring text-auth-body rounded-sm font-medium underline underline-offset-2"
               >
                 {t("Open the Trenova console")}
               </a>

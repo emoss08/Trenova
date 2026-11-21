@@ -30,6 +30,7 @@ import (
 	"github.com/emoss08/trenova/internal/testutil/mocks/workerportsmock"
 	"github.com/emoss08/trenova/internal/testutil/pgstubtest"
 	"github.com/emoss08/trenova/internal/testutil/plantest"
+	"github.com/emoss08/trenova/internal/testutil/validationtest"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/testutil"
@@ -124,6 +125,7 @@ func setupWorkerHandlerWithEngines(
 		CacheRepo:         cacheRepo,
 		DB:                dbtest.NopConnection{},
 		Validator: workerservice.NewValidator(workerservice.ValidatorParams{
+			Integrity:           validationtest.NewIntegrity(),
 			DB:                  pgstubtest.NewConnection(t, "us_states", "fleet_codes"),
 			DispatchControlRepo: dispatchControlRepo,
 		}),

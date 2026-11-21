@@ -1,5 +1,5 @@
 {
-  "version": "sha256:fb9359434cb8e7323fa0c020316a39c8f95efb4a0f5cf050ee8fff0dd4088787",
+  "version": "sha256:6b6d9c3ad919ee21ff29a65f7a1ff8880dbb4fc4b9c16847e87fc193ba59faf3",
   "screens": [
     {
       "path": "/",
@@ -634,6 +634,7 @@
       ],
       "reads": [
         "accounting_integration",
+        "accounting_reconciliation",
         "accounting_sync",
         "customer_payment",
         "journal_entry",
@@ -1635,6 +1636,7 @@
       ],
       "reads": [
         "accounting_integration",
+        "accounting_reconciliation",
         "accounting_sync"
       ],
       "references": [
@@ -1700,6 +1702,7 @@
       ],
       "reads": [
         "accounting_integration",
+        "accounting_reconciliation",
         "accounting_sync"
       ],
       "references": [
@@ -1764,6 +1767,7 @@
       ],
       "reads": [
         "accounting_integration",
+        "accounting_reconciliation",
         "accounting_sync"
       ],
       "references": [
@@ -1874,6 +1878,7 @@
       ],
       "reads": [
         "accounting_integration",
+        "accounting_reconciliation",
         "accounting_sync"
       ],
       "references": [
@@ -4719,6 +4724,7 @@
       ],
       "reads": [
         "accounting_integration",
+        "accounting_reconciliation",
         "accounting_sync"
       ],
       "references": [
@@ -4756,6 +4762,7 @@
       "endpoints": [],
       "reads": [
         "accounting_integration",
+        "accounting_reconciliation",
         "accounting_sync"
       ],
       "references": [
@@ -4793,6 +4800,7 @@
       "endpoints": [],
       "reads": [
         "accounting_integration",
+        "accounting_reconciliation",
         "accounting_sync"
       ],
       "references": [
@@ -4830,6 +4838,7 @@
       "endpoints": [],
       "reads": [
         "accounting_integration",
+        "accounting_reconciliation",
         "accounting_sync"
       ],
       "references": [
@@ -4867,6 +4876,7 @@
       "endpoints": [],
       "reads": [
         "accounting_integration",
+        "accounting_reconciliation",
         "accounting_sync"
       ],
       "references": [
@@ -6581,6 +6591,7 @@
       ],
       "reads": [
         "accounting_integration",
+        "accounting_reconciliation",
         "accounting_sync",
         "carrier_intelligence",
         "customer",
@@ -12060,6 +12071,7 @@
       ],
       "reads": [
         "accounting_integration",
+        "accounting_reconciliation",
         "accounting_sync",
         "audit_legal_hold",
         "factoring_agreement",
@@ -13580,6 +13592,7 @@
       ],
       "reads": [
         "accounting_integration",
+        "accounting_reconciliation",
         "accounting_sync",
         "carrier_invoice_match",
         "carrier_settlement"
@@ -13902,6 +13915,7 @@
       ],
       "reads": [
         "accounting_integration",
+        "accounting_reconciliation",
         "accounting_sync",
         "carrier_invoice_match",
         "carrier_settlement"
@@ -15552,6 +15566,7 @@
       ],
       "reads": [
         "accounting_integration",
+        "accounting_reconciliation",
         "accounting_sync",
         "briefing",
         "capture_batch",
@@ -17500,6 +17515,7 @@
       ],
       "reads": [
         "accounting_integration",
+        "accounting_reconciliation",
         "accounting_sync",
         "agent_proposal",
         "briefing",
@@ -19241,6 +19257,7 @@
       ],
       "reads": [
         "accounting_integration",
+        "accounting_reconciliation",
         "accounting_sync",
         "briefing",
         "capture_batch",
@@ -21910,6 +21927,7 @@
       ],
       "reads": [
         "accounting_integration",
+        "accounting_reconciliation",
         "accounting_sync",
         "briefing",
         "capture_batch",
@@ -22251,6 +22269,7 @@
       ],
       "reads": [
         "accounting_integration",
+        "accounting_reconciliation",
         "accounting_sync",
         "carrier",
         "carrier_intelligence"
@@ -32239,6 +32258,7 @@
       ],
       "reads": [
         "accounting_integration",
+        "accounting_reconciliation",
         "accounting_sync",
         "benefit_plan",
         "capture_batch",
@@ -33155,6 +33175,7 @@
       ],
       "reads": [
         "accounting_integration",
+        "accounting_reconciliation",
         "accounting_sync",
         "driver_settlement"
       ],
@@ -33222,6 +33243,7 @@
       "endpoints": [],
       "reads": [
         "accounting_integration",
+        "accounting_reconciliation",
         "accounting_sync",
         "driver_settlement",
         "pay_advance",
@@ -36243,7 +36265,7 @@
       "name": "AccountingDriftFinding",
       "type": "query",
       "reads": [
-        "accounting_sync"
+        "accounting_reconciliation"
       ],
       "linked": [
         {
@@ -36259,7 +36281,7 @@
       "name": "AccountingDriftFindingTable",
       "type": "query",
       "reads": [
-        "accounting_sync"
+        "accounting_reconciliation"
       ],
       "linked": [
         {
@@ -36282,7 +36304,7 @@
       "name": "AccountingDriftOverview",
       "type": "query",
       "reads": [
-        "accounting_sync"
+        "accounting_reconciliation"
       ],
       "linked": [],
       "declared": []
@@ -36298,7 +36320,7 @@
       "name": "AccountingInboundChange",
       "type": "query",
       "reads": [
-        "accounting_sync"
+        "accounting_reconciliation"
       ],
       "linked": [
         {
@@ -36314,7 +36336,7 @@
       "name": "AccountingInboundChangeTable",
       "type": "query",
       "reads": [
-        "accounting_sync"
+        "accounting_reconciliation"
       ],
       "linked": [
         {

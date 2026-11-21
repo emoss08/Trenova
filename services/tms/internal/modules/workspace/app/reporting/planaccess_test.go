@@ -399,19 +399,18 @@ func TestCannedLibrary_ABaseOnlyPlanLocksEveryReportThatReadsAnAddOn(t *testing.
 		byKey[library[i].Entry.Key] = &library[i]
 	}
 	for key, addOn := range map[string]string{
-		"accounting-open-drift-by-customer":  accountingAndCash,
-		"accounting-sync-exceptions-by-week": accountingAndCash,
-		"ar-aging-by-document":               accountingAndCash,
-		"credential-expiry-forecast":         safetyCompliance,
-		"dqf-credential-detail":              safetyCompliance,
-		"factoring-days-to-fund":             accountingAndCash,
-		"factoring-fees-by-customer":         accountingAndCash,
-		"factoring-schedules":                accountingAndCash,
-		"invoices-ready-to-factor":           accountingAndCash,
-		"pto-liability":                      "HR Suite",
-		"revenue-by-gl-account":              accountingAndCash,
-		"settlement-register":                "Driver Pay",
-		"trial-balance":                      accountingAndCash,
+		"accounting-open-drift-by-customer": accountingAndCash,
+		"ar-aging-by-document":              accountingAndCash,
+		"credential-expiry-forecast":        safetyCompliance,
+		"dqf-credential-detail":             safetyCompliance,
+		"factoring-days-to-fund":            accountingAndCash,
+		"factoring-fees-by-customer":        accountingAndCash,
+		"factoring-schedules":               accountingAndCash,
+		"invoices-ready-to-factor":          accountingAndCash,
+		"pto-liability":                     "HR Suite",
+		"revenue-by-gl-account":             accountingAndCash,
+		"settlement-register":               "Driver Pay",
+		"trial-balance":                     accountingAndCash,
 	} {
 		entry, ok := byKey[key]
 		require.Truef(t, ok, "canned report %s is missing", key)
@@ -420,6 +419,11 @@ func TestCannedLibrary_ABaseOnlyPlanLocksEveryReportThatReadsAnAddOn(t *testing.
 			assert.Equalf(t, addOn, entry.Plan.AddOnName, "%s", key)
 		}
 	}
+	syncExceptions, ok := byKey["accounting-sync-exceptions-by-week"]
+	require.True(t, ok, "canned report accounting-sync-exceptions-by-week is missing")
+	assert.True(t, syncExceptions.Available,
+		"the sync exceptions read accounting integrations, a base feature")
+	assert.Nil(t, syncExceptions.Plan)
 }
 
 func TestCannedLibrary_EveryFeatureOnLeavesEveryReportAvailable(t *testing.T) {

@@ -431,6 +431,7 @@ func TestLocate_AppendsMoveAndAdvancesContinuity(t *testing.T) {
 			OrganizationID:    orgID,
 			BusinessUnitID:    buID,
 			ServiceTypeID:     pulid.MustNew("svc_"),
+			ShipmentTypeID:    pulid.MustNew("sht_"),
 			CustomerID:        pulid.MustNew("cust_"),
 			FormulaTemplateID: pulid.MustNew("ft_"),
 			BOL:               "BOL-1",

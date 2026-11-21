@@ -22,6 +22,7 @@ import (
 	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"github.com/emoss08/trenova/internal/testutil/pgstubtest"
 	"github.com/emoss08/trenova/internal/testutil/plantest"
+	"github.com/emoss08/trenova/internal/testutil/validationtest"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/testutil"
 	"github.com/stretchr/testify/assert"
@@ -234,7 +235,10 @@ func setupOrganizationHandler(
 		SecurityConfig: &cfg.Security,
 		StorageConfig:  &cfg.Storage,
 		Validator: organizationservice.NewValidator(
-			organizationservice.ValidatorParams{DB: pgstubtest.NewConnection(t)},
+			organizationservice.ValidatorParams{
+				Integrity: validationtest.NewIntegrity(),
+				DB:        pgstubtest.NewConnection(t),
+			},
 		),
 		AuditService: &mocks.NoopAuditService{},
 		PlanFields:   plantest.Keeper(nil),

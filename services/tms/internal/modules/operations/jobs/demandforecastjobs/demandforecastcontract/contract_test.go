@@ -5,6 +5,7 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/interceptors"
 	"github.com/emoss08/trenova/internal/testutil/mocks/kernelportsmock"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
@@ -56,7 +57,9 @@ func TestStartFitting_StartsOneFitPerTenantOnTheDispatchQueue(t *testing.T) {
 		options.WorkflowIDConflictPolicy,
 		"turning the setting on twice while a fit runs joins the running fit",
 	)
-	assert.Equal(t, "org_a", options.Priority.FairnessKey)
+	assert.Empty(t, options.Priority.FairnessKey, "the client's fairness interceptor sets the key")
+	assert.Equal(t, "org_a", interceptors.FairnessKey(t.Context(), args...),
+		"the payload carries the tenant the interceptor keys the fit by")
 	assert.Equal(t, []any{&FitPayload{
 		OrganizationID: tenantInfo.OrgID,
 		BusinessUnitID: tenantInfo.BuID,

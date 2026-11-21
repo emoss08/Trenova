@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/app/telematicsservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/telematics"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/telematicsports"
+	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -72,8 +73,9 @@ func newTractorReadFixture(grants ...string) *tractorReadFixture {
 		root: &Deps{
 			Core: &resolvercore.Core{PermissionEngine: engine},
 			TelematicsService: telematicsservice.New(telematicsservice.Params{
-				Repo:   repo,
-				Logger: zap.NewNop(),
+				Repo:     repo,
+				Logger:   zap.NewNop(),
+				Features: plantest.AllFeatures(),
 			}),
 		},
 		orgID: pulid.MustNew("org_"),

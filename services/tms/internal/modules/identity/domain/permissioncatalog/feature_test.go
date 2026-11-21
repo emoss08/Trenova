@@ -14,7 +14,11 @@ func TestEveryDefaultResourceDeclaresAFeatureTheCatalogKnows(t *testing.T) {
 	t.Parallel()
 
 	defs := Default().All()
-	require.Len(t, defs, 198)
+	names := make([]string, 0, len(defs))
+	for _, def := range defs {
+		names = append(names, def.Resource)
+	}
+	require.Len(t, names, 199)
 
 	for _, def := range defs {
 		assert.NotEmpty(t, def.Feature, "resource %s declares no feature", def.Resource)
@@ -87,7 +91,10 @@ func TestResourcesBelongToTheFeaturesTheCatalogueAssignsThem(t *testing.T) {
 		{permission.ResourceDetention, platformcatalog.FeatureDetention, "add-on RTE"},
 		{permission.ResourceIFTAReturn, platformcatalog.FeatureFuelTax, "add-on FUL"},
 		{permission.ResourceDriverSettlement, platformcatalog.FeatureSettlement, "add-on PAY"},
-		{permission.ResourceDriverPortal, platformcatalog.FeatureDriverPortal, "add-on PAY"},
+		{permission.ResourceDriverPortal, platformcatalog.FeatureDriverPortal, "base: the driver portal"},
+		{permission.ResourceAccountingIntegration, platformcatalog.FeatureAccountingIntegration, "base: accounting integrations"},
+		{permission.ResourceAccountingSync, platformcatalog.FeatureAccountingIntegration, "base: accounting integrations"},
+		{permission.ResourceAccountingReconciliation, platformcatalog.FeatureAccounting, "add-on ACC"},
 		{permission.ResourceWorkerPTO, platformcatalog.FeatureWorkforceTimeOff, "add-on HRS"},
 		{permission.ResourceTimesheet, platformcatalog.FeatureWorkforceTimeTracking, "add-on HRS"},
 		{permission.ResourceTrainingCourse, platformcatalog.FeatureWorkforceTalent, "add-on HRS"},

@@ -19,6 +19,7 @@ import (
 	"github.com/emoss08/trenova/internal/testutil/mocks/customfieldportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/trailerportsmock"
 	"github.com/emoss08/trenova/internal/testutil/pgstubtest"
+	"github.com/emoss08/trenova/internal/testutil/validationtest"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/testutil"
@@ -59,7 +60,8 @@ func setupTrailerHandler(t *testing.T, repo *trailerportsmock.MockTrailerReposit
 		Logger: logger,
 		Repo:   repo,
 		Validator: trailerservice.NewValidator(trailerservice.ValidatorParams{
-			DB: pgstubtest.NewConnection(t, "equipment_types", "equipment_manufacturers", "fleet_codes"),
+			Integrity: validationtest.NewIntegrity(),
+			DB:        pgstubtest.NewConnection(t, "equipment_types", "equipment_manufacturers", "fleet_codes"),
 		}),
 		AuditService:              &mocks.NoopAuditService{},
 		Realtime:                  &mocks.NoopRealtimeService{},

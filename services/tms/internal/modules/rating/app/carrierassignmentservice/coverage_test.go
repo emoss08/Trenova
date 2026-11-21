@@ -103,6 +103,7 @@ func coverageShipment(
 		OrganizationID:    tenantInfo.OrgID,
 		BusinessUnitID:    tenantInfo.BuID,
 		ServiceTypeID:     pulid.MustNew("svc_"),
+		ShipmentTypeID:    pulid.MustNew("sht_"),
 		CustomerID:        pulid.MustNew("cust_"),
 		BOL:               "BOL-1",
 		FormulaTemplateID: pulid.MustNew("ft_"),

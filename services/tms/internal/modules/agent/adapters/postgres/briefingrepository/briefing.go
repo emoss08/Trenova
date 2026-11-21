@@ -212,15 +212,11 @@ func (r *repository) DeleteBefore(
 			limit = maxDeleteBatch
 		}
 
-		b := briefingdb.Briefings
-		stale := b.As("stale")
-		entitled, entitledErr := r.entitlements.ForWork(ctx, stale.OrganizationID.Col)
-		if entitledErr != nil {
-			return 0, entitledErr
+		batch, batchErr := r.staleBatch(ctx, req.BeforeDate, limit)
+		if batchErr != nil {
+			return 0, batchErr
 		}
-		n, err := b.AllTenants().
-			Where(staleBatch(stale, entitled, req.BeforeDate, limit)).
-			Delete(ctx, r.db.Keel(ctx))
+		n, err := briefingdb.Briefings.AllTenants().Where(batch).Delete(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return 0, fmt.Errorf("delete briefings: %w", err)
 		}
@@ -229,18 +225,23 @@ func (r *repository) DeleteBefore(
 	})
 }
 
-func staleBatch(
-	stale *briefingdb.BriefingsTable,
-	entitled keel.Pred,
+func (r *repository) staleBatch(
+	ctx context.Context,
 	beforeDate string,
 	limit int,
-) keel.Pred {
+) (keel.Pred, error) {
 	b := briefingdb.Briefings
+	stale := b.As("stale")
+	entitled, err := r.entitlements.ForWork(ctx, stale.OrganizationID.Col)
+	if err != nil {
+		return nil, err
+	}
+
 	return b.ID.InQuery(stale.AllTenants().
 		Pick(stale.ID).
 		Where(entitled, stale.BriefingDate.Lt(beforeDate)).
 		Order(stale.BriefingDate.Asc()).
-		Limit(limit))
+		Limit(limit)), nil
 }
 
 func (r *repository) stamp(
