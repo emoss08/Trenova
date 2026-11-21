@@ -558,12 +558,15 @@ func (e SharedCommandFailureKind) Valid() bool {
 
 // Defines values for SharedEntryRefusedCode.
 const (
-	SharedEntryNotPlaced SharedEntryRefusedCode = "not_placed"
+	SharedEntryImplausible SharedEntryRefusedCode = "implausible"
+	SharedEntryNotPlaced   SharedEntryRefusedCode = "not_placed"
 )
 
 // Valid indicates whether the value is a known member of the SharedEntryRefusedCode enum.
 func (e SharedEntryRefusedCode) Valid() bool {
 	switch e {
+	case SharedEntryImplausible:
+		return true
 	case SharedEntryNotPlaced:
 		return true
 	default:
@@ -1866,12 +1869,22 @@ type SharedCommandFailureKind string
 type SharedEntryRefused struct {
 	// Code `not_placed`: the instance is not a tenant placed on this server, or it was already
 	// reported `removed`. Stop reporting it.
+	// `implausible` (usage reports only): a reading of the tenant's in the report is more than
+	// its plan allows (an hour's count above the allowance's ceiling, or a level above twice
+	// it), so none of the tenant's readings in the report was recorded. Do not send those readings again; report the tenant's later hours as usual.
+	// A refused entry is never recorded. Treat a code you do not know as a refusal of the
+	// entry's readings in that report: do not send them again.
 	Code       SharedEntryRefusedCode `json:"code"`
 	InstanceId openapi_types.UUID     `json:"instanceId"`
 }
 
 // SharedEntryRefusedCode `not_placed`: the instance is not a tenant placed on this server, or it was already
 // reported `removed`. Stop reporting it.
+// `implausible` (usage reports only): a reading of the tenant's in the report is more than
+// its plan allows (an hour's count above the allowance's ceiling, or a level above twice
+// it), so none of the tenant's readings in the report was recorded. Do not send those readings again; report the tenant's later hours as usual.
+// A refused entry is never recorded. Treat a code you do not know as a refusal of the
+// entry's readings in that report: do not send them again.
 type SharedEntryRefusedCode string
 
 // SharedImportCommand Make the tenant from an archive instead of from `firstAdministrator`: the tenant is moving
@@ -3538,7 +3551,9 @@ type ClientInterface interface {
 	// report; send more in several. Report at least every 15 minutes: a usage window closes and is
 	// billed 30 minutes after it ends, and readings that arrive later are kept but not billed. A
 	// reading for an instance that is not a tenant placed on this server is not recorded, and that
-	// instance is named in `refused`; the rest are recorded.
+	// instance is named in `refused`; the rest are recorded. A tenant with any reading in the
+	// report that its plan does not allow (`implausible`) has none of its readings in the report
+	// recorded, and is named in `refused`; every other tenant's are recorded.
 	//
 	// The answer covers every tenant placed on the server, whether or not the report had readings
 	// for it, so a server learns what each tenant may do with an empty report: each tenant's open
@@ -3561,7 +3576,9 @@ type ClientInterface interface {
 	// report; send more in several. Report at least every 15 minutes: a usage window closes and is
 	// billed 30 minutes after it ends, and readings that arrive later are kept but not billed. A
 	// reading for an instance that is not a tenant placed on this server is not recorded, and that
-	// instance is named in `refused`; the rest are recorded.
+	// instance is named in `refused`; the rest are recorded. A tenant with any reading in the
+	// report that its plan does not allow (`implausible`) has none of its readings in the report
+	// recorded, and is named in `refused`; every other tenant's are recorded.
 	//
 	// The answer covers every tenant placed on the server, whether or not the report had readings
 	// for it, so a server learns what each tenant may do with an empty report: each tenant's open
@@ -4112,7 +4129,9 @@ func (c *Client) ListSharedTenants(ctx context.Context, params *ListSharedTenant
 // report; send more in several. Report at least every 15 minutes: a usage window closes and is
 // billed 30 minutes after it ends, and readings that arrive later are kept but not billed. A
 // reading for an instance that is not a tenant placed on this server is not recorded, and that
-// instance is named in `refused`; the rest are recorded.
+// instance is named in `refused`; the rest are recorded. A tenant with any reading in the
+// report that its plan does not allow (`implausible`) has none of its readings in the report
+// recorded, and is named in `refused`; every other tenant's are recorded.
 //
 // The answer covers every tenant placed on the server, whether or not the report had readings
 // for it, so a server learns what each tenant may do with an empty report: each tenant's open
@@ -4145,7 +4164,9 @@ func (c *Client) ReportSharedUsageWithBody(ctx context.Context, contentType stri
 // report; send more in several. Report at least every 15 minutes: a usage window closes and is
 // billed 30 minutes after it ends, and readings that arrive later are kept but not billed. A
 // reading for an instance that is not a tenant placed on this server is not recorded, and that
-// instance is named in `refused`; the rest are recorded.
+// instance is named in `refused`; the rest are recorded. A tenant with any reading in the
+// report that its plan does not allow (`implausible`) has none of its readings in the report
+// recorded, and is named in `refused`; every other tenant's are recorded.
 //
 // The answer covers every tenant placed on the server, whether or not the report had readings
 // for it, so a server learns what each tenant may do with an empty report: each tenant's open
@@ -5302,7 +5323,9 @@ type ClientWithResponsesInterface interface {
 	// report; send more in several. Report at least every 15 minutes: a usage window closes and is
 	// billed 30 minutes after it ends, and readings that arrive later are kept but not billed. A
 	// reading for an instance that is not a tenant placed on this server is not recorded, and that
-	// instance is named in `refused`; the rest are recorded.
+	// instance is named in `refused`; the rest are recorded. A tenant with any reading in the
+	// report that its plan does not allow (`implausible`) has none of its readings in the report
+	// recorded, and is named in `refused`; every other tenant's are recorded.
 	//
 	// The answer covers every tenant placed on the server, whether or not the report had readings
 	// for it, so a server learns what each tenant may do with an empty report: each tenant's open
@@ -5325,7 +5348,9 @@ type ClientWithResponsesInterface interface {
 	// report; send more in several. Report at least every 15 minutes: a usage window closes and is
 	// billed 30 minutes after it ends, and readings that arrive later are kept but not billed. A
 	// reading for an instance that is not a tenant placed on this server is not recorded, and that
-	// instance is named in `refused`; the rest are recorded.
+	// instance is named in `refused`; the rest are recorded. A tenant with any reading in the
+	// report that its plan does not allow (`implausible`) has none of its readings in the report
+	// recorded, and is named in `refused`; every other tenant's are recorded.
 	//
 	// The answer covers every tenant placed on the server, whether or not the report had readings
 	// for it, so a server learns what each tenant may do with an empty report: each tenant's open
@@ -7115,7 +7140,9 @@ func (c *ClientWithResponses) ListSharedTenantsWithResponse(ctx context.Context,
 // report; send more in several. Report at least every 15 minutes: a usage window closes and is
 // billed 30 minutes after it ends, and readings that arrive later are kept but not billed. A
 // reading for an instance that is not a tenant placed on this server is not recorded, and that
-// instance is named in `refused`; the rest are recorded.
+// instance is named in `refused`; the rest are recorded. A tenant with any reading in the
+// report that its plan does not allow (`implausible`) has none of its readings in the report
+// recorded, and is named in `refused`; every other tenant's are recorded.
 //
 // The answer covers every tenant placed on the server, whether or not the report had readings
 // for it, so a server learns what each tenant may do with an empty report: each tenant's open
@@ -7144,7 +7171,9 @@ func (c *ClientWithResponses) ReportSharedUsageWithBodyWithResponse(ctx context.
 // report; send more in several. Report at least every 15 minutes: a usage window closes and is
 // billed 30 minutes after it ends, and readings that arrive later are kept but not billed. A
 // reading for an instance that is not a tenant placed on this server is not recorded, and that
-// instance is named in `refused`; the rest are recorded.
+// instance is named in `refused`; the rest are recorded. A tenant with any reading in the
+// report that its plan does not allow (`implausible`) has none of its readings in the report
+// recorded, and is named in `refused`; every other tenant's are recorded.
 //
 // The answer covers every tenant placed on the server, whether or not the report had readings
 // for it, so a server learns what each tenant may do with an empty report: each tenant's open
