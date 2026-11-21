@@ -11,7 +11,7 @@
 #   PDFium     bblanchon/pdfium-binaries chromium/7881 (the build pdfium-render 0.9.4 binds),
 #              BSD-3-Clause (PDFium) and MIT (the build scripts); the tarball's SHA-256 is
 #              checked below, per architecture.
-#   libheif    Debian trixie 1.19.8-1+deb13u1, LGPL-3.0, linked dynamically (the worker opens
+#   libheif    Debian trixie 1.23.6-2~deb13u1, LGPL-3.0, linked dynamically (the worker opens
 #              it at run time, so the library can be replaced); its HEVC plugin and libde265
 #              1.0.15-1+deb13u2 (LGPL-3.0), and its AV1 plugin and dav1d 1.5.1-1
 #              (BSD-2-Clause), which trixie's libheif1 depends on. apt checks each package's
@@ -58,10 +58,10 @@ FROM debian:${DEBIAN_RELEASE}-slim@sha256:a72b4433de1cf7d6bae0c4cee74d0547f58601
 RUN set -eux; \
     apt-get update; \
     apt-get install -y --no-install-recommends \
-      libheif1=1.19.8-1+deb13u1 \
-      libheif-plugin-libde265=1.19.8-1+deb13u1 \
+      libheif1=1.23.6-2~deb13u1 \
+      libheif-plugin-libde265=1.23.6-2~deb13u1 \
       libde265-0=1.0.15-1+deb13u2 \
-      libheif-plugin-dav1d=1.19.8-1+deb13u1 \
+      libheif-plugin-dav1d=1.23.6-2~deb13u1 \
       libdav1d7=1.5.1-1 \
       fonts-liberation2=1:2.1.5-3; \
     rm -rf /var/lib/apt/lists/* /var/cache/apt/*
@@ -88,8 +88,8 @@ ENV CARGO_BUILD_JOBS=${CARGO_BUILD_JOBS}
 RUN set -eux; \
     apt-get update; \
     apt-get install -y --no-install-recommends \
-      libheif1=1.19.8-1+deb13u1 libheif-plugin-libde265=1.19.8-1+deb13u1 libde265-0=1.0.15-1+deb13u2 \
-      libheif-plugin-dav1d=1.19.8-1+deb13u1 libdav1d7=1.5.1-1 \
+      libheif1=1.23.6-2~deb13u1 libheif-plugin-libde265=1.23.6-2~deb13u1 libde265-0=1.0.15-1+deb13u2 \
+      libheif-plugin-dav1d=1.23.6-2~deb13u1 libdav1d7=1.5.1-1 \
       fonts-liberation2=1:2.1.5-3; \
     rm -rf /var/lib/apt/lists/*
 COPY --from=natives /out/ /

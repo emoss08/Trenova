@@ -315,7 +315,7 @@ The PDF targets load PDFium from `TRENOVA_PDFIUM_LIBRARY` and seed from `tests/f
 | Library | Version | Licence | How it ships |
 |---|---|---|---|
 | PDFium (bblanchon/pdfium-binaries) | chromium/7881 | BSD-3-Clause; build scripts MIT | downloaded in the image build, SHA-256 checked per architecture |
-| libheif | 1.19.8 (Debian trixie) | LGPL-3.0 | Debian package, opened at run time (dynamically linked, replaceable) |
+| libheif | 1.23.6 (Debian trixie) | LGPL-3.0 | Debian package, opened at run time (dynamically linked, replaceable) |
 | libde265 (libheif's HEVC plugin) | 1.0.15 | LGPL-3.0 | Debian package |
 | dav1d (libheif's AV1 plugin, which trixie's libheif1 requires) | 1.5.1 | BSD-2-Clause | Debian package |
 | libwebp | as vendored by libwebp-sys 0.14.4 | BSD-3-Clause | compiled into the binary |
