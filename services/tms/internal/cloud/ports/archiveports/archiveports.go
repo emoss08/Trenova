@@ -22,6 +22,7 @@ type Bucket interface {
 
 type Buckets interface {
 	Open(location *tenantarchive.Location, credentials *tenantarchive.Credentials) (Bucket, error)
+	CheckEndpoint(endpoint string) error
 }
 
 type Dangling struct {

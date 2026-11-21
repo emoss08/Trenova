@@ -40,6 +40,10 @@ type tenantState struct {
 	nightly   []tms.NightlyGrant
 	pending   map[string]tenantEntry
 	posted    map[string]int
+
+	heldNightly    *tms.NightlyGrant
+	nightlyDeletes int
+	refuseNightly  string
 }
 
 func newTenantState() tenantState {

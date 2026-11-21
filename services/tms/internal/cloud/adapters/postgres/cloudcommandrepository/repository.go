@@ -119,7 +119,11 @@ func (r *repository) Failures(
 		rows, err := c.Where(
 			c.InstanceID.In(instanceIDs...),
 			c.State.Eq(tenantcommand.StateFailed),
-			c.Kind.In(tenantcommand.KindArchive, tenantcommand.KindImport),
+			c.Kind.In(
+				tenantcommand.KindArchive,
+				tenantcommand.KindRestore,
+				tenantcommand.KindImport,
+			),
 			c.FinishedAt.Gt(failureWindowStart(r.clock())),
 		).Order(c.FinishedAt.Desc()).Limit(len(instanceIDs)*failuresPerTenant).List(ctx, r.db.Keel(ctx))
 		if err != nil {
@@ -159,6 +163,17 @@ func (r *repository) SetGrant(ctx context.Context, grant *tenantcommand.Grant) e
 			keel.OnConflict(g.Name).Update(g.Location, g.SealedAccess, g.ExpiresAt, g.UpdatedAt),
 		); err != nil {
 			return fmt.Errorf("record the nightly archive location: %w", err)
+		}
+		return nil
+	})
+}
+
+func (r *repository) DeleteGrant(ctx context.Context, name string) error {
+	ctx = dbscope.WithSystem(ctx, grantReason)
+	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
+		g := tenantcommanddb.Grants
+		if _, err := g.Where(g.Name.Eq(name)).Delete(ctx, r.db.Keel(ctx)); err != nil {
+			return fmt.Errorf("remove the nightly archive location: %w", err)
 		}
 		return nil
 	})

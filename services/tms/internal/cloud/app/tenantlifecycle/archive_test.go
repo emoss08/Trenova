@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/cloud/domain/tenantarchive"
 	"github.com/emoss08/trenova/internal/cloud/domain/tenantcommand"
 	"github.com/emoss08/trenova/internal/cloud/jobs/archivejobs/archivejobscontract"
+	"github.com/emoss08/trenova/internal/cloud/ports/cloudtenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/managedfeatures"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -251,7 +252,117 @@ func TestAFailedImportIsReportedOnceAsACommandFailure(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, page.Tenants[0].CommandFailures, 1)
 	assert.Equal(t, cloudtenant.CommandFailure{
-		CommandID: importID, Kind: "import", Reason: "an address is already used on this server",
+		CommandID: importID, Kind: "import", Code: "taken",
+		Reason: "an address is already used on this server",
 	}, page.Tenants[0].CommandFailures[0])
 	assert.Nil(t, page.Tenants[0].Refused)
+}
+
+const (
+	endpointRefusal = "the archive endpoint's host is not in this server's managed.archive.allowedEndpoints"
+	refusedEndpoint = "https://objects.elsewhere.test"
+)
+
+func nightlyStorage() *tenantarchive.Access {
+	access := target(tenantarchive.TenantsRoot, true)
+	return access
+}
+
+func TestTheNightlyStorageIsHeldAndNightlyArchivesGoUnderItsPrefix(t *testing.T) {
+	t.Parallel()
+	r := newRig(t, true)
+	made(t, r, cloudtenant.LifecycleActive)
+	require.NoError(t, r.svc.SetNightlyGrant(t.Context(), nightlyStorage(), time.Time{}))
+	require.NotNil(t, r.commands.grant)
+	assert.Equal(t, "s3://archives/tenants/", r.commands.grant.Location)
+	assert.NotContains(t, r.commands.grant.SealedAccess, testSecret)
+
+	page, err := r.svc.NightlyTargets(t.Context(), "", 10)
+	require.NoError(t, err)
+	require.Len(t, page.Targets, 1)
+	day := time.Date(2026, 11, 20, 0, 0, 0, 0, time.UTC)
+	cmd, access, err := r.svc.BeginNightly(t.Context(), &page.Targets[0], day)
+	require.NoError(t, err)
+	require.NotNil(t, cmd)
+	require.NotNil(t, access)
+	assert.Equal(t, "tenants/"+instanceA+"/nightly/2026-11-20/", access.Location.Prefix)
+	assert.Equal(t, "archives", access.Location.Bucket)
+	current := access.CurrentKey()
+	require.NotNil(t, current, "a nightly archive is written under the current key")
+	assert.Equal(t, "region-1", current.ID)
+}
+
+func TestANightlyStorageOutsideTenantsOrAtARefusedEndpointIsNotHeld(t *testing.T) {
+	t.Parallel()
+	r := newRig(t, true)
+	for _, prefix := range []string{"", "tenants/" + instanceA + "/", "archives/", "tenants"} {
+		access := nightlyStorage()
+		access.Location.Prefix = prefix
+		err := r.svc.SetNightlyGrant(t.Context(), access, time.Time{})
+		require.ErrorIs(t, err, tenantarchive.ErrNightlyPrefix, prefix)
+	}
+
+	r.buckets.refused = refusedEndpoint
+	access := nightlyStorage()
+	access.Location.Endpoint = refusedEndpoint
+	err := r.svc.SetNightlyGrant(t.Context(), access, time.Time{})
+	refusal, ok := tenantarchive.RefusalOf(err)
+	require.True(t, ok, "%v", err)
+	assert.Equal(t, tenantarchive.RefusalLocation, refusal.Code)
+	assert.NotContains(t, err.Error(), testSecret)
+
+	plain := nightlyStorage()
+	plain.Location.Endpoint = "http://objects.test"
+	require.ErrorIs(t, r.svc.SetNightlyGrant(t.Context(), plain, time.Time{}),
+		tenantarchive.ErrLocationInvalid)
+	assert.Nil(t, r.commands.grant, "a refused storage is never held")
+}
+
+func TestRemovingTheNightlyStorageStopsNightlyArchives(t *testing.T) {
+	t.Parallel()
+	r := newRig(t, true)
+	made(t, r, cloudtenant.LifecycleActive)
+	_, err := r.svc.NightlyTargets(t.Context(), "", 10)
+	require.ErrorIs(t, err, cloudtenantports.ErrGrantMissing, "no storage is held yet")
+
+	require.NoError(t, r.svc.SetNightlyGrant(t.Context(), nightlyStorage(), time.Time{}))
+	page, err := r.svc.NightlyTargets(t.Context(), "", 10)
+	require.NoError(t, err)
+	require.Len(t, page.Targets, 1)
+
+	require.NoError(t, r.svc.RemoveNightlyGrant(t.Context()))
+	assert.Nil(t, r.commands.grant)
+	_, err = r.svc.NightlyTargets(t.Context(), "", 10)
+	require.ErrorIs(t, err, cloudtenantports.ErrGrantMissing)
+	_, _, err = r.svc.BeginNightly(t.Context(), &page.Targets[0], time.Unix(now, 0))
+	require.ErrorIs(t, err, cloudtenantports.ErrGrantMissing)
+
+	dedicated := newRig(t, false)
+	require.ErrorIs(t, dedicated.svc.RemoveNightlyGrant(t.Context()), tenantlifecycle.ErrNotShared)
+	require.ErrorIs(t, dedicated.svc.SetNightlyGrant(t.Context(), nightlyStorage(), time.Time{}),
+		tenantlifecycle.ErrNotShared)
+}
+
+func TestAStorageOrKeyFailureIsReportedWithItsCode(t *testing.T) {
+	t.Parallel()
+	r := newRig(t, true)
+	made(t, r, cloudtenant.LifecycleSuspended)
+	req := &tenantlifecycle.RestoreRequest{
+		CommandID:    restoreID,
+		ExpectSHA256: strings.Repeat("b", 64),
+		Access:       target("tenants/"+instanceA+"/nightly/2026-11-19/", true),
+	}
+	_, err := r.svc.StartRestore(t.Context(), instanceA, req)
+	require.NoError(t, err)
+	require.NoError(t, r.svc.FailRestore(t.Context(), restoreID, tenantarchive.Refuse(
+		tenantarchive.RefusalKeyAbsent,
+		"the archive was sealed with archive key region-0, which the command does not carry",
+	), false))
+	page, err := r.svc.List(t.Context(), "", 10)
+	require.NoError(t, err)
+	require.Len(t, page.Tenants[0].CommandFailures, 1)
+	failure := page.Tenants[0].CommandFailures[0]
+	assert.Equal(t, restoreID, failure.CommandID)
+	assert.Equal(t, "restore", failure.Kind)
+	assert.Equal(t, string(tenantarchive.RefusalKeyAbsent), failure.Code)
 }

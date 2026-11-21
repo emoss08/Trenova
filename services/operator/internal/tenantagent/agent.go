@@ -25,16 +25,17 @@ import (
 )
 
 const (
-	DefaultPoll        = 15 * time.Second
-	DefaultUsageEvery  = 15 * time.Minute
-	DefaultEventsEvery = time.Minute
-	DefaultStatusEvery = time.Minute
-	DefaultConcurrency = 4
-	maxBackoff         = 5 * time.Minute
-	healthyFor         = 3
-	tmsComponent       = "tms"
-	maxMessage         = 500
-	maxFailures        = 20
+	DefaultPoll         = 15 * time.Second
+	DefaultUsageEvery   = 15 * time.Minute
+	DefaultEventsEvery  = time.Minute
+	DefaultStatusEvery  = time.Minute
+	DefaultConcurrency  = 4
+	maxBackoff          = 5 * time.Minute
+	healthyFor          = 3
+	tmsComponent        = "tms"
+	maxMessage          = 500
+	maxComponentMessage = 200
+	maxFailures         = 20
 )
 
 var ErrNoDesired = errors.New("the control plane has not answered with the tenants yet")
@@ -66,6 +67,7 @@ type TMS interface {
 		instanceID, kind, commandID string,
 	) (tms.TenantCommand, error)
 	PutNightlyGrant(ctx context.Context, grant *tms.NightlyGrant) error
+	DeleteNightlyGrant(ctx context.Context) error
 }
 
 type SupportKeys interface {
@@ -123,11 +125,7 @@ type Agent struct {
 	sent     map[uuid.UUID]string
 	silenced map[uuid.UUID]struct{}
 	refusals map[string]refusal
-	asked    map[string]struct{}
-
-	storageAt time.Time
-	nightly   string
-	nightlyAt time.Time
+	storage  storageState
 
 	lastReport   []byte
 	lastReportAt time.Time
@@ -173,7 +171,7 @@ func New(params *Params) (*Agent, error) {
 		sent:     make(map[uuid.UUID]string),
 		silenced: make(map[uuid.UUID]struct{}),
 		refusals: make(map[string]refusal),
-		asked:    make(map[string]struct{}),
+		storage:  newStorageState(p.Poll),
 	}, nil
 }
 
@@ -348,18 +346,17 @@ func (a *Agent) converge(
 	for _, s := range held {
 		byID[s.InstanceID] = s
 	}
+	a.noteSignals(held)
 	var (
-		plans   []plan
-		starts  []start
-		wanted  []targetKey
-		failed  []error
-		anyCmds bool
+		plans  []plan
+		starts []start
+		wanted []targetKey
+		failed []error
 	)
 	for i := range desired.Tenants {
 		entry := &desired.Tenants[i]
 		id := entry.InstanceId.String()
 		status := byID[id]
-		anyCmds = anyCmds || len(entry.Commands) > 0
 		body, err := sonic.Marshal(entry)
 		if err != nil {
 			return held, fmt.Errorf("encode the tenant %s: %w", entry.InstanceId, err)
@@ -390,7 +387,8 @@ func (a *Agent) converge(
 			starts = append(starts, start{instance: entry.InstanceId, cmd: *next})
 		}
 	}
-	targets := a.targets(ctx, wanted, anyCmds)
+	targets := a.targets(ctx, desired.StorageRevision, wanted)
+	a.syncNightly(ctx)
 	applied, perr := a.apply(ctx, plans, targets, byID)
 	if perr != nil {
 		failed = append(failed, perr)
@@ -508,8 +506,16 @@ func (a *Agent) report(
 	}
 	if tmsErr != nil {
 		message := clip("the TMS's managed listener cannot be read: " + tmsErr.Error())
+		component := clipTo(message, maxComponentMessage)
 		report.Message = &message
-		report.Components[0].Message = &message
+		report.Components[0].Message = &component
+	}
+	if storage, known := a.storageComponent(); known {
+		report.Components = append(report.Components, storage)
+		if !storage.Ready && report.Ready {
+			report.Ready = false
+			report.Message = storage.Message
+		}
 	}
 	body, err := sonic.Marshal(report)
 	if err != nil {
@@ -603,9 +609,13 @@ func (a *Agent) statusOf(id uuid.UUID, s *tms.TenantStatus) instanceapi.SharedTe
 }
 
 func clip(s string) string {
+	return clipTo(s, maxMessage)
+}
+
+func clipTo(s string, limit int) string {
 	runes := []rune(s)
-	if len(runes) <= maxMessage {
+	if len(runes) <= limit {
 		return s
 	}
-	return string(runes[:maxMessage-1]) + "…"
+	return string(runes[:limit-1]) + "…"
 }

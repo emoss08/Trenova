@@ -199,7 +199,7 @@ func (r *importRun) admit(m *tenantarchive.Manifest) error {
 	key, err := r.req.Access.KeyByID(m.Encryption.KeyID)
 	if err != nil {
 		return tenantarchive.Refuse(
-			tenantarchive.RefusalKey,
+			tenantarchive.RefusalKeyAbsent,
 			"the archive was sealed with archive key "+m.Encryption.KeyID+", which the command does not carry",
 		)
 	}

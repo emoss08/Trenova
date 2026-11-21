@@ -28,10 +28,9 @@ import (
 )
 
 const (
-	progressEvery       = 5 * time.Second
-	errorNotRestoring   = "CloudTenantNotRestoring"
-	errorNoNightlyGrant = "CloudTenantNoNightlyGrant"
-	nightlyPageSize     = 100
+	progressEvery     = 5 * time.Second
+	errorNotRestoring = "CloudTenantNotRestoring"
+	nightlyPageSize   = 100
 )
 
 type ActivitiesParams struct {

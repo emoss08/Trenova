@@ -39,6 +39,7 @@ func (s *Server) routeArchives(mux *http.ServeMux) {
 		s.getCommand(tms.CommandImport),
 	)
 	mux.HandleFunc("PUT /managed/v1/tenants/archive-storage", s.putNightly)
+	mux.HandleFunc("DELETE /managed/v1/tenants/archive-storage", s.deleteNightly)
 }
 
 func (s *Server) RefuseCommand(commandID, reason string) {
@@ -93,6 +94,27 @@ func (s *Server) NightlyGrants() []tms.NightlyGrant {
 	return slices.Clone(s.tenants.nightly)
 }
 
+func (s *Server) NightlyGrantDeletes() int {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.tenants.nightlyDeletes
+}
+
+func (s *Server) HeldNightlyGrant() (tms.NightlyGrant, bool) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if s.tenants.heldNightly == nil {
+		return tms.NightlyGrant{}, false
+	}
+	return *s.tenants.heldNightly, true
+}
+
+func (s *Server) RefuseNightlyGrant(reason string) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.tenants.refuseNightly = reason
+}
+
 func (s *Server) SetTenantGrants(instanceID string, grants []tms.SupportGrant) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -119,15 +141,29 @@ func (s *Server) FinishArchive(commandID string, size int64, sha string, takenAt
 }
 
 func (s *Server) FailCommand(commandID, reason string) {
+	s.FailCommandWithCode(commandID, "failed", reason)
+}
+
+func (s *Server) FailCommandWithCode(commandID, code, reason string) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	c := s.tenants.commands[commandID]
 	c.state = "failed"
 	status := s.tenants.statuses[c.instance]
 	status.CommandFailures = append([]tms.TenantCommandFailure{{
-		CommandID: c.id, Kind: c.kind, Reason: reason,
+		CommandID: c.id, Kind: c.kind, Code: code, Reason: reason,
 	}}, status.CommandFailures...)
 	s.tenants.statuses[c.instance] = status
+}
+
+func (s *Server) FailNightly(instanceID, commandID, code, reason string) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	status := s.tenants.statuses[instanceID]
+	status.CommandFailures = append([]tms.TenantCommandFailure{{
+		CommandID: commandID, Kind: tms.CommandArchive, Code: code, Reason: reason,
+	}}, status.CommandFailures...)
+	s.tenants.statuses[instanceID] = status
 }
 
 func (s *Server) FinishRestore(commandID string, at time.Time, reason string) {
@@ -315,7 +351,32 @@ func (s *Server) putNightly(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	s.mu.Lock()
+	defer s.mu.Unlock()
+	if !s.tenants.shared {
+		problem(w, http.StatusConflict, "tenants are managed only on a shared server")
+		return
+	}
+	switch {
+	case grant.Prefix != "tenants/":
+		problem(w, http.StatusBadRequest, "the nightly archive storage's prefix must be tenants/")
+		return
+	case s.tenants.refuseNightly != "":
+		problem(w, http.StatusBadRequest, s.tenants.refuseNightly)
+		return
+	}
 	s.tenants.nightly = append(s.tenants.nightly, grant)
-	s.mu.Unlock()
+	s.tenants.heldNightly = &grant
 	writeJSON(w, map[string]any{"expiresAt": grant.ExpiresAt})
+}
+
+func (s *Server) deleteNightly(w http.ResponseWriter, _ *http.Request) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if !s.tenants.shared {
+		problem(w, http.StatusConflict, "tenants are managed only on a shared server")
+		return
+	}
+	s.tenants.nightlyDeletes++
+	s.tenants.heldNightly = nil
+	w.WriteHeader(http.StatusNoContent)
 }

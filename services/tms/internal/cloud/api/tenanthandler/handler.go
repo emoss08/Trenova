@@ -60,6 +60,7 @@ type Lifecycle interface {
 		kind tenantcommand.Kind,
 	) (*tenantcommand.View, error)
 	SetNightlyGrant(ctx context.Context, access *tenantarchive.Access, expiresAt time.Time) error
+	RemoveNightlyGrant(ctx context.Context) error
 }
 
 type EntryBody struct {

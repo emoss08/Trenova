@@ -1195,7 +1195,9 @@ bootstrap (`internal/importer`, `values/import.go`, the chart's release Job). `g
   and the chart runs the release Job while `import.id` is set even though the release is stopped:
   migrations, roles, publication, then the `import` container in place of `bootstrap`. The import
   runs whatever the lifecycle; the workloads follow the lifecycle.
-- **The keys.** `import.archiveKeys` (served only) are written by the operator into a Secret,
+- **The keys.** `import.archiveKeys` (served only) is exactly one key, `current`, made by Trenova
+  for this import alone (the copy's data key is re-wrapped under it); `values.CheckImport` refuses
+  any other count (`invalid`), so no shared server's key ever reaches a dedicated instance. It is written by the operator into a Secret,
   `<fullname>-import-keys` (`archiveKeys`, annotated with the import id), and reach the container as
   `TRENOVA_IMPORT_ARCHIVE_KEYS` by `secretKeyRef`; the values Helm stores name only the Secret. The
   bucket is read with the backup Secret (`backup.existingSecret`: `ACCESS_KEY_ID` and
@@ -1282,13 +1284,13 @@ command the TMS status does not show settled (`lastArchive`/`lastRestore` naming
 `commandFailures` entry, an applied revision for an import) it asks the TMS for it by id
 (`GET /managed/v1/tenants/{id}/archives|restores|imports/{commandId}`): found and running is polled,
 found and settled moves to the next, `404` is started. A restarted agent therefore never starts a
-command twice. To start one it needs the command's storage target: `GET /v1/shared/storage` is read
-when a command not yet asked for needs one, then at most once a minute while one waits (`waiting`,
-or no target), never otherwise. A target is used only when it names the same tenant and command id,
-the same kind, `write` for an archive and `read` for a restore or import, the prefix
-`tenants/<id>/archives/<commandId>/` for an archive and exactly the command's `location` for a
-restore or import, archive keys for every archive but an export and none for an export; anything
-else is logged (without the credential) and not used. Then: an `archive` is
+command twice. To start one it needs the command's storage target, which comes from the storage the
+agent holds (see **Storage** below). A target is used only when it names the same tenant and command id,
+an `https` endpoint, the server's own bucket and endpoint (those of `nightly`, when it is present:
+a server has one bucket), the same kind, `write` for an archive and `read` for a restore or import,
+the prefix `tenants/<id>/archives/<commandId>/` for an archive and exactly the command's `location`
+for a restore or import, archive keys with exactly one `current` for every archive but an export
+and none for an export; anything else is logged (without the credential) and not used. Then: an `archive` is
 `POST .../archives {commandId, purpose, target}`, a `restore` `POST .../restores {commandId,
 expectSha256, target}`, an `import` the tenant's first `PUT` with `importTarget` (held back while
 no target fits, so the TMS never sees an import entry without its source). `423` (the tenant runs
@@ -1299,19 +1301,39 @@ was changed: " or "The tenant is incomplete: " (an unprefixed one is reported as
 safe reading). A later revision never carries the import again: the target is attached only while
 the TMS has no import command of that id.
 
-**The nightly grant.** The contract gives no target for nightly archives; each target's key is the
-region bucket's own key ("the same key lists and prunes a tenant's nightly archives"). So whenever
-the agent reads the storage it gives the TMS, with `PUT /managed/v1/tenants/archive-storage` (one
-grant per server: a shared server is in one region), the credential and archive keys of a target
-that carries keys (a write target first), when they differ from what it last gave (a SHA-256 kept in
-memory, so a restart gives it again once), and reads the storage at least hourly while any command
-is listed. A server with no command ever listed holds no grant and takes no nightly archive; see the
-contract problem in the control plane's step D notes.
+**Storage** (`tenantagent/storage.go`). A shared server has its own archive bucket, its own access
+key for it and its own archive keys; `GET /v1/shared/storage` names them as the standing nightly
+target (`nightly`: `access: write`, `prefix: tenants/`, the keys with one `current`) and, for each
+listed command, a target inside that bucket. The tenants document carries `storageRevision`, which
+changes exactly when the storage answer would. The agent reads the storage once at start, then only
+when:
+
+- `storageRevision` differs from the one the held storage was read at;
+- the TMS lists a `commandFailures` entry the agent has not seen whose `code` is `storage` (a bucket
+  refused the credential) or `key_unknown` (a manifest names a key id the TMS was not given); a
+  restarted agent counts the failures it finds as seen, since it reads the storage then anyway;
+- a listed command is in `waiting`, at most once a minute, as the contract asks.
+
+Never hourly and never on every poll. A read that fails keeps the held storage and is retried with
+exponential backoff (from the poll interval up to five minutes).
+
+The TMS's nightly archive storage comes from `nightly` and nothing else:
+`PUT /managed/v1/tenants/archive-storage` with its endpoint, region, bucket, prefix, credential and
+archive keys whenever it differs from what was last sent successfully (a SHA-256 of the body held in
+memory, never on disk, so a restart sends once). When `nightly` is absent (no bucket recorded, or the
+server is retired) the agent sends `DELETE` on that route once, so the TMS drops the credential and
+keys and its nightly run does nothing. A `nightly` out of shape (access, prefix, an endpoint that is
+not `https`, no access key, not exactly one `current` key) is not sent, and a storage the TMS answers
+`400` (its prefix, its `managed.archive.allowedEndpoints`, https and private-address rules) is not
+sent again until it changes: either is logged at error once per change and reported as the
+`archive-storage` component (not ready, with the reason), which makes the report not ready. Once
+the storage has been read the report always carries that component; with no `nightly` it is ready
+and says nightly archives are off.
 
 **Secrets.** Bucket credentials, session tokens and archive keys pass from the control plane to the
 TMS over the Compose network with the bearer token and nowhere else: never logged (targets and
-grants print as their bucket and prefix), never written to the state directory, never in a status
-report. `TestNoSecretTheAgentHandlesReachesItsLogsOrItsStateDirectory` runs every command kind and
+grants print as their bucket and prefix), never written to the state directory (the nightly digest
+lives in memory), never in a status report. `TestNoSecretTheAgentHandlesReachesItsLogsOrItsStateDirectory` runs every command kind and
 scans the logs, every report and every file under the state directory.
 
 **When things fail.** The control plane down: the last list is converged and reported again later;

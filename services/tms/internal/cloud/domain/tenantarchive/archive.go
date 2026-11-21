@@ -25,6 +25,8 @@ const (
 
 	DefaultContentType = "application/octet-stream"
 
+	TenantsRoot = "tenants/"
+
 	maxPrefixLength   = 512
 	maxBucketLength   = 63
 	maxEndpointLength = 255
@@ -80,6 +82,7 @@ var (
 	ErrKeyUnknown = errors.New(
 		"the archive was sealed with an archive key the command does not carry",
 	)
+	ErrNightlyPrefix = errors.New("the nightly archive storage's prefix must be " + TenantsRoot)
 
 	bucketPattern = regexp.MustCompile(`^[a-z0-9][a-z0-9.\-]{1,61}[a-z0-9]$`)
 	keyIDPattern  = regexp.MustCompile(`^\S{1,64}$`)
@@ -235,7 +238,7 @@ func (a *Access) KeyByID(id string) (*Key, error) {
 }
 
 func TenantPrefix(instanceID string) string {
-	return "tenants/" + instanceID + "/"
+	return TenantsRoot + instanceID + "/"
 }
 
 func ImportPrefix(importID string) string {
@@ -251,7 +254,18 @@ func NightlyRoot(instanceID string) string {
 }
 
 func NightlyPrefix(instanceID string, day time.Time) string {
-	return NightlyRoot(instanceID) + day.UTC().Format(time.DateOnly) + "/"
+	return NightlyUnder(TenantsRoot, instanceID, day)
+}
+
+func NightlyUnder(root, instanceID string, day time.Time) string {
+	return root + instanceID + "/nightly/" + day.UTC().Format(time.DateOnly) + "/"
+}
+
+func (a *Access) CheckNightlyRoot() error {
+	if a.Location.Prefix != TenantsRoot {
+		return ErrNightlyPrefix
+	}
+	return nil
 }
 
 func NightlyDay(prefix, instanceID string) (time.Time, bool) {

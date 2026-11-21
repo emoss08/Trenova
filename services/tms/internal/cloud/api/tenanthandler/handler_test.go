@@ -32,6 +32,7 @@ type lifecycle struct {
 	archive  *tenantlifecycle.ArchiveRequest
 	restore  *tenantlifecycle.RestoreRequest
 	grant    *tenantarchive.Access
+	removed  int
 	err      error
 }
 
@@ -135,6 +136,11 @@ func (l *lifecycle) SetNightlyGrant(
 	_ time.Time,
 ) error {
 	l.grant = access
+	return l.err
+}
+
+func (l *lifecycle) RemoveNightlyGrant(context.Context) error {
+	l.removed++
 	return l.err
 }
 

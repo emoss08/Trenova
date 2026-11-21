@@ -128,6 +128,7 @@ func (s *Service) failures(
 		out[cmd.InstanceID] = append(out[cmd.InstanceID], cloudtenant.CommandFailure{
 			CommandID: cmd.CommandID,
 			Kind:      string(cmd.Kind),
+			Code:      cmd.FailureCode,
 			Reason:    reason,
 		})
 	}

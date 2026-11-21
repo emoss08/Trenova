@@ -11,7 +11,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/cloud/app/tenantlifecycle"
 	"github.com/emoss08/trenova/internal/cloud/domain/cloudtenant"
+	"github.com/emoss08/trenova/internal/cloud/domain/tenantarchive"
 	"github.com/emoss08/trenova/internal/cloud/domain/tenantcommand"
+	"github.com/emoss08/trenova/internal/cloud/ports/archiveports"
 	"github.com/emoss08/trenova/internal/cloud/ports/cloudtenantports"
 	"github.com/emoss08/trenova/internal/infrastructure/config/managedconfig"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/session"
@@ -363,8 +365,7 @@ func (c *commands) Failures(_ context.Context, ids []string) ([]*tenantcommand.C
 	defer c.mu.Unlock()
 	out := make([]*tenantcommand.Command, 0)
 	for _, cmd := range c.rows {
-		if slices.Contains(ids, cmd.InstanceID) && cmd.State == tenantcommand.StateFailed &&
-			cmd.Kind != tenantcommand.KindRestore {
+		if slices.Contains(ids, cmd.InstanceID) && cmd.State == tenantcommand.StateFailed {
 			out = append(out, &cmd)
 		}
 	}
@@ -382,6 +383,29 @@ func (c *commands) Progress(_ context.Context, id string, p *tenantcommand.Progr
 
 func (c *commands) SetGrant(_ context.Context, g *tenantcommand.Grant) error {
 	c.grant = g
+	return nil
+}
+
+func (c *commands) DeleteGrant(context.Context, string) error {
+	c.grant = nil
+	return nil
+}
+
+type buckets struct {
+	refused string
+}
+
+func (b *buckets) Open(
+	*tenantarchive.Location,
+	*tenantarchive.Credentials,
+) (archiveports.Bucket, error) {
+	return nil, errors.New("the lifecycle never opens a bucket")
+}
+
+func (b *buckets) CheckEndpoint(endpoint string) error {
+	if b.refused != "" && endpoint == b.refused {
+		return tenantarchive.Refuse(tenantarchive.RefusalLocation, endpointRefusal)
+	}
 	return nil
 }
 
@@ -431,6 +455,7 @@ type rig struct {
 	audit     *securityaudittest.Recorder
 	members   *members
 	grants    *liveGrants
+	buckets   *buckets
 }
 
 type liveGrants struct {
@@ -480,6 +505,7 @@ func newRig(t *testing.T, shared bool) *rig {
 		members:   &members{},
 		commands:  &commands{rows: map[string]tenantcommand.Command{}},
 		grants:    &liveGrants{},
+		buckets:   &buckets{},
 	}
 	r.svc = tenantlifecycle.New(tenantlifecycle.Params{
 		Config:         &managedconfig.Config{Enabled: true, Tenancy: tenancy},
@@ -497,6 +523,7 @@ func newRig(t *testing.T, shared bool) *rig {
 		Workflows:      r.workflows,
 		Commands:       r.commands,
 		Grants:         r.grants,
+		Buckets:        r.buckets,
 		Secrets:        cipher{},
 		Scopes:         managedscope.NewResolver(shared),
 		Clock:          func() int64 { return now },

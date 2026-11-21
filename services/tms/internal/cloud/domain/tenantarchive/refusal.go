@@ -19,6 +19,8 @@ const (
 	RefusalTaken     = RefusalCode("taken")
 	RefusalTenant    = RefusalCode("tenant")
 	RefusalLocation  = RefusalCode("location")
+	RefusalStorage   = RefusalCode("storage")
+	RefusalKeyAbsent = RefusalCode("key_unknown")
 	RefusalFailed    = RefusalCode("failed")
 
 	maxRefusalReason = 500

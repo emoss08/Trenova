@@ -89,6 +89,10 @@ func (b *memoryBucket) Open(
 	return b, nil
 }
 
+func (b *memoryBucket) CheckEndpoint(string) error {
+	return nil
+}
+
 func (b *memoryBucket) Put(_ context.Context, key string, body io.Reader) error {
 	if b.discard {
 		h := sha256.New()
@@ -802,6 +806,12 @@ func TestATenantArchiveCarriesOneTenantWholeToAnotherServerAndBack(t *testing.T)
 	t.Run("each broken archive is refused before anything is written", func(t *testing.T) {
 		_, err := dst.engine.Import(dst.ctx, request(archiveKeys(0x12), final.SHA256))
 		assert.Equal(t, tenantarchive.RefusalKey, refusalOf(t, err), "a wrong archive key")
+		nothingWritten(t)
+
+		unknown := []tenantarchive.Key{{ID: "region-0", Material: keys[0].Material, Current: true}}
+		_, err = dst.engine.Import(dst.ctx, request(unknown, final.SHA256))
+		assert.Equal(t, tenantarchive.RefusalKeyAbsent, refusalOf(t, err),
+			"a key id the command does not carry")
 		nothingWritten(t)
 
 		_, err = dst.engine.Import(dst.ctx, request(keys, strings.Repeat("0", 64)))

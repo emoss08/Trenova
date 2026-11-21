@@ -113,13 +113,41 @@ func TestAnImportOutsideTheInstancesBackupsIsRefused(t *testing.T) {
 		"another bucket": func(s *instanceapi.SpecImport) { s.Bucket = "someone-elses" },
 		"another prefix": func(s *instanceapi.SpecImport) { s.Prefix = "tenants/x/" },
 		"no keys":        func(s *instanceapi.SpecImport) { s.ArchiveKeys = nil },
-		"a bad digest":   func(s *instanceapi.SpecImport) { s.ExpectSha256 = "zz" },
+		"two keys": func(s *instanceapi.SpecImport) {
+			s.ArchiveKeys = append(s.ArchiveKeys, instanceapi.ArchiveKey{
+				Id: "import-2", Key: importKeyMaterial,
+			})
+		},
+		"a key that is not current": func(s *instanceapi.SpecImport) {
+			s.ArchiveKeys[0].Current = false
+		},
+		"a bad digest": func(s *instanceapi.SpecImport) { s.ExpectSha256 = "zz" },
 	} {
 		imp := importSpec()
 		change(imp)
 		require.ErrorIs(t, values.CheckImport(imp, &testStorage), values.ErrInvalidSpec, name)
 	}
 	require.ErrorIs(t, values.CheckImport(importSpec(), &values.Storage{}), values.ErrInvalidSpec)
+}
+
+func TestAnImportCarriesExactlyOneArchiveKey(t *testing.T) {
+	t.Parallel()
+	key := instanceapi.ArchiveKey{Id: "import-1", Key: importKeyMaterial, Current: true}
+	for count, want := range map[int]bool{0: false, 1: true, 2: false} {
+		imp := importSpec()
+		imp.ArchiveKeys = nil
+		for i := range count {
+			k := key
+			k.Current = i == 0
+			imp.ArchiveKeys = append(imp.ArchiveKeys, k)
+		}
+		err := values.CheckImport(imp, &testStorage)
+		if want {
+			require.NoError(t, err, "%d keys", count)
+			continue
+		}
+		require.ErrorIs(t, err, values.ErrInvalidSpec, "%d keys", count)
+	}
 }
 
 func yamlOf(v map[string]any) (string, error) {

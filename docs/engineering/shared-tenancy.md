@@ -580,11 +580,21 @@ archive taken before a removal. The format is the control plane's `TenantArchive
 | `archivestream` | a part's pipeline: zstd, then encryption, then SHA-256 of the stored bytes (and the reverse) |
 | `copybinary` | PostgreSQL binary `COPY` rows: counted while streaming, or rewritten one row at a time |
 | `adapters/postgres/tenantcopyrepository` | the snapshot (export), the load transaction (import) and the preflight queries |
-| `adapters/objectstore/archivebucket` | the archive bucket the target names (minio-go, 16 MiB parts) |
+| `adapters/objectstore/archivebucket` | the archive bucket the target names (minio-go, 16 MiB parts); a request the store refuses for the credential or the bucket is refusal `storage` |
 | `app/archiveengine` | export, verify and import |
 | `jobs/archivejobs` | the archive, restore, import and nightly workflows |
 
 ### Layout and format
+
+**Where archives are.** Each shared server keeps its tenants' archives in its own bucket, which no
+other server shares, reached with that bucket's own access key and wrapped with the server's own
+archive keys (one `current` to write with, its older ones to read its older archives with). The
+control plane is the only party that moves an archive between buckets (a move to another server,
+a final archive into Trenova's vault): it copies the parts unchanged and re-wraps the manifest's
+data key under the destination's key, so a server only ever reads and writes its own bucket. Every
+location is built from the bucket and prefix the server was given: the nightly storage's prefix is
+exactly `tenants/` (anything else is refused, `tenantarchive.ErrNightlyPrefix`), and a commanded
+target's prefix is exactly the command's archive.
 
 Under `tenants/<instanceId>/archives/<commandId>/` (commanded) or
 `tenants/<instanceId>/nightly/<YYYY-MM-DD>/` (nightly): one part per table,
@@ -609,7 +619,7 @@ written under the prefix (never `export.tar`).
   only). Sizes and digests are of the stored bytes. An archive's SHA-256 (`lastArchive.sha256`,
   `expectSha256`) is the SHA-256 of `manifest.json`'s bytes, which name every part's digest.
 - **Encryption** (`aes256gcm_stream_v1`): a fresh 32-byte data key per archive, wrapped with
-  AES-256-GCM under the region's current archive key (12-byte random nonce ‖ ciphertext ‖ tag,
+  AES-256-GCM under the server's current archive key (12-byte random nonce ‖ ciphertext ‖ tag,
   standard base64, the instance id as additional data). Each part is the STREAM construction over
   AES-256-GCM with the data key: a random 7-byte nonce prefix first in the object, then 1 MiB
   plaintext segments, each sealed with nonce `prefix ‖ uint32 BE segment index ‖ 0x01 on the last
@@ -825,11 +835,15 @@ plan, is not archived at night (the harness proves it), while a commanded `final
 archive, started through the client with no schedule feature, runs for a suspended tenant
 (`backstop_test.go`). `concurrency` tenants run at once and each holds the `archive` heavy-job slot
 (one per organization, two on a 24 GB server). Each run writes
-`tenants/<instanceId>/nightly/<YYYY-MM-DD>/`, recorded as a command (id derived from the instance
-and day, so a rerun is a no-op), with the bucket grant the agent last delivered
+`tenants/<instanceId>/nightly/<YYYY-MM-DD>/` (the storage's `tenants/` prefix, the instance and the
+UTC day), recorded as a command (id derived from the instance and day, so a rerun is a no-op),
+wrapped with the `current` key of the nightly storage the agent last delivered
 (`PUT /managed/v1/tenants/archive-storage`). It then keeps the newest `plan.backupRetentionDays`
 complete archives and deletes older ones whole, and incomplete ones only when a newer complete one
-exists.
+exists. While the server holds no nightly storage (never delivered, removed with `DELETE`, expired,
+or held from before the prefix rule), the run lists no tenant and logs once why ("no nightly
+archive storage is held …"); a run that loses the storage mid-way skips the remaining tenants the
+same way.
 
 ### Commands, routes and secrets
 
@@ -840,10 +854,12 @@ exists.
 | `POST /managed/v1/tenants/{instanceId}/restores` | `{commandId, expectSha256, target}` (`kind restore`, `access read`) | `202` the command |
 | `GET /managed/v1/tenants/{instanceId}/restores/{commandId}`, `…/imports/{commandId}` | | `200` the command |
 | `PUT /managed/v1/tenants/{instanceId}` | the entry, plus `importTarget` (`kind import`, `access read`) when its first entry carries an `import` command | as before |
-| `PUT /managed/v1/tenants/archive-storage` | `{endpoint, region, bucket, accessKeyId, secretAccessKey, sessionToken?, expiresAt?, archiveKeys}` | `200 {expiresAt}` |
+| `PUT /managed/v1/tenants/archive-storage` | `{endpoint, region, bucket, prefix: "tenants/", accessKeyId, secretAccessKey, sessionToken?, expiresAt?, archiveKeys}` (exactly one `current`) | `200 {expiresAt}`; `400` naming the rule (prefix, endpoint, keys) and never the credential |
+| `DELETE /managed/v1/tenants/archive-storage` | | `204`; the sealed nightly storage is deleted and nightly archives stop (logged at info, as the support keys' removal is) |
 
 The target's endpoint must be an `https` URL or a bare host; the archive bucket adapter
-(`archivebucket`) refuses, with reason `location`, a host outside `managed.archive.allowedEndpoints`
+(`archivebucket`, `CheckEndpoint` for the nightly storage when it is delivered, `Open` for every
+bucket opened) refuses, with reason `location` and a reason naming the rule, a host outside `managed.archive.allowedEndpoints`
 (a host, or a suffix such as `.r2.cloudflarestorage.com`; required on a shared server, empty on a
 dedicated instance means any public host) and any literal loopback, private, link-local or metadata
 address, and its dialer re-checks every resolved address (`httpsafe.DialControl`, no proxy), so a
@@ -851,8 +867,13 @@ name that resolves inside the server is never reached. `trenova db import-archiv
 
 Every start is idempotent by command id (a repeat answers the same command; the id reused for
 another tenant or kind is `409`); `409` also answers a tenant whose state does not allow the
-command, and `423` one that already runs another command (the agent waits and sends it again). Failed `archive` and `import` commands are reported in the
-tenant's `commandFailures` (30 days, newest first). The target's credentials and archive keys are
+command, and `423` one that already runs another command (the agent waits and sends it again). Failed `archive`, `restore` and `import` commands (nightly ones too) are reported in the
+tenant's `commandFailures` (30 days, newest first) with `{commandId, kind, code, reason}`; `code`
+is the refusal code (`failureCode` on the command). Two codes ask the agent to read the control
+plane's storage again: `storage` (the object store refused the credential or the bucket:
+`AccessDenied`, `InvalidAccessKeyId`, `SignatureDoesNotMatch`, `ExpiredToken`, `NoSuchBucket`, any
+401 or 403) and `key_unknown` (the manifest names an archive key id the command does not carry; the
+import fails closed). A key that is carried but does not unwrap the data key stays `key`. The target's credentials and archive keys are
 secrets: they are sealed with the install's key (`SecretPurposeArchiveAccess`, the command id as
 the resource) into `cloud_tenant_commands.sealed_access`, erased when the command settles (a check
 constraint holds it), never written to `cloud_tenants.desired` (the import target is a sibling of
@@ -894,9 +915,18 @@ prefix (an archive through `POST .../archives`, a restore through `POST .../rest
 the first entry's `importTarget`), a running one is polled, a settled one is skipped. It keeps no
 state that can drift: the TMS's routes are idempotent by command id, so a restarted agent finds what
 it started. A command the TMS refuses (`400`/`409`) is reported as a `commandFailure`, or for a
-restore as a failed `lastRestore` starting "Nothing was changed: ". The nightly grant
-(`PUT .../archive-storage`) is taken from a target that carries the region's keys, whenever the
-agent reads the storage.
+restore as a failed `lastRestore` starting "Nothing was changed: ".
+
+**Storage.** `GET /v1/shared/storage` names the server's standing nightly target (`nightly`: its
+own bucket, `prefix: tenants/`, its own key and archive keys) and a target in that same bucket for
+each listed command. The agent reads it once at start, then only when the tenants document's
+`storageRevision` differs from the one it read at, when a `commandFailures` entry it has not seen
+carries code `storage` or `key_unknown`, or once a minute while a listed command is in `waiting`;
+a failed read keeps what was read and is retried with backoff. It sends the TMS `nightly` (and only
+`nightly`) with `PUT .../archive-storage` when it differs from what it last sent (a digest held in
+memory, so a restart sends once), and when `nightly` is absent it sends `DELETE` once, so nightly
+archives stop. A storage the TMS refuses is logged at error once per change and reported as the
+`archive-storage` component, not ready, which makes the server not ready.
 
 ## Support access for a shared tenant
 

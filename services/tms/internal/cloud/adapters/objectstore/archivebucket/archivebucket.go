@@ -33,9 +33,28 @@ const (
 	maxIdle          = 16
 )
 
+const (
+	reasonPrivate    = "the archive endpoint is a loopback, private, link-local or metadata address, which this server never reaches"
+	reasonNotAllowed = "the archive endpoint's host is not in this server's managed.archive.allowedEndpoints"
+	reasonRefused    = "the object store refused the archive credential or bucket"
+)
+
 var ErrEndpoint = errors.New(
 	"the archive endpoint must be a host or an https URL with a host and no path",
 )
+
+var credentialRefusals = map[string]struct{}{
+	"AccessDenied":          {},
+	"AccountProblem":        {},
+	"AllAccessDisabled":     {},
+	"ExpiredToken":          {},
+	"InvalidAccessKeyId":    {},
+	"InvalidBucketName":     {},
+	"InvalidToken":          {},
+	"NoSuchBucket":          {},
+	"SignatureDoesNotMatch": {},
+	"TokenRefreshRequired":  {},
+}
 
 type Params struct {
 	fx.In
@@ -105,18 +124,52 @@ type bucket struct {
 	name   string
 }
 
+func (b Buckets) CheckEndpoint(endpoint string) error {
+	_, _, err := b.reachable(endpoint)
+	return err
+}
+
+func (b Buckets) reachable(endpoint string) (host string, secure bool, err error) {
+	host, secure, err = endpointHost(endpoint, b.insecure)
+	if err != nil {
+		return "", false, tenantarchive.Refuse(tenantarchive.RefusalLocation, err.Error())
+	}
+	name := hostName(host)
+	if httpsafe.ValidateHost(name, b.policy) != nil {
+		return "", false, tenantarchive.Refuse(tenantarchive.RefusalLocation, reasonPrivate)
+	}
+	if !b.allowed(name) {
+		return "", false, tenantarchive.Refuse(tenantarchive.RefusalLocation, reasonNotAllowed)
+	}
+	return host, secure, nil
+}
+
+func refused(err error) error {
+	if err == nil {
+		return nil
+	}
+	response := minio.ToErrorResponse(err)
+	if _, ok := credentialRefusals[response.Code]; ok {
+		return tenantarchive.Refuse(
+			tenantarchive.RefusalStorage,
+			reasonRefused+" ("+response.Code+")",
+		)
+	}
+	if response.StatusCode == http.StatusUnauthorized ||
+		response.StatusCode == http.StatusForbidden {
+		return tenantarchive.Refuse(tenantarchive.RefusalStorage,
+			fmt.Sprintf("%s (HTTP %d)", reasonRefused, response.StatusCode))
+	}
+	return err
+}
+
 func (b Buckets) Open(
 	location *tenantarchive.Location,
 	creds *tenantarchive.Credentials,
 ) (archiveports.Bucket, error) {
-	host, secure, err := endpointHost(location.Endpoint, b.insecure)
+	host, secure, err := b.reachable(location.Endpoint)
 	if err != nil {
-		return nil, tenantarchive.Refuse(tenantarchive.RefusalLocation, err.Error())
-	}
-	name := hostName(host)
-	if httpsafe.ValidateHost(name, b.policy) != nil || !b.allowed(name) {
-		return nil, tenantarchive.Refuse(tenantarchive.RefusalLocation,
-			"the archive endpoint is not an object store this server may reach")
+		return nil, err
 	}
 	client, err := minio.New(host, &minio.Options{
 		Creds:        credentials.NewStaticV4(creds.AccessKey, creds.SecretKey, creds.SessionToken),
@@ -162,7 +215,7 @@ func (b *bucket) Put(ctx context.Context, key string, body io.Reader) error {
 		ConcurrentStreamParts: false,
 		DisableContentSha256:  true,
 	}); err != nil {
-		return fmt.Errorf("write %s to the archive location: %w", key, err)
+		return fmt.Errorf("write %s to the archive location: %w", key, refused(err))
 	}
 	return nil
 }
@@ -170,14 +223,15 @@ func (b *bucket) Put(ctx context.Context, key string, body io.Reader) error {
 func (b *bucket) Get(ctx context.Context, key string) (io.ReadCloser, error) {
 	object, err := b.client.GetObject(ctx, b.name, key, minio.GetObjectOptions{})
 	if err != nil {
-		return nil, fmt.Errorf("read %s from the archive location: %w", key, err)
+		return nil, fmt.Errorf("read %s from the archive location: %w", key, refused(err))
 	}
 	if _, err = object.Stat(); err != nil {
 		_ = object.Close()
-		if minio.ToErrorResponse(err).StatusCode == http.StatusNotFound {
+		response := minio.ToErrorResponse(err)
+		if response.StatusCode == http.StatusNotFound && response.Code != "NoSuchBucket" {
 			return nil, fmt.Errorf("%s: %w", key, archiveports.ErrMissing)
 		}
-		return nil, fmt.Errorf("read %s from the archive location: %w", key, err)
+		return nil, fmt.Errorf("read %s from the archive location: %w", key, refused(err))
 	}
 	return object, nil
 }
@@ -194,7 +248,7 @@ func (b *bucket) List(
 		Recursive: true,
 	}) {
 		if object.Err != nil {
-			return fmt.Errorf("list the archive location: %w", object.Err)
+			return fmt.Errorf("list the archive location: %w", refused(object.Err))
 		}
 		if err := fn(object.Key, object.Size); err != nil {
 			return err
@@ -212,7 +266,7 @@ func (b *bucket) Children(ctx context.Context, prefix string) ([]string, error) 
 		Recursive: false,
 	}) {
 		if object.Err != nil {
-			return nil, fmt.Errorf("list the archive location: %w", object.Err)
+			return nil, fmt.Errorf("list the archive location: %w", refused(object.Err))
 		}
 		if strings.HasSuffix(object.Key, "/") {
 			out = append(out, object.Key)
@@ -256,10 +310,10 @@ func (b *bucket) DeletePrefix(ctx context.Context, prefix string) (int64, error)
 		removeErr = result.Err
 	}
 	if listErr != nil {
-		return queued - failed, fmt.Errorf("list %s: %w", prefix, listErr)
+		return queued - failed, fmt.Errorf("list %s: %w", prefix, refused(listErr))
 	}
 	if removeErr != nil {
-		return queued - failed, fmt.Errorf("delete under %s: %w", prefix, removeErr)
+		return queued - failed, fmt.Errorf("delete under %s: %w", prefix, refused(removeErr))
 	}
 	return queued - failed, nil
 }

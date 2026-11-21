@@ -157,6 +157,13 @@ func TestApplyTakesAnImportTargetApartFromTheEntry(t *testing.T) {
 	assert.NotContains(t, string(body), keyMaterial)
 }
 
+func nightlyBody(prefix string) string {
+	return `{"endpoint":"https://objects.test","region":"us-east-1","bucket":"archives",` +
+		`"prefix":"` + prefix + `","accessKeyId":"` + fakeAccess + `","secretAccessKey":"` +
+		fakeSecret + `","archiveKeys":[{"id":"region-1","key":"` + keyMaterial +
+		`","current":true}]}`
+}
+
 func TestTheNightlyStorageGrantIsTaken(t *testing.T) {
 	t.Parallel()
 
@@ -166,14 +173,46 @@ func TestTheNightlyStorageGrantIsTaken(t *testing.T) {
 		l,
 		http.MethodPut,
 		"/managed/v1/tenants/archive-storage",
-		`{"endpoint":"https://objects.test","region":"us-east-1","bucket":"archives","accessKeyId":"`+
-			fakeAccess+`","secretAccessKey":"`+fakeSecret+`","archiveKeys":[{"id":"region-1","key":"`+
-			keyMaterial+`","current":true}]}`,
+		nightlyBody("tenants/"),
 	)
 	require.Equal(t, http.StatusOK, rec.Code, rec.Body.String())
 	require.NotNil(t, l.grant)
 	assert.Equal(t, "archives", l.grant.Location.Bucket)
+	assert.Equal(t, "tenants/", l.grant.Location.Prefix)
 	assert.NotContains(t, rec.Body.String(), fakeSecret)
+}
+
+func TestARefusedNightlyStorageIsAnswered400NamingTheRuleNotTheCredential(t *testing.T) {
+	t.Parallel()
+
+	for name, cause := range map[string]error{
+		"prefix": tenantarchive.ErrNightlyPrefix,
+		"endpoint": tenantarchive.Refuse(tenantarchive.RefusalLocation,
+			"the archive endpoint's host is not in this server's managed.archive.allowedEndpoints"),
+		"http": tenantarchive.ErrLocationInvalid,
+	} {
+		l := &lifecycle{shared: true, err: cause}
+		rec := serve(t, l, http.MethodPut, "/managed/v1/tenants/archive-storage",
+			nightlyBody("tenants/"))
+		require.Equal(t, http.StatusBadRequest, rec.Code, name)
+		assert.Contains(t, rec.Body.String(), cause.Error(), name)
+		assert.NotContains(t, rec.Body.String(), fakeSecret, name)
+		assert.NotContains(t, rec.Body.String(), fakeAccess, name)
+	}
+}
+
+func TestTheNightlyStorageIsRemoved(t *testing.T) {
+	t.Parallel()
+
+	l := &lifecycle{shared: true}
+	rec := serve(t, l, http.MethodDelete, "/managed/v1/tenants/archive-storage", "")
+	require.Equal(t, http.StatusNoContent, rec.Code, rec.Body.String())
+	assert.Equal(t, 1, l.removed)
+
+	failing := &lifecycle{shared: true, err: errors.New("the database is down")}
+	rec = serve(t, failing, http.MethodDelete, "/managed/v1/tenants/archive-storage", "")
+	assert.Equal(t, http.StatusInternalServerError, rec.Code)
+	assert.NotContains(t, rec.Body.String(), "database")
 }
 
 func TestArchiveRoutesAreRefusedOnADedicatedInstance(t *testing.T) {
@@ -185,8 +224,10 @@ func TestArchiveRoutesAreRefusedOnADedicatedInstance(t *testing.T) {
 		{http.MethodGet, "/managed/v1/tenants/" + instanceID + "/archives/" + commandID},
 		{http.MethodPost, "/managed/v1/tenants/" + instanceID + "/restores"},
 		{http.MethodPut, "/managed/v1/tenants/archive-storage"},
+		{http.MethodDelete, "/managed/v1/tenants/archive-storage"},
 	} {
 		rec := serve(t, l, route.method, route.target, "{}")
-		assert.Equal(t, http.StatusConflict, rec.Code, route.target)
+		assert.Equal(t, http.StatusConflict, rec.Code, route.method+" "+route.target)
 	}
+	assert.Zero(t, l.removed, "a dedicated instance never removes anything")
 }

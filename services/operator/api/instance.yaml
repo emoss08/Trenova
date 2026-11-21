@@ -15,8 +15,9 @@ info:
     every operation but the `/v1/shared/` ones. A shared server calls the `/v1/shared/` ones,
     `renewCertificate`, `reportTelemetry` (its machine), `getSecrets` (its own escrowed secrets,
     for the one TMS it runs, and the system email sender) and the email events of its tenants;
-    never an instance's spec, status, usage, storage, commands or log bundles. Each identity is
-    rate limited on its own.
+    never an instance's spec, status, usage, storage, commands or log bundles. A company's own
+    machine for a move to Managed, before its switch, calls only what its import needs (see
+    `SpecImport`). Each identity is rate limited on its own.
 
     **Enrolment.** Staff issue an instance's first certificate and key once, as an enrolment
     bundle, when its infrastructure is ready. The operator's first call should be
@@ -36,9 +37,10 @@ info:
 
     **The tenant archive.** One format holds one tenant's data, for every use: a customer's data
     export, the nightly backup, a restore, a move to another shared server, a move to a Trenova of
-    the customer's own, and the final archive taken before a tenant is removed. Archives live in
-    the shared archive bucket of the tenant's region, which `getSharedStorage` names with the
-    bucket's key:
+    the customer's own, and the final archive taken before a tenant is removed. A shared server
+    keeps its tenants' archives in **its own bucket**, which no other server shares and which
+    `getSharedStorage` names with that bucket's own key (an S3 user scoped at the provider to that
+    bucket alone):
 
     - `tenants/<instanceId>/archives/<archiveId>/`: an archive the control plane asked for with an
       `archive` command (`<archiveId>` is the command's `id`);
@@ -57,11 +59,31 @@ info:
     a command's `expectSha256`) is the lowercase hex SHA-256 of `manifest.json`'s exact bytes; the
     manifest in turn holds every part's SHA-256, so the one digest proves the whole archive.
 
-    **Encryption and the region's archive key.** Archives of purpose `final` and `move`, and the
+    **Nothing is taken on a server's word.** A reported archive (`lastArchive`) is used for nothing
+    until the control plane has read it back from the server's bucket: its `location` must be
+    exactly `s3://<the server's bucket>/tenants/<instanceId>/archives/<commandId>/`, its
+    `manifest.json` must digest to the reported `sha256`, name the tenant's `instanceId` and the
+    command's `purpose`, be encrypted under one of the server's own archive keys (or, an `export`,
+    be unencrypted with `omitted` listed), and every part it lists must be in the bucket at its
+    listed size. A report that fails any of these is recorded as failed with why and never removes,
+    moves or exports anything; Trenova staff are alerted. A tenant's removal waits for its final
+    archive to be verified and then copied into Trenova's vault.
+
+    **The control plane is the only party that moves an archive between places.** When a tenant
+    moves to another shared server, the control plane copies its `move` archive from the old
+    server's bucket into the new server's bucket, under the same relative prefix
+    (`tenants/<instanceId>/archives/<archiveId>/`), with every part's bytes unchanged and the
+    manifest's data key re-wrapped under the new server's current archive key; the new server's
+    `import` command names that copy and its `expectSha256` is the copy's (re-wrapped) manifest's
+    digest. A final archive is copied into Trenova's vault the same way and deleted from the
+    server's bucket once the copy is verified. A server never reads or writes another server's
+    bucket.
+
+    **Encryption and the server's archive keys.** Archives of purpose `final` and `move`, and the
     nightly ones, hold everything of the tenant and are encrypted part by part
     (`TenantArchiveManifest.encryption`): each archive gets a fresh random 256-bit data key, the
-    data key is wrapped with the region's **archive key** and written, wrapped, in the manifest
-    with the id of the archive key that wrapped it. Columns the TMS encrypts with its install's key
+    data key is wrapped with **the server's current archive key** and written, wrapped, in the
+    manifest with the id of the archive key that wrapped it. Columns the TMS encrypts with its install's key
     are decrypted on export and re-encrypted with the destination's key on import, so inside an
     archive they are protected by the archive's own encryption alone. Archives of purpose `export`
     are the customer's readable copy: not encrypted, and without what is a secret rather than the
@@ -69,11 +91,13 @@ info:
     sessions and tokens, integration credentials, webhook secrets), each left-out table or column
     listed in the manifest's `omitted`. The control plane never decrypts a part: it lists
     archives, reads manifests (plaintext JSON with no tenant data in it but the organization's
-    name), verifies sizes and SHA-256 of the stored bytes, copies objects and deletes them. The
-    archive keys reach a shared server only in `getSharedStorage` (`archiveKeys`), and a dedicated
-    instance importing an archive only in its served spec's `import.archiveKeys`. A region keeps
-    every archive key it has had until the archives each wrapped have expired: losing one loses
-    every archive it wrapped.
+    name), verifies sizes and SHA-256 of the stored bytes, copies objects, re-wraps a manifest's
+    data key from one archive key to another, and deletes objects. A shared server is given only
+    its own archive keys, in `getSharedStorage` (`archiveKeys`): the current one to write with and
+    its own older ones to read its own older archives with. Trenova makes a server a new current
+    key when it rotates them; a server keeps none of them past its process's memory. A dedicated
+    instance importing an archive is given exactly one key, made for that import alone, in its
+    served spec's `import.archiveKeys`.
 
     **Errors** are RFC 9457 problem details with a `code`. `401 unauthenticated` means the
     certificate is unknown, revoked or names an instance or server that is gone; do not retry with
@@ -106,7 +130,7 @@ paths:
               schema:
                 type: string
             Cache-Control:
-              description: "`no-store`: a spec that carries an import carries the region's archive keys."
+              description: "`no-store`: a spec that carries an import carries its import's archive key."
               schema:
                 type: string
           content:
@@ -669,26 +693,36 @@ paths:
     get:
       operationId: getSharedStorage
       x-identity: [shared_server]
-      summary: Where to keep or read each tenant archive a command names, and the credential for it
+      summary: The server's own archive bucket and archive keys, and where each commanded archive is in it
       description: |
-        For each `archive`, `restore` and `import` command the tenants document lists, where the
-        archive is and the credential to reach it with: the shared archive bucket of the tenant's
-        region, the archive's prefix in it, and the bucket's own access key, which Trenova scopes at
-        the provider to that bucket alone (read, write, list, delete and multipart uploads in it).
+        The standing target for nightly archives (`nightly`: the server's own archive bucket, key
+        and archive keys), and for each `archive`, `restore` and `import` command the tenants
+        document lists, where in that bucket the archive is and the credential to reach it
+        with: always the server's own bucket and its own access key, which Trenova scopes at the
+        provider to that bucket alone (read, write, list, delete and multipart uploads in it). No
+        other server's bucket or key is ever named here.
 
         - An `archive` command's target has `access: write` and the prefix
           `tenants/<instanceId>/archives/<commandId>/`: write every object of the archive under it
           and nowhere else, `manifest.json` last, then report the archive as the tenant's
           `lastArchive` with its `location` (`s3://<bucket>/<prefix>`).
+          The `location` reported must be exactly that, or the archive is refused.
         - A `restore` or `import` command's target has `access: read` and the prefix of the archive
-          the command's `location` names: read the archive from it, and write nothing.
+          the command's `location` names, in the server's own bucket (for an `import`, the copy
+          the control plane made there): read the archive from it, and write nothing.
 
-        The same key lists and prunes a tenant's nightly archives
-        (`tenants/<instanceId>/nightly/`), which need no command. Keep the key only in memory or in
-        the server's own sealed secrets, never log it. When `sessionToken` and `expiresAt` are
-        absent the key does not expire; fetch this again when a request is refused, in case Trenova
-        replaced it. A command whose region has no archive bucket recorded yet is listed in
-        `waiting` with why; fetch again in a minute.
+        Nightly archives need no command: take them with `nightly`. **When to read this:** the
+        tenants document carries `storageRevision`, which changes whenever anything here would
+        change (the server's bucket or its key recorded or replaced, its archive keys rotated, the
+        bucket retired, or a command's target added or removed). Read this once at start, then
+        again only when `storageRevision` differs from the one you last read it at, when a bucket
+        request is refused, or when a manifest names a key id you do not hold. When `nightly` is
+        absent (the server has no bucket recorded, which never happens for a server Trenova has
+        opened, or it is retired), stop taking nightly archives and remove the credential and keys
+        held for them. Keep the key only in memory or in the server's own sealed secrets, never log
+        it. When `sessionToken` and `expiresAt` are absent the key does not expire. Commands that
+        cannot be given a target now are listed in `waiting`; read again at the next
+        `storageRevision` change or in a minute.
       responses:
         "200":
           description: The archives to write.
@@ -1201,9 +1235,13 @@ components:
         the instance's own backups bucket under `prefix`, in the tenant archive format
         (`TenantArchiveManifest`), and the release in `release` is the one the shared server ran
         when it took the archive (its manifest's `releaseVersion`), so the schema matches. Until
-        the switch the control plane records this machine's status reports on the move alone
-        (`import`, `appliedRevision`, `ready`, `version`): its usage reports are answered and not
-        recorded, as the company's server still meters it.
+        the switch this machine's certificate may call only `getSpec`, `reportStatus`,
+        `renewCertificate`, `getStorage` (its own buckets, to read the import and write its
+        documents) and `getSecrets` (its own escrowed secrets, without the system email sender):
+        every other operation answers `403 forbidden`, its usage is not metered (the company's
+        server still meters it), and its status reports are recorded on the move alone (`import`,
+        `appliedRevision`, `ready`, `version`), never as the company's status. A move that fails or
+        is cancelled revokes the machine's certificates at once (`401` from then).
 
         The operator, before the TMS's first start: reads `manifest.json` under `prefix` with the
         instance's own storage key (`getStorage`), checks its SHA-256 against `expectSha256` and
@@ -1230,13 +1268,15 @@ components:
           description: The import, which the status report's `import.id` names.
         archiveKeys:
           type: array
-          maxItems: 20
+          minItems: 1
+          maxItems: 1
           description: |
-            The archive keys of the region the archive was taken in, to unwrap its data key with (the
-            one its manifest's `encryption.keyId` names). Served only: added by the control plane
-            each time it serves the spec, opened from the keyring's seal, never stored in the spec's
-            revision and never in the `ETag`'s digest input in the clear. Hold them only in memory
-            while importing.
+            Exactly one key: the one Trenova made for this import alone and re-wrapped the copy's
+            data key under (the one the copy's manifest's `encryption.keyId` names). No shared
+            server's key is ever served here. Served only: added by the control plane each time it
+            serves the spec, opened from the keyring's seal, never stored in the spec's revision and
+            never in the `ETag`'s digest input in the clear; destroyed once the move settles. Hold
+            it only in memory while importing.
           items:
             $ref: "#/components/schemas/ArchiveKey"
         bucket:
@@ -1249,7 +1289,9 @@ components:
         expectSha256:
           type: string
           pattern: "^[0-9a-f]{64}$"
-          description: The lowercase hex SHA-256 of `manifest.json`'s exact bytes.
+          description: |
+            The lowercase hex SHA-256 of the copy's `manifest.json` exact bytes (re-wrapped for
+            this import, so not the digest the shared server reported).
 
     ImportStatus:
       type: object
@@ -2402,13 +2444,21 @@ components:
       type: object
       description: |
         Every tenant placed on the server and not yet reported `removed`, ordered by `instanceId`.
-      required: [tenants]
+      required: [tenants, storageRevision]
       properties:
         tenants:
           type: array
           maxItems: 1000
           items:
             $ref: "#/components/schemas/SharedTenant"
+        storageRevision:
+          type: string
+          maxLength: 64
+          description: |
+            Opaque: changes exactly when `getSharedStorage` would answer differently (the server's
+            bucket or its key recorded, replaced or retired, its archive keys rotated, an archive
+            command's target added or removed). Read `getSharedStorage` again when it differs from
+            the value you last read storage at; not on every poll.
         systemEmail:
           $ref: "#/components/schemas/SpecSystemEmail"
         support:
@@ -2646,8 +2696,9 @@ components:
           type: string
           maxLength: 1024
           description: |
-            The archive, `s3://<bucket>/<prefix>`: always an archive of this tenant, under
-            `tenants/<instanceId>/archives/` or `tenants/<instanceId>/nightly/`.
+            The archive, `s3://<bucket>/<prefix>`: always exactly one archive of this tenant in this
+            server's own bucket, `tenants/<instanceId>/archives/<archiveId>/` or
+            `tenants/<instanceId>/nightly/<YYYY-MM-DD>/`, verified by Trenova before it was sent.
         expectSha256:
           type: string
           pattern: "^[0-9a-f]{64}$"
@@ -2686,11 +2737,16 @@ components:
         location:
           type: string
           maxLength: 1024
-          description: The archive to import, `s3://<bucket>/tenants/<instanceId>/archives/<archiveId>/`.
+          description: |
+            The archive to import, `s3://<bucket>/tenants/<instanceId>/archives/<archiveId>/`: the copy
+            Trenova made in this server's own bucket of the archive the tenant's old server took, its
+            data key re-wrapped under this server's current archive key.
         expectSha256:
           type: string
           pattern: "^[0-9a-f]{64}$"
-          description: The lowercase hex SHA-256 of the archive's `manifest.json`.
+          description: |
+            The lowercase hex SHA-256 of the copy's `manifest.json` (not the old server's: the
+            re-wrapped manifest is another file).
         requestedAt:
           type: string
           format: date-time
@@ -2780,7 +2836,9 @@ components:
       type: object
       description: |
         The newest archive of the tenant the server took for an `archive` command, by its ID:
-        reported once it is written whole. Reporting the same archive again changes nothing.
+        reported once it is written whole. Reporting the same archive again changes nothing. The
+        report only makes the archive reported: Trenova then reads it back from the bucket and uses
+        it only once it checks out (see "Nothing is taken on a server's word").
       required: [commandId, location, sizeBytes, sha256, takenAt]
       properties:
         commandId:
@@ -2791,7 +2849,9 @@ components:
           type: string
           minLength: 1
           maxLength: 1024
-          description: Where it is, `s3://<bucket>/<prefix>`, as `getSharedStorage` named it.
+          description: |
+            Where it is: exactly `s3://<the server's bucket>/tenants/<instanceId>/archives/<commandId>/`,
+            as `getSharedStorage` named it. Any other location is refused.
         sizeBytes:
           type: integer
           format: int64
@@ -2947,7 +3007,10 @@ components:
         keyId:
           type: string
           maxLength: 64
-          description: The `ArchiveKey.id` of the region archive key that wrapped the data key.
+          description: |
+            The `ArchiveKey.id` of the archive key that wrapped the data key: the writing server's
+            current key; on a copy Trenova made, the destination's (another server's current key, an
+            import's own key, or Trenova's vault key).
         wrappedDataKey:
           type: string
           description: |
@@ -3146,6 +3209,8 @@ components:
       type: object
       required: [archives, waiting]
       properties:
+        nightly:
+          $ref: "#/components/schemas/SharedNightlyTarget"
         archives:
           type: array
           maxItems: 100
@@ -3158,11 +3223,63 @@ components:
           items:
             $ref: "#/components/schemas/SharedArchiveWaiting"
 
+    SharedNightlyTarget:
+      type: object
+      description: |
+        The standing target for nightly archives: the server's own archive bucket, its own access key
+        (scoped at the provider to that bucket alone) and the server's own archive keys. Write each
+        active tenant's nightly archive under `tenants/<instanceId>/nightly/<YYYY-MM-DD>/` (the UTC
+        day), wrapped by the key marked `current`; read and prune the tenant's older nightly archives
+        there with the keys their manifests name. Never write anything else with it, and never
+        another tenant's prefix than one the tenants document lists as this server's. Present on
+        every answer while the server has its archive bucket recorded and is not retired; absent
+        otherwise, and then the server takes no nightly archive and removes the credential and keys
+        it holds for them. Never another server's bucket or key.
+      required: [access, endpoint, region, bucket, prefix, accessKeyId, secretAccessKey, archiveKeys]
+      properties:
+        access:
+          type: string
+          enum: [write]
+          x-enum-varnames: [NightlyWrite]
+          description: Write, list, read and delete under `prefix`.
+        endpoint:
+          type: string
+          description: The S3 API's URL, always `https`, such as `https://s3.bhs.io.cloud.ovh.net`.
+        region:
+          type: string
+          description: The region requests are signed for.
+        bucket:
+          type: string
+          description: The server's own bucket.
+        prefix:
+          type: string
+          description: |
+            Always `tenants/`: nightly archives go only to `tenants/<instanceId>/nightly/<YYYY-MM-DD>/`
+            of the server's own tenants.
+        accessKeyId:
+          type: string
+        secretAccessKey:
+          type: string
+        sessionToken:
+          type: string
+          description: Present only for a temporary credential; absent for the bucket's own key.
+        expiresAt:
+          type: string
+          format: date-time
+          description: When a temporary credential stops working; absent for the bucket's own key.
+        archiveKeys:
+          type: array
+          minItems: 1
+          maxItems: 50
+          description: The server's own archive keys, exactly one `current`.
+          items:
+            $ref: "#/components/schemas/ArchiveKey"
+
     SharedArchiveTarget:
       type: object
       description: |
-        Where one archive is kept, and the credential to reach it with: the region's archive
-        bucket's own key, scoped at the provider to that bucket.
+        Where one archive is kept, and the credential to reach it with: the server's own bucket's
+        own key, scoped at the provider to that bucket (the same as `SharedStorage.bucket`).
       required: [instanceId, commandId, kind, access, endpoint, region, bucket, prefix, accessKeyId, secretAccessKey]
       properties:
         instanceId:
@@ -3178,14 +3295,14 @@ components:
           description: The command's kind.
         archiveKeys:
           type: array
-          maxItems: 20
+          maxItems: 50
           description: |
-            The region's archive keys, absent for an `export` archive (written unencrypted). To
+            The server's own archive keys, absent for an `export` archive (written unencrypted). To
             write an archive, wrap its data key with the one key marked `current` and record that
-            key's `id` in the manifest's `encryption.keyId`; to read one (a restore, an import, or
-            pruning that needs to read), unwrap its data key with the key whose `id` its manifest
-            names. Hold them only in memory, never log or store them; fetch again for a key id you
-            do not hold.
+            key's `id` in the manifest's `encryption.keyId`; to read one (a restore, an import of the
+            copy Trenova made for this server, or pruning that needs to read), unwrap its data key
+            with the key whose `id` its manifest names. Hold them only in memory, never log or store
+            them; fetch again for a key id you do not hold.
           items:
             $ref: "#/components/schemas/ArchiveKey"
         access:
@@ -3195,12 +3312,13 @@ components:
           description: "`write` for an `archive` command's new archive; `read` for the archive a `restore` or `import` reads."
         endpoint:
           type: string
-          description: The S3 API's URL, such as `https://s3.bhs.io.cloud.ovh.net`.
+          description: The S3 API's URL, always `https`, such as `https://s3.bhs.io.cloud.ovh.net`.
         region:
           type: string
           description: The region requests are signed for.
         bucket:
           type: string
+          description: The server's own bucket.
         prefix:
           type: string
           description: |
@@ -3225,8 +3343,9 @@ components:
     ArchiveKey:
       type: object
       description: |
-        One of a region's archive keys: a random 256-bit AES key that wraps each archive's own data
-        key (AES-256-GCM, `encryption.wrappedDataKey`). Never wraps tenant data itself.
+        One archive key: a random 256-bit AES key that wraps each archive's own data key
+        (AES-256-GCM, `encryption.wrappedDataKey`). Never wraps tenant data itself. A server's are
+        its own; an import's is made for that import alone.
       required: [id, key, current]
       properties:
         id:
@@ -3255,5 +3374,5 @@ components:
           enum: [no_bucket, unavailable]
           x-enum-varnames: [SharedArchiveNoBucket, SharedArchiveUnavailable]
           description: |
-            `no_bucket`: Trenova has not recorded the archive bucket of the tenant's region yet.
-            `unavailable`: the credential could not be given just now.
+            `no_bucket`: Trenova has not recorded this server's own archive bucket (never so for a
+            server Trenova has opened). `unavailable`: the credential could not be given just now.

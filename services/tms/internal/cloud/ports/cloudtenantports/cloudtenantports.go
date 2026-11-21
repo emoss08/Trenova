@@ -164,5 +164,6 @@ type Commands interface {
 	Failures(ctx context.Context, instanceIDs []string) ([]*tenantcommand.Command, error)
 	Progress(ctx context.Context, commandID string, progress *tenantcommand.Progress) error
 	SetGrant(ctx context.Context, grant *tenantcommand.Grant) error
+	DeleteGrant(ctx context.Context, name string) error
 	Grant(ctx context.Context, name string) (*tenantcommand.Grant, error)
 }

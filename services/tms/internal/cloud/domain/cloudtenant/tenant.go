@@ -147,6 +147,7 @@ type Administrator struct {
 type CommandFailure struct {
 	CommandID string `json:"commandId"`
 	Kind      string `json:"kind"`
+	Code      string `json:"code,omitempty"`
 	Reason    string `json:"reason"`
 }
 

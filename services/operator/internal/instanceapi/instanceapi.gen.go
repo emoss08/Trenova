@@ -586,6 +586,21 @@ func (e SharedImportCommandKind) Valid() bool {
 	}
 }
 
+// Defines values for SharedNightlyTargetAccess.
+const (
+	NightlyWrite SharedNightlyTargetAccess = "write"
+)
+
+// Valid indicates whether the value is a known member of the SharedNightlyTargetAccess enum.
+func (e SharedNightlyTargetAccess) Valid() bool {
+	switch e {
+	case NightlyWrite:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for SharedRestoreCommandKind.
 const (
 	SharedCommandRestore SharedRestoreCommandKind = "restore"
@@ -956,8 +971,9 @@ type AdministratorStatus struct {
 	SetUp bool `json:"setUp"`
 }
 
-// ArchiveKey One of a region's archive keys: a random 256-bit AES key that wraps each archive's own data
-// key (AES-256-GCM, `encryption.wrappedDataKey`). Never wraps tenant data itself.
+// ArchiveKey One archive key: a random 256-bit AES key that wraps each archive's own data key
+// (AES-256-GCM, `encryption.wrappedDataKey`). Never wraps tenant data itself. A server's are
+// its own; an import's is made for that import alone.
 type ArchiveKey struct {
 	// Current Whether new archives are wrapped with it; exactly one is.
 	Current bool `json:"current"`
@@ -1348,9 +1364,13 @@ type InstanceSpec struct {
 	// the instance's own backups bucket under `prefix`, in the tenant archive format
 	// (`TenantArchiveManifest`), and the release in `release` is the one the shared server ran
 	// when it took the archive (its manifest's `releaseVersion`), so the schema matches. Until
-	// the switch the control plane records this machine's status reports on the move alone
-	// (`import`, `appliedRevision`, `ready`, `version`): its usage reports are answered and not
-	// recorded, as the company's server still meters it.
+	// the switch this machine's certificate may call only `getSpec`, `reportStatus`,
+	// `renewCertificate`, `getStorage` (its own buckets, to read the import and write its
+	// documents) and `getSecrets` (its own escrowed secrets, without the system email sender):
+	// every other operation answers `403 forbidden`, its usage is not metered (the company's
+	// server still meters it), and its status reports are recorded on the move alone (`import`,
+	// `appliedRevision`, `ready`, `version`), never as the company's status. A move that fails or
+	// is cancelled revokes the machine's certificates at once (`401` from then).
 	//
 	// The operator, before the TMS's first start: reads `manifest.json` under `prefix` with the
 	// instance's own storage key (`getStorage`), checks its SHA-256 against `expectSha256` and
@@ -1746,12 +1766,15 @@ type SharedArchiveCommandKind string
 type SharedArchiveCommandPurpose string
 
 // SharedArchiveReport The newest archive of the tenant the server took for an `archive` command, by its ID:
-// reported once it is written whole. Reporting the same archive again changes nothing.
+// reported once it is written whole. Reporting the same archive again changes nothing. The
+// report only makes the archive reported: Trenova then reads it back from the bucket and uses
+// it only once it checks out (see "Nothing is taken on a server's word").
 type SharedArchiveReport struct {
 	// CommandId The `archive` command's `id`.
 	CommandId openapi_types.UUID `json:"commandId"`
 
-	// Location Where it is, `s3://<bucket>/<prefix>`, as `getSharedStorage` named it.
+	// Location Where it is: exactly `s3://<the server's bucket>/tenants/<instanceId>/archives/<commandId>/`,
+	// as `getSharedStorage` named it. Any other location is refused.
 	Location string `json:"location"`
 
 	// Sha256 The lowercase hex SHA-256 of the archive's manifest.
@@ -1764,24 +1787,26 @@ type SharedArchiveReport struct {
 	TakenAt time.Time `json:"takenAt"`
 }
 
-// SharedArchiveTarget Where one archive is kept, and the credential to reach it with: the region's archive
-// bucket's own key, scoped at the provider to that bucket.
+// SharedArchiveTarget Where one archive is kept, and the credential to reach it with: the server's own bucket's
+// own key, scoped at the provider to that bucket (the same as `SharedStorage.bucket`).
 type SharedArchiveTarget struct {
 	// Access `write` for an `archive` command's new archive; `read` for the archive a `restore` or `import` reads.
 	Access      SharedArchiveTargetAccess `json:"access"`
 	AccessKeyId string                    `json:"accessKeyId"`
 
-	// ArchiveKeys The region's archive keys, absent for an `export` archive (written unencrypted). To
+	// ArchiveKeys The server's own archive keys, absent for an `export` archive (written unencrypted). To
 	// write an archive, wrap its data key with the one key marked `current` and record that
-	// key's `id` in the manifest's `encryption.keyId`; to read one (a restore, an import, or
-	// pruning that needs to read), unwrap its data key with the key whose `id` its manifest
-	// names. Hold them only in memory, never log or store them; fetch again for a key id you
-	// do not hold.
-	ArchiveKeys *[]ArchiveKey      `json:"archiveKeys,omitempty"`
-	Bucket      string             `json:"bucket"`
-	CommandId   openapi_types.UUID `json:"commandId"`
+	// key's `id` in the manifest's `encryption.keyId`; to read one (a restore, an import of the
+	// copy Trenova made for this server, or pruning that needs to read), unwrap its data key
+	// with the key whose `id` its manifest names. Hold them only in memory, never log or store
+	// them; fetch again for a key id you do not hold.
+	ArchiveKeys *[]ArchiveKey `json:"archiveKeys,omitempty"`
 
-	// Endpoint The S3 API's URL, such as `https://s3.bhs.io.cloud.ovh.net`.
+	// Bucket The server's own bucket.
+	Bucket    string             `json:"bucket"`
+	CommandId openapi_types.UUID `json:"commandId"`
+
+	// Endpoint The S3 API's URL, always `https`, such as `https://s3.bhs.io.cloud.ovh.net`.
 	Endpoint string `json:"endpoint"`
 
 	// ExpiresAt When a temporary credential stops working; absent for the bucket's own key, which does not
@@ -1816,13 +1841,13 @@ type SharedArchiveWaiting struct {
 	CommandId  openapi_types.UUID `json:"commandId"`
 	InstanceId openapi_types.UUID `json:"instanceId"`
 
-	// Reason `no_bucket`: Trenova has not recorded the archive bucket of the tenant's region yet.
-	// `unavailable`: the credential could not be given just now.
+	// Reason `no_bucket`: Trenova has not recorded this server's own archive bucket (never so for a
+	// server Trenova has opened). `unavailable`: the credential could not be given just now.
 	Reason SharedArchiveWaitingReason `json:"reason"`
 }
 
-// SharedArchiveWaitingReason `no_bucket`: Trenova has not recorded the archive bucket of the tenant's region yet.
-// `unavailable`: the credential could not be given just now.
+// SharedArchiveWaitingReason `no_bucket`: Trenova has not recorded this server's own archive bucket (never so for a
+// server Trenova has opened). `unavailable`: the credential could not be given just now.
 type SharedArchiveWaitingReason string
 
 // SharedCommandFailure defines model for SharedCommandFailure.
@@ -1860,20 +1885,64 @@ type SharedEntryRefusedCode string
 // entry's `revision`, and reports it `suspended` with `appliedRevision` set. A refused import
 // leaves nothing of the tenant on the server and is reported once in `commandFailures`.
 type SharedImportCommand struct {
-	// ExpectSha256 The lowercase hex SHA-256 of the archive's `manifest.json`.
+	// ExpectSha256 The lowercase hex SHA-256 of the copy's `manifest.json` (not the old server's: the
+	// re-wrapped manifest is another file).
 	ExpectSha256 string `json:"expectSha256"`
 
 	// Id The import's ID; report a failure of it as `commandFailures[].commandId`.
 	Id   openapi_types.UUID      `json:"id"`
 	Kind SharedImportCommandKind `json:"kind"`
 
-	// Location The archive to import, `s3://<bucket>/tenants/<instanceId>/archives/<archiveId>/`.
+	// Location The archive to import, `s3://<bucket>/tenants/<instanceId>/archives/<archiveId>/`: the copy
+	// Trenova made in this server's own bucket of the archive the tenant's old server took, its
+	// data key re-wrapped under this server's current archive key.
 	Location    string    `json:"location"`
 	RequestedAt time.Time `json:"requestedAt"`
 }
 
 // SharedImportCommandKind defines model for SharedImportCommand.Kind.
 type SharedImportCommandKind string
+
+// SharedNightlyTarget The standing target for nightly archives: the server's own archive bucket, its own access key
+// (scoped at the provider to that bucket alone) and the server's own archive keys. Write each
+// active tenant's nightly archive under `tenants/<instanceId>/nightly/<YYYY-MM-DD>/` (the UTC
+// day), wrapped by the key marked `current`; read and prune the tenant's older nightly archives
+// there with the keys their manifests name. Never write anything else with it, and never
+// another tenant's prefix than one the tenants document lists as this server's. Present on
+// every answer while the server has its archive bucket recorded and is not retired; absent
+// otherwise, and then the server takes no nightly archive and removes the credential and keys
+// it holds for them. Never another server's bucket or key.
+type SharedNightlyTarget struct {
+	// Access Write, list, read and delete under `prefix`.
+	Access      SharedNightlyTargetAccess `json:"access"`
+	AccessKeyId string                    `json:"accessKeyId"`
+
+	// ArchiveKeys The server's own archive keys, exactly one `current`.
+	ArchiveKeys []ArchiveKey `json:"archiveKeys"`
+
+	// Bucket The server's own bucket.
+	Bucket string `json:"bucket"`
+
+	// Endpoint The S3 API's URL, always `https`, such as `https://s3.bhs.io.cloud.ovh.net`.
+	Endpoint string `json:"endpoint"`
+
+	// ExpiresAt When a temporary credential stops working; absent for the bucket's own key.
+	ExpiresAt *time.Time `json:"expiresAt,omitempty"`
+
+	// Prefix Always `tenants/`: nightly archives go only to `tenants/<instanceId>/nightly/<YYYY-MM-DD>/`
+	// of the server's own tenants.
+	Prefix string `json:"prefix"`
+
+	// Region The region requests are signed for.
+	Region          string `json:"region"`
+	SecretAccessKey string `json:"secretAccessKey"`
+
+	// SessionToken Present only for a temporary credential; absent for the bucket's own key.
+	SessionToken *string `json:"sessionToken,omitempty"`
+}
+
+// SharedNightlyTargetAccess Write, list, read and delete under `prefix`.
+type SharedNightlyTargetAccess string
 
 // SharedReportAck defines model for SharedReportAck.
 type SharedReportAck struct {
@@ -1901,8 +1970,9 @@ type SharedRestoreCommand struct {
 	Id   openapi_types.UUID       `json:"id"`
 	Kind SharedRestoreCommandKind `json:"kind"`
 
-	// Location The archive, `s3://<bucket>/<prefix>`: always an archive of this tenant, under
-	// `tenants/<instanceId>/archives/` or `tenants/<instanceId>/nightly/`.
+	// Location The archive, `s3://<bucket>/<prefix>`: always exactly one archive of this tenant in this
+	// server's own bucket, `tenants/<instanceId>/archives/<archiveId>/` or
+	// `tenants/<instanceId>/nightly/<YYYY-MM-DD>/`, verified by Trenova before it was sent.
 	Location    string    `json:"location"`
 	RequestedAt time.Time `json:"requestedAt"`
 
@@ -1956,6 +2026,17 @@ type SharedStatusReport struct {
 // SharedStorage defines model for SharedStorage.
 type SharedStorage struct {
 	Archives []SharedArchiveTarget `json:"archives"`
+
+	// Nightly The standing target for nightly archives: the server's own archive bucket, its own access key
+	// (scoped at the provider to that bucket alone) and the server's own archive keys. Write each
+	// active tenant's nightly archive under `tenants/<instanceId>/nightly/<YYYY-MM-DD>/` (the UTC
+	// day), wrapped by the key marked `current`; read and prune the tenant's older nightly archives
+	// there with the keys their manifests name. Never write anything else with it, and never
+	// another tenant's prefix than one the tenants document lists as this server's. Present on
+	// every answer while the server has its archive bucket recorded and is not retired; absent
+	// otherwise, and then the server takes no nightly archive and removes the credential and keys
+	// it holds for them. Never another server's bucket or key.
+	Nightly *SharedNightlyTarget `json:"nightly,omitempty"`
 
 	// Waiting The archive commands no credential could be given for now, with why; ask again in a minute.
 	Waiting []SharedArchiveWaiting `json:"waiting"`
@@ -2081,6 +2162,12 @@ type SharedTenantCommand struct {
 
 // SharedTenantList Every tenant placed on the server and not yet reported `removed`, ordered by `instanceId`.
 type SharedTenantList struct {
+	// StorageRevision Opaque: changes exactly when `getSharedStorage` would answer differently (the server's
+	// bucket or its key recorded, replaced or retired, its archive keys rotated, an archive
+	// command's target added or removed). Read `getSharedStorage` again when it differs from
+	// the value you last read storage at; not on every poll.
+	StorageRevision string `json:"storageRevision"`
+
 	// Support Trenova support access for every tenant on the server: the keys that sign the assertions
 	// Trenova staff enter a tenant with, and the one email domain a grant may name. The same keys
 	// and rotation as a dedicated instance's `SpecSupport`, served once for the whole server.
@@ -2156,7 +2243,9 @@ type SharedTenantStatus struct {
 	InstanceId      openapi_types.UUID      `json:"instanceId"`
 
 	// LastArchive The newest archive of the tenant the server took for an `archive` command, by its ID:
-	// reported once it is written whole. Reporting the same archive again changes nothing.
+	// reported once it is written whole. Reporting the same archive again changes nothing. The
+	// report only makes the archive reported: Trenova then reads it back from the bucket and uses
+	// it only once it checks out (see "Nothing is taken on a server's word").
 	LastArchive *SharedArchiveReport `json:"lastArchive,omitempty"`
 
 	// LastRestore The newest `restore` command the server finished for the tenant, done or failed. Report it
@@ -2364,9 +2453,13 @@ type SpecFirstAdministrator struct {
 // the instance's own backups bucket under `prefix`, in the tenant archive format
 // (`TenantArchiveManifest`), and the release in `release` is the one the shared server ran
 // when it took the archive (its manifest's `releaseVersion`), so the schema matches. Until
-// the switch the control plane records this machine's status reports on the move alone
-// (`import`, `appliedRevision`, `ready`, `version`): its usage reports are answered and not
-// recorded, as the company's server still meters it.
+// the switch this machine's certificate may call only `getSpec`, `reportStatus`,
+// `renewCertificate`, `getStorage` (its own buckets, to read the import and write its
+// documents) and `getSecrets` (its own escrowed secrets, without the system email sender):
+// every other operation answers `403 forbidden`, its usage is not metered (the company's
+// server still meters it), and its status reports are recorded on the move alone (`import`,
+// `appliedRevision`, `ready`, `version`), never as the company's status. A move that fails or
+// is cancelled revokes the machine's certificates at once (`401` from then).
 //
 // The operator, before the TMS's first start: reads `manifest.json` under `prefix` with the
 // instance's own storage key (`getStorage`), checks its SHA-256 against `expectSha256` and
@@ -2386,17 +2479,19 @@ type SpecFirstAdministrator struct {
 // Importing again after a restart is idempotent by `id`: an import already done is not run
 // again.
 type SpecImport struct {
-	// ArchiveKeys The archive keys of the region the archive was taken in, to unwrap its data key with (the
-	// one its manifest's `encryption.keyId` names). Served only: added by the control plane
-	// each time it serves the spec, opened from the keyring's seal, never stored in the spec's
-	// revision and never in the `ETag`'s digest input in the clear. Hold them only in memory
-	// while importing.
+	// ArchiveKeys Exactly one key: the one Trenova made for this import alone and re-wrapped the copy's
+	// data key under (the one the copy's manifest's `encryption.keyId` names). No shared
+	// server's key is ever served here. Served only: added by the control plane each time it
+	// serves the spec, opened from the keyring's seal, never stored in the spec's revision and
+	// never in the `ETag`'s digest input in the clear; destroyed once the move settles. Hold
+	// it only in memory while importing.
 	ArchiveKeys []ArchiveKey `json:"archiveKeys"`
 
 	// Bucket The instance's own backups bucket, as `getStorage` names it.
 	Bucket string `json:"bucket"`
 
-	// ExpectSha256 The lowercase hex SHA-256 of `manifest.json`'s exact bytes.
+	// ExpectSha256 The lowercase hex SHA-256 of the copy's `manifest.json` exact bytes (re-wrapped for
+	// this import, so not the digest the shared server reported).
 	ExpectSha256 string `json:"expectSha256"`
 
 	// Id The import, which the status report's `import.id` names.
@@ -2705,7 +2800,9 @@ type TelemetrySample struct {
 type TenantArchiveEncryption struct {
 	Algorithm TenantArchiveEncryptionAlgorithm `json:"algorithm"`
 
-	// KeyId The `ArchiveKey.id` of the region archive key that wrapped the data key.
+	// KeyId The `ArchiveKey.id` of the archive key that wrapped the data key: the writing server's
+	// current key; on a copy Trenova made, the destination's (another server's current key, an
+	// import's own key, or Trenova's vault key).
 	KeyId string `json:"keyId"`
 
 	// SegmentBytes The plaintext bytes of every segment but the last.
@@ -3324,26 +3421,36 @@ type ClientInterface interface {
 	// Corresponds with PUT /v1/shared/status (the `ReportSharedStatus` operationId).
 	ReportSharedStatus(ctx context.Context, body ReportSharedStatusJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// GetSharedStorage Where to keep or read each tenant archive a command names, and the credential for it
+	// GetSharedStorage The server's own archive bucket and archive keys, and where each commanded archive is in it
 	//
-	// For each `archive`, `restore` and `import` command the tenants document lists, where the
-	// archive is and the credential to reach it with: the shared archive bucket of the tenant's
-	// region, the archive's prefix in it, and the bucket's own access key, which Trenova scopes at
-	// the provider to that bucket alone (read, write, list, delete and multipart uploads in it).
+	// The standing target for nightly archives (`nightly`: the server's own archive bucket, key
+	// and archive keys), and for each `archive`, `restore` and `import` command the tenants
+	// document lists, where in that bucket the archive is and the credential to reach it
+	// with: always the server's own bucket and its own access key, which Trenova scopes at the
+	// provider to that bucket alone (read, write, list, delete and multipart uploads in it). No
+	// other server's bucket or key is ever named here.
 	//
 	// - An `archive` command's target has `access: write` and the prefix
 	//   `tenants/<instanceId>/archives/<commandId>/`: write every object of the archive under it
 	//   and nowhere else, `manifest.json` last, then report the archive as the tenant's
 	//   `lastArchive` with its `location` (`s3://<bucket>/<prefix>`).
+	//   The `location` reported must be exactly that, or the archive is refused.
 	// - A `restore` or `import` command's target has `access: read` and the prefix of the archive
-	//   the command's `location` names: read the archive from it, and write nothing.
+	//   the command's `location` names, in the server's own bucket (for an `import`, the copy
+	//   the control plane made there): read the archive from it, and write nothing.
 	//
-	// The same key lists and prunes a tenant's nightly archives
-	// (`tenants/<instanceId>/nightly/`), which need no command. Keep the key only in memory or in
-	// the server's own sealed secrets, never log it. When `sessionToken` and `expiresAt` are
-	// absent the key does not expire; fetch this again when a request is refused, in case Trenova
-	// replaced it. A command whose region has no archive bucket recorded yet is listed in
-	// `waiting` with why; fetch again in a minute.
+	// Nightly archives need no command: take them with `nightly`. **When to read this:** the
+	// tenants document carries `storageRevision`, which changes whenever anything here would
+	// change (the server's bucket or its key recorded or replaced, its archive keys rotated, the
+	// bucket retired, or a command's target added or removed). Read this once at start, then
+	// again only when `storageRevision` differs from the one you last read it at, when a bucket
+	// request is refused, or when a manifest names a key id you do not hold. When `nightly` is
+	// absent (the server has no bucket recorded, which never happens for a server Trenova has
+	// opened, or it is retired), stop taking nightly archives and remove the credential and keys
+	// held for them. Keep the key only in memory or in the server's own sealed secrets, never log
+	// it. When `sessionToken` and `expiresAt` are absent the key does not expire. Commands that
+	// cannot be given a target now are listed in `waiting`; read again at the next
+	// `storageRevision` change or in a minute.
 	//
 	// Corresponds with GET /v1/shared/storage (the `GetSharedStorage` operationId).
 	GetSharedStorage(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -3868,26 +3975,36 @@ func (c *Client) ReportSharedStatus(ctx context.Context, body ReportSharedStatus
 	return c.Client.Do(req)
 }
 
-// GetSharedStorage Where to keep or read each tenant archive a command names, and the credential for it
+// GetSharedStorage The server's own archive bucket and archive keys, and where each commanded archive is in it
 //
-// For each `archive`, `restore` and `import` command the tenants document lists, where the
-// archive is and the credential to reach it with: the shared archive bucket of the tenant's
-// region, the archive's prefix in it, and the bucket's own access key, which Trenova scopes at
-// the provider to that bucket alone (read, write, list, delete and multipart uploads in it).
+// The standing target for nightly archives (`nightly`: the server's own archive bucket, key
+// and archive keys), and for each `archive`, `restore` and `import` command the tenants
+// document lists, where in that bucket the archive is and the credential to reach it
+// with: always the server's own bucket and its own access key, which Trenova scopes at the
+// provider to that bucket alone (read, write, list, delete and multipart uploads in it). No
+// other server's bucket or key is ever named here.
 //
 //   - An `archive` command's target has `access: write` and the prefix
 //     `tenants/<instanceId>/archives/<commandId>/`: write every object of the archive under it
 //     and nowhere else, `manifest.json` last, then report the archive as the tenant's
 //     `lastArchive` with its `location` (`s3://<bucket>/<prefix>`).
+//     The `location` reported must be exactly that, or the archive is refused.
 //   - A `restore` or `import` command's target has `access: read` and the prefix of the archive
-//     the command's `location` names: read the archive from it, and write nothing.
+//     the command's `location` names, in the server's own bucket (for an `import`, the copy
+//     the control plane made there): read the archive from it, and write nothing.
 //
-// The same key lists and prunes a tenant's nightly archives
-// (`tenants/<instanceId>/nightly/`), which need no command. Keep the key only in memory or in
-// the server's own sealed secrets, never log it. When `sessionToken` and `expiresAt` are
-// absent the key does not expire; fetch this again when a request is refused, in case Trenova
-// replaced it. A command whose region has no archive bucket recorded yet is listed in
-// `waiting` with why; fetch again in a minute.
+// Nightly archives need no command: take them with `nightly`. **When to read this:** the
+// tenants document carries `storageRevision`, which changes whenever anything here would
+// change (the server's bucket or its key recorded or replaced, its archive keys rotated, the
+// bucket retired, or a command's target added or removed). Read this once at start, then
+// again only when `storageRevision` differs from the one you last read it at, when a bucket
+// request is refused, or when a manifest names a key id you do not hold. When `nightly` is
+// absent (the server has no bucket recorded, which never happens for a server Trenova has
+// opened, or it is retired), stop taking nightly archives and remove the credential and keys
+// held for them. Keep the key only in memory or in the server's own sealed secrets, never log
+// it. When `sessionToken` and `expiresAt` are absent the key does not expire. Commands that
+// cannot be given a target now are listed in `waiting`; read again at the next
+// `storageRevision` change or in a minute.
 //
 // Corresponds with GET /v1/shared/storage (the `GetSharedStorage` operationId).
 func (c *Client) GetSharedStorage(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
@@ -5064,26 +5181,36 @@ type ClientWithResponsesInterface interface {
 	// Corresponds with PUT /v1/shared/status (the `ReportSharedStatus` operationId).
 	ReportSharedStatusWithResponse(ctx context.Context, body ReportSharedStatusJSONRequestBody, reqEditors ...RequestEditorFn) (*ReportSharedStatusResponse, error)
 
-	// GetSharedStorageWithResponse Where to keep or read each tenant archive a command names, and the credential for it
+	// GetSharedStorageWithResponse The server's own archive bucket and archive keys, and where each commanded archive is in it
 	//
-	// For each `archive`, `restore` and `import` command the tenants document lists, where the
-	// archive is and the credential to reach it with: the shared archive bucket of the tenant's
-	// region, the archive's prefix in it, and the bucket's own access key, which Trenova scopes at
-	// the provider to that bucket alone (read, write, list, delete and multipart uploads in it).
+	// The standing target for nightly archives (`nightly`: the server's own archive bucket, key
+	// and archive keys), and for each `archive`, `restore` and `import` command the tenants
+	// document lists, where in that bucket the archive is and the credential to reach it
+	// with: always the server's own bucket and its own access key, which Trenova scopes at the
+	// provider to that bucket alone (read, write, list, delete and multipart uploads in it). No
+	// other server's bucket or key is ever named here.
 	//
 	// - An `archive` command's target has `access: write` and the prefix
 	//   `tenants/<instanceId>/archives/<commandId>/`: write every object of the archive under it
 	//   and nowhere else, `manifest.json` last, then report the archive as the tenant's
 	//   `lastArchive` with its `location` (`s3://<bucket>/<prefix>`).
+	//   The `location` reported must be exactly that, or the archive is refused.
 	// - A `restore` or `import` command's target has `access: read` and the prefix of the archive
-	//   the command's `location` names: read the archive from it, and write nothing.
+	//   the command's `location` names, in the server's own bucket (for an `import`, the copy
+	//   the control plane made there): read the archive from it, and write nothing.
 	//
-	// The same key lists and prunes a tenant's nightly archives
-	// (`tenants/<instanceId>/nightly/`), which need no command. Keep the key only in memory or in
-	// the server's own sealed secrets, never log it. When `sessionToken` and `expiresAt` are
-	// absent the key does not expire; fetch this again when a request is refused, in case Trenova
-	// replaced it. A command whose region has no archive bucket recorded yet is listed in
-	// `waiting` with why; fetch again in a minute.
+	// Nightly archives need no command: take them with `nightly`. **When to read this:** the
+	// tenants document carries `storageRevision`, which changes whenever anything here would
+	// change (the server's bucket or its key recorded or replaced, its archive keys rotated, the
+	// bucket retired, or a command's target added or removed). Read this once at start, then
+	// again only when `storageRevision` differs from the one you last read it at, when a bucket
+	// request is refused, or when a manifest names a key id you do not hold. When `nightly` is
+	// absent (the server has no bucket recorded, which never happens for a server Trenova has
+	// opened, or it is retired), stop taking nightly archives and remove the credential and keys
+	// held for them. Keep the key only in memory or in the server's own sealed secrets, never log
+	// it. When `sessionToken` and `expiresAt` are absent the key does not expire. Commands that
+	// cannot be given a target now are listed in `waiting`; read again at the next
+	// `storageRevision` change or in a minute.
 	//
 	// Returns a wrapper object for the known response body format(s).
 	//
@@ -6855,26 +6982,36 @@ func (c *ClientWithResponses) ReportSharedStatusWithResponse(ctx context.Context
 	return ParseReportSharedStatusResponse(rsp)
 }
 
-// GetSharedStorageWithResponse Where to keep or read each tenant archive a command names, and the credential for it
+// GetSharedStorageWithResponse The server's own archive bucket and archive keys, and where each commanded archive is in it
 //
-// For each `archive`, `restore` and `import` command the tenants document lists, where the
-// archive is and the credential to reach it with: the shared archive bucket of the tenant's
-// region, the archive's prefix in it, and the bucket's own access key, which Trenova scopes at
-// the provider to that bucket alone (read, write, list, delete and multipart uploads in it).
+// The standing target for nightly archives (`nightly`: the server's own archive bucket, key
+// and archive keys), and for each `archive`, `restore` and `import` command the tenants
+// document lists, where in that bucket the archive is and the credential to reach it
+// with: always the server's own bucket and its own access key, which Trenova scopes at the
+// provider to that bucket alone (read, write, list, delete and multipart uploads in it). No
+// other server's bucket or key is ever named here.
 //
 //   - An `archive` command's target has `access: write` and the prefix
 //     `tenants/<instanceId>/archives/<commandId>/`: write every object of the archive under it
 //     and nowhere else, `manifest.json` last, then report the archive as the tenant's
 //     `lastArchive` with its `location` (`s3://<bucket>/<prefix>`).
+//     The `location` reported must be exactly that, or the archive is refused.
 //   - A `restore` or `import` command's target has `access: read` and the prefix of the archive
-//     the command's `location` names: read the archive from it, and write nothing.
+//     the command's `location` names, in the server's own bucket (for an `import`, the copy
+//     the control plane made there): read the archive from it, and write nothing.
 //
-// The same key lists and prunes a tenant's nightly archives
-// (`tenants/<instanceId>/nightly/`), which need no command. Keep the key only in memory or in
-// the server's own sealed secrets, never log it. When `sessionToken` and `expiresAt` are
-// absent the key does not expire; fetch this again when a request is refused, in case Trenova
-// replaced it. A command whose region has no archive bucket recorded yet is listed in
-// `waiting` with why; fetch again in a minute.
+// Nightly archives need no command: take them with `nightly`. **When to read this:** the
+// tenants document carries `storageRevision`, which changes whenever anything here would
+// change (the server's bucket or its key recorded or replaced, its archive keys rotated, the
+// bucket retired, or a command's target added or removed). Read this once at start, then
+// again only when `storageRevision` differs from the one you last read it at, when a bucket
+// request is refused, or when a manifest names a key id you do not hold. When `nightly` is
+// absent (the server has no bucket recorded, which never happens for a server Trenova has
+// opened, or it is retired), stop taking nightly archives and remove the credential and keys
+// held for them. Keep the key only in memory or in the server's own sealed secrets, never log
+// it. When `sessionToken` and `expiresAt` are absent the key does not expire. Commands that
+// cannot be given a target now are listed in `waiting`; read again at the next
+// `storageRevision` change or in a minute.
 //
 // Returns a wrapper object for the known response body format(s).
 //

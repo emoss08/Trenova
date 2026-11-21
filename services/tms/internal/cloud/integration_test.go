@@ -405,6 +405,7 @@ func newRigOn(t *testing.T, seeded bool) *rig {
 		Grants: supportaccessrepository.NewGrantRepository(supportaccessrepository.Params{
 			Entitlements: entitlementtest.Instance(), DB: r.conn, Logger: logger,
 		}),
+		Buckets: newBucket(),
 		Secrets: encryptionservice.NewSecretCipher(encryptionservice.NewWithKeyManager(
 			encryptionservice.NewLocalKeyManager("lifecycle-test-key-not-a-real-secret"),
 		)),

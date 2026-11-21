@@ -2,14 +2,11 @@ package tenantagent
 
 import (
 	"context"
-	"crypto/sha256"
-	"encoding/hex"
 	"errors"
 	"fmt"
 	"strings"
 	"time"
 
-	"github.com/bytedance/sonic"
 	"github.com/google/uuid"
 
 	"github.com/emoss08/trenova/operator/internal/instanceapi"
@@ -18,7 +15,6 @@ import (
 
 const (
 	DefaultStorageEvery = time.Minute
-	nightlyRefresh      = time.Hour
 	restoreUntouched    = "Nothing was changed: "
 	restoreIncomplete   = "The tenant is incomplete: "
 )
@@ -91,11 +87,6 @@ func (a *Agent) forgetUnlisted(desired *instanceapi.SharedTenantList) {
 	for id := range a.refusals {
 		if _, ok := listed[id]; !ok {
 			delete(a.refusals, id)
-		}
-	}
-	for id := range a.asked {
-		if _, ok := listed[id]; !ok {
-			delete(a.asked, id)
 		}
 	}
 }
@@ -194,50 +185,6 @@ func (a *Agent) nextCommand(
 	return nil, false, nil
 }
 
-func (a *Agent) storageDue(wanted []targetKey, commandsListed bool) bool {
-	now := a.now()
-	for _, k := range wanted {
-		if _, ok := a.asked[k.command]; !ok {
-			return true
-		}
-	}
-	if len(wanted) > 0 && now.Sub(a.storageAt) >= a.p.StorageEvery {
-		return true
-	}
-	return commandsListed && now.Sub(a.nightlyAt) >= nightlyRefresh &&
-		now.Sub(a.storageAt) >= a.p.StorageEvery
-}
-
-func (a *Agent) targets(
-	ctx context.Context,
-	wanted []targetKey,
-	commandsListed bool,
-) map[targetKey]instanceapi.SharedArchiveTarget {
-	if !a.storageDue(wanted, commandsListed) {
-		return nil
-	}
-	a.storageAt = a.now()
-	for _, k := range wanted {
-		a.asked[k.command] = struct{}{}
-	}
-	storage, err := a.p.ControlPlane.SharedStorage(ctx)
-	if err != nil {
-		a.p.Logger.Warn("cannot read where the archives go; the commands wait", "error", err)
-		return nil
-	}
-	for _, w := range storage.Waiting {
-		a.p.Logger.Info("the control plane has no archive credential for a command yet",
-			"instanceId", w.InstanceId, "command", w.CommandId, "reason", w.Reason)
-	}
-	out := make(map[targetKey]instanceapi.SharedArchiveTarget, len(storage.Archives))
-	for i := range storage.Archives {
-		t := &storage.Archives[i]
-		out[targetKey{instance: t.InstanceId.String(), command: t.CommandId.String()}] = *t
-	}
-	a.deliverNightly(ctx, storage.Archives)
-	return out
-}
-
 func (a *Agent) targetFor(
 	targets map[targetKey]instanceapi.SharedArchiveTarget,
 	instanceID uuid.UUID,
@@ -247,7 +194,7 @@ func (a *Agent) targetFor(
 	if !ok {
 		return nil, false
 	}
-	if why := mismatch(&t, instanceID, c); why != "" {
+	if why := mismatch(&t, instanceID, c, a.heldNightly()); why != "" {
 		a.p.Logger.Warn(
 			"the control plane's archive target does not fit its command; it is not used",
 			"instanceId",
@@ -264,11 +211,20 @@ func (a *Agent) targetFor(
 	return convertTarget(&t), true
 }
 
-func mismatch(t *instanceapi.SharedArchiveTarget, instanceID uuid.UUID, c *command) string {
-	keys := t.ArchiveKeys != nil && len(*t.ArchiveKeys) > 0
+func mismatch(
+	t *instanceapi.SharedArchiveTarget,
+	instanceID uuid.UUID,
+	c *command,
+	nightly *instanceapi.SharedNightlyTarget,
+) string {
 	switch {
 	case t.InstanceId != instanceID || t.CommandId.String() != c.id:
 		return "it names another tenant or command"
+	case !httpsEndpoint(t.Endpoint):
+		return "its endpoint is not an https URL"
+	case nightly != nil &&
+		(t.Bucket != nightly.Bucket || !sameEndpoint(t.Endpoint, nightly.Endpoint)):
+		return "it names another bucket than the server's own"
 	case string(t.Kind) != c.kind:
 		return "it is for another kind of command"
 	case c.kind == tms.CommandArchive && t.Access != instanceapi.TargetWrite,
@@ -279,10 +235,20 @@ func mismatch(t *instanceapi.SharedArchiveTarget, instanceID uuid.UUID, c *comma
 		return "its prefix is not the command's archive"
 	case c.kind != tms.CommandArchive && !samePlace(t.Bucket, t.Prefix, c.location):
 		return "its prefix is not the archive the command names"
+	default:
+		return keysMismatch(t, c)
+	}
+}
+
+func keysMismatch(t *instanceapi.SharedArchiveTarget, c *command) string {
+	keys := t.ArchiveKeys != nil && len(*t.ArchiveKeys) > 0
+	switch {
 	case c.exports() && keys:
 		return "an export is written without archive keys"
 	case !c.exports() && !keys:
 		return "it carries no archive keys"
+	case keys && !oneCurrent(*t.ArchiveKeys):
+		return "its archive keys do not have exactly one current key"
 	default:
 		return ""
 	}
@@ -327,65 +293,6 @@ func archiveKeys(keys *[]instanceapi.ArchiveKey) []tms.ArchiveKey {
 		out = append(out, tms.ArchiveKey{ID: k.Id, Key: k.Key, Current: k.Current})
 	}
 	return out
-}
-
-func (a *Agent) deliverNightly(ctx context.Context, targets []instanceapi.SharedArchiveTarget) {
-	grant := nightlyFrom(targets)
-	if grant == nil {
-		return
-	}
-	body, err := sonic.Marshal(grant)
-	if err != nil {
-		return
-	}
-	sum := sha256.Sum256(body)
-	digest := hex.EncodeToString(sum[:])
-	if digest == a.nightly {
-		a.nightlyAt = a.now()
-		return
-	}
-	if err = a.p.TMS.PutNightlyGrant(ctx, grant); err != nil {
-		a.p.Logger.Warn("cannot give the TMS the nightly archive grant; it is sent again later",
-			"bucket", grant.Bucket, "error", err)
-		return
-	}
-	a.nightly, a.nightlyAt = digest, a.now()
-	ids := make([]string, 0, len(grant.ArchiveKeys))
-	for _, k := range grant.ArchiveKeys {
-		ids = append(ids, k.ID)
-	}
-	a.p.Logger.Info("the nightly archive grant was given to the TMS",
-		"bucket", grant.Bucket, "archiveKeyIds", ids, "expires", grant.ExpiresAt != nil)
-}
-
-func nightlyFrom(targets []instanceapi.SharedArchiveTarget) *tms.NightlyGrant {
-	var picked *instanceapi.SharedArchiveTarget
-	for i := range targets {
-		t := &targets[i]
-		if t.ArchiveKeys == nil || len(*t.ArchiveKeys) == 0 {
-			continue
-		}
-		if picked == nil ||
-			(picked.Access != instanceapi.TargetWrite && t.Access == instanceapi.TargetWrite) {
-			picked = t
-		}
-	}
-	if picked == nil {
-		return nil
-	}
-	grant := &tms.NightlyGrant{
-		Endpoint:        picked.Endpoint,
-		Region:          picked.Region,
-		Bucket:          picked.Bucket,
-		AccessKeyID:     picked.AccessKeyId,
-		SecretAccessKey: picked.SecretAccessKey,
-		ExpiresAt:       picked.ExpiresAt,
-		ArchiveKeys:     archiveKeys(picked.ArchiveKeys),
-	}
-	if picked.SessionToken != nil {
-		grant.SessionToken = *picked.SessionToken
-	}
-	return grant
 }
 
 func (a *Agent) startAll(

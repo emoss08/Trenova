@@ -114,6 +114,7 @@ type StorageBody struct {
 	Endpoint        string       `json:"endpoint"`
 	Region          string       `json:"region"`
 	Bucket          string       `json:"bucket"`
+	Prefix          string       `json:"prefix"`
 	AccessKeyID     string       `json:"accessKeyId"`
 	SecretAccessKey string       `json:"secretAccessKey"`
 	SessionToken    string       `json:"sessionToken,omitempty"`
@@ -132,6 +133,7 @@ func (h *Handler) routeArchives(mux *http.ServeMux) {
 	mux.HandleFunc("GET "+RestorePath, h.sharedOnly(h.command(tenantcommand.KindRestore)))
 	mux.HandleFunc("GET "+ImportPath, h.sharedOnly(h.command(tenantcommand.KindImport)))
 	mux.HandleFunc("PUT "+ArchiveStoragePath, h.sharedOnly(h.setStorage))
+	mux.HandleFunc("DELETE "+ArchiveStoragePath, h.sharedOnly(h.removeStorage))
 }
 
 func (h *Handler) startArchive(w http.ResponseWriter, r *http.Request) {
@@ -190,7 +192,7 @@ func (h *Handler) setStorage(w http.ResponseWriter, r *http.Request) {
 		w,
 		r,
 		&body,
-		"the body must be {endpoint, region, bucket, accessKeyId, secretAccessKey, archiveKeys}",
+		"the body must be {endpoint, region, bucket, prefix, accessKeyId, secretAccessKey, archiveKeys}",
 	) {
 		return
 	}
@@ -198,6 +200,7 @@ func (h *Handler) setStorage(w http.ResponseWriter, r *http.Request) {
 		Endpoint:        body.Endpoint,
 		Region:          body.Region,
 		Bucket:          body.Bucket,
+		Prefix:          body.Prefix,
 		AccessKeyID:     body.AccessKeyID,
 		SecretAccessKey: body.SecretAccessKey,
 		SessionToken:    body.SessionToken,
@@ -217,6 +220,14 @@ func (h *Handler) setStorage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	managedroutes.WriteJSON(w, h.l, http.StatusOK, StorageAnswer{ExpiresAt: body.ExpiresAt})
+}
+
+func (h *Handler) removeStorage(w http.ResponseWriter, r *http.Request) {
+	if err := h.lifecycle.RemoveNightlyGrant(r.Context()); err != nil {
+		h.commandProblem(w, "", "", err)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func (h *Handler) decode(w http.ResponseWriter, r *http.Request, into any, shape string) bool {
@@ -245,6 +256,10 @@ func (h *Handler) answerCommand(
 }
 
 func (h *Handler) commandProblem(w http.ResponseWriter, instanceID, commandID string, err error) {
+	if refusal, ok := tenantarchive.RefusalOf(err); ok {
+		managedroutes.WriteProblem(w, h.l, http.StatusBadRequest, refusal.Reason)
+		return
+	}
 	switch {
 	case errors.Is(err, cloudtenantports.ErrNotFound),
 		errors.Is(err, cloudtenantports.ErrCommandNotFound):
@@ -254,6 +269,7 @@ func (h *Handler) commandProblem(w http.ResponseWriter, instanceID, commandID st
 		errors.Is(err, tenantlifecycle.ErrExpectInvalid),
 		errors.Is(err, tenantlifecycle.ErrGrantExpiry),
 		errors.Is(err, tenantarchive.ErrLocationInvalid),
+		errors.Is(err, tenantarchive.ErrNightlyPrefix),
 		errors.Is(err, tenantarchive.ErrCredentialsMissing),
 		errors.Is(err, tenantarchive.ErrKeyInvalid),
 		errors.Is(err, tenantarchive.ErrKeyNotExpected):
@@ -261,7 +277,8 @@ func (h *Handler) commandProblem(w http.ResponseWriter, instanceID, commandID st
 	case errors.Is(err, tenantlifecycle.ErrTenantBusy):
 		managedroutes.WriteProblem(w, h.l, http.StatusLocked, err.Error())
 	case errors.Is(err, tenantlifecycle.ErrCommandConflict),
-		errors.Is(err, tenantlifecycle.ErrTenantState):
+		errors.Is(err, tenantlifecycle.ErrTenantState),
+		errors.Is(err, tenantlifecycle.ErrNotShared):
 		managedroutes.WriteProblem(w, h.l, http.StatusConflict, err.Error())
 	default:
 		h.l.Error("cannot answer a tenant archive command",

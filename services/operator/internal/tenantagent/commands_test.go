@@ -68,7 +68,16 @@ func importCommand(id uuid.UUID, location string) instanceapi.SharedTenantComman
 }
 
 func keys() *[]instanceapi.ArchiveKey {
-	return &[]instanceapi.ArchiveKey{{Id: "region-key-1", Key: archiveKeyMaterial, Current: true}}
+	return &[]instanceapi.ArchiveKey{{Id: "server-key-1", Key: archiveKeyMaterial, Current: true}}
+}
+
+func nightlyTarget() *instanceapi.SharedNightlyTarget {
+	return &instanceapi.SharedNightlyTarget{
+		Access: instanceapi.NightlyWrite, Endpoint: "https://s3.test", Region: "bhs",
+		Bucket: archiveBucket, Prefix: "tenants/",
+		AccessKeyId: "FIXTUREACCESSKEY", SecretAccessKey: bucketSecret,
+		ArchiveKeys: *keys(),
+	}
 }
 
 func writeTarget(instance, command uuid.UUID, withKeys bool) instanceapi.SharedArchiveTarget {
@@ -99,6 +108,7 @@ func readTarget(
 
 func storage(targets ...instanceapi.SharedArchiveTarget) instanceapi.SharedStorage {
 	return instanceapi.SharedStorage{
+		Nightly:  nightlyTarget(),
 		Archives: targets,
 		Waiting:  []instanceapi.SharedArchiveWaiting{},
 	}
@@ -154,11 +164,9 @@ func TestAnExportArchiveIsTakenOnceAndReported(t *testing.T) {
 	assert.Equal(t, cmd, status.LastArchive.CommandId)
 	assert.Equal(t, "s3://"+archiveBucket+"/"+target.Prefix, status.LastArchive.Location)
 	assert.Equal(t, int64(4096), status.LastArchive.SizeBytes)
-	assert.Empty(
-		t,
-		r.tms.NightlyGrants(),
-		"an export's target carries no keys for the nightly archives",
-	)
+	grants := r.tms.NightlyGrants()
+	require.Len(t, grants, 1, "the nightly storage comes from the nightly target alone, once")
+	assert.Equal(t, "tenants/", grants[0].Prefix)
 }
 
 func TestAFinalArchiveThenTheTenantIsRemoved(t *testing.T) {
@@ -176,11 +184,16 @@ func TestAFinalArchiveThenTheTenantIsRemoved(t *testing.T) {
 	require.Equal(t, 1, r.tms.CommandStarts(cmd.String()))
 	target, _ := r.tms.CommandTarget(cmd.String())
 	require.Len(t, target.ArchiveKeys, 1)
-	assert.Equal(t, "region-key-1", target.ArchiveKeys[0].ID)
+	assert.Equal(t, "server-key-1", target.ArchiveKeys[0].ID)
 	assert.Equal(t, sessionSecret, target.SessionToken)
 	grants := r.tms.NightlyGrants()
-	require.Len(t, grants, 1, "the region's grant reaches the TMS for the nightly archives")
+	require.Len(t, grants, 1, "the server's nightly storage reaches the TMS")
 	assert.Equal(t, archiveBucket, grants[0].Bucket)
+	assert.Empty(
+		t,
+		grants[0].SessionToken,
+		"the nightly grant is the nightly target's, not a command's",
+	)
 
 	r.tms.FinishArchive(cmd.String(), 1<<20, strings.Repeat("01", 32), r.clock.Now())
 	r.iterate(t)

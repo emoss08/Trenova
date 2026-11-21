@@ -38,8 +38,17 @@ func CheckImport(spec *instanceapi.SpecImport, storage *Storage) error {
 		return fmt.Errorf("%w: the import's prefix must be imports/%s/", ErrInvalidSpec, id)
 	case !sha256Pattern.MatchString(spec.ExpectSha256):
 		return fmt.Errorf("%w: the import's expectSha256", ErrInvalidSpec)
-	case len(spec.ArchiveKeys) == 0:
-		return fmt.Errorf("%w: the import carries no archive keys", ErrInvalidSpec)
+	case len(spec.ArchiveKeys) != 1:
+		return fmt.Errorf(
+			"%w: the import must carry exactly one archive key, not %d",
+			ErrInvalidSpec,
+			len(spec.ArchiveKeys),
+		)
+	case !spec.ArchiveKeys[0].Current || strings.TrimSpace(spec.ArchiveKeys[0].Id) == "":
+		return fmt.Errorf(
+			"%w: the import's archive key must have an id and be current",
+			ErrInvalidSpec,
+		)
 	case !storage.Configured():
 		return fmt.Errorf("%w: an import needs the instance's backups bucket", ErrInvalidSpec)
 	case spec.Bucket != BackupsBucket(storage):

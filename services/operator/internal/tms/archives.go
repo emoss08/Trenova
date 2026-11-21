@@ -14,6 +14,9 @@ const (
 	CommandArchive = "archive"
 	CommandRestore = "restore"
 	CommandImport  = "import"
+
+	FailureStorageRefused = "storage"
+	FailureKeyUnknown     = "key_unknown"
 )
 
 var (
@@ -69,6 +72,7 @@ type NightlyGrant struct {
 	Endpoint        string       `json:"endpoint"`
 	Region          string       `json:"region"`
 	Bucket          string       `json:"bucket"`
+	Prefix          string       `json:"prefix"`
 	AccessKeyID     string       `json:"accessKeyId"`
 	SecretAccessKey string       `json:"secretAccessKey"`
 	SessionToken    string       `json:"sessionToken,omitempty"`
@@ -77,7 +81,7 @@ type NightlyGrant struct {
 }
 
 func (g NightlyGrant) String() string {
-	return "nightly archive grant for s3://" + g.Bucket
+	return "nightly archive grant for s3://" + g.Bucket + "/" + g.Prefix
 }
 
 func (g NightlyGrant) GoString() string { //nolint:gocritic // hugeParam: a value receiver, so %#v on a value prints this and never the secret fields
@@ -179,6 +183,14 @@ func (c *Client) PutNightlyGrant(ctx context.Context, grant *NightlyGrant) error
 	u := c.base.JoinPath("managed", "v1", "tenants", "archive-storage")
 	if _, err = c.do(ctx, http.MethodPut, u, body, http.StatusOK); err != nil {
 		return fmt.Errorf("send the nightly archive grant to the TMS: %w", sharedOnly(err))
+	}
+	return nil
+}
+
+func (c *Client) DeleteNightlyGrant(ctx context.Context) error {
+	u := c.base.JoinPath("managed", "v1", "tenants", "archive-storage")
+	if _, err := c.do(ctx, http.MethodDelete, u, nil, http.StatusNoContent); err != nil {
+		return fmt.Errorf("remove the TMS's nightly archive grant: %w", sharedOnly(err))
 	}
 	return nil
 }

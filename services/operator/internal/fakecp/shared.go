@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"net/http"
 	"slices"
+	"strconv"
 
 	"github.com/bytedance/sonic"
 	"github.com/google/uuid"
@@ -25,6 +26,8 @@ type sharedState struct {
 	support     *instanceapi.SharedSupport
 	storage     instanceapi.SharedStorage
 	storageAsks int
+	storageFail int
+	storageSalt int
 }
 
 func newSharedState() sharedState {
@@ -75,6 +78,33 @@ func (s *Server) SetSharedStorage(storage instanceapi.SharedStorage) {
 	s.shared.storage = storage
 }
 
+func (s *Server) FailSharedStorage(n int) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.shared.storageFail = n
+}
+
+func (s *Server) BumpStorageRevision() {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.shared.storageSalt++
+}
+
+func (s *Server) StorageRevision() string {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.storageRevision()
+}
+
+func (s *Server) storageRevision() string {
+	body, err := sonic.Marshal(s.shared.storage)
+	if err != nil {
+		return "unencodable"
+	}
+	sum := sha256.Sum256(append(body, strconv.Itoa(s.shared.storageSalt)...))
+	return hex.EncodeToString(sum[:16])
+}
+
 func (s *Server) SharedStorageAsks() int {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -84,7 +114,14 @@ func (s *Server) SharedStorageAsks() int {
 func (s *Server) sharedStorage(w http.ResponseWriter, _ *http.Request) {
 	s.mu.Lock()
 	s.shared.storageAsks++
+	if s.shared.storageFail > 0 {
+		s.shared.storageFail--
+		s.mu.Unlock()
+		problem(w, http.StatusServiceUnavailable, "unavailable")
+		return
+	}
 	out := instanceapi.SharedStorage{
+		Nightly:  s.shared.storage.Nightly,
 		Archives: slices.Clone(s.shared.storage.Archives),
 		Waiting:  slices.Clone(s.shared.storage.Waiting),
 	}
@@ -141,9 +178,10 @@ func (s *Server) SharedUsageReports() []instanceapi.SharedUsageReport {
 func (s *Server) listSharedTenants(w http.ResponseWriter, r *http.Request) {
 	s.mu.Lock()
 	list := instanceapi.SharedTenantList{
-		Tenants:     slices.Clone(s.shared.tenants),
-		SystemEmail: s.shared.systemEmail,
-		Support:     s.shared.support,
+		Tenants:         slices.Clone(s.shared.tenants),
+		SystemEmail:     s.shared.systemEmail,
+		Support:         s.shared.support,
+		StorageRevision: s.storageRevision(),
 	}
 	s.shared.listings++
 	s.mu.Unlock()

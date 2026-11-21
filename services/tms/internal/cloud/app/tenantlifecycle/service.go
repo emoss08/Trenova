@@ -4,6 +4,7 @@ import (
 	"errors"
 	"time"
 
+	"github.com/emoss08/trenova/internal/cloud/ports/archiveports"
 	"github.com/emoss08/trenova/internal/cloud/ports/cloudtenantports"
 	"github.com/emoss08/trenova/internal/infrastructure/config/managedconfig"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/instancebootstrapports"
@@ -47,6 +48,7 @@ type Params struct {
 	Workflows      kernelports.WorkflowStarter
 	Commands       cloudtenantports.Commands
 	Grants         cloudtenantports.LiveSupportGrants
+	Buckets        archiveports.Buckets
 	Secrets        kernelports.SecretCipher
 	Scopes         *managedscope.Resolver
 	Clock          timeutils.Clock
@@ -69,6 +71,7 @@ type Service struct {
 	workflows      kernelports.WorkflowStarter
 	commands       cloudtenantports.Commands
 	grants         cloudtenantports.LiveSupportGrants
+	buckets        archiveports.Buckets
 	secrets        kernelports.SecretCipher
 	scopes         *managedscope.Resolver
 	clock          timeutils.Clock
@@ -93,6 +96,7 @@ func New(p Params) *Service {
 		workflows:      p.Workflows,
 		commands:       p.Commands,
 		grants:         p.Grants,
+		buckets:        p.Buckets,
 		secrets:        p.Secrets,
 		scopes:         p.Scopes,
 		clock:          p.Clock,

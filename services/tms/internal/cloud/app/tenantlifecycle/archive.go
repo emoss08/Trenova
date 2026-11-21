@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/google/uuid"
+	"go.uber.org/zap"
 )
 
 const (
@@ -185,24 +186,54 @@ func (s *Service) SetNightlyGrant(
 	if expiresAt.Unix() <= s.clock() {
 		return ErrGrantExpiry
 	}
-	location := access.Location
-	location.Prefix = tenantarchive.TenantPrefix(nightlyProbe)
+	if err := access.CheckNightlyRoot(); err != nil {
+		return err
+	}
 	probe := *access
-	probe.Location = location
+	probe.Location.Prefix = tenantarchive.TenantPrefix(nightlyProbe)
 	if err := probe.CheckWrite(nightlyProbe, tenantarchive.PurposeNightly); err != nil {
+		return err
+	}
+	if err := s.buckets.CheckEndpoint(access.Location.Endpoint); err != nil {
 		return err
 	}
 	sealed, err := s.sealAccess(ctx, grantResource+tenantcommand.NightlyGrant, access)
 	if err != nil {
 		return err
 	}
-	return s.commands.SetGrant(ctx, &tenantcommand.Grant{
+	if err = s.commands.SetGrant(ctx, &tenantcommand.Grant{
 		Name:         tenantcommand.NightlyGrant,
-		Location:     "s3://" + location.Bucket,
+		Location:     "s3://" + access.Location.Bucket + "/" + access.Location.Prefix,
 		SealedAccess: sealed,
 		ExpiresAt:    expiresAt.Unix(),
 		UpdatedAt:    s.clock(),
-	})
+	}); err != nil {
+		return err
+	}
+	keyIDs := make([]string, 0, len(access.Keys))
+	for i := range access.Keys {
+		keyIDs = append(keyIDs, access.Keys[i].ID)
+	}
+	s.l.Info("the control plane set the nightly archive storage",
+		zap.String("bucket", access.Location.Bucket),
+		zap.String("prefix", access.Location.Prefix),
+		zap.Strings("archiveKeyIds", keyIDs),
+		zap.Time("expiresAt", expiresAt.UTC()),
+	)
+	return nil
+}
+
+func (s *Service) RemoveNightlyGrant(ctx context.Context) error {
+	if !s.shared {
+		return ErrNotShared
+	}
+	if err := s.commands.DeleteGrant(ctx, tenantcommand.NightlyGrant); err != nil {
+		return err
+	}
+	s.l.Info(
+		"the control plane removed the nightly archive storage; nightly tenant archives stop until it names storage again",
+	)
+	return nil
 }
 
 func (s *Service) NightlyAccess(ctx context.Context) (*tenantarchive.Access, error) {
@@ -213,7 +244,14 @@ func (s *Service) NightlyAccess(ctx context.Context) (*tenantarchive.Access, err
 	if grant.ExpiresAt <= s.clock() {
 		return nil, cloudtenantports.ErrGrantMissing
 	}
-	return s.openAccess(ctx, grantResource+tenantcommand.NightlyGrant, grant.SealedAccess)
+	access, err := s.openAccess(ctx, grantResource+tenantcommand.NightlyGrant, grant.SealedAccess)
+	if err != nil {
+		return nil, err
+	}
+	if access.CheckNightlyRoot() != nil {
+		return nil, cloudtenantports.ErrGrantMissing
+	}
+	return access, nil
 }
 
 type NightlyTarget struct {
@@ -240,6 +278,9 @@ func (s *Service) NightlyTargets(
 ) (*NightlyPage, error) {
 	if limit <= 0 {
 		limit = nightlyPage
+	}
+	if _, err := s.NightlyAccess(ctx); err != nil {
+		return nil, err
 	}
 	page, err := s.tenants.List(
 		ctx,
@@ -305,7 +346,11 @@ func (s *Service) BeginNightly(
 	if err != nil {
 		return nil, nil, err
 	}
-	grant.Location.Prefix = tenantarchive.NightlyPrefix(target.InstanceID, day)
+	grant.Location.Prefix = tenantarchive.NightlyUnder(
+		grant.Location.Prefix,
+		target.InstanceID,
+		day,
+	)
 	if err = grant.CheckWrite(target.InstanceID, tenantarchive.PurposeNightly); err != nil {
 		return nil, nil, err
 	}

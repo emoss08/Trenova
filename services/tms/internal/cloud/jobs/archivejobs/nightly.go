@@ -20,7 +20,10 @@ import (
 	"go.uber.org/zap"
 )
 
-const maxNightlyScans = 20
+const (
+	maxNightlyScans  = 20
+	noNightlyStorage = "no nightly archive storage is held (the control plane names none, or it was removed or has expired), so nightly tenant archives are skipped"
+)
 
 type NightlyInput struct {
 	InstanceID     string   `json:"instanceId"`
@@ -40,6 +43,10 @@ func (a *Activities) ListNightlyTenantsActivity(
 	out := &temporaljobs.TenantPage{Tenants: make([]temporaljobs.TenantWorkItem, 0)}
 	for range maxNightlyScans {
 		page, err := a.lifecycle.NightlyTargets(ctx, cursor, nightlyPageSize)
+		if errors.Is(err, cloudtenantports.ErrGrantMissing) {
+			a.l.Info(noNightlyStorage)
+			return out, nil
+		}
 		if err != nil {
 			return nil, err
 		}
@@ -81,7 +88,8 @@ func (a *Activities) NightlyArchiveActivity(ctx context.Context, input *NightlyI
 	}
 	cmd, access, err := a.lifecycle.BeginNightly(ctx, target, day)
 	if errors.Is(err, cloudtenantports.ErrGrantMissing) {
-		return 0, temporal.NewNonRetryableApplicationError(err.Error(), errorNoNightlyGrant, err)
+		a.l.Info(noNightlyStorage, zap.String("instanceId", target.InstanceID))
+		return 0, nil
 	}
 	if err != nil {
 		return 0, err
@@ -92,6 +100,10 @@ func (a *Activities) NightlyArchiveActivity(ctx context.Context, input *NightlyI
 		}
 	}
 	grant, err := a.lifecycle.NightlyAccess(ctx)
+	if errors.Is(err, cloudtenantports.ErrGrantMissing) {
+		a.l.Info(noNightlyStorage, zap.String("instanceId", target.InstanceID))
+		return 1, nil
+	}
 	if err != nil {
 		return 0, err
 	}

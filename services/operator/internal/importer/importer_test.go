@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/bytedance/sonic"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -35,7 +36,7 @@ func spec() *instanceapi.InstanceSpec {
 			Id: id, Bucket: "backups", Prefix: "imports/" + id.String() + "/",
 			ExpectSha256: strings.Repeat("ab", 32),
 			ArchiveKeys: []instanceapi.ArchiveKey{
-				{Id: "region-1", Key: keyFixture, Current: true},
+				{Id: "import-1", Key: keyFixture, Current: true},
 			},
 		},
 	}
@@ -102,4 +103,40 @@ func TestTheKeysLiveOnlyInTheirSecretUntilTheImportSettlesAndNeverInALog(t *test
 
 	assert.NotContains(t, logs.String(), keyFixture)
 	assert.WithinDuration(t, time.Now(), status.At, time.Minute)
+}
+
+func TestTheImportSecretHoldsTheImportsOneKeyAndTwoAreRefused(t *testing.T) {
+	t.Parallel()
+	kube := fake.NewClientset()
+	imp, err := importer.New(&importer.Params{
+		Kube: kube, Namespace: "trenova", Release: "trenova",
+		Logger: slog.New(slog.NewTextHandler(&bytes.Buffer{}, nil)),
+	})
+	require.NoError(t, err)
+
+	two := spec()
+	two.Import.ArchiveKeys = append(two.Import.ArchiveKeys, instanceapi.ArchiveKey{
+		Id: "import-2", Key: keyFixture,
+	})
+	_, err = imp.Prepare(t.Context(), two, &storage)
+	require.ErrorIs(t, err, values.ErrInvalidSpec)
+	_, err = kube.CoreV1().Secrets("trenova").
+		Get(t.Context(), values.ImportKeysSecret("trenova"), metav1.GetOptions{})
+	assert.True(t, apierrors.IsNotFound(err), "a refused import keeps no key")
+
+	none := spec()
+	none.Import.ArchiveKeys = nil
+	_, err = imp.Prepare(t.Context(), none, &storage)
+	require.ErrorIs(t, err, values.ErrInvalidSpec)
+
+	planned, err := imp.Prepare(t.Context(), spec(), &storage)
+	require.NoError(t, err)
+	secret, err := kube.CoreV1().Secrets("trenova").
+		Get(t.Context(), planned.KeysSecret, metav1.GetOptions{})
+	require.NoError(t, err)
+	var held []instanceapi.ArchiveKey
+	require.NoError(t, sonic.Unmarshal(secret.Data[values.ImportKeysKey], &held))
+	require.Len(t, held, 1)
+	assert.Equal(t, "import-1", held[0].Id)
+	assert.True(t, held[0].Current)
 }
