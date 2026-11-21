@@ -11,6 +11,7 @@ import (
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/cloud/ports/cloudtenantports"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/tenantkeys"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/jackc/pgx/v5"
@@ -100,7 +101,12 @@ func literalOf(v string) string { return "'" + strings.ReplaceAll(v, "'", "''") 
 
 func (r *rig) plantInbound(t *testing.T, removed, other dbscope.Tenant) []string {
 	t.Helper()
-	keys, err := keel.QueryAll(r.ctx, r.admin, pgx.RowToAddrOfStructByName[inboundKey], inboundKeysQuery)
+	keys, err := keel.QueryAll(
+		r.ctx,
+		r.admin,
+		pgx.RowToAddrOfStructByName[inboundKey],
+		inboundKeysQuery,
+	)
 	require.NoError(t, err)
 	planted := make([]string, 0)
 	for _, k := range keys {
@@ -154,9 +160,15 @@ GROUP BY c.relname ORDER BY 1`)
 		if table.HasBU {
 			where = "t.business_unit_id = $1"
 		}
-		sum, qerr := keel.QueryValue[string](r.ctx, r.admin,
+		sum, qerr := keel.QueryValue[string](
+			r.ctx,
+			r.admin,
 			"SELECT count(*)::text || ':' || COALESCE(md5(string_agg(t::text, '|' ORDER BY t::text)), '') FROM "+
-				ident(table.Name)+" t WHERE "+where, tenant.BusinessUnitID.String())
+				ident(
+					table.Name,
+				)+" t WHERE "+where,
+			tenant.BusinessUnitID.String(),
+		)
 		require.NoError(t, qerr, table.Name)
 		out[table.Name] = sum
 	}
@@ -170,8 +182,13 @@ func TestRemovalStopsOnAnotherTenantsReferenceAndChangesNothing(t *testing.T) {
 	removed := scopeOf(r.tenant(t, instanceA))
 
 	planted := r.plantInbound(t, removed, other)
-	require.NotEmpty(t, planted, "the schema admits at least one reference to plant")
+	require.NotEmpty(t, planted, "the declared exceptions admit at least one reference to plant")
 	t.Logf("planted %d cross-tenant references: %s", len(planted), strings.Join(planted, ", "))
+	declared := tenantkeys.Exceptions()
+	for _, constraint := range planted {
+		assert.Contains(t, declared, constraint, "only a declared exception admits another "+
+			"tenant's record; every other key carries the tenant")
+	}
 
 	otherBefore := r.fingerprint(t, other)
 	removedBefore := r.fingerprint(t, removed)

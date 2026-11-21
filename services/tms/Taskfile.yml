@@ -557,17 +557,27 @@ tasks:
         git archive "{{.BASE_REF}}" "{{.SCHEMA_DIR}}" | tar -x -C "$BASE_DIR"
         go run ./internal/api/graphql/schemadiff/cmd -base "$BASE_DIR/{{.SCHEMA_DIR}}" -head "{{.SCHEMA_DIR}}"
 
+  # keel gen loads the domain packages with go/packages, which reads GOFLAGS; both tasks set it
+  # themselves, the base tags without -trimpath, so the file-wide GOFLAGS above or a machine's
+  # `go env -w GOFLAGS=...` never changes what the loader sees. keel gen exits non-zero when
+  # loading or generation fails and -check when a file is stale; the check also fails when
+  # either generated table list is missing.
   keel-gen:
     desc: Generate the keel table packages from the domain models' keel tags
+    env:
+      GOFLAGS: '{{if .GO_TAGS}}-tags={{.GO_TAGS}}{{end}}'
     cmds:
       - go tool keel gen {{.KEEL_GEN_ARGS}}
       - go tool keel gen {{.CLOUD_KEEL_GEN_ARGS}}
 
   keel-gen-check:
     desc: Verify the generated keel table packages are up to date
+    env:
+      GOFLAGS: '{{if .GO_TAGS}}-tags={{.GO_TAGS}}{{end}}'
     cmds:
       - go tool keel gen -check {{.KEEL_GEN_ARGS}}
       - go tool keel gen -check {{.CLOUD_KEEL_GEN_ARGS}}
+      - test -s internal/keeltables/keel_gen.go && test -s internal/cloud/cloudtables/keel_gen.go
 
   generate-write-coverage:
     desc: Regenerate docs/engineering/agent-write-coverage.md from writecoverage.yml, the schema, the routes and the agent tools

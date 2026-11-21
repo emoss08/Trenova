@@ -172,6 +172,42 @@ func TestACycleThatCannotBeBrokenIsRefused(t *testing.T) {
 	assert.Contains(t, err.Error(), "billing_queue_items")
 }
 
+func TestOnlyAKeyByIDAloneIsCheckedForRowsOutsideTheTenant(t *testing.T) {
+	t.Parallel()
+
+	cat := catalog()
+	cat.Tables["invoices"].Columns = append(cat.Tables["invoices"].Columns,
+		col("approved_by_id", true), col("posted_by_id", true))
+	cat.ForeignKeys = append(cat.ForeignKeys,
+		fk("fk_invoices_approved_by", "invoices", "users", "approved_by_id", "business_unit_id"),
+		fk("fk_invoices_posted_by", "invoices", "users", "posted_by_id"),
+	)
+	plan, err := archiveplan.Build(
+		&archiveplan.Input{Catalog: cat, Purpose: tenantarchive.PurposeFinal},
+	)
+	require.NoError(t, err)
+
+	outside := make([]string, 0, len(plan.Outside))
+	for _, k := range plan.Outside {
+		outside = append(outside, k.Name)
+	}
+	assert.Contains(t, outside, "fk_invoices_posted_by")
+	assert.NotContains(t, outside, "fk_invoices_approved_by",
+		"a key that carries the business unit cannot name another tenant's row")
+
+	cat.Tables["invoices"].Columns[2].Nullable = true
+	plan, err = archiveplan.Build(
+		&archiveplan.Input{Catalog: cat, Purpose: tenantarchive.PurposeFinal},
+	)
+	require.NoError(t, err)
+	outside = outside[:0]
+	for _, k := range plan.Outside {
+		outside = append(outside, k.Name)
+	}
+	assert.Contains(t, outside, "fk_invoices_approved_by",
+		"a business unit that may be empty leaves the key unchecked for that row")
+}
+
 func TestAGlobalReferenceWithoutANaturalKeyIsRefused(t *testing.T) {
 	t.Parallel()
 

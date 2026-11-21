@@ -242,7 +242,8 @@ func (b *builder) foreignKey(fk *ForeignKey) {
 	cat := b.in.Catalog
 	if parent, ok := b.plan.byName[fk.Parent]; ok {
 		b.plan.ForeignKeys = append(b.plan.ForeignKeys, fk)
-		if !fk.SelfReferencing() && !withinTenant(fk, child, parent) {
+		if !fk.SelfReferencing() && !withinTenant(fk, child, parent) &&
+			!b.carriesUnit(fk) {
 			b.plan.Outside = append(b.plan.Outside, fk)
 		}
 		return
@@ -271,6 +272,26 @@ func withinTenant(fk *ForeignKey, child, parent *PlannedTable) bool {
 	return slices.Contains(fk.ChildColumns, BusinessUnitColumn) &&
 		parentOf(fk, BusinessUnitColumn) == BusinessUnitColumn &&
 		child.Filter == FilterUnit && parent.Filter == FilterUnit
+}
+
+func (b *builder) carriesUnit(fk *ForeignKey) bool {
+	table, ok := b.in.Catalog.Tables[fk.Child]
+	if !ok {
+		return false
+	}
+	for i, c := range fk.ChildColumns {
+		if i >= len(fk.ParentColumns) || !unitColumn(c) || !unitColumn(fk.ParentColumns[i]) {
+			continue
+		}
+		if column, found := table.Column(c); found && !column.Nullable {
+			return true
+		}
+	}
+	return false
+}
+
+func unitColumn(name string) bool {
+	return name == BusinessUnitColumn || strings.HasSuffix(name, "_"+BusinessUnitColumn)
 }
 
 func (b *builder) global(fk *ForeignKey, child *PlannedTable) {

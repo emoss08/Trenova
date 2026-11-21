@@ -154,6 +154,9 @@ revoked from `trenova_tenant`; see [security-audit.md](security-audit.md). A rol
 revokes every write on it from `trenova_tenant`. Its refresh marks (`keel_rollup_dirty`) name
 tenants and the days they were busy: their policy lets a tenant append marks for its own tenant
 key and read none ([backend/data-access.md](backend/data-access.md#rollups)).
+A policy does not reach a foreign-key check, so every foreign key between tenant tables carries
+`business_unit_id` and the database refuses a reference to another tenant's record ("Tenant keys" in
+[backend/data-access.md](backend/data-access.md#tenant-keys)).
 `schemalint` fails on a table with neither, on a tenant policy that does not read
 the scope, on a view that is not `security_invoker`, and on a new
 `SECURITY DEFINER` function. The two allowed are `trenova_rls.claims()` and

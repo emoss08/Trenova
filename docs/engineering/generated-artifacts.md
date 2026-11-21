@@ -51,6 +51,15 @@ runs `migrate check -base-dir` against the base branch's `schema/migrations`: it
 migration older than the newest one there (renumber it) and on an edited or deleted migration the
 base branch already has (fix forward with a new migration instead).
 
+## Tenant keys
+
+`internal/infrastructure/postgres/tenantkeys` reads the migrated catalog and classifies every
+foreign key between tenant tables. Two `schemalint` integration tests fail when a key names a
+record by id alone or has no index, and the same run writes the migrations that fix them when
+`TRENOVA_TENANT_KEYS_OUT` and `TRENOVA_TENANT_KEYS_VERSION` are set. The written SQL is reviewed
+and checked in like any migration, then `task db-stamp`. See "Tenant keys" in
+[backend/data-access.md](backend/data-access.md#tenant-keys).
+
 ## GraphQL projections: the one that fails on correct code
 
 `internal/api/graphql/projection/projection.yml` maps every GraphQL field to the database

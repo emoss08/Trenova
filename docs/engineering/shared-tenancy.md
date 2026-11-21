@@ -514,18 +514,30 @@ deleted and never takes a user with it). The catalog test in
 `internal/cloud/boundaries_integration_test.go` accepts nothing weaker.
 
 **Nothing of another tenant is touched.** A foreign key that names a record by id alone is not held
-to the row's tenant (foreign-key checks ignore row-level security), so a write path that took
-another tenant's id without looking it up would leave a row that names two tenants. Before it
-deletes anything, and again before the organization's and business unit's cascades, the purge
-counts, for every foreign key from a tenant table to a table of the tenant (and to
-`organizations` and `business_units`) whose columns do not carry the tenant, the child rows of
-another business unit that refer to a row of the removed tenant (one batched statement per 40
-keys, the parent's tenant index first). Any count above zero stops the removal, the restore's
-purge included, with `CrossTenantReferencesError`: a non-retryable
-`CloudTenantCrossTenantReference` naming each table, column and count, never a row; nothing of
-either tenant was changed. The purge's own reference deletes and nulls carry the child row's
-business unit too. `internal/cloud/crosstenant_integration_test.go` plants such a reference in
-every key the schema allows and proves the removal changes nothing of either tenant. A shared server gives every tenant its own business unit, so in-network EDI and
+to the row's tenant (foreign-key checks ignore row-level security), so the database itself refuses
+the reference instead: every foreign key between tenant tables carries the row's business unit
+(`(canceled_by_id, business_unit_id) → users(id, business_unit_id)`), or its organization where
+the table has no business unit, or is the parent's whole `(id, organization_id,
+business_unit_id)` key (migrations `20261231023730`…`20261231023760`; the rule and its catalog
+tests are "Tenant keys" in [backend/data-access.md](backend/data-access.md#tenant-keys)). A write
+that names another tenant's record fails with a foreign-key violation of the key's usual name, so
+the model's message is the same as for a record that does not exist.
+`internal/cloud/tenantkeys_integration_test.go` inserts, for every such key, a row naming a record
+of another tenant (refused, by that constraint) and one naming a record of its own (accepted).
+Eight keys cannot carry the tenant: the people of `mfa_authenticators`, `mfa_recovery_codes` and
+`user_role_assignments` (organization only, and `users` has no organization) and the keys of
+`auth_events`, `notifications` and `risk_decisions` (business unit may be empty); each is listed
+with its reason in `tenantkeys/exceptions.go`. For those, before it deletes anything, and again
+before the organization's and business unit's cascades, the purge counts, for every foreign key
+from a tenant table to a table of the tenant (and to `organizations` and `business_units`) whose
+columns do not carry the tenant, the child rows of another business unit that refer to a row of the
+removed tenant (one batched statement per 40 keys, the parent's tenant index first). Any count
+above zero stops the removal, the restore's purge included, with `CrossTenantReferencesError`: a
+non-retryable `CloudTenantCrossTenantReference` naming each table, column and count, never a row;
+nothing of either tenant was changed. The purge's own reference deletes and nulls carry the child
+row's business unit too. `internal/cloud/crosstenant_integration_test.go` plants such a reference
+in every key that still admits one (only declared exceptions do) and proves the removal changes
+nothing of either tenant. A shared server gives every tenant its own business unit, so in-network EDI and
 memberships connect organizations of one company and never two tenants: a removal deletes every
 row that names the tenant, and no other tenant has a row to keep or rewrite. The removal
 integration test runs on the full seeded company and checks every `*organization_id` column of
@@ -645,8 +657,11 @@ table whose tenant columns name its parties; both are held to one business unit)
 carries one business unit with exactly one organization; a unit holding another organization is
 refused. Because every reference to another organization carries the row's business unit (see
 "No row names two tenants" above), an archive never holds another tenant's row, and an import has
-no counterparty to find or clear. A row that refers out of the tenant through a key that names a
-record by id alone refuses the export with reason `tenant`, naming each table, column and count;
+no counterparty to find or clear. A key that maps the row's non-null business unit to the
+parent's cannot leave the tenant, so the export checks only the others (`archiveplan` leaves keys
+that carry the business unit out of `Plan.Outside`): a row that refers out of the tenant through a
+key that names a record by id alone (a declared exception of "Tenant keys") refuses the export with
+reason `tenant`, naming each table, column and count;
 the nightly run records the refusal on its command and counts it in
 `trenova_tenancy_archive_refusals_total{purpose,code}`, so the nightly archive of every tenant is
 also the server-wide check that no row names two tenants, and a final or move archive refused this

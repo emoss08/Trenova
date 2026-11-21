@@ -574,6 +574,51 @@ is idempotent and cheap, since it runs on every deploy. A new table
   other shape calls `trenova_rls.apply_policy` or joins `trenova_rls.global_tables` in the same
   migration ([row-level-security.md](../row-level-security.md)).
 
+### Tenant keys
+
+**A foreign key between tenant tables includes `business_unit_id`.** A foreign-key check ignores
+row-level security, so a key that names a record by id alone lets a write carry another tenant's
+id. Reference the parent's `(id, business_unit_id)` (the parent has a unique index on it,
+`uq_<parent>_id_business_unit`), and give `SET NULL` its column so the tenant column is never
+cleared:
+
+```sql
+CONSTRAINT "fk_shipments_canceled_by" FOREIGN KEY ("canceled_by_id", "business_unit_id")
+    REFERENCES "users"("id", "business_unit_id") ON UPDATE NO ACTION ON DELETE SET NULL ("canceled_by_id")
+```
+
+A parent whose primary key is `(id, organization_id, business_unit_id)` is referenced by the whole
+key, as before. A table without `business_unit_id` carries `organization_id` instead (`(directory_id,
+organization_id) → scim_directories(id, organization_id)`); a two-party table is referenced by its
+first party's business unit (`edi_load_tender_transfers(id, source_business_unit_id)`). A key that
+cannot carry either (a nullable tenant column, a table with no column pair in common with its
+parent) is listed with its reason in `internal/infrastructure/postgres/tenantkeys/exceptions.go`.
+
+**Every foreign key between tenant tables has an index** whose leading columns are its reference
+columns, partial `WHERE <column> IS NOT NULL` when they may be empty, or its whole key; without one,
+deleting a parent row (and a tenant removal) scans every tenant's rows of the child:
+
+```sql
+CREATE INDEX CONCURRENTLY IF NOT EXISTS "idx_shipments_fk_canceled_by_id"
+    ON "shipments"("canceled_by_id") WHERE "canceled_by_id" IS NOT NULL;
+```
+
+The reference column alone is enough: the parent's id is unique, so `(col)` answers the check's
+`col = $1 AND business_unit_id = $2` as well as `(col, business_unit_id)` would, and is smaller. The
+tenant columns' own keys to `business_units` are not held to the rule (`business_units` is not a
+tenant table); `organization_id → organizations` is.
+
+`schemalint`'s `TestForeignKeysBetweenTenantTablesCarryTheTenant` and
+`TestEveryForeignKeyBetweenTenantTablesIsIndexed` read the catalog and fail on a key or an index
+that breaks either rule. Run them with `TRENOVA_TENANT_KEYS_OUT=schema/migrations` (an absolute
+path) and `TRENOVA_TENANT_KEYS_VERSION=<next version>` to write the four migrations that fix what
+they found (`tenantkeys.Render`): the indexes (`--keel:notx`); a preflight that stops with each
+table, column and count when existing rows already refer to another tenant, then the new keys
+added `NOT VALID`; `VALIDATE CONSTRAINT`; the old keys dropped and the new ones renamed to the old
+names, so model constraint messages keep resolving. Review the SQL; prefer writing a new key the
+right way in its own migration. `20261231023730`…`20261231023760` are the migrations that converted
+the schema.
+
 An index on an existing table goes in its own file that starts with `--keel:notx`, one
 `CREATE INDEX CONCURRENTLY IF NOT EXISTS` (or `DROP INDEX CONCURRENTLY IF EXISTS`) per
 `--keel:split` part, as does `ALTER TYPE … ADD VALUE`. The exception is an index rebuilt in the
