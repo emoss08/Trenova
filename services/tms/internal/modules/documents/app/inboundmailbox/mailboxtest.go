@@ -7,8 +7,11 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/documents/app/inboundqueue"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/mailtemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/triage"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/email"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
@@ -21,9 +24,6 @@ const (
 	testTokenPrefix = "trv-test-"
 	testTokenBytes  = 8
 	testCooldown    = int64(60)
-	testSubject     = "Trenova test message "
-	testBody        = "This is a test from Trenova to check that this address receives mail. " +
-		"It lands in Triage like any other message; you can ignore it once it arrives."
 )
 
 func (s *Service) SendMailboxTest(
@@ -60,16 +60,27 @@ func (s *Service) SendMailboxTest(
 		return nil, err
 	}
 
-	if _, err = s.email.Send(ctx, &emailports.SendEmailRequest{
-		TenantInfo:     tenantInfo,
-		Type:           email.TypeMailboxTest,
-		Purpose:        email.PurposeOperations,
-		To:             []string{mailbox.Address},
-		Subject:        testSubject + token,
-		Text:           testBody,
-		HTML:           "<p>" + testBody + "</p>",
-		IdempotencyKey: token,
-	}); err != nil {
+	rendered, err := s.renderer.RenderMessage(ctx, &documenttemplateports.RenderMessageRequest{
+		TenantInfo: tenantInfo,
+		Kind:       documenttemplate.KindMailboxTestEmail,
+		Data: mailtemplate.MailboxTestEmailContext{
+			MailboxAddress: mailbox.Address,
+			Token:          token,
+		},
+	})
+	if err == nil {
+		_, err = s.email.Send(ctx, &emailports.SendEmailRequest{
+			TenantInfo:     tenantInfo,
+			Type:           email.TypeMailboxTest,
+			Purpose:        email.PurposeOperations,
+			To:             []string{mailbox.Address},
+			Subject:        rendered.Subject,
+			Text:           rendered.Text,
+			HTML:           rendered.HTML,
+			IdempotencyKey: token,
+		})
+	}
+	if err != nil {
 		if _, restoreErr := s.mailboxState.MarkTestSent(ctx, inboundmessageports.MailboxTestRequest{
 			TenantInfo: tenantInfo,
 			MailboxID:  mailbox.ID,

@@ -1,12 +1,10 @@
 package detentionnoticeservice_test
 
 import (
-	"strings"
 	"testing"
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/operations/app/detentionnoticerender"
-	"github.com/emoss08/trenova/internal/modules/operations/app/detentionnoticeservice"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionnotice"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -50,20 +48,4 @@ func TestNoticeHTMLEscapesOperatorEnteredNames(t *testing.T) {
 
 	// And nothing landed somewhere html/template could not escape it.
 	assert.NotContains(t, content.HTML, "ZgotmplZ")
-}
-
-// A notice queued before body_html existed has no snapshot to send. The
-// reconstruction must escape rather than reproduce the old bug.
-func TestLegacyNoticeWithoutASnapshotIsEscapedOnSend(t *testing.T) {
-	t.Parallel()
-
-	legacy := &detentionnotice.DetentionNotice{
-		Body: "Detention at Memphis <script>alert(1)</script> DC",
-	}
-
-	html := detentionnoticeservice.NoticeHTMLForTest(legacy)
-
-	assert.NotContains(t, html, "<script>")
-	assert.Contains(t, html, "&lt;script&gt;")
-	assert.True(t, strings.HasPrefix(html, "<pre"))
 }

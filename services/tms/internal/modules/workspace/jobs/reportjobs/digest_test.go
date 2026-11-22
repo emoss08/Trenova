@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/keel/analytics/format"
 	"github.com/emoss08/keel/analytics/table"
 	"github.com/emoss08/keel/analytics/value"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/reporttemplate"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
 	"github.com/stretchr/testify/assert"
@@ -169,15 +170,26 @@ func TestDigestContextFormatsThroughTheDisplayContract(t *testing.T) {
 	out, err := digestContext(t.Context(), digest, nil, "en", 2)
 	require.NoError(t, err)
 
-	assert.Equal(t, []string{"Customer", "Revenue"}, out.Headers)
+	assert.Equal(t, []reporttemplate.ReportColumn{
+		{Label: "Customer"},
+		{Label: "Revenue", Numeric: true},
+	}, out.Headers)
 	require.Len(t, out.Rows, 2)
+	assert.False(t, out.Rows[0].Cells[0].Numeric)
+	assert.True(t, out.Rows[0].Cells[1].Numeric, "money reads right-aligned")
 	assert.Equal(t, "$2,000.00", out.Rows[0].Cells[1].Text)
 	assert.Equal(t, "$500.00", out.Rows[1].Cells[1].Text)
 	assert.Equal(t, string(format.ToneNegative), out.Rows[0].Cells[1].Tone)
 	assert.Empty(t, out.Rows[1].Cells[1].Tone, "the value under the threshold is not toned")
 	require.Len(t, out.Totals, 2)
-	assert.Equal(t, "Total", out.Totals[0], "the leading dimension is labelled rather than blank")
-	assert.Equal(t, "$2,500.00", out.Totals[1])
+	assert.Equal(
+		t,
+		"Total",
+		out.Totals[0].Text,
+		"the leading dimension is labelled rather than blank",
+	)
+	assert.Equal(t, "$2,500.00", out.Totals[1].Text)
+	assert.True(t, out.Totals[1].Numeric)
 }
 
 func TestDigestContextIsEmptyWhenThereIsNothingToShow(t *testing.T) {

@@ -63,7 +63,10 @@ type sentMail struct {
 	sent chan *emailports.SendEmailRequest
 }
 
-func (m *sentMail) Send(_ context.Context, req *emailports.SendEmailRequest) (*email.Message, error) {
+func (m *sentMail) Send(
+	_ context.Context,
+	req *emailports.SendEmailRequest,
+) (*email.Message, error) {
 	m.sent <- req
 	return &email.Message{}, nil
 }
@@ -75,15 +78,50 @@ func (m *sentMail) SendPersisted(
 	return &email.Message{}, nil
 }
 
+type recordingComposer struct {
+	notifications chan *emailports.NotificationEmail
+}
+
+func (c *recordingComposer) ComposeNotification(
+	_ context.Context,
+	req *emailports.NotificationEmail,
+) (*emailports.ComposedEmail, error) {
+	c.notifications <- req
+	return &emailports.ComposedEmail{
+		Subject: req.Title,
+		HTML:    "<html>" + req.Link + "</html>",
+		Text:    req.Message,
+	}, nil
+}
+
+func (c *recordingComposer) ComposeNotificationDigest(
+	_ context.Context,
+	req *emailports.NotificationDigestEmail,
+) (*emailports.ComposedEmail, error) {
+	return &emailports.ComposedEmail{
+		Subject: "digest",
+		HTML:    "<html></html>",
+		Text:    req.RecipientName,
+	}, nil
+}
+
+func (c *recordingComposer) ComposeProfileTest(
+	context.Context,
+	*emailports.ProfileTestEmail,
+) (*emailports.ComposedEmail, error) {
+	return &emailports.ComposedEmail{}, nil
+}
+
 type dispatchFixture struct {
-	repo  *recordingNotificationRepo
-	prefs *storedPreferences
-	users *memberDirectory
-	mail  *sentMail
-	svc   *Service
-	orgID pulid.ID
-	buID  pulid.ID
-	now   time.Time
+	repo     *recordingNotificationRepo
+	prefs    *storedPreferences
+	users    *memberDirectory
+	mail     *sentMail
+	composer *recordingComposer
+	svc      *Service
+	orgID    pulid.ID
+	buID     pulid.ID
+	now      time.Time
 }
 
 func newDispatchFixture(t *testing.T) *dispatchFixture {
@@ -93,6 +131,9 @@ func newDispatchFixture(t *testing.T) *dispatchFixture {
 		prefs: &storedPreferences{byUser: map[pulid.ID]*notification.Preference{}},
 		users: &memberDirectory{members: map[pulid.ID]*tenant.User{}},
 		mail:  &sentMail{sent: make(chan *emailports.SendEmailRequest, 4)},
+		composer: &recordingComposer{
+			notifications: make(chan *emailports.NotificationEmail, 4),
+		},
 		orgID: pulid.MustNew("org_"),
 		buID:  pulid.MustNew("bu_"),
 		now:   time.Date(2026, time.October, 14, 17, 0, 0, 0, time.UTC),
@@ -104,6 +145,7 @@ func newDispatchFixture(t *testing.T) *dispatchFixture {
 		Users:       f.users,
 		Preferences: f.prefs,
 		Email:       f.mail,
+		Composer:    f.composer,
 		AppConfig:   &appconfig.Config{},
 		WebPush:     disabledWebPush(),
 	})
@@ -164,7 +206,12 @@ func TestCreateStampsTheRecipientsDecisionForTheBrowser(t *testing.T) {
 	assert.Equal(t, true, delivery["desktop"])
 	assert.Equal(t, false, delivery["sound"])
 	assert.Equal(t, string(notification.EmailDeliveryNone), delivery["email"])
-	assert.Equal(t, "/dispatch/console?move=smv_1", created.Data["link"], "the producer's data is kept")
+	assert.Equal(
+		t,
+		"/dispatch/console?move=smv_1",
+		created.Data["link"],
+		"the producer's data is kept",
+	)
 }
 
 func TestCreateWithoutStoredPreferencesUsesTheDefaults(t *testing.T) {
@@ -191,18 +238,30 @@ func TestCreateEmailsAnUrgentNotificationRightAway(t *testing.T) {
 	require.NoError(t, err)
 
 	select {
+	case composed := <-f.composer.notifications:
+		assert.Equal(t, maya.ID, composed.TenantInfo.UserID)
+		assert.Equal(t, "maya", composed.RecipientName)
+		assert.Equal(t, "A tender needs your review", composed.Title)
+		assert.Equal(t, "S-48219 needs review", composed.Message)
+		assert.Equal(t, "https://tms.example.com/dispatch/console?move=smv_1", composed.Link)
+		assert.Equal(
+			t,
+			"https://tms.example.com/settings?section=notifications",
+			composed.SettingsURL,
+			"the email links to the notifications section of Settings",
+		)
+	case <-time.After(2 * time.Second):
+		t.Fatal("the urgent notification was not composed")
+	}
+
+	select {
 	case sent := <-f.mail.sent:
 		assert.Equal(t, []string{"maya@example.com"}, sent.To)
 		assert.Equal(t, email.PurposeNotifications, sent.Purpose)
 		assert.Equal(t, "notification-email-"+created.ID.String(), sent.IdempotencyKey)
+		assert.Equal(t, "A tender needs your review", sent.Subject)
 		assert.Contains(t, sent.HTML, "https://tms.example.com/dispatch/console?move=smv_1")
-		assert.Contains(t, sent.Text, "S-48219 needs review")
-		assert.Contains(
-			t,
-			sent.Text,
-			"Change what reaches you: https://tms.example.com/settings?section=notifications\n",
-			"the email links to the notifications section of Settings",
-		)
+		assert.Equal(t, "S-48219 needs review", sent.Text)
 	case <-time.After(2 * time.Second):
 		t.Fatal("the urgent notification was not emailed")
 	}
@@ -244,7 +303,12 @@ func TestCreateHandsAReviewToTheDelegateOfSomeoneAway(t *testing.T) {
 	assert.Equal(t, jordan.ID, *handedOff.TargetUserID)
 	assert.Equal(t, maya.ID.String(), handedOff.Data[onBehalfOfIDKey])
 	assert.Equal(t, "maya", handedOff.Data[onBehalfOfNameKey])
-	assert.Equal(t, false, deliveryOf(t, f.repo.created[0])["desktop"], "the person away is not pinged")
+	assert.Equal(
+		t,
+		false,
+		deliveryOf(t, f.repo.created[0])["desktop"],
+		"the person away is not pinged",
+	)
 }
 
 func TestCreateDoesNotHandOffRoutineNewsOrOnceItIsBack(t *testing.T) {
@@ -286,7 +350,11 @@ func TestDigestDueAtEightInThePersonsZoneOncePerDay(t *testing.T) {
 	t.Parallel()
 	loc, err := time.LoadLocation("America/Chicago")
 	require.NoError(t, err)
-	pref := notification.DefaultPreference(pulid.MustNew("org_"), pulid.MustNew("bu_"), pulid.MustNew("usr_"))
+	pref := notification.DefaultPreference(
+		pulid.MustNew("org_"),
+		pulid.MustNew("bu_"),
+		pulid.MustNew("usr_"),
+	)
 	pref.EmailMode = notification.DeliveryModeAll
 	pref.EmailDigest = true
 

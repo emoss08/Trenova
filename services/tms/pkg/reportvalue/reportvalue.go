@@ -65,6 +65,17 @@ func Row(columns []table.Column, b *table.Batch, i int) []any {
 	return row
 }
 
+func IsNumeric(t value.Type) bool {
+	switch t {
+	case value.Int, value.Decimal, value.Float:
+		return true
+	case value.Epoch, value.String, value.Enum, value.Ref, value.Bool, value.Time, value.JSON:
+		return false
+	default:
+		return false
+	}
+}
+
 func Float(t value.Type, v *value.Vector, i int) (float64, bool) {
 	if v.Null(i) {
 		return 0, false

@@ -1,13 +1,19 @@
-{{ if eq .Kind "Warning" }}{{ t "Our driver on shipment {0} is approaching the end of contracted free time at {1}." .ShipmentProNumber .FacilityName }}{{ else if eq .Kind "Started" }}{{ t "Contracted free time on shipment {0} at {1} has been exhausted and detention is now accruing." .ShipmentProNumber .FacilityName }}{{ else if eq .Kind "Update" }}{{ t "Our driver on shipment {0} remains at {1} and detention continues to accrue." .ShipmentProNumber .FacilityName }}{{ else if eq .Kind "Final" }}{{ t "Our driver has departed {0} on shipment {1}. Final detention is summarized below." .FacilityName .ShipmentProNumber }}{{ else }}{{ t "Detention notice for shipment {0} at {1}." .ShipmentProNumber .FacilityName }}{{ end }}
+{{ if eq .Kind "Warning" }}{{ heading "Free time at {1} is <hl>almost over</hl> on shipment {0}." .ShipmentProNumber .FacilityName }}{{ else if eq .Kind "Started" }}{{ heading "Detention <hl>is now accruing</hl> on shipment {0} at {1}." .ShipmentProNumber .FacilityName }}{{ else if eq .Kind "Update" }}{{ heading "Detention <hl>continues to accrue</hl> on shipment {0} at {1}." .ShipmentProNumber .FacilityName }}{{ else if eq .Kind "Final" }}{{ heading "Detention on shipment {0} at {1} <hl>is final</hl>." .ShipmentProNumber .FacilityName }}{{ else }}{{ heading "Detention notice for shipment <hl>{0}</hl> at {1}." .ShipmentProNumber .FacilityName }}{{ end }}
+
+{{ if eq .Kind "Warning" }}{{ t "Our driver on shipment {0} is approaching the end of contracted free time at {1}." .ShipmentProNumber .FacilityName }}{{ else if eq .Kind "Started" }}{{ t "Contracted free time on shipment {0} at {1} has been exhausted and detention is now accruing." .ShipmentProNumber .FacilityName }}{{ else if eq .Kind "Update" }}{{ t "Our driver on shipment {0} remains at {1} and detention continues to accrue." .ShipmentProNumber .FacilityName }}{{ else if eq .Kind "Final" }}{{ t "Our driver has departed {0} on shipment {1}. Final detention is summarized below." .FacilityName .ShipmentProNumber }}{{ end }}
 
 {{ if .ArrivedAt }}{{ if .ArrivalSource }}{{ t "Arrived: {0} ({1})" .ArrivedAt .ArrivalSource }}{{ else }}{{ t "Arrived: {0}" .ArrivedAt }}{{ end }}
 {{ end }}{{ if .FreeTime }}{{ t "Contracted free time: {0}" .FreeTime }}
 {{ end }}{{ if .FreeTimeExpiresAt }}{{ t "Free time expires: {0}" .FreeTimeExpiresAt }}
 {{ end }}{{ if .RateLabel }}{{ t "Detention rate after free time: {0}" .RateLabel }}
 {{ end }}{{ if eq .Kind "Final" }}{{ if .DepartedAt }}{{ t "Departed: {0}" .DepartedAt }}
-{{ end }}{{ t "Total time on site: {0}" .TotalTimeOnSite }}
-{{ end }}{{ if .BillableTime }}{{ t "Billable detention: {0}" .BillableTime }}
+{{ end }}{{ if .TotalTimeOnSite }}{{ t "Total time on site: {0}" .TotalTimeOnSite }}
+{{ end }}{{ end }}{{ if .BillableTime }}{{ t "Billable detention: {0}" .BillableTime }}
 {{ end }}{{ if .BillableAmount }}{{ t "Detention charge: {0}" (moneyString .Currency .BillableAmount) }}
+{{ end }}{{ range .Tiers }}{{ .Band }}{{ if .Label }} ({{ .Label }}){{ end }}: {{ .Rate }}
 {{ end }}
 {{ if eq .Kind "Final" }}{{ t "This charge will appear on the invoice for this shipment. Reply to this message if any detail needs review." }}{{ else }}{{ t "Please expedite loading or unloading to avoid further charges. Reply to this message if any detail needs review." }}{{ end }}
 {{ .CompanyName }}
+
+--
+{{ t "You received this notice because {0} lists you as a contact for this shipment." .CompanyName }}

@@ -5,6 +5,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/triage"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundreplyports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/email"
@@ -57,7 +58,12 @@ func TestSendThreadsReplyFromMailbox(t *testing.T) {
 	assert.Contains(t, req.Headers["References"], "<root@partner.example>")
 	assert.Contains(t, req.Headers["References"], "<abc123@partner.example>")
 	assert.True(t, strings.HasSuffix(req.Headers["Message-ID"], "@trenova.example>"))
-	assert.NotEmpty(t, req.HTML)
+	require.Len(t, f.renderer.requests, 1)
+	rendered := f.renderer.requests[0]
+	assert.Equal(t, documenttemplate.KindTriageReplyEmail, rendered.Kind)
+	assert.Equal(t, reply.Subject, rendered.Subject, "the reply keeps its thread subject")
+	assert.Equal(t, "<html>"+reply.Body+"</html>", req.HTML)
+	assert.Equal(t, reply.Body, req.Text)
 
 	assert.True(t, containsKind(f.recorder.kinds(), triage.ActivityReplied))
 	assert.Contains(t, f.notifier.changed, f.message.ID)

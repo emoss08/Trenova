@@ -1,17 +1,18 @@
-{{ .CarrierName }},
+{{ if .RevisionLabel }}{{ heading "The rate confirmation for shipment <hl>{0}</hl> ({1}) is attached." .ShipmentProNumber .RevisionLabel }}{{ else }}{{ heading "The rate confirmation for shipment <hl>{0}</hl> is attached." .ShipmentProNumber }}{{ end }}
 
-{{ if .RevisionLabel }}{{ t "Attached is the rate confirmation for shipment {0} ({1})." .ShipmentProNumber .RevisionLabel }}{{ else }}{{ t "Attached is the rate confirmation for shipment {0}." .ShipmentProNumber }}{{ end }}
+{{ if .CarrierName }}{{ t "Hello {0}," .CarrierName }}{{ else }}{{ t "Hello," }}{{ end }}
 
-{{ range .Stops }}{{ .Sequence }}. {{ .Type }}: {{ .Name }} — {{ .Window }}
+{{ if .SignURL }}{{ t "Please sign before dispatching and submit the attached confirmation with your invoice. Reply to this message if any detail needs review." }}{{ else }}{{ t "Please sign and return the attached confirmation before dispatching, and submit it with your invoice. Reply to this message if any detail needs review." }}{{ end }}
+
+{{ range .Stops }}{{ .Type }}: {{ .Name }}{{ if .Window }} ({{ .Window }}){{ end }}
 {{ end }}
 {{ t "Total agreed rate: {0}" (moneyString .Currency .TotalCost) }}
 {{ if .PaymentTermsLabel }}{{ t "Payment terms: {0}" .PaymentTermsLabel }}
-{{ end }}
-{{ if .SignURL }}{{ t "Review and sign the confirmation:" }}
-{{ .SignURL }}
+{{ end }}{{ if .SignURL }}
+{{ t "Review and sign" }}: {{ .SignURL }}
 {{ if .SignExpiresLabel }}{{ t "The link stops working at {0}." .SignExpiresLabel }}
-{{ end }}
-{{ t "Please sign before dispatching and submit the confirmation with your invoice. Reply to this message if any detail needs review." }}
-{{ else }}{{ t "Please sign and return the attached confirmation before dispatching. Submit the confirmation with your invoice. Reply to this message if any detail needs review." }}
-{{ end }}
+{{ end }}{{ end }}
 {{ .CompanyName }}
+
+--
+{{ t "You received this email because {0} booked you on this load." .CompanyName }}

@@ -138,23 +138,25 @@ func (s *Service) sendDigest(
 		return false, markSent()
 	}
 
-	digest := &digestEmail{
+	digest := &emailports.NotificationDigestEmail{
+		TenantInfo:    tenantInfo,
+		Locale:        userLocale(user.Locale),
 		RecipientName: user.Name,
-		Items:         make([]digestItem, 0, len(items)),
+		Items:         make([]emailports.NotificationDigestItem, 0, len(items)),
 		SettingsURL:   s.settingsURL(),
 	}
 	if s.webBaseURL != "" {
 		digest.BellURL = s.webBaseURL + "/"
 	}
 	for _, item := range items {
-		digest.Items = append(digest.Items, digestItem{
+		digest.Items = append(digest.Items, emailports.NotificationDigestItem{
 			Title:   item.Title,
 			Message: item.Message,
 			Link:    s.absoluteLink(item),
 		})
 	}
 
-	rendered, err := renderDigestEmail(digest)
+	rendered, err := s.composer.ComposeNotificationDigest(ctx, digest)
 	if err != nil {
 		return false, err
 	}

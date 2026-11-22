@@ -1,0 +1,1 @@
+{{ t "Your daily digest: {0, plural, one {# notification} other {# notifications}}" .ItemCount }}

@@ -1,10 +1,14 @@
+{{ if .ShipmentProNumber }}{{ heading "We are <hl>missing documents</hl> for shipment {0}." .ShipmentProNumber }}{{ else }}{{ heading "We are <hl>missing documents</hl> from you." }}{{ end }}
+
 {{ if .CustomerName }}{{ t "Hello {0}," .CustomerName }}{{ else }}{{ t "Hello," }}{{ end }}
 
 {{ .AgentBody }}
 {{ if .RequestedDocuments }}
+{{ t "Documents we need" }}:
 {{ range .RequestedDocuments }}- {{ . }}
-{{ end }}{{ end }}{{ if .ShipmentProNumber }}
-{{ t "Shipment {0}" .ShipmentProNumber }}
-{{ end }}
+{{ end }}{{ end }}
 {{ t "Reply to this message with the documents attached." }}
 {{ .CompanyName }}
+
+--
+{{ t "You received this email because {0} lists you as a contact for this shipment." .CompanyName }}

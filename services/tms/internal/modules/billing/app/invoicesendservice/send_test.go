@@ -11,7 +11,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/invoicetemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -23,6 +25,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
 	"github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/mocks/customerportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/documenttemplateportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/emailportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/invoiceportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
@@ -305,8 +308,25 @@ func TestPlanSendRendersTemplatesAndOrganizationAlias(t *testing.T) {
 		Once()
 
 	billingRepo := tenantportsmock.NewMockBillingControlRepository(t)
+	templates := documenttemplateportsmock.NewMockDocumentTemplateResolver(t)
+	templates.EXPECT().
+		RenderMessage(mock.Anything, mock.Anything).
+		RunAndReturn(func(
+			_ context.Context,
+			req *documenttemplateports.RenderMessageRequest,
+		) (*documenttemplateports.RenderedMessage, error) {
+			data, ok := req.Data.(invoicetemplate.InvoiceEmailContext)
+			require.True(t, ok)
+			return &documenttemplateports.RenderedMessage{
+				Subject: req.Subject,
+				Text:    data.Message,
+				HTML:    "<html></html>",
+			}, nil
+		}).
+		Once()
 	svc := &Service{
 		l:                zap.NewNop(),
+		templates:        templates,
 		repo:             repo,
 		customerRepo:     customerRepo,
 		organizationRepo: organizationRepo,
@@ -462,7 +482,7 @@ func TestAutoSendInvoiceAfterPDFGenerationSkipsDisabledAndAlreadySending(t *test
 	}
 }
 
-func TestAppendShipmentDetailIncludesRouteAndCharges(t *testing.T) {
+func TestEmailContextCarriesShipmentDetailWhenTheCustomerAsksForIt(t *testing.T) {
 	t.Parallel()
 
 	amount := decimal.NewFromInt(100)
@@ -509,12 +529,32 @@ func TestAppendShipmentDetailIncludesRouteAndCharges(t *testing.T) {
 		},
 	}
 
-	body := appendShipmentDetail("Please pay.", entity, shp)
+	withDetail := invoicedocument.EmailContext(&invoicedocument.EmailContextParams{
+		Entity: entity,
+		Profile: &invoicedocument.DeliveryProfile{
+			Email:    &customer.CustomerEmailProfile{IncludeShipmentDetail: true},
+			Shipment: shp,
+		},
+	})
 
-	require.Contains(t, body, "Shipment Detail")
-	require.Contains(t, body, "Route: Origin DC Nashville 37201 -> Destination DC Atlanta 30301")
-	require.Contains(t, body, "Pieces: 12")
-	require.Contains(t, body, "- Freight: $100.00")
+	assert.Equal(t, "PRO123", withDetail.ShipmentProNumber)
+	assert.Equal(t, "12", withDetail.ShipmentPieces)
+	assert.Equal(t, "24000", withDetail.ShipmentWeight)
+	assert.NotEmpty(t, withDetail.ShipmentPickupDate)
+	assert.NotEmpty(t, withDetail.ShipmentOrigin)
+	require.Len(t, withDetail.Charges, 1)
+	assert.Equal(t, "Freight", withDetail.Charges[0].Description)
+	assert.Equal(t, "$100.00", withDetail.Charges[0].Amount)
+
+	without := invoicedocument.EmailContext(&invoicedocument.EmailContextParams{
+		Entity: entity,
+		Profile: &invoicedocument.DeliveryProfile{
+			Email:    &customer.CustomerEmailProfile{},
+			Shipment: shp,
+		},
+	})
+	assert.Empty(t, without.Charges, "a customer who did not ask for detail gets none")
+	assert.Empty(t, without.ShipmentPieces)
 }
 
 func TestRefuseSendInFlight(t *testing.T) {

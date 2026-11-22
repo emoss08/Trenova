@@ -210,6 +210,36 @@ func TestEmailStartersUseInlineStyles(t *testing.T) {
 	}
 }
 
+var markupInEmail = regexp.MustCompile(`<[a-zA-Z!/]`)
+
+func TestEmailStartersHoldNoMarkupOfTheirOwn(t *testing.T) {
+	registry := templateregistry.NewRegistry()
+
+	starters, err := All()
+	require.NoError(t, err)
+
+	for _, starter := range starters {
+		def, ok := registry.Get(starter.Kind)
+		require.True(t, ok)
+		if !def.HasChannel(documenttemplate.ChannelEmailHTML) {
+			continue
+		}
+
+		t.Run(string(starter.Kind), func(t *testing.T) {
+			source := strings.NewReplacer("<hl>", "", "</hl>", "").Replace(starter.BodyHTML)
+			assert.False(t, markupInEmail.MatchString(source),
+				"an email starter is built from the blocks; the shell and every block's markup "+
+					"belong to pkg/emaildesign")
+			for _, block := range []string{"preheader", "heading", "footer"} {
+				assert.Contains(t, starter.BodyHTML, "{{ "+block+" ",
+					"every email names its %s", block)
+			}
+			assert.LessOrEqual(t, strings.Count(starter.BodyHTML, "{{ action "), 1,
+				"an email has at most one action band")
+		})
+	}
+}
+
 func TestDocumentStartersHaveAStylesheet(t *testing.T) {
 	registry := templateregistry.NewRegistry()
 
@@ -749,24 +779,28 @@ func TestEveryDriverEventInTheSourceHasAKindAndAStarter(t *testing.T) {
 	require.NoError(t, err, "the walk starts at the service's root")
 
 	seen := map[string]string{}
-	err = filepath.WalkDir(filepath.Join(root, "internal"), func(path string, d fs.DirEntry, walkErr error) error {
-		if walkErr != nil {
-			return walkErr
-		}
-		if d.IsDir() || !strings.HasSuffix(path, ".go") || strings.HasSuffix(path, "_test.go") ||
-			strings.HasSuffix(path, "_gen.go") {
-			return nil
-		}
-		source, readErr := os.ReadFile(path)
-		if readErr != nil {
-			return readErr
-		}
-		for _, match := range event.FindAllSubmatch(source, -1) {
-			seen[string(match[1])] = path
-		}
+	err = filepath.WalkDir(
+		filepath.Join(root, "internal"),
+		func(path string, d fs.DirEntry, walkErr error) error {
+			if walkErr != nil {
+				return walkErr
+			}
+			if d.IsDir() || !strings.HasSuffix(path, ".go") ||
+				strings.HasSuffix(path, "_test.go") ||
+				strings.HasSuffix(path, "_gen.go") {
+				return nil
+			}
+			source, readErr := os.ReadFile(path)
+			if readErr != nil {
+				return readErr
+			}
+			for _, match := range event.FindAllSubmatch(source, -1) {
+				seen[string(match[1])] = path
+			}
 
-		return nil
-	})
+			return nil
+		},
+	)
 	require.NoError(t, err)
 	require.NotEmpty(t, seen)
 

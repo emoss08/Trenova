@@ -38,7 +38,8 @@ type ReportRow struct {
 type ReportCell struct {
 	Text string
 	// Tone is positive, warning, negative, neutral, or empty.
-	Tone string
+	Tone    string
+	Numeric bool
 }
 
 // ReportDeliveryEmailContext is the message that delivers a scheduled report.
@@ -71,10 +72,15 @@ type ReportDeliveryEmailContext struct {
 
 // ReportDigest is the inline sample of a report's results.
 type ReportDigest struct {
-	Headers []string
+	Headers []ReportColumn
 	Rows    []ReportRow
-	Totals  []string
+	Totals  []ReportCell
 	Note    string
+}
+
+type ReportColumn struct {
+	Label   string
+	Numeric bool
 }
 
 func newReportSampleContext() any {
@@ -82,7 +88,7 @@ func newReportSampleContext() any {
 		Title:       templatecatalog.SampleReportTitle,
 		Description: "Total charges grouped by customer for the selected period",
 		GeneratedAt: "2026-07-15 11:00 CDT",
-		RequestedBy: "dispatch@trenova.app",
+		RequestedBy: "dispatch@example.com",
 		Params: []templatecatalog.KeyValue{
 			{Label: "Period", Value: "2026-07-01 to 2026-07-14"},
 			{Label: "Status", Value: "Delivered"},
@@ -121,7 +127,7 @@ func newReportDeliverySampleContext() any {
 		Description:  "Total charges grouped by customer for the selected period",
 		Format:       "XLSX",
 		CompletedAt:  "2026-07-15 11:00 CDT",
-		RequestedBy:  "dispatch@trenova.app",
+		RequestedBy:  "dispatch@example.com",
 		RowCount:     67,
 		FileSize:     "184 KB",
 		Truncated:    false,
@@ -130,21 +136,29 @@ func newReportDeliverySampleContext() any {
 		ExpiresAt:    "2026-07-22 11:00 CDT",
 		AttachedNote: "The workbook is attached to this message.",
 		Digest: ReportDigest{
-			Headers: []string{"Customer", "Shipments", "Revenue"},
+			Headers: []ReportColumn{
+				{Label: "Customer"},
+				{Label: "Shipments", Numeric: true},
+				{Label: "Revenue", Numeric: true},
+			},
 			Rows: []ReportRow{
 				{Cells: []ReportCell{
-					{Text: "Halstead Grocery Group"},
-					{Text: "42"},
-					{Text: "$98,441.20"},
+					{Text: "Halstead Grocery Group", Tone: "neutral"},
+					{Text: "42", Numeric: true},
+					{Text: "$98,441.20", Numeric: true, Tone: "positive"},
 				}},
 				{Cells: []ReportCell{
-					{Text: templatecatalog.SampleShipperName},
-					{Text: "17"},
-					{Text: "$31,002.85"},
+					{Text: templatecatalog.SampleShipperName, Tone: "neutral"},
+					{Text: "17", Numeric: true},
+					{Text: "$31,002.85", Numeric: true},
 				}},
 			},
-			Totals: []string{templatecatalog.SampleTotalsLabel, "67", "$142,324.05"},
-			Note:   "Showing the first 2 of 67 rows.",
+			Totals: []ReportCell{
+				{Text: templatecatalog.SampleTotalsLabel},
+				{Text: "67", Numeric: true},
+				{Text: "$142,324.05", Numeric: true},
+			},
+			Note: "Showing the first 2 of 67 rows.",
 		},
 	}
 }
@@ -273,13 +287,24 @@ func RegisterReportingKinds(r *templatecatalog.Registry) {
 				Fields: []templatecatalog.VariableDefinition{
 					{
 						Path:        "Headers",
-						Type:        templatecatalog.VariableStringList,
+						Type:        templatecatalog.VariableCollection,
 						Description: "Sample column headings.",
+						Fields: []templatecatalog.VariableDefinition{
+							{
+								Path:        "Label",
+								Type:        templatecatalog.VariableString,
+								Description: "The column heading.",
+							},
+							numericVariable(
+								"True when the column holds numbers, which read right-aligned.",
+							),
+						},
 					},
 					{
 						Path:        "Totals",
-						Type:        templatecatalog.VariableStringList,
-						Description: "Sample totals row.",
+						Type:        templatecatalog.VariableCollection,
+						Description: "Sample totals row, in header order.",
+						Fields:      reportCellFields(),
 					},
 					{
 						Path:        "Note",
@@ -343,5 +368,14 @@ func reportCellFields() []templatecatalog.VariableDefinition {
 			Description: "Emphasis the report asked for: positive, warning, negative, " +
 				"neutral, or blank. Use it to colour exceptions.",
 		},
+		numericVariable("True when the cell holds a number, which reads right-aligned."),
+	}
+}
+
+func numericVariable(description string) templatecatalog.VariableDefinition {
+	return templatecatalog.VariableDefinition{
+		Path:        "Numeric",
+		Type:        templatecatalog.VariableBool,
+		Description: description,
 	}
 }

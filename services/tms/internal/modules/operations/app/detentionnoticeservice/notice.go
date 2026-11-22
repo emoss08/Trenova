@@ -1,9 +1,6 @@
 package detentionnoticeservice
 
 import (
-	"html"
-	"strings"
-
 	"github.com/emoss08/trenova/internal/modules/operations/app/detentionnoticerender"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionnotice"
@@ -102,21 +99,4 @@ func noticeKindFor(
 	default:
 		return detentionnotice.NoticeKindUpdate
 	}
-}
-
-// noticeHTML returns the HTML snapshotted when the notice was built.
-//
-// It never constructs markup from Body. The previous implementation wrapped the
-// plain text in <pre> at send time, which meant any angle bracket in a facility
-// or customer name was interpolated into the email unescaped.
-func noticeHTML(notice *detentionnotice.DetentionNotice) string {
-	if strings.TrimSpace(notice.BodyHTML) != "" {
-		return notice.BodyHTML
-	}
-
-	// A notice queued before this column existed has no snapshot. Escaping the
-	// stored text is the safe reconstruction; it renders as plain text rather
-	// than as whatever the text happens to look like.
-	return "<pre style=\"font-family:inherit;white-space:pre-wrap\">" +
-		html.EscapeString(notice.Body) + "</pre>"
 }

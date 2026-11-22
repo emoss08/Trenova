@@ -1,9 +1,12 @@
+{{ heading "{0} has <hl>{1, plural, one {# change} other {# changes}}</hl> waiting on a decision." .AgentName .PendingCount }}
+
 {{ if .RecipientFirstName }}{{ t "Hello {0}," .RecipientFirstName }}{{ else }}{{ t "Hello," }}{{ end }}
 
-{{ t "{0} has {1} changes that have been waiting {2} hours for someone to decide. Nothing runs until one of you does." .AgentName .PendingCount .WaitingHours }}
+{{ t "The oldest has been waiting {0, plural, one {# hour} other {# hours}}. Nothing runs until one of you decides." .WaitingHours }}
 {{ range .Proposals }}
-- {{ .Tool }}: {{ .Rationale }}
-{{ end }}
-{{ t "Decide here:" }} {{ .ReviewURL }}
+- {{ .Tool }}{{ if .Rationale }}: {{ .Rationale }}{{ end }}{{ end }}
 
-{{ .CompanyName }}
+{{ t "Decide in AI Control" }}: {{ .ReviewURL }}
+
+--
+{{ t "You get this email because you can decide what {0} proposes in Trenova." .AgentName }}

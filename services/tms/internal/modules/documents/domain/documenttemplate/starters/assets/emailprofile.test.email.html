@@ -1,0 +1,6 @@
+{{ preheader (t "A test message that checks this email profile can send.") }}
+{{ kicker (t "Email profile test") }}
+{{ heading "The email profile <hl>{0}</hl> can send." .ProfileName }}
+{{ para (t "This test verifies {0} can send through {1}." .ProfileName .ProviderName) }}
+{{ facts (fact (t "Profile") .ProfileName) (fact (t "Provider") .ProviderName) (fact (t "Sent from") .SenderEmail) }}
+{{ footer (t "You received this test because someone checked that this email profile can send.") }}

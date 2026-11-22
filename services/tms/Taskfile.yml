@@ -586,6 +586,11 @@ tasks:
     cmds:
       - go generate ./internal/api/writecoverage/...
 
+  email-preview:
+    desc: 'Render every email the TMS sends, every variant, into a folder with an index.html (task email-preview -- -out <dir> -locales en,es)'
+    cmds:
+      - go run -tags nomsgpack ./internal/modules/documents/app/emailpreview/cmd {{.CLI_ARGS}}
+
   generate-write-coverage-check:
     desc: Verify every write has a decision and the write coverage document is up to date
     dir: internal/api/writecoverage

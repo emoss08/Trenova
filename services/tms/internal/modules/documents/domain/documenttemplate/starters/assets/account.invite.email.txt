@@ -1,3 +1,5 @@
+{{ heading "Your <hl>{0} account</hl> is ready to set up." .CompanyName }}
+
 {{ if .FirstName }}{{ t "Hi {0}," .FirstName }}{{ else }}{{ t "Hi," }}{{ end }}
 
 {{ if .InvitedByName }}{{ t "{0} has invited you to {1}." .InvitedByName .CompanyName }}{{ else }}{{ t "An account has been created for you at {0}." .CompanyName }}{{ end }}
@@ -5,7 +7,10 @@
 
 {{ t "Set up your account:" }}
 {{ .SetupURL }}
-
 {{ if .ExpiresInDays }}{{ if .ExpiresAt }}{{ t "This link works once and expires in {0, plural, one {# day} other {# days}}, on {1}." .ExpiresInDays .ExpiresAt }}{{ else }}{{ t "This link works once and expires in {0, plural, one {# day} other {# days}}." .ExpiresInDays }}{{ end }}
 {{ else if .ExpiresInHours }}{{ if .ExpiresAt }}{{ t "This link works once and expires in {0, plural, one {# hour} other {# hours}}, at {1}." .ExpiresInHours .ExpiresAt }}{{ else }}{{ t "This link works once and expires in {0, plural, one {# hour} other {# hours}}." .ExpiresInHours }}{{ end }}
-{{ end }}{{ t "If you were not expecting this invitation, you can ignore this email. Nobody can sign in to the account until a password is chosen." }}
+{{ end }}
+{{ t "If you were not expecting this invitation, you can ignore this email. Nobody can sign in to the account until a password is chosen." }}
+
+--
+{{ t "You received this email because an administrator at {0} created an account for you." .CompanyName }}

@@ -83,6 +83,8 @@ const (
 
 	// CodeRangeTooDeep means ranges are nested deeper than a render can afford.
 	CodeRangeTooDeep = "range_too_deep"
+
+	CodeEmailStructure = "email_structure"
 )
 
 // Diagnostic is one problem found in a template, addressed to the person editing

@@ -1,0 +1,10 @@
+{{ heading "The email profile <hl>{0}</hl> can send." .ProfileName }}
+
+{{ t "This test verifies {0} can send through {1}." .ProfileName .ProviderName }}
+
+{{ t "Profile" }}: {{ .ProfileName }}
+{{ t "Provider" }}: {{ .ProviderName }}
+{{ if .SenderEmail }}{{ t "Sent from" }}: {{ .SenderEmail }}
+{{ end }}
+--
+{{ t "You received this test because someone checked that this email profile can send." }}

@@ -1,0 +1,14 @@
+{{ heading "You have <hl>{0, plural, one {# notification} other {# notifications}}</hl> waiting." .ItemCount }}
+{{ if .RecipientFirstName }}
+{{ t "Hi {0}," .RecipientFirstName }}
+{{ end }}{{ range .Items }}
+- {{ .Title }}{{ if .Message }}
+  {{ .Message }}{{ end }}{{ if .Link }}
+  {{ .Link }}{{ end }}
+{{ end }}
+{{ t "Urgent notifications still reach you right away." }}{{ if .BellURL }}
+{{ t "See everything in Trenova" }}: {{ .BellURL }}{{ end }}
+
+--
+{{ t "You get this digest because of your notification settings in Trenova." }}{{ if .SettingsURL }}
+{{ t "Change your digest" }}: {{ .SettingsURL }}{{ end }}

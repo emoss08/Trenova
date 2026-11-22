@@ -1,23 +1,17 @@
 package invoicesendservice
 
 import (
-	"context"
-	"fmt"
-	"html"
 	"path/filepath"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoicedocument"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
-	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/email"
 	"github.com/emoss08/trenova/shared/fileutils"
 	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/sliceutils"
 	"github.com/emoss08/trenova/shared/stringutils"
-	"go.uber.org/zap"
 )
 
 func invoiceTemplateContext(
@@ -176,122 +170,4 @@ func invoicePDFAttachmentName(rendered string, entity *invoice.Invoice) string {
 		base = strings.TrimSuffix(invoicedocument.PDFName(entity), ".pdf")
 	}
 	return base + ".pdf"
-}
-
-func appendShipmentDetail(body string, entity *invoice.Invoice, shp *shipment.Shipment) string {
-	detail := shipmentDetailBlock(entity, shp)
-	if detail == "" {
-		return body
-	}
-	if strings.TrimSpace(body) == "" {
-		return detail
-	}
-	return strings.TrimSpace(body) + "\n\n" + detail
-}
-
-func shipmentDetailBlock(entity *invoice.Invoice, shp *shipment.Shipment) string {
-	lines := []string{"Shipment Detail"}
-	appendDetailLine := func(label, value string) {
-		if strings.TrimSpace(value) != "" {
-			lines = append(lines, label+": "+strings.TrimSpace(value))
-		}
-	}
-	appendDetailLine(
-		"PRO",
-		stringutils.FirstNonEmpty(entity.ShipmentProNumber, invoicedocument.ShipmentPro(shp)),
-	)
-	appendDetailLine(
-		"BOL",
-		stringutils.FirstNonEmpty(entity.ShipmentBOL, invoicedocument.ShipmentBOL(shp)),
-	)
-	appendDetailLine("Route", invoicedocument.ShipmentRoute(shp))
-	appendDetailLine("Service Date", invoicedocument.UnixDatePtr(entity.ServiceDate))
-	if shp != nil {
-		appendDetailLine("Pickup", invoicedocument.UnixDatePtr(shp.ActualShipDate))
-		appendDetailLine("Delivery", invoicedocument.UnixDatePtr(shp.ActualDeliveryDate))
-		appendDetailLine("Commodities", invoicedocument.CommoditySummary(shp))
-		appendDetailLine("Pieces", invoicedocument.Int64PtrString(shp.Pieces))
-		appendDetailLine("Weight", invoicedocument.Int64PtrString(shp.Weight))
-	}
-	if len(entity.Lines) > 0 {
-		lines = append(lines, "Charges:")
-		for _, line := range entity.Lines {
-			if line == nil {
-				continue
-			}
-			lines = append(lines, fmt.Sprintf(
-				"- %s: %s",
-				line.Description,
-				money.Display(entity.CurrencyCode, line.Amount),
-			))
-		}
-	}
-	if len(lines) == 1 {
-		return ""
-	}
-	return strings.Join(lines, "\n")
-}
-
-type partBodyHTMLParams struct {
-	Request  *invoiceports.InvoiceSendRequest
-	Entity   *invoice.Invoice
-	Profile  *invoicedocument.DeliveryProfile
-	Plan     *invoiceports.InvoiceSendPlan
-	Part     *invoiceports.InvoiceSendPlanPart
-	PartBody string
-}
-
-func (s *Service) partBodyHTML(ctx context.Context, p *partBodyHTMLParams) string {
-	if !p.Plan.FromTemplate {
-		return bodyHTML(p.PartBody)
-	}
-
-	rendered := p.Plan.BodyHTML
-	if len(p.Plan.Parts) > 1 && p.Profile != nil {
-		wording, err := s.renderInvoiceEmail(ctx, &invoiceEmailRenderParams{
-			TenantInfo: p.Request.TenantInfo,
-			Entity:     p.Entity,
-			Profile:    p.Profile,
-			PartLabel:  fmt.Sprintf("%d of %d", p.Part.PartNumber, len(p.Plan.Parts)),
-		})
-		if err != nil {
-			s.l.Warn("could not re-render the invoice email for this part",
-				zap.String("invoiceId", p.Entity.ID.String()),
-				zap.Error(err))
-		} else {
-			rendered = withShipmentDetailHTML(
-				wording.HTML,
-				includedShipmentDetail(p.Entity, p.Profile),
-			)
-		}
-	}
-
-	extra := strings.TrimSpace(strings.TrimPrefix(p.PartBody, strings.TrimSpace(p.Plan.Body)))
-	if extra != "" {
-		rendered += bodyHTML(extra)
-	}
-
-	return rendered
-}
-
-func includedShipmentDetail(
-	entity *invoice.Invoice,
-	profile *invoicedocument.DeliveryProfile,
-) string {
-	if profile == nil || profile.Email == nil || !profile.Email.IncludeShipmentDetail {
-		return ""
-	}
-	return shipmentDetailBlock(entity, profile.Shipment)
-}
-
-func withShipmentDetailHTML(rendered, detail string) string {
-	if rendered == "" || detail == "" {
-		return rendered
-	}
-	return rendered + bodyHTML(detail)
-}
-
-func bodyHTML(body string) string {
-	escaped := html.EscapeString(body)
-	return "<p>" + strings.ReplaceAll(escaped, "\n", "<br>") + "</p>"
 }

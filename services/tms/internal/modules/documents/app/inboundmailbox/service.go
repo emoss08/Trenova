@@ -1,6 +1,7 @@
 package inboundmailbox
 
 import (
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
@@ -16,6 +17,7 @@ type Params struct {
 	// Audit records mailbox configuration changes.
 	Audit        auditports.AuditService
 	Email        emailports.EmailService
+	Renderer     documenttemplateports.DocumentTemplateResolver
 	Encryption   SecretKeeper
 	Logger       *zap.Logger
 	MailboxRepo  inboundmessageports.InboundMailboxRepository
@@ -26,6 +28,7 @@ type Params struct {
 type Service struct {
 	audit        auditports.AuditService
 	email        emailports.EmailService
+	renderer     documenttemplateports.DocumentTemplateResolver
 	encryption   SecretKeeper
 	l            *zap.Logger
 	mailboxRepo  inboundmessageports.InboundMailboxRepository
@@ -39,6 +42,7 @@ func New(p Params) *Service {
 	return &Service{
 		audit:        p.Audit,
 		email:        p.Email,
+		renderer:     p.Renderer,
 		encryption:   p.Encryption,
 		l:            p.Logger.Named("service.inbound-message"),
 		mailboxRepo:  p.MailboxRepo,

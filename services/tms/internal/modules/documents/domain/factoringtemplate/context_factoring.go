@@ -112,7 +112,7 @@ func newFactoringNoaEmailSampleContext() any {
 		EffectiveDate:  sampleNoaEffectiveDate,
 		Note:           sampleNoaNote,
 		AttachmentName: "Notice-of-Assignment-HALSTEAD-2026-09-01.pdf",
-		ReplyTo:        "billing@trenova.example",
+		ReplyTo:        "billing@larkspurfreight.example",
 	}
 }
 

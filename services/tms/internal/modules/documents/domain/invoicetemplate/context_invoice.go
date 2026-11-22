@@ -144,6 +144,25 @@ type InvoiceEmailContext struct {
 	PartLabel string
 
 	AttachmentName string
+
+	Message              string
+	ShipmentPickupDate   string
+	ShipmentDeliveryDate string
+	ShipmentCommodities  string
+	ShipmentPieces       string
+	ShipmentWeight       string
+	Charges              []InvoiceEmailCharge
+	DocumentLinks        []InvoiceEmailLink
+}
+
+type InvoiceEmailCharge struct {
+	Description string
+	Amount      string
+}
+
+type InvoiceEmailLink struct {
+	FileName string
+	URL      string
 }
 
 //nolint:funlen // Sample fixture data; splitting it would only scatter one document.
@@ -286,7 +305,7 @@ func newInvoiceSampleContext() any {
 		InvoiceTerms: []string{
 			"Remit by ACH or check to the address above.",
 		},
-		InvoiceFooter: "Thank you for shipping with Trenova.",
+		InvoiceFooter: "Thank you for shipping with Larkspur.",
 		Notes:         []string{"Reefer set to 36F continuous per customer instruction."},
 		Attachments:   []string{"BOL-77401.pdf", "POD-77401.pdf", "Lumper-receipt.pdf"},
 	}
@@ -312,6 +331,22 @@ func newInvoiceEmailSampleContext() any {
 		RemittanceInstructions: "Remit by ACH to routing 111000614, account 8842091.",
 		PartLabel:              "",
 		AttachmentName:         "Invoice-INV-2026-1042.pdf",
+		ShipmentPickupDate:     "2026-07-10",
+		ShipmentDeliveryDate:   sampleDeliveredOn,
+		ShipmentCommodities:    "Fresh produce, palletized",
+		ShipmentPieces:         "22",
+		ShipmentWeight:         "38,400",
+		Charges: []InvoiceEmailCharge{
+			{Description: "Linehaul", Amount: "$1,980.00"},
+			{Description: "Fuel surcharge", Amount: "$283.74"},
+			{Description: "Detention", Amount: "$75.00"},
+		},
+		DocumentLinks: []InvoiceEmailLink{
+			{
+				FileName: "POD-" + templatecatalog.SampleProNumber + ".pdf",
+				URL:      "https://app.example.com/invoice-documents/sample-download-token",
+			},
+		},
 	}
 }
 
@@ -464,7 +499,7 @@ func RegisterBillingKinds(r *templatecatalog.Registry) {
 						Description: "Rate per unit.",
 					},
 					{
-						Path:        "Amount",
+						Path:        chargeAmountPath,
 						Type:        templatecatalog.VariableString,
 						Description: "Extended amount for the line.",
 					},
@@ -511,7 +546,7 @@ func RegisterBillingKinds(r *templatecatalog.Registry) {
 						Description: "City and state the freight was delivered to.",
 					},
 					{
-						Path:        "Amount",
+						Path:        chargeAmountPath,
 						Type:        templatecatalog.VariableString,
 						Description: "What this shipment contributes to the invoice total.",
 					},
@@ -636,6 +671,70 @@ func RegisterBillingKinds(r *templatecatalog.Registry) {
 				Type:        templatecatalog.VariableString,
 				Description: "Filename of the attached invoice PDF.",
 			},
+			{
+				Path:        "Message",
+				Type:        templatecatalog.VariableString,
+				Description: "The words someone wrote for this send, or the customer's standing email comment, with its placeholders filled in. Blank when neither was written; print it in place of the greeting when it is set.",
+			},
+			{
+				Path:        "ShipmentPickupDate",
+				Type:        templatecatalog.VariableDate,
+				Description: "When the shipment was picked up. Set only when the customer asks for shipment detail.",
+			},
+			{
+				Path:        "ShipmentDeliveryDate",
+				Type:        templatecatalog.VariableDate,
+				Description: "When the shipment was delivered. Set only when the customer asks for shipment detail.",
+			},
+			{
+				Path:        "ShipmentCommodities",
+				Type:        templatecatalog.VariableString,
+				Description: "What the shipment carried. Set only when the customer asks for shipment detail.",
+			},
+			{
+				Path:        "ShipmentPieces",
+				Type:        templatecatalog.VariableString,
+				Description: "How many pieces the shipment carried. Set only when the customer asks for shipment detail.",
+			},
+			{
+				Path:        "ShipmentWeight",
+				Type:        templatecatalog.VariableString,
+				Description: "The shipment's weight. Set only when the customer asks for shipment detail.",
+			},
+			{
+				Path:        "Charges",
+				Type:        templatecatalog.VariableCollection,
+				Description: "The invoice's charge lines. Set only when the customer asks for shipment detail.",
+				Fields: []templatecatalog.VariableDefinition{
+					{
+						Path:        "Description",
+						Type:        templatecatalog.VariableString,
+						Description: "What the charge is for.",
+					},
+					{
+						Path:        chargeAmountPath,
+						Type:        templatecatalog.VariableMoney,
+						Description: "The charge, with currency.",
+					},
+				},
+			},
+			{
+				Path:        "DocumentLinks",
+				Type:        templatecatalog.VariableCollection,
+				Description: "Supporting documents too large to attach, each with a signed download link. Empty when everything fits in the message.",
+				Fields: []templatecatalog.VariableDefinition{
+					{
+						Path:        "FileName",
+						Type:        templatecatalog.VariableString,
+						Description: "The document's file name.",
+					},
+					{
+						Path:        "URL",
+						Type:        templatecatalog.VariableString,
+						Description: "The signed link that downloads it.",
+					},
+				},
+			},
 		},
 	})
 }
@@ -645,7 +744,9 @@ func RegisterBillingKinds(r *templatecatalog.Registry) {
 // detention notice that preceded it sees the same load rather than three unrelated
 // inventions.
 const (
-	sampleBOL = "BOL-77401"
+	sampleBOL         = "BOL-77401"
+	sampleDeliveredOn = "2026-07-12"
+	chargeAmountPath  = "Amount"
 )
 
 func invoiceDateVariable() templatecatalog.VariableDefinition {

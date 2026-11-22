@@ -1,6 +1,6 @@
-{{ if .CarrierName }}{{ t "Hello {0}," .CarrierName }}{{ else }}{{ t "Hello," }}{{ end }}
+{{ if .ShipmentProNumber }}{{ heading "{0} has <hl>a load available</hl> for you (ref {1})." .CompanyName .ShipmentProNumber }}{{ else }}{{ heading "{0} has <hl>a load available</hl> for you." .CompanyName }}{{ end }}
 
-{{ if .ShipmentProNumber }}{{ t "{0} has a load available for you (ref {1})." .CompanyName .ShipmentProNumber }}{{ else }}{{ t "{0} has a load available for you." .CompanyName }}{{ end }}
+{{ if .CarrierName }}{{ t "Hello {0}," .CarrierName }}{{ else }}{{ t "Hello," }}{{ end }}
 
 {{ if .PickupWindow }}{{ t "Origin: {0} ({1})" .OriginSummary .PickupWindow }}{{ else }}{{ t "Origin: {0}" .OriginSummary }}{{ end }}
 {{ if .DeliveryWindow }}{{ t "Destination: {0} ({1})" .DestinationSummary .DeliveryWindow }}{{ else }}{{ t "Destination: {0}" .DestinationSummary }}{{ end }}
@@ -10,8 +10,10 @@
 
 {{ t "Accept the load:" }}
 {{ .AcceptURL }}
+{{ if .ExpiresInHours }}{{ if .ExpiresAt }}{{ t "This offer expires in {0, plural, one {# hour} other {# hours}}, at {1}." .ExpiresInHours .ExpiresAt }}{{ else }}{{ t "This offer expires in {0, plural, one {# hour} other {# hours}}." .ExpiresInHours }}{{ end }}{{ else }}{{ if .ExpiresAt }}{{ t "This offer expires at {0}." .ExpiresAt }}{{ end }}{{ end }} {{ t "After that the load may be offered to another carrier." }}
 
 {{ t "Decline the load:" }}
 {{ .DeclineURL }}
 
-{{ if .ExpiresInHours }}{{ if .ExpiresAt }}{{ t "This offer expires in {0, plural, one {# hour} other {# hours}}, at {1}." .ExpiresInHours .ExpiresAt }}{{ else }}{{ t "This offer expires in {0, plural, one {# hour} other {# hours}}." .ExpiresInHours }}{{ end }}{{ else }}{{ if .ExpiresAt }}{{ t "This offer expires at {0}." .ExpiresAt }}{{ end }}{{ end }} {{ t "After that the load may be offered to another carrier." }}
+--
+{{ t "You received this offer because {0} works with you as a carrier." .CompanyName }}

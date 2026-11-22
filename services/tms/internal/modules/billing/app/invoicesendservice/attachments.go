@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/invoicetemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -99,18 +100,18 @@ func (s *Service) materializePartLinks(
 	req *invoiceports.InvoiceSendRequest,
 	actor *permissionports.RequestActor,
 	part *invoiceports.InvoiceSendPlanPart,
-) (string, []*invoice.EmailAttemptAttachment, error) {
-	body := strings.TrimSpace(partBodyBase(part))
+) ([]invoicetemplate.InvoiceEmailLink, []*invoice.EmailAttemptAttachment, error) {
+	links := make([]invoicetemplate.InvoiceEmailLink, 0, len(part.Links))
 	linked := make([]*invoice.EmailAttemptAttachment, 0, len(part.Links))
 	if len(part.Links) > 0 && s.webBaseURL == "" {
-		return body, linked, errortypes.NewBusinessError(
+		return links, linked, errortypes.NewBusinessError(
 			"Document links need a public base URL; set app.webBaseUrl",
 		)
 	}
 	for _, link := range part.Links {
 		rawToken, hash, err := newShareToken()
 		if err != nil {
-			return body, linked, err
+			return links, linked, err
 		}
 		share, err := s.repo.CreateDocumentShareToken(ctx, &invoice.DocumentShareToken{
 			OrganizationID: req.TenantInfo.OrgID,
@@ -122,10 +123,13 @@ func (s *Service) materializePartLinks(
 			CreatedByID:    invoiceaction.ActorUserID(actor, req.TenantInfo),
 		})
 		if err != nil {
-			return body, linked, err
+			return links, linked, err
 		}
 		link.URL = signedDocumentURL(s.webBaseURL, rawToken)
-		body += "\n\nSupporting document link: " + link.FileName + "\n" + link.URL
+		links = append(links, invoicetemplate.InvoiceEmailLink{
+			FileName: link.FileName,
+			URL:      link.URL,
+		})
 		linked = append(linked, &invoice.EmailAttemptAttachment{
 			DocumentID:   link.DocumentID,
 			FileName:     link.FileName,
@@ -136,7 +140,7 @@ func (s *Service) materializePartLinks(
 			Reason:       link.Reason,
 		})
 	}
-	return body, linked, nil
+	return links, linked, nil
 }
 
 func attemptAttachmentsForPlan(

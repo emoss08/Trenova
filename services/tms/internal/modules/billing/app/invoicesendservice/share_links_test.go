@@ -47,7 +47,7 @@ func TestMaterializePartLinks_UsesTheConfiguredAddress(t *testing.T) {
 	svc := &Service{repo: repo, webBaseURL: "https://app.example.com"}
 	part := linkedPart()
 
-	body, linked, err := svc.materializePartLinks(
+	links, linked, err := svc.materializePartLinks(
 		t.Context(),
 		req,
 		testutil.NewSessionActor(userID, orgID, buID),
@@ -60,7 +60,9 @@ func TestMaterializePartLinks_UsesTheConfiguredAddress(t *testing.T) {
 		part.Links[0].URL,
 		"https://app.example.com/api/v1/billing/invoices/shared-documents/",
 	))
-	assert.Contains(t, body, part.Links[0].URL)
+	require.Len(t, links, 1)
+	assert.Equal(t, part.Links[0].URL, links[0].URL)
+	assert.Equal(t, part.Links[0].FileName, links[0].FileName)
 }
 
 func TestMaterializePartLinks_MintsNothingWithoutAConfiguredAddress(t *testing.T) {
@@ -91,7 +93,7 @@ func TestMaterializePartLinks_NeedsNoAddressWhenThereAreNoLinks(t *testing.T) {
 	req, orgID, buID, userID := shareRequest()
 	svc := &Service{}
 
-	body, linked, err := svc.materializePartLinks(
+	links, linked, err := svc.materializePartLinks(
 		t.Context(),
 		req,
 		testutil.NewSessionActor(userID, orgID, buID),
@@ -99,6 +101,6 @@ func TestMaterializePartLinks_NeedsNoAddressWhenThereAreNoLinks(t *testing.T) {
 	)
 
 	require.NoError(t, err)
-	assert.Empty(t, body)
+	assert.Empty(t, links)
 	assert.Empty(t, linked)
 }

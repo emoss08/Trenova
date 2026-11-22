@@ -1,9 +1,14 @@
+{{ heading "{0} set up <hl>a Dash account</hl> for you." .CompanyName }}
+
 {{ if .FirstName }}{{ t "Hi {0}," .FirstName }}{{ else }}{{ t "Hi," }}{{ end }}
 
 {{ t "{0} has set up a Dash account for you. Dash is where you will see your assigned loads, submit expenses, and check your pay." .CompanyName }}
 
 {{ t "Set up your account:" }}
 {{ .InviteURL }}
-
 {{ if .ExpiresInDays }}{{ if .ExpiresAt }}{{ t "This link expires in {0, plural, one {# day} other {# days}}, on {1}." .ExpiresInDays .ExpiresAt }}{{ else }}{{ t "This link expires in {0, plural, one {# day} other {# days}}." .ExpiresInDays }}{{ end }}
-{{ end }}{{ t "If you were not expecting this, you can ignore it." }}
+{{ end }}
+{{ t "If you were not expecting this, you can ignore it." }}
+
+--
+{{ t "You received this email because {0} set up a Dash account for you." .CompanyName }}

@@ -94,11 +94,16 @@ func digestContext(
 	totalLabel := i18n.Translate(i18n.FromContext(ctx), "Total")
 
 	out := reporttemplate.ReportDigest{
-		Headers: make([]string, 0, len(columns)),
+		Headers: make([]reporttemplate.ReportColumn, 0, len(columns)),
 		Rows:    make([]reporttemplate.ReportRow, 0, reportports.MaxDigestRows),
 	}
+	numeric := make([]bool, len(columns))
 	for i := range columns {
-		out.Headers = append(out.Headers, columns[i].Label)
+		numeric[i] = reportvalue.IsNumeric(columns[i].Type)
+		out.Headers = append(out.Headers, reporttemplate.ReportColumn{
+			Label:   columns[i].Label,
+			Numeric: numeric[i],
+		})
 	}
 
 	for {
@@ -112,24 +117,17 @@ func digestContext(
 		for i := range batch.Len {
 			level := batch.Level(i)
 			if level == table.Total {
-				cells := render.FormatRow(formatters, batch, i, totalLabel)
-				out.Totals = make([]string, 0, len(cells))
-				for _, cell := range cells {
-					out.Totals = append(out.Totals, cell.Text)
-				}
+				out.Totals = digestCells(
+					render.FormatRow(formatters, batch, i, totalLabel),
+					numeric,
+				)
 				continue
 			}
 			cells := render.FormatRow(formatters, batch, i, "")
-			row := reporttemplate.ReportRow{
-				Cells: make([]reporttemplate.ReportCell, 0, len(cells)),
-			}
-			for _, cell := range cells {
-				row.Cells = append(
-					row.Cells,
-					reporttemplate.ReportCell{Text: cell.Text, Tone: cell.Tone},
-				)
-			}
-			out.Rows = append(out.Rows, row)
+			out.Rows = append(
+				out.Rows,
+				reporttemplate.ReportRow{Cells: digestCells(cells, numeric)},
+			)
 		}
 	}
 	if len(out.Rows) == 0 {
@@ -137,4 +135,16 @@ func digestContext(
 	}
 	out.Note = digestNote(ctx, digest, len(out.Rows), rowCount)
 	return out, nil
+}
+
+func digestCells(cells []render.Cell, numeric []bool) []reporttemplate.ReportCell {
+	out := make([]reporttemplate.ReportCell, 0, len(cells))
+	for i, cell := range cells {
+		out = append(out, reporttemplate.ReportCell{
+			Text:    cell.Text,
+			Tone:    cell.Tone,
+			Numeric: i < len(numeric) && numeric[i],
+		})
+	}
+	return out
 }

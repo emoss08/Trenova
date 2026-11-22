@@ -1,0 +1,9 @@
+{{ heading "Checking that <hl>{0}</hl> receives mail." .MailboxAddress }}
+
+{{ t "This is a test from Trenova to check that this address receives mail. It lands in Triage like any other message; you can ignore it once it arrives." }}
+
+{{ t "Address" }}: {{ .MailboxAddress }}
+{{ t "Test code" }}: {{ .Token }}
+
+--
+{{ t "You received this test because someone checked that this address receives mail." }}

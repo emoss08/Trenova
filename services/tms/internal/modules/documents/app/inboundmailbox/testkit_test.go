@@ -1,6 +1,10 @@
 package inboundmailbox
 
 import (
+	"context"
+
+	"github.com/emoss08/trenova/internal/modules/documents/domain/mailtemplate"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
@@ -19,6 +23,22 @@ type testService struct {
 	now          func() int64
 }
 
+type tokenRenderer struct {
+	documenttemplateports.DocumentTemplateResolver
+}
+
+func (tokenRenderer) RenderMessage(
+	_ context.Context,
+	req *documenttemplateports.RenderMessageRequest,
+) (*documenttemplateports.RenderedMessage, error) {
+	data, _ := req.Data.(mailtemplate.MailboxTestEmailContext)
+	return &documenttemplateports.RenderedMessage{
+		Subject: "Test message " + data.Token,
+		Text:    data.MailboxAddress,
+		HTML:    "<html>" + data.Token + "</html>",
+	}, nil
+}
+
 func (t *testService) mailbox() *Service {
 	audit := t.audit
 	if audit == nil {
@@ -28,6 +48,7 @@ func (t *testService) mailbox() *Service {
 	return &Service{
 		audit:        audit,
 		email:        t.email,
+		renderer:     tokenRenderer{},
 		encryption:   t.encryption,
 		l:            t.l,
 		mailboxRepo:  t.mailboxRepo,

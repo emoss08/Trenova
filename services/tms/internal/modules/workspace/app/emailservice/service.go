@@ -80,6 +80,7 @@ type Params struct {
 	SystemMessages     emailports.SystemMessageLocator
 	RateLimits         kernelports.RateLimitStore
 	Organizations      tenantports.OrganizationRepository
+	Composer           emailports.Composer
 }
 
 // ObserverParams are the observers told when a message changes. They are
@@ -116,6 +117,7 @@ type Service struct {
 	systemMessages      emailports.SystemMessageLocator
 	rateLimits          kernelports.RateLimitStore
 	organizations       tenantports.OrganizationRepository
+	composer            emailports.Composer
 	observers           atomic.Pointer[[]emailports.EmailMessageObserver]
 	observersMu         sync.Mutex
 }
@@ -155,6 +157,7 @@ func New(p Params) *Service {
 		systemMessages:  p.SystemMessages,
 		rateLimits:      p.RateLimits,
 		organizations:   p.Organizations,
+		composer:        p.Composer,
 	}
 }
 
@@ -532,15 +535,33 @@ func (s *Service) TestSend(
 	profileID pulid.ID,
 	req *emailports.TestEmailProfileRequest,
 ) (*email.Message, error) {
+	profile, err := s.repo.GetProfile(ctx, emailports.GetEmailEntityRequest{
+		ID:         profileID,
+		TenantInfo: tenantInfo,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	composed, err := s.composer.ComposeProfileTest(ctx, &emailports.ProfileTestEmail{
+		TenantInfo:   tenantInfo,
+		ProfileName:  profile.Name,
+		ProviderName: string(profile.Provider),
+		SenderEmail:  profile.SenderEmail,
+	})
+	if err != nil {
+		return nil, err
+	}
+
 	return s.Send(ctx, &emailports.SendEmailRequest{
 		TenantInfo:     tenantInfo,
 		ProfileID:      profileID,
 		Type:           email.TypeProfileTest,
 		Purpose:        email.PurposeGeneral,
 		To:             []string{req.To},
-		Subject:        req.Subject,
-		HTML:           req.HTML,
-		Text:           req.Text,
+		Subject:        composed.Subject,
+		HTML:           composed.HTML,
+		Text:           composed.Text,
 		IdempotencyKey: "test-" + newIdempotencyKey(),
 	})
 }

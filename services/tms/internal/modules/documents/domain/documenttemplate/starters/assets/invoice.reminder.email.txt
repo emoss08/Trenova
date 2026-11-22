@@ -1,3 +1,5 @@
+{{ heading "<hl>{0}</hl> is past due." .TotalOverdue }}
+
 {{ if .CustomerName }}{{ t "Hello {0}," .CustomerName }}{{ else }}{{ t "Hello," }}{{ end }}
 
 {{ if .IsFinalReminder }}{{ t "This is our final reminder: {0} is past due on the invoices below." .TotalOverdue }}{{ else }}{{ t "Our records show {0} past due on the invoices below." .TotalOverdue }}{{ end }}
@@ -5,10 +7,13 @@
 {{ .Note }}
 {{ end }}
 {{ range .Invoices }}{{ t "Invoice {0}, due {1} ({2} days past due): {3}" .InvoiceNumber .DueDate .DaysPastDue .OpenAmount }}
-{{ end }}
-{{ t "Total past due" }}: {{ .TotalOverdue }}
+{{ end }}{{ t "Total past due" }}: {{ .TotalOverdue }}
 {{ if .RemittanceInstructions }}
+{{ t "Remittance" }}:
 {{ .RemittanceInstructions }}
 {{ end }}
 {{ t "If you have already paid, thank you, and please disregard this reminder. If any of these invoices is in question, reply to this message and we will look into it." }}
 {{ .CompanyName }}
+
+--
+{{ t "You received this reminder because {0} sends account notices to this address." .CompanyName }}

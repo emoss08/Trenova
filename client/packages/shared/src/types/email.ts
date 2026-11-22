@@ -100,9 +100,6 @@ export const emailSuppressionSchema = z.object({
 
 export const testEmailProfileRequestSchema = z.object({
   to: z.string().email(),
-  subject: z.string().min(1),
-  html: z.string().optional().default(""),
-  text: z.string().optional().default(""),
 });
 
 export const emailProfileListSchema = createLimitOffsetResponse(emailProfileSchema);

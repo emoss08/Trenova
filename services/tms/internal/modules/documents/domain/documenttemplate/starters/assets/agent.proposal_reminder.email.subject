@@ -1,1 +1,1 @@
-{{ t "{0}: {1} changes waiting on a decision" .AgentName .PendingCount }}
+{{ t "{0}: {1, plural, one {# change} other {# changes}} waiting on a decision" .AgentName .PendingCount }}

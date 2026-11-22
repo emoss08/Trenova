@@ -187,6 +187,8 @@ type RenderMessageRequest struct {
 
 	// Locale is the language the recipient reads; see ResolveTemplateRequest.
 	Locale i18n.Locale
+
+	Subject string
 }
 
 type RenderedMessage struct {

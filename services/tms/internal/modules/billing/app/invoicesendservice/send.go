@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoicerealtime"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/invoicetemplate"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/jobs/billingjobs/billingcontract"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -27,19 +28,32 @@ import (
 	"go.uber.org/zap"
 )
 
+type sendBasis struct {
+	profile *invoicedocument.DeliveryProfile
+	message string
+}
+
 func (s *Service) PlanSend(
 	ctx context.Context,
 	req *invoiceports.InvoiceSendPlanRequest,
 ) (*invoiceports.InvoiceSendPlan, error) {
+	plan, _, err := s.planSend(ctx, req)
+	return plan, err
+}
+
+func (s *Service) planSend(
+	ctx context.Context,
+	req *invoiceports.InvoiceSendPlanRequest,
+) (*invoiceports.InvoiceSendPlan, *sendBasis, error) {
 	entity, err := s.repo.GetByID(ctx, invoiceports.GetInvoiceByIDRequest{
 		ID:         req.InvoiceID,
 		TenantInfo: req.TenantInfo,
 	})
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	if err = invoicevalidation.RefuseVoided(entity, "sent"); err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	deliveryProfile, err := s.resolveDeliveryProfile(ctx, invoicedocument.DeliveryProfileParams{
 		Entity:                        entity,
@@ -50,16 +64,16 @@ func (s *Service) PlanSend(
 		IncludeCustomerBillingProfile: true,
 	})
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	var profile *email.Profile
 	profile, err = s.emailRepo.GetAssignedProfile(ctx, req.TenantInfo, email.PurposeBilling)
 	if err != nil && !errortypes.IsNotFoundError(err) {
-		return nil, err
+		return nil, nil, err
 	}
 	recipients := invoicedocument.ResolveRecipients(entity, deliveryProfile.Email)
 	if err = s.resolveDeliveryOrganization(ctx, deliveryProfile, req.TenantInfo); err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	templateContext := invoiceTemplateContext(entity, deliveryProfile)
 	wording, err := s.resolveInvoiceWording(ctx, &invoiceWordingParams{
@@ -69,14 +83,11 @@ func (s *Service) PlanSend(
 		Context:    templateContext,
 	})
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	body := wording.Body.Value
-	shipmentDetail := includedShipmentDetail(entity, deliveryProfile)
-	if shipmentDetail != "" {
-		body = appendShipmentDetail(body, entity, deliveryProfile.Shipment)
-	}
+	basis := &sendBasis{profile: deliveryProfile, message: wording.Message}
 	fromEmail := billingSenderEmail(profile)
 	headers := resolveDeliveryHeaders(fromEmail, deliveryProfile.Email)
 
@@ -97,23 +108,19 @@ func (s *Service) PlanSend(
 		Subject:              wording.Subject.Value,
 		Body:                 body,
 		InvoicePDFDocumentID: entity.PDFDocumentID,
-		// Only the template tier produces HTML. A draft or a profile comment is
-		// free text, and the send path wraps it the way it always has.
-		BodyHTML:     withShipmentDetailHTML(wording.HTML, shipmentDetail),
-		FromTemplate: wording.FromTemplate,
 	}
 	plan.Warnings = append(plan.Warnings, templateWarnings("subject", wording.Subject.Unknown)...)
 	plan.Warnings = append(plan.Warnings, templateWarnings("body", wording.Body.Unknown)...)
 	plan.Errors = append(plan.Errors, sendEligibilityErrors(entity, deliveryProfile.Customer)...)
 	replaced, err := s.hiddenAsReplaced(ctx, entity)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	if replaced {
 		plan.Errors = append(plan.Errors, replacedInvoiceSendError)
 	}
 	if err = s.checkSuppressedRecipients(ctx, plan, profile, req.TenantInfo); err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	if profile == nil {
 		plan.Errors = append(
@@ -126,7 +133,7 @@ func (s *Service) PlanSend(
 	}
 	if entity.PDFDocumentID.IsNil() {
 		plan.Errors = append(plan.Errors, "Invoice PDF has not been generated")
-		return plan, nil
+		return plan, basis, nil
 	}
 
 	pdfDoc := entity.PDFDocument
@@ -136,7 +143,7 @@ func (s *Service) PlanSend(
 			plan.Errors = append(plan.Errors, "Invoice PDF document could not be loaded")
 			//nolint:nilerr // a plan reports delivery blockers in plan.Errors; a
 			// missing PDF is one of them, not a failure to produce the plan
-			return plan, nil
+			return plan, basis, nil
 		}
 	}
 	pdfAttachment := planAttachment(pdfDoc, true)
@@ -153,7 +160,7 @@ func (s *Service) PlanSend(
 	}
 	if plan.EstimatedBodyBytes+pdfAttachment.EncodedBytes > plan.ProviderLimitBytes {
 		plan.Errors = append(plan.Errors, "Invoice PDF exceeds the email provider message limit")
-		return plan, nil
+		return plan, basis, nil
 	}
 
 	firstPart := &invoiceports.InvoiceSendPlanPart{
@@ -168,7 +175,7 @@ func (s *Service) PlanSend(
 		TenantInfo: req.TenantInfo,
 	})
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	for _, selected := range attachments {
 		if selected == nil || !selected.Selected || selected.Document == nil {
@@ -199,7 +206,7 @@ func (s *Service) PlanSend(
 		current.Attachments = append(current.Attachments, attachment)
 		current.EstimatedSizeBytes += attachment.EncodedBytes
 	}
-	return plan, nil
+	return plan, basis, nil
 }
 
 const sendInFlightTimeout = 15 * time.Minute
@@ -209,7 +216,6 @@ func (s *Service) Send(
 	req *invoiceports.InvoiceSendRequest,
 	actor *permissionports.RequestActor,
 ) (*invoiceports.InvoiceSendResult, error) {
-
 	plan, err := s.PlanSend(ctx, &invoiceports.InvoiceSendPlanRequest{
 		InvoiceID:  req.InvoiceID,
 		TenantInfo: req.TenantInfo,
@@ -280,7 +286,7 @@ func (s *Service) SendFromWorkflow(
 		}
 	}()
 
-	plan, err := s.PlanSend(ctx, &invoiceports.InvoiceSendPlanRequest{
+	plan, basis, err := s.planSend(ctx, &invoiceports.InvoiceSendPlanRequest{
 		InvoiceID:  req.InvoiceID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -318,63 +324,38 @@ func (s *Service) SendFromWorkflow(
 		return nil, err
 	}
 
-	deliveryProfile, err := s.splitSendProfile(ctx, req, entity, plan)
-	if err != nil {
-		return nil, err
-	}
-
 	attempts := make([]*invoice.EmailAttempt, 0, len(plan.Parts))
 	sendErrors := make([]string, 0)
 	for _, part := range plan.Parts {
-		partBody, linkedAttachments, linkErr := s.materializePartLinks(ctx, req, actor, part)
-		if strings.TrimSpace(partBody) == "" {
-			partBody = plan.Body
-		} else {
-			partBody = strings.TrimSpace(plan.Body) + "\n\n" + partBody
-		}
+		links, linkedAttachments, linkErr := s.materializePartLinks(ctx, req, actor, part)
 		emailAttachments, attachmentErr := s.emailAttachmentsForPlan(
 			ctx,
 			req.TenantInfo,
 			part.Attachments,
 		)
-		partHTML := s.partBodyHTML(ctx, &partBodyHTMLParams{
-			Request:  req,
-			Entity:   entity,
-			Profile:  deliveryProfile,
-			Plan:     plan,
-			Part:     part,
-			PartBody: partBody,
-		})
+		subject := partSubject(plan.Subject, part.PartNumber, len(plan.Parts))
+		partBody := plan.Body
 
 		var message *email.Message
 		var sendErr error
-		if linkErr == nil && attachmentErr == nil {
-			message, sendErr = s.emailService.Send(ctx, &emailports.SendEmailRequest{
-				TenantInfo:   req.TenantInfo,
-				ProfileID:    profile.ID,
-				Type:         email.TypeInvoice,
-				Purpose:      email.PurposeBilling,
-				To:           plan.Recipients.To,
-				CC:           plan.Recipients.CC,
-				BCC:          plan.Recipients.BCC,
-				FromEmail:    plan.FromEmail,
-				Subject:      partSubject(plan.Subject, part.PartNumber, len(plan.Parts)),
-				HTML:         partHTML,
-				Text:         partBody,
-				Attachments:  emailAttachments,
-				Headers:      plan.Headers,
-				OpenTracking: plan.OpenTracking,
-				IdempotencyKey: fmt.Sprintf(
-					"invoice-%s-part-%d-%d",
-					entity.ID,
-					part.PartNumber,
-					startedAt,
-				),
-			})
-		} else if attachmentErr != nil {
-			sendErr = attachmentErr
-		} else {
+		switch {
+		case linkErr != nil:
 			sendErr = linkErr
+		case attachmentErr != nil:
+			sendErr = attachmentErr
+		default:
+			message, partBody, sendErr = s.sendPart(ctx, &partSend{
+				req:         req,
+				entity:      entity,
+				plan:        plan,
+				part:        part,
+				basis:       basis,
+				profile:     profile,
+				subject:     subject,
+				links:       links,
+				attachments: emailAttachments,
+				startedAt:   startedAt,
+			})
 		}
 
 		attempt := &invoice.EmailAttempt{
@@ -389,7 +370,7 @@ func (s *Service) SendFromWorkflow(
 			ToRecipients:   plan.Recipients.To,
 			CCRecipients:   plan.Recipients.CC,
 			BCCRecipients:  plan.Recipients.BCC,
-			Subject:        partSubject(plan.Subject, part.PartNumber, len(plan.Parts)),
+			Subject:        subject,
 			Body:           partBody,
 			EstimatedSize:  part.EstimatedSizeBytes,
 			Warnings:       attemptWarnings(plan, part),
@@ -421,12 +402,13 @@ func (s *Service) SendFromWorkflow(
 		return nil, err
 	}
 	entity.SentByID = invoiceaction.ActorUserID(actor, req.TenantInfo)
-	if len(sendErrors) == 0 {
+	switch {
+	case len(sendErrors) == 0:
 		entity.SendStatus = invoice.SendStatusSending
-	} else if len(sendErrors) < len(plan.Parts) {
+	case len(sendErrors) < len(plan.Parts):
 		entity.SendStatus = invoice.SendStatusSending
 		entity.LastSendError = strings.Join(sliceutils.DedupeStrings(sendErrors), "; ")
-	} else {
+	default:
 		entity.SendStatus = invoice.SendStatusFailed
 		entity.LastSendError = strings.Join(sliceutils.DedupeStrings(sendErrors), "; ")
 	}
@@ -450,6 +432,58 @@ func (s *Service) SendFromWorkflow(
 		invoicerealtime.RealtimeActionSendUpdated,
 	)
 	return &invoiceports.InvoiceSendResult{Invoice: updated, Plan: plan, Attempts: attempts}, nil
+}
+
+type partSend struct {
+	req         *invoiceports.InvoiceSendRequest
+	entity      *invoice.Invoice
+	plan        *invoiceports.InvoiceSendPlan
+	part        *invoiceports.InvoiceSendPlanPart
+	basis       *sendBasis
+	profile     *email.Profile
+	subject     string
+	links       []invoicetemplate.InvoiceEmailLink
+	attachments []emailports.EmailAttachment
+	startedAt   int64
+}
+
+func (s *Service) sendPart(ctx context.Context, p *partSend) (*email.Message, string, error) {
+	rendered, err := s.renderInvoiceEmail(ctx, &invoiceEmailRenderParams{
+		TenantInfo: p.req.TenantInfo,
+		Entity:     p.entity,
+		Profile:    p.basis.profile,
+		PartLabel:  partLabel(p.part.PartNumber, len(p.plan.Parts)),
+		Message:    p.basis.message,
+		Subject:    p.subject,
+		Links:      p.links,
+	})
+	if err != nil {
+		return nil, p.plan.Body, err
+	}
+
+	message, err := s.emailService.Send(ctx, &emailports.SendEmailRequest{
+		TenantInfo:   p.req.TenantInfo,
+		ProfileID:    p.profile.ID,
+		Type:         email.TypeInvoice,
+		Purpose:      email.PurposeBilling,
+		To:           p.plan.Recipients.To,
+		CC:           p.plan.Recipients.CC,
+		BCC:          p.plan.Recipients.BCC,
+		FromEmail:    p.plan.FromEmail,
+		Subject:      rendered.Subject,
+		HTML:         rendered.HTML,
+		Text:         rendered.Text,
+		Attachments:  p.attachments,
+		Headers:      p.plan.Headers,
+		OpenTracking: p.plan.OpenTracking,
+		IdempotencyKey: fmt.Sprintf(
+			"invoice-%s-part-%d-%d",
+			p.entity.ID,
+			p.part.PartNumber,
+			p.startedAt,
+		),
+	})
+	return message, rendered.Text, err
 }
 
 func (s *Service) enqueueInvoiceSendWorkflow(
@@ -614,46 +648,4 @@ func applySendSnapshot(entity *invoice.Invoice, plan *invoiceports.InvoiceSendPl
 	entity.SendStatus = invoice.SendStatusSending
 	entity.LastSendError = ""
 	entity.LastSendWarning = strings.Join(plan.Warnings, "; ")
-}
-
-// partBodyHTML picks the HTML for one message of a send.
-//
-// A template-rendered invoice re-renders per part so the wording can name which
-// message this is; anything the part appended — secure download links — is wrapped
-// and appended after it, because those links are generated per part and cannot be
-// inside the template. A render failure here falls back to wrapping the plain text
-// rather than failing a send whose plan already validated: the recipient gets the
-// invoice, unstyled, instead of nothing.
-// splitSendProfile loads what a split send needs to re-render its wording per
-// message, and nothing when the send is a single email.
-//
-// The profile is read again rather than carried on the plan because the plan
-// crosses a workflow boundary as JSON, and one extra read on the rare invoice too
-// large for a single email is cheaper than putting a customer record in a Temporal
-// payload.
-func (s *Service) splitSendProfile(
-	ctx context.Context,
-	req *invoiceports.InvoiceSendRequest,
-	entity *invoice.Invoice,
-	plan *invoiceports.InvoiceSendPlan,
-) (*invoicedocument.DeliveryProfile, error) {
-	if !plan.FromTemplate || len(plan.Parts) <= 1 {
-		return nil, nil //nolint:nilnil // no profile is needed for a single message
-	}
-
-	profile, err := s.resolveDeliveryProfile(ctx, invoicedocument.DeliveryProfileParams{
-		Entity:                      entity,
-		TenantInfo:                  req.TenantInfo,
-		IncludeShipmentDetails:      true,
-		IncludeCustomer:             true,
-		IncludeCustomerEmailProfile: true,
-	})
-	if err != nil {
-		return nil, err
-	}
-	if err = s.resolveDeliveryOrganization(ctx, profile, req.TenantInfo); err != nil {
-		return nil, err
-	}
-
-	return profile, nil
 }

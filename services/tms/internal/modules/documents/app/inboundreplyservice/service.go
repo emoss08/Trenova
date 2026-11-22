@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/triage"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundreplyports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/triageworkports"
@@ -39,6 +40,7 @@ type Params struct {
 	Nova          *triagenova.Caller
 	Documents     documentports.DocumentMailAttachments
 	Email         emailports.EmailService
+	Renderer      documenttemplateports.DocumentTemplateResolver
 	Peeks         triageworkports.TriageShipmentPeeker
 	Stops         triageworkports.TriageStopTimesReader
 	Evidence      triageworkports.TriageDetentionEvidenceSource
@@ -61,6 +63,7 @@ type Service struct {
 	organizations tenantports.OrganizationRepository
 	nova          triagenova.Completer
 	email         emailports.EmailService
+	renderer      documenttemplateports.DocumentTemplateResolver
 	peeks         triageworkports.TriageShipmentPeeker
 	stops         triageworkports.TriageStopTimesReader
 	documents     documentports.DocumentMailAttachments
@@ -91,6 +94,7 @@ func New(p Params) *Service { //nolint:gocritic // fx params are passed by value
 		organizations: p.Organizations,
 		nova:          p.Nova,
 		email:         p.Email,
+		renderer:      p.Renderer,
 		peeks:         p.Peeks,
 		stops:         p.Stops,
 		documents:     p.Documents,

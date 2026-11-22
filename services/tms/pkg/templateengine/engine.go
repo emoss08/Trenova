@@ -198,8 +198,12 @@ func (e *Engine) compile(req *ParseRequest, field string) (*Compiled, templatedi
 	var associatedCount int
 
 	if req.Channel.IsHTML() {
+		funcs := templatefuncs.FuncMapFor(req.Locale)
+		if req.Channel == ChannelEmailHTML {
+			funcs = templatefuncs.EmailFuncMapFor(req.Locale)
+		}
 		tmpl, err := template.New(name).
-			Funcs(templatefuncs.FuncMapFor(req.Locale)).
+			Funcs(funcs).
 			Option("missingkey=error").
 			Parse(req.Source)
 		if err != nil {

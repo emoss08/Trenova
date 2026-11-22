@@ -1,16 +1,22 @@
-{{ .Title }}
-{{ if .Description }}{{ .Description }}
+{{ heading "Your scheduled report <hl>{0}</hl> is ready." .Title }}
+{{ if .Description }}
+{{ .Description }}
 {{ end }}
-{{ t "{0, plural, one {# row} other {# rows}}" .RowCount }}{{ if .Format }} / {{ upper .Format }}{{ end }}{{ if .FileSize }} / {{ .FileSize }}{{ end }}{{ if .CompletedAt }} / {{ t "completed {0}" .CompletedAt }}{{ end }}
-{{ if .Truncated }}
+{{ t "Rows" }}: {{ .RowCount }}
+{{ if .Format }}{{ t "Format" }}: {{ upper .Format }}
+{{ end }}{{ if .FileSize }}{{ t "Size" }}: {{ .FileSize }}
+{{ end }}{{ if .CompletedAt }}{{ t "Completed" }}: {{ .CompletedAt }}
+{{ end }}{{ if .Truncated }}
 {{ t "These results were cut short at the row limit. Narrow the filters or export a wider format to see everything." }}
 {{ end }}{{ if .Digest.Rows }}
-{{ range .Digest.Headers }}{{ . }}	{{ end }}
+{{ range .Digest.Headers }}{{ .Label }}	{{ end }}
 {{ range .Digest.Rows }}{{ range .Cells }}{{ .Text }}	{{ end }}
+{{ end }}{{ if .Digest.Totals }}{{ range .Digest.Totals }}{{ .Text }}	{{ end }}
 {{ end }}{{ if .Digest.Note }}{{ .Digest.Note }}
 {{ end }}{{ end }}
 {{ .AttachedNote }}{{ if and (not .Attached) .DownloadURL }}
-{{ .DownloadURL }}{{ end }}
-{{ if .ExpiresAt }}
-{{ t "The download expires {0}." .ExpiresAt }}
-{{ end }}
+{{ t "Download the report" }}: {{ .DownloadURL }}{{ if .ExpiresAt }}
+{{ t "The download expires {0}." .ExpiresAt }}{{ end }}{{ end }}
+
+--
+{{ t "You receive this email because this scheduled report is delivered to you." }}

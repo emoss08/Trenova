@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate/starters"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/templateregistry"
+	"github.com/emoss08/trenova/pkg/emaildesign"
 	"github.com/emoss08/trenova/pkg/templateengine"
 )
 
@@ -86,6 +87,17 @@ func RenderBuiltInNotice(
 		}
 		channel.assign(rendered)
 	}
+
+	composed, diags := emaildesign.Compose(&emaildesign.Message{
+		Subject: content.Subject,
+		Content: content.HTML,
+	})
+	if diags.HasErrors() {
+		return NoticeContent{}, fmt.Errorf(
+			"the built-in detention notice is not a sendable email: %s", diags.Summary(),
+		)
+	}
+	content.HTML = composed
 
 	return content, nil
 }

@@ -1,0 +1,8 @@
+{{ preheader (t "Everything that reached you today, in one email.") }}
+{{ kicker (t "Daily digest") }}
+{{ heading "You have <hl>{0, plural, one {# notification} other {# notifications}}</hl> waiting." .ItemCount }}
+{{ if .RecipientFirstName }}{{ para (t "Hi {0}," .RecipientFirstName) }}{{ end }}
+{{ if .Items }}{{ tableOpen }}{{ range $i, $entry := .Items }}{{ row (step $i) (item $entry.Title $entry.Message $entry.Link) }}{{ end }}{{ tableClose }}{{ end }}
+{{ para (t "Urgent notifications still reach you right away.") }}
+{{ action (t "See everything in Trenova") .BellURL }}
+{{ footer (t "You get this digest because of your notification settings in Trenova.") (t "Change your digest") .SettingsURL }}

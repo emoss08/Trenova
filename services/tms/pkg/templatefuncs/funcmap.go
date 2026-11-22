@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/emoss08/trenova/pkg/emaildesign"
 	"github.com/emoss08/trenova/shared/fileutils"
 	"github.com/emoss08/trenova/shared/i18n"
 	"github.com/emoss08/trenova/shared/money"
@@ -100,6 +101,17 @@ func TextFuncMap() template.FuncMap {
 func TextFuncMapFor(locale i18n.Locale) template.FuncMap {
 	out := FuncMapFor(locale)
 	delete(out, "nl2br")
+	for name, fn := range emaildesign.TextFuncs(locale) {
+		out[name] = fn
+	}
+	return out
+}
+
+func EmailFuncMapFor(locale i18n.Locale) template.FuncMap {
+	out := FuncMapFor(locale)
+	for name, fn := range emaildesign.Funcs(locale) {
+		out[name] = fn
+	}
 	return out
 }
 
@@ -157,7 +169,7 @@ func seq(n int) []int {
 // AllowedFunctionSet is the lookup the analyzer uses to reject calls to anything
 // outside the permitted set, including the builtins a FuncMap cannot remove.
 func AllowedFunctionSet() map[string]struct{} {
-	fm := FuncMap()
+	fm := EmailFuncMapFor(i18n.Default)
 	out := make(map[string]struct{}, len(fm)+len(builtinTemplateFunctions))
 	for name := range fm {
 		out[name] = struct{}{}
@@ -174,7 +186,7 @@ func AllowedFunctionSet() map[string]struct{} {
 // reference panel in the editor, so the list an author sees can never drift from
 // the map the engine actually installs.
 func AllowedFunctionNames() []string {
-	fm := FuncMap()
+	fm := EmailFuncMapFor(i18n.Default)
 	out := make([]string, 0, len(fm)+len(builtinTemplateFunctions))
 	for name := range fm {
 		out = append(out, name)

@@ -1,8 +1,11 @@
+{{ if .ShipmentProNumber }}{{ heading "Where is <hl>load {0}</hl> now?" .ShipmentProNumber }}{{ else }}{{ heading "Where is <hl>the load</hl> now?" }}{{ end }}
+
 {{ if .CustomerName }}{{ t "Hello {0}," .CustomerName }}{{ else }}{{ t "Hello," }}{{ end }}
 
 {{ .AgentBody }}
-{{ if .ShipmentProNumber }}
-{{ t "Shipment {0}" .ShipmentProNumber }}
-{{ end }}
+
 {{ t "Reply to this message with where the load is and when it will arrive." }}
 {{ .CompanyName }}
+
+--
+{{ t "You received this email because {0} lists you as a contact for this shipment." .CompanyName }}

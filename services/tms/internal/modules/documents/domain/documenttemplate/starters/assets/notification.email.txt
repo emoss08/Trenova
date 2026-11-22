@@ -1,0 +1,11 @@
+{{ heading "<hl>{0}</hl>" .Title }}
+{{ if .RecipientFirstName }}
+{{ t "Hi {0}," .RecipientFirstName }}
+{{ end }}{{ if .Message }}
+{{ .Message }}
+{{ end }}{{ if .Link }}
+{{ t "Open in Trenova" }}: {{ .Link }}
+{{ end }}
+--
+{{ t "You get this email because of your notification settings in Trenova." }}{{ if .SettingsURL }}
+{{ t "Change what reaches you" }}: {{ .SettingsURL }}{{ end }}

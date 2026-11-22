@@ -83,7 +83,10 @@ on screen").
   `TypeNotificationDigest`): it goes to the person's own address through the organization's
   email profile, or, on a managed instance with none, through the sender Trenova supplies
   ([managed-mode.md](managed-mode.md#system-email)). Never send one to an address outside the
-  organization: the Trenova sender refuses it.
+  organization: the Trenova sender refuses it. Both are written from the template kinds
+  `notification.email` and `notification.digest.email` through `emailports.Composer`
+  (implemented in `documents/app/workspaceemail`), so they follow the email standard in
+  [emails.md](emails.md); `notificationservice` holds no markup.
 - **A new kind needs a registry entry** (`notification-registry.ts`) to get a look, a link, a
   line saying why, and actions. Without one it is drawn as a system notice with only its
   `data.link`.

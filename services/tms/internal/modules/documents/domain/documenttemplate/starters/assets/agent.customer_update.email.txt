@@ -1,8 +1,11 @@
+{{ if .ShipmentProNumber }}{{ heading "An update on <hl>shipment {0}</hl>." .ShipmentProNumber }}{{ else }}{{ heading "An update <hl>on your shipment</hl>." }}{{ end }}
+
 {{ if .CustomerName }}{{ t "Hello {0}," .CustomerName }}{{ else }}{{ t "Hello," }}{{ end }}
 
 {{ .AgentBody }}
-{{ if .ShipmentProNumber }}
-{{ t "Shipment {0}" .ShipmentProNumber }}
-{{ end }}
+
 {{ t "Reply to this message if you have any questions." }}
 {{ .CompanyName }}
+
+--
+{{ t "You received this email because {0} lists you as a contact for this shipment." .CompanyName }}

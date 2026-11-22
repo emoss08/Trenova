@@ -247,15 +247,6 @@ type InvoiceSendPlan struct {
 
 	// EDI is where the invoice's outbound 210 stands and what blocks it.
 	EDI *InvoiceEDISendPlan `json:"edi"`
-
-	// BodyHTML is the organization's template output. It is empty when the
-	// subject and body came from an operator's draft or the customer's email
-	// profile, because those are free text and the send path wraps them itself.
-	BodyHTML string `json:"bodyHtml"`
-
-	// FromTemplate says the wording is the organization's template rather than
-	// free text, which decides whether the send path uses BodyHTML.
-	FromTemplate bool `json:"fromTemplate"`
 }
 
 type InvoiceSendRecipients struct {

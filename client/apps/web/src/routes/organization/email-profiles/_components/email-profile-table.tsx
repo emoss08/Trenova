@@ -71,12 +71,7 @@ export default function EmailProfileTable() {
       }
       return emailService.testProfile(
         profile.id,
-        testEmailProfileRequestSchema.parse({
-          to,
-          subject: "Trenova email profile test",
-          text: `This test verifies ${profile.name} can send through ${profile.provider}.`,
-          html: `<p>This test verifies ${profile.name} can send through ${profile.provider}.</p>`,
-        }),
+        testEmailProfileRequestSchema.parse({ to }),
       );
     },
     onSuccess: () => {

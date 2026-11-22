@@ -56,6 +56,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/app/triagepeekservice"
 	"github.com/emoss08/trenova/internal/modules/documents/app/triageruleservice"
 	"github.com/emoss08/trenova/internal/modules/documents/app/triageworkservice"
+	"github.com/emoss08/trenova/internal/modules/documents/app/workspaceemail"
 	"github.com/emoss08/trenova/internal/modules/documents/jobs/triagewakejobs/triagewakecontract"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
@@ -212,6 +213,8 @@ func SharedOptions() fx.Option {
 			documenttemplateservice.New,
 			func(s *documenttemplateservice.Service) documenttemplateports.DocumentTemplateResolver { return s },
 			func(s *documentservice.Service) workerdqfservice.PacketSummarizer { return s },
+			workspaceemail.New,
+			func(c *workspaceemail.Composer) emailports.Composer { return c },
 		),
 	)
 }

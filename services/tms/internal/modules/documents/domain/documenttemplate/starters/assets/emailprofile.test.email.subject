@@ -1,0 +1,1 @@
+{{ t "Test email from {0}" .ProfileName }}

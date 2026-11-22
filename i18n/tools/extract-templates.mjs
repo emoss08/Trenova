@@ -17,7 +17,9 @@ const TEMPLATE_ROOTS = [
 
 // {{ t "message" ...args }}, the whitespace-trimming {{- t "..." -}} forms, and a call
 // nested as an argument — (t "...") — which is how a translated label reaches a helper.
-const CALL = /(?:\{\{-?|\()\s*t\s+"((?:[^"\\]|\\.)*)"/g;
+// heading translates its own message, because the phrase it highlights is a <hl> tag
+// inside the sentence and only the whole sentence can be translated.
+const CALL = /(?:\{\{-?|\()\s*(?:t|heading)\s+"((?:[^"\\]|\\.)*)"/g;
 
 function unquote(raw) {
   return raw.replace(/\\(["\\nrt])/g, (_, ch) => {

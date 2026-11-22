@@ -1,0 +1,7 @@
+{{ if .Message }}{{ preheader .Message }}{{ else }}{{ preheader (t "You have a new notification.") }}{{ end }}
+{{ kicker (t "Notification") }}
+{{ heading "<hl>{0}</hl>" .Title }}
+{{ if .RecipientFirstName }}{{ para (t "Hi {0}," .RecipientFirstName) }}{{ end }}
+{{ para .Message }}
+{{ action (t "Open in Trenova") .Link }}
+{{ footer (t "You get this email because of your notification settings in Trenova.") (t "Change what reaches you") .SettingsURL }}

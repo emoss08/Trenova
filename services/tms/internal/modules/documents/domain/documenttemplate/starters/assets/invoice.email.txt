@@ -1,6 +1,8 @@
-{{ if .CustomerName }}{{ t "Hello {0}," .CustomerName }}{{ else }}{{ t "Hello," }}{{ end }}
+{{ if .PartLabel }}{{ heading "Invoice {0} <hl>is attached</hl> ({1})." .InvoiceNumber .PartLabel }}{{ else }}{{ heading "Invoice {0} <hl>is attached</hl>." .InvoiceNumber }}{{ end }}
 
-{{ if .PartLabel }}{{ t "Invoice {0} is attached ({1})." .InvoiceNumber .PartLabel }}{{ else }}{{ t "Invoice {0} is attached." .InvoiceNumber }}{{ end }}
+{{ if .Message }}{{ .Message }}{{ else }}{{ if .CustomerName }}{{ t "Hello {0}," .CustomerName }}{{ else }}{{ t "Hello," }}{{ end }}{{ if .Memo }}
+
+{{ .Memo }}{{ end }}{{ end }}
 
 {{ t "Invoice" }}: {{ .InvoiceNumber }}
 {{ if .InvoiceDate }}{{ t "Issued" }}: {{ .InvoiceDate }}
@@ -8,13 +10,31 @@
 {{ end }}{{ if .PaymentTerm }}{{ t "Terms" }}: {{ .PaymentTerm }}
 {{ end }}{{ if .Total }}{{ t "Total" }}: {{ .Total }}
 {{ end }}{{ if .ShipmentProNumber }}
-{{ if .ShipmentBOL }}{{ t "Shipment {0} / BOL {1}" .ShipmentProNumber .ShipmentBOL }}{{ else }}{{ t "Shipment {0}" .ShipmentProNumber }}{{ end }}
-{{ end }}{{ if .Memo }}
-{{ .Memo }}
-{{ end }}{{ if .RemittanceInstructions }}
+{{ t "PRO" }}: {{ .ShipmentProNumber }}
+{{ if .ShipmentBOL }}{{ t "BOL" }}: {{ .ShipmentBOL }}
+{{ end }}{{ if and .ShipmentOrigin .ShipmentDestination }}{{ t "Route" }}: {{ t "{0} to {1}" .ShipmentOrigin .ShipmentDestination }}
+{{ end }}{{ if .ShipmentServiceDate }}{{ t "Service date" }}: {{ .ShipmentServiceDate }}
+{{ end }}{{ if .ShipmentPickupDate }}{{ t "Pickup" }}: {{ .ShipmentPickupDate }}
+{{ end }}{{ if .ShipmentDeliveryDate }}{{ t "Delivery" }}: {{ .ShipmentDeliveryDate }}
+{{ end }}{{ if .ShipmentCommodities }}{{ t "Commodities" }}: {{ .ShipmentCommodities }}
+{{ end }}{{ if .ShipmentPieces }}{{ t "Pieces" }}: {{ .ShipmentPieces }}
+{{ end }}{{ if .ShipmentWeight }}{{ t "Weight" }}: {{ .ShipmentWeight }}
+{{ end }}{{ end }}{{ if .Charges }}
+{{ t "Charges" }}:
+{{ range .Charges }}{{ .Description }}: {{ .Amount }}
+{{ end }}{{ t "Total" }}: {{ .Total }}
+{{ end }}{{ if .DocumentLinks }}
+{{ t "Some supporting documents are too large to attach. Download them from these links." }}
+{{ range .DocumentLinks }}{{ .FileName }}: {{ .URL }}
+{{ end }}{{ end }}{{ if .RemittanceInstructions }}
+{{ t "Remittance" }}:
 {{ .RemittanceInstructions }}
 {{ end }}{{ if .NoticeOfAssignment }}
+{{ t "Notice of assignment" }}:
 {{ .NoticeOfAssignment }}
 {{ end }}
 {{ t "Reply to this message if any detail needs review." }}
 {{ .CompanyName }}
+
+--
+{{ t "You received this email because {0} sends its invoices to this address." .CompanyName }}

@@ -1,0 +1,1 @@
+{{ t "Trenova test message {0}" .Token }}

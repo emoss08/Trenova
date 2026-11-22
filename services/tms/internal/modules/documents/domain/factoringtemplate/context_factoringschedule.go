@@ -139,7 +139,7 @@ func newFactoringScheduleEmailSampleContext() any {
 		},
 		Part:    1,
 		Parts:   1,
-		ReplyTo: "billing@trenova.example",
+		ReplyTo: "billing@larkspurfreight.example",
 	}
 }
 

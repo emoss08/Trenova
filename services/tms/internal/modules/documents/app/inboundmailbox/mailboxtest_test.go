@@ -86,6 +86,8 @@ func TestSendMailboxTest_SendsOneTestAndStartsTheCooldown(t *testing.T) {
 	assert.Equal(t, mailboxTestNow-60, h.state.Claims[0].LastSentBefore)
 	assert.Equal(t, mailboxTestNow, updated.TestSentAt)
 	assert.Equal(t, h.state.Claims[0].Token, h.mailer.sent[0].IdempotencyKey)
+	assert.Contains(t, h.mailer.sent[0].Subject, h.state.Claims[0].Token,
+		"the arriving test is matched by the token in its subject")
 }
 
 func TestSendMailboxTest_RefusesASecondTestInsideTheCooldownWithoutSending(t *testing.T) {

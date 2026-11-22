@@ -191,6 +191,13 @@ const (
 
 	// KindNotificationRecordShared tells someone a teammate shared a record with them.
 	KindNotificationRecordShared Kind = "notification.record_shared"
+
+	KindNotificationEmail       Kind = "notification.email"
+	KindNotificationDigestEmail Kind = "notification.digest.email"
+
+	KindTriageReplyEmail      Kind = "triage.reply.email"
+	KindMailboxTestEmail      Kind = "mailbox.test.email"
+	KindEmailProfileTestEmail Kind = "emailprofile.test.email"
 )
 
 func (k Kind) String() string { return string(k) }
@@ -257,5 +264,10 @@ func AllKinds() []Kind {
 		KindNotificationCommentMention,
 		KindNotificationCommentReply,
 		KindNotificationRecordShared,
+		KindNotificationEmail,
+		KindNotificationDigestEmail,
+		KindTriageReplyEmail,
+		KindMailboxTestEmail,
+		KindEmailProfileTestEmail,
 	}
 }

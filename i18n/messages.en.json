@@ -1690,6 +1690,15 @@
       "packages/shared/components"
     ]
   },
+  "42 rows, delivered to your inbox.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "48 h": {
     "sites": 1,
     "scope": [
@@ -3280,6 +3289,24 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "<hl>{0}</hl>": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/notification.email"
+    ]
+  },
+  "<hl>{0}</hl> is past due.": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/invoice.reminder.email"
     ]
   },
   "<n>{0, plural, one {# customer has} other {# customers have}} no notice</n> in force.": {
@@ -8486,6 +8513,15 @@
       "edi/lading"
     ]
   },
+  "A live tracking page for your shipment, with no sign-in needed.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/customertracking.link.email"
+    ]
+  },
   "A load already exists for this tender": {
     "sites": 2,
     "scope": [
@@ -11659,6 +11695,35 @@
       "apps/web/components"
     ]
   },
+  "A reply <hl>about shipment {0}</hl>.": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/agent.inbound_reply.email"
+    ]
+  },
+  "A reply <hl>to your message</hl>.": {
+    "sites": 4,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/agent.inbound_reply.email",
+      "template/triage.reply.email"
+    ]
+  },
+  "A reply from {0} to your message.": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/agent.inbound_reply.email",
+      "template/triage.reply.email"
+    ]
+  },
   "A reply to {0} didn't send": {
     "sites": 1,
     "scope": [
@@ -13998,6 +14063,15 @@
       "template/notification.shipment_comment_reply"
     ]
   },
+  "A teammate shared <hl>{0}</hl> with you.": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/record.share.email"
+    ]
+  },
   "A teammate shared {0} with you": {
     "sites": 2,
     "scope": [
@@ -14005,15 +14079,6 @@
     ],
     "areas": [
       "template/notification.record_shared",
-      "template/record.share.email"
-    ]
-  },
-  "A teammate shared {0} with you.": {
-    "sites": 2,
-    "scope": [
-      "go"
-    ],
-    "areas": [
       "template/record.share.email"
     ]
   },
@@ -14251,6 +14316,24 @@
     "areas": [
       "apps/web/rules",
       "rules/tariff"
+    ]
+  },
+  "A test message that checks this address receives mail.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/mailbox.test.email"
+    ]
+  },
+  "A test message that checks this email profile can send.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/emailprofile.test.email"
     ]
   },
   "A test name cannot be longer than 100 characters": {
@@ -17121,6 +17204,15 @@
       "routes/desk"
     ]
   },
+  "Accept or decline this load from the email before the offer expires.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/tender.offer.email"
+    ]
+  },
   "Accept subledger postings again": {
     "sites": 1,
     "scope": [
@@ -17209,15 +17301,6 @@
     ],
     "areas": [
       "go/other"
-    ]
-  },
-  "Accept:": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "template/tender.offer.email"
     ]
   },
   "Acceptance": {
@@ -23062,7 +23145,7 @@
     ]
   },
   "Address": {
-    "sites": 15,
+    "sites": 17,
     "scope": [
       "go",
       "ts"
@@ -23077,6 +23160,7 @@
       "routes/inbox",
       "routes/onboarding",
       "routes/shipment",
+      "template/mailbox.test.email",
       "template/rateconfirmation.pdf"
     ]
   },
@@ -24340,7 +24424,7 @@
     ]
   },
   "After that the load may be offered to another carrier.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -27611,7 +27695,7 @@
     ]
   },
   "Amount": {
-    "sites": 56,
+    "sites": 57,
     "scope": [
       "go",
       "ts"
@@ -27643,6 +27727,7 @@
       "routes/recurring-earning",
       "routes/shipment",
       "template/factoring.schedule.pdf",
+      "template/invoice.email",
       "template/invoice.pdf"
     ]
   },
@@ -27761,14 +27846,15 @@
     ]
   },
   "Amount due": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "apps/web/components",
-      "template/invoice.pdf"
+      "template/invoice.pdf",
+      "template/invoice.reminder.email"
     ]
   },
   "Amount is required": {
@@ -30621,6 +30707,33 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "An update <hl>on your shipment</hl>.": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/agent.customer_update.email"
+    ]
+  },
+  "An update from {0} about your shipment.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/agent.customer_update.email"
+    ]
+  },
+  "An update on <hl>shipment {0}</hl>.": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/agent.customer_update.email"
     ]
   },
   "Analyses": {
@@ -39376,24 +39489,6 @@
       "routes/policies"
     ]
   },
-  "Attached is the rate confirmation for shipment {0} ({1}).": {
-    "sites": 2,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "template/rateconfirmation.email"
-    ]
-  },
-  "Attached is the rate confirmation for shipment {0}.": {
-    "sites": 2,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "template/rateconfirmation.email"
-    ]
-  },
   "Attached to": {
     "sites": 1,
     "scope": [
@@ -41272,14 +41367,12 @@
     ]
   },
   "Awaiting decision": {
-    "sites": 4,
+    "sites": 3,
     "scope": [
-      "go",
       "ts"
     ],
     "areas": [
-      "routes/agent-control",
-      "template/agent.proposal_reminder.email"
+      "routes/agent-control"
     ]
   },
   "Awaiting file": {
@@ -41526,7 +41619,7 @@
     ]
   },
   "BOL": {
-    "sites": 28,
+    "sites": 32,
     "scope": [
       "go",
       "ts"
@@ -41544,6 +41637,9 @@
       "routes/order",
       "routes/shipment",
       "routes/shipment-tracking-public",
+      "template/customertracking.link.email",
+      "template/customertracking.status.email",
+      "template/invoice.email",
       "template/invoice.pdf"
     ]
   },
@@ -47886,6 +47982,15 @@
       "routes/settings"
     ]
   },
+  "Bundles a day of notifications into one email for someone who asked for a digest instead of an email per notification.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Busier than the range.": {
     "sites": 1,
     "scope": [
@@ -49237,6 +49342,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "Can you confirm the delivery appointment with the receiver before 3 PM?": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Can you take this load?": {
@@ -52948,6 +53062,15 @@
       "routes/admin"
     ]
   },
+  "Carries a reply someone wrote in Triage back to the sender of the message it answers, in the same thread.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Carries forward": {
     "sites": 1,
     "scope": [
@@ -54664,6 +54787,15 @@
       "go/other"
     ]
   },
+  "Change what reaches you": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/notification.email"
+    ]
+  },
   "Change what your plan includes": {
     "sites": 1,
     "scope": [
@@ -54689,6 +54821,15 @@
     ],
     "areas": [
       "routes/billing-queue"
+    ]
+  },
+  "Change your digest": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/notification.digest.email"
     ]
   },
   "Change {0}": {
@@ -55705,7 +55846,7 @@
     ]
   },
   "Charges": {
-    "sites": 24,
+    "sites": 26,
     "scope": [
       "go",
       "ts"
@@ -55718,6 +55859,7 @@
       "routes/edi",
       "routes/invoice",
       "template/customer.statement.pdf",
+      "template/invoice.email",
       "template/invoice.pdf"
     ]
   },
@@ -56723,6 +56865,15 @@
       "routes/billing-queue"
     ]
   },
+  "Checking that <hl>{0}</hl> receives mail.": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/mailbox.test.email"
+    ]
+  },
   "Checking the OANDA connection.": {
     "sites": 1,
     "scope": [
@@ -56989,6 +57140,24 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "Checks that a monitored address receives mail. It goes to the address itself and lands in Triage.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Checks that an email profile can send, from the email settings.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Checks the document of": {
@@ -57429,7 +57598,7 @@
     ]
   },
   "Choose a new password": {
-    "sites": 4,
+    "sites": 3,
     "scope": [
       "go",
       "ts"
@@ -57495,6 +57664,15 @@
   },
   "Choose a password to finish setting up your account.": {
     "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/account.invite.email"
+    ]
+  },
+  "Choose a password to finish setting up your {0} account.": {
+    "sites": 1,
     "scope": [
       "go"
     ],
@@ -63684,7 +63862,7 @@
     ]
   },
   "Commodities": {
-    "sites": 9,
+    "sites": 11,
     "scope": [
       "go",
       "ts"
@@ -63696,7 +63874,8 @@
       "routes/desk",
       "routes/detention-policy",
       "routes/edi",
-      "routes/shipment"
+      "routes/shipment",
+      "template/invoice.email"
     ]
   },
   "Commodities, hazardous materials, hold reasons and the other lookup lists.": {
@@ -64428,7 +64607,7 @@
     ]
   },
   "Completed": {
-    "sites": 47,
+    "sites": 49,
     "scope": [
       "go",
       "ts"
@@ -64448,7 +64627,8 @@
       "routes/edi",
       "routes/invoice-adjustment-batch",
       "routes/shipment",
-      "routes/worker"
+      "routes/worker",
+      "template/report.delivery.email"
     ]
   },
   "Completed %": {
@@ -75205,7 +75385,7 @@
     ]
   },
   "Customer": {
-    "sites": 101,
+    "sites": 103,
     "scope": [
       "go",
       "ts"
@@ -76810,6 +76990,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Daily digest": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/notification.digest.email"
     ]
   },
   "Daily digest of carrier intelligence changes awaiting review": {
@@ -78746,17 +78935,8 @@
       "routes/desk"
     ]
   },
-  "Decide here:": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "template/agent.proposal_reminder.email"
-    ]
-  },
   "Decide in AI Control": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -79279,9 +79459,8 @@
     ]
   },
   "Decline": {
-    "sites": 15,
+    "sites": 14,
     "scope": [
-      "go",
       "ts"
     ],
     "areas": [
@@ -79289,8 +79468,7 @@
       "apps/web/components",
       "routes/desk",
       "routes/dispatch-console",
-      "routes/tender-offer-public",
-      "template/tender.offer.email"
+      "routes/tender-offer-public"
     ]
   },
   "Decline Nova's proposal": {
@@ -79375,6 +79553,15 @@
       "routes/desk"
     ]
   },
+  "Decline this load": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/tender.offer.email"
+    ]
+  },
   "Decline this load?": {
     "sites": 1,
     "scope": [
@@ -79420,15 +79607,6 @@
     "areas": [
       "apps/web/components",
       "routes/desk"
-    ]
-  },
-  "Decline:": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "template/tender.offer.email"
     ]
   },
   "Declined": {
@@ -81722,7 +81900,7 @@
     ]
   },
   "Delivery": {
-    "sites": 38,
+    "sites": 40,
     "scope": [
       "go",
       "ts"
@@ -81747,7 +81925,8 @@
       "routes/settings",
       "routes/shipment",
       "routes/tender-offer-public",
-      "routes/training-course"
+      "routes/training-course",
+      "template/invoice.email"
     ]
   },
   "Delivery #": {
@@ -82830,7 +83009,7 @@
     ]
   },
   "Description": {
-    "sites": 173,
+    "sites": 174,
     "scope": [
       "go",
       "ts"
@@ -82893,6 +83072,7 @@
       "routes/worker-checklist-template",
       "routes/worker-credential-type",
       "template/customer.statement.pdf",
+      "template/invoice.email",
       "template/invoice.pdf"
     ]
   },
@@ -83798,7 +83978,7 @@
     ]
   },
   "Detention": {
-    "sites": 13,
+    "sites": 14,
     "scope": [
       "go",
       "ts"
@@ -83810,6 +83990,24 @@
       "routes/desk",
       "routes/shipment",
       "routes/shipment-control"
+    ]
+  },
+  "Detention <hl>continues to accrue</hl> on shipment {0} at {1}.": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/detention.notice.email"
+    ]
+  },
+  "Detention <hl>is now accruing</hl> on shipment {0} at {1}.": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/detention.notice.email"
     ]
   },
   "Detention Charge": {
@@ -83840,12 +84038,11 @@
     ]
   },
   "Detention Notice": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "go"
     ],
     "areas": [
-      "template/detention.notice.email",
       "template/detention.notice.pdf"
     ]
   },
@@ -84154,6 +84351,15 @@
       "apps/web/config"
     ]
   },
+  "Detention notice": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/detention.notice.email"
+    ]
+  },
   "Detention notice due": {
     "sites": 1,
     "scope": [
@@ -84163,13 +84369,21 @@
       "go/other"
     ]
   },
-  "Detention notice for shipment {0} at {1}.": {
-    "sites": 3,
+  "Detention notice for shipment <hl>{0}</hl> at {1}.": {
+    "sites": 2,
     "scope": [
       "go"
     ],
     "areas": [
-      "template/detention.notice.email",
+      "template/detention.notice.email"
+    ]
+  },
+  "Detention notice for shipment {0} at {1}.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
       "template/detention.notice.pdf"
     ]
   },
@@ -84216,6 +84430,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Detention on shipment {0} at {1} <hl>is final</hl>.": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/detention.notice.email"
     ]
   },
   "Detention paid out to drivers": {
@@ -84326,6 +84549,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "Detention terms and timing for our driver at this facility.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/detention.notice.email"
     ]
   },
   "Detention terms for standard dry van freight, per the 2026 master agreement": {
@@ -88431,6 +88663,15 @@
       "routes/agent-control"
     ]
   },
+  "Documents we need": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/agent.request_missing_docs.email"
+    ]
+  },
   "Does it match the shipment?": {
     "sites": 1,
     "scope": [
@@ -88914,7 +89155,7 @@
     ]
   },
   "Download the report": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -96100,6 +96341,15 @@
       "go/other"
     ]
   },
+  "Email Profile Test": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Email Profile(s)": {
     "sites": 1,
     "scope": [
@@ -96556,6 +96806,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Email profile test": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/emailprofile.test.email"
     ]
   },
   "Email profiles": {
@@ -105072,6 +105331,15 @@
     ],
     "areas": [
       "routes/settings"
+    ]
+  },
+  "Everything that reached you today, in one email.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/notification.digest.email"
     ]
   },
   "Everything the briefing checks is in order.": {
@@ -114763,6 +115031,15 @@
       "routes/random-testing"
     ]
   },
+  "Final detention for this stop, with the charge that will be invoiced.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/detention.notice.email"
+    ]
+  },
   "Final notice": {
     "sites": 1,
     "scope": [
@@ -117263,8 +117540,8 @@
       "go/other"
     ]
   },
-  "Follow load {0} as it moves.": {
-    "sites": 1,
+  "Follow load <hl>{0}</hl> as it moves.": {
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -117279,15 +117556,6 @@
     ],
     "areas": [
       "apps/web/lib"
-    ]
-  },
-  "Follow the load here:": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "template/customertracking.status.email"
     ]
   },
   "Follow the load: {0}": {
@@ -117335,8 +117603,8 @@
       "routes/collections"
     ]
   },
-  "Follow your load as it moves.": {
-    "sites": 1,
+  "Follow your load <hl>as it moves</hl>.": {
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -117995,7 +118263,7 @@
     ]
   },
   "Format": {
-    "sites": 19,
+    "sites": 21,
     "scope": [
       "go",
       "ts"
@@ -118006,7 +118274,8 @@
       "routes/admin",
       "routes/agent-control",
       "routes/customer-ledger",
-      "routes/reports"
+      "routes/reports",
+      "template/report.delivery.email"
     ]
   },
   "Format is invalid": {
@@ -118640,6 +118909,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Free time at {1} is <hl>almost over</hl> on shipment {0}.": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/detention.notice.email"
     ]
   },
   "Free time ended": {
@@ -119514,6 +119792,15 @@
       "go/other"
     ]
   },
+  "From now on, pay invoices from {0} to {1}.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/factoring.noa.email"
+    ]
+  },
   "From old information": {
     "sites": 1,
     "scope": [
@@ -120258,7 +120545,7 @@
     ]
   },
   "Fuel surcharge": {
-    "sites": 14,
+    "sites": 15,
     "scope": [
       "go",
       "ts"
@@ -125750,7 +126037,7 @@
     ]
   },
   "Hello {0},": {
-    "sites": 28,
+    "sites": 30,
     "scope": [
       "go"
     ],
@@ -125768,6 +126055,7 @@
       "template/factoring.schedule.email",
       "template/invoice.email",
       "template/invoice.reminder.email",
+      "template/rateconfirmation.email",
       "template/tender.offer.email"
     ]
   },
@@ -125783,7 +126071,7 @@
     ]
   },
   "Hello,": {
-    "sites": 28,
+    "sites": 30,
     "scope": [
       "go"
     ],
@@ -125801,6 +126089,7 @@
       "template/factoring.schedule.email",
       "template/invoice.email",
       "template/invoice.reminder.email",
+      "template/rateconfirmation.email",
       "template/tender.offer.email"
     ]
   },
@@ -125926,7 +126215,7 @@
     ]
   },
   "Hi {0},": {
-    "sites": 8,
+    "sites": 12,
     "scope": [
       "go"
     ],
@@ -125934,6 +126223,8 @@
       "template/account.invite.email",
       "template/account.password_reset.email",
       "template/driverportal.invitation.email",
+      "template/notification.digest.email",
+      "template/notification.email",
       "template/record.share.email"
     ]
   },
@@ -128831,6 +129122,15 @@
       "go/other"
     ]
   },
+  "How many notifications the digest holds.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "How many of its changes are waiting on a decision.": {
     "sites": 1,
     "scope": [
@@ -128896,6 +129196,15 @@
     "areas": [
       "apps/web/edi",
       "edi/lading"
+    ]
+  },
+  "How many pieces the shipment carried. Set only when the customer asks for shipment detail.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "How many questions each person may ask the agents in a calendar month. Desk warns people as they get close and says when it refreshes. Each agent's own budget and daily limit still apply.": {
@@ -130870,7 +131179,7 @@
     ]
   },
   "If this was not you, ignore this email. Your password has not changed and your current one still works.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -130897,7 +131206,7 @@
     ]
   },
   "If you were not expecting this, you can ignore it.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -137468,6 +137777,24 @@
       "template/invoice.email"
     ]
   },
+  "Invoice {0} <hl>is attached</hl> ({1}).": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/invoice.email"
+    ]
+  },
+  "Invoice {0} <hl>is attached</hl>.": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/invoice.email"
+    ]
+  },
   "Invoice {0} already has an open dispute": {
     "sites": 1,
     "scope": [
@@ -137493,6 +137820,24 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Invoice {0} for {1}, due {2}.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/invoice.email"
+    ]
+  },
+  "Invoice {0} for {1}.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/invoice.email"
     ]
   },
   "Invoice {0} from this carrier is already matched; reject that match first if this one replaces it": {
@@ -137592,24 +137937,6 @@
     ],
     "areas": [
       "go/other"
-    ]
-  },
-  "Invoice {0} is attached ({1}).": {
-    "sites": 2,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "template/invoice.email"
-    ]
-  },
-  "Invoice {0} is attached.": {
-    "sites": 2,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "template/invoice.email"
     ]
   },
   "Invoice {0} is billed in {1}, but this credit memo is in {2}": {
@@ -148262,7 +148589,7 @@
     ]
   },
   "Linehaul": {
-    "sites": 12,
+    "sites": 13,
     "scope": [
       "go",
       "ts"
@@ -149979,6 +150306,33 @@
       "routes/shipment-tracking-public"
     ]
   },
+  "Load {0} <hl>has been delivered</hl>.": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/customertracking.status.email"
+    ]
+  },
+  "Load {0} <hl>has been picked up</hl>.": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/customertracking.status.email"
+    ]
+  },
+  "Load {0} <hl>is running late</hl>.": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/customertracking.status.email"
+    ]
+  },
   "Load {0} for {1}": {
     "sites": 1,
     "scope": [
@@ -149988,24 +150342,6 @@
       "routes/carrier-tracking-public"
     ]
   },
-  "Load {0} has been delivered.": {
-    "sites": 2,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "template/customertracking.status.email"
-    ]
-  },
-  "Load {0} has been picked up.": {
-    "sites": 2,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "template/customertracking.status.email"
-    ]
-  },
   "Load {0} is new": {
     "sites": 1,
     "scope": [
@@ -150013,15 +150349,6 @@
     ],
     "areas": [
       "routes/inbox"
-    ]
-  },
-  "Load {0} is running late.": {
-    "sites": 2,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "template/customertracking.status.email"
     ]
   },
   "Load {0} may already exist": {
@@ -150040,15 +150367,6 @@
     ],
     "areas": [
       "template/notification.dash.load_unassigned"
-    ]
-  },
-  "Load: {0}": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "template/customertracking.link.email"
     ]
   },
   "Loaded": {
@@ -152697,7 +153015,7 @@
     ]
   },
   "Location": {
-    "sites": 24,
+    "sites": 25,
     "scope": [
       "go",
       "ts"
@@ -152713,7 +153031,8 @@
       "routes/location",
       "routes/rate-zone",
       "routes/reports",
-      "routes/shipment"
+      "routes/shipment",
+      "template/rateconfirmation.email"
     ]
   },
   "Location Categories": {
@@ -154764,6 +155083,15 @@
       "routes/edi"
     ]
   },
+  "Mailbox Test": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Mailbox actions": {
     "sites": 1,
     "scope": [
@@ -154789,6 +155117,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Mailbox test": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/mailbox.test.email"
     ]
   },
   "Mailing address": {
@@ -156379,6 +156716,15 @@
     ],
     "areas": [
       "apps/web/types"
+    ]
+  },
+  "Marcus Bell replied to your comment": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Margin": {
@@ -184546,7 +184892,7 @@
     ]
   },
   "Notice of assignment": {
-    "sites": 14,
+    "sites": 15,
     "scope": [
       "go",
       "ts"
@@ -184768,12 +185114,32 @@
     ]
   },
   "Notification": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "routes/table-change-alert"
+      "routes/table-change-alert",
+      "template/notification.email"
+    ]
+  },
+  "Notification Digest": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Notification Email": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Notification deadline cannot be negative": {
@@ -192321,7 +192687,7 @@
     ]
   },
   "Open": {
-    "sites": 75,
+    "sites": 74,
     "scope": [
       "go",
       "ts"
@@ -192363,8 +192729,7 @@
       "routes/time-attendance",
       "routes/tractor",
       "routes/worker",
-      "template/customer.statement.pdf",
-      "template/invoice.reminder.email"
+      "template/customer.statement.pdf"
     ]
   },
   "Open (first-come) stops will not accrue detention under this policy.": {
@@ -193403,12 +193768,14 @@
     ]
   },
   "Open in Trenova": {
-    "sites": 1,
+    "sites": 3,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "routes/carrier-sourcing"
+      "routes/carrier-sourcing",
+      "template/notification.email"
     ]
   },
   "Open in Triage": {
@@ -194503,6 +194870,15 @@
       "routes/desk"
     ]
   },
+  "Open the record from this email; your role already lets you view it.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/record.share.email"
+    ]
+  },
   "Open the record it's attached to": {
     "sites": 2,
     "scope": [
@@ -194721,7 +195097,7 @@
     ]
   },
   "Open tracking link": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -194730,7 +195106,7 @@
     ]
   },
   "Open tracking page": {
-    "sites": 2,
+    "sites": 4,
     "scope": [
       "go"
     ],
@@ -196380,7 +196756,7 @@
     ]
   },
   "Or paste this link into your browser:": {
-    "sites": 8,
+    "sites": 7,
     "scope": [
       "go"
     ],
@@ -196389,7 +196765,6 @@
       "template/account.password_reset.email",
       "template/carriertracking.link.email",
       "template/customertracking.link.email",
-      "template/customertracking.status.email",
       "template/driverportal.invitation.email",
       "template/rateconfirmation.email",
       "template/record.share.email"
@@ -197906,8 +198281,8 @@
       "routes/desk"
     ]
   },
-  "Our invoices are now payable to {0}.": {
-    "sites": 1,
+  "Our invoices are now payable to <hl>{0}</hl>.": {
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -197958,6 +198333,16 @@
     ],
     "areas": [
       "template/invoice.reminder.email"
+    ]
+  },
+  "Our reply": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/agent.inbound_reply.email",
+      "template/triage.reply.email"
     ]
   },
   "Our shipment this tender offers": {
@@ -199918,7 +200303,7 @@
     ]
   },
   "PRO": {
-    "sites": 7,
+    "sites": 9,
     "scope": [
       "go",
       "ts"
@@ -199928,6 +200313,7 @@
       "go/other",
       "routes/billing-queue",
       "routes/desk",
+      "template/invoice.email",
       "template/invoice.pdf"
     ]
   },
@@ -207866,7 +208252,7 @@
     ]
   },
   "Pickup": {
-    "sites": 27,
+    "sites": 29,
     "scope": [
       "go",
       "ts"
@@ -207883,7 +208269,8 @@
       "routes/dispatch-console",
       "routes/inbox",
       "routes/shipment",
-      "routes/tender-offer-public"
+      "routes/tender-offer-public",
+      "template/invoice.email"
     ]
   },
   "Pickup #": {
@@ -208240,7 +208627,7 @@
     ]
   },
   "Pieces": {
-    "sites": 22,
+    "sites": 24,
     "scope": [
       "go",
       "ts"
@@ -208255,7 +208642,8 @@
       "routes/desk",
       "routes/edi",
       "routes/shipment",
-      "routes/shipment-tracking-public"
+      "routes/shipment-tracking-public",
+      "template/invoice.email"
     ]
   },
   "Pieces / Packages": {
@@ -209342,17 +209730,8 @@
       "template/detention.notice.pdf"
     ]
   },
-  "Please expedite loading or unloading to avoid further charges. Reply to the message if any detail needs review.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "template/detention.notice.email"
-    ]
-  },
   "Please expedite loading or unloading to avoid further charges. Reply to this message if any detail needs review.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -209360,7 +209739,7 @@
       "template/detention.notice.email"
     ]
   },
-  "Please find schedule {0} from {1} attached, with {2} invoices totalling {3}.": {
+  "Please find schedule {0} from {1} attached, with {2, plural, one {# invoice} other {# invoices}} totalling {3}.": {
     "sites": 2,
     "scope": [
       "go"
@@ -209406,16 +209785,7 @@
     ]
   },
   "Please sign and return the attached confirmation before dispatching, and submit it with your invoice. Reply to this message if any detail needs review.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "template/rateconfirmation.email"
-    ]
-  },
-  "Please sign and return the attached confirmation before dispatching. Submit the confirmation with your invoice. Reply to this message if any detail needs review.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -209424,16 +209794,7 @@
     ]
   },
   "Please sign before dispatching and submit the attached confirmation with your invoice. Reply to this message if any detail needs review.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "template/rateconfirmation.email"
-    ]
-  },
-  "Please sign before dispatching and submit the confirmation with your invoice. Reply to this message if any detail needs review.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -210557,6 +210918,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "Post check calls, arrivals, departures and delays for this load from one link.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/carriertracking.link.email"
     ]
   },
   "Post customer payments and apply credit memos": {
@@ -214031,7 +214401,7 @@
     ]
   },
   "Profile": {
-    "sites": 16,
+    "sites": 18,
     "scope": [
       "go",
       "ts"
@@ -214047,7 +214417,8 @@
       "routes/organization",
       "routes/pay-profile",
       "routes/settings",
-      "routes/worker"
+      "routes/worker",
+      "template/emailprofile.test.email"
     ]
   },
   "Profile & time off": {
@@ -215477,7 +215848,7 @@
     ]
   },
   "Provider": {
-    "sites": 35,
+    "sites": 37,
     "scope": [
       "go",
       "ts"
@@ -215493,7 +215864,8 @@
       "routes/fuel-card",
       "routes/fuel-feed-run",
       "routes/fuel-purchase",
-      "routes/organization"
+      "routes/organization",
+      "template/emailprofile.test.email"
     ]
   },
   "Provider API": {
@@ -219209,6 +219581,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Rate bands": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/detention.notice.email"
     ]
   },
   "Rate cannot be negative": {
@@ -229345,7 +229726,7 @@
     ]
   },
   "Remittance": {
-    "sites": 8,
+    "sites": 11,
     "scope": [
       "go",
       "ts"
@@ -232140,6 +232521,15 @@
       "go/other"
     ]
   },
+  "Report Revenue by Customer is ready": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Report Run": {
     "sites": 1,
     "scope": [
@@ -234630,6 +235020,15 @@
       "apps/web/components"
     ]
   },
+  "Reset your <hl>{0} password</hl>.": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/account.password_reset.email"
+    ]
+  },
   "Reset your password": {
     "sites": 1,
     "scope": [
@@ -236074,12 +236473,14 @@
     ]
   },
   "Results": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "routes/agent-control"
+      "routes/agent-control",
+      "template/report.delivery.email"
     ]
   },
   "Results per search": {
@@ -236962,7 +237363,7 @@
     ]
   },
   "Revenue": {
-    "sites": 13,
+    "sites": 15,
     "scope": [
       "go",
       "ts"
@@ -237491,15 +237892,6 @@
       "routes/settlement-control"
     ]
   },
-  "Review & sign": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "template/rateconfirmation.email"
-    ]
-  },
   "Review 1 change": {
     "sites": 1,
     "scope": [
@@ -237663,6 +238055,15 @@
       "routes/tender-offer-public"
     ]
   },
+  "Review and sign": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/rateconfirmation.email"
+    ]
+  },
   "Review and sign a rate confirmation": {
     "sites": 1,
     "scope": [
@@ -237681,7 +238082,7 @@
       "routes/rate-confirmation-public"
     ]
   },
-  "Review and sign the confirmation:": {
+  "Review and sign the rate confirmation before you dispatch.": {
     "sites": 1,
     "scope": [
       "go"
@@ -239788,8 +240189,9 @@
     ]
   },
   "Route": {
-    "sites": 11,
+    "sites": 13,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
@@ -239800,7 +240202,8 @@
       "routes/edi",
       "routes/inbox",
       "routes/invoice",
-      "routes/shipment-tracking-public"
+      "routes/shipment-tracking-public",
+      "template/invoice.email"
     ]
   },
   "Route Calculation": {
@@ -240414,7 +240817,7 @@
     ]
   },
   "Rows": {
-    "sites": 14,
+    "sites": 16,
     "scope": [
       "go",
       "ts"
@@ -240427,7 +240830,8 @@
       "routes/fuel-feed-run",
       "routes/fuel-purchase",
       "routes/reports",
-      "routes/shipment"
+      "routes/shipment",
+      "template/report.delivery.email"
     ]
   },
   "Rows a page": {
@@ -242997,7 +243401,7 @@
       "go/other"
     ]
   },
-  "Sample totals row.": {
+  "Sample totals row, in header order.": {
     "sites": 1,
     "scope": [
       "go"
@@ -246068,6 +246472,15 @@
       "template/factoring.schedule.email"
     ]
   },
+  "Schedule <hl>{0}</hl> is attached.": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/factoring.schedule.email"
+    ]
+  },
   "Schedule CSV Document ID": {
     "sites": 1,
     "scope": [
@@ -246314,14 +246727,12 @@
     ]
   },
   "Schedule {0}": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
-      "go",
       "ts"
     ],
     "areas": [
-      "routes/factoring-submission",
-      "template/factoring.schedule.email"
+      "routes/factoring-submission"
     ]
   },
   "Schedule {0} changed since you opened it; reload and try again": {
@@ -246385,6 +246796,15 @@
     ],
     "areas": [
       "routes/factoring-submission"
+    ]
+  },
+  "Schedule {0}: {1, plural, one {# invoice} other {# invoices}} totalling {2}.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/factoring.schedule.email"
     ]
   },
   "Scheduled": {
@@ -249040,6 +249460,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "See everything in Trenova": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/notification.digest.email"
     ]
   },
   "See loads": {
@@ -253937,6 +254366,15 @@
       "routes/admin"
     ]
   },
+  "Sends one notification by email to someone who asked to hear about it right away. Its title and message are the notification's own.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Sends only when the report returns {0} {1, plural, one {# row} other {# rows}}.": {
     "sites": 1,
     "scope": [
@@ -254213,6 +254651,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "Sent from": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/emailprofile.test.email"
     ]
   },
   "Sent from Trenova": {
@@ -254998,12 +255445,14 @@
     ]
   },
   "Service date": {
-    "sites": 1,
+    "sites": 3,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "routes/invoice"
+      "routes/invoice",
+      "template/invoice.email"
     ]
   },
   "Service failure": {
@@ -256108,6 +256557,15 @@
       "routes/settings"
     ]
   },
+  "Set up Dash to see your loads, submit expenses and check your pay.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/driverportal.invitation.email"
+    ]
+  },
   "Set up a trading partner": {
     "sites": 1,
     "scope": [
@@ -256208,7 +256666,7 @@
     ]
   },
   "Set up your account": {
-    "sites": 5,
+    "sites": 4,
     "scope": [
       "go",
       "ts"
@@ -257920,7 +258378,7 @@
     ]
   },
   "Shipment": {
-    "sites": 51,
+    "sites": 52,
     "scope": [
       "go",
       "ts"
@@ -257941,6 +258399,7 @@
       "routes/shipment",
       "routes/shipment-tracking-public",
       "template/detention.notice.pdf",
+      "template/invoice.email",
       "template/rateconfirmation.pdf"
     ]
   },
@@ -259416,6 +259875,15 @@
       "routes/shipment-type"
     ]
   },
+  "Shipment update": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/agent.customer_update.email"
+    ]
+  },
   "Shipment updated": {
     "sites": 1,
     "scope": [
@@ -259426,7 +259894,7 @@
     ]
   },
   "Shipment {0}": {
-    "sites": 13,
+    "sites": 6,
     "scope": [
       "go",
       "ts"
@@ -259436,18 +259904,7 @@
       "template/agent.customer_update.email",
       "template/agent.inbound_reply.email",
       "template/agent.request_missing_docs.email",
-      "template/agent.status_request.email",
-      "template/detention.notice.email",
-      "template/invoice.email"
-    ]
-  },
-  "Shipment {0} / BOL {1}": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "template/invoice.email"
+      "template/agent.status_request.email"
     ]
   },
   "Shipment {0} attached {1} .": {
@@ -259514,15 +259971,6 @@
       "go/other"
     ]
   },
-  "Shipment {0} · BOL {1}": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "template/invoice.email"
-    ]
-  },
   "Shipment · BOL {0}": {
     "sites": 1,
     "scope": [
@@ -259560,7 +260008,7 @@
     ]
   },
   "Shipments": {
-    "sites": 30,
+    "sites": 32,
     "scope": [
       "go",
       "ts"
@@ -261438,6 +261886,15 @@
       "routes/auth"
     ]
   },
+  "Sign and return the attached rate confirmation before you dispatch.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/rateconfirmation.email"
+    ]
+  },
   "Sign as {0} {1} — the name on your record": {
     "sites": 1,
     "scope": [
@@ -262516,8 +262973,9 @@
     ]
   },
   "Size": {
-    "sites": 9,
+    "sites": 11,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
@@ -262525,7 +262983,8 @@
       "routes/agent-control",
       "routes/desk",
       "routes/edi",
-      "routes/reports"
+      "routes/reports",
+      "template/report.delivery.email"
     ]
   },
   "Size (bytes)": {
@@ -263635,6 +264094,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Some supporting documents are too large to attach. Download them from these links.": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/invoice.email"
     ]
   },
   "Some transactions processed with warnings. Review the failure reason.": {
@@ -267557,14 +268025,12 @@
     ]
   },
   "Statement date": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
-      "go",
       "ts"
     ],
     "areas": [
-      "routes/customer-statement",
-      "template/customer.statement.email"
+      "routes/customer-statement"
     ]
   },
   "Statement dates cannot be negative": {
@@ -268679,7 +269145,7 @@
     ]
   },
   "Stop": {
-    "sites": 18,
+    "sites": 19,
     "scope": [
       "go",
       "ts"
@@ -268694,6 +269160,7 @@
       "routes/desk",
       "routes/service-failure",
       "routes/shipment",
+      "template/rateconfirmation.email",
       "template/rateconfirmation.pdf"
     ]
   },
@@ -271080,6 +271547,15 @@
       "go/other"
     ]
   },
+  "Supporting documents": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/invoice.email"
+    ]
+  },
   "Supporting documents (optional)": {
     "sites": 1,
     "scope": [
@@ -271087,6 +271563,15 @@
     ],
     "areas": [
       "routes/invoice"
+    ]
+  },
+  "Supporting documents too large to attach, each with a signed download link. Empty when everything fits in the message.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Supporting evidence must reference documents from the invoice's shipments": {
@@ -275416,6 +275901,15 @@
       "routes/desk"
     ]
   },
+  "Test code": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/mailbox.test.email"
+    ]
+  },
   "Test connection": {
     "sites": 9,
     "scope": [
@@ -275453,6 +275947,15 @@
     ],
     "areas": [
       "routes/inbox"
+    ]
+  },
+  "Test email from {0}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/emailprofile.test.email"
     ]
   },
   "Test email queued": {
@@ -277649,6 +278152,15 @@
       "edi/lading"
     ]
   },
+  "The address being tested.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "The address may be mistyped, or the page may have moved or been removed. Check the link, or head back to somewhere you know.": {
     "sites": 1,
     "scope": [
@@ -277677,6 +278189,15 @@
     ]
   },
   "The address the factor's questions go to.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "The address the test was sent from.": {
     "sites": 1,
     "scope": [
       "go"
@@ -280358,6 +280879,15 @@
       "rules/tariff"
     ]
   },
+  "The charge, with currency.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "The charges are applied, but the shipment cannot be billed until someone approves the rating.": {
     "sites": 1,
     "scope": [
@@ -280726,6 +281256,15 @@
       "routes/admin"
     ]
   },
+  "The code that tells the test apart from other mail. Keep it in the subject: the arriving message is matched by it.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "The code {0} is not in the base's list": {
     "sites": 2,
     "scope": [
@@ -280836,6 +281375,15 @@
     ],
     "areas": [
       "routes/shipment-type"
+    ]
+  },
+  "The column heading.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "The column {0} is listed twice": {
@@ -282882,6 +283430,15 @@
       "go/other"
     ]
   },
+  "The document's file name.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "The documents could not be read.": {
     "sites": 1,
     "scope": [
@@ -283531,6 +284088,24 @@
     ],
     "areas": [
       "routes/factoring-company"
+    ]
+  },
+  "The email profile <hl>{0}</hl> can send.": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/emailprofile.test.email"
+    ]
+  },
+  "The email provider the profile sends through.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "The email went to {0}.": {
@@ -286713,6 +287288,15 @@
       "apps/web/lib"
     ]
   },
+  "The invoice's charge lines. Set only when the customer asks for shipment detail.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "The invoice's own date while its period is open, or always the next open period.": {
     "sites": 1,
     "scope": [
@@ -287831,6 +288415,33 @@
       "template/rateconfirmation.email"
     ]
   },
+  "The link that opens every notification in the app.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "The link that opens what it is about, if anything.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "The link that opens what the notification is about. Empty when it is about nothing that can be opened.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "The link that opens what was shared, where the sharer was looking. Required: without it the message has no purpose.": {
     "sites": 1,
     "scope": [
@@ -287841,6 +288452,24 @@
     ]
   },
   "The link to the accounting system stopped working normally: calls are failing, the authorization was revoked, or it expires soon.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "The link to the recipient's notification settings, where they change the digest.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "The link to the recipient's notification settings, where they choose what reaches them by email.": {
     "sites": 1,
     "scope": [
       "go"
@@ -289437,6 +290066,15 @@
       "routes/document-type"
     ]
   },
+  "The name of the email profile being tested. Required: the test is about it.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "The name of the equipment manufacturer": {
     "sites": 1,
     "scope": [
@@ -289931,6 +290569,51 @@
       "go/other"
     ]
   },
+  "The notification's message, if it has one.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "The notification's message. Empty when the title says everything.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "The notification's title, which is also the subject.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "The notification's title.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "The notifications, newest first.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "The number a group of consolidated shipments is given.": {
     "sites": 1,
     "scope": [
@@ -290147,6 +290830,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "The oldest has been waiting {0, plural, one {# hour} other {# hours}}. Nothing runs until one of you decides.": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/agent.proposal_reminder.email"
     ]
   },
   "The oldest has waited {0}.": {
@@ -292191,7 +292883,7 @@
       "routes/agent-control"
     ]
   },
-  "The proof of delivery for load {0} is ready.": {
+  "The proof of delivery for load {0} <hl>is ready</hl>.": {
     "sites": 2,
     "scope": [
       "go"
@@ -292200,7 +292892,7 @@
       "template/customertracking.status.email"
     ]
   },
-  "The proof of delivery for your load is ready.": {
+  "The proof of delivery for your load <hl>is ready</hl>.": {
     "sites": 2,
     "scope": [
       "go"
@@ -292744,6 +293436,24 @@
     ],
     "areas": [
       "routes/rate-confirmation-public"
+    ]
+  },
+  "The rate confirmation for shipment <hl>{0}</hl> ({1}) is attached.": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/rateconfirmation.email"
+    ]
+  },
+  "The rate confirmation for shipment <hl>{0}</hl> is attached.": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/rateconfirmation.email"
     ]
   },
   "The rate confirmation has no payload snapshot to render from. Regenerate it first": {
@@ -293371,6 +294081,15 @@
       "routes/desk"
     ]
   },
+  "The receiver moved the appointment to 9 AM.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "The receiving dock at … closes at …": {
     "sites": 1,
     "scope": [
@@ -293387,6 +294106,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "The recipient's first name.": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "The record": {
@@ -293889,6 +294617,15 @@
     ]
   },
   "The reply's subject, the original's with Re: in front. Required on the subject channel: a changed subject starts a new thread in the sender's mail.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "The reply's subject, which keeps the thread together. Use it as the subject unchanged.": {
     "sites": 1,
     "scope": [
       "go"
@@ -296017,6 +296754,15 @@
       "go/other"
     ]
   },
+  "The shipment's weight. Set only when the customer asks for shipment detail.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "The shipments a consolidated invoice bills": {
     "sites": 2,
     "scope": [
@@ -296147,6 +296893,24 @@
     ],
     "areas": [
       "routes/rate-agreement"
+    ]
+  },
+  "The signed link that downloads it.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "The signed proof of delivery for your shipment is on file.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/customertracking.status.email"
     ]
   },
   "The signed proof of delivery is on file.": {
@@ -299498,6 +300262,15 @@
       "routes/policies"
     ]
   },
+  "The words someone wrote for this send, or the customer's standing email comment, with its placeholders filled in. Blank when neither was written; print it in place of the greeting when it is set.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "The work": {
     "sites": 1,
     "scope": [
@@ -302365,17 +303138,8 @@
       "template/detention.notice.pdf"
     ]
   },
-  "This charge will appear on the invoice for this shipment. Reply to the message if any detail needs review.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "template/detention.notice.email"
-    ]
-  },
   "This charge will appear on the invoice for this shipment. Reply to this message if any detail needs review.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -304761,6 +305525,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "This is a test from Trenova to check that this address receives mail. It lands in Triage like any other message; you can ignore it once it arrives.": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/mailbox.test.email"
     ]
   },
   "This is already resolved": {
@@ -308631,6 +309404,15 @@
       "rules/tariff"
     ]
   },
+  "This test verifies {0} can send through {1}.": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/emailprofile.test.email"
+    ]
+  },
   "This text is missing its closing quote": {
     "sites": 2,
     "scope": [
@@ -312382,7 +313164,7 @@
     ]
   },
   "Total": {
-    "sites": 52,
+    "sites": 54,
     "scope": [
       "go",
       "ts"
@@ -315787,6 +316569,15 @@
       "go/other"
     ]
   },
+  "Trenova test message {0}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/mailbox.test.email"
+    ]
+  },
   "Trenova to Trenova": {
     "sites": 1,
     "scope": [
@@ -315908,6 +316699,15 @@
       "go/other",
       "routes/desk",
       "routes/inbox"
+    ]
+  },
+  "Triage Reply": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Triage folders": {
@@ -322220,6 +323020,15 @@
       "routes/shipment"
     ]
   },
+  "Urgent notifications still reach you right away.": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/notification.digest.email"
+    ]
+  },
   "Urgent only": {
     "sites": 1,
     "scope": [
@@ -322764,6 +323573,15 @@
     ],
     "areas": [
       "routes/billing-queue"
+    ]
+  },
+  "Use the link inside to choose a new password for your {0} account.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/account.password_reset.email"
     ]
   },
   "Use the matched guide": {
@@ -327831,15 +328649,17 @@
     ]
   },
   "Waiting on you": {
-    "sites": 8,
+    "sites": 9,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
       "apps/web/components",
       "apps/web/lib",
       "routes/desk",
-      "routes/inbox"
+      "routes/inbox",
+      "template/agent.proposal_reminder.email"
     ]
   },
   "Waiting on you to submit it.": {
@@ -329043,6 +329863,24 @@
       "routes/desk"
     ]
   },
+  "We are <hl>missing documents</hl> for shipment {0}.": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/agent.request_missing_docs.email"
+    ]
+  },
+  "We are <hl>missing documents</hl> from you.": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/agent.request_missing_docs.email"
+    ]
+  },
   "We are extracting text, classifying the document, and assembling the shipment draft.": {
     "sites": 1,
     "scope": [
@@ -330069,7 +330907,7 @@
     ]
   },
   "Weight": {
-    "sites": 27,
+    "sites": 29,
     "scope": [
       "go",
       "ts"
@@ -330088,6 +330926,7 @@
       "routes/shipment",
       "routes/shipment-tracking-public",
       "routes/tender-offer-public",
+      "template/invoice.email",
       "template/invoice.pdf",
       "template/tender.offer.email"
     ]
@@ -330279,15 +331118,6 @@
     ],
     "areas": [
       "routes/auth"
-    ]
-  },
-  "Welcome to Dash": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "template/driverportal.invitation.email"
     ]
   },
   "Welcome to the freight outlook": {
@@ -332486,7 +333316,7 @@
     ]
   },
   "What the charge is for.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -332741,6 +333571,15 @@
       "go/other"
     ]
   },
+  "What the person wrote. Print it whole: it is the reply.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "What the portal said": {
     "sites": 2,
     "scope": [
@@ -332859,6 +333698,15 @@
     ]
   },
   "What the sharer wrote, if anything. Print it: it is the reason the record was shared.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "What the shipment carried. Set only when the customer asks for shipment detail.": {
     "sites": 1,
     "scope": [
       "go"
@@ -334932,6 +335780,24 @@
       "rules/tariff"
     ]
   },
+  "When the shipment was delivered. Set only when the customer asks for shipment detail.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "When the shipment was picked up. Set only when the customer asks for shipment detail.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "When the sign link stops working, in words.": {
     "sites": 1,
     "scope": [
@@ -335212,6 +336078,24 @@
     ],
     "areas": [
       "routes/accounting-control"
+    ]
+  },
+  "Where is <hl>load {0}</hl> now?": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/agent.status_request.email"
+    ]
+  },
+  "Where is <hl>the load</hl> now?": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/agent.status_request.email"
     ]
   },
   "Where is PRO S12345 right now and who is on it?": {
@@ -343911,6 +344795,33 @@
       "routes/inbox"
     ]
   },
+  "You get this digest because of your notification settings in Trenova.": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/notification.digest.email"
+    ]
+  },
+  "You get this email because of your notification settings in Trenova.": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/notification.email"
+    ]
+  },
+  "You get this email because you can decide what {0} proposes in Trenova.": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/agent.proposal_reminder.email"
+    ]
+  },
   "You handled {0} of {1} {2} from {3} the same way by hand": {
     "sites": 1,
     "scope": [
@@ -343927,6 +344838,24 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "You have <hl>{0, plural, one {# notification} other {# notifications}}</hl> waiting.": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/notification.digest.email"
+    ]
+  },
+  "You have a new notification.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/notification.email"
     ]
   },
   "You have already been shown every tour there is room to remember.": {
@@ -344207,6 +345136,180 @@
     ],
     "areas": [
       "template/customertracking.status.email"
+    ]
+  },
+  "You receive this email because this scheduled report is delivered to you.": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/report.delivery.email"
+    ]
+  },
+  "You received this email because a teammate shared a record with you in Trenova.": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/record.share.email"
+    ]
+  },
+  "You received this email because an administrator at {0} created an account for you.": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/account.invite.email"
+    ]
+  },
+  "You received this email because someone asked to reset the password for this address at {0}.": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/account.password_reset.email"
+    ]
+  },
+  "You received this email because {0} assigned this load to you.": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/carriertracking.link.email"
+    ]
+  },
+  "You received this email because {0} booked you on this load.": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/rateconfirmation.email"
+    ]
+  },
+  "You received this email because {0} lists you as a contact for this shipment.": {
+    "sites": 6,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/agent.customer_update.email",
+      "template/agent.request_missing_docs.email",
+      "template/agent.status_request.email"
+    ]
+  },
+  "You received this email because {0} sends its invoices to this address.": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/invoice.email"
+    ]
+  },
+  "You received this email because {0} set up a Dash account for you.": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/driverportal.invitation.email"
+    ]
+  },
+  "You received this email because {0} shared tracking for your shipment.": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/customertracking.link.email"
+    ]
+  },
+  "You received this notice because you pay invoices from {0}.": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/factoring.noa.email"
+    ]
+  },
+  "You received this notice because {0} lists you as a contact for this shipment.": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/detention.notice.email"
+    ]
+  },
+  "You received this offer because {0} works with you as a carrier.": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/tender.offer.email"
+    ]
+  },
+  "You received this reminder because {0} sends account notices to this address.": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/invoice.reminder.email"
+    ]
+  },
+  "You received this reply because you wrote to {0}.": {
+    "sites": 4,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/agent.inbound_reply.email",
+      "template/triage.reply.email"
+    ]
+  },
+  "You received this schedule because {0} factors its invoices with you.": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/factoring.schedule.email"
+    ]
+  },
+  "You received this statement because {0} sends account statements to this address.": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/customer.statement.email"
+    ]
+  },
+  "You received this test because someone checked that this address receives mail.": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/mailbox.test.email"
+    ]
+  },
+  "You received this test because someone checked that this email profile can send.": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/emailprofile.test.email"
     ]
   },
   "You replied": {
@@ -344548,6 +345651,15 @@
       "apps/web/components"
     ]
   },
+  "Your <hl>{0} account</hl> is ready to set up.": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/account.invite.email"
+    ]
+  },
   "Your DOT profile": {
     "sites": 1,
     "scope": [
@@ -344726,6 +345838,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "Your balance is <hl>{0}</hl> as of {1}.": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/customer.statement.email"
     ]
   },
   "Your business unit's code, after the prefix.": {
@@ -344964,6 +346085,15 @@
       "apps/web/components"
     ]
   },
+  "Your daily digest: {0, plural, one {# notification} other {# notifications}}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/notification.digest.email"
+    ]
+  },
   "Your details are saved, but Trenova could not reach the server to continue. Check your connection and try again.": {
     "sites": 1,
     "scope": [
@@ -345191,7 +346321,7 @@
       "apps/web/components"
     ]
   },
-  "Your load has been delivered.": {
+  "Your load <hl>has been delivered</hl>.": {
     "sites": 2,
     "scope": [
       "go"
@@ -345200,7 +346330,16 @@
       "template/customertracking.status.email"
     ]
   },
-  "Your load has been picked up.": {
+  "Your load <hl>has been picked up</hl>.": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/customertracking.status.email"
+    ]
+  },
+  "Your load <hl>is running late</hl>.": {
     "sites": 2,
     "scope": [
       "go"
@@ -345211,15 +346350,6 @@
   },
   "Your load is running late": {
     "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "template/customertracking.status.email"
-    ]
-  },
-  "Your load is running late.": {
-    "sites": 2,
     "scope": [
       "go"
     ],
@@ -346217,6 +347347,15 @@
       "apps/dash/_components"
     ]
   },
+  "Your scheduled report <hl>{0}</hl> is ready.": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/report.delivery.email"
+    ]
+  },
   "Your session changed in another tab. Reload this page to continue.": {
     "sites": 1,
     "scope": [
@@ -346262,6 +347401,15 @@
       "apps/dash/routes"
     ]
   },
+  "Your shipment has arrived at its destination.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/customertracking.status.email"
+    ]
+  },
   "Your shipment history is being read for the first time. This takes about a minute.": {
     "sites": 1,
     "scope": [
@@ -346269,6 +347417,24 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "Your shipment is behind schedule, with a new arrival estimate.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/customertracking.status.email"
+    ]
+  },
+  "Your shipment is on its way.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/customertracking.status.email"
     ]
   },
   "Your sign-in has expired. Sign in again.": {
@@ -346287,6 +347453,15 @@
     ],
     "areas": [
       "routes/rate-confirmation-public"
+    ]
+  },
+  "Your statement of account as of {0}, with a balance of {1}.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/customer.statement.email"
     ]
   },
   "Your statement of account is attached.": {
@@ -349260,15 +350435,6 @@
     ],
     "areas": [
       "go/other"
-    ]
-  },
-  "completed {0}": {
-    "sites": 2,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "template/report.delivery.email"
     ]
   },
   "confirmed by {0}": {
@@ -363517,7 +364683,7 @@
     ]
   },
   "{0, plural, one {# row} other {# rows}}": {
-    "sites": 14,
+    "sites": 12,
     "scope": [
       "go",
       "ts"
@@ -363528,7 +364694,6 @@
       "routes/desk",
       "routes/ifta-tax-rate",
       "routes/reports",
-      "template/report.delivery.email",
       "template/report.pdf"
     ]
   },
@@ -368751,7 +369916,7 @@
       "routes/desk"
     ]
   },
-  "{0} asks you to post updates for load {1} through this link.": {
+  "{0} asks you to post updates <hl>for this load</hl>.": {
     "sites": 2,
     "scope": [
       "go"
@@ -368760,7 +369925,7 @@
       "template/carriertracking.link.email"
     ]
   },
-  "{0} asks you to post updates for this load through this link.": {
+  "{0} asks you to post updates for load <hl>{1}</hl>.": {
     "sites": 2,
     "scope": [
       "go"
@@ -369359,6 +370524,15 @@
     ],
     "areas": [
       "routes/carrier-sourcing"
+    ]
+  },
+  "{0} cannot act until someone approves or declines what it proposed.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/agent.proposal_reminder.email"
     ]
   },
   "{0} cannot be applied to {1} and {2}": {
@@ -370677,15 +371851,6 @@
       "routes/desk"
     ]
   },
-  "{0} due as of {1}.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "template/customer.statement.email"
-    ]
-  },
   "{0} due soon": {
     "sites": 2,
     "scope": [
@@ -371097,6 +372262,15 @@
       "routes/insights"
     ]
   },
+  "{0} finished with {1, plural, one {# row} other {# rows}}.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/report.delivery.email"
+    ]
+  },
   "{0} finished without drafting a plan for this option.": {
     "sites": 1,
     "scope": [
@@ -371441,6 +372615,33 @@
       "go/other"
     ]
   },
+  "{0} has <hl>a load available</hl> for you (ref {1}).": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/tender.offer.email"
+    ]
+  },
+  "{0} has <hl>a load available</hl> for you.": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/tender.offer.email"
+    ]
+  },
+  "{0} has <hl>{1, plural, one {# change} other {# changes}}</hl> waiting on a decision.": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/agent.proposal_reminder.email"
+    ]
+  },
   "{0} has a block body, so it must say what it returns: write {1}": {
     "sites": 2,
     "scope": [
@@ -371450,24 +372651,6 @@
     "areas": [
       "apps/web/rules",
       "rules/tariff"
-    ]
-  },
-  "{0} has a load available for you (ref {1}).": {
-    "sites": 2,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "template/tender.offer.email"
-    ]
-  },
-  "{0} has a load available for you.": {
-    "sites": 2,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "template/tender.offer.email"
     ]
   },
   "{0} has a published version, and tariffs read it as tables.{0}; a matrix cannot change its code once it has been published": {
@@ -372153,15 +373336,6 @@
     ],
     "areas": [
       "apps/web/components"
-    ]
-  },
-  "{0} has {1} changes that have been waiting {2} hours for someone to decide. Nothing runs until one of you does.": {
-    "sites": 2,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "template/agent.proposal_reminder.email"
     ]
   },
   "{0} has {1} elements": {
@@ -373096,6 +374270,24 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "{0} is asking for documents it still needs.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/agent.request_missing_docs.email"
+    ]
+  },
+  "{0} is asking where the load is and when it will arrive.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/agent.status_request.email"
     ]
   },
   "{0} is assigned to another tractor": {
@@ -374508,7 +375700,7 @@
       "packages/shared/lib"
     ]
   },
-  "{0} is past due.": {
+  "{0} is past due on {1, plural, one {# invoice} other {# invoices}}.": {
     "sites": 1,
     "scope": [
       "go"
@@ -379744,6 +380936,15 @@
       "packages/shared/lib"
     ]
   },
+  "{0} set up <hl>a Dash account</hl> for you.": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/driverportal.invitation.email"
+    ]
+  },
   "{0} settled the conflict": {
     "sites": 1,
     "scope": [
@@ -379771,6 +380972,15 @@
       "routes/agent-control"
     ]
   },
+  "{0} shared <hl>{1}</hl> with you.": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/record.share.email"
+    ]
+  },
   "{0} shared {1} with you": {
     "sites": 2,
     "scope": [
@@ -379778,15 +380988,6 @@
     ],
     "areas": [
       "template/notification.record_shared",
-      "template/record.share.email"
-    ]
-  },
-  "{0} shared {1} with you.": {
-    "sites": 2,
-    "scope": [
-      "go"
-    ],
-    "areas": [
       "template/record.share.email"
     ]
   },
@@ -380562,7 +381763,7 @@
     ]
   },
   "{0} to {1}": {
-    "sites": 22,
+    "sites": 23,
     "scope": [
       "go",
       "ts"
@@ -383663,6 +384864,15 @@
       "routes/agent-control"
     ]
   },
+  "{0}: {1, plural, one {# change} other {# changes}} waiting on a decision": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/agent.proposal_reminder.email"
+    ]
+  },
   "{0}: {1} calls, {2} failed": {
     "sites": 1,
     "scope": [
@@ -383670,15 +384880,6 @@
     ],
     "areas": [
       "routes/agent-control"
-    ]
-  },
-  "{0}: {1} changes waiting on a decision": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "template/agent.proposal_reminder.email"
     ]
   },
   "{0}: {1} free time, {2} median stop, {3} p90": {
@@ -384659,15 +385860,6 @@
     ],
     "areas": [
       "routes/settlement-dispute"
-    ]
-  },
-  "· delivered {0}": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "template/invoice.email"
     ]
   },
   "· due {0}": {

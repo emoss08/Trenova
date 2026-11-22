@@ -9,8 +9,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/mailtemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/triage"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundreplyports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/triageworkports"
@@ -570,7 +572,29 @@ type fixture struct {
 	email     *fakeEmail
 	nova      *fakeNova
 	peeks     *fakePeeks
+	renderer  *fakeRenderer
 	message   *inboundmessage.InboundMessage
+}
+
+type fakeRenderer struct {
+	documenttemplateports.DocumentTemplateResolver
+	mu       sync.Mutex
+	requests []*documenttemplateports.RenderMessageRequest
+}
+
+func (r *fakeRenderer) RenderMessage(
+	_ context.Context,
+	req *documenttemplateports.RenderMessageRequest,
+) (*documenttemplateports.RenderedMessage, error) {
+	r.mu.Lock()
+	r.requests = append(r.requests, req)
+	r.mu.Unlock()
+	data, _ := req.Data.(mailtemplate.TriageReplyEmailContext)
+	return &documenttemplateports.RenderedMessage{
+		Subject: req.Subject,
+		Text:    data.Body,
+		HTML:    "<html>" + data.Body + "</html>",
+	}, nil
 }
 
 func newFixture() *fixture {
@@ -632,6 +656,7 @@ func newFixture() *fixture {
 		message:   message,
 		documents: &fakeAttachments{docs: map[pulid.ID]*document.Document{}},
 		evidence:  &fakeEvidence{},
+		renderer:  &fakeRenderer{},
 	}
 	f.service = &Service{
 		tracker: &tracker{
@@ -647,6 +672,7 @@ func newFixture() *fixture {
 		organizations: fakeOrganizations{},
 		nova:          f.nova,
 		email:         f.email,
+		renderer:      f.renderer,
 		peeks:         f.peeks,
 		documents:     f.documents,
 		evidence:      f.evidence,

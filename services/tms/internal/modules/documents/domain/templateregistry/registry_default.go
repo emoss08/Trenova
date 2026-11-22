@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/detentiontemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/factoringtemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/invoicetemplate"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/mailtemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/notificationtemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/portaltemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/rateconfirmationtemplate"
@@ -43,5 +44,7 @@ func NewRegistry() *templatecatalog.Registry {
 		accounttemplate.RegisterAccountKinds,
 		portaltemplate.RegisterAgentKinds,
 		notificationtemplate.RegisterNotificationKinds,
+		notificationtemplate.RegisterNotificationEmailKinds,
+		mailtemplate.RegisterMailKinds,
 	)
 }

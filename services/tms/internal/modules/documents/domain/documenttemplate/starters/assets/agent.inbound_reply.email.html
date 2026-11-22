@@ -1,29 +1,7 @@
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;margin:0;padding:0;background-color:#f7f6f2">
-  <tr>
-    <td align="center" style="margin:0;padding:32px 12px 40px">
-      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:600px;margin:0 auto">
-        <tr>
-          <td style="margin:0;padding:0 4px 20px;font-family:Geist,-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;font-size:19px;line-height:1.2;font-weight:600;letter-spacing:-0.4px;color:#121210">{{ if .LogoDataURI }}<img src="{{ .LogoDataURI }}" alt="{{ .CompanyName }}" height="30" style="display:block;height:30px;max-height:30px;width:auto;border:0;outline:none">{{ else }}{{ .CompanyName }}{{ end }}</td>
-        </tr>
-        <tr>
-          <td style="margin:0;padding:0;background-color:#ffffff;border:1px solid #121210">
-            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%">
-              <tr>
-                <td style="margin:0;padding:36px 36px 16px;font-family:Geist,-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;font-size:16px;line-height:1.6;color:#121210">
-                  {{ if .ShipmentProNumber }}<p style="margin:0 0 18px;font-family:'Geist Mono',ui-monospace,'SF Mono',Menlo,Consolas,monospace;font-size:12px;line-height:1.4;letter-spacing:1px;text-transform:uppercase;color:#55544e">[ {{ t "Shipment {0}" .ShipmentProNumber }} ]</p>{{ end }}
-                  <p style="margin:0 0 16px;font-size:16px;line-height:1.6;color:#121210">{{ if .CustomerName }}{{ t "Hello {0}," .CustomerName }}{{ else }}{{ t "Hello," }}{{ end }}</p>
-                  <p style="margin:0 0 16px;font-size:16px;line-height:1.6;color:#121210">{{ nl2br .AgentBody }}</p>
-                </td>
-              </tr>
-              <tr>
-                <td style="margin:0;padding:20px 36px 28px;border-top:1px solid #dddbd3;font-family:Geist,-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;font-size:14px;line-height:1.6;color:#55544e">
-                  <p style="margin:0">{{ .CompanyName }}</p>
-                </td>
-              </tr>
-            </table>
-          </td>
-        </tr>
-      </table>
-    </td>
-  </tr>
-</table>
+{{ preheader (t "A reply from {0} to your message." .CompanyName) }}
+{{ if .ShipmentProNumber }}{{ kicker (t "Shipment {0}" .ShipmentProNumber) }}{{ else }}{{ kicker (t "Our reply") }}{{ end }}
+{{ if .ShipmentProNumber }}{{ heading "A reply <hl>about shipment {0}</hl>." .ShipmentProNumber }}{{ else }}{{ heading "A reply <hl>to your message</hl>." }}{{ end }}
+{{ if .CustomerName }}{{ para (t "Hello {0}," .CustomerName) }}{{ else }}{{ para (t "Hello,") }}{{ end }}
+{{ para .AgentBody }}
+{{ signoff .CompanyName }}
+{{ footer (t "You received this reply because you wrote to {0}." .CompanyName) }}

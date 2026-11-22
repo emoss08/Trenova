@@ -34,6 +34,7 @@ type Params struct {
 	Users       tenantports.UserRepository
 	Preferences notificationports.PreferenceRepository
 	Email       emailports.EmailService
+	Composer    emailports.Composer
 	AppConfig   *appconfig.Config
 }
 
@@ -46,6 +47,7 @@ type Service struct {
 	users       tenantports.UserRepository
 	preferences notificationports.PreferenceRepository
 	email       emailports.EmailService
+	composer    emailports.Composer
 	webBaseURL  string
 	now         func() time.Time
 }
@@ -60,6 +62,7 @@ func New(p Params) *Service {
 		users:       p.Users,
 		preferences: p.Preferences,
 		email:       p.Email,
+		composer:    p.Composer,
 		now:         time.Now,
 	}
 	svc.webBaseURL = strings.TrimRight(p.AppConfig.GetWebBaseURL(), "/")

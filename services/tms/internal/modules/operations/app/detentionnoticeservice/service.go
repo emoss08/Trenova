@@ -472,7 +472,7 @@ func (s *Service) SendNotice(
 		To:             notice.Recipients,
 		Subject:        notice.Subject,
 		Text:           notice.Body,
-		HTML:           noticeHTML(notice),
+		HTML:           notice.BodyHTML,
 		Attachments:    noticeAttachments(p.PDF),
 		OpenTracking:   true,
 		IdempotencyKey: "detention-notice-" + notice.ID.String(),

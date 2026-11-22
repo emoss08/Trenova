@@ -82,7 +82,7 @@ type RecordShareEmailContext struct {
 
 func newRecordShareEmailSampleContext() any {
 	return RecordShareEmailContext{
-		RecipientFirstName: "Dana",
+		RecipientFirstName: sampleRecipientFirstName,
 		SharedByName:       "Marcus Bell",
 		RecordTitle:        "invoice " + templatecatalog.SampleInvoiceNo,
 		RecordSubtitle:     templatecatalog.SampleCustomerName,
@@ -111,7 +111,7 @@ func RegisterRecordShareKinds(r *templatecatalog.Registry) {
 		SampleFactory: newRecordShareEmailSampleContext,
 		Variables: []templatecatalog.VariableDefinition{
 			{
-				Path:        "RecipientFirstName",
+				Path:        recipientFirstNamePath,
 				Type:        templatecatalog.VariableString,
 				Description: "The teammate's first name.",
 			},

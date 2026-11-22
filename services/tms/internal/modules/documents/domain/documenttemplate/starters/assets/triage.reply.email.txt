@@ -1,0 +1,6 @@
+{{ heading "A reply <hl>to your message</hl>." }}
+
+{{ .Body }}
+
+--
+{{ t "You received this reply because you wrote to {0}." .CompanyName }}

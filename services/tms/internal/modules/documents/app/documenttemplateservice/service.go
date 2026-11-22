@@ -3,9 +3,10 @@ package documenttemplateservice
 import (
 	"context"
 	"fmt"
-	"github.com/emoss08/trenova/shared/pulid"
 	"sort"
 	"strings"
+
+	"github.com/emoss08/trenova/shared/pulid"
 
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate/starters"
@@ -55,6 +56,7 @@ type Service struct {
 	pdf            documenttemplateports.PDFRenderer
 	validator      *Validator
 	auditService   auditports.AuditService
+	brands         *brandBook
 
 	builders map[documenttemplate.Kind]documenttemplateports.ContextBuilder
 }
@@ -87,7 +89,12 @@ func New(p Params) *Service {
 		pdf:            p.PDFRenderer,
 		validator:      p.Validator,
 		auditService:   p.AuditService,
-		builders:       builders,
+		brands: newBrandBook(
+			p.OrgRepo,
+			p.Inliner,
+			p.Logger.Named("service.document-template.brand"),
+		),
+		builders: builders,
 	}
 }
 

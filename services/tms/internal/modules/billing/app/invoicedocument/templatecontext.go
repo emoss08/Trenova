@@ -3,6 +3,7 @@ package invoicedocument
 import (
 	"context"
 	"html/template"
+	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
@@ -11,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/templatecatalog"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/factoringcompanyports"
@@ -291,6 +293,9 @@ type EmailContextParams struct {
 	// AttachmentName is the file the recipient will see, which a template may
 	// want to name in the body so a stripped attachment is recoverable.
 	AttachmentName string
+
+	Message string
+	Links   []invoicetemplate.InvoiceEmailLink
 }
 
 // emailContext maps an invoice onto the variables the invoice email template
@@ -319,6 +324,8 @@ func EmailContext(p *EmailContextParams) invoicetemplate.InvoiceEmailContext {
 		RemittanceInstructions: entity.RemittanceInstructions,
 		PartLabel:              p.PartLabel,
 		AttachmentName:         p.AttachmentName,
+		Message:                strings.TrimSpace(p.Message),
+		DocumentLinks:          p.Links,
 	}
 
 	if p.Profile == nil {
@@ -353,5 +360,33 @@ func EmailContext(p *EmailContextParams) invoicetemplate.InvoiceEmailContext {
 		)
 	}
 
+	if p.Profile.Email != nil && p.Profile.Email.IncludeShipmentDetail {
+		withShipmentDetail(&out, entity, p.Profile.Shipment)
+	}
+
 	return out
+}
+
+func withShipmentDetail(
+	out *invoicetemplate.InvoiceEmailContext,
+	entity *invoice.Invoice,
+	shp *shipment.Shipment,
+) {
+	if shp != nil {
+		out.ShipmentPickupDate = UnixDatePtr(shp.ActualShipDate)
+		out.ShipmentDeliveryDate = UnixDatePtr(shp.ActualDeliveryDate)
+		out.ShipmentCommodities = CommoditySummary(shp)
+		out.ShipmentPieces = Int64PtrString(shp.Pieces)
+		out.ShipmentWeight = Int64PtrString(shp.Weight)
+	}
+	out.Charges = make([]invoicetemplate.InvoiceEmailCharge, 0, len(entity.Lines))
+	for _, line := range entity.Lines {
+		if line == nil {
+			continue
+		}
+		out.Charges = append(out.Charges, invoicetemplate.InvoiceEmailCharge{
+			Description: line.Description,
+			Amount:      money.Display(entity.CurrencyCode, line.Amount),
+		})
+	}
 }

@@ -1,7 +1,10 @@
+{{ if .ShipmentProNumber }}{{ heading "A reply <hl>about shipment {0}</hl>." .ShipmentProNumber }}{{ else }}{{ heading "A reply <hl>to your message</hl>." }}{{ end }}
+
 {{ if .CustomerName }}{{ t "Hello {0}," .CustomerName }}{{ else }}{{ t "Hello," }}{{ end }}
 
 {{ .AgentBody }}
-{{ if .ShipmentProNumber }}
-{{ t "Shipment {0}" .ShipmentProNumber }}
-{{ end }}
+
 {{ .CompanyName }}
+
+--
+{{ t "You received this reply because you wrote to {0}." .CompanyName }}

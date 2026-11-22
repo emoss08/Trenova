@@ -3,9 +3,11 @@ package documenttemplateservice
 import (
 	"context"
 	"fmt"
-	"github.com/emoss08/trenova/pkg/templatesanitize"
-	"github.com/emoss08/trenova/shared/pulid"
 	"strings"
+
+	"github.com/emoss08/trenova/pkg/emaildesign"
+	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/templatesanitize"
 
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/templatecatalog"
@@ -306,7 +308,8 @@ func (s *Service) RenderMessage(
 		return nil, err
 	}
 
-	message, err := s.renderMessageWith(ctx, def, resolved, data, resolved.Locale, req.TenantInfo.OrgID)
+	target := &messageTarget{tenant: req.TenantInfo, subject: req.Subject}
+	message, err := s.renderMessageWith(ctx, def, resolved, data, target)
 	if err == nil || !req.FallbackToBuiltIn || resolved.FromBuiltIn() {
 		return message, err
 	}
@@ -325,7 +328,12 @@ func (s *Service) RenderMessage(
 		return nil, err
 	}
 
-	return s.renderMessageWith(ctx, def, fallback, data, fallback.Locale, req.TenantInfo.OrgID)
+	return s.renderMessageWith(ctx, def, fallback, data, target)
+}
+
+type messageTarget struct {
+	tenant  pagination.TenantInfo
+	subject string
 }
 
 func (s *Service) resolveForMessage(
@@ -345,12 +353,11 @@ func (s *Service) renderMessageWith(
 	def *templatecatalog.KindDefinition,
 	resolved *documenttemplateports.ResolvedTemplate,
 	data any,
-	locale i18n.Locale,
-	organizationID pulid.ID,
+	target *messageTarget,
 ) (*documenttemplateports.RenderedMessage, error) {
 	compiled := s.compile(def, &resolved.Content, compileOptions{
 		CacheKeyPrefix: s.cacheKeyFor(resolved),
-		Locale:         locale,
+		Locale:         resolved.Locale,
 	})
 
 	if multiErr := diagnosticsToMultiError(compiled.diags); multiErr != nil {
@@ -392,24 +399,32 @@ func (s *Service) renderMessageWith(
 		}
 	}
 
+	if subject := sanitizeHeaderLine(target.subject); subject != "" {
+		out.Subject = subject
+	}
+
 	if out.HTML != "" {
 		inlined, err := s.inliner.InlineAssets(ctx, &documenttemplateports.AssetInlineRequest{
 			HTML:           out.HTML,
 			Field:          documenttemplate.ChannelEmailHTML.Field(),
-			OrganizationID: organizationID,
+			OrganizationID: target.tenant.OrgID,
 		})
 		if err != nil {
 			return nil, fmt.Errorf("inline %s message assets: %w", def.Kind, err)
 		}
-		out.HTML = inlined.HTML
 		out.Warnings = append(out.Warnings, warningsFrom(inlined.Diags)...)
-		if multiErr := diagnosticsToMultiError(templatesanitize.HTML(
-			documenttemplate.ChannelEmailHTML.Field(),
-			out.HTML,
-			templatesanitize.RenderedEmailOptions(),
-		)); multiErr != nil {
+
+		composed, diags := emaildesign.Compose(&emaildesign.Message{
+			Locale:  resolved.Locale,
+			Subject: out.Subject,
+			Brand:   s.brands.brandFor(ctx, target.tenant),
+			Content: inlined.HTML,
+		})
+		if multiErr := diagnosticsToMultiError(diags); multiErr != nil {
 			return nil, multiErr
 		}
+		out.HTML = composed
+		out.Warnings = append(out.Warnings, warningsFrom(diags)...)
 	}
 
 	return out, nil
@@ -463,6 +478,19 @@ func (s *Service) PreviewVersion(
 
 	if err = s.fillPreviewChannels(ctx, def, resolved, compiled, data, result); err != nil {
 		return nil, err
+	}
+
+	if def.HasChannel(documenttemplate.ChannelEmailHTML) && result.HTML != "" {
+		composed, diags := emaildesign.Compose(&emaildesign.Message{
+			Locale:  resolved.Locale,
+			Subject: result.Subject,
+			Brand:   s.brands.brandFor(ctx, req.TenantInfo),
+			Content: result.HTML,
+		})
+		result.Diagnostics = append(result.Diagnostics, diags...).Sorted()
+		if composed != "" {
+			result.HTML = composed
+		}
 	}
 
 	if !req.IncludePDF || !def.HasChannel(documenttemplate.ChannelPDF) {

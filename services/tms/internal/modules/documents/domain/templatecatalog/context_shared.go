@@ -148,7 +148,7 @@ func RouteScheduleVariables() []VariableDefinition {
 
 const (
 	InvoiceIssuedDescription   = "When the invoice was issued."
-	SampleCompanyName          = "Trenova Logistics, Inc."
+	SampleCompanyName          = "Larkspur Freight Lines"
 	SampleCustomerName         = "Halstead Grocery Group"
 	SampleProNumber            = "TRV-884120"
 	SampleFacilityName         = "Halstead DC 14"

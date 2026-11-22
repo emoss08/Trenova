@@ -5,9 +5,13 @@ import (
 	"errors"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/modules/documents/app/triagenova"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/mailtemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/triage"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundreplyports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/triageworkports"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
@@ -32,6 +36,7 @@ const (
 	failureNoOutbound  = "Outbound email is not set up on this installation, so the reply was not sent."
 	failureNoProfile   = "No email profile is set up for this organization, so the reply was not sent. An administrator can add one in the email settings."
 	failureUnqueued    = "Trenova could not hand the reply to the email provider. Try sending it again."
+	failureUnrendered  = "Trenova could not build the reply email from the organization's template. Try sending it again."
 	failureBounced     = "The receiving server refused it."
 	failureComplained  = "The recipient marked it as spam."
 	failureSuppressed  = "The address is on the organization's suppression list."
@@ -187,15 +192,25 @@ func (s *Service) dispatch(
 	reply *triage.Reply,
 	attachments []emailports.EmailAttachment,
 ) (*triage.Reply, error) {
+	rendered, err := s.renderReply(ctx, message, reply)
+	if err != nil {
+		return s.fail(ctx, &failure{
+			message: message,
+			reply:   reply,
+			text:    failureUnrendered,
+			cause:   err,
+		})
+	}
+
 	sent, err := s.email.Send(ctx, &emailports.SendEmailRequest{
 		TenantInfo:     tenantOf(message),
 		Type:           email.TypeInboundReply,
 		Purpose:        email.PurposeOperations,
 		FromEmail:      reply.FromAddress,
 		To:             []string{reply.ToAddress},
-		Subject:        reply.Subject,
-		Text:           reply.Body,
-		HTML:           stringutils.TextToHTMLParagraph(reply.Body),
+		Subject:        rendered.Subject,
+		Text:           rendered.Text,
+		HTML:           rendered.HTML,
 		Attachments:    attachments,
 		Headers:        threadHeaders(message, reply),
 		IdempotencyKey: inboundreplyports.InboundReplyIdempotencyPrefix + reply.ID.String(),
@@ -211,6 +226,30 @@ func (s *Service) dispatch(
 	}
 
 	return s.applyEmailStatus(ctx, message, reply, emailports.EmailMessageChange{Message: sent})
+}
+
+func (s *Service) renderReply(
+	ctx context.Context,
+	message *inboundmessage.InboundMessage,
+	reply *triage.Reply,
+) (*documenttemplateports.RenderedMessage, error) {
+	tenantInfo := tenantOf(message)
+	companyName := ""
+	if org, _, orgErr := triagenova.Organization(ctx, s.organizations, tenantInfo); orgErr == nil &&
+		org != nil {
+		companyName = org.Name
+	}
+
+	return s.renderer.RenderMessage(ctx, &documenttemplateports.RenderMessageRequest{
+		TenantInfo: tenantInfo,
+		Kind:       documenttemplate.KindTriageReplyEmail,
+		Data: mailtemplate.TriageReplyEmailContext{
+			Subject:     reply.Subject,
+			Body:        reply.Body,
+			CompanyName: companyName,
+		},
+		Subject: reply.Subject,
+	})
 }
 
 func threadHeaders(message *inboundmessage.InboundMessage, reply *triage.Reply) map[string]string {

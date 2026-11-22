@@ -62,10 +62,7 @@ type SendPersistedEmailRequest struct {
 }
 
 type TestEmailProfileRequest struct {
-	To      string `json:"to"`
-	Subject string `json:"subject"`
-	HTML    string `json:"html"`
-	Text    string `json:"text"`
+	To string `json:"to"`
 }
 
 type EmailService interface {

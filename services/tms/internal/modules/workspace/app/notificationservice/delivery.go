@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/notificationports"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/i18n"
 	"go.uber.org/zap"
 )
 
@@ -135,28 +136,30 @@ func (s *Service) sendEmail(
 		return
 	}
 
-	rendered, err := renderNotificationEmail(&notificationEmail{
-		RecipientName: to.user.Name,
-		Title:         created.Title,
-		Message:       created.Message,
-		Link:          s.absoluteLink(created),
-		SettingsURL:   s.settingsURL(),
-	})
-	if err != nil {
-		s.l.Warn("failed to render notification email",
-			zap.String("notificationID", created.ID.String()),
-			zap.Error(err),
-		)
-		return
-	}
-
 	tenantInfo := pagination.TenantInfo{
 		OrgID:  created.OrganizationID,
 		BuID:   *created.BusinessUnitID,
 		UserID: to.user.ID,
 	}
+	compose := &emailports.NotificationEmail{
+		TenantInfo:    tenantInfo,
+		Locale:        userLocale(to.user.Locale),
+		RecipientName: to.user.Name,
+		Title:         created.Title,
+		Message:       created.Message,
+		Link:          s.absoluteLink(created),
+		SettingsURL:   s.settingsURL(),
+	}
 	background := context.WithoutCancel(ctx)
 	go func() {
+		rendered, err := s.composer.ComposeNotification(background, compose)
+		if err != nil {
+			s.l.Warn("failed to render notification email",
+				zap.String("notificationID", created.ID.String()),
+				zap.Error(err),
+			)
+			return
+		}
 		if _, sendErr := s.email.Send(background, &emailports.SendEmailRequest{
 			TenantInfo:     tenantInfo,
 			Type:           email.TypeNotification,
@@ -174,6 +177,13 @@ func (s *Service) sendEmail(
 			)
 		}
 	}()
+}
+
+func userLocale(value string) i18n.Locale {
+	if locale, ok := i18n.Parse(value); ok {
+		return locale
+	}
+	return ""
 }
 
 func (s *Service) handOff(

@@ -5,6 +5,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/pkg/emaildesign"
+
 	"github.com/emoss08/trenova/shared/i18n"
 	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -172,7 +174,24 @@ func TestTextFuncMapDropsOnlyNl2br(t *testing.T) {
 
 	assert.Contains(t, htmlMap, "nl2br")
 	assert.NotContains(t, textMap, "nl2br")
-	assert.Len(t, textMap, len(htmlMap)-1)
+	assert.Contains(t, textMap, "heading", "a text part says its email's heading in plain words")
+	assert.Len(t, textMap, len(htmlMap)-1+len(emaildesign.TextFuncs(i18n.Default)))
+}
+
+func TestEmailFuncMapAddsTheBlocksToTheHTMLMap(t *testing.T) {
+	emailMap := EmailFuncMapFor(i18n.Default)
+
+	for name := range FuncMap() {
+		assert.Contains(t, emailMap, name)
+	}
+	for _, name := range emaildesign.Names() {
+		assert.Contains(t, emailMap, name)
+		assert.NotContains(t, FuncMap(), name, "a document template has no email blocks")
+		assert.Contains(t, AllowedFunctionNames(), name)
+	}
+	for _, forbidden := range ForbiddenFunctionNames() {
+		assert.NotContains(t, emailMap, forbidden)
+	}
 }
 
 func TestAllowedFunctionNamesIsSortedAndComplete(t *testing.T) {
