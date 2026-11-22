@@ -69,6 +69,8 @@ func (c WorkerConfig) ToWorkerOptions() worker.Options {
 	}
 }
 
+const sharedActivitiesHolder = "the shared queue activities"
+
 type WorkerManager struct {
 	client       client.Client
 	workers      map[string]worker.Worker
@@ -98,6 +100,19 @@ func (m *WorkerManager) SetQueueActivities(activities any) {
 	m.queueShared = activities
 }
 
+func (m *WorkerManager) ownedActivities(taskQueue string) map[string]string {
+	owned, ok := m.queueActivities[taskQueue]
+	if ok {
+		return owned
+	}
+	owned = make(map[string]string)
+	for _, activity := range ActivityNamesOf(m.queueShared) {
+		owned[activity] = sharedActivitiesHolder
+	}
+	m.queueActivities[taskQueue] = owned
+	return owned
+}
+
 func NewWorkerManager(c client.Client, logger *zap.Logger) *WorkerManager {
 	return &WorkerManager{
 		client:          c,
@@ -125,7 +140,7 @@ func (m *WorkerManager) Register(registry WorkerRegistry) error {
 	// over it.
 	if namer, ok := registry.(ActivityNamer); ok {
 		if conflicts := conflictingActivities(
-			m.queueActivities[taskQueue],
+			m.ownedActivities(taskQueue),
 			namer.ActivityNames(),
 		); len(
 			conflicts,
@@ -171,8 +186,8 @@ func (m *WorkerManager) Register(registry WorkerRegistry) error {
 	if !exists {
 		w = worker.New(m.client, taskQueue, opts)
 		createdQueueWorker = true
-		if _, err := RegisterActivitiesFromStruct(w, m.queueShared, m.logger); err != nil {
-			return fmt.Errorf("register the shared activities for %s: %w", taskQueue, err)
+		if m.queueShared != nil {
+			w.RegisterActivity(m.queueShared)
 		}
 	}
 
@@ -189,11 +204,7 @@ func (m *WorkerManager) Register(registry WorkerRegistry) error {
 		m.queueOptions[taskQueue] = opts
 	}
 	if namer, ok := registry.(ActivityNamer); ok {
-		owned := m.queueActivities[taskQueue]
-		if owned == nil {
-			owned = make(map[string]string)
-			m.queueActivities[taskQueue] = owned
-		}
+		owned := m.ownedActivities(taskQueue)
 		for _, activity := range namer.ActivityNames() {
 			owned[activity] = name
 		}

@@ -561,3 +561,52 @@ func (w *countingWorker) RegisterDynamicActivity(
 }
 
 func (w *countingWorker) RegisterNexusService(_ *nexus.Service) {}
+
+type sharedActivities struct{}
+
+func (*sharedActivities) SweepActivity(_ context.Context) error { return nil }
+
+func (*sharedActivities) ReportActivity(_ context.Context, _ string) (int, error) {
+	return 0, nil
+}
+
+func TestWorkerManager_Register_SharedActivitiesUseTheirMethodNames(t *testing.T) {
+	t.Parallel()
+
+	c, err := client.NewLazyClient(client.Options{})
+	require.NoError(t, err)
+	t.Cleanup(c.Close)
+
+	wm := NewWorkerManager(c, zap.NewNop())
+	wm.SetQueueActivities(&sharedActivities{})
+	reg := newTestWorkerRegistry("first-worker", "shared-queue", DefaultWorkerConfig())
+
+	require.NoError(t, wm.Register(reg))
+
+	for _, name := range []string{"SweepActivity", "ReportActivity"} {
+		assert.Panics(t, func() {
+			reg.registeredWorker.RegisterActivityWithOptions(
+				func(context.Context) error { return nil },
+				activity.RegisterOptions{Name: name},
+			)
+		}, "the shared activities must already hold %s on the queue worker", name)
+	}
+}
+
+func TestWorkerManager_Register_CollisionWithSharedActivitiesFails(t *testing.T) {
+	t.Parallel()
+
+	wm := NewWorkerManager(nil, zap.NewNop())
+	wm.SetQueueActivities(&sharedActivities{})
+	reg := NewDomainRegistry(
+		&DomainConfig{Name: "sweeper", TaskQueue: "shared-queue"},
+		fakeActivities{},
+		nil,
+		zap.NewNop(),
+	)
+
+	err := wm.Register(reg)
+
+	require.Error(t, err)
+	assert.ErrorContains(t, err, "ReportActivity is already registered by "+sharedActivitiesHolder)
+}
