@@ -7,7 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/bootstrap/infrastructure"
 	infraConfig "github.com/emoss08/trenova/internal/infrastructure/config"
-	goredis "github.com/redis/go-redis/v9"
+	goredis "github.com/emoss08/trenova/shared/redis"
 	"github.com/spf13/cobra"
 	"go.uber.org/fx"
 	"go.uber.org/zap"

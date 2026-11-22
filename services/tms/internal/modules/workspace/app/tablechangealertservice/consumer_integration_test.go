@@ -8,8 +8,8 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/testutil/plantest"
+	"github.com/emoss08/trenova/shared/redis"
 	"github.com/emoss08/trenova/shared/testutil"
-	"github.com/redis/go-redis/v9"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 )

@@ -8,7 +8,7 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
-	"github.com/redis/go-redis/v9"
+	"github.com/emoss08/trenova/shared/redis"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )

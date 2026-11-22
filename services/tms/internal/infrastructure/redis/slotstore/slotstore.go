@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/redis/go-redis/v9"
+	"github.com/emoss08/trenova/shared/redis"
 )
 
 type Bound struct {
@@ -133,7 +133,7 @@ func (s *Store) Release(ctx context.Context, claim Claim) error {
 	if claim.Token == "" || len(claim.Bounds) == 0 {
 		return nil
 	}
-	_, err := s.client.Pipelined(ctx, func(pipe redis.Pipeliner) error {
+	_, err := s.client.Pipelined(ctx, func(pipe *redis.Pipeline) error {
 		for _, key := range claim.keys() {
 			pipe.ZRem(ctx, key, claim.Token)
 		}

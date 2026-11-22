@@ -13,8 +13,8 @@ import (
 	"github.com/emoss08/trenova/pkg/redishelpers"
 	"github.com/emoss08/trenova/shared/hashutils"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/redis"
 	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/redis/go-redis/v9"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -185,7 +185,7 @@ func (r *sessionRepository) Update(
 				return err
 			}
 
-			if _, err = tx.TxPipelined(ctx, func(pipe redis.Pipeliner) error {
+			if _, err = tx.TxPipelined(ctx, func(pipe *redis.Pipeline) error {
 				pipe.JSONSet(ctx, key, ".", data)
 				pipe.ExpireAt(ctx, key, time.Unix(sess.ExpiresAt, 0))
 				return nil

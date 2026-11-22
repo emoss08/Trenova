@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/bytedance/sonic"
-	"github.com/redis/go-redis/v9"
+	"github.com/emoss08/trenova/shared/redis"
 )
 
 func GetJSON(ctx context.Context, client *redis.Client, key string, obj any) error {
@@ -38,7 +38,7 @@ func SetJSON(
 
 func PipelineSetJSON(
 	ctx context.Context,
-	pipe redis.Pipeliner,
+	pipe *redis.Pipeline,
 	key string,
 	obj any,
 	ttl time.Duration,

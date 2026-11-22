@@ -9,7 +9,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aituneupports"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/redis/go-redis/v9"
+	"github.com/emoss08/trenova/shared/redis"
 	"go.uber.org/fx"
 )
 

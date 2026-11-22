@@ -3,7 +3,7 @@ package redishelpers
 import (
 	"errors"
 
-	"github.com/redis/go-redis/v9"
+	"github.com/emoss08/trenova/shared/redis"
 )
 
 func IsRedisNil(err error) bool {

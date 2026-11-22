@@ -7,7 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/redis/go-redis/v9"
+	"github.com/emoss08/trenova/shared/redis"
 	"go.uber.org/fx"
 )
 
@@ -60,7 +60,7 @@ func (r *providerBreakerRepository) Resting(
 	}
 
 	cmds := make([]*redis.DurationCmd, len(providerIDs))
-	_, err := r.client.Pipelined(ctx, func(pipe redis.Pipeliner) error {
+	_, err := r.client.Pipelined(ctx, func(pipe *redis.Pipeline) error {
 		for idx, id := range providerIDs {
 			cmds[idx] = pipe.PTTL(ctx, providerBreakerKey(id))
 		}

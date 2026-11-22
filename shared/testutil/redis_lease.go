@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/redis/go-redis/v9"
+	"github.com/emoss08/trenova/shared/redis"
 )
 
 const (
@@ -44,7 +44,10 @@ func leaseRedisDB(ctx context.Context, addr, keyPrefix string) (*redisDBLease, e
 
 	id, err := conn.ClientID(ctx).Result()
 	if err != nil {
-		return nil, errors.Join(fmt.Errorf("identify the Redis lease connection: %w", err), lease.release())
+		return nil, errors.Join(
+			fmt.Errorf("identify the Redis lease connection: %w", err),
+			lease.release(),
+		)
 	}
 	holder := strconv.FormatInt(id, 10)
 

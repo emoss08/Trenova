@@ -5,7 +5,7 @@ import (
 	"errors"
 	"time"
 
-	"github.com/redis/go-redis/v9"
+	"github.com/emoss08/trenova/shared/redis"
 )
 
 type BytesClient struct {

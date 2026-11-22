@@ -9,9 +9,9 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/config/monitoringconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/startwait"
 	"github.com/emoss08/trenova/shared/intutils"
+	"github.com/emoss08/trenova/shared/redis"
 	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/redis/go-redis/extra/redisotel/v9"
-	"github.com/redis/go-redis/v9"
+	"go.opentelemetry.io/otel"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -68,16 +68,12 @@ func NewConnection(p ConnectionParams) (*redis.Client, error) {
 		options.TLSConfig = tlsConfig
 	}
 
-	client := redis.NewClient(options)
-
 	if p.MonitoringConfig.Tracing.Enabled {
-		if err := redisotel.InstrumentTracing(client); err != nil {
-			logger.Warn("Failed to instrument Redis tracing", zap.Error(err))
-		}
-		if err := redisotel.InstrumentMetrics(client); err != nil {
-			logger.Warn("Failed to instrument Redis metrics", zap.Error(err))
-		}
+		options.TracerProvider = otel.GetTracerProvider()
+		options.MeterProvider = otel.GetMeterProvider()
 	}
+
+	client := redis.NewClient(options)
 
 	p.LC.Append(fx.Hook{
 		OnStop: func(context.Context) error {

@@ -464,17 +464,21 @@ wrappers. A fit of compile CPU across the 2,706 first-party packages puts about 
 fixed cost per package (0.06 s) and 39% in imports (about 4 ms per direct import), against 25% in
 source size, so the number of packages and the imports of each weigh more than generics now.
 
-go-redis did it to every package that holds a `*redis.Client` or a `redis.UniversalClient`, at
-about 0.7 seconds each. `baseClient` kept a `weak.Pointer[Client]`, and because `Client` embeds
-`cmdable`, the stand-in type the compiler builds for that instantiation carries every promoted
-command method, so each of those packages compiled about 1,480 wrapper functions. Several
-`sync.Map` fields reachable from the client added the hash trie on top. Only `redis.Cmdable` stays
-clear of both. Trenova builds against
-[`emoss08/go-redis`](https://github.com/emoss08/go-redis), whose `master` is upstream `master`
-plus a change that holds the weak reference and the maps behind types whose method signatures
-name no generic type. A package holding a `*redis.Client` now compiles 114 functions in about
-66 ms instead of 1,722 in about 690 ms. The core module, `extra/redisotel` and `extra/rediscmd`
-are replaced at one commit, and a new fork commit moves all three `replace` lines together.
+go-redis did it to every package that holds a `*redis.Client`, at about 0.7 seconds each: a
+`weak.Pointer[Client]` whose stand-in type carried every promoted command method (about 1,480
+wrappers per package) and `sync.Map` fields reachable from the client. A fork fixed that, but the
+module itself stayed a single 24-second compile action with a 77 MB output, plus about 11 seconds
+for its OpenTelemetry and pool packages, for the small slice of Redis Trenova uses. Trenova now
+uses its own client, `shared/redis`, which keeps go-redis's names and shapes for exactly the
+commands, results, pipelines, transactions, scripts and options the code calls, and nothing else.
+It speaks RESP2 through a hand-written codec (`internal/resp`), pools connections with
+`jackc/puddle` behind a non-generic `pool.Pool` interface (`internal/pool`), runs commands,
+retries, deadlines and `MULTI`/`EXEC` in `internal/wire` and emits redisotel's span and metric
+names from `internal/instrument` when `Options.TracerProvider` or `Options.MeterProvider` is set.
+All five packages compile in about one second on a clean cache, and a probe package holding a
+`*redis.Client` defines no generic functions (59 in all). Add a command by adding its method and,
+if its reply is new, its result type there; keep generic types out of everything a `Client`
+reaches.
 
 The linker keeps every exported method of every type a binary can reach when any reachable
 function calls `reflect.Value.Method`, `MethodByName` or their `reflect.Type` forms with a name

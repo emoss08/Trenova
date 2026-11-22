@@ -40,8 +40,6 @@ require (
 	github.com/paulmach/orb v0.14.0
 	github.com/pgvector/pgvector-go v0.4.1
 	github.com/prometheus/client_golang v1.25.0
-	github.com/redis/go-redis/extra/redisotel/v9 v9.23.0
-	github.com/redis/go-redis/v9 v9.23.0
 	github.com/samber/lo v1.53.0
 	github.com/santhosh-tekuri/jsonschema/v6 v6.0.3
 	github.com/shopspring/decimal v1.6.0
@@ -246,7 +244,6 @@ require (
 	github.com/prometheus/procfs v0.23.0 // indirect
 	github.com/quic-go/qpack v0.6.0 // indirect
 	github.com/quic-go/quic-go v0.65.0 // indirect
-	github.com/redis/go-redis/extra/rediscmd/v9 v9.23.0 // indirect
 	github.com/richardlehane/mscfb v1.0.9 // indirect
 	github.com/richardlehane/msoleps v1.0.6 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
@@ -307,12 +304,6 @@ require (
 replace github.com/emoss08/trenova/shared => ../../shared
 
 replace google.golang.org/genproto => google.golang.org/genproto v0.0.0-20241118233622-e639e219e697
-
-replace (
-	github.com/redis/go-redis/extra/rediscmd/v9 => github.com/emoss08/go-redis/extra/rediscmd/v9 v9.0.0-20261016021426-01e29e5f58fd
-	github.com/redis/go-redis/extra/redisotel/v9 => github.com/emoss08/go-redis/extra/redisotel/v9 v9.0.0-20261016021426-01e29e5f58fd
-	github.com/redis/go-redis/v9 => github.com/emoss08/go-redis/v9 v9.0.0-20261016021426-01e29e5f58fd
-)
 
 tool (
 	github.com/99designs/gqlgen
