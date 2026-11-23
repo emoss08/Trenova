@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/employment"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerchecklist"
@@ -21,11 +22,8 @@ import (
 	"go.uber.org/zap"
 )
 
-const workerResourceType = "worker"
-
-// ListForWorker returns the worker's checklists with the auto-satisfy pass
-// applied, so what the office sees already reflects the credentials and
-// documents on file.
+// ListForWorker returns the worker's checklists as stored. The auto-satisfy
+// pass runs when the evidence changes (RefreshEvidence), never on a read.
 func (s *Service) ListForWorker(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
@@ -37,27 +35,20 @@ func (s *Service) ListForWorker(
 		WorkerID:      workerID,
 		IncludeClosed: includeClosed,
 		IncludeItems:  true,
+		Limit:         pagination.MaxLimit,
 	})
 	if err != nil {
 		return nil, err
 	}
-
-	open := make([]*workerchecklist.WorkerChecklist, 0, len(checklists))
-	for _, checklist := range checklists {
-		if checklist.IsOpen() {
-			open = append(open, checklist)
-		}
-	}
-	if len(open) > 0 {
-		if err = s.refreshMany(ctx, tenantInfo, workerID, open); err != nil {
-			s.l.Warn(
-				"failed to refresh checklists",
-				zap.String("workerId", workerID.String()),
-				zap.Error(err),
-			)
-		}
-	}
 	return checklists, nil
+}
+
+func (s *Service) CountClosed(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	workerID pulid.ID,
+) (int, error) {
+	return s.repo.CountClosedForWorker(ctx, tenantInfo, workerID)
 }
 
 func (s *Service) Get(
@@ -65,25 +56,11 @@ func (s *Service) Get(
 	tenantInfo pagination.TenantInfo,
 	id pulid.ID,
 ) (*workerchecklist.WorkerChecklist, error) {
-	checklist, err := s.repo.GetByID(ctx, &workerchecklistports.GetWorkerChecklistByIDRequest{
+	return s.repo.GetByID(ctx, &workerchecklistports.GetWorkerChecklistByIDRequest{
 		ID:           id,
 		TenantInfo:   tenantInfo,
 		IncludeItems: true,
 	})
-	if err != nil {
-		return nil, err
-	}
-	if checklist.IsOpen() {
-		if err = s.refreshMany(
-			ctx,
-			tenantInfo,
-			checklist.WorkerID,
-			[]*workerchecklist.WorkerChecklist{checklist},
-		); err != nil {
-			s.l.Warn("failed to refresh checklist", zap.String("id", id.String()), zap.Error(err))
-		}
-	}
-	return checklist, nil
 }
 
 type StartRequest struct {
@@ -125,13 +102,10 @@ func (s *Service) Start(
 		return nil, err
 	}
 
-	if err = s.refreshMany(
-		ctx,
-		req.TenantInfo,
-		req.WorkerID,
-		[]*workerchecklist.WorkerChecklist{created},
-	); err != nil {
+	if err = s.RefreshEvidence(ctx, req.TenantInfo, req.WorkerID); err != nil {
 		log.Warn("failed to auto-satisfy new checklist", zap.Error(err))
+	} else if refreshed, getErr := s.Get(ctx, req.TenantInfo, created.ID); getErr == nil {
+		created = refreshed
 	}
 
 	s.audit(ctx, &auditParams{
@@ -434,52 +408,79 @@ func (s *Service) cancelChecklist(
 	return saved, nil
 }
 
-// refreshMany runs the auto-satisfy pass over open checklists for one worker,
-// persists what changed, closes checklists whose required items are all
-// settled, and flips DQF readiness when an onboarding checklist closes.
-func (s *Service) refreshMany(
+// RefreshEvidence runs the auto-satisfy pass over the worker's open
+// checklists: it ticks the items whose evidence now exists, closes the
+// checklists whose required items are settled, and flips DQF readiness when
+// an onboarding checklist closes. The checklists are locked for the pass, so
+// two passes for one worker on any replica run one after the other, and a
+// second pass finds nothing left to tick.
+func (s *Service) RefreshEvidence(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	workerID pulid.ID,
-	checklists []*workerchecklist.WorkerChecklist,
 ) error {
-	if len(checklists) == 0 {
-		return nil
-	}
-	lockKey := workerID.String()
-	if _, busy := s.refreshLocks.LoadOrStore(lockKey, struct{}{}); busy {
-		return nil
-	}
-	defer s.refreshLocks.Delete(lockKey)
-
-	evidence, err := s.collectEvidence(ctx, tenantInfo, workerID)
-	if err != nil {
-		return err
-	}
-
-	now := timeutils.NowUnix()
-	for _, checklist := range checklists {
-		changed := checklist.AutoSatisfy(evidence, now)
-		if len(changed) > 0 {
-			if err = s.repo.UpdateItems(ctx, changed); err != nil {
-				return err
-			}
-		}
-		if err = s.closeIfComplete(ctx, tenantInfo, checklist, now); err != nil {
+	return s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
+		checklists, err := s.repo.LockOpenForWorker(
+			txCtx,
+			&workerchecklistports.LockOpenChecklistsRequest{
+				TenantInfo: tenantInfo,
+				WorkerID:   workerID,
+			},
+		)
+		if err != nil || len(checklists) == 0 {
 			return err
 		}
-		if len(changed) > 0 {
-			s.publish(
-				ctx,
-				tenantInfo,
-				realtimeResource,
-				permission.OpUpdate,
-				checklist.ID,
-				pulid.Nil,
-			)
+		evidence, err := s.collectEvidence(txCtx, tenantInfo, workerID)
+		if err != nil {
+			return err
 		}
+
+		now := timeutils.NowUnix()
+		for _, checklist := range checklists {
+			changed := checklist.AutoSatisfy(evidence, now)
+			if len(changed) > 0 {
+				if err = s.repo.UpdateItems(txCtx, changed); err != nil {
+					return err
+				}
+			}
+			if err = s.closeIfComplete(txCtx, tenantInfo, checklist, now); err != nil {
+				return err
+			}
+			if len(changed) > 0 {
+				s.publish(
+					txCtx,
+					tenantInfo,
+					realtimeResource,
+					permission.OpUpdate,
+					checklist.ID,
+					pulid.Nil,
+				)
+			}
+		}
+		return nil
+	})
+}
+
+// ResourceDocumentsChanged refreshes a worker's checklists when a document
+// filed against the worker is added, changed or removed.
+func (s *Service) ResourceDocumentsChanged(
+	ctx context.Context,
+	change documentports.ResourceDocumentsChange,
+) {
+	if change.ResourceType != permission.ResourceWorker.String() {
+		return
 	}
-	return nil
+	workerID, err := pulid.Parse(change.ResourceID)
+	if err != nil || workerID.IsNil() {
+		return
+	}
+	if err = s.RefreshEvidence(ctx, change.TenantInfo, workerID); err != nil {
+		s.l.Warn(
+			"failed to refresh checklists after a document change",
+			zap.String("workerId", workerID.String()),
+			zap.Error(err),
+		)
+	}
 }
 
 func (s *Service) closeIfComplete(
@@ -570,7 +571,7 @@ func (s *Service) collectEvidence(
 		&documentports.GetDocumentsByResourceRequest{
 			TenantInfo:   tenantInfo,
 			ResourceID:   workerID.String(),
-			ResourceType: workerResourceType,
+			ResourceType: permission.ResourceWorker.String(),
 		},
 	)
 	if err != nil {

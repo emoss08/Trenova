@@ -1,9 +1,11 @@
+import { preloadOn } from "@/components/work-pane";
 import type { PerformanceReviewRow } from "@/lib/graphql/performance-review";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
+import { formatNumber } from "@trenova/shared/i18n/format";
 import { translate } from "@trenova/shared/i18n/runtime";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { formatUnixDateMedium } from "@trenova/shared/lib/date";
+import { formatRange, formatUnixDateMedium } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
 import {
   PERFORMANCE_REVIEW_STATUS_HINTS,
@@ -13,6 +15,7 @@ import {
   type ReviewGoalStatus,
 } from "@trenova/shared/types/performance-review";
 import { useEffect, useRef } from "react";
+import { EditReviewPane } from "../development-panes";
 import { RatingScale, scoreWord } from "./rating-scale";
 
 export type ReviewPermissions = {
@@ -40,15 +43,19 @@ const GOAL_VARIANT: Record<ReviewGoalStatus, "neutral" | "success" | "info"> = {
 
 /** "Jan 1 to Dec 31, 2026 · reviewer Dana Whitfield · Driver annual" */
 export function reviewMeta(review: PerformanceReviewRow): string {
-  const period = translate(
-    "{0} to {1}",
-    formatUnixDateMedium(review.periodStart),
-    formatUnixDateMedium(review.periodEnd),
-  );
+  const period = formatRange(review.periodStart, review.periodEnd, {
+    year: "always",
+    join: "words",
+  });
   const parts = [period];
   if (review.reviewer?.name) parts.push(translate("reviewer {0}", review.reviewer.name));
   if (review.template?.name) parts.push(review.template.name);
   return parts.join(" · ");
+}
+
+/** An overall score on the 1 to 5 scale, to one decimal: "4.3". */
+export function formatReviewScore(score: number): string {
+  return formatNumber(score, { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 }
 
 /** The overall score as a figure with its word; nothing while no criterion is rated. */
@@ -57,7 +64,7 @@ export function OverallScore({ score, className }: { score: number | null; class
   return (
     <div className={cn("flex items-baseline gap-2", className)}>
       <span className="text-3xl leading-none font-semibold tracking-tight tabular-nums">
-        {score == null ? "—" : score.toFixed(1)}
+        {score == null ? "—" : formatReviewScore(score)}
       </span>
       <span className="text-sm font-medium">
         {score == null ? t("Not rated yet") : scoreWord(score)}
@@ -213,7 +220,14 @@ export function ReviewCard({
       </Button>
     ) : null,
     isDraft && permissions.canUpdate ? (
-      <Button key="edit" size="sm" variant="outline" disabled={busy} onClick={() => onEdit(review)}>
+      <Button
+        key="edit"
+        size="sm"
+        variant="outline"
+        disabled={busy}
+        {...preloadOn(EditReviewPane)}
+        onClick={() => onEdit(review)}
+      >
         {t("Edit")}
       </Button>
     ) : null,

@@ -72,6 +72,13 @@ const rows = [
   }),
 ];
 
+function connection(nodes: { id: string }[]) {
+  return {
+    edges: nodes.map((node) => ({ cursor: node.id, node })),
+    pageInfo: { hasNextPage: false, endCursor: null },
+  };
+}
+
 function renderSection() {
   const onOpen = vi.fn();
   const client = new QueryClient({
@@ -96,7 +103,7 @@ afterEach(() => {
 
 describe("WorkerBenefitsSection", () => {
   it("lists covered plans before elections still to make, with what each costs a period", async () => {
-    mocks.fetchWorkerBenefitEnrollments.mockResolvedValue(rows);
+    mocks.fetchWorkerBenefitEnrollments.mockResolvedValue(connection(rows));
     mocks.fetchWorkerTotalCompensation.mockResolvedValue({
       asOf: 1,
       planYear: 2026,
@@ -121,7 +128,7 @@ describe("WorkerBenefitsSection", () => {
   });
 
   it("opens the election for a plan not started in the work pane, preset to that plan", async () => {
-    mocks.fetchWorkerBenefitEnrollments.mockResolvedValue(rows);
+    mocks.fetchWorkerBenefitEnrollments.mockResolvedValue(connection(rows));
     mocks.fetchWorkerTotalCompensation.mockResolvedValue(null);
     const onOpen = renderSection();
 
@@ -136,7 +143,7 @@ describe("WorkerBenefitsSection", () => {
   });
 
   it("ends cover only after it is confirmed with a reason", async () => {
-    mocks.fetchWorkerBenefitEnrollments.mockResolvedValue(rows);
+    mocks.fetchWorkerBenefitEnrollments.mockResolvedValue(connection(rows));
     mocks.fetchWorkerTotalCompensation.mockResolvedValue(null);
     mocks.endBenefitEnrollment.mockResolvedValue({ id: "ben_medical" });
     renderSection();
@@ -159,7 +166,7 @@ describe("WorkerBenefitsSection", () => {
   });
 
   it("asks for the first election when nothing is recorded", async () => {
-    mocks.fetchWorkerBenefitEnrollments.mockResolvedValue([]);
+    mocks.fetchWorkerBenefitEnrollments.mockResolvedValue(connection([]));
     mocks.fetchWorkerTotalCompensation.mockResolvedValue(null);
     renderSection();
 

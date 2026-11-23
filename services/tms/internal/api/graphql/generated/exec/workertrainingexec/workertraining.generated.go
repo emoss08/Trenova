@@ -30,6 +30,8 @@ var Shard = &gqlexec.Shard{
 		{Name: "TrainingCourseConnection", Implementors: []string{"TrainingCourseConnection"}},
 		{Name: "TrainingCourseEdge", Implementors: []string{"TrainingCourseEdge"}},
 		{Name: "WorkerTrainingRecord", Implementors: []string{"WorkerTrainingRecord"}},
+		{Name: "WorkerTrainingRecordConnection", Implementors: []string{"WorkerTrainingRecordConnection"}},
+		{Name: "WorkerTrainingRecordEdge", Implementors: []string{"WorkerTrainingRecordEdge"}},
 		{Name: "WorkerTrainingSummary", Implementors: []string{"WorkerTrainingSummary"}},
 		{Name: "WorkerTrainingSummaryItem", Implementors: []string{"WorkerTrainingSummaryItem"}},
 	},
@@ -552,13 +554,13 @@ var Shard = &gqlexec.Shard{
 				IsResolver: true,
 				Concurrent: true,
 				HasChild:   true,
-				ChildType:  "WorkerTrainingRecord",
+				ChildType:  "WorkerTrainingRecordConnection",
 				Args:       field_Query_workerTrainingRecords_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[QueryResolver](ec, "Query@workertraining").WorkerTrainingRecords(ctx, fc.Args["workerId"].(string), fc.Args["includeClosed"].(*bool))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@workertraining").WorkerTrainingRecords(ctx, fc.Args["workerId"].(string), fc.Args["includeClosed"].(*bool), fc.Args["first"].(*int), fc.Args["after"].(*string))
 				},
-				Marshal: gqlexec.Marshal(marshalNWorkerTrainingRecord2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkertrainingᚐWorkerTrainingRecordᚄ),
+				Marshal: gqlexec.Marshal(marshalNWorkerTrainingRecordConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐWorkerTrainingRecordConnection),
 			},
 			{
 				Name:       "workerTrainingRecord",
@@ -1201,6 +1203,72 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalOWorker2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorker),
 			},
 		}},
+		{Object: "WorkerTrainingRecordConnection", Fields: []*gqlexec.Field{
+			{
+				Name:      "edges",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "WorkerTrainingRecordEdge",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.WorkerTrainingRecordConnection)
+					return obj.Edges, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNWorkerTrainingRecordEdge2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐWorkerTrainingRecordEdgeᚄ),
+			},
+			{
+				Name:      "pageInfo",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "PageInfo",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.WorkerTrainingRecordConnection)
+					return obj.PageInfo, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNPageInfo2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐPageInfo),
+			},
+			{
+				Name:     "totalCount",
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.WorkerTrainingRecordConnection)
+					return obj.TotalCount, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOInt2ᚖint),
+			},
+			{
+				Name:     "totalCountExact",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.WorkerTrainingRecordConnection)
+					return obj.TotalCountExact, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+		}},
+		{Object: "WorkerTrainingRecordEdge", Fields: []*gqlexec.Field{
+			{
+				Name:      "node",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "WorkerTrainingRecord",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.WorkerTrainingRecordEdge)
+					return obj.Node, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNWorkerTrainingRecord2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkertrainingᚐWorkerTrainingRecord),
+			},
+			{
+				Name:     "cursor",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.WorkerTrainingRecordEdge)
+					return obj.Cursor, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+		}},
 		{Object: "WorkerTrainingSummary", Fields: []*gqlexec.Field{
 			{
 				Name:     "workerId",
@@ -1410,7 +1478,7 @@ type QueryResolver interface {
 	TrainingCourses(ctx context.Context, input gqlmodel.TrainingCoursesInput) (*gqlmodel.TrainingCourseConnection, error)
 	TrainingCourse(ctx context.Context, id string) (*workertraining.TrainingCourse, error)
 	ActiveTrainingCourses(ctx context.Context) ([]*workertraining.TrainingCourse, error)
-	WorkerTrainingRecords(ctx context.Context, workerID string, includeClosed *bool) ([]*workertraining.WorkerTrainingRecord, error)
+	WorkerTrainingRecords(ctx context.Context, workerID string, includeClosed *bool, first *int, after *string) (*gqlmodel.WorkerTrainingRecordConnection, error)
 	WorkerTrainingRecord(ctx context.Context, id string) (*workertraining.WorkerTrainingRecord, error)
 	WorkerTrainingSummary(ctx context.Context, workerID string) (*workertraining.WorkerTrainingSummary, error)
 	MyTraining(ctx context.Context) ([]*driverportalrecordsservice.PortalTraining, error)
@@ -1666,7 +1734,7 @@ func field_Query_trainingCourse_args(ctx context.Context, ec *gqlexec.Exec, rawA
 }
 
 func field_Query_workerTrainingRecords_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
-	args := make(map[string]any, 2)
+	args := make(map[string]any, 4)
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "workerId",
 		func(ctx context.Context, v any) (string, error) {
 			return unmarshalNID2string(ctx, ec, v)
@@ -1683,6 +1751,22 @@ func field_Query_workerTrainingRecords_args(ctx context.Context, ec *gqlexec.Exe
 		return nil, err
 	}
 	args["includeClosed"] = arg1
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "first",
+		func(ctx context.Context, v any) (*int, error) {
+			return unmarshalOInt2ᚖint(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["first"] = arg2
+	arg3, err := graphql.ProcessArgField(ctx, rawArgs, "after",
+		func(ctx context.Context, v any) (*string, error) {
+			return unmarshalOString2ᚖstring(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["after"] = arg3
 	return args, nil
 }
 
@@ -2653,6 +2737,30 @@ func marshalNWorkerTrainingRecord2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternal
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "WorkerTrainingRecord", v)
+}
+
+func marshalNWorkerTrainingRecordConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐWorkerTrainingRecordConnection(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.WorkerTrainingRecordConnection) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "WorkerTrainingRecordConnection", v)
+}
+
+func marshalNWorkerTrainingRecordEdge2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐWorkerTrainingRecordEdgeᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*gqlmodel.WorkerTrainingRecordEdge) graphql.Marshaler {
+	return gqlexec.List[*gqlmodel.WorkerTrainingRecordEdge]{
+		Elem:        marshalNWorkerTrainingRecordEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐWorkerTrainingRecordEdge,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalNWorkerTrainingRecordEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐWorkerTrainingRecordEdge(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.WorkerTrainingRecordEdge) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "WorkerTrainingRecordEdge", v)
 }
 
 func marshalNWorkerTrainingStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkertrainingᚐTrainingStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v workertraining.TrainingStatus) graphql.Marshaler {

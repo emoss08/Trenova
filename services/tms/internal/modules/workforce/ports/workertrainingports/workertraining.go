@@ -54,6 +54,7 @@ type ListWorkerTrainingRequest struct {
 	IncludeCourse   bool                  `json:"includeCourse"`
 	IncludeDocument bool                  `json:"includeDocument"`
 	IncludeActors   bool                  `json:"includeActors"`
+	Cursor          pagination.CursorInfo `json:"cursor"`
 }
 
 type GetWorkerTrainingByIDRequest struct {
@@ -113,6 +114,14 @@ type WorkerTrainingRepository interface {
 	) (map[pulid.ID]int, error)
 
 	ListForWorker(
+		ctx context.Context,
+		req *ListWorkerTrainingRequest,
+	) ([]*workertraining.WorkerTrainingRecord, error)
+	PageForWorker(
+		ctx context.Context,
+		req *ListWorkerTrainingRequest,
+	) (*pagination.CursorListResult[*workertraining.WorkerTrainingRecord], error)
+	CurrentForWorker(
 		ctx context.Context,
 		req *ListWorkerTrainingRequest,
 	) ([]*workertraining.WorkerTrainingRecord, error)

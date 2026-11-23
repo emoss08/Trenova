@@ -56,6 +56,7 @@ type ListPTOAssignmentsRequest struct {
 	TenantInfo    pagination.TenantInfo `json:"tenantInfo"`
 	WorkerID      pulid.ID              `json:"workerId"`
 	IncludePolicy bool                  `json:"includePolicy"`
+	Cursor        pagination.CursorInfo `json:"cursor"`
 }
 
 type GetPTOAssignmentRequest struct {
@@ -101,10 +102,10 @@ type PTOPolicyRepository interface {
 		req *CountOpenPTOAssignmentsByIDsRequest,
 	) (map[pulid.ID]int, error)
 
-	ListAssignments(
+	PageAssignments(
 		ctx context.Context,
 		req *ListPTOAssignmentsRequest,
-	) ([]*pto.WorkerPTOPolicyAssignment, error)
+	) (*pagination.CursorListResult[*pto.WorkerPTOPolicyAssignment], error)
 	GetAssignmentByID(
 		ctx context.Context,
 		req *GetPTOAssignmentByIDRequest,

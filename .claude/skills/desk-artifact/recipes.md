@@ -258,7 +258,7 @@ Register the conversations in `fixtures/desk-cards.mjs` twice: once in `deskCard
 and once in the turns list. Add the card to `CARDS` in `desk-cards-screenshots.mjs`, then run:
 
 ```
-node e2e/mock-api/server.mjs &           # from client/apps/web
-pnpm dev &                               # the web app on :5173
-node e2e/mock-api/desk-cards-screenshots.mjs <outDir> <name>-loaded-light,<name>-attention-light,…
+bun e2e/mock-api/server.mjs &            # from client/apps/web
+bun run dev &                            # the web app on :5173
+bun e2e/mock-api/desk-cards-screenshots.mjs <outDir> <name>-loaded-light,<name>-attention-light,…
 ```

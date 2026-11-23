@@ -1,7 +1,8 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { stubLayout } from "@/test/layout";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import WorkerChecklistTab from "../worker-checklist-tab";
 
 const {
@@ -168,7 +169,10 @@ async function openActions(scope: HTMLElement, name: string) {
 }
 
 function renderTab(events: unknown[] = [], focusId: string | null = null) {
-  fetchWorkerEmploymentEvents.mockResolvedValue(events);
+  fetchWorkerEmploymentEvents.mockResolvedValue({
+    edges: events.map((node, index) => ({ cursor: String(index + 1), node })),
+    pageInfo: { hasNextPage: false, endCursor: null },
+  });
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   render(
     <QueryClientProvider client={queryClient}>
@@ -177,7 +181,14 @@ function renderTab(events: unknown[] = [], focusId: string | null = null) {
   );
 }
 
+let restoreLayout = () => {};
+
+beforeEach(() => {
+  restoreLayout = stubLayout(320);
+});
+
 afterEach(() => {
+  restoreLayout();
   cleanup();
   vi.clearAllMocks();
   permissionState.create = true;
@@ -247,7 +258,7 @@ describe("WorkerChecklistTab", () => {
     await waitFor(() => expect(fetchWorkerChecklists).toHaveBeenCalledTimes(2));
   });
 
-  it("skips through a note dialog and refuses an empty note", async () => {
+  it("skips through a note dialog that names the item and refuses an empty note", async () => {
     fetchWorkerChecklists.mockResolvedValue([checklist]);
     fetchActiveWorkerChecklistTemplates.mockResolvedValue([]);
     skipWorkerChecklistItem.mockResolvedValue(checklist);
@@ -256,14 +267,17 @@ describe("WorkerChecklistTab", () => {
     const fuel = await screen.findByTestId("checklist-item-wcli_fuel");
     const user = await openActions(fuel, "Actions for Fuel card issued");
     await user.click(await screen.findByRole("menuitem", { name: "Skip" }));
-    const dialog = await screen.findByRole("dialog");
-    fireEvent.click(within(dialog).getByRole("button", { name: "Skip item" }));
+    const dialog = await screen.findByRole("dialog", { name: "Skip item" });
     expect(
-      await within(dialog).findByText("Say why this item is being skipped"),
+      within(dialog).getByText(
+        "“Fuel card issued” settles without being done. It still counts toward closing the checklist, so say why.",
+      ),
     ).toBeInTheDocument();
+    fireEvent.click(within(dialog).getByRole("button", { name: "Skip item" }));
+    expect(await within(dialog).findByText("Say why")).toBeInTheDocument();
     expect(skipWorkerChecklistItem).not.toHaveBeenCalled();
 
-    fireEvent.change(within(dialog).getByLabelText("Note"), {
+    fireEvent.change(within(dialog).getByLabelText(/^Note/), {
       target: { value: "Driver brings own card" },
     });
     fireEvent.click(within(dialog).getByRole("button", { name: "Skip item" }));
@@ -424,8 +438,40 @@ describe("WorkerChecklistTab", () => {
     fetchWorkerChecklists.mockRejectedValue(new Error("boom"));
     fetchActiveWorkerChecklistTemplates.mockResolvedValue([]);
     renderTab();
-    expect(await screen.findByText("Couldn't load the checklists")).toBeInTheDocument();
+    expect(await screen.findByText("The checklists could not be loaded")).toBeInTheDocument();
     expect(screen.queryByText("No checklists yet")).toBeNull();
+  });
+
+  it("says only the newest 100 are listed when the server's cap is reached, and no count", async () => {
+    const closedRows = Array.from({ length: 100 }, (_, index) => ({
+      ...checklist,
+      id: `wcl_c${index}`,
+      name: `Annual review ${index}`,
+      status: "Completed",
+      completedAt: 1_700_000_000 + index,
+      items: [],
+    }));
+    fetchWorkerChecklists.mockResolvedValue(closedRows);
+    fetchActiveWorkerChecklistTemplates.mockResolvedValue([]);
+    renderTab();
+
+    const closed = within(await screen.findByRole("region", { name: "Closed" }));
+    expect(closed.getByText("Showing the newest 100")).toBeInTheDocument();
+    expect(closed.queryByText("100")).toBeNull();
+    // Only the rows near the view are mounted.
+    expect(closed.getAllByTestId(/^closed-checklist-/).length).toBeLessThan(100);
+  });
+
+  it("counts the closed checklists and says nothing of a cap under it", async () => {
+    fetchWorkerChecklists.mockResolvedValue([
+      { ...checklist, id: "wcl_done", status: "Completed", completedAt: 1_700_000_000 },
+    ]);
+    fetchActiveWorkerChecklistTemplates.mockResolvedValue([]);
+    renderTab();
+
+    const closed = within(await screen.findByRole("region", { name: "Closed" }));
+    expect(closed.getByText("1")).toBeInTheDocument();
+    expect(closed.queryByText(/Showing the newest/)).toBeNull();
   });
 
   it("hides item actions and starting without permission", async () => {

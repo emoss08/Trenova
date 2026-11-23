@@ -69,7 +69,7 @@ export default defineConfig({
           tailwindcss(),
           storybookTest({
             configDir: path.join(dirname, ".storybook"),
-            storybookScript: "pnpm storybook --no-open",
+            storybookScript: "bun run storybook --no-open",
           }),
         ],
         resolve: {

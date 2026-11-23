@@ -62,6 +62,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationschedule/conversationscheduledb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationturn/conversationturndb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/deskcase/deskcasedb"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/desktranscript/desktranscriptdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/extensionportal/extensionportaldb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/extensionwebwatch/extensionwebwatchdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/insight/insightdb"
@@ -454,6 +455,7 @@ func All() []*schema.Table {
 		demandforecastdb.DaysSchema(),
 		demandforecastdb.QualitiesSchema(),
 		demandforecastdb.RatesSchema(),
+		desktranscriptdb.ExportsSchema(),
 		detentionevidencedb.DetentionEvidencesSchema(),
 		detentionnoticedb.DetentionNoticesSchema(),
 		detentiondb.DetentionOccurrencesSchema(),

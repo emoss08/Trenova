@@ -1,9 +1,11 @@
 import type { WorkerHosDailyLog, WorkerHosLogEntry } from "@/lib/graphql/telematics";
+import { fromUserWallClock } from "@trenova/shared/lib/date";
 import { describe, expect, it } from "vitest";
 import {
   buildLogSegments,
   dayLaneTotals,
   formatLaneTotal,
+  hosWindow,
   laneTotalsMs,
   logHourLabels,
   logPath,
@@ -146,5 +148,29 @@ describe("logHourLabels", () => {
     expect(labels.slice(0, 3)).toEqual(["M", "1", "2"]);
     expect(labels.slice(11, 14)).toEqual(["11", "N", "1"]);
     expect(labels[24]).toBe("M");
+  });
+});
+
+describe("hosWindow", () => {
+  const at = (hour: number, minute: number, day = 23) =>
+    fromUserWallClock(new Date(2026, 10, day, hour, minute)) ?? 0;
+
+  // The reads are keyed by the window, so it must not move between two readings of one day.
+  it("stays the same all day and moves at midnight", () => {
+    const morning = hosWindow(at(0, 1));
+    const night = hosWindow(at(23, 59));
+    expect(night).toEqual(morning);
+    expect(morning.startDate).toBe("2026-11-17");
+    expect(morning.endDate).toBe("2026-11-23");
+
+    const next = hosWindow(at(0, 0, 24));
+    expect(next.endDate).toBe("2026-11-24");
+    expect(next.since).toBe(at(0, 0, 25 - 31));
+  });
+
+  it("covers the thirty days before today and all of today", () => {
+    const span = hosWindow(at(9, 30));
+    expect(span.since).toBe(at(0, 0, 23 - 30));
+    expect(span.until).toBe(at(0, 0, 24));
   });
 });

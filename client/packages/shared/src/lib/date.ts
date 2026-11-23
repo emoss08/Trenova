@@ -561,9 +561,20 @@ export function formatCountdownClock(seconds: number): string {
 
 const MS_PER_DAY = 86_400_000;
 
-export const daysUntil = (unixSeconds: number, timezone?: string) => {
-  const target = startOfUserDay(toDateFromUnixSeconds(unixSeconds), timezone);
-  const today = startOfUserDay(new Date(), timezone);
+/**
+ * Calendar days from today to `unixSeconds` in the user's zone (negative once it has passed).
+ * A component passes `now` (unix seconds) from `useNow`, so the count follows the clock it
+ * renders with instead of a wall-clock read the compiler could cache between ticks.
+ */
+export const daysUntil = (
+  unixSeconds: number,
+  options: { now?: number; timezone?: string } = {},
+) => {
+  const target = startOfUserDay(toDateFromUnixSeconds(unixSeconds), options.timezone);
+  const today = startOfUserDay(
+    options.now === undefined ? new Date() : toDateFromUnixSeconds(options.now),
+    options.timezone,
+  );
   return Math.round((target.getTime() - today.getTime()) / MS_PER_DAY);
 };
 
@@ -604,7 +615,15 @@ export type RangeYear = "auto" | "always" | "never";
  */
 export type RangeJoin = "dash" | "words";
 
-export type FormatRangeOptions = { timezone?: string; year?: RangeYear; join?: RangeJoin };
+/** What a range counts in: whole days ("Jul 12 to 14"), or months ("Sep 2020 to Apr 2022"). */
+export type RangeUnit = "day" | "month";
+
+export type FormatRangeOptions = {
+  timezone?: string;
+  year?: RangeYear;
+  join?: RangeJoin;
+  unit?: RangeUnit;
+};
 
 /**
  * A run of whole days in the reader's timezone, in the reader's language. The locale's range
@@ -612,12 +631,14 @@ export type FormatRangeOptions = { timezone?: string; year?: RangeYear; join?: R
  * differ meet: "Jul 12–14, 2026", "Jul 28–Aug 2", "Dec 30, 2026–Jan 2, 2027", or with words
  * "Aug 3 to 7, 2026", "de 3 a 7 de ago de 2026". One day, or an end before the start, reads as
  * the start alone. By default the year is said only when an end falls outside this year;
- * `year: "never"` leaves it out even across a year boundary ("Dec 30 to Jan 2").
+ * `year: "never"` leaves it out even across a year boundary ("Dec 30 to Jan 2"). `unit: "month"`
+ * reads a span of months, such as a past job's ("Sep 2020 to Apr 2022", "Mar to Jun 2024"); one
+ * month reads as that month alone.
  */
 export const formatRange = (
   startUnix: number,
   endUnix: number,
-  { timezone, year = "auto", join = "dash" }: FormatRangeOptions = {},
+  { timezone, year = "auto", join = "dash", unit = "day" }: FormatRangeOptions = {},
 ): string => {
   const resolved = resolveUserTimezone(timezone);
   const start = toDateFromUnixSeconds(startUnix);
@@ -633,7 +654,7 @@ export const formatRange = (
 
   const formatter = zonedFormatter({
     month: "short",
-    day: "numeric",
+    ...(unit === "day" ? { day: "numeric" as const } : {}),
     ...(showYear ? { year: "numeric" as const } : {}),
     timezone: resolved,
   });

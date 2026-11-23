@@ -20,7 +20,13 @@ var objectWrites = map[string]map[string]bool{
 	"uploadpipe":   {"Params": true},
 }
 
-var familyRoots = []string{"capture/", "audit-exports/", "ai-audit-exports/", "reports/"}
+var familyRoots = []string{
+	"capture/",
+	"audit-exports/",
+	"ai-audit-exports/",
+	"desk-transcript-exports/",
+	"reports/",
+}
 
 func sourceRoot(t *testing.T) string {
 	t.Helper()

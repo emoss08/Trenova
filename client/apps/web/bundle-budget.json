@@ -1,10 +1,10 @@
 {
   "scripts": {
     "files": 16,
-    "gzipBytes": 562176
+    "gzipBytes": 565914
   },
   "styles": {
     "files": 1,
-    "gzipBytes": 86016
+    "gzipBytes": 86299
   }
 }

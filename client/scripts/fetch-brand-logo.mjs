@@ -17,7 +17,7 @@
  * The API key is read from BRANDFETCH_API_KEY and never written anywhere.
  *
  * Usage:
- *   BRANDFETCH_API_KEY=... node scripts/fetch-brand-logo.mjs \
+ *   BRANDFETCH_API_KEY=... bun scripts/fetch-brand-logo.mjs \
  *     --domain quickbooks.co.uk --slug quickbooks \
  *     [--icon-viewbox "0 27.6024 227.502 227.502"]
  *

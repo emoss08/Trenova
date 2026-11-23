@@ -52,6 +52,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/conversationrepository"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/conversationschedulerepository"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/correctedworkrepository"
+	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/desktranscriptrepository"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/exceptionsourcerepository"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/insightrepository"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/palettequestionrepository"
@@ -148,6 +149,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/deskactivityservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/deskattentionservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/deskrecords"
+	"github.com/emoss08/trenova/internal/modules/agent/app/desktranscriptservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/dispatchautoassignservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/dispatchcoveragewatch"
 	"github.com/emoss08/trenova/internal/modules/agent/app/documentreader"
@@ -310,6 +312,8 @@ func SharedOptions() fx.Option {
 			aiauditrepository.New,
 			aiauditrepository.NewSource,
 			aiauditrepository.NewExport,
+			desktranscriptrepository.NewConversations,
+			desktranscriptrepository.NewExports,
 			insightrepository.New,
 			palettequestionrepository.New,
 			insightrepository.NewMetrics,
@@ -552,6 +556,7 @@ func SharedOptions() fx.Option {
 		agentguard.Module,
 		agentruneventservice.Module,
 		aiauditservice.Module,
+		desktranscriptservice.Module,
 		watchtowersources.Module,
 		proposalrecorder.Module,
 		assistantservice.Module,

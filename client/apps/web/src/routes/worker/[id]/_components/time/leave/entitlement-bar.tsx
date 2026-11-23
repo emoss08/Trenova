@@ -2,8 +2,9 @@ import type { LeaveEntitlement } from "@/lib/graphql/worker-leave";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatLeaveHours } from "@trenova/shared/lib/leave";
 import { cn } from "@trenova/shared/lib/utils";
-import { useEffect, useState, type CSSProperties } from "react";
+import type { CSSProperties } from "react";
 import { entitlementBar } from "./leave-model";
+import { useDrawn } from "@/hooks/use-drawn";
 
 const TICKS_STYLE: CSSProperties = {
   backgroundImage:
@@ -23,12 +24,7 @@ export function EntitlementBar({
   scale?: boolean;
 }) {
   const t = useT();
-  const [drawn, setDrawn] = useState(false);
-  useEffect(() => {
-    if (drawn) return;
-    const frame = requestAnimationFrame(() => setDrawn(true));
-    return () => cancelAnimationFrame(frame);
-  }, [drawn]);
+  const drawn = useDrawn();
   const bar = entitlementBar(entitlement);
 
   return (

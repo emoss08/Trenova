@@ -1,4 +1,5 @@
 import { AutoCompleteDateField } from "@/components/fields/date-field/date-field";
+import { FieldNote } from "@/components/fields/field-components";
 import { InputField } from "@/components/fields/input-field";
 import { NumberField } from "@/components/fields/number-field";
 import { SelectField } from "@/components/fields/select-field";
@@ -20,17 +21,15 @@ import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form
 import { useT } from "@trenova/shared/i18n/use-t";
 import { getTodayDate } from "@trenova/shared/lib/date";
 import { leaveFrequencyLabel, leaveTypeLabel } from "@trenova/shared/lib/leave";
-import { cn } from "@trenova/shared/lib/utils";
 import {
   leaveCaseFormSchema,
   leaveFrequencySchema,
   leaveTypeFormSchema,
   type LeaveCaseFormValues,
 } from "@trenova/shared/types/worker-leave";
-import { useEffect } from "react";
-import { FormProvider, useForm, useWatch, type Resolver } from "react-hook-form";
+import { FormProvider, useForm, useWatch, type Control, type Resolver } from "react-hook-form";
 import { FMLA_ELIGIBILITY_HOURS } from "./leave-model";
-import { useLeaveInvalidation } from "./use-leave-invalidation";
+import { useWorkerInvalidation } from "../../use-worker-invalidation";
 
 export type LeaveCasePaneProps = {
   open: boolean;
@@ -79,24 +78,14 @@ export function eligibilityNote(hours: number | null | undefined): "unknown" | "
  */
 export function LeaveCasePane({ open, onOpenChange, workerId, leaveCase }: LeaveCasePaneProps) {
   const t = useT();
-  const invalidate = useLeaveInvalidation(workerId);
+  const invalidate = useWorkerInvalidation(workerId, "leave");
   const isEdit = leaveCase !== null;
   const form = useForm<LeaveCaseFormValues>({
     resolver: zodResolver(leaveCaseFormSchema) as Resolver<LeaveCaseFormValues>,
     defaultValues: defaultsFor(leaveCase),
   });
-  const { control, handleSubmit, reset } = form;
-
-  useEffect(() => {
-    if (!open) return;
-    reset(defaultsFor(leaveCase));
-  }, [open, leaveCase, reset]);
-
-  const [frequency, leaveType, hoursWorked] = useWatch({
-    control,
-    name: ["frequency", "leaveType", "eligibilityHoursWorked"],
-  });
-  const eligibility = eligibilityNote(hoursWorked);
+  const { control, handleSubmit } = form;
+  const frequency = useWatch({ control, name: "frequency" });
   const typeOptions = leaveTypeFormSchema.options.map((value) => ({
     value,
     label: leaveTypeLabel(value),
@@ -219,35 +208,7 @@ export function LeaveCasePane({ open, onOpenChange, workerId, leaveCase }: Leave
                 </FormControl>
               )}
               <FormControl>
-                <NumberField<LeaveCaseFormValues>
-                  control={control}
-                  name="eligibilityHoursWorked"
-                  label={t("Hours worked in the prior year")}
-                  placeholder={t("e.g. 1800")}
-                />
-                <p
-                  aria-live="polite"
-                  className={cn(
-                    "mt-1 text-2xs",
-                    eligibility === "meets"
-                      ? "text-success-foreground"
-                      : eligibility === "short" && leaveType === "FMLA"
-                        ? "text-danger-foreground"
-                        : "text-muted-foreground",
-                  )}
-                >
-                  {eligibility === "unknown"
-                    ? t(
-                        "For the 1,250-hour eligibility test. There is no timeclock here to answer it.",
-                      )
-                    : eligibility === "meets"
-                      ? t("Meets the 1,250-hour test.")
-                      : leaveType === "FMLA"
-                        ? t(
-                            "Under 1,250 hours, so not eligible for FMLA. Record it as another type.",
-                          )
-                        : t("Under 1,250 hours.")}
-                </p>
+                <EligibilityHoursField control={control} />
               </FormControl>
               <FormControl cols="full">
                 <SwitchField<LeaveCaseFormValues>
@@ -289,11 +250,49 @@ export function LeaveCasePane({ open, onOpenChange, workerId, leaveCase }: Leave
           <WorkPaneFooter>
             <WorkPaneCancel />
             <Button type="submit" size="sm" isLoading={isPending}>
-              {isEdit ? t("Save case") : t("Open case")}
+              {isEdit ? t("Save changes") : t("Open a leave case")}
             </Button>
           </WorkPaneFooter>
         </Form>
       </FormProvider>
     </WorkPane>
+  );
+}
+
+/** Hours worked in the prior year, with what they mean for the FMLA test under it. */
+function EligibilityHoursField({ control }: { control: Control<LeaveCaseFormValues> }) {
+  const t = useT();
+  const [leaveType, hoursWorked] = useWatch({
+    control,
+    name: ["leaveType", "eligibilityHoursWorked"],
+  });
+  const eligibility = eligibilityNote(hoursWorked);
+  return (
+    <NumberField<LeaveCaseFormValues>
+      control={control}
+      name="eligibilityHoursWorked"
+      label={t("Hours worked in the prior year")}
+      placeholder={t("e.g. 1800")}
+      description={
+        <FieldNote
+          live
+          tone={
+            eligibility === "meets"
+              ? "success"
+              : eligibility === "short" && leaveType === "FMLA"
+                ? "danger"
+                : "muted"
+          }
+        >
+          {eligibility === "unknown"
+            ? t("For the 1,250-hour eligibility test. There is no timeclock here to answer it.")
+            : eligibility === "meets"
+              ? t("Meets the 1,250-hour test.")
+              : leaveType === "FMLA"
+                ? t("Under 1,250 hours, so not eligible for FMLA. Record it as another type.")
+                : t("Under 1,250 hours.")}
+        </FieldNote>
+      }
+    />
   );
 }

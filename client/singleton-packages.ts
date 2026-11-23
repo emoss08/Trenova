@@ -9,11 +9,11 @@
  * router hook reports it is outside a router).
  *
  * Three guards use this list:
- * - pnpm-workspace.yaml's catalog gives every workspace package the same
- *   version (reference them as "catalog:").
+ * - The workspaces catalog in package.json gives every workspace package the
+ *   same version (reference them as "catalog:").
  * - Each app's vite.config.ts dedupes them, so a build bundles one copy.
- * - scripts/check-single-copies.ts fails CI when the lockfile resolves any of
- *   them to more than one copy.
+ * - scripts/check-single-copies.ts fails CI when bun.lock or the install
+ *   store holds more than one copy of any of them.
  */
 export const singletonPackages = [
   "react",

@@ -3,10 +3,15 @@ import { PageLayout } from "@/components/navigation/sidebar-layout";
 import { RecordPresence, RecordViewers } from "@/components/presence/data-table-viewers";
 import { SectionStrip } from "@/components/section-strip";
 import { UnsavedChangesGuard } from "@/components/unsaved-changes-guard";
-import { WorkPaneHost, WorkPaneProvider, useWorkPane } from "@/components/work-pane";
+import { WorkPaneHost, WorkPaneProvider, lazyWorkPane, useWorkPane } from "@/components/work-pane";
 import { useBreadcrumbLabel } from "@/hooks/use-breadcrumb-label";
 import { lazyComponent } from "@/lib/lazy-component";
-import { worker as workerQueries } from "@/lib/queries/worker";
+import { whenIdle } from "@/lib/when-idle";
+import {
+  worker as workerQueries,
+  workerOverviewQuery,
+  workerRecordQuery,
+} from "@/lib/queries/worker";
 import type { RoutePrefetch } from "@/lib/route-prefetch";
 import { useQuery } from "@tanstack/react-query";
 import { useParams } from "@tanstack/react-router";
@@ -15,7 +20,7 @@ import { ErrorState } from "@trenova/shared/components/errors/error-state";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { Resource } from "@trenova/shared/types/permission";
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { ActivitySkeleton } from "./_components/activity/activity-skeleton";
 import { DevelopmentSkeleton } from "./_components/development/development-skeleton";
 import {
@@ -28,9 +33,8 @@ import { FilesSkeleton } from "./_components/files/files-skeleton";
 import { OverviewSkeleton } from "./_components/overview/overview-skeleton";
 import { workerStripItems, workerTabLabel } from "./_components/overview-model";
 import { PaySkeleton } from "./_components/pay/pay-skeleton";
-import { ProfileChangePane } from "./_components/profile-change/profile-change-pane";
 import type { ProfileTabProps } from "./_components/profile/profile-tab";
-import { WorkerProfileDock, type ProfileDock } from "./_components/profile/profile-dock";
+import type { ProfileDock } from "./_components/profile/profile-dock";
 import { ProfileSkeleton } from "./_components/profile/profile-skeleton";
 import { QualificationSkeleton } from "./_components/qualification/qualification-skeleton";
 import { RosterStepper } from "./_components/roster-stepper";
@@ -38,6 +42,8 @@ import { SafetySkeleton } from "./_components/safety/safety-skeleton";
 import { TimeSkeleton } from "./_components/time/time-skeleton";
 import { WorkerHeader } from "./_components/worker-header";
 import { WorkerPageSkeleton } from "./_components/worker-page-skeleton";
+import { preloadWorkerForm } from "./_components/worker-form-panes";
+import { preloadWorkerView } from "./_components/worker-view-modules";
 import { WorkerStripProvider } from "./_components/worker-strip-slot";
 import {
   CLOSED_WORKER_OPEN_STATE,
@@ -84,6 +90,24 @@ const TAB_ENTRIES = {
 const ProfileEntry = lazyComponent(
   () => import("./_components/profile/profile-tab"),
   pick<ProfileTabProps>,
+);
+
+const ProfileChange = lazyWorkPane(
+  () => import("./_components/profile-change/profile-change-pane"),
+  (module) => module.ProfileChangePane,
+  {
+    isOpen: (props) => props.requestId !== null,
+    openKey: (props) => props.requestId,
+    title: (props, t) => t("Profile change from {0}", props.workerFirstName),
+    fields: 3,
+  },
+);
+
+// The Profile form's save dock arrives with the Profile tab's first save-able form, never before,
+// so its code (the dock, react-hook-form's provider) is read then rather than with the page.
+const ProfileDockEntry = lazyComponent(
+  () => import("./_components/profile/profile-dock"),
+  (module) => module.WorkerProfileDock,
 );
 
 function preloadTab(tab: WorkerTab) {
@@ -162,7 +186,7 @@ export const prefetch: RoutePrefetch = ({ params }) =>
 export function WorkerPage() {
   const t = useT();
   const { id = "" } = useParams({ strict: false });
-  const record = useQuery({ ...workerQueries.record(id), enabled: id !== "" });
+  const record = useQuery({ ...workerRecordQuery(id), enabled: id !== "" });
   useBreadcrumbLabel(record.data ? record.data.wholeName || record.data.firstName : undefined);
   const [waitedFor, setWaitedFor] = useState<string | null>(null);
   if (record.isLoading && waitedFor !== id) setWaitedFor(id);
@@ -265,10 +289,26 @@ function WorkerFile({
   // this worker's keyed subtree, so stepping to another worker drops it with the old form.
   const [profileDock, setProfileDock] = useState<ProfileDock | null>(null);
   const areas = useWorkerAreas();
-  const overview = useQuery(workerQueries.overview(worker.id));
-  const record = useQuery({ ...workerQueries.record(worker.id), enabled: false });
+  const overview = useQuery(workerOverviewQuery(worker.id));
+  const record = useQuery({ ...workerRecordQuery(worker.id), enabled: false });
   const area = areas.resolve({ tab: state.tab, view: state.view });
   const tab = area.tab;
+
+  // Once the browser is idle, the other views of the tab showing are read, so switching views
+  // draws at once; a hidden tab reads nothing.
+  const idleViews = areas.viewsOf(tab).join(" ");
+  useEffect(() => {
+    if (idleViews === "") return undefined;
+    return whenIdle(() => {
+      for (const view of idleViews.split(" ")) preloadWorkerView(view as WorkerView);
+    });
+  }, [idleViews]);
+
+  // A link that opens a form reads the form's pane alongside the tab, not after it.
+  const deepLinkedForm = state.form;
+  useEffect(() => {
+    if (deepLinkedForm) preloadWorkerForm(deepLinkedForm);
+  }, [deepLinkedForm]);
 
   // The view each tab last showed, so coming back to a tab lands where the person left it.
   const [views, setViews] = useState<Partial<Record<WorkerTab, WorkerView>>>(() =>
@@ -316,6 +356,7 @@ function WorkerFile({
           onValueChange={(view) => selectView(key, view)}
           aria-label={t("{0} views", workerTabLabel(key, t))}
           loading={overview.isLoading}
+          onValueIntent={preloadWorkerView}
         />
       ) : null;
     return (
@@ -385,7 +426,7 @@ function WorkerFile({
               : entry(key),
           )}
         </WorkPaneHost>
-        <ProfileChangePane
+        <ProfileChange.Component
           workerId={worker.id}
           workerFirstName={worker.firstName}
           requestId={state.request}
@@ -397,11 +438,13 @@ function WorkerFile({
         // container), and the tab panes animate with transforms, so a fixed dock in there would sit
         // at the end of the tab and hide with it. Here it is fixed to the viewport, and its spacer
         // ends whatever tab is showing.
-        <WorkerProfileDock
-          dock={profileDock}
-          onDirtyChange={onProfileDirtyChange}
-          lifted={paneOpen}
-        />
+        <LazyComponent fallback={null}>
+          <ProfileDockEntry.Component
+            dock={profileDock}
+            onDirtyChange={onProfileDirtyChange}
+            lifted={paneOpen}
+          />
+        </LazyComponent>
       ) : null}
     </>
   );

@@ -1,9 +1,9 @@
 // Screenshots of the Lading studio against the mock API: Acme Retail Group's project, its draft
 // version 3 being written, tested, run and replayed, and version 3 in shadow.
 //
-//   node e2e/mock-api/server.mjs
-//   pnpm --filter @trenova/web dev
-//   node e2e/mock-api/lading-studio-screenshots.mjs [outDir] [name,name,...]
+//   bun e2e/mock-api/server.mjs
+//   bun run --filter @trenova/web dev
+//   bun e2e/mock-api/lading-studio-screenshots.mjs [outDir] [name,name,...]
 //
 // Every shot starts from a fresh scenario, so a save, a certify or a shadow one makes never
 // leaks into the next. Shots are 1600 by 1000 at 1.5x, the 2400 by 1500 the site's posts use.

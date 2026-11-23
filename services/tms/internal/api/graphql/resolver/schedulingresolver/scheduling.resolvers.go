@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/loaders/loadercore"
 	"github.com/emoss08/trenova/internal/api/graphql/loaders/workforceloaders"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
@@ -249,6 +250,7 @@ func (r *QueryResolver) WorkerShiftAssignments(ctx context.Context, workerID str
 		TenantInfo:      resolvercore.TenantInfo(authCtx),
 		WorkerID:        id,
 		IncludeTemplate: true,
+		Limit:           gqlconnection.RecordListLimit(nil, true),
 	}
 	if gqlscalar.BoolValue(activeOnly) {
 		req.ActiveAt = timeutils.NowUnix()
@@ -300,7 +302,7 @@ func (r *QueryResolver) ShiftSwapRequests(ctx context.Context, workerID *string,
 		OpenOnly:       gqlscalar.BoolValue(openOnly),
 		Since:          gqlscalar.Int64Value(since),
 		IncludeWorkers: true,
-		Limit:          gqlscalar.IntValue(limit),
+		Limit:          gqlconnection.RecordListLimit(limit, id.IsNotNil()),
 	})
 }
 

@@ -2,7 +2,7 @@
 //
 // Source of truth: services/tms/internal/modules/agent/ports/agenttoolports/toolnamespace.go (agenttoolports.ToolNamespaces).
 //
-// Regenerate with: pnpm --filter @trenova/graphql codegen
+// Regenerate with: bun run --filter @trenova/graphql codegen
 // Drift between these values and the Go source fails the codegen:check CI gate.
 
 /** Every agent tool namespace: a tool is named <namespace>_<verb>[_<object>]. */

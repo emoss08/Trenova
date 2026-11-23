@@ -24,6 +24,8 @@ var Shard = &gqlexec.Shard{
 		{Name: "RecordWorkerEmploymentEventPayload", Implementors: []string{"RecordWorkerEmploymentEventPayload"}},
 		{Name: "WorkerEmploymentEffect", Implementors: []string{"WorkerEmploymentEffect"}},
 		{Name: "WorkerEmploymentEvent", Implementors: []string{"WorkerEmploymentEvent"}},
+		{Name: "WorkerEmploymentEventConnection", Implementors: []string{"WorkerEmploymentEventConnection"}},
+		{Name: "WorkerEmploymentEventEdge", Implementors: []string{"WorkerEmploymentEventEdge"}},
 		{Name: "WorkerEmploymentEventOptions", Implementors: []string{"WorkerEmploymentEventOptions"}},
 		{Name: "WorkerEmploymentEventPreview", Implementors: []string{"WorkerEmploymentEventPreview"}},
 		{Name: "WorkerEmploymentValue", Implementors: []string{"WorkerEmploymentValue"}},
@@ -64,13 +66,13 @@ var Shard = &gqlexec.Shard{
 				IsResolver: true,
 				Concurrent: true,
 				HasChild:   true,
-				ChildType:  "WorkerEmploymentEvent",
+				ChildType:  "WorkerEmploymentEventConnection",
 				Args:       field_Query_workerEmploymentEvents_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[QueryResolver](ec, "Query@workeremployment").WorkerEmploymentEvents(ctx, fc.Args["workerId"].(string), fc.Args["kinds"].([]employment.EmploymentEventKind))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@workeremployment").WorkerEmploymentEvents(ctx, fc.Args["workerId"].(string), fc.Args["kinds"].([]employment.EmploymentEventKind), fc.Args["first"].(*int), fc.Args["after"].(*string))
 				},
-				Marshal: gqlexec.Marshal(marshalNWorkerEmploymentEvent2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋemploymentᚐWorkerEmploymentEventᚄ),
+				Marshal: gqlexec.Marshal(marshalNWorkerEmploymentEventConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐWorkerEmploymentEventConnection),
 			},
 			{
 				Name:       "workerEmploymentEvent",
@@ -434,6 +436,72 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
 			},
 		}},
+		{Object: "WorkerEmploymentEventConnection", Fields: []*gqlexec.Field{
+			{
+				Name:      "edges",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "WorkerEmploymentEventEdge",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.WorkerEmploymentEventConnection)
+					return obj.Edges, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNWorkerEmploymentEventEdge2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐWorkerEmploymentEventEdgeᚄ),
+			},
+			{
+				Name:      "pageInfo",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "PageInfo",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.WorkerEmploymentEventConnection)
+					return obj.PageInfo, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNPageInfo2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐPageInfo),
+			},
+			{
+				Name:     "totalCount",
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.WorkerEmploymentEventConnection)
+					return obj.TotalCount, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOInt2ᚖint),
+			},
+			{
+				Name:     "totalCountExact",
+				NonNull:  true,
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.WorkerEmploymentEventConnection)
+					return obj.TotalCountExact, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+		}},
+		{Object: "WorkerEmploymentEventEdge", Fields: []*gqlexec.Field{
+			{
+				Name:      "node",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "WorkerEmploymentEvent",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.WorkerEmploymentEventEdge)
+					return obj.Node, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNWorkerEmploymentEvent2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋemploymentᚐWorkerEmploymentEvent),
+			},
+			{
+				Name:     "cursor",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.WorkerEmploymentEventEdge)
+					return obj.Cursor, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+		}},
 		{Object: "WorkerEmploymentEventOptions", Fields: []*gqlexec.Field{
 			{
 				Name:     "recordableKinds",
@@ -557,7 +625,7 @@ type MutationResolver interface {
 }
 
 type QueryResolver interface {
-	WorkerEmploymentEvents(ctx context.Context, workerID string, kinds []employment.EmploymentEventKind) ([]*employment.WorkerEmploymentEvent, error)
+	WorkerEmploymentEvents(ctx context.Context, workerID string, kinds []employment.EmploymentEventKind, first *int, after *string) (*gqlmodel.WorkerEmploymentEventConnection, error)
 	WorkerEmploymentEvent(ctx context.Context, id string) (*employment.WorkerEmploymentEvent, error)
 	WorkerEmploymentEventOptions(ctx context.Context, workerID string) (*workeremploymentservice.Options, error)
 	PreviewWorkerEmploymentEvent(ctx context.Context, input gqlmodel.RecordWorkerEmploymentEventInput) (*workeremploymentservice.Preview, error)
@@ -619,7 +687,7 @@ func field_Mutation_amendWorkerEmploymentEvent_args(ctx context.Context, ec *gql
 }
 
 func field_Query_workerEmploymentEvents_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
-	args := make(map[string]any, 2)
+	args := make(map[string]any, 4)
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "workerId",
 		func(ctx context.Context, v any) (string, error) {
 			return unmarshalNID2string(ctx, ec, v)
@@ -636,6 +704,22 @@ func field_Query_workerEmploymentEvents_args(ctx context.Context, ec *gqlexec.Ex
 		return nil, err
 	}
 	args["kinds"] = arg1
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "first",
+		func(ctx context.Context, v any) (*int, error) {
+			return unmarshalOInt2ᚖint(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["first"] = arg2
+	arg3, err := graphql.ProcessArgField(ctx, rawArgs, "after",
+		func(ctx context.Context, v any) (*string, error) {
+			return unmarshalOString2ᚖstring(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["after"] = arg3
 	return args, nil
 }
 
@@ -985,6 +1069,14 @@ func marshalNInt2int64(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionS
 	return res
 }
 
+func marshalNPageInfo2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐPageInfo(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.PageInfo) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "PageInfo", v)
+}
+
 func marshalNRecordWorkerEmploymentEventPayload2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋworkeremploymentserviceᚐRecordResult(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *workeremploymentservice.RecordResult) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
@@ -1033,20 +1125,36 @@ func marshalNWorkerEmploymentEffectKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinter
 	return res
 }
 
-func marshalNWorkerEmploymentEvent2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋemploymentᚐWorkerEmploymentEventᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*employment.WorkerEmploymentEvent) graphql.Marshaler {
-	return gqlexec.List[*employment.WorkerEmploymentEvent]{
-		Elem:        marshalNWorkerEmploymentEvent2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋemploymentᚐWorkerEmploymentEvent,
-		NonNull:     true,
-		NonNullElem: true,
-	}.Marshal(ctx, ec, sel, v)
-}
-
 func marshalNWorkerEmploymentEvent2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋemploymentᚐWorkerEmploymentEvent(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *employment.WorkerEmploymentEvent) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "WorkerEmploymentEvent", v)
+}
+
+func marshalNWorkerEmploymentEventConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐWorkerEmploymentEventConnection(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.WorkerEmploymentEventConnection) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "WorkerEmploymentEventConnection", v)
+}
+
+func marshalNWorkerEmploymentEventEdge2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐWorkerEmploymentEventEdgeᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*gqlmodel.WorkerEmploymentEventEdge) graphql.Marshaler {
+	return gqlexec.List[*gqlmodel.WorkerEmploymentEventEdge]{
+		Elem:        marshalNWorkerEmploymentEventEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐWorkerEmploymentEventEdge,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalNWorkerEmploymentEventEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐWorkerEmploymentEventEdge(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.WorkerEmploymentEventEdge) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "WorkerEmploymentEventEdge", v)
 }
 
 func marshalNWorkerEmploymentEventKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋemploymentᚐEmploymentEventKind(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v employment.EmploymentEventKind) graphql.Marshaler {

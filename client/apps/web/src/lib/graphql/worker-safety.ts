@@ -27,6 +27,8 @@ import type {
   UpdateWorkerSafetyEventMutation,
   UpdateWorkerSafetyEventMutationVariables,
   WorkerDisciplinaryActionFieldsFragment,
+  WorkerDisciplinaryActionQuery,
+  WorkerDisciplinaryActionQueryVariables,
   WorkerDisciplinaryActionsQuery,
   WorkerDisciplinaryActionsQueryVariables,
   WorkerDisciplinaryLadderQuery,
@@ -37,6 +39,8 @@ import type {
   WorkerRecognitionsQueryVariables,
   WorkerSafetyEventFieldsFragment,
   WorkerSafetyEventInput,
+  WorkerSafetyEventQuery,
+  WorkerSafetyEventQueryVariables,
   WorkerSafetyEventsQuery,
   WorkerSafetyEventsQueryVariables,
   WorkerSafetyScorecardQuery,
@@ -54,13 +58,16 @@ import {
   RescindDisciplinaryActionDocument,
   ReviewWorkerSafetyEventDocument,
   UpdateWorkerSafetyEventDocument,
+  WorkerDisciplinaryActionDocument,
   WorkerDisciplinaryActionsDocument,
   WorkerDisciplinaryLadderDocument,
   WorkerRecognitionsDocument,
+  WorkerSafetyEventDocument,
   WorkerSafetyEventsDocument,
   WorkerSafetyScorecardDocument,
 } from "@trenova/graphql/generated/documents/worker-safety/operations";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
+import type { Connection } from "./connection";
 
 export type WorkerSafetyEventRow = WorkerSafetyEventFieldsFragment;
 export type WorkerDisciplinaryActionRow = WorkerDisciplinaryActionFieldsFragment;
@@ -74,17 +81,36 @@ export const WORKER_DISCIPLINARY_ACTIONS_KEY = "worker-disciplinary-actions";
 export const WORKER_DISCIPLINARY_LADDER_KEY = "worker-disciplinary-ladder";
 export const WORKER_RECOGNITIONS_KEY = "worker-recognitions";
 
+/**
+ * A worker's safety events, newest first: the whole record up to the server's cap (the newest
+ * 100), read in one go because the Desk's tools read it whole too.
+ */
 export async function fetchWorkerSafetyEvents(
   workerId: string,
+  filters: { openOnly?: boolean } = {},
   options?: { signal?: AbortSignal },
 ): Promise<WorkerSafetyEventRow[]> {
   const data = await requestGraphQL<WorkerSafetyEventsQuery, WorkerSafetyEventsQueryVariables>({
     document: WorkerSafetyEventsDocument,
     operationName: "WorkerSafetyEvents",
-    variables: { workerId },
+    variables: { workerId, openOnly: filters.openOnly || undefined },
     signal: options?.signal,
   });
   return data.workerSafetyEvents as WorkerSafetyEventRow[];
+}
+
+/** One safety event by id: a deep link to an event outside the newest 100. */
+export async function fetchWorkerSafetyEvent(
+  id: string,
+  options?: { signal?: AbortSignal },
+): Promise<WorkerSafetyEventRow> {
+  const data = await requestGraphQL<WorkerSafetyEventQuery, WorkerSafetyEventQueryVariables>({
+    document: WorkerSafetyEventDocument,
+    operationName: "WorkerSafetyEvent",
+    variables: { id },
+    signal: options?.signal,
+  });
+  return data.workerSafetyEvent as WorkerSafetyEventRow;
 }
 
 export async function fetchWorkerSafetyScorecard(
@@ -103,20 +129,38 @@ export async function fetchWorkerSafetyScorecard(
   return data.workerSafetyScorecard as SafetyScorecard;
 }
 
+/** A page of a worker's disciplinary actions, newest first, as the server's connection. */
 export async function fetchWorkerDisciplinaryActions(
-  workerId: string,
+  variables: WorkerDisciplinaryActionsQueryVariables,
   options?: { signal?: AbortSignal },
-): Promise<WorkerDisciplinaryActionRow[]> {
+): Promise<Connection<WorkerDisciplinaryActionRow>> {
   const data = await requestGraphQL<
     WorkerDisciplinaryActionsQuery,
     WorkerDisciplinaryActionsQueryVariables
   >({
     document: WorkerDisciplinaryActionsDocument,
     operationName: "WorkerDisciplinaryActions",
-    variables: { workerId },
+    variables: { ...variables, includeTotalCount: !variables.after },
     signal: options?.signal,
   });
-  return data.workerDisciplinaryActions as WorkerDisciplinaryActionRow[];
+  return data.workerDisciplinaryActions as Connection<WorkerDisciplinaryActionRow>;
+}
+
+/** One disciplinary action by id: a deep link to an action outside the pages already read. */
+export async function fetchWorkerDisciplinaryAction(
+  id: string,
+  options?: { signal?: AbortSignal },
+): Promise<WorkerDisciplinaryActionRow> {
+  const data = await requestGraphQL<
+    WorkerDisciplinaryActionQuery,
+    WorkerDisciplinaryActionQueryVariables
+  >({
+    document: WorkerDisciplinaryActionDocument,
+    operationName: "WorkerDisciplinaryAction",
+    variables: { id },
+    signal: options?.signal,
+  });
+  return data.workerDisciplinaryAction as WorkerDisciplinaryActionRow;
 }
 
 export async function fetchWorkerDisciplinaryLadder(
@@ -135,6 +179,7 @@ export async function fetchWorkerDisciplinaryLadder(
   return data.workerDisciplinaryLadder;
 }
 
+/** A worker's recognitions, newest first, up to the server's cap (the newest 100). */
 export async function fetchWorkerRecognitions(
   workerId: string,
   options?: { signal?: AbortSignal },

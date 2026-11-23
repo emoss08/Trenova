@@ -498,11 +498,11 @@ func truncate(value string, limit int) string {
 	return value[:limit]
 }
 
-func (s *Service) ListAcknowledgements(
+func (s *Service) PageAcknowledgements(
 	ctx context.Context,
 	req *selfserviceports.ListPolicyAcknowledgementsRequest,
-) ([]*workerpolicy.WorkerPolicyAcknowledgement, error) {
-	return s.repo.ListAcknowledgements(ctx, req)
+) (*pagination.CursorListResult[*workerpolicy.WorkerPolicyAcknowledgement], error) {
+	return s.repo.PageAcknowledgements(ctx, req)
 }
 
 // publishNotice tells everybody a policy binds that there is something to

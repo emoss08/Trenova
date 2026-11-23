@@ -35,6 +35,28 @@ describe("BoardWords", () => {
     expect(container.querySelector(".dk-bd-n")).toHaveTextContent("1");
   });
 
+  // jsdom breaks no lines, so the whole-token span is what can be asserted; that a browser keeps
+  // it on one line is `white-space: nowrap`'s promise.
+  it("sets each record number and hyphenated date of plain words whole, and leaves cited phrases and readings as they are", () => {
+    const card = conversationBoard();
+    const segments = writtenSegments(
+      "Pay SEED-INV-0006 by 2026-11-29: [SEED-INV-0007 is late][1], {late} of them.",
+    );
+    const { container } = render(
+      <p data-testid="words">
+        <BoardWords segments={segments} board={card} />
+      </p>,
+    );
+
+    expect(
+      [...container.querySelectorAll(".whitespace-nowrap")].map((run) => run.textContent),
+    ).toEqual(["SEED-INV-0006", "2026-11-29", "6"]);
+    expect(container.querySelector(".dk-bd-hl")?.innerHTML).toBe("SEED-INV-0007 is late");
+    expect(screen.getByTestId("words").textContent).toBe(
+      "Pay SEED-INV-0006 by 2026-11-29: SEED-INV-0007 is late1, 6 of them.",
+    );
+  });
+
   it("draws a reading as a button whose popover says what it reads, where from and when", async () => {
     words();
 

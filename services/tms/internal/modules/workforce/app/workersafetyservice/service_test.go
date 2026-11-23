@@ -52,6 +52,33 @@ func (f *fakeRepo) ListEvents(
 	return out, nil
 }
 
+func (f *fakeRepo) LastCountingEventAt(
+	_ context.Context,
+	req *workersafetyports.LastCountingSafetyEventRequest,
+) (*int64, error) {
+	var last *int64
+	for _, e := range f.events {
+		if e.WorkerID != req.WorkerID || !e.Kind.CountsAgainstRecord() {
+			continue
+		}
+		if last == nil || e.OccurredAt > *last {
+			last = new(e.OccurredAt)
+		}
+	}
+	return last, nil
+}
+
+func (f *fakeRepo) ActionsPage(
+	ctx context.Context,
+	req *workersafetyports.ListWorkerDisciplinaryActionsRequest,
+) (*pagination.CursorListResult[*workerdiscipline.WorkerDisciplinaryAction], error) {
+	items, err := f.ListActions(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	return &pagination.CursorListResult[*workerdiscipline.WorkerDisciplinaryAction]{Items: items}, nil
+}
+
 func (f *fakeRepo) GetEventByID(
 	_ context.Context,
 	req *workersafetyports.GetWorkerSafetyEventByIDRequest,

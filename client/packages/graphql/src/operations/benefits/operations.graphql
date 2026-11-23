@@ -25,27 +25,36 @@ query BenefitPlans($activeOnly: Boolean, $planYear: Int) {
   }
 }
 
-query WorkerBenefitEnrollments($workerId: ID!, $openOnly: Boolean) {
-  workerBenefitEnrollments(workerId: $workerId, openOnly: $openOnly) {
-    id
-    workerId
-    benefitPlanId
-    status
-    coverageTier
-    effectiveFrom
-    effectiveTo
-    employeeCostMinor
-    employerCostMinor
-    recurringDeductionId
-    waivedReason
-    notes
-    version
-    benefitPlan {
-      id
-      code
-      name
-      planType
-      carrier
+query WorkerBenefitEnrollments($workerId: ID!, $openOnly: Boolean, $first: Int, $after: String) {
+  workerBenefitEnrollments(workerId: $workerId, openOnly: $openOnly, first: $first, after: $after) {
+    edges {
+      cursor
+      node {
+        id
+        workerId
+        benefitPlanId
+        status
+        coverageTier
+        effectiveFrom
+        effectiveTo
+        employeeCostMinor
+        employerCostMinor
+        recurringDeductionId
+        waivedReason
+        notes
+        version
+        benefitPlan {
+          id
+          code
+          name
+          planType
+          carrier
+        }
+      }
+    }
+    pageInfo {
+      hasNextPage
+      endCursor
     }
   }
 }

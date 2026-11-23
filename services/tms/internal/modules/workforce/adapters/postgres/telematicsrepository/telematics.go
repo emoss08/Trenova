@@ -275,10 +275,7 @@ func (r *repository) ListWorkerHOSViolations(
 			q := v.Where(
 				keel.When(req.WorkerID.IsNotNil(), v.WorkerID.Eq(req.WorkerID)),
 				keel.When(req.Since > 0, v.ViolationStartAt.Gte(req.Since)),
-			).Order(v.ViolationStartAt.Desc())
-			if req.Limit > 0 {
-				q = q.Limit(req.Limit)
-			}
+			).Order(v.ViolationStartAt.Desc()).Limit(violationPageLimit(req.Limit))
 
 			entities, err := q.All(ctx, r.db.Keel(ctx))
 			if err != nil {
@@ -288,6 +285,15 @@ func (r *repository) ListWorkerHOSViolations(
 			return entities, nil
 		},
 	)
+}
+
+const maxViolationPage = 500
+
+func violationPageLimit(limit int) int {
+	if limit <= 0 || limit > maxViolationPage {
+		return maxViolationPage
+	}
+	return limit
 }
 
 func (r *repository) ListWorkerHOSViolationStats(

@@ -1,4 +1,4 @@
-// Run with: node --test i18n/tools/
+// Run with: bun test i18n/tools/
 //
 // The codemod rewrites ~1,500 files, so its edge cases are pinned here rather than
 // discovered in a diff. Each case is one thing that would be wrong in the product if the

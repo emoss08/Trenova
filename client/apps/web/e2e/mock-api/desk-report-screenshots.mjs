@@ -2,7 +2,7 @@
 // for the last 30 days, after previewing it. Run with the mock API and the web
 // app up (see README.md):
 //
-//   node e2e/mock-api/desk-report-screenshots.mjs [outDir] [name,name,...]
+//   bun e2e/mock-api/desk-report-screenshots.mjs [outDir] [name,name,...]
 //
 // Each shot sets the `deskReport` stage it needs.
 import { mkdir } from "node:fs/promises";

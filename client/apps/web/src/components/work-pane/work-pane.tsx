@@ -10,6 +10,7 @@ import { useLatestCallback } from "@trenova/shared/hooks/use-latest-callback";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import {
+  use,
   useEffect,
   useId,
   useLayoutEffect,
@@ -21,6 +22,7 @@ import {
 import { createPortal } from "react-dom";
 import type { FieldValues, UseFormReturn } from "react-hook-form";
 import {
+  WorkPaneIdentityContext,
   WorkPanePartContext,
   useWorkPaneApi,
   useWorkPanePart,
@@ -97,12 +99,17 @@ export function WorkPane({
   const t = useT();
   const api = useWorkPaneApi();
   const { activeId, host } = useWorkPaneState();
-  const id = useId();
+  const ownId = useId();
+  const sharedId = use(WorkPaneIdentityContext);
+  const id = sharedId ?? ownId;
   const titleId = useId();
   const descriptionId = useId();
   const contentRef = useRef<HTMLDivElement>(null);
   const pendingRef = useRef<(() => void) | null>(null);
   const shown = open && activeId === id;
+  // A pane that takes over from its loading stand-in is already in the host: it draws without
+  // replaying the entrance. A later opening of the same pane enters as usual.
+  const [quietEntrance, setQuietEntrance] = useState(sharedId !== null && shown);
 
   const closeForGood = useLatestCallback(() => {
     onOpenChange(false);
@@ -136,6 +143,7 @@ export function WorkPane({
   if (wasShown !== shown) {
     setWasShown(shown);
     setLingering(!shown);
+    if (shown) setQuietEntrance(false);
   }
   useEffect(() => {
     if (!lingering) return undefined;
@@ -186,47 +194,50 @@ export function WorkPane({
   if (!drawn) return null;
 
   return createPortal(
-    <WorkPanePartContext.Provider
-      value={{
-        guard,
-        requestClose: () => requestClose(),
-        description,
-        descriptionId,
-        registerFooter,
-      }}
-    >
-      <div
-        ref={contentRef}
-        key={contentKey}
-        role="dialog"
-        aria-modal={false}
-        aria-labelledby={titleId}
-        aria-describedby={description ? descriptionId : undefined}
-        className={cn(
-          "flex min-h-0 flex-1 animate-panel-in flex-col motion-reduce:animate-none",
-          "[&>form]:flex [&>form]:min-h-0 [&>form]:flex-1 [&>form]:flex-col",
-          "[&>form>[role=alert]]:mx-4 [&>form>[role=alert]]:mt-4 [&>form>[role=alert]]:mb-0",
-        )}
+    <WorkPaneIdentityContext value={null}>
+      <WorkPanePartContext.Provider
+        value={{
+          guard,
+          requestClose: () => requestClose(),
+          description,
+          descriptionId,
+          registerFooter,
+        }}
       >
-        <header className="flex h-11 shrink-0 items-center gap-2 border-b pr-2 pl-4">
-          <h2 id={titleId} className="min-w-0 flex-1 truncate text-sm font-semibold">
-            {title}
-          </h2>
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon-sm"
-            data-slot="work-pane-close"
-            aria-label={t("Close")}
-            onClick={() => requestClose()}
-          >
-            <XCloseIcon className="size-3.5" />
-          </Button>
-        </header>
-        {children}
-        {panelGuard.confirmingClose && footers === 0 ? <WorkPaneFooter /> : null}
-      </div>
-    </WorkPanePartContext.Provider>,
+        <div
+          ref={contentRef}
+          key={contentKey}
+          role="dialog"
+          aria-modal={false}
+          aria-labelledby={titleId}
+          aria-describedby={description ? descriptionId : undefined}
+          className={cn(
+            "flex min-h-0 flex-1 flex-col",
+            !quietEntrance && "animate-panel-in motion-reduce:animate-none",
+            "[&>form]:flex [&>form]:min-h-0 [&>form]:flex-1 [&>form]:flex-col",
+            "[&>form>[role=alert]]:mx-4 [&>form>[role=alert]]:mt-4 [&>form>[role=alert]]:mb-0",
+          )}
+        >
+          <header className="flex h-11 shrink-0 items-center gap-2 border-b pr-2 pl-4">
+            <h2 id={titleId} className="min-w-0 flex-1 truncate text-sm font-semibold">
+              {title}
+            </h2>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-sm"
+              data-slot="work-pane-close"
+              aria-label={t("Close")}
+              onClick={() => requestClose()}
+            >
+              <XCloseIcon className="size-3.5" />
+            </Button>
+          </header>
+          {children}
+          {panelGuard.confirmingClose && footers === 0 ? <WorkPaneFooter /> : null}
+        </div>
+      </WorkPanePartContext.Provider>
+    </WorkPaneIdentityContext>,
     host,
   );
 }

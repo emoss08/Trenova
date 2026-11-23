@@ -161,3 +161,21 @@ func TestMonthStartInZone(t *testing.T) {
 		NextMonthStart(december, time.UTC),
 	)
 }
+
+func TestLocalDateAsUTC_IsTheOrganizationsDateOnAUSEvening(t *testing.T) {
+	t.Parallel()
+
+	chicago, err := time.LoadLocation("America/Chicago")
+	if err != nil {
+		t.Fatal(err)
+	}
+	evening := time.Date(2026, time.November, 23, 20, 30, 0, 0, chicago).Unix()
+	want := time.Date(2026, time.November, 23, 0, 0, 0, 0, time.UTC).Unix()
+
+	if got := LocalDateAsUTC(evening, chicago); got != want {
+		t.Fatalf("LocalDateAsUTC = %d, want %d (the 23rd in Chicago, already the 24th in UTC)", got, want)
+	}
+	if got := LocalDateAsUTC(evening, nil); got != want+86400 {
+		t.Fatalf("LocalDateAsUTC without a zone = %d, want the UTC date %d", got, want+86400)
+	}
+}

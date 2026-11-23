@@ -761,7 +761,7 @@ tasks:
   watch-ui:
     desc: Run frontend with hot reload
     cmds:
-      - cd {{.CLIENT_DIR}} && pnpm dev
+      - cd {{.CLIENT_DIR}} && bun run dev
 
   dev:
     desc: Start development environment
@@ -772,22 +772,22 @@ tasks:
   ui-install:
     desc: Install UI dependencies
     cmds:
-      - cd {{.CLIENT_DIR}} && pnpm install
+      - cd {{.CLIENT_DIR}} && bun install
 
   ui-build:
     desc: Build UI for production
     cmds:
-      - cd {{.CLIENT_DIR}} && pnpm build
+      - cd {{.CLIENT_DIR}} && bun run build
 
   ui-lint:
     desc: Lint UI code
     cmds:
-      - cd {{.CLIENT_DIR}} && pnpm lint
+      - cd {{.CLIENT_DIR}} && bun run lint
 
   ui-test:
     desc: Run UI tests
     cmds:
-      - cd {{.CLIENT_DIR}} && pnpm test
+      - cd {{.CLIENT_DIR}} && bun run test
 
   install-hooks:
     desc: Install git hooks

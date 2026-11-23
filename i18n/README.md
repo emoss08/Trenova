@@ -66,8 +66,8 @@ There are no `shipment.header.title` keys to invent or keep in sync. Three thing
 | `task i18n-report` | Inventory: totals, per-area breakdown, what the filter dropped |
 | `task i18n-report -- --rejected` | Audit *why* each literal was filtered out |
 | `task i18n-check` | CI gate — fails on missing or orphaned entries, or stale runtime catalogs |
-| `node i18n/tools/i18n.mjs pending es --area routes/shipment` | List what still needs translating |
-| `node i18n/tools/i18n.mjs merge es batch.json` | Merge a batch of translations |
+| `bun i18n/tools/i18n.mjs pending es --area routes/shipment` | List what still needs translating |
+| `bun i18n/tools/i18n.mjs merge es batch.json` | Merge a batch of translations |
 
 ## Adding a language
 

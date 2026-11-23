@@ -17,7 +17,7 @@ import { fieldInvalidClass, fieldTriggerClass } from "@trenova/shared/lib/varian
 
 export type BaseDateFieldProps = {
   label: string;
-  description?: string;
+  description?: React.ReactNode;
   className?: string;
   onKeyDown?: (event: React.KeyboardEvent<HTMLInputElement>) => void;
   placeholder?: string;
@@ -196,7 +196,7 @@ export type AutoCompleteDateFieldProps<T extends FieldValues> = Omit<
 > &
   FormControlProps<T> & {
     label?: string;
-    description?: string;
+    description?: React.ReactNode;
   };
 
 export function AutoCompleteDateField<T extends FieldValues>({

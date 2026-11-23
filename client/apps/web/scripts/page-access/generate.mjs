@@ -16,8 +16,8 @@
  * with @requiresRead. See docs/engineering/reference-views.md.
  *
  * Usage:
- *   node scripts/page-access/generate.mjs           write screens_gen.json
- *   node scripts/page-access/generate.mjs --check   fail if it is stale
+ *   bun scripts/page-access/generate.mjs           write screens_gen.json
+ *   bun scripts/page-access/generate.mjs --check  fail if it is stale
  */
 
 import { existsSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
@@ -159,7 +159,7 @@ if (CHECK) {
   const current = existsSync(OUTPUT) ? readFileSync(OUTPUT, "utf8") : "";
   if (current !== serialized) {
     console.error(
-      "page access: screens_gen.json is stale. Run `pnpm --filter @trenova/web access:generate`, " +
+      "page access: screens_gen.json is stale. Run `bun run --filter @trenova/web access:generate`, " +
         "then `go run ./internal/api/graphql/gqlext/refgen` from services/tms, and commit both.",
     );
     process.exit(1);

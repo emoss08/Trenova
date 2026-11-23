@@ -1,5 +1,6 @@
 import { ShiftTemplateAutocompleteField } from "@/components/autocomplete-fields";
 import { AutoCompleteDateField } from "@/components/fields/date-field/date-field";
+import { FieldNote } from "@/components/fields/field-components";
 import { NumberField } from "@/components/fields/number-field";
 import { TextareaField } from "@/components/fields/textarea-field";
 import {
@@ -18,12 +19,11 @@ import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form
 import { useT } from "@trenova/shared/i18n/use-t";
 import { getTodayDate } from "@trenova/shared/lib/date";
 import { describeShiftPattern, formatShiftWindow } from "@trenova/shared/lib/scheduling";
-import { cn } from "@trenova/shared/lib/utils";
 import {
   assignShiftFormSchema,
   type AssignShiftFormValues,
 } from "@trenova/shared/types/scheduling";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { FormProvider, useForm, type Resolver } from "react-hook-form";
 import { longWeekday, shiftClashes, type StatedPreference } from "./schedule-model";
 import { WeekPattern } from "./week-pattern";
@@ -35,7 +35,8 @@ export type AssignShiftPaneProps = {
   /** True when the worker is on a shift already, so this moves them. */
   moving: boolean;
   preferences: readonly StatedPreference[];
-  onAssigned: () => void;
+  /** Refreshes what the assignment changed; the save holds until it settles. */
+  onAssigned: () => Promise<unknown>;
 };
 
 type ShiftPreview = {
@@ -94,18 +95,7 @@ export function AssignShiftPane({
     resolver: zodResolver(assignShiftFormSchema) as Resolver<AssignShiftFormValues>,
     defaultValues: defaults(workerId),
   });
-  const { control, handleSubmit, reset } = form;
-
-  const [wasOpen, setWasOpen] = useState(open);
-  if (open !== wasOpen) {
-    setWasOpen(open);
-    if (open) setPreview(null);
-  }
-
-  useEffect(() => {
-    if (!open) return;
-    reset(defaults(workerId));
-  }, [open, workerId, reset]);
+  const { control, handleSubmit } = form;
 
   const { mutateAsync, isPending } = useApiMutation<
     { id: string },
@@ -124,8 +114,8 @@ export function AssignShiftPane({
         cycleOffsetWeeks: values.cycleOffsetWeeks,
         notes: values.notes ?? undefined,
       }),
-    onSuccess: () => {
-      onAssigned();
+    onSuccess: async () => {
+      await onAssigned();
       onOpenChange(false);
     },
   });
@@ -161,7 +151,20 @@ export function AssignShiftPane({
                   placeholder={t("Pick a shift")}
                   required
                   onOptionChange={(option) => setPreview(previewOf(option))}
-                  description={t("Only shifts in force can be assigned.")}
+                  description={
+                    preview ? (
+                      <FieldNote live tone={clashes.length > 0 ? "warning" : "muted"}>
+                        {clashes.length > 0
+                          ? t(
+                              "Works {0}, which they said they can't.",
+                              clashes.map((day) => longWeekday(day)).join(", "),
+                            )
+                          : t("Fits the days they said they can work.")}
+                      </FieldNote>
+                    ) : (
+                      t("Only shifts in force can be assigned.")
+                    )
+                  }
                 />
               </FormControl>
               <FormControl>
@@ -192,21 +195,6 @@ export function AssignShiftPane({
                       </p>
                     )}
                   </div>
-                  {preview ? (
-                    <p
-                      className={cn(
-                        "text-2xs",
-                        clashes.length > 0 ? "text-warning-foreground" : "text-muted-foreground",
-                      )}
-                    >
-                      {clashes.length > 0
-                        ? t(
-                            "Works {0}, which they said they can't.",
-                            clashes.map((day) => longWeekday(day)).join(", "),
-                          )
-                        : t("Fits the days they said they can work.")}
-                    </p>
-                  ) : null}
                 </div>
               </FormControl>
               <FormControl>
@@ -247,7 +235,7 @@ export function AssignShiftPane({
           <WorkPaneFooter>
             <WorkPaneCancel />
             <Button type="submit" size="sm" isLoading={isPending}>
-              {moving ? t("Move to shift") : t("Put on shift")}
+              {moving ? t("Move to another shift") : t("Put on a shift")}
             </Button>
           </WorkPaneFooter>
         </Form>

@@ -36,7 +36,7 @@ func TestPageAccessManifestIsGenerated(t *testing.T) {
 	current, err := os.ReadFile(filepath.Join(repoRoot, pagemanifest.ManifestPath))
 	require.NoError(t, err)
 	require.Equal(t, string(rendered), string(current),
-		"pkg/pageaccess/manifest_gen.json is stale. Run `pnpm --filter @trenova/web "+
+		"pkg/pageaccess/manifest_gen.json is stale. Run `bun run --filter @trenova/web "+
 			"access:generate`, then `go run ./internal/api/graphql/gqlext/refgen` from "+
 			"services/tms, and commit both generated files")
 }

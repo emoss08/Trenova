@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentpacketrule"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/dataretention"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerdqfservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/employment"
@@ -145,7 +146,7 @@ func (f *fakeDocuments) GetPacketSummary(
 	_ pagination.TenantInfo,
 ) (*documentpacketrule.PacketSummary, error) {
 	f.calls++
-	if resourceType != "Worker" {
+	if resourceType != permission.ResourceWorker.String() {
 		return nil, errortypes.NewNotFoundError("unexpected resource type " + resourceType)
 	}
 	return f.summary, nil

@@ -40,6 +40,13 @@ export type WorkPanePart = {
 
 export const WorkPanePartContext = createContext<WorkPanePart | null>(null);
 
+/**
+ * The id a lazily loaded pane's stand-in and the pane itself share, so the pane that arrives
+ * takes over the host the stand-in holds: no frame with the host empty, no second entrance.
+ * Provided by `lazyWorkPane` around one pane; a `WorkPane` clears it for its own children.
+ */
+export const WorkPaneIdentityContext = createContext<string | null>(null);
+
 export function useWorkPaneApi(): WorkPaneApi {
   const api = useContext(WorkPaneApiContext);
   if (!api) throw new Error("A work pane needs a WorkPaneProvider above it.");

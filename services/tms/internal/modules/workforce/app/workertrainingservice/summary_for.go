@@ -12,6 +12,7 @@ func (s *Service) SummaryFor(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	wrk *worker.Worker,
+	asOf int64,
 ) (*workertraining.WorkerTrainingSummary, error) {
-	return s.summarize(ctx, tenantInfo, wrk)
+	return s.summarize(ctx, tenantInfo, wrk, asOf)
 }

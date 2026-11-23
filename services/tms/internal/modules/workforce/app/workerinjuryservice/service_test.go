@@ -33,6 +33,17 @@ func newFakeRepo() *fakeRepo {
 	}
 }
 
+func (f *fakeRepo) PageInjuries(
+	ctx context.Context,
+	req *workersafetyports.ListWorkerInjuriesRequest,
+) (*pagination.CursorListResult[*workerinjury.WorkerInjury], error) {
+	items, err := f.ListInjuries(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	return &pagination.CursorListResult[*workerinjury.WorkerInjury]{Items: items}, nil
+}
+
 func (f *fakeRepo) ListInjuries(
 	_ context.Context,
 	req *workersafetyports.ListWorkerInjuriesRequest,

@@ -34,6 +34,7 @@ func TestRevokeAccess_EndsTheDriversPortalSessions(t *testing.T) {
 		portalRepo:   portalRepo,
 		sessions:     sessions,
 		auditService: &mocks.NoopAuditService{},
+		checklists:   noRefresh{},
 	}
 
 	require.NoError(t, svc.RevokeAccess(
@@ -60,6 +61,7 @@ func TestRevokeAccess_WithoutALinkedSignInEndsNoSessions(t *testing.T) {
 		portalRepo:   portalRepo,
 		sessions:     sessionportsmock.NewMockSessionRepository(t),
 		auditService: &mocks.NoopAuditService{},
+		checklists:   noRefresh{},
 	}
 
 	require.NoError(t, svc.RevokeAccess(

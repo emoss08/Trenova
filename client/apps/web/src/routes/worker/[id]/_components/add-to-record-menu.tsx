@@ -1,3 +1,4 @@
+import { preloadOn } from "@/components/work-pane";
 import { usePermission } from "@/hooks/use-permission";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 import { appPath } from "@/lib/app-path";
@@ -43,6 +44,7 @@ import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { Fragment } from "react";
+import { WORKER_FORM_PANES } from "./worker-form-panes";
 
 type AddItem = {
   form: WorkerForm;
@@ -156,6 +158,8 @@ export type WorkerRecordMenusProps = {
   terminated: boolean;
   /** Opens a place on the page; the page asks first when a work pane holds changes. */
   onOpen: (target: WorkerTarget) => void;
+  /** An entry is highlighted: start reading the tab it opens on. Its pane is read here. */
+  onIntent: (target: WorkerTarget) => void;
 };
 
 /**
@@ -169,6 +173,7 @@ export function WorkerRecordMenus({
   hasFleetCode,
   terminated,
   onOpen,
+  onIntent,
 }: WorkerRecordMenusProps) {
   const t = useT();
   const navigate = useNavigate();
@@ -228,12 +233,20 @@ export function WorkerRecordMenus({
                   <DropdownMenuLabel>{group.label(t)}</DropdownMenuLabel>
                   {group.items.map((item) => {
                     const Icon = item.icon;
+                    const target = workerFormTarget(item.form);
+                    const warm = preloadOn({
+                      preload: () => {
+                        onIntent(target);
+                        return WORKER_FORM_PANES[item.form]();
+                      },
+                    });
                     return (
                       <DropdownMenuItem
                         key={item.form}
+                        {...warm}
                         title={item.label(t)}
                         startContent={<Icon className="size-3.5" />}
-                        onClick={() => onOpen(workerFormTarget(item.form))}
+                        onClick={() => onOpen(target)}
                       />
                     );
                   })}
@@ -273,6 +286,12 @@ export function WorkerRecordMenus({
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 data-variant="destructive"
+                {...preloadOn({
+                  preload: () => {
+                    onIntent(workerFormTarget("record-event", "Terminated"));
+                    return WORKER_FORM_PANES["record-event"]();
+                  },
+                })}
                 title={t("End employment…")}
                 startContent={<LogOut01Icon className="size-3.5" />}
                 onClick={() => onOpen(workerFormTarget("record-event", "Terminated"))}

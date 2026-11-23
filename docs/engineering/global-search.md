@@ -98,7 +98,7 @@ Server (`services/tms`):
    Add the index to `indexConfig()` in the package's tests, and a test that finds the kind and
    one that finds none without its read (`invoice_test.go`).
 5. **The record link.** The hit's `href` needs the kind in `client/apps/web/src/config/record-links.ts`
-   (then `pnpm --filter @trenova/web guide:generate`); a hit with no `href` is dropped.
+   (then `bun run --filter @trenova/web guide:generate`); a hit with no `href` is dropped.
 
 GTC (`deploy/gtc/sinks.yaml`):
 

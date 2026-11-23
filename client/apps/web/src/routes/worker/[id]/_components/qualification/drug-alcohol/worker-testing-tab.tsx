@@ -1,4 +1,7 @@
 import { ReasonDialog } from "@/components/reason-dialog";
+import { lazyWorkPane, preloadOn } from "@/components/work-pane";
+import { useOpenedOnce } from "@/hooks/use-opened-once";
+import { lazyComponent } from "@/lib/lazy-component";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { usePermission } from "@/hooks/use-permission";
 import {
@@ -8,16 +11,18 @@ import {
   type DotTestRow,
 } from "@/lib/graphql/worker-drug-alcohol";
 import { useQuery } from "@tanstack/react-query";
+import { LazyComponent } from "@trenova/shared/components/error-boundary";
 import { ErrorState } from "@trenova/shared/components/errors/error-state";
 import { EmptyTableSketch } from "@trenova/shared/components/ui/empty-table";
-import { useNow } from "@trenova/shared/hooks/use-now";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useEffect, useRef, useState } from "react";
 import { QualificationSkeletonBody } from "../qualification-skeleton";
 import { useQualificationRoute, type QualificationViewProps } from "../qualification-route";
-import { revealElement, useRowFlash } from "../use-row-flash";
-import { AnswerQueryPane, LogQueryPane } from "./clearinghouse-panes";
+import type { BoundedTableHandle } from "../../bounded-table";
+import { useRowFlash } from "../../use-row-flash";
+import { useWorkerInvalidation } from "../../use-worker-invalidation";
+import { WORKER_FORM_PANES } from "../../worker-form-panes";
 import {
   DrugAlcoholBand,
   QueriesPanel,
@@ -26,14 +31,33 @@ import {
   TestsPanel,
   testIsOpen,
 } from "./drug-alcohol-sections";
-import { RecordCollectionPane } from "./record-collection-pane";
-import { RecordResultPane } from "./record-result-pane";
-import { useTestingInvalidation } from "./use-testing-invalidation";
-import { ViolationProgressDialog } from "./violation-progress-dialog";
 
 const VIEW = "drug-and-alcohol" as const;
 /** The longest void reason kept; the server stores it in the test's notes. */
 const VOID_REASON_MAX = 500;
+
+const RecordCollectionPane = lazyWorkPane(
+  WORKER_FORM_PANES["record-collection"],
+  (module) => module.RecordCollectionPane,
+  { title: (_props, t) => t("Record collection") },
+);
+const RecordResultPane = lazyWorkPane(
+  WORKER_FORM_PANES["record-test-result"],
+  (module) => module.RecordResultPane,
+  { title: (_props, t) => t("Record result") },
+);
+const LogQueryPane = lazyWorkPane(WORKER_FORM_PANES["log-query"], (module) => module.LogQueryPane, {
+  title: (_props, t) => t("Log query"),
+});
+const AnswerQueryPane = lazyWorkPane(
+  WORKER_FORM_PANES["answer-query"],
+  (module) => module.AnswerQueryPane,
+  { title: (_props, t) => t("Record answer") },
+);
+const ViolationProgressDialog = lazyComponent(
+  () => import("./violation-progress-dialog"),
+  (module) => module.ViolationProgressDialog,
+);
 
 /**
  * The drug and alcohol programme for one worker: the standing band, the return-to-duty process
@@ -45,15 +69,16 @@ export default function WorkerTestingTab({ workerId, open, onOpen }: Qualificati
   const t = useT();
   const { go, closeWhen } = useQualificationRoute(VIEW, onOpen);
   const { flash, flashOf } = useRowFlash();
-  const rows = useRef(new Map<string, HTMLTableRowElement>());
-  const now = useNow();
+  const testsTable = useRef<BoundedTableHandle>(null);
+  const queriesTable = useRef<BoundedTableHandle>(null);
 
   const { allowed: canRecord } = usePermission(Resource.WorkerDOTTest, Operation.Create);
   const { allowed: canUpdate } = usePermission(Resource.WorkerDOTTest, Operation.Update);
   const { allowed: canCancel } = usePermission(Resource.WorkerDOTTest, Operation.Cancel);
   const { allowed: canManage } = usePermission(Resource.WorkerDOTTest, Operation.Manage);
-  const invalidate = useTestingInvalidation(workerId);
+  const invalidate = useWorkerInvalidation(workerId, "testing");
   const [progressOpen, setProgressOpen] = useState(false);
+  const progressOpened = useOpenedOnce(progressOpen);
   const [voiding, setVoiding] = useState<DotTestRow | null>(null);
 
   const fileQuery = useQuery({
@@ -76,10 +101,16 @@ export default function WorkerTestingTab({ workerId, open, onOpen }: Qualificati
   const lastShown = useRef<string | null>(null);
   useEffect(() => {
     const id = open.form == null ? (open.test ?? open.query) : null;
-    if (!id || id === lastShown.current || !rows.current.has(id)) return;
+    if (!id || id === lastShown.current || !file) return;
+    const table = file.tests.some((test) => test.id === id)
+      ? testsTable
+      : file.queries.some((query) => query.id === id)
+        ? queriesTable
+        : null;
+    if (!table) return;
     lastShown.current = id;
     flash(id);
-    revealElement(rows.current.get(id));
+    table.current?.scrollToKey(id);
   });
 
   if (fileQuery.isPending) return <QualificationSkeletonBody view={VIEW} />;
@@ -89,7 +120,6 @@ export default function WorkerTestingTab({ workerId, open, onOpen }: Qualificati
         layout="sheet"
         error={fileQuery.error ?? new Error("No drug and alcohol file")}
         title={t("The drug and alcohol record could not be loaded")}
-        description={t("This isn't an empty record. Try again in a moment.")}
         onRetry={() => void fileQuery.refetch()}
         sketch={<EmptyTableSketch columns={[{ label: t("Reason") }, { label: t("Result") }]} />}
       />
@@ -117,17 +147,14 @@ export default function WorkerTestingTab({ workerId, open, onOpen }: Qualificati
     open.form === "record-collection" && open.kind
       ? (file.selections.find((entry) => entry.id === open.kind) ?? null)
       : null;
-  const rowRef = (key: string, element: HTMLTableRowElement | null) => {
-    if (element) rows.current.set(key, element);
-    else rows.current.delete(key);
-  };
 
   return (
     <div className="flex flex-col gap-4">
       <DrugAlcoholBand
         file={file}
-        now={now}
         canRecord={canRecord}
+        collectionIntent={preloadOn(RecordCollectionPane)}
+        queryIntent={preloadOn(LogQueryPane)}
         onRecordCollection={() =>
           go({ tab: "qualification", view: VIEW, form: "record-collection" })
         }
@@ -138,6 +165,7 @@ export default function WorkerTestingTab({ workerId, open, onOpen }: Qualificati
         <ReturnToDutyPanel
           violation={openViolation}
           canManage={canManage}
+          updateIntent={preloadOn(ViolationProgressDialog)}
           onUpdate={() => setProgressOpen(true)}
         />
       ) : null}
@@ -146,6 +174,7 @@ export default function WorkerTestingTab({ workerId, open, onOpen }: Qualificati
         <RandomSelectionsPanel
           selections={file.selections}
           canRecord={canRecord}
+          recordIntent={preloadOn(RecordCollectionPane)}
           onRecord={(entry) =>
             go({ tab: "qualification", view: VIEW, form: "record-collection", kind: entry.id })
           }
@@ -158,7 +187,8 @@ export default function WorkerTestingTab({ workerId, open, onOpen }: Qualificati
           canUpdate={canUpdate}
           canCancel={canCancel}
           flashOf={flashOf}
-          rowRef={rowRef}
+          handleRef={testsTable}
+          resultIntent={preloadOn(RecordResultPane)}
           onRecordResult={(test) =>
             go({ tab: "qualification", view: VIEW, form: "record-test-result", test: test.id })
           }
@@ -168,14 +198,15 @@ export default function WorkerTestingTab({ workerId, open, onOpen }: Qualificati
           queries={file.queries}
           canUpdate={canUpdate}
           flashOf={flashOf}
-          rowRef={rowRef}
+          handleRef={queriesTable}
+          answerIntent={preloadOn(AnswerQueryPane)}
           onAnswer={(query) =>
             go({ tab: "qualification", view: VIEW, form: "answer-query", query: query.id })
           }
         />
       </div>
 
-      <RecordCollectionPane
+      <RecordCollectionPane.Component
         open={open.form === "record-collection" && canRecord}
         onOpenChange={closeWhen(open.form === "record-collection")}
         workerId={workerId}
@@ -183,32 +214,36 @@ export default function WorkerTestingTab({ workerId, open, onOpen }: Qualificati
         defaultSubstance={selection?.substance === "Alcohol" ? "Alcohol" : "Drug"}
         onSaved={flash}
       />
-      <RecordResultPane
+      <RecordResultPane.Component
         open={open.form === "record-test-result" && canUpdate && resultTest != null}
         onOpenChange={closeWhen(open.form === "record-test-result")}
         workerId={workerId}
         test={resultTest}
         onSaved={flash}
       />
-      <LogQueryPane
+      <LogQueryPane.Component
         open={open.form === "log-query" && canRecord}
         onOpenChange={closeWhen(open.form === "log-query")}
         workerId={workerId}
         onSaved={flash}
       />
-      <AnswerQueryPane
+      <AnswerQueryPane.Component
         open={open.form === "answer-query" && canUpdate && answerQuery != null}
         onOpenChange={closeWhen(open.form === "answer-query")}
         workerId={workerId}
         query={answerQuery}
         onSaved={flash}
       />
-      <ViolationProgressDialog
-        open={progressOpen && openViolation != null}
-        onOpenChange={setProgressOpen}
-        workerId={workerId}
-        violation={openViolation ?? null}
-      />
+      {progressOpened ? (
+        <LazyComponent fallback={null}>
+          <ViolationProgressDialog.Component
+            open={progressOpen && openViolation != null}
+            onOpenChange={setProgressOpen}
+            workerId={workerId}
+            violation={openViolation ?? null}
+          />
+        </LazyComponent>
+      ) : null}
       <ReasonDialog
         open={voiding !== null}
         title={t("Void this test?")}
@@ -217,6 +252,7 @@ export default function WorkerTestingTab({ workerId, open, onOpen }: Qualificati
         )}
         placeholder={t("e.g. Recorded against the wrong driver")}
         confirmLabel={t("Void test")}
+        cancelLabel={t("Cancel")}
         destructive
         maxLength={VOID_REASON_MAX}
         pending={voidTest.isPending}

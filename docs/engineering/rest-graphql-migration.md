@@ -37,11 +37,11 @@ with its wiring.
   `components/navigation/user-menu`, `organization-settings-loading`. They sit mostly in areas of the recent
   WIP redesign commits; confirm which predate this migration (run them at the parent commit) and fix the ones
   it caused.
-- `pnpm --filter @trenova/web typecheck` has two errors outside this work:
+- `bun run --filter @trenova/web typecheck` has two errors outside this work:
   `routes/shipment/_components/rating-breakdown-popover.tsx` (`bill.currency`) and
   `routes/shipment/_components/move/__tests__/move-headline.test.ts` (`addressLine: null`).
 - `pkg/pageaccess/screens_gen.json` / `manifest_gen.json` still list deleted REST paths: run
-  `pnpm --filter @trenova/web access:generate`, then the manifest build
+  `bun run --filter @trenova/web access:generate`, then the manifest build
   (`go run ./internal/api/graphql/gqlext/refgen` from services/tms if that is the generator; check
   `internal/api/pagemanifest`).
 - `task i18n` for new caller-facing strings, then `task i18n-check`.
@@ -56,19 +56,19 @@ with its wiring.
 2. From services/tms: `go run ./internal/api/graphql/gqlexec/gen` then `go run ./internal/api/graphql/agentread/gen`
    (that is `task gqlgen`), `go generate ./internal/api/graphql/projection/...`,
    `go generate ./internal/api/writecoverage/...`. All with `GOFLAGS=-tags=nomsgpack`.
-3. From client: `pnpm --filter @trenova/graphql codegen`.
+3. From client: `bun run --filter @trenova/graphql codegen`.
 4. `GOFLAGS=-tags=nomsgpack go vet` and `go test` on the touched packages plus
    `./internal/api/writecoverage/ ./internal/api/graphql/authzlint/ ./internal/api/middleware/
    ./internal/api/responseguard/ ./internal/api ./internal/bootstrap/modules/api`.
 5. `golangci-lint run --new-from-rev=<base>` and `golangci-lint run --enable-only=unused,whitespace` on the
    touched packages; `golangci-lint fmt <files>` for formatting.
-6. `pnpm --filter @trenova/web typecheck`, and `pnpm exec vitest related --run <changed files>` from
+6. `bun run --filter @trenova/web typecheck`, and `bunx --bun vitest related --run <changed files>` from
    client/apps/web (run it in the background: it can exceed ten minutes).
 7. Commit the batch.
 
 ## Playbook
 
-Repo: /home/wolf/projects/Trenova. Server: services/tms (Go). Client: client/ (pnpm).
+Repo: /home/wolf/projects/Trenova. Server: services/tms (Go). Client: client/ (Bun).
 Read first: AGENTS.md, docs/engineering/backend/api.md, docs/engineering/graphql-executor.md,
 .claude/skills/trenova-backend/SKILL.md and .claude/skills/trenova-frontend/SKILL.md.
 Run builds, vet, tests and lint **one package (or a small explicit list) at a time**, never the whole

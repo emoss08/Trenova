@@ -233,7 +233,11 @@ export function SelectionDock<TData>({
                     onClick={() => handleSimpleActionClick(action)}
                   >
                     {isLoading ? <Spinner /> : ActionIcon && <ActionIcon className="size-4" />}
-                    {isLoading && action.loadingLabel ? t(action.loadingLabel) : t(action.label)}
+                    {isLoading && action.loadingLabel
+                      ? t(action.loadingLabel)
+                      : action.labelFor
+                        ? action.labelFor(selectedCount)
+                        : t(action.label)}
                   </Button>
                 );
               })}

@@ -20,6 +20,7 @@ import {
   ShipmentStatusBadge,
   StatusBadge,
 } from "@trenova/shared/components/status-badge";
+import { useRichT } from "@trenova/shared/i18n/rich";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { shipmentStatusSchema } from "@trenova/shared/types/shipment";
@@ -43,6 +44,7 @@ import {
   toneClass,
   unreadableRecord,
   readableIds,
+  type MeasureReading,
 } from "./board-card";
 
 const boardChart = lazyComponent(
@@ -132,6 +134,10 @@ export function RecordChips(props: {
   );
 }
 
+/** An exhibit's caption under its tab, drawn and sketched alike; its last line never a lone word. */
+export const EXHIBIT_CAPTION_CLASS =
+  "-mt-0.5 mb-2.5 text-dsk-base leading-normal text-pretty text-dsk-subtle";
+
 /**
  * An exhibit: printed by Trenova on a tab that names what it shows, the line
  * the agent wrote under it when it wrote one, and where it read it from.
@@ -178,7 +184,7 @@ export function Exhibit({
         <span>{block.title || t("Exhibit {0}", block.numeral)}</span>
       </div>
       {block.caption.length > 0 && (
-        <p className="-mt-0.5 mb-2.5 text-dsk-base leading-normal text-dsk-subtle">
+        <p className={EXHIBIT_CAPTION_CLASS}>
           <BoardWords segments={block.caption} board={board} />
         </p>
       )}
@@ -196,7 +202,7 @@ export function Exhibit({
 export function SourceLine({ line, stamp }: { line: ReactNode; stamp: ReactNode }) {
   return (
     <div className="dk-bd-src">
-      <span>{line}</span>
+      <span title={typeof line === "string" ? line : undefined}>{line}</span>
       <span>{stamp}</span>
     </div>
   );
@@ -217,24 +223,26 @@ export function LineBlank({ className }: { className?: string }) {
 }
 
 /**
- * A record's row while the list is read, in the row's own box: the name and
- * the line under it, each a blank in its own font, so a row read is the height
- * of the row drawn. The line under the name is always drawn, as nearly every
- * record has one, and it is what sets the row's height either way.
+ * A record's row while the list is read, in the row's own box and lines: its
+ * number and the line under it, each a blank in its own font, and in a list
+ * read by a track the track's place, so a row read is the height of the row
+ * drawn. The row's lines are fixed heights (`.dk-bd-row`), so the blanks cannot
+ * make it taller or shorter than a drawn row.
  */
-export function RecordRowSketch() {
+export function RecordRowSketch({ track = false }: { track?: boolean }) {
   return (
     <div className="dk-bd-row">
-      <span className="dk-bd-who">
-        <b>
+      <span className="dk-bd-l1">
+        <b className="dk-bd-id">
           <LineBlank className="w-28" />
         </b>
-        <span>
+      </span>
+      <span className="dk-bd-line">
+        <span className="dk-bd-sub">
           <LineBlank className="w-40" />
         </span>
       </span>
-      <span />
-      <span />
+      {track && <span className="dk-bd-track ui-shimmer" aria-hidden="true" />}
     </div>
   );
 }
@@ -371,51 +379,96 @@ function ReadoutRow({
 /** A record the reader may not read, drawn where it stands in the list. */
 function GoneRow({ resource }: { resource: string }) {
   const t = useT();
+  const why = t("It may have been removed, or you may not be allowed to see it.");
   return (
     <div className="dk-bd-row dk-gone">
       <span className="dk-bd-lock">
         <ArtIcon name="lock" size={12} stroke={2} />
       </span>
-      <span className="dk-bd-who">
-        <b>{unreadableRecord(resource, t)}</b>
-        <span>{t("It may have been removed, or you may not be allowed to see it.")}</span>
+      <span className="dk-bd-l1">
+        <b className="dk-bd-id">{unreadableRecord(resource, t)}</b>
+      </span>
+      <span className="dk-bd-line">
+        <span className="dk-bd-sub" title={why}>
+          {why}
+        </span>
       </span>
     </div>
   );
 }
 
+/**
+ * What a row draws of its measure's second fact, as siblings on the row's second line: the
+ * moment (`dk-bd-at`), which never gives way, then the stop it is measured at (`dk-bd-place`),
+ * which gives way first. Each carries the whole fact in `title`.
+ */
+function SecondFact({ reading }: { reading: MeasureReading }) {
+  const rt = useRichT();
+  const tags = {
+    at: (children: ReactNode) => (
+      <span className="dk-bd-at" title={reading.against}>
+        {children}
+      </span>
+    ),
+    place: (children: ReactNode) => (
+      <span className="dk-bd-place" title={reading.against}>
+        {children}
+      </span>
+    ),
+  };
+  if (!reading.at) {
+    return (
+      <span className="dk-bd-at" title={reading.against}>
+        {reading.shown}
+      </span>
+    );
+  }
+  return reading.at.verb === "due"
+    ? rt("<at>Due {0}</at><place> at {1}</place>", tags, reading.at.when, reading.at.place)
+    : rt("<at>Delivered {0}</at><place> at {1}</place>", tags, reading.at.when, reading.at.place);
+}
+
+/**
+ * A record's row, one anatomy at every width (`.dk-bd-row` in desk-v2.css), each
+ * line its own box so neither narrows the other: the number and the measure's
+ * standing value (`dk-bd-l1`); the subtitle and the measure's second fact as one
+ * phrase, then the status (`dk-bd-line`); the track under them for a measure
+ * read as one. On the second line the stop gives way first, then the subtitle;
+ * the moment never does.
+ */
 function RowBody({ row, furthest, now }: { row: DeskBoardRow; furthest: number; now: number }) {
   const t = useT();
   const reading = row.measure ? measureReading(row.measure, furthest, now, t) : null;
-  const track = row.measure && measureIsTrack(row.measure.measure) && reading;
+  const track = reading !== null && measureIsTrack(row.measure?.measure ?? "");
   return (
     <>
-      <span className="dk-bd-who">
-        <b>{row.label}</b>
-        {row.subtitle !== "" && <span>{row.subtitle}</span>}
+      <span className="dk-bd-l1">
+        <b className="dk-bd-id">{row.label}</b>
+        {reading && reading.standing !== "" && (
+          <span className={cn("dk-bd-val", toneClass(reading.tone))}>{reading.standing}</span>
+        )}
       </span>
-      {track ? (
-        <span className={cn("dk-bd-behind", toneClass(reading.tone))}>
-          <span>
-            <span title={reading.against}>{reading.against}</span>
-            <b>{reading.standing}</b>
+      <span className="dk-bd-line">
+        {row.subtitle !== "" && (
+          <span className="dk-bd-sub" title={row.subtitle}>
+            {row.subtitle}
           </span>
-          <span className="dk-bd-track">
-            <i
-              className={cn(reading.held && "dk-bd-held", reading.projected && "dk-bd-projected")}
-              style={{ width: `${Math.round(reading.fraction * 100)}%` }}
-            />
+        )}
+        {reading && reading.shown !== "" && <SecondFact reading={reading} />}
+        {row.status !== "" && (
+          <span className="dk-bd-st">
+            <BoardStatus resource={row.resource} status={row.status} />
           </span>
+        )}
+      </span>
+      {track && (
+        <span className="dk-bd-track">
+          <i
+            className={cn(reading.held && "dk-bd-held", reading.projected && "dk-bd-projected")}
+            style={{ width: `${Math.round(reading.fraction * 100)}%` }}
+          />
         </span>
-      ) : reading ? (
-        <span className={cn("dk-bd-amt", toneClass(reading.tone))}>
-          {reading.standing}
-          {reading.against !== "" && <span>{reading.against}</span>}
-        </span>
-      ) : (
-        <span />
       )}
-      <BoardStatus resource={row.resource} status={row.status} />
     </>
   );
 }
@@ -522,8 +575,8 @@ function Face({
   const body = (
     <>
       <span className="dk-bd-mono">{initialsOf(column.label)}</span>
-      <b>{column.label}</b>
-      {column.subtitle !== "" && <small>{column.subtitle}</small>}
+      <b title={column.label}>{column.label}</b>
+      {column.subtitle !== "" && <small title={column.subtitle}>{column.subtitle}</small>}
       <BoardStatus resource={column.resource} status={column.status} />
     </>
   );
@@ -558,7 +611,7 @@ export function HeadToHead({
   const order = readableIds(compare.columns);
   const lines = compare.lines.length;
   return (
-    <table className="dk-bd-h2h">
+    <table className="dk-bd-h2h" style={{ "--cols": compare.columns.length } as CSSProperties}>
       <colgroup>
         <col className="dk-lab" />
         {compare.columns.map((column) => (

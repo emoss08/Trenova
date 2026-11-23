@@ -1,12 +1,18 @@
 import type { WorkerSafetyEventRow } from "@/lib/graphql/worker-safety";
 import { describe, expect, it } from "vitest";
 import {
-  decimalAmount,
+  actionSummary,
   disciplineStair,
+  EARLIER_SEGMENT,
+  eventAmountMinor,
   filterEvents,
+  formatEventAmount,
   pointsGauge,
   sortEvents,
 } from "../safety-model";
+
+const t = ((text: string, ...args: unknown[]) =>
+  args.reduce<string>((out, arg, index) => out.replace(`{${index}}`, String(arg)), text)) as never;
 
 function event(overrides: Partial<WorkerSafetyEventRow>): WorkerSafetyEventRow {
   return {
@@ -128,12 +134,52 @@ describe("events", () => {
   });
 });
 
-describe("decimalAmount", () => {
-  it("reads the server's decimal text and treats empty and zero as none", () => {
-    expect(decimalAmount("150.00")).toBe(150);
-    expect(decimalAmount("0")).toBeNull();
-    expect(decimalAmount("")).toBeNull();
-    expect(decimalAmount(null)).toBeNull();
-    expect(decimalAmount("abc")).toBeNull();
+describe("eventAmountMinor", () => {
+  it("reads the server's decimal text in cents and treats empty, zero and junk as none", () => {
+    expect(eventAmountMinor("150.00")).toBe(15_000);
+    expect(eventAmountMinor("0.29")).toBe(29);
+    expect(eventAmountMinor("640")).toBe(64_000);
+    expect(eventAmountMinor("0")).toBeNull();
+    expect(eventAmountMinor("0.0000")).toBeNull();
+    expect(eventAmountMinor("")).toBeNull();
+    expect(eventAmountMinor(null)).toBeNull();
+    expect(eventAmountMinor("abc")).toBeNull();
+  });
+
+  it("writes it as money, and nothing when there is none", () => {
+    expect(formatEventAmount("640.00")).toBe("$640.00");
+    expect(formatEventAmount(null)).toBeNull();
+  });
+});
+
+describe("pointsGauge against the scorecard", () => {
+  it("puts points on events not read yet into one earlier segment, so the shares add up to the scorecard", () => {
+    const gauge = pointsGauge({ ...thresholds, activePoints: 9 }, [
+      event({ id: "recent", occurredAt: 500, activePoints: 3, pointsExpireAt: 5_000 }),
+    ]);
+    expect(gauge.segments.map((segment) => [segment.id, segment.points])).toEqual([
+      [EARLIER_SEGMENT, 6],
+      ["recent", 3],
+    ]);
+    expect(gauge.segments[0].share).toBeCloseTo(6 / 9);
+    expect(gauge.segments[1].share).toBeCloseTo(3 / 9);
+    expect(gauge.rollOffs).toEqual([{ date: 5_000, points: 3 }]);
+  });
+});
+
+describe("actionSummary", () => {
+  it("leaves out what a ladder's active action does not carry", () => {
+    expect(
+      actionSummary({ status: "Active", issuedAt: 1_790_100_000, expiresAt: null }, t),
+    ).not.toMatch(/acknowledg/);
+  });
+
+  it("says whether an active row of the list was acknowledged", () => {
+    expect(
+      actionSummary(
+        { status: "Active", issuedAt: 1_790_100_000, expiresAt: null, acknowledgedAt: null },
+        t,
+      ),
+    ).toMatch(/waiting for the acknowledgement$/);
   });
 });

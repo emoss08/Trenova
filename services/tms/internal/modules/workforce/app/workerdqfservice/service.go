@@ -39,7 +39,6 @@ import (
 
 const (
 	realtimeVerification = "worker_employment_verification"
-	workerResourceType   = "Worker"
 	secondsPerDay        = int64(86400)
 )
 
@@ -192,7 +191,7 @@ func (s *Service) FileFor(ctx context.Context, req *FileForRequest) (*FileParts,
 		var gErr error
 		documents, gErr = s.documents.GetPacketSummary(
 			groupCtx,
-			workerResourceType,
+			permission.ResourceWorker.String(),
 			workerID.String(),
 			req.TenantInfo,
 		)

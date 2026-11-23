@@ -752,6 +752,15 @@ where records are shared from: every Desk bundle (`platformbundles`), and `billi
 to look at. A new bundle whose people need to pass records on adds the same grant.
 
 
+## Other people's Desk conversations
+
+`desk_transcript` (View, Export) reads other people's Desk conversations and takes them out of
+Trenova. It has no parent, is Confidential, and is held by the Organization Administrator alone:
+no job template (Read-only excepts it), and only the `desk.transcript-oversight` bundle, which a
+company adds on purpose. Support access, agents and API keys can never hold it. Export implies
+View, as it does on every resource. See "Other people's conversations" in
+[agent-runtime.md](agent-runtime.md#other-peoples-conversations).
+
 ## Trenova support
 
 On a managed instance a Trenova staff member enters under a grant an administrator made

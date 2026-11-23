@@ -250,7 +250,7 @@ describe("routeCatalogs plugin", () => {
     expect(reachesHandler(`${ROUTES}/shipment/page.tsx`)).toBe(true);
     expect(reachesHandler(`${SRC}/lib/api.ts`)).toBe(true);
     expect(
-      reachesHandler("/repo/client/node_modules/.pnpm/react@19/node_modules/react/index.js"),
+      reachesHandler("/repo/client/node_modules/.bun/react@19.3.1/node_modules/react/index.js"),
     ).toBe(false);
     expect(reachesHandler("C:\\repo\\client\\node_modules\\react\\index.js")).toBe(false);
     expect(reachesHandler(`\0virtual:${ROUTES}/shipment/page.tsx`)).toBe(false);

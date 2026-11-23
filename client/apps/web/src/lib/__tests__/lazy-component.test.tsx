@@ -71,4 +71,32 @@ describe("lazyComponent", () => {
     expect(await screen.findByText("Card")).toBeInTheDocument();
     expect(load).toHaveBeenCalledTimes(1);
   });
+
+  it("draws a preloaded module at once, without the fallback", async () => {
+    const { Component, preload } = lazyComponent(
+      async () => ({ Shown: () => <p>Card</p> }),
+      (module) => module.Shown,
+    );
+
+    await preload();
+    render(
+      <Suspense fallback={<p>Outline</p>}>
+        <Component />
+      </Suspense>,
+    );
+
+    expect(screen.getByText("Card")).toBeInTheDocument();
+    expect(screen.queryByText("Outline")).not.toBeInTheDocument();
+  });
+
+  it("shares one read with another owner of the same loader", async () => {
+    const load = vi.fn(async () => ({ Shown: () => <p>Card</p> }));
+    const shared = preloadable(load);
+    const { preload } = lazyComponent(shared, (module) => module.Shown);
+
+    await shared();
+    await preload();
+
+    expect(load).toHaveBeenCalledTimes(1);
+  });
 });

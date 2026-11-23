@@ -51,11 +51,11 @@ type EndAssignmentRequest struct {
 	UserID       pulid.ID
 }
 
-func (s *Service) ListAssignments(
+func (s *Service) PageAssignments(
 	ctx context.Context,
 	req *ptopolicyports.ListPTOAssignmentsRequest,
-) ([]*pto.WorkerPTOPolicyAssignment, error) {
-	return s.repo.ListAssignments(ctx, req)
+) (*pagination.CursorListResult[*pto.WorkerPTOPolicyAssignment], error) {
+	return s.repo.PageAssignments(ctx, req)
 }
 
 func (s *Service) ActiveAssignment(

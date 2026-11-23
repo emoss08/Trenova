@@ -18,8 +18,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/drivernotificationservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerchecklistports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workercredentialports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
@@ -51,6 +53,10 @@ type Params struct {
 	// organization's own template gives it.
 	DriverNotify *drivernotificationservice.Service
 	Fields       permissionports.FieldAccess
+	Checklists   workerchecklistports.EvidenceRefresher
+	// Organizations give the organization's zone, so a credential's days
+	// until expiry count the organization's calendar days.
+	Organizations tenantports.OrganizationRepository
 }
 
 type Service struct {
@@ -62,19 +68,23 @@ type Service struct {
 	realtime      realtimeports.RealtimeService
 	driverNotify  *drivernotificationservice.Service
 	fields        permissionports.FieldAccess
+	checklists    workerchecklistports.EvidenceRefresher
+	organizations tenantports.OrganizationReader
 	seededTenants sync.Map
 }
 
 func New(p Params) *Service {
 	return &Service{
-		l:            p.Logger.Named("service.worker-credential"),
-		repo:         p.Repo,
-		workerRepo:   p.WorkerRepo,
-		documentRepo: p.DocumentRepo,
-		auditService: p.AuditService,
-		realtime:     p.Realtime,
-		driverNotify: p.DriverNotify,
-		fields:       p.Fields,
+		l:             p.Logger.Named("service.worker-credential"),
+		repo:          p.Repo,
+		workerRepo:    p.WorkerRepo,
+		documentRepo:  p.DocumentRepo,
+		auditService:  p.AuditService,
+		realtime:      p.Realtime,
+		driverNotify:  p.DriverNotify,
+		fields:        p.Fields,
+		checklists:    p.Checklists,
+		organizations: p.Organizations,
 	}
 }
 

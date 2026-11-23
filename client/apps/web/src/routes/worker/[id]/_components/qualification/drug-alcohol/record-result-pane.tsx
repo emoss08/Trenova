@@ -22,16 +22,15 @@ import {
   isViolatingResult,
 } from "@trenova/shared/lib/drug-alcohol";
 import { formatUnixDateMedium, getTodayDate } from "@trenova/shared/lib/date";
-import { SubjectCard } from "./subject-card";
+import { SubjectCard } from "../subject-card";
 import { substanceLabel } from "./drug-alcohol-labels";
 import {
   dotTestResultFormSchema,
   dotTestResultSchema,
   type DOTTestResultFormValues,
 } from "@trenova/shared/types/worker-drug-alcohol";
-import { useEffect, useRef } from "react";
 import { FormProvider, useForm, useWatch, type Resolver } from "react-hook-form";
-import { useTestingInvalidation } from "./use-testing-invalidation";
+import { useWorkerInvalidation } from "../../use-worker-invalidation";
 
 // Pending is what the record starts as, not something anyone reports back.
 const RESULT_OPTIONS = dotTestResultSchema.options
@@ -68,20 +67,12 @@ export function RecordResultPane({
 }: RecordResultPaneProps) {
   const t = useT();
 
-  const invalidate = useTestingInvalidation(workerId);
+  const invalidate = useWorkerInvalidation(workerId, "testing");
   const form = useForm<DOTTestResultFormValues>({
     resolver: zodResolver(dotTestResultFormSchema) as Resolver<DOTTestResultFormValues>,
     defaultValues: defaultsFor(test),
   });
   const { control, handleSubmit, reset } = form;
-
-  const loadedFor = useRef<string | null>(null);
-  useEffect(() => {
-    const key = open ? (test?.id ?? "") : null;
-    if (key === loadedFor.current) return;
-    loadedFor.current = key;
-    if (key !== null) reset(defaultsFor(test));
-  }, [open, test, reset]);
 
   const isAlcohol = test?.substance === "Alcohol";
   const [concentration, result] = useWatch({ control, name: ["alcoholConcentration", "result"] });
@@ -118,7 +109,7 @@ export function RecordResultPane({
   });
 
   return (
-    <WorkPane open={open} onOpenChange={onOpenChange} title={t("Record the result")}>
+    <WorkPane open={open} onOpenChange={onOpenChange} title={t("Record result")}>
       <WorkPaneDirtyTracker form={form} />
       <FormProvider {...form}>
         <Form
@@ -156,6 +147,7 @@ export function RecordResultPane({
                       name="alcoholConcentration"
                       label={t("Concentration")}
                       placeholder="0.000"
+                      inputClassProps="font-mono"
                       description={t(
                         "The breath alcohol concentration from the confirmation test; it decides the result on its own.",
                       )}
@@ -163,7 +155,7 @@ export function RecordResultPane({
                     />
                   </FormControl>
                   <FormControl cols="full">
-                    <Alert variant={readingIsViolation ? "destructive" : "default"}>
+                    <Alert size="sm" variant={readingIsViolation ? "destructive" : "default"}>
                       <AlertDescription>
                         {readingIsViolation
                           ? t(

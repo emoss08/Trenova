@@ -2,7 +2,7 @@
 // recover a load, drawn at every point the plan can stand at. Run with the
 // mock API and the web app up (see README.md):
 //
-//   node e2e/mock-api/desk-plan-screenshots.mjs [outDir] [name,name,...]
+//   bun e2e/mock-api/desk-plan-screenshots.mjs [outDir] [name,name,...]
 //
 // Each shot sets the `deskPlan` stage it needs. Every stage is shot on the
 // artifact's own page in light and dark, and the ones a person works from

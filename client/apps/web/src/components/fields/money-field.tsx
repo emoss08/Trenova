@@ -23,7 +23,7 @@ type BaseMoneyFieldProps = {
   hideLabel?: boolean;
   /** A small control beside the label. */
   labelAction?: ReactNode;
-  description?: string;
+  description?: React.ReactNode;
   layout?: FieldLayout;
   /** Classes for the field's box: its height and type size. */
   className?: string;

@@ -107,6 +107,8 @@ export type DataTablePanelProps<TData> = {
 type BaseDockAction = {
   id: string;
   label: string;
+  /** The label in words that name how many rows are selected, already translated. */
+  labelFor?: (selectedCount: number) => string;
   loadingLabel?: string;
   icon?: IconComponent;
   variant?: "default" | "destructive";

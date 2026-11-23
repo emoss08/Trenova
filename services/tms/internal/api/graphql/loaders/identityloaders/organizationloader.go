@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/vikstrous/dataloadgen"
 	"go.uber.org/fx"
 )
@@ -63,4 +64,17 @@ func (f *OrganizationByIDLoaderFactory) Attach(
 	tenantInfo pagination.TenantInfo,
 ) context.Context {
 	return loadercore.Attach(ctx, tenantInfo, f)
+}
+
+// OrganizationToday is the organization's calendar date now, as the instant
+// that date starts in UTC (timeutils.LocalDateAsUTC): what a row's days until
+// a date count from. The organization is read once per request however many
+// rows ask; the UTC date stands in when it cannot be read.
+func OrganizationToday(ctx context.Context, organizationID pulid.ID) int64 {
+	now := timeutils.NowUnix()
+	org, err := OrganizationByID(ctx, organizationID.String())
+	if err != nil || org == nil {
+		return timeutils.LocalDateAsUTC(now, nil)
+	}
+	return timeutils.LocalDateAsUTC(now, timeutils.LoadLocation(org.Timezone))
 }

@@ -852,6 +852,7 @@
   "Waive this permit requirement": "Eximir de este requisito de permiso",
   "Waived: {0}": "Eximido: {0}",
   "Waiving does not make the movement legal. It records that your organization accepts the compliance risk and releases the dispatch block. Your reason is the audit trail if the load is stopped.": "La exención no hace legal el movimiento. Registra que su organización asume el riesgo de incumplimiento y libera el bloqueo de despacho. Su motivo constituye la pista de auditoría si se detiene la carga.",
+  "Waiving...": "Eximiendo...",
   "Was {0}, now {1}": "Antes {0}, ahora {1}",
   "We are extracting text, classifying the document, and assembling the shipment draft.": "Estamos extrayendo el texto, clasificando el documento y componiendo el borrador del envío.",
   "We are queuing OCR and intelligence work for this rate confirmation.": "Estamos poniendo en cola el trabajo de OCR e inteligencia para esta confirmación de tarifa.",

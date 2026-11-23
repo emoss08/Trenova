@@ -1,6 +1,7 @@
 package workforce
 
 import (
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/equipment/ports/tractorports"
 	"github.com/emoss08/trenova/internal/modules/workforce/adapters/postgres/orgholidayrepository"
 	"github.com/emoss08/trenova/internal/modules/workforce/adapters/postgres/performancereviewrepository"
@@ -98,7 +99,7 @@ func SharedOptions() fx.Option {
 			func(s *workerdqfservice.Service) workeroverviewservice.QualificationFiler { return s },
 			func(
 				r workeremploymentports.WorkerEmploymentEventRepository,
-			) workeroverviewservice.EmploymentEventLister {
+			) workeroverviewservice.EmploymentSummarizer {
 				return r
 			},
 			func(s *schedulingservice.Service) workeroverviewservice.ShiftLister { return s },
@@ -119,6 +120,13 @@ func SharedOptions() fx.Option {
 			func(s *workerleaveservice.Service) driverportalrecordsservice.LeaveReader { return s },
 			orgholidayservice.New,
 			func(s *workerchecklistservice.Service) workerchecklistports.ChecklistSpawner { return s },
+			func(s *workerchecklistservice.Service) workerchecklistports.EvidenceRefresher { return s },
+			fx.Annotate(
+				func(s *workerchecklistservice.Service) documentports.ResourceDocumentsWatcher {
+					return s
+				},
+				fx.ResultTags(`group:"resource_document_watchers"`),
+			),
 			workeremploymentservice.New,
 			func(s *workeremploymentservice.Service) workeremploymentports.EmploymentEventRecorder { return s },
 			samsaracontract.NewManager,

@@ -39,9 +39,26 @@ fragment WorkerEmploymentEventFields on WorkerEmploymentEvent {
   updatedAt
 }
 
-query WorkerEmploymentEvents($workerId: ID!, $kinds: [WorkerEmploymentEventKind!]) {
-  workerEmploymentEvents(workerId: $workerId, kinds: $kinds) {
-    ...WorkerEmploymentEventFields
+query WorkerEmploymentEvents(
+  $workerId: ID!
+  $kinds: [WorkerEmploymentEventKind!]
+  $first: Int
+  $after: String
+  $includeTotalCount: Boolean = true
+) {
+  workerEmploymentEvents(workerId: $workerId, kinds: $kinds, first: $first, after: $after) {
+    edges {
+      cursor
+      node {
+        ...WorkerEmploymentEventFields
+      }
+    }
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+    totalCount @include(if: $includeTotalCount)
+    totalCountExact @include(if: $includeTotalCount)
   }
 }
 
@@ -95,5 +112,11 @@ query PreviewWorkerEmploymentEvent($input: RecordWorkerEmploymentEventInput!) {
     effects {
       ...WorkerEmploymentEffectFields
     }
+  }
+}
+
+query WorkerEmploymentEvent($id: ID!) {
+  workerEmploymentEvent(id: $id) {
+    ...WorkerEmploymentEventFields
   }
 }

@@ -14,7 +14,15 @@
         "$TURBO_ROOT$/../services/tms/internal/api/graphql/schema/**",
         "$TURBO_ROOT$/../services/tms/pkg/errortypes/enums.go",
         "$TURBO_ROOT$/../services/tms/internal/api/helpers/problemtypes.go",
-        "$TURBO_ROOT$/../services/tms/internal/modules/identity/domain/permission/resource_gen.go"
+        "$TURBO_ROOT$/../services/tms/internal/modules/identity/domain/permission/resource_gen.go",
+        "$TURBO_ROOT$/../services/tms/internal/modules/identity/domain/permission/operations.go",
+        "$TURBO_ROOT$/../services/tms/internal/modules/identity/domain/permission/sensitivity.go",
+        "$TURBO_ROOT$/../services/tms/internal/modules/identity/domain/recordkind/recordid.go",
+        "$TURBO_ROOT$/../services/tms/internal/modules/identity/domain/recordkind/recordkind.go",
+        "$TURBO_ROOT$/../services/tms/internal/modules/agent/domain/agent/enums.go",
+        "$TURBO_ROOT$/../services/tms/internal/modules/agent/domain/agent/subjectrecord.go",
+        "$TURBO_ROOT$/../services/tms/internal/modules/agent/app/assistantservice/assistantthreads/mentions.go",
+        "$TURBO_ROOT$/../services/tms/internal/modules/agent/ports/agenttoolports/toolnamespace.go"
       ],
       "outputs": ["src/generated/**", "src/schema.graphql"]
     },
@@ -27,6 +35,12 @@
     },
     "test": {},
     "dev": {
+      "dependsOn": ["^codegen"],
+      "cache": false,
+      "persistent": true
+    },
+    "@trenova/graphql#dev": {
+      "dependsOn": ["codegen"],
       "cache": false,
       "persistent": true
     }

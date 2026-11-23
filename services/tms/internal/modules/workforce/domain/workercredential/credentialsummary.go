@@ -26,6 +26,7 @@ type WorkerCredentialSummary struct {
 	ExpiringCount    int
 	ExpiredCount     int
 	MissingCount     int
+	ArchivedCount    int
 	Items            []*CredentialSummaryItem
 }
 

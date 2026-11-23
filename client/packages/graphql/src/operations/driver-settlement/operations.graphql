@@ -46,32 +46,41 @@ query PayProfileTable($input: DataTableConnectionInput!, $includeTotalCount: Boo
   }
 }
 
-query WorkerPayAssignments($workerId: ID!) {
-  workerPayAssignments(workerId: $workerId) {
-    id
-    workerId
-    payProfileId
-    effectiveFrom
-    effectiveTo
-    splitPercent
-    rateOverrides {
-      componentId
-      rate
-    }
-    notes
-    version
-    createdAt
-    payProfile {
-      id
-      name
-      classification
-      components {
+query WorkerPayAssignments($workerId: ID!, $first: Int, $after: String) {
+  workerPayAssignments(workerId: $workerId, first: $first, after: $after) {
+    edges {
+      cursor
+      node {
         id
-        kind
-        method
-        description
-        rate
+        workerId
+        payProfileId
+        effectiveFrom
+        effectiveTo
+        splitPercent
+        rateOverrides {
+          componentId
+          rate
+        }
+        notes
+        version
+        createdAt
+        payProfile {
+          id
+          name
+          classification
+          components {
+            id
+            kind
+            method
+            description
+            rate
+          }
+        }
       }
+    }
+    pageInfo {
+      hasNextPage
+      endCursor
     }
   }
 }

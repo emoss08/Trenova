@@ -1,4 +1,5 @@
 import { AutoCompleteDateField } from "@/components/fields/date-field/date-field";
+import { FieldNote } from "@/components/fields/field-components";
 import { NumberField } from "@/components/fields/number-field";
 import { SelectField } from "@/components/fields/select-field";
 import { SwitchField } from "@/components/fields/switch-field";
@@ -32,21 +33,31 @@ import {
   type DisciplinaryLevel,
   type IssueActionFormValues,
 } from "@trenova/shared/types/worker-safety";
-import { useEffect, useRef } from "react";
 import { FormProvider, useForm, useWatch, type Resolver } from "react-hook-form";
-import { DISCIPLINE_STAIR } from "./safety-model";
-import { safetyEventHeadline } from "./safety-event-row";
-import { useSafetyInvalidation } from "./use-safety-invalidation";
+import { useWorkerInvalidation } from "../use-worker-invalidation";
+import { DISCIPLINE_STAIR, safetyEventHeadline } from "./safety-model";
 
-function defaults(level: DisciplinaryLevel, safetyEventId: string | null): IssueActionFormValues {
+/** A new action: on the suggested step, and for the event when it came from one. */
+function defaults(
+  level: DisciplinaryLevel,
+  event: WorkerSafetyEventRow | null,
+  t: TranslateFn,
+): IssueActionFormValues {
+  const firstViolation = event?.violations?.[0]?.description;
   return {
     level,
-    reason: "",
+    reason: event
+      ? t(
+          "{0}, {1}",
+          firstViolation ?? safetyEventHeadline(event),
+          formatUnixDateMedium(event.occurredAt),
+        )
+      : "",
     details: null,
     occurredAt: null,
     expiresAt: null,
     suspensionDays: null,
-    safetyEventId,
+    safetyEventId: event?.id ?? null,
     recordEmploymentEvent: true,
   };
 }
@@ -99,8 +110,8 @@ export type IssueActionPaneProps = {
   highestLevel: DisciplinaryLevel | null;
   /** The event the action is issued for, when it came from one. */
   event: WorkerSafetyEventRow | null;
-  /** Tells the stair which step the form is on, so it previews it. */
-  onLevelChange: (level: DisciplinaryLevel | null) => void;
+  /** Tells the stair which step the person picked, so it previews it. */
+  onLevelChange: (level: DisciplinaryLevel) => void;
   onSaved: () => void;
 };
 
@@ -122,46 +133,24 @@ export function IssueActionPane({
 }: IssueActionPaneProps) {
   const t = useT();
   const rt = useRichT();
-  const invalidate = useSafetyInvalidation(workerId);
+  const invalidate = useWorkerInvalidation(workerId, "safety");
   const form = useForm<IssueActionFormValues>({
     resolver: zodResolver(issueActionFormSchema) as Resolver<IssueActionFormValues>,
-    defaultValues: defaults(suggestedLevel, event?.id ?? null),
+    defaultValues: defaults(suggestedLevel, event, t),
   });
-  const { control, handleSubmit, reset, setValue } = form;
-
-  const loaded = useRef<string | null>(null);
-  useEffect(() => {
-    if (!open) {
-      loaded.current = null;
-      return;
-    }
-    const key = `${suggestedLevel}:${event?.id ?? ""}`;
-    if (loaded.current === key) return;
-    loaded.current = key;
-    const values = defaults(suggestedLevel, event?.id ?? null);
-    if (event) {
-      const firstViolation = event.violations?.[0]?.description;
-      values.reason = t(
-        "{0}, {1}",
-        firstViolation ?? safetyEventHeadline(event),
-        formatUnixDateMedium(event.occurredAt),
-      );
-    }
-    reset(values);
-  }, [open, suggestedLevel, event, reset, t]);
+  const { control, handleSubmit, setValue } = form;
 
   const level = useWatch({ control, name: "level" });
   const meta = disciplinaryLevelMeta(level);
   const isSuspension = level === "Suspension";
   const movesEmployment = isSuspension || meta.endsEmployment;
 
-  useEffect(() => {
-    onLevelChange(open ? level : null);
-  }, [open, level, onLevelChange]);
-
-  useEffect(() => {
-    if (!isSuspension) setValue("suspensionDays", null);
-  }, [isSuspension, setValue]);
+  // Leaving the suspension step drops its length, which only a suspension carries.
+  const changeLevel = (value: string) => {
+    const next = (value || suggestedLevel) as DisciplinaryLevel;
+    if (next !== "Suspension") setValue("suspensionDays", null);
+    onLevelChange(next);
+  };
 
   const options = disciplinaryLevelSchema.options.map((value) => ({
     value,
@@ -190,8 +179,8 @@ export function IssueActionPane({
         safetyEventId: values.safetyEventId ?? undefined,
         recordEmploymentEvent: movesEmployment && values.recordEmploymentEvent,
       }),
-    onSuccess: () => {
-      void invalidate();
+    onSuccess: async () => {
+      await invalidate();
       onSaved();
     },
   });
@@ -238,12 +227,14 @@ export function IssueActionPane({
                   label={t("Level")}
                   options={options}
                   placeholder={t("Pick a level")}
-                  description={note.warn ? undefined : note.text}
+                  description={
+                    <FieldNote live tone={note.warn ? "warning" : "muted"}>
+                      {note.text}
+                    </FieldNote>
+                  }
+                  onValueChange={changeLevel}
                   required
                 />
-                {note.warn ? (
-                  <p className="mt-1 text-xs text-warning-foreground">{note.text}</p>
-                ) : null}
               </FormControl>
               <FormControl cols="full">
                 <TextareaField<IssueActionFormValues>
@@ -333,7 +324,6 @@ export function IssueActionPane({
               size="sm"
               variant={meta.endsEmployment ? "destructive" : "default"}
               isLoading={isPending}
-              loadingText={t("Issuing...")}
             >
               {issueLabel(level, t)}
             </Button>

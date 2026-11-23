@@ -2,8 +2,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { WorkerPTO } from "@trenova/shared/types/worker";
-import { useState } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { useRowFlash } from "../../../use-row-flash";
 import { RequestsPanel, type RequestAction } from "../requests-panel";
 
 const mocks = vi.hoisted(() => ({ approveWorkerPTO: vi.fn() }));
@@ -52,42 +52,62 @@ const approved = {
   approver: { id: "usr_1", name: "Dana Whitfield" },
 } as unknown as WorkerPTO;
 
+const MORE_NONE = {
+  hasMore: false,
+  loadMore: () => undefined,
+  loadingMore: false,
+  loadMoreFailed: false,
+  error: null,
+};
+
 function Harness({
   entries,
+  hasMore,
   onDecided,
   onReason,
+  onOpenRequest,
 }: {
   entries: WorkerPTO[];
+  hasMore: boolean;
   onDecided: () => Promise<unknown>;
   onReason: (action: RequestAction) => void;
+  onOpenRequest: (id: string) => void;
 }) {
-  const [changed, setChanged] = useState<{ id: string; tick: "a" | "b" } | null>(null);
+  const { flash, flashOf } = useRowFlash();
   return (
     <RequestsPanel
       entries={entries}
-      onOpenRequest={vi.fn()}
+      total={entries.length}
+      more={{ ...MORE_NONE, hasMore }}
+      onOpenRequest={onOpenRequest}
+      requestPane={{ preload: () => Promise.resolve() }}
       onReason={onReason}
       onDecided={onDecided}
-      changed={changed}
-      onChanged={(id) =>
-        setChanged((previous) => ({ id, tick: previous?.tick === "a" ? "b" : "a" }))
-      }
+      flashOf={flashOf}
+      onChanged={flash}
     />
   );
 }
 
-function renderPanel(entries: WorkerPTO[]) {
+function renderPanel(entries: WorkerPTO[], { hasMore = false } = {}) {
   const onDecided = vi.fn().mockResolvedValue(undefined);
   const onReason = vi.fn();
+  const onOpenRequest = vi.fn();
   const client = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
   });
   render(
     <QueryClientProvider client={client}>
-      <Harness entries={entries} onDecided={onDecided} onReason={onReason} />
+      <Harness
+        entries={entries}
+        hasMore={hasMore}
+        onDecided={onDecided}
+        onReason={onReason}
+        onOpenRequest={onOpenRequest}
+      />
     </QueryClientProvider>,
   );
-  return { onDecided, onReason };
+  return { onDecided, onReason, onOpenRequest };
 }
 
 function rowOf(text: string): HTMLElement {
@@ -173,6 +193,27 @@ describe("RequestsPanel", () => {
     expect(within(rowOf("Holiday")).getByText("Peak week")).toBeInTheDocument();
     expect(screen.getAllByText("Waiting")).toHaveLength(1);
     expect(document.querySelectorAll('[data-slot="badge-dot"]')).toHaveLength(4);
+  });
+
+  it("opens a request from anywhere on its row, by pointer or keyboard, but not from its buttons", async () => {
+    const user = userEvent.setup();
+    const { onOpenRequest } = renderPanel([requested, approved]);
+
+    await user.click(within(rowOf("Sick")).getByText("Dana Whitfield"));
+    expect(onOpenRequest).toHaveBeenLastCalledWith("wrkpto_2");
+
+    rowOf("Vacation").focus();
+    await user.keyboard("{Enter}");
+    expect(onOpenRequest).toHaveBeenLastCalledWith("wrkpto_1");
+
+    await user.click(within(rowOf("Vacation")).getByRole("button", { name: "Reject" }));
+    expect(onOpenRequest).toHaveBeenCalledTimes(2);
+  });
+
+  it("says how many wait only once every request has been read", () => {
+    renderPanel([requested, approved], { hasMore: true });
+    expect(screen.queryByText("1 waiting on a decision")).not.toBeInTheDocument();
+    expect(screen.queryByText("Nothing waiting")).not.toBeInTheDocument();
   });
 
   it("draws the empty table with its headings when nothing has been requested", () => {

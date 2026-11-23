@@ -34,6 +34,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/dataentrycontrolhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/dataretentionhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/deskcasehandler"
+	"github.com/emoss08/trenova/internal/api/handlers/desktranscripthandler"
 	"github.com/emoss08/trenova/internal/api/handlers/detentionhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/dispatchcontrolhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/distancecontrolhandler"
@@ -186,6 +187,7 @@ type RouterParams struct {
 	AssistantHandler                *assistanthandler.Handler
 	InsightHandler                  *insighthandler.Handler
 	AgentRunHandler                 *agentrunhandler.Handler
+	DeskTranscriptHandler           *desktranscripthandler.Handler
 	VersionHandler                  *versionhandler.Handler
 	WeatherAlertHandler             *weatheralerthandler.Handler
 	ServiceTypeHandler              *servicetypehandler.Handler
@@ -324,6 +326,7 @@ type Router struct {
 	assistantHandler                *assistanthandler.Handler
 	insightHandler                  *insighthandler.Handler
 	agentRunHandler                 *agentrunhandler.Handler
+	deskTranscriptHandler           *desktranscripthandler.Handler
 	versionHandler                  *versionhandler.Handler
 	weatherAlertHandler             *weatheralerthandler.Handler
 	shipmentTypeHandler             *shipmenttypehandler.Handler
@@ -455,6 +458,7 @@ func NewRouter(p RouterParams) *Router {
 		assistantHandler:                p.AssistantHandler,
 		insightHandler:                  p.InsightHandler,
 		agentRunHandler:                 p.AgentRunHandler,
+		deskTranscriptHandler:           p.DeskTranscriptHandler,
 		versionHandler:                  p.VersionHandler,
 		weatherAlertHandler:             p.WeatherAlertHandler,
 		shipmentTypeHandler:             p.ShipmentTypeHandler,
@@ -648,6 +652,7 @@ func (r *Router) setupProtectedRoutes(rg *gin.RouterGroup) {
 	r.assistantHandler.RegisterRoutes(protected)
 	r.insightHandler.RegisterRoutes(protected)
 	r.agentRunHandler.RegisterRoutes(protected)
+	r.deskTranscriptHandler.RegisterRoutes(protected)
 	r.serviceTypeHandler.RegisterRoutes(protected)
 	r.serviceFailureReasonCodeHandler.RegisterRoutes(protected)
 	r.serviceFailureHandler.RegisterRoutes(protected)

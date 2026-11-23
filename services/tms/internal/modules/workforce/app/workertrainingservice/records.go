@@ -3,6 +3,8 @@ package workertrainingservice
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
@@ -31,6 +33,16 @@ func (s *Service) ListForWorker(
 		IncludeDocument: true,
 		IncludeActors:   true,
 	})
+}
+
+func (s *Service) PageForWorker(
+	ctx context.Context,
+	req *workertrainingports.ListWorkerTrainingRequest,
+) (*pagination.CursorListResult[*workertraining.WorkerTrainingRecord], error) {
+	req.IncludeCourse = true
+	req.IncludeDocument = true
+	req.IncludeActors = true
+	return s.repo.PageForWorker(ctx, req)
 }
 
 func (s *Service) Get(
@@ -84,29 +96,41 @@ func (s *Service) Summary(
 	if err != nil {
 		return nil, err
 	}
-	return s.summarize(ctx, tenantInfo, wrk)
+	today, err := s.today(ctx, tenantInfo)
+	if err != nil {
+		return nil, err
+	}
+	return s.summarize(ctx, tenantInfo, wrk, today)
+}
+
+func (s *Service) today(ctx context.Context, tenantInfo pagination.TenantInfo) (int64, error) {
+	loc, err := tenantports.OrganizationLocation(ctx, s.organizations, tenantInfo)
+	if err != nil {
+		return 0, err
+	}
+	return timeutils.LocalDateAsUTC(timeutils.NowUnix(), loc), nil
 }
 
 func (s *Service) summarize(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	wrk *worker.Worker,
+	asOf int64,
 ) (*workertraining.WorkerTrainingSummary, error) {
 	courses, err := s.repo.ListActiveCourses(ctx, tenantInfo)
 	if err != nil {
 		return nil, err
 	}
-	records, err := s.repo.ListForWorker(ctx, &workertrainingports.ListWorkerTrainingRequest{
+	records, err := s.repo.CurrentForWorker(ctx, &workertrainingports.ListWorkerTrainingRequest{
 		TenantInfo:      tenantInfo,
 		WorkerID:        wrk.ID,
-		IncludeClosed:   true,
 		IncludeCourse:   true,
 		IncludeDocument: true,
 	})
 	if err != nil {
 		return nil, err
 	}
-	return workertraining.BuildTrainingSummary(wrk, courses, records, timeutils.NowUnix()), nil
+	return workertraining.BuildTrainingSummary(wrk, courses, records, asOf), nil
 }
 
 type AssignRequest struct {
@@ -366,7 +390,7 @@ func (s *Service) requireWorkerDocument(
 	}
 	ownedByRecord := doc.ResourceType == trainingResourceType &&
 		doc.ResourceID == record.ID.String()
-	ownedByWorker := doc.ResourceType == workerResourceType &&
+	ownedByWorker := doc.ResourceType == permission.ResourceWorker.String() &&
 		doc.ResourceID == record.WorkerID.String()
 	if !ownedByRecord && !ownedByWorker {
 		return errortypes.NewValidationError(

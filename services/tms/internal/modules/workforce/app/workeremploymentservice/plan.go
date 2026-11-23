@@ -26,8 +26,7 @@ import (
 type phase int
 
 const (
-	phaseBefore phase = iota
-	phaseAtomic
+	phaseAtomic phase = iota
 	phaseAfter
 )
 
@@ -320,7 +319,7 @@ func (s *Service) timeOffStep(request *worker.WorkerPTO) *step {
 		EndDate:   &end,
 	}
 	return &step{
-		phase:   phaseBefore,
+		phase:   phaseAtomic,
 		effects: []*employment.Effect{effect},
 		run: func(ctx context.Context, plan *RecordPlan) ([]*employment.Effect, error) {
 			_, err := s.pto.Cancel(ctx, &workerptoports.UpdatePTOStatusRequest{

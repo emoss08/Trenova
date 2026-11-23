@@ -30,12 +30,11 @@ import (
 )
 
 const (
-	realtimeTest       = "worker_dot_test"
-	realtimeViolation  = "worker_dot_violation"
-	realtimeQuery      = "worker_clearinghouse_query"
-	realtimePool       = "dot_random_pool"
-	realtimeDraw       = "dot_random_draw"
-	workerResourceType = "worker"
+	realtimeTest      = "worker_dot_test"
+	realtimeViolation = "worker_dot_violation"
+	realtimeQuery     = "worker_clearinghouse_query"
+	realtimePool      = "dot_random_pool"
+	realtimeDraw      = "dot_random_draw"
 )
 
 type Params struct {

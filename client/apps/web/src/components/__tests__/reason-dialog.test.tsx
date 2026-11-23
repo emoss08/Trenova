@@ -73,4 +73,25 @@ describe("ReasonDialog", () => {
 
     expect(screen.getByRole("button", { name: "Back" })).toBeInTheDocument();
   });
+
+  it("opens on its default reason and keeps what is typed when the default changes while open", () => {
+    const props = {
+      title: "Close this event?",
+      description: "Say how it ended.",
+      placeholder: "Resolution",
+      confirmLabel: "Close event",
+      pending: false,
+      onConfirm: vi.fn(),
+      onOpenChange: vi.fn(),
+    };
+    const { rerender } = render(<ReasonDialog open defaultReason="Coached" {...props} />);
+    const field = screen.getByRole("textbox") as HTMLTextAreaElement;
+    expect(field.value).toBe("Coached");
+
+    fireEvent.change(field, { target: { value: "Coached and retrained" } });
+    rerender(<ReasonDialog open defaultReason="Refetched" {...props} />);
+    expect((screen.getByRole("textbox") as HTMLTextAreaElement).value).toBe(
+      "Coached and retrained",
+    );
+  });
 });

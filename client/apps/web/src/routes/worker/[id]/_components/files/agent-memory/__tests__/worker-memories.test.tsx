@@ -1,7 +1,8 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { stubLayout } from "@/test/layout";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import WorkerMemories from "../worker-memories";
 
 const mocks = vi.hoisted(() => ({
@@ -9,6 +10,7 @@ const mocks = vi.hoisted(() => ({
   setDeskMemoryStatus: vi.fn(),
   createDeskMemory: vi.fn(),
   available: true,
+  overviewCount: 2,
 }));
 
 vi.mock("@/lib/graphql/desk-memories", () => ({
@@ -23,6 +25,17 @@ vi.mock("@/components/record-memories/record-memories", async (importOriginal) =
   const actual =
     await importOriginal<typeof import("@/components/record-memories/record-memories")>();
   return { ...actual, useRecordMemoriesAvailable: () => mocks.available };
+});
+
+vi.mock("@/lib/queries/worker", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/queries/worker")>();
+  return {
+    ...actual,
+    workerOverviewQuery: () => ({
+      queryKey: ["worker-overview-test"],
+      queryFn: async () => ({ agentMemoryCount: mocks.overviewCount }),
+    }),
+  };
 });
 
 function memory(overrides: Record<string, unknown>) {
@@ -62,10 +75,17 @@ function renderView() {
   );
 }
 
+let restoreLayout = () => {};
+beforeEach(() => {
+  restoreLayout = stubLayout(320);
+});
+
 afterEach(() => {
+  restoreLayout();
   cleanup();
   vi.clearAllMocks();
   mocks.available = true;
+  mocks.overviewCount = 2;
 });
 
 describe("WorkerMemories", () => {
@@ -87,7 +107,7 @@ describe("WorkerMemories", () => {
     renderView();
 
     expect(await screen.findByText("What agents remember about Maria")).toBeTruthy();
-    expect(screen.getByText("2 notes")).toBeTruthy();
+    expect(screen.getByText("2")).toBeTruthy();
     expect(screen.getByText("Will not take loads into New York City.")).toBeTruthy();
     expect(mocks.fetchDeskMemories).toHaveBeenCalledWith(
       { scope: null, roleId: null, query: "", subject: { type: "Worker", id: "wrk_1" } },
@@ -95,6 +115,16 @@ describe("WorkerMemories", () => {
       50,
       expect.anything(),
     );
+  });
+
+  it("counts every note the overview knows of, not only the pages read", async () => {
+    mocks.overviewCount = 120;
+    mocks.fetchDeskMemories
+      .mockResolvedValueOnce({ items: [memory({ id: "mem_1" })], next: "cursor_2" })
+      .mockResolvedValue({ items: [], next: null });
+    renderView();
+
+    expect(await screen.findByText("120")).toBeTruthy();
   });
 
   it("removes a note only after the confirmation", async () => {

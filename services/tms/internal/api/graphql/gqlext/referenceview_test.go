@@ -211,7 +211,7 @@ func TestReferenceFragmentsAreGenerated(t *testing.T) {
 			want,
 			string(got),
 			"%s is out of date: run `go run ./internal/api/graphql/gqlext/refgen` from services/tms, "+
-				"then `pnpm --filter @trenova/graphql codegen`",
+				"then `bun run --filter @trenova/graphql codegen`",
 			path,
 		)
 	}

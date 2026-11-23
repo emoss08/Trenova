@@ -25,6 +25,7 @@ import type { WorkerRecord } from "@/routes/worker/use-worker-state";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery } from "@tanstack/react-query";
 import type { RecordWorkerEmploymentEventInput } from "@trenova/graphql/generated/graphql";
+import { ErrorState } from "@trenova/shared/components/errors/error-state";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form";
 import { toast } from "@trenova/shared/components/ui/toast";
@@ -38,13 +39,12 @@ import {
   type EmploymentEventFormValues,
   type EmploymentEventKind,
 } from "@trenova/shared/types/worker-employment";
-import { useEffect, useRef } from "react";
 import { FormProvider, useForm, useWatch, type FieldErrors, type Resolver } from "react-hook-form";
 import { employmentOptionsQuery } from "../employment-reads";
 import { describeEmploymentEffect, failedEffects } from "./employment-effects";
 import { employmentEventHint, isEmploymentEventKind } from "./employment-event-meta";
 import { EventPreview } from "./event-preview";
-import { useEmploymentInvalidation } from "./use-employment-invalidation";
+import { useWorkerInvalidation } from "../../use-worker-invalidation";
 
 const LEAVE_TYPES = Object.keys(WORKER_LEAVE_TYPE_LABELS) as WorkerLeaveType[];
 
@@ -218,7 +218,6 @@ export function RecordEventPane({
     >
       {options ? (
         <RecordEventForm
-          open={open}
           preset={preset}
           workerId={workerId}
           worker={worker}
@@ -230,17 +229,12 @@ export function RecordEventPane({
         <>
           <WorkPaneBody>
             {optionsQuery.isError ? (
-              <div role="alert" className="flex items-center gap-2 text-sm text-muted-foreground">
-                <span className="flex-1">{t("Could not read which events can be recorded.")}</span>
-                <Button
-                  type="button"
-                  size="xs"
-                  variant="outline"
-                  onClick={() => void optionsQuery.refetch()}
-                >
-                  {t("Try again")}
-                </Button>
-              </div>
+              <ErrorState
+                layout="compact"
+                error={optionsQuery.error}
+                title={t("The events that can be recorded could not be loaded")}
+                onRetry={() => void optionsQuery.refetch()}
+              />
             ) : (
               <div
                 aria-busy
@@ -269,7 +263,6 @@ export function RecordEventPane({
 }
 
 function RecordEventForm({
-  open,
   preset,
   workerId,
   worker,
@@ -277,7 +270,6 @@ function RecordEventForm({
   reasonRequired,
   onDone,
 }: {
-  open: boolean;
   preset: EmploymentEventKind | null;
   workerId: string;
   worker: WorkerRecord;
@@ -286,21 +278,12 @@ function RecordEventForm({
   onDone: () => void;
 }) {
   const t = useT();
-  const invalidate = useEmploymentInvalidation(workerId);
+  const invalidate = useWorkerInvalidation(workerId, "employment");
   const form = useForm<EmploymentEventFormValues>({
     resolver: employmentEventResolver(reasonRequired),
     defaultValues: emptyValues(preset),
   });
-  const { control, handleSubmit, reset } = form;
-
-  // Each opening starts a fresh form; returning to the tab (its effects run again) keeps
-  // what the person typed.
-  const openedFor = useRef<string | null>(null);
-  useEffect(() => {
-    const session = open ? (preset ?? "") : null;
-    if (session !== null && openedFor.current !== session) reset(emptyValues(preset));
-    openedFor.current = session;
-  }, [open, preset, reset]);
+  const { control, handleSubmit } = form;
 
   const values = useWatch({ control }) as EmploymentEventFormValues;
   const kind = values.kind as EmploymentEventKind | "";
@@ -317,9 +300,9 @@ function RecordEventForm({
     resourceName: "Employment event",
     scope: { id: `worker-employment-event:${workerId}` },
     mutationFn: (submitted) => recordWorkerEmploymentEvent(recordEventInput(workerId, submitted)),
-    onSuccess: (result, submitted) => {
+    onSuccess: async (result, submitted) => {
       announceRecorded(submitted.kind, result, t);
-      void invalidate();
+      await invalidate();
       onDone();
     },
   });
@@ -406,9 +389,6 @@ function RecordEventForm({
                   />
                 </FormControl>
               </FormGroup>
-              <p className="mt-1.5 text-xs text-muted-foreground">
-                {t("Choose a fleet code, a manager or both.")}
-              </p>
             </div>
           ) : null}
           {kind === "LeaveStarted" ? (

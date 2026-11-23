@@ -28,6 +28,8 @@ Each conversation opens in the middle, and anything an agent produces (a table, 
 
 While an agent replies you can steer it with a correction or queue the next question. The message box names records with @, takes slash commands, files, scans and dictation, and can share the page you came from. A conversation about a shipment, invoice or dispute becomes a case, with a ready-to-bill or ready-to-close checklist, snoozes and waiting on the customer's or carrier's reply. Conversations can also run a request on a schedule, be handed to another agent, keep pinned facts in mind, and compact themselves when they grow long. Each fact an agent looked up carries a number tying it to the step that found it.
 
+Your conversations are your own: nobody else sees them on their Desk. An administrator your organization allows to read other people's Desk conversations can open and download them from [Desk conversations](/admin/desk-conversations), as you saw them, and each time they do is recorded in the audit log.
+
 ## Tasks
 
 ### Open a record's case

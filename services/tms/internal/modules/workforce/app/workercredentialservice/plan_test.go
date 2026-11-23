@@ -181,6 +181,8 @@ func TestUpdate_KeepsTheDocumentACallerCarriesOver(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Equal(t, docID, updated.DocumentID)
+	require.NotNil(t, updated.Document, "the response carries the kept document")
+	assert.Equal(t, docID, updated.Document.ID)
 	assert.Equal(t, docID, h.repo.credentials[edit.ID].DocumentID)
 	assert.True(t, updated.IsVerified(), "carrying the same document over is no change")
 }
@@ -201,6 +203,8 @@ func TestUpdate_SetsADocumentOnACredentialWithout(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Equal(t, docID, updated.DocumentID)
+	require.NotNil(t, updated.Document, "the response carries the new document")
+	assert.Equal(t, docID, updated.Document.ID)
 	assert.Equal(t, docID, h.repo.credentials[created.ID].DocumentID)
 }
 
@@ -279,6 +283,7 @@ func TestUpdate_RemovingTheDocumentClearsItAndTheVerification(t *testing.T) {
 	require.NoError(t, err, "a type that requires a document still lets a wrong scan come off")
 
 	assert.True(t, updated.DocumentID.IsNil())
+	assert.Nil(t, updated.Document, "the response carries no stale document")
 	assert.True(t, h.repo.credentials[edit.ID].DocumentID.IsNil())
 	assert.False(t, updated.IsVerified(), "removing the document is a change of document")
 	assert.True(t, updated.VerifiedByID.IsNil())

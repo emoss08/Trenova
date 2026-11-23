@@ -32,6 +32,7 @@ func (s *Service) Evidence(ctx context.Context, req *EvidenceRequest) (*Evidence
 			&workersafetyports.ListWorkerDisciplinaryActionsRequest{
 				TenantInfo: req.TenantInfo,
 				WorkerID:   req.WorkerID,
+				ActiveOnly: true,
 			},
 		)
 		if err != nil {
@@ -48,10 +49,20 @@ func (s *Service) evidence(
 	actions []*workerdiscipline.WorkerDisciplinaryAction,
 	now int64,
 ) (*Evidence, error) {
+	windowStart := safetyscorecard.WindowStart(now)
 	events, err := s.repo.ListEvents(ctx, &workersafetyports.ListWorkerSafetyEventsRequest{
-		TenantInfo: tenantInfo,
-		WorkerID:   workerID,
+		TenantInfo:    tenantInfo,
+		WorkerID:      workerID,
+		DecisiveSince: windowStart,
+		DecisiveAt:    now,
 	})
+	if err != nil {
+		return nil, err
+	}
+	lastEventAt, err := s.repo.LastCountingEventAt(
+		ctx,
+		&workersafetyports.LastCountingSafetyEventRequest{TenantInfo: tenantInfo, WorkerID: workerID},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -60,19 +71,13 @@ func (s *Service) evidence(
 		&workersafetyports.ListWorkerRecognitionsRequest{
 			TenantInfo: tenantInfo,
 			WorkerID:   workerID,
+			Since:      windowStart,
 		},
 	)
 	if err != nil {
 		return nil, err
 	}
-	return &Evidence{
-		Scorecard: safetyscorecard.BuildSafetyScorecard(
-			workerID,
-			events,
-			actions,
-			recognitions,
-			now,
-		),
-		Events: events,
-	}, nil
+	card := safetyscorecard.BuildSafetyScorecard(workerID, events, actions, recognitions, now)
+	card.WithLastEvent(lastEventAt, now)
+	return &Evidence{Scorecard: card, Events: events}, nil
 }

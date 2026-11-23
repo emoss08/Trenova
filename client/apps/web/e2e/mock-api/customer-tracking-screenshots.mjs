@@ -1,7 +1,7 @@
 // Screenshots of the customer's tracking page and the shipment panel's
 // Customer tracking tab. Run with the mock API and the web app up (see README.md):
 //
-//   node e2e/mock-api/customer-tracking-screenshots.mjs [outDir] [name,name,...]
+//   bun e2e/mock-api/customer-tracking-screenshots.mjs [outDir] [name,name,...]
 //
 // E2E_CHROMIUM_PATH points at a Chromium binary when Playwright's own is not installed.
 import { mkdir } from "node:fs/promises";

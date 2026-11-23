@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workertraining"
 	"github.com/emoss08/trenova/internal/testutil/mocks/workerportsmock"
+	"github.com/emoss08/trenova/internal/testutil/orgzonetest"
 	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -50,7 +51,7 @@ type trainingOnly struct {
 }
 
 func (f *trainingOnly) SummaryFor(
-	_ context.Context, _ pagination.TenantInfo, _ *worker.Worker,
+	_ context.Context, _ pagination.TenantInfo, _ *worker.Worker, _ int64,
 ) (*workertraining.WorkerTrainingSummary, error) {
 	return f.summary, nil
 }
@@ -115,10 +116,11 @@ func TestWorkerOverview_ClearanceIsNullWithoutCredentialRead(t *testing.T) {
 	workerRepo := workerportsmock.NewMockWorkerRepository(t)
 	workerRepo.EXPECT().GetByID(mock.Anything, mock.Anything).Return(wrk, nil).Once()
 	service := workeroverviewservice.New(workeroverviewservice.Params{
-		Logger:     zap.NewNop(),
-		Clock:      func() int64 { return 1_800_000_000 },
-		Features:   plantest.Without(platformcatalog.FeatureSamsaraIntegration),
-		WorkerRepo: workerRepo,
+		Logger:        zap.NewNop(),
+		Organizations: orgzonetest.Organizations{},
+		Clock:         func() int64 { return 1_800_000_000 },
+		Features:      plantest.Without(platformcatalog.FeatureSamsaraIntegration),
+		WorkerRepo:    workerRepo,
 		Training: &trainingOnly{
 			summary: &workertraining.WorkerTrainingSummary{Compliant: true},
 		},

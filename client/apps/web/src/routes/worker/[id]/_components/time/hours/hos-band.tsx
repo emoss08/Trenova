@@ -5,9 +5,10 @@ import { AlertOctagonIcon } from "@trenova/shared/components/icons";
 import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { formatUnixDate, formatUnixTime } from "@trenova/shared/lib/date";
-import { dutyStatusVariant, HOUR_MS } from "./hos-model";
-import { formatHoursMinutes, limitHours } from "./hos-format";
+import { formatUnixDateMedium, formatUnixTime } from "@trenova/shared/lib/date";
+import { HOUR_MS } from "@/lib/time-units";
+import { dutyStatusVariant } from "@/lib/hos";
+import { formatHoursMinutes, limitHours } from "@/lib/hours-format";
 
 const DEFAULT_LIMITS = {
   break: 8 * HOUR_MS,
@@ -43,7 +44,7 @@ export function HosBand({ clocks, vehicleName, drivenTodayMs }: HosBandProps) {
     ? t(
         "{0} available tomorrow · cycle began {1}",
         formatHoursMinutes(t, clocks.cycleTomorrowMs),
-        formatUnixDate(clocks.cycleStartedAt),
+        formatUnixDateMedium(clocks.cycleStartedAt),
       )
     : t("{0} available tomorrow", formatHoursMinutes(t, clocks.cycleTomorrowMs));
   const violations = [

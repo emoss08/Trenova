@@ -11,6 +11,7 @@ import {
   type DisciplinaryLevel,
   type DisciplinaryStatus,
 } from "@trenova/shared/types/worker-safety";
+import { PaneSection } from "../pane-section";
 
 export type DisciplinaryActionPaneProps = {
   open: boolean;
@@ -80,29 +81,23 @@ export function DisciplinaryActionPane({
             </DescriptionItem>
           ) : null}
         </DescriptionList>
-        <section className="flex flex-col gap-1.5">
-          <h4 className="text-xs font-medium text-foreground-subtle">{t("Reason")}</h4>
+        <PaneSection title={t("Reason")}>
           <p className="text-pretty">{action.reason}</p>
-        </section>
+        </PaneSection>
         {action.details ? (
-          <section className="flex flex-col gap-1.5">
-            <h4 className="text-xs font-medium text-foreground-subtle">{t("Details")}</h4>
+          <PaneSection title={t("Details")}>
             <p className="text-pretty">{action.details}</p>
-          </section>
+          </PaneSection>
         ) : null}
         {action.workerComment ? (
-          <section className="flex flex-col gap-1.5">
-            <h4 className="text-xs font-medium text-foreground-subtle">
-              {t("The driver's answer")}
-            </h4>
+          <PaneSection title={t("The driver's answer")}>
             <blockquote className="border-l-2 border-border-strong pl-2.5 text-pretty">
               {action.workerComment}
             </blockquote>
-          </section>
+          </PaneSection>
         ) : null}
         {status === "Rescinded" ? (
-          <section className="flex flex-col gap-1.5">
-            <h4 className="text-xs font-medium text-foreground-subtle">{t("Rescinded")}</h4>
+          <PaneSection title={t("Rescinded")}>
             <p className="text-pretty">
               {action.rescindedAt
                 ? t(
@@ -112,7 +107,7 @@ export function DisciplinaryActionPane({
                   )
                 : (action.rescindReason ?? "")}
             </p>
-          </section>
+          </PaneSection>
         ) : null}
       </WorkPaneBody>
       {eventId || (canRescind && status === "Active") ? (

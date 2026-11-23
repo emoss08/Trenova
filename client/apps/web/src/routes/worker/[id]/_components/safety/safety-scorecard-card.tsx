@@ -1,4 +1,5 @@
 import { InfoTooltip } from "@/components/info-tooltip";
+import type { PreloadIntent } from "@/components/work-pane";
 import type { SafetyScorecard, WorkerSafetyEventRow } from "@/lib/graphql/worker-safety";
 import { Award01Icon, PlusIcon } from "@trenova/shared/components/icons";
 import { Badge } from "@trenova/shared/components/ui/badge";
@@ -8,24 +9,29 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/compone
 import { formatNumber } from "@trenova/shared/i18n/format";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatUnixDateMedium } from "@trenova/shared/lib/date";
-import { describeSafetyEvent, safetyRatingMeta } from "@trenova/shared/lib/safety";
+import { safetyRatingMeta } from "@trenova/shared/lib/safety";
 import { cn } from "@trenova/shared/lib/utils";
-import type {
-  InspectionResult,
-  SafetyEventKind,
-  SafetyRating,
-  SafetySeverity,
-} from "@trenova/shared/types/worker-safety";
-import { useEffect, useState, type CSSProperties } from "react";
-import { pointsGauge, type PointsGauge } from "./safety-model";
+import type { SafetyRating } from "@trenova/shared/types/worker-safety";
+import type { CSSProperties } from "react";
+import { useDrawn } from "@/hooks/use-drawn";
+import {
+  EARLIER_SEGMENT,
+  pointsGauge,
+  safetyEventHeadline,
+  type GaugeSegment,
+  type PointsGauge,
+} from "./safety-model";
 
 type SafetyScorecardCardProps = {
   scorecard: SafetyScorecard;
+  /** The events loaded so far: they name the gauge's segments; the figures are the scorecard's. */
   events: readonly WorkerSafetyEventRow[];
   canRecord: boolean;
   canRecognise: boolean;
   onRecordEvent: () => void;
   onRecognise: () => void;
+  recordIntent: PreloadIntent;
+  recogniseIntent: PreloadIntent;
 };
 
 const FIGURE_TONE: Record<PointsGauge["tone"], string> = {
@@ -52,6 +58,8 @@ export function SafetyScorecardCard({
   canRecognise,
   onRecordEvent,
   onRecognise,
+  recordIntent,
+  recogniseIntent,
 }: SafetyScorecardCardProps) {
   const t = useT();
   const meta = safetyRatingMeta(scorecard.rating as SafetyRating);
@@ -93,13 +101,13 @@ export function SafetyScorecardCard({
           {canRecognise || canRecord ? (
             <div className="mt-auto flex flex-wrap gap-2 pt-4">
               {canRecognise ? (
-                <Button size="sm" variant="secondary" onClick={onRecognise}>
+                <Button size="sm" variant="secondary" {...recogniseIntent} onClick={onRecognise}>
                   <Award01Icon className="size-3.5" />
                   {t("Add recognition")}
                 </Button>
               ) : null}
               {canRecord ? (
-                <Button size="sm" onClick={onRecordEvent}>
+                <Button size="sm" {...recordIntent} onClick={onRecordEvent}>
                   <PlusIcon className="size-3.5" />
                   {t("Record event")}
                 </Button>
@@ -158,12 +166,7 @@ function PointsGaugeView({
   events: readonly WorkerSafetyEventRow[];
 }) {
   const t = useT();
-  const [drawn, setDrawn] = useState(false);
-  useEffect(() => {
-    if (drawn) return;
-    const frame = requestAnimationFrame(() => setDrawn(true));
-    return () => cancelAnimationFrame(frame);
-  }, [drawn]);
+  const drawn = useDrawn();
   const byId = new Map(events.map((event) => [event.id, event]));
 
   return (
@@ -191,48 +194,25 @@ function PointsGaugeView({
             className="absolute inset-y-0 left-0 flex origin-left transition-transform duration-420 ease-settle motion-reduce:transition-none"
             style={{ width: at(gauge.points, gauge.max), transform: `scaleX(${drawn ? 1 : 0})` }}
           >
-            {gauge.segments.map((segment, index) => {
-              const event = byId.get(segment.id);
-              const what = event
-                ? describeSafetyEvent({
-                    kind: event.kind as SafetyEventKind,
-                    severity: event.severity as SafetySeverity,
-                    preventable: event.preventable,
-                    inspectionResult: (event.inspectionResult ?? null) as InspectionResult | null,
-                    inspectionLevel: event.inspectionLevel ?? null,
-                  })
-                : "";
-              return (
-                <Tooltip key={segment.id}>
-                  <TooltipTrigger
-                    render={
-                      <span
-                        className={cn(
-                          "block h-full shrink-0",
-                          FILL_TONE[gauge.tone],
-                          index > 0 && "border-l border-card",
-                        )}
-                        style={{ flexBasis: `${(segment.share * 100).toFixed(3)}%` }}
-                      />
-                    }
-                  />
-                  <TooltipContent>
-                    <span className="block font-medium">
-                      {t("{0, plural, one {# point} other {# points}} · {1}", segment.points, what)}
-                    </span>
-                    <span className="block">
-                      {segment.rollsOffAt
-                        ? t(
-                            "{0}. Rolls off {1}.",
-                            formatUnixDateMedium(segment.occurredAt),
-                            formatUnixDateMedium(segment.rollsOffAt),
-                          )
-                        : formatUnixDateMedium(segment.occurredAt)}
-                    </span>
-                  </TooltipContent>
-                </Tooltip>
-              );
-            })}
+            {gauge.segments.map((segment, index) => (
+              <Tooltip key={segment.id}>
+                <TooltipTrigger
+                  render={
+                    <span
+                      className={cn(
+                        "block h-full shrink-0",
+                        FILL_TONE[gauge.tone],
+                        index > 0 && "border-l border-card",
+                      )}
+                      style={{ flexBasis: `${(segment.share * 100).toFixed(3)}%` }}
+                    />
+                  }
+                />
+                <TooltipContent>
+                  <SegmentNote segment={segment} event={byId.get(segment.id)} />
+                </TooltipContent>
+              </Tooltip>
+            ))}
           </span>
           <span
             aria-hidden
@@ -292,5 +272,46 @@ function PointsGaugeView({
           : t("No active points. The score recovers as events roll off.")}
       </p>
     </div>
+  );
+}
+
+/** What a segment of the gauge stands for: its event and when its points roll off. */
+function SegmentNote({
+  segment,
+  event,
+}: {
+  segment: GaugeSegment;
+  event: WorkerSafetyEventRow | undefined;
+}) {
+  const t = useT();
+  if (segment.id === EARLIER_SEGMENT || !event || segment.occurredAt === null) {
+    return (
+      <span className="block font-medium">
+        {t(
+          "{0, plural, one {# point from earlier events} other {# points from earlier events}}",
+          segment.points,
+        )}
+      </span>
+    );
+  }
+  return (
+    <>
+      <span className="block font-medium">
+        {t(
+          "{0, plural, one {# point} other {# points}} · {1}",
+          segment.points,
+          safetyEventHeadline(event),
+        )}
+      </span>
+      <span className="block">
+        {segment.rollsOffAt
+          ? t(
+              "{0}. Rolls off {1}.",
+              formatUnixDateMedium(segment.occurredAt),
+              formatUnixDateMedium(segment.rollsOffAt),
+            )
+          : formatUnixDateMedium(segment.occurredAt)}
+      </span>
+    </>
   );
 }

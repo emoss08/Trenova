@@ -1,36 +1,52 @@
 # Fields are inlined rather than spread: a fragment beside other selections
 # comes back masked, and these screens read the values directly.
-query WorkerInjuries($workerId: ID!) {
-  workerInjuries(workerId: $workerId) {
-    id
-    workerId
-    caseNumber
-    caseYear
-    classification
-    illnessType
-    treatment
-    status
-    recordable
-    occurredAt
-    reportedAt
-    returnedToWorkAt
-    location
-    description
-    bodyPart
-    harmfulAgent
-    daysAway
-    daysRestricted
-    privacyCase
-    logName
-    claimStatus
-    claimNumber
-    claimCarrier
-    claimFiledAt
-    claimClosedAt
-    safetyEventId
-    documentId
-    notes
-    version
+query WorkerInjuries(
+  $workerId: ID!
+  $first: Int
+  $after: String
+  $includeTotalCount: Boolean = true
+) {
+  workerInjuries(workerId: $workerId, first: $first, after: $after) {
+    edges {
+      cursor
+      node {
+        id
+        workerId
+        caseNumber
+        caseYear
+        classification
+        illnessType
+        treatment
+        status
+        recordable
+        occurredAt
+        reportedAt
+        returnedToWorkAt
+        location
+        description
+        bodyPart
+        harmfulAgent
+        daysAway
+        daysRestricted
+        privacyCase
+        logName
+        claimStatus
+        claimNumber
+        claimCarrier
+        claimFiledAt
+        claimClosedAt
+        safetyEventId
+        documentId
+        notes
+        version
+      }
+    }
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+    totalCount @include(if: $includeTotalCount)
+    totalCountExact @include(if: $includeTotalCount)
   }
 }
 
@@ -179,6 +195,40 @@ mutation UncertifyOshaSummary($year: Int!) {
     id
     year
     status
+    version
+  }
+}
+
+query WorkerInjury($id: ID!) {
+  workerInjury(id: $id) {
+    id
+    workerId
+    caseNumber
+    caseYear
+    classification
+    illnessType
+    treatment
+    status
+    recordable
+    occurredAt
+    reportedAt
+    returnedToWorkAt
+    location
+    description
+    bodyPart
+    harmfulAgent
+    daysAway
+    daysRestricted
+    privacyCase
+    logName
+    claimStatus
+    claimNumber
+    claimCarrier
+    claimFiledAt
+    claimClosedAt
+    safetyEventId
+    documentId
+    notes
     version
   }
 }

@@ -63,6 +63,10 @@ func (k SafetyEventKind) CountsAgainstRecord() bool {
 	return k == SafetyEventAccident || k == SafetyEventIncident || k == SafetyEventCitation
 }
 
+func CountingKinds() []SafetyEventKind {
+	return []SafetyEventKind{SafetyEventAccident, SafetyEventIncident, SafetyEventCitation}
+}
+
 type SafetySeverity string
 
 const (

@@ -14,12 +14,10 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock("@/lib/queries/worker", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/lib/queries/worker")>()),
-  worker: {
-    overview: (workerId: string) => ({
-      queryKey: ["worker", "overview", workerId],
-      queryFn: () => mocks.overview(workerId),
-    }),
-  },
+  workerOverviewQuery: (workerId: string) => ({
+    queryKey: ["worker", "overview", workerId],
+    queryFn: () => mocks.overview(workerId),
+  }),
 }));
 
 vi.mock("@/lib/queries/telematics", () => ({
@@ -136,7 +134,7 @@ describe("HoursOfServiceView", () => {
     mocks.overview.mockRejectedValue(new Error("boom"));
     renderView();
 
-    expect(await screen.findByText("Hours of service could not be loaded")).toBeInTheDocument();
+    expect(await screen.findByText("The hours of service could not be loaded")).toBeInTheDocument();
     expect(screen.queryByText("Samsara is not connected")).not.toBeInTheDocument();
   });
 

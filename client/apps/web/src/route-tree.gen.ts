@@ -44,6 +44,7 @@ import { Route as AppAdminCostControlRouteImport } from "./pages/_app/admin/cost
 import { Route as AppAdminCustomFieldsRouteImport } from "./pages/_app/admin/custom-fields";
 import { Route as AppAdminDashControlRouteImport } from "./pages/_app/admin/dash-control";
 import { Route as AppAdminDataEntryControlsRouteImport } from "./pages/_app/admin/data-entry-controls";
+import { Route as AppAdminDeskConversationsRouteImport } from "./pages/_app/admin/desk-conversations";
 import { Route as AppAdminDispatchControlsRouteImport } from "./pages/_app/admin/dispatch-controls";
 import { Route as AppAdminDistanceControlsRouteImport } from "./pages/_app/admin/distance-controls";
 import { Route as AppAdminDistanceOverridesRouteImport } from "./pages/_app/admin/distance-overrides";
@@ -412,6 +413,12 @@ const AppAdminDataEntryControlsRoute =
   AppAdminDataEntryControlsRouteImport.update({
     id: "/data-entry-controls",
     path: "/data-entry-controls",
+    getParentRoute: () => AppAdminRoute,
+  } as any);
+const AppAdminDeskConversationsRoute =
+  AppAdminDeskConversationsRouteImport.update({
+    id: "/desk-conversations",
+    path: "/desk-conversations",
     getParentRoute: () => AppAdminRoute,
   } as any);
 const AppAdminDispatchControlsRoute =
@@ -1493,6 +1500,7 @@ export interface FileRoutesByFullPath {
   "/admin/custom-fields": typeof AppAdminCustomFieldsRoute;
   "/admin/dash-control": typeof AppAdminDashControlRoute;
   "/admin/data-entry-controls": typeof AppAdminDataEntryControlsRoute;
+  "/admin/desk-conversations": typeof AppAdminDeskConversationsRoute;
   "/admin/dispatch-controls": typeof AppAdminDispatchControlsRoute;
   "/admin/distance-controls": typeof AppAdminDistanceControlsRoute;
   "/admin/distance-overrides": typeof AppAdminDistanceOverridesRoute;
@@ -1713,6 +1721,7 @@ export interface FileRoutesByTo {
   "/admin/custom-fields": typeof AppAdminCustomFieldsRoute;
   "/admin/dash-control": typeof AppAdminDashControlRoute;
   "/admin/data-entry-controls": typeof AppAdminDataEntryControlsRoute;
+  "/admin/desk-conversations": typeof AppAdminDeskConversationsRoute;
   "/admin/dispatch-controls": typeof AppAdminDispatchControlsRoute;
   "/admin/distance-controls": typeof AppAdminDistanceControlsRoute;
   "/admin/distance-overrides": typeof AppAdminDistanceOverridesRoute;
@@ -1940,6 +1949,7 @@ export interface FileRoutesById {
   "/_app/admin/custom-fields": typeof AppAdminCustomFieldsRoute;
   "/_app/admin/dash-control": typeof AppAdminDashControlRoute;
   "/_app/admin/data-entry-controls": typeof AppAdminDataEntryControlsRoute;
+  "/_app/admin/desk-conversations": typeof AppAdminDeskConversationsRoute;
   "/_app/admin/dispatch-controls": typeof AppAdminDispatchControlsRoute;
   "/_app/admin/distance-controls": typeof AppAdminDistanceControlsRoute;
   "/_app/admin/distance-overrides": typeof AppAdminDistanceOverridesRoute;
@@ -2164,6 +2174,7 @@ export interface FileRouteTypes {
     | "/admin/custom-fields"
     | "/admin/dash-control"
     | "/admin/data-entry-controls"
+    | "/admin/desk-conversations"
     | "/admin/dispatch-controls"
     | "/admin/distance-controls"
     | "/admin/distance-overrides"
@@ -2384,6 +2395,7 @@ export interface FileRouteTypes {
     | "/admin/custom-fields"
     | "/admin/dash-control"
     | "/admin/data-entry-controls"
+    | "/admin/desk-conversations"
     | "/admin/dispatch-controls"
     | "/admin/distance-controls"
     | "/admin/distance-overrides"
@@ -2610,6 +2622,7 @@ export interface FileRouteTypes {
     | "/_app/admin/custom-fields"
     | "/_app/admin/dash-control"
     | "/_app/admin/data-entry-controls"
+    | "/_app/admin/desk-conversations"
     | "/_app/admin/dispatch-controls"
     | "/_app/admin/distance-controls"
     | "/_app/admin/distance-overrides"
@@ -3060,6 +3073,13 @@ declare module "@tanstack/react-router" {
       path: "/data-entry-controls";
       fullPath: "/admin/data-entry-controls";
       preLoaderRoute: typeof AppAdminDataEntryControlsRouteImport;
+      parentRoute: typeof AppAdminRoute;
+    };
+    "/_app/admin/desk-conversations": {
+      id: "/_app/admin/desk-conversations";
+      path: "/desk-conversations";
+      fullPath: "/admin/desk-conversations";
+      preLoaderRoute: typeof AppAdminDeskConversationsRouteImport;
       parentRoute: typeof AppAdminRoute;
     };
     "/_app/admin/dispatch-controls": {
@@ -4400,6 +4420,7 @@ interface AppAdminRouteChildren {
   AppAdminCustomFieldsRoute: typeof AppAdminCustomFieldsRoute;
   AppAdminDashControlRoute: typeof AppAdminDashControlRoute;
   AppAdminDataEntryControlsRoute: typeof AppAdminDataEntryControlsRoute;
+  AppAdminDeskConversationsRoute: typeof AppAdminDeskConversationsRoute;
   AppAdminDispatchControlsRoute: typeof AppAdminDispatchControlsRoute;
   AppAdminDistanceControlsRoute: typeof AppAdminDistanceControlsRoute;
   AppAdminDistanceOverridesRoute: typeof AppAdminDistanceOverridesRoute;
@@ -4448,6 +4469,7 @@ const AppAdminRouteChildren: AppAdminRouteChildren = {
   AppAdminCustomFieldsRoute: AppAdminCustomFieldsRoute,
   AppAdminDashControlRoute: AppAdminDashControlRoute,
   AppAdminDataEntryControlsRoute: AppAdminDataEntryControlsRoute,
+  AppAdminDeskConversationsRoute: AppAdminDeskConversationsRoute,
   AppAdminDispatchControlsRoute: AppAdminDispatchControlsRoute,
   AppAdminDistanceControlsRoute: AppAdminDistanceControlsRoute,
   AppAdminDistanceOverridesRoute: AppAdminDistanceOverridesRoute,

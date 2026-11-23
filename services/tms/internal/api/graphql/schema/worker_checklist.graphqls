@@ -206,6 +206,7 @@ extend type Query {
   workerChecklistTemplates(input: WorkerChecklistTemplatesInput!): WorkerChecklistTemplateConnection!
   workerChecklistTemplate(id: ID!): WorkerChecklistTemplate!
   activeWorkerChecklistTemplates: [WorkerChecklistTemplate!]!
+  "A worker's checklists, open ones first, then newest started; at most 100."
   workerChecklists(
     workerId: ID!
     "Also the completed and cancelled checklists, not only the open ones."

@@ -1,3 +1,4 @@
+import { preloadOn } from "@/components/work-pane";
 import { PlusIcon } from "@trenova/shared/components/icons";
 import { Button } from "@trenova/shared/components/ui/button";
 import { useT } from "@trenova/shared/i18n/use-t";
@@ -13,13 +14,15 @@ type LifecycleRouteProps = {
   stops: readonly LifecycleStop[];
   /** Null when the reader may not record events. */
   onRecord: (() => void) | null;
+  /** The record pane, read on intent. */
+  recordPane: { preload: () => Promise<unknown> };
 };
 
 /**
  * The employment as stops on a route sheet: a solid line through the stops behind, a ringed
  * stop where the worker is, hollow stops and a dashed line ahead.
  */
-export function LifecycleRoute({ stops, onRecord }: LifecycleRouteProps) {
+export function LifecycleRoute({ stops, onRecord, recordPane }: LifecycleRouteProps) {
   const t = useT();
   // Drawn once: after the entrance the classes go, so returning to the tab does not replay it.
   const [drawn, setDrawn] = useState(false);
@@ -98,7 +101,12 @@ export function LifecycleRoute({ stops, onRecord }: LifecycleRouteProps) {
         ))}
       </ol>
       {onRecord ? (
-        <Button size="sm" className="self-start lg:self-center" onClick={onRecord}>
+        <Button
+          size="sm"
+          className="self-start lg:self-center"
+          {...preloadOn(recordPane)}
+          onClick={onRecord}
+        >
           <PlusIcon className="size-3.5" />
           {t("Record event")}
         </Button>

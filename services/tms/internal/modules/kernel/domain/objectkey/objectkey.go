@@ -26,9 +26,21 @@ var (
 	Capture        = Family{Name: "capture", Carried: true, root: "capture/"}
 	AuditExports   = Family{Name: "audit-exports", root: "audit-exports/"}
 	AIAuditExports = Family{Name: "ai-audit-exports", root: "ai-audit-exports/"}
+
+	DeskTranscriptExports = Family{
+		Name: "desk-transcript-exports",
+		root: "desk-transcript-exports/",
+	}
 )
 
-var families = []Family{Organization, Reports, Capture, AuditExports, AIAuditExports}
+var families = []Family{
+	Organization,
+	Reports,
+	Capture,
+	AuditExports,
+	AIAuditExports,
+	DeskTranscriptExports,
+}
 
 func Families() []Family {
 	return slices.Clone(families)

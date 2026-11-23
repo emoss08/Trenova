@@ -27,9 +27,9 @@
 
 - [ ] `cd services/tms && task test`
 - [ ] `cd services/tms && task lint`
-- [ ] `cd client && pnpm typecheck`
-- [ ] `cd client && pnpm build`
-- [ ] `cd client && pnpm lint`
+- [ ] `cd client && bun run typecheck`
+- [ ] `cd client && bun run build`
+- [ ] `cd client && bun run lint`
 - [ ] Other:
 
 ## Screenshots or Recordings

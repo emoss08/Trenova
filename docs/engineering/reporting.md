@@ -561,7 +561,7 @@ is in `writecoverage.yml` ([agent-write-coverage.md](agent-write-coverage.md)).
   converts it to and from the keel `Definition` the server stores, and carries through untouched
   what the builder cannot edit (windows, top-N, subtotals, free formulas). The operations are in
   `client/packages/graphql/src/operations/reports/`; their types come from
-  `pnpm --filter @trenova/graphql codegen` over the server schema.
+  `bun run --filter @trenova/graphql codegen` over the server schema.
 - Cells are formatted from each column's `display` by the rules module
   (`@trenova/shared/rules/report`).
 - A dashboard tile loads its report and calls `previewReport` itself. `applyTileFilters`
@@ -635,7 +635,7 @@ GOFLAGS=-tags=nomsgpack go test ./internal/infrastructure/reportengine/... \
   ./internal/infrastructure/reporting/render/... ./internal/api/graphql/resolver/reportresolver/...
 ```
 
-Then `task i18n` and `task i18n-check` from the root, and `pnpm --filter @trenova/graphql codegen`
+Then `task i18n` and `task i18n-check` from the root, and `bun run --filter @trenova/graphql codegen`
 from `client/` after a change to `report.graphqls`. `task keel-gen-check` and the codegen steps of
 the Go `Lint` job ([generated-artifacts.md](generated-artifacts.md)) fail when a generated file is stale.
 

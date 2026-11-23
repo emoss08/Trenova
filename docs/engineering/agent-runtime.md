@@ -3620,6 +3620,64 @@ delegated task's steps on either side of that line are never joined across it. A
 (`testdata/conversation_transcript.golden.md`) holds the conversation's
 download byte for byte, so a change to the shared renderer that moves it fails.
 
+### Other people's conversations
+
+A conversation is its owner's: every read of `assistant_threads` and its messages on the Desk, the
+panel, the rail, search, the REST routes and the agent tools filters by the owner
+(`GetThread`, `ListThreads`, `DeleteThread`, …), and none of that changed. Administrators read
+everyone's through a separate door, the **Desk conversations** page (`/admin/desk-conversations`):
+
+- **Permission.** `desk_transcript` (View, Export; AI & agents; Confidential), with no parent. View
+  lists and opens; Export is what takes a transcript out of Trenova (the single download, an
+  export request, an export's file) and, as everywhere, implies View. The Organization
+  Administrator holds it; no template does (the Read-only template excepts it in `ownGrantKinds`);
+  only the `desk.transcript-oversight` bundle grants it. Support access refuses it outright
+  (`LimitDeskConversations`), the agent ceiling never allows it, and API keys cannot hold it (it is
+  not in `apikeyservice.runtimePolicy`). `desktranscriptservice` refuses any actor that is not a
+  person acting for themselves (an agent, a delegated run, an API key, the system, a support
+  principal) before it checks the permission again, so no agent tool, delegated run or palette
+  question reaches it; none is registered.
+- **Reads.** `desktranscriptrepository` (`ConversationRepository`) is the only code that reads a
+  conversation without its owner, and only `desktranscriptservice` calls it. It picks metadata
+  columns (never pinned facts or working sets), reads messages in one statement per batch of
+  conversations bounded to 2,000 messages (`desktranscriptexport.readGroups`), and writes nothing:
+  opening a conversation leaves `last_read_at`, attention, presence and the rail as they were.
+- **Indexes.** The list and the export page on `(last_message_at DESC, id DESC)` inside the tenant:
+  `idx_assistant_threads_tenant_last_message`, `…_user_last_message` (a person) and
+  `…_agent_last_message` (an agent), from `20261231024010`. Origin and title search filter inside
+  that range. Message counts read `idx_assistant_messages_thread` for one page of conversations.
+  The total is counted only when the table asks for it, exactly up to 10,000 and estimated past it.
+- **Timeframes.** `desktranscript.Timeframe` is the one definition: Last 7/30/90 days are today and
+  the days before it, Last 12 months starts on today's date a year ago, a custom range runs from its
+  first day to the end of its last, all in the organization's time zone and over the last message.
+  The list and the export send the same preset and the server resolves it.
+- **What a transcript is.** Opening returns the conversation bounded as a run's transcript is
+  (`conversationtranscript.RunTranscriptOf`), drawn by the same blocks as the run panel. A download
+  is `renderTranscriptDocument`'s file, the one the owner downloads, with a **Person** fact and the
+  owner's name in place of "You" (`RenderConversation`, `transcriptInput.PersonName`); the owner's
+  own file is unchanged and the golden file still holds it.
+- **Exports.** `requestDeskTranscriptExport` takes exactly one of a filter or up to 200 picked
+  conversation ids (a picked id the organization does not hold is refused as not found), fixes the
+  matching ids on the row (`desk_transcript_exports.thread_ids`, at most 5,000, counted one past
+  the limit so an export over it is refused, never cut), and starts `DeskTranscriptExportWorkflow`
+  on the report queue with a workflow id per export (reject duplicate). A partial unique index
+  holds one pending or running export per organization. The activity holds a heavy-job export
+  slot, heartbeats every 25 conversations, and streams a zip through `uploadpipe` capped at 1 GB:
+  a Markdown file per conversation (`<person>/<date> - <title>.md`, no ids) and
+  `conversations.jsonl`, kept in a temporary file while the zip is written. The requester is
+  notified (`desk_transcript_export_ready` / `_failed`), only the requester downloads it, through a
+  60-second presigned link issued after Export is checked again, and the hourly
+  `desk-transcript-export-cleanup` schedule deletes files after seven days and fails exports left
+  running for six hours.
+- **Audit.** Opening, downloading, requesting an export and downloading an export each write a
+  security audit entry through `SecurityAuditor` (who, whose conversation or what the export
+  covered, the owners named up to twenty and how many). Listing is not audited per row; the list
+  shows no message text, but titles come from the first question, which is why the permission's
+  description says titles are included.
+- **Out of scope.** Command palette questions (`assistant_palette_questions`) are a different
+  table and stay with the AI audit trail; background agent runs keep their own transcripts under
+  `agent_run` read.
+
 The transcript lives on the run row and goes with it: no sweep prunes runs or
 their events today, and the row is deleted only with its organization, by the
 existing cascade, so nothing has to keep the transcript and the event log in

@@ -23,11 +23,11 @@ import {
   employmentEventAmendSchema,
   type EmploymentEventAmendValues,
 } from "@trenova/shared/types/worker-employment";
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { FormProvider, useForm, type Resolver } from "react-hook-form";
 import { employmentEventName } from "./employment-event-meta";
-import { pairValues, ValueChips } from "./timeline-list";
-import { useEmploymentInvalidation } from "./use-employment-invalidation";
+import { pairValues, ValueChips } from "./employment-values";
+import { useWorkerInvalidation } from "../../use-worker-invalidation";
 
 function amendDefaults(event: WorkerEmploymentEventRow | null): EmploymentEventAmendValues {
   return {
@@ -51,23 +51,16 @@ export type AmendEventPaneProps = {
  */
 export function AmendEventPane({ event: requested, workerId, onClose }: AmendEventPaneProps) {
   const t = useT();
-  // The pane keeps drawing the last event while it folds away after closing.
-  const [held, setHeld] = useState(requested);
-  if (requested !== null && requested !== held) setHeld(requested);
-  const event = requested ?? held;
-  const invalidate = useEmploymentInvalidation(workerId);
+  // Each opening mounts the pane anew (`lazyWorkPane`, keyed by the event), so the event it
+  // opened on is held for the fold-away after closing, and a refetch never resets the form.
+  const [opened] = useState(requested);
+  const event = requested ?? opened;
+  const invalidate = useWorkerInvalidation(workerId, "employment");
   const form = useForm<EmploymentEventAmendValues>({
     resolver: zodResolver(employmentEventAmendSchema) as Resolver<EmploymentEventAmendValues>,
     defaultValues: amendDefaults(event),
   });
-  const { control, handleSubmit, reset } = form;
-
-  const loadedFor = useRef<string | null>(null);
-  useEffect(() => {
-    const key = requested ? `${requested.id}:${requested.version}` : null;
-    if (key !== null && loadedFor.current !== key) reset(amendDefaults(requested));
-    loadedFor.current = key;
-  }, [requested, reset]);
+  const { control, handleSubmit } = form;
 
   const save = useApiMutation<
     WorkerEmploymentEventRow,
@@ -89,8 +82,8 @@ export function AmendEventPane({ event: requested, workerId, onClose }: AmendEve
         version: event.version,
       });
     },
-    onSuccess: () => {
-      void invalidate();
+    onSuccess: async () => {
+      await invalidate();
       onClose();
     },
   });
@@ -104,7 +97,6 @@ export function AmendEventPane({ event: requested, workerId, onClose }: AmendEve
       }}
       title={t("Amend event")}
       description={t("The original stays on the record beside the amendment.")}
-      contentKey={event?.id}
     >
       <FormProvider {...form}>
         <WorkPaneDirtyTracker form={form} />

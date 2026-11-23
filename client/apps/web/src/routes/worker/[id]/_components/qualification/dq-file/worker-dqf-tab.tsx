@@ -1,5 +1,7 @@
 import { HoverGlideGroup } from "@/components/hover-glide";
 import { SectionPanel, SectionPanelQuiet } from "@/components/section-panel";
+import { VirtualRows, type VirtualRowsHandle } from "@/components/virtual-rows";
+import { lazyWorkPane, preloadOn } from "@/components/work-pane";
 import { usePermission } from "@/hooks/use-permission";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import {
@@ -24,7 +26,6 @@ import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import { DescriptionItem, DescriptionList } from "@trenova/shared/components/ui/description-list";
 import { EmptyTableSketch } from "@trenova/shared/components/ui/empty-table";
-import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { useNow } from "@trenova/shared/hooks/use-now";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatUnixDateMedium } from "@trenova/shared/lib/date";
@@ -35,22 +36,32 @@ import { useEffect, useRef, useState } from "react";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { QualificationSkeletonBody } from "../qualification-skeleton";
 import { useQualificationRoute, type QualificationViewProps } from "../qualification-route";
-import { ATTENTION_CLASS, revealElement, useRowFlash } from "../use-row-flash";
+import { ATTENTION_CLASS, revealElement, useRowFlash } from "../../use-row-flash";
+import { useWorkerInvalidation } from "../../use-worker-invalidation";
+import { WORKER_FORM_PANES } from "../../worker-form-panes";
 import {
   dqNextSteps,
   dqSpine,
   itemTone,
   type DQStep,
   type FileCredential,
+  type StepAbilities,
   type StepAction,
 } from "./dq-file-model";
 import { DQNextSteps } from "./dq-next-steps";
 import { DQSpine, spineName } from "./dq-spine";
-import { EmployerFormPane } from "./employer-form-pane";
 import { EmployerRow } from "./employer-row";
-import { useDqfInvalidation } from "./use-dqf-invalidation";
 
 const VIEW = "dq-file" as const;
+
+const EmployerFormPane = lazyWorkPane(
+  WORKER_FORM_PANES["add-employer"],
+  (module) => module.EmployerFormPane,
+  {
+    title: (props, t) =>
+      props.verification ? t("Edit previous employer") : t("Add previous employer"),
+  },
+);
 
 /**
  * The driver qualification file as a process: the verdict, the spine of its four sections, one
@@ -62,8 +73,7 @@ export default function WorkerDQFTab({ workerId, open, onOpen }: QualificationVi
   const { go, closeWhen } = useQualificationRoute(VIEW, onOpen);
   const { flash, flashOf } = useRowFlash();
   const sections = useRef(new Map<string, HTMLElement>());
-  const employers = useRef(new Map<string, HTMLElement>());
-  const now = useNow();
+  const employers = useRef<VirtualRowsHandle>(null);
 
   const { allowed: canCreate } = usePermission(Resource.Qualification, Operation.Create);
   const { allowed: canUpdate } = usePermission(Resource.Qualification, Operation.Update);
@@ -73,7 +83,7 @@ export default function WorkerDQFTab({ workerId, open, onOpen }: QualificationVi
     Resource.WorkerCredential,
     Operation.Create,
   );
-  const invalidate = useDqfInvalidation(workerId);
+  const invalidate = useWorkerInvalidation(workerId, "dq-file");
 
   const fileQuery = useQuery({
     queryKey: [DRIVER_QUALIFICATION_FILE_KEY, workerId],
@@ -128,7 +138,7 @@ export default function WorkerDQFTab({ workerId, open, onOpen }: QualificationVi
     }
     lastShown.current = id;
     flash(id);
-    revealElement(employers.current.get(id));
+    employers.current?.scrollToKey(id);
   });
 
   if (fileQuery.isPending) return <QualificationSkeletonBody view={VIEW} />;
@@ -138,7 +148,6 @@ export default function WorkerDQFTab({ workerId, open, onOpen }: QualificationVi
         layout="sheet"
         error={fileQuery.error ?? new Error("No qualification file")}
         title={t("The qualification file could not be loaded")}
-        description={t("This isn't an empty file. Try again in a moment.")}
         onRetry={() => void fileQuery.refetch()}
         sketch={<EmptyTableSketch columns={[{ label: t("Item") }, { label: t("Status") }]} />}
       />
@@ -155,16 +164,11 @@ export default function WorkerDQFTab({ workerId, open, onOpen }: QualificationVi
       verified: Boolean(item.credential?.verifiedAt),
     });
   }
-  const steps = dqNextSteps(t, {
-    file,
-    credentials: fileCredentials,
-    now,
-    can: {
-      createCredential: canCreateCredential,
-      createEmployer: canCreate,
-      updateEmployer: canUpdate,
-    },
-  });
+  const can: StepAbilities = {
+    createCredential: canCreateCredential,
+    createEmployer: canCreate,
+    updateEmployer: canUpdate,
+  };
   const spine = dqSpine(file);
   const deadline = { dueAt: file.safetyHistoryDueAt, late: file.safetyHistoryLate };
   const editing =
@@ -212,6 +216,7 @@ export default function WorkerDQFTab({ workerId, open, onOpen }: QualificationVi
             size="sm"
             variant="secondary"
             className="ml-auto"
+            {...preloadOn(EmployerFormPane)}
             onClick={() => go({ tab: "qualification", view: VIEW, form: "add-employer" })}
           >
             <PlusIcon className="size-3.5" />
@@ -263,38 +268,39 @@ export default function WorkerDQFTab({ workerId, open, onOpen }: QualificationVi
                   )}
                 </SectionPanelQuiet>
               ) : (
-                <ScrollArea className="max-h-120" maskVariant="card">
-                  <HoverGlideGroup className="bg-card px-1.5 pt-1 pb-1.5">
-                    <ul className="flex flex-col gap-px">
-                      {file.verifications.map((verification) => (
-                        <EmployerRow
-                          key={verification.id}
-                          rowRef={(element) => {
-                            if (element) employers.current.set(verification.id, element);
-                            else employers.current.delete(verification.id);
-                          }}
-                          verification={verification}
-                          permissions={{ canUpdate, canDelete }}
-                          deadline={deadline}
-                          now={now}
-                          busy={busy}
-                          flash={flashOf(verification.id)}
-                          onRequest={(row) => run(requested, row.id)}
-                          onFollowUp={(row) => run(followUp, row.id)}
-                          onEdit={(row) =>
-                            go({
-                              tab: "qualification",
-                              view: VIEW,
-                              form: "edit-employer",
-                              employer: row.id,
-                            })
-                          }
-                          onRemove={setRemoving}
-                        />
-                      ))}
-                    </ul>
-                  </HoverGlideGroup>
-                </ScrollArea>
+                <VirtualRows
+                  aria-label={t("Previous employers")}
+                  handleRef={employers}
+                  rows={file.verifications.map((verification) => ({
+                    key: verification.id,
+                    render: () => (
+                      <EmployerRow
+                        verification={verification}
+                        permissions={{ canUpdate, canDelete }}
+                        deadline={deadline}
+                        busy={busy}
+                        flash={flashOf(verification.id)}
+                        intent={preloadOn(EmployerFormPane)}
+                        onRequest={(row) => run(requested, row.id)}
+                        onFollowUp={(row) => run(followUp, row.id)}
+                        onEdit={(row) =>
+                          go({
+                            tab: "qualification",
+                            view: VIEW,
+                            form: "edit-employer",
+                            employer: row.id,
+                          })
+                        }
+                        onRemove={setRemoving}
+                      />
+                    ),
+                  }))}
+                  mask="card"
+                  className="max-h-120"
+                  contentClassName="px-1.5 pt-1 pb-1.5"
+                  hoverGlide
+                  estimateSize={112}
+                />
               )}
             </SectionPanel>
           </div>
@@ -314,19 +320,25 @@ export default function WorkerDQFTab({ workerId, open, onOpen }: QualificationVi
         </div>
 
         <div className="flex min-w-0 flex-col gap-4">
-          <DQNextSteps steps={steps} busyId={busyStep} onAction={onStep} />
+          <FileNextSteps
+            file={file}
+            credentials={fileCredentials}
+            can={can}
+            busyId={busyStep}
+            onAction={onStep}
+          />
           <RetentionPanel file={file} />
         </div>
       </div>
 
-      <EmployerFormPane
+      <EmployerFormPane.Component
         open={open.form === "add-employer" && canCreate}
         onOpenChange={closeWhen(open.form === "add-employer")}
         workerId={workerId}
         verification={null}
         onSaved={flash}
       />
-      <EmployerFormPane
+      <EmployerFormPane.Component
         open={open.form === "edit-employer" && canUpdate && editing != null}
         onOpenChange={closeWhen(open.form === "edit-employer")}
         workerId={workerId}
@@ -352,6 +364,29 @@ export default function WorkerDQFTab({ workerId, open, onOpen }: QualificationVi
       />
     </div>
   );
+}
+
+/**
+ * The next steps, worked out against the clock: a request falls due to be chased as the days
+ * pass, so this leaf reads the minute and the view around it does not.
+ */
+function FileNextSteps({
+  file,
+  credentials,
+  can,
+  busyId,
+  onAction,
+}: {
+  file: DQFFile;
+  credentials: ReadonlyMap<string, FileCredential>;
+  can: StepAbilities;
+  busyId: string | null;
+  onAction: (step: DQStep, action: StepAction) => void;
+}) {
+  const t = useT();
+  const now = useNow("minute");
+  const steps = dqNextSteps(t, { file, credentials, now, can });
+  return <DQNextSteps steps={steps} busyId={busyId} onAction={onAction} />;
 }
 
 /** One section of the file as a panel of its items, with a link named for where it is fixed. */

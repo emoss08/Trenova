@@ -1,5 +1,5 @@
 /**
- * The audit behind `pnpm lint:skeletons` (scripts/check-loading-skeletons.mjs): it reads
+ * The audit behind `bun run lint:skeletons` (scripts/check-loading-skeletons.mjs): it reads
  * every component under each app's and each package's `src` in a client root and returns each
  * loading state that does not look like what loads. The rules are described there.
  */

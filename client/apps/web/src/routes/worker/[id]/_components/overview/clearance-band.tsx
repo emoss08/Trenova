@@ -4,7 +4,8 @@ import { WithheldPanel } from "@trenova/shared/components/withheld-value";
 import { ShieldOffIcon, ShieldTickIcon } from "@trenova/shared/components/icons";
 import { Button } from "@trenova/shared/components/ui/button";
 import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
-import { formatUnixDateMedium } from "@trenova/shared/lib/date";
+import { useNow } from "@trenova/shared/hooks/use-now";
+import { daysUntil, formatUnixDateMedium } from "@trenova/shared/lib/date";
 import type { WorkerClearanceBlock } from "@trenova/graphql/generated/graphql";
 import { ClearanceRunway, clearanceItemName } from "./clearance-runway";
 import {
@@ -16,7 +17,6 @@ import {
   type WorkerClearanceItem,
 } from "./runway-model";
 
-const DAY_S = 86_400;
 const CREDENTIALS: WorkerTarget = { tab: "qualification", view: "credentials" };
 
 type BlockStep = { label: string; target: WorkerTarget };
@@ -140,14 +140,28 @@ function ClearedVerdict({
   );
 }
 
+/** How many days the worker has not been cleared, moving at midnight, and since when. */
+function NotClearedSince({ since }: { since: number }) {
+  const t = useT();
+  const now = useNow("minute");
+  return (
+    <>
+      <p className="mt-2.5 text-3xl font-semibold text-danger tabular-nums">
+        {t("{0, plural, one {# day} other {# days}}", Math.max(0, -daysUntil(since, { now })))}
+      </p>
+      <p className="text-base text-muted-foreground tabular-nums">
+        {t("since {0}", formatUnixDateMedium(since))}
+      </p>
+    </>
+  );
+}
+
 function NotClearedVerdict({
   clearance,
-  asOf,
   canOpenCredentials,
   onOpen,
 }: {
   clearance: WorkerClearance;
-  asOf: number;
   canOpenCredentials: boolean;
   onOpen: (target: WorkerTarget) => void;
 }) {
@@ -164,19 +178,7 @@ function NotClearedVerdict({
         <ShieldOffIcon aria-hidden className="size-3.5" />
         {t("Not cleared to drive")}
       </p>
-      {since ? (
-        <>
-          <p className="mt-2.5 text-3xl font-semibold text-danger tabular-nums">
-            {t(
-              "{0, plural, one {# day} other {# days}}",
-              Math.max(0, Math.floor((asOf - since) / DAY_S)),
-            )}
-          </p>
-          <p className="text-base text-muted-foreground tabular-nums">
-            {t("since {0}", formatUnixDateMedium(since))}
-          </p>
-        </>
-      ) : null}
+      {since ? <NotClearedSince since={since} /> : null}
       {clearance.blocks.length > 0 ? (
         <ul className="mt-3 flex max-w-[34ch] flex-col gap-1 text-sm text-pretty text-muted-foreground">
           {clearance.blocks.map((block) => (
@@ -265,7 +267,6 @@ export function ClearanceBand({
         ) : (
           <NotClearedVerdict
             clearance={clearance}
-            asOf={overview.asOf}
             canOpenCredentials={canOpenCredentials}
             onOpen={onOpen}
           />

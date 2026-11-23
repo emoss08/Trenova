@@ -10,9 +10,10 @@ import type { Rolldown } from "vite";
 //     of the chunks the entry needs (editors, charts, PDF, maps).
 //
 // A group matches a package by its own `node_modules/<name>/` segment and nothing else.
-// pnpm names a package's folder after its peers (`@base-ui+react@1.8.0_date-fns@4.4.0`),
-// so a bare /date-fns/ also matched every Base UI module and moved all of Base UI into the
-// date chunk the entry loads; an app file named route-prefetch.ts once matched /fetch/.
+// Install stores name folders after more than the package
+// (`node_modules/.bun/@base-ui+react@1.9.0+670a94236aee320d`; pnpm used peer names, and a
+// bare /date-fns/ then matched every Base UI module and moved all of Base UI into the date
+// chunk the entry loads); an app file named route-prefetch.ts once matched /fetch/.
 
 type Group = Rolldown.CodeSplittingGroup;
 

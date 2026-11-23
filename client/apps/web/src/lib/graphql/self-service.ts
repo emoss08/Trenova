@@ -27,11 +27,12 @@ import {
   WorkerPolicyComplianceDocument,
 } from "@trenova/graphql/generated/documents/self-service/operations";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
+import type { Connection } from "./connection";
 
 export type WorkerPolicyRow = WorkerPoliciesQuery["workerPolicies"][number];
 export type PolicyComplianceView = WorkerPolicyComplianceQuery["workerPolicyCompliance"];
 export type PolicyAcknowledgementRow =
-  WorkerPolicyAcknowledgementsQuery["workerPolicyAcknowledgements"][number];
+  WorkerPolicyAcknowledgementsQuery["workerPolicyAcknowledgements"]["edges"][number]["node"];
 export type ProfileChangeRequestRow = ProfileChangeRequestsQuery["profileChangeRequests"][number];
 
 export const WORKER_POLICIES_KEY = "worker-policies";
@@ -68,17 +69,18 @@ export async function fetchWorkerPolicyCompliance(
   return data.workerPolicyCompliance;
 }
 
+/** One page of the policies a worker signed, newest first, as the connection the server returns. */
 export async function fetchWorkerPolicyAcknowledgements(
-  workerId: string,
+  args: { workerId: string; first?: number; after?: string | null },
   options?: { signal?: AbortSignal },
-): Promise<PolicyAcknowledgementRow[]> {
+): Promise<Connection<PolicyAcknowledgementRow>> {
   const data = await requestGraphQL<
     WorkerPolicyAcknowledgementsQuery,
     WorkerPolicyAcknowledgementsQueryVariables
   >({
     document: WorkerPolicyAcknowledgementsDocument,
     operationName: "WorkerPolicyAcknowledgements",
-    variables: { workerId },
+    variables: { workerId: args.workerId, first: args.first, after: args.after },
     signal: options?.signal,
   });
   return data.workerPolicyAcknowledgements;

@@ -40,6 +40,7 @@ import {
   type WorkerClearance,
   type WorkerClearanceItem,
 } from "./runway-model";
+import { useDrawn } from "@/hooks/use-drawn";
 
 export type ClearanceRunwayProps = {
   clearance: WorkerClearance;
@@ -358,24 +359,16 @@ export function ClearanceRunway({
   const t = useT();
   const [range, setRange] = useState<RunwayRange>(DEFAULT_RUNWAY_RANGE);
   const [plotRef, width] = useElementWidth<HTMLDivElement>();
-  const [drawn, setDrawn] = useState(false);
-  const [entering, setEntering] = useState(false);
-
-  // The first frame it is seen draws the band at nothing; the next grows it to its edge.
+  // The first frame it is seen draws the band at nothing; the next grows it to its edge, and
+  // for ENTER_MS after that the markers rise and the band moves at its entrance pace.
+  const drawn = useDrawn(width > 0);
+  const [entered, setEntered] = useState(false);
   useEffect(() => {
-    if (drawn || width <= 0) return;
-    const frame = requestAnimationFrame(() => {
-      setEntering(true);
-      setDrawn(true);
-    });
-    return () => cancelAnimationFrame(frame);
-  }, [drawn, width]);
-
-  useEffect(() => {
-    if (!entering) return;
-    const timer = setTimeout(() => setEntering(false), ENTER_MS);
+    if (!drawn || entered) return undefined;
+    const timer = setTimeout(() => setEntered(true), ENTER_MS);
     return () => clearTimeout(timer);
-  }, [entering]);
+  }, [drawn, entered]);
+  const entering = drawn && !entered;
 
   const geometry = GEOMETRY[variant];
   const laneCount = runwayLaneCount(variant);
@@ -616,13 +609,16 @@ export function ClearanceRunway({
                   {t("Later")}
                 </span>
                 {later.map((lane, index) => (
-                  <div key={index} className="flex min-w-0 flex-col justify-center pt-0.5">
+                  <div
+                    key={RUNWAY_LANES[index] ?? "single"}
+                    className="flex min-w-0 flex-col justify-center pt-0.5"
+                  >
                     {lane.slice(0, LATER_PER_LANE[variant]).map((marker) => (
                       <LaterItem key={marker.item.key} marker={marker} onOpen={onOpen} />
                     ))}
                     {lane.length > LATER_PER_LANE[variant] ? (
                       <span className="h-3.5 text-2xs text-muted-foreground tabular-nums">
-                        {t("{0, plural, other {# more}}", lane.length - LATER_PER_LANE[variant])}
+                        {t("{0} more", lane.length - LATER_PER_LANE[variant])}
                       </span>
                     ) : null}
                   </div>

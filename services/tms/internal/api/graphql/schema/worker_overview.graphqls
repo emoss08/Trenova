@@ -135,7 +135,7 @@ type WorkerConcern {
   occurredAt: Timestamp
   "When it falls due or fell due. Null when the concern has no date."
   dueAt: Timestamp
-  "Whole UTC days from asOf to dueAt; negative once it has passed. Null when dueAt is null."
+  "Whole days in the organization's calendar from asOf to dueAt; negative once it has passed. Null when dueAt is null."
   daysUntil: Int
   "Whether this concern on its own keeps the worker off assignments today or at its date, by the same rules as clearance."
   stopsAssignment: Boolean!
@@ -204,7 +204,7 @@ type WorkerClearanceItem {
   "The credential type's, course's or query's name."
   name: String!
   dueAt: Timestamp!
-  "Whole UTC days from asOf to dueAt; negative once lapsed."
+  "Whole days in the organization's calendar from asOf to dueAt; negative once lapsed."
   daysUntil: Int!
   effect: WorkerClearanceEffect!
   "Null when effect is Due."
@@ -242,7 +242,7 @@ The drug and alcohol standing with the one figure the page draws beside it.
 """
 type WorkerOverviewDrugAlcohol {
   standing: DrugAlcoholStanding!
-  "Whole UTC days from asOf to standing.nextClearinghouseQueryDue; negative when overdue. Null when no query is due."
+  "Whole days in the organization's calendar from asOf to standing.nextClearinghouseQueryDue; negative when overdue. Null when no query is due."
   nextQueryDaysUntil: Int
 }
 
@@ -256,6 +256,8 @@ type WorkerOverviewEmployment {
   hiredAt: Timestamp
   "Open checklists. Null for a reader without worker_checklist read."
   openChecklistCount: Int
+  "Completed and cancelled checklists, counted whole. Null for a reader without worker_checklist read."
+  closedChecklistCount: Int
 }
 
 """

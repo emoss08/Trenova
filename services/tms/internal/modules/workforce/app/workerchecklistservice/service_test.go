@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerchecklistservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/employment"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
@@ -13,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerchecklistports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workercredentialports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/documentportsmock"
@@ -30,6 +32,7 @@ import (
 const day = int64(86400)
 
 type fakeRepo struct {
+	locked     int
 	templates  map[pulid.ID]*workerchecklist.WorkerChecklistTemplate
 	checklists map[pulid.ID]*workerchecklist.WorkerChecklist
 	items      map[pulid.ID]*workerchecklist.WorkerChecklistItem
@@ -146,6 +149,34 @@ func (f *fakeRepo) ListForWorker(
 			continue
 		}
 		out = append(out, c)
+	}
+	return out, nil
+}
+
+func (f *fakeRepo) CountClosedForWorker(
+	_ context.Context,
+	_ pagination.TenantInfo,
+	workerID pulid.ID,
+) (int, error) {
+	count := 0
+	for _, c := range f.checklists {
+		if c.WorkerID == workerID && !c.IsOpen() {
+			count++
+		}
+	}
+	return count, nil
+}
+
+func (f *fakeRepo) LockOpenForWorker(
+	_ context.Context,
+	req *workerchecklistports.LockOpenChecklistsRequest,
+) ([]*workerchecklist.WorkerChecklist, error) {
+	f.locked++
+	out := make([]*workerchecklist.WorkerChecklist, 0, len(f.checklists))
+	for _, c := range f.checklists {
+		if c.WorkerID == req.WorkerID && c.IsOpen() {
+			out = append(out, c)
+		}
 	}
 	return out, nil
 }
@@ -308,6 +339,7 @@ func newHarness(t *testing.T) *harness {
 
 	h.svc = workerchecklistservice.New(workerchecklistservice.Params{
 		Logger:         zap.NewNop(),
+		DB:             dbtest.NopConnection{},
 		Repo:           h.repo,
 		WorkerRepo:     h.workerRepo,
 		CredentialRepo: h.creds,
@@ -749,4 +781,72 @@ func TestCancel_RefusesABlankReason(t *testing.T) {
 		h.repo.checklists[checklist.ID].Status,
 		"a refused cancel leaves the checklist open",
 	)
+}
+
+func TestReads_DoNotRunTheAutoSatisfyPass(t *testing.T) {
+	h := newHarness(t)
+	event := &employment.WorkerEmploymentEvent{
+		ID:          pulid.MustNew("wee_"),
+		Kind:        employment.EmploymentEventHired,
+		EffectiveAt: 1_800_000_000,
+	}
+	checklist, err := h.spawnForEvent(event, h.wrk, h.userID)
+	require.NoError(t, err)
+	require.NotNil(t, checklist)
+	lockedAtStart := h.repo.locked
+
+	expiry := int64(2_000_000_000)
+	h.creds.credentials = []*workercredential.WorkerCredential{{
+		ID:               pulid.MustNew("wcred_"),
+		CredentialTypeID: h.credType,
+		Status:           workercredential.CredentialStatusActive,
+		ExpiresAt:        &expiry,
+	}}
+
+	listed, err := h.svc.ListForWorker(t.Context(), h.tenant, h.wrk.ID, true)
+	require.NoError(t, err)
+	require.Len(t, listed, 1)
+	_, err = h.svc.Get(t.Context(), h.tenant, checklist.ID)
+	require.NoError(t, err)
+
+	assert.Equal(t, lockedAtStart, h.repo.locked, "a read never locks or writes")
+	assert.Equal(
+		t,
+		workerchecklist.ChecklistItemPending,
+		h.itemByLabel(listed[0], "CDL on file").Status,
+		"evidence that arrived after the start waits for its write path",
+	)
+
+	require.NoError(t, h.svc.RefreshEvidence(t.Context(), h.tenant, h.wrk.ID))
+	assert.Equal(t, workerchecklist.ChecklistItemDone, h.itemByLabel(listed[0], "CDL on file").Status)
+
+	require.NoError(t, h.svc.RefreshEvidence(t.Context(), h.tenant, h.wrk.ID),
+		"a second pass finds nothing left to tick")
+	assert.Equal(t, workerchecklist.ChecklistItemDone, h.itemByLabel(listed[0], "CDL on file").Status)
+}
+
+func TestResourceDocumentsChanged_RefreshesOnlyAWorkersChecklists(t *testing.T) {
+	h := newHarness(t)
+	event := &employment.WorkerEmploymentEvent{
+		ID:          pulid.MustNew("wee_"),
+		Kind:        employment.EmploymentEventHired,
+		EffectiveAt: 1_800_000_000,
+	}
+	_, err := h.spawnForEvent(event, h.wrk, h.userID)
+	require.NoError(t, err)
+	before := h.repo.locked
+
+	h.svc.ResourceDocumentsChanged(t.Context(), documentports.ResourceDocumentsChange{
+		TenantInfo:   h.tenant,
+		ResourceType: "shipment",
+		ResourceID:   pulid.MustNew("shp_").String(),
+	})
+	assert.Equal(t, before, h.repo.locked, "a shipment's document satisfies no worker's checklist")
+
+	h.svc.ResourceDocumentsChanged(t.Context(), documentports.ResourceDocumentsChange{
+		TenantInfo:   h.tenant,
+		ResourceType: "worker",
+		ResourceID:   h.wrk.ID.String(),
+	})
+	assert.Equal(t, before+1, h.repo.locked)
 }

@@ -7,6 +7,11 @@ import {
   AI_AUDIT_TRAIL_PATH,
   aiAuditExportNotice,
 } from "@/lib/ai-audit-exports";
+import {
+  DESK_TRANSCRIPT_EXPORTS_PATH,
+  DESK_TRANSCRIPT_EXPORT_FAILED_EVENT,
+  DESK_TRANSCRIPT_EXPORT_READY_EVENT,
+} from "@/lib/desk-transcript-notices";
 import { invoicePanelPath } from "@/lib/invoice-links";
 import { PlanFeature } from "@/lib/plan-feature";
 import { AssistMark } from "@trenova/shared/components/ui/assist-mark";
@@ -393,6 +398,22 @@ const EXACT_REGISTRY: Record<string, NotificationDescriptor> = {
     iconClass: "text-destructive",
     tileClass: "bg-danger-subtle",
     getLink: (n) => aiAuditExportNotice(n)?.link ?? null,
+  },
+  [DESK_TRANSCRIPT_EXPORT_READY_EVENT]: {
+    label: "An export of Desk conversations is ready",
+    category: "AI Control",
+    icon: FileDownload02Icon,
+    iconClass: "text-success",
+    tileClass: "bg-success-subtle",
+    getLink: () => DESK_TRANSCRIPT_EXPORTS_PATH,
+  },
+  [DESK_TRANSCRIPT_EXPORT_FAILED_EVENT]: {
+    label: "An export of Desk conversations fails",
+    category: "AI Control",
+    icon: FileX02Icon,
+    iconClass: "text-destructive",
+    tileClass: "bg-danger-subtle",
+    getLink: () => DESK_TRANSCRIPT_EXPORTS_PATH,
   },
   [AI_AUDIT_CHAIN_MISMATCH_EVENT]: {
     label: "The audit chain doesn’t verify",

@@ -3,7 +3,8 @@ import { formatNumber } from "@trenova/shared/i18n/format";
 import { useRichT } from "@trenova/shared/i18n/rich";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatMinor } from "@trenova/shared/lib/money";
-import { useEffect, useState, type ReactNode } from "react";
+import type { ReactNode } from "react";
+import { useDrawn } from "@/hooks/use-drawn";
 
 export type CompensationShape = {
   total: number;
@@ -88,12 +89,7 @@ export function CompensationBar({ summary }: { summary: TotalCompensationSummary
     b: (chunk: ReactNode) => <b className="font-medium text-foreground tabular-nums">{chunk}</b>,
   };
   const shape = compensationShape(summary);
-  const [drawn, setDrawn] = useState(false);
-  useEffect(() => {
-    if (drawn) return;
-    const frame = requestAnimationFrame(() => setDrawn(true));
-    return () => cancelAnimationFrame(frame);
-  }, [drawn]);
+  const drawn = useDrawn();
   const contribution = Math.min(summary.employeeBenefitMinor, summary.grossPayMinor);
 
   return (

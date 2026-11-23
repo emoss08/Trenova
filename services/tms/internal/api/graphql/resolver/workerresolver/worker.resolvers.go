@@ -399,3 +399,20 @@ func (r *QueryResolver) Worker(ctx context.Context, id string) (*worker.Worker, 
 		resolvercore.TenantInfo(authCtx),
 	))
 }
+
+func (r *QueryResolver) WorkerPTO(ctx context.Context, id string) (*worker.WorkerPTO, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceWorkerPTO, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+
+	ptoID, err := pulid.MustParse(id)
+	if err != nil {
+		return nil, err
+	}
+	return r.WorkerPTOService.Get(ctx, &workerptoports.GetPTOByIDRequest{
+		ID:            ptoID,
+		TenantInfo:    resolvercore.TenantInfo(authCtx),
+		IncludeWorker: true,
+	})
+}

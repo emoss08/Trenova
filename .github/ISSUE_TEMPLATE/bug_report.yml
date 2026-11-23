@@ -66,7 +66,7 @@ body:
         OS:
         Browser:
         Go version:
-        Node/pnpm version:
+        Bun version:
         Docker version:
     validations:
       required: true

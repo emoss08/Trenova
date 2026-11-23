@@ -27,7 +27,6 @@ import {
   safetyViolationFormSchema,
   type SafetyViolationFormValues,
 } from "@trenova/shared/types/fleet-safety";
-import { useEffect } from "react";
 import { FormProvider, useForm, type Resolver } from "react-hook-form";
 
 const BASIC_OPTIONS = CSA_BASIC_ORDER.map((value) => ({
@@ -68,28 +67,36 @@ function defaultsFor(
   };
 }
 
-export function ViolationDialog({
-  open,
-  onOpenChange,
+/**
+ * Cites a violation on an event, or corrects one. The form lives inside the dialog's content,
+ * which is mounted only while it is open, so each opening starts from the violation it was opened
+ * on and nothing that refetches meanwhile replaces what is typed.
+ */
+export function ViolationDialog({ open, onOpenChange, ...props }: ViolationDialogProps) {
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent size="md">
+        <ViolationForm {...props} onClose={() => onOpenChange(false)} />
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function ViolationForm({
   safetyEventId,
   suggestedBasic,
   violation,
   onSaved,
-}: ViolationDialogProps) {
+  onClose,
+}: Omit<ViolationDialogProps, "open" | "onOpenChange"> & { onClose: () => void }) {
   const t = useT();
-
   const queryClient = useQueryClient();
-  const isEdit = Boolean(violation);
+  const isEdit = violation !== null;
   const form = useForm<SafetyViolationFormValues>({
     resolver: zodResolver(safetyViolationFormSchema) as Resolver<SafetyViolationFormValues>,
     defaultValues: defaultsFor(violation, suggestedBasic),
   });
-  const { control, handleSubmit, reset } = form;
-
-  useEffect(() => {
-    if (!open) return;
-    reset(defaultsFor(violation, suggestedBasic));
-  }, [open, violation, suggestedBasic, reset]);
+  const { control, handleSubmit } = form;
 
   const { mutateAsync, isPending } = useApiMutation<
     { id: string },
@@ -111,99 +118,97 @@ export function ViolationDialog({
         ? updateSafetyViolation({ ...shared, id: violation.id, version: violation.version })
         : recordSafetyViolation({ ...shared, safetyEventId });
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       void queryClient.invalidateQueries({ queryKey: [SAFETY_VIOLATIONS_KEY, safetyEventId] });
       void queryClient.invalidateQueries({ queryKey: ["fleet-safety"] });
-      void onSaved();
-      onOpenChange(false);
+      await onSaved();
+      onClose();
     },
   });
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent size="md">
-        <DialogHeader>
-          <DialogTitle>{isEdit ? t("Correct the violation") : t("Cite a violation")}</DialogTitle>
-          <DialogDescription>
-            {t(
-              "One row per violation. A single inspection routinely cites several in different BASICs, and only the rows can say which.",
-            )}
-          </DialogDescription>
-        </DialogHeader>
-        <FormProvider {...form}>
-          <Form
-            className="flex flex-col gap-4"
-            onSubmit={(submitEvent) => {
-              submitEvent.preventDefault();
-              submitEvent.stopPropagation();
-              void handleSubmit((values) => mutateAsync(values))(submitEvent);
-            }}
-          >
-            <FormGroup cols={2}>
-              <FormControl cols="full">
-                <SelectField<SafetyViolationFormValues>
-                  control={control}
-                  name="basic"
-                  label="BASIC"
-                  options={BASIC_OPTIONS}
-                  placeholder={t("Pick a BASIC")}
-                  description={t(
-                    "The CSA category the violation is scored under; each BASIC has its own measure and threshold.",
-                  )}
-                  required
-                />
-              </FormControl>
-              <FormControl>
-                <InputField<SafetyViolationFormValues>
-                  control={control}
-                  name="code"
-                  label={t("Violation code")}
-                  placeholder={t("e.g. 395.8")}
-                  description={t("From the inspection report, so it can be looked up.")}
-                />
-              </FormControl>
-              <FormControl>
-                <NumberField<SafetyViolationFormValues>
-                  control={control}
-                  name="severityWeight"
-                  placeholder={t("e.g. 5")}
-                  label={t("Severity weight")}
-                  required
-                  description={t("The FMCSA's published weight, 1 to 10.")}
-                />
-              </FormControl>
-              <FormControl cols="full">
-                <InputField<SafetyViolationFormValues>
-                  control={control}
-                  name="description"
-                  label={t("What was cited")}
-                  placeholder={t("e.g. Brake out of adjustment on two axles")}
-                  description={t("The violation as written on the inspection report.")}
-                  required
-                />
-              </FormControl>
-              <FormControl cols="full">
-                <SwitchField<SafetyViolationFormValues>
-                  control={control}
-                  name="outOfService"
-                  label={t("Out of service")}
-                  description={t(
-                    "Adds two to the weight before the recency multiplier, the way the FMCSA scores it.",
-                  )}
-                />
-              </FormControl>
-            </FormGroup>
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-                {t("Cancel")}
-              </Button>
-              <Button type="submit" isLoading={isPending}>
-                {isEdit ? t("Save") : t("Cite")}
-              </Button>
-            </DialogFooter>
-          </Form>
-        </FormProvider>
-      </DialogContent>
-    </Dialog>
+    <>
+      <DialogHeader>
+        <DialogTitle>{isEdit ? t("Correct the violation") : t("Cite a violation")}</DialogTitle>
+        <DialogDescription>
+          {t(
+            "One row per violation. A single inspection routinely cites several in different BASICs, and only the rows can say which.",
+          )}
+        </DialogDescription>
+      </DialogHeader>
+      <FormProvider {...form}>
+        <Form
+          className="flex flex-col gap-4"
+          onSubmit={(submitEvent) => {
+            submitEvent.preventDefault();
+            submitEvent.stopPropagation();
+            void handleSubmit((values) => mutateAsync(values))(submitEvent);
+          }}
+        >
+          <FormGroup cols={2}>
+            <FormControl cols="full">
+              <SelectField<SafetyViolationFormValues>
+                control={control}
+                name="basic"
+                label="BASIC"
+                options={BASIC_OPTIONS}
+                placeholder={t("Pick a BASIC")}
+                description={t(
+                  "The CSA category the violation is scored under; each BASIC has its own measure and threshold.",
+                )}
+                required
+              />
+            </FormControl>
+            <FormControl>
+              <InputField<SafetyViolationFormValues>
+                control={control}
+                name="code"
+                label={t("Violation code")}
+                placeholder={t("e.g. 395.8")}
+                description={t("From the inspection report, so it can be looked up.")}
+              />
+            </FormControl>
+            <FormControl>
+              <NumberField<SafetyViolationFormValues>
+                control={control}
+                name="severityWeight"
+                placeholder={t("e.g. 5")}
+                label={t("Severity weight")}
+                required
+                description={t("The FMCSA's published weight, 1 to 10.")}
+              />
+            </FormControl>
+            <FormControl cols="full">
+              <InputField<SafetyViolationFormValues>
+                control={control}
+                name="description"
+                label={t("What was cited")}
+                placeholder={t("e.g. Brake out of adjustment on two axles")}
+                description={t("The violation as written on the inspection report.")}
+                required
+              />
+            </FormControl>
+            <FormControl cols="full">
+              <SwitchField<SafetyViolationFormValues>
+                control={control}
+                name="outOfService"
+                label={t("Out of service")}
+                description={t(
+                  "Adds two to the weight before the recency multiplier, the way the FMCSA scores it.",
+                )}
+              />
+            </FormControl>
+          </FormGroup>
+          <DialogFooter>
+            <Button type="button" size="sm" variant="outline" onClick={onClose}>
+              {t("Cancel")}
+            </Button>
+            <Button type="submit" size="sm" isLoading={isPending}>
+              {isEdit ? t("Save changes") : t("Cite violation")}
+            </Button>
+          </DialogFooter>
+        </Form>
+      </FormProvider>
+    </>
   );
 }

@@ -8,6 +8,8 @@ package workercredentialresolver
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/identityloaders"
+
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/loaders/loadercore"
@@ -23,7 +25,6 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
-	"github.com/emoss08/trenova/shared/timeutils"
 )
 
 func (r *MutationResolver) CreateWorkerCredentialType(ctx context.Context, input gqlmodel.WorkerCredentialTypeInput) (*workercredential.WorkerCredentialType, error) {
@@ -350,11 +351,11 @@ func (r *WorkerCredentialResolver) ArchivedByID(ctx context.Context, obj *worker
 }
 
 func (r *WorkerCredentialResolver) Health(ctx context.Context, obj *workercredential.WorkerCredential) (workercredential.CredentialHealth, error) {
-	return obj.Health(timeutils.NowUnix()), nil
+	return obj.Health(identityloaders.OrganizationToday(ctx, obj.OrganizationID)), nil
 }
 
 func (r *WorkerCredentialResolver) DaysUntilExpiry(ctx context.Context, obj *workercredential.WorkerCredential) (*int, error) {
-	return gqlscalar.IntPtr(obj.DaysUntilExpiry(timeutils.NowUnix())), nil
+	return gqlscalar.IntPtr(obj.DaysUntilExpiry(identityloaders.OrganizationToday(ctx, obj.OrganizationID))), nil
 }
 
 func (r *WorkerCredentialTypeResolver) ProfileField(ctx context.Context, obj *workercredential.WorkerCredentialType) (*string, error) {

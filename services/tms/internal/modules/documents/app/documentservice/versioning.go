@@ -207,6 +207,33 @@ func (s *Service) RestoreVersion(
 	})
 }
 
+func (s *Service) packetDocumentTypes(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	rules []*documentpacketrule.DocumentPacketRule,
+) (map[string]*documenttype.DocumentType, error) {
+	typeByID := make(map[string]*documenttype.DocumentType, len(rules))
+	if len(rules) == 0 {
+		return typeByID, nil
+	}
+	ids := make([]pulid.ID, 0, len(rules))
+	for _, rule := range rules {
+		ids = append(ids, rule.DocumentTypeID)
+	}
+	types, err := s.documentTypeRepo.GetByIDs(ctx, documenttypeports.GetDocumentTypesByIDsRequest{
+		TenantInfo:      tenantInfo,
+		DocumentTypeIDs: ids,
+	})
+	if err != nil {
+		return nil, err
+	}
+	for _, docType := range types {
+		typeByID[docType.ID.String()] = docType
+	}
+
+	return typeByID, nil
+}
+
 func (s *Service) GetPacketSummary( //nolint:funlen,gocognit // legacy workflow
 	ctx context.Context,
 	resourceType, resourceID string,
@@ -236,19 +263,9 @@ func (s *Service) GetPacketSummary( //nolint:funlen,gocognit // legacy workflow
 		return nil, err
 	}
 
-	typeByID := make(map[string]*documenttype.DocumentType, len(rules))
-	for _, rule := range rules {
-		docType, typeErr := s.documentTypeRepo.GetByID(
-			ctx,
-			documenttypeports.GetDocumentTypeByIDRequest{
-				ID:         rule.DocumentTypeID,
-				TenantInfo: tenantInfo,
-			},
-		)
-		if typeErr != nil {
-			return nil, typeErr
-		}
-		typeByID[rule.DocumentTypeID.String()] = docType
+	typeByID, err := s.packetDocumentTypes(ctx, tenantInfo, rules)
+	if err != nil {
+		return nil, err
 	}
 
 	items := make([]documentpacketrule.PacketItemSummary, 0, len(rules))
@@ -431,6 +448,7 @@ func (s *Service) AttachLineageToResource(
 	}
 	s.syncSearchProjection(ctx, s.l, updated, contentText)
 	inboundmessageports.AnnounceDocumentAttached(ctx, s.triage, updated)
+	s.announceResourceDocuments(ctx, updated)
 
 	if err = s.auditService.LogAction(ctx, &auditports.LogActionParams{
 		Resource:       permission.ResourceDocument,

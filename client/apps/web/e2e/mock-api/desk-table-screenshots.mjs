@@ -2,7 +2,7 @@
 // transit, of which the conversation's agent read two pages, paged on with the
 // person's own access. Run with the mock API and the web app up (see README.md):
 //
-//   node e2e/mock-api/desk-table-screenshots.mjs [outDir] [name,name,...]
+//   bun e2e/mock-api/desk-table-screenshots.mjs [outDir] [name,name,...]
 //
 // Each shot sets the `deskTable` stage it needs and, where the state is one a
 // person reaches by working the table, takes the steps that reach it.

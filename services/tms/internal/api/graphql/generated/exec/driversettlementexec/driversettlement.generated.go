@@ -77,6 +77,8 @@ var Shard = &gqlexec.Shard{
 		{Name: "UnsettledWorkerSummary", Implementors: []string{"UnsettledWorkerSummary"}},
 		{Name: "WorkerEarningsSummary", Implementors: []string{"WorkerEarningsSummary"}},
 		{Name: "WorkerPayAssignment", Implementors: []string{"WorkerPayAssignment"}},
+		{Name: "WorkerPayAssignmentConnection", Implementors: []string{"WorkerPayAssignmentConnection"}},
+		{Name: "WorkerPayAssignmentEdge", Implementors: []string{"WorkerPayAssignmentEdge"}},
 		{Name: "WorkerYTDPaySummary", Implementors: []string{"WorkerYTDPaySummary"}},
 	},
 	Fields: []gqlexec.Fields{
@@ -3249,13 +3251,13 @@ var Shard = &gqlexec.Shard{
 				IsResolver: true,
 				Concurrent: true,
 				HasChild:   true,
-				ChildType:  "WorkerPayAssignment",
+				ChildType:  "WorkerPayAssignmentConnection",
 				Args:       field_Query_workerPayAssignments_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[QueryResolver](ec, "Query@driversettlement").WorkerPayAssignments(ctx, fc.Args["workerId"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@driversettlement").WorkerPayAssignments(ctx, fc.Args["workerId"].(string), fc.Args["first"].(*int), fc.Args["after"].(*string))
 				},
-				Marshal: gqlexec.Marshal(marshalNWorkerPayAssignment2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋpayassignmentᚐWorkerPayAssignmentᚄ),
+				Marshal: gqlexec.Marshal(marshalNWorkerPayAssignmentConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐWorkerPayAssignmentConnection),
 			},
 			{
 				Name:       "effectiveWorkerPayAssignment",
@@ -5210,6 +5212,72 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalOPayProfile2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriverpayᚐPayProfile),
 			},
 		}},
+		{Object: "WorkerPayAssignmentConnection", Fields: []*gqlexec.Field{
+			{
+				Name:      "edges",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "WorkerPayAssignmentEdge",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.WorkerPayAssignmentConnection)
+					return obj.Edges, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNWorkerPayAssignmentEdge2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐWorkerPayAssignmentEdgeᚄ),
+			},
+			{
+				Name:      "pageInfo",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "PageInfo",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.WorkerPayAssignmentConnection)
+					return obj.PageInfo, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNPageInfo2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐPageInfo),
+			},
+			{
+				Name:     "totalCount",
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.WorkerPayAssignmentConnection)
+					return obj.TotalCount, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOInt2ᚖint),
+			},
+			{
+				Name:     "totalCountExact",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.WorkerPayAssignmentConnection)
+					return obj.TotalCountExact, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+		}},
+		{Object: "WorkerPayAssignmentEdge", Fields: []*gqlexec.Field{
+			{
+				Name:      "node",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "WorkerPayAssignment",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.WorkerPayAssignmentEdge)
+					return obj.Node, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNWorkerPayAssignment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋpayassignmentᚐWorkerPayAssignment),
+			},
+			{
+				Name:     "cursor",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.WorkerPayAssignmentEdge)
+					return obj.Cursor, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+		}},
 		{Object: "WorkerYTDPaySummary", Fields: []*gqlexec.Field{
 			{
 				Name:     "workerId",
@@ -5455,7 +5523,7 @@ type PayRateOverrideResolver interface {
 type QueryResolver interface {
 	PayProfiles(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.PayProfileConnection, error)
 	PayProfile(ctx context.Context, id string) (*driverpay.PayProfile, error)
-	WorkerPayAssignments(ctx context.Context, workerID string) ([]*payassignment.WorkerPayAssignment, error)
+	WorkerPayAssignments(ctx context.Context, workerID string, first *int, after *string) (*gqlmodel.WorkerPayAssignmentConnection, error)
 	EffectiveWorkerPayAssignment(ctx context.Context, workerID string) (*payassignment.WorkerPayAssignment, error)
 	PayProfileAssignments(ctx context.Context, payProfileID string) ([]*payassignment.WorkerPayAssignment, error)
 	RecurringDeductions(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.RecurringDeductionConnection, error)
@@ -5997,7 +6065,7 @@ func field_Query_payProfile_args(ctx context.Context, ec *gqlexec.Exec, rawArgs 
 }
 
 func field_Query_workerPayAssignments_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
-	args := make(map[string]any, 1)
+	args := make(map[string]any, 3)
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "workerId",
 		func(ctx context.Context, v any) (string, error) {
 			return unmarshalNID2string(ctx, ec, v)
@@ -6006,6 +6074,22 @@ func field_Query_workerPayAssignments_args(ctx context.Context, ec *gqlexec.Exec
 		return nil, err
 	}
 	args["workerId"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "first",
+		func(ctx context.Context, v any) (*int, error) {
+			return unmarshalOInt2ᚖint(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["first"] = arg1
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "after",
+		func(ctx context.Context, v any) (*string, error) {
+			return unmarshalOString2ᚖstring(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["after"] = arg2
 	return args, nil
 }
 
@@ -9422,6 +9506,30 @@ func marshalNWorkerPayAssignment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "WorkerPayAssignment", v)
+}
+
+func marshalNWorkerPayAssignmentConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐWorkerPayAssignmentConnection(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.WorkerPayAssignmentConnection) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "WorkerPayAssignmentConnection", v)
+}
+
+func marshalNWorkerPayAssignmentEdge2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐWorkerPayAssignmentEdgeᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*gqlmodel.WorkerPayAssignmentEdge) graphql.Marshaler {
+	return gqlexec.List[*gqlmodel.WorkerPayAssignmentEdge]{
+		Elem:        marshalNWorkerPayAssignmentEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐWorkerPayAssignmentEdge,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalNWorkerPayAssignmentEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐWorkerPayAssignmentEdge(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.WorkerPayAssignmentEdge) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "WorkerPayAssignmentEdge", v)
 }
 
 func marshalNWorkerYTDPaySummary2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋappᚋdriversettlementworkspaceserviceᚐWorkerYTDPaySummaryᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*driversettlementworkspaceservice.WorkerYTDPaySummary) graphql.Marshaler {

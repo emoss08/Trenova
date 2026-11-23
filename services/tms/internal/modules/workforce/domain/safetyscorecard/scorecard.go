@@ -30,6 +30,7 @@ type SafetyScorecard struct {
 	Score                 int32
 	Rating                worker.SafetyRating
 	ActivePoints          int32
+	ActivePointEvents     []*workersafety.WorkerSafetyEvent
 	PointsWatchThreshold  int32
 	PointsAtRiskThreshold int32
 	Accidents             int32
@@ -109,7 +110,10 @@ func (card *SafetyScorecard) tallyEvents(
 		if event == nil {
 			continue
 		}
-		card.ActivePoints += event.ActivePoints(now)
+		if points := event.ActivePoints(now); points > 0 {
+			card.ActivePoints += points
+			card.ActivePointEvents = append(card.ActivePointEvents, event)
+		}
 		if !event.IsClosed() {
 			card.OpenEvents++
 		}
@@ -129,6 +133,19 @@ func (card *SafetyScorecard) tallyEvents(
 		card.LastEventAt = &lastEvent
 		card.DaysSinceLastEvent = &days
 	}
+}
+
+func (card *SafetyScorecard) WithLastEvent(at *int64, now int64) {
+	if at == nil || *at <= 0 {
+		return
+	}
+	if card.LastEventAt != nil && *card.LastEventAt >= *at {
+		return
+	}
+	last := *at
+	days := workercredential.DaysUntil(now, last)
+	card.LastEventAt = &last
+	card.DaysSinceLastEvent = &days
 }
 
 func (card *SafetyScorecard) countWindowEvent(event *workersafety.WorkerSafetyEvent) {

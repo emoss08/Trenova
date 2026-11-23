@@ -9,7 +9,7 @@
 // for gql.ts, which reads them off it. Run after strip-fragment-text.mjs, which leaves every
 // document a one-line constant.
 
-import { mkdir, readdir, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdir, readdir, readFile, rename, rm, rmdir, writeFile } from "node:fs/promises";
 import { dirname, join, posix, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { Kind, parse } from "graphql";
@@ -136,16 +136,45 @@ async function operationSources(dir) {
   return sources.sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0));
 }
 
+// The dev server reads these modules while codegen --watch runs, so the folder is never
+// emptied: an unchanged module is left alone, a changed one is swapped in by rename, and only
+// modules whose operations file is gone are removed. Deleting the folder first let Vite's
+// dependency scan find it empty on every dev start.
+async function writeIfChanged(path, source) {
+  const current = await readFile(path, "utf8").catch(() => undefined);
+  if (current === source) return;
+  await mkdir(dirname(path), { recursive: true });
+  const temporary = `${path}.${process.pid}.tmp`;
+  await writeFile(temporary, source);
+  await rename(temporary, path);
+}
+
+async function existingModules(dir) {
+  const entries = await readdir(dir, { withFileTypes: true, recursive: true }).catch(() => []);
+  return entries
+    .filter((entry) => entry.isFile())
+    .map((entry) => relative(dir, join(entry.parentPath, entry.name)).split(sep).join("/"));
+}
+
+async function removeEmptyDirectories(dir) {
+  const entries = await readdir(dir, { withFileTypes: true }).catch(() => []);
+  for (const entry of entries) {
+    if (entry.isDirectory()) await removeEmptyDirectories(join(dir, entry.name));
+  }
+  if (dir !== documentsDir && (await readdir(dir)).length === 0) await rmdir(dir);
+}
+
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const graphqlPath = join(generatedDir, "graphql.ts");
   const files = definitionFiles(await operationSources(operationsDir));
   const { graphql, modules } = splitDocuments(await readFile(graphqlPath, "utf8"), files);
 
-  await rm(documentsDir, { recursive: true, force: true });
   for (const [file, source] of modules) {
-    const path = join(documentsDir, file);
-    await mkdir(dirname(path), { recursive: true });
-    await writeFile(path, source);
+    await writeIfChanged(join(documentsDir, file), source);
   }
-  await writeFile(graphqlPath, graphql);
+  for (const file of await existingModules(documentsDir)) {
+    if (!modules.has(file)) await rm(join(documentsDir, file), { force: true });
+  }
+  await removeEmptyDirectories(documentsDir);
+  await writeIfChanged(graphqlPath, graphql);
 }

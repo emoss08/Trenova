@@ -13,12 +13,19 @@ const mocks = vi.hoisted(() => ({
   assignments: vi.fn(),
   ledger: vi.fn(),
   history: vi.fn(),
+  adjustPaneRead: vi.fn(),
 }));
+
+vi.mock("../adjust-balance-pane", async (importOriginal) => {
+  mocks.adjustPaneRead();
+  return await importOriginal<typeof import("../adjust-balance-pane")>();
+});
 
 vi.mock("@/lib/graphql/pto-policy", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/lib/graphql/pto-policy")>()),
   fetchWorkerPtoBalances: mocks.balances,
   fetchWorkerPtoPolicyAssignments: mocks.assignments,
+  fetchWorkerPtoRequests: mocks.history,
   fetchWorkerPtoLedger: mocks.ledger,
   fetchWorkerPtoAvailability: vi.fn().mockResolvedValue(null),
   runPtoAccrual: vi.fn(),
@@ -26,18 +33,13 @@ vi.mock("@/lib/graphql/pto-policy", async (importOriginal) => ({
   assignWorkerPtoPolicy: vi.fn(),
 }));
 
-vi.mock("@/lib/queries/worker", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("@/lib/queries/worker")>()),
-  worker: {
-    ptoHistory: (workerId: string) => ({
-      queryKey: ["worker", "pto-history", workerId],
-      queryFn: () => mocks.history(workerId),
-    }),
-    overview: (workerId: string) => ({ queryKey: ["worker", "overview", workerId] }),
-    listUpcomingPTO: { _def: ["worker", "list-upcoming-pto"] },
-    ptoChartData: { _def: ["worker", "pto-chart-data"] },
-  },
-}));
+function page<Row>(rows: Row[], { hasNextPage = false, totalCount = rows.length } = {}) {
+  return {
+    edges: rows.map((node) => ({ node })),
+    pageInfo: { hasNextPage, endCursor: hasNextPage ? "next" : null },
+    totalCount,
+  };
+}
 
 vi.mock("@/hooks/use-permission", () => ({
   usePermission: () => ({ allowed: true, isLoading: false }),
@@ -137,12 +139,25 @@ afterEach(() => {
 
 function seed() {
   mocks.balances.mockResolvedValue([balance]);
-  mocks.assignments.mockResolvedValue([assignment]);
-  mocks.ledger.mockResolvedValue({ entries: [], hasNextPage: false, endCursor: null });
-  mocks.history.mockResolvedValue([decided]);
+  mocks.assignments.mockResolvedValue(page([assignment]));
+  mocks.ledger.mockResolvedValue(page([]));
+  mocks.history.mockResolvedValue(page([decided]));
 }
 
 describe("TimeOffView", () => {
+  // First, while no test has read the pane's module yet.
+  it("reads the adjustment pane's code only once the pane is opened", async () => {
+    seed();
+    renderView({});
+    expect(await screen.findByText("Dana Whitfield")).toBeInTheDocument();
+    expect(mocks.adjustPaneRead).not.toHaveBeenCalled();
+    cleanup();
+
+    renderView({ form: "adjust-balance" });
+    expect(await screen.findByRole("dialog", { name: "Adjust balance" })).toBeInTheDocument();
+    expect(mocks.adjustPaneRead).toHaveBeenCalledTimes(1);
+  });
+
   it("shows the policy line, the balances strip and the requests", async () => {
     seed();
     renderView({});
@@ -159,8 +174,8 @@ describe("TimeOffView", () => {
 
     const pane = await screen.findByRole("dialog", { name: "Request time off" });
     expect(pane).toBeInTheDocument();
+    expect(await screen.findByLabelText("First day")).toBeInTheDocument();
     expect(screen.queryByLabelText("Worker")).not.toBeInTheDocument();
-    expect(screen.getByLabelText("First day")).toBeInTheDocument();
     expect(screen.getByTestId("pto-day-count")).toHaveTextContent("0");
   });
 
@@ -177,17 +192,30 @@ describe("TimeOffView", () => {
     const user = userEvent.setup();
     const { onOpen } = renderView({ form: "adjust-balance" });
 
-    expect(await screen.findByRole("dialog", { name: "Adjust a balance" })).toBeInTheDocument();
-    expect(screen.getByText("Vacation is 11.50 days today.")).toBeInTheDocument();
+    expect(await screen.findByRole("dialog", { name: "Adjust balance" })).toBeInTheDocument();
+    expect(await screen.findByText("Vacation is 11.50 days today.")).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "Cancel" }));
     expect(onOpen).toHaveBeenCalledWith({ tab: "time", view: "time-off" });
   });
 
+  it("heads the requests with the server's count, and reads only the first page of them", async () => {
+    seed();
+    mocks.history.mockResolvedValue(page([decided], { hasNextPage: true, totalCount: 80 }));
+    renderView({});
+
+    expect(await screen.findByText("Dana Whitfield")).toBeInTheDocument();
+    expect(screen.getByText("80")).toBeInTheDocument();
+    expect(mocks.history).toHaveBeenCalledExactlyOnceWith(
+      { workerId: "wrk_1", first: 100, after: null },
+      expect.anything(),
+    );
+  });
+
   it("offers enrollment instead of balances when the worker is on no policy", async () => {
     mocks.balances.mockResolvedValue([]);
-    mocks.assignments.mockResolvedValue([]);
-    mocks.history.mockResolvedValue([]);
+    mocks.assignments.mockResolvedValue(page([]));
+    mocks.history.mockResolvedValue(page([]));
     renderView({});
 
     expect(await screen.findByText("Not enrolled in a time off policy")).toBeInTheDocument();

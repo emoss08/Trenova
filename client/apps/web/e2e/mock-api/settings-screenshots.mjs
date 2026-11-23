@@ -1,4 +1,4 @@
-// Walks through the Settings page against the mock API and writes one PNG per state. Usage: node e2e/mock-api/settings-screenshots.mjs [outDir] [name,name,...]
+// Walks through the Settings page against the mock API and writes one PNG per state. Usage: bun e2e/mock-api/settings-screenshots.mjs [outDir] [name,name,...]
 import { mkdir } from "node:fs/promises";
 import { resolve } from "node:path";
 import { chromium } from "playwright";

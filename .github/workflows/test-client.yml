@@ -77,14 +77,14 @@ jobs:
       - name: Check GraphQL generated artifacts
         if: ${{ !cancelled() && steps.setup.outcome == 'success' }}
         working-directory: ./client
-        run: pnpm --filter @trenova/graphql codegen:check
+        run: bun run --filter @trenova/graphql codegen:check
 
       # Every routed page needs a guide, every bold label in one must be text
       # the app shows, and the catalog the server embeds must match the guides.
       - name: Check the product guide
         if: ${{ !cancelled() && steps.setup.outcome == 'success' }}
         working-directory: ./client
-        run: pnpm --filter @trenova/web guide:check
+        run: bun run --filter @trenova/web guide:check
 
       # The screens half of the page access manifest: each route's operations
       # and REST endpoints, read from its module graph. The Go test
@@ -92,27 +92,28 @@ jobs:
       - name: Check the page access screens
         if: ${{ !cancelled() && steps.setup.outcome == 'success' }}
         working-directory: ./client
-        run: pnpm --filter @trenova/web access:check
+        run: bun run --filter @trenova/web access:check
 
+      # bun run drops a lone "--", so turbo is called directly to pass the flag to oxlint.
       - name: Lint
         if: ${{ !cancelled() && steps.setup.outcome == 'success' }}
         working-directory: ./client
-        run: pnpm lint -- --format=github
+        run: bun x turbo run lint -- --format=github
 
       - name: Design tokens
         if: ${{ !cancelled() && steps.setup.outcome == 'success' }}
         working-directory: ./client
-        run: pnpm lint:design -- --format=github
+        run: bun run lint:design --format=github
 
       - name: Loading skeletons
         if: ${{ !cancelled() && steps.setup.outcome == 'success' }}
         working-directory: ./client
-        run: pnpm lint:skeletons -- --format=github
+        run: bun run lint:skeletons --format=github
 
       - name: Single copies
         if: ${{ !cancelled() && steps.setup.outcome == 'success' }}
         working-directory: ./client
-        run: pnpm check:single-copies
+        run: bun run check:single-copies
 
       # tsc -b is incremental: with the build info from an earlier run it checks again only
       # what changed since, rather than every project from cold. It compares file contents,
@@ -134,7 +135,7 @@ jobs:
         id: typecheck
         if: ${{ !cancelled() && steps.setup.outcome == 'success' }}
         working-directory: ./client
-        run: pnpm typecheck
+        run: bun run typecheck
 
       - name: Save TypeScript build info
         if: ${{ !cancelled() && steps.typecheck.outcome == 'success' && steps.tsbuildinfo.outputs.cache-hit != 'true' }}
@@ -150,7 +151,7 @@ jobs:
       - name: Build
         if: ${{ !cancelled() && steps.setup.outcome == 'success' }}
         working-directory: ./client
-        run: pnpm build && pnpm --filter @trenova/web bundle:check
+        run: bun run build && bun run --filter @trenova/web bundle:check
 
   test:
     name: Test
@@ -165,7 +166,7 @@ jobs:
 
       - name: Test
         working-directory: ./client
-        run: pnpm test
+        run: bun run test
 
   # The release builds and pushes the self-hosting client image from
   # deploy/Dockerfile.client. It loads the vite config differently from the
@@ -210,14 +211,14 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.cache/ms-playwright
-          key: playwright-${{ runner.os }}-${{ hashFiles('client/pnpm-lock.yaml') }}
+          key: playwright-${{ runner.os }}-${{ hashFiles('client/bun.lock') }}
           restore-keys: |
             playwright-${{ runner.os }}-
 
       - name: Install Playwright Chromium
         working-directory: ./client/apps/web
-        run: pnpm exec playwright install --with-deps chromium
+        run: bun x playwright install --with-deps chromium
 
       - name: Run Storybook tests
         working-directory: ./client/apps/web
-        run: pnpm test:storybook
+        run: bun run test:storybook

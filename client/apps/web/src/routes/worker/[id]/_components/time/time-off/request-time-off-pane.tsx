@@ -17,10 +17,12 @@ import {
 import { Button } from "@trenova/shared/components/ui/button";
 import { FormControl } from "@trenova/shared/components/ui/form";
 import { Form } from "@trenova/shared/components/ui/form";
+import { formatNumber } from "@trenova/shared/i18n/format";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatRange, inclusiveDays } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
 import type { WorkerPTO } from "@trenova/shared/types/worker";
+import { useState } from "react";
 import { FormProvider } from "react-hook-form";
 
 export type TimeOffPaneProps = {
@@ -32,8 +34,14 @@ export type TimeOffPaneProps = {
   onSaved: (pto: WorkerPTO) => void;
 };
 
+/** A count of days as the reader's language writes it, to two places at most: "2", "0.5". */
 function dayCount(value: number): string {
-  return String(Math.round(value * 100) / 100);
+  return formatNumber(value, { maximumFractionDigits: 2 });
+}
+
+/** A balance in days to one place: "4.5". */
+function balanceDays(value: number): string {
+  return formatNumber(value, { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 }
 
 /** The chosen days counted live, and what they leave of the balance they come from. */
@@ -95,8 +103,8 @@ function DayCount(state: PTOFormPreviewState) {
                       : available !== null
                         ? t(
                             "{0} of {1} {2} days would remain.",
-                            (available - counted).toFixed(1),
-                            available.toFixed(1),
+                            balanceDays(available - counted),
+                            balanceDays(available),
                             type,
                           )
                         : null}
@@ -111,8 +119,18 @@ function DayCount(state: PTOFormPreviewState) {
  * A time off request beside the requests table: recorded on the worker's behalf, edited while it
  * waits for a decision, and read once it is decided. The form is the roster dialog's own.
  */
-export function TimeOffPane({ open, onOpenChange, workerId, pto, onSaved }: TimeOffPaneProps) {
+export function TimeOffPane({
+  open,
+  onOpenChange,
+  workerId,
+  pto: opened,
+  onSaved,
+}: TimeOffPaneProps) {
   const t = useT();
+  // The request as it was when the pane opened: the shared form resets whenever the record it is
+  // given changes, and a refetch of the requests must never wipe what is being typed. Each opening
+  // (and each other request) mounts the pane anew.
+  const [pto] = useState(opened);
   const { form, submit, isSubmitting, isEdit, editable } = usePTOForm({
     open,
     pto,
@@ -130,7 +148,7 @@ export function TimeOffPane({ open, onOpenChange, workerId, pto, onSaved }: Time
         contentKey={pto.id ?? undefined}
       >
         <WorkPaneBody>
-          <ReadOnlyPTO pto={pto} />
+          <ReadOnlyPTO pto={opened ?? pto} />
         </WorkPaneBody>
         <WorkPaneFooter>
           <WorkPaneCancel>{t("Close")}</WorkPaneCancel>

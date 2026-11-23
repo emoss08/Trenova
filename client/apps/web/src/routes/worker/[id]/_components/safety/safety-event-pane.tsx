@@ -14,13 +14,14 @@ import {
   type SafetyEventStatus,
   type SafetySeverity,
 } from "@trenova/shared/types/worker-safety";
-import type { ReactNode } from "react";
-import { decimalAmount, eventCarriesViolations, eventStatusTone } from "./safety-model";
+import { PaneSection } from "../pane-section";
+import type { SafetyEventPermissions } from "./safety-event-row";
 import {
-  formatDecimalMoney,
+  eventCarriesViolations,
+  eventStatusTone,
+  formatEventAmount,
   safetyEventHeadline,
-  type SafetyEventPermissions,
-} from "./safety-event-row";
+} from "./safety-model";
 import { ViolationList } from "./violation-list";
 
 export type SafetyEventPaneProps = {
@@ -38,15 +39,6 @@ export type SafetyEventPaneProps = {
   onOpenDocuments: () => void;
   onViolationsChanged: () => Promise<unknown>;
 };
-
-function Section({ title, children }: { title: string; children: ReactNode }) {
-  return (
-    <section className="flex flex-col gap-1.5">
-      <h4 className="text-xs font-medium text-foreground-subtle">{title}</h4>
-      {children}
-    </section>
-  );
-}
 
 /** One safety event read beside the list: its facts, what happened, what it cited and how it ended. */
 export function SafetyEventPane({
@@ -78,8 +70,8 @@ export function SafetyEventPane({
 
   const status = event.status as SafetyEventStatus;
   const closed = status === "Closed";
-  const fine = decimalAmount(event.fineAmount);
-  const cost = decimalAmount(event.costAmount);
+  const fine = formatEventAmount(event.fineAmount);
+  const cost = formatEventAmount(event.costAmount);
   const facts: { label: string; value: string }[] = [
     { label: t("When"), value: formatUnixDateMedium(event.occurredAt) },
     { label: t("Where"), value: event.location || t("Not recorded") },
@@ -106,9 +98,8 @@ export function SafetyEventPane({
   if (event.kind === "Accident" || event.kind === "Incident") {
     facts.push({ label: t("Preventable"), value: event.preventable ? t("Yes") : t("No") });
   }
-  if (fine !== null) facts.push({ label: t("Fine"), value: formatDecimalMoney(fine) });
-  if (cost !== null)
-    facts.push({ label: t("Cost to the carrier"), value: formatDecimalMoney(cost) });
+  if (fine !== null) facts.push({ label: t("Fine"), value: fine });
+  if (cost !== null) facts.push({ label: t("Cost to the carrier"), value: cost });
   facts.push({ label: t("Recorded by"), value: event.recordedBy?.name ?? t("Not recorded") });
 
   const points = event.pointsExpireAt
@@ -146,16 +137,16 @@ export function SafetyEventPane({
             </DescriptionItem>
           ))}
         </DescriptionList>
-        <Section title={t("What happened")}>
+        <PaneSection title={t("What happened")}>
           <p className="text-pretty">{event.description}</p>
-        </Section>
+        </PaneSection>
         {eventCarriesViolations(event) ? (
-          <Section title={t("Violations cited")}>
+          <PaneSection title={t("Violations cited")}>
             <ViolationList event={event} onChanged={onViolationsChanged} />
-          </Section>
+          </PaneSection>
         ) : null}
         {closed && event.resolution ? (
-          <Section title={t("Resolution")}>
+          <PaneSection title={t("Resolution")}>
             <p className="text-pretty">{event.resolution}</p>
             {event.closedBy?.name ? (
               <p className="text-xs text-muted-foreground">
@@ -164,10 +155,10 @@ export function SafetyEventPane({
                   : event.closedBy.name}
               </p>
             ) : null}
-          </Section>
+          </PaneSection>
         ) : null}
         {event.document ? (
-          <Section title={t("Document")}>
+          <PaneSection title={t("Document")}>
             <DocumentPanePreview
               document={{
                 id: event.document.id,
@@ -190,7 +181,7 @@ export function SafetyEventPane({
                 </button>
               </p>
             </DocumentPanePreview>
-          </Section>
+          </PaneSection>
         ) : null}
       </WorkPaneBody>
       <WorkPaneFooter

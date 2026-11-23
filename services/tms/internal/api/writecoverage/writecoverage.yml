@@ -949,6 +949,17 @@ writes:
     exempt: agent-administration
     reason: "Whether agents keep what they learn in the person's conversations straight away or ask first; an agent that could change it could stop asking."
 
+  # desktranscript
+  "mutation deskTranscriptExportDownload":
+    exempt: read-only
+    reason: "Returns a download link for an export of Desk conversations already produced, to the person who asked for it."
+  "mutation openDeskConversation":
+    exempt: read-only
+    reason: "Reads another person's conversation for an administrator; it changes nothing but the audit log, which records every look."
+  "mutation requestDeskTranscriptExport":
+    exempt: security
+    reason: "Taking other people's Desk conversations out of Trenova is a person's decision on their own authority; no agent, delegated run or palette may reach other people's conversations."
+
   # detention
   "mutation approveDetentionOccurrence":
     tools: [detention_approve]

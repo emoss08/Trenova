@@ -1,12 +1,49 @@
 import type { WorkerHosDailyLog, WorkerHosLogEntry } from "@/lib/graphql/telematics";
 import { fromUserWallClock, toUserWallClock, userWallClockNow } from "@trenova/shared/lib/date";
-import type { BadgeVariant } from "@trenova/shared/types/badge";
-import { format, startOfDay, subDays } from "date-fns";
+import { dateTimeFormatter } from "@trenova/shared/i18n/format";
+import { addDays, format, startOfDay, subDays } from "date-fns";
+import { SECONDS_IN_DAY } from "@/lib/time-units";
 
-export const HOUR_MS = 3_600_000;
-export const DAY_SECONDS = 86_400;
 export const DAILY_LOG_DAYS = 7;
 export const DAY_KEY_FORMAT = "yyyy-MM-dd";
+
+/**
+ * How often the live reads (the clocks and today's log) are read again while the Hours view is
+ * on screen. TanStack stops the interval while the browser tab is in the background, and the
+ * view's observers unsubscribe while `Kept` hides it, so a hidden view reads nothing.
+ */
+export const HOS_LIVE_REFRESH_MS = 60_000;
+
+/** How far back the violations and driver forms reach. */
+export const HOS_RECORDS_DAYS = 30;
+
+/** What the Hours view reads, as whole days in the reader's zone, so it moves only at midnight. */
+export type HosWindow = {
+  /** Midnight today on the reader's wall clock. */
+  today: Date;
+  /** The daily logs' first and last day keys (`yyyy-MM-dd`). */
+  startDate: string;
+  endDate: string;
+  /** The records' window in unix seconds: midnight 30 days ago to midnight tonight. */
+  since: number;
+  until: number;
+};
+
+export function hosWindow(nowSec: number): HosWindow {
+  const today = startOfDay(toUserWallClock(nowSec) ?? userWallClockNow());
+  return {
+    today,
+    startDate: format(subDays(today, DAILY_LOG_DAYS - 1), DAY_KEY_FORMAT),
+    endDate: format(today, DAY_KEY_FORMAT),
+    since: fromUserWallClock(subDays(today, HOS_RECORDS_DAYS)) ?? 0,
+    until: fromUserWallClock(addDays(today, 1)) ?? 0,
+  };
+}
+
+/** A log day in full, as the daily log heads it: "Monday, Nov 23". */
+export function formatLogDay(date: Date): string {
+  return dateTimeFormatter({ weekday: "long", month: "short", day: "numeric" }).format(date);
+}
 
 export const LOG_LANE_CODES = ["OFF", "SB", "D", "ON"] as const;
 
@@ -20,20 +57,6 @@ const LANE_BY_STATUS: Record<string, LogLane> = {
   onDuty: 3,
   yardMove: 3,
 };
-
-const DUTY_STATUS_VARIANT: Record<string, BadgeVariant> = {
-  driving: "accent-emerald",
-  onDuty: "accent-amber",
-  offDuty: "neutral",
-  sleeperBed: "accent-violet",
-  yardMove: "accent-sky",
-  personalConveyance: "accent-teal",
-};
-
-export function dutyStatusVariant(status: string | null | undefined): BadgeVariant {
-  if (!status) return "neutral";
-  return DUTY_STATUS_VARIANT[status] ?? "neutral";
-}
 
 export function laneOfStatus(status: string): LogLane {
   return LANE_BY_STATUS[status] ?? 3;
@@ -208,7 +231,7 @@ export function buildDaySlots(
       date,
       isToday: offset === 0,
       startAt: dailyLog?.startAt ?? fallbackStart,
-      endAt: dailyLog?.endAt ?? fallbackStart + DAY_SECONDS,
+      endAt: dailyLog?.endAt ?? fallbackStart + SECONDS_IN_DAY,
       dailyLog,
     });
   }

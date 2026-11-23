@@ -197,6 +197,24 @@ func (r *repository) CountTemplateAssignmentsByIDs(
 	})
 }
 
+func assignmentsOf(
+	req *workerscheduleports.ListShiftAssignmentsRequest,
+) keel.Query[*workerschedule.WorkerShiftAssignment] {
+	a := workerscheduledb.WorkerShiftAssignments
+	var activeAt keel.Pred
+	if req.ActiveAt > 0 {
+		activeAt = keel.And(
+			a.EffectiveFrom.Lte(req.ActiveAt),
+			keel.Or(a.EffectiveTo.IsNull(), a.EffectiveTo.Gte(req.ActiveAt)),
+		)
+	}
+
+	return a.Where(
+		keel.When(req.WorkerID.IsNotNil(), a.WorkerID.Eq(req.WorkerID)),
+		activeAt,
+	)
+}
+
 func (r *repository) ListAssignments(
 	ctx context.Context,
 	req *workerscheduleports.ListShiftAssignmentsRequest,
@@ -206,18 +224,7 @@ func (r *repository) ListAssignments(
 		r.db,
 		func(ctx context.Context) ([]*workerschedule.WorkerShiftAssignment, error) {
 			a := workerscheduledb.WorkerShiftAssignments
-			var activeAt keel.Pred
-			if req.ActiveAt > 0 {
-				activeAt = keel.And(
-					a.EffectiveFrom.Lte(req.ActiveAt),
-					keel.Or(a.EffectiveTo.IsNull(), a.EffectiveTo.Gte(req.ActiveAt)),
-				)
-			}
-
-			entities, err := a.Where(
-				keel.When(req.WorkerID.IsNotNil(), a.WorkerID.Eq(req.WorkerID)),
-				activeAt,
-			).
+			entities, err := assignmentsOf(req).
 				Load(listquery.When(req.IncludeTemplate, a.ShiftTemplate())...).
 				Order(a.EffectiveFrom.Desc()).
 				Limit(limitOr(req.Limit, defaultAssignmentPageSize)).

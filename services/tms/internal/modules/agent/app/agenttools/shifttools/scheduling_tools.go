@@ -113,6 +113,7 @@ type scheduleKeeper interface {
 		req *schedulingservice.ProposeSwapRequest,
 	) (*workerschedule.ShiftSwapRequest, error)
 	PreviewProposeSwap(
+		ctx context.Context,
 		req *schedulingservice.ProposeSwapRequest,
 	) (*workerschedule.ShiftSwapRequest, error)
 	TransitionSwap(
@@ -654,13 +655,13 @@ func NewProposeShiftSwapTool(schedules scheduleKeeper) agenttoolports.AgentTool 
 	}, toolspec.ReceivablePlan[*schedulingservice.ProposeSwapRequest, *workerschedule.ShiftSwapRequest]{
 		Request: proposeSwapRequest,
 		Plan: func(
-			_ context.Context,
+			ctx context.Context,
 			req *schedulingservice.ProposeSwapRequest,
 			_ *agenttoolports.ToolExecuteParams,
 		) (*workerschedule.ShiftSwapRequest, error) {
 			entity := *req.Entity
 
-			return schedules.PreviewProposeSwap(&schedulingservice.ProposeSwapRequest{
+			return schedules.PreviewProposeSwap(ctx, &schedulingservice.ProposeSwapRequest{
 				Entity:     &entity,
 				TenantInfo: req.TenantInfo,
 				UserID:     req.UserID,

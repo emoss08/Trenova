@@ -2,6 +2,7 @@ package ptopolicyrepository
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
@@ -10,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/ptopolicyports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
+	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -34,25 +36,42 @@ func policyLoads(include bool) []keel.Loader {
 	return listquery.When(include, policyWithRules())
 }
 
-func (r *repository) ListAssignments(
+func (r *repository) PageAssignments(
 	ctx context.Context,
 	req *ptopolicyports.ListPTOAssignmentsRequest,
-) ([]*pto.WorkerPTOPolicyAssignment, error) {
+) (*pagination.CursorListResult[*pto.WorkerPTOPolicyAssignment], error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) ([]*pto.WorkerPTOPolicyAssignment, error) {
+		func(ctx context.Context) (*pagination.CursorListResult[*pto.WorkerPTOPolicyAssignment], error) {
 			a := ptodb.WorkerPTOPolicyAssignments
-			entities, err := a.Where(a.WorkerID.Eq(req.WorkerID)).
-				Load(policyLoads(req.IncludePolicy)...).
-				Order(a.EffectiveFrom.Desc()).
-				All(ctx, r.db.Keel(ctx))
+			desc := string(dbtype.SortDirectionDesc)
+			result, err := listquery.Connection(
+				ctx,
+				r.db.Keel(ctx),
+				a.Where(a.WorkerID.Eq(req.WorkerID)),
+				&listquery.Request[pto.WorkerPTOPolicyAssignment]{
+					Filter: &pagination.QueryOptions{TenantInfo: req.TenantInfo},
+					Cursor: req.Cursor,
+					Shape: func(
+						q keel.Query[*pto.WorkerPTOPolicyAssignment],
+					) keel.Query[*pto.WorkerPTOPolicyAssignment] {
+						return q.Load(policyLoads(req.IncludePolicy)...)
+					},
+					Keyset: &listquery.Keyset{
+						Orders: []keel.Order{a.EffectiveFrom.Desc(), a.ID.Desc()},
+						Shape: []pagination.CursorSortField{
+							{Field: "effectiveFrom", Direction: desc},
+							{Field: "id", Direction: desc},
+						},
+					},
+				},
+			)
 			if err != nil {
-				r.l.Error("failed to list PTO assignments", zap.Error(err))
-				return nil, err
+				return nil, fmt.Errorf("page PTO policy assignments: %w", err)
 			}
 
-			return entities, nil
+			return result, nil
 		},
 	)
 }

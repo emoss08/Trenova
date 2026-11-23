@@ -39,6 +39,8 @@ var Shard = &gqlexec.Shard{
 		{Name: "WorkerPTOLedgerEdge", Implementors: []string{"WorkerPTOLedgerEdge"}},
 		{Name: "WorkerPTOLedgerEntry", Implementors: []string{"WorkerPTOLedgerEntry"}},
 		{Name: "WorkerPTOPolicyAssignment", Implementors: []string{"WorkerPTOPolicyAssignment"}},
+		{Name: "WorkerPTOPolicyAssignmentConnection", Implementors: []string{"WorkerPTOPolicyAssignmentConnection"}},
+		{Name: "WorkerPTOPolicyAssignmentEdge", Implementors: []string{"WorkerPTOPolicyAssignmentEdge"}},
 	},
 	Fields: []gqlexec.Fields{
 		{Object: "AssignWorkerPTOPolicyFailure", Fields: []*gqlexec.Field{
@@ -1121,13 +1123,13 @@ var Shard = &gqlexec.Shard{
 				IsResolver: true,
 				Concurrent: true,
 				HasChild:   true,
-				ChildType:  "WorkerPTOPolicyAssignment",
+				ChildType:  "WorkerPTOPolicyAssignmentConnection",
 				Args:       field_Query_workerPtoPolicyAssignments_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[QueryResolver](ec, "Query@ptopolicy").WorkerPTOPolicyAssignments(ctx, fc.Args["workerId"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@ptopolicy").WorkerPTOPolicyAssignments(ctx, fc.Args["workerId"].(string), fc.Args["first"].(*int), fc.Args["after"].(*string))
 				},
-				Marshal: gqlexec.Marshal(marshalNWorkerPTOPolicyAssignment2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋptoᚐWorkerPTOPolicyAssignmentᚄ),
+				Marshal: gqlexec.Marshal(marshalNWorkerPTOPolicyAssignmentConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐWorkerPTOPolicyAssignmentConnection),
 			},
 			{
 				Name:       "workerPtoBalances",
@@ -1708,6 +1710,72 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
 			},
 		}},
+		{Object: "WorkerPTOPolicyAssignmentConnection", Fields: []*gqlexec.Field{
+			{
+				Name:      "edges",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "WorkerPTOPolicyAssignmentEdge",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.WorkerPTOPolicyAssignmentConnection)
+					return obj.Edges, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNWorkerPTOPolicyAssignmentEdge2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐWorkerPTOPolicyAssignmentEdgeᚄ),
+			},
+			{
+				Name:      "pageInfo",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "PageInfo",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.WorkerPTOPolicyAssignmentConnection)
+					return obj.PageInfo, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNPageInfo2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐPageInfo),
+			},
+			{
+				Name:     "totalCount",
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.WorkerPTOPolicyAssignmentConnection)
+					return obj.TotalCount, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOInt2ᚖint),
+			},
+			{
+				Name:     "totalCountExact",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.WorkerPTOPolicyAssignmentConnection)
+					return obj.TotalCountExact, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+		}},
+		{Object: "WorkerPTOPolicyAssignmentEdge", Fields: []*gqlexec.Field{
+			{
+				Name:      "node",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "WorkerPTOPolicyAssignment",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.WorkerPTOPolicyAssignmentEdge)
+					return obj.Node, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNWorkerPTOPolicyAssignment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋptoᚐWorkerPTOPolicyAssignment),
+			},
+			{
+				Name:     "cursor",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.WorkerPTOPolicyAssignmentEdge)
+					return obj.Cursor, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+		}},
 	},
 	Inputs: []gqlexec.Input{
 		{Name: "AdjustWorkerPTOBalanceInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputAdjustWorkerPTOBalanceInput)},
@@ -1803,7 +1871,7 @@ type PlannedPTOAccrualResolver interface {
 type QueryResolver interface {
 	PTOPolicies(ctx context.Context, input gqlmodel.PTOPoliciesInput) (*gqlmodel.PTOPolicyConnection, error)
 	PTOPolicy(ctx context.Context, id string) (*pto.PTOPolicy, error)
-	WorkerPTOPolicyAssignments(ctx context.Context, workerID string) ([]*pto.WorkerPTOPolicyAssignment, error)
+	WorkerPTOPolicyAssignments(ctx context.Context, workerID string, first *int, after *string) (*gqlmodel.WorkerPTOPolicyAssignmentConnection, error)
 	WorkerPTOBalances(ctx context.Context, workerID string) ([]*ptoledgerservice.BalanceView, error)
 	WorkerPTOLedger(ctx context.Context, input gqlmodel.WorkerPTOLedgerInput) (*gqlmodel.WorkerPTOLedgerConnection, error)
 	WorkerPTOAvailability(ctx context.Context, input gqlmodel.PTOAvailabilityInput) (*ptoledgerservice.AvailabilityResult, error)
@@ -2009,7 +2077,7 @@ func field_Query_ptoPolicy_args(ctx context.Context, ec *gqlexec.Exec, rawArgs m
 }
 
 func field_Query_workerPtoPolicyAssignments_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
-	args := make(map[string]any, 1)
+	args := make(map[string]any, 3)
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "workerId",
 		func(ctx context.Context, v any) (string, error) {
 			return unmarshalNID2string(ctx, ec, v)
@@ -2018,6 +2086,22 @@ func field_Query_workerPtoPolicyAssignments_args(ctx context.Context, ec *gqlexe
 		return nil, err
 	}
 	args["workerId"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "first",
+		func(ctx context.Context, v any) (*int, error) {
+			return unmarshalOInt2ᚖint(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["first"] = arg1
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "after",
+		func(ctx context.Context, v any) (*string, error) {
+			return unmarshalOString2ᚖstring(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["after"] = arg2
 	return args, nil
 }
 
@@ -3422,6 +3506,30 @@ func marshalNWorkerPTOPolicyAssignment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋint
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "WorkerPTOPolicyAssignment", v)
+}
+
+func marshalNWorkerPTOPolicyAssignmentConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐWorkerPTOPolicyAssignmentConnection(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.WorkerPTOPolicyAssignmentConnection) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "WorkerPTOPolicyAssignmentConnection", v)
+}
+
+func marshalNWorkerPTOPolicyAssignmentEdge2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐWorkerPTOPolicyAssignmentEdgeᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*gqlmodel.WorkerPTOPolicyAssignmentEdge) graphql.Marshaler {
+	return gqlexec.List[*gqlmodel.WorkerPTOPolicyAssignmentEdge]{
+		Elem:        marshalNWorkerPTOPolicyAssignmentEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐWorkerPTOPolicyAssignmentEdge,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalNWorkerPTOPolicyAssignmentEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐWorkerPTOPolicyAssignmentEdge(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.WorkerPTOPolicyAssignmentEdge) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "WorkerPTOPolicyAssignmentEdge", v)
 }
 
 func marshalODecimal2ᚖstring(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *string) graphql.Marshaler {

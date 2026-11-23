@@ -29,6 +29,8 @@ var Shard = &gqlexec.Shard{
 		{Name: "IssueDisciplinaryActionPayload", Implementors: []string{"IssueDisciplinaryActionPayload"}},
 		{Name: "SafetyScorecard", Implementors: []string{"SafetyScorecard"}},
 		{Name: "WorkerDisciplinaryAction", Implementors: []string{"WorkerDisciplinaryAction"}},
+		{Name: "WorkerDisciplinaryActionConnection", Implementors: []string{"WorkerDisciplinaryActionConnection"}},
+		{Name: "WorkerDisciplinaryActionEdge", Implementors: []string{"WorkerDisciplinaryActionEdge"}},
 		{Name: "WorkerRecognition", Implementors: []string{"WorkerRecognition"}},
 		{Name: "WorkerSafetyEvent", Implementors: []string{"WorkerSafetyEvent"}},
 	},
@@ -292,13 +294,27 @@ var Shard = &gqlexec.Shard{
 				IsResolver: true,
 				Concurrent: true,
 				HasChild:   true,
-				ChildType:  "WorkerDisciplinaryAction",
+				ChildType:  "WorkerDisciplinaryActionConnection",
 				Args:       field_Query_workerDisciplinaryActions_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[QueryResolver](ec, "Query@workersafety").WorkerDisciplinaryActions(ctx, fc.Args["workerId"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@workersafety").WorkerDisciplinaryActions(ctx, fc.Args["workerId"].(string), fc.Args["first"].(*int), fc.Args["after"].(*string))
 				},
-				Marshal: gqlexec.Marshal(marshalNWorkerDisciplinaryAction2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerdisciplineᚐWorkerDisciplinaryActionᚄ),
+				Marshal: gqlexec.Marshal(marshalNWorkerDisciplinaryActionConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐWorkerDisciplinaryActionConnection),
+			},
+			{
+				Name:       "workerDisciplinaryAction",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "WorkerDisciplinaryAction",
+				Args:       field_Query_workerDisciplinaryAction_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[QueryResolver](ec, "Query@workersafety").WorkerDisciplinaryAction(ctx, fc.Args["id"].(string))
+				},
+				Marshal: gqlexec.Marshal(marshalNWorkerDisciplinaryAction2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerdisciplineᚐWorkerDisciplinaryAction),
 			},
 			{
 				Name:       "workerDisciplinaryLadder",
@@ -428,6 +444,17 @@ var Shard = &gqlexec.Shard{
 					return obj.ActivePoints, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int32),
+			},
+			{
+				Name:      "activePointEvents",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "WorkerSafetyEvent",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*safetyscorecard.SafetyScorecard)
+					return obj.ActivePointEvents, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNWorkerSafetyEvent2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkersafetyᚐWorkerSafetyEventᚄ),
 			},
 			{
 				Name:     "pointsWatchThreshold",
@@ -870,6 +897,72 @@ var Shard = &gqlexec.Shard{
 					return obj.UpdatedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
+			},
+		}},
+		{Object: "WorkerDisciplinaryActionConnection", Fields: []*gqlexec.Field{
+			{
+				Name:      "edges",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "WorkerDisciplinaryActionEdge",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.WorkerDisciplinaryActionConnection)
+					return obj.Edges, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNWorkerDisciplinaryActionEdge2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐWorkerDisciplinaryActionEdgeᚄ),
+			},
+			{
+				Name:      "pageInfo",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "PageInfo",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.WorkerDisciplinaryActionConnection)
+					return obj.PageInfo, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNPageInfo2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐPageInfo),
+			},
+			{
+				Name:     "totalCount",
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.WorkerDisciplinaryActionConnection)
+					return obj.TotalCount, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOInt2ᚖint),
+			},
+			{
+				Name:     "totalCountExact",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.WorkerDisciplinaryActionConnection)
+					return obj.TotalCountExact, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+		}},
+		{Object: "WorkerDisciplinaryActionEdge", Fields: []*gqlexec.Field{
+			{
+				Name:      "node",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "WorkerDisciplinaryAction",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.WorkerDisciplinaryActionEdge)
+					return obj.Node, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNWorkerDisciplinaryAction2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerdisciplineᚐWorkerDisciplinaryAction),
+			},
+			{
+				Name:     "cursor",
+				NonNull:  true,
+				ChildErr: errNoChild8,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.WorkerDisciplinaryActionEdge)
+					return obj.Cursor, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
 		}},
 		{Object: "WorkerRecognition", Fields: []*gqlexec.Field{
@@ -1406,7 +1499,8 @@ type QueryResolver interface {
 	WorkerSafetyEvents(ctx context.Context, workerID *string, openOnly *bool, limit *int) ([]*workersafety.WorkerSafetyEvent, error)
 	WorkerSafetyEvent(ctx context.Context, id string) (*workersafety.WorkerSafetyEvent, error)
 	WorkerSafetyScorecard(ctx context.Context, workerID string) (*safetyscorecard.SafetyScorecard, error)
-	WorkerDisciplinaryActions(ctx context.Context, workerID string) ([]*workerdiscipline.WorkerDisciplinaryAction, error)
+	WorkerDisciplinaryActions(ctx context.Context, workerID string, first *int, after *string) (*gqlmodel.WorkerDisciplinaryActionConnection, error)
+	WorkerDisciplinaryAction(ctx context.Context, id string) (*workerdiscipline.WorkerDisciplinaryAction, error)
 	WorkerDisciplinaryLadder(ctx context.Context, workerID string) (*workerdiscipline.DisciplinaryLadder, error)
 	WorkerRecognitions(ctx context.Context, workerID string) ([]*workerdiscipline.WorkerRecognition, error)
 	DefaultSafetyPoints(ctx context.Context, kind workersafety.SafetyEventKind, severity workersafety.SafetySeverity, preventable *bool, inspectionResult *workersafety.InspectionResult) (int, error)
@@ -1671,7 +1765,7 @@ func field_Query_workerSafetyScorecard_args(ctx context.Context, ec *gqlexec.Exe
 }
 
 func field_Query_workerDisciplinaryActions_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
-	args := make(map[string]any, 1)
+	args := make(map[string]any, 3)
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "workerId",
 		func(ctx context.Context, v any) (string, error) {
 			return unmarshalNID2string(ctx, ec, v)
@@ -1680,6 +1774,35 @@ func field_Query_workerDisciplinaryActions_args(ctx context.Context, ec *gqlexec
 		return nil, err
 	}
 	args["workerId"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "first",
+		func(ctx context.Context, v any) (*int, error) {
+			return unmarshalOInt2ᚖint(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["first"] = arg1
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "after",
+		func(ctx context.Context, v any) (*string, error) {
+			return unmarshalOString2ᚖstring(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["after"] = arg2
+	return args, nil
+}
+
+func field_Query_workerDisciplinaryAction_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
 	return args, nil
 }
 
@@ -2493,6 +2616,14 @@ func marshalNIssueDisciplinaryActionPayload2ᚖgithubᚗcomᚋemoss08ᚋtrenova�
 	return ec.MarshalType(ctx, sel, "IssueDisciplinaryActionPayload", v)
 }
 
+func marshalNPageInfo2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐPageInfo(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.PageInfo) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "PageInfo", v)
+}
+
 func marshalNRecognitionKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerdisciplineᚐRecognitionKind(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v workerdiscipline.RecognitionKind) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
@@ -2571,6 +2702,30 @@ func marshalNWorkerDisciplinaryAction2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinte
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "WorkerDisciplinaryAction", v)
+}
+
+func marshalNWorkerDisciplinaryActionConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐWorkerDisciplinaryActionConnection(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.WorkerDisciplinaryActionConnection) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "WorkerDisciplinaryActionConnection", v)
+}
+
+func marshalNWorkerDisciplinaryActionEdge2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐWorkerDisciplinaryActionEdgeᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*gqlmodel.WorkerDisciplinaryActionEdge) graphql.Marshaler {
+	return gqlexec.List[*gqlmodel.WorkerDisciplinaryActionEdge]{
+		Elem:        marshalNWorkerDisciplinaryActionEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐWorkerDisciplinaryActionEdge,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalNWorkerDisciplinaryActionEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐWorkerDisciplinaryActionEdge(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.WorkerDisciplinaryActionEdge) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "WorkerDisciplinaryActionEdge", v)
 }
 
 func marshalNWorkerRecognition2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerdisciplineᚐWorkerRecognitionᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*workerdiscipline.WorkerRecognition) graphql.Marshaler {

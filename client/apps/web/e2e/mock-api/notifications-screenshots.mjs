@@ -1,8 +1,8 @@
 // Screenshots of the notification panel against the mock API.
 //
-//   node e2e/mock-api/server.mjs
-//   pnpm --filter @trenova/web dev
-//   node e2e/mock-api/notifications-screenshots.mjs [outDir] [only,names]
+//   bun e2e/mock-api/server.mjs
+//   bun run --filter @trenova/web dev
+//   bun e2e/mock-api/notifications-screenshots.mjs [outDir] [only,names]
 
 import { mkdir } from "node:fs/promises";
 import { resolve } from "node:path";

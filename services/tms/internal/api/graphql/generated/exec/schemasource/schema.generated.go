@@ -7919,10 +7919,34 @@ type TotalCompensation {
   enrollments: [WorkerBenefitEnrollment!]!
 }
 
+type WorkerBenefitEnrollmentEdge {
+  node: WorkerBenefitEnrollment!
+  cursor: String!
+}
+
+"""
+A worker's benefit enrollments, a page at a time. totalCount is counted only when it is selected.
+"""
+type WorkerBenefitEnrollmentConnection {
+  edges: [WorkerBenefitEnrollmentEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
+}
+
 extend type Query {
   benefitPlans(activeOnly: Boolean, planYear: Int): [BenefitPlan!]!
   benefitPlan(id: ID!): BenefitPlan!
-  workerBenefitEnrollments(workerId: ID!, openOnly: Boolean): [WorkerBenefitEnrollment!]! @authorizes(resource: "benefit_plan")
+  "A worker's benefit enrollments, newest first, a page at a time."
+  workerBenefitEnrollments(
+    workerId: ID!
+    openOnly: Boolean
+    "How many to read, from 1 to 100; 20 when left out."
+    first: Int
+    "The endCursor of the page before this one."
+    after: String
+  ): WorkerBenefitEnrollmentConnection! @authorizes(resource: "benefit_plan")
   """
   Enrollments across the organisation, newest first, with the worker and the
   plan on each. It is what "who is on this plan" reads; a worker's own history
@@ -13482,6 +13506,202 @@ extend type Mutation {
   setMemorySavingMode(mode: AgentMemorySavingMode!): DeskMemorySettings!
 }
 `, BuiltIn: false},
+	{Name: "../schema/desk_transcript.graphqls", Input: `"""
+Where a Desk conversation began.
+"""
+enum DeskConversationOrigin {
+  Panel
+  Desk
+  Watchtower
+  Briefing
+  Import
+  Formula
+}
+
+"""
+A timeframe over a conversation's last message, in the organization's time
+zone. Last7Days is today and the six days before it, Last30Days and Last90Days
+likewise; Last12Months starts on today's date a year ago; Custom runs from the
+start of fromDate to the end of toDate.
+"""
+enum DeskTranscriptTimeframePreset {
+  Last7Days
+  Last30Days
+  Last90Days
+  Last12Months
+  AllTime
+  Custom
+}
+
+enum DeskTranscriptExportKind {
+  "Conversations matching a timeframe and, optionally, a person, an agent or where they began."
+  Filter
+  "Conversations a person picked from the list."
+  Selection
+}
+
+enum DeskTranscriptExportStatus {
+  Pending
+  Running
+  Succeeded
+  Failed
+  Expired
+}
+
+input DeskTranscriptTimeframeInput {
+  preset: DeskTranscriptTimeframePreset!
+  "The first day of a Custom timeframe, as YYYY-MM-DD."
+  fromDate: String
+  "The last day of a Custom timeframe, as YYYY-MM-DD."
+  toDate: String
+}
+
+input DeskConversationFilterInput {
+  "All time when absent."
+  timeframe: DeskTranscriptTimeframeInput
+  "Only this person's conversations."
+  userId: ID
+  "Only conversations with this agent."
+  agentId: ID
+  "Only conversations that began in one of these places."
+  origins: [DeskConversationOrigin!]
+}
+
+"""
+One person's Desk conversation as an administrator lists it: who, with which
+agent, what it is called and when. Never a message's text.
+"""
+type DeskConversation {
+  id: ID!
+  ownerName: String!
+  agentName: String!
+  title: String!
+  origin: DeskConversationOrigin!
+  archived: Boolean!
+  messageCount: Int!
+  startedAt: Timestamp!
+  lastMessageAt: Timestamp
+}
+
+type DeskConversationEdge {
+  node: DeskConversation!
+  cursor: String!
+}
+
+type DeskConversationConnection {
+  edges: [DeskConversationEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
+}
+
+"""
+A conversation opened read-only by someone who may read other people's: its
+summary and what was said, bounded as a run's transcript is.
+"""
+type DeskConversationTranscript {
+  conversation: DeskConversation!
+  transcript: AgentRunTranscript
+}
+
+"""
+How many conversations an export of these filters would hold, counted up to
+one past the limit.
+"""
+type DeskTranscriptExportPreview {
+  count: Int!
+  "False when more conversations match than the limit, so count is the limit plus one."
+  exact: Boolean!
+  limit: Int!
+  withinLimit: Boolean!
+}
+
+type DeskTranscriptTimeframe {
+  preset: DeskTranscriptTimeframePreset!
+  fromDate: String
+  toDate: String
+}
+
+"""
+What an export covers, kept in names and dates when it was asked for.
+"""
+type DeskTranscriptExportCoverage {
+  kind: DeskTranscriptExportKind!
+  timeframe: DeskTranscriptTimeframe
+  personName: String
+  agentName: String
+  origins: [DeskConversationOrigin!]!
+  selectedCount: Int!
+  "The people whose conversations the file holds, at most twenty, by name."
+  ownerNames: [String!]!
+  ownerCount: Int!
+}
+
+type DeskTranscriptExport {
+  id: ID!
+  requestedByName: String!
+  kind: DeskTranscriptExportKind!
+  coverage: DeskTranscriptExportCoverage!
+  status: DeskTranscriptExportStatus!
+  conversationCount: Int!
+  byteSize: Int!
+  artifactExpiresAt: Timestamp
+  errorMessage: String
+  startedAt: Timestamp
+  completedAt: Timestamp
+  "Whether the reader may download the file now: they asked for it and it has not expired."
+  downloadable: Boolean!
+  createdAt: Timestamp!
+}
+
+type DeskTranscriptExportEdge {
+  node: DeskTranscriptExport!
+  cursor: String!
+}
+
+type DeskTranscriptExportConnection {
+  edges: [DeskTranscriptExportEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
+}
+
+"""
+A link to an export's file, good for a minute.
+"""
+type DeskTranscriptDownload {
+  url: String!
+  fileName: String!
+  expiresAt: Timestamp!
+}
+
+"""
+Exactly one of filter and conversationIds.
+"""
+input RequestDeskTranscriptExportInput {
+  filter: DeskConversationFilterInput
+  "At most 200 conversations picked from the list."
+  conversationIds: [ID!]
+}
+
+extend type Query {
+  deskConversations(
+    input: DataTableConnectionInput!
+    filter: DeskConversationFilterInput
+  ): DeskConversationConnection!
+  deskTranscriptExportPreview(filter: DeskConversationFilterInput!): DeskTranscriptExportPreview!
+  deskTranscriptExports(input: DataTableConnectionInput!): DeskTranscriptExportConnection!
+}
+
+extend type Mutation {
+  "Opens another person's conversation read-only. Every opening is written to the audit log."
+  openDeskConversation(id: ID!): DeskConversationTranscript!
+  requestDeskTranscriptExport(input: RequestDeskTranscriptExportInput!): DeskTranscriptExport!
+  deskTranscriptExportDownload(id: ID!): DeskTranscriptDownload!
+}
+`, BuiltIn: false},
 	{Name: "../schema/detention.graphqls", Input: `enum DetentionPolicyStatus {
   Active
   Inactive
@@ -18030,11 +18250,33 @@ input UpdateSettlementControlInput {
   escrowInterestFrequencyMonths: Int!
 }
 
+type WorkerPayAssignmentEdge {
+  node: WorkerPayAssignment!
+  cursor: String!
+}
+
+"""
+A worker's pay profile assignments, a page at a time. totalCount is counted only when it is selected.
+"""
+type WorkerPayAssignmentConnection {
+  edges: [WorkerPayAssignmentEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
+}
+
 extend type Query {
   payProfiles(input: DataTableConnectionInput!): PayProfileConnection!
   payProfile(id: ID!): PayProfile
-  "Full assignment history for a worker, newest first."
-  workerPayAssignments(workerId: ID!): [WorkerPayAssignment!]!
+  "A worker's pay profile assignments, newest first, a page at a time."
+  workerPayAssignments(
+    workerId: ID!
+    "How many to read, from 1 to 100; 20 when left out."
+    first: Int
+    "The endCursor of the page before this one."
+    after: String
+  ): WorkerPayAssignmentConnection!
   "The assignment governing the worker's pay right now, if any."
   effectiveWorkerPayAssignment(workerId: ID!): WorkerPayAssignment
   "Open assignments on a profile — every driver currently paid under it."
@@ -27368,10 +27610,33 @@ input PTOAvailabilityInput {
   excludePtoId: ID
 }
 
+type WorkerPTOPolicyAssignmentEdge {
+  node: WorkerPTOPolicyAssignment!
+  cursor: String!
+}
+
+"""
+A worker's time off policy assignments, a page at a time. totalCount is counted only when it is selected.
+"""
+type WorkerPTOPolicyAssignmentConnection {
+  edges: [WorkerPTOPolicyAssignmentEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
+}
+
 extend type Query {
   ptoPolicies(input: PTOPoliciesInput!): PTOPolicyConnection!
   ptoPolicy(id: ID!): PTOPolicy!
-  workerPtoPolicyAssignments(workerId: ID!): [WorkerPTOPolicyAssignment!]! @authorizes(resource: "pto_policy")
+  "A worker's time off policy assignments, newest first, a page at a time."
+  workerPtoPolicyAssignments(
+    workerId: ID!
+    "How many to read, from 1 to 100; 20 when left out."
+    first: Int
+    "The endCursor of the page before this one."
+    after: String
+  ): WorkerPTOPolicyAssignmentConnection! @authorizes(resource: "pto_policy")
   workerPtoBalances(workerId: ID!): [WorkerPTOBalance!]!
   workerPtoLedger(input: WorkerPTOLedgerInput!): WorkerPTOLedgerConnection!
   workerPtoAvailability(input: PTOAvailabilityInput!): PTOAvailability!
@@ -29116,6 +29381,7 @@ extend type Query {
     limit: Int
   ): [ShiftTemplate!]!
   shiftTemplate(id: ID!): ShiftTemplate!
+  "A worker's shift patterns, newest first; at most 100."
   workerShiftAssignments(
     workerId: ID!
     "Only the pattern the worker is on today, leaving out past and future ones."
@@ -29571,11 +29837,34 @@ input ProfileChangeFilterInput {
   limit: Int
 }
 
+type WorkerPolicyAcknowledgementEdge {
+  node: WorkerPolicyAcknowledgement!
+  cursor: String!
+}
+
+"""
+A worker's policy signatures, a page at a time. totalCount is counted only when it is selected.
+"""
+type WorkerPolicyAcknowledgementConnection {
+  edges: [WorkerPolicyAcknowledgementEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
+}
+
 extend type Query {
   workerPolicies(activeOnly: Boolean, limit: Int): [WorkerPolicy!]!
   workerPolicy(id: ID!): WorkerPolicy!
   workerPolicyCompliance(id: ID!): PolicyCompliance!
-  workerPolicyAcknowledgements(workerId: ID!): [WorkerPolicyAcknowledgement!]!
+  "A worker's policy signatures, newest first, a page at a time."
+  workerPolicyAcknowledgements(
+    workerId: ID!
+    "How many to read, from 1 to 100; 20 when left out."
+    first: Int
+    "The endCursor of the page before this one."
+    after: String
+  ): WorkerPolicyAcknowledgementConnection!
   profileChangeRequests(filter: ProfileChangeFilterInput): [WorkerProfileChangeRequest!]!
 }
 
@@ -35765,6 +36054,8 @@ extend type Query {
   "One worker, with the profile, state, fleet, manager and license state it is asked for."
   worker(id: ID!): Worker
   workerPTOEntries(input: WorkerPTOEntriesInput!): WorkerPTOConnection!
+  "One time off request by id, with its worker, for a link to a request not on the loaded page."
+  workerPTO(id: ID!): WorkerPTO!
   upcomingWorkerPTO(input: UpcomingWorkerPTOInput!): WorkerPTOConnection!
   workerPTOChartData(input: WorkerPTOChartInput!): [PTOChartDataPoint!]!
 }
@@ -35987,6 +36278,7 @@ extend type Query {
   workerChecklistTemplates(input: WorkerChecklistTemplatesInput!): WorkerChecklistTemplateConnection!
   workerChecklistTemplate(id: ID!): WorkerChecklistTemplate!
   activeWorkerChecklistTemplates: [WorkerChecklistTemplate!]!
+  "A worker's checklists, open ones first, then newest started; at most 100."
   workerChecklists(
     workerId: ID!
     "Also the completed and cancelled checklists, not only the open ones."
@@ -36145,6 +36437,8 @@ type WorkerCredentialSummary {
   expiringCount: Int!
   expiredCount: Int!
   missingCount: Int!
+  "How many archived credentials the worker has: the history beyond the current ones, counted whole."
+  archivedCount: Int!
   items: [WorkerCredentialSummaryItem!]!
 }
 
@@ -36265,7 +36559,7 @@ extend type Query {
     credentialTypeCode: String
     "Only credential types the organization marks required."
     requiredOnly: Boolean
-    "At most this many credentials, from 1 to 100. Every credential of a named worker when left out; 20 across the organization."
+    "At most this many credentials, from 1 to 100. The first 100 of the workers named when left out; 20 across the organization."
     limit: Int
     "Skip this many credentials of the same list, for the page after them."
     offset: Int
@@ -37171,11 +37465,32 @@ input AmendWorkerEmploymentEventInput {
   version: Int
 }
 
+type WorkerEmploymentEventEdge {
+  node: WorkerEmploymentEvent!
+  cursor: String!
+}
+
+"""
+A worker's employment events, a page at a time. totalCount is counted only when it is selected.
+"""
+type WorkerEmploymentEventConnection {
+  edges: [WorkerEmploymentEventEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
+}
+
 extend type Query {
+  "A worker's employment timeline, newest first, a page at a time."
   workerEmploymentEvents(
     workerId: ID!
     kinds: [WorkerEmploymentEventKind!]
-  ): [WorkerEmploymentEvent!]!
+    "How many to read, from 1 to 100; 20 when left out."
+    first: Int
+    "The endCursor of the page before this one."
+    after: String
+  ): WorkerEmploymentEventConnection!
   workerEmploymentEvent(id: ID!): WorkerEmploymentEvent!
   "Needs worker_employment_event read."
   workerEmploymentEventOptions(workerId: ID!): WorkerEmploymentEventOptions!
@@ -37433,6 +37748,22 @@ input SaveOSHASummaryInput {
   notes: String
 }
 
+type WorkerInjuryEdge {
+  node: WorkerInjury!
+  cursor: String!
+}
+
+"""
+Injury and illness cases, a page at a time. totalCount is counted only when it is selected.
+"""
+type WorkerInjuryConnection {
+  edges: [WorkerInjuryEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
+}
+
 extend type Query {
   """
   Injury and illness cases, newest first: one worker's, or the
@@ -37447,9 +37778,11 @@ extend type Query {
     recordableOnly: Boolean
     "Only the cases still open."
     openOnly: Boolean
-    "At most this many cases, from 1 to 100. Every case of a named worker when left out; 20 across the organization."
-    limit: Int
-  ): [WorkerInjury!]!
+    "How many to read, from 1 to 100; 20 when left out."
+    first: Int
+    "The endCursor of the page before this one."
+    after: String
+  ): WorkerInjuryConnection!
   workerInjury(id: ID!): WorkerInjury!
   """
   One year of the OSHA 300 log with its 300A totals. Leave the year empty for
@@ -37874,7 +38207,7 @@ type WorkerConcern {
   occurredAt: Timestamp
   "When it falls due or fell due. Null when the concern has no date."
   dueAt: Timestamp
-  "Whole UTC days from asOf to dueAt; negative once it has passed. Null when dueAt is null."
+  "Whole days in the organization's calendar from asOf to dueAt; negative once it has passed. Null when dueAt is null."
   daysUntil: Int
   "Whether this concern on its own keeps the worker off assignments today or at its date, by the same rules as clearance."
   stopsAssignment: Boolean!
@@ -37943,7 +38276,7 @@ type WorkerClearanceItem {
   "The credential type's, course's or query's name."
   name: String!
   dueAt: Timestamp!
-  "Whole UTC days from asOf to dueAt; negative once lapsed."
+  "Whole days in the organization's calendar from asOf to dueAt; negative once lapsed."
   daysUntil: Int!
   effect: WorkerClearanceEffect!
   "Null when effect is Due."
@@ -37981,7 +38314,7 @@ The drug and alcohol standing with the one figure the page draws beside it.
 """
 type WorkerOverviewDrugAlcohol {
   standing: DrugAlcoholStanding!
-  "Whole UTC days from asOf to standing.nextClearinghouseQueryDue; negative when overdue. Null when no query is due."
+  "Whole days in the organization's calendar from asOf to standing.nextClearinghouseQueryDue; negative when overdue. Null when no query is due."
   nextQueryDaysUntil: Int
 }
 
@@ -37995,6 +38328,8 @@ type WorkerOverviewEmployment {
   hiredAt: Timestamp
   "Open checklists. Null for a reader without worker_checklist read."
   openChecklistCount: Int
+  "Completed and cancelled checklists, counted whole. Null for a reader without worker_checklist read."
+  closedChecklistCount: Int
 }
 
 """
@@ -38325,6 +38660,14 @@ type SafetyScorecard {
   score: Int!
   rating: SafetyRating!
   activePoints: Int!
+  """
+  The events whose points still count at asOf, newest first: what makes up
+  activePoints and when each part rolls off. Read by that condition, not from a
+  page of the events list; bounded by the points window (a point rolls off at
+  its pointsExpireAt, which defaults to the occurrence plus the policy's months),
+  so only points set never to expire keep an event here for good.
+  """
+  activePointEvents: [WorkerSafetyEvent!]!
   pointsWatchThreshold: Int!
   pointsAtRiskThreshold: Int!
   accidents: Int!
@@ -38488,6 +38831,22 @@ input WorkerRecognitionInput {
   visibleToWorker: Boolean
 }
 
+type WorkerDisciplinaryActionEdge {
+  node: WorkerDisciplinaryAction!
+  cursor: String!
+}
+
+"""
+A worker's disciplinary actions, a page at a time. totalCount is counted only when it is selected.
+"""
+type WorkerDisciplinaryActionConnection {
+  edges: [WorkerDisciplinaryActionEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
+}
+
 extend type Query {
   """
   Safety events, newest first: one worker's record, or every worker's across
@@ -38498,13 +38857,23 @@ extend type Query {
     workerId: ID
     "Only the events still open or under review."
     openOnly: Boolean
-    "At most this many events, from 1 to 100. Every event of a named worker when left out; 20 across the organization."
+    "At most this many events, from 1 to 100. The newest 100 of a named worker when left out; 20 across the organization."
     limit: Int
   ): [WorkerSafetyEvent!]!
   workerSafetyEvent(id: ID!): WorkerSafetyEvent!
   workerSafetyScorecard(workerId: ID!): SafetyScorecard!
-  workerDisciplinaryActions(workerId: ID!): [WorkerDisciplinaryAction!]!
+  "A worker's disciplinary actions, newest first, a page at a time."
+  workerDisciplinaryActions(
+    workerId: ID!
+    "How many to read, from 1 to 100; 20 when left out."
+    first: Int
+    "The endCursor of the page before this one."
+    after: String
+  ): WorkerDisciplinaryActionConnection!
+  "One disciplinary action by id, with its safety event and who issued it, for a link to an action not on the loaded page."
+  workerDisciplinaryAction(id: ID!): WorkerDisciplinaryAction!
   workerDisciplinaryLadder(workerId: ID!): DisciplinaryLadder! @authorizes(resource: "worker_disciplinary_action")
+  "A worker's recognitions, newest first; at most 100."
   workerRecognitions(workerId: ID!): [WorkerRecognition!]!
   """
   Suggested points for a kind, severity and outcome, so the form starts from
@@ -38792,6 +39161,22 @@ input AttachWorkerTrainingDocumentInput {
   documentId: ID!
 }
 
+type WorkerTrainingRecordEdge {
+  node: WorkerTrainingRecord!
+  cursor: String!
+}
+
+"""
+A worker's training assignments, a page at a time. totalCount is counted only when it is selected.
+"""
+type WorkerTrainingRecordConnection {
+  edges: [WorkerTrainingRecordEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
+}
+
 extend type Query {
   trainingCourses(input: TrainingCoursesInput!): TrainingCourseConnection!
   trainingCourse(id: ID!): TrainingCourse!
@@ -38800,7 +39185,11 @@ extend type Query {
     workerId: ID!
     "Also the completed, waived, cancelled and expired assignments, not only the open ones."
     includeClosed: Boolean = true
-  ): [WorkerTrainingRecord!]!
+    "How many to read, from 1 to 100; 20 when left out."
+    first: Int
+    "The endCursor of the page before this one."
+    after: String
+  ): WorkerTrainingRecordConnection!
   workerTrainingRecord(id: ID!): WorkerTrainingRecord!
   workerTrainingSummary(workerId: ID!): WorkerTrainingSummary!
   """

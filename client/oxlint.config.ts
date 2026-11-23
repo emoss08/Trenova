@@ -3,7 +3,7 @@ import { fileURLToPath } from "node:url";
 import { defineConfig } from "oxlint";
 
 // better-tailwindcss resolves a relative entryPoint against the linter process cwd, which
-// differs between `pnpm lint` (apps/web), the repo root and the editor language server.
+// differs between `bun run lint` (apps/web), the repo root and the editor language server.
 // An absolute path anchored to this file sorts classes by the real stylesheet everywhere.
 export default defineConfig({
   plugins: ["typescript", "react", "eslint", "oxc", "unicorn"],

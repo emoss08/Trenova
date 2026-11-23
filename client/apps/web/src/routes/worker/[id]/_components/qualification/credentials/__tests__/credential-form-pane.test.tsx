@@ -2,7 +2,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { getTodayDate } from "@trenova/shared/lib/date";
 import { suggestExpiryUnix } from "@trenova/shared/lib/credential";
-import { useController, type Control } from "react-hook-form";
+import { useController, type Control, type RegisterOptions } from "react-hook-form";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { WorkPaneHost, WorkPaneProvider } from "@/components/work-pane";
 import { CredentialFormPane } from "../credential-form-pane";
@@ -70,12 +70,14 @@ vi.mock("@/components/fields/date-field/date-field", () => ({
     control,
     name,
     label,
+    rules,
   }: {
     control: Control;
     name: string;
     label: string;
+    rules?: RegisterOptions;
   }) => {
-    const { field } = useController({ control, name });
+    const { field } = useController({ control, name, rules });
     return (
       <input
         aria-label={label}
@@ -210,6 +212,24 @@ describe("CredentialFormPane", () => {
     await waitFor(() => expect(onOpenChange).toHaveBeenCalledWith(false));
   });
 
+  it("moves the suggested expiry with the issue date until the expiry is set by hand", async () => {
+    selectedTypeIs("wct_fork");
+    renderPane({ credentialTypeId: "wct_fork" });
+    const today = getTodayDate();
+
+    const issued = await screen.findByLabelText("Issued");
+    const expires = screen.getByLabelText("Expires");
+    await waitFor(() => expect(expires).toHaveValue(suggestExpiryUnix(today, 36)));
+
+    const earlier = today - 400 * 86_400;
+    fireEvent.change(issued, { target: { value: String(earlier) } });
+    await waitFor(() => expect(expires).toHaveValue(suggestExpiryUnix(earlier, 36)));
+
+    fireEvent.change(expires, { target: { value: "1900000000" } });
+    fireEvent.change(issued, { target: { value: String(today) } });
+    expect(expires).toHaveValue(1_900_000_000);
+  });
+
   it("renews with the type locked and the renew flag set", async () => {
     selectedTypeIs("wct_med");
     createWorkerCredential.mockResolvedValue({ id: "wcred_new" });
@@ -229,7 +249,7 @@ describe("CredentialFormPane", () => {
     expect(select).toBeDisabled();
     expect(inputById("issuingAuthority")).toHaveValue("Dr. Who");
 
-    fireEvent.click(screen.getByRole("button", { name: "Save renewal" }));
+    fireEvent.click(screen.getByRole("button", { name: "Renew credential" }));
     await waitFor(() => expect(createWorkerCredential).toHaveBeenCalledTimes(1));
     expect(createWorkerCredential.mock.calls[0][0]).toMatchObject({
       credentialTypeId: "wct_med",

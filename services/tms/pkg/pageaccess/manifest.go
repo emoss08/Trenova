@@ -5,7 +5,7 @@
 // declares with @requiresRead.
 //
 // manifest_gen.json is generated in two steps: the web app's route tree and
-// module graph give screens_gen.json (`pnpm --filter @trenova/web
+// module graph give screens_gen.json (`bun run --filter @trenova/web
 // access:generate`), and `go run ./internal/api/graphql/gqlext/refgen` reads
 // it with the operations, the schema and the permission registry. See
 // docs/engineering/reference-views.md. It is embedded, so a server always

@@ -8,6 +8,8 @@ package workertrainingresolver
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/identityloaders"
+
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/loaders/loadercore"
 	"github.com/emoss08/trenova/internal/api/graphql/loaders/workforceloaders"
@@ -25,7 +27,6 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
-	"github.com/emoss08/trenova/shared/timeutils"
 )
 
 func (r *MutationResolver) CreateTrainingCourse(ctx context.Context, input gqlmodel.TrainingCourseInput) (*workertraining.TrainingCourse, error) {
@@ -329,7 +330,7 @@ func (r *QueryResolver) ActiveTrainingCourses(ctx context.Context) ([]*workertra
 	return r.WorkerTrainingService.ActiveCourses(ctx, resolvercore.TenantInfo(authCtx))
 }
 
-func (r *QueryResolver) WorkerTrainingRecords(ctx context.Context, workerID string, includeClosed *bool) ([]*workertraining.WorkerTrainingRecord, error) {
+func (r *QueryResolver) WorkerTrainingRecords(ctx context.Context, workerID string, includeClosed *bool, first *int, after *string) (*gqlmodel.WorkerTrainingRecordConnection, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceWorkerTraining, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -343,7 +344,36 @@ func (r *QueryResolver) WorkerTrainingRecords(ctx context.Context, workerID stri
 	if includeClosed != nil {
 		closed = *includeClosed
 	}
-	return r.WorkerTrainingService.ListForWorker(ctx, resolvercore.TenantInfo(authCtx), wid, closed)
+	cursor, err := gqlconnection.CursorFromArgs(ctx, first, after)
+	if err != nil {
+		return nil, err
+	}
+	result, err := r.WorkerTrainingService.PageForWorker(ctx, &workertrainingports.ListWorkerTrainingRequest{
+		TenantInfo:    resolvercore.TenantInfo(authCtx),
+		WorkerID:      wid,
+		IncludeClosed: closed,
+		Cursor:        cursor,
+	})
+	if err != nil {
+		return nil, err
+	}
+	page, err := gqlconnection.EntityCursorConnection(
+		result,
+		func(node *workertraining.WorkerTrainingRecord, edgeCursor string) *gqlmodel.WorkerTrainingRecordEdge {
+			return &gqlmodel.WorkerTrainingRecordEdge{Node: node, Cursor: edgeCursor}
+		},
+		func(edge *gqlmodel.WorkerTrainingRecordEdge) string { return edge.Cursor },
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return &gqlmodel.WorkerTrainingRecordConnection{
+		Edges:           page.Edges,
+		PageInfo:        page.PageInfo,
+		TotalCount:      page.TotalCount,
+		TotalCountExact: page.TotalCountExact,
+	}, nil
 }
 
 func (r *QueryResolver) WorkerTrainingRecord(ctx context.Context, id string) (*workertraining.WorkerTrainingRecord, error) {
@@ -408,13 +438,13 @@ func (r *WorkerTrainingRecordResolver) RecordedByID(ctx context.Context, obj *wo
 }
 
 func (r *WorkerTrainingRecordResolver) Health(ctx context.Context, obj *workertraining.WorkerTrainingRecord) (worker.TrainingHealth, error) {
-	return obj.Health(timeutils.NowUnix()), nil
+	return obj.Health(identityloaders.OrganizationToday(ctx, obj.OrganizationID)), nil
 }
 
 func (r *WorkerTrainingRecordResolver) DaysUntilDue(ctx context.Context, obj *workertraining.WorkerTrainingRecord) (*int, error) {
-	return gqlscalar.IntPtr(obj.DaysUntilDue(timeutils.NowUnix())), nil
+	return gqlscalar.IntPtr(obj.DaysUntilDue(identityloaders.OrganizationToday(ctx, obj.OrganizationID))), nil
 }
 
 func (r *WorkerTrainingRecordResolver) DaysUntilExpiry(ctx context.Context, obj *workertraining.WorkerTrainingRecord) (*int, error) {
-	return gqlscalar.IntPtr(obj.DaysUntilExpiry(timeutils.NowUnix())), nil
+	return gqlscalar.IntPtr(obj.DaysUntilExpiry(identityloaders.OrganizationToday(ctx, obj.OrganizationID))), nil
 }

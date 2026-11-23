@@ -161,3 +161,44 @@ func TestBuildSafetyScorecard(t *testing.T) {
 		assert.Equal(t, worker.SafetyRatingWatch, card.Rating)
 	})
 }
+
+func TestBuildSafetyScorecard_ListsTheEventsWhosePointsStillCount(t *testing.T) {
+	t.Parallel()
+	now := int64(1_800_000_000)
+	live := &workersafety.WorkerSafetyEvent{
+		ID: pulid.MustNew("wse_"), Kind: workersafety.SafetyEventCitation,
+		Points: 3, PointsExpireAt: new(now + 86_400), OccurredAt: now - 86_400,
+		Status: workersafety.SafetyEventStatusClosed,
+	}
+	rolledOff := &workersafety.WorkerSafetyEvent{
+		ID: pulid.MustNew("wse_"), Kind: workersafety.SafetyEventCitation,
+		Points: 5, PointsExpireAt: new(now - 1), OccurredAt: now - 400*86_400,
+		Status: workersafety.SafetyEventStatusClosed,
+	}
+
+	card := safetyscorecard.BuildSafetyScorecard(
+		pulid.MustNew("wrk_"),
+		[]*workersafety.WorkerSafetyEvent{live, rolledOff},
+		nil,
+		nil,
+		now,
+	)
+
+	assert.Equal(t, int32(3), card.ActivePoints)
+	require.Len(t, card.ActivePointEvents, 1)
+	assert.Equal(t, live.ID, card.ActivePointEvents[0].ID)
+}
+
+func TestWithLastEvent_TakesTheLatestCountingEventFromOutsideTheWindow(t *testing.T) {
+	t.Parallel()
+	now := int64(1_800_000_000)
+	card := safetyscorecard.BuildSafetyScorecard(pulid.MustNew("wrk_"), nil, nil, nil, now)
+	last := now - 500*86_400
+
+	card.WithLastEvent(&last, now)
+
+	require.NotNil(t, card.LastEventAt)
+	assert.Equal(t, last, *card.LastEventAt)
+	require.NotNil(t, card.DaysSinceLastEvent)
+	assert.Equal(t, int64(500), *card.DaysSinceLastEvent)
+}

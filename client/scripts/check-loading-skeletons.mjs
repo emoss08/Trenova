@@ -26,7 +26,7 @@
  * A genuine exception takes `loading-skeleton-ignore: <reason>` in a comment on
  * the line or the line above.
  *
- * Usage: node scripts/check-loading-skeletons.mjs [--format=github]
+ * Usage: bun scripts/check-loading-skeletons.mjs [--format=github]
  */
 
 import { auditLoadingSkeletons } from "./loading-skeletons.mjs";

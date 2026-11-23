@@ -32,6 +32,7 @@ import {
   CONVERSATION_ROWS,
   halfBlocks,
   readStamp,
+  replyFootPlace,
   wordPieces,
   writtenSegments,
 } from "./board-card";
@@ -45,7 +46,6 @@ import { BlockBody } from "./desk-board-body";
 /** How far below the viewport a reply's board starts being read, so it is ready as it scrolls in. */
 const READ_AHEAD = "600px 0px";
 
-/** The exhibits under a reply's words: two half blocks side by side, stacked when the reply is narrow. */
 /**
  * What pulls a block with no title tab up to the block above it. The rows of
  * the desk stand a tab's height apart, which is room an exhibit's tab fills
@@ -53,21 +53,30 @@ const READ_AHEAD = "600px 0px";
  */
 const NO_TAB = "-mt-7 first:mt-0";
 
+/**
+ * The exhibits under a reply's words: two half blocks side by side, each as tall
+ * as its own content and aligned at the top, stacked when the reply is too
+ * narrow for both to take a record row's narrow anatomy whole. That row needs
+ * about 300px of exhibit ("S26110009560805" beside "252d 11h 5m behind" on one
+ * line), so two sit side by side from 38rem: (608 - 12) / 2 = 298px each.
+ */
 function ReplyDesk({ children }: { children: ReactNode }) {
   return (
     <div className="@container mt-11">
-      <div className="grid grid-cols-1 gap-x-3 gap-y-11 @min-[34rem]:grid-cols-2">{children}</div>
+      <div className="grid grid-cols-1 items-start gap-x-3 gap-y-11 @min-[38rem]:grid-cols-2">
+        {children}
+      </div>
     </div>
   );
 }
 
 /**
  * Where a block of words or buttons sits on the reply's desk, as the drawn
- * board sets it: a note in its column at the top, words and buttons with no
- * tab pulled up to the block above.
+ * board sets it: a note in its column, words and buttons with no tab pulled up
+ * to the block above.
  */
 function wordsPlace(type: string, span: string | undefined, half: boolean): string {
-  if (type === "note") return cn(span, "self-start");
+  if (type === "note") return cn(span);
   if (type === "actions") return cn(!half && NO_TAB);
   return cn(span, !half && NO_TAB);
 }
@@ -76,8 +85,8 @@ function wordsPlace(type: string, span: string | undefined, half: boolean): stri
  * A reply's board while it is read: the words as written, each reading a blank
  * where its value will stand, and every block in the shape and place it will
  * be drawn, with each list cut where the conversation cuts it, the count of
- * what it holds beyond, and the foot under the last exhibit where the surface
- * opens boards. Under it, the row the reply's actions will take says the board
+ * what it holds beyond, and the foot where the drawn board puts it
+ * (`replyFootPlace`) where the surface opens boards. Under it, the row the reply's actions will take says the board
  * is being read. With no layout in view, the reply's own words stand in.
  */
 function ReplyBoardWaiting({
@@ -92,12 +101,12 @@ function ReplyBoardWaiting({
   const halves = halfBlocks(layout.blocks);
   const numerals = exhibitNumerals(layout.blocks);
   const last = layout.blocks.length - 1;
-  const lastIsExhibit = last >= 0 && isBoardExhibit(layout.blocks[last].type);
+  const footPlace = replyFootPlace(layout.blocks, halves, isBoardExhibit);
   return (
     <div aria-busy="true" aria-label={t("Reading the board…")}>
       {layout.verdict !== "" ? (
         <div className="dk-prose">
-          <p>
+          <p className="text-pretty">
             <BoardWords segments={writtenSegments(layout.verdict)} board={null} />
           </p>
         </div>
@@ -119,7 +128,7 @@ function ReplyBoardWaiting({
                 />
               );
             }
-            const foot = index === last && opens;
+            const foot = index === last && opens && footPlace === "inside";
             const rowsFoot = foot && block.type === "records";
             return (
               <ExhibitSketch
@@ -146,7 +155,7 @@ function ReplyBoardWaiting({
           })}
         </ReplyDesk>
       )}
-      {!lastIsExhibit && opens && <ReplyFoot onOpen={null} className="mt-4" />}
+      {footPlace === "under" && opens && <ReplyFoot onOpen={null} className="mt-4" />}
       <BoardWaitRow />
     </div>
   );
@@ -307,13 +316,13 @@ export function ReplyBoardView({ card, arrives }: { card: DeskBoardCard; arrives
     ? boardArrival(wordPieces(card.verdict).phrases, card.blocks.length)
     : null;
   const last = card.blocks.length - 1;
-  const lastIsExhibit = last >= 0 && isBoardExhibit(card.blocks[last].type);
+  const footPlace = replyFootPlace(card.blocks, halves, isBoardExhibit);
 
   return (
     <article aria-label={card.title}>
       {card.verdict.length > 0 && (
         <div className="dk-prose">
-          <p>
+          <p className="text-pretty">
             <BoardWords
               segments={card.verdict}
               board={card}
@@ -361,12 +370,12 @@ export function ReplyBoardView({ card, arrives }: { card: DeskBoardCard; arrives
                   half={halves[index]}
                   open={open}
                   opensInPlace={opensInPlace}
-                  className={cn(span, "self-start", motion.className)}
+                  className={cn(span, motion.className)}
                   style={motion.style}
                 />
               );
             }
-            const foot = index === last && openBoard !== null;
+            const foot = index === last && openBoard !== null && footPlace === "inside";
             const rowsFoot = foot && block.type === "records" && block.state === "ready";
             return (
               <Exhibit
@@ -404,7 +413,7 @@ export function ReplyBoardView({ card, arrives }: { card: DeskBoardCard; arrives
           })}
         </ReplyDesk>
       )}
-      {!lastIsExhibit && openBoard && <ReplyFoot onOpen={openBoard} className="mt-4" />}
+      {footPlace === "under" && openBoard && <ReplyFoot onOpen={openBoard} className="mt-4" />}
     </article>
   );
 }

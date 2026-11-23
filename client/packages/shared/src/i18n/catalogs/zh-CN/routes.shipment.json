@@ -852,6 +852,7 @@
   "Waive this permit requirement": "豁免此许可证要求",
   "Waived: {0}": "已豁免：{0}",
   "Waiving does not make the movement legal. It records that your organization accepts the compliance risk and releases the dispatch block. Your reason is the audit trail if the load is stopped.": "豁免并不会使该运输行为合法。它仅记录贵组织接受此合规风险，并解除调度阻止。若货物遭拦查，您填写的原因即为审计依据。",
+  "Waiving...": "豁免中…",
   "Was {0}, now {1}": "原为 {0}，现为 {1}",
   "We are extracting text, classifying the document, and assembling the shipment draft.": "我们正在提取文本、分类文档并组建运单草稿。",
   "We are queuing OCR and intelligence work for this rate confirmation.": "我们正在为此运价确认书排入 OCR 与智能分析作业。",

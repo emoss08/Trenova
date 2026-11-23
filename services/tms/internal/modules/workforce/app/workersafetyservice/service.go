@@ -37,7 +37,6 @@ const (
 	realtimeSafetyEvent  = "worker_safety_event"
 	realtimeDiscipline   = "worker_disciplinary_action"
 	realtimeRecognition  = "worker_recognition"
-	workerResourceType   = "worker"
 	safetyResourceType   = "worker_safety_event"
 	eventRecognition     = "dash.recognition"
 	eventDisciplinary    = "dash.disciplinary_issued"
@@ -219,6 +218,7 @@ func (s *Service) Scorecard(
 	actions, err := s.repo.ListActions(ctx, &workersafetyports.ListWorkerDisciplinaryActionsRequest{
 		TenantInfo: tenantInfo,
 		WorkerID:   workerID,
+		ActiveOnly: true,
 	})
 	if err != nil {
 		return nil, err

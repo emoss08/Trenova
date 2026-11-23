@@ -46,19 +46,19 @@ From a development database seeded with `development` seeds (the agents
 ./build/trenova-cli api run
 ./build/trenova-cli worker run
 # client
-pnpm --filter @trenova/web dev        # http://localhost:5173
+bun run --filter @trenova/web dev     # http://localhost:5173
 ```
 
 ## 3. The tests
 
 The runner is not in the web app's dependencies yet; add it once with
-`pnpm add -D @playwright/test --filter @trenova/web`, which also updates the lockfile.
+`bun add -d @playwright/test` from `client/apps/web`, which also updates the lockfile.
 
 ```sh
 cd client/apps/web
-E2E_CHROMIUM_PATH=/opt/pw-browsers/chromium pnpm test:e2e
-pnpm test:e2e desk-shell              # one spec
-pnpm test:e2e --headed --debug        # step through
+E2E_CHROMIUM_PATH=/opt/pw-browsers/chromium bun run test:e2e
+bun run test:e2e desk-shell           # one spec
+bun run test:e2e --headed --debug     # step through
 ```
 
 | Variable | Default | |
@@ -70,7 +70,7 @@ pnpm test:e2e --headed --debug        # step through
 | `E2E_COMMIT` | | `1` lets approvals go through. By default each approval is undone inside its undo window, so the seeded records stay as they were and the tests can run again. |
 
 Reports land in `e2e/.report`, traces of failures in `e2e/.results`
-(`pnpm exec playwright show-trace <trace.zip>`).
+(`bunx --bun playwright show-trace <trace.zip>`).
 
 ## When a test fails
 

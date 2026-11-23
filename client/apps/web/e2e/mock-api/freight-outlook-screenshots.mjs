@@ -1,8 +1,8 @@
 // Screenshots of the freight outlook against the mock API.
 //
-//   node e2e/mock-api/server.mjs
-//   pnpm --filter @trenova/web dev
-//   node e2e/mock-api/freight-outlook-screenshots.mjs [outDir] [only,names]
+//   bun e2e/mock-api/server.mjs
+//   bun run --filter @trenova/web dev
+//   bun e2e/mock-api/freight-outlook-screenshots.mjs [outDir] [only,names]
 
 import { mkdir } from "node:fs/promises";
 import { resolve } from "node:path";

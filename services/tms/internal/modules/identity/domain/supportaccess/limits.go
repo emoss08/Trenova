@@ -21,6 +21,7 @@ const (
 	LimitPaymentDestinations
 	LimitExport
 	LimitOutbound
+	LimitDeskConversations
 )
 
 var limitLabels = map[Limit]string{ //nolint:gosec // customer-facing sentences that name credentials, holding none
@@ -40,6 +41,7 @@ var limitLabels = map[Limit]string{ //nolint:gosec // customer-facing sentences 
 	LimitPaymentDestinations: "Change where money is sent: remittance instructions, remit-to addresses, the factor an invoice or customer pays, or your company address printed on invoices",
 	LimitExport:              "Export data in bulk",
 	LimitOutbound:            "Send email, share links or scheduled reports to anyone outside your organization, or change what your customers read on an invoice or in an email",
+	LimitDeskConversations:   "Read the Desk conversations of people in your organization",
 }
 
 func (l Limit) Label() string {

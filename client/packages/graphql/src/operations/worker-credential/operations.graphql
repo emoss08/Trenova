@@ -92,8 +92,12 @@ query WorkerCredentialTypeTable(
   }
 }
 
-query WorkerCredentials($workerId: ID!, $includeArchived: Boolean) {
-  workerCredentials(workerIds: [$workerId], includeArchived: $includeArchived) {
+query WorkerCredentials($workerId: ID!, $includeArchived: Boolean, $credentialTypeCode: String) {
+  workerCredentials(
+    workerIds: [$workerId]
+    includeArchived: $includeArchived
+    credentialTypeCode: $credentialTypeCode
+  ) {
     ...WorkerCredentialFields
   }
 }
@@ -107,6 +111,7 @@ query WorkerCredentialSummary($workerId: ID!) @requiresRead(kind: "worker_creden
     expiringCount
     expiredCount
     missingCount
+    archivedCount
     items {
       health
       daysUntilExpiry

@@ -1,40 +1,14 @@
 import { ptoTypeChoices } from "@/lib/choices";
-import {
-  PTO_BALANCE_SUMMARY_KEY,
-  WORKER_PTO_ASSIGNMENTS_KEY,
-  WORKER_PTO_BALANCES_KEY,
-  WORKER_PTO_LEDGER_KEY,
-  type WorkerPTOBalanceView,
-} from "@/lib/graphql/pto-policy";
-import { worker } from "@/lib/queries/worker";
-import { useQueryClient } from "@tanstack/react-query";
+import type { WorkerPTOBalanceView } from "@/lib/graphql/pto-policy";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatUnixMonthDay } from "@trenova/shared/lib/date";
 import { formatPtoDayTotal } from "@trenova/shared/lib/pto";
 import { cn } from "@trenova/shared/lib/utils";
-import { useCallback, useEffect, useState, type CSSProperties } from "react";
+import { useEffect, useState, type CSSProperties } from "react";
 
 export function ptoTypeLabel(ptoType: string): string {
   return ptoTypeChoices.find((choice) => choice.value === ptoType)?.label ?? ptoType;
-}
-
-/**
- * Everything one worker's time off figures are read from: the balances and ledger, the policy
- * assignments, the request history, the roster's balance summary and the page's overview strip.
- */
-export function useWorkerPtoInvalidation(workerId: string) {
-  const queryClient = useQueryClient();
-  return useCallback(async () => {
-    await Promise.all([
-      queryClient.invalidateQueries({ queryKey: [WORKER_PTO_BALANCES_KEY, workerId] }),
-      queryClient.invalidateQueries({ queryKey: [WORKER_PTO_LEDGER_KEY, workerId] }),
-      queryClient.invalidateQueries({ queryKey: [WORKER_PTO_ASSIGNMENTS_KEY, workerId] }),
-      queryClient.invalidateQueries({ queryKey: [PTO_BALANCE_SUMMARY_KEY] }),
-      queryClient.invalidateQueries({ queryKey: worker.ptoHistory(workerId).queryKey }),
-      queryClient.invalidateQueries({ queryKey: worker.overview(workerId).queryKey }),
-    ]);
-  }, [queryClient, workerId]);
 }
 
 /** The most days a cap bar draws one tick per day for; a longer cap would be a solid comb. */

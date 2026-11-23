@@ -1,5 +1,10 @@
 import type { TranslateFn } from "@trenova/shared/i18n/runtime";
-import { formatUnixDateMedium } from "@trenova/shared/lib/date";
+import {
+  daysUntil,
+  formatRange,
+  formatUnixDateMedium,
+  toUserWallClock,
+} from "@trenova/shared/lib/date";
 import {
   buildEmploymentCycles,
   CYCLE_STEPS,
@@ -9,8 +14,6 @@ import {
   type CycleStage,
   type EmploymentCycle,
 } from "../checklists/checklist-cycles";
-
-const DAY = 86_400;
 
 export type LifecycleChecklist = CycleChecklist & { completedAt?: number | null };
 
@@ -22,12 +25,16 @@ export type LifecycleStop = {
   meta: string;
 };
 
-/** Whole months from one date to another, counting a month only once its day has come round. */
-export function monthsBetween(from: number, to: number): number {
-  const a = new Date(from * 1000);
-  const b = new Date(to * 1000);
-  let months = (b.getUTCFullYear() - a.getUTCFullYear()) * 12 + (b.getUTCMonth() - a.getUTCMonth());
-  if (b.getUTCDate() < a.getUTCDate()) months -= 1;
+/**
+ * Whole months from one date to another, counting a month only once its day has come round, in
+ * the reader's zone (where a hire date entered as a day is that day's local midnight).
+ */
+export function monthsBetween(from: number, to: number, timezone?: string): number {
+  const a = toUserWallClock(from, timezone);
+  const b = toUserWallClock(to, timezone);
+  if (!a || !b) return 0;
+  let months = (b.getFullYear() - a.getFullYear()) * 12 + (b.getMonth() - a.getMonth());
+  if (b.getDate() < a.getDate()) months -= 1;
   return Math.max(0, months);
 }
 
@@ -46,11 +53,10 @@ export function describeTenure(months: number, t: TranslateFn): string {
 }
 
 function span(from: number, to: number, t: TranslateFn): string {
-  const days = Math.max(0, Math.round((to - from) / DAY));
+  const days = Math.max(0, daysUntil(to, { now: from }));
   return t(
-    "{0} to {1} · {2, plural, one {# day} other {# days}}",
-    formatUnixDateMedium(from),
-    formatUnixDateMedium(to),
+    "{0} · {1, plural, one {# day} other {# days}}",
+    formatRange(from, to, { year: "always", join: "words" }),
     days,
   );
 }
@@ -152,7 +158,7 @@ export function buildLifecycle(
       return since;
     }
     if (activeFrom && leftAt) {
-      return t("{0} to {1}", formatUnixDateMedium(activeFrom), formatUnixDateMedium(leftAt));
+      return formatRange(activeFrom, leftAt, { year: "always", join: "words" });
     }
     return leftAt ? t("Ended {0}", formatUnixDateMedium(leftAt)) : t("Ended");
   };

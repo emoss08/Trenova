@@ -4,7 +4,6 @@ import { dayMaskToDays } from "@trenova/shared/lib/scheduling";
 import type { AvailabilityPreferenceValue } from "@trenova/shared/types/scheduling";
 
 const MINUTES_IN_DAY = 1440;
-const DAY_SECONDS = 86_400;
 
 /** The week as the schedule draws it, Monday first; values are Sunday-based day indexes. */
 export const WEEK_ORDER = [1, 2, 3, 4, 5, 6, 0] as const;
@@ -124,25 +123,4 @@ export function availabilitySummary(
     parts.push(t("not {0}", runs(unavailable, shortDay, t)));
   }
   return parts.join(" · ");
-}
-
-/** Whole days since the worker was last home, or null when nobody has recorded it. */
-export function daysOut(lastHomeAt: number | null | undefined, nowSec: number): number | null {
-  if (!lastHomeAt) return null;
-  return Math.max(0, Math.floor((nowSec - lastHomeAt) / DAY_SECONDS));
-}
-
-export type TimeOffSpan = { status: string; startDate: number; endDate: number };
-
-/** The next approved time off that has not ended yet, earliest first. */
-export function nextApprovedTimeOff<T extends TimeOffSpan>(
-  entries: readonly T[],
-  nowSec: number,
-): T | null {
-  let next: T | null = null;
-  for (const entry of entries) {
-    if (entry.status !== "Approved" || entry.endDate < nowSec) continue;
-    if (next === null || entry.startDate < next.startDate) next = entry;
-  }
-  return next;
 }

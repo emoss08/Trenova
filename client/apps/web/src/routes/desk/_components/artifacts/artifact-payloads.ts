@@ -1111,6 +1111,8 @@ export type BoardLayoutBlock = {
   size: number;
   /** The line under the exhibit's tab as written, readings `{key}` in place; empty for none. */
   caption: string;
+  /** The measure a records block reads its rows by (`board.Measure`), so its skeleton rows take the drawn rows' shape; empty for none. */
+  measure: string;
 };
 
 /** A figure the board's words place as `{key}`, as the agent declared it. */
@@ -1158,6 +1160,7 @@ export function boardLayoutFrom(
       half: raw.half === true,
       size: blockSize(raw),
       caption: stringOf(raw.caption),
+      measure: raw.type === "records" ? answerMeasure(stringOf(raw.measure).trim()) : "",
     });
   }
   const readings: BoardLayoutReading[] = [];
@@ -1293,16 +1296,25 @@ export function answerLayoutFrom(
     .filter(isRecord)
     .filter((group) => listOf(group.records).length > 0)
     .slice(0, 3);
+  const callMeasure = answerMeasure(stringOf(answer.measure).trim());
   const blocks: BoardLayoutBlock[] = groups.map((group) => ({
     type: "records",
     title: stringOf(group.title),
     half: groups.length === 2,
     size: listOf(group.records).length,
     caption: stringOf(group.note),
+    measure: callMeasure,
   }));
   const actions = listOf(answer.actions).filter(isRecord);
   if (actions.length > 0) {
-    blocks.push({ type: "actions", title: "", half: false, size: actions.length, caption: "" });
+    blocks.push({
+      type: "actions",
+      title: "",
+      half: false,
+      size: actions.length,
+      caption: "",
+      measure: "",
+    });
   }
   const records = [
     ...new Set(
@@ -1313,7 +1325,6 @@ export function answerLayoutFrom(
       ),
     ),
   ];
-  const callMeasure = answerMeasure(stringOf(answer.measure).trim());
   const unlisted = new Map<string, number>();
   const found = new Map<string, AnswerFigure>();
   const keyed = (text: string): string =>

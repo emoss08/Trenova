@@ -1,6 +1,6 @@
 import { RowActionsMenu } from "@/components/row-actions-menu";
 import { SectionPanel, SectionPanelLink, SectionPanelQuiet } from "@/components/section-panel";
-import { useWorkPane } from "@/components/work-pane";
+import { lazyWorkPane, preloadOn, useWorkPane } from "@/components/work-pane";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { usePermission } from "@/hooks/use-permission";
 import {
@@ -10,18 +10,18 @@ import {
   fetchWorkerEarningsSummary,
   fetchWorkerPayAssignments,
   type EffectiveWorkerPayAssignment,
+  type WorkerPayAssignmentRow,
 } from "@/lib/graphql/driver-settlement";
 import type { WorkerTabProps } from "@/routes/worker/use-worker-state";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { ErrorState } from "@trenova/shared/components/errors/error-state";
 import { SlashCircle01Icon, Wallet02Icon } from "@trenova/shared/components/icons";
 import { PayeeClassificationBadge } from "@trenova/shared/components/status-badge";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import { DescriptionItem, DescriptionList } from "@trenova/shared/components/ui/description-list";
-import { EmptySheet, GhostLine } from "@trenova/shared/components/ui/empty-sheet";
-import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
-import { useT } from "@trenova/shared/i18n/use-t";
+import { EmptySheet } from "@trenova/shared/components/ui/empty-sheet";
+import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
 import { formatUnixDateMedium, getTodayDate } from "@trenova/shared/lib/date";
 import { formatMinor } from "@trenova/shared/lib/money";
 import { cn } from "@trenova/shared/lib/utils";
@@ -29,11 +29,29 @@ import type { PayeeClassification } from "@trenova/shared/types/driver-pay";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useState } from "react";
 import { ConfirmDialog } from "@/components/confirm-dialog";
+import {
+  BOUNDED_CELL_CLASS,
+  BoundedTable,
+  type BoundedColumn,
+  type BoundedRowProps,
+} from "../../bounded-table";
+import { LineSketch } from "../../list-sketch";
+import { useWorkerInvalidation } from "../../use-worker-invalidation";
+import { useWorkerList } from "../../use-worker-list";
+import { WORKER_FORM_PANES } from "../../worker-form-panes";
+import { formatPayRate, PAY_METHOD_UNITS, payComponentLines } from "../pay-model";
 import { PaySkeleton } from "../pay-skeleton";
-import { formatPayRate, PAY_METHOD_UNITS, payComponentLines, sortAssignments } from "../pay-model";
-import { ChangeProfilePane } from "./change-profile-pane";
 
-const WORKER_PAY_KEY = "worker-pay";
+export const WORKER_PAY_KEY = "worker-pay";
+
+const ChangeProfilePane = lazyWorkPane(
+  WORKER_FORM_PANES["assign-pay-profile"],
+  (module) => module.ChangeProfilePane,
+  {
+    title: (props, t) => (props.current ? t("Change pay profile") : t("Assign pay profile")),
+    fields: 4,
+  },
+);
 
 type PayProfileViewProps = Pick<WorkerTabProps, "workerId" | "worker" | "open" | "onOpen">;
 
@@ -44,22 +62,24 @@ type PayProfileViewProps = Pick<WorkerTabProps, "workerId" | "worker" | "open" |
  */
 export default function WorkerPayTab({ workerId, worker, open, onOpen }: PayProfileViewProps) {
   const t = useT();
-  const queryClient = useQueryClient();
   const { closeThen } = useWorkPane();
   const { allowed: canAssign } = usePermission(Resource.DriverPayProfile, Operation.Assign);
   const { allowed: canReadSettlements } = usePermission(Resource.DriverSettlement, Operation.Read);
   const [ending, setEnding] = useState(false);
 
   const assignmentQuery = useQuery({
-    queryKey: [WORKER_PAY_KEY, "effective-assignment", workerId],
+    queryKey: [WORKER_PAY_KEY, workerId, "effective-assignment"],
     queryFn: ({ signal }) => fetchEffectiveWorkerPayAssignment(workerId, { signal }),
   });
-  const historyQuery = useQuery({
-    queryKey: [WORKER_PAY_KEY, "assignment-history", workerId],
-    queryFn: ({ signal }) => fetchWorkerPayAssignments(workerId, { signal }),
+  const history = useWorkerList({
+    root: WORKER_PAY_KEY,
+    workerId,
+    pageSize: 100,
+    fetchPage: ({ first, after, signal }) =>
+      fetchWorkerPayAssignments({ workerId, first, after }, { signal }),
   });
   const earningsQuery = useQuery({
-    queryKey: [WORKER_PAY_KEY, "earnings-summary", workerId],
+    queryKey: [WORKER_PAY_KEY, workerId, "earnings-summary"],
     queryFn: ({ signal }) => fetchWorkerEarningsSummary(workerId, { signal }),
     enabled: canReadSettlements,
   });
@@ -69,18 +89,14 @@ export default function WorkerPayTab({ workerId, worker, open, onOpen }: PayProf
     enabled: canReadSettlements,
   });
 
-  const invalidate = () =>
-    Promise.all([
-      queryClient.invalidateQueries({ queryKey: [WORKER_PAY_KEY] }),
-      queryClient.invalidateQueries({ queryKey: ["worker"] }),
-    ]);
+  const invalidate = useWorkerInvalidation(workerId, "pay-profile");
 
   const end = useApiMutation({
     scope: { id: `worker-pay-end:${workerId}` },
     resourceName: "Pay assignment",
     mutationFn: (assignmentId: string) =>
       endWorkerPayAssignment({ assignmentId, endDate: getTodayDate() }),
-    onSuccess: () => void invalidate(),
+    onSuccess: () => invalidate(),
   });
 
   if (assignmentQuery.isPending) return <PaySkeleton view="pay-profile" />;
@@ -96,7 +112,6 @@ export default function WorkerPayTab({ workerId, worker, open, onOpen }: PayProf
   }
 
   const assignment = assignmentQuery.data ?? null;
-  const history = sortAssignments(historyQuery.data ?? []);
   const openChange = () =>
     closeThen(() => onOpen({ tab: "pay", view: "pay-profile", form: "assign-pay-profile" }));
   const close = () => onOpen({ tab: "pay", view: "pay-profile" });
@@ -121,16 +136,10 @@ export default function WorkerPayTab({ workerId, worker, open, onOpen }: PayProf
                   "{0} does not accrue pay for delivered shipments until a profile is assigned. Assign a shared profile and set this driver's own rates on it where they differ.",
                   worker.firstName,
                 )}
-                sketch={
-                  <div className="flex flex-col gap-2 rounded-md border bg-card p-4">
-                    <GhostLine className="w-1/3" />
-                    <GhostLine className="w-2/3" />
-                    <GhostLine className="w-1/2" />
-                  </div>
-                }
+                sketch={<LineSketch widths={["w-1/3", "w-2/3", "w-1/2"]} />}
                 action={
                   canAssign ? (
-                    <Button size="sm" onClick={openChange}>
+                    <Button size="sm" {...preloadOn(ChangeProfilePane)} onClick={openChange}>
                       <Wallet02Icon className="size-3.5" />
                       {t("Assign profile")}
                     </Button>
@@ -140,75 +149,36 @@ export default function WorkerPayTab({ workerId, worker, open, onOpen }: PayProf
             </SectionPanel>
           )}
 
-          <SectionPanel title={t("Assignment history")} count={history.length}>
-            {historyQuery.isPending ? (
+          <SectionPanel
+            title={t("Assignment history")}
+            count={history.hasMore ? (history.total ?? undefined) : history.rows.length}
+          >
+            {history.isPending ? (
               <div aria-busy aria-label={t("Loading the assignment history")} className="p-3">
                 <span className="block h-3 w-1/2 ui-shimmer rounded-sm" />
               </div>
-            ) : historyQuery.isError ? (
+            ) : history.isError ? (
               <ErrorState
-                error={historyQuery.error}
+                error={history.error}
                 layout="compact"
                 title={t("The assignment history could not be loaded")}
-                onRetry={() => void historyQuery.refetch()}
+                onRetry={history.refetch}
               />
-            ) : history.length === 0 ? (
+            ) : history.rows.length === 0 ? (
               <SectionPanelQuiet>{t("No assignments yet.")}</SectionPanelQuiet>
             ) : (
-              <ScrollArea viewportClassName="max-h-64" maskVariant="card">
-                <table className="w-full min-w-[32rem] text-sm">
-                  <thead className="sticky top-0 z-10 bg-card text-left text-xs text-muted-foreground">
-                    <tr className="border-b border-border-subtle">
-                      <th className="px-3 py-2 font-medium">{t("Profile")}</th>
-                      <th className="px-3 py-2 font-medium">{t("Effective")}</th>
-                      <th className="px-3 py-2 font-medium">{t("Ended")}</th>
-                      <th className="px-3 py-2 text-right font-medium">{t("Split")}</th>
-                      <th className="px-3 py-2 font-medium">{t("Overrides")}</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {history.map((row) => {
-                      const current = assignment?.id === row.id;
-                      const overrides = row.rateOverrides?.length ?? 0;
-                      return (
-                        <tr key={row.id} className="border-b border-border-subtle last:border-0">
-                          <td className="px-3 py-2">
-                            <span className="font-medium">{row.payProfile?.name ?? "—"}</span>
-                            {current ? (
-                              <Badge variant="success" className="ml-2">
-                                {t("Current")}
-                              </Badge>
-                            ) : null}
-                          </td>
-                          <td className="px-3 py-2 font-mono text-xs">
-                            {formatUnixDateMedium(row.effectiveFrom)}
-                          </td>
-                          <td
-                            className={cn(
-                              "px-3 py-2 text-xs",
-                              row.effectiveTo ? "font-mono" : "text-muted-foreground",
-                            )}
-                          >
-                            {row.effectiveTo
-                              ? formatUnixDateMedium(row.effectiveTo)
-                              : t("Still in effect")}
-                          </td>
-                          <td className="px-3 py-2 text-right font-mono text-xs">
-                            {t("{0}%", Number(row.splitPercent))}
-                          </td>
-                          <td
-                            className={cn("px-3 py-2", overrides === 0 && "text-muted-foreground")}
-                          >
-                            {overrides === 0
-                              ? t("None")
-                              : t("{0, plural, one {# override} other {# overrides}}", overrides)}
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </ScrollArea>
+              <BoundedTable
+                label={t("Assignment history")}
+                columns={historyColumns(t)}
+                maxHeightClassName="max-h-64"
+                rows={history.rows.map((row) => ({
+                  key: row.id,
+                  render: (props) => (
+                    <HistoryRow props={props} row={row} current={assignment?.id === row.id} />
+                  ),
+                }))}
+                more={history}
+              />
             )}
           </SectionPanel>
         </div>
@@ -279,7 +249,7 @@ export default function WorkerPayTab({ workerId, worker, open, onOpen }: PayProf
         ) : null}
       </div>
 
-      <ChangeProfilePane
+      <ChangeProfilePane.Component
         open={open.form === "assign-pay-profile" && canAssign}
         onOpenChange={(next) => !next && close()}
         workerId={workerId}
@@ -332,7 +302,12 @@ function CurrentProfile({
       action={
         canAssign ? (
           <>
-            <Button size="sm" variant="secondary" onClick={onChange}>
+            <Button
+              size="sm"
+              variant="secondary"
+              {...preloadOn(ChangeProfilePane)}
+              onClick={onChange}
+            >
               {t("Change profile")}
             </Button>
             <RowActionsMenu
@@ -372,57 +347,51 @@ function CurrentProfile({
       {lines.length === 0 ? (
         <SectionPanelQuiet>{t("This profile has no active components.")}</SectionPanelQuiet>
       ) : (
-        <ScrollArea maskVariant="card">
-          <table className="w-full min-w-[26rem] text-sm">
-            <thead className="text-left text-xs text-muted-foreground">
-              <tr className="border-b border-border-subtle">
-                <th className="px-4 py-2 font-medium">{t("Component")}</th>
-                <th className="px-3 py-2 text-right font-medium">{t("Profile rate")}</th>
-                <th className="px-3 py-2 text-right font-medium">{t("This driver")}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {lines.map((line) => {
-                const unit = t(PAY_METHOD_UNITS[line.method] ?? "");
-                return (
-                  <tr key={line.id} className="border-b border-border-subtle last:border-0">
-                    <td className="px-4 py-2">
-                      {line.name}
-                      {line.bandCount > 0 ? (
-                        <span className="block text-xs text-muted-foreground">
-                          {t(
-                            "{0, plural, one {# mileage band} other {# mileage bands}}",
-                            line.bandCount,
-                          )}
-                        </span>
-                      ) : null}
-                    </td>
-                    <td className="px-3 py-2 text-right">
-                      <span className="font-mono">
-                        {formatPayRate(line.method, line.profileRate)}
-                      </span>{" "}
-                      <span className="text-xs text-muted-foreground">{unit}</span>
-                    </td>
-                    <td
-                      data-override={line.override !== null ? "" : undefined}
-                      className={cn(
-                        "px-3 py-2 text-right",
-                        line.override !== null
-                          ? "bg-brand-subtle font-medium"
-                          : "text-muted-foreground",
+        <BoundedTable
+          label={t("Pay components")}
+          columns={componentColumns(t)}
+          maxHeightClassName="max-h-96"
+        >
+          {lines.map((line) => {
+            const unit = t(PAY_METHOD_UNITS[line.method] ?? "");
+            return (
+              <tr key={line.id} data-glide-target>
+                <td className={BOUNDED_CELL_CLASS}>
+                  {line.name}
+                  {line.bandCount > 0 ? (
+                    <span className="block text-xs text-muted-foreground">
+                      {t(
+                        "{0, plural, one {# mileage band} other {# mileage bands}}",
+                        line.bandCount,
                       )}
-                    >
-                      <span className="font-mono">
-                        {formatPayRate(line.method, line.override ?? line.profileRate)}
-                      </span>{" "}
-                      <span className="text-xs font-normal text-muted-foreground">{unit}</span>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </ScrollArea>
+                    </span>
+                  ) : null}
+                </td>
+                <td className={cn(BOUNDED_CELL_CLASS, "text-right")}>
+                  <span className="font-mono text-xs tabular-nums">
+                    {formatPayRate(line.method, line.profileRate)}
+                  </span>{" "}
+                  <span className="text-xs text-muted-foreground">{unit}</span>
+                </td>
+                <td
+                  data-override={line.override !== null ? "" : undefined}
+                  className={cn(
+                    BOUNDED_CELL_CLASS,
+                    "text-right",
+                    line.override !== null
+                      ? "bg-brand-subtle font-medium"
+                      : "text-muted-foreground",
+                  )}
+                >
+                  <span className="font-mono text-xs tabular-nums">
+                    {formatPayRate(line.method, line.override ?? line.profileRate)}
+                  </span>{" "}
+                  <span className="text-xs font-normal text-muted-foreground">{unit}</span>
+                </td>
+              </tr>
+            );
+          })}
+        </BoundedTable>
       )}
       {minimum > 0 ? (
         <div className="flex items-center justify-between gap-4 border-t border-border-subtle py-2.5 pr-3 pl-4">
@@ -436,5 +405,68 @@ function CurrentProfile({
         </div>
       ) : null}
     </SectionPanel>
+  );
+}
+
+function historyColumns(t: TranslateFn): BoundedColumn[] {
+  return [
+    { key: "profile", label: t("Profile") },
+    { key: "effective", label: t("Effective") },
+    { key: "ended", label: t("Ended") },
+    { key: "split", label: t("Split"), align: "end" },
+    { key: "overrides", label: t("Overrides") },
+  ];
+}
+
+function componentColumns(t: TranslateFn): BoundedColumn[] {
+  return [
+    { key: "component", label: t("Component") },
+    { key: "profile-rate", label: t("Profile rate"), align: "end" },
+    { key: "this-driver", label: t("This driver"), align: "end" },
+  ];
+}
+
+function HistoryRow({
+  props,
+  row,
+  current,
+}: {
+  props: BoundedRowProps;
+  row: WorkerPayAssignmentRow;
+  current: boolean;
+}) {
+  const t = useT();
+  const overrides = row.rateOverrides?.length ?? 0;
+  return (
+    <tr {...props} data-glide-target>
+      <td className={BOUNDED_CELL_CLASS}>
+        <span className="font-medium">{row.payProfile?.name ?? "—"}</span>
+        {current ? (
+          <Badge variant="success" dot className="ml-2">
+            {t("Current")}
+          </Badge>
+        ) : null}
+      </td>
+      <td className={cn(BOUNDED_CELL_CLASS, "font-mono text-xs tabular-nums")}>
+        {formatUnixDateMedium(row.effectiveFrom)}
+      </td>
+      <td
+        className={cn(
+          BOUNDED_CELL_CLASS,
+          "text-xs",
+          row.effectiveTo ? "font-mono tabular-nums" : "text-muted-foreground",
+        )}
+      >
+        {row.effectiveTo ? formatUnixDateMedium(row.effectiveTo) : t("Still in effect")}
+      </td>
+      <td className={cn(BOUNDED_CELL_CLASS, "text-right font-mono text-xs tabular-nums")}>
+        {t("{0}%", Number(row.splitPercent))}
+      </td>
+      <td className={cn(BOUNDED_CELL_CLASS, overrides === 0 && "text-muted-foreground")}>
+        {overrides === 0
+          ? t("None")
+          : t("{0, plural, one {# override} other {# overrides}}", overrides)}
+      </td>
+    </tr>
   );
 }

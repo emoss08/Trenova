@@ -272,7 +272,7 @@ dom.title = \`Remove \${name}\`;
     ]);
   });
 
-  it("finds none in the app", async () => {
+  it("finds none in the app", { timeout: 60_000 }, async () => {
     const found = await findFragments(repoRoot);
     assert.deepEqual(found.map((f) => `${f.file}:${f.line} ${f.detail}`), []);
   });

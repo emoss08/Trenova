@@ -4,7 +4,7 @@
 // reply itself (eight late loads, the same loads as show_answer made them, Acme
 // Foods' credit, a carrier comparison and its revision). Run with the mock API and the web app up (see README.md):
 //
-//   node e2e/mock-api/desk-board-screenshots.mjs [outDir] [name,name,...]
+//   bun e2e/mock-api/desk-board-screenshots.mjs [outDir] [name,name,...]
 //
 // Each shot sets the `deskBoard` stage it needs.
 import { mkdir } from "node:fs/promises";

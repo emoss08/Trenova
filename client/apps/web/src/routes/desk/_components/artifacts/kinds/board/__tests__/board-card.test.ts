@@ -1,7 +1,12 @@
 import { translate } from "@trenova/shared/i18n/runtime";
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import { describe, expect, it } from "vitest";
-import { cardMomentAfter, cardTime } from "../../../record-card/record-card-values";
+import {
+  cardDay,
+  cardMoment,
+  cardMomentAfter,
+  cardTime,
+} from "../../../record-card/record-card-values";
 import {
   boardArrival,
   boardReads,
@@ -13,13 +18,16 @@ import {
   halfBlocks,
   initialsOf,
   lockedReading,
+  measureMoment,
   measureReading,
   readableIds,
   readingSource,
   readStamp,
+  replyFootPlace,
   sourceLine,
   toneClass,
   wordPieces,
+  wordRuns,
   writtenSegments,
 } from "../board-card";
 import {
@@ -104,6 +112,8 @@ describe("measureReading", () => {
     );
     expect(reading).toEqual({
       against: `Due ${cardMomentAfter(NOW, due)}`,
+      shown: `Due ${cardMomentAfter(NOW, due)}`,
+      at: null,
       standing: "50m behind",
       tone: "warn",
       fraction: 0.5,
@@ -128,6 +138,8 @@ describe("measureReading", () => {
     );
     expect(reading).toEqual({
       against: `Due ${cardMomentAfter(NOW, due)}`,
+      shown: `Due ${cardMomentAfter(NOW, due)}`,
+      at: null,
       standing: "estimated 6m late",
       tone: "warn",
       fraction: 0.1,
@@ -151,6 +163,8 @@ describe("measureReading", () => {
       t,
     );
     expect(late.against).toBe(`Due ${cardMomentAfter(NOW, due)} at Seattle, WA`);
+    expect(late.shown).toBe(`Due ${cardMomentAfter(NOW, due)}`);
+    expect(late.at).toEqual({ verb: "due", when: cardMomentAfter(NOW, due), place: "Seattle, WA" });
 
     const delivered = measureReading(
       {
@@ -166,6 +180,11 @@ describe("measureReading", () => {
       t,
     );
     expect(delivered.against).toBe(`Delivered ${cardMomentAfter(NOW, due)} at Memphis, TN`);
+    expect(delivered.at).toEqual({
+      verb: "delivered",
+      when: cardMomentAfter(NOW, due),
+      place: "Memphis, TN",
+    });
   });
 
   it("says a load due with no estimate is not estimated rather than on time", () => {
@@ -259,6 +278,164 @@ describe("measureReading", () => {
         t,
       ).standing,
     ).toBe("paid");
+  });
+
+  // An invoice falls due on a day (`invoice.DueDateFromPaymentTerm` adds whole days to the
+  // invoice date), so its due moment's time of day means nothing and is never said.
+  const LAST_YEAR = Date.UTC(2025, 8, 15, 12) / 1000;
+  const dayAndYear = (at: number) =>
+    new Date(at * 1000).toLocaleDateString(undefined, {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
+  const amountDue = (at: number) =>
+    measureReading(
+      { measure: "amountDue", value: money("2531.25"), state: "open", at, place: "", tone: "warn" },
+      0,
+      NOW,
+      t,
+    );
+
+  it("says the day an amount falls due, without its time, and the year only when it is not this year's", () => {
+    const thisYear = amountDue(due);
+    expect(thisYear.against).toBe(`Due ${cardDay(due)}`);
+    expect(thisYear.against).not.toContain(cardTime(due));
+    expect(thisYear.standing).toBe("$2,531.25 due");
+
+    const lastYear = amountDue(LAST_YEAR);
+    expect(lastYear.against).toBe(`Due ${dayAndYear(LAST_YEAR)}`);
+    expect(lastYear.against).toContain("2025");
+    expect(lastYear.against).not.toContain(cardTime(LAST_YEAR));
+  });
+
+  it("says the day a record is dated for its age, without its time", () => {
+    const reading = measureReading(
+      { measure: "age", value: duration(3 * 24 * HOUR), state: "", at: due, place: "", tone: "" },
+      3 * 24 * HOUR,
+      NOW,
+      t,
+    );
+    expect(reading.against).toBe(`Dated ${cardDay(due)}`);
+  });
+
+  it("writes a load's appointment within a week of now with its time, and the whole moment and stop in what it is held against", () => {
+    const sixDaysAgo = NOW - 6 * 24 * HOUR;
+    const reading = measureReading(
+      {
+        measure: "lateness",
+        value: duration(HOUR),
+        state: "late",
+        at: sixDaysAgo,
+        place: "Rockford, IL",
+        tone: "",
+      },
+      HOUR,
+      NOW,
+      t,
+    );
+    expect(reading.shown).toBe(`Due ${cardMoment(sixDaysAgo)}`);
+    expect(reading.at?.when).toBe(cardMoment(sixDaysAgo));
+    expect(reading.against).toBe(`Due ${cardMoment(sixDaysAgo)} at Rockford, IL`);
+  });
+
+  it("writes a load's appointment more than a week from now, either way, as its day, keeping the whole moment in what it is held against", () => {
+    for (const at of [NOW - 8 * 24 * HOUR, NOW + 8 * 24 * HOUR]) {
+      const reading = measureReading(
+        { measure: "lateness", value: duration(HOUR), state: "late", at, place: "", tone: "" },
+        HOUR,
+        NOW,
+        t,
+      );
+      expect(reading.shown).toBe(`Due ${cardDay(at)}`);
+      expect(reading.shown).not.toContain(cardTime(at));
+      expect(reading.against).toBe(`Due ${cardMoment(at)}`);
+    }
+  });
+});
+
+describe("measureMoment", () => {
+  const LAST_YEAR = Date.UTC(2025, 2, 19, 12) / 1000;
+
+  it("keeps the time of a moment up to seven days from now on either side, and gives the day past it", () => {
+    const week = 7 * 24 * HOUR;
+    expect(measureMoment(NOW, NOW - week, "moment")).toBe(cardMomentAfter(NOW, NOW - week));
+    expect(measureMoment(NOW, NOW + week, "moment")).toBe(cardMomentAfter(NOW, NOW + week));
+    expect(measureMoment(NOW, NOW - week - 1, "moment")).toBe(cardDay(NOW - week - 1));
+    expect(measureMoment(NOW, NOW + week + 1, "moment")).toBe(cardDay(NOW + week + 1));
+  });
+
+  it("gives a date its day however near, with the year only when it is not now's, and nothing for none", () => {
+    expect(measureMoment(NOW, NOW - HOUR, "date")).toBe(cardDay(NOW - HOUR));
+    expect(measureMoment(NOW, LAST_YEAR, "moment")).toBe(
+      new Date(LAST_YEAR * 1000).toLocaleDateString(undefined, {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      }),
+    );
+    expect(measureMoment(NOW, 0, "moment")).toBe("");
+  });
+});
+
+describe("wordRuns", () => {
+  const join = (text: string) =>
+    wordRuns(text)
+      .map((run) => run.text)
+      .join("");
+
+  it("keeps a record's number and a hyphenated date whole, and the words around them plain", () => {
+    expect(wordRuns("SEED-INV-0006 is due 2026-11-29, after SEED-SHP-010.")).toEqual([
+      { text: "SEED-INV-0006", whole: true },
+      { text: " is due ", whole: false },
+      { text: "2026-11-29", whole: true },
+      { text: ", after ", whole: false },
+      { text: "SEED-SHP-010", whole: true },
+      { text: ".", whole: false },
+    ]);
+  });
+
+  it("leaves plain words, hyphenated words without a digit, amounts and a trailing hyphen alone", () => {
+    for (const text of ["a well-known lane", "$2,531.25 owed", "SEED- then more", "three loads"]) {
+      expect(wordRuns(text)).toEqual([{ text, whole: false }]);
+    }
+  });
+
+  it("gives back the words unchanged when its runs are joined", () => {
+    for (const text of [
+      "",
+      "S-24110",
+      "Pay SEED-INV-0006 and SEED-INV-0007 by 2026-12-01 — a well-known lane.",
+      "SEED- INV-0006-",
+    ]) {
+      expect(join(text)).toBe(text);
+    }
+    expect(wordRuns("")).toEqual([]);
+  });
+});
+
+describe("replyFootPlace", () => {
+  const exhibit = (type: string) => type !== "actions" && type !== "prose" && type !== "note";
+
+  it("stands inside the last exhibit when it is drawn full width", () => {
+    expect(replyFootPlace([{ type: "records" }], [false], exhibit)).toBe("inside");
+    expect(
+      replyFootPlace(
+        [{ type: "records" }, { type: "records" }, { type: "figures" }],
+        [true, true, false],
+        exhibit,
+      ),
+    ).toBe("inside");
+  });
+
+  it("stands under the desk when the last row is two halves, the last block is words or buttons, or there are none", () => {
+    expect(replyFootPlace([{ type: "records" }, { type: "records" }], [true, true], exhibit)).toBe(
+      "under",
+    );
+    expect(
+      replyFootPlace([{ type: "records" }, { type: "actions" }], [false, false], exhibit),
+    ).toBe("under");
+    expect(replyFootPlace([], [], exhibit)).toBe("under");
   });
 });
 

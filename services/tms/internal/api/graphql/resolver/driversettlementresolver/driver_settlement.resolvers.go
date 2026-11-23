@@ -712,7 +712,7 @@ func (r *QueryResolver) PayProfile(ctx context.Context, id string) (*driverpay.P
 	})
 }
 
-func (r *QueryResolver) WorkerPayAssignments(ctx context.Context, workerID string) ([]*payassignment.WorkerPayAssignment, error) {
+func (r *QueryResolver) WorkerPayAssignments(ctx context.Context, workerID string, first *int, after *string) (*gqlmodel.WorkerPayAssignmentConnection, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceDriverPayProfile, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -721,10 +721,35 @@ func (r *QueryResolver) WorkerPayAssignments(ctx context.Context, workerID strin
 	if err != nil {
 		return nil, errortypes.NewValidationError("workerId", errortypes.ErrInvalid, "Invalid worker")
 	}
-	return r.DriverPayService.ListWorkerAssignments(ctx, driverpayports.ListWorkerPayAssignmentsRequest{
+	cursor, err := gqlconnection.CursorFromArgs(ctx, first, after)
+	if err != nil {
+		return nil, err
+	}
+	result, err := r.DriverPayService.PageWorkerAssignments(ctx, driverpayports.ListWorkerPayAssignmentsRequest{
 		TenantInfo: resolvercore.TenantInfo(authCtx),
 		WorkerID:   id,
+		Cursor:     cursor,
 	})
+	if err != nil {
+		return nil, err
+	}
+	page, err := gqlconnection.EntityCursorConnection(
+		result,
+		func(node *payassignment.WorkerPayAssignment, edgeCursor string) *gqlmodel.WorkerPayAssignmentEdge {
+			return &gqlmodel.WorkerPayAssignmentEdge{Node: node, Cursor: edgeCursor}
+		},
+		func(edge *gqlmodel.WorkerPayAssignmentEdge) string { return edge.Cursor },
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return &gqlmodel.WorkerPayAssignmentConnection{
+		Edges:           page.Edges,
+		PageInfo:        page.PageInfo,
+		TotalCount:      page.TotalCount,
+		TotalCountExact: page.TotalCountExact,
+	}, nil
 }
 
 func (r *QueryResolver) EffectiveWorkerPayAssignment(ctx context.Context, workerID string) (*payassignment.WorkerPayAssignment, error) {

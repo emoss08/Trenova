@@ -7,7 +7,8 @@ import {
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { stubLayout } from "@/test/layout";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import WorkerDQFTab from "../worker-dqf-tab";
 
 const {
@@ -194,7 +195,14 @@ function renderTab(
   return onOpen;
 }
 
+// The employers and the history are windowed lists; jsdom lays nothing out without this.
+let restoreLayout = () => {};
+beforeEach(() => {
+  restoreLayout = stubLayout(320);
+});
+
 afterEach(() => {
+  restoreLayout();
   cleanup();
   vi.clearAllMocks();
 });
@@ -320,6 +328,13 @@ describe("WorkerDQFTab", () => {
       "ahead",
     ]);
     expect(within(beta).getByText("Late")).toBeInTheDocument();
+  });
+
+  it("dates the employment in months and years, in the reader's zone", async () => {
+    renderTab();
+
+    const beta = await screen.findByTestId("dqf-employer-ev_beta");
+    expect(within(beta).getByText("Sep 2020 to Apr 2022")).toBeInTheDocument();
   });
 
   it("opens the employer panes from the address", async () => {

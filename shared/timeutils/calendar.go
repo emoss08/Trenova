@@ -27,6 +27,17 @@ func WeekStartUTC(ts int64) int64 {
 	return day.AddDate(0, 0, -sinceMonday).Unix()
 }
 
+// LocalDateAsUTC is the calendar date ts falls on in loc, as the instant that
+// date starts in UTC: the form dates such as an expiry are stored in, so the
+// difference between the two is whole days in loc's calendar.
+func LocalDateAsUTC(ts int64, loc *time.Location) int64 {
+	if loc == nil {
+		loc = time.UTC
+	}
+	local := time.Unix(ts, 0).In(loc)
+	return time.Date(local.Year(), local.Month(), local.Day(), 0, 0, 0, 0, time.UTC).Unix()
+}
+
 func DayStart(ts int64, loc *time.Location) int64 {
 	if loc == nil {
 		loc = time.UTC

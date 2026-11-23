@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import {
   hasPendingDocumentWork,
   PENDING_DOCUMENTS_REFETCH_MS,
+  PREVIEW_PENDING_MAX_POLLS,
   previewPendingRefetchMs,
   resourceDocumentsQuery,
 } from "../resource-documents";
@@ -60,19 +61,37 @@ describe("hasPendingDocumentWork", () => {
 describe("previewPendingRefetchMs", () => {
   it("reads again while any document's preview is being drawn", () => {
     expect(
-      previewPendingRefetchMs([null, { previewStatus: "Ready" }, { previewStatus: "Pending" }]),
+      previewPendingRefetchMs({}, [null, { previewStatus: "Ready" }, { previewStatus: "Pending" }]),
     ).toBe(PENDING_DOCUMENTS_REFETCH_MS);
   });
 
   it("stops once every preview has settled, and never starts for rows without documents", () => {
+    const query = {};
     expect(
-      previewPendingRefetchMs([
+      previewPendingRefetchMs(query, [
         { previewStatus: "Ready" },
         { previewStatus: "Failed" },
         { previewStatus: "Unsupported" },
       ]),
     ).toBe(false);
-    expect(previewPendingRefetchMs([null, undefined])).toBe(false);
-    expect(previewPendingRefetchMs([])).toBe(false);
+    expect(previewPendingRefetchMs(query, [null, undefined])).toBe(false);
+    expect(previewPendingRefetchMs(query, [])).toBe(false);
+  });
+
+  it("gives up on a preview that stays pending for forty intervals, and starts over once it settles", () => {
+    const query = {};
+    const pending = [{ previewStatus: "Pending" as const }];
+    const limit = PENDING_DOCUMENTS_REFETCH_MS * PREVIEW_PENDING_MAX_POLLS;
+    expect(previewPendingRefetchMs(query, pending, 1_000)).toBe(PENDING_DOCUMENTS_REFETCH_MS);
+    expect(previewPendingRefetchMs(query, pending, 1_000 + limit - 1)).toBe(
+      PENDING_DOCUMENTS_REFETCH_MS,
+    );
+    expect(previewPendingRefetchMs(query, pending, 1_000 + limit)).toBe(false);
+    expect(previewPendingRefetchMs({}, pending, 1_000 + limit)).toBe(PENDING_DOCUMENTS_REFETCH_MS);
+
+    expect(previewPendingRefetchMs(query, [{ previewStatus: "Ready" }], 2_000 + limit)).toBe(false);
+    expect(previewPendingRefetchMs(query, pending, 3_000 + limit)).toBe(
+      PENDING_DOCUMENTS_REFETCH_MS,
+    );
   });
 });

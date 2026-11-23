@@ -462,7 +462,7 @@ turn sees the file the way a person's does once its upload has finished. A relat
 read from the scenario file's folder. Fixtures live in `deskbench/fixtures/attachments/` and are
 made up: no real broker, carrier or person. Each rate confirmation there is one entry of
 `variants.json` (an entry may `extend` another and change a few values) filled into
-`rate-confirmation.html` and printed by Gotenberg's Chromium (`node render.mjs` from that folder,
+`rate-confirmation.html` and printed by Gotenberg's Chromium (`bun render.mjs` from that folder,
 with the local stack up), so it is laid out the way a browser-printed confirmation is; the PDF
 reader's own tests read them too. A trading partner's EDI implementation guide is printed the same
 way, from `edi-guide.html` and `edi-guides.json` (a version and its revision).

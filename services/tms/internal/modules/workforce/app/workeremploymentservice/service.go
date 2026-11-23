@@ -2,6 +2,7 @@ package workeremploymentservice
 
 import (
 	"context"
+	"slices"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
@@ -182,19 +183,13 @@ func (s *Service) SetPortalRevoker(portal PortalAccess) {
 	s.portal = portal
 }
 
-func (s *Service) List(
+func (s *Service) ListPage(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
-	workerID pulid.ID,
-	kinds []employment.EmploymentEventKind,
-) ([]*employment.WorkerEmploymentEvent, error) {
-	return s.repo.List(ctx, &workeremploymentports.ListWorkerEmploymentEventsRequest{
-		TenantInfo:      tenantInfo,
-		WorkerID:        workerID,
-		Kinds:           kinds,
-		IncludeDocument: true,
-		IncludeActors:   true,
-	})
+	req *workeremploymentports.ListWorkerEmploymentEventsRequest,
+) (*pagination.CursorListResult[*employment.WorkerEmploymentEvent], error) {
+	req.IncludeDocument = true
+	req.IncludeActors = true
+	return s.repo.ListPage(ctx, req)
 }
 
 func (s *Service) Get(
@@ -252,11 +247,12 @@ func (s *Service) loadState(
 	history, err := s.repo.List(ctx, &workeremploymentports.ListWorkerEmploymentEventsRequest{
 		TenantInfo: tenantInfo,
 		WorkerID:   workerID,
-		Ascending:  true,
+		Kinds:      employment.StateKinds(),
 	})
 	if err != nil {
 		return nil, nil, err
 	}
+	slices.Reverse(history)
 	return wrk, history, nil
 }
 
@@ -373,7 +369,8 @@ func (s *Service) requireWorkerDocument(
 	if err != nil {
 		return err
 	}
-	if doc.ResourceType != "worker" || doc.ResourceID != workerID.String() {
+	if doc.ResourceType != permission.ResourceWorker.String() ||
+		doc.ResourceID != workerID.String() {
 		return errortypes.NewValidationError(
 			"documentId",
 			errortypes.ErrInvalid,

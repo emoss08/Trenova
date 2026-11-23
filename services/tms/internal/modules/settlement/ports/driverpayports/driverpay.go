@@ -91,6 +91,7 @@ type GetWorkerPayAssignmentsRequest struct {
 type ListWorkerPayAssignmentsRequest struct {
 	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
 	WorkerID   pulid.ID              `json:"workerId"`
+	Cursor     pagination.CursorInfo `json:"cursor"`
 }
 
 type WorkerPayAssignmentRepository interface {
@@ -107,10 +108,10 @@ type WorkerPayAssignmentRepository interface {
 		ctx context.Context,
 		req GetWorkerPayAssignmentsRequest,
 	) (map[pulid.ID]*payassignment.WorkerPayAssignment, error)
-	ListForWorker(
+	PageForWorker(
 		ctx context.Context,
 		req ListWorkerPayAssignmentsRequest,
-	) ([]*payassignment.WorkerPayAssignment, error)
+	) (*pagination.CursorListResult[*payassignment.WorkerPayAssignment], error)
 	ListForProfile(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,

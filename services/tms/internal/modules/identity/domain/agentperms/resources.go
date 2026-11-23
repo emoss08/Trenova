@@ -28,6 +28,7 @@ func Resources() []*permissionspec.ResourceDefinition {
 		codeModeResource(),
 		aiProviderResource(),
 		aiUsageResource(),
+		deskTranscriptResource(),
 	}
 }
 
@@ -569,5 +570,28 @@ func aiUsageResource() *permissionspec.ResourceDefinition {
 			},
 		},
 		DefaultSensitivity: permission.SensitivityRestricted,
+	}
+}
+
+func deskTranscriptResource() *permissionspec.ResourceDefinition {
+	return &permissionspec.ResourceDefinition{
+		Resource:    permission.ResourceDeskTranscript.String(),
+		Feature:     platformcatalog.FeatureAIDesk,
+		DisplayName: "Desk conversations of other people",
+		Description: "Other people's Desk conversations, titles included, as their owners saw them. A conversation shows whatever its owner was shown, which can include data the reader's own role cannot otherwise reach",
+		Category:    "AI & agents",
+		Operations: []permissionspec.OperationDefinition{
+			{
+				Operation:   permission.OpRead,
+				DisplayName: "View",
+				Description: "List other people's Desk conversations and read one on screen; nothing leaves Trenova",
+			},
+			{
+				Operation:   permission.OpExport,
+				DisplayName: "Export",
+				Description: "Pull transcripts out of Trenova: download one conversation or export many as a file",
+			},
+		},
+		DefaultSensitivity: permission.SensitivityConfidential,
 	}
 }

@@ -1,7 +1,8 @@
 import { PENDING_DOCUMENTS_REFETCH_MS } from "@/lib/resource-documents";
 import type { Query } from "@tanstack/react-query";
 import { describe, expect, it, vi } from "vitest";
-import { trainingRecordsQuery, trainingSummaryQuery } from "../development-reads";
+import { fetchWorkerTrainingRecords } from "@/lib/graphql/worker-training";
+import { trainingRecordsList, trainingSummaryQuery } from "../development-reads";
 
 vi.mock("@/lib/graphql/worker-training", () => ({
   fetchWorkerTrainingRecords: vi.fn(),
@@ -32,16 +33,18 @@ function intervalOf(options: { refetchInterval?: unknown }, data: unknown) {
 }
 
 describe("training reads", () => {
-  it("read the records again while a certificate's preview is drawn, and stop once it is ready", () => {
-    const options = trainingRecordsQuery("wrk_1");
+  it("read the records a page at a time, open and closed, under the training key", async () => {
+    const list = trainingRecordsList("wrk_1");
+    const signal = new AbortController().signal;
 
-    expect(intervalOf(options, [{ document: certificate("Pending") }, { document: null }])).toBe(
-      PENDING_DOCUMENTS_REFETCH_MS,
-    );
-    expect(intervalOf(options, [{ document: certificate("Ready") }, { document: null }])).toBe(
-      false,
-    );
-    expect(intervalOf(options, undefined)).toBe(false);
+    expect(list.root).toBe("worker-training");
+    await list.fetchPage({ first: 50, after: null, signal });
+    await list.fetchPage({ first: 50, after: "c_50", signal });
+
+    expect(vi.mocked(fetchWorkerTrainingRecords).mock.calls).toEqual([
+      [{ workerId: "wrk_1", includeClosed: true, first: 50, after: undefined }, { signal }],
+      [{ workerId: "wrk_1", includeClosed: true, first: 50, after: "c_50" }, { signal }],
+    ]);
   });
 
   it("read the summary again while a slot's certificate preview is drawn", () => {

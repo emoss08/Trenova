@@ -234,7 +234,7 @@ func (r *QueryResolver) WorkerSafetyScorecard(ctx context.Context, workerID stri
 	return r.WorkerSafetyService.ScorecardWithoutDiscipline(ctx, resolvercore.TenantInfo(authCtx), wid)
 }
 
-func (r *QueryResolver) WorkerDisciplinaryActions(ctx context.Context, workerID string) ([]*workerdiscipline.WorkerDisciplinaryAction, error) {
+func (r *QueryResolver) WorkerDisciplinaryActions(ctx context.Context, workerID string, first *int, after *string) (*gqlmodel.WorkerDisciplinaryActionConnection, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceWorkerDisciplinaryAction, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -244,7 +244,35 @@ func (r *QueryResolver) WorkerDisciplinaryActions(ctx context.Context, workerID 
 	if err != nil {
 		return nil, err
 	}
-	return r.WorkerSafetyService.ListActions(ctx, resolvercore.TenantInfo(authCtx), wid)
+	cursor, err := gqlconnection.CursorFromArgs(ctx, first, after)
+	if err != nil {
+		return nil, err
+	}
+	result, err := r.WorkerSafetyService.ActionsPage(ctx, &workersafetyports.ListWorkerDisciplinaryActionsRequest{
+		TenantInfo: resolvercore.TenantInfo(authCtx),
+		WorkerID:   wid,
+		Cursor:     cursor,
+	})
+	if err != nil {
+		return nil, err
+	}
+	page, err := gqlconnection.EntityCursorConnection(
+		result,
+		func(node *workerdiscipline.WorkerDisciplinaryAction, edgeCursor string) *gqlmodel.WorkerDisciplinaryActionEdge {
+			return &gqlmodel.WorkerDisciplinaryActionEdge{Node: node, Cursor: edgeCursor}
+		},
+		func(edge *gqlmodel.WorkerDisciplinaryActionEdge) string { return edge.Cursor },
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return &gqlmodel.WorkerDisciplinaryActionConnection{
+		Edges:           page.Edges,
+		PageInfo:        page.PageInfo,
+		TotalCount:      page.TotalCount,
+		TotalCountExact: page.TotalCountExact,
+	}, nil
 }
 
 func (r *QueryResolver) WorkerDisciplinaryLadder(ctx context.Context, workerID string) (*workerdiscipline.DisciplinaryLadder, error) {
@@ -402,4 +430,17 @@ func (r *WorkerSafetyEventResolver) Violations(ctx context.Context, obj *workers
 		TenantInfo:     resolvercore.TenantInfo(authCtx),
 		SafetyEventIDs: []pulid.ID{obj.ID},
 	})
+}
+
+func (r *QueryResolver) WorkerDisciplinaryAction(ctx context.Context, id string) (*workerdiscipline.WorkerDisciplinaryAction, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceWorkerDisciplinaryAction, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+
+	actionID, err := pulid.MustParse(id)
+	if err != nil {
+		return nil, err
+	}
+	return r.WorkerSafetyService.GetAction(ctx, resolvercore.TenantInfo(authCtx), actionID)
 }

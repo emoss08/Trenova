@@ -41,7 +41,16 @@ import type {
   WorkerPtoLedgerQueryVariables,
   WorkerPtoPolicyAssignmentsQuery,
   WorkerPtoPolicyAssignmentsQueryVariables,
+  WorkerPtoQuery,
+  WorkerPtoQueryVariables,
+  WorkerPtoTableQuery,
+  WorkerPtoTableQueryVariables,
 } from "@trenova/graphql/generated/graphql";
+import {
+  WorkerPtoDocument,
+  WorkerPtoTableDocument,
+} from "@trenova/graphql/generated/documents/worker/page";
+import type { WorkerPTO } from "@trenova/shared/types/worker";
 import {
   AdjustWorkerPtoBalanceDocument,
   ArchivePtoPolicyDocument,
@@ -62,6 +71,7 @@ import {
 } from "@trenova/graphql/generated/documents/pto-policy/operations";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import { defineDataTableGraphQLConfig } from "@trenova/shared/lib/graphql/data-table";
+import type { Connection } from "./connection";
 
 export type PTOPolicyRow = PtoPolicyFieldsFragment;
 export type PTOPolicyAssignment = PtoPolicyAssignmentFieldsFragment;
@@ -78,6 +88,7 @@ export const PTO_POLICY_LIST_KEY = "pto-policy-list";
 export const WORKER_PTO_BALANCES_KEY = "worker-pto-balances";
 export const WORKER_PTO_LEDGER_KEY = "worker-pto-ledger";
 export const WORKER_PTO_ASSIGNMENTS_KEY = "worker-pto-assignments";
+export const WORKER_PTO_REQUESTS_KEY = "worker-pto-requests";
 export const PTO_BALANCE_SUMMARY_KEY = "pto-balance-summary";
 export const PTO_LIABILITY_REPORT_KEY = "pto-liability-report";
 
@@ -123,20 +134,61 @@ export async function restorePtoPolicy(id: string, version?: number): Promise<PT
   return data.restorePtoPolicy as PTOPolicyRow;
 }
 
+/** A page of the policies a worker has been on, newest first; the one in force has no end. */
 export async function fetchWorkerPtoPolicyAssignments(
-  workerId: string,
+  args: { workerId: string; first?: number; after?: string | null },
   options?: { signal?: AbortSignal },
-): Promise<PTOPolicyAssignment[]> {
+): Promise<Connection<PTOPolicyAssignment>> {
   const data = await requestGraphQL<
     WorkerPtoPolicyAssignmentsQuery,
     WorkerPtoPolicyAssignmentsQueryVariables
   >({
     document: WorkerPtoPolicyAssignmentsDocument,
     operationName: "WorkerPtoPolicyAssignments",
-    variables: { workerId },
+    variables: { workerId: args.workerId, first: args.first ?? null, after: args.after ?? null },
     signal: options?.signal,
   });
-  return data.workerPtoPolicyAssignments as PTOPolicyAssignment[];
+  return data.workerPtoPolicyAssignments as Connection<PTOPolicyAssignment>;
+}
+
+/**
+ * A page of a worker's time off requests, latest start first. The first page carries the total,
+ * which the requests panel heads itself with.
+ */
+export async function fetchWorkerPtoRequests(
+  args: { workerId: string; first?: number; after?: string | null },
+  options?: { signal?: AbortSignal },
+): Promise<Connection<WorkerPTO>> {
+  const data = await requestGraphQL<WorkerPtoTableQuery, WorkerPtoTableQueryVariables>({
+    document: WorkerPtoTableDocument,
+    operationName: "WorkerPtoTable",
+    variables: {
+      input: {
+        workerId: args.workerId,
+        first: args.first,
+        after: args.after ?? undefined,
+        includeWorker: false,
+        sort: [{ field: "startDate", direction: "desc" }],
+      },
+      includeTotalCount: !args.after,
+    },
+    signal: options?.signal,
+  });
+  return data.workerPTOEntries as unknown as Connection<WorkerPTO>;
+}
+
+/** One time off request by id: a deep link to a request outside the pages already read. */
+export async function fetchWorkerPto(
+  id: string,
+  options?: { signal?: AbortSignal },
+): Promise<WorkerPTO> {
+  const data = await requestGraphQL<WorkerPtoQuery, WorkerPtoQueryVariables>({
+    document: WorkerPtoDocument,
+    operationName: "WorkerPto",
+    variables: { id },
+    signal: options?.signal,
+  });
+  return data.workerPTO as unknown as WorkerPTO;
 }
 
 export async function fetchWorkerPtoBalances(
@@ -152,22 +204,18 @@ export async function fetchWorkerPtoBalances(
   return data.workerPtoBalances as WorkerPTOBalanceView[];
 }
 
+/** A page of the worker's ledger as the connection the server returns, newest first as asked. */
 export async function fetchWorkerPtoLedger(
   input: WorkerPtoLedgerInput,
   options?: { signal?: AbortSignal },
-): Promise<{ entries: WorkerPTOLedgerEntry[]; hasNextPage: boolean; endCursor: string | null }> {
+): Promise<Connection<WorkerPTOLedgerEntry>> {
   const data = await requestGraphQL<WorkerPtoLedgerQuery, WorkerPtoLedgerQueryVariables>({
     document: WorkerPtoLedgerDocument,
     operationName: "WorkerPtoLedger",
     variables: { input },
     signal: options?.signal,
   });
-  const connection = data.workerPtoLedger;
-  return {
-    entries: (connection.edges ?? []).map((edge) => edge.node as WorkerPTOLedgerEntry),
-    hasNextPage: connection.pageInfo.hasNextPage,
-    endCursor: connection.pageInfo.endCursor ?? null,
-  };
+  return data.workerPtoLedger as Connection<WorkerPTOLedgerEntry>;
 }
 
 export async function fetchWorkerPtoAvailability(

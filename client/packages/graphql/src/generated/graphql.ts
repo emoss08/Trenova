@@ -3841,6 +3841,26 @@ export type DeskCaseTrustKey =
   /** If nothing changes. */
   | 'Unchanged';
 
+export type DeskConversationFilterInput = {
+  /** Only conversations with this agent. */
+  agentId?: string | number | null | undefined;
+  /** Only conversations that began in one of these places. */
+  origins?: Array<DeskConversationOrigin> | null | undefined;
+  /** All time when absent. */
+  timeframe?: DeskTranscriptTimeframeInput | null | undefined;
+  /** Only this person's conversations. */
+  userId?: string | number | null | undefined;
+};
+
+/** Where a Desk conversation began. */
+export type DeskConversationOrigin =
+  | 'Briefing'
+  | 'Desk'
+  | 'Formula'
+  | 'Import'
+  | 'Panel'
+  | 'Watchtower';
+
 /** Which of the Desk's queues an item belongs to, by what raised it. Everything is all of them. */
 export type DeskLens =
   | 'Decisions'
@@ -3862,6 +3882,41 @@ export type DeskMemoriesInput = {
   /** With subjectId, only the memories about that record, as its own page lists them: what agents keep about it for their own work is listed too. */
   subjectType?: AgentMemorySubjectType | null | undefined;
 };
+
+export type DeskTranscriptExportKind =
+  /** Conversations matching a timeframe and, optionally, a person, an agent or where they began. */
+  | 'Filter'
+  /** Conversations a person picked from the list. */
+  | 'Selection';
+
+export type DeskTranscriptExportStatus =
+  | 'Expired'
+  | 'Failed'
+  | 'Pending'
+  | 'Running'
+  | 'Succeeded';
+
+export type DeskTranscriptTimeframeInput = {
+  /** The first day of a Custom timeframe, as YYYY-MM-DD. */
+  fromDate?: string | null | undefined;
+  preset: DeskTranscriptTimeframePreset;
+  /** The last day of a Custom timeframe, as YYYY-MM-DD. */
+  toDate?: string | null | undefined;
+};
+
+/**
+ * A timeframe over a conversation's last message, in the organization's time
+ * zone. Last7Days is today and the six days before it, Last30Days and Last90Days
+ * likewise; Last12Months starts on today's date a year ago; Custom runs from the
+ * start of fromDate to the end of toDate.
+ */
+export type DeskTranscriptTimeframePreset =
+  | 'AllTime'
+  | 'Custom'
+  | 'Last7Days'
+  | 'Last12Months'
+  | 'Last30Days'
+  | 'Last90Days';
 
 export type DetachPayEventInput = {
   payEventId: string | number;
@@ -7599,6 +7654,13 @@ export type RequestAuditExportInput = {
   includeSecurity?: boolean | null | undefined;
   rangeFrom: number;
   rangeTo: number;
+};
+
+/** Exactly one of filter and conversationIds. */
+export type RequestDeskTranscriptExportInput = {
+  /** At most 200 conversations picked from the list. */
+  conversationIds?: Array<string | number> | null | undefined;
+  filter?: DeskConversationFilterInput | null | undefined;
 };
 
 export type RequestMissingFactoringDocumentsInput = {
@@ -11918,6 +11980,55 @@ export type SetMemorySavingModeMutationVariables = Exact<{
 
 export type SetMemorySavingModeMutation = { setMemorySavingMode: { ' $fragmentRefs'?: { 'DeskMemorySettingsFieldsFragment': DeskMemorySettingsFieldsFragment } } };
 
+export type DeskConversationRowFieldsFragment = { id: string, ownerName: string, agentName: string, title: string, origin: DeskConversationOrigin, archived: boolean, messageCount: number, startedAt: number, lastMessageAt: number | null } & { ' $fragmentName'?: 'DeskConversationRowFieldsFragment' };
+
+export type DeskTranscriptExportFieldsFragment = { id: string, requestedByName: string, kind: DeskTranscriptExportKind, status: DeskTranscriptExportStatus, conversationCount: number, byteSize: number, artifactExpiresAt: number | null, errorMessage: string | null, startedAt: number | null, completedAt: number | null, downloadable: boolean, createdAt: number, coverage: { kind: DeskTranscriptExportKind, personName: string | null, agentName: string | null, origins: Array<DeskConversationOrigin>, selectedCount: number, ownerNames: Array<string>, ownerCount: number, timeframe: { preset: DeskTranscriptTimeframePreset, fromDate: string | null, toDate: string | null } | null } } & { ' $fragmentName'?: 'DeskTranscriptExportFieldsFragment' };
+
+export type DeskConversationTableQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+  filter?: DeskConversationFilterInput | null | undefined;
+  includeTotalCount?: boolean | null | undefined;
+}>;
+
+
+export type DeskConversationTableQuery = { deskConversations: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'DeskConversationRowFieldsFragment': DeskConversationRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
+export type DeskTranscriptExportTableQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+  includeTotalCount?: boolean | null | undefined;
+}>;
+
+
+export type DeskTranscriptExportTableQuery = { deskTranscriptExports: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'DeskTranscriptExportFieldsFragment': DeskTranscriptExportFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
+export type DeskTranscriptExportPreviewQueryVariables = Exact<{
+  filter: DeskConversationFilterInput;
+}>;
+
+
+export type DeskTranscriptExportPreviewQuery = { deskTranscriptExportPreview: { count: number, exact: boolean, limit: number, withinLimit: boolean } };
+
+export type OpenDeskConversationMutationVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type OpenDeskConversationMutation = { openDeskConversation: { conversation: { ' $fragmentRefs'?: { 'DeskConversationRowFieldsFragment': DeskConversationRowFieldsFragment } }, transcript: { ' $fragmentRefs'?: { 'AgentRunTranscriptFieldsFragment': AgentRunTranscriptFieldsFragment } } | null } };
+
+export type RequestDeskTranscriptExportMutationVariables = Exact<{
+  input: RequestDeskTranscriptExportInput;
+}>;
+
+
+export type RequestDeskTranscriptExportMutation = { requestDeskTranscriptExport: { ' $fragmentRefs'?: { 'DeskTranscriptExportFieldsFragment': DeskTranscriptExportFieldsFragment } } };
+
+export type DeskTranscriptExportDownloadMutationVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type DeskTranscriptExportDownloadMutation = { deskTranscriptExportDownload: { url: string, fileName: string, expiresAt: number } };
+
 export type AgentEvalCaseTableRowFieldsFragment = { id: string, organizationId: string, businessUnitId: string, agentDefinitionId: string, title: string, source: AgentEvalCaseSource, status: AgentEvalCaseStatus, automatic: boolean, trigger: AgentRunTrigger, input: string, sourceThreadId: string | null, sourceProposalId: string | null, heldTools: Array<string>, expected: unknown, weight: number, expiresAt: number | null, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'AgentEvalCaseTableRowFieldsFragment' };
 
 export type AgentEvalCaseDetailFieldsFragment = (
@@ -12819,10 +12930,12 @@ export type BenefitPlansQuery = { benefitPlans: Array<{ id: string, status: Enti
 export type WorkerBenefitEnrollmentsQueryVariables = Exact<{
   workerId: string | number;
   openOnly?: boolean | null | undefined;
+  first?: number | null | undefined;
+  after?: string | null | undefined;
 }>;
 
 
-export type WorkerBenefitEnrollmentsQuery = { workerBenefitEnrollments: Array<{ id: string, workerId: string, benefitPlanId: string, status: BenefitEnrollmentStatus, coverageTier: CoverageTier, effectiveFrom: number, effectiveTo: number | null, employeeCostMinor: number, employerCostMinor: number, recurringDeductionId: string | null, waivedReason: string | null, notes: string | null, version: number, benefitPlan: { id: string, code: string, name: string, planType: BenefitPlanType, carrier: string | null } | null }> };
+export type WorkerBenefitEnrollmentsQuery = { workerBenefitEnrollments: { edges: Array<{ cursor: string, node: { id: string, workerId: string, benefitPlanId: string, status: BenefitEnrollmentStatus, coverageTier: CoverageTier, effectiveFrom: number, effectiveTo: number | null, employeeCostMinor: number, employerCostMinor: number, recurringDeductionId: string | null, waivedReason: string | null, notes: string | null, version: number, benefitPlan: { id: string, code: string, name: string, planType: BenefitPlanType, carrier: string | null } | null } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
 
 export type BenefitEnrollmentsQueryVariables = Exact<{
   planId?: string | number | null | undefined;
@@ -14901,10 +15014,12 @@ export type PayProfileTableQuery = { payProfiles: { totalCount?: number | null, 
 
 export type WorkerPayAssignmentsQueryVariables = Exact<{
   workerId: string | number;
+  first?: number | null | undefined;
+  after?: string | null | undefined;
 }>;
 
 
-export type WorkerPayAssignmentsQuery = { workerPayAssignments: Array<{ id: string, workerId: string, payProfileId: string, effectiveFrom: number, effectiveTo: number | null, splitPercent: string, notes: string, version: number, createdAt: number, rateOverrides: Array<{ componentId: string, rate: string }> | null, payProfile: { id: string, name: string, classification: PayeeClassification, components: Array<{ id: string, kind: PayComponentKind, method: PayCalcMethod, description: string, rate: string }> | null } | null }> };
+export type WorkerPayAssignmentsQuery = { workerPayAssignments: { edges: Array<{ cursor: string, node: { id: string, workerId: string, payProfileId: string, effectiveFrom: number, effectiveTo: number | null, splitPercent: string, notes: string, version: number, createdAt: number, rateOverrides: Array<{ componentId: string, rate: string }> | null, payProfile: { id: string, name: string, classification: PayeeClassification, components: Array<{ id: string, kind: PayComponentKind, method: PayCalcMethod, description: string, rate: string }> | null } | null } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
 
 export type EffectiveWorkerPayAssignmentQueryVariables = Exact<{
   workerId: string | number;
@@ -18611,10 +18726,12 @@ export type PtoPolicyQuery = { ptoPolicy: { ' $fragmentRefs'?: { 'PtoPolicyField
 
 export type WorkerPtoPolicyAssignmentsQueryVariables = Exact<{
   workerId: string | number;
+  first?: number | null | undefined;
+  after?: string | null | undefined;
 }>;
 
 
-export type WorkerPtoPolicyAssignmentsQuery = { workerPtoPolicyAssignments: Array<{ ' $fragmentRefs'?: { 'PtoPolicyAssignmentFieldsFragment': PtoPolicyAssignmentFieldsFragment } }> };
+export type WorkerPtoPolicyAssignmentsQuery = { workerPtoPolicyAssignments: { edges: Array<{ cursor: string, node: { ' $fragmentRefs'?: { 'PtoPolicyAssignmentFieldsFragment': PtoPolicyAssignmentFieldsFragment } } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
 
 export type WorkerPtoBalancesQueryVariables = Exact<{
   workerId: string | number;
@@ -19523,10 +19640,12 @@ export type WorkerPolicyComplianceQuery = { workerPolicyCompliance: { signed: nu
 
 export type WorkerPolicyAcknowledgementsQueryVariables = Exact<{
   workerId: string | number;
+  first?: number | null | undefined;
+  after?: string | null | undefined;
 }>;
 
 
-export type WorkerPolicyAcknowledgementsQuery = { workerPolicyAcknowledgements: Array<{ id: string, policyId: string, versionLabel: string, acknowledgedAt: number, signatureName: string | null, documentChecksum: string | null, policy: { id: string, title: string, versionLabel: string } | null }> };
+export type WorkerPolicyAcknowledgementsQuery = { workerPolicyAcknowledgements: { edges: Array<{ cursor: string, node: { id: string, policyId: string, versionLabel: string, acknowledgedAt: number, signatureName: string | null, documentChecksum: string | null, policy: { id: string, title: string, versionLabel: string } | null } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
 
 export type ProfileChangeRequestsQueryVariables = Exact<{
   filter?: ProfileChangeFilterInput | null | undefined;
@@ -20960,6 +21079,7 @@ export type WorkerCredentialTypeTableQuery = { workerCredentialTypes: { totalCou
 export type WorkerCredentialsQueryVariables = Exact<{
   workerId: string | number;
   includeArchived?: boolean | null | undefined;
+  credentialTypeCode?: string | null | undefined;
 }>;
 
 
@@ -20970,7 +21090,7 @@ export type WorkerCredentialSummaryQueryVariables = Exact<{
 }>;
 
 
-export type WorkerCredentialSummaryQuery = { workerCredentialSummary: { workerId: string, complianceStatus: ComplianceStatus, requiredCount: number, validCount: number, expiringCount: number, expiredCount: number, missingCount: number, items: Array<{ health: WorkerCredentialHealth, daysUntilExpiry: number | null, required: boolean, credentialType: { id: string, businessUnitId: string, organizationId: string, code: string, name: string, description: string | null, category: WorkerCredentialCategory, status: EntityStatus | null, isRequired: boolean, requiredForDriverTypes: Array<DriverType> | null, renewalWindowDays: number, validityMonths: number | null, requiresNumber: boolean, requiresDocument: boolean, profileField: string | null, isSystem: boolean, sortOrder: number, activeCredentialCount: number | null, version: number, createdAt: number, updatedAt: number } | null, credential: { id: string, workerId: string, credentialTypeId: string, status: WorkerCredentialStatus, number: string | null, issuingAuthority: string | null, issuedAt: number | null, expiresAt: number | null, documentId: string | null, notes: string | null, verifiedById: string | null, verifiedAt: number | null, archivedById: string | null, archivedAt: number | null, archiveReason: string | null, health: WorkerCredentialHealth, daysUntilExpiry: number | null, version: number, createdAt: number, updatedAt: number, credentialType: { id: string, code: string, name: string, category: WorkerCredentialCategory, isRequired: boolean, renewalWindowDays: number, validityMonths: number | null, requiresNumber: boolean, requiresDocument: boolean, profileField: string | null, isSystem: boolean, sortOrder: number } | null, document: { id: string, fileName: string, originalName: string, fileType: string, fileSize: number, createdAt: number } | null, verifiedBy: { id: string, name: string } | null } | null }> } };
+export type WorkerCredentialSummaryQuery = { workerCredentialSummary: { workerId: string, complianceStatus: ComplianceStatus, requiredCount: number, validCount: number, expiringCount: number, expiredCount: number, missingCount: number, archivedCount: number, items: Array<{ health: WorkerCredentialHealth, daysUntilExpiry: number | null, required: boolean, credentialType: { id: string, businessUnitId: string, organizationId: string, code: string, name: string, description: string | null, category: WorkerCredentialCategory, status: EntityStatus | null, isRequired: boolean, requiredForDriverTypes: Array<DriverType> | null, renewalWindowDays: number, validityMonths: number | null, requiresNumber: boolean, requiresDocument: boolean, profileField: string | null, isSystem: boolean, sortOrder: number, activeCredentialCount: number | null, version: number, createdAt: number, updatedAt: number } | null, credential: { id: string, workerId: string, credentialTypeId: string, status: WorkerCredentialStatus, number: string | null, issuingAuthority: string | null, issuedAt: number | null, expiresAt: number | null, documentId: string | null, notes: string | null, verifiedById: string | null, verifiedAt: number | null, archivedById: string | null, archivedAt: number | null, archiveReason: string | null, health: WorkerCredentialHealth, daysUntilExpiry: number | null, version: number, createdAt: number, updatedAt: number, credentialType: { id: string, code: string, name: string, category: WorkerCredentialCategory, isRequired: boolean, renewalWindowDays: number, validityMonths: number | null, requiresNumber: boolean, requiresDocument: boolean, profileField: string | null, isSystem: boolean, sortOrder: number } | null, document: { id: string, fileName: string, originalName: string, fileType: string, fileSize: number, createdAt: number } | null, verifiedBy: { id: string, name: string } | null } | null }> } };
 
 export type CredentialExpiryForecastQueryVariables = Exact<{
   days?: number | null | undefined;
@@ -21300,10 +21420,13 @@ export type WorkerEmploymentEventFieldsFragment = { id: string, workerId: string
 export type WorkerEmploymentEventsQueryVariables = Exact<{
   workerId: string | number;
   kinds?: Array<WorkerEmploymentEventKind> | WorkerEmploymentEventKind | null | undefined;
+  first?: number | null | undefined;
+  after?: string | null | undefined;
+  includeTotalCount?: boolean | null | undefined;
 }>;
 
 
-export type WorkerEmploymentEventsQuery = { workerEmploymentEvents: Array<{ ' $fragmentRefs'?: { 'WorkerEmploymentEventFieldsFragment': WorkerEmploymentEventFieldsFragment } }> };
+export type WorkerEmploymentEventsQuery = { workerEmploymentEvents: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ cursor: string, node: { ' $fragmentRefs'?: { 'WorkerEmploymentEventFieldsFragment': WorkerEmploymentEventFieldsFragment } } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
 
 export type WorkerEmploymentEffectFieldsFragment = { kind: WorkerEmploymentEffectKind, name: string | null, count: number | null, days: string | null, ptoType: PtoType | null, startDate: number | null, endDate: number | null, failed: boolean } & { ' $fragmentName'?: 'WorkerEmploymentEffectFieldsFragment' };
 
@@ -21335,23 +21458,34 @@ export type PreviewWorkerEmploymentEventQueryVariables = Exact<{
 
 export type PreviewWorkerEmploymentEventQuery = { previewWorkerEmploymentEvent: { kind: WorkerEmploymentEventKind, effectiveAt: number, fromValues: Array<{ key: string, value: string }>, toValues: Array<{ key: string, value: string }>, effects: Array<{ ' $fragmentRefs'?: { 'WorkerEmploymentEffectFieldsFragment': WorkerEmploymentEffectFieldsFragment } }> } };
 
+export type WorkerEmploymentEventQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type WorkerEmploymentEventQuery = { workerEmploymentEvent: { ' $fragmentRefs'?: { 'WorkerEmploymentEventFieldsFragment': WorkerEmploymentEventFieldsFragment } } };
+
 export type DeskWorkerInjuriesQueryVariables = Exact<{
   workerId?: string | number | null | undefined;
   caseYear?: number | null | undefined;
   recordableOnly?: boolean | null | undefined;
   openOnly?: boolean | null | undefined;
-  limit?: number | null | undefined;
+  first?: number | null | undefined;
+  after?: string | null | undefined;
 }>;
 
 
-export type DeskWorkerInjuriesQuery = { workerInjuries: Array<{ id: string, workerId: string, caseNumber: number, caseYear: number, classification: OshaCaseClassification, illnessType: OshaIllnessType, treatment: InjuryTreatment, status: InjuryCaseStatus, recordable: boolean, occurredAt: number, returnedToWorkAt: number | null, description: string, bodyPart: string | null, daysAway: number, daysRestricted: number, privacyCase: boolean, logName: string, claimStatus: WorkersCompClaimStatus, worker: { ' $fragmentRefs'?: { 'WorkerReferenceFragment': WorkerReferenceFragment } } | null }> };
+export type DeskWorkerInjuriesQuery = { workerInjuries: { edges: Array<{ cursor: string, node: { id: string, workerId: string, caseNumber: number, caseYear: number, classification: OshaCaseClassification, illnessType: OshaIllnessType, treatment: InjuryTreatment, status: InjuryCaseStatus, recordable: boolean, occurredAt: number, returnedToWorkAt: number | null, description: string, bodyPart: string | null, daysAway: number, daysRestricted: number, privacyCase: boolean, logName: string, claimStatus: WorkersCompClaimStatus, worker: { ' $fragmentRefs'?: { 'WorkerReferenceFragment': WorkerReferenceFragment } } | null } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
 
 export type WorkerInjuriesQueryVariables = Exact<{
   workerId: string | number;
+  first?: number | null | undefined;
+  after?: string | null | undefined;
+  includeTotalCount?: boolean | null | undefined;
 }>;
 
 
-export type WorkerInjuriesQuery = { workerInjuries: Array<{ id: string, workerId: string, caseNumber: number, caseYear: number, classification: OshaCaseClassification, illnessType: OshaIllnessType, treatment: InjuryTreatment, status: InjuryCaseStatus, recordable: boolean, occurredAt: number, reportedAt: number | null, returnedToWorkAt: number | null, location: string | null, description: string, bodyPart: string | null, harmfulAgent: string | null, daysAway: number, daysRestricted: number, privacyCase: boolean, logName: string, claimStatus: WorkersCompClaimStatus, claimNumber: string | null, claimCarrier: string | null, claimFiledAt: number | null, claimClosedAt: number | null, safetyEventId: string | null, documentId: string | null, notes: string | null, version: number }> };
+export type WorkerInjuriesQuery = { workerInjuries: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ cursor: string, node: { id: string, workerId: string, caseNumber: number, caseYear: number, classification: OshaCaseClassification, illnessType: OshaIllnessType, treatment: InjuryTreatment, status: InjuryCaseStatus, recordable: boolean, occurredAt: number, reportedAt: number | null, returnedToWorkAt: number | null, location: string | null, description: string, bodyPart: string | null, harmfulAgent: string | null, daysAway: number, daysRestricted: number, privacyCase: boolean, logName: string, claimStatus: WorkersCompClaimStatus, claimNumber: string | null, claimCarrier: string | null, claimFiledAt: number | null, claimClosedAt: number | null, safetyEventId: string | null, documentId: string | null, notes: string | null, version: number } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
 
 export type OshaLogQueryVariables = Exact<{
   year?: number | null | undefined;
@@ -21406,6 +21540,13 @@ export type UncertifyOshaSummaryMutationVariables = Exact<{
 
 
 export type UncertifyOshaSummaryMutation = { uncertifyOshaSummary: { id: string, year: number, status: OshaSummaryStatus, version: number } };
+
+export type WorkerInjuryQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type WorkerInjuryQuery = { workerInjury: { id: string, workerId: string, caseNumber: number, caseYear: number, classification: OshaCaseClassification, illnessType: OshaIllnessType, treatment: InjuryTreatment, status: InjuryCaseStatus, recordable: boolean, occurredAt: number, reportedAt: number | null, returnedToWorkAt: number | null, location: string | null, description: string, bodyPart: string | null, harmfulAgent: string | null, daysAway: number, daysRestricted: number, privacyCase: boolean, logName: string, claimStatus: WorkersCompClaimStatus, claimNumber: string | null, claimCarrier: string | null, claimFiledAt: number | null, claimClosedAt: number | null, safetyEventId: string | null, documentId: string | null, notes: string | null, version: number } };
 
 export type DeskWorkerLeaveCasesQueryVariables = Exact<{
   workerId?: string | number | null | undefined;
@@ -21498,7 +21639,7 @@ export type WorkerOverviewQueryVariables = Exact<{
 }>;
 
 
-export type WorkerOverviewQuery = { workerOverview: { asOf: number, standing: WorkerStanding, concernCount: number, nextReviewAt: number | null, documentCount: number | null, agentMemoryCount: number | null, concerns: Array<{ severity: WorkerConcernSeverity, code: WorkerConcernCode, subject: string | null, count: number, occurredAt: number | null, dueAt: number | null, daysUntil: number | null, stopsAssignment: boolean, destination: { tab: WorkerPageTab, view: WorkerPageView | null, record: WorkerPageRecord | null, recordId: string | null } }>, clearance: { cleared: boolean, clearedThrough: number | null, notClearedSince: number | null, blocks: Array<WorkerClearanceBlock>, itemsTruncated: boolean, firstStop: { key: string, name: string, source: WorkerClearanceSource, dueAt: number, daysUntil: number } | null, items: Array<{ key: string, lane: WorkerClearanceLane, source: WorkerClearanceSource, name: string, dueAt: number, daysUntil: number, effect: WorkerClearanceEffect, rule: WorkerClearanceRule | null, hazmatOnly: boolean, regulation: string | null, required: boolean, destination: { tab: WorkerPageTab, view: WorkerPageView | null, record: WorkerPageRecord | null, recordId: string | null } }> } | null, worker: { id: string, firstName: string, lastName: string, status: EntityStatus, canBeAssigned: boolean, availableForDispatch: boolean, type: WorkerType, driverType: DriverType, lastHomeAt: number | null, fleetCode: { id: string, code: string, color: string } | null, profile: { hireDate: number, terminationDate: number | null, complianceStatus: ComplianceStatus | null, isQualified: boolean, eldExempt: boolean } | null }, credentials: { complianceStatus: ComplianceStatus, requiredCount: number, validCount: number, expiringCount: number, expiredCount: number, missingCount: number } | null, qualificationFile: { complete: boolean, missingRequired: number, expiringSoon: number, expired: number, outstanding: number, safetyHistoryLate: boolean } | null, drugAlcohol: { nextQueryDaysUntil: number | null, standing: { status: DrugAlcoholStatus, returnToDuty: ReturnToDutyStatus, lastClearinghouseQueryAt: number | null, nextClearinghouseQueryDue: number | null, openTestCount: number } } | null, training: { compliant: boolean, requiredCount: number, currentCount: number, dueCount: number, overdueCount: number, expiringCount: number, expiredCount: number, missingCount: number } | null, safety: { score: number, rating: SafetyRating, activePoints: number, pointsWatchThreshold: number, pointsAtRiskThreshold: number, accidents: number, preventableAccidents: number, citations: number, outOfServiceOrders: number, openEvents: number, activeDiscipline: number, highestDiscipline: DisciplinaryLevel | null, recognitions: number, daysSinceLastEvent: number | null } | null, employment: { eventCount: number, hiredAt: number | null, openChecklistCount: number | null } | null, checklist: { id: string, name: string, kind: WorkerChecklistKind, status: WorkerChecklistStatus, dueAt: number | null, progress: { requiredTotal: number, requiredDone: number, overdue: number, percent: number } | null } | null, pto: Array<{ ptoType: PtoType, tracked: boolean, balanceDays: string, pendingDays: string, availableDays: string }> | null, leave: { openCaseCount: number, remainingHours: string, totalHours: string, exhausted: boolean } | null, openReview: { id: string, title: string, status: PerformanceReviewStatus, periodEnd: number, overallScore: string | null } | null, lastReview: { id: string, title: string, status: PerformanceReviewStatus, periodEnd: number, overallScore: string | null } | null, schedule: { currentShiftName: string | null } | null, hos: { link: WorkerHosLink, dutyStatus: string | null, dutyStatusSince: number | null, driveRemainingMs: number | null, driveLimitMs: number | null, shiftRemainingMs: number | null, shiftLimitMs: number | null, cycleRemainingMs: number | null, cycleLimitMs: number | null, breakRemainingMs: number | null, breakLimitMs: number | null, tractorCode: string | null, recordedAt: number | null } | null, pay: { profileName: string, classification: PayeeClassification, effectiveFrom: number, headline: { kind: PayComponentKind, method: PayCalcMethod, rate: string, overridden: boolean } | null } | null, benefits: { coveredCount: number, notStartedCount: number, employeeCostPerPeriodMinor: number } | null, portal: { access: WorkerPortalAccess, pendingProfileChangeCount: number | null, lastSignInAt: number | null } | null, nextTimeOff: { id: string, status: PtoStatus, type: PtoType, startDate: number, endDate: number, days: string } | null } };
+export type WorkerOverviewQuery = { workerOverview: { asOf: number, standing: WorkerStanding, concernCount: number, nextReviewAt: number | null, documentCount: number | null, agentMemoryCount: number | null, concerns: Array<{ severity: WorkerConcernSeverity, code: WorkerConcernCode, subject: string | null, count: number, occurredAt: number | null, dueAt: number | null, daysUntil: number | null, stopsAssignment: boolean, destination: { tab: WorkerPageTab, view: WorkerPageView | null, record: WorkerPageRecord | null, recordId: string | null } }>, clearance: { cleared: boolean, clearedThrough: number | null, notClearedSince: number | null, blocks: Array<WorkerClearanceBlock>, itemsTruncated: boolean, firstStop: { key: string, name: string, source: WorkerClearanceSource, dueAt: number, daysUntil: number } | null, items: Array<{ key: string, lane: WorkerClearanceLane, source: WorkerClearanceSource, name: string, dueAt: number, daysUntil: number, effect: WorkerClearanceEffect, rule: WorkerClearanceRule | null, hazmatOnly: boolean, regulation: string | null, required: boolean, destination: { tab: WorkerPageTab, view: WorkerPageView | null, record: WorkerPageRecord | null, recordId: string | null } }> } | null, worker: { id: string, firstName: string, lastName: string, status: EntityStatus, canBeAssigned: boolean, availableForDispatch: boolean, type: WorkerType, driverType: DriverType, lastHomeAt: number | null, fleetCode: { id: string, code: string, color: string } | null, profile: { hireDate: number, terminationDate: number | null, complianceStatus: ComplianceStatus | null, isQualified: boolean, eldExempt: boolean } | null }, credentials: { complianceStatus: ComplianceStatus, requiredCount: number, validCount: number, expiringCount: number, expiredCount: number, missingCount: number } | null, qualificationFile: { complete: boolean, missingRequired: number, expiringSoon: number, expired: number, outstanding: number, safetyHistoryLate: boolean } | null, drugAlcohol: { nextQueryDaysUntil: number | null, standing: { status: DrugAlcoholStatus, returnToDuty: ReturnToDutyStatus, lastClearinghouseQueryAt: number | null, nextClearinghouseQueryDue: number | null, openTestCount: number } } | null, training: { compliant: boolean, requiredCount: number, currentCount: number, dueCount: number, overdueCount: number, expiringCount: number, expiredCount: number, missingCount: number } | null, safety: { score: number, rating: SafetyRating, activePoints: number, pointsWatchThreshold: number, pointsAtRiskThreshold: number, accidents: number, preventableAccidents: number, citations: number, outOfServiceOrders: number, openEvents: number, activeDiscipline: number, highestDiscipline: DisciplinaryLevel | null, recognitions: number, daysSinceLastEvent: number | null } | null, employment: { eventCount: number, hiredAt: number | null, openChecklistCount: number | null, closedChecklistCount: number | null } | null, checklist: { id: string, name: string, kind: WorkerChecklistKind, status: WorkerChecklistStatus, dueAt: number | null, progress: { requiredTotal: number, requiredDone: number, overdue: number, percent: number } | null } | null, pto: Array<{ ptoType: PtoType, tracked: boolean, balanceDays: string, pendingDays: string, availableDays: string }> | null, leave: { openCaseCount: number, remainingHours: string, totalHours: string, exhausted: boolean } | null, openReview: { id: string, title: string, status: PerformanceReviewStatus, periodEnd: number, overallScore: string | null } | null, lastReview: { id: string, title: string, status: PerformanceReviewStatus, periodEnd: number, overallScore: string | null } | null, schedule: { currentShiftName: string | null } | null, hos: { link: WorkerHosLink, dutyStatus: string | null, dutyStatusSince: number | null, driveRemainingMs: number | null, driveLimitMs: number | null, shiftRemainingMs: number | null, shiftLimitMs: number | null, cycleRemainingMs: number | null, cycleLimitMs: number | null, breakRemainingMs: number | null, breakLimitMs: number | null, tractorCode: string | null, recordedAt: number | null } | null, pay: { profileName: string, classification: PayeeClassification, effectiveFrom: number, headline: { kind: PayComponentKind, method: PayCalcMethod, rate: string, overridden: boolean } | null } | null, benefits: { coveredCount: number, notStartedCount: number, employeeCostPerPeriodMinor: number } | null, portal: { access: WorkerPortalAccess, pendingProfileChangeCount: number | null, lastSignInAt: number | null } | null, nextTimeOff: { id: string, status: PtoStatus, type: PtoType, startDate: number, endDate: number, days: string } | null } };
 
 export type WorkerRosterAttentionQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -21531,6 +21672,7 @@ export type SafetyScorecardFieldsFragment = { workerId: string, asOf: number, sc
 
 export type WorkerSafetyEventsQueryVariables = Exact<{
   workerId: string | number;
+  openOnly?: boolean | null | undefined;
 }>;
 
 
@@ -21541,21 +21683,27 @@ export type WorkerSafetyScorecardQueryVariables = Exact<{
 }>;
 
 
-export type WorkerSafetyScorecardQuery = { workerSafetyScorecard: { ' $fragmentRefs'?: { 'SafetyScorecardFieldsFragment': SafetyScorecardFieldsFragment } } };
+export type WorkerSafetyScorecardQuery = { workerSafetyScorecard: (
+    { activePointEvents: Array<{ id: string, kind: SafetyEventKind, severity: SafetySeverity, preventable: boolean, inspectionResult: InspectionResult | null, inspectionLevel: number | null, occurredAt: number, activePoints: number, pointsExpireAt: number | null }> }
+    & { ' $fragmentRefs'?: { 'SafetyScorecardFieldsFragment': SafetyScorecardFieldsFragment } }
+  ) };
 
 export type WorkerDisciplinaryActionsQueryVariables = Exact<{
   workerId: string | number;
+  first?: number | null | undefined;
+  after?: string | null | undefined;
+  includeTotalCount?: boolean | null | undefined;
 }>;
 
 
-export type WorkerDisciplinaryActionsQuery = { workerDisciplinaryActions: Array<{ ' $fragmentRefs'?: { 'WorkerDisciplinaryActionFieldsFragment': WorkerDisciplinaryActionFieldsFragment } }> };
+export type WorkerDisciplinaryActionsQuery = { workerDisciplinaryActions: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ cursor: string, node: { ' $fragmentRefs'?: { 'WorkerDisciplinaryActionFieldsFragment': WorkerDisciplinaryActionFieldsFragment } } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
 
 export type WorkerDisciplinaryLadderQueryVariables = Exact<{
   workerId: string | number;
 }>;
 
 
-export type WorkerDisciplinaryLadderQuery = { workerDisciplinaryLadder: { highestLevel: DisciplinaryLevel | null, suggestedLevel: DisciplinaryLevel, atFinalStep: boolean, activeActions: Array<{ id: string, level: DisciplinaryLevel, status: DisciplinaryStatus, reason: string, issuedAt: number, expiresAt: number | null, active: boolean }> } };
+export type WorkerDisciplinaryLadderQuery = { workerDisciplinaryLadder: { highestLevel: DisciplinaryLevel | null, suggestedLevel: DisciplinaryLevel, atFinalStep: boolean, activeActions: Array<{ id: string, level: DisciplinaryLevel, status: DisciplinaryStatus, reason: string, issuedAt: number, expiresAt: number | null, active: boolean, suspensionDays: number | null, acknowledgedAt: number | null, issuedBy: { id: string, name: string } | null }> } };
 
 export type WorkerRecognitionsQueryVariables = Exact<{
   workerId: string | number;
@@ -21644,13 +21792,29 @@ export type DeleteWorkerRecognitionMutationVariables = Exact<{
 
 export type DeleteWorkerRecognitionMutation = { deleteWorkerRecognition: boolean };
 
-export type DeskWorkerTrainingRecordsQueryVariables = Exact<{
-  workerId: string | number;
-  includeClosed?: boolean | null | undefined;
+export type WorkerSafetyEventQueryVariables = Exact<{
+  id: string | number;
 }>;
 
 
-export type DeskWorkerTrainingRecordsQuery = { workerTrainingRecords: Array<{ id: string, courseId: string, status: WorkerTrainingStatus, assignedAt: number, dueAt: number | null, completedAt: number | null, expiresAt: number | null, score: string | null, passed: boolean | null, course: { ' $fragmentRefs'?: { 'TrainingCourseReferenceFragment': TrainingCourseReferenceFragment } } | null }> };
+export type WorkerSafetyEventQuery = { workerSafetyEvent: { ' $fragmentRefs'?: { 'WorkerSafetyEventFieldsFragment': WorkerSafetyEventFieldsFragment } } };
+
+export type WorkerDisciplinaryActionQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type WorkerDisciplinaryActionQuery = { workerDisciplinaryAction: { ' $fragmentRefs'?: { 'WorkerDisciplinaryActionFieldsFragment': WorkerDisciplinaryActionFieldsFragment } } };
+
+export type DeskWorkerTrainingRecordsQueryVariables = Exact<{
+  workerId: string | number;
+  includeClosed?: boolean | null | undefined;
+  first?: number | null | undefined;
+  after?: string | null | undefined;
+}>;
+
+
+export type DeskWorkerTrainingRecordsQuery = { workerTrainingRecords: { edges: Array<{ cursor: string, node: { id: string, courseId: string, status: WorkerTrainingStatus, assignedAt: number, dueAt: number | null, completedAt: number | null, expiresAt: number | null, score: string | null, passed: boolean | null, course: { ' $fragmentRefs'?: { 'TrainingCourseReferenceFragment': TrainingCourseReferenceFragment } } | null } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
 
 export type TrainingCourseFieldsFragment = { id: string, businessUnitId: string, organizationId: string, code: string, name: string, description: string | null, category: TrainingCategory, status: EntityStatus, delivery: TrainingDelivery, contentUrl: string | null, durationMinutes: number, passingScore: string | null, validityMonths: number | null, renewalWindowDays: number, isRequired: boolean, requiredForDriverTypes: Array<DriverType>, dueDaysAfterAssignment: number, requiresAcknowledgement: boolean, sortOrder: number, openRecordCount: number, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'TrainingCourseFieldsFragment' };
 
@@ -21672,10 +21836,12 @@ export type ActiveTrainingCoursesQuery = { activeTrainingCourses: Array<{ ' $fra
 export type WorkerTrainingRecordsQueryVariables = Exact<{
   workerId: string | number;
   includeClosed?: boolean | null | undefined;
+  first?: number | null | undefined;
+  after?: string | null | undefined;
 }>;
 
 
-export type WorkerTrainingRecordsQuery = { workerTrainingRecords: Array<{ ' $fragmentRefs'?: { 'WorkerTrainingRecordFieldsFragment': WorkerTrainingRecordFieldsFragment } }> };
+export type WorkerTrainingRecordsQuery = { workerTrainingRecords: { edges: Array<{ cursor: string, node: { ' $fragmentRefs'?: { 'WorkerTrainingRecordFieldsFragment': WorkerTrainingRecordFieldsFragment } } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
 
 export type WorkerTrainingSummaryQueryVariables = Exact<{
   workerId: string | number;
@@ -21763,6 +21929,13 @@ export type AttachWorkerTrainingDocumentMutationVariables = Exact<{
 
 
 export type AttachWorkerTrainingDocumentMutation = { attachWorkerTrainingDocument: { ' $fragmentRefs'?: { 'WorkerTrainingRecordFieldsFragment': WorkerTrainingRecordFieldsFragment } } };
+
+export type WorkerTrainingRecordQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type WorkerTrainingRecordQuery = { workerTrainingRecord: { ' $fragmentRefs'?: { 'WorkerTrainingRecordFieldsFragment': WorkerTrainingRecordFieldsFragment } } };
 
 export type WorkerFleetCodeFieldsFragment = { id: string, code: string, color: string } & { ' $fragmentName'?: 'WorkerFleetCodeFieldsFragment' };
 
@@ -21863,6 +22036,13 @@ export type BulkWorkerPtoActionMutationVariables = Exact<{
 
 export type BulkWorkerPtoActionMutation = { bulkWorkerPTOAction: { successCount: number, failureCount: number, results: Array<{ ptoId: string, success: boolean, error: string }> } };
 
+export type WorkerPtoQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type WorkerPtoQuery = { workerPTO: { ' $fragmentRefs'?: { 'WorkerPtoRowFieldsFragment': WorkerPtoRowFieldsFragment } } };
+
 export type WorkerRecordQueryVariables = Exact<{
   id: string | number;
 }>;
@@ -21914,6 +22094,7 @@ export { DeskRecordFieldsFragmentDoc, DeskAttentionGroupFieldsFragmentDoc, DeskA
 export { DeskBoardCardDocument } from "./documents/agent/desk-board";
 export { DeskCaseExhibitFieldsFragmentDoc, DeskCaseDecisionFieldsFragmentDoc, DeskCaseDocument, ChooseDeskCaseOptionDocument, AcceptDeskCaseRiskDocument, PutAwayDeskCaseDocument, BringBackDeskCaseDocument, AssignDeskCaseDocument, ReleaseDeskCaseDocument, UndoAgentDecisionDocument, CommitAgentDecisionNowDocument } from "./documents/agent/desk-case";
 export { DeskMemoryFieldsFragmentDoc, DeskMemorySettingsFieldsFragmentDoc, DeskMemoriesDocument, DeskMemoriesByIdsDocument, DeskMemorySettingsDocument, CreateDeskMemoryDocument, ReviseDeskMemoryDocument, SetDeskMemoryStatusDocument, ConfirmDeskMemoryDocument, DismissDeskMemoryDocument, SetMemorySavingModeDocument } from "./documents/agent/desk-memory";
+export { DeskConversationRowFieldsFragmentDoc, DeskTranscriptExportFieldsFragmentDoc, DeskConversationTableDocument, DeskTranscriptExportTableDocument, DeskTranscriptExportPreviewDocument, OpenDeskConversationDocument, RequestDeskTranscriptExportDocument, DeskTranscriptExportDownloadDocument } from "./documents/agent/desk-transcripts";
 export { AgentEvalCaseTableRowFieldsFragmentDoc, AgentEvalCaseDetailFieldsFragmentDoc, AgentEvalCaseTableDocument, AgentEvalCaseDetailDocument, CreateAgentEvalCaseDocument, UpdateAgentEvalCaseDocument, SetAgentEvalCaseStatusDocument, ReplayAgentEvalCaseDocument } from "./documents/agent/eval-cases";
 export { AgentEvaluationTableRowFieldsFragmentDoc, AgentEvaluationTableDocument, AgentEvaluationDetailDocument, ReplayAgentRunDocument } from "./documents/agent/evaluations";
 export { AgentExceptionTableRowFieldsFragmentDoc, AgentExceptionDetailFieldsFragmentDoc, AgentExceptionTableDocument, AgentExceptionDetailDocument, ResolveAgentExceptionDocument } from "./documents/agent/exceptions";
@@ -22139,15 +22320,15 @@ export { DeskWorkerEmploymentVerificationsDocument } from "./documents/worker-dq
 export { DriverQualificationFileDocument, OutstandingEmploymentVerificationsDocument, DqfRetentionCandidatesDocument, RecordEmploymentVerificationDocument, UpdateEmploymentVerificationDocument, MarkEmploymentVerificationRequestedDocument, RecordEmploymentVerificationFollowUpDocument, DeleteEmploymentVerificationDocument } from "./documents/worker-dqf/operations";
 export { DeskWorkerDotTestsDocument } from "./documents/worker-drug-alcohol/desk";
 export { WorkerDotTestFieldsFragmentDoc, WorkerDotViolationFieldsFragmentDoc, ClearinghouseQueryFieldsFragmentDoc, DotRandomPoolFieldsFragmentDoc, DotRandomDrawEntryFieldsFragmentDoc, DotRandomDrawFieldsFragmentDoc, WorkerDrugAlcoholFileDocument, DotRandomPoolsDocument, DotRandomDrawsDocument, DotRandomDrawDocument, RecordDotTestDocument, RecordDotTestResultDocument, CancelDotTestDocument, RecordDotViolationDocument, UpdateDotViolationDocument, RecordClearinghouseQueryDocument, CompleteClearinghouseQueryDocument, CreateDotRandomPoolDocument, UpdateDotRandomPoolDocument, RunDotRandomDrawDocument, FinalizeDotRandomDrawDocument, CancelDotRandomDrawDocument, UpdateDotRandomDrawEntryDocument } from "./documents/worker-drug-alcohol/operations";
-export { WorkerEmploymentEventFieldsFragmentDoc, WorkerEmploymentEffectFieldsFragmentDoc, WorkerEmploymentEventsDocument, RecordWorkerEmploymentEventDocument, AmendWorkerEmploymentEventDocument, WorkerEmploymentEventOptionsDocument, PreviewWorkerEmploymentEventDocument } from "./documents/worker-employment/operations";
+export { WorkerEmploymentEventFieldsFragmentDoc, WorkerEmploymentEffectFieldsFragmentDoc, WorkerEmploymentEventsDocument, RecordWorkerEmploymentEventDocument, AmendWorkerEmploymentEventDocument, WorkerEmploymentEventOptionsDocument, PreviewWorkerEmploymentEventDocument, WorkerEmploymentEventDocument } from "./documents/worker-employment/operations";
 export { DeskWorkerInjuriesDocument } from "./documents/worker-injury/desk";
-export { WorkerInjuriesDocument, OshaLogDocument, OshaSummariesDocument, RecordWorkerInjuryDocument, UpdateWorkerInjuryDocument, DeleteWorkerInjuryDocument, SaveOshaSummaryDocument, CertifyOshaSummaryDocument, UncertifyOshaSummaryDocument } from "./documents/worker-injury/operations";
+export { WorkerInjuriesDocument, OshaLogDocument, OshaSummariesDocument, RecordWorkerInjuryDocument, UpdateWorkerInjuryDocument, DeleteWorkerInjuryDocument, SaveOshaSummaryDocument, CertifyOshaSummaryDocument, UncertifyOshaSummaryDocument, WorkerInjuryDocument } from "./documents/worker-injury/operations";
 export { DeskWorkerLeaveCasesDocument } from "./documents/worker-leave/desk";
 export { WorkerLeaveFileDocument, LeaveControlDocument, OpenLeaveCaseDocument, UpdateLeaveCaseDocument, DecideLeaveCaseDocument, CloseLeaveCaseDocument, RequestLeaveCertificationDocument, RecordLeaveCertificationDocument, RecordLeaveDayDocument, DeleteLeaveDayDocument, UpdateLeaveControlDocument } from "./documents/worker-leave/operations";
 export { WorkerOverviewDocument, WorkerRosterAttentionDocument } from "./documents/worker-overview/operations";
 export { DeskWorkerSafetyEventsDocument, DeskWorkerRecognitionsDocument } from "./documents/worker-safety/desk";
-export { WorkerSafetyEventFieldsFragmentDoc, WorkerDisciplinaryActionFieldsFragmentDoc, WorkerRecognitionFieldsFragmentDoc, SafetyScorecardFieldsFragmentDoc, WorkerSafetyEventsDocument, WorkerSafetyScorecardDocument, WorkerDisciplinaryActionsDocument, WorkerDisciplinaryLadderDocument, WorkerRecognitionsDocument, DefaultSafetyPointsDocument, CreateWorkerSafetyEventDocument, UpdateWorkerSafetyEventDocument, CloseWorkerSafetyEventDocument, ReviewWorkerSafetyEventDocument, ReopenWorkerSafetyEventDocument, DeleteWorkerSafetyEventDocument, IssueDisciplinaryActionDocument, RescindDisciplinaryActionDocument, GiveWorkerRecognitionDocument, DeleteWorkerRecognitionDocument } from "./documents/worker-safety/operations";
+export { WorkerSafetyEventFieldsFragmentDoc, WorkerDisciplinaryActionFieldsFragmentDoc, WorkerRecognitionFieldsFragmentDoc, SafetyScorecardFieldsFragmentDoc, WorkerSafetyEventsDocument, WorkerSafetyScorecardDocument, WorkerDisciplinaryActionsDocument, WorkerDisciplinaryLadderDocument, WorkerRecognitionsDocument, DefaultSafetyPointsDocument, CreateWorkerSafetyEventDocument, UpdateWorkerSafetyEventDocument, CloseWorkerSafetyEventDocument, ReviewWorkerSafetyEventDocument, ReopenWorkerSafetyEventDocument, DeleteWorkerSafetyEventDocument, IssueDisciplinaryActionDocument, RescindDisciplinaryActionDocument, GiveWorkerRecognitionDocument, DeleteWorkerRecognitionDocument, WorkerSafetyEventDocument, WorkerDisciplinaryActionDocument } from "./documents/worker-safety/operations";
 export { DeskWorkerTrainingRecordsDocument } from "./documents/worker-training/desk";
-export { TrainingCourseFieldsFragmentDoc, WorkerTrainingRecordFieldsFragmentDoc, TrainingCourseTableDocument, ActiveTrainingCoursesDocument, WorkerTrainingRecordsDocument, WorkerTrainingSummaryDocument, CreateTrainingCourseDocument, UpdateTrainingCourseDocument, ArchiveTrainingCourseDocument, RestoreTrainingCourseDocument, AssignWorkerTrainingDocument, BulkAssignTrainingDocument, AssignRequiredWorkerTrainingDocument, CompleteWorkerTrainingDocument, WaiveWorkerTrainingDocument, CancelWorkerTrainingDocument, AttachWorkerTrainingDocumentDocument } from "./documents/worker-training/operations";
-export { WorkerFleetCodeFieldsFragmentDoc, WorkerUsStateFieldsFragmentDoc, WorkerProfileTableFieldsFragmentDoc, WorkerTableRowFieldsFragmentDoc, WorkerPtoWorkerFieldsFragmentDoc, WorkerPtoActorFieldsFragmentDoc, WorkerPtoRowFieldsFragmentDoc, WorkerDataTablePageInfoFieldsFragmentDoc, WorkerTableDocument, WorkerPtoTableDocument, UpcomingWorkerPtoDocument, WorkerPtoChartDataDocument, PatchWorkerDocument, CreateWorkerPtoDocument, UpdateWorkerPtoDocument, ApproveWorkerPtoDocument, RejectWorkerPtoDocument, CancelWorkerPtoDocument, BulkWorkerPtoActionDocument } from "./documents/worker/page";
+export { TrainingCourseFieldsFragmentDoc, WorkerTrainingRecordFieldsFragmentDoc, TrainingCourseTableDocument, ActiveTrainingCoursesDocument, WorkerTrainingRecordsDocument, WorkerTrainingSummaryDocument, CreateTrainingCourseDocument, UpdateTrainingCourseDocument, ArchiveTrainingCourseDocument, RestoreTrainingCourseDocument, AssignWorkerTrainingDocument, BulkAssignTrainingDocument, AssignRequiredWorkerTrainingDocument, CompleteWorkerTrainingDocument, WaiveWorkerTrainingDocument, CancelWorkerTrainingDocument, AttachWorkerTrainingDocumentDocument, WorkerTrainingRecordDocument } from "./documents/worker-training/operations";
+export { WorkerFleetCodeFieldsFragmentDoc, WorkerUsStateFieldsFragmentDoc, WorkerProfileTableFieldsFragmentDoc, WorkerTableRowFieldsFragmentDoc, WorkerPtoWorkerFieldsFragmentDoc, WorkerPtoActorFieldsFragmentDoc, WorkerPtoRowFieldsFragmentDoc, WorkerDataTablePageInfoFieldsFragmentDoc, WorkerTableDocument, WorkerPtoTableDocument, UpcomingWorkerPtoDocument, WorkerPtoChartDataDocument, PatchWorkerDocument, CreateWorkerPtoDocument, UpdateWorkerPtoDocument, ApproveWorkerPtoDocument, RejectWorkerPtoDocument, CancelWorkerPtoDocument, BulkWorkerPtoActionDocument, WorkerPtoDocument } from "./documents/worker/page";
 export { WorkerRecordDocument } from "./documents/worker/record";

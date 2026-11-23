@@ -178,6 +178,7 @@ func (f *fakeSchedules) ProposeSwap(
 }
 
 func (f *fakeSchedules) PreviewProposeSwap(
+	_ context.Context,
 	req *schedulingservice.ProposeSwapRequest,
 ) (*workerschedule.ShiftSwapRequest, error) {
 	req.Entity.Status = workerschedule.SwapProposed

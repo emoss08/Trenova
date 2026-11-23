@@ -13787,6 +13787,67 @@ enum DeskCaseTrustKey {
 }
 
 """
+One person's Desk conversation as an administrator lists it: who, with which
+agent, what it is called and when. Never a message's text.
+"""
+type DeskConversation {
+  agentName: String!
+  archived: Boolean!
+  id: ID!
+  lastMessageAt: Timestamp
+  messageCount: Int!
+  origin: DeskConversationOrigin!
+  ownerName: String!
+  startedAt: Timestamp!
+  title: String!
+}
+
+type DeskConversationConnection {
+  edges: [DeskConversationEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+  """
+  Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+  """
+  totalCountExact: Boolean!
+}
+
+type DeskConversationEdge {
+  cursor: String!
+  node: DeskConversation!
+}
+
+input DeskConversationFilterInput {
+  """Only conversations with this agent."""
+  agentId: ID
+  """Only conversations that began in one of these places."""
+  origins: [DeskConversationOrigin!]
+  """All time when absent."""
+  timeframe: DeskTranscriptTimeframeInput
+  """Only this person's conversations."""
+  userId: ID
+}
+
+"""Where a Desk conversation began."""
+enum DeskConversationOrigin {
+  Briefing
+  Desk
+  Formula
+  Import
+  Panel
+  Watchtower
+}
+
+"""
+A conversation opened read-only by someone who may read other people's: its
+summary and what was said, bounded as a run's transcript is.
+"""
+type DeskConversationTranscript {
+  conversation: DeskConversation!
+  transcript: AgentRunTranscript
+}
+
+"""
 Which of the Desk's queues an item belongs to, by what raised it. Everything is all of them.
 """
 enum DeskLens {
@@ -13941,6 +14002,122 @@ type DeskRecord {
   readable: Boolean!
   status: String!
   subtitle: String!
+}
+
+"""A link to an export's file, good for a minute."""
+type DeskTranscriptDownload {
+  expiresAt: Timestamp!
+  fileName: String!
+  url: String!
+}
+
+type DeskTranscriptExport {
+  artifactExpiresAt: Timestamp
+  byteSize: Int!
+  completedAt: Timestamp
+  conversationCount: Int!
+  coverage: DeskTranscriptExportCoverage!
+  createdAt: Timestamp!
+  """
+  Whether the reader may download the file now: they asked for it and it has not expired.
+  """
+  downloadable: Boolean!
+  errorMessage: String
+  id: ID!
+  kind: DeskTranscriptExportKind!
+  requestedByName: String!
+  startedAt: Timestamp
+  status: DeskTranscriptExportStatus!
+}
+
+type DeskTranscriptExportConnection {
+  edges: [DeskTranscriptExportEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+  """
+  Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+  """
+  totalCountExact: Boolean!
+}
+
+"""What an export covers, kept in names and dates when it was asked for."""
+type DeskTranscriptExportCoverage {
+  agentName: String
+  kind: DeskTranscriptExportKind!
+  origins: [DeskConversationOrigin!]!
+  ownerCount: Int!
+  """
+  The people whose conversations the file holds, at most twenty, by name.
+  """
+  ownerNames: [String!]!
+  personName: String
+  selectedCount: Int!
+  timeframe: DeskTranscriptTimeframe
+}
+
+type DeskTranscriptExportEdge {
+  cursor: String!
+  node: DeskTranscriptExport!
+}
+
+enum DeskTranscriptExportKind {
+  """
+  Conversations matching a timeframe and, optionally, a person, an agent or where they began.
+  """
+  Filter
+  """Conversations a person picked from the list."""
+  Selection
+}
+
+"""
+How many conversations an export of these filters would hold, counted up to
+one past the limit.
+"""
+type DeskTranscriptExportPreview {
+  count: Int!
+  """
+  False when more conversations match than the limit, so count is the limit plus one.
+  """
+  exact: Boolean!
+  limit: Int!
+  withinLimit: Boolean!
+}
+
+enum DeskTranscriptExportStatus {
+  Expired
+  Failed
+  Pending
+  Running
+  Succeeded
+}
+
+type DeskTranscriptTimeframe {
+  fromDate: String
+  preset: DeskTranscriptTimeframePreset!
+  toDate: String
+}
+
+input DeskTranscriptTimeframeInput {
+  """The first day of a Custom timeframe, as YYYY-MM-DD."""
+  fromDate: String
+  preset: DeskTranscriptTimeframePreset!
+  """The last day of a Custom timeframe, as YYYY-MM-DD."""
+  toDate: String
+}
+
+"""
+A timeframe over a conversation's last message, in the organization's time
+zone. Last7Days is today and the six days before it, Last30Days and Last90Days
+likewise; Last12Months starts on today's date a year ago; Custom runs from the
+start of fromDate to the end of toDate.
+"""
+enum DeskTranscriptTimeframePreset {
+  AllTime
+  Custom
+  Last7Days
+  Last12Months
+  Last30Days
+  Last90Days
 }
 
 input DetachPayEventInput {
@@ -25064,6 +25241,7 @@ type Mutation {
   deleteWorkerSafetyEvent(id: ID!): Boolean!
   """Refuses a machine waiting to pair."""
   denyCaptureDevicePairing(userCode: String!): Boolean!
+  deskTranscriptExportDownload(id: ID!): DeskTranscriptDownload!
   detachOrderShipment(orderId: ID!, shipmentId: ID!): Order!
   """
   Remove a pay event from a draft settlement, returning it to the unsettled pool.
@@ -25263,6 +25441,10 @@ type Mutation {
   markWatchtowerSeen(seenAt: Timestamp): WatchtowerCounts!
   markWorkerChecklistItemNotApplicable(input: WorkerChecklistItemActionInput!): WorkerChecklist!
   notifyShipmentDelay(input: NotifyShipmentDelayInput!): Boolean!
+  """
+  Opens another person's conversation read-only. Every opening is written to the audit log.
+  """
+  openDeskConversation(id: ID!): DeskConversationTranscript!
   openEscrowAccount(input: OpenEscrowAccountInput!): EscrowAccount!
   """
   Opens a dispute on a posted invoice; the invoice reads Disputed until it closes.
@@ -25468,6 +25650,7 @@ type Mutation {
   """
   requestAccountingBackfill(input: RequestAccountingBackfillInput!): AccountingBackfill!
   requestAuditExport(input: RequestAuditExportInput!): AuditExport!
+  requestDeskTranscriptExport(input: RequestDeskTranscriptExportInput!): DeskTranscriptExport!
   requestLeaveCertification(caseId: ID!, dueAt: Timestamp): WorkerLeaveCase!
   requestMissingFactoringDocuments(input: RequestMissingFactoringDocumentsInput!): FactoringDocumentRequestResult!
   requestMyPto(input: RequestMyPtoInput!): PortalPto!
@@ -28540,6 +28723,7 @@ type Query {
   times in its wording are told in; the organization's when left out.
   """
   deskCase(id: ID!, kind: String!, timezone: String): DeskCase!
+  deskConversations(filter: DeskConversationFilterInput, input: DataTableConnectionInput!): DeskConversationConnection!
   """
   The memories the person keeps, newest first, with how many each scope holds.
   """
@@ -28549,6 +28733,8 @@ type Query {
   """
   deskMemoriesByIds(ids: [ID!]!): [DeskMemory!]!
   deskMemorySettings: DeskMemorySettings!
+  deskTranscriptExportPreview(filter: DeskConversationFilterInput!): DeskTranscriptExportPreview!
+  deskTranscriptExports(input: DataTableConnectionInput!): DeskTranscriptExportConnection!
   detentionDesk(
     """
     Also list the stopped charges waiting on approval, whose shipments cannot be invoiced until someone approves or waives them.
@@ -29418,10 +29604,21 @@ type Query {
   """
   worker(id: ID!): Worker
   workerAvailabilityPreferences(workerId: ID!): [WorkerAvailabilityPreference!]!
-  workerBenefitEnrollments(openOnly: Boolean, workerId: ID!): [WorkerBenefitEnrollment!]! @authorizes(resource: "benefit_plan")
+  """A worker's benefit enrollments, newest first, a page at a time."""
+  workerBenefitEnrollments(
+    """The endCursor of the page before this one."""
+    after: String
+    """How many to read, from 1 to 100; 20 when left out."""
+    first: Int
+    openOnly: Boolean
+    workerId: ID!
+  ): WorkerBenefitEnrollmentConnection! @authorizes(resource: "benefit_plan")
   workerChecklist(id: ID!): WorkerChecklist!
   workerChecklistTemplate(id: ID!): WorkerChecklistTemplate!
   workerChecklistTemplates(input: WorkerChecklistTemplatesInput!): WorkerChecklistTemplateConnection!
+  """
+  A worker's checklists, open ones first, then newest started; at most 100.
+  """
   workerChecklists(
     """Also the completed and cancelled checklists, not only the open ones."""
     includeClosed: Boolean = true
@@ -29455,7 +29652,7 @@ type Query {
     """With an expiry window, also those that lapsed in the last 90 days."""
     includeExpired: Boolean
     """
-    At most this many credentials, from 1 to 100. Every credential of a named worker when left out; 20 across the organization.
+    At most this many credentials, from 1 to 100. The first 100 of the workers named when left out; 20 across the organization.
     """
     limit: Int
     """Skip this many credentials of the same list, for the page after them."""
@@ -29467,7 +29664,18 @@ type Query {
     """
     workerIds: [ID!]
   ): [WorkerCredential!]!
-  workerDisciplinaryActions(workerId: ID!): [WorkerDisciplinaryAction!]!
+  """
+  One disciplinary action by id, with its safety event and who issued it, for a link to an action not on the loaded page.
+  """
+  workerDisciplinaryAction(id: ID!): WorkerDisciplinaryAction!
+  """A worker's disciplinary actions, newest first, a page at a time."""
+  workerDisciplinaryActions(
+    """The endCursor of the page before this one."""
+    after: String
+    """How many to read, from 1 to 100; 20 when left out."""
+    first: Int
+    workerId: ID!
+  ): WorkerDisciplinaryActionConnection!
   workerDisciplinaryLadder(workerId: ID!): DisciplinaryLadder! @authorizes(resource: "worker_disciplinary_action")
   workerDotTest(id: ID!): WorkerDOTTest!
   """
@@ -29490,7 +29698,15 @@ type Query {
   workerEmploymentEvent(id: ID!): WorkerEmploymentEvent!
   """Needs worker_employment_event read."""
   workerEmploymentEventOptions(workerId: ID!): WorkerEmploymentEventOptions!
-  workerEmploymentEvents(kinds: [WorkerEmploymentEventKind!], workerId: ID!): [WorkerEmploymentEvent!]!
+  """A worker's employment timeline, newest first, a page at a time."""
+  workerEmploymentEvents(
+    """The endCursor of the page before this one."""
+    after: String
+    """How many to read, from 1 to 100; 20 when left out."""
+    first: Int
+    kinds: [WorkerEmploymentEventKind!]
+    workerId: ID!
+  ): WorkerEmploymentEventConnection!
   """
   Previous employers on drivers' qualification files: one driver's, or every
   driver's when no worker is named.
@@ -29518,19 +29734,19 @@ type Query {
   establishment's log when no worker is named.
   """
   workerInjuries(
+    """The endCursor of the page before this one."""
+    after: String
     """Only the cases of one calendar year's log, such as 2026."""
     caseYear: Int
-    """
-    At most this many cases, from 1 to 100. Every case of a named worker when left out; 20 across the organization.
-    """
-    limit: Int
+    """How many to read, from 1 to 100; 20 when left out."""
+    first: Int
     """Only the cases still open."""
     openOnly: Boolean
     """Only the cases that belong on the OSHA 300 log."""
     recordableOnly: Boolean
     """The worker whose cases are read. Leave it out for every worker's."""
     workerId: ID
-  ): [WorkerInjury!]!
+  ): WorkerInjuryConnection!
   workerInjury(id: ID!): WorkerInjury!
   workerLeaveCase(id: ID!): WorkerLeaveCase!
   """
@@ -29552,23 +29768,50 @@ type Query {
   """A worker's FMLA balance. Leave asOf empty for today."""
   workerLeaveEntitlement(asOf: Timestamp, workerId: ID!): LeaveEntitlement!
   workerOverview(workerId: ID!): WorkerOverview! @authorizes(resource: "worker")
+  """
+  One time off request by id, with its worker, for a link to a request not on the loaded page.
+  """
+  workerPTO(id: ID!): WorkerPTO!
   workerPTOChartData(input: WorkerPTOChartInput!): [PTOChartDataPoint!]!
   workerPTOEntries(input: WorkerPTOEntriesInput!): WorkerPTOConnection!
-  """Full assignment history for a worker, newest first."""
-  workerPayAssignments(workerId: ID!): [WorkerPayAssignment!]!
+  """A worker's pay profile assignments, newest first, a page at a time."""
+  workerPayAssignments(
+    """The endCursor of the page before this one."""
+    after: String
+    """How many to read, from 1 to 100; 20 when left out."""
+    first: Int
+    workerId: ID!
+  ): WorkerPayAssignmentConnection!
   workerPerformanceReviews(workerId: ID!): [PerformanceReview!]!
   workerPolicies(activeOnly: Boolean, limit: Int): [WorkerPolicy!]!
   workerPolicy(id: ID!): WorkerPolicy!
-  workerPolicyAcknowledgements(workerId: ID!): [WorkerPolicyAcknowledgement!]!
+  """A worker's policy signatures, newest first, a page at a time."""
+  workerPolicyAcknowledgements(
+    """The endCursor of the page before this one."""
+    after: String
+    """How many to read, from 1 to 100; 20 when left out."""
+    first: Int
+    workerId: ID!
+  ): WorkerPolicyAcknowledgementConnection!
   workerPolicyCompliance(id: ID!): PolicyCompliance!
   """Portal access state for a worker (back office)."""
   workerPortalStatus(workerId: ID!): WorkerPortalStatus!
   workerPtoAvailability(input: PTOAvailabilityInput!): PTOAvailability!
   workerPtoBalances(workerId: ID!): [WorkerPTOBalance!]!
   workerPtoLedger(input: WorkerPTOLedgerInput!): WorkerPTOLedgerConnection!
-  workerPtoPolicyAssignments(workerId: ID!): [WorkerPTOPolicyAssignment!]! @authorizes(resource: "pto_policy")
+  """
+  A worker's time off policy assignments, newest first, a page at a time.
+  """
+  workerPtoPolicyAssignments(
+    """The endCursor of the page before this one."""
+    after: String
+    """How many to read, from 1 to 100; 20 when left out."""
+    first: Int
+    workerId: ID!
+  ): WorkerPTOPolicyAssignmentConnection! @authorizes(resource: "pto_policy")
   """Selections the worker still owes a collection for."""
   workerRandomSelections(workerId: ID!): [DOTRandomDrawEntry!]!
+  """A worker's recognitions, newest first; at most 100."""
   workerRecognitions(workerId: ID!): [WorkerRecognition!]!
   workerRosterAttention: WorkerRosterAttention!
   workerSafetyEvent(id: ID!): WorkerSafetyEvent!
@@ -29578,7 +29821,7 @@ type Query {
   """
   workerSafetyEvents(
     """
-    At most this many events, from 1 to 100. Every event of a named worker when left out; 20 across the organization.
+    At most this many events, from 1 to 100. The newest 100 of a named worker when left out; 20 across the organization.
     """
     limit: Int
     """Only the events still open or under review."""
@@ -29588,6 +29831,7 @@ type Query {
   ): [WorkerSafetyEvent!]!
   workerSafetyScorecard(workerId: ID!): SafetyScorecard!
   workerSafetyViolations(safetyEventId: ID, workerId: ID): [WorkerSafetyViolation!]!
+  """A worker's shift patterns, newest first; at most 100."""
   workerShiftAssignments(
     """
     Only the pattern the worker is on today, leaving out past and future ones.
@@ -29602,12 +29846,16 @@ type Query {
   workerTotalCompensation(planYear: Int, workerId: ID!): TotalCompensation!
   workerTrainingRecord(id: ID!): WorkerTrainingRecord!
   workerTrainingRecords(
+    """The endCursor of the page before this one."""
+    after: String
+    """How many to read, from 1 to 100; 20 when left out."""
+    first: Int
     """
     Also the completed, waived, cancelled and expired assignments, not only the open ones.
     """
     includeClosed: Boolean = true
     workerId: ID!
-  ): [WorkerTrainingRecord!]!
+  ): WorkerTrainingRecordConnection!
   workerTrainingSummary(workerId: ID!): WorkerTrainingSummary!
   workerYtdPaySummaries(classification: PayeeClassification, year: Int!): [WorkerYTDPaySummary!]!
   workers(
@@ -31197,6 +31445,13 @@ input RequestAuditExportInput {
   rangeTo: Timestamp!
 }
 
+"""Exactly one of filter and conversationIds."""
+input RequestDeskTranscriptExportInput {
+  """At most 200 conversations picked from the list."""
+  conversationIds: [ID!]
+  filter: DeskConversationFilterInput
+}
+
 input RequestMissingFactoringDocumentsInput {
   """Ask for these only. Defaults to every document the invoice is missing."""
   documentTypeIds: [ID!]
@@ -31752,6 +32007,14 @@ Twelve-month record plus the points still active from the two-year look-back.
 type SafetyScorecard {
   accidents: Int!
   activeDiscipline: Int!
+  """
+  The events whose points still count at asOf, newest first: what makes up
+  activePoints and when each part rolls off. Read by that condition, not from a
+  page of the events list; bounded by the points window (a point rolls off at
+  its pointsExpireAt, which defaults to the occurrence plus the policy's months),
+  so only points set never to expire keep an event here for good.
+  """
+  activePointEvents: [WorkerSafetyEvent!]!
   activePoints: Int!
   asOf: Timestamp!
   citations: Int!
@@ -38479,6 +38742,24 @@ type WorkerBenefitEnrollment {
   workerId: ID!
 }
 
+"""
+A worker's benefit enrollments, a page at a time. totalCount is counted only when it is selected.
+"""
+type WorkerBenefitEnrollmentConnection {
+  edges: [WorkerBenefitEnrollmentEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+  """
+  Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+  """
+  totalCountExact: Boolean!
+}
+
+type WorkerBenefitEnrollmentEdge {
+  cursor: String!
+  node: WorkerBenefitEnrollment!
+}
+
 type WorkerChecklist {
   cancelReason: String
   cancelledAt: Timestamp
@@ -38718,7 +38999,9 @@ enum WorkerClearanceEffect {
 
 """One dated requirement on the clearance runway."""
 type WorkerClearanceItem {
-  """Whole UTC days from asOf to dueAt; negative once lapsed."""
+  """
+  Whole days in the organization's calendar from asOf to dueAt; negative once lapsed.
+  """
   daysUntil: Int!
   destination: WorkerDestination!
   dueAt: Timestamp!
@@ -38804,7 +39087,7 @@ type WorkerConcern {
   """
   count: Int!
   """
-  Whole UTC days from asOf to dueAt; negative once it has passed. Null when dueAt is null.
+  Whole days in the organization's calendar from asOf to dueAt; negative once it has passed. Null when dueAt is null.
   """
   daysUntil: Int
   destination: WorkerDestination!
@@ -38951,6 +39234,10 @@ enum WorkerCredentialStatus {
 }
 
 type WorkerCredentialSummary {
+  """
+  How many archived credentials the worker has: the history beyond the current ones, counted whole.
+  """
+  archivedCount: Int!
   complianceStatus: ComplianceStatus!
   expiredCount: Int!
   expiringCount: Int!
@@ -39165,6 +39452,24 @@ type WorkerDisciplinaryAction {
 }
 
 """
+A worker's disciplinary actions, a page at a time. totalCount is counted only when it is selected.
+"""
+type WorkerDisciplinaryActionConnection {
+  edges: [WorkerDisciplinaryActionEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+  """
+  Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+  """
+  totalCountExact: Boolean!
+}
+
+type WorkerDisciplinaryActionEdge {
+  cursor: String!
+  node: WorkerDisciplinaryAction!
+}
+
+"""
 Live pay position for one driver: unsettled earnings accrued to date,
 outstanding advances, and escrow balance.
 """
@@ -39270,6 +39575,24 @@ type WorkerEmploymentEvent {
   updatedAt: Timestamp!
   version: Int!
   workerId: ID!
+}
+
+"""
+A worker's employment events, a page at a time. totalCount is counted only when it is selected.
+"""
+type WorkerEmploymentEventConnection {
+  edges: [WorkerEmploymentEventEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+  """
+  Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+  """
+  totalCountExact: Boolean!
+}
+
+type WorkerEmploymentEventEdge {
+  cursor: String!
+  node: WorkerEmploymentEvent!
 }
 
 enum WorkerEmploymentEventKind {
@@ -39512,6 +39835,24 @@ type WorkerInjury {
 }
 
 """
+Injury and illness cases, a page at a time. totalCount is counted only when it is selected.
+"""
+type WorkerInjuryConnection {
+  edges: [WorkerInjuryEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+  """
+  Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+  """
+  totalCountExact: Boolean!
+}
+
+type WorkerInjuryEdge {
+  cursor: String!
+  node: WorkerInjury!
+}
+
+"""
 One qualifying reason for leave. Entitlement is drawn down by the days recorded
 against a case, so a case open for months has used nothing until days are.
 """
@@ -39680,7 +40021,7 @@ The drug and alcohol standing with the one figure the page draws beside it.
 """
 type WorkerOverviewDrugAlcohol {
   """
-  Whole UTC days from asOf to standing.nextClearinghouseQueryDue; negative when overdue. Null when no query is due.
+  Whole days in the organization's calendar from asOf to standing.nextClearinghouseQueryDue; negative when overdue. Null when no query is due.
   """
   nextQueryDaysUntil: Int
   standing: DrugAlcoholStanding!
@@ -39688,6 +40029,10 @@ type WorkerOverviewDrugAlcohol {
 
 """The employment history at a glance."""
 type WorkerOverviewEmployment {
+  """
+  Completed and cancelled checklists, counted whole. Null for a reader without worker_checklist read.
+  """
+  closedChecklistCount: Int
   """Employment events on the timeline."""
   eventCount: Int!
   """
@@ -39939,6 +40284,24 @@ type WorkerPTOPolicyAssignment {
 }
 
 """
+A worker's time off policy assignments, a page at a time. totalCount is counted only when it is selected.
+"""
+type WorkerPTOPolicyAssignmentConnection {
+  edges: [WorkerPTOPolicyAssignmentEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+  """
+  Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+  """
+  totalCountExact: Boolean!
+}
+
+type WorkerPTOPolicyAssignmentEdge {
+  cursor: String!
+  node: WorkerPTOPolicyAssignment!
+}
+
+"""
 The kind of sub-record a destination opens in the work pane. Each is one record
 search parameter on the worker page: Event is an employment event on the
 Employment tab and a safety event on the Safety tab, Test a drug or alcohol
@@ -40042,6 +40405,24 @@ type WorkerPayAssignment @kind(resource: "driver_pay_profile") {
 }
 
 """
+A worker's pay profile assignments, a page at a time. totalCount is counted only when it is selected.
+"""
+type WorkerPayAssignmentConnection {
+  edges: [WorkerPayAssignmentEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+  """
+  Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+  """
+  totalCountExact: Boolean!
+}
+
+type WorkerPayAssignmentEdge {
+  cursor: String!
+  node: WorkerPayAssignment!
+}
+
+"""
 A handbook, a policy, or a notice the carrier needs people to have read. Either
 a short text or an attached document — never neither.
 
@@ -40089,6 +40470,24 @@ type WorkerPolicyAcknowledgement {
   versionLabel: String!
   worker: Worker
   workerId: ID!
+}
+
+"""
+A worker's policy signatures, a page at a time. totalCount is counted only when it is selected.
+"""
+type WorkerPolicyAcknowledgementConnection {
+  edges: [WorkerPolicyAcknowledgementEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+  """
+  Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+  """
+  totalCountExact: Boolean!
+}
+
+type WorkerPolicyAcknowledgementEdge {
+  cursor: String!
+  node: WorkerPolicyAcknowledgement!
 }
 
 input WorkerPolicyInput {
@@ -40433,6 +40832,24 @@ type WorkerTrainingRecord {
   waivedReason: String
   worker: Worker
   workerId: ID!
+}
+
+"""
+A worker's training assignments, a page at a time. totalCount is counted only when it is selected.
+"""
+type WorkerTrainingRecordConnection {
+  edges: [WorkerTrainingRecordEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+  """
+  Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+  """
+  totalCountExact: Boolean!
+}
+
+type WorkerTrainingRecordEdge {
+  cursor: String!
+  node: WorkerTrainingRecord!
 }
 
 enum WorkerTrainingStatus {

@@ -31,6 +31,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/dataentrycontrolhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/dataretentionhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/deskcasehandler"
+	"github.com/emoss08/trenova/internal/api/handlers/desktranscripthandler"
 	"github.com/emoss08/trenova/internal/api/handlers/detentionhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/dispatchcontrolhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/distancecontrolhandler"
@@ -154,6 +155,7 @@ var HandlersModule = fx.Module("api-handlers", fx.Provide(
 	agentextensionhandler.New,
 	agentanalysishandler.New,
 	agentrunhandler.New,
+	desktranscripthandler.New,
 	assignmenthandler.New,
 	accountsreceivablehandler.New,
 	collectionhandler.New,

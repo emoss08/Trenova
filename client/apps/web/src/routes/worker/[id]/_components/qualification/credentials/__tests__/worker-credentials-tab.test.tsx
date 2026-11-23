@@ -9,7 +9,8 @@ import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testi
 import userEvent from "@testing-library/user-event";
 import { PENDING_DOCUMENTS_REFETCH_MS } from "@/lib/resource-documents";
 import { documentContentUrl } from "@/services/document";
-import { afterEach, describe, expect, it, onTestFinished, vi } from "vitest";
+import { stubLayout } from "@/test/layout";
+import { afterEach, beforeEach, describe, expect, it, onTestFinished, vi } from "vitest";
 import WorkerCredentialsTab from "../worker-credentials-tab";
 
 const {
@@ -24,6 +25,7 @@ const {
   archiveWorkerCredential: vi.fn(),
 }));
 const paneProps = vi.hoisted(() => ({ byMode: {} as Record<string, Record<string, unknown>> }));
+const formModule = vi.hoisted(() => ({ read: false }));
 const permissionState = vi.hoisted(() => ({
   create: true,
   update: true,
@@ -41,13 +43,12 @@ vi.mock("@/lib/graphql/worker-credential", () => ({
   CREDENTIAL_EXPIRY_FORECAST_KEY: "credential-expiry-forecast",
 }));
 
-vi.mock("@/lib/queries/worker", () => ({
-  worker: {
-    overview: (workerId: string) => ({
-      queryKey: ["worker", "overview", workerId],
-      queryFn: async () => ({ asOf: 1_700_000_000, clearance: null }),
-    }),
-  },
+vi.mock("@/lib/queries/worker", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/queries/worker")>()),
+  workerOverviewQuery: (workerId: string) => ({
+    queryKey: ["worker", "overview", workerId],
+    queryFn: async () => ({ asOf: 1_700_000_000, clearance: null }),
+  }),
 }));
 
 vi.mock("../../../overview/clearance-runway", () => ({
@@ -66,12 +67,15 @@ vi.mock("@/hooks/use-permission", () => ({
   },
 }));
 
-vi.mock("../credential-form-pane", () => ({
-  CredentialFormPane: (props: Record<string, unknown>) => {
-    paneProps.byMode[props.mode as string] = props;
-    return props.open ? <div data-testid={`credential-form-${String(props.mode)}`} /> : null;
-  },
-}));
+vi.mock("../credential-form-pane", () => {
+  formModule.read = true;
+  return {
+    CredentialFormPane: (props: Record<string, unknown>) => {
+      paneProps.byMode[props.mode as string] = props;
+      return props.open ? <div data-testid={`credential-form-${String(props.mode)}`} /> : null;
+    },
+  };
+});
 
 vi.mock("@trenova/shared/components/ui/toast", () => ({
   toast: { success: vi.fn(), error: vi.fn(), info: vi.fn() },
@@ -222,12 +226,23 @@ function renderTab(open: Partial<WorkerOpenState> = {}) {
   return { onOpen, queryClient, view };
 }
 
+/** The tab's reads of the whole list; the read pane's per-type read of earlier versions aside. */
+const listReads = () =>
+  fetchWorkerCredentials.mock.calls.filter(([variables]) => !variables?.credentialTypeCode).length;
+
 function loads(credentials: unknown[] = [cdlCred, forkCred, archived]) {
   fetchWorkerCredentialSummary.mockResolvedValue(summary);
   fetchWorkerCredentials.mockResolvedValue(credentials);
 }
 
+// The employers and the history are windowed lists; jsdom lays nothing out without this.
+let restoreLayout = () => {};
+beforeEach(() => {
+  restoreLayout = stubLayout(320);
+});
+
 afterEach(() => {
+  restoreLayout();
   cleanup();
   vi.clearAllMocks();
   paneProps.byMode = {};
@@ -238,6 +253,16 @@ afterEach(() => {
 });
 
 describe("WorkerCredentialsTab", () => {
+  it("reads the credential form's code only once the pointer reaches Add credential", async () => {
+    loads();
+    renderTab();
+
+    const add = await screen.findByRole("button", { name: "Add credential" });
+    expect(formModule.read).toBe(false);
+    fireEvent.pointerEnter(add);
+    await waitFor(() => expect(formModule.read).toBe(true));
+  });
+
   it("draws every required slot and the held optional credential in one grouped table", async () => {
     loads();
     renderTab();
@@ -376,7 +401,7 @@ describe("WorkerCredentialsTab", () => {
     const pane = await screen.findByRole("dialog", { name: "Commercial Driver's License" });
     expect(within(pane).getByTitle("Generating thumbnail...")).toBeInTheDocument();
     expect(within(pane).queryByAltText("cdl-front.jpg")).not.toBeInTheDocument();
-    expect(fetchWorkerCredentials).toHaveBeenCalledTimes(1);
+    expect(listReads()).toBe(1);
 
     await act(() => vi.advanceTimersByTimeAsync(PENDING_DOCUMENTS_REFETCH_MS));
 
@@ -386,11 +411,29 @@ describe("WorkerCredentialsTab", () => {
         documentContentUrl("doc_cdl", "preview"),
       ),
     );
-    expect(fetchWorkerCredentials).toHaveBeenCalledTimes(2);
+    expect(listReads()).toBe(2);
 
     await act(() => vi.advanceTimersByTimeAsync(PENDING_DOCUMENTS_REFETCH_MS * 3));
-    expect(fetchWorkerCredentials).toHaveBeenCalledTimes(2);
+    expect(listReads()).toBe(2);
     expect(fetchWorkerCredentialSummary).toHaveBeenCalledTimes(1);
+  });
+
+  it("reads a credential's earlier versions for its type, past what the tab's list holds", async () => {
+    fetchWorkerCredentialSummary.mockResolvedValue(summary);
+    fetchWorkerCredentials.mockImplementation((variables: { credentialTypeCode?: string }) =>
+      Promise.resolve(
+        variables.credentialTypeCode === "WCT_CDL" ? [cdlCred, archived] : [cdlCred, forkCred],
+      ),
+    );
+    renderTab({ credential: "wcred_cdl" });
+
+    const pane = await screen.findByRole("dialog", { name: "Commercial Driver's License" });
+    const earlier = within(pane).getByRole("region", { name: "Earlier versions" });
+    expect(await within(earlier).findByText("Superseded by renewal")).toBeInTheDocument();
+    expect(fetchWorkerCredentials).toHaveBeenCalledWith(
+      { workerId: "wrk_1", credentialTypeCode: "WCT_CDL" },
+      expect.anything(),
+    );
   });
 
   it("reads the credentials once when no document's preview is waited on", async () => {

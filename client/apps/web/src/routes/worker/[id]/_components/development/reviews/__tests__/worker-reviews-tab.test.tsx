@@ -1,7 +1,8 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { stubLayout } from "@/test/layout";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import WorkerReviewsTab from "../worker-reviews-tab";
 
 const {
@@ -92,18 +93,20 @@ function renderTab(focusId: string | null = null) {
   });
   return render(
     <QueryClientProvider client={client}>
-      <WorkerReviewsTab
-        workerId="wrk_1"
-        workerFirstName="Maria"
-        focusId={focusId}
-        now={1_800_000_000}
-        {...handlers}
-      />
+      <WorkerReviewsTab workerId="wrk_1" workerFirstName="Maria" focusId={focusId} {...handlers} />
     </QueryClientProvider>,
   );
 }
 
+// The history region is a virtualised list; give it a viewport to draw its rows in.
+let restoreLayout = () => {};
+beforeEach(() => {
+  restoreLayout = stubLayout(320);
+});
+
 afterEach(() => {
+  restoreLayout();
+  vi.useRealTimers();
   cleanup();
   vi.clearAllMocks();
 });
@@ -134,12 +137,14 @@ describe("WorkerReviewsTab", () => {
   });
 
   it("reads the cadence from the last closed review and lists it in History", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime((1_830_000_000 - 30 * 86_400) * 1000);
     fetchWorkerPerformanceReviews.mockResolvedValue([review("prev_open"), closed]);
     renderTab();
     const user = userEvent.setup();
 
     const cadence = within(await screen.findByRole("region", { name: "Cadence" }));
-    expect(cadence.getByText(/in 347 days/)).toBeInTheDocument();
+    expect(cadence.getByText(/in 30 days/)).toBeInTheDocument();
     expect(cadence.getByText("Annual Driver Review · every 12 months")).toBeInTheDocument();
 
     await user.click(screen.getByTestId("review-history-prev_closed"));
@@ -210,7 +215,7 @@ describe("WorkerReviewsTab", () => {
   it("says the read failed instead of claiming there are no reviews", async () => {
     fetchWorkerPerformanceReviews.mockRejectedValue(new Error("boom"));
     renderTab();
-    expect(await screen.findByText("Couldn't load the reviews")).toBeInTheDocument();
+    expect(await screen.findByText("The reviews could not be loaded")).toBeInTheDocument();
     expect(screen.queryByText("No review open")).not.toBeInTheDocument();
   });
 });

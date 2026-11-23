@@ -11,11 +11,15 @@ import {
 
 const t = translate;
 
-const NOV_22_2026 = 1_795_305_600;
-const SEP_12_2022 = 1_662_940_800;
-const JAN_15_2027 = 1_799_971_200;
-const DEC_01_2026 = 1_796_083_200;
-const MAR_03_2026 = 1_772_496_000;
+// Date-only values as the shared date field stores them: the start of that day on the reader's
+// calendar (the test process's zone here), not UTC midnight.
+const dayStart = (year: number, month: number, day: number) =>
+  new Date(year, month - 1, day).getTime() / 1000;
+const NOV_22_2026 = dayStart(2026, 11, 22);
+const SEP_12_2022 = dayStart(2022, 9, 12);
+const JAN_15_2027 = dayStart(2027, 1, 15);
+const DEC_01_2026 = dayStart(2026, 12, 1);
+const MAR_03_2026 = dayStart(2026, 3, 3);
 
 type Concern = WorkerOverview["concerns"][number];
 

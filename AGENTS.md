@@ -55,7 +55,7 @@ You are a senior engineer on this codebase, not a transcriber of instructions.
 | `services/imaging/`, `services/crates/`, `services/proto/` | Rust imaging worker, shared crates, gRPC contracts (buf) |
 | `services/operator/` | the Trenova Cloud operator (Go, its own module outside `go.work`): runs one instance's Helm release from the control plane's spec |
 | `shared/` | shared Go packages (`stringutils`, `sliceutils`, …); its own module in `go.work` |
-| `client/` | pnpm + Turborepo: `apps/web` (TMS), `apps/dash` (driver portal), `packages/{shared,graphql,config}` |
+| `client/` | Bun + Turborepo: `apps/web` (TMS), `apps/dash` (driver portal), `packages/{shared,graphql,config}` |
 | `desktop/capture/` | Windows scanning and printing companion (Rust) |
 | `i18n/`, `dev/`, `deploy/`, `tools/`, `docs/` | translations; local environment; images and self-host; unshipped tooling; docs |
 
@@ -72,8 +72,11 @@ From `services/tms/`: `task run-watch` (API, hot reload), `task test`, `task tes
 `task db-create-migration name=…`, `task db-stamp`, `task docker-up`, `task quick-start`.
 One test: `GOFLAGS=-tags=nomsgpack,devlog go test -run TestName ./path/...`.
 
-From `client/`: `pnpm dev`, `pnpm build`, `pnpm lint`, `pnpm typecheck`, `pnpm test`; scope with
-`pnpm --filter @trenova/web …`. GraphQL client codegen: `pnpm --filter @trenova/graphql codegen`.
+From `client/`: `bun run dev`, `bun run build`, `bun run lint`, `bun run typecheck`, `bun run test`
+(never bare `bun test`, which is Bun's own runner); scope with `bun run --filter @trenova/web …`.
+GraphQL client codegen: `bun run --filter @trenova/graphql codegen`. The client runs on Bun, never
+pnpm, npm, npx or Node; every client command and its traps are in
+[client-commands.md](docs/engineering/client-commands.md).
 
 From the root: `task rust:fmt`, `task rust:lint`, `task rust:test`, `task rust:proto`.
 
@@ -121,8 +124,8 @@ and still break production or the build.
 
 Use the `trenova-frontend` skill (`.claude/skills/trenova-frontend/SKILL.md`; agents without
 skills read it directly) for any change under `client/`. Tokens, page anatomy and loading states
-are in [design-system.md](docs/engineering/design-system.md); `pnpm lint:design` and
-`pnpm lint:skeletons` enforce them.
+are in [design-system.md](docs/engineering/design-system.md); `bun run lint:design` and
+`bun run lint:skeletons` enforce them.
 
 **Never show a record's internal id** (`cus_01J…`), a field's code name or an enum's code to a
 person. An id belongs in a URL or on a page only an administrator can open; everywhere else

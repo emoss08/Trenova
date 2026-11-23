@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/dashcontrol"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/documenttypeports"
@@ -16,10 +17,7 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
-const (
-	shipmentResourceType = "shipment"
-	workerResourceType   = "worker"
-)
+const shipmentResourceType = "shipment"
 
 type PortalDocument struct {
 	ID               pulid.ID `json:"id"`
@@ -101,7 +99,7 @@ func (s *Service) MyProfileDocuments(
 		&documentports.GetDocumentsByResourceRequest{
 			TenantInfo:          tenantInfo,
 			ResourceID:          wrk.ID.String(),
-			ResourceType:        workerResourceType,
+			ResourceType:        permission.ResourceWorker.String(),
 			IncludeDocumentType: true,
 		},
 	)
@@ -150,7 +148,7 @@ func (s *Service) UploadMyProfileDocument(
 		Actor:          *actor,
 		File:           file,
 		ResourceID:     wrk.ID.String(),
-		ResourceType:   workerResourceType,
+		ResourceType:   permission.ResourceWorker.String(),
 		DocumentTypeID: documentTypeID,
 	})
 	if err != nil {

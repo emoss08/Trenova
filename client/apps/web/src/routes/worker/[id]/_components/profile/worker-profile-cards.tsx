@@ -5,7 +5,7 @@ import {
 } from "@/components/autocomplete-fields";
 import { CustomFieldsSection } from "@/components/custom-fields-section";
 import { AutoCompleteDateField } from "@/components/fields/date-field/date-field";
-import { FieldLayoutProvider } from "@/components/fields/field-components";
+import { FieldLayoutProvider, FieldNote } from "@/components/fields/field-components";
 import { InputField } from "@/components/fields/input-field";
 import { PhoneNumberField } from "@/components/fields/phone-number-field";
 import { SelectField } from "@/components/fields/select-field";
@@ -18,22 +18,19 @@ import {
   workerTypeChoices,
 } from "@/lib/choices";
 import { InfoCircleIcon, Lock01Icon } from "@trenova/shared/components/icons";
-import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import { FormControl, FormGroup } from "@trenova/shared/components/ui/form";
-import { usePlanFeature } from "@trenova/shared/hooks/use-plan-feature";
 import { useNow } from "@trenova/shared/hooks/use-now";
+import { usePlanFeature } from "@trenova/shared/hooks/use-plan-feature";
 import { useRichT } from "@trenova/shared/i18n/rich";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { formatShiftDate } from "@trenova/shared/lib/scheduling";
-import { cn } from "@trenova/shared/lib/utils";
+import { daysUntil, formatUnixDateMedium } from "@trenova/shared/lib/date";
 import type { ComplianceStatus, Worker } from "@trenova/shared/types/worker";
+import { ComplianceBadge } from "../compliance-badge";
 import type { ReactNode } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 import { LicenceLine } from "./licence-line";
 import { WorkerHomeAddressField } from "./worker-home-address-field";
-
-const SECONDS_IN_DAY = 86_400;
 
 /** A titled card of the Profile form, the factoring details card's anatomy. */
 function ProfileCard({
@@ -77,54 +74,34 @@ function ColumnHeading({ children }: { children: ReactNode }) {
   return <h2 className="-mb-2 text-xs font-medium text-foreground-subtle">{children}</h2>;
 }
 
-const COMPLIANCE_BADGE: Record<ComplianceStatus, "success" | "danger" | "warning"> = {
-  Compliant: "success",
-  NonCompliant: "danger",
-  Pending: "warning",
-};
-
-function ComplianceBadge({ status }: { status: ComplianceStatus }) {
-  const t = useT();
-  const label =
-    status === "Compliant"
-      ? t("Compliant")
-      : status === "NonCompliant"
-        ? t("Non-compliant")
-        : t("Pending review");
-  return (
-    <Badge variant={COMPLIANCE_BADGE[status]} dot>
-      {label}
-    </Badge>
-  );
-}
-
-/** "Expires in 84 days" under the medical card date, toned by how soon. */
-function MedicalExpiryLine() {
+/**
+ * The medical card's expiry, with how soon it runs out under it as the field's own description:
+ * danger once lapsed, warning inside 90 days.
+ */
+function MedicalCardExpiryField() {
   const t = useT();
   const { control } = useFormContext<Worker>();
   const expiry = useWatch({ control, name: "profile.medicalCardExpiry" });
   const now = useNow("minute");
-  if (!expiry) return null;
-  const days = Math.floor((expiry - now) / SECONDS_IN_DAY);
-  const text =
-    days < 0
-      ? t("{0, plural, one {Expired # day ago} other {Expired # days ago}}", -days)
-      : days === 0
-        ? t("Expires today")
-        : t("{0, plural, one {Expires in # day} other {Expires in # days}}", days);
+  const days = expiry ? daysUntil(expiry, { now }) : null;
   return (
-    <p
-      className={cn(
-        "-mt-2 text-2xs",
-        days < 0
-          ? "text-danger-foreground"
-          : days <= 90
-            ? "text-warning-foreground"
-            : "text-muted-foreground",
-      )}
-    >
-      {text}
-    </p>
+    <AutoCompleteDateField
+      control={control}
+      name="profile.medicalCardExpiry"
+      label={t("Medical card expires")}
+      placeholder={t("MM/DD/YYYY")}
+      description={
+        days === null ? undefined : (
+          <FieldNote live tone={days < 0 ? "danger" : days <= 90 ? "warning" : "muted"}>
+            {days < 0
+              ? t("{0, plural, one {Expired # day ago} other {Expired # days ago}}", -days)
+              : days === 0
+                ? t("Expires today")
+                : t("{0, plural, one {Expires in # day} other {Expires in # days}}", days)}
+          </FieldNote>
+        )
+      }
+    />
   );
 }
 
@@ -421,7 +398,7 @@ export function WorkerProfileCards({
                 ? rt(
                     "<b>Termination date: {0}.</b> Set by a Terminated event.",
                     { b: strong },
-                    formatShiftDate(stored.terminationDate),
+                    formatUnixDateMedium(stored.terminationDate),
                   )
                 : rt("<b>Termination date: not terminated.</b> Set by a Terminated event.", {
                     b: strong,
@@ -523,13 +500,7 @@ export function WorkerProfileCards({
         >
           <FormGroup cols={2}>
             <FormControl>
-              <AutoCompleteDateField
-                control={control}
-                name="profile.medicalCardExpiry"
-                label={t("Medical card expires")}
-                placeholder={t("MM/DD/YYYY")}
-              />
-              <MedicalExpiryLine />
+              <MedicalCardExpiryField />
             </FormControl>
             <FormControl>
               <AutoCompleteDateField

@@ -14,6 +14,7 @@ import { DESK_THREAD_ROUTES } from "./deskthreads.mjs";
 import { ORG, permissionManifest } from "../fixtures/session.mjs";
 import { SETTINGS_ROUTES } from "./settings.mjs";
 import { AUDIT_ROUTES } from "./audit.mjs";
+import { DESK_TRANSCRIPT_ROUTES } from "./desktranscripts.mjs";
 import { PALETTE_ROUTES } from "./palette.mjs";
 import { FORMULA_ROUTES } from "./formula.mjs";
 import { FORMULA_LIBRARY_ROUTES } from "./formula-library.mjs";
@@ -52,6 +53,7 @@ const ROUTES = [
   ...DESK_CARD_ROUTES,
   ...SETTINGS_ROUTES,
   ...AUDIT_ROUTES,
+  ...DESK_TRANSCRIPT_ROUTES,
   ["GET", /^\/api\/v1\/me\/permissions\/?$/, () => permissionManifest()],
   [
     "GET",

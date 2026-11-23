@@ -82,6 +82,10 @@ export async function fetchActiveWorkerChecklistTemplates(options?: {
   return data.activeWorkerChecklistTemplates as WorkerChecklistTemplateRow[];
 }
 
+/**
+ * A worker's checklists, open first then closed newest first, as one list the server caps at
+ * the newest 100. `includeClosed: false` reads only the open ones.
+ */
 export async function fetchWorkerChecklists(
   workerId: string,
   includeClosed = true,

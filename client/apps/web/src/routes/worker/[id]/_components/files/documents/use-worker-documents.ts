@@ -5,21 +5,25 @@ import {
   PENDING_DOCUMENTS_REFETCH_MS,
   resourceDocumentsQuery,
 } from "@/lib/resource-documents";
+import { worker as workerQueries } from "@/lib/queries/worker";
 import { documentService } from "@/services/document";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "@trenova/shared/components/ui/toast";
 import { useT } from "@trenova/shared/i18n/use-t";
 import type { Document, DocumentPacketSummary } from "@trenova/shared/types/document";
+import { WORKER_DOCUMENT_RESOURCE } from "./documents-model";
 
-export const WORKER_DOCUMENT_RESOURCE = "worker";
-
-/** Every key a change to the worker's documents makes stale, the overview's file count included. */
-export function workerDocumentKeys(workerId: string, versionOf?: string | null) {
+/**
+ * Every key a change to the worker's documents makes stale: the list, the packet summary, the
+ * versions of the document open in the versions dialog, and the overview, which carries the file
+ * count. The record and the roster hold nothing about documents.
+ */
+function workerDocumentKeys(workerId: string, versionOf: string | null) {
   return [
     ["documents", WORKER_DOCUMENT_RESOURCE, workerId],
     ["document-packet-summary", WORKER_DOCUMENT_RESOURCE, workerId],
-    ["document-versions", versionOf ?? null],
-    ["worker"],
+    ...(versionOf === null ? [] : [["document-versions", versionOf]]),
+    workerQueries.overview(workerId).queryKey,
   ] as const;
 }
 
@@ -48,41 +52,42 @@ export function useWorkerDocuments(workerId: string, versionOf: Document | null)
     enabled: versionId !== null,
   });
 
-  const refresh = () =>
-    Promise.all(
-      workerDocumentKeys(workerId, versionOf?.id).map((queryKey) =>
+  const refresh = async () => {
+    await Promise.all(
+      workerDocumentKeys(workerId, versionId).map((queryKey) =>
         queryClient.invalidateQueries({ queryKey }),
       ),
     );
+  };
 
   const remove = useApiMutation({
     scope: { id: `worker-documents:${workerId}` },
     resourceName: "Document",
     mutationFn: (document: Document) => documentService.delete(document.id),
-    onSuccess: () => void refresh(),
+    onSuccess: () => refresh(),
   });
   const removeMany = useApiMutation({
     scope: { id: `worker-documents:${workerId}` },
     resourceName: "Documents",
     mutationFn: (ids: string[]) => documentService.bulkDelete(ids),
-    onSuccess: (result) => {
-      void refresh();
+    onSuccess: async (result) => {
       toast.success(
         t("{0, plural, one {# document deleted} other {# documents deleted}}", result.deletedCount),
       );
+      await refresh();
     },
   });
   const approve = useApiMutation({
     scope: { id: `worker-documents-review:${workerId}` },
     resourceName: "Document",
     mutationFn: (document: Document) => documentService.approve(document.id),
-    onSuccess: () => void refresh(),
+    onSuccess: () => refresh(),
   });
   const restore = useApiMutation({
     scope: { id: `worker-documents-review:${workerId}` },
     resourceName: "Document",
     mutationFn: (document: Document) => documentService.restoreVersion(document.id),
-    onSuccess: () => void refresh(),
+    onSuccess: () => refresh(),
   });
 
   const open = async (document: Document) => {

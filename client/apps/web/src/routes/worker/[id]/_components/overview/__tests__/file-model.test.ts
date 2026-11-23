@@ -1,17 +1,19 @@
 import type { WorkerArea } from "@/routes/worker/use-worker-state";
 import { translate } from "@trenova/shared/i18n/runtime";
 import { formatUnixDateMedium } from "@trenova/shared/lib/date";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { payRateText } from "../../overview-model";
 import { fileCellRules, fileCells, fileColumns } from "../file-model";
 import { overviewFixture } from "./overview-fixtures";
 
 const t = translate;
 const everything = { isDrawable: () => true };
+/** The reader's clock as `useNow` gives it: unix seconds of the (possibly faked) wall clock. */
+const now = () => Math.floor(Date.now() / 1000);
 
 describe("fileCells", () => {
   it("says where each part of the record stands, in the file's order", () => {
-    const cells = fileCells(overviewFixture(), everything, t);
+    const cells = fileCells(overviewFixture(), everything, t, now());
     expect(
       cells.map((cell) => [
         cell.label,
@@ -41,7 +43,7 @@ describe("fileCells", () => {
   });
 
   it("opens each cell's tab and view", () => {
-    const cells = fileCells(overviewFixture(), everything, t);
+    const cells = fileCells(overviewFixture(), everything, t, now());
     expect(cells.find((cell) => cell.key === "safety")?.area).toEqual({
       tab: "safety",
       view: null,
@@ -57,7 +59,7 @@ describe("fileCells", () => {
     const areas = {
       isDrawable: (area: WorkerArea) => !hidden.has(area.view ?? area.tab),
     };
-    const keys = fileCells(overviewFixture(), areas, t).map((cell) => cell.key);
+    const keys = fileCells(overviewFixture(), areas, t, now()).map((cell) => cell.key);
     expect(keys).toEqual([
       "credentials",
       "dq-file",
@@ -76,6 +78,7 @@ describe("fileCells", () => {
       overviewFixture({ credentials: null, portal: null, pto: null }),
       everything,
       t,
+      now(),
     );
     for (const key of ["credentials", "driver-portal", "time-off"]) {
       expect(cells.find((cell) => cell.key === key)).toMatchObject({ state: null, note: null });
@@ -83,7 +86,7 @@ describe("fileCells", () => {
   });
 
   it("says when no pay profile is in force rather than withholding the cell", () => {
-    const pay = fileCells(overviewFixture({ pay: null }), everything, t).find(
+    const pay = fileCells(overviewFixture({ pay: null }), everything, t, now()).find(
       (cell) => cell.key === "pay-profile",
     );
     expect(pay).toMatchObject({ state: "No pay profile", note: { tone: "warning" } });
@@ -154,5 +157,27 @@ describe("fileColumns and fileCellRules", () => {
       { right: false, bottom: false },
     ]);
     expect(fileCellRules(0, 1, 3)).toEqual({ right: false, bottom: false });
+  });
+});
+
+describe("the driver portal cell's last sign-in", () => {
+  afterEach(() => vi.useRealTimers());
+
+  function signedInAt(lastSignInAt: number) {
+    const overview = overviewFixture();
+    const portal = { ...overview.portal!, pendingProfileChangeCount: 0, lastSignInAt };
+    const cells = fileCells({ ...overview, portal }, everything, t, now());
+    return cells.find((cell) => cell.key === "driver-portal")?.note?.text;
+  }
+
+  // Counted in calendar days where the reader is, not in 24-hour blocks: last night is
+  // yesterday even when it was under a day ago.
+  it("says yesterday's sign-in was a day ago even when it was under 24 hours ago", () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    const now = new Date(2026, 10, 23, 9, 0);
+    vi.setSystemTime(now);
+    const lastNight = new Date(2026, 10, 22, 23, 0).getTime() / 1000;
+    expect(signedInAt(lastNight)).toBe("Signed in 1 day ago");
+    expect(signedInAt(new Date(2026, 10, 23, 1, 0).getTime() / 1000)).toBe("Signed in today");
   });
 });

@@ -2,45 +2,34 @@ import { Kept } from "@/components/kept";
 import { useWorkPane } from "@/components/work-pane";
 import { usePermission } from "@/hooks/use-permission";
 import type { PerformanceReviewRow } from "@/lib/graphql/performance-review";
-import type {
-  WorkerTrainingRecordRow,
-  WorkerTrainingSummaryItem,
+import {
+  fetchWorkerTrainingRecord,
+  WORKER_TRAINING_KEY,
+  type WorkerTrainingRecordRow,
+  type WorkerTrainingSummaryItem,
 } from "@/lib/graphql/worker-training";
+import { lazyComponent } from "@/lib/lazy-component";
 import type { WorkerTabProps, WorkerTarget, WorkerViewOf } from "@/routes/worker/use-worker-state";
 import { useQuery } from "@tanstack/react-query";
 import { LazyComponent } from "@trenova/shared/components/error-boundary";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { lazy, useState } from "react";
+import { useRecordById } from "../use-record-by-id";
+import { useWorkerList } from "../use-worker-list";
+import { WORKER_VIEW_MODULES } from "../worker-view-modules";
 import {
-  trainingRecordsQuery,
-  trainingSummaryQuery,
-  workerReviewsQuery,
-} from "./development-reads";
+  AssignTrainingPane,
+  CoursePane,
+  EditReviewPane,
+  RecordTrainingResultPane,
+  ReviewReadPane,
+  StartReviewPane,
+} from "./development-panes";
+import { trainingRecordsList, trainingSummaryQuery, workerReviewsQuery } from "./development-reads";
 import { ReviewsSkeletonBody, TrainingSkeletonBody } from "./development-skeleton";
-import { EditReviewPane } from "./reviews/edit-review-pane";
-import { ReviewReadPane } from "./reviews/review-read-pane";
-import { StartReviewPane } from "./reviews/start-review-pane";
-import { AssignTrainingPane } from "./training/assign-training-pane";
-import { CoursePane } from "./training/course-pane";
-import { RecordTrainingResultPane } from "./training/record-training-result-pane";
-import { isOpenRecord } from "./training/training-slot-card";
+import { isOpenRecord, slotRecord, trainingRecordsById } from "./training/training-model";
 
-const Training = lazy(() => import("./training/worker-training-tab"));
-const Reviews = lazy(() => import("./reviews/worker-reviews-tab"));
-
-/** Every training record the tab has read, by id: the summary's slots and the full list. */
-export function trainingRecordsById(
-  items: readonly WorkerTrainingSummaryItem[] | undefined,
-  records: readonly WorkerTrainingRecordRow[] | undefined,
-): Map<string, WorkerTrainingRecordRow> {
-  const byId = new Map<string, WorkerTrainingRecordRow>();
-  for (const record of records ?? []) byId.set(record.id, record);
-  for (const item of items ?? []) {
-    const record = item.record as WorkerTrainingRecordRow | null | undefined;
-    if (record) byId.set(record.id, record);
-  }
-  return byId;
-}
+const Training = lazyComponent(WORKER_VIEW_MODULES.training, (module) => module.default);
+const Reviews = lazyComponent(WORKER_VIEW_MODULES.reviews, (module) => module.default);
 
 /**
  * Development: Training or Reviews, and the panes the address opens: `assign-training`,
@@ -54,19 +43,25 @@ export default function DevelopmentTab({ workerId, worker, view, open, onOpen }:
   const { allowed: canRecord } = usePermission(Resource.WorkerTraining, Operation.Update);
   const { allowed: canCreateReview } = usePermission(Resource.PerformanceReview, Operation.Create);
   const { allowed: canUpdateReview } = usePermission(Resource.PerformanceReview, Operation.Update);
-  const [now] = useState(() => Math.floor(Date.now() / 1000));
   // A course a row chose for the pane it opens rides in the address, so a reload or a shared
   // link keeps it.
   const presetCourseId = open.course;
 
-  const summaryQuery = useQuery(trainingSummaryQuery(workerId));
-  const recordsQuery = useQuery({
-    ...trainingRecordsQuery(workerId),
+  // Only a record the address names needs the training reads here; the view reads its own.
+  const summaryQuery = useQuery({
+    ...trainingSummaryQuery(workerId),
     enabled: open.training !== null,
+  });
+  const items = summaryQuery.data?.items ?? [];
+  const inSlots =
+    open.training !== null && items.some((item) => slotRecord(item)?.id === open.training);
+  const records = useWorkerList({
+    ...trainingRecordsList(workerId),
+    enabled: open.training !== null && summaryQuery.isSuccess && !inSlots,
   });
   const reviewsQuery = useQuery({
     ...workerReviewsQuery(workerId),
-    enabled: open.review !== null || open.form === "edit-review",
+    enabled: open.review !== null,
   });
 
   const go = (
@@ -78,23 +73,29 @@ export default function DevelopmentTab({ workerId, worker, view, open, onOpen }:
     );
   const closePane = () => onOpen({ tab: "development", view: selected });
 
-  const items = summaryQuery.data?.items ?? [];
-  const byId = trainingRecordsById(items, recordsQuery.data);
-  const requested = open.training ? (byId.get(open.training) ?? null) : null;
-  const openCourseIds = new Set(
-    items
-      .filter((item) => isOpenRecord(item.record as WorkerTrainingRecordRow | null))
-      .map((item) => item.course.id),
-  );
+  // The record the address names: in a slot, in the pages read, or past them, read by id.
+  const trainingRecord = useRecordById({
+    root: WORKER_TRAINING_KEY,
+    workerId,
+    id: open.training,
+    rows: [...trainingRecordsById(items, records.rows).values()],
+    rowsSettled:
+      summaryQuery.isError ||
+      (summaryQuery.isSuccess && (inSlots || records.isError || !records.isPending)),
+    fetchRecord: fetchWorkerTrainingRecord,
+  });
+  const requested = trainingRecord.record;
+  // Still looking for the record the address names: the result pane waits, so it opens once on
+  // the assignment rather than on a bare course and then again.
+  const lookingUp = trainingRecord.isPending;
 
-  const resultOpen = open.form === "record-training-result" && canRecord;
+  const resultOpen = open.form === "record-training-result" && canRecord && !lookingUp;
   const resultRecord = resultOpen && requested && isOpenRecord(requested) ? requested : null;
   const resultCourse = resultOpen && !resultRecord ? (requested?.courseId ?? presetCourseId) : null;
   const readRecord = open.form === null ? requested : null;
 
-  const reviews = reviewsQuery.data ?? [];
   const reviewById = open.review
-    ? (reviews.find((review) => review.id === open.review) ?? null)
+    ? ((reviewsQuery.data ?? []).find((review) => review.id === open.review) ?? null)
     : null;
   const editing =
     open.form === "edit-review" && canUpdateReview && reviewById?.status === "Draft"
@@ -105,7 +106,7 @@ export default function DevelopmentTab({ workerId, worker, view, open, onOpen }:
   const assign = (courseId: string | null) =>
     go({ view: "training", form: "assign-training" }, courseId);
   const record = (item: WorkerTrainingSummaryItem) => {
-    const slot = item.record as WorkerTrainingRecordRow | null | undefined;
+    const slot = slotRecord(item);
     go(
       {
         view: "training",
@@ -124,16 +125,20 @@ export default function DevelopmentTab({ workerId, worker, view, open, onOpen }:
     <>
       <Kept shown={selected === "training"}>
         <LazyComponent fallback={<TrainingSkeletonBody />}>
-          <Training workerId={workerId} onAssign={assign} onRecord={record} onRead={readCourse} />
+          <Training.Component
+            workerId={workerId}
+            onAssign={assign}
+            onRecord={record}
+            onRead={readCourse}
+          />
         </LazyComponent>
       </Kept>
       <Kept shown={selected === "reviews"}>
         <LazyComponent fallback={<ReviewsSkeletonBody />}>
-          <Reviews
+          <Reviews.Component
             workerId={workerId}
             workerFirstName={worker.firstName}
             focusId={open.form === null ? open.review : null}
-            now={now}
             onStart={() => go({ view: "reviews", form: "start-review" })}
             onEdit={(review: PerformanceReviewRow) =>
               go({ view: "reviews", form: "edit-review", review: review.id })
@@ -143,21 +148,20 @@ export default function DevelopmentTab({ workerId, worker, view, open, onOpen }:
         </LazyComponent>
       </Kept>
 
-      <AssignTrainingPane
+      <AssignTrainingPane.Component
         open={open.form === "assign-training" && canAssign}
         presetCourseId={presetCourseId}
         workerId={workerId}
-        openCourseIds={openCourseIds}
         onClose={closePane}
       />
-      <RecordTrainingResultPane
+      <RecordTrainingResultPane.Component
         open={resultOpen}
         record={resultRecord}
         presetCourseId={resultCourse}
         workerId={workerId}
         onClose={closePane}
       />
-      <CoursePane
+      <CoursePane.Component
         record={readRecord}
         required={
           readRecord
@@ -167,7 +171,7 @@ export default function DevelopmentTab({ workerId, worker, view, open, onOpen }:
         onRetake={canRecord ? retake : null}
         onClose={closePane}
       />
-      <StartReviewPane
+      <StartReviewPane.Component
         open={open.form === "start-review" && canCreateReview}
         workerId={workerId}
         workerName={worker.wholeName}
@@ -180,8 +184,8 @@ export default function DevelopmentTab({ workerId, worker, view, open, onOpen }:
         }
         onClose={closePane}
       />
-      <EditReviewPane review={editing} workerId={workerId} onClose={closePane} />
-      <ReviewReadPane review={readingReview} onClose={closePane} />
+      <EditReviewPane.Component review={editing} workerId={workerId} onClose={closePane} />
+      <ReviewReadPane.Component review={readingReview} onClose={closePane} />
     </>
   );
 }

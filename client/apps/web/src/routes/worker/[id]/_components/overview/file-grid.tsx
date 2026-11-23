@@ -20,9 +20,10 @@ import {
   Wallet02Icon,
   type IconComponent,
 } from "@trenova/shared/components/icons";
-import { useElementWidth } from "@trenova/shared/hooks/use-element-width";
+import { useNow } from "@trenova/shared/hooks/use-now";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
+import { useState } from "react";
 import {
   fileCellRules,
   fileCells,
@@ -55,6 +56,25 @@ const NOTE_TONES: Record<FileNoteTone, string> = {
 const GRID_COLUMNS = { 1: "grid-cols-1", 2: "grid-cols-2", 3: "grid-cols-3" } as const;
 
 /**
+ * How many columns the grid's measured width takes. It changes state only when the count does,
+ * so dragging a window wider re-renders the grid two or three times, not once per pixel.
+ */
+function useFileColumns(): [(node: HTMLDivElement | null) => (() => void) | undefined, 1 | 2 | 3] {
+  const [columns, setColumns] = useState<1 | 2 | 3>(3);
+  const ref = (node: HTMLDivElement | null) => {
+    if (!node) return undefined;
+    setColumns(fileColumns(node.clientWidth));
+    if (typeof ResizeObserver === "undefined") return undefined;
+    const observer = new ResizeObserver(([entry]) => {
+      if (entry) setColumns(fileColumns(entry.contentRect.width));
+    });
+    observer.observe(node);
+    return () => observer.disconnect();
+  };
+  return [ref, columns];
+}
+
+/**
  * Every part of the worker's record the reader can open and where it stands, as a ruled grid
  * of buttons that open that tab and view. It takes three columns, then two, then one as its
  * width narrows, and draws its hairlines for whatever number of cells the plan leaves.
@@ -69,10 +89,10 @@ export function FileGrid({
   onOpen: (target: WorkerTarget) => void;
 }) {
   const t = useT();
-  const [ref, width] = useElementWidth<HTMLDivElement>();
-  const cells = fileCells(overview, areas, t);
+  const now = useNow("minute");
+  const [ref, columns] = useFileColumns();
+  const cells = fileCells(overview, areas, t, now);
   if (cells.length === 0) return null;
-  const columns = fileColumns(width);
 
   return (
     <SectionPanel title={t("The file")} hint={t("Every part of the record and where it stands")}>

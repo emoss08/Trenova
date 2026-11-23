@@ -8,13 +8,13 @@ import (
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor"
 	"github.com/emoss08/trenova/internal/modules/equipment/ports/tractorports"
 	"github.com/emoss08/trenova/internal/modules/identity/app/ptoledgerservice"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/payassignment"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/paybenefit"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerdqfservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workersafetyservice"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/employment"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/portalinvitation"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/profilechange"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/safetyscorecard"
@@ -52,6 +52,7 @@ type CredentialSummarizer interface {
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 		wrk *worker.Worker,
+		asOf int64,
 	) (*workercredential.WorkerCredentialSummary, error)
 }
 
@@ -60,6 +61,7 @@ type TrainingSummarizer interface {
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 		wrk *worker.Worker,
+		asOf int64,
 	) (*workertraining.WorkerTrainingSummary, error)
 }
 
@@ -77,6 +79,7 @@ type ChecklistLister interface {
 		workerID pulid.ID,
 		includeClosed bool,
 	) ([]*workerchecklist.WorkerChecklist, error)
+	CountClosed(ctx context.Context, tenantInfo pagination.TenantInfo, workerID pulid.ID) (int, error)
 }
 
 type BalanceReader interface {
@@ -138,11 +141,11 @@ type QualificationFiler interface {
 	) (*workerdqfservice.FileParts, error)
 }
 
-type EmploymentEventLister interface {
-	List(
+type EmploymentSummarizer interface {
+	Summarize(
 		ctx context.Context,
-		req *workeremploymentports.ListWorkerEmploymentEventsRequest,
-	) ([]*employment.WorkerEmploymentEvent, error)
+		req *workeremploymentports.SummarizeWorkerEmploymentEventsRequest,
+	) (*workeremploymentports.EmploymentEventSummary, error)
 }
 
 type ShiftLister interface {
@@ -312,7 +315,7 @@ type Params struct {
 	LeaveStanding  LeaveEntitler
 	DrugAlcohol    DrugAlcoholStander
 	Qualification  QualificationFiler
-	Employment     EmploymentEventLister
+	Employment     EmploymentSummarizer
 	Shifts         ShiftLister
 	HOS            HOSLinker
 	Tractors       TractorReader
@@ -324,6 +327,7 @@ type Params struct {
 	Documents      documentports.ResourceDocumentCounter
 	Memories       MemoryLister
 	Dispatch       workerclearanceports.DispatchCheck
+	Organizations  tenantports.OrganizationRepository
 }
 
 type Service struct {
@@ -342,7 +346,7 @@ type Service struct {
 	leaveStanding  LeaveEntitler
 	drugAlcohol    DrugAlcoholStander
 	qualification  QualificationFiler
-	employment     EmploymentEventLister
+	employment     EmploymentSummarizer
 	shifts         ShiftLister
 	hos            HOSLinker
 	tractors       TractorReader
@@ -354,6 +358,7 @@ type Service struct {
 	documents      documentports.ResourceDocumentCounter
 	memories       MemoryLister
 	dispatch       workerclearanceports.DispatchCheck
+	organizations  tenantports.OrganizationReader
 }
 
 func New(p Params) *Service {
@@ -385,6 +390,7 @@ func New(p Params) *Service {
 		documents:      p.Documents,
 		memories:       p.Memories,
 		dispatch:       p.Dispatch,
+		organizations:  p.Organizations,
 	}
 }
 

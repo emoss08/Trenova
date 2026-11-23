@@ -1,7 +1,8 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { stubLayout } from "@/test/layout";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import WorkerTrainingTab from "../worker-training-tab";
 
 const {
@@ -9,12 +10,14 @@ const {
   fetchWorkerTrainingRecords,
   assignRequiredWorkerTraining,
   cancelWorkerTraining,
+  waiveWorkerTraining,
   toast,
 } = vi.hoisted(() => ({
   fetchWorkerTrainingSummary: vi.fn(),
   fetchWorkerTrainingRecords: vi.fn(),
   assignRequiredWorkerTraining: vi.fn(),
   cancelWorkerTraining: vi.fn(),
+  waiveWorkerTraining: vi.fn(),
   toast: { success: vi.fn(), error: vi.fn(), info: vi.fn() },
 }));
 
@@ -23,6 +26,7 @@ vi.mock("@/lib/graphql/worker-training", () => ({
   fetchWorkerTrainingRecords,
   assignRequiredWorkerTraining,
   cancelWorkerTraining,
+  waiveWorkerTraining,
   fetchActiveTrainingCourses: vi.fn().mockResolvedValue([]),
   WORKER_TRAINING_KEY: "worker-training",
   WORKER_TRAINING_SUMMARY_KEY: "worker-training-summary",
@@ -33,11 +37,6 @@ vi.mock("@trenova/shared/components/ui/toast", () => ({ toast }));
 
 vi.mock("@/hooks/use-permission", () => ({
   usePermission: () => ({ allowed: true, isLoading: false }),
-}));
-
-vi.mock("../waive-training-dialog", () => ({
-  WaiveTrainingDialog: ({ open, record }: { open: boolean; record?: { id: string } | null }) =>
-    open ? <div data-testid="waive-dialog">{record?.id}</div> : null,
 }));
 
 function course(id: string, name: string, overrides: Record<string, unknown> = {}) {
@@ -180,6 +179,14 @@ const summary = {
   ],
 };
 
+/** One page of the records connection, as the server answers `WorkerTrainingRecords`. */
+function page(nodes: unknown[], endCursor: string | null = null) {
+  return {
+    edges: nodes.map((node, index) => ({ cursor: `c${index}`, node })),
+    pageInfo: { hasNextPage: endCursor !== null, endCursor },
+  };
+}
+
 const handlers = { onAssign: vi.fn(), onRecord: vi.fn(), onRead: vi.fn() };
 
 function renderTab() {
@@ -193,19 +200,23 @@ function renderTab() {
   );
 }
 
+// The history region is a virtualised list; give it a viewport to draw its rows in.
+let restoreLayout = () => {};
+beforeEach(() => {
+  restoreLayout = stubLayout(320);
+});
+
 afterEach(() => {
+  restoreLayout();
   cleanup();
   vi.clearAllMocks();
 });
 
 function loadAll() {
   fetchWorkerTrainingSummary.mockResolvedValue(summary);
-  fetchWorkerTrainingRecords.mockResolvedValue([
-    hazmatRecord,
-    orientationRecord,
-    winterRecord,
-    oldFailure,
-  ]);
+  fetchWorkerTrainingRecords.mockResolvedValue(
+    page([hazmatRecord, orientationRecord, winterRecord, oldFailure]),
+  );
 }
 
 describe("WorkerTrainingTab", () => {
@@ -276,7 +287,7 @@ describe("WorkerTrainingTab", () => {
       missingCount: 0,
       items: summary.items.filter((item) => item.course.id !== "trnc_hos"),
     });
-    fetchWorkerTrainingRecords.mockResolvedValue([]);
+    fetchWorkerTrainingRecords.mockResolvedValue(page([]));
     renderTab();
 
     expect(await screen.findByRole("button", { name: "Assign course" })).toBeInTheDocument();
@@ -300,25 +311,61 @@ describe("WorkerTrainingTab", () => {
     );
   });
 
-  it("keeps the waiver a dialog and folds earlier records under the table", async () => {
+  it("asks why before waiving, then waives the assignment with the reason and its version", async () => {
     loadAll();
+    waiveWorkerTraining.mockResolvedValue({ ...hazmatRecord, status: "Waived" });
     renderTab();
     const user = userEvent.setup();
 
     const hazmatRow = within(await screen.findByTestId("training-slot-trnc_hazmat"));
     await user.click(hazmatRow.getByRole("button", { name: /^Actions for/ }));
     await user.click(await screen.findByRole("menuitem", { name: "Waive" }));
-    expect(screen.getByTestId("waive-dialog")).toHaveTextContent("wtrn_hazmat");
+    const dialog = await screen.findByRole("dialog");
+    expect(within(dialog).getByRole("button", { name: "Cancel" })).toBeInTheDocument();
+    await user.type(within(dialog).getByLabelText(/Reason/), "Certificate from previous carrier");
+    await user.click(within(dialog).getByRole("button", { name: "Waive course" }));
 
-    await user.click(screen.getByRole("button", { name: /History/ }));
+    await waitFor(() =>
+      expect(waiveWorkerTraining).toHaveBeenCalledWith({
+        id: "wtrn_hazmat",
+        reason: "Certificate from previous carrier",
+        version: 1,
+      }),
+    );
+  });
+
+  it("folds the closed records no course stands on under the table, counted once the list is whole", async () => {
+    loadAll();
+    renderTab();
+    const user = userEvent.setup();
+
+    const toggle = await screen.findByRole("button", { name: /History/ });
+    expect(toggle).toHaveTextContent("History1earlier records");
+    await user.click(toggle);
     expect(screen.getByText(/55%/)).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /^New Driver Orientation/ }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("reads the records a page at a time and leaves the count out while more pages exist", async () => {
+    fetchWorkerTrainingSummary.mockResolvedValue(summary);
+    fetchWorkerTrainingRecords.mockResolvedValue(page([oldFailure], "c_next"));
+    renderTab();
+
+    const toggle = await screen.findByRole("button", { name: /History/ });
+    expect(toggle).toHaveTextContent("Historyearlier records");
+    expect(fetchWorkerTrainingRecords).toHaveBeenCalledWith(
+      { workerId: "wrk_1", includeClosed: true, first: 50, after: undefined },
+      expect.objectContaining({ signal: expect.any(AbortSignal) }),
+    );
   });
 
   it("says the read failed instead of drawing an empty table", async () => {
     fetchWorkerTrainingSummary.mockRejectedValue(new Error("boom"));
-    fetchWorkerTrainingRecords.mockResolvedValue([]);
+    fetchWorkerTrainingRecords.mockResolvedValue(page([]));
     renderTab();
-    expect(await screen.findByText("Couldn't load the training")).toBeInTheDocument();
+    expect(await screen.findByText("The training could not be loaded")).toBeInTheDocument();
     expect(screen.queryByText("No courses on file")).not.toBeInTheDocument();
   });
 });

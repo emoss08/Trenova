@@ -24,11 +24,11 @@ func (h *harness) hold(
 	return credential
 }
 
-func TestList_OneWorkerReadsWhatTheyHoldNarrowedByTypeAndRequired(t *testing.T) {
+func TestList_OneWorkerReadsWhatTheyHoldNarrowedInTheQuery(t *testing.T) {
 	t.Parallel()
 
 	h := newHarness(t)
-	cdl := h.hold(h.cdl, 1_900_000_000)
+	h.hold(h.cdl, 1_900_000_000)
 	h.hold(h.forklift, 1_900_000_000)
 
 	all, err := h.svc.List(t.Context(), &workercredentialservice.ListRequest{
@@ -37,39 +37,23 @@ func TestList_OneWorkerReadsWhatTheyHoldNarrowedByTypeAndRequired(t *testing.T) 
 	require.NoError(t, err)
 	assert.Len(t, all, 2)
 	assert.Nil(t, h.repo.expiring, "one worker's record is not an expiry walk")
+	require.NotNil(t, h.repo.held)
+	assert.True(t, h.repo.held.IncludeType)
+	assert.True(t, h.repo.held.IncludeDocument)
 
-	byCode, err := h.svc.List(t.Context(), &workercredentialservice.ListRequest{
-		TenantInfo: h.tenant, WorkerIDs: []pulid.ID{h.wrk.ID}, CredentialTypeCode: " cdl ",
+	_, err = h.svc.List(t.Context(), &workercredentialservice.ListRequest{
+		TenantInfo:         h.tenant,
+		WorkerIDs:          []pulid.ID{h.wrk.ID},
+		CredentialTypeCode: " cdl ",
+		RequiredOnly:       true,
+		Limit:              1,
+		Offset:             1,
 	})
 	require.NoError(t, err)
-	require.Len(t, byCode, 1, "a code matches whatever its case")
-	assert.Equal(t, cdl.ID, byCode[0].ID)
-
-	required, err := h.svc.List(t.Context(), &workercredentialservice.ListRequest{
-		TenantInfo: h.tenant, WorkerIDs: []pulid.ID{h.wrk.ID}, RequiredOnly: true,
-	})
-	require.NoError(t, err)
-	require.Len(t, required, 1)
-	assert.Equal(t, cdl.ID, required[0].ID)
-
-	limited, err := h.svc.List(t.Context(), &workercredentialservice.ListRequest{
-		TenantInfo: h.tenant, WorkerIDs: []pulid.ID{h.wrk.ID}, Limit: 1,
-	})
-	require.NoError(t, err)
-	assert.Len(t, limited, 1)
-
-	rest, err := h.svc.List(t.Context(), &workercredentialservice.ListRequest{
-		TenantInfo: h.tenant, WorkerIDs: []pulid.ID{h.wrk.ID}, Limit: 1, Offset: 1,
-	})
-	require.NoError(t, err)
-	require.Len(t, rest, 1)
-	assert.NotEqual(t, limited[0].ID, rest[0].ID, "the next page starts after the first")
-
-	past, err := h.svc.List(t.Context(), &workercredentialservice.ListRequest{
-		TenantInfo: h.tenant, WorkerIDs: []pulid.ID{h.wrk.ID}, Offset: 5,
-	})
-	require.NoError(t, err)
-	assert.Empty(t, past)
+	assert.Equal(t, "CDL", h.repo.held.CredentialTypeCode, "a code matches whatever its case")
+	assert.True(t, h.repo.held.RequiredOnly, "required is narrowed in the query")
+	assert.Equal(t, 1, h.repo.held.Limit, "the page is the query's, not a slice in memory")
+	assert.Equal(t, 1, h.repo.held.Offset)
 }
 
 func TestList_WhatFallsDueIsWalkedInTheQuery(t *testing.T) {

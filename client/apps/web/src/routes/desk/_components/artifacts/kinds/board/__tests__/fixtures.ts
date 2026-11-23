@@ -373,6 +373,8 @@ export const CONVERSATION_SPEC = {
       type: "records",
       title: "The late loads, furthest behind first",
       records: { resource: "shipment", ids: ["shp_1", "shp_2", "shp_3"] },
+      measure: "lateness",
+      order: "measure",
     },
     { type: "actions", actions: [{ label: "Ask the Memphis dock", ask: "Ask the Memphis dock" }] },
   ],

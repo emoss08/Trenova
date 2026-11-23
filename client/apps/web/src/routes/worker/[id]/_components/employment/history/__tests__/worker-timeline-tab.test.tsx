@@ -1,17 +1,23 @@
 import type { WorkerRecord } from "@/routes/worker/use-worker-state";
+import { WorkPaneHost, WorkPaneProvider } from "@/components/work-pane";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { cleanup, render, screen, within } from "@testing-library/react";
+import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { worker as workerQueries } from "@/lib/queries/worker";
+import { formatUnixDateMedium } from "@trenova/shared/lib/date";
+import { stubLayout } from "@/test/layout";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import WorkerTimelineTab from "../worker-timeline-tab";
 
-const { fetchWorkerEmploymentEvents } = vi.hoisted(() => ({
+const { fetchWorkerEmploymentEvents, fetchWorkerEmploymentEvent } = vi.hoisted(() => ({
   fetchWorkerEmploymentEvents: vi.fn(),
+  fetchWorkerEmploymentEvent: vi.fn(),
 }));
 const permissionState = vi.hoisted(() => ({ create: true, update: true }));
 
 vi.mock("@/lib/graphql/worker-employment", () => ({
   fetchWorkerEmploymentEvents,
+  fetchWorkerEmploymentEvent,
   fetchWorkerEmploymentEventOptions: vi.fn(),
   WORKER_EMPLOYMENT_EVENTS_KEY: "worker-employment-events",
   WORKER_EMPLOYMENT_OPTIONS_KEY: "worker-employment-event-options",
@@ -63,24 +69,72 @@ const worker = {
   profile: { hireDate: 1_662_940_800, terminationDate: null },
 } as unknown as WorkerRecord;
 
-const handlers = { onRecord: vi.fn(), onAmend: vi.fn() };
+const handlers = {
+  onRecord: vi.fn(),
+  onAmend: vi.fn(),
+  onCloseAmend: vi.fn(),
+  recordPane: { preload: vi.fn(() => Promise.resolve()) },
+};
 
-function renderTab(highlightId: string | null = null) {
+type Row = Record<string, unknown>;
+
+/** The server's read: newest first, narrowed to `kinds`, a page of `first` after `after`. */
+function serve(rows: readonly Row[]) {
+  fetchWorkerEmploymentEvents.mockImplementation(
+    async (input: { kinds?: readonly string[]; first: number; after?: string | null }) => {
+      const matching = [...rows]
+        .filter((row) => !input.kinds?.length || input.kinds.includes(row.kind as string))
+        .sort((a, b) => (b.effectiveAt as number) - (a.effectiveAt as number));
+      const start = input.after ? Number(input.after) : 0;
+      const page = matching.slice(start, start + input.first);
+      const end = start + page.length;
+      return {
+        edges: page.map((node, index) => ({ cursor: String(start + index + 1), node })),
+        pageInfo: { hasNextPage: end < matching.length, endCursor: String(end) },
+        // Counted on the first page only, as the operation asks.
+        ...(input.after ? {} : { totalCount: matching.length, totalCountExact: true }),
+      };
+    },
+  );
+}
+
+function renderTab(
+  highlightId: string | null = null,
+  eventCount = 3,
+  amendingId: string | null = null,
+) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  client.setQueryData(workerQueries.overview("wrk_1").queryKey, {
+    employment: { eventCount, hiredAt: null, openChecklistCount: 0 },
+  } as never);
   return render(
     <QueryClientProvider client={client}>
-      <WorkerTimelineTab
-        workerId="wrk_1"
-        worker={worker}
-        highlightId={highlightId}
-        now={1_795_305_600}
-        {...handlers}
-      />
+      <WorkPaneProvider>
+        <WorkPaneHost>
+          <WorkerTimelineTab
+            workerId="wrk_1"
+            worker={worker}
+            highlightId={highlightId}
+            amendingId={amendingId}
+            {...handlers}
+          />
+        </WorkPaneHost>
+      </WorkPaneProvider>
     </QueryClientProvider>,
   );
 }
 
+let restoreLayout = () => {};
+
+beforeEach(() => {
+  restoreLayout = stubLayout(320);
+  vi.useFakeTimers({ toFake: ["Date"] });
+  vi.setSystemTime(1_795_305_600_000);
+});
+
 afterEach(() => {
+  restoreLayout();
+  vi.useRealTimers();
   cleanup();
   vi.clearAllMocks();
   permissionState.create = true;
@@ -118,7 +172,7 @@ const history = [
 
 describe("Employment history", () => {
   it("groups events by year, newest first, with changes as chips and no raw ids", async () => {
-    fetchWorkerEmploymentEvents.mockResolvedValue(history);
+    serve(history);
     renderTab();
 
     expect(await screen.findByTestId("timeline-year-2025")).toBeInTheDocument();
@@ -132,11 +186,12 @@ describe("Employment history", () => {
 
     const hire = within(screen.getByTestId("timeline-event-wee_hire"));
     expect(hire.queryByText("fc_01J9")).not.toBeInTheDocument();
-    expect(screen.getByText("3 of 3 events")).toBeInTheDocument();
+    const panel = within(screen.getByRole("region", { name: "Employment history" }));
+    expect(panel.getByText("3")).toBeInTheDocument();
   });
 
   it("marks an amended event and says who amended it and why", async () => {
-    fetchWorkerEmploymentEvents.mockResolvedValue(history);
+    serve(history);
     renderTab();
 
     const rate = within(await screen.findByTestId("timeline-event-wee_rate"));
@@ -146,25 +201,55 @@ describe("Employment history", () => {
     ).toBeInTheDocument();
   });
 
-  it("filters by kind and offers to show every kind when the filter empties the list", async () => {
-    fetchWorkerEmploymentEvents.mockResolvedValue(history);
+  it("filters by kind on the server and offers to show every kind when nothing matches", async () => {
+    serve(history);
     renderTab();
     const user = userEvent.setup();
 
     await user.click(await screen.findByRole("combobox", { name: "Show events of kind" }));
     await user.click(await screen.findByRole("option", { name: "Rate changes" }));
-    expect(screen.getByText("1 of 3 events")).toBeInTheDocument();
-    expect(screen.queryByTestId("timeline-event-wee_transfer")).not.toBeInTheDocument();
+    await waitFor(() =>
+      expect(screen.queryByTestId("timeline-event-wee_transfer")).not.toBeInTheDocument(),
+    );
+    expect(screen.getByTestId("timeline-event-wee_rate")).toBeInTheDocument();
+    expect(fetchWorkerEmploymentEvents).toHaveBeenCalledWith(
+      expect.objectContaining({ workerId: "wrk_1", kinds: ["RateChanged"], first: 50 }),
+      expect.anything(),
+    );
 
     await user.click(screen.getByRole("combobox", { name: "Show events of kind" }));
     await user.click(await screen.findByRole("option", { name: "Leave" }));
-    expect(screen.getByText("No events of this kind.")).toBeInTheDocument();
+    expect(await screen.findByText("No events of this kind.")).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Show all kinds" }));
-    expect(screen.getByText("3 of 3 events")).toBeInTheDocument();
+    expect(await screen.findByTestId("timeline-event-wee_transfer")).toBeInTheDocument();
+  });
+
+  it("counts a kind's events from the server's total on its first page", async () => {
+    serve(history);
+    renderTab();
+    const user = userEvent.setup();
+
+    await user.click(await screen.findByRole("combobox", { name: "Show events of kind" }));
+    await user.click(await screen.findByRole("option", { name: "Rate changes" }));
+    const panel = within(screen.getByRole("region", { name: "Employment history" }));
+    await waitFor(() => expect(panel.getByText("1")).toBeInTheDocument());
+  });
+
+  it("reads the event the Amend pane names by id when it is past the pages read", async () => {
+    serve(history);
+    fetchWorkerEmploymentEvent.mockResolvedValue(
+      event("wee_old", "Transferred", 1_600_000_000, { reason: "Long ago" }),
+    );
+    renderTab(null, 3, "wee_old");
+
+    expect(
+      await screen.findByRole("dialog", { name: "Amend event" }, { timeout: 5000 }),
+    ).toBeInTheDocument();
+    expect(fetchWorkerEmploymentEvent).toHaveBeenCalledWith("wee_old", expect.anything());
   });
 
   it("amends from the row, and only for a reader who may update events", async () => {
-    fetchWorkerEmploymentEvents.mockResolvedValue(history);
+    serve(history);
     renderTab();
     const user = userEvent.setup();
 
@@ -180,18 +265,19 @@ describe("Employment history", () => {
   });
 
   it("shows the dates the employment turns on beside the history", async () => {
-    fetchWorkerEmploymentEvents.mockResolvedValue(history);
+    serve(history);
     renderTab();
 
     const dates = within(await screen.findByRole("region", { name: "Dates" }));
     expect(dates.getByText("Last rate change")).toBeInTheDocument();
+    expect(dates.getByText(formatUnixDateMedium(1_751_328_000))).toBeInTheDocument();
     expect(dates.getByText("4 years 2 months")).toBeInTheDocument();
     expect(screen.getByTestId("leave-standing")).toBeInTheDocument();
   });
 
   it("draws an empty history with the way to record the first event", async () => {
-    fetchWorkerEmploymentEvents.mockResolvedValue([]);
-    renderTab();
+    serve([]);
+    renderTab(null, 0);
     const user = userEvent.setup();
 
     expect(await screen.findByText("No employment events yet")).toBeInTheDocument();
@@ -203,7 +289,9 @@ describe("Employment history", () => {
     fetchWorkerEmploymentEvents.mockRejectedValue(new Error("boom"));
     renderTab();
 
-    expect(await screen.findByText("Couldn't load the employment history")).toBeInTheDocument();
+    expect(
+      await screen.findByText("The employment history could not be loaded"),
+    ).toBeInTheDocument();
     expect(screen.queryByText("No employment events yet")).not.toBeInTheDocument();
   });
 });

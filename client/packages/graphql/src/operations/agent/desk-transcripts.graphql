@@ -1,0 +1,111 @@
+fragment DeskConversationRowFields on DeskConversation {
+  id
+  ownerName
+  agentName
+  title
+  origin
+  archived
+  messageCount
+  startedAt
+  lastMessageAt
+}
+
+fragment DeskTranscriptExportFields on DeskTranscriptExport {
+  id
+  requestedByName
+  kind
+  coverage {
+    kind
+    timeframe {
+      preset
+      fromDate
+      toDate
+    }
+    personName
+    agentName
+    origins
+    selectedCount
+    ownerNames
+    ownerCount
+  }
+  status
+  conversationCount
+  byteSize
+  artifactExpiresAt
+  errorMessage
+  startedAt
+  completedAt
+  downloadable
+  createdAt
+}
+
+query DeskConversationTable(
+  $input: DataTableConnectionInput!
+  $filter: DeskConversationFilterInput
+  $includeTotalCount: Boolean = true
+) {
+  deskConversations(input: $input, filter: $filter) {
+    edges {
+      node {
+        ...DeskConversationRowFields
+      }
+    }
+    totalCount @include(if: $includeTotalCount)
+    totalCountExact @include(if: $includeTotalCount)
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+
+query DeskTranscriptExportTable(
+  $input: DataTableConnectionInput!
+  $includeTotalCount: Boolean = true
+) {
+  deskTranscriptExports(input: $input) {
+    edges {
+      node {
+        ...DeskTranscriptExportFields
+      }
+    }
+    totalCount @include(if: $includeTotalCount)
+    totalCountExact @include(if: $includeTotalCount)
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+
+query DeskTranscriptExportPreview($filter: DeskConversationFilterInput!) {
+  deskTranscriptExportPreview(filter: $filter) {
+    count
+    exact
+    limit
+    withinLimit
+  }
+}
+
+mutation OpenDeskConversation($id: ID!) {
+  openDeskConversation(id: $id) {
+    conversation {
+      ...DeskConversationRowFields
+    }
+    transcript {
+      ...AgentRunTranscriptFields
+    }
+  }
+}
+
+mutation RequestDeskTranscriptExport($input: RequestDeskTranscriptExportInput!) {
+  requestDeskTranscriptExport(input: $input) {
+    ...DeskTranscriptExportFields
+  }
+}
+
+mutation DeskTranscriptExportDownload($id: ID!) {
+  deskTranscriptExportDownload(id: $id) {
+    url
+    fileName
+    expiresAt
+  }
+}

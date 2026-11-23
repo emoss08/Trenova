@@ -55,6 +55,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/caseownerports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/deskactivityports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/deskattentionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/desktranscriptports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/dispatchconsoleports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/recordcaseports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/recordshareports"
@@ -464,6 +465,7 @@ type Params struct {
 	AgentRosterService                agentrosterports.AgentRosterService
 	AIProviderService                 aiproviderports.AIProviderService
 	AIUsageService                    aiusageports.AIUsageService
+	DeskTranscriptService             desktranscriptports.Service
 	AIRetrievalStatusService          retrievalports.AIRetrievalStatusService
 	AgentProposalService              agentproposalports.AgentProposalService
 	AgentPlanService                  agentplanports.AgentPlanService
@@ -772,6 +774,7 @@ type Services struct {
 	AgentRosterService                agentrosterports.AgentRosterService
 	AiProviderService                 aiproviderports.AIProviderService
 	AiUsageService                    aiusageports.AIUsageService
+	DeskTranscriptService             desktranscriptports.Service
 	AiRetrievalStatusService          retrievalports.AIRetrievalStatusService
 	AgentProposalService              agentproposalports.AgentProposalService
 	AgentPlanService                  agentplanports.AgentPlanService
@@ -1086,6 +1089,7 @@ func newServices(p *Params) *Services {
 		AgentRosterService:                p.AgentRosterService,
 		AiProviderService:                 p.AIProviderService,
 		AiUsageService:                    p.AIUsageService,
+		DeskTranscriptService:             p.DeskTranscriptService,
 		AiRetrievalStatusService:          p.AIRetrievalStatusService,
 		AgentProposalService:              p.AgentProposalService,
 		AgentPlanService:                  p.AgentPlanService,

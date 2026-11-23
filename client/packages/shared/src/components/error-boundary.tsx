@@ -77,7 +77,7 @@ export function ErrorStateBoundary({
 /**
  * The boundary around a data table: a failure draws ErrorState in place, and while the table's
  * code or first page loads it draws the table's own skeleton. It is for tables only;
- * `pnpm lint:skeletons` fails when anything inside it does not render a `DataTable`. Anything
+ * `bun run lint:skeletons` fails when anything inside it does not render a `DataTable`. Anything
  * else takes `LazyComponent` with a skeleton of its own layout.
  */
 export function DataTableLazyComponent({

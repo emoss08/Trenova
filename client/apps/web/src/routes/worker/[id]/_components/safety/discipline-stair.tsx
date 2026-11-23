@@ -1,15 +1,15 @@
-import { HoverGlideGroup } from "@/components/hover-glide";
 import { RowActionsMenu, type RowAction } from "@/components/row-actions-menu";
+import type { PreloadIntent } from "@/components/work-pane";
 import { SectionPanel, SectionPanelQuiet } from "@/components/section-panel";
+import { VirtualRows, type VirtualRow } from "@/components/virtual-rows";
 import type { DisciplinaryLadder, WorkerDisciplinaryActionRow } from "@/lib/graphql/worker-safety";
+import { ErrorState } from "@trenova/shared/components/errors/error-state";
 import { ArrowNarrowRightIcon, ReverseLeftIcon } from "@trenova/shared/components/icons";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
-import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import { useRichT } from "@trenova/shared/i18n/rich";
-import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
-import { formatUnixDateMedium } from "@trenova/shared/lib/date";
+import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import {
   DISCIPLINARY_LEVEL_LABELS,
@@ -17,45 +17,30 @@ import {
   type DisciplinaryLevel,
   type DisciplinaryStatus,
 } from "@trenova/shared/types/worker-safety";
-import { useEffect, useState } from "react";
-import { disciplineStair, sortActions, type StairStep } from "./safety-model";
+import { useState } from "react";
+import { ListMoreLine } from "../list-more";
+import { ShimmerLine } from "../tab-skeleton-parts";
+import type { WorkerList } from "../use-worker-list";
+import { actionSummary, disciplineStair, type StairStep } from "./safety-model";
 
 /** Each step a little taller than the last. */
 const STEP_HEIGHTS = ["h-3.5", "h-5.5", "h-7.5", "h-9.5", "h-11.5", "h-13.5"];
 
-export function actionSummary(action: WorkerDisciplinaryActionRow, t: TranslateFn): string {
-  if (action.status === "Rescinded") {
-    return action.rescindReason ? t("Rescinded: {0}", action.rescindReason) : t("Rescinded");
-  }
-  const parts = [
-    action.issuedBy?.name
-      ? t("{0} by {1}", formatUnixDateMedium(action.issuedAt), action.issuedBy.name)
-      : formatUnixDateMedium(action.issuedAt),
-    action.suspensionDays
-      ? t("{0, plural, one {# day off} other {# days off}}", action.suspensionDays)
-      : null,
-    action.expiresAt
-      ? action.status === "Expired"
-        ? t("rolled off {0}", formatUnixDateMedium(action.expiresAt))
-        : t("rolls off {0}", formatUnixDateMedium(action.expiresAt))
-      : null,
-    action.status === "Active"
-      ? action.acknowledgedAt
-        ? t("Acknowledged")
-        : t("waiting for the acknowledgement")
-      : null,
-  ].filter(Boolean);
-  return parts.join(" · ");
-}
-
 type DisciplineStairProps = {
   ladder: DisciplinaryLadder;
-  actions: readonly WorkerDisciplinaryActionRow[];
+  /** Every action issued, a page at a time. */
+  actions: WorkerList<WorkerDisciplinaryActionRow>;
   /** The level being issued in the pane, previewed on its step. */
   preview: DisciplinaryLevel | null;
   canIssue: boolean;
   canRescind: boolean;
   onIssue: () => void;
+  /** Reads the issue pane's code when the button is pointed at or focused. */
+  issueIntent: PreloadIntent;
+  /** Reads the action pane's code when a row is pointed at or focused. */
+  openActionIntent: PreloadIntent;
+  /** Reads the safety event pane's code when "Open the event" comes into reach. */
+  preloadEvent: () => Promise<unknown>;
   onOpenAction: (action: WorkerDisciplinaryActionRow) => void;
   onOpenEvent: (safetyEventId: string) => void;
   onRescind: (action: WorkerDisciplinaryActionRow) => void;
@@ -63,8 +48,9 @@ type DisciplineStairProps = {
 
 /**
  * Progressive discipline as six ascending steps: the steps reached are filled, the active one
- * carries a ring, and the server's suggested next step is outlined in the warning tone. Under it,
- * every action issued, active ones first.
+ * carries a ring, and the server's suggested next step is outlined in the warning tone; all of it
+ * comes from the ladder, not from the actions loaded. Under it, every action issued, newest first,
+ * a page at a time.
  */
 export function DisciplineStair({
   ladder,
@@ -73,6 +59,9 @@ export function DisciplineStair({
   canIssue,
   canRescind,
   onIssue,
+  issueIntent,
+  openActionIntent,
+  preloadEvent,
   onOpenAction,
   onOpenEvent,
   onRescind,
@@ -82,20 +71,30 @@ export function DisciplineStair({
   const steps = disciplineStair(ladder, preview);
   const atTop = ladder.highestLevel === "Termination";
   const suggested = ladder.suggestedLevel as DisciplinaryLevel;
-  const sorted = sortActions(actions);
+  // The steps rise once. A kept tab is hidden with `display: none`, which replays a CSS
+  // animation when it is shown again, so the class comes off when the last step has risen.
   const [entered, setEntered] = useState(false);
-  useEffect(() => {
-    const timer = window.setTimeout(() => setEntered(true), 600);
-    return () => window.clearTimeout(timer);
-  }, []);
 
   const stepNote = (step: StairStep) => {
-    const action = sorted.find(
-      (candidate) => candidate.level === step.level && candidate.status === "Active",
-    );
+    const action = ladder.activeActions.find((candidate) => candidate.level === step.level);
     if (action) return actionSummary(action, t);
     return step.next ? t("Suggested next step.") : t("Not reached.");
   };
+
+  const rows: VirtualRow[] = actions.rows.map((action) => ({
+    key: action.id,
+    render: () => (
+      <ActionRow
+        action={action}
+        canRescind={canRescind}
+        openIntent={openActionIntent}
+        preloadEvent={preloadEvent}
+        onOpen={onOpenAction}
+        onOpenEvent={onOpenEvent}
+        onRescind={onRescind}
+      />
+    ),
+  }));
 
   return (
     <SectionPanel title={t("Discipline")} hint={t("Progressive, rolls off after 12 months")}>
@@ -137,6 +136,7 @@ export function DisciplineStair({
                       !entered && "motion-safe:animate-rise",
                     )}
                     style={{ animationDelay: `${index * 40}ms` }}
+                    onAnimationEnd={index === steps.length - 1 ? () => setEntered(true) : undefined}
                   />
                 }
               >
@@ -192,76 +192,116 @@ export function DisciplineStair({
                 )}
           </p>
           {canIssue ? (
-            <Button size="sm" variant="secondary" onClick={onIssue}>
+            <Button size="sm" variant="secondary" {...issueIntent} onClick={onIssue}>
               {t("Issue action")}
             </Button>
           ) : null}
         </div>
       </div>
-      {sorted.length === 0 ? (
+      {actions.isPending ? (
+        <div aria-busy aria-label={t("Loading the actions")} className="flex flex-col gap-2 p-3">
+          <ShimmerLine className="w-3/5" />
+          <ShimmerLine className="w-2/5" />
+        </div>
+      ) : actions.isError ? (
+        <div className="p-3">
+          <ErrorState
+            error={actions.error}
+            layout="compact"
+            title={t("The disciplinary actions could not be loaded")}
+            onRetry={actions.refetch}
+          />
+        </div>
+      ) : rows.length === 0 ? (
         <SectionPanelQuiet>{t("No disciplinary actions on record.")}</SectionPanelQuiet>
       ) : (
-        <ScrollArea viewportClassName="max-h-72" maskVariant="card">
-          <HoverGlideGroup className="flex flex-col px-1.5 py-1">
-            {sorted.map((action) => {
-              const status = action.status as DisciplinaryStatus;
-              const level = action.level as DisciplinaryLevel;
-              const menu: RowAction[] = [];
-              if (action.safetyEventId) {
-                const eventId = action.safetyEventId;
-                menu.push({
-                  id: "event",
-                  label: t("Open the event"),
-                  icon: ArrowNarrowRightIcon,
-                  onSelect: () => onOpenEvent(eventId),
-                });
-              }
-              if (canRescind && status === "Active") {
-                menu.push({
-                  id: "rescind",
-                  label: t("Rescind…"),
-                  icon: ReverseLeftIcon,
-                  destructive: true,
-                  onSelect: () => onRescind(action),
-                });
-              }
-              return (
-                <div
-                  key={action.id}
-                  data-glide-target
-                  data-testid={`discipline-${action.id}`}
-                  className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-2 rounded-md p-2"
-                >
-                  <button
-                    type="button"
-                    onClick={() => onOpenAction(action)}
-                    className="min-w-0 rounded-sm ui-focus-ring text-left"
-                  >
-                    <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                      <span
-                        className={cn(
-                          "font-medium",
-                          status !== "Active" && "text-muted-foreground",
-                          status === "Rescinded" && "line-through decoration-foreground-subtle",
-                        )}
-                      >
-                        {t(DISCIPLINARY_LEVEL_LABELS[level] ?? level)}
-                      </span>
-                      <Badge variant="neutral" dot={status === "Active"}>
-                        {t(DISCIPLINARY_STATUS_LABELS[status] ?? status)}
-                      </Badge>
-                    </span>
-                    <span className="mt-0.5 block text-xs text-muted-foreground tabular-nums">
-                      {actionSummary(action, t)}
-                    </span>
-                  </button>
-                  <RowActionsMenu label={t("Action options")} actions={menu} />
-                </div>
-              );
-            })}
-          </HoverGlideGroup>
-        </ScrollArea>
+        <VirtualRows
+          rows={rows}
+          mask="card"
+          className="max-h-72"
+          contentClassName="px-1.5 py-1"
+          hoverGlide
+          estimateSize={56}
+          onEndReached={actions.hasMore && !actions.loadMoreFailed ? actions.loadMore : undefined}
+          footer={<ListMoreLine more={actions} />}
+          aria-label={t("Disciplinary actions")}
+        />
       )}
     </SectionPanel>
+  );
+}
+
+function ActionRow({
+  action,
+  canRescind,
+  openIntent,
+  preloadEvent,
+  onOpen,
+  onOpenEvent,
+  onRescind,
+}: {
+  action: WorkerDisciplinaryActionRow;
+  canRescind: boolean;
+  openIntent: PreloadIntent;
+  preloadEvent: () => Promise<unknown>;
+  onOpen: (action: WorkerDisciplinaryActionRow) => void;
+  onOpenEvent: (safetyEventId: string) => void;
+  onRescind: (action: WorkerDisciplinaryActionRow) => void;
+}) {
+  const t = useT();
+  const status = action.status as DisciplinaryStatus;
+  const level = action.level as DisciplinaryLevel;
+  const menu: RowAction[] = [];
+  if (action.safetyEventId) {
+    const eventId = action.safetyEventId;
+    menu.push({
+      id: "event",
+      label: t("Open the event"),
+      icon: ArrowNarrowRightIcon,
+      preload: preloadEvent,
+      onSelect: () => onOpenEvent(eventId),
+    });
+  }
+  if (canRescind && status === "Active") {
+    menu.push({
+      id: "rescind",
+      label: t("Rescind…"),
+      icon: ReverseLeftIcon,
+      destructive: true,
+      onSelect: () => onRescind(action),
+    });
+  }
+  return (
+    <div
+      data-glide-target
+      data-testid={`discipline-${action.id}`}
+      className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-2 rounded-md p-2"
+    >
+      <button
+        type="button"
+        {...openIntent}
+        onClick={() => onOpen(action)}
+        className="min-w-0 rounded-sm ui-focus-ring text-left"
+      >
+        <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
+          <span
+            className={cn(
+              "font-medium",
+              status !== "Active" && "text-muted-foreground",
+              status === "Rescinded" && "line-through decoration-foreground-subtle",
+            )}
+          >
+            {t(DISCIPLINARY_LEVEL_LABELS[level] ?? level)}
+          </span>
+          <Badge variant="neutral" dot={status === "Active"}>
+            {t(DISCIPLINARY_STATUS_LABELS[status] ?? status)}
+          </Badge>
+        </span>
+        <span className="mt-0.5 block text-xs text-muted-foreground tabular-nums">
+          {actionSummary(action, t)}
+        </span>
+      </button>
+      <RowActionsMenu label={t("Action options")} actions={menu} />
+    </div>
   );
 }

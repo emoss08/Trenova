@@ -23,6 +23,53 @@ export function ErrorMessage({ formError, id }: { formError?: string; id?: strin
   );
 }
 
+export type FieldNoteTone = "muted" | "success" | "warning" | "danger";
+
+const FIELD_NOTE_TONE: Record<FieldNoteTone, string> = {
+  muted: "text-foreground/70",
+  success: "text-success-foreground",
+  warning: "text-warning-foreground",
+  danger: "text-danger-foreground",
+};
+
+/**
+ * A field's description that carries a tone or changes while the person works, passed as the
+ * field's `description`: the field draws it in the description's place, with the id its control
+ * is described by, and the row grows to hold it.
+ *
+ *   <AutoCompleteDateField
+ *     name="profile.medicalCardExpiry"
+ *     description={<FieldNote tone="warning" live>{t("Expires in 84 days")}</FieldNote>}
+ *   />
+ *
+ * `live` announces a change politely to a screen reader (text that follows the value).
+ */
+export function FieldNote({
+  tone = "muted",
+  live = false,
+  id,
+  className,
+  children,
+}: {
+  tone?: FieldNoteTone;
+  live?: boolean;
+  /** Set by the field. */
+  id?: string;
+  /** Set by the field's layout. */
+  className?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <p
+      id={id}
+      aria-live={live ? "polite" : undefined}
+      className={cn("text-left text-2xs", className, FIELD_NOTE_TONE[tone])}
+    >
+      {children}
+    </p>
+  );
+}
+
 export function FieldDescription({
   description,
   warning,
@@ -47,7 +94,13 @@ export function FieldDescription({
     return null;
   }
 
-  if (React.isValidElement(description)) {
+  if (React.isValidElement<React.ComponentProps<typeof FieldNote>>(description)) {
+    if (description.type === FieldNote) {
+      return React.cloneElement(description, {
+        id,
+        className: cn(className, description.props.className),
+      });
+    }
     return description;
   }
 

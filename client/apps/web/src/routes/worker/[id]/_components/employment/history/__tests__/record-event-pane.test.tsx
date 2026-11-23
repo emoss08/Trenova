@@ -327,12 +327,23 @@ describe("RecordEventPane", () => {
     const view = await pane();
     fireEvent.change(await view.findByLabelText("Event"), { target: { value: "ProbationEnded" } });
     expect(
-      await view.findByText(
-        "Could not read what this will change. Saving still works.",
-        {},
-        { timeout: 2000 },
-      ),
+      await view.findByText("What this will change could not be loaded", {}, { timeout: 2000 }),
     ).toBeInTheDocument();
+    expect(view.getByText("Saving still works.")).toBeInTheDocument();
+  });
+
+  it("says when the events on offer could not be read, and reads them again on retry", async () => {
+    mocks.fetchWorkerEmploymentEventOptions
+      .mockRejectedValueOnce(new Error("down"))
+      .mockResolvedValue(activeOptions);
+    renderPane();
+
+    const view = await pane();
+    expect(
+      await view.findByText("The events that can be recorded could not be loaded"),
+    ).toBeInTheDocument();
+    fireEvent.click(view.getByRole("button", { name: /Try again/ }));
+    expect(await view.findByLabelText("Event")).toBeInTheDocument();
   });
 
   it("requires a reason for the kinds the server names, then records with today's date", async () => {
@@ -476,5 +487,35 @@ describe("AmendEventPane", () => {
       version: 2,
     });
     await waitFor(() => expect(onClose).toHaveBeenCalled());
+  });
+
+  it("keeps what is typed when the event it was opened on is read again", async () => {
+    const event = {
+      id: "wee_3",
+      kind: "Suspended",
+      effectiveAt: 1_750_000_000,
+      reason: "Safety review",
+      notes: null,
+      version: 2,
+      fromValues: [],
+      toValues: [],
+    };
+    const onClose = vi.fn();
+    const { rerender } = render(
+      wrap(<AmendEventPane workerId="wrk_1" onClose={onClose} event={event as never} />),
+    );
+    await screen.findByRole("dialog", { name: "Amend event" });
+    fireEvent.change(inputById("amendmentNote"), { target: { value: "Wrong date" } });
+
+    rerender(
+      wrap(
+        <AmendEventPane
+          workerId="wrk_1"
+          onClose={onClose}
+          event={{ ...event, reason: "Safety review, updated", version: 3 } as never}
+        />,
+      ),
+    );
+    expect(inputById("amendmentNote").value).toBe("Wrong date");
   });
 });

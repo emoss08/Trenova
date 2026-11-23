@@ -3,13 +3,10 @@ import type {
   UpcomingWorkerPtoQueryVariables,
   WorkerPtoChartDataQuery,
   WorkerPtoChartDataQueryVariables,
-  WorkerPtoTableQuery,
-  WorkerPtoTableQueryVariables,
 } from "@trenova/graphql/generated/graphql";
 import {
   UpcomingWorkerPtoDocument,
   WorkerPtoChartDataDocument,
-  WorkerPtoTableDocument,
 } from "@trenova/graphql/generated/documents/worker/page";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import type { GenericLimitOffsetResponse } from "@trenova/shared/types/server";
@@ -80,29 +77,6 @@ export async function fetchUpcomingWorkerPTO(
   return workerPTOConnectionToLimitOffset(data.upcomingWorkerPTO as WorkerPTOConnection);
 }
 
-export const WORKER_PTO_HISTORY_PAGE_SIZE = 100;
-
-export async function fetchWorkerPTOHistory(
-  workerId: string,
-  options?: { signal?: AbortSignal },
-): Promise<WorkerPTO[]> {
-  const data = await requestGraphQL<WorkerPtoTableQuery, WorkerPtoTableQueryVariables>({
-    document: WorkerPtoTableDocument,
-    operationName: "WorkerPtoTable",
-    variables: {
-      input: {
-        first: WORKER_PTO_HISTORY_PAGE_SIZE,
-        workerId,
-        includeWorker: false,
-        sort: [{ field: "startDate", direction: "desc" }],
-      },
-    },
-    signal: options?.signal,
-  });
-
-  return (data.workerPTOEntries.edges ?? []).map((edge) => edge.node as WorkerPTO);
-}
-
 export const worker = createQueryKeys("worker", {
   record: (workerId: string) => ({
     queryKey: ["record", workerId],
@@ -132,10 +106,6 @@ export const worker = createQueryKeys("worker", {
     queryKey: ["credential-type-choices"],
     queryFn: ({ signal }) => fetchWorkerCredentialTypeChoices({ signal }),
   }),
-  ptoHistory: (workerId: string) => ({
-    queryKey: ["pto-history", workerId],
-    queryFn: ({ signal }) => fetchWorkerPTOHistory(workerId, { signal }),
-  }),
   listUpcomingPTO: (req: ListUpcomingPTORequest) => ({
     queryKey: ["list-upcoming-pto", req],
     queryFn: ({ signal }) => fetchUpcomingWorkerPTO(req, { signal }),
@@ -154,3 +124,19 @@ export const worker = createQueryKeys("worker", {
     },
   }),
 });
+
+/**
+ * The worker page's two reads as its components observe them. The route loader is what keeps
+ * them fresh on arrival (it fetches anything older than a few seconds), every write refreshes what
+ * it changed (`useWorkerInvalidation`), realtime events invalidate them, and the header refreshes
+ * on request; so a component that mounts later (a tab opened or shown again, a pane) reads what
+ * is there instead of fetching it again. Prefetch with the plain factory entries.
+ */
+export function workerRecordQuery(workerId: string) {
+  return { ...worker.record(workerId), refetchOnMount: false } as const;
+}
+
+/** The overview as the page's components observe it; see `workerRecordQuery`. */
+export function workerOverviewQuery(workerId: string) {
+  return { ...worker.overview(workerId), refetchOnMount: false } as const;
+}

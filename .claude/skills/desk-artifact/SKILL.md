@@ -104,7 +104,7 @@ cards/<resource>/
 
 - **Data:**
   - Put the operation in `client/packages/graphql/src/operations/<area>/desk.graphql`, then run
-    `pnpm --filter @trenova/graphql codegen`.
+    `bun run --filter @trenova/graphql codegen`.
   - Write a wrapper in `apps/web/src/lib/graphql/<area>-desk-card(s).ts` that unmasks
     fragments with `getFragmentData` and takes `{ signal }`.
   - Add a key factory in `apps/web/src/lib/queries/<entity>.ts` (`createQueryKeys`).
@@ -187,7 +187,7 @@ Several of these fail CI on code that compiles and passes every test.
     terms.
   - Then run `emit` and `check`.
   - Never build sentences from pieces; ICU placeholders stay outside plural branches.
-- **Product guide:** run `pnpm --filter @trenova/web guide:generate` after a new record link
+- **Product guide:** run `bun run --filter @trenova/web guide:generate` after a new record link
   or registry entry.
 - **Agent catalog snapshot:** a new card or record link changes the record kinds an agent
   tool lists. Run
@@ -206,9 +206,9 @@ Several of these fail CI on code that compiles and passes every test.
    `go vet`, and `go build ./...`. Also run the agent eval gates (`agentprompt`,
    `agentevalgate`, `agentruntime`, `agentredteam`) when you touched record kinds or tools.
 2. **Client:**
-   - `pnpm --filter @trenova/web typecheck`;
+   - `bun run --filter @trenova/web typecheck`;
    - `oxlint` on the changed folders;
-   - `pnpm lint:design` and `pnpm lint:skeletons`;
+   - `bun run lint:design` and `bun run lint:skeletons`;
    - vitest for the desk folder;
    - oxfmt on the edited files only.
 3. **Failures that aren't yours:** a test already red on master isn't yours to fix. Check it

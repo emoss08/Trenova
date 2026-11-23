@@ -9,6 +9,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
@@ -176,7 +177,7 @@ func (r *QueryResolver) BenefitPlan(ctx context.Context, id string) (*paybenefit
 	return r.BenefitsService.GetPlan(ctx, resolvercore.TenantInfo(authCtx), planID)
 }
 
-func (r *QueryResolver) WorkerBenefitEnrollments(ctx context.Context, workerID string, openOnly *bool) ([]*paybenefit.WorkerBenefitEnrollment, error) {
+func (r *QueryResolver) WorkerBenefitEnrollments(ctx context.Context, workerID string, openOnly *bool, first *int, after *string) (*gqlmodel.WorkerBenefitEnrollmentConnection, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceBenefitPlan, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -187,12 +188,37 @@ func (r *QueryResolver) WorkerBenefitEnrollments(ctx context.Context, workerID s
 		return nil, errortypes.NewValidationError("workerId", errortypes.ErrInvalid, "Worker is invalid")
 	}
 
-	return r.BenefitsService.ListEnrollments(ctx, &driverpayports.ListBenefitEnrollmentsRequest{
+	cursor, err := gqlconnection.CursorFromArgs(ctx, first, after)
+	if err != nil {
+		return nil, err
+	}
+	result, err := r.BenefitsService.PageEnrollments(ctx, &driverpayports.ListBenefitEnrollmentsRequest{
 		TenantInfo:  resolvercore.TenantInfo(authCtx),
 		WorkerID:    id,
 		OpenOnly:    gqlscalar.BoolValue(openOnly),
 		IncludePlan: true,
+		Cursor:      cursor,
 	})
+	if err != nil {
+		return nil, err
+	}
+	page, err := gqlconnection.EntityCursorConnection(
+		result,
+		func(node *paybenefit.WorkerBenefitEnrollment, edgeCursor string) *gqlmodel.WorkerBenefitEnrollmentEdge {
+			return &gqlmodel.WorkerBenefitEnrollmentEdge{Node: node, Cursor: edgeCursor}
+		},
+		func(edge *gqlmodel.WorkerBenefitEnrollmentEdge) string { return edge.Cursor },
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return &gqlmodel.WorkerBenefitEnrollmentConnection{
+		Edges:           page.Edges,
+		PageInfo:        page.PageInfo,
+		TotalCount:      page.TotalCount,
+		TotalCountExact: page.TotalCountExact,
+	}, nil
 }
 
 func (r *QueryResolver) BenefitEnrollments(ctx context.Context, planID *string, statuses []paybenefit.BenefitEnrollmentStatus, openOnly *bool, limit *int) ([]*paybenefit.WorkerBenefitEnrollment, error) {

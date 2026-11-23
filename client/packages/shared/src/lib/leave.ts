@@ -1,3 +1,4 @@
+import { formatNumber } from "@trenova/shared/i18n/format";
 import { defineLabels } from "@trenova/shared/i18n/labels";
 /**
  * Labels and tones for leave of absence and FMLA. The regulation's own words
@@ -120,7 +121,7 @@ export function leaveTypeLabel(value: string): string {
 export function formatLeaveHours(value: string): string {
   const parsed = Number(value);
   if (!Number.isFinite(parsed)) return value;
-  return parsed.toLocaleString("en-US", { maximumFractionDigits: 2 });
+  return formatNumber(parsed, { maximumFractionDigits: 2 });
 }
 
 /**

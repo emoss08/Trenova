@@ -2,6 +2,9 @@ import { getFileCategory } from "@/components/documents/document-utils";
 import { defineLabels } from "@trenova/shared/i18n/labels";
 import type { Document } from "@trenova/shared/types/document";
 
+/** What the documents service files a worker's documents under. */
+export const WORKER_DOCUMENT_RESOURCE = "worker";
+
 /** The type filter's choices: every file, or one kind of file. */
 export const DOCUMENT_KINDS = ["all", "pdf", "image", "document", "spreadsheet", "other"] as const;
 export type DocumentKind = (typeof DOCUMENT_KINDS)[number];

@@ -137,6 +137,7 @@ query WorkerOverview($workerId: ID!) @requiresRead(kind: "performance_review") @
       eventCount
       hiredAt
       openChecklistCount
+      closedChecklistCount
     }
     checklist {
       id

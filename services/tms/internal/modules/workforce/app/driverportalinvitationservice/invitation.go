@@ -258,6 +258,7 @@ func (s *Service) RevokeAccess(
 	if err = s.portalRepo.RevokePortalAccess(ctx, tenantInfo, workerID); err != nil {
 		return err
 	}
+	s.refreshChecklists(ctx, tenantInfo, workerID)
 	s.logPortalAudit(ctx,
 		workerID,
 		workerID,
@@ -404,6 +405,11 @@ func (s *Service) AcceptInvitation(
 	if err != nil {
 		return nil, err
 	}
+
+	s.refreshChecklists(ctx, pagination.TenantInfo{
+		OrgID: invitation.OrganizationID,
+		BuID:  invitation.BusinessUnitID,
+	}, invitation.WorkerID)
 
 	result := &AcceptInvitationResult{EmailAddress: created.EmailAddress}
 	if invitation.Worker.Organization != nil {

@@ -3,7 +3,7 @@
 // present, nothing unselected (other than __typename), no null on a non-null type, enums and
 // scalars of the right kind. Also walks the scenarios and the realtime stream.
 //
-//   node e2e/mock-api/check-triage.mjs            (mock on :8080, or MOCK_API_URL)
+//   bun e2e/mock-api/check-triage.mjs            (mock on :8080, or MOCK_API_URL)
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { buildSchema, isEnumType, isListType, isNonNullType, isScalarType, Kind, parse } from "graphql";

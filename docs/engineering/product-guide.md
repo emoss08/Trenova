@@ -55,8 +55,8 @@ to them. Their guides live in the overlay's own `guide/` directory.
 
 ```bash
 cd client/apps/web
-pnpm guide:generate   # write the catalog
-pnpm guide:check      # fail if it is stale or a guide is wrong (CI runs this)
+bun run guide:generate   # write the catalog
+bun run guide:check      # fail if it is stale or a guide is wrong (CI runs this)
 ```
 
 The **Checks** job in `.github/workflows/test-client.yml` runs
@@ -83,7 +83,7 @@ every guide that tells people to press it fails until it is updated.
 
 1. Add the route and navigation entry as usual.
 2. Write `docs/product-guide/<module>/<page>.md` (format below).
-3. `pnpm guide:generate` and commit the catalog with the change.
+3. `bun run guide:generate` and commit the catalog with the change.
 
 ## Guide format
 

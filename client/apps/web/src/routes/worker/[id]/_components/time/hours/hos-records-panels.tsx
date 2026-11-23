@@ -1,20 +1,16 @@
-import { HoverGlideGroup } from "@/components/hover-glide";
 import { SectionPanel, SectionPanelQuiet } from "@/components/section-panel";
 import type { WorkerFormSubmission, WorkerHosViolation } from "@/lib/graphql/telematics";
 import { telematics } from "@/lib/queries/telematics";
 import { useQuery } from "@tanstack/react-query";
 import { ErrorState } from "@trenova/shared/components/errors/error-state";
 import { ChevronRightIcon } from "@trenova/shared/components/icons";
+import { VirtualRows } from "@/components/virtual-rows";
 import { Badge } from "@trenova/shared/components/ui/badge";
-import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { formatUnixDate, formatUnixDateTime } from "@trenova/shared/lib/date";
+import { formatUnixDateMedium, formatUnixDateTimeMedium } from "@trenova/shared/lib/date";
 import { cn, toTitleCase } from "@trenova/shared/lib/utils";
 import { useId, useState } from "react";
-import { formatLaneTotal } from "./hos-model";
-
-const REFETCH_INTERVAL_MS = 60_000;
-const STALE_TIME_MS = 60_000;
+import { formatLaneTotal, HOS_LIVE_REFRESH_MS } from "./hos-model";
 
 function PanelLoading({ label }: { label: string }) {
   return (
@@ -27,12 +23,16 @@ function PanelLoading({ label }: { label: string }) {
   );
 }
 
-/** Hours-of-service violations in the window, worst news first in time order. */
+/**
+ * Hours-of-service violations in the window, in time order. The server caps the read at 500 for
+ * 30 days, so it is one read, drawn a screenful at a time. A violation happening now is on the
+ * band, which is live; this record is read again when the view is opened after a minute.
+ */
 export function ViolationsPanel({ workerId, since }: { workerId: string; since: number }) {
   const t = useT();
   const query = useQuery({
     ...telematics.workerHosViolations(workerId, since),
-    refetchInterval: REFETCH_INTERVAL_MS,
+    staleTime: HOS_LIVE_REFRESH_MS,
   });
   const violations = query.data ?? [];
 
@@ -46,24 +46,24 @@ export function ViolationsPanel({ workerId, since }: { workerId: string; since: 
             layout="compact"
             error={query.error}
             onRetry={() => void query.refetch()}
-            title={t("Violations could not be loaded")}
+            title={t("The violations could not be loaded")}
           />
         </div>
       ) : violations.length === 0 ? (
         <SectionPanelQuiet>{t("None.")}</SectionPanelQuiet>
       ) : (
-        <ScrollArea className="max-h-72" maskVariant="card">
-          <HoverGlideGroup>
-            <ul className="flex flex-col px-1.5 py-1">
-              {violations.map((violation) => (
-                <ViolationRow
-                  key={`${violation.violationType}-${violation.violationStartAt}-${violation.detectedAt}`}
-                  violation={violation}
-                />
-              ))}
-            </ul>
-          </HoverGlideGroup>
-        </ScrollArea>
+        <VirtualRows
+          rows={violations.map((violation) => ({
+            key: `${violation.violationType}-${violation.violationStartAt}-${violation.detectedAt}`,
+            render: () => <ViolationRow violation={violation} />,
+          }))}
+          aria-label={t("Violations")}
+          mask="card"
+          className="max-h-72"
+          contentClassName="px-1.5 py-1"
+          hoverGlide
+          estimateSize={53}
+        />
       )}
     </SectionPanel>
   );
@@ -71,10 +71,7 @@ export function ViolationsPanel({ workerId, since }: { workerId: string; since: 
 
 function ViolationRow({ violation }: { violation: WorkerHosViolation }) {
   return (
-    <li
-      data-glide-target
-      className="flex items-center justify-between gap-3 border-border-subtle px-2 py-2 not-first:border-t"
-    >
+    <div data-glide-target className="flex items-center justify-between gap-3 rounded-md px-2 py-2">
       <div className="min-w-0">
         <p className="truncate font-medium">{toTitleCase(violation.violationType)}</p>
         {violation.description ? (
@@ -83,11 +80,11 @@ function ViolationRow({ violation }: { violation: WorkerHosViolation }) {
       </div>
       <div className="flex shrink-0 items-center gap-2">
         <span className="font-mono text-xs text-muted-foreground tabular-nums">
-          {formatUnixDate(violation.violationStartAt)}
+          {formatUnixDateMedium(violation.violationStartAt)}
         </span>
         <Badge variant="danger">{formatLaneTotal(violation.durationMs)}</Badge>
       </div>
-    </li>
+    </div>
   );
 }
 
@@ -104,7 +101,7 @@ export function DriverFormsPanel({
   const t = useT();
   const query = useQuery({
     ...telematics.workerFormSubmissions(workerId, startTime, endTime),
-    staleTime: STALE_TIME_MS,
+    staleTime: HOS_LIVE_REFRESH_MS,
   });
   const submissions = [...(query.data ?? [])].sort((a, b) => b.submittedAt - a.submittedAt);
 
@@ -118,21 +115,24 @@ export function DriverFormsPanel({
             layout="compact"
             error={query.error}
             onRetry={() => void query.refetch()}
-            title={t("Driver forms could not be loaded")}
+            title={t("The driver forms could not be loaded")}
           />
         </div>
       ) : submissions.length === 0 ? (
         <SectionPanelQuiet>{t("No forms sent in the last 30 days.")}</SectionPanelQuiet>
       ) : (
-        <ScrollArea className="max-h-72" maskVariant="card">
-          <HoverGlideGroup>
-            <ul className="flex flex-col px-1.5 py-1">
-              {submissions.map((submission) => (
-                <FormRow key={submission.id} submission={submission} />
-              ))}
-            </ul>
-          </HoverGlideGroup>
-        </ScrollArea>
+        <VirtualRows
+          rows={submissions.map((submission) => ({
+            key: submission.id,
+            render: () => <FormRow submission={submission} />,
+          }))}
+          aria-label={t("Driver forms")}
+          mask="card"
+          className="max-h-72"
+          contentClassName="px-1.5 py-1"
+          hoverGlide
+          estimateSize={53}
+        />
       )}
     </SectionPanel>
   );
@@ -145,7 +145,7 @@ function FormRow({ submission }: { submission: WorkerFormSubmission }) {
   const hasFields = submission.fields.length > 0;
 
   return (
-    <li className="border-border-subtle not-first:border-t">
+    <div>
       <button
         type="button"
         data-glide-target
@@ -166,7 +166,7 @@ function FormRow({ submission }: { submission: WorkerFormSubmission }) {
         <span className="min-w-0 flex-1">
           <span className="block truncate font-medium">{submission.templateName}</span>
           <span className="block text-xs text-muted-foreground tabular-nums">
-            {formatUnixDateTime(submission.submittedAt)}
+            {formatUnixDateTimeMedium(submission.submittedAt)}
           </span>
         </span>
         <span className="shrink-0 text-xs text-muted-foreground tabular-nums">
@@ -186,6 +186,6 @@ function FormRow({ submission }: { submission: WorkerFormSubmission }) {
           ))}
         </dl>
       ) : null}
-    </li>
+    </div>
   );
 }

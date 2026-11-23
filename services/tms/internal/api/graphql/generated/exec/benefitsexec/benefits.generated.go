@@ -26,6 +26,8 @@ var Shard = &gqlexec.Shard{
 		{Name: "BenefitPlan", Implementors: []string{"BenefitPlan"}},
 		{Name: "TotalCompensation", Implementors: []string{"TotalCompensation"}},
 		{Name: "WorkerBenefitEnrollment", Implementors: []string{"WorkerBenefitEnrollment"}},
+		{Name: "WorkerBenefitEnrollmentConnection", Implementors: []string{"WorkerBenefitEnrollmentConnection"}},
+		{Name: "WorkerBenefitEnrollmentEdge", Implementors: []string{"WorkerBenefitEnrollmentEdge"}},
 	},
 	Fields: []gqlexec.Fields{
 		{Object: "BenefitCostRow", Fields: []*gqlexec.Field{
@@ -388,13 +390,13 @@ var Shard = &gqlexec.Shard{
 				IsResolver: true,
 				Concurrent: true,
 				HasChild:   true,
-				ChildType:  "WorkerBenefitEnrollment",
+				ChildType:  "WorkerBenefitEnrollmentConnection",
 				Args:       field_Query_workerBenefitEnrollments_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[QueryResolver](ec, "Query@benefits").WorkerBenefitEnrollments(ctx, fc.Args["workerId"].(string), fc.Args["openOnly"].(*bool))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@benefits").WorkerBenefitEnrollments(ctx, fc.Args["workerId"].(string), fc.Args["openOnly"].(*bool), fc.Args["first"].(*int), fc.Args["after"].(*string))
 				},
-				Marshal: gqlexec.Marshal(marshalNWorkerBenefitEnrollment2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋpaybenefitᚐWorkerBenefitEnrollmentᚄ),
+				Marshal: gqlexec.Marshal(marshalNWorkerBenefitEnrollmentConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐWorkerBenefitEnrollmentConnection),
 			},
 			{
 				Name:       "benefitEnrollments",
@@ -698,6 +700,72 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalOWorker2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorker),
 			},
 		}},
+		{Object: "WorkerBenefitEnrollmentConnection", Fields: []*gqlexec.Field{
+			{
+				Name:      "edges",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "WorkerBenefitEnrollmentEdge",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.WorkerBenefitEnrollmentConnection)
+					return obj.Edges, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNWorkerBenefitEnrollmentEdge2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐWorkerBenefitEnrollmentEdgeᚄ),
+			},
+			{
+				Name:      "pageInfo",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "PageInfo",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.WorkerBenefitEnrollmentConnection)
+					return obj.PageInfo, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNPageInfo2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐPageInfo),
+			},
+			{
+				Name:     "totalCount",
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.WorkerBenefitEnrollmentConnection)
+					return obj.TotalCount, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOInt2ᚖint),
+			},
+			{
+				Name:     "totalCountExact",
+				NonNull:  true,
+				ChildErr: errNoChild8,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.WorkerBenefitEnrollmentConnection)
+					return obj.TotalCountExact, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+		}},
+		{Object: "WorkerBenefitEnrollmentEdge", Fields: []*gqlexec.Field{
+			{
+				Name:      "node",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "WorkerBenefitEnrollment",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.WorkerBenefitEnrollmentEdge)
+					return obj.Node, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNWorkerBenefitEnrollment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋpaybenefitᚐWorkerBenefitEnrollment),
+			},
+			{
+				Name:     "cursor",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.WorkerBenefitEnrollmentEdge)
+					return obj.Cursor, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+		}},
 	},
 	Inputs: []gqlexec.Input{
 		{Name: "BenefitPlanInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputBenefitPlanInput)},
@@ -722,7 +790,7 @@ type MutationResolver interface {
 type QueryResolver interface {
 	BenefitPlans(ctx context.Context, activeOnly *bool, planYear *int) ([]*paybenefit.BenefitPlan, error)
 	BenefitPlan(ctx context.Context, id string) (*paybenefit.BenefitPlan, error)
-	WorkerBenefitEnrollments(ctx context.Context, workerID string, openOnly *bool) ([]*paybenefit.WorkerBenefitEnrollment, error)
+	WorkerBenefitEnrollments(ctx context.Context, workerID string, openOnly *bool, first *int, after *string) (*gqlmodel.WorkerBenefitEnrollmentConnection, error)
 	BenefitEnrollments(ctx context.Context, planID *string, statuses []paybenefit.BenefitEnrollmentStatus, openOnly *bool, limit *int) ([]*paybenefit.WorkerBenefitEnrollment, error)
 	BenefitCosts(ctx context.Context, planYear *int) ([]*driverpayports.BenefitCostRow, error)
 	WorkerTotalCompensation(ctx context.Context, workerID string, planYear *int) (*benefitsservice.TotalCompensation, error)
@@ -743,6 +811,7 @@ var (
 	errNoChild5 = errors.New("field of type Timestamp does not have child fields")
 	errNoChild6 = errors.New("field of type BenefitEnrollmentStatus does not have child fields")
 	errNoChild7 = errors.New("field of type CoverageTier does not have child fields")
+	errNoChild8 = errors.New("field of type Boolean does not have child fields")
 )
 
 func field_Mutation_createBenefitPlan_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
@@ -832,7 +901,7 @@ func field_Query_benefitPlan_args(ctx context.Context, ec *gqlexec.Exec, rawArgs
 }
 
 func field_Query_workerBenefitEnrollments_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
-	args := make(map[string]any, 2)
+	args := make(map[string]any, 4)
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "workerId",
 		func(ctx context.Context, v any) (string, error) {
 			return unmarshalNID2string(ctx, ec, v)
@@ -849,6 +918,22 @@ func field_Query_workerBenefitEnrollments_args(ctx context.Context, ec *gqlexec.
 		return nil, err
 	}
 	args["openOnly"] = arg1
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "first",
+		func(ctx context.Context, v any) (*int, error) {
+			return unmarshalOInt2ᚖint(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["first"] = arg2
+	arg3, err := graphql.ProcessArgField(ctx, rawArgs, "after",
+		func(ctx context.Context, v any) (*string, error) {
+			return unmarshalOString2ᚖstring(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["after"] = arg3
 	return args, nil
 }
 
@@ -1454,6 +1539,14 @@ func marshalNBenefitPlanType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodul
 	return res
 }
 
+func marshalNBoolean2bool(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v bool) graphql.Marshaler {
+	res := graphql.MarshalBoolean(v)
+	if res == graphql.Null {
+		gqlexec.NullViolation(ctx)
+	}
+	return res
+}
+
 func marshalNCoverageTier2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋpaybenefitᚐCoverageTier(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v paybenefit.CoverageTier) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
@@ -1510,6 +1603,14 @@ func marshalNInt2int64(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionS
 	return res
 }
 
+func marshalNPageInfo2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐPageInfo(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.PageInfo) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "PageInfo", v)
+}
+
 func marshalNString2string(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v string) graphql.Marshaler {
 	res := graphql.MarshalString(v)
 	if res == graphql.Null {
@@ -1550,6 +1651,30 @@ func marshalNWorkerBenefitEnrollment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinter
 	return ec.MarshalType(ctx, sel, "WorkerBenefitEnrollment", v)
 }
 
+func marshalNWorkerBenefitEnrollmentConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐWorkerBenefitEnrollmentConnection(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.WorkerBenefitEnrollmentConnection) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "WorkerBenefitEnrollmentConnection", v)
+}
+
+func marshalNWorkerBenefitEnrollmentEdge2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐWorkerBenefitEnrollmentEdgeᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*gqlmodel.WorkerBenefitEnrollmentEdge) graphql.Marshaler {
+	return gqlexec.List[*gqlmodel.WorkerBenefitEnrollmentEdge]{
+		Elem:        marshalNWorkerBenefitEnrollmentEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐWorkerBenefitEnrollmentEdge,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalNWorkerBenefitEnrollmentEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐWorkerBenefitEnrollmentEdge(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.WorkerBenefitEnrollmentEdge) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "WorkerBenefitEnrollmentEdge", v)
+}
+
 func marshalOBenefitPlan2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋpaybenefitᚐBenefitPlan(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *paybenefit.BenefitPlan) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
@@ -1562,6 +1687,14 @@ func marshalOID2ᚖstring(ctx context.Context, ec *gqlexec.Exec, sel ast.Selecti
 		return graphql.Null
 	}
 	res := graphql.MarshalID(*v)
+	return res
+}
+
+func marshalOInt2ᚖint(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *int) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	res := graphql.MarshalInt(*v)
 	return res
 }
 

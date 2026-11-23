@@ -11,6 +11,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/payassignment/payassignmentdb"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
 	"github.com/emoss08/trenova/pkg/dberror"
+	"github.com/emoss08/trenova/pkg/dbtype"
+	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/zap"
@@ -121,24 +123,44 @@ func (r *workerPayAssignmentRepository) GetEffectiveForWorkers(
 	)
 }
 
-func (r *workerPayAssignmentRepository) ListForWorker(
+func (r *workerPayAssignmentRepository) PageForWorker(
 	ctx context.Context,
 	req driverpayports.ListWorkerPayAssignmentsRequest,
-) ([]*payassignment.WorkerPayAssignment, error) {
+) (*pagination.CursorListResult[*payassignment.WorkerPayAssignment], error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) ([]*payassignment.WorkerPayAssignment, error) {
+		func(
+			ctx context.Context,
+		) (*pagination.CursorListResult[*payassignment.WorkerPayAssignment], error) {
 			wpa := payassignmentdb.WorkerPayAssignments
-			items, err := wpa.Where(wpa.WorkerID.Eq(req.WorkerID)).
-				Load(wpa.PayProfile()).
-				Order(wpa.EffectiveFrom.Desc()).
-				All(ctx, r.db.Keel(ctx))
+			desc := string(dbtype.SortDirectionDesc)
+			result, err := listquery.Connection(
+				ctx,
+				r.db.Keel(ctx),
+				wpa.Where(wpa.WorkerID.Eq(req.WorkerID)),
+				&listquery.Request[payassignment.WorkerPayAssignment]{
+					Filter: &pagination.QueryOptions{TenantInfo: req.TenantInfo},
+					Cursor: req.Cursor,
+					Shape: func(
+						q keel.Query[*payassignment.WorkerPayAssignment],
+					) keel.Query[*payassignment.WorkerPayAssignment] {
+						return q.Load(wpa.PayProfile())
+					},
+					Keyset: &listquery.Keyset{
+						Orders: []keel.Order{wpa.EffectiveFrom.Desc(), wpa.ID.Desc()},
+						Shape: []pagination.CursorSortField{
+							{Field: "effectiveFrom", Direction: desc},
+							{Field: "id", Direction: desc},
+						},
+					},
+				},
+			)
 			if err != nil {
-				return nil, fmt.Errorf("list worker pay assignments: %w", err)
+				return nil, fmt.Errorf("page worker pay assignments: %w", err)
 			}
 
-			return items, nil
+			return result, nil
 		},
 	)
 }

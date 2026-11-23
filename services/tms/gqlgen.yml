@@ -6393,3 +6393,41 @@ models:
   StopEtaDriveMethod:
     model:
       - github.com/emoss08/trenova/internal/modules/operations/domain/stopeta.DriveMethod
+  DeskConversationOrigin:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/conversation.ThreadOrigin
+  DeskTranscriptTimeframePreset:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/desktranscript.TimeframePreset
+  DeskTranscriptExportKind:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/desktranscript.ExportKind
+  DeskTranscriptExportStatus:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/desktranscript.ExportStatus
+  DeskConversation:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/desktranscript.Conversation
+  DeskConversationTranscript:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/ports/desktranscriptports.OpenedConversation
+  DeskTranscriptExportPreview:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/ports/desktranscriptports.ExportPreview
+  DeskTranscriptTimeframe:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/desktranscript.Timeframe
+  DeskTranscriptExportCoverage:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/desktranscript.Coverage
+  DeskTranscriptExport:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/desktranscript.Export
+    fields:
+      requestedByName:
+        resolver: true
+      downloadable:
+        resolver: true
+  DeskTranscriptDownload:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/ports/desktranscriptports.ExportDownload

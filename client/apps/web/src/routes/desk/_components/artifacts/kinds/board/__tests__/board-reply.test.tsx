@@ -12,8 +12,14 @@ import { Operation, Resource } from "@trenova/shared/types/permission";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi, type Mock } from "vitest";
-import { cardTime } from "../../../record-card/record-card-values";
+import {
+  cardDay,
+  cardMoment,
+  cardMomentAfter,
+  cardTime,
+} from "../../../record-card/record-card-values";
 import { DESK_ACTION_ROW } from "@/components/desk-chat/conversation/desk-message-actions";
+import { measureMoment } from "../board-card";
 import { DeskPendingBoard, DeskReplyBoards } from "../board-reply";
 import {
   ANSWERED_AT,
@@ -468,25 +474,125 @@ describe("DeskReplyBoards", () => {
     ];
     const rows = exhibits.map((exhibit) => exhibit.querySelectorAll(".dk-bd-rows > .dk-bd-row"));
     expect(rows.map((list) => list.length)).toEqual([2, 6]);
-    expect([...rows[0][0].querySelectorAll(".dk-bd-who > *")].map((line) => line.tagName)).toEqual([
-      "B",
-      "SPAN",
+    // A lateness list: the number, the line under it and the track's place, as a drawn row holds.
+    expect([...rows[0][0].children].map((part) => part.className)).toEqual([
+      "dk-bd-l1",
+      "dk-bd-line",
+      "dk-bd-track ui-shimmer",
     ]);
+    expect(rows[0][0].querySelector(".dk-bd-l1 > .dk-bd-id")).not.toBeNull();
+    expect(rows[0][0].querySelector(".dk-bd-line > .dk-bd-sub")).not.toBeNull();
     expect(within(exhibits[1] as HTMLElement).getByText("2 more on the board")).toBeInTheDocument();
   });
 
-  it("holds the foot under the last exhibit while it is read, only where the surface opens boards", () => {
+  // jsdom lays nothing out, so the tree is what can be asserted: which elements a row holds and
+  // in what order, and where the foot stands. Heights, truncation and the stop shown from 32rem
+  // are desk-v2.css's, measured in a browser.
+  it("draws a row's parts in the order its one anatomy places them, the subtitle and second fact one phrase, each titled", async () => {
+    draw(conversationBoard());
+
+    const list = await screen.findByRole("region", {
+      name: "The late loads, furthest behind first",
+    });
+    const row = list.querySelector(".dk-bd-rows > .dk-bd-row") as HTMLElement;
+    const due = conversationBoard().blocks[0].rows[0].measure?.at ?? 0;
+    const now = Math.floor(Date.now() / 1000);
+    const whole = `Due ${cardMomentAfter(now, due)}`;
+    const when = `Due ${measureMoment(now, due, "moment")}`;
+    // Each line is its own box: the number and value in one, the phrase and status in the other.
+    expect([...row.children].map((part) => part.className)).toEqual([
+      "dk-bd-l1",
+      "dk-bd-line",
+      "dk-bd-track",
+    ]);
+    const first = row.querySelector(".dk-bd-l1") as HTMLElement;
+    expect([...first.children].map((part) => [part.className, part.textContent])).toEqual([
+      ["dk-bd-id", "S-24110"],
+      ["dk-bd-val dk-warn", "1h 40m behind"],
+    ]);
+    const line = row.querySelector(".dk-bd-line") as HTMLElement;
+    expect([...line.children].map((part) => [part.className, part.textContent])).toEqual([
+      ["dk-bd-sub", "Dallas, TX → Memphis, TN"],
+      ["dk-bd-at", when],
+      ["dk-bd-st", "In transit"],
+    ]);
+    expect(line.querySelector(".dk-bd-sub")).toHaveAttribute("title", "Dallas, TX → Memphis, TN");
+    expect(line.querySelector(".dk-bd-at")).toHaveAttribute("title", whole);
+  });
+
+  it("draws the stop a load is measured at in its own span after the moment, the whole of it in the title", async () => {
+    const card = conversationBoard();
+    const [records] = card.blocks;
+    const [first] = records.rows;
+    const at = Math.floor(Date.now() / 1000) - 30 * 24 * 3600;
+    card.blocks = [
+      {
+        ...records,
+        rows: [
+          {
+            ...first,
+            measure: {
+              ...(first.measure as NonNullable<typeof first.measure>),
+              at,
+              place: "Rockford, IL",
+            },
+          },
+        ],
+      },
+    ];
+    draw(card);
+
+    const list = await screen.findByRole("region", {
+      name: "The late loads, furthest behind first",
+    });
+    // The moment and the stop are siblings on the line, so the stop can give way and the moment
+    // cannot: the order and the shrinking are desk-v2.css's, measured in a browser.
+    const line = list.querySelector(".dk-bd-line") as HTMLElement;
+    expect([...line.children].map((part) => [part.className, part.textContent])).toEqual([
+      ["dk-bd-sub", "Dallas, TX → Memphis, TN"],
+      ["dk-bd-at", `Due ${cardDay(at)}`],
+      ["dk-bd-place", " at Rockford, IL"],
+      ["dk-bd-st", "In transit"],
+    ]);
+    const whole = `Due ${cardMoment(at)} at Rockford, IL`;
+    expect(line.querySelector(".dk-bd-at")).toHaveAttribute("title", whole);
+    expect(line.querySelector(".dk-bd-place")).toHaveAttribute("title", whole);
+  });
+
+  it("draws the row read and the row drawn in the same box, each list read by a track holding its place", async () => {
+    let land: (card: DeskBoardCard) => void = () => {};
+    draw(
+      new Promise<DeskBoardCard>((resolve) => {
+        land = resolve;
+      }),
+    );
+
+    const sketched = screen
+      .getByLabelText("Reading the board…")
+      .querySelector(".dk-bd-rows > .dk-bd-row") as HTMLElement;
+    expect(sketched.className).toBe("dk-bd-row");
+    expect(sketched.querySelector(":scope > .dk-bd-track")).not.toBeNull();
+
+    await act(async () => land(conversationBoard()));
+    const list = await screen.findByRole("region", {
+      name: "The late loads, furthest behind first",
+    });
+    const drawn = list.querySelector(".dk-bd-rows > .dk-bd-row") as HTMLElement;
+    expect(drawn.className).toBe(sketched.className);
+    expect(drawn.querySelector(":scope > .dk-bd-track")).not.toBeNull();
+  });
+
+  it("holds the foot under the desk, not in a half exhibit, while two halves are read, only where the surface opens boards", () => {
     draw(new Promise<DeskBoardCard>(() => {}), { tool: "show_answer", spec: ANSWER_ARGS });
 
-    const exhibits = [
-      ...screen.getByLabelText("Reading the board…").querySelectorAll("section.dk-bd-ex"),
-    ];
+    const waiting = screen.getByLabelText("Reading the board…");
+    const exhibits = [...waiting.querySelectorAll("section.dk-bd-ex")];
     expect(
       exhibits.map((exhibit) => exhibit.textContent?.includes("From the board for this answer")),
-    ).toEqual([false, true]);
-    expect(exhibits[1].querySelector(".dk-bd-rows")?.lastElementChild).toHaveTextContent(
-      "From the board for this answer",
-    );
+    ).toEqual([false, false]);
+    const foot = within(waiting).getByText("From the board for this answer").parentElement;
+    expect(foot?.parentElement).toBe(waiting);
+    expect(foot).toHaveClass("mt-4");
     expect(screen.queryByRole("button", { name: "Open the board" })).not.toBeInTheDocument();
 
     cleanup();
@@ -496,6 +602,48 @@ describe("DeskReplyBoards", () => {
       opens: false,
     });
     expect(screen.queryByText("From the board for this answer")).not.toBeInTheDocument();
+  });
+
+  it("holds the foot inside a last exhibit drawn full width while it is read, after its rows", () => {
+    draw(new Promise<DeskBoardCard>(() => {}), {
+      tool: "show_answer",
+      spec: { ...ANSWER_ARGS, groups: [ANSWER_ARGS.groups[0]] },
+    });
+
+    const exhibit = screen
+      .getByLabelText("Reading the board…")
+      .querySelector("section.dk-bd-ex") as HTMLElement;
+    expect(exhibit.querySelector(".dk-bd-rows")?.lastElementChild).toHaveTextContent(
+      "From the board for this answer",
+    );
+  });
+
+  it("draws the foot under the desk when the board's last row is two half exhibits, and inside a full-width last exhibit", async () => {
+    const card = conversationBoard();
+    const [records] = card.blocks;
+    card.blocks = [
+      { ...records, half: true },
+      { ...records, half: true, numeral: 2, title: "The rest" },
+    ];
+    draw(card);
+
+    const board = await screen.findByRole("article", {
+      name: "Six late loads on the Dallas lanes",
+    });
+    const open = within(board).getByRole("button", { name: "Open the board" });
+    expect(open.closest("section.dk-bd-ex")).toBeNull();
+    expect(open.parentElement?.parentElement).toBe(board);
+
+    cleanup();
+    const full = conversationBoard();
+    full.blocks = [full.blocks[0]];
+    draw(full);
+    const list = await screen.findByRole("region", {
+      name: "The late loads, furthest behind first",
+    });
+    expect(
+      within(list).getByRole("button", { name: "Open the board" }).closest(".dk-bd-rows"),
+    ).not.toBeNull();
   });
 
   it("says the board is being read in the row the reply's actions take, last under it", () => {

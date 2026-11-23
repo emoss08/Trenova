@@ -1,16 +1,25 @@
-query DeskWorkerTrainingRecords($workerId: ID!, $includeClosed: Boolean) {
-  workerTrainingRecords(workerId: $workerId, includeClosed: $includeClosed) {
-    id
-    courseId
-    course {
-      ...TrainingCourseReference
+query DeskWorkerTrainingRecords($workerId: ID!, $includeClosed: Boolean, $first: Int, $after: String) {
+  workerTrainingRecords(workerId: $workerId, includeClosed: $includeClosed, first: $first, after: $after) {
+    edges {
+      cursor
+      node {
+        id
+        courseId
+        course {
+          ...TrainingCourseReference
+        }
+        status
+        assignedAt
+        dueAt
+        completedAt
+        expiresAt
+        score
+        passed
+      }
     }
-    status
-    assignedAt
-    dueAt
-    completedAt
-    expiresAt
-    score
-    passed
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
   }
 }

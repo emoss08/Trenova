@@ -14,6 +14,7 @@ import { useSelectOption } from "@/hooks/use-select-option";
 import { assignWorkerPtoPolicy } from "@/lib/graphql/pto-policy";
 import type { SelectOption } from "@/lib/graphql/select-options";
 import { ptoTypeLabel } from "@/routes/worker/_components/pto/worker-pto-balances";
+import { PaneFormSection } from "../../pane-section";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form";
@@ -23,7 +24,7 @@ import {
   assignPtoPolicyFormSchema,
   type AssignPTOPolicyFormValues,
 } from "@trenova/shared/types/pto-policy";
-import { useCallback, useEffect } from "react";
+import { useEffect } from "react";
 import { FormProvider, useFieldArray, useForm, useWatch, type Resolver } from "react-hook-form";
 
 export type ChangePolicyPaneProps = {
@@ -31,7 +32,8 @@ export type ChangePolicyPaneProps = {
   onOpenChange: (open: boolean) => void;
   workerId: string;
   currentPolicyId: string | null;
-  onAssigned: () => void;
+  /** Refreshes the figures the change moved; the save holds until it settles. */
+  onAssigned: () => Promise<unknown>;
 };
 
 function trackedTypes(policy: SelectOption | null): string[] {
@@ -60,16 +62,13 @@ export function ChangePolicyPane({
     resolver: zodResolver(assignPtoPolicyFormSchema) as Resolver<AssignPTOPolicyFormValues>,
     defaultValues: emptyValues(),
   });
-  const { control, handleSubmit, reset, setValue, setError } = form;
+  const { control, handleSubmit, setValue, setError } = form;
   const openingArray = useFieldArray({ control, name: "openingBalances" });
   const selectedPolicyId = useWatch({ control, name: "ptoPolicyId" });
 
-  useEffect(() => {
-    if (open) reset(emptyValues());
-  }, [open, reset]);
-
   const { option: selectedPolicy } = useSelectOption("PTO_POLICY", selectedPolicyId);
 
+  // The opening balances follow the picked policy's tracked types once its option has loaded.
   useEffect(() => {
     setValue(
       "openingBalances",
@@ -80,10 +79,7 @@ export function ChangePolicyPane({
     );
   }, [selectedPolicy, setValue]);
 
-  const hideCurrentPolicy = useCallback(
-    (option: SelectOption) => option.id !== currentPolicyId,
-    [currentPolicyId],
-  );
+  const hideCurrentPolicy = (option: SelectOption) => option.id !== currentPolicyId;
 
   const { mutateAsync, isPending } = useApiMutation<
     Awaited<ReturnType<typeof assignWorkerPtoPolicy>>,
@@ -104,13 +100,13 @@ export function ChangePolicyPane({
           .filter((balance) => Number(balance.days) > 0)
           .map((balance) => ({ ptoType: balance.ptoType, days: balance.days })),
       }),
-    onSuccess: (result) => {
+    onSuccess: async (result) => {
       const failure = result.failures[0];
       if (failure) {
         setError("root", { message: failure.error });
         return;
       }
-      onAssigned();
+      await onAssigned();
       onOpenChange(false);
     },
   });
@@ -119,7 +115,7 @@ export function ChangePolicyPane({
     <WorkPane
       open={open}
       onOpenChange={onOpenChange}
-      title={currentPolicyId ? t("Change time off policy") : t("Enroll in a time off policy")}
+      title={currentPolicyId ? t("Change policy") : t("Enroll in a policy")}
       description={
         currentPolicyId
           ? t(
@@ -166,27 +162,25 @@ export function ChangePolicyPane({
                   }
                 />
               </FormControl>
-              {openingArray.fields.length > 0 ? (
-                <FormControl>
-                  <div className="flex flex-col gap-2">
-                    <p className="text-xs font-medium">{t("Opening balances")}</p>
-                    <p className="text-2xs text-muted-foreground">
-                      {t("Days they already have banked, posted once on the effective date.")}
-                    </p>
-                    <div className="grid grid-cols-2 gap-2">
-                      {openingArray.fields.map((field, index) => (
-                        <InputField<AssignPTOPolicyFormValues>
-                          key={field.id}
-                          control={control}
-                          name={`openingBalances.${index}.days`}
-                          label={t(ptoTypeLabel(field.ptoType))}
-                          placeholder="0"
-                        />
-                      ))}
-                    </div>
-                  </div>
-                </FormControl>
-              ) : null}
+            </FormGroup>
+            {openingArray.fields.length > 0 ? (
+              <PaneFormSection
+                title={t("Opening balances")}
+                description={t("Days they already have banked, posted once on the effective date.")}
+              >
+                {openingArray.fields.map((field, index) => (
+                  <FormControl key={field.id}>
+                    <InputField<AssignPTOPolicyFormValues>
+                      control={control}
+                      name={`openingBalances.${index}.days`}
+                      label={t(ptoTypeLabel(field.ptoType))}
+                      placeholder="0"
+                    />
+                  </FormControl>
+                ))}
+              </PaneFormSection>
+            ) : null}
+            <FormGroup cols={1}>
               <FormControl>
                 <TextareaField<AssignPTOPolicyFormValues>
                   control={control}
@@ -202,7 +196,7 @@ export function ChangePolicyPane({
           <WorkPaneFooter>
             <WorkPaneCancel />
             <Button type="submit" size="sm" isLoading={isPending}>
-              {currentPolicyId ? t("Change policy") : t("Enroll")}
+              {currentPolicyId ? t("Change policy") : t("Enroll in a policy")}
             </Button>
           </WorkPaneFooter>
         </Form>

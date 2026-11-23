@@ -22,7 +22,7 @@ import {
   type LogLane,
   type LogSegment,
 } from "./hos-model";
-import { formatHoursMinutes } from "./hos-format";
+import { formatHoursMinutes } from "@/lib/hours-format";
 
 const MIN_WIDTH = 760;
 const LEFT = 40;

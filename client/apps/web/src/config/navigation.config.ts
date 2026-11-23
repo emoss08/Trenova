@@ -1686,6 +1686,15 @@ export const adminLinks: SidebarLink[] = [
     planFeature: PlanFeature.AgentAutomation,
   },
   {
+    href: "/admin/desk-conversations",
+    keywords: ["transcripts", "conversations", "desk", "ai", "oversight", "export"],
+    title: "Desk conversations",
+    group: "AI & Automation",
+    resource: Resource.DeskTranscript,
+    requiredOperation: Operation.Read,
+    planFeature: PlanFeature.AIDesk,
+  },
+  {
     href: "/admin/document-intelligence",
     keywords: ["ocr", "extraction", "capture", "ai", "scanning"],
     title: "Document extraction",

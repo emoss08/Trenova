@@ -182,6 +182,16 @@ was signed is marked so in what the hash covers (hash version 3 or 4), so every 
 as imported and not verified rather than valid. A new reader of chain validity shows that state;
 a new writer of a chain never signs imported links as ordinary ones.
 
+## Reading what belonged to someone else is its own door
+
+A record one person owns (a Desk conversation, a draft, a file attached to a conversation) stays
+behind its owner filter on every path that already reads it. When people with authority must read
+everyone's, they get a separate door, never a loosened filter: its own permission, granted by no
+template and no bundle that is not about exactly that, refused to Trenova support, agents and API
+keys; its own service and repository methods whose only callers are that surface; reads that
+write nothing the owner would see as activity; and an audit entry for every look. The Desk
+conversations oversight page is the model ([agent-runtime.md](../agent-runtime.md#other-peoples-conversations)).
+
 ## What ships
 
 - The operator runs only charts the release workflow signed, and published charts pin every image

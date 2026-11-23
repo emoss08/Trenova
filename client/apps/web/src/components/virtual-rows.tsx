@@ -1,6 +1,7 @@
 "use no memo";
 import { HoverGlideGroup } from "@/components/hover-glide";
 import { useDeferredMeasure } from "@/hooks/use-deferred-measure";
+import { rowNavigationKeyDown, useFocusedRow, withIndex } from "@/components/virtual-focus";
 import { ScrollArea, type ScrollAreaMaskVariant } from "@trenova/shared/components/ui/scroll-area";
 import { cn } from "@trenova/shared/lib/utils";
 import { defaultRangeExtractor, useVirtualizer, type Range } from "@tanstack/react-virtual";
@@ -73,6 +74,11 @@ export type VirtualRowsProps = {
    * so the list shows there is more above or below it.
    */
   mask?: ScrollAreaMaskVariant;
+  /**
+   * Rows take focus: Arrow Up and Down move between rows, and Tab out of the window's edge goes on
+   * to the next row, scrolling it in first. Leave it off for a listbox that keeps focus on itself.
+   */
+  rowNavigation?: boolean;
   /** Classes on the masks, such as an inset that keeps a pinned heading clear of the top fade. */
   maskClassName?: string;
   /** How far the masks fade in, in pixels; a dense list takes a shorter fade. */
@@ -119,6 +125,7 @@ export function VirtualRows({
   mask,
   maskClassName,
   maskHeight,
+  rowNavigation = false,
 }: VirtualRowsProps) {
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const setScrollElement = useCallback(
@@ -135,24 +142,27 @@ export function VirtualRows({
   );
   const activeSticky = useRef(-1);
 
-  const rangeExtractor = useCallback(
-    (range: Range) => {
-      let active = -1;
-      for (const index of stickyIndexes) {
-        if (index > range.startIndex) {
-          break;
-        }
-        active = index;
+  // The row holding focus stays mounted wherever it scrolls, so focus is never dropped with it.
+  const { focusedKey, handlers: focusHandlers } = useFocusedRow((index) => rows[index]?.key);
+  const focusedIndex = () => {
+    const key = focusedKey.current;
+    if (key === null) return null;
+    const index = rows.findIndex((row) => row.key === key);
+    return index === -1 ? null : index;
+  };
+
+  const rangeExtractor = (range: Range) => {
+    let active = -1;
+    for (const index of stickyIndexes) {
+      if (index > range.startIndex) {
+        break;
       }
-      activeSticky.current = active;
-      if (active === -1) {
-        return defaultRangeExtractor(range);
-      }
-      const indexes = new Set([active, ...defaultRangeExtractor(range)]);
-      return [...indexes].sort((a, b) => a - b);
-    },
-    [stickyIndexes],
-  );
+      active = index;
+    }
+    activeSticky.current = active;
+    const indexes = withIndex(defaultRangeExtractor(range), focusedIndex());
+    return withIndex(indexes, active === -1 ? null : active);
+  };
 
   // oxlint-disable-next-line react/incompatible-library -- TanStack Virtual is incompatible with the React Compiler; file is already "use no memo", which oxlint 1.89 ignores
   const virtualizer = useVirtualizer({
@@ -162,10 +172,17 @@ export function VirtualRows({
     getItemKey: (index) => rows[index].key,
     overscan,
     initialRect: { width: 0, height: initialHeight },
-    rangeExtractor: stickyIndexes.length > 0 ? rangeExtractor : undefined,
+    rangeExtractor,
   });
 
   const measureRow = useDeferredMeasure(virtualizer);
+  const onKeyDown = rowNavigation
+    ? rowNavigationKeyDown({
+        count: rows.length,
+        containerRef: scrollRef,
+        scrollToIndex: (index) => virtualizer.scrollToIndex(index, { align: "auto" }),
+      })
+    : undefined;
 
   useImperativeHandle(
     handleRef,
@@ -256,6 +273,8 @@ export function VirtualRows({
           aria-multiselectable={ariaMultiselectable}
           aria-activedescendant={ariaActiveDescendant}
           className={contentClassName}
+          {...focusHandlers}
+          onKeyDown={onKeyDown}
         >
           {body}
           {footer}
@@ -271,7 +290,13 @@ export function VirtualRows({
       aria-label={ariaLabel}
       aria-multiselectable={ariaMultiselectable}
       aria-activedescendant={ariaActiveDescendant}
-      className={cn("scrollbar-overlay overflow-y-auto overscroll-contain", contentClassName, className)}
+      className={cn(
+        "scrollbar-overlay overflow-y-auto overscroll-contain",
+        contentClassName,
+        className,
+      )}
+      {...focusHandlers}
+      onKeyDown={onKeyDown}
     >
       {body}
       {footer}

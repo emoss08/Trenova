@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/paybenefit/paybenefitdb"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
 	"github.com/emoss08/trenova/pkg/dberror"
+	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -228,6 +229,76 @@ func (r *repository) CountPlanEnrollments(
 	})
 }
 
+func enrollmentsOf(
+	req *driverpayports.ListBenefitEnrollmentsRequest,
+) keel.Query[*paybenefit.WorkerBenefitEnrollment] {
+	e := paybenefitdb.WorkerBenefitEnrollments
+
+	return e.Where(
+		when(!req.WorkerID.IsNil(), e.WorkerID.Eq(req.WorkerID)),
+		when(!req.PlanID.IsNil(), e.BenefitPlanID.Eq(req.PlanID)),
+		when(req.OpenOnly, e.Status.In(openEnrollmentStatuses...)),
+		when(len(req.Statuses) > 0, e.Status.In(req.Statuses...)),
+	)
+}
+
+func enrollmentLoads(
+	q keel.Query[*paybenefit.WorkerBenefitEnrollment],
+	req *driverpayports.ListBenefitEnrollmentsRequest,
+) keel.Query[*paybenefit.WorkerBenefitEnrollment] {
+	e := paybenefitdb.WorkerBenefitEnrollments
+	if req.IncludePlan {
+		q = q.Load(e.BenefitPlan())
+	}
+	if req.IncludeWorker {
+		q = q.Load(e.Worker())
+	}
+
+	return q
+}
+
+func (r *repository) PageEnrollments(
+	ctx context.Context,
+	req *driverpayports.ListBenefitEnrollmentsRequest,
+) (*pagination.CursorListResult[*paybenefit.WorkerBenefitEnrollment], error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(
+			ctx context.Context,
+		) (*pagination.CursorListResult[*paybenefit.WorkerBenefitEnrollment], error) {
+			e := paybenefitdb.WorkerBenefitEnrollments
+			desc := string(dbtype.SortDirectionDesc)
+			result, err := listquery.Connection(
+				ctx,
+				r.db.Keel(ctx),
+				enrollmentsOf(req),
+				&listquery.Request[paybenefit.WorkerBenefitEnrollment]{
+					Filter: &pagination.QueryOptions{TenantInfo: req.TenantInfo},
+					Cursor: req.Cursor,
+					Shape: func(
+						q keel.Query[*paybenefit.WorkerBenefitEnrollment],
+					) keel.Query[*paybenefit.WorkerBenefitEnrollment] {
+						return enrollmentLoads(q, req)
+					},
+					Keyset: &listquery.Keyset{
+						Orders: []keel.Order{e.EffectiveFrom.Desc(), e.ID.Desc()},
+						Shape: []pagination.CursorSortField{
+							{Field: "effectiveFrom", Direction: desc},
+							{Field: "id", Direction: desc},
+						},
+					},
+				},
+			)
+			if err != nil {
+				return nil, fmt.Errorf("page benefit enrollments: %w", err)
+			}
+
+			return result, nil
+		},
+	)
+}
+
 func (r *repository) ListEnrollments(
 	ctx context.Context,
 	req *driverpayports.ListBenefitEnrollmentsRequest,
@@ -237,20 +308,12 @@ func (r *repository) ListEnrollments(
 		r.db,
 		func(ctx context.Context) ([]*paybenefit.WorkerBenefitEnrollment, error) {
 			e := paybenefitdb.WorkerBenefitEnrollments
-			q := e.Where(
-				when(!req.WorkerID.IsNil(), e.WorkerID.Eq(req.WorkerID)),
-				when(!req.PlanID.IsNil(), e.BenefitPlanID.Eq(req.PlanID)),
-				when(req.OpenOnly, e.Status.In(openEnrollmentStatuses...)),
-				when(len(req.Statuses) > 0, e.Status.In(req.Statuses...)),
-			).
-				Order(e.EffectiveFrom.Desc()).
-				Limit(limitOr(req.Limit, defaultEnrollmentPageSize))
-			if req.IncludePlan {
-				q = q.Load(e.BenefitPlan())
-			}
-			if req.IncludeWorker {
-				q = q.Load(e.Worker())
-			}
+			q := enrollmentLoads(
+				enrollmentsOf(req).
+					Order(e.EffectiveFrom.Desc()).
+					Limit(limitOr(req.Limit, defaultEnrollmentPageSize)),
+				req,
+			)
 
 			entities, err := q.List(ctx, r.db.Keel(ctx))
 			if err != nil {

@@ -1,5 +1,8 @@
 import { SectionPanel, SectionPanelQuiet } from "@/components/section-panel";
-import { useWorkPane } from "@/components/work-pane";
+import { VirtualRows } from "@/components/virtual-rows";
+import { lazyWorkPane, preloadOn, useWorkPane } from "@/components/work-pane";
+import { useOpenedOnce } from "@/hooks/use-opened-once";
+import { lazyComponent } from "@/lib/lazy-component";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { usePermission } from "@/hooks/use-permission";
 import {
@@ -16,15 +19,15 @@ import {
 } from "@/lib/graphql/worker-leave";
 import type { WorkerTabProps } from "@/routes/worker/use-worker-state";
 import { useQuery } from "@tanstack/react-query";
+import { LazyComponent } from "@trenova/shared/components/error-boundary";
 import { ErrorState } from "@trenova/shared/components/errors/error-state";
 import { ChevronRightIcon } from "@trenova/shared/components/icons";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import { DescriptionItem, DescriptionList } from "@trenova/shared/components/ui/description-list";
 import { EmptySheet, GhostLine } from "@trenova/shared/components/ui/empty-sheet";
-import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
-import { useT } from "@trenova/shared/i18n/use-t";
-import { formatRange, formatUnixDate } from "@trenova/shared/lib/date";
+import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
+import { formatRange, formatUnixDateMedium } from "@trenova/shared/lib/date";
 import {
   certificationStatusLabel,
   certificationTone,
@@ -41,10 +44,29 @@ import { useId, useState } from "react";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { TimeSkeleton } from "../time-skeleton";
 import { EntitlementBar } from "./entitlement-bar";
-import { LeaveCasePane } from "./leave-case-pane";
-import { LeaveDayDialog } from "./leave-day-dialog";
 import { caseHours } from "./leave-model";
-import { useLeaveInvalidation } from "./use-leave-invalidation";
+import {
+  BOUNDED_CELL_CLASS,
+  BoundedTable,
+  type BoundedColumn,
+  type BoundedRowProps,
+} from "../../bounded-table";
+import { useWorkerInvalidation } from "../../use-worker-invalidation";
+import { WORKER_FORM_PANES } from "../../worker-form-panes";
+
+const LeaveCasePane = lazyWorkPane(
+  WORKER_FORM_PANES["open-leave-case"],
+  (module) => module.LeaveCasePane,
+  {
+    openKey: (props) => props.leaveCase?.id ?? "new",
+    title: (props, t) => (props.leaveCase ? t("Edit leave case") : t("Open a leave case")),
+    fields: 8,
+  },
+);
+const LeaveDayDialog = lazyComponent(
+  () => import("./leave-day-dialog"),
+  (module) => module.LeaveDayDialog,
+);
 
 type LeaveViewProps = Pick<WorkerTabProps, "workerId" | "open" | "onOpen">;
 
@@ -77,7 +99,12 @@ export default function LeaveView({ workerId, open, onOpen }: LeaveViewProps) {
     queryFn: ({ signal }) => fetchWorkerLeaveFile(workerId, { signal }),
     enabled: canRead,
   });
-  const [recordFor, setRecordFor] = useState<LeaveCaseRow | null>(null);
+  // The case stays set after the dialog closes, so its content does not empty while it leaves.
+  const [recording, setRecording] = useState<{ open: boolean; leaveCase: LeaveCaseRow | null }>({
+    open: false,
+    leaveCase: null,
+  });
+  const dayDialogOpened = useOpenedOnce(recording.open);
 
   if (!canRead) {
     return (
@@ -97,7 +124,7 @@ export default function LeaveView({ workerId, open, onOpen }: LeaveViewProps) {
         layout="sheet"
         error={fileQuery.error}
         onRetry={() => void fileQuery.refetch()}
-        title={t("Leave could not be loaded")}
+        title={t("The leave could not be loaded")}
       />
     );
   }
@@ -115,26 +142,35 @@ export default function LeaveView({ workerId, open, onOpen }: LeaveViewProps) {
             {t("No leave case has been opened for this worker.")}
           </SectionPanelQuiet>
         ) : (
-          <ul className="flex flex-col px-1.5 py-1">
-            {cases.map((leaveCase) => (
-              <CaseRow
-                key={leaveCase.id}
-                workerId={workerId}
-                leaveCase={leaveCase}
-                canRecord={canRecord}
-                canUpdate={canUpdate}
-                onRecordDay={() => setRecordFor(leaveCase)}
-                onEdit={() =>
-                  pane.closeThen(() => onOpen({ tab: "time", view: "leave", leave: leaveCase.id }))
-                }
-              />
-            ))}
-          </ul>
+          <VirtualRows
+            rows={cases.map((leaveCase) => ({
+              key: leaveCase.id,
+              render: () => (
+                <CaseRow
+                  workerId={workerId}
+                  leaveCase={leaveCase}
+                  canRecord={canRecord}
+                  canUpdate={canUpdate}
+                  onRecordDay={() => setRecording({ open: true, leaveCase })}
+                  onEdit={() =>
+                    pane.closeThen(() =>
+                      onOpen({ tab: "time", view: "leave", leave: leaveCase.id }),
+                    )
+                  }
+                />
+              ),
+            }))}
+            aria-label={t("Cases")}
+            mask="card"
+            className="max-h-160"
+            contentClassName="px-1.5 py-1"
+            estimateSize={120}
+          />
         )}
       </SectionPanel>
       <EntitlementPanel entitlement={entitlement} canRecord={canRecord} onOpenCase={openCase} />
       {canRecord || canUpdate ? (
-        <LeaveCasePane
+        <LeaveCasePane.Component
           open={open.form === "open-leave-case" || editing !== null}
           onOpenChange={(next) => {
             if (!next) onOpen({ tab: "time", view: "leave" });
@@ -143,14 +179,16 @@ export default function LeaveView({ workerId, open, onOpen }: LeaveViewProps) {
           leaveCase={open.form === "open-leave-case" ? null : editing}
         />
       ) : null}
-      <LeaveDayDialog
-        open={recordFor !== null}
-        onOpenChange={(next) => {
-          if (!next) setRecordFor(null);
-        }}
-        workerId={workerId}
-        leaveCase={recordFor}
-      />
+      {dayDialogOpened ? (
+        <LazyComponent fallback={null}>
+          <LeaveDayDialog.Component
+            open={recording.open}
+            onOpenChange={(next) => setRecording((current) => ({ ...current, open: next }))}
+            workerId={workerId}
+            leaveCase={recording.leaveCase}
+          />
+        </LazyComponent>
+      ) : null}
     </div>
   );
 }
@@ -237,8 +275,8 @@ function EntitlementPanel({
           )}
         </p>
         {canRecord ? (
-          <Button size="sm" className="shrink-0" onClick={onOpenCase}>
-            {t("Open a case")}
+          <Button size="sm" className="shrink-0" {...preloadOn(LeaveCasePane)} onClick={onOpenCase}>
+            {t("Open a leave case")}
           </Button>
         ) : null}
       </div>
@@ -265,7 +303,7 @@ function CaseRow({
 }) {
   const t = useT();
   const { allowed: canDecide } = usePermission(Resource.WorkerLeave, Operation.Approve);
-  const invalidate = useLeaveInvalidation(workerId);
+  const invalidate = useWorkerInvalidation(workerId, "leave");
   const [expanded, setExpanded] = useState(false);
   const [confirm, setConfirm] = useState<CaseConfirm>(null);
   const daysId = useId();
@@ -301,19 +339,19 @@ function CaseRow({
   const meta = [
     leaveCase.endsAt
       ? formatRange(leaveCase.startsAt, leaveCase.endsAt, { year: "always", join: "words" })
-      : t("From {0}, end not known", formatUnixDate(leaveCase.startsAt)),
+      : t("From {0}, end not known", formatUnixDateMedium(leaveCase.startsAt)),
     t("{0} hours", formatLeaveHours(String(hours))),
     leaveCase.certificationReceivedAt
-      ? t("certification received {0}", formatUnixDate(leaveCase.certificationReceivedAt))
+      ? t("certification received {0}", formatUnixDateMedium(leaveCase.certificationReceivedAt))
       : leaveCase.certificationDueAt
-        ? t("certification due {0}", formatUnixDate(leaveCase.certificationDueAt))
+        ? t("certification due {0}", formatUnixDateMedium(leaveCase.certificationDueAt))
         : null,
   ].filter((part): part is string => part !== null);
   const pendingDecision = canDecide && leaveCase.status === "Pending";
   const closable = canDecide && (leaveCase.status === "Approved" || leaveCase.status === "Denied");
 
   return (
-    <li className="border-border-subtle px-2 py-2.5 not-first:border-t">
+    <div className="border-b border-border-subtle px-2 py-2.5">
       <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
         <span className="font-medium">
           {t(
@@ -327,7 +365,7 @@ function CaseRow({
         </Badge>
         {leaveCase.fmlaDesignated ? <Badge variant="info">{t("Designated FMLA")}</Badge> : null}
         {leaveCase.certificationStatus === "NotRequired" ? null : (
-          <Badge variant={certificationTone(leaveCase.certificationStatus)}>
+          <Badge variant={certificationTone(leaveCase.certificationStatus)} dot>
             {t(
               "Certification: {0}",
               certificationStatusLabel(leaveCase.certificationStatus).toLowerCase(),
@@ -379,7 +417,13 @@ function CaseRow({
           </>
         ) : null}
         {canRecord && leaveCase.status === "Approved" ? (
-          <Button size="xs" variant="outline" disabled={busy} onClick={onRecordDay}>
+          <Button
+            size="xs"
+            variant="outline"
+            disabled={busy}
+            {...preloadOn(LeaveDayDialog)}
+            onClick={onRecordDay}
+          >
             {t("Record a day")}
           </Button>
         ) : null}
@@ -406,7 +450,13 @@ function CaseRow({
           </Button>
         ) : null}
         {canUpdate ? (
-          <Button size="xs" variant="ghost" disabled={busy} onClick={onEdit}>
+          <Button
+            size="xs"
+            variant="ghost"
+            disabled={busy}
+            {...preloadOn(LeaveCasePane)}
+            onClick={onEdit}
+          >
             {t("Edit")}
           </Button>
         ) : null}
@@ -470,8 +520,19 @@ function CaseRow({
         pending={close.isPending}
         onConfirm={() => close.mutateAsync()}
       />
-    </li>
+    </div>
   );
+}
+
+function dayColumns(t: TranslateFn, canUpdate: boolean): BoundedColumn[] {
+  return [
+    { key: "day", label: t("Day") },
+    { key: "hours", label: t("Hours"), align: "end" },
+    { key: "entry", label: t("Entry") },
+    ...(canUpdate
+      ? [{ key: "actions", label: <span className="sr-only">{t("Actions")}</span>, shrink: true }]
+      : []),
+  ];
 }
 
 function DayEntries({
@@ -484,7 +545,7 @@ function DayEntries({
   canUpdate: boolean;
 }) {
   const t = useT();
-  const invalidate = useLeaveInvalidation(workerId);
+  const invalidate = useWorkerInvalidation(workerId, "leave");
   const [removing, setRemoving] = useState<LeaveEntryRow | null>(null);
   const remove = useApiMutation({
     resourceName: "Day",
@@ -496,49 +557,22 @@ function DayEntries({
 
   return (
     <>
-      <ScrollArea className="max-h-72" maskVariant="card">
-        <table className="w-full text-sm">
-          <thead className="sticky top-0 z-10 bg-card">
-            <tr className="border-b text-left text-xs text-foreground-subtle">
-              <th className="px-3 py-1.5 font-medium">{t("Day")}</th>
-              <th className="px-3 py-1.5 text-right font-medium">{t("Hours")}</th>
-              <th className="px-3 py-1.5 font-medium">{t("Entry")}</th>
-              {canUpdate ? (
-                <th className="w-16 px-2 py-1.5">
-                  <span className="sr-only">{t("Actions")}</span>
-                </th>
-              ) : null}
-            </tr>
-          </thead>
-          <tbody>
-            {sorted.map((entry) => (
-              <tr key={entry.id} className="border-b border-border-subtle last:border-0">
-                <td className="px-3 py-1.5 font-mono text-xs tabular-nums">
-                  {formatUnixDate(entry.usedOn)}
-                </td>
-                <td className="px-3 py-1.5 text-right font-mono text-xs tabular-nums">
-                  {t("{0} h", formatLeaveHours(entry.hours))}
-                </td>
-                <td className="px-3 py-1.5">
-                  <span className="flex flex-wrap items-center gap-1.5">
-                    {entry.notes ? <span>{entry.notes}</span> : null}
-                    {entry.countsAgainstEntitlement ? null : (
-                      <Badge variant="neutral">{t("Not counted")}</Badge>
-                    )}
-                  </span>
-                </td>
-                {canUpdate ? (
-                  <td className="px-2 py-1.5 text-right">
-                    <Button size="xs" variant="ghost" onClick={() => setRemoving(entry)}>
-                      {t("Remove")}
-                    </Button>
-                  </td>
-                ) : null}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </ScrollArea>
+      <BoundedTable
+        label={t("Day entries")}
+        columns={dayColumns(t, canUpdate)}
+        maxHeightClassName="max-h-72"
+        rows={sorted.map((entry) => ({
+          key: entry.id,
+          render: (props) => (
+            <DayEntryRow
+              props={props}
+              entry={entry}
+              canUpdate={canUpdate}
+              onRemove={() => setRemoving(entry)}
+            />
+          ),
+        }))}
+      />
       <ConfirmDialog
         open={removing !== null}
         onOpenChange={(next) => !next && setRemoving(null)}
@@ -550,12 +584,12 @@ function DayEntries({
               ? t(
                   "{0} hours on {1} come off the case and go back onto the entitlement.",
                   formatLeaveHours(removing.hours),
-                  formatUnixDate(removing.usedOn),
+                  formatUnixDateMedium(removing.usedOn),
                 )
               : t(
                   "{0} hours on {1} come off the case. They were not counted against the entitlement.",
                   formatLeaveHours(removing.hours),
-                  formatUnixDate(removing.usedOn),
+                  formatUnixDateMedium(removing.usedOn),
                 )
         }
         confirmLabel={t("Remove day")}
@@ -563,5 +597,44 @@ function DayEntries({
         onConfirm={() => (removing ? remove.mutateAsync(removing.id) : Promise.resolve())}
       />
     </>
+  );
+}
+
+function DayEntryRow({
+  props,
+  entry,
+  canUpdate,
+  onRemove,
+}: {
+  props: BoundedRowProps;
+  entry: LeaveEntryRow;
+  canUpdate: boolean;
+  onRemove: () => void;
+}) {
+  const t = useT();
+  return (
+    <tr {...props} data-glide-target>
+      <td className={cn(BOUNDED_CELL_CLASS, "font-mono text-xs tabular-nums")}>
+        {formatUnixDateMedium(entry.usedOn)}
+      </td>
+      <td className={cn(BOUNDED_CELL_CLASS, "text-right font-mono text-xs tabular-nums")}>
+        {t("{0} h", formatLeaveHours(entry.hours))}
+      </td>
+      <td className={BOUNDED_CELL_CLASS}>
+        <span className="flex flex-wrap items-center gap-1.5">
+          {entry.notes ? <span>{entry.notes}</span> : null}
+          {entry.countsAgainstEntitlement ? null : (
+            <Badge variant="neutral">{t("Not counted")}</Badge>
+          )}
+        </span>
+      </td>
+      {canUpdate ? (
+        <td className={cn(BOUNDED_CELL_CLASS, "text-right")}>
+          <Button size="xs" variant="ghost" onClick={onRemove}>
+            {t("Remove")}
+          </Button>
+        </td>
+      ) : null}
+    </tr>
   );
 }

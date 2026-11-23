@@ -2,6 +2,7 @@ import { usePermission } from "@/hooks/use-permission";
 import { formatRange } from "@trenova/shared/lib/date";
 import { fetchWorkerLeaveFile, WORKER_LEAVE_KEY } from "@/lib/graphql/worker-leave";
 import { useQuery } from "@tanstack/react-query";
+import { ErrorState } from "@trenova/shared/components/errors/error-state";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { useT } from "@trenova/shared/i18n/use-t";
 import {
@@ -36,8 +37,19 @@ export function LeaveStandingStrip({ workerId }: { workerId: string }) {
     );
   }
 
+  if (leaveQuery.isError) {
+    return (
+      <ErrorState
+        layout="compact"
+        error={leaveQuery.error}
+        onRetry={() => void leaveQuery.refetch()}
+        title={t("The leave standing could not be loaded")}
+      />
+    );
+  }
+
   const file = leaveQuery.data;
-  if (!file || file.cases.length === 0) return null;
+  if (file.cases.length === 0) return null;
 
   const { entitlement } = file;
   const owing = file.cases.filter((row) =>

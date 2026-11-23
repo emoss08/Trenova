@@ -33,9 +33,10 @@ type ListPolicyAcknowledgementsRequest struct {
 	WorkerID   pulid.ID              `json:"workerId"`
 	// VersionLabel narrows to signatures on one version, which is the one
 	// question compliance asks: who has signed what is in force now.
-	VersionLabel  string `json:"versionLabel"`
-	IncludeWorker bool   `json:"includeWorker"`
-	Limit         int    `json:"limit"`
+	VersionLabel  string                `json:"versionLabel"`
+	IncludeWorker bool                  `json:"includeWorker"`
+	Limit         int                   `json:"limit"`
+	Cursor        pagination.CursorInfo `json:"cursor"`
 }
 
 // PolicyComplianceRow is who a policy binds and whether they have signed the
@@ -100,6 +101,10 @@ type SelfServiceRepository interface {
 		ctx context.Context,
 		req *ListPolicyAcknowledgementsRequest,
 	) ([]*workerpolicy.WorkerPolicyAcknowledgement, error)
+	PageAcknowledgements(
+		ctx context.Context,
+		req *ListPolicyAcknowledgementsRequest,
+	) (*pagination.CursorListResult[*workerpolicy.WorkerPolicyAcknowledgement], error)
 	CreateAcknowledgement(
 		ctx context.Context,
 		entity *workerpolicy.WorkerPolicyAcknowledgement,

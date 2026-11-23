@@ -239,6 +239,22 @@ input SaveOSHASummaryInput {
   notes: String
 }
 
+type WorkerInjuryEdge {
+  node: WorkerInjury!
+  cursor: String!
+}
+
+"""
+Injury and illness cases, a page at a time. totalCount is counted only when it is selected.
+"""
+type WorkerInjuryConnection {
+  edges: [WorkerInjuryEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
+}
+
 extend type Query {
   """
   Injury and illness cases, newest first: one worker's, or the
@@ -253,9 +269,11 @@ extend type Query {
     recordableOnly: Boolean
     "Only the cases still open."
     openOnly: Boolean
-    "At most this many cases, from 1 to 100. Every case of a named worker when left out; 20 across the organization."
-    limit: Int
-  ): [WorkerInjury!]!
+    "How many to read, from 1 to 100; 20 when left out."
+    first: Int
+    "The endCursor of the page before this one."
+    after: String
+  ): WorkerInjuryConnection!
   workerInjury(id: ID!): WorkerInjury!
   """
   One year of the OSHA 300 log with its 300A totals. Leave the year empty for

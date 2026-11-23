@@ -359,13 +359,14 @@ func (s *Service) transition(
 
 	operation := transitionOperation(params.target)
 	s.logTransitionAudit(ctx, current, updated, operation, req, log)
-	s.publishPTOInvalidation(ctx, updated, operation, req.UserID)
-
-	if params.notifyWorker {
-		if notice, ok := transitionNotice(params.target, req.Reason); ok {
-			s.notifyDriverPTO(ctx, req.TenantInfo, updated, notice)
+	kernelports.AfterCommit(ctx, func(committed context.Context) {
+		s.publishPTOInvalidation(committed, updated, operation, req.UserID)
+		if params.notifyWorker {
+			if notice, ok := transitionNotice(params.target, req.Reason); ok {
+				s.notifyDriverPTO(committed, req.TenantInfo, updated, notice)
+			}
 		}
-	}
+	})
 
 	return updated, nil
 }

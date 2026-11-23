@@ -3,7 +3,8 @@ import { CLOSED_WORKER_OPEN_STATE, type WorkerOpenState } from "@/routes/worker/
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { stubLayout } from "@/test/layout";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import LeaveView from "../leave-view";
 
 const mocks = vi.hoisted(() => ({
@@ -126,7 +127,15 @@ function renderView(file: unknown = baseFile, open: Partial<WorkerOpenState> = {
   return { onOpen };
 }
 
+// The cases are drawn a screenful at a time, which needs a laid-out region.
+let restoreLayout = () => {};
+
+beforeEach(() => {
+  restoreLayout = stubLayout(640);
+});
+
 afterEach(() => {
+  restoreLayout();
   cleanup();
   vi.clearAllMocks();
   permissions.read = true;
@@ -180,6 +189,27 @@ describe("LeaveView", () => {
     expect(
       screen.queryByRole("button", { name: "Approve and designate FMLA" }),
     ).not.toBeInTheDocument();
+  });
+
+  it("opens the day dialog for the case, starting from an empty day each time", async () => {
+    const user = userEvent.setup();
+    renderView({ ...baseFile, cases: [makeCase({ status: "Approved", fmlaDesignated: true })] });
+
+    await user.click(await screen.findByRole("button", { name: "Record a day" }));
+    const dialog = await screen.findByRole("dialog", { name: "Record a day of leave" });
+    expect(
+      within(dialog).getByText(
+        "This case is designated as FMLA, so the day draws the entitlement down.",
+      ),
+    ).toBeInTheDocument();
+    const notes = within(dialog).getByLabelText("Notes");
+    await user.type(notes, "Half day");
+    await user.click(within(dialog).getByRole("button", { name: "Cancel" }));
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+
+    await user.click(screen.getByRole("button", { name: "Record a day" }));
+    const reopened = await screen.findByRole("dialog", { name: "Record a day of leave" });
+    expect(within(reopened).getByLabelText("Notes")).toHaveValue("");
   });
 
   // A day recorded against an undesignated case is time off, but it draws nothing down.

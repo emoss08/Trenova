@@ -337,6 +337,8 @@ extend type Query {
   "One worker, with the profile, state, fleet, manager and license state it is asked for."
   worker(id: ID!): Worker
   workerPTOEntries(input: WorkerPTOEntriesInput!): WorkerPTOConnection!
+  "One time off request by id, with its worker, for a link to a request not on the loaded page."
+  workerPTO(id: ID!): WorkerPTO!
   upcomingWorkerPTO(input: UpcomingWorkerPTOInput!): WorkerPTOConnection!
   workerPTOChartData(input: WorkerPTOChartInput!): [PTOChartDataPoint!]!
 }

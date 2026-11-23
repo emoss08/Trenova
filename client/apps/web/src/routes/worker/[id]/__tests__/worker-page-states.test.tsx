@@ -27,14 +27,14 @@ vi.mock("@/components/navigation/sidebar-layout", () => ({
 }));
 vi.mock("@/lib/queries/worker", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/lib/queries/worker")>();
+  const record = (workerId: string) => ({
+    queryKey: ["worker", "record", workerId],
+    queryFn: () => mocks.fetchRecord(workerId),
+  });
   return {
-    worker: {
-      ...actual.worker,
-      record: (workerId: string) => ({
-        queryKey: ["worker", "record", workerId],
-        queryFn: () => mocks.fetchRecord(workerId),
-      }),
-    },
+    ...actual,
+    worker: { ...actual.worker, record },
+    workerRecordQuery: (workerId: string) => ({ ...record(workerId), refetchOnMount: false }),
   };
 });
 

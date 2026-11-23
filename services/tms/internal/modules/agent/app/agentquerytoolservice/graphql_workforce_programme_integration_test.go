@@ -6,6 +6,8 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/testutil/orgzonetest"
+
 	"github.com/emoss08/trenova/internal/testutil/entitlementtest"
 
 	"github.com/emoss08/trenova/internal/api/graphql/agentread/agentreadtest"
@@ -186,7 +188,7 @@ func TestConvertedLists_SchedulingAndRandomTestingReadTheTenantsOwnUnderRowLevel
 		},
 	)
 	resolvers.SchedulingService = schedulingservice.New(schedulingservice.Params{
-		Logger: logger, Repo: schedules,
+		Logger: logger, Repo: schedules, Organizations: orgzonetest.Organizations{},
 	})
 	resolvers.WorkerDrugAlcoholService = workerdrugalcoholservice.New(
 		workerdrugalcoholservice.Params{Logger: logger, Repo: draws, WorkerRepo: workers})

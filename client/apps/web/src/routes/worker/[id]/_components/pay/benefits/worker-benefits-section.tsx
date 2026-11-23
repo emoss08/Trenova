@@ -1,8 +1,7 @@
-import { HoverGlideGroup } from "@/components/hover-glide";
 import { ReasonDialog } from "@/components/reason-dialog";
 import { RowActionsMenu } from "@/components/row-actions-menu";
 import { SectionPanel } from "@/components/section-panel";
-import { useWorkPane } from "@/components/work-pane";
+import { lazyWorkPane, preloadOn, useWorkPane } from "@/components/work-pane";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { usePermission } from "@/hooks/use-permission";
 import {
@@ -14,15 +13,14 @@ import {
   type BenefitEnrollmentRow,
 } from "@/lib/graphql/benefits";
 import type { WorkerTabProps } from "@/routes/worker/use-worker-state";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { ErrorState } from "@trenova/shared/components/errors/error-state";
 import { Edit02Icon, PlusIcon, SlashCircle01Icon } from "@trenova/shared/components/icons";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
-import { EmptySheet, GhostLine } from "@trenova/shared/components/ui/empty-sheet";
-import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
+import { EmptySheet } from "@trenova/shared/components/ui/empty-sheet";
 import { useRichT } from "@trenova/shared/i18n/rich";
-import { useT } from "@trenova/shared/i18n/use-t";
+import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
 import {
   benefitPlanTypeLabel,
   coverageTierLabel,
@@ -34,9 +32,27 @@ import { formatMinor } from "@trenova/shared/lib/money";
 import { cn } from "@trenova/shared/lib/utils";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useState } from "react";
+import {
+  BOUNDED_CELL_CLASS,
+  BoundedTable,
+  type BoundedColumn,
+  type BoundedRowProps,
+} from "../../bounded-table";
+import { LineSketch } from "../../list-sketch";
+import { useWorkerInvalidation } from "../../use-worker-invalidation";
+import { useWorkerList } from "../../use-worker-list";
+import { WORKER_FORM_PANES } from "../../worker-form-panes";
 import { PaySkeleton } from "../pay-skeleton";
 import { CompensationBar } from "./compensation-bar";
-import { EnrollPane } from "./enroll-pane";
+
+const EnrollPane = lazyWorkPane(
+  WORKER_FORM_PANES["enroll-benefit"],
+  (module) => module.EnrollPane,
+  {
+    title: (props, t) => (props.coverageTier ? t("Change coverage") : t("Enroll or decline")),
+    fields: 5,
+  },
+);
 
 type BenefitsViewProps = Pick<WorkerTabProps, "workerId" | "open" | "onOpen">;
 
@@ -58,14 +74,17 @@ export function sortEnrollments(rows: readonly BenefitEnrollmentRow[]): BenefitE
 export function WorkerBenefitsSection({ workerId, open, onOpen }: BenefitsViewProps) {
   const t = useT();
   const rt = useRichT();
-  const queryClient = useQueryClient();
+  const invalidate = useWorkerInvalidation(workerId, "benefits");
   const { closeThen } = useWorkPane();
   const { allowed: canEnroll } = usePermission(Resource.BenefitPlan, Operation.Assign);
   const [ending, setEnding] = useState<BenefitEnrollmentRow | null>(null);
 
-  const enrollmentsQuery = useQuery({
-    queryKey: [BENEFIT_ENROLLMENTS_KEY, workerId],
-    queryFn: ({ signal }) => fetchWorkerBenefitEnrollments(workerId, undefined, { signal }),
+  const enrollmentsQuery = useWorkerList({
+    root: BENEFIT_ENROLLMENTS_KEY,
+    workerId,
+    pageSize: 100,
+    fetchPage: ({ first, after, signal }) =>
+      fetchWorkerBenefitEnrollments({ workerId, first, after }, { signal }),
   });
   const totalQuery = useQuery({
     queryKey: [TOTAL_COMPENSATION_KEY, workerId],
@@ -77,11 +96,9 @@ export function WorkerBenefitsSection({ workerId, open, onOpen }: BenefitsViewPr
     resourceName: "Enrollment",
     mutationFn: ({ row, reason }: { row: BenefitEnrollmentRow; reason: string }) =>
       endBenefitEnrollment({ id: row.id, notes: reason, version: row.version }),
-    onSuccess: () => {
+    onSuccess: async () => {
+      await invalidate();
       setEnding(null);
-      void queryClient.invalidateQueries({ queryKey: [BENEFIT_ENROLLMENTS_KEY, workerId] });
-      void queryClient.invalidateQueries({ queryKey: [TOTAL_COMPENSATION_KEY, workerId] });
-      void queryClient.invalidateQueries({ queryKey: ["worker"] });
     },
   });
 
@@ -92,12 +109,12 @@ export function WorkerBenefitsSection({ workerId, open, onOpen }: BenefitsViewPr
         error={enrollmentsQuery.error}
         layout="sheet"
         title={t("The benefits could not be loaded")}
-        onRetry={() => void enrollmentsQuery.refetch()}
+        onRetry={enrollmentsQuery.refetch}
       />
     );
   }
 
-  const enrollments = sortEnrollments(enrollmentsQuery.data);
+  const enrollments = sortEnrollments(enrollmentsQuery.rows);
   const covered = enrollments.filter((row) => row.status === "Active");
   const share = covered.reduce((sum, row) => sum + row.employeeCostMinor, 0);
   const employer = covered.reduce((sum, row) => sum + row.employerCostMinor, 0);
@@ -122,7 +139,7 @@ export function WorkerBenefitsSection({ workerId, open, onOpen }: BenefitsViewPr
         <div
           aria-busy
           aria-label={t("Loading the total compensation")}
-          className="flex flex-col gap-3 rounded-lg border p-4"
+          className="flex flex-col gap-3 rounded-lg border bg-card px-4 pt-3.5 pb-4"
         >
           <span className="block h-3 w-40 ui-shimmer rounded-sm" />
           <span className="block h-6 w-32 ui-shimmer rounded-sm" />
@@ -141,10 +158,17 @@ export function WorkerBenefitsSection({ workerId, open, onOpen }: BenefitsViewPr
 
       <SectionPanel
         title={t("Enrollments")}
-        count={enrollments.length}
+        count={
+          enrollmentsQuery.hasMore ? (enrollmentsQuery.total ?? undefined) : enrollments.length
+        }
         action={
           canEnroll && enrollments.length > 0 ? (
-            <Button size="sm" variant="secondary" onClick={() => elect()}>
+            <Button
+              size="sm"
+              variant="secondary"
+              {...preloadOn(EnrollPane)}
+              onClick={() => elect()}
+            >
               <PlusIcon className="size-3.5" />
               {t("Enroll or decline")}
             </Button>
@@ -157,15 +181,10 @@ export function WorkerBenefitsSection({ workerId, open, onOpen }: BenefitsViewPr
             description={t(
               "A declined plan is worth recording too: declined and nobody asked are different facts at audit.",
             )}
-            sketch={
-              <div className="flex flex-col gap-2 rounded-md border bg-card p-4">
-                <GhostLine className="w-1/2" />
-                <GhostLine className="w-3/4" />
-              </div>
-            }
+            sketch={<LineSketch widths={["w-1/2", "w-3/4"]} />}
             action={
               canEnroll ? (
-                <Button size="sm" onClick={() => elect()}>
+                <Button size="sm" {...preloadOn(EnrollPane)} onClick={() => elect()}>
                   {t("Enroll or decline")}
                 </Button>
               ) : undefined
@@ -173,115 +192,25 @@ export function WorkerBenefitsSection({ workerId, open, onOpen }: BenefitsViewPr
           />
         ) : (
           <>
-            <ScrollArea viewportClassName="max-h-80" maskVariant="card">
-              <HoverGlideGroup>
-                <table className="w-full min-w-[44rem] text-sm">
-                  <thead className="sticky top-0 z-10 bg-card text-left text-xs text-muted-foreground">
-                    <tr className="border-b border-border-subtle">
-                      <th className="px-3 py-2 font-medium">{t("Plan")}</th>
-                      <th className="px-3 py-2 font-medium">{t("Type")}</th>
-                      <th className="px-3 py-2 font-medium">{t("Coverage")}</th>
-                      <th className="px-3 py-2 font-medium">{t("Since")}</th>
-                      <th className="px-3 py-2 text-right font-medium">{t("Cost a period")}</th>
-                      <th className="px-3 py-2 font-medium">{t("Status")}</th>
-                      <th className="w-0 px-2 py-2">
-                        <span className="sr-only">{t("Actions")}</span>
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {enrollments.map((row) => {
-                      const active = row.status === "Active";
-                      const priced = active || row.status === "Ended";
-                      return (
-                        <tr
-                          key={row.id}
-                          data-glide-target
-                          data-testid={`enrollment-${row.id}`}
-                          className="border-b border-border-subtle last:border-0"
-                        >
-                          <td className="px-3 py-2 font-medium">
-                            {row.benefitPlan?.name ?? t("Plan")}
-                          </td>
-                          <td className="px-3 py-2">
-                            {row.benefitPlan ? benefitPlanTypeLabel(row.benefitPlan.planType) : "—"}
-                          </td>
-                          <td className={cn("px-3 py-2", !priced && "text-muted-foreground")}>
-                            {priced ? coverageTierLabel(row.coverageTier) : "—"}
-                          </td>
-                          <td
-                            className={cn(
-                              "px-3 py-2 text-xs",
-                              priced ? "font-mono" : "text-muted-foreground",
-                            )}
-                          >
-                            {priced ? formatUnixDateMedium(row.effectiveFrom) : "—"}
-                          </td>
-                          <td
-                            className={cn(
-                              "px-3 py-2 text-right text-xs",
-                              active ? "font-mono" : "text-muted-foreground",
-                            )}
-                          >
-                            {active ? formatMinor(row.employeeCostMinor) : "—"}
-                          </td>
-                          <td className="px-3 py-2">
-                            <Badge
-                              variant={enrollmentStatusTone(row.status)}
-                              dot={row.status !== "Waived"}
-                            >
-                              {enrollmentStatusLabel(row.status)}
-                            </Badge>
-                            {row.status === "Waived" && row.waivedReason ? (
-                              <span className="mt-0.5 block text-xs text-muted-foreground">
-                                {row.waivedReason}
-                              </span>
-                            ) : null}
-                            {row.status === "Ended" && row.effectiveTo ? (
-                              <span className="mt-0.5 block text-xs text-muted-foreground tabular-nums">
-                                {t("Ended {0}", formatUnixDateMedium(row.effectiveTo))}
-                              </span>
-                            ) : null}
-                          </td>
-                          <td className="px-2 py-1.5 text-right">
-                            {!canEnroll ? null : active ? (
-                              <RowActionsMenu
-                                label={t("Enrollment options")}
-                                actions={[
-                                  {
-                                    id: "change",
-                                    label: t("Change coverage"),
-                                    icon: Edit02Icon,
-                                    onSelect: () => elect(row.benefitPlanId),
-                                  },
-                                  {
-                                    id: "end",
-                                    label: t("End cover…"),
-                                    icon: SlashCircle01Icon,
-                                    destructive: true,
-                                    disabled: end.isPending,
-                                    onSelect: () => setEnding(row),
-                                  },
-                                ]}
-                              />
-                            ) : row.status === "Pending" || row.status === "Waived" ? (
-                              <Button
-                                size="xs"
-                                variant="secondary"
-                                className="whitespace-nowrap"
-                                onClick={() => elect(row.benefitPlanId)}
-                              >
-                                {t("Enroll or decline")}
-                              </Button>
-                            ) : null}
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </HoverGlideGroup>
-            </ScrollArea>
+            <BoundedTable
+              label={t("Enrollments")}
+              columns={enrollmentColumns(t)}
+              maxHeightClassName="max-h-80"
+              rows={enrollments.map((row) => ({
+                key: row.id,
+                render: (props) => (
+                  <EnrollmentRow
+                    props={props}
+                    row={row}
+                    canEnroll={canEnroll}
+                    ending={end.isPending}
+                    onElect={elect}
+                    onEnd={setEnding}
+                  />
+                ),
+              }))}
+              more={enrollmentsQuery}
+            />
             {covered.length > 0 ? (
               <div className="flex flex-wrap justify-between gap-x-4 gap-y-1 border-t border-border-subtle py-2.5 pr-3 pl-4 text-xs text-muted-foreground tabular-nums">
                 <span>
@@ -312,7 +241,7 @@ export function WorkerBenefitsSection({ workerId, open, onOpen }: BenefitsViewPr
         )}
       </SectionPanel>
 
-      <EnrollPane
+      <EnrollPane.Component
         open={open.form === "enroll-benefit" && canEnroll}
         onOpenChange={(next) => !next && close()}
         workerId={workerId}
@@ -332,6 +261,7 @@ export function WorkerBenefitsSection({ workerId, open, onOpen }: BenefitsViewPr
         )}
         placeholder={t("e.g. Moving to a spouse's plan")}
         confirmLabel={t("End cover")}
+        cancelLabel={t("Cancel")}
         destructive
         maxLength={2000}
         pending={end.isPending}
@@ -341,5 +271,114 @@ export function WorkerBenefitsSection({ workerId, open, onOpen }: BenefitsViewPr
         onOpenChange={(next) => !next && !end.isPending && setEnding(null)}
       />
     </div>
+  );
+}
+
+function enrollmentColumns(t: TranslateFn): BoundedColumn[] {
+  return [
+    { key: "plan", label: t("Plan") },
+    { key: "type", label: t("Type") },
+    { key: "coverage", label: t("Coverage") },
+    { key: "since", label: t("Since") },
+    { key: "cost", label: t("Cost a period"), align: "end" },
+    { key: "status", label: t("Status") },
+    { key: "actions", label: <span className="sr-only">{t("Actions")}</span>, shrink: true },
+  ];
+}
+
+function EnrollmentRow({
+  props,
+  row,
+  canEnroll,
+  ending,
+  onElect,
+  onEnd,
+}: {
+  props: BoundedRowProps;
+  row: BenefitEnrollmentRow;
+  canEnroll: boolean;
+  ending: boolean;
+  onElect: (planId?: string) => void;
+  onEnd: (row: BenefitEnrollmentRow) => void;
+}) {
+  const t = useT();
+  const active = row.status === "Active";
+  const priced = active || row.status === "Ended";
+  return (
+    <tr {...props} data-glide-target data-testid={`enrollment-${row.id}`}>
+      <td className={cn(BOUNDED_CELL_CLASS, "font-medium")}>
+        {row.benefitPlan?.name ?? t("Plan")}
+      </td>
+      <td className={BOUNDED_CELL_CLASS}>
+        {row.benefitPlan ? benefitPlanTypeLabel(row.benefitPlan.planType) : "—"}
+      </td>
+      <td className={cn(BOUNDED_CELL_CLASS, !priced && "text-muted-foreground")}>
+        {priced ? coverageTierLabel(row.coverageTier) : "—"}
+      </td>
+      <td
+        className={cn(
+          BOUNDED_CELL_CLASS,
+          "text-xs",
+          priced ? "font-mono tabular-nums" : "text-muted-foreground",
+        )}
+      >
+        {priced ? formatUnixDateMedium(row.effectiveFrom) : "—"}
+      </td>
+      <td
+        className={cn(
+          BOUNDED_CELL_CLASS,
+          "text-right text-xs",
+          active ? "font-mono tabular-nums" : "text-muted-foreground",
+        )}
+      >
+        {active ? formatMinor(row.employeeCostMinor) : "—"}
+      </td>
+      <td className={BOUNDED_CELL_CLASS}>
+        <Badge variant={enrollmentStatusTone(row.status)} dot={row.status !== "Waived"}>
+          {enrollmentStatusLabel(row.status)}
+        </Badge>
+        {row.status === "Waived" && row.waivedReason ? (
+          <span className="mt-0.5 block text-xs text-muted-foreground">{row.waivedReason}</span>
+        ) : null}
+        {row.status === "Ended" && row.effectiveTo ? (
+          <span className="mt-0.5 block text-xs text-muted-foreground tabular-nums">
+            {t("Ended {0}", formatUnixDateMedium(row.effectiveTo))}
+          </span>
+        ) : null}
+      </td>
+      <td className={cn(BOUNDED_CELL_CLASS, "text-right")}>
+        {!canEnroll ? null : active ? (
+          <RowActionsMenu
+            label={t("Enrollment options")}
+            actions={[
+              {
+                id: "change",
+                label: t("Change coverage"),
+                icon: Edit02Icon,
+                onSelect: () => onElect(row.benefitPlanId),
+              },
+              {
+                id: "end",
+                label: t("End cover…"),
+                icon: SlashCircle01Icon,
+                destructive: true,
+                disabled: ending,
+                onSelect: () => onEnd(row),
+              },
+            ]}
+          />
+        ) : row.status === "Pending" || row.status === "Waived" ? (
+          <Button
+            size="xs"
+            variant="secondary"
+            className="whitespace-nowrap"
+            {...preloadOn(EnrollPane)}
+            onClick={() => onElect(row.benefitPlanId)}
+          >
+            {t("Enroll or decline")}
+          </Button>
+        ) : null}
+      </td>
+    </tr>
   );
 }

@@ -109,6 +109,14 @@ type SafetyScorecard {
   score: Int!
   rating: SafetyRating!
   activePoints: Int!
+  """
+  The events whose points still count at asOf, newest first: what makes up
+  activePoints and when each part rolls off. Read by that condition, not from a
+  page of the events list; bounded by the points window (a point rolls off at
+  its pointsExpireAt, which defaults to the occurrence plus the policy's months),
+  so only points set never to expire keep an event here for good.
+  """
+  activePointEvents: [WorkerSafetyEvent!]!
   pointsWatchThreshold: Int!
   pointsAtRiskThreshold: Int!
   accidents: Int!
@@ -272,6 +280,22 @@ input WorkerRecognitionInput {
   visibleToWorker: Boolean
 }
 
+type WorkerDisciplinaryActionEdge {
+  node: WorkerDisciplinaryAction!
+  cursor: String!
+}
+
+"""
+A worker's disciplinary actions, a page at a time. totalCount is counted only when it is selected.
+"""
+type WorkerDisciplinaryActionConnection {
+  edges: [WorkerDisciplinaryActionEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
+}
+
 extend type Query {
   """
   Safety events, newest first: one worker's record, or every worker's across
@@ -282,13 +306,23 @@ extend type Query {
     workerId: ID
     "Only the events still open or under review."
     openOnly: Boolean
-    "At most this many events, from 1 to 100. Every event of a named worker when left out; 20 across the organization."
+    "At most this many events, from 1 to 100. The newest 100 of a named worker when left out; 20 across the organization."
     limit: Int
   ): [WorkerSafetyEvent!]!
   workerSafetyEvent(id: ID!): WorkerSafetyEvent!
   workerSafetyScorecard(workerId: ID!): SafetyScorecard!
-  workerDisciplinaryActions(workerId: ID!): [WorkerDisciplinaryAction!]!
+  "A worker's disciplinary actions, newest first, a page at a time."
+  workerDisciplinaryActions(
+    workerId: ID!
+    "How many to read, from 1 to 100; 20 when left out."
+    first: Int
+    "The endCursor of the page before this one."
+    after: String
+  ): WorkerDisciplinaryActionConnection!
+  "One disciplinary action by id, with its safety event and who issued it, for a link to an action not on the loaded page."
+  workerDisciplinaryAction(id: ID!): WorkerDisciplinaryAction!
   workerDisciplinaryLadder(workerId: ID!): DisciplinaryLadder! @authorizes(resource: "worker_disciplinary_action")
+  "A worker's recognitions, newest first; at most 100."
   workerRecognitions(workerId: ID!): [WorkerRecognition!]!
   """
   Suggested points for a kind, severity and outcome, so the form starts from

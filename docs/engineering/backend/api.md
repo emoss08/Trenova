@@ -102,7 +102,7 @@ Resolver packages never import each other; shared code goes in `resolvercore` on
 ## Transport limits
 
 Clients send persisted operations by hash only (outside production the server re-reads
-`persisted-documents.json`, so run `pnpm --filter @trenova/graphql codegen` after editing an
+`persisted-documents.json`, so run `bun run --filter @trenova/graphql codegen` after editing an
 operation). `/graphql` enforces a body limit, a static cost and depth ceiling
 (`querycost.MaxOperationCost`, `MaxOperationDepth`) and a per-user cost budget
 (`security.graphql.*`, `gqlext.NewCostBudgetExtension`). A new expensive field declares its cost

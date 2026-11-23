@@ -88,7 +88,8 @@ func (s *Service) requireWorkerDocument(
 	}
 	ownedByRecord := !ownerID.IsNil() && doc.ResourceType == safetyResourceType &&
 		doc.ResourceID == ownerID.String()
-	ownedByWorker := doc.ResourceType == workerResourceType && doc.ResourceID == workerID.String()
+	ownedByWorker := doc.ResourceType == permission.ResourceWorker.String() &&
+		doc.ResourceID == workerID.String()
 	if !ownedByRecord && !ownedByWorker {
 		return errortypes.NewValidationError(
 			"documentId",

@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/documentportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/workerportsmock"
+	"github.com/emoss08/trenova/internal/testutil/orgzonetest"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -58,6 +59,44 @@ func (f *fakeRepo) GetCourseByID(
 		}
 	}
 	return nil, errortypes.NewNotFoundError("TrainingCourse not found")
+}
+
+func (f *fakeRepo) PageForWorker(
+	ctx context.Context,
+	req *workertrainingports.ListWorkerTrainingRequest,
+) (*pagination.CursorListResult[*workertraining.WorkerTrainingRecord], error) {
+	items, err := f.ListForWorker(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	return &pagination.CursorListResult[*workertraining.WorkerTrainingRecord]{Items: items}, nil
+}
+
+func (f *fakeRepo) CurrentForWorker(
+	ctx context.Context,
+	req *workertrainingports.ListWorkerTrainingRequest,
+) ([]*workertraining.WorkerTrainingRecord, error) {
+	every := *req
+	every.IncludeClosed = true
+	all, err := f.ListForWorker(ctx, &every)
+	if err != nil {
+		return nil, err
+	}
+	byCourse := make(map[pulid.ID][]*workertraining.WorkerTrainingRecord, len(all))
+	order := make([]pulid.ID, 0, len(all))
+	for _, record := range all {
+		if _, ok := byCourse[record.CourseID]; !ok {
+			order = append(order, record.CourseID)
+		}
+		byCourse[record.CourseID] = append(byCourse[record.CourseID], record)
+	}
+	out := make([]*workertraining.WorkerTrainingRecord, 0, len(order))
+	for _, courseID := range order {
+		if current := workertraining.CurrentTrainingRecord(byCourse[courseID]); current != nil {
+			out = append(out, current)
+		}
+	}
+	return out, nil
 }
 
 func (f *fakeRepo) ListForWorker(
@@ -166,12 +205,13 @@ func newHarness(t *testing.T) *harness {
 
 	repo := &fakeRepo{}
 	svc := workertrainingservice.New(workertrainingservice.Params{
-		Logger:       zap.NewNop(),
-		Repo:         repo,
-		WorkerRepo:   workerRepo,
-		DocumentRepo: docs,
-		AuditService: audit,
-		Realtime:     &mocks.NoopRealtimeService{},
+		Logger:        zap.NewNop(),
+		Repo:          repo,
+		WorkerRepo:    workerRepo,
+		DocumentRepo:  docs,
+		AuditService:  audit,
+		Realtime:      &mocks.NoopRealtimeService{},
+		Organizations: orgzonetest.Organizations{},
 	})
 	return &harness{
 		svc:    svc,

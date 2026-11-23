@@ -52,6 +52,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/deskboardexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/deskcaseexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/deskmemoryexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/desktranscriptexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/detentionexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/dispatchconsoleexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/dispatchstyleexec"
@@ -212,6 +213,7 @@ var registry = sync.OnceValues(func() (*gqlexec.Registry, error) {
 		deskboardexec.Shard,
 		deskcaseexec.Shard,
 		deskmemoryexec.Shard,
+		desktranscriptexec.Shard,
 		detentionexec.Shard,
 		dispatchconsoleexec.Shard,
 		dispatchstyleexec.Shard,

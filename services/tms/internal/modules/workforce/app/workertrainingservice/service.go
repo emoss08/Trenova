@@ -7,6 +7,8 @@ package workertrainingservice
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -28,7 +30,6 @@ import (
 const (
 	realtimeResource       = "worker_training"
 	realtimeResourceCourse = "training_course"
-	workerResourceType     = "worker"
 	trainingResourceType   = "worker_training"
 )
 
@@ -41,25 +42,30 @@ type Params struct {
 	DocumentRepo documentports.DocumentRepository
 	AuditService auditports.AuditService
 	Realtime     realtimeports.RealtimeService
+	// Organizations give the organization's zone, so days until due and
+	// until expiry count the organization's calendar days.
+	Organizations tenantports.OrganizationRepository
 }
 
 type Service struct {
-	l            *zap.Logger
-	repo         workertrainingports.WorkerTrainingRepository
-	workerRepo   workerports.WorkerRepository
-	documentRepo documentports.DocumentRepository
-	auditService auditports.AuditService
-	realtime     realtimeports.RealtimeService
+	organizations tenantports.OrganizationReader
+	l             *zap.Logger
+	repo          workertrainingports.WorkerTrainingRepository
+	workerRepo    workerports.WorkerRepository
+	documentRepo  documentports.DocumentRepository
+	auditService  auditports.AuditService
+	realtime      realtimeports.RealtimeService
 }
 
 func New(p Params) *Service {
 	return &Service{
-		l:            p.Logger.Named("service.worker-training"),
-		repo:         p.Repo,
-		workerRepo:   p.WorkerRepo,
-		documentRepo: p.DocumentRepo,
-		auditService: p.AuditService,
-		realtime:     p.Realtime,
+		l:             p.Logger.Named("service.worker-training"),
+		repo:          p.Repo,
+		workerRepo:    p.WorkerRepo,
+		documentRepo:  p.DocumentRepo,
+		auditService:  p.AuditService,
+		realtime:      p.Realtime,
+		organizations: p.Organizations,
 	}
 }
 

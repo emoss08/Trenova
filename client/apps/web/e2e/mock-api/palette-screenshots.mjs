@@ -1,8 +1,8 @@
 // Screenshots of the command palette (design_handoff_command_palette) against the mock API.
 //
-//   MOCK_PALETTE=1 node e2e/mock-api/server.mjs
-//   pnpm --filter @trenova/web dev
-//   node e2e/mock-api/palette-screenshots.mjs [outDir] [only,names]
+//   MOCK_PALETTE=1 bun e2e/mock-api/server.mjs
+//   bun run --filter @trenova/web dev
+//   bun e2e/mock-api/palette-screenshots.mjs [outDir] [only,names]
 
 import { mkdir } from "node:fs/promises";
 import { resolve } from "node:path";

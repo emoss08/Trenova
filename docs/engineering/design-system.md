@@ -1,7 +1,7 @@
 # Design system
 
 Tokens live in `client/packages/shared/src/styles/tokens.css`. Components consume
-them and define no colour, size or elevation of their own. `pnpm lint:design`
+them and define no colour, size or elevation of their own. `bun run lint:design`
 enforces that and runs in CI.
 
 This document says which token to reach for. If none fits, add one — a missing
@@ -61,7 +61,7 @@ neutrals and the two themes mirror each other step for step:
 | Ink | #171717 | #ededed |
 
 Light's hairline is one step darker than Geist's #ebebeb because
-`pnpm lint:design` requires a panel outline to clear 1.2:1 against the page.
+`bun run lint:design` requires a panel outline to clear 1.2:1 against the page.
 `--hue-neutral` stays as a name so a grey written against it still resolves, but
 it carries no chroma.
 
@@ -110,7 +110,7 @@ The warm arc keeps its own floor:
 danger 25  →  warning 76  →  amber 98
 ```
 
-`pnpm lint:design` fails if any of those gaps closes.
+`bun run lint:design` fails if any of those gaps closes.
 
 ## Colour
 
@@ -315,7 +315,7 @@ table row, a field, a card, a panel: all flat, all the time.
 
 The four `--elevation-*` tokens still exist and are all `0 0 #0000`, and the whole
 Tailwind `shadow-*` scale points at them, so a stray `shadow-md` lands on nothing
-rather than on Tailwind's default. Do not give them a value. `pnpm lint:design`
+rather than on Tailwind's default. Do not give them a value. `bun run lint:design`
 fails on any `shadow-sm|md|lg|…` or coloured `shadow-black/15`.
 
 Two things are box-shadows in CSS and lines on screen, and are fine: the focus
@@ -491,7 +491,7 @@ is entering (`billing-queue-charges-tab.tsx`, `ViewRow`).
 ## Focus
 
 One ring, three utilities. Never assemble a ring out of `focus-visible:ring-*`,
-`focus-visible:border-*` or `focus-visible:outline-*` — `pnpm lint:design` fails
+`focus-visible:border-*` or `focus-visible:outline-*` — `bun run lint:design` fails
 on those. There were **34 distinct focus treatments across 16 primitives** before
 this, which is why focus never looked like one system.
 
@@ -512,7 +512,7 @@ utility turns red:
 sequence appear inside a comment body. CSS comments do not nest, so it ends the
 comment early and every `@utility` after it silently stops generating a rule —
 a focus utility that emits nothing removes the focus indicator without failing a
-build, a test or a type check. This happened once. `pnpm lint:design` now
+build, a test or a type check. This happened once. `bun run lint:design` now
 compiles the real file and asserts every declared `@utility` reaches the output,
 so it cannot happen quietly again.
 
@@ -854,7 +854,7 @@ A control page is one record per organization, edited in one form. Moving one of
    with exact output; the skeleton per tab; the form's conditional rows and a refused save
    opening its tab.
 6. **Owed after text changes:** `task i18n`, the locale translations and `task i18n-check`,
-   then `pnpm --filter @trenova/web guide:generate`, and the page's product guide in
+   then `bun run --filter @trenova/web guide:generate`, and the page's product guide in
    `docs/product-guide/admin/`.
 
 ### Toasts
@@ -951,7 +951,7 @@ Options are `id`, `description`, `action`, `duration` and `progress`.
   and assert with `toContainText`. ding repeats a toast's words in a live region
   (`role="status"` or `role="alert"`, class `tst-sr`), so a page-wide `getByText` or
   `getByRole("status")` finds them twice.
-- **The dependency is pinned exactly** in the pnpm catalog and listed in
+- **The dependency is pinned exactly** in the workspaces catalog in `client/package.json` and listed in
   `singleton-packages.ts`, since a second copy of its store would draw nothing. Both packages
   were read before adoption: no dependencies beyond each other, no install scripts, no
   network, storage or `eval`. A version bump is a deliberate change and gets the same read.
@@ -1029,7 +1029,7 @@ true columns of "Nothing here" under figures that shimmered forever.
   keeps the last good data on screen under it rather than blanking it
   (`console-status-line.tsx`).
 
-`pnpm lint:skeletons` (`scripts/check-loading-skeletons.mjs`) runs in CI. It follows
+`bun run lint:skeletons` (`scripts/check-loading-skeletons.mjs`) runs in CI. It follows
 each child of a `DataTableLazyComponent` to its module (through `lazy`,
 `lazyComponent` and imports) and fails when that module does not render a
 `DataTable`, and it fails a `<Suspense>` with no `fallback`. A genuine exception takes
@@ -1134,7 +1134,7 @@ in `packages/shared/scripts/icons/draw_custom_icons.py`, which builds its corner
 with the same curve Untitled uses and composes badges (`ShieldAlert`,
 `FileClock`) from Untitled's own outlines. Add the drawing there, run
 `python3 packages/shared/scripts/icons/draw_custom_icons.py`, then
-`pnpm --filter @trenova/shared icons:generate`, which rewrites
+`bun run --filter @trenova/shared icons:generate`, which rewrites
 `components/icon-set/custom.gen.tsx` and `untitled.gen.ts`. The generator refuses a
 custom name that shadows an Untitled icon. Run it after upgrading
 `@untitledui/icons` too.
@@ -1338,7 +1338,7 @@ through seven tokens: `--syntax-keyword` (red), `--syntax-string` (green), `--sy
 `--syntax-meta` (orange). Only a value's lightness moves from Gruvbox's, where AA needs it. Comments
 (in italics) and punctuation take `--foreground-subtle` and `--foreground-muted`, and a diff's added and removed
 lines take the success and danger text. Each syntax token is written out in both themes rather
-than pointing at an accent, so `pnpm lint:design` holds it to AA on `--card`, `--sunken` and
+than pointing at an accent, so `bun run lint:design` holds it to AA on `--card`, `--sunken` and
 `--surface-hover` (the ground under a Desk reply's code block). A theme switch recolours code
 through CSS alone; nothing is highlighted again. A new grammar goes in `lib/highlight/`, built with
 `defineLanguage` (see `graphql.ts`), and is added to the highlighter's list.
@@ -1346,7 +1346,7 @@ through CSS alone; nothing is highlighted again. A new grammar goes in `lib/high
 The Tariff editor marks over code with three tokens of its own: `--editor-reference` (a read of
 the name at the cursor, and the editor's selection matches), `--editor-reference-write` (where it
 is declared or set, in an amber tint, so a change of value stands out) and
-`--editor-coverage-gap` (the gutter bar beside a line no test reaches). `pnpm lint:design` holds
+`--editor-coverage-gap` (the gutter bar beside a line no test reaches). `bun run lint:design` holds
 the ink and every syntax role to AA on both tints and the bar to 3:1 on the field.
 
 ## Adding a token
@@ -1356,7 +1356,7 @@ the ink and every syntax role to AA on both tints and the bar to 3:1 on the fiel
 2. Add it to **both** `:root` and `.dark` in `tokens.css`. A token defined in one
    theme is the `--shadow-*` bug again.
 3. Map it in the `@theme` block so it reaches a utility.
-4. Run `pnpm lint:design`. It reads the oklch values straight out of `tokens.css`
+4. Run `bun run lint:design`. It reads the oklch values straight out of `tokens.css`
    and fails on a pair below AA, a value outside sRGB (the browser would show it
    somewhere other than where you placed it), a hairline that is invisible
    against the surface it divides, or either hue arc closing up.
@@ -1769,9 +1769,9 @@ front page has not started one.
 ## Checking your work
 
 ```bash
-pnpm lint:design      # the seven rules, with the token to use instead
-pnpm lint:skeletons   # every Suspense fallback is the layout of what loads
-node scripts/tw-probe.mjs bleed:px-3 text-warning   # does this class emit, and as what?
-pnpm lint             # oxlint
-pnpm typecheck        # Badge variants and status phases are typed
+bun run lint:design      # the seven rules, with the token to use instead
+bun run lint:skeletons   # every Suspense fallback is the layout of what loads
+bun scripts/tw-probe.mjs bleed:px-3 text-warning   # does this class emit, and as what?
+bun run lint             # oxlint
+bun run typecheck        # Badge variants and status phases are typed
 ```

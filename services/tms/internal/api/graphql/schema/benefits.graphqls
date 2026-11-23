@@ -180,10 +180,34 @@ type TotalCompensation {
   enrollments: [WorkerBenefitEnrollment!]!
 }
 
+type WorkerBenefitEnrollmentEdge {
+  node: WorkerBenefitEnrollment!
+  cursor: String!
+}
+
+"""
+A worker's benefit enrollments, a page at a time. totalCount is counted only when it is selected.
+"""
+type WorkerBenefitEnrollmentConnection {
+  edges: [WorkerBenefitEnrollmentEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
+}
+
 extend type Query {
   benefitPlans(activeOnly: Boolean, planYear: Int): [BenefitPlan!]!
   benefitPlan(id: ID!): BenefitPlan!
-  workerBenefitEnrollments(workerId: ID!, openOnly: Boolean): [WorkerBenefitEnrollment!]! @authorizes(resource: "benefit_plan")
+  "A worker's benefit enrollments, newest first, a page at a time."
+  workerBenefitEnrollments(
+    workerId: ID!
+    openOnly: Boolean
+    "How many to read, from 1 to 100; 20 when left out."
+    first: Int
+    "The endCursor of the page before this one."
+    after: String
+  ): WorkerBenefitEnrollmentConnection! @authorizes(resource: "benefit_plan")
   """
   Enrollments across the organisation, newest first, with the worker and the
   plan on each. It is what "who is on this plan" reads; a worker's own history

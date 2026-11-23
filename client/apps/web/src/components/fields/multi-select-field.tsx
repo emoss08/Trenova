@@ -79,7 +79,7 @@ export interface MultiSelectAutocompleteFieldProps<TOption, TForm extends FieldV
   required?: FieldRequired;
   rules?: RegisterOptions<TForm, Path<TForm>>;
   label?: string;
-  description?: string;
+  description?: React.ReactNode;
   className?: string;
   graphql: GraphQLSelectOptionsConfig;
   preload?: boolean;

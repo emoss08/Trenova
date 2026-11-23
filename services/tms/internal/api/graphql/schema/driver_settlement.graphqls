@@ -1182,11 +1182,33 @@ input UpdateSettlementControlInput {
   escrowInterestFrequencyMonths: Int!
 }
 
+type WorkerPayAssignmentEdge {
+  node: WorkerPayAssignment!
+  cursor: String!
+}
+
+"""
+A worker's pay profile assignments, a page at a time. totalCount is counted only when it is selected.
+"""
+type WorkerPayAssignmentConnection {
+  edges: [WorkerPayAssignmentEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
+}
+
 extend type Query {
   payProfiles(input: DataTableConnectionInput!): PayProfileConnection!
   payProfile(id: ID!): PayProfile
-  "Full assignment history for a worker, newest first."
-  workerPayAssignments(workerId: ID!): [WorkerPayAssignment!]!
+  "A worker's pay profile assignments, newest first, a page at a time."
+  workerPayAssignments(
+    workerId: ID!
+    "How many to read, from 1 to 100; 20 when left out."
+    first: Int
+    "The endCursor of the page before this one."
+    after: String
+  ): WorkerPayAssignmentConnection!
   "The assignment governing the worker's pay right now, if any."
   effectiveWorkerPayAssignment(workerId: ID!): WorkerPayAssignment
   "Open assignments on a profile — every driver currently paid under it."

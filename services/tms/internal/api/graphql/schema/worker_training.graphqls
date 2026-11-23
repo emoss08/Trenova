@@ -255,6 +255,22 @@ input AttachWorkerTrainingDocumentInput {
   documentId: ID!
 }
 
+type WorkerTrainingRecordEdge {
+  node: WorkerTrainingRecord!
+  cursor: String!
+}
+
+"""
+A worker's training assignments, a page at a time. totalCount is counted only when it is selected.
+"""
+type WorkerTrainingRecordConnection {
+  edges: [WorkerTrainingRecordEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
+}
+
 extend type Query {
   trainingCourses(input: TrainingCoursesInput!): TrainingCourseConnection!
   trainingCourse(id: ID!): TrainingCourse!
@@ -263,7 +279,11 @@ extend type Query {
     workerId: ID!
     "Also the completed, waived, cancelled and expired assignments, not only the open ones."
     includeClosed: Boolean = true
-  ): [WorkerTrainingRecord!]!
+    "How many to read, from 1 to 100; 20 when left out."
+    first: Int
+    "The endCursor of the page before this one."
+    after: String
+  ): WorkerTrainingRecordConnection!
   workerTrainingRecord(id: ID!): WorkerTrainingRecord!
   workerTrainingSummary(workerId: ID!): WorkerTrainingSummary!
   """

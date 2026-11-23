@@ -1,5 +1,5 @@
 {
-  "version": "sha256:c81d924b58f0b6a688a3f8d372caf647b96202d1602291980ea511ca5e5f0668",
+  "version": "sha256:91494a48fc2c07d35e435cf9cbf8bdc372693154f3b7e797a220ec11784f754c",
   "modules": [
     {
       "id": "home",
@@ -4136,6 +4136,101 @@
       "related": [
         "/admin/organization-settings",
         "/admin/sequence-configs"
+      ],
+      "covers": [],
+      "createAction": null,
+      "inNavigation": true
+    },
+    {
+      "path": "/admin/desk-conversations",
+      "name": "Desk conversations",
+      "module": "admin",
+      "breadcrumb": [
+        "Organization settings",
+        "AI & Automation",
+        "Desk conversations"
+      ],
+      "description": "Read the Desk conversations of everyone in your organization, and download their transcripts. Every conversation you open or download is recorded in the audit log.",
+      "summary": "Administrators read and take out of Trenova the Desk conversations of everyone in the organization: who talked to which agent, when, and what was said, as the person saw it. Each person's conversations stay private on their own Desk; this page is the one place someone else can read them, and only with the permission \"Desk conversations of other people\".\n\nView lists every conversation (person, agent, title, where it began, how many messages, when it started and its last message) and opens one read-only. The list never shows what was said; titles can, because a conversation's title is taken from its first question. Export pulls transcripts out of Trenova: one conversation at a time, the conversations you select, or every conversation in a timeframe. The Organization Administrator holds both. Any other role needs the \"Read and export other people's Desk conversations\" capability added to it on purpose. A conversation shows whatever its owner was shown, including records the reader's own role may not reach, so grant it only to people whose job is oversight. Trenova support, agents and API keys can never read other people's conversations.\n\nOpening a conversation changes nothing for its owner: it is not marked read, nothing moves on their Desk, and they are not told. Every conversation opened, every transcript downloaded and every export requested or downloaded is written to the [audit log](/admin/audit-logs), naming who looked, whose conversation it was and, for an export, what it covered.\n\nA timeframe is over each conversation's last message, in your organization's time zone: **Last 7 days** is today and the six days before it, and **Last 12 months** starts on today's date a year ago. The list and an export use the same timeframes, so an export holds what the list showed.\n\nAn export is one zip: a Markdown transcript for each conversation, in a folder per person and named by the day it started and its title, the same file the owner gets when they download their own conversation with their name at the top, and `conversations.jsonl`, one conversation per line with its person, agent, title, times and every message, for an archive or a search tool. One export holds at most 5,000 conversations, or 200 selected ones, and at most 1 GB; one export is written at a time for the organization. You are notified when it is ready, only you can download it, and it is deleted after seven days. Command palette questions and background agent runs are not here: agent runs and their transcripts are in [AI control](/admin/agent-control).",
+      "requires": [
+        {
+          "resource": "desk_transcript",
+          "operation": "read"
+        }
+      ],
+      "capabilities": [],
+      "aliases": [
+        "desk transcripts",
+        "conversation transcripts",
+        "read someone's desk conversation",
+        "export desk conversations",
+        "download transcripts",
+        "AI chat history",
+        "chat logs",
+        "conversation oversight",
+        "compliance export",
+        "e-discovery"
+      ],
+      "tasks": [
+        {
+          "title": "Read someone's conversation",
+          "keywords": [
+            "open a conversation",
+            "see what someone asked",
+            "read a transcript"
+          ],
+          "steps": [
+            "Open [Desk conversations](/admin/desk-conversations).",
+            "Narrow the list with the **Timeframe**, **Person**, **Agent** and **Where it began** controls above it.",
+            "Select a conversation. It opens beside the list, read-only, with a note that opening it was recorded."
+          ]
+        },
+        {
+          "title": "Download one conversation's transcript",
+          "keywords": [
+            "download a transcript",
+            "save a conversation",
+            "markdown transcript"
+          ],
+          "steps": [
+            "Open [Desk conversations](/admin/desk-conversations) and select the conversation.",
+            "Select **Download**. You can also right-click its row and choose **Download transcript**."
+          ]
+        },
+        {
+          "title": "Download the conversations you pick",
+          "keywords": [
+            "download several transcripts",
+            "select conversations",
+            "bulk download"
+          ],
+          "steps": [
+            "Open [Desk conversations](/admin/desk-conversations).",
+            "Tick the conversations you want, on as many pages as you need, up to 200.",
+            "Select the download action in the bar at the bottom of the page. One conversation downloads at once; several are written to one zip, which appears under **Exports**."
+          ]
+        },
+        {
+          "title": "Export every conversation in a timeframe",
+          "keywords": [
+            "export desk conversations",
+            "how many days back",
+            "compliance archive",
+            "all transcripts"
+          ],
+          "steps": [
+            "Open [Desk conversations](/admin/desk-conversations) and narrow the list to what you want.",
+            "Select **Export transcripts**. The dialog opens with the list's filters.",
+            "Choose the **Timeframe**, and a **Person** or **Agent** if you want only theirs. The dialog says how many conversations that is before you start, and stops you when it is more than one export can hold.",
+            "Select **Export**. When you are notified that it is ready, open **Exports** and select **Download**."
+          ]
+        }
+      ],
+      "notes": "",
+      "related": [
+        "/admin/audit-logs",
+        "/admin/roles",
+        "/desk"
       ],
       "covers": [],
       "createAction": null,
@@ -9876,7 +9971,7 @@
         "Desk"
       ],
       "description": "The Desk is where you work with Trenova's AI agents, keep a case on each shipment, invoice or dispute you are working, and see everything that needs you, in one room: the rail down the left, the page in the middle, and Nova's margin on the right when you ask something.",
-      "summary": "The Desk is where you work with Trenova's AI agents, keep a case on each shipment, invoice or dispute you are working, and see everything that needs you, in one room: the rail down the left, the page in the middle, and Nova's margin on the right when you ask something. You can snooze a case until a time, the next appointment or the truck's ETA and pick it up again later. The bar across the top names where you are and, on every page but a conversation, holds the operation in one strip (the morning's first figures, how much needs you and how many runs your agents have going under **Agents working**), **Search or do** (⌘K / Ctrl+K) and **Ask** (⌘J / Ctrl+J), which opens Nova's margin on whatever the page is about.\n\nIts **Today** page greets you with the date and one line on what the day holds (the morning briefing's headline when one was written, with a note on how it was written, otherwise how many decisions are waiting on you), the box you ask in, and under it the day itself: the morning's figures in one strip, the four rows that need you soonest with every signal about each, what changed since you left, what agents changed today (on their own, after someone approved it, only as a preview, or not at all) and what they are working on now. The box names the agent it will ask and types out that agent's starter questions as its placeholder: press Tab to take the one on screen, or ⌘1–3 (Ctrl+1–3) to ask it outright. Your question opens in Nova's margin, beside Today.\n\nThe rail down the left holds its fold (⌘B / Ctrl+B), the logo (which leads back to Trenova), search, **New conversation**, **Today**, **Needs you** with its two lenses under it (**Watchtower** and **Decisions**, each opening Needs you on that lens, with a count only while something waits there), **Triage** (the room where mail is read and filed, with how many messages wait on you; while it is open the rail holds Triage's folders in place of your conversations), **Scheduled**, **Memory**, the cases you opened this session, every conversation grouped by when it was last used (**Pinned** first, then **Today**, **Yesterday**, **Previous 7 days**, **Previous 30 days** and **Older**), and at the foot your name with **Keyboard shortcuts** and **Desk settings**. Each conversation names its agent under its title, and says so when it needs you or has an agent at work: \"Needs your approval\", \"Writing a reply\" or \"Last reply failed\". Selecting a conversation opens it as a page of its own, wherever you are. To keep the page you are on and read the conversation beside it, right-click the conversation and choose **Open beside the page**; **Open full width** at the top of the margin then opens it as its own page. Press ? anywhere outside a text box to see every Desk shortcut, ⌘K (Ctrl+K) to search or do anything, ⌘J (Ctrl+J) to ask Nova, and G then D, N, W or T to go to Today, Needs you, or Needs you on the Watchtower or Triage lens. On a phone the rail slides over the page from the menu button at the top left.\n\n**Needs you** puts everything waiting on people in one list, one row per record: a shipment's late warning, the customer's email about it and the plan an agent drafted to recover it are one row. Opening a record gives its case: what it is and how long is left, what was found with each point numbered to the evidence beside it, the ways it could go, and the plan to approve or decline as written.\n\nEach conversation opens in the middle, and anything an agent produces (a table, a draft, a document, a plan, a board) opens in the workspace beside it. A short answer an agent lays out as a small board is drawn in the conversation as the reply itself: its sentence, with each figure Trenova read underlined (point at it for where it came from and when it was read, with your access), and the exhibits under it. Changes an agent wants to make to your records are not applied on their own: in a Desk conversation they wait in a card above the message box, and they are also listed in the Decisions lens of [Needs you](/desk/needs).\n\nWhile an agent replies you can steer it with a correction or queue the next question. The message box names records with @, takes slash commands, files, scans and dictation, and can share the page you came from. A conversation about a shipment, invoice or dispute becomes a case, with a ready-to-bill or ready-to-close checklist, snoozes and waiting on the customer's or carrier's reply. Conversations can also run a request on a schedule, be handed to another agent, keep pinned facts in mind, and compact themselves when they grow long. Each fact an agent looked up carries a number tying it to the step that found it.",
+      "summary": "The Desk is where you work with Trenova's AI agents, keep a case on each shipment, invoice or dispute you are working, and see everything that needs you, in one room: the rail down the left, the page in the middle, and Nova's margin on the right when you ask something. You can snooze a case until a time, the next appointment or the truck's ETA and pick it up again later. The bar across the top names where you are and, on every page but a conversation, holds the operation in one strip (the morning's first figures, how much needs you and how many runs your agents have going under **Agents working**), **Search or do** (⌘K / Ctrl+K) and **Ask** (⌘J / Ctrl+J), which opens Nova's margin on whatever the page is about.\n\nIts **Today** page greets you with the date and one line on what the day holds (the morning briefing's headline when one was written, with a note on how it was written, otherwise how many decisions are waiting on you), the box you ask in, and under it the day itself: the morning's figures in one strip, the four rows that need you soonest with every signal about each, what changed since you left, what agents changed today (on their own, after someone approved it, only as a preview, or not at all) and what they are working on now. The box names the agent it will ask and types out that agent's starter questions as its placeholder: press Tab to take the one on screen, or ⌘1–3 (Ctrl+1–3) to ask it outright. Your question opens in Nova's margin, beside Today.\n\nThe rail down the left holds its fold (⌘B / Ctrl+B), the logo (which leads back to Trenova), search, **New conversation**, **Today**, **Needs you** with its two lenses under it (**Watchtower** and **Decisions**, each opening Needs you on that lens, with a count only while something waits there), **Triage** (the room where mail is read and filed, with how many messages wait on you; while it is open the rail holds Triage's folders in place of your conversations), **Scheduled**, **Memory**, the cases you opened this session, every conversation grouped by when it was last used (**Pinned** first, then **Today**, **Yesterday**, **Previous 7 days**, **Previous 30 days** and **Older**), and at the foot your name with **Keyboard shortcuts** and **Desk settings**. Each conversation names its agent under its title, and says so when it needs you or has an agent at work: \"Needs your approval\", \"Writing a reply\" or \"Last reply failed\". Selecting a conversation opens it as a page of its own, wherever you are. To keep the page you are on and read the conversation beside it, right-click the conversation and choose **Open beside the page**; **Open full width** at the top of the margin then opens it as its own page. Press ? anywhere outside a text box to see every Desk shortcut, ⌘K (Ctrl+K) to search or do anything, ⌘J (Ctrl+J) to ask Nova, and G then D, N, W or T to go to Today, Needs you, or Needs you on the Watchtower or Triage lens. On a phone the rail slides over the page from the menu button at the top left.\n\n**Needs you** puts everything waiting on people in one list, one row per record: a shipment's late warning, the customer's email about it and the plan an agent drafted to recover it are one row. Opening a record gives its case: what it is and how long is left, what was found with each point numbered to the evidence beside it, the ways it could go, and the plan to approve or decline as written.\n\nEach conversation opens in the middle, and anything an agent produces (a table, a draft, a document, a plan, a board) opens in the workspace beside it. A short answer an agent lays out as a small board is drawn in the conversation as the reply itself: its sentence, with each figure Trenova read underlined (point at it for where it came from and when it was read, with your access), and the exhibits under it. Changes an agent wants to make to your records are not applied on their own: in a Desk conversation they wait in a card above the message box, and they are also listed in the Decisions lens of [Needs you](/desk/needs).\n\nWhile an agent replies you can steer it with a correction or queue the next question. The message box names records with @, takes slash commands, files, scans and dictation, and can share the page you came from. A conversation about a shipment, invoice or dispute becomes a case, with a ready-to-bill or ready-to-close checklist, snoozes and waiting on the customer's or carrier's reply. Conversations can also run a request on a schedule, be handed to another agent, keep pinned facts in mind, and compact themselves when they grow long. Each fact an agent looked up carries a number tying it to the step that found it.\n\nYour conversations are your own: nobody else sees them on their Desk. An administrator your organization allows to read other people's Desk conversations can open and download them from [Desk conversations](/admin/desk-conversations), as you saw them, and each time they do is recorded in the audit log.",
       "requires": [
         {
           "resource": "assistant",

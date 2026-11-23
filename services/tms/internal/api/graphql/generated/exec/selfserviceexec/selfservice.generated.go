@@ -25,6 +25,8 @@ var Shard = &gqlexec.Shard{
 		{Name: "ProfileFieldChange", Implementors: []string{"ProfileFieldChange"}},
 		{Name: "WorkerPolicy", Implementors: []string{"WorkerPolicy"}},
 		{Name: "WorkerPolicyAcknowledgement", Implementors: []string{"WorkerPolicyAcknowledgement"}},
+		{Name: "WorkerPolicyAcknowledgementConnection", Implementors: []string{"WorkerPolicyAcknowledgementConnection"}},
+		{Name: "WorkerPolicyAcknowledgementEdge", Implementors: []string{"WorkerPolicyAcknowledgementEdge"}},
 		{Name: "WorkerProfileChangeRequest", Implementors: []string{"WorkerProfileChangeRequest"}},
 	},
 	Fields: []gqlexec.Fields{
@@ -254,13 +256,13 @@ var Shard = &gqlexec.Shard{
 				IsResolver: true,
 				Concurrent: true,
 				HasChild:   true,
-				ChildType:  "WorkerPolicyAcknowledgement",
+				ChildType:  "WorkerPolicyAcknowledgementConnection",
 				Args:       field_Query_workerPolicyAcknowledgements_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[QueryResolver](ec, "Query@selfservice").WorkerPolicyAcknowledgements(ctx, fc.Args["workerId"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@selfservice").WorkerPolicyAcknowledgements(ctx, fc.Args["workerId"].(string), fc.Args["first"].(*int), fc.Args["after"].(*string))
 				},
-				Marshal: gqlexec.Marshal(marshalNWorkerPolicyAcknowledgement2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerpolicyᚐWorkerPolicyAcknowledgementᚄ),
+				Marshal: gqlexec.Marshal(marshalNWorkerPolicyAcknowledgementConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐWorkerPolicyAcknowledgementConnection),
 			},
 			{
 				Name:       "profileChangeRequests",
@@ -583,6 +585,72 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalOWorkerPolicy2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerpolicyᚐWorkerPolicy),
 			},
 		}},
+		{Object: "WorkerPolicyAcknowledgementConnection", Fields: []*gqlexec.Field{
+			{
+				Name:      "edges",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "WorkerPolicyAcknowledgementEdge",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.WorkerPolicyAcknowledgementConnection)
+					return obj.Edges, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNWorkerPolicyAcknowledgementEdge2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐWorkerPolicyAcknowledgementEdgeᚄ),
+			},
+			{
+				Name:      "pageInfo",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "PageInfo",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.WorkerPolicyAcknowledgementConnection)
+					return obj.PageInfo, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNPageInfo2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐPageInfo),
+			},
+			{
+				Name:     "totalCount",
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.WorkerPolicyAcknowledgementConnection)
+					return obj.TotalCount, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOInt2ᚖint),
+			},
+			{
+				Name:     "totalCountExact",
+				NonNull:  true,
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.WorkerPolicyAcknowledgementConnection)
+					return obj.TotalCountExact, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+		}},
+		{Object: "WorkerPolicyAcknowledgementEdge", Fields: []*gqlexec.Field{
+			{
+				Name:      "node",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "WorkerPolicyAcknowledgement",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.WorkerPolicyAcknowledgementEdge)
+					return obj.Node, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNWorkerPolicyAcknowledgement2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerpolicyᚐWorkerPolicyAcknowledgement),
+			},
+			{
+				Name:     "cursor",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.WorkerPolicyAcknowledgementEdge)
+					return obj.Cursor, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+		}},
 		{Object: "WorkerProfileChangeRequest", Fields: []*gqlexec.Field{
 			{
 				Name:     "id",
@@ -737,7 +805,7 @@ type QueryResolver interface {
 	WorkerPolicies(ctx context.Context, activeOnly *bool, limit *int) ([]*workerpolicy.WorkerPolicy, error)
 	WorkerPolicy(ctx context.Context, id string) (*workerpolicy.WorkerPolicy, error)
 	WorkerPolicyCompliance(ctx context.Context, id string) (*gqlmodel.PolicyCompliance, error)
-	WorkerPolicyAcknowledgements(ctx context.Context, workerID string) ([]*workerpolicy.WorkerPolicyAcknowledgement, error)
+	WorkerPolicyAcknowledgements(ctx context.Context, workerID string, first *int, after *string) (*gqlmodel.WorkerPolicyAcknowledgementConnection, error)
 	ProfileChangeRequests(ctx context.Context, filter *gqlmodel.ProfileChangeFilterInput) ([]*profilechange.WorkerProfileChangeRequest, error)
 }
 
@@ -851,7 +919,7 @@ func field_Query_workerPolicyCompliance_args(ctx context.Context, ec *gqlexec.Ex
 }
 
 func field_Query_workerPolicyAcknowledgements_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
-	args := make(map[string]any, 1)
+	args := make(map[string]any, 3)
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "workerId",
 		func(ctx context.Context, v any) (string, error) {
 			return unmarshalNID2string(ctx, ec, v)
@@ -860,6 +928,22 @@ func field_Query_workerPolicyAcknowledgements_args(ctx context.Context, ec *gqle
 		return nil, err
 	}
 	args["workerId"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "first",
+		func(ctx context.Context, v any) (*int, error) {
+			return unmarshalOInt2ᚖint(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["first"] = arg1
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "after",
+		func(ctx context.Context, v any) (*string, error) {
+			return unmarshalOString2ᚖstring(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["after"] = arg2
 	return args, nil
 }
 
@@ -1213,6 +1297,14 @@ func marshalNInt2int64(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionS
 	return res
 }
 
+func marshalNPageInfo2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐPageInfo(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.PageInfo) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "PageInfo", v)
+}
+
 func marshalNPolicyAudience2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerpolicyᚐPolicyAudience(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v workerpolicy.PolicyAudience) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
@@ -1301,20 +1393,36 @@ func marshalNWorkerPolicy2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodul
 	return ec.MarshalType(ctx, sel, "WorkerPolicy", v)
 }
 
-func marshalNWorkerPolicyAcknowledgement2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerpolicyᚐWorkerPolicyAcknowledgementᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*workerpolicy.WorkerPolicyAcknowledgement) graphql.Marshaler {
-	return gqlexec.List[*workerpolicy.WorkerPolicyAcknowledgement]{
-		Elem:        marshalNWorkerPolicyAcknowledgement2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerpolicyᚐWorkerPolicyAcknowledgement,
-		NonNull:     true,
-		NonNullElem: true,
-	}.Marshal(ctx, ec, sel, v)
-}
-
 func marshalNWorkerPolicyAcknowledgement2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerpolicyᚐWorkerPolicyAcknowledgement(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *workerpolicy.WorkerPolicyAcknowledgement) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "WorkerPolicyAcknowledgement", v)
+}
+
+func marshalNWorkerPolicyAcknowledgementConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐWorkerPolicyAcknowledgementConnection(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.WorkerPolicyAcknowledgementConnection) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "WorkerPolicyAcknowledgementConnection", v)
+}
+
+func marshalNWorkerPolicyAcknowledgementEdge2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐWorkerPolicyAcknowledgementEdgeᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*gqlmodel.WorkerPolicyAcknowledgementEdge) graphql.Marshaler {
+	return gqlexec.List[*gqlmodel.WorkerPolicyAcknowledgementEdge]{
+		Elem:        marshalNWorkerPolicyAcknowledgementEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐWorkerPolicyAcknowledgementEdge,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalNWorkerPolicyAcknowledgementEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐWorkerPolicyAcknowledgementEdge(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.WorkerPolicyAcknowledgementEdge) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "WorkerPolicyAcknowledgementEdge", v)
 }
 
 func marshalNWorkerProfileChangeRequest2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋprofilechangeᚐWorkerProfileChangeRequestᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*profilechange.WorkerProfileChangeRequest) graphql.Marshaler {
@@ -1335,6 +1443,14 @@ func marshalNWorkerProfileChangeRequest2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋin
 
 func marshalOID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v pulid.ID) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
+	return res
+}
+
+func marshalOInt2ᚖint(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *int) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	res := graphql.MarshalInt(*v)
 	return res
 }
 

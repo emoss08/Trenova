@@ -45,6 +45,7 @@ type ListWorkerChecklistsRequest struct {
 	WorkerID      pulid.ID              `json:"workerId"`
 	IncludeClosed bool                  `json:"includeClosed"`
 	IncludeItems  bool                  `json:"includeItems"`
+	Limit         int                   `json:"limit"`
 }
 
 type GetWorkerChecklistByIDRequest struct {
@@ -123,4 +124,22 @@ type WorkerChecklistRepository interface {
 		entity *workerchecklist.WorkerChecklist,
 	) (*workerchecklist.WorkerChecklist, error)
 	UpdateItems(ctx context.Context, items []*workerchecklist.WorkerChecklistItem) error
+	CountClosedForWorker(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+		workerID pulid.ID,
+	) (int, error)
+	LockOpenForWorker(
+		ctx context.Context,
+		req *LockOpenChecklistsRequest,
+	) ([]*workerchecklist.WorkerChecklist, error)
+}
+
+type LockOpenChecklistsRequest struct {
+	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
+	WorkerID   pulid.ID              `json:"workerId"`
+}
+
+type EvidenceRefresher interface {
+	RefreshEvidence(ctx context.Context, tenantInfo pagination.TenantInfo, workerID pulid.ID) error
 }

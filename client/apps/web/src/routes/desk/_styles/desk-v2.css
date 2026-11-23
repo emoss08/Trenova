@@ -17167,6 +17167,7 @@ button.dk-fcd-buy:hover {
   max-width: 64ch;
   font: 400 17px/1.6 var(--font-newsreader);
   color: var(--dsk-fg);
+  text-wrap: pretty;
 }
 .dk-bd-by {
   display: flex;
@@ -17257,9 +17258,12 @@ button.dk-bd-n:hover,
 }
 
 /* -------------------------------------------------------------- the desk */
+/* Every block is as tall as its own content: blocks side by side align at the top and never
+   stretch to a neighbour's height. */
 .dk-bd-desk {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
   gap: 34px 16px;
   padding: 34px 22px 26px;
   border-top: 1px solid var(--dsk-b-sub);
@@ -17272,9 +17276,6 @@ button.dk-bd-n:hover,
 }
 .dk-bd-desk > .dk-bd-half {
   grid-column: span 1;
-}
-.dk-bd-desk > .dk-bd-note {
-  align-self: start;
 }
 
 /* an exhibit: printed by Trenova, on a tab that names what it reads */
@@ -17327,6 +17328,16 @@ button.dk-bd-n:hover,
   margin: -2px 0 12px;
   font: 400 11px var(--dk-plex);
   color: var(--dsk-subtle);
+  white-space: nowrap;
+}
+/* one line: where it was read from gives way, with its whole text in `title`; the stamp stands */
+.dk-bd-src > span:first-child {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.dk-bd-src > span:last-child {
+  flex: none;
 }
 .dk-bd-src b {
   font-weight: 500;
@@ -17374,6 +17385,7 @@ button.dk-bd-n:hover,
 .dk-bd-note > p {
   margin: 4px 0 0;
   font: 400 15px/1.55 var(--font-newsreader);
+  text-wrap: pretty;
 }
 .dk-bd-note .dk-bd-chips {
   margin-top: 10px;
@@ -17424,6 +17436,7 @@ button.dk-bd-n:hover,
   padding: 0 4px;
   font: 400 15.5px/1.6 var(--font-newsreader);
   color: var(--dsk-fg);
+  text-wrap: pretty;
 }
 
 /* a record named in the words: its label, read from the record, opening it */
@@ -17537,11 +17550,21 @@ span.dk-bd-ref {
   flex-direction: column;
   margin: 0 -16px -16px;
 }
+/* A record's row, one anatomy at every width. A value never wraps: the number and the measure's
+   standing value share the first line, the number left and the value right; the subtitle and the
+   measure's second fact read as one phrase from the left of the second line, the status right,
+   aligned to the value's edge. A list read by a track draws it under them, full width. Only the
+   stop and the subtitle give way, with an ellipsis and their text in `title`. The lines are
+   fixed heights, so every row of a list is one height whatever it holds, and the row drawn while
+   the list is read (RecordRowSketch) is the same box: 61px, and 75px in a list with a track. */
 .dk-bd-row {
   display: grid;
-  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: 20px 20px;
+  grid-template-areas:
+    "l1"
+    "line";
   align-items: center;
-  gap: 14px;
   width: 100%;
   padding: 10px 16px;
   border: 0;
@@ -17565,67 +17588,110 @@ div.dk-bd-row:not(.dk-gone):hover {
 .dk-bd-row:last-child {
   border-radius: 0 0 12px 12px;
 }
-.dk-bd-who {
+/* A measure read as a track (how far behind its appointment a load runs, against the furthest
+   behind): the bar under both lines, the row's whole width, 8px below the second line. Every row
+   of that list, the unreadable one and the skeleton's included, takes the track's line. */
+.dk-bd-rows:has(.dk-bd-track) > .dk-bd-row {
+  grid-template-rows: 20px 20px 14px;
+  grid-template-areas:
+    "l1"
+    "line"
+    "trk";
+}
+/* Each line is its own box, the row's whole width, so neither narrows the other: a wide value on
+   the first line leaves the second its width beside the status, and the value and the status end
+   at the same edge. */
+.dk-bd-l1,
+.dk-bd-line {
   display: flex;
-  flex-direction: column;
-  gap: 2px;
+  align-items: center;
   min-width: 0;
-}
-.dk-bd-who b {
-  font: 500 13px var(--dk-plex);
-  color: var(--dsk-fg);
-}
-.dk-bd-who span {
-  font-size: 12px;
-  color: var(--dsk-subtle);
-  overflow: hidden;
-  text-overflow: ellipsis;
+  height: 20px;
   white-space: nowrap;
 }
-.dk-bd-who span i {
-  font-style: normal;
+.dk-bd-l1 {
+  grid-area: l1;
+  gap: 10px;
+}
+.dk-bd-id {
+  flex: none;
+  font: 500 13px/20px var(--dk-plex);
+  color: var(--dsk-fg);
+}
+/* The second line: the subtitle, a dot, the moment and the stop, packed from the left, then the
+   status at the right edge. When room runs out the stop gives way first, then the subtitle down to
+   a few letters; the moment never gives way, so no ellipsis falls inside a date. */
+.dk-bd-line {
+  grid-area: line;
+  font-size: 12px;
+  line-height: 20px;
+  color: var(--dsk-subtle);
+}
+.dk-bd-sub {
+  flex: 0 1 auto;
+  min-width: 5ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.dk-bd-sub:only-child {
+  min-width: 0;
+}
+.dk-bd-sub + .dk-bd-at::before {
+  content: "\00b7" / "";
+  margin: 0 5px;
   color: var(--dsk-faint);
 }
-.dk-bd-amt {
-  font: 500 12.5px var(--dk-plex);
+.dk-bd-val {
+  flex: none;
+  margin-left: auto;
+  font: 500 12px/20px var(--dk-plex);
   font-feature-settings: "tnum";
-  text-align: right;
+  white-space: nowrap;
   color: var(--dsk-fg);
 }
-.dk-bd-amt span {
-  display: block;
-  font: 400 11px var(--font-sans, inherit);
-  color: var(--dsk-subtle);
+.dk-bd-val.dk-warn {
+  color: var(--dsk-warn-fg);
 }
-/* how far behind its appointment a load runs, against the furthest behind */
-.dk-bd-behind {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  min-width: 0;
+.dk-bd-at {
+  flex: none;
 }
-.dk-bd-behind > span {
-  display: flex;
-  justify-content: space-between;
-  gap: 8px;
-  font: 400 11px var(--dk-plex);
-  color: var(--dsk-subtle);
-}
-.dk-bd-behind > span > span {
+/* The stop shrinks before anything else on the line (its shrink factor dwarfs the subtitle's), and
+   is drawn only where the row has room for the subtitle, the moment and the stop beside the status
+   (32rem of exhibit content). */
+.dk-bd-place {
+  display: none;
+  flex: 0 100000 auto;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
 }
-.dk-bd-behind > span b {
+@container dkbdex (width >= 32rem) {
+  .dk-bd-place {
+    display: block;
+  }
+}
+/* Below 17rem of exhibit content the longest moment ("Due Nov 22, 3:00 PM", about 118px), the
+   dot, a subtitle's few letters and the widest status (about 90px) no longer fit on one line, so
+   a row with a moment drops its subtitle rather than cut the moment. */
+@container dkbdex (width < 17rem) {
+  .dk-bd-line:has(> .dk-bd-at) > .dk-bd-sub {
+    display: none;
+  }
+  .dk-bd-line > .dk-bd-sub + .dk-bd-at::before {
+    display: none;
+  }
+}
+.dk-bd-st {
   flex: none;
-  font-weight: 500;
-  white-space: nowrap;
-  color: var(--dsk-warn-fg);
+  display: flex;
+  margin-left: auto;
+  padding-left: 10px;
 }
 .dk-bd-track {
+  grid-area: trk;
+  align-self: end;
   position: relative;
-  height: 8px;
+  height: 6px;
   border-radius: 3px;
   background: var(--dsk-sunken);
 }
@@ -17656,6 +17722,10 @@ div.dk-bd-row:not(.dk-gone):hover {
 /* a record the reader may not read: the "could not be read" head, as a row */
 .dk-bd-row.dk-gone {
   grid-template-columns: auto minmax(0, 1fr);
+  grid-template-areas:
+    "lock l1"
+    "lock line";
+  column-gap: 12px;
   cursor: default;
   color: var(--dsk-subtle);
   background: repeating-linear-gradient(
@@ -17664,11 +17734,18 @@ div.dk-bd-row:not(.dk-gone):hover {
     color-mix(in oklab, var(--dsk-b-sub) 60%, transparent) 7px 8px
   );
 }
-.dk-bd-row.dk-gone .dk-bd-who b {
-  font: 500 12.5px var(--font-sans, inherit);
+.dk-bd-rows:has(.dk-bd-track) > .dk-bd-row.dk-gone {
+  grid-template-areas:
+    "lock l1"
+    "lock line"
+    "lock .";
+}
+.dk-bd-row.dk-gone .dk-bd-id {
+  font: 500 12.5px/20px var(--font-sans, inherit);
   color: var(--dsk-fg2);
 }
 .dk-bd-lock {
+  grid-area: lock;
   display: grid;
   place-items: center;
   width: 28px;
@@ -17812,6 +17889,15 @@ a.dk-bd-face:hover {
   background: var(--dsk-card);
   box-shadow: inset 0 0 0 1px var(--dsk-b);
 }
+/* A face's name and subtitle hold one line each; past the column's width they give way, with
+   their whole text in `title`. */
+.dk-bd-face b,
+.dk-bd-face small {
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 .dk-bd-face b {
   font-size: 13px;
   font-weight: 600;
@@ -17843,6 +17929,7 @@ a.dk-bd-face:hover {
   text-align: center;
   font: 400 13px var(--dk-plex);
   font-feature-settings: "tnum";
+  white-space: nowrap;
   color: var(--dsk-fg2);
 }
 .dk-bd-h2h td.dk-win > span {
@@ -18021,6 +18108,7 @@ a.dk-bd-face:hover {
   grid-row: 1;
   font: 500 15px var(--dk-plex);
   font-feature-settings: "tnum";
+  white-space: nowrap;
   color: var(--dsk-fg);
 }
 .dk-bd-count s {
@@ -18216,13 +18304,47 @@ a.dk-bd-face:hover {
   }
 }
 
-@container dkbdex (max-width: 560px) {
-  .dk-bd-row:has(.dk-bd-behind) {
-    grid-template-columns: minmax(0, 1fr) auto;
+/* Head to head in an exhibit with less than 30rem of content: each measure's name on its own line
+   over the records' values, so a value has a whole column's width and never wraps. */
+@container dkbdex (width < 30rem) {
+  .dk-bd-h2h,
+  .dk-bd-h2h thead,
+  .dk-bd-h2h tbody,
+  .dk-bd-h2h tfoot {
+    display: block;
   }
-  .dk-bd-row .dk-bd-behind {
+  .dk-bd-h2h colgroup,
+  .dk-bd-h2h thead th:first-child {
+    display: none;
+  }
+  .dk-bd-h2h tr {
+    display: grid;
+    grid-template-columns: repeat(var(--cols, 2), minmax(0, 1fr));
+  }
+  .dk-bd-h2h thead th {
+    padding: 0 3px 12px;
+  }
+  .dk-bd-h2h tbody th,
+  .dk-bd-h2h tfoot th {
     grid-column: 1 / -1;
-    grid-row: 2;
+  }
+  .dk-bd-h2h tbody th {
+    padding: 8px 0 2px;
+  }
+  .dk-bd-h2h tbody td {
+    padding: 2px 3px 8px;
+    border-top: 0;
+  }
+  .dk-bd-h2h tfoot td {
+    padding-top: 4px;
+    border-top: 0;
+  }
+  .dk-bd-h2h tfoot th {
+    padding-bottom: 0;
+  }
+  .dk-bd-h2h td.dk-win > span {
+    gap: 3px;
+    padding: 2px 6px 2px 5px;
   }
   .dk-bd-read {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -18234,7 +18356,9 @@ a.dk-bd-face:hover {
   }
 }
 
-@container dkbd (max-width: 640px) {
+/* The board beside the conversation. Its half exhibits sit side by side only while each keeps
+   about 300px, a record row's narrow anatomy whole: (660 - 44 padding - 16 gap) / 2 = 300px. */
+@container dkbd (max-width: 660px) {
   .dk-bd-mast {
     padding: 4px 16px 18px;
   }
@@ -18260,13 +18384,6 @@ a.dk-bd-face:hover {
     padding-left: 0;
     border-left: 0;
   }
-  .dk-bd-row:has(.dk-bd-behind) {
-    grid-template-columns: minmax(0, 1fr) auto;
-  }
-  .dk-bd-row .dk-bd-behind {
-    grid-column: 1 / -1;
-    grid-row: 2;
-  }
   .dk-bd-pips {
     gap: 3px;
   }
@@ -18288,44 +18405,6 @@ a.dk-bd-face:hover {
   }
   .dk-bd-wait.dk-read {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-/* A list in an exhibit too narrow for its columns (half of a reply's width): each record on one
-   line with how far behind it runs, and its track under it. */
-@container dkbdex (max-width: 360px) {
-  .dk-bd-row:has(.dk-bd-behind) {
-    grid-template-columns: minmax(0, 1fr) auto;
-    align-items: baseline;
-    gap: 5px 10px;
-    padding: 9px 16px 10px;
-  }
-  .dk-bd-row:has(.dk-bd-behind) .dk-bd-who {
-    flex-direction: row;
-    align-items: baseline;
-    gap: 7px;
-  }
-  /* The track keeps its box: its fill is positioned against it, and without one the fill
-     takes the whole exhibit. */
-  .dk-bd-row .dk-bd-behind,
-  .dk-bd-row .dk-bd-behind > span:not(.dk-bd-track) {
-    display: contents;
-  }
-  .dk-bd-row .dk-bd-behind > span:not(.dk-bd-track) > span {
-    display: none;
-  }
-  .dk-bd-row .dk-bd-behind > span:not(.dk-bd-track) > b {
-    grid-row: 1;
-    grid-column: 2;
-    font: 500 11.5px var(--dk-plex);
-  }
-  .dk-bd-row .dk-bd-track {
-    grid-row: 2;
-    grid-column: 1 / -1;
-    height: 6px;
-  }
-  .dk-bd-row:has(.dk-bd-behind) > :last-child:not(.dk-bd-behind) {
-    display: none;
   }
 }
 

@@ -1,6 +1,6 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
-import { formatHoursMinutes } from "../hours/hos-format";
+import { formatHoursMinutes } from "@/lib/hours-format";
 import { shortWeekday, weekBars } from "./schedule-model";
 
 export type WeekPatternProps = {

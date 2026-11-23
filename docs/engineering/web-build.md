@@ -5,6 +5,12 @@ have already been hit. Read this before changing `client/apps/web/vite.config.ts
 `client/apps/web/vite/chunk-groups.ts`, `client/apps/web/bundle-budget.json`, or the GraphQL
 codegen hooks in `client/packages/graphql/scripts/`.
 
+## Toolchain
+
+The client installs and runs on Bun, not Node. Its commands and traps (per-package `bunfig.toml`,
+`bun run test` and not `bun test`, the install store, the budget measured with Bun's gzip) are in
+[client-commands](client-commands.md).
+
 ## Compiling
 
 - **React Compiler runs in Rust.** `react({ compiler: true })` uses `oxc-transform-react`, the
@@ -14,14 +20,14 @@ codegen hooks in `client/packages/graphql/scripts/`.
   a default (`{ icons = [] }`). `"use no memo"` is honoured as before.
 - `oxc-transform-react` is a 0.x package, so `@vitejs/plugin-react`'s peer range pins its minor
   (`^0.152.0` means 0.152.x). Upgrade the two together.
-- `pnpm build` bundles and does not typecheck; `pnpm typecheck` is its own task and CI job.
+- `bun run build` bundles and does not typecheck; `bun run typecheck` is its own task and CI job.
   Every tsconfig is `incremental`, so a repeat `tsc -b` checks only what changed (a touched but
   unchanged file costs nothing), and CI restores the build info between runs.
 
 ## What a first visit downloads
 
 `index.html` loads the entry, preloads the modules it imports statically, and links one
-stylesheet. `pnpm --filter @trenova/web bundle:check` measures that set against
+stylesheet. `bun run --filter @trenova/web bundle:check` measures that set against
 `bundle-budget.json` and runs in CI after the build. When it fails, move what the first page
 does not need behind `lazyComponent` (`src/lib/lazy-component.ts`), or raise the budget in the
 same change if the growth is intended.
@@ -213,8 +219,8 @@ SPA) must be added to `routeRequest`'s exclusions, or the worker answers it with
 `vite/chunk-groups.ts` holds Rolldown's `codeSplitting.groups`; its tests are in
 `src/lib/__tests__/chunk-groups.test.ts`. The rules, each learned from a broken build:
 
-- **Match a package by its own `node_modules/<name>/` segment** (`packageTest`). pnpm names a
-  package's folder after its peers (`@base-ui+react@1.8.0_date-fns@4.4.0`), so `/date-fns/`
+- **Match a package by its own `node_modules/<name>/` segment** (`packageTest`). Bun's isolated
+  linker names a package's folder after its peers (`@base-ui+react@1.9.0+670a94236aee320d`), so `/date-fns/`
   put all of Base UI in the date chunk, and `/fetch/` caught `route-prefetch.ts`.
 - **Group only** the framework core every page needs, or a large library that only loads
   behind a lazy boundary. A library used a little on many pages (icons, date-fns, Base UI)
@@ -234,7 +240,7 @@ SPA) must be added to `routeRequest`'s exclusions, or the worker answers it with
 ## GraphQL codegen hooks
 
 After `graphql-codegen` writes `src/generated/`, two hooks rewrite it (both have `node:test`
-suites run by `pnpm test`):
+suites run by `bun run test`):
 
 - `strip-fragment-text.mjs` replaces each fragment's GraphQL text with its name. The server
   only accepts persisted operations by hash, and nothing at runtime reads a fragment's text.
@@ -255,11 +261,11 @@ re-exports `gql.ts` and its namespace import of every document.
 
 ## Full-bundle dev server
 
-`pnpm --filter @trenova/web dev:bundled` (`vite --experimentalBundle`) serves the app bundled by
+`bun run --filter @trenova/web dev:bundled` (`vite --experimentalBundle`) serves the app bundled by
 Rolldown, as a build would, instead of as thousands of separate modules: a page loads a few
 large files rather than one request per module, and a component edit hot-swaps in about half a
 second with the page's state kept. The first page load bundles the shell (about 15 seconds
-cold); a route's chunk is bundled the first time something imports it. `pnpm dev` is unchanged
+cold); a route's chunk is bundled the first time something imports it. `bun run dev` is unchanged
 and stays the default. An edit to a module that also exports something other than components
 (`sidebar-chrome.tsx` exports `formatAttentionCount`) reloads the page in both modes; that is
 Fast Refresh's rule, not the bundler's.
@@ -278,8 +284,8 @@ The dev server bundles with `build.rolldownOptions`, so two of them are split by
 
 ## Patched dependencies
 
-A bug in a dependency we can't wait on is fixed with `pnpm patch`, which writes the diff to
-`client/patches/` and lists it under `patchedDependencies` in `pnpm-workspace.yaml`. Each patch
+A bug in a dependency we can't wait on is fixed with `bun patch`, which writes the diff to
+`client/patches/` and lists it under `patchedDependencies` in `client/package.json`. Each patch
 has a test that fails without it, and goes away when a release carries the fix.
 
 - **`@uiw/react-codemirror`**: while someone types, the controlled `value` is held back and
@@ -312,6 +318,6 @@ has a test that fails without it, and goes away when a release carries the fix.
 
 - Rolldown prints `PLUGIN_TIMINGS` after a slow build: which plugin hook took the time.
   A hook another plugin wraps reports that plugin's time as its own.
-- `pnpm --filter @trenova/web bundle:check` after a build for the startup set.
+- `bun run --filter @trenova/web bundle:check` after a build for the startup set.
 - For which module pulls what into startup, dump `this.getModuleInfo(id).importedIds` from a
   `generateBundle` hook and walk it from `src/main.tsx`.

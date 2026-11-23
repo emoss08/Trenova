@@ -1,5 +1,11 @@
-import { WorkPane, WorkPaneBody, WorkPaneFooter } from "@/components/work-pane";
-import type { WorkerCredentialRow } from "@/lib/graphql/worker-credential";
+import { WorkPane, WorkPaneBody, WorkPaneFooter, type PreloadIntent } from "@/components/work-pane";
+import {
+  fetchWorkerCredentials,
+  WORKER_CREDENTIALS_KEY,
+  type WorkerCredentialRow,
+} from "@/lib/graphql/worker-credential";
+import { useQuery } from "@tanstack/react-query";
+import { ErrorState } from "@trenova/shared/components/errors/error-state";
 import { DocumentPanePreview } from "@/components/documents/document-pane-preview";
 import { DocumentThumbnail } from "@/components/documents/document-thumbnail";
 import { documentContentUrl } from "@/services/document";
@@ -12,10 +18,16 @@ import {
   DescriptionList,
 } from "@trenova/shared/components/ui/description-list";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { formatUnixDateMedium } from "@trenova/shared/lib/date";
+import { formatRange, formatUnixDateMedium } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
 import type { CredentialPermissions } from "./credential-table";
-import { expiryPhrase, expiryToneClass, healthLabel, healthTone } from "./credential-model";
+import {
+  earlierVersions,
+  expiryPhrase,
+  expiryToneClass,
+  healthLabel,
+  healthTone,
+} from "./credential-model";
 
 /**
  * One credential read beside the table: its document, the facts on the card, the versions it
@@ -24,24 +36,31 @@ import { expiryPhrase, expiryToneClass, healthLabel, healthTone } from "./creden
 export function CredentialReadPane({
   open,
   onOpenChange,
+  credentialId,
   credential,
-  loading,
-  earlier,
+  workerId,
+  loadedEarlier,
   permissions,
   verifying,
   onVerify,
+  editIntent,
   onEdit,
   onRenew,
   onArchive,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  /** The credential the address names, found or not. */
+  credentialId: string | null;
   credential: WorkerCredentialRow | null;
-  loading: boolean;
-  earlier: readonly WorkerCredentialRow[];
+  workerId: string;
+  /** The versions the tab's capped list already holds, shown while the type's own read lands. */
+  loadedEarlier: readonly WorkerCredentialRow[];
   permissions: CredentialPermissions;
   verifying: boolean;
   onVerify: (credential: WorkerCredentialRow) => Promise<void>;
+  /** Reads the form's code as the pointer reaches Edit or Renew. */
+  editIntent: PreloadIntent;
   onEdit: (credential: WorkerCredentialRow) => void;
   onRenew: (credential: WorkerCredentialRow) => void;
   onArchive: (credential: WorkerCredentialRow) => void;
@@ -54,18 +73,15 @@ export function CredentialReadPane({
       open={open}
       onOpenChange={onOpenChange}
       title={credential?.credentialType?.name ?? t("Credential")}
-      contentKey={credential?.id}
+      contentKey={credentialId ?? undefined}
     >
       <WorkPaneBody>
         {credential ? (
-          <CredentialDetails credential={credential} earlier={earlier} />
-        ) : loading ? (
-          <div aria-busy aria-label={t("Loading the credential")} className="flex flex-col gap-3">
-            <div aria-hidden className="contents">
-              <span className="block h-42 ui-shimmer rounded-md" />
-              <span className="block h-32 ui-shimmer rounded-md" />
-            </div>
-          </div>
+          <CredentialDetails
+            credential={credential}
+            workerId={workerId}
+            loadedEarlier={loadedEarlier}
+          />
         ) : (
           <p className="text-sm text-muted-foreground">
             {t("This credential is no longer on the file.")}
@@ -101,12 +117,18 @@ export function CredentialReadPane({
             </Button>
           ) : null}
           {permissions.canUpdate ? (
-            <Button type="button" size="sm" variant="outline" onClick={() => onEdit(credential)}>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              {...editIntent}
+              onClick={() => onEdit(credential)}
+            >
               {t("Edit")}
             </Button>
           ) : null}
           {permissions.canCreate ? (
-            <Button type="button" size="sm" onClick={() => onRenew(credential)}>
+            <Button type="button" size="sm" {...editIntent} onClick={() => onRenew(credential)}>
               {t("Renew")}
             </Button>
           ) : null}
@@ -118,10 +140,12 @@ export function CredentialReadPane({
 
 function CredentialDetails({
   credential,
-  earlier,
+  workerId,
+  loadedEarlier,
 }: {
   credential: WorkerCredentialRow;
-  earlier: readonly WorkerCredentialRow[];
+  workerId: string;
+  loadedEarlier: readonly WorkerCredentialRow[];
 }) {
   const t = useT();
 
@@ -195,63 +219,99 @@ function CredentialDetails({
         </DescriptionItem>
       </DescriptionList>
 
-      <section aria-label={t("Earlier versions")} className="flex flex-col gap-2">
-        <h4 className="text-sm font-semibold">{t("Earlier versions")}</h4>
-        {earlier.length === 0 ? (
-          <p className="text-xs text-muted-foreground">{t("No earlier versions.")}</p>
-        ) : (
-          <ul className="rounded-md border border-border-subtle">
-            {earlier.map((version) => (
-              <li
-                key={version.id}
-                className="flex items-center gap-2.5 px-2.5 py-2 text-xs not-first:border-t not-first:border-border-subtle"
-              >
-                <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-                  <span className="font-mono text-xs">
-                    {version.issuedAt && version.expiresAt
-                      ? t(
-                          "{0} to {1}",
-                          formatUnixDateMedium(version.issuedAt),
-                          formatUnixDateMedium(version.expiresAt),
-                        )
-                      : version.expiresAt
-                        ? t("Until {0}", formatUnixDateMedium(version.expiresAt))
-                        : t("No expiry")}
-                  </span>
-                  {version.document?.originalName || version.archiveReason ? (
-                    <span
-                      className="truncate text-xs text-muted-foreground"
-                      title={version.document?.originalName}
-                    >
-                      {[version.document?.originalName, version.archiveReason]
-                        .filter(Boolean)
-                        .join(" · ")}
-                    </span>
-                  ) : null}
-                </span>
-                {version.document ? (
-                  <a
-                    href={documentContentUrl(version.document.id, "view")}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    aria-label={t("Open {0}", version.document.originalName)}
-                    className="shrink-0 rounded-sm ui-focus-ring"
-                  >
-                    <DocumentThumbnail
-                      fileType={version.document.fileType}
-                      fileName={version.document.originalName}
-                      previewStatus={version.document.previewStatus}
-                      previewUrl={documentContentUrl(version.document.id, "preview")}
-                      size="sm"
-                      className="border border-border-subtle"
-                    />
-                  </a>
-                ) : null}
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
+      <EarlierVersions credential={credential} workerId={workerId} loadedEarlier={loadedEarlier} />
     </>
+  );
+}
+
+/**
+ * The versions this credential replaced, read for its type alone, so they are all here even when
+ * the tab's list stopped at the server's cap. What that list already held shows until the read
+ * lands; the read sits under the credentials key, so a write that refreshes them refreshes this.
+ */
+function EarlierVersions({
+  credential,
+  workerId,
+  loadedEarlier,
+}: {
+  credential: WorkerCredentialRow;
+  workerId: string;
+  loadedEarlier: readonly WorkerCredentialRow[];
+}) {
+  const t = useT();
+  const code = credential.credentialType?.code ?? null;
+  const versions = useQuery({
+    queryKey: [WORKER_CREDENTIALS_KEY, workerId, "type", code],
+    queryFn: ({ signal }) =>
+      fetchWorkerCredentials({ workerId, credentialTypeCode: code ?? undefined }, { signal }),
+    enabled: code !== null,
+    select: (rows) => earlierVersions(rows, credential),
+  });
+  const earlier = versions.data ?? loadedEarlier;
+
+  return (
+    <section aria-label={t("Earlier versions")} className="flex flex-col gap-2">
+      <h4 className="text-sm font-semibold">{t("Earlier versions")}</h4>
+      {versions.isError ? (
+        <ErrorState
+          layout="compact"
+          error={versions.error}
+          title={t("The earlier versions could not be loaded")}
+          onRetry={() => void versions.refetch()}
+        />
+      ) : earlier.length === 0 ? (
+        <p className="text-xs text-muted-foreground">{t("No earlier versions.")}</p>
+      ) : (
+        <ul className="rounded-md border border-border-subtle">
+          {earlier.map((version) => (
+            <li
+              key={version.id}
+              className="flex items-center gap-2.5 px-2.5 py-2 text-xs not-first:border-t not-first:border-border-subtle"
+            >
+              <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+                <span className="font-mono text-xs">
+                  {version.issuedAt && version.expiresAt
+                    ? formatRange(version.issuedAt, version.expiresAt, {
+                        year: "always",
+                        join: "words",
+                      })
+                    : version.expiresAt
+                      ? t("Until {0}", formatUnixDateMedium(version.expiresAt))
+                      : t("No expiry")}
+                </span>
+                {version.document?.originalName || version.archiveReason ? (
+                  <span
+                    className="truncate text-xs text-muted-foreground"
+                    title={version.document?.originalName}
+                  >
+                    {[version.document?.originalName, version.archiveReason]
+                      .filter(Boolean)
+                      .join(" · ")}
+                  </span>
+                ) : null}
+              </span>
+              {version.document ? (
+                <a
+                  href={documentContentUrl(version.document.id, "view")}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={t("Open {0}", version.document.originalName)}
+                  className="shrink-0 rounded-sm ui-focus-ring"
+                >
+                  <DocumentThumbnail
+                    fileType={version.document.fileType}
+                    fileName={version.document.originalName}
+                    previewStatus={version.document.previewStatus}
+                    previewUrl={documentContentUrl(version.document.id, "preview")}
+                    size="sm"
+                    className="border border-border-subtle"
+                  />
+                </a>
+              ) : null}
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
   );
 }

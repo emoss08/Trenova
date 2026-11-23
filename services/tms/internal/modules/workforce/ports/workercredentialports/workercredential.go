@@ -50,10 +50,14 @@ type CountCredentialsByTypeIDsRequest struct {
 type ListWorkerCredentialsRequest struct {
 	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
 	// WorkerIDs are the workers whose credentials are read, in one query.
-	WorkerIDs       []pulid.ID `json:"workerIds"`
-	IncludeArchived bool       `json:"includeArchived"`
-	IncludeType     bool       `json:"includeType"`
-	IncludeDocument bool       `json:"includeDocument"`
+	WorkerIDs          []pulid.ID `json:"workerIds"`
+	IncludeArchived    bool       `json:"includeArchived"`
+	IncludeType        bool       `json:"includeType"`
+	IncludeDocument    bool       `json:"includeDocument"`
+	CredentialTypeCode string     `json:"credentialTypeCode"`
+	RequiredOnly       bool       `json:"requiredOnly"`
+	Limit              int        `json:"limit"`
+	Offset             int        `json:"offset"`
 }
 
 type GetWorkerCredentialByIDRequest struct {
@@ -150,6 +154,11 @@ type WorkerCredentialRepository interface {
 		ctx context.Context,
 		req *ListWorkerCredentialsRequest,
 	) ([]*workercredential.WorkerCredential, error)
+	CountArchivedForWorker(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+		workerID pulid.ID,
+	) (int, error)
 	GetByID(
 		ctx context.Context,
 		req *GetWorkerCredentialByIDRequest,

@@ -1,4 +1,5 @@
 import { RowActionsMenu, type RowAction } from "@/components/row-actions-menu";
+import type { PreloadIntent } from "@/components/work-pane";
 import type { WorkerSafetyEventRow } from "@/lib/graphql/worker-safety";
 import {
   Car01Icon,
@@ -20,17 +21,13 @@ import { formatNumber } from "@trenova/shared/i18n/format";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { csaBasicLabel } from "@trenova/shared/lib/csa";
 import { formatUnixDateMedium } from "@trenova/shared/lib/date";
-import { describeSafetyEvent } from "@trenova/shared/lib/safety";
 import { cn } from "@trenova/shared/lib/utils";
 import {
   SAFETY_EVENT_STATUS_LABELS,
-  type InspectionResult,
-  type SafetyEventKind,
   type SafetyEventStatus,
-  type SafetySeverity,
 } from "@trenova/shared/types/worker-safety";
 import { useId, useState } from "react";
-import { decimalAmount, eventStatusTone } from "./safety-model";
+import { eventStatusTone, formatEventAmount, safetyEventHeadline } from "./safety-model";
 
 export type SafetyEventPermissions = {
   canUpdate: boolean;
@@ -47,29 +44,18 @@ export type SafetyEventHandlers = {
   onReopen: (event: WorkerSafetyEventRow) => void;
   onDelete: (event: WorkerSafetyEventRow) => void;
   onDiscipline: (event: WorkerSafetyEventRow) => void;
+  /** Read the edit and issue-action panes' code when their menu items come into reach. */
+  preloadEdit?: () => Promise<unknown>;
+  preloadDiscipline?: () => Promise<unknown>;
 };
 
-const KIND_ICONS: Record<string, IconComponent> = {
+const EVENT_KIND_ICONS: Record<string, IconComponent> = {
   Accident: Car01Icon,
   Incident: ZapIcon,
   NearMiss: EyeIcon,
   Citation: ReceiptIcon,
   Inspection: ClipboardCheckIcon,
 };
-
-export function safetyEventHeadline(event: WorkerSafetyEventRow): string {
-  return describeSafetyEvent({
-    kind: event.kind as SafetyEventKind,
-    severity: event.severity as SafetySeverity,
-    preventable: event.preventable,
-    inspectionResult: (event.inspectionResult ?? null) as InspectionResult | null,
-    inspectionLevel: event.inspectionLevel ?? null,
-  });
-}
-
-export function formatDecimalMoney(amount: number): string {
-  return formatNumber(amount, { style: "currency", currency: "USD" });
-}
 
 /** The actions an event's state and the reader's grants allow, in the menu's order. */
 export function safetyEventActions(
@@ -115,6 +101,7 @@ export function safetyEventActions(
       label: t("Issue action for this"),
       icon: GavelIcon,
       disabled: busy,
+      preload: handlers.preloadDiscipline,
       onSelect: () => handlers.onDiscipline(event),
     });
   }
@@ -124,6 +111,7 @@ export function safetyEventActions(
       label: t("Edit"),
       icon: Edit02Icon,
       disabled: busy,
+      preload: handlers.preloadEdit,
       onSelect: () => handlers.onEdit(event),
     });
   }
@@ -150,21 +138,24 @@ export function SafetyEventRow({
   permissions,
   busy,
   handlers,
+  openIntent,
 }: {
   event: WorkerSafetyEventRow;
   permissions: SafetyEventPermissions;
   busy: boolean;
   handlers: SafetyEventHandlers;
+  /** Reads the event pane's code when the row is pointed at or focused. */
+  openIntent: PreloadIntent;
 }) {
   const t = useT();
   const violationsId = useId();
   const [expanded, setExpanded] = useState(false);
   const status = event.status as SafetyEventStatus;
   const closed = status === "Closed";
-  const Icon = KIND_ICONS[event.kind] ?? ZapIcon;
+  const Icon = EVENT_KIND_ICONS[event.kind] ?? ZapIcon;
   const headline = safetyEventHeadline(event);
-  const fine = decimalAmount(event.fineAmount);
-  const cost = decimalAmount(event.costAmount);
+  const fine = formatEventAmount(event.fineAmount);
+  const cost = formatEventAmount(event.costAmount);
   const violations = event.violations ?? [];
   const rolledOff = event.points > 0 && event.activePoints === 0;
   const meta = [
@@ -178,8 +169,9 @@ export function SafetyEventRow({
     <div
       data-glide-target
       data-testid={`safety-event-${event.id}`}
-      role="button"
+      role="group"
       tabIndex={0}
+      {...openIntent}
       aria-label={t("{0}. {1}.", headline, t(SAFETY_EVENT_STATUS_LABELS[status] ?? status))}
       onClick={() => handlers.onOpen(event)}
       onKeyDown={(keyEvent) => {
@@ -209,8 +201,8 @@ export function SafetyEventRow({
         {fine !== null || cost !== null ? (
           <p className="mt-1 text-xs text-muted-foreground tabular-nums">
             {[
-              fine !== null ? t("Fine {0}", formatDecimalMoney(fine)) : null,
-              cost !== null ? t("Cost {0}", formatDecimalMoney(cost)) : null,
+              fine !== null ? t("Fine {0}", fine) : null,
+              cost !== null ? t("Cost {0}", cost) : null,
             ]
               .filter(Boolean)
               .join(" · ")}
@@ -296,7 +288,7 @@ export function ViolationRows({ violations }: { violations: readonly ViolationLi
           <span className="min-w-0">
             {violation.description}
             {violation.outOfService ? (
-              <Badge variant="danger" className="ml-1.5">
+              <Badge variant="danger" dot className="ml-1.5">
                 {t("Out of service")}
               </Badge>
             ) : null}

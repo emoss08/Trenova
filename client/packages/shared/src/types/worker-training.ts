@@ -185,12 +185,3 @@ export const completeTrainingFormSchema = z
     }
   });
 export type CompleteTrainingFormValues = z.infer<typeof completeTrainingFormSchema>;
-
-export const waiveTrainingFormSchema = z.object({
-  reason: z
-    .string()
-    .trim()
-    .min(3, { error: () => translate("Say why the course is waived") })
-    .max(255, { error: () => translate("Reason cannot exceed 255 characters") }),
-});
-export type WaiveTrainingFormValues = z.infer<typeof waiveTrainingFormSchema>;

@@ -24,6 +24,13 @@ type ListWorkerSafetyEventsRequest struct {
 	IncludeDocument bool  `json:"includeDocument"`
 	IncludeActors   bool  `json:"includeActors"`
 	IncludeWorker   bool  `json:"includeWorker"`
+	DecisiveSince   int64 `json:"decisiveSince"`
+	DecisiveAt      int64 `json:"decisiveAt"`
+}
+
+type LastCountingSafetyEventRequest struct {
+	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
+	WorkerID   pulid.ID              `json:"workerId"`
 }
 
 type GetWorkerSafetyEventByIDRequest struct {
@@ -38,12 +45,15 @@ type ListWorkerDisciplinaryActionsRequest struct {
 	WorkerID      pulid.ID              `json:"workerId"`
 	IncludeEvent  bool                  `json:"includeEvent"`
 	IncludeActors bool                  `json:"includeActors"`
+	ActiveOnly    bool                  `json:"activeOnly"`
+	Cursor        pagination.CursorInfo `json:"cursor"`
 }
 
 type GetWorkerDisciplinaryActionByIDRequest struct {
-	ID           pulid.ID              `json:"id"`
-	TenantInfo   pagination.TenantInfo `json:"tenantInfo"`
-	IncludeEvent bool                  `json:"includeEvent"`
+	ID            pulid.ID              `json:"id"`
+	TenantInfo    pagination.TenantInfo `json:"tenantInfo"`
+	IncludeEvent  bool                  `json:"includeEvent"`
+	IncludeActors bool                  `json:"includeActors"`
 }
 
 type ListWorkerRecognitionsRequest struct {
@@ -51,6 +61,8 @@ type ListWorkerRecognitionsRequest struct {
 	WorkerID      pulid.ID              `json:"workerId"`
 	VisibleOnly   bool                  `json:"visibleOnly"`
 	IncludeActors bool                  `json:"includeActors"`
+	Since         int64                 `json:"since"`
+	Limit         int                   `json:"limit"`
 }
 
 type GetWorkerRecognitionByIDRequest struct {
@@ -179,6 +191,7 @@ type WorkerSafetyRepository interface {
 		ctx context.Context,
 		req *ListWorkerSafetyEventsRequest,
 	) ([]*workersafety.WorkerSafetyEvent, error)
+	LastCountingEventAt(ctx context.Context, req *LastCountingSafetyEventRequest) (*int64, error)
 	GetEventByID(
 		ctx context.Context,
 		req *GetWorkerSafetyEventByIDRequest,
@@ -197,6 +210,10 @@ type WorkerSafetyRepository interface {
 		ctx context.Context,
 		req *ListWorkerDisciplinaryActionsRequest,
 	) ([]*workerdiscipline.WorkerDisciplinaryAction, error)
+	ActionsPage(
+		ctx context.Context,
+		req *ListWorkerDisciplinaryActionsRequest,
+	) (*pagination.CursorListResult[*workerdiscipline.WorkerDisciplinaryAction], error)
 	GetActionByID(
 		ctx context.Context,
 		req *GetWorkerDisciplinaryActionByIDRequest,

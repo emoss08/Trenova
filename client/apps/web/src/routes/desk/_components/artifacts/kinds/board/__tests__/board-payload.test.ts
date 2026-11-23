@@ -56,10 +56,30 @@ describe("boardFrom", () => {
           half: false,
           size: 3,
           caption: "",
+          measure: "lateness",
         },
-        { type: "actions", title: "", half: false, size: 1, caption: "" },
+        { type: "actions", title: "", half: false, size: 1, caption: "", measure: "" },
       ],
     });
+  });
+
+  it("reads the measure a records block is read by under the name the server keeps, and none for other blocks", () => {
+    const layout = boardLayoutFrom(
+      {
+        blocks: [
+          {
+            type: "records",
+            records: { resource: "invoice", ids: ["inv_1"] },
+            measure: "balanceDue",
+          },
+          { type: "records", records: { resource: "shipment", ids: ["shp_1"] } },
+          { type: "figures", measure: "lateness", figures: [{ label: "Late" }] },
+        ],
+      },
+      { title: "", author: "" },
+    );
+
+    expect(layout.blocks.map((block) => block.measure)).toEqual(["amountDue", "", ""]);
   });
 
   it("reads a board stored with no place and no readings as beside, with none", () => {
@@ -179,6 +199,7 @@ describe("answerLayoutFrom", () => {
           half: false,
           size: 3,
           caption: "All three are past their window.",
+          measure: "lateness",
         },
       ],
     });
@@ -212,9 +233,10 @@ describe("answerLayoutFrom", () => {
         half: true,
         size: 4,
         caption: "{count_1} wait on Marcus Bell, the furthest {largest_1} behind.",
+        measure: "",
       },
-      { type: "records", title: "At the dock", half: true, size: 2, caption: "" },
-      { type: "actions", title: "", half: false, size: 2, caption: "" },
+      { type: "records", title: "At the dock", half: true, size: 2, caption: "", measure: "" },
+      { type: "actions", title: "", half: false, size: 2, caption: "", measure: "" },
     ]);
     expect(layout.readings.map((reading) => reading.key)).toEqual(["count_1", "largest_1"]);
     expect(layout.blocks.map((block) => isBoardExhibit(block.type))).toEqual([true, true, false]);
@@ -239,9 +261,9 @@ describe("answerLayoutFrom", () => {
 
     expect(layout.title).toBe("From the artifact");
     expect(layout.blocks).toEqual([
-      { type: "records", title: "First", half: false, size: 1, caption: "" },
-      { type: "records", title: "Second", half: false, size: 1, caption: "" },
-      { type: "records", title: "Third", half: false, size: 1, caption: "" },
+      { type: "records", title: "First", half: false, size: 1, caption: "", measure: "" },
+      { type: "records", title: "Second", half: false, size: 1, caption: "", measure: "" },
+      { type: "records", title: "Third", half: false, size: 1, caption: "", measure: "" },
     ]);
     expect(layout.readings).toEqual([{ key: "count", label: "" }]);
   });

@@ -2670,6 +2670,24 @@
       "routes/shipment"
     ]
   },
+  "<at>Delivered {0}</at><place> at {1}</place>": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "<at>Due {0}</at><place> at {1}</place>": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "<b>1</b> unsaved change": {
     "sites": 1,
     "scope": [
@@ -5970,6 +5988,15 @@
     "areas": [
       "apps/web/components",
       "routes/agent-control"
+    ]
+  },
+  "A conversation is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "A conversation keeps at most {0} pinned facts; unpin one first": {
@@ -12893,6 +12920,15 @@
       "go/other"
     ]
   },
+  "A selected conversation is not one Trenova knows": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "A selected document must record when it was selected": {
     "sites": 1,
     "scope": [
@@ -15961,7 +15997,7 @@
     ]
   },
   "AI & Automation": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
@@ -20270,7 +20306,7 @@
     ]
   },
   "Activity": {
-    "sites": 19,
+    "sites": 20,
     "scope": [
       "go",
       "ts"
@@ -20572,7 +20608,7 @@
     ]
   },
   "Add": {
-    "sites": 13,
+    "sites": 12,
     "scope": [
       "ts"
     ],
@@ -20586,8 +20622,7 @@
       "routes/formula-template",
       "routes/fuel-management",
       "routes/inbox",
-      "routes/org-structure",
-      "routes/worker"
+      "routes/org-structure"
     ]
   },
   "Add Customer": {
@@ -21165,15 +21200,6 @@
       "routes/org-structure"
     ]
   },
-  "Add a previous employer": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/worker"
-    ]
-  },
   "Add a provider": {
     "sites": 2,
     "scope": [
@@ -21667,7 +21693,7 @@
     ]
   },
   "Add credential": {
-    "sites": 7,
+    "sites": 8,
     "scope": [
       "ts"
     ],
@@ -21722,7 +21748,7 @@
     ]
   },
   "Add employer": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -22303,7 +22329,7 @@
     ]
   },
   "Add previous employer": {
-    "sites": 1,
+    "sites": 4,
     "scope": [
       "ts"
     ],
@@ -22357,7 +22383,7 @@
     ]
   },
   "Add recognition": {
-    "sites": 2,
+    "sites": 5,
     "scope": [
       "ts"
     ],
@@ -22989,7 +23015,7 @@
     ]
   },
   "Added": {
-    "sites": 9,
+    "sites": 10,
     "scope": [
       "ts"
     ],
@@ -23057,7 +23083,7 @@
     ]
   },
   "Added by": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -23763,17 +23789,8 @@
       "apps/web/hooks"
     ]
   },
-  "Adjust a balance": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/worker"
-    ]
-  },
   "Adjust balance": {
-    "sites": 2,
+    "sites": 4,
     "scope": [
       "ts"
     ],
@@ -24764,7 +24781,7 @@
     ]
   },
   "Agent": {
-    "sites": 36,
+    "sites": 42,
     "scope": [
       "go",
       "ts"
@@ -24772,6 +24789,7 @@
     "areas": [
       "apps/web/hooks",
       "go/other",
+      "routes/admin",
       "routes/agent-control",
       "routes/desk",
       "routes/worker"
@@ -26269,7 +26287,7 @@
     ]
   },
   "All": {
-    "sites": 26,
+    "sites": 27,
     "scope": [
       "ts"
     ],
@@ -27039,6 +27057,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "All time": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "All tools": {
@@ -27923,7 +27950,7 @@
     ]
   },
   "Amend event": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -30362,12 +30389,39 @@
     ]
   },
   "An export must be requested by a person": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "An export of Desk conversations fails": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "An export of Desk conversations is already being written for your organization. Wait for it to finish, then export again.": {
     "sites": 1,
     "scope": [
       "go"
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "An export of Desk conversations is ready": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "An export of the AI audit trail must be requested by a person": {
@@ -33155,7 +33209,7 @@
     ]
   },
   "Apply": {
-    "sites": 11,
+    "sites": 12,
     "scope": [
       "go",
       "ts"
@@ -33164,6 +33218,7 @@
       "apps/web/components",
       "go/other",
       "packages/shared/components",
+      "routes/admin",
       "routes/agent-control",
       "routes/edi",
       "routes/factoring-remittance",
@@ -35508,7 +35563,7 @@
     ]
   },
   "Archived": {
-    "sites": 16,
+    "sites": 17,
     "scope": [
       "go",
       "ts"
@@ -35518,6 +35573,7 @@
       "apps/web/types",
       "go/other",
       "packages/shared/components",
+      "routes/admin",
       "routes/benefits",
       "routes/billing-queue",
       "routes/desk",
@@ -37321,6 +37377,15 @@
       "routes/agent-control"
     ]
   },
+  "Asked by": {
+    "sites": 3,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Asked by {0} on {1}": {
     "sites": 1,
     "scope": [
@@ -37713,7 +37778,7 @@
     ]
   },
   "Assign": {
-    "sites": 29,
+    "sites": 28,
     "scope": [
       "go",
       "ts"
@@ -37784,15 +37849,6 @@
     ],
     "areas": [
       "go/other"
-    ]
-  },
-  "Assign a course": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/worker"
     ]
   },
   "Assign a default biller for this customer. New billing queue items will be auto-assigned to this user.": {
@@ -37925,7 +37981,7 @@
     ]
   },
   "Assign course": {
-    "sites": 2,
+    "sites": 5,
     "scope": [
       "ts"
     ],
@@ -38054,7 +38110,7 @@
     ]
   },
   "Assign pay profile": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -38709,7 +38765,7 @@
     ]
   },
   "Assignment history": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -38804,6 +38860,15 @@
     "areas": [
       "apps/web/lib",
       "go/other"
+    ]
+  },
+  "Assistant panel": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Assistant · Nova · AI": {
@@ -44031,6 +44096,15 @@
       "routes/desk"
     ]
   },
+  "Began anywhere": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Behavior": {
     "sites": 1,
     "scope": [
@@ -47722,7 +47796,7 @@
     ]
   },
   "Briefing": {
-    "sites": 7,
+    "sites": 8,
     "scope": [
       "go",
       "ts"
@@ -47731,6 +47805,7 @@
       "apps/web/components",
       "apps/web/config",
       "go/other",
+      "routes/admin",
       "routes/agent-control",
       "routes/inbox"
     ]
@@ -49880,7 +49955,7 @@
       "apps/web/components"
     ]
   },
-  "Can read every record except HR, medical, drug testing and pay records, and change nothing.": {
+  "Can read every record except HR, medical, drug testing and pay records and other people's Desk conversations, and change nothing.": {
     "sites": 1,
     "scope": [
       "go"
@@ -50036,7 +50111,7 @@
     ]
   },
   "Cancel": {
-    "sites": 314,
+    "sites": 319,
     "scope": [
       "go",
       "ts"
@@ -54113,7 +54188,7 @@
     ]
   },
   "Cases": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "ts"
     ],
@@ -54985,7 +55060,7 @@
     ]
   },
   "Change coverage": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -55178,7 +55253,7 @@
     ]
   },
   "Change pay profile": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -55205,7 +55280,7 @@
     ]
   },
   "Change policy": {
-    "sites": 2,
+    "sites": 4,
     "scope": [
       "ts"
     ],
@@ -55409,15 +55484,6 @@
     ],
     "areas": [
       "apps/web/components"
-    ]
-  },
-  "Change time off policy": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/worker"
     ]
   },
   "Change to `freight`": {
@@ -58122,6 +58188,15 @@
       "apps/web/lib"
     ]
   },
+  "Choose a conversation": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Choose a course": {
     "sites": 2,
     "scope": [
@@ -58286,15 +58361,6 @@
     ]
   },
   "Choose a fleet code or a manager": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/worker"
-    ]
-  },
-  "Choose a fleet code, a manager or both.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -58760,6 +58826,42 @@
     ]
   },
   "Choose a time within the next 30 days": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Choose a timeframe": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Choose a timeframe or conversations to export": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Choose a timeframe or select conversations to export": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Choose a timeframe to export": {
     "sites": 1,
     "scope": [
       "go"
@@ -59833,6 +59935,15 @@
       "routes/admin"
     ]
   },
+  "Choose the first day of the range": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Choose the first day sent": {
     "sites": 1,
     "scope": [
@@ -59932,6 +60043,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Choose the last day of the range": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Choose the last document date": {
@@ -60811,8 +60931,8 @@
       "routes/worker"
     ]
   },
-  "Cite": {
-    "sites": 1,
+  "Cite a violation": {
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -60820,8 +60940,8 @@
       "routes/worker"
     ]
   },
-  "Cite a violation": {
-    "sites": 2,
+  "Cite violation": {
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -61916,7 +62036,7 @@
     ]
   },
   "Clear the filters": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -61934,7 +62054,7 @@
     ]
   },
   "Clear the search": {
-    "sites": 13,
+    "sites": 12,
     "scope": [
       "ts"
     ],
@@ -61943,8 +62063,7 @@
       "routes/admin",
       "routes/agent-control",
       "routes/desk",
-      "routes/intake",
-      "routes/worker"
+      "routes/intake"
     ]
   },
   "Clear the search and filters": {
@@ -63195,6 +63314,15 @@
       "routes/desk"
     ]
   },
+  "Closed checklists": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/worker"
+    ]
+  },
   "Closed date cannot be before the opened date": {
     "sites": 1,
     "scope": [
@@ -63310,6 +63438,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Closed reviews": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/worker"
     ]
   },
   "Closed the {0} checklist, which this made moot.": {
@@ -63462,14 +63599,13 @@
     ]
   },
   "Closing...": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
       "routes/fiscal-year",
-      "routes/order",
-      "routes/worker"
+      "routes/order"
     ]
   },
   "Cloud cover": {
@@ -66007,7 +66143,7 @@
     ]
   },
   "Compliant": {
-    "sites": 6,
+    "sites": 4,
     "scope": [
       "go",
       "ts"
@@ -69131,6 +69267,24 @@
       "apps/web/components"
     ]
   },
+  "Conversation compacted": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "Conversation is not one Trenova knows": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/handlers"
+    ]
+  },
   "Conversation is required": {
     "sites": 4,
     "scope": [
@@ -69149,6 +69303,15 @@
       "routes/desk"
     ]
   },
+  "Conversation not found": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Conversation width": {
     "sites": 2,
     "scope": [
@@ -69159,12 +69322,22 @@
     ]
   },
   "Conversations": {
-    "sites": 6,
+    "sites": 10,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "routes/admin"
+    ]
+  },
+  "Conversations are chosen by when their last message was sent, in your organization's time zone. The file can be downloaded by you for seven days, and the export is recorded in the audit log.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Conversations could not be searched": {
@@ -71124,24 +71297,6 @@
       "apps/web/lib"
     ]
   },
-  "Could not read what this will change. Saving still works.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/worker"
-    ]
-  },
-  "Could not read which events can be recorded.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/worker"
-    ]
-  },
   "Could not record the backout": {
     "sites": 1,
     "scope": [
@@ -71576,24 +71731,6 @@
       "routes/billing-queue"
     ]
   },
-  "Couldn't load the checklists": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/worker"
-    ]
-  },
-  "Couldn't load the employment history": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/worker"
-    ]
-  },
   "Couldn't load the files: {0}": {
     "sites": 1,
     "scope": [
@@ -71601,24 +71738,6 @@
     ],
     "areas": [
       "routes/inbox"
-    ]
-  },
-  "Couldn't load the reviews": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/worker"
-    ]
-  },
-  "Couldn't load the training": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/worker"
     ]
   },
   "Couldn't load who this is shared with.": {
@@ -72231,6 +72350,15 @@
       "routes/osha"
     ]
   },
+  "Counting the conversations in {0}…": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Counting the moves this would re-route…": {
     "sites": 1,
     "scope": [
@@ -72411,7 +72539,7 @@
     ]
   },
   "Course": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "ts"
     ],
@@ -72465,7 +72593,7 @@
     ]
   },
   "Courses": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -72879,6 +73007,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Covers": {
+    "sites": 3,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Covers brokered loads with carriers.": {
@@ -74286,7 +74423,7 @@
     ]
   },
   "Credential": {
-    "sites": 6,
+    "sites": 7,
     "scope": [
       "ts"
     ],
@@ -75782,7 +75919,7 @@
     ]
   },
   "Cursor is not one a previous page returned": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go"
     ],
@@ -75930,6 +76067,15 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "Custom range": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Custom ranges": {
@@ -78600,7 +78746,7 @@
     ]
   },
   "Dates": {
-    "sites": 6,
+    "sites": 7,
     "scope": [
       "ts"
     ],
@@ -78610,12 +78756,13 @@
     ]
   },
   "Dates must use the YYYY-MM-DD format": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "go"
     ],
     "areas": [
-      "api/graphql"
+      "api/graphql",
+      "go/other"
     ]
   },
   "Day": {
@@ -78681,7 +78828,7 @@
     ]
   },
   "Day entries": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -79865,7 +80012,7 @@
     ]
   },
   "Decision": {
-    "sites": 13,
+    "sites": 14,
     "scope": [
       "ts"
     ],
@@ -81552,6 +81699,15 @@
       "go/other"
     ]
   },
+  "Delete Desk conversation exports past their download window": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Delete SCIM directory": {
     "sites": 1,
     "scope": [
@@ -82398,7 +82554,7 @@
     ]
   },
   "Delivered": {
-    "sites": 30,
+    "sites": 31,
     "scope": [
       "go",
       "ts"
@@ -82477,7 +82633,7 @@
     ]
   },
   "Delivered {0}": {
-    "sites": 8,
+    "sites": 10,
     "scope": [
       "ts"
     ],
@@ -84020,7 +84176,7 @@
     ]
   },
   "Desk": {
-    "sites": 17,
+    "sites": 18,
     "scope": [
       "go",
       "ts"
@@ -84033,6 +84189,15 @@
       "routes/admin",
       "routes/desk",
       "routes/inbox"
+    ]
+  },
+  "Desk Conversations": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Desk agent": {
@@ -84100,6 +84265,25 @@
     ]
   },
   "Desk conversation": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Desk conversations": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/config",
+      "routes/admin"
+    ]
+  },
+  "Desk conversations of other people": {
     "sites": 1,
     "scope": [
       "go"
@@ -86428,7 +86612,7 @@
     ]
   },
   "Disciplinary action": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -86470,6 +86654,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Disciplinary actions": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/worker"
     ]
   },
   "Discipline": {
@@ -88525,7 +88718,7 @@
     ]
   },
   "Document": {
-    "sites": 52,
+    "sites": 53,
     "scope": [
       "go",
       "ts"
@@ -89324,7 +89517,7 @@
     ]
   },
   "Documents": {
-    "sites": 29,
+    "sites": 30,
     "scope": [
       "go",
       "ts"
@@ -89844,7 +90037,7 @@
     ]
   },
   "Download": {
-    "sites": 24,
+    "sites": 27,
     "scope": [
       "ts"
     ],
@@ -90028,14 +90221,24 @@
     ]
   },
   "Download transcript": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "routes/admin",
       "routes/agent-control",
       "routes/desk"
+    ]
+  },
+  "Download transcripts": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Download version snapshot": {
@@ -90045,6 +90248,15 @@
     ],
     "areas": [
       "routes/formula-template"
+    ]
+  },
+  "Download {0, plural, one {# transcript} other {# transcripts}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Download {0}": {
@@ -91476,7 +91688,7 @@
     ]
   },
   "Driver forms": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -93261,7 +93473,7 @@
     ]
   },
   "Due {0}": {
-    "sites": 15,
+    "sites": 17,
     "scope": [
       "ts"
     ],
@@ -95940,8 +96152,17 @@
       "routes/time-attendance"
     ]
   },
-  "Earlier shifts": {
+  "Earlier records": {
     "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/worker"
+    ]
+  },
+  "Earlier shifts": {
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -96390,7 +96611,7 @@
     ]
   },
   "Edit case": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "ts"
     ],
@@ -96428,7 +96649,7 @@
     ]
   },
   "Edit credential": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -96527,7 +96748,7 @@
     ]
   },
   "Edit leave case": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -96618,7 +96839,7 @@
     ]
   },
   "Edit previous employer": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -96627,7 +96848,7 @@
     ]
   },
   "Edit review": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -96654,7 +96875,7 @@
     ]
   },
   "Edit safety event": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -96781,7 +97002,7 @@
     ]
   },
   "Edit {0}": {
-    "sites": 21,
+    "sites": 22,
     "scope": [
       "ts"
     ],
@@ -98719,7 +98940,7 @@
     ]
   },
   "Employment history": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -100018,7 +100239,7 @@
     ]
   },
   "Enroll": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "go",
       "ts"
@@ -100038,16 +100259,7 @@
     ]
   },
   "Enroll in a policy": {
-    "sites": 2,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/worker"
-    ]
-  },
-  "Enroll in a time off policy": {
-    "sites": 1,
+    "sites": 5,
     "scope": [
       "ts"
     ],
@@ -100065,7 +100277,7 @@
     ]
   },
   "Enroll or decline": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
@@ -100182,7 +100394,7 @@
     ]
   },
   "Enrollments": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -103723,7 +103935,7 @@
     ]
   },
   "Events": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
@@ -104061,11 +104273,12 @@
     ]
   },
   "Every agent": {
-    "sites": 7,
+    "sites": 8,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/admin",
       "routes/agent-control"
     ]
   },
@@ -106002,7 +106215,7 @@
     ]
   },
   "Everyone": {
-    "sites": 12,
+    "sites": 13,
     "scope": [
       "go",
       "ts"
@@ -106011,6 +106224,7 @@
       "apps/web/components",
       "go/other",
       "packages/shared/lib",
+      "routes/admin",
       "routes/agent-control",
       "routes/desk",
       "routes/my-team",
@@ -109268,7 +109482,7 @@
     ]
   },
   "Expired": {
-    "sites": 41,
+    "sites": 42,
     "scope": [
       "go",
       "ts"
@@ -109350,7 +109564,7 @@
     ]
   },
   "Expires": {
-    "sites": 29,
+    "sites": 31,
     "scope": [
       "go",
       "ts"
@@ -109879,7 +110093,7 @@
     ]
   },
   "Export": {
-    "sites": 76,
+    "sites": 78,
     "scope": [
       "go",
       "ts"
@@ -109908,6 +110122,15 @@
       "routes/ifta-return"
     ]
   },
+  "Export Desk conversations": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Export JSON": {
     "sites": 2,
     "scope": [
@@ -109933,6 +110156,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Export a timeframe, or select conversations and download them. Each file can be downloaded by the person who asked for it for seven days.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Export accounting reports": {
@@ -110053,6 +110285,15 @@
     ]
   },
   "Export disciplinary data": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Export either a timeframe or the conversations you selected, not both": {
     "sites": 1,
     "scope": [
       "go"
@@ -110388,6 +110629,15 @@
       "go/other"
     ]
   },
+  "Export started": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Export sync records": {
     "sites": 1,
     "scope": [
@@ -110505,6 +110755,15 @@
       "go/other"
     ]
   },
+  "Export transcripts": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Export what support did": {
     "sites": 1,
     "scope": [
@@ -110608,7 +110867,7 @@
     ]
   },
   "Exports": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
@@ -112101,7 +112360,7 @@
     ]
   },
   "Failed": {
-    "sites": 79,
+    "sites": 80,
     "scope": [
       "go",
       "ts"
@@ -114719,7 +114978,7 @@
     ]
   },
   "File": {
-    "sites": 16,
+    "sites": 18,
     "scope": [
       "go",
       "ts"
@@ -114727,6 +114986,7 @@
     "areas": [
       "apps/web/components",
       "go/other",
+      "routes/admin",
       "routes/agent-control",
       "routes/desk",
       "routes/edi",
@@ -119533,6 +119793,15 @@
     ],
     "areas": [
       "routes/fuel-management"
+    ]
+  },
+  "Formula studio": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Formula template": {
@@ -125823,6 +126092,15 @@
       "routes/inbox"
     ]
   },
+  "Handed over from another agent": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Handed over from {0}": {
     "sites": 1,
     "scope": [
@@ -128063,7 +128341,7 @@
     ]
   },
   "History": {
-    "sites": 18,
+    "sites": 19,
     "scope": [
       "ts"
     ],
@@ -135371,7 +135649,7 @@
     ]
   },
   "Injuries and illnesses": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -137712,7 +137990,7 @@
     ]
   },
   "Invitations": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -139804,7 +140082,7 @@
     ]
   },
   "Issue a disciplinary action": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -141413,6 +141691,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Items on {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/worker"
     ]
   },
   "Items to embed": {
@@ -145391,6 +145678,15 @@
       "go/other"
     ]
   },
+  "Last 12 months": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Last 14 days": {
     "sites": 2,
     "scope": [
@@ -145412,11 +145708,12 @@
     ]
   },
   "Last 30 days": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/admin",
       "routes/agent-control",
       "routes/inbox",
       "routes/intake",
@@ -145424,7 +145721,7 @@
     ]
   },
   "Last 7 days": {
-    "sites": 6,
+    "sites": 7,
     "scope": [
       "ts"
     ],
@@ -145437,11 +145734,12 @@
     ]
   },
   "Last 90 days": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/admin",
       "routes/agent-control"
     ]
   },
@@ -146012,6 +146310,15 @@
   },
   "Last mail {0}": {
     "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "Last message": {
+    "sites": 4,
     "scope": [
       "ts"
     ],
@@ -147897,15 +148204,6 @@
       "go/other"
     ]
   },
-  "Leave could not be loaded": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/worker"
-    ]
-  },
   "Leave empty for no deadline; a date in the past is rejected.": {
     "sites": 1,
     "scope": [
@@ -148397,7 +148695,7 @@
     ]
   },
   "Ledger": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
@@ -150795,6 +151093,15 @@
       "apps/web/components"
     ]
   },
+  "List and read every person's Desk conversations, and take them out of Trenova as transcripts, one at a time or many at once. A conversation shows whatever its owner was shown, including data the reader's own role may not otherwise reach.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "List at least one accepted value": {
     "sites": 1,
     "scope": [
@@ -151005,6 +151312,15 @@
     ]
   },
   "List must contain at least one item": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "List other people's Desk conversations and read one on screen; nothing leaves Trenova": {
     "sites": 1,
     "scope": [
       "go"
@@ -152040,11 +152356,12 @@
     ]
   },
   "Loading": {
-    "sites": 8,
+    "sites": 9,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "routes/admin",
       "routes/benefits",
       "routes/carrier-sourcing",
@@ -152654,21 +152971,13 @@
     ]
   },
   "Loading more": {
-    "sites": 2,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
-      "routes/carrier-monitoring"
-    ]
-  },
-  "Loading more changes": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
+      "routes/carrier-monitoring",
       "routes/worker"
     ]
   },
@@ -153267,6 +153576,15 @@
       "routes/accounting-dashboard"
     ]
   },
+  "Loading the actions": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/worker"
+    ]
+  },
   "Loading the activity": {
     "sites": 1,
     "scope": [
@@ -153529,15 +153847,6 @@
       "routes/accounting-dashboard"
     ]
   },
-  "Loading the credential": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/worker"
-    ]
-  },
   "Loading the credentials": {
     "sites": 1,
     "scope": [
@@ -153700,6 +154009,16 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "Loading the form": {
+    "sites": 6,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components",
+      "routes/worker"
     ]
   },
   "Loading the formatting…": {
@@ -154063,6 +154382,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Loading the recognition": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/worker"
     ]
   },
   "Loading the reconciliation": {
@@ -155388,15 +155716,6 @@
       "routes/fiscal-year"
     ]
   },
-  "Log a Clearinghouse query": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/worker"
-    ]
-  },
   "Log a call, email, note or promise to pay against a customer's overdue receivables, so the next person chasing them knows what was said. Record what the customer said in their words; a promise to pay takes the amount and the date they gave, holds back payment reminders until then, and moves the follow-up to the day after unless you give one. Never infer a promise from a payment that has not arrived.": {
     "sites": 1,
     "scope": [
@@ -155425,7 +155744,7 @@
     ]
   },
   "Log a query": {
-    "sites": 5,
+    "sites": 4,
     "scope": [
       "ts"
     ],
@@ -155526,7 +155845,7 @@
     ]
   },
   "Log query": {
-    "sites": 1,
+    "sites": 4,
     "scope": [
       "ts"
     ],
@@ -162064,13 +162383,14 @@
     ]
   },
   "Messages": {
-    "sites": 4,
+    "sites": 8,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
       "apps/web/config",
+      "routes/admin",
       "routes/inbox"
     ]
   },
@@ -165067,7 +165387,7 @@
       "routes/worker"
     ]
   },
-  "More changes could not be loaded.": {
+  "More could not be loaded": {
     "sites": 1,
     "scope": [
       "ts"
@@ -165158,6 +165478,15 @@
       "routes/agent-control"
     ]
   },
+  "More notes could not be loaded": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/worker"
+    ]
+  },
   "More of the street address": {
     "sites": 2,
     "scope": [
@@ -165170,6 +165499,15 @@
     ]
   },
   "More past these": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/worker"
+    ]
+  },
+  "More policies could not be loaded": {
     "sites": 1,
     "scope": [
       "ts"
@@ -165221,6 +165559,24 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "More than {0} conversations match, and one export can hold at most {0}. Choose a shorter timeframe, one person or one agent.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "More than {0} conversations match. One export holds at most {0}; choose a shorter timeframe, one person or one agent.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "More ways to add paper": {
@@ -165944,7 +166300,7 @@
     ]
   },
   "Move to another shift": {
-    "sites": 2,
+    "sites": 4,
     "scope": [
       "ts"
     ],
@@ -165968,15 +166324,6 @@
     ],
     "areas": [
       "apps/web/lib"
-    ]
-  },
-  "Move to shift": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/worker"
     ]
   },
   "Move to the billing queue": {
@@ -166291,7 +166638,7 @@
       "routes/worker"
     ]
   },
-  "Moves the worker to another fleet or manager.": {
+  "Moves the worker to another fleet or manager. Choose a fleet code, a manager or both.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -167216,7 +167563,7 @@
     ]
   },
   "Name": {
-    "sites": 159,
+    "sites": 160,
     "scope": [
       "go",
       "ts"
@@ -168326,6 +168673,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "Narrow the conversations with the timeframe, person, agent and origin above the table": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/graphql"
     ]
   },
   "Narrow to one kind: @shipment, @customer, @worker, @doc": {
@@ -171044,15 +171400,6 @@
       "apps/web/config"
     ]
   },
-  "Next approved time off": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/worker"
-    ]
-  },
   "Next attempt": {
     "sites": 3,
     "scope": [
@@ -171566,7 +171913,7 @@
     ]
   },
   "Next time off": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -172686,11 +173033,12 @@
     ]
   },
   "No agent matches.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/admin",
       "routes/agent-control"
     ]
   },
@@ -173983,6 +174331,26 @@
       "go/other"
     ]
   },
+  "No conversation matches": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "No conversation matches. Choose a longer timeframe, or another person or agent.": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "go/other",
+      "routes/admin"
+    ]
+  },
   "No conversations match “{0}”": {
     "sites": 1,
     "scope": [
@@ -174609,7 +174977,7 @@
       "apps/web/components"
     ]
   },
-  "No documents match.": {
+  "No documents match": {
     "sites": 1,
     "scope": [
       "ts"
@@ -175319,11 +175687,12 @@
     ]
   },
   "No export fits the filters. Clear them to see every one.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/admin",
       "routes/agent-control"
     ]
   },
@@ -175337,7 +175706,7 @@
     ]
   },
   "No exports yet": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -178715,6 +179084,15 @@
       "routes/desk"
     ]
   },
+  "No recognition yet.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/worker"
+    ]
+  },
   "No record": {
     "sites": 1,
     "scope": [
@@ -181070,6 +181448,15 @@
       "routes/rate-matrix"
     ]
   },
+  "Nobody had a Desk conversation in this timeframe with these filters. Choose a longer timeframe, or another person, agent or place it began.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Nobody has asked it anything since {0} · it holds 1 tool": {
     "sites": 1,
     "scope": [
@@ -181497,7 +181884,7 @@
     ]
   },
   "Non-compliant": {
-    "sites": 8,
+    "sites": 6,
     "scope": [
       "ts"
     ],
@@ -184198,14 +184585,12 @@
     ]
   },
   "Note cannot exceed 500 characters": {
-    "sites": 5,
+    "sites": 4,
     "scope": [
-      "go",
-      "ts"
+      "go"
     ],
     "areas": [
-      "go/other",
-      "routes/worker"
+      "go/other"
     ]
   },
   "Note for billing (optional)": {
@@ -185846,7 +186231,7 @@
     ]
   },
   "Nothing matches": {
-    "sites": 16,
+    "sites": 17,
     "scope": [
       "ts"
     ],
@@ -186081,6 +186466,15 @@
     ]
   },
   "Nothing on file": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/worker"
+    ]
+  },
+  "Nothing on file fits this search and type.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -186481,15 +186875,6 @@
     ],
     "areas": [
       "routes/rate-agreement"
-    ]
-  },
-  "Nothing recorded yet.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/worker"
     ]
   },
   "Nothing recorded.": {
@@ -187226,6 +187611,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Nothing was said in this conversation.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Nothing was sitting at the address. New mail shows up here, already read, as it arrives.": {
@@ -191642,6 +192036,15 @@
       "routes/billing-control"
     ]
   },
+  "One export can hold at most {0} conversations. Narrow the timeframe, the person or the agent.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "One free-time allowance for every stop, and one charge billed for the time past it.": {
     "sites": 1,
     "scope": [
@@ -192651,6 +193054,15 @@
       "go/other"
     ]
   },
+  "Only a custom timeframe takes dates": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Only a deadline the source reports carries a label": {
     "sites": 1,
     "scope": [
@@ -193075,6 +193487,15 @@
     ]
   },
   "Only a person keeps memories on the Desk": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Only a person signed in to this organization can read other people's Desk conversations": {
     "sites": 1,
     "scope": [
       "go"
@@ -195020,8 +195441,17 @@
       "go/other"
     ]
   },
+  "Only the person who asked can download it": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Only the person who asked for an export may download it": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "go"
     ],
@@ -195292,7 +195722,7 @@
     ]
   },
   "Open": {
-    "sites": 78,
+    "sites": 79,
     "scope": [
       "go",
       "ts"
@@ -195490,6 +195920,15 @@
       "template/notification.dash.disciplinary_issued"
     ]
   },
+  "Open Desk conversations in administration to download it. It can be downloaded for seven days.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Open Desk to": {
     "sites": 2,
     "scope": [
@@ -195634,15 +196073,6 @@
       "go/other"
     ]
   },
-  "Open a case": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/worker"
-    ]
-  },
   "Open a course, take it, then confirm here. Scored courses are closed by your carrier once they enter your result.": {
     "sites": 1,
     "scope": [
@@ -195689,7 +196119,7 @@
     ]
   },
   "Open a leave case": {
-    "sites": 1,
+    "sites": 4,
     "scope": [
       "ts"
     ],
@@ -195961,13 +196391,12 @@
     ]
   },
   "Open case": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/osha",
-      "routes/worker"
+      "routes/osha"
     ]
   },
   "Open checklist": {
@@ -198303,11 +198732,12 @@
     ]
   },
   "Opening the conversation": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/admin",
       "routes/desk"
     ]
   },
@@ -200814,6 +201244,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "Other people's Desk conversations, titles included, as their owners saw them. A conversation shows whatever its owner was shown, which can include data the reader's own role cannot otherwise reach": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Other reason": {
@@ -204861,6 +205300,15 @@
       "routes/agent-control"
     ]
   },
+  "Part of this turn is too large to show here; download the transcript to read it whole.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Part of {0}": {
     "sites": 7,
     "scope": [
@@ -206784,12 +207232,13 @@
     ]
   },
   "Pay components": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/pay-profile"
+      "routes/pay-profile",
+      "routes/worker"
     ]
   },
   "Pay components must not contain null values": {
@@ -208251,7 +208700,7 @@
     ]
   },
   "Pending review": {
-    "sites": 4,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -209878,7 +210327,7 @@
     ]
   },
   "Person": {
-    "sites": 11,
+    "sites": 16,
     "scope": [
       "go",
       "ts"
@@ -210973,12 +211422,13 @@
     ]
   },
   "Picked up after a wait": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "routes/admin"
     ]
   },
   "Picked up after the wait ran out": {
@@ -212895,7 +213345,7 @@
     ]
   },
   "Policies signed": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -212971,7 +213421,7 @@
     ]
   },
   "Policy history": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -215702,7 +216152,7 @@
     ]
   },
   "Previous employers": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -217275,7 +217725,7 @@
     ]
   },
   "Profile change from {0}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -219455,6 +219905,15 @@
       "apps/web/components"
     ]
   },
+  "Pull transcripts out of Trenova: download one conversation or export many as a file": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Pulled back by the driver before a decision was made.": {
     "sites": 1,
     "scope": [
@@ -219938,16 +220397,7 @@
     ]
   },
   "Put on a shift": {
-    "sites": 2,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/worker"
-    ]
-  },
-  "Put on shift": {
-    "sites": 1,
+    "sites": 4,
     "scope": [
       "ts"
     ],
@@ -220904,7 +221354,7 @@
     ]
   },
   "Queued": {
-    "sites": 25,
+    "sites": 26,
     "scope": [
       "go",
       "ts"
@@ -224467,6 +224917,15 @@
       "apps/web/components"
     ]
   },
+  "Read and export other people's Desk conversations": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Read at its next step": {
     "sites": 1,
     "scope": [
@@ -224878,6 +225337,25 @@
     ],
     "areas": [
       "routes/inbox"
+    ]
+  },
+  "Read the Desk conversations of everyone in your organization, and download their transcripts. Every conversation you open or download is recorded in the audit log.": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin",
+      "routes/section-index"
+    ]
+  },
+  "Read the Desk conversations of people in your organization": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Read the Tariff reference": {
@@ -225865,7 +226343,7 @@
     ]
   },
   "Ready": {
-    "sites": 11,
+    "sites": 12,
     "scope": [
       "go",
       "ts"
@@ -226242,7 +226720,7 @@
     ]
   },
   "Reason": {
-    "sites": 86,
+    "sites": 84,
     "scope": [
       "go",
       "ts"
@@ -227784,7 +228262,7 @@
     ]
   },
   "Recognition": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
@@ -228257,7 +228735,7 @@
     ]
   },
   "Record": {
-    "sites": 26,
+    "sites": 25,
     "scope": [
       "go",
       "ts"
@@ -228311,7 +228789,7 @@
     ]
   },
   "Record a case": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "go",
       "ts"
@@ -228328,15 +228806,6 @@
     ],
     "areas": [
       "apps/web/components"
-    ]
-  },
-  "Record a collection": {
-    "sites": 2,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/worker"
     ]
   },
   "Record a day": {
@@ -228411,24 +228880,6 @@
       "routes/shipment"
     ]
   },
-  "Record a result": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/worker"
-    ]
-  },
-  "Record a result: {0}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/worker"
-    ]
-  },
   "Record a retake": {
     "sites": 1,
     "scope": [
@@ -228439,7 +228890,7 @@
     ]
   },
   "Record a safety event": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -228494,7 +228945,7 @@
     ]
   },
   "Record an injury or illness": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -228504,7 +228955,7 @@
     ]
   },
   "Record answer": {
-    "sites": 2,
+    "sites": 4,
     "scope": [
       "ts"
     ],
@@ -228568,7 +229019,7 @@
     ]
   },
   "Record collection": {
-    "sites": 2,
+    "sites": 5,
     "scope": [
       "ts"
     ],
@@ -228603,6 +229054,15 @@
       "apps/web/components"
     ]
   },
+  "Record day": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/worker"
+    ]
+  },
   "Record departure": {
     "sites": 1,
     "scope": [
@@ -228623,7 +229083,7 @@
     ]
   },
   "Record employment event": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -229004,14 +229464,12 @@
     ]
   },
   "Record recognition": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
-      "go",
-      "ts"
+      "go"
     ],
     "areas": [
-      "go/other",
-      "routes/worker"
+      "go/other"
     ]
   },
   "Record response": {
@@ -229024,13 +229482,22 @@
     ]
   },
   "Record result": {
-    "sites": 6,
+    "sites": 10,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "go/other",
+      "routes/worker"
+    ]
+  },
+  "Record result: {0}": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
       "routes/worker"
     ]
   },
@@ -229134,15 +229601,6 @@
       "apps/web/components"
     ]
   },
-  "Record the Clearinghouse answer": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/worker"
-    ]
-  },
   "Record the SAP evaluation before a return-to-duty test (49 CFR 40.305)": {
     "sites": 1,
     "scope": [
@@ -229243,15 +229701,6 @@
     ]
   },
   "Record the response by editing this employer once it arrives. Each chase is kept as the record of a good-faith effort.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/worker"
-    ]
-  },
-  "Record the result": {
     "sites": 1,
     "scope": [
       "ts"
@@ -229786,6 +230235,15 @@
     ],
     "areas": [
       "routes/reports"
+    ]
+  },
+  "Records changed while the agent worked": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Records held or failed for the same reason are grouped, so one fix clears them all. Fix what the reason names, then retry.": {
@@ -234302,7 +234760,7 @@
     ]
   },
   "Renew credential": {
-    "sites": 1,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -236533,7 +236991,7 @@
     ]
   },
   "Request time off": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
@@ -236597,7 +237055,7 @@
     ]
   },
   "Requested": {
-    "sites": 18,
+    "sites": 21,
     "scope": [
       "go",
       "ts"
@@ -236830,7 +237288,7 @@
     ]
   },
   "Requests": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -237716,15 +238174,6 @@
       "routes/worker"
     ]
   },
-  "Rescinding...": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/worker"
-    ]
-  },
   "Rescind…": {
     "sites": 1,
     "scope": [
@@ -238070,12 +238519,13 @@
     ]
   },
   "Reset filters": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "routes/admin"
     ]
   },
   "Reset formatting": {
@@ -241080,7 +241530,7 @@
     ]
   },
   "Review": {
-    "sites": 30,
+    "sites": 31,
     "scope": [
       "go",
       "ts"
@@ -246293,7 +246743,7 @@
     ]
   },
   "Safety event": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -247067,7 +247517,7 @@
     ]
   },
   "Save": {
-    "sites": 49,
+    "sites": 47,
     "scope": [
       "ts"
     ],
@@ -247297,17 +247747,8 @@
       "routes/organization"
     ]
   },
-  "Save case": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/worker"
-    ]
-  },
   "Save changes": {
-    "sites": 37,
+    "sites": 41,
     "scope": [
       "ts"
     ],
@@ -247401,14 +247842,13 @@
     ]
   },
   "Save draft": {
-    "sites": 4,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
       "routes/factoring-company",
-      "routes/manual-journal",
-      "routes/worker"
+      "routes/manual-journal"
     ]
   },
   "Save each PC*Miler result as stored mileage for the lane.": {
@@ -247590,15 +248030,6 @@
     ],
     "areas": [
       "routes/rate-matrix"
-    ]
-  },
-  "Save renewal": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/worker"
     ]
   },
   "Save report": {
@@ -248264,6 +248695,15 @@
       "routes/formula-template"
     ]
   },
+  "Saving still works.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/worker"
+    ]
+  },
   "Saving the first mapping creates the partner's mapping profile.": {
     "sites": 1,
     "scope": [
@@ -248337,7 +248777,7 @@
     ]
   },
   "Saving...": {
-    "sites": 58,
+    "sites": 57,
     "scope": [
       "ts"
     ],
@@ -249380,25 +249820,21 @@
     ]
   },
   "Say why this item does not apply": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
-      "go",
-      "ts"
+      "go"
     ],
     "areas": [
-      "go/other",
-      "routes/worker"
+      "go/other"
     ]
   },
   "Say why this item is being skipped": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
-      "go",
-      "ts"
+      "go"
     ],
     "areas": [
-      "go/other",
-      "routes/worker"
+      "go/other"
     ]
   },
   "Say why this line is not booked": {
@@ -250324,6 +250760,15 @@
     ],
     "areas": [
       "apps/web/config"
+    ]
+  },
+  "Scheduled request": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Scheduled requests": {
@@ -251304,7 +251749,7 @@
     ]
   },
   "Search changes": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -254253,6 +254698,15 @@
       "go/other"
     ]
   },
+  "Select at least one conversation to export": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Select at least one customer to bill": {
     "sites": 1,
     "scope": [
@@ -254332,6 +254786,33 @@
     ],
     "areas": [
       "packages/shared/types"
+    ]
+  },
+  "Select at most {0} conversations to download at once, or export a timeframe instead": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Select at most {0} conversations, or export a timeframe instead.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "Select at most {0} to download": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Select behavior": {
@@ -262829,6 +263310,15 @@
       "go/other"
     ]
   },
+  "Shipment import": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Shipment import assistant": {
     "sites": 1,
     "scope": [
@@ -264067,12 +264557,13 @@
     ]
   },
   "Show": {
-    "sites": 10,
+    "sites": 11,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "routes/admin",
       "routes/agent-control",
       "routes/desk",
       "routes/edi"
@@ -264228,11 +264719,12 @@
     ]
   },
   "Show every agent": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/admin",
       "routes/agent-control"
     ]
   },
@@ -264971,6 +265463,15 @@
     ],
     "areas": [
       "routes/factoring-company"
+    ]
+  },
+  "Showing the newest {0}": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/worker"
     ]
   },
   "Showing {0, plural, one {# row} other {# rows}}": {
@@ -266356,7 +266857,7 @@
     ]
   },
   "Since {0}": {
-    "sites": 14,
+    "sites": 15,
     "scope": [
       "ts"
     ],
@@ -266525,13 +267026,14 @@
     ]
   },
   "Size": {
-    "sites": 12,
+    "sites": 15,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "routes/admin",
       "routes/agent-control",
       "routes/desk",
       "routes/edi",
@@ -270367,7 +270869,7 @@
     ]
   },
   "Start a review": {
-    "sites": 3,
+    "sites": 5,
     "scope": [
       "ts"
     ],
@@ -270649,7 +271151,7 @@
     ]
   },
   "Start review": {
-    "sites": 9,
+    "sites": 8,
     "scope": [
       "ts"
     ],
@@ -270950,11 +271452,12 @@
     ]
   },
   "Started": {
-    "sites": 9,
+    "sites": 12,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/admin",
       "routes/agent-control",
       "routes/desk",
       "routes/time-attendance"
@@ -271848,7 +272351,7 @@
     ]
   },
   "Status": {
-    "sites": 346,
+    "sites": 349,
     "scope": [
       "go",
       "ts"
@@ -272113,7 +272616,7 @@
     ]
   },
   "Status is required": {
-    "sites": 132,
+    "sites": 133,
     "scope": [
       "go",
       "ts"
@@ -275615,7 +276118,7 @@
     ]
   },
   "Swaps": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
@@ -284897,6 +285400,15 @@
       "routes/desk"
     ]
   },
+  "The checklists could not be loaded": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/worker"
+    ]
+  },
   "The checklists could not be loaded.": {
     "sites": 1,
     "scope": [
@@ -285846,6 +286358,15 @@
     ],
     "areas": [
       "routes/edi"
+    ]
+  },
+  "The conversations could not be counted.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "The cost estimate could not be loaded.": {
@@ -287206,6 +287727,15 @@
       "routes/edi"
     ]
   },
+  "The disciplinary actions could not be loaded": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/worker"
+    ]
+  },
   "The dispatch compliance check refuses this driver.": {
     "sites": 1,
     "scope": [
@@ -287936,6 +288466,15 @@
       "routes/desk"
     ]
   },
+  "The earlier records could not be loaded": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/worker"
+    ]
+  },
   "The earliest day of time off to include.": {
     "sites": 1,
     "scope": [
@@ -288207,6 +288746,15 @@
       "apps/web/components"
     ]
   },
+  "The employment dates could not be loaded": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/worker"
+    ]
+  },
   "The employment event that starts this checklist for a worker.": {
     "sites": 1,
     "scope": [
@@ -288214,6 +288762,24 @@
     ],
     "areas": [
       "routes/worker-checklist-template"
+    ]
+  },
+  "The employment history could not be loaded": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/worker"
+    ]
+  },
+  "The employment lifecycle could not be loaded": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/worker"
     ]
   },
   "The empty value of an optional.": {
@@ -288552,6 +289118,15 @@
       "routes/accounting-control"
     ]
   },
+  "The events that can be recorded could not be loaded": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/worker"
+    ]
+  },
   "The events {0} can move through now.": {
     "sites": 1,
     "scope": [
@@ -288723,6 +289298,15 @@
       "go/other"
     ]
   },
+  "The export could not be prepared for download. Try again shortly.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "The export could not be prepared for download; try again shortly": {
     "sites": 1,
     "scope": [
@@ -288741,6 +289325,24 @@
       "go/other"
     ]
   },
+  "The export could not be queued. Export again.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "The export could not be queued. Try again shortly.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "The export could not be requested.": {
     "sites": 1,
     "scope": [
@@ -288750,6 +289352,15 @@
       "routes/agent-control"
     ]
   },
+  "The export could not be started": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "The export could not be written.": {
     "sites": 1,
     "scope": [
@@ -288757,6 +289368,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "The export could not be written. Try again; if it fails again, export a shorter timeframe.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "The export failed": {
@@ -288793,6 +289413,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "The export was abandoned before it finished. Export again.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "The extended linehaul amount, unformatted.": {
@@ -289305,7 +289934,7 @@
     ]
   },
   "The file could not be downloaded": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
@@ -289521,6 +290150,15 @@
     ]
   },
   "The file name of the attached statement.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "The file passed the {0} MB an export may hold. Export a shorter timeframe, one person or one agent.": {
     "sites": 1,
     "scope": [
       "go"
@@ -291432,15 +292070,6 @@
       "routes/worker-checklist-template"
     ]
   },
-  "The item settles without being done. It still counts toward closing the checklist, so say why.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/worker"
-    ]
-  },
   "The items `f` holds for, in order: `stops.where(s => s.kind == Delivery)`.": {
     "sites": 2,
     "scope": [
@@ -291867,6 +292496,15 @@
       "routes/org-structure"
     ]
   },
+  "The last day of the range cannot be before its first": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "The last day off, counted inclusively.": {
     "sites": 1,
     "scope": [
@@ -292120,6 +292758,24 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "The leave could not be loaded": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/worker"
+    ]
+  },
+  "The leave standing could not be loaded": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/worker"
     ]
   },
   "The ledger could not be loaded": {
@@ -298323,6 +298979,15 @@
       "go/other"
     ]
   },
+  "The recognition could not be loaded": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/worker"
+    ]
+  },
   "The record already has a field {0}": {
     "sites": 2,
     "scope": [
@@ -299003,7 +299668,7 @@
       "api/handlers"
     ]
   },
-  "The request could not be read.": {
+  "The request could not be loaded": {
     "sites": 1,
     "scope": [
       "ts"
@@ -299450,6 +300115,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "The reviews could not be loaded": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/worker"
     ]
   },
   "The revised tender is identical to the one already sent": {
@@ -303042,6 +303716,15 @@
       "rules/tariff"
     ]
   },
+  "The time off could not be loaded": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/worker"
+    ]
+  },
   "The time range this tier covers.": {
     "sites": 1,
     "scope": [
@@ -303438,6 +304121,15 @@
       "rules/tariff"
     ]
   },
+  "The training could not be loaded": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/worker"
+    ]
+  },
   "The training course this is about.": {
     "sites": 1,
     "scope": [
@@ -303456,6 +304148,15 @@
     "areas": [
       "apps/web/edi",
       "edi/x12"
+    ]
+  },
+  "The transcript could not be downloaded": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "The transfer could not be queued — try again shortly": {
@@ -307724,6 +308425,15 @@
       "apps/web/components"
     ]
   },
+  "This conversation could not be opened. Try again shortly.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "This conversation has as many chapters as it can hold. Merge some before starting another.": {
     "sites": 1,
     "scope": [
@@ -307821,6 +308531,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "This conversation no longer exists.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "This conversation takes the page's {0} draft": {
@@ -308864,6 +309583,15 @@
       "go/other"
     ]
   },
+  "This export has expired. Export the conversations again.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "This export has expired; export the log again": {
     "sites": 1,
     "scope": [
@@ -308874,7 +309602,7 @@
     ]
   },
   "This export has no file to download yet": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go"
     ],
@@ -310209,15 +310937,6 @@
       "routes/dispatch-console"
     ]
   },
-  "This isn't an empty file. Try again in a moment.": {
-    "sites": 2,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/worker"
-    ]
-  },
   "This isn't an empty list: covered moves may still be slipping. The Watchtower has them too.": {
     "sites": 1,
     "scope": [
@@ -310234,15 +310953,6 @@
     ],
     "areas": [
       "routes/freight-outlook"
-    ]
-  },
-  "This isn't an empty record. Try again in a moment.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/worker"
     ]
   },
   "This isn't an empty roster: drivers may still be free for work.": {
@@ -315533,15 +316243,6 @@
       "packages/shared/types"
     ]
   },
-  "Time off could not be loaded": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/worker"
-    ]
-  },
   "Time off denied": {
     "sites": 1,
     "scope": [
@@ -315797,6 +316498,15 @@
       "apps/web/components",
       "apps/web/lib",
       "routes/agent-control"
+    ]
+  },
+  "Timeframe": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Timeline": {
@@ -316088,13 +316798,14 @@
     ]
   },
   "Title": {
-    "sites": 12,
+    "sites": 15,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "go/other",
+      "routes/admin",
       "routes/agent-control",
       "routes/carrier",
       "routes/edi",
@@ -317036,6 +317747,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Too many conversations selected": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Too many extracted fields": {
@@ -321886,7 +322606,7 @@
     ]
   },
   "Try again": {
-    "sites": 88,
+    "sites": 85,
     "scope": [
       "ts"
     ],
@@ -321934,7 +322654,7 @@
     ]
   },
   "Try again shortly.": {
-    "sites": 4,
+    "sites": 8,
     "scope": [
       "ts"
     ],
@@ -322887,7 +323607,7 @@
     ]
   },
   "Type": {
-    "sites": 57,
+    "sites": 58,
     "scope": [
       "go",
       "ts"
@@ -326150,12 +326870,13 @@
     ]
   },
   "Untitled conversation": {
-    "sites": 15,
+    "sites": 17,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "routes/admin",
       "routes/desk"
     ]
   },
@@ -326905,7 +327626,7 @@
     ]
   },
   "Upload a new version": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
@@ -326978,7 +327699,7 @@
     ]
   },
   "Upload documents": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
@@ -328243,7 +328964,7 @@
       "routes/fuel-management"
     ]
   },
-  "Use this when the item does not apply to this worker at all.": {
+  "Use this when the worker already meets the requirement another way — prior experience, an equivalent certificate, a grandfathered rule. The waiver satisfies the matrix and is kept in the audit log with your reason.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -328252,7 +328973,7 @@
       "routes/worker"
     ]
   },
-  "Use this when the worker already meets the requirement another way — prior experience, an equivalent certificate, a grandfathered rule. The waiver satisfies the matrix and is kept in the audit log with your reason.": {
+  "Use this when “{0}” does not apply to this worker at all.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -330339,7 +331060,7 @@
     ]
   },
   "View": {
-    "sites": 140,
+    "sites": 141,
     "scope": [
       "go",
       "ts"
@@ -330765,12 +331486,13 @@
     ]
   },
   "View exports": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/hooks"
+      "apps/web/hooks",
+      "routes/admin"
     ]
   },
   "View factor funding, reserve balances and chargebacks": {
@@ -331875,7 +332597,7 @@
     ]
   },
   "Violations": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -333731,13 +334453,12 @@
     ]
   },
   "Waiving...": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/shipment",
-      "routes/worker"
+      "routes/shipment"
     ]
   },
   "Waiving…": {
@@ -334339,7 +335060,7 @@
     ]
   },
   "Watchtower": {
-    "sites": 6,
+    "sites": 7,
     "scope": [
       "go",
       "ts"
@@ -334347,6 +335068,7 @@
     "areas": [
       "apps/web/config",
       "go/other",
+      "routes/admin",
       "routes/desk"
     ]
   },
@@ -336283,7 +337005,7 @@
     ]
   },
   "What agents remember about {0}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -338730,6 +339452,15 @@
       "routes/rate-matrix"
     ]
   },
+  "What this will change could not be loaded": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/worker"
+    ]
+  },
   "What this will do": {
     "sites": 2,
     "scope": [
@@ -340715,6 +341446,15 @@
       "routes/carrier-settlement-control"
     ]
   },
+  "Where a conversation began is invalid": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Where a fresh conversation starts. Auto switch still moves a question to the agent with the tools for it.": {
     "sites": 1,
     "scope": [
@@ -340902,6 +341642,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "Where it began": {
+    "sites": 6,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Where it came from": {
@@ -347287,6 +348036,15 @@
       "edi/lading"
     ]
   },
+  "Write an export of Desk conversations to object storage": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Write an instruction, a fact or a procedure": {
     "sites": 1,
     "scope": [
@@ -347851,7 +348609,7 @@
     ]
   },
   "Writing": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
@@ -348781,6 +349539,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "You are reading {0}'s conversation as they saw it. Opening it was recorded in the audit log; nothing here changes it for them.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "You are running out of recovery codes. Create new ones and store them safely.": {
@@ -349914,6 +350681,15 @@
       "apps/web/components"
     ]
   },
+  "You no longer have permission to read other people's Desk conversations.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "You offered this memory for others; an administrator decides whether it is kept": {
     "sites": 1,
     "scope": [
@@ -350294,6 +351070,15 @@
     ],
     "areas": [
       "packages/shared/components"
+    ]
+  },
+  "You will be told when the file is ready to download.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "You will be told when the file is ready. It is kept in Reports.": {
@@ -351068,6 +351853,24 @@
     "areas": [
       "apps/web/components",
       "routes/customer-ledger"
+    ]
+  },
+  "Your export of Desk conversations failed": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Your export of Desk conversations is ready": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Your first briefing": {
@@ -363426,6 +364229,15 @@
       "api/handlers"
     ]
   },
+  "startDate must not be after endDate": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "startDateFrom must be greater than 0": {
     "sites": 1,
     "scope": [
@@ -363454,12 +364266,12 @@
     ]
   },
   "startTime must be before endTime": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "go"
     ],
     "areas": [
-      "api/graphql"
+      "go/other"
     ]
   },
   "status": {
@@ -366685,6 +367497,15 @@
       "routes/table-change-alert"
     ]
   },
+  "{0, plural, one {# conversation} other {# conversations}} will be exported as one zip: a Markdown transcript for each, and conversations.jsonl with all of them.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "{0, plural, one {# could not be sent and is still in the queue.} other {# could not be sent and are still in the queue.}}": {
     "sites": 1,
     "scope": [
@@ -368460,6 +369281,15 @@
       "routes/agent-control"
     ]
   },
+  "{0, plural, one {# message from the middle of this conversation is left out here; download the transcript to read all of it} other {# messages from the middle of this conversation are left out here; download the transcript to read all of them}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "{0, plural, one {# message is waiting on an acknowledgment} other {# messages are waiting on an acknowledgment}} past {1}": {
     "sites": 1,
     "scope": [
@@ -369008,7 +369838,7 @@
     ]
   },
   "{0, plural, one {# note} other {# notes}}": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -369559,6 +370389,15 @@
     ],
     "areas": [
       "routes/benefits"
+    ]
+  },
+  "{0, plural, one {# point from earlier events} other {# points from earlier events}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/worker"
     ]
   },
   "{0, plural, one {# point} other {# points}}": {
@@ -370335,6 +371174,15 @@
       "routes/desk"
     ]
   },
+  "{0, plural, one {# selected conversation} other {# selected conversations}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "{0, plural, one {# selected event was} other {# selected events were}} not open and left unchanged.": {
     "sites": 1,
     "scope": [
@@ -371084,6 +371932,15 @@
       "routes/desk"
     ]
   },
+  "{0, plural, one {# transcript is} other {# transcripts are}} being written to one file. You will be told when it is ready to download.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "{0, plural, one {# truck posted} other {# trucks posted}}": {
     "sites": 1,
     "scope": [
@@ -371203,15 +372060,6 @@
     ]
   },
   "{0, plural, one {# violation} other {# violations}}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/worker"
-    ]
-  },
-  "{0, plural, one {# waiting on a decision} other {# waiting on a decision}}": {
     "sites": 1,
     "scope": [
       "ts"
@@ -373930,15 +374778,6 @@
       "routes/admin"
     ]
   },
-  "{0, plural, other {# more}}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/worker"
-    ]
-  },
   "{0, plural, other {# remittances}} are waiting to be applied": {
     "sites": 1,
     "scope": [
@@ -375338,12 +376177,13 @@
     ]
   },
   "{0} and {1, plural, one {# other} other {# others}}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "routes/admin"
     ]
   },
   "{0} and {1}": {
@@ -383646,12 +384486,13 @@
     ]
   },
   "{0} more": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/desk"
+      "routes/desk",
+      "routes/worker"
     ]
   },
   "{0} more clean approvals and": {
@@ -384530,6 +385371,15 @@
       "routes/detention-intelligence"
     ]
   },
+  "{0} of the selected conversations could not be found in your organization": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "{0} of the usual {1, plural, one {# load} other {# loads}} in the next day are in; by now {2} usually are, so the rest may be going to another carrier.": {
     "sites": 1,
     "scope": [
@@ -384591,15 +385441,6 @@
     ],
     "areas": [
       "routes/freight-outlook"
-    ]
-  },
-  "{0} of {1, plural, one {# event} other {# events}}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/worker"
     ]
   },
   "{0} of {1, plural, one {# move} other {# moves}} {0, plural, one {has} other {have}} no driver or carrier": {
@@ -388528,6 +389369,15 @@
       "apps/dash/_components"
     ]
   },
+  "{0} waiting on a decision": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/worker"
+    ]
+  },
   "{0} waiting on this period's draw": {
     "sites": 1,
     "scope": [
@@ -390658,6 +391508,15 @@
       "routes/desk"
     ]
   },
+  "{0}'s conversation with {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "{0}'s hours": {
     "sites": 2,
     "scope": [
@@ -390746,6 +391605,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "{0}, begun in {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "{0}, element {1}": {
@@ -390946,6 +391814,24 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "{0}, while it worked": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "{0}, with {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "{0}, {1, plural, one {# mile} other {# miles}}, free {2} · {3}": {
@@ -391699,10 +392585,10 @@
       "ts"
     ],
     "areas": [
+      "apps/web/lib",
       "go/other",
       "routes/detention-intelligence",
-      "routes/inbox",
-      "routes/worker"
+      "routes/inbox"
     ]
   },
   "{0}h ago": {
@@ -391733,7 +392619,7 @@
     ]
   },
   "{0}h {1}m": {
-    "sites": 6,
+    "sites": 5,
     "scope": [
       "go",
       "ts"
@@ -391742,12 +392628,11 @@
       "apps/web/components",
       "apps/web/lib",
       "go/other",
-      "routes/desk",
-      "routes/worker"
+      "routes/desk"
     ]
   },
   "{0}m": {
-    "sites": 8,
+    "sites": 7,
     "scope": [
       "go",
       "ts"
@@ -391758,8 +392643,7 @@
       "go/other",
       "routes/desk",
       "routes/inbox",
-      "routes/time-attendance",
-      "routes/worker"
+      "routes/time-attendance"
     ]
   },
   "{0}m left": {
@@ -392439,6 +393323,15 @@
       "routes/home"
     ]
   },
+  "· waiting on a decision": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/worker"
+    ]
+  },
   "· {0, plural, one {# day out} other {# days out}}": {
     "sites": 1,
     "scope": [
@@ -392897,6 +393790,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "“{0}” settles without being done. It still counts toward closing the checklist, so say why.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/worker"
     ]
   },
   "• Maximum file size: 50 MB per file": {

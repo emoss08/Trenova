@@ -2,7 +2,7 @@
 // read off a file, drawn over the file's own pages. Run with the mock API and
 // the web app up (see README.md):
 //
-//   node e2e/mock-api/desk-extraction-screenshots.mjs [outDir] [name,name,...]
+//   bun e2e/mock-api/desk-extraction-screenshots.mjs [outDir] [name,name,...]
 //
 // Each shot sets the `extraction` variant and `extractionStage` it needs. Every
 // shot also measures where each drawn box sits against the drawn page and

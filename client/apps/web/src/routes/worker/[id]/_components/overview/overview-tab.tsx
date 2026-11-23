@@ -1,5 +1,5 @@
 import { useWorkPane } from "@/components/work-pane";
-import { worker as workerQueries } from "@/lib/queries/worker";
+import { workerOverviewQuery } from "@/lib/queries/worker";
 import type { WorkerTabProps, WorkerTarget } from "@/routes/worker/use-worker-state";
 import { useWorkerAreas } from "@/routes/worker/worker-areas";
 import { useQuery } from "@tanstack/react-query";
@@ -21,7 +21,7 @@ export default function OverviewTab({ workerId, onOpen }: WorkerTabProps) {
   const t = useT();
   const areas = useWorkerAreas();
   const pane = useWorkPane();
-  const { data, error, isLoading, refetch } = useQuery(workerQueries.overview(workerId));
+  const { data, error, isLoading, refetch } = useQuery(workerOverviewQuery(workerId));
 
   if (isLoading) return <OverviewSkeleton />;
   if (error || !data) {

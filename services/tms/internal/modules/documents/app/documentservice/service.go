@@ -85,6 +85,7 @@ type Params struct {
 	AICorrections        aicorrectionports.AICorrectionService
 	Triage               inboundmessageports.TriageEventSink
 	Permissions          permissionports.PermissionEngine
+	Watchers             []documentports.ResourceDocumentsWatcher `group:"resource_document_watchers"`
 }
 
 type Service struct {
@@ -114,6 +115,7 @@ type Service struct {
 	aiCorrections        aicorrectionports.AICorrectionService
 	triage               inboundmessageports.TriageEventSink
 	permissions          permissionports.PermissionEngine
+	watchers             []documentports.ResourceDocumentsWatcher
 }
 
 func New(p Params) *Service { //nolint:gocritic // stable API shape
@@ -150,6 +152,7 @@ func New(p Params) *Service { //nolint:gocritic // stable API shape
 		aiCorrections:        p.AICorrections,
 		triage:               p.Triage,
 		permissions:          p.Permissions,
+		watchers:             p.Watchers,
 	}
 }
 
@@ -502,6 +505,26 @@ func (s *Service) publishDocumentInvalidation(
 	if err := realtimeinvalidation.Publish(ctx, s.realtime, params); err != nil {
 		s.l.Warn("failed to publish document invalidation", zap.Error(err))
 	}
+	s.announceResourceDocuments(ctx, doc)
+}
+
+func (s *Service) announceResourceDocuments(ctx context.Context, doc *document.Document) {
+	if doc == nil || len(s.watchers) == 0 || doc.ResourceType == "" || doc.ResourceID == "" {
+		return
+	}
+	change := documentports.ResourceDocumentsChange{
+		TenantInfo: pagination.TenantInfo{
+			OrgID: doc.OrganizationID,
+			BuID:  doc.BusinessUnitID,
+		},
+		ResourceType: doc.ResourceType,
+		ResourceID:   doc.ResourceID,
+	}
+	kernelports.AfterCommit(ctx, func(committed context.Context) {
+		for _, watcher := range s.watchers {
+			watcher.ResourceDocumentsChanged(committed, change)
+		}
+	})
 }
 
 func (s *Service) prepareUploadLineage(

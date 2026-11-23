@@ -6,6 +6,7 @@ import {
   useRecordMemoriesAvailable,
 } from "@/components/record-memories/record-memories";
 import { SectionPanel, SectionPanelQuiet } from "@/components/section-panel";
+import { VirtualRows, type VirtualRow } from "@/components/virtual-rows";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import {
   createDeskMemory,
@@ -15,21 +16,24 @@ import {
   type DeskMemory,
   type DeskMemorySubject,
 } from "@/lib/graphql/desk-memories";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { workerOverviewQuery } from "@/lib/queries/worker";
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { ErrorState } from "@trenova/shared/components/errors/error-state";
 import { BotIcon, Edit02Icon, Trash01Icon, User01Icon } from "@trenova/shared/components/icons";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
-import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { SegmentedControl } from "@trenova/shared/components/ui/segmented-control";
 import { Textarea } from "@trenova/shared/components/ui/textarea";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { resolveUserTimezone } from "@trenova/shared/lib/date";
+import { cn } from "@trenova/shared/lib/utils";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { useState } from "react";
 import { FilesSkeleton } from "../files-skeleton";
+import { useWorkerInvalidation } from "../../use-worker-invalidation";
+import { LoadMoreFooter } from "../load-more-footer";
 
-/** The most notes about one worker the view reads, as the shared memories panel does. */
+/** How many notes one read brings; the list asks for the next page as it is scrolled to. */
 const PAGE_SIZE = 50;
 
 type WrittenKind = "Fact" | "Instruction";
@@ -49,22 +53,26 @@ export default function WorkerMemories({
 }) {
   const t = useT();
   const available = useRecordMemoriesAvailable();
-  const queryClient = useQueryClient();
   const subject: DeskMemorySubject = { type: "Worker", id: workerId };
   const [adding, setAdding] = useState(false);
   const [forgetting, setForgetting] = useState<DeskMemory | null>(null);
 
-  const memoriesQuery = useQuery({
-    queryKey: recordMemoriesQueryKey(subject),
-    queryFn: ({ signal }) =>
-      fetchDeskMemories({ scope: null, roleId: null, query: "", subject }, null, PAGE_SIZE, signal),
+  const memoriesQuery = useInfiniteQuery({
+    queryKey: [...recordMemoriesQueryKey(subject), "pages"],
+    queryFn: ({ pageParam, signal }) =>
+      fetchDeskMemories(
+        { scope: null, roleId: null, query: "", subject },
+        pageParam,
+        PAGE_SIZE,
+        signal,
+      ),
+    initialPageParam: null as string | null,
+    getNextPageParam: (page) => page.next,
+    select: (data) => data.pages.flatMap((page) => page.items),
     enabled: available,
   });
-  const refresh = () =>
-    Promise.all([
-      queryClient.invalidateQueries({ queryKey: recordMemoriesQueryKey(subject) }),
-      queryClient.invalidateQueries({ queryKey: ["worker"] }),
-    ]);
+  const overview = useQuery({ ...workerOverviewQuery(workerId), enabled: available });
+  const refresh = useWorkerInvalidation(workerId, "agent-memory");
 
   const forget = useApiMutation({
     scope: { id: `worker-memory:${workerId}` },
@@ -76,20 +84,28 @@ export default function WorkerMemories({
   if (!available) return null;
   if (memoriesQuery.isPending) return <FilesSkeleton view="agent-memory" />;
 
-  const memories = memoriesQuery.data?.items ?? [];
+  const memories = memoriesQuery.data ?? [];
+  const rows: VirtualRow[] = memories.map((memory, index) => ({
+    key: memory.id,
+    render: () => (
+      <MemoryRow
+        ruled={index > 0}
+        memory={memory}
+        removing={forget.isPending && forget.variables?.id === memory.id}
+        onSaved={refresh}
+        onForget={() => setForgetting(memory)}
+      />
+    ),
+  }));
 
   return (
     <div className="flex min-w-0 flex-col gap-4 text-sm">
       <SectionPanel
         title={t("What agents remember about {0}", workerName)}
-        hint={
-          memories.length > 0
-            ? t("{0, plural, one {# note} other {# notes}}", memories.length)
-            : undefined
-        }
+        count={overview.data?.agentMemoryCount ?? memories.length}
         action={
           adding ? null : (
-            <Button size="xs" variant="quiet" onClick={() => setAdding(true)}>
+            <Button size="sm" variant="quiet" onClick={() => setAdding(true)}>
               {t("Add a note")}
             </Button>
           )
@@ -103,7 +119,7 @@ export default function WorkerMemories({
             onSaved={refresh}
           />
         ) : null}
-        {memoriesQuery.isError ? (
+        {memoriesQuery.isError && !memoriesQuery.isFetchNextPageError ? (
           <ErrorState
             error={memoriesQuery.error}
             layout="compact"
@@ -118,19 +134,33 @@ export default function WorkerMemories({
             )}
           </SectionPanelQuiet>
         ) : (
-          <ScrollArea viewportClassName="max-h-[32rem]" maskVariant="card">
-            <ul className="flex flex-col divide-y divide-border-subtle px-1.5 py-1">
-              {memories.map((memory) => (
-                <MemoryRow
-                  key={memory.id}
-                  memory={memory}
-                  removing={forget.isPending && forget.variables?.id === memory.id}
-                  onSaved={refresh}
-                  onForget={() => setForgetting(memory)}
-                />
-              ))}
-            </ul>
-          </ScrollArea>
+          <VirtualRows
+            rows={rows}
+            estimateSize={64}
+            className="max-h-128"
+            contentClassName="px-1.5 py-1"
+            aria-label={t("What agents remember about {0}", workerName)}
+            role="list"
+            mask="card"
+            onEndReached={() => {
+              if (
+                memoriesQuery.hasNextPage &&
+                !memoriesQuery.isFetching &&
+                !memoriesQuery.isFetchNextPageError
+              ) {
+                void memoriesQuery.fetchNextPage();
+              }
+            }}
+            footer={
+              <LoadMoreFooter
+                loading={memoriesQuery.isFetchingNextPage}
+                failed={memoriesQuery.isFetchNextPageError}
+                error={memoriesQuery.error}
+                failedTitle={t("More notes could not be loaded")}
+                onRetry={() => void memoriesQuery.fetchNextPage()}
+              />
+            }
+          />
         )}
         <p className="border-t border-border-subtle px-3 py-2.5 text-xs text-muted-foreground">
           {t(
@@ -153,11 +183,14 @@ export default function WorkerMemories({
 }
 
 function MemoryRow({
+  ruled,
   memory,
   removing,
   onSaved,
   onForget,
 }: {
+  /** A rule above it, between rows. */
+  ruled: boolean;
   memory: DeskMemory;
   removing: boolean;
   onSaved: () => Promise<unknown>;
@@ -180,9 +213,13 @@ function MemoryRow({
   });
 
   return (
-    <li
+    <div
+      role="listitem"
       data-testid={`memory-${memory.id}`}
-      className="group/memory grid grid-cols-[0.875rem_minmax(0,1fr)_auto] items-start gap-2.5 px-2 py-2.5"
+      className={cn(
+        "group/memory grid grid-cols-[0.875rem_minmax(0,1fr)_auto] items-start gap-2.5 px-2 py-2.5",
+        ruled && "border-t border-border-subtle",
+      )}
     >
       <Icon className="mt-0.5 size-3.5 text-muted-foreground" />
       <div className="min-w-0">
@@ -198,11 +235,11 @@ function MemoryRow({
               aria-label={t("What agents should remember")}
             />
             <div className="flex justify-end gap-2">
-              <Button size="xs" variant="outline" onClick={() => setDraft(null)}>
+              <Button size="sm" variant="outline" onClick={() => setDraft(null)}>
                 {t("Cancel")}
               </Button>
               <Button
-                size="xs"
+                size="sm"
                 isLoading={revise.isPending}
                 disabled={draft.trim() === "" || draft.trim() === memory.content}
                 onClick={() => void revise.mutateAsync(draft.trim()).catch(() => undefined)}
@@ -251,7 +288,7 @@ function MemoryRow({
       ) : (
         <span />
       )}
-    </li>
+    </div>
   );
 }
 

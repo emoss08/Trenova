@@ -203,6 +203,7 @@ only that the sweep keeps its shape.
 | `ai-audit-verify` | `AIAuditTrail` | fans out | ListChainHeads composes ForWork; KeepEntitled before per-tenant verify |
 | `ai-audit-prune` | `AIAuditTrail` | sweeps in SQL | ListChainHeads composes ForWork |
 | `ai-audit-export-cleanup` | `AIAuditTrail` | sweeps in SQL | export ListExpired/ListStale compose ForWork |
+| `desk-transcript-export-cleanup` | `AIDesk` | sweeps in SQL | export ListExpired/ListStale compose ForWork |
 | `conversation-schedule-reconcile` | `AIDesk` | sweeps in SQL | ListAcrossTenants composes ForWork |
 | `eval-case-capture` | `AgentAutomation` | sweeps in SQL | ListCaptureCandidates/AdoptCandidates/RetireStaleAutomatic compose ForWork |
 | `eval-case-purge` | `AgentAutomation` | sweeps in SQL | PurgeExpired(AllTenants)/PurgeOrphaned compose ForWork |

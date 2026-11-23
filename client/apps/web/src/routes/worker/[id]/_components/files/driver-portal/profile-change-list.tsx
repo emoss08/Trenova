@@ -1,13 +1,8 @@
 import { SectionPanel, SectionPanelQuiet } from "@/components/section-panel";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { usePermission } from "@/hooks/use-permission";
-import {
-  decideProfileChange,
-  fetchProfileChangeRequests,
-  PROFILE_CHANGE_REQUESTS_KEY,
-  type ProfileChangeRequestRow,
-} from "@/lib/graphql/self-service";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { decideProfileChange, type ProfileChangeRequestRow } from "@/lib/graphql/self-service";
+import { useQuery } from "@tanstack/react-query";
 import { ErrorState } from "@trenova/shared/components/errors/error-state";
 import { ArrowRightIcon } from "@trenova/shared/components/icons";
 import { Badge } from "@trenova/shared/components/ui/badge";
@@ -17,11 +12,13 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { formatUnixDateMedium } from "@trenova/shared/lib/date";
 import { changeRequestTone } from "@trenova/shared/lib/self-service";
 import { Operation, Resource } from "@trenova/shared/types/permission";
+import {
+  pendingProfileChanges,
+  workerProfileChangesQuery,
+} from "../../profile-change/profile-change-query";
+import { useWorkerInvalidation } from "../../use-worker-invalidation";
 
 type FieldChange = ProfileChangeRequestRow["changes"][number];
-
-/** How many requests the list reads; the newest are the ones a manager acts on. */
-const REQUEST_LIMIT = 20;
 
 /** One field as before and after, so the eye lands on what moves. */
 export function ChangeChip({ change }: { change: FieldChange }) {
@@ -52,33 +49,25 @@ export function ProfileChangeList({
   onReview: (requestId: string) => void;
 }) {
   const t = useT();
-  const queryClient = useQueryClient();
   const { allowed: canRead } = usePermission(Resource.ProfileChangeRequest, Operation.Read);
   const { allowed: canApprove } = usePermission(Resource.ProfileChangeRequest, Operation.Approve);
   const { allowed: canReject } = usePermission(Resource.ProfileChangeRequest, Operation.Reject);
 
-  const requests = useQuery({
-    queryKey: [PROFILE_CHANGE_REQUESTS_KEY, workerId],
-    queryFn: ({ signal }) =>
-      fetchProfileChangeRequests({ workerId, limit: REQUEST_LIMIT }, { signal }),
-    enabled: canRead,
-  });
+  const requests = useQuery({ ...workerProfileChangesQuery(workerId), enabled: canRead });
+  const invalidate = useWorkerInvalidation(workerId, "profile-change");
 
   const approve = useApiMutation({
     scope: { id: `profile-change-decide:${workerId}` },
     resourceName: "Request",
     mutationFn: (request: ProfileChangeRequestRow) =>
       decideProfileChange({ id: request.id, approve: true }),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: [PROFILE_CHANGE_REQUESTS_KEY, workerId] });
-      void queryClient.invalidateQueries({ queryKey: ["worker"] });
-    },
+    onSuccess: () => invalidate(),
   });
 
   if (!canRead) return null;
 
   const rows = requests.data ?? [];
-  const pending = rows.filter((row) => row.status === "Pending");
+  const pending = pendingProfileChanges(rows);
   const decided = rows.filter((row) => row.status !== "Pending");
 
   return (
@@ -87,7 +76,7 @@ export function ProfileChangeList({
       count={pending.length}
       action={
         pending.length > 0 && (canApprove || canReject) ? (
-          <Button size="xs" variant="quiet" onClick={() => onReview(pending[0].id)}>
+          <Button size="sm" variant="quiet" onClick={() => onReview(pending[0].id)}>
             {t("Review with a note")}
           </Button>
         ) : null
@@ -167,7 +156,9 @@ export function ProfileChangeList({
                 className="flex flex-col gap-1.5 border-b border-border-subtle px-3 py-2.5 last:border-0"
               >
                 <div className="flex flex-wrap items-center gap-2">
-                  <Badge variant={tone.variant}>{t(tone.label)}</Badge>
+                  <Badge variant={tone.variant} dot>
+                    {t(tone.label)}
+                  </Badge>
                   <span className="text-xs text-muted-foreground tabular-nums">
                     {request.decidedAt
                       ? t(

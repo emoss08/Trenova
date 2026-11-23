@@ -20,6 +20,8 @@ import type {
   UpdateWorkerInjuryMutationVariables,
   WorkerInjuriesQuery,
   WorkerInjuriesQueryVariables,
+  WorkerInjuryQuery,
+  WorkerInjuryQueryVariables,
 } from "@trenova/graphql/generated/graphql";
 import {
   CertifyOshaSummaryDocument,
@@ -31,10 +33,12 @@ import {
   UncertifyOshaSummaryDocument,
   UpdateWorkerInjuryDocument,
   WorkerInjuriesDocument,
+  WorkerInjuryDocument,
 } from "@trenova/graphql/generated/documents/worker-injury/operations";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
+import type { Connection } from "./connection";
 
-export type WorkerInjuryRow = WorkerInjuriesQuery["workerInjuries"][number];
+export type WorkerInjuryRow = WorkerInjuriesQuery["workerInjuries"]["edges"][number]["node"];
 export type OshaLog = OshaLogQuery["oshaLog"];
 export type OshaLogCase = OshaLog["cases"][number];
 export type OshaSummary = NonNullable<OshaLog["summary"]>;
@@ -44,17 +48,32 @@ export const WORKER_INJURIES_KEY = "worker-injuries";
 export const OSHA_LOG_KEY = "osha-log";
 export const OSHA_SUMMARIES_KEY = "osha-summaries";
 
+/** A page of a worker's injury and illness cases, newest first, as the server's connection. */
 export async function fetchWorkerInjuries(
-  workerId: string,
+  variables: WorkerInjuriesQueryVariables,
   options?: { signal?: AbortSignal },
-): Promise<WorkerInjuryRow[]> {
+): Promise<Connection<WorkerInjuryRow>> {
   const data = await requestGraphQL<WorkerInjuriesQuery, WorkerInjuriesQueryVariables>({
     document: WorkerInjuriesDocument,
     operationName: "WorkerInjuries",
-    variables: { workerId },
+    variables: { ...variables, includeTotalCount: !variables.after },
     signal: options?.signal,
   });
-  return data.workerInjuries;
+  return data.workerInjuries as Connection<WorkerInjuryRow>;
+}
+
+/** One injury or illness case by id: a deep link to a case outside the pages already read. */
+export async function fetchWorkerInjury(
+  id: string,
+  options?: { signal?: AbortSignal },
+): Promise<WorkerInjuryRow> {
+  const data = await requestGraphQL<WorkerInjuryQuery, WorkerInjuryQueryVariables>({
+    document: WorkerInjuryDocument,
+    operationName: "WorkerInjury",
+    variables: { id },
+    signal: options?.signal,
+  });
+  return data.workerInjury;
 }
 
 export async function fetchOshaLog(

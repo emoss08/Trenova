@@ -14,7 +14,7 @@
  * Put `design-tokens-ignore: <reason>` in a comment on the line or the line
  * above. It is deliberately visible in review rather than silent.
  *
- * Usage: node scripts/check-design-tokens.mjs [--format=github]
+ * Usage: bun scripts/check-design-tokens.mjs [--format=github]
  */
 
 import { readFileSync } from "node:fs";

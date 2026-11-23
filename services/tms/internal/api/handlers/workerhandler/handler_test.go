@@ -6,6 +6,9 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/testutil/checklisttest"
+	"github.com/emoss08/trenova/internal/testutil/orgzonetest"
+
 	"github.com/emoss08/trenova/internal/api/handlers/workerhandler"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
@@ -101,10 +104,12 @@ func setupWorkerHandlerWithEngines(
 	})
 
 	credentialService := workercredentialservice.New(workercredentialservice.Params{
-		Logger:       logger,
-		Repo:         emptyCredentialRepo{},
-		AuditService: auditSvc,
-		Realtime:     &mocks.NoopRealtimeService{},
+		Logger:        logger,
+		Repo:          emptyCredentialRepo{},
+		AuditService:  auditSvc,
+		Realtime:      &mocks.NoopRealtimeService{},
+		Checklists:    checklisttest.NoRefresh{},
+		Organizations: orgzonetest.Organizations{},
 	})
 	ptoPolicyService := ptopolicyservice.New(ptopolicyservice.Params{
 		Logger:       logger,

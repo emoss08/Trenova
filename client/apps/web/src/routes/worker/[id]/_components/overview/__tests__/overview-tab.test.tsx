@@ -71,6 +71,7 @@ function draw() {
 
 beforeEach(() => signIn());
 afterEach(() => {
+  vi.useRealTimers();
   clearPermissions();
   fetchWorkerOverview.mockReset();
 });
@@ -132,6 +133,9 @@ describe("OverviewTab", () => {
   });
 
   it("turns to the danger tone with the reasons when the driver is not cleared", async () => {
+    // Days not cleared are counted to the reader's today.
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(AS_OF * 1000);
     const lapsedAt = AS_OF - 3 * DAY;
     const base = overviewFixture();
     fetchWorkerOverview.mockResolvedValue(

@@ -2,6 +2,7 @@ package workeremploymenteventrepository
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
@@ -10,7 +11,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/employment/employmentdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workeremploymentports"
 	"github.com/emoss08/trenova/pkg/dberror"
+	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/listquery"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -47,6 +50,17 @@ func eventLoads(includeDocument, includeActors bool) []keel.Loader {
 	)
 }
 
+func eventsOf(
+	req *workeremploymentports.ListWorkerEmploymentEventsRequest,
+) keel.Query[*employment.WorkerEmploymentEvent] {
+	e := employmentdb.WorkerEmploymentEvents
+
+	return e.Where(
+		e.WorkerID.Eq(req.WorkerID),
+		keel.When(len(req.Kinds) > 0, e.Kind.In(req.Kinds...)),
+	)
+}
+
 func listQuery(
 	req *workeremploymentports.ListWorkerEmploymentEventsRequest,
 ) keel.Query[*employment.WorkerEmploymentEvent] {
@@ -56,18 +70,57 @@ func listQuery(
 		limit = defaultPageSize
 	}
 
-	order := []keel.Order{e.EffectiveAt.Desc(), e.CreatedAt.Desc()}
-	if req.Ascending {
-		order = []keel.Order{e.EffectiveAt.Asc(), e.CreatedAt.Asc()}
-	}
-
-	return e.Where(
-		e.WorkerID.Eq(req.WorkerID),
-		keel.When(len(req.Kinds) > 0, e.Kind.In(req.Kinds...)),
-	).
+	return eventsOf(req).
 		Load(eventLoads(req.IncludeDocument, req.IncludeActors)...).
-		Order(order...).
+		Order(e.EffectiveAt.Desc(), e.CreatedAt.Desc()).
 		Limit(limit)
+}
+
+func timelineKeyset() *listquery.Keyset {
+	e := employmentdb.WorkerEmploymentEvents
+
+	return &listquery.Keyset{
+		Orders: []keel.Order{e.EffectiveAt.Desc(), e.CreatedAt.Desc(), e.ID.Desc()},
+		Shape: []pagination.CursorSortField{
+			{Field: "effectiveAt", Direction: string(dbtype.SortDirectionDesc)},
+			{Field: "createdAt", Direction: string(dbtype.SortDirectionDesc)},
+			{Field: "id", Direction: string(dbtype.SortDirectionDesc)},
+		},
+	}
+}
+
+func (r *repository) ListPage(
+	ctx context.Context,
+	req *workeremploymentports.ListWorkerEmploymentEventsRequest,
+) (*pagination.CursorListResult[*employment.WorkerEmploymentEvent], error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(
+			ctx context.Context,
+		) (*pagination.CursorListResult[*employment.WorkerEmploymentEvent], error) {
+			result, err := listquery.Connection(
+				ctx,
+				r.db.Keel(ctx),
+				eventsOf(req),
+				&listquery.Request[employment.WorkerEmploymentEvent]{
+					Filter: &pagination.QueryOptions{TenantInfo: req.TenantInfo},
+					Cursor: req.Cursor,
+					Shape: func(
+						q keel.Query[*employment.WorkerEmploymentEvent],
+					) keel.Query[*employment.WorkerEmploymentEvent] {
+						return q.Load(eventLoads(req.IncludeDocument, req.IncludeActors)...)
+					},
+					Keyset: timelineKeyset(),
+				},
+			)
+			if err != nil {
+				return nil, fmt.Errorf("page worker employment events: %w", err)
+			}
+
+			return result, nil
+		},
+	)
 }
 
 func (r *repository) List(
@@ -85,6 +138,35 @@ func (r *repository) List(
 			}
 
 			return entities, nil
+		},
+	)
+}
+
+func (r *repository) Summarize(
+	ctx context.Context,
+	req *workeremploymentports.SummarizeWorkerEmploymentEventsRequest,
+) (*workeremploymentports.EmploymentEventSummary, error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*workeremploymentports.EmploymentEventSummary, error) {
+			e := employmentdb.WorkerEmploymentEvents
+			summary, err := keel.IntoOne[workeremploymentports.EmploymentEventSummary](
+				ctx,
+				r.db.Keel(ctx),
+				e.Pick(
+					keel.Count(),
+					e.EffectiveAt.Max().Filter(e.Kind.In(
+						employment.EmploymentEventHired,
+						employment.EmploymentEventRehired,
+					)),
+				).Where(e.WorkerID.Eq(req.WorkerID)),
+			)
+			if err != nil {
+				return nil, fmt.Errorf("summarize worker employment events: %w", err)
+			}
+
+			return &summary, nil
 		},
 	)
 }

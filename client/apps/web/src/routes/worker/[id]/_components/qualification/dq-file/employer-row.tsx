@@ -1,4 +1,5 @@
 import { RowActionsMenu, type RowAction } from "@/components/row-actions-menu";
+import type { PreloadIntent } from "@/components/work-pane";
 import type { EmploymentVerificationRow } from "@/lib/graphql/worker-dqf";
 import {
   Edit03Icon,
@@ -8,9 +9,9 @@ import {
 } from "@trenova/shared/components/icons";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
-import { dateTimeFormatter } from "@trenova/shared/i18n/format";
 import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
-import { formatUnixDateMedium } from "@trenova/shared/lib/date";
+import { useNow } from "@trenova/shared/hooks/use-now";
+import { formatRange, formatUnixDateMedium } from "@trenova/shared/lib/date";
 import {
   verificationMethodLabel,
   verificationNextStep,
@@ -18,7 +19,7 @@ import {
   verificationStatusLabel,
 } from "@trenova/shared/lib/dqf";
 import { cn, toSentenceFragment } from "@trenova/shared/lib/utils";
-import { ATTENTION_CLASS, type FlashPhase } from "../use-row-flash";
+import { ATTENTION_CLASS, type FlashPhase } from "../../use-row-flash";
 import {
   employerStops,
   employerTone,
@@ -28,18 +29,17 @@ import {
 
 export type EmployerPermissions = { canUpdate: boolean; canDelete: boolean };
 
-const MONTH_YEAR: Intl.DateTimeFormatOptions = { month: "short", year: "numeric", timeZone: "UTC" };
-
-function monthYear(value: number): string {
-  return dateTimeFormatter(MONTH_YEAR).format(new Date(value * 1000));
-}
+/** The dates employed there: date-only fields, read in the reader's zone (Patterns 14). */
+/** A past job's dates are read in months, as a reference check asks for them. */
+const MONTH = { unit: "month", year: "always" } as const;
 
 function employedRange(t: TranslateFn, verification: EmploymentVerificationRow): string | null {
   const { employedFrom, employedTo } = verification;
-  if (employedFrom && employedTo)
-    return t("{0} to {1}", monthYear(employedFrom), monthYear(employedTo));
-  if (employedFrom) return t("Since {0}", monthYear(employedFrom));
-  if (employedTo) return t("Until {0}", monthYear(employedTo));
+  if (employedFrom && employedTo) {
+    return formatRange(employedFrom, employedTo, { ...MONTH, join: "words" });
+  }
+  if (employedFrom) return t("Since {0}", formatRange(employedFrom, employedFrom, MONTH));
+  if (employedTo) return t("Until {0}", formatRange(employedTo, employedTo, MONTH));
   return null;
 }
 
@@ -128,10 +128,9 @@ export function EmployerRow({
   verification,
   permissions,
   deadline,
-  now,
   busy,
   flash,
-  rowRef,
+  intent,
   onRequest,
   onFollowUp,
   onEdit,
@@ -140,16 +139,17 @@ export function EmployerRow({
   verification: EmploymentVerificationRow;
   permissions: EmployerPermissions;
   deadline: { dueAt: number; late: boolean };
-  now: number;
   busy: boolean;
   flash: FlashPhase | undefined;
-  rowRef?: (element: HTMLLIElement | null) => void;
+  /** Reads the edit form's code as the pointer or focus reaches the row's menu. */
+  intent?: PreloadIntent;
   onRequest: (verification: EmploymentVerificationRow) => void;
   onFollowUp: (verification: EmploymentVerificationRow) => void;
   onEdit: (verification: EmploymentVerificationRow) => void;
   onRemove: (verification: EmploymentVerificationRow) => void;
 }) {
   const t = useT();
+  const now = useNow("minute");
   const settled = verificationSettled(verification.status);
   const late = deadline.late && !settled;
   const tone = employerTone(verification, deadline.late);
@@ -181,6 +181,7 @@ export function EmployerRow({
       id: "edit",
       label: t("Edit"),
       icon: Edit03Icon,
+      preload: intent?.onFocus,
       onSelect: () => onEdit(verification),
     });
   }
@@ -196,8 +197,7 @@ export function EmployerRow({
   }
 
   return (
-    <li
-      ref={rowRef}
+    <div
       data-glide-target
       data-testid={`dqf-employer-${verification.id}`}
       data-state={tone}
@@ -247,7 +247,7 @@ export function EmployerRow({
       {verification.findings ? (
         <p className="mt-1 text-xs text-muted-foreground">{verification.findings}</p>
       ) : null}
-    </li>
+    </div>
   );
 }
 

@@ -62,6 +62,8 @@ export const SCENARIO_DEFAULTS = {
   // managed or bare: history (one sent, one failed) | empty (none yet) | inFlight (one being
   // collected) | limit (five sent in the last 24 hours)
   supportLogs: process.env.MOCK_SUPPORT_LOGS ?? "history",
+  // the administrator's Desk conversations page: full | empty | hold (every list left open)
+  deskTranscripts: process.env.MOCK_DESK_TRANSCRIPTS ?? "full",
 };
 
 const TRIAGE_SCENARIOS = new Set(["live", "firstDay", "noMailbox", "deskOff"]);

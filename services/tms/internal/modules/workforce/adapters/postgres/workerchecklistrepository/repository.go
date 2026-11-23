@@ -88,7 +88,9 @@ func (r *repository) ListTemplates(
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) (*pagination.CursorListResult[*workerchecklist.WorkerChecklistTemplate], error) {
+		func(
+			ctx context.Context,
+		) (*pagination.CursorListResult[*workerchecklist.WorkerChecklistTemplate], error) {
 			t := workerchecklistdb.WorkerChecklistTemplates
 			result, err := listquery.Connection(
 				ctx,
@@ -376,6 +378,25 @@ func (r *repository) CountOpenChecklists(
 	})
 }
 
+func (r *repository) CountClosedForWorker(
+	ctx context.Context,
+	_ pagination.TenantInfo,
+	workerID pulid.ID,
+) (int, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
+		c := workerchecklistdb.WorkerChecklists
+		count, err := c.Where(
+			c.WorkerID.Eq(workerID),
+			c.Status.Ne(workerchecklist.ChecklistStatusOpen),
+		).Count(ctx, r.db.Keel(ctx))
+		if err != nil {
+			return 0, err
+		}
+
+		return int(count), nil
+	})
+}
+
 func (r *repository) CountOpenChecklistsByTemplateIDs(
 	ctx context.Context,
 	req *workerchecklistports.CountOpenChecklistsByTemplateIDsRequest,
@@ -417,14 +438,16 @@ func (r *repository) ListForWorker(
 		r.db,
 		func(ctx context.Context) ([]*workerchecklist.WorkerChecklist, error) {
 			c := workerchecklistdb.WorkerChecklists
-			entities, err := c.Where(
-				c.WorkerID.Eq(req.WorkerID),
-				keel.When(!req.IncludeClosed, c.Status.Eq(workerchecklist.ChecklistStatusOpen)),
-			).
+			limit := req.Limit
+			if limit <= 0 || limit > pagination.MaxLimit {
+				limit = pagination.MaxLimit
+			}
+			entities, err := checklistsOf(req).
 				Load(c.StartedBy()).
 				Load(listquery.When(req.IncludeItems, checklistItems())...).
-				Order(c.Status.Asc(), c.StartedAt.Desc()).
-				All(ctx, r.db.Keel(ctx))
+				Order(c.Status.Asc(), c.StartedAt.Desc(), c.ID.Desc()).
+				Limit(limit).
+				List(ctx, r.db.Keel(ctx))
 			if err != nil {
 				r.l.Error("failed to list worker checklists", zap.Error(err))
 				return nil, err
@@ -432,6 +455,43 @@ func (r *repository) ListForWorker(
 
 			return entities, nil
 		},
+	)
+}
+
+func (r *repository) LockOpenForWorker(
+	ctx context.Context,
+	req *workerchecklistports.LockOpenChecklistsRequest,
+) ([]*workerchecklist.WorkerChecklist, error) {
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*workerchecklist.WorkerChecklist, error) {
+			c := workerchecklistdb.WorkerChecklists
+			entities, err := c.Where(
+				c.WorkerID.Eq(req.WorkerID),
+				c.Status.Eq(workerchecklist.ChecklistStatusOpen),
+			).
+				Load(checklistItems()).
+				Order(c.ID.Asc()).
+				Lock(keel.ForNoKeyUpdate).
+				All(ctx, r.db.Keel(ctx))
+			if err != nil {
+				return nil, err
+			}
+
+			return entities, nil
+		},
+	)
+}
+
+func checklistsOf(
+	req *workerchecklistports.ListWorkerChecklistsRequest,
+) keel.Query[*workerchecklist.WorkerChecklist] {
+	c := workerchecklistdb.WorkerChecklists
+
+	return c.Where(
+		c.WorkerID.Eq(req.WorkerID),
+		keel.When(!req.IncludeClosed, c.Status.Eq(workerchecklist.ChecklistStatusOpen)),
 	)
 }
 

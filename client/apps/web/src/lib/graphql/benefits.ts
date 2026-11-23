@@ -35,10 +35,11 @@ import {
   WorkerTotalCompensationDocument,
 } from "@trenova/graphql/generated/documents/benefits/operations";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
+import type { Connection } from "./connection";
 
 export type BenefitPlanRow = BenefitPlansQuery["benefitPlans"][number];
 export type BenefitEnrollmentRow =
-  WorkerBenefitEnrollmentsQuery["workerBenefitEnrollments"][number];
+  WorkerBenefitEnrollmentsQuery["workerBenefitEnrollments"]["edges"][number]["node"];
 export type BenefitCostRow = BenefitCostsQuery["benefitCosts"][number];
 export type BenefitEnrollmentListRow = BenefitEnrollmentsQuery["benefitEnrollments"][number];
 export type TotalCompensationSummary = WorkerTotalCompensationQuery["workerTotalCompensation"];
@@ -65,18 +66,23 @@ export async function fetchBenefitPlans(
   return data.benefitPlans;
 }
 
+/** One page of a worker's enrolments as the connection the server returns. */
 export async function fetchWorkerBenefitEnrollments(
-  workerId: string,
-  openOnly = false,
+  args: { workerId: string; openOnly?: boolean; first?: number; after?: string | null },
   options?: { signal?: AbortSignal },
-): Promise<BenefitEnrollmentRow[]> {
+): Promise<Connection<BenefitEnrollmentRow>> {
   const data = await requestGraphQL<
     WorkerBenefitEnrollmentsQuery,
     WorkerBenefitEnrollmentsQueryVariables
   >({
     document: WorkerBenefitEnrollmentsDocument,
     operationName: "WorkerBenefitEnrollments",
-    variables: { workerId, openOnly },
+    variables: {
+      workerId: args.workerId,
+      openOnly: args.openOnly ?? false,
+      first: args.first,
+      after: args.after,
+    },
     signal: options?.signal,
   });
   return data.workerBenefitEnrollments;

@@ -34,10 +34,9 @@ import {
   type ClearinghouseAnswerFormValues,
   type ClearinghouseQueryFormValues,
 } from "@trenova/shared/types/worker-drug-alcohol";
-import { useEffect, useRef } from "react";
-import { SubjectCard } from "./subject-card";
+import { SubjectCard } from "../subject-card";
 import { FormProvider, useForm, useWatch, type Resolver } from "react-hook-form";
-import { useTestingInvalidation } from "./use-testing-invalidation";
+import { useWorkerInvalidation } from "../../use-worker-invalidation";
 
 const TYPE_OPTIONS = clearinghouseQueryTypeSchema.options.map((value) => ({
   value,
@@ -69,18 +68,12 @@ function emptyQuery(): ClearinghouseQueryFormValues {
 export function LogQueryPane({ open, onOpenChange, workerId, onSaved }: LogQueryPaneProps) {
   const t = useT();
 
-  const invalidate = useTestingInvalidation(workerId);
+  const invalidate = useWorkerInvalidation(workerId, "testing");
   const form = useForm<ClearinghouseQueryFormValues>({
     resolver: zodResolver(clearinghouseQueryFormSchema) as Resolver<ClearinghouseQueryFormValues>,
     defaultValues: emptyQuery(),
   });
   const { control, handleSubmit, reset } = form;
-
-  const wasOpen = useRef(false);
-  useEffect(() => {
-    if (open && !wasOpen.current) reset(emptyQuery());
-    wasOpen.current = open;
-  }, [open, reset]);
 
   const [queryType] = useWatch({ control, name: ["queryType"] });
   const isFull = queryType === "PreEmploymentFull" || queryType === "Full";
@@ -115,7 +108,7 @@ export function LogQueryPane({ open, onOpenChange, workerId, onSaved }: LogQuery
     <WorkPane
       open={open}
       onOpenChange={onOpenChange}
-      title={t("Log a Clearinghouse query")}
+      title={t("Log query")}
       description={t(
         "The 12-month clock restarts when the answer comes back clear, not when you log the query.",
       )}
@@ -187,6 +180,7 @@ export function LogQueryPane({ open, onOpenChange, workerId, onSaved }: LogQuery
                   name="reference"
                   label={t("Reference")}
                   placeholder={t("Clearinghouse query reference")}
+                  inputClassProps="font-mono"
                   description={t(
                     "The query ID the Clearinghouse assigned, for matching the answer when it comes back.",
                   )}
@@ -243,20 +237,12 @@ export function AnswerQueryPane({
 }: AnswerQueryPaneProps) {
   const t = useT();
 
-  const invalidate = useTestingInvalidation(workerId);
+  const invalidate = useWorkerInvalidation(workerId, "testing");
   const form = useForm<ClearinghouseAnswerFormValues>({
     resolver: zodResolver(clearinghouseAnswerFormSchema) as Resolver<ClearinghouseAnswerFormValues>,
     defaultValues: emptyAnswer(),
   });
   const { control, handleSubmit, reset } = form;
-
-  const loadedFor = useRef<string | null>(null);
-  useEffect(() => {
-    const key = open ? (query?.id ?? "") : null;
-    if (key === loadedFor.current) return;
-    loadedFor.current = key;
-    if (key !== null) reset(emptyAnswer());
-  }, [open, query, reset]);
 
   const [result] = useWatch({ control, name: ["result"] });
   const foundViolations = result === "ViolationsFound";
@@ -289,7 +275,7 @@ export function AnswerQueryPane({
   });
 
   return (
-    <WorkPane open={open} onOpenChange={onOpenChange} title={t("Record the Clearinghouse answer")}>
+    <WorkPane open={open} onOpenChange={onOpenChange} title={t("Record answer")}>
       <WorkPaneDirtyTracker form={form} />
       <FormProvider {...form}>
         <Form
@@ -361,6 +347,7 @@ export function AnswerQueryPane({
                   name="reference"
                   label={t("Reference")}
                   placeholder={t("Clearinghouse response reference")}
+                  inputClassProps="font-mono"
                   description={t("The query ID on the Clearinghouse response.")}
                 />
               </FormControl>

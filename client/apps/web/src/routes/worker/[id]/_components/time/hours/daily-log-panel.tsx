@@ -5,42 +5,43 @@ import { useQuery } from "@tanstack/react-query";
 import { ErrorState } from "@trenova/shared/components/errors/error-state";
 import { DescriptionItem, DescriptionList } from "@trenova/shared/components/ui/description-list";
 import { SegmentedControl } from "@trenova/shared/components/ui/segmented-control";
-import { useNow } from "@trenova/shared/hooks/use-now";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatUnixMonthDay } from "@trenova/shared/lib/date";
 import { cn, metersToMiles } from "@trenova/shared/lib/utils";
-import { dateTimeFormatter } from "@trenova/shared/i18n/format";
-import { buildLogSegments, dayLaneTotals, type HosDaySlot } from "./hos-model";
-import { formatHoursMinutes } from "./hos-format";
+import {
+  buildLogSegments,
+  dayLaneTotals,
+  formatLogDay,
+  HOS_LIVE_REFRESH_MS,
+  type HosDaySlot,
+} from "./hos-model";
+import { formatHoursMinutes } from "@/lib/hours-format";
+import { shortWeekday } from "../schedule/schedule-model";
 import { LogGrid } from "./log-grid";
-
-const REFETCH_INTERVAL_MS = 60_000;
-const STALE_TIME_MS = 60_000;
 
 export type DailyLogPanelProps = {
   workerId: string;
   slots: readonly HosDaySlot[];
   selected: HosDaySlot;
   onSelect: (key: string) => void;
+  /** The view's minute clock: today's open segment runs to it. */
+  nowSec: number;
 };
 
 /**
  * The last seven days, one at a time: day buttons on a gliding plate (a dot under each certified
  * day), the paper log grid for the selected day and the day's ruled summary under it.
  */
-export function DailyLogPanel({ workerId, slots, selected, onSelect }: DailyLogPanelProps) {
+export function DailyLogPanel({ workerId, slots, selected, onSelect, nowSec }: DailyLogPanelProps) {
   const t = useT();
-  const nowSec = useNow();
+  // Today's key is the view's own live read, refreshed there; a finished day does not change.
   const logsQuery = useQuery({
     ...telematics.workerHosLogs(workerId, selected.startAt, selected.endAt),
-    staleTime: STALE_TIME_MS,
-    refetchInterval: selected.isToday ? REFETCH_INTERVAL_MS : false,
+    staleTime: HOS_LIVE_REFRESH_MS,
   });
   const segments = buildLogSegments(logsQuery.data ?? [], selected.startAt, selected.endAt, nowSec);
   const totals = dayLaneTotals(segments, selected.dailyLog);
-  const dayLabel = dateTimeFormatter({ weekday: "long", month: "short", day: "numeric" }).format(
-    selected.date,
-  );
+  const dayLabel = formatLogDay(selected.date);
 
   return (
     <SectionPanel title={t("Daily log")} hint={t("In your time zone")}>
@@ -51,7 +52,7 @@ export function DailyLogPanel({ workerId, slots, selected, onSelect }: DailyLogP
           onValueChange={onSelect}
           items={slots.map((slot) => ({
             value: slot.key,
-            label: dateTimeFormatter({ weekday: "short" }).format(slot.date),
+            label: shortWeekday(slot.date.getDay()),
             caption: (
               <span className="flex flex-col items-center">
                 <span className="font-medium tabular-nums">{slot.date.getDate()}</span>

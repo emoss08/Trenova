@@ -138,8 +138,8 @@ fragment SafetyScorecardFields on SafetyScorecard {
   recognitions
 }
 
-query WorkerSafetyEvents($workerId: ID!) {
-  workerSafetyEvents(workerId: $workerId) {
+query WorkerSafetyEvents($workerId: ID!, $openOnly: Boolean) {
+  workerSafetyEvents(workerId: $workerId, openOnly: $openOnly) {
     ...WorkerSafetyEventFields
   }
 }
@@ -147,12 +147,39 @@ query WorkerSafetyEvents($workerId: ID!) {
 query WorkerSafetyScorecard($workerId: ID!) {
   workerSafetyScorecard(workerId: $workerId) {
     ...SafetyScorecardFields
+    activePointEvents {
+      id
+      kind
+      severity
+      preventable
+      inspectionResult
+      inspectionLevel
+      occurredAt
+      activePoints
+      pointsExpireAt
+    }
   }
 }
 
-query WorkerDisciplinaryActions($workerId: ID!) {
-  workerDisciplinaryActions(workerId: $workerId) {
-    ...WorkerDisciplinaryActionFields
+query WorkerDisciplinaryActions(
+  $workerId: ID!
+  $first: Int
+  $after: String
+  $includeTotalCount: Boolean = true
+) {
+  workerDisciplinaryActions(workerId: $workerId, first: $first, after: $after) {
+    edges {
+      cursor
+      node {
+        ...WorkerDisciplinaryActionFields
+      }
+    }
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+    totalCount @include(if: $includeTotalCount)
+    totalCountExact @include(if: $includeTotalCount)
   }
 }
 
@@ -169,6 +196,12 @@ query WorkerDisciplinaryLadder($workerId: ID!) {
       issuedAt
       expiresAt
       active
+      suspensionDays
+      acknowledgedAt
+      issuedBy {
+        id
+        name
+      }
     }
   }
 }
@@ -252,4 +285,16 @@ mutation GiveWorkerRecognition($input: WorkerRecognitionInput!) {
 
 mutation DeleteWorkerRecognition($id: ID!) {
   deleteWorkerRecognition(id: $id)
+}
+
+query WorkerSafetyEvent($id: ID!) {
+  workerSafetyEvent(id: $id) {
+    ...WorkerSafetyEventFields
+  }
+}
+
+query WorkerDisciplinaryAction($id: ID!) {
+  workerDisciplinaryAction(id: $id) {
+    ...WorkerDisciplinaryActionFields
+  }
 }

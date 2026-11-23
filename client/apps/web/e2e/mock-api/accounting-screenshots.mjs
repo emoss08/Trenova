@@ -1,6 +1,6 @@
 // Walks the accounting integration modal (every setup step, the connected tabs and the
 // connection's states) and the connect dialogs against the mock API, one PNG per state.
-// Usage: node e2e/mock-api/accounting-screenshots.mjs [outDir] [name,name,...]
+// Usage: bun e2e/mock-api/accounting-screenshots.mjs [outDir] [name,name,...]
 import { mkdir } from "node:fs/promises";
 import { resolve } from "node:path";
 import { chromium } from "playwright";

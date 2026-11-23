@@ -42,6 +42,7 @@ export function SwitchField<T extends FieldValues>({
   badges,
   className,
   "aria-describedby": ariaDescribedBy,
+  onCheckedChange,
   ...props
 }: SwitchFieldProps<T>) {
   useFieldRegistration(name, label);
@@ -69,11 +70,14 @@ export function SwitchField<T extends FieldValues>({
             name={name}
             onBlur={onBlur}
             checked={value}
-            onCheckedChange={onChange}
             disabled={disabled}
             className="after:absolute after:inset-0"
             onClick={(e) => e.stopPropagation()}
             {...props}
+            onCheckedChange={(checked, details) => {
+              onChange(checked);
+              onCheckedChange?.(checked, details);
+            }}
           />
         );
         const marks =

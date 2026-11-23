@@ -27,9 +27,22 @@
  * - The host never traps fixed-position children: its row and content box carry no container
  *   query, `contain`, transform, filter or perspective, so a save dock, `ActionDock` or the
  *   documents upload panel inside a tab stays on the viewport. Keep it that way.
+ * - A pane is read on demand with `lazyWorkPane(load, pick, options)` (`lazy-work-pane.tsx`):
+ *   the tab mounts its `Component` as it mounted the pane; it draws nothing until first opened,
+ *   then a stand-in (the pane's header, a form in shimmer, Cancel) under the same id while the
+ *   code loads, so the host never empties and nothing moves. `preloadOn(pane)` on the opener.
  * - The host is a containing block (an inline-size container), so nothing `position: fixed` goes
  *   inside it: a page's save dock is mounted beside the host, not in a tab within it.
  */
+export {
+  lazyWorkPane,
+  PaneFormLoading,
+  PaneFormSkeleton,
+  preloadOn,
+  type LazyWorkPane,
+  type PreloadIntent,
+  type LazyWorkPaneOptions,
+} from "./lazy-work-pane";
 export { useWorkPane, type WorkPaneControls } from "./work-pane-context";
 export { WorkPaneHost } from "./work-pane-host";
 export { WorkPaneProvider } from "./work-pane-provider";

@@ -13,13 +13,8 @@ import {
   WorkPaneFooter,
 } from "@/components/work-pane";
 import { useApiMutation } from "@/hooks/use-api-mutation";
-import {
-  BENEFIT_ENROLLMENTS_KEY,
-  enrollBenefit,
-  TOTAL_COMPENSATION_KEY,
-} from "@/lib/graphql/benefits";
+import { enrollBenefit } from "@/lib/graphql/benefits";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form";
 import { useT } from "@trenova/shared/i18n/use-t";
@@ -29,8 +24,8 @@ import {
   benefitEnrollmentFormSchema,
   type BenefitEnrollmentFormValues,
 } from "@trenova/shared/types/benefits";
-import { useEffect, useRef } from "react";
 import { FormProvider, useForm, useWatch, type Resolver } from "react-hook-form";
+import { useWorkerInvalidation } from "../../use-worker-invalidation";
 
 function startEnrollment(
   planId: string | null,
@@ -71,24 +66,12 @@ export function EnrollPane({
   onSaved,
 }: EnrollPaneProps) {
   const t = useT();
-  const queryClient = useQueryClient();
+  const invalidate = useWorkerInvalidation(workerId, "benefits");
   const form = useForm<BenefitEnrollmentFormValues>({
     resolver: zodResolver(benefitEnrollmentFormSchema) as Resolver<BenefitEnrollmentFormValues>,
     defaultValues: startEnrollment(planId, coverageTier),
   });
-  const { control, handleSubmit, reset } = form;
-
-  const loaded = useRef<string | null>(null);
-  useEffect(() => {
-    if (!open) {
-      loaded.current = null;
-      return;
-    }
-    const key = `${planId ?? ""}:${coverageTier ?? ""}`;
-    if (loaded.current === key) return;
-    loaded.current = key;
-    reset(startEnrollment(planId, coverageTier));
-  }, [open, planId, coverageTier, reset]);
+  const { control, handleSubmit } = form;
 
   const waive = useWatch({ control, name: "waive" });
   const tierOptions = COVERAGE_TIER_ORDER.map((value) => ({
@@ -115,10 +98,8 @@ export function EnrollPane({
         effectiveFrom: values.effectiveFrom,
         notes: values.notes ?? undefined,
       }),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: [BENEFIT_ENROLLMENTS_KEY, workerId] });
-      void queryClient.invalidateQueries({ queryKey: [TOTAL_COMPENSATION_KEY, workerId] });
-      void queryClient.invalidateQueries({ queryKey: ["worker"] });
+    onSuccess: async () => {
+      await invalidate();
       onSaved();
     },
   });

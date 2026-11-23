@@ -66,6 +66,7 @@ export function credentialSummary(file) {
     expiringCount: 0,
     expiredCount: 0,
     missingCount: 0,
+    archivedCount: file.credentials.filter((cred) => cred.status === "Archived").length,
     items: [],
   };
   const required = new Set(requiredCredentialTypes(wrk.driverType).map((type) => type.id));
@@ -351,6 +352,9 @@ export function disciplinaryLadder(file) {
       issuedAt: action.issuedAt,
       expiresAt: action.expiresAt,
       active: action.active,
+      suspensionDays: action.suspensionDays ?? null,
+      acknowledgedAt: action.acknowledgedAt ?? null,
+      issuedBy: action.issuedBy ?? null,
     })),
   };
 }
@@ -375,6 +379,9 @@ export function safetyScorecard(file) {
     ...card,
     rating,
     activePoints,
+    activePointEvents: events
+      .filter((event) => event.activePoints > 0)
+      .sort((a, b) => b.occurredAt - a.occurredAt),
     openEvents: events.filter((event) => event.status !== "Closed").length,
     activeDiscipline: ladder.activeActions.length,
     highestDiscipline: ladder.highestLevel,

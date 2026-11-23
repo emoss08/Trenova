@@ -77,7 +77,7 @@ Pricing is per provider, and the provider editor already asks for it.
 
 **Series colours.** There are twelve hues, 30° apart, at `oklch(0.72 0.15 h)`, added as
 `--series-1` … `--series-12` in both themes. Four hues trim their chroma to stay inside sRGB, which
-`pnpm lint:design` checks:
+`bun run lint:design` checks:
 
 | Hue | Chroma |
 | --- | --- |

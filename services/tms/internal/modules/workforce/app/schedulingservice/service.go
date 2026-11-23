@@ -16,6 +16,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerschedule"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerscheduleports"
@@ -26,6 +28,7 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -38,20 +41,44 @@ type Params struct {
 	Logger       *zap.Logger
 	Repo         workerscheduleports.SchedulingRepository
 	AuditService auditports.AuditService
+	// Organizations give the organization's zone: a pattern starts and ends
+	// on a date in the organization's calendar, whatever instant names it.
+	Organizations tenantports.OrganizationRepository
 }
 
 type Service struct {
-	l            *zap.Logger
-	repo         workerscheduleports.SchedulingRepository
-	auditService auditports.AuditService
+	l             *zap.Logger
+	repo          workerscheduleports.SchedulingRepository
+	auditService  auditports.AuditService
+	organizations tenantports.OrganizationReader
 }
 
 func New(p Params) *Service {
 	return &Service{
-		l:            p.Logger.Named("service.scheduling"),
-		repo:         p.Repo,
-		auditService: p.AuditService,
+		l:             p.Logger.Named("service.scheduling"),
+		repo:          p.Repo,
+		auditService:  p.AuditService,
+		organizations: p.Organizations,
 	}
+}
+
+// calendarDate is the date an instant falls on in the organization's
+// calendar, stored as the instant that date starts in UTC, as every schedule
+// date is. A local midnight east of UTC is the previous day in UTC, so taking
+// the UTC date of the instant would start or end a pattern a day early.
+func (s *Service) calendarDate(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	at int64,
+) (int64, error) {
+	if at <= 0 {
+		return at, nil
+	}
+	loc, err := tenantports.OrganizationLocation(ctx, s.organizations, tenantInfo)
+	if err != nil {
+		return 0, err
+	}
+	return timeutils.LocalDateAsUTC(at, loc), nil
 }
 
 type auditParams struct {
@@ -452,7 +479,7 @@ func (s *Service) ProposeSwap(
 	ctx context.Context,
 	req *ProposeSwapRequest,
 ) (*workerschedule.ShiftSwapRequest, error) {
-	entity, err := s.planProposeSwap(req)
+	entity, err := s.planProposeSwap(ctx, req)
 	if err != nil {
 		return nil, err
 	}

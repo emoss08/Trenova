@@ -1,100 +1,78 @@
 import { Kept } from "@/components/kept";
-import { useWorkPane } from "@/components/work-pane";
+import { lazyWorkPane, useWorkPane } from "@/components/work-pane";
 import { usePermission } from "@/hooks/use-permission";
+import { lazyComponent } from "@/lib/lazy-component";
 import type { WorkerTabProps, WorkerTarget, WorkerViewOf } from "@/routes/worker/use-worker-state";
-import { useQuery } from "@tanstack/react-query";
 import { LazyComponent } from "@trenova/shared/components/error-boundary";
-import { useT } from "@trenova/shared/i18n/use-t";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { lazy, useState } from "react";
-import { employmentEventsQuery, workerChecklistsQuery } from "./employment-reads";
-import {
-  ChecklistsSkeletonBody,
-  HistorySkeletonBody,
-  LifecycleRouteSkeleton,
-} from "./employment-skeleton";
-import { AmendEventPane } from "./history/amend-event-pane";
-import { RecordEventPane } from "./history/record-event-pane";
-import { buildLifecycle } from "./lifecycle/lifecycle-model";
-import { LifecycleRoute } from "./lifecycle/lifecycle-route";
+import { ChecklistsSkeletonBody, HistorySkeletonBody } from "./employment-skeleton";
+import { EmploymentLifecycle } from "./lifecycle/employment-lifecycle";
+import { WORKER_FORM_PANES } from "../worker-form-panes";
+import { WORKER_VIEW_MODULES } from "../worker-view-modules";
 import { WorkerSectionStrip } from "../worker-strip-slot";
 
-const History = lazy(() => import("./history/worker-timeline-tab"));
-const Checklists = lazy(() => import("./checklists/worker-checklist-tab"));
+const History = lazyComponent(WORKER_VIEW_MODULES.history, (module) => module.default);
+const Checklists = lazyComponent(WORKER_VIEW_MODULES.checklists, (module) => module.default);
+
+const RecordEventPane = lazyWorkPane(
+  WORKER_FORM_PANES["record-event"],
+  (module) => module.RecordEventPane,
+  { title: (_props, t) => t("Record employment event"), fields: 4 },
+);
 
 /**
  * Employment: the lifecycle route, then the section strip the shell hands it (the route comes
  * first, so the tab places the strip), then the selected view (History or Checklists), and the
- * Record event and Amend panes, which the address opens (`form=record-event`, `kind` presets
- * the event; `form=amend-event` with `event`).
+ * Record event pane, which the address opens (`form=record-event`, `kind` presets the event).
+ * History owns the Amend pane (`form=amend-event` with `event`), since it holds the rows.
  */
 export default function EmploymentTab({ workerId, worker, view, open, onOpen }: WorkerTabProps) {
-  const t = useT();
   const selected: WorkerViewOf<"employment"> = view === "checklists" ? "checklists" : "history";
   const { closeThen } = useWorkPane();
   const { allowed: canRecord } = usePermission(Resource.WorkerEmploymentEvent, Operation.Create);
-  const { allowed: canAmend } = usePermission(Resource.WorkerEmploymentEvent, Operation.Update);
-  const [now] = useState(() => Math.floor(Date.now() / 1000));
-
-  const eventsQuery = useQuery(employmentEventsQuery(workerId));
-  const checklistsQuery = useQuery(workerChecklistsQuery(workerId));
 
   const go = (target: Omit<Extract<WorkerTarget, { tab: "employment" }>, "tab">) =>
     closeThen(() => onOpen({ tab: "employment", ...target }));
   const closePane = () => onOpen({ tab: "employment", view: selected });
   const recordEvent = () => go({ view: selected, form: "record-event" });
 
-  const amending =
-    canAmend && open.form === "amend-event" && open.event
-      ? (eventsQuery.data?.find((event) => event.id === open.event) ?? null)
-      : null;
-
   return (
     <div className="flex flex-col gap-4">
-      {eventsQuery.data && checklistsQuery.data ? (
-        <LifecycleRoute
-          stops={buildLifecycle(
-            {
-              events: eventsQuery.data,
-              checklists: checklistsQuery.data,
-              hireDate: worker.profile?.hireDate ?? null,
-              now,
-            },
-            t,
-          )}
-          onRecord={canRecord ? recordEvent : null}
-        />
-      ) : eventsQuery.isError || checklistsQuery.isError ? null : (
-        <LifecycleRouteSkeleton />
-      )}
+      <EmploymentLifecycle
+        workerId={workerId}
+        hireDate={worker.profile?.hireDate ?? null}
+        onRecord={canRecord ? recordEvent : null}
+        recordPane={RecordEventPane}
+      />
       <WorkerSectionStrip />
 
       <Kept shown={selected === "history"}>
         <LazyComponent fallback={<HistorySkeletonBody />}>
-          <History
+          <History.Component
             workerId={workerId}
             worker={worker}
             highlightId={open.form ? null : open.event}
-            now={now}
+            amendingId={open.form === "amend-event" ? open.event : null}
+            recordPane={RecordEventPane}
             onRecord={recordEvent}
             onAmend={(event) => go({ view: "history", form: "amend-event", event: event.id })}
+            onCloseAmend={closePane}
           />
         </LazyComponent>
       </Kept>
       <Kept shown={selected === "checklists"}>
         <LazyComponent fallback={<ChecklistsSkeletonBody />}>
-          <Checklists workerId={workerId} focusId={open.checklist} />
+          <Checklists.Component workerId={workerId} focusId={open.checklist} />
         </LazyComponent>
       </Kept>
 
-      <RecordEventPane
+      <RecordEventPane.Component
         open={open.form === "record-event" && canRecord}
         presetKind={open.kind}
         workerId={workerId}
         worker={worker}
         onClose={closePane}
       />
-      <AmendEventPane event={amending} workerId={workerId} onClose={closePane} />
     </div>
   );
 }

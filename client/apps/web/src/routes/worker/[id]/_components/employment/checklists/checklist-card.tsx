@@ -1,5 +1,5 @@
-import { HoverGlideGroup } from "@/components/hover-glide";
 import { SectionPanel } from "@/components/section-panel";
+import { VirtualRows } from "@/components/virtual-rows";
 import type { WorkerChecklistItemRow, WorkerChecklistRow } from "@/lib/graphql/worker-checklist";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -145,21 +145,30 @@ export function ChecklistCard({
             </p>
           </div>
         </div>
-        <HoverGlideGroup className="px-1.5 pb-1.5">
-          {groups.map((group) => {
+        <VirtualRows
+          rows={groups.flatMap((group) => {
             const settled = group.items.filter((item) => item.status !== "Pending").length;
-            return (
-              <div key={group.owner} data-testid={`checklist-owner-${group.owner}`}>
-                <p className="px-2 pt-3 pb-1 text-xs font-medium text-foreground-subtle">
-                  {CHECKLIST_OWNER_LABELS[group.owner] ?? t("Other")}{" "}
-                  <span className="font-normal text-foreground-subtle/80 tabular-nums">
-                    {t("{0} of {1}", settled, group.items.length)}
-                  </span>
-                </p>
-                <ul className="flex flex-col gap-px">
-                  {group.items.map((item) => (
+            return [
+              {
+                key: `owner:${group.owner}`,
+                sticky: true,
+                render: () => (
+                  <p
+                    data-testid={`checklist-owner-${group.owner}`}
+                    className="bg-card px-2 pt-3 pb-1 text-xs font-medium text-foreground-subtle"
+                  >
+                    {CHECKLIST_OWNER_LABELS[group.owner] ?? t("Other")}{" "}
+                    <span className="font-normal text-foreground-subtle/80 tabular-nums">
+                      {t("{0} of {1}", settled, group.items.length)}
+                    </span>
+                  </p>
+                ),
+              },
+              ...group.items.map((item) => ({
+                key: item.id,
+                render: () => (
+                  <div className="pb-px">
                     <ChecklistItemRow
-                      key={item.id}
                       item={item}
                       checklistOpen={open}
                       permissions={permissions}
@@ -169,12 +178,18 @@ export function ChecklistCard({
                       onNotApplicable={onNotApplicable}
                       onReopen={onReopen}
                     />
-                  ))}
-                </ul>
-              </div>
-            );
+                  </div>
+                ),
+              })),
+            ];
           })}
-        </HoverGlideGroup>
+          aria-label={t("Items on {0}", checklist.name)}
+          mask="card"
+          className="max-h-160"
+          contentClassName="px-1.5 pb-1.5"
+          hoverGlide
+          estimateSize={56}
+        />
       </SectionPanel>
     </div>
   );

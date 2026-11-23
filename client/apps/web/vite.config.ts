@@ -101,7 +101,7 @@ export default defineConfig(({ command }) => ({
       experimental: { lazyBarrel: true },
       preserveEntrySignatures: "strict",
       output: {
-        // The full-bundle dev server (pnpm dev:bundled) bundles with these options too. Its
+        // The full-bundle dev server (bun run dev:bundled) bundles with these options too. Its
         // chunks place modules the entry shares with lazy routes in a chunk the entry imports,
         // which runs before the entry's own body: React's refresh preamble, inlined from
         // index.html into the entry, came after the components that check for it, and the page

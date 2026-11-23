@@ -41,6 +41,8 @@ export function PhoneNumberField<T extends FieldValues>({
           name={name}
           label={label}
           description={description}
+          descriptionId={descriptionId}
+          errorId={errorId}
           required={isRequired(rules, required)}
           error={fieldState.error?.message}
           className={className}
@@ -54,7 +56,7 @@ export function PhoneNumberField<T extends FieldValues>({
             className={inputClassProps}
             onChange={field.onChange}
             aria-invalid={fieldState.invalid}
-            aria-describedby={descriptionId || errorId}
+            aria-describedby={fieldState.error ? errorId : description ? descriptionId : undefined}
             defaultCountry="US"
           />
         </FieldWrapper>

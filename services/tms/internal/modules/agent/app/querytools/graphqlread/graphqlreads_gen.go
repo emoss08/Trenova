@@ -7717,8 +7717,9 @@ var Reads = map[string]Read{
 		RootField: "workerPayAssignments",
 		Node:      "WorkerPayAssignment",
 		Resource:  "driver_pay_profile",
-		Unpaged:   true,
 		Variables: []Variable{
+			{Name: "after", Type: "String", NonNull: false, List: false, Kind: "scalar", Description: "The endCursor of the page before this one."},
+			{Name: "first", Type: "Int", NonNull: false, List: false, Kind: "scalar", Description: "How many to read, from 1 to 100; 20 when left out."},
 			{Name: "workerId", Type: "ID", NonNull: true, List: false, Kind: "scalar"},
 		},
 		Fields: []Field{
@@ -8813,7 +8814,7 @@ var Reads = map[string]Read{
 			{Name: "expiringWithinDays", Type: "Int", NonNull: false, List: false, Kind: "scalar", Description: "Only active credentials expiring within this many days from now, from 1 to 365. 30 when neither a worker nor a type is named."},
 			{Name: "includeArchived", Type: "Boolean", NonNull: false, List: false, Kind: "scalar", Description: "With a worker and no expiry window, also read their archived credentials."},
 			{Name: "includeExpired", Type: "Boolean", NonNull: false, List: false, Kind: "scalar", Description: "With an expiry window, also those that lapsed in the last 90 days."},
-			{Name: "limit", Type: "Int", NonNull: false, List: false, Kind: "scalar", Description: "At most this many credentials, from 1 to 100. Every credential of a named worker when left out; 20 across the organization."},
+			{Name: "limit", Type: "Int", NonNull: false, List: false, Kind: "scalar", Description: "At most this many credentials, from 1 to 100. The first 100 of the workers named when left out; 20 across the organization."},
 			{Name: "offset", Type: "Int", NonNull: false, List: false, Kind: "scalar", Description: "Skip this many credentials of the same list, for the page after them."},
 			{Name: "requiredOnly", Type: "Boolean", NonNull: false, List: false, Kind: "scalar", Description: "Only credential types the organization marks required."},
 			{Name: "workerIds", Type: "ID", NonNull: false, List: true, Kind: "scalar", Description: "The workers whose credentials are read, every one in one call, at most 50. Leave it out for those across the organization."},
@@ -9165,14 +9166,13 @@ var Reads = map[string]Read{
 	"worker_list_injuries": {
 		Verb:      "list",
 		Operation: "DeskWorkerInjuries",
-		Reason:    "Injury cases are read by workerInjuries, one worker's or the whole log.",
 		RootField: "workerInjuries",
 		Node:      "WorkerInjury",
 		Resource:  "worker_injury",
-		Unpaged:   true,
 		Variables: []Variable{
+			{Name: "after", Type: "String", NonNull: false, List: false, Kind: "scalar", Description: "The endCursor of the page before this one."},
 			{Name: "caseYear", Type: "Int", NonNull: false, List: false, Kind: "scalar", Description: "Only the cases of one calendar year's log, such as 2026."},
-			{Name: "limit", Type: "Int", NonNull: false, List: false, Kind: "scalar", Description: "At most this many cases, from 1 to 100. Every case of a named worker when left out; 20 across the organization."},
+			{Name: "first", Type: "Int", NonNull: false, List: false, Kind: "scalar", Description: "How many to read, from 1 to 100; 20 when left out."},
 			{Name: "openOnly", Type: "Boolean", NonNull: false, List: false, Kind: "scalar", Description: "Only the cases still open."},
 			{Name: "recordableOnly", Type: "Boolean", NonNull: false, List: false, Kind: "scalar", Description: "Only the cases that belong on the OSHA 300 log."},
 			{Name: "workerId", Type: "ID", NonNull: false, List: false, Kind: "scalar", Description: "The worker whose cases are read. Leave it out for every worker's."},
@@ -9407,7 +9407,7 @@ var Reads = map[string]Read{
 		Resource:  "worker_safety_event",
 		Unpaged:   true,
 		Variables: []Variable{
-			{Name: "limit", Type: "Int", NonNull: false, List: false, Kind: "scalar", Description: "At most this many events, from 1 to 100. Every event of a named worker when left out; 20 across the organization."},
+			{Name: "limit", Type: "Int", NonNull: false, List: false, Kind: "scalar", Description: "At most this many events, from 1 to 100. The newest 100 of a named worker when left out; 20 across the organization."},
 			{Name: "openOnly", Type: "Boolean", NonNull: false, List: false, Kind: "scalar", Description: "Only the events still open or under review."},
 			{Name: "workerId", Type: "ID", NonNull: false, List: false, Kind: "scalar", Description: "The worker whose events are read. Leave it out for every worker's."},
 		},
@@ -9696,8 +9696,9 @@ var Reads = map[string]Read{
 		RootField: "workerTrainingRecords",
 		Node:      "WorkerTrainingRecord",
 		Resource:  "worker_training",
-		Unpaged:   true,
 		Variables: []Variable{
+			{Name: "after", Type: "String", NonNull: false, List: false, Kind: "scalar", Description: "The endCursor of the page before this one."},
+			{Name: "first", Type: "Int", NonNull: false, List: false, Kind: "scalar", Description: "How many to read, from 1 to 100; 20 when left out."},
 			{Name: "includeClosed", Type: "Boolean", NonNull: false, List: false, Kind: "scalar", Description: "Also the completed, waived, cancelled and expired assignments, not only the open ones."},
 			{Name: "workerId", Type: "ID", NonNull: true, List: false, Kind: "scalar"},
 		},

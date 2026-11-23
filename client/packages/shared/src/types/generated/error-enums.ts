@@ -4,7 +4,7 @@
 //   services/tms/pkg/errortypes/enums.go (ErrorCode)
 //   services/tms/internal/api/helpers/problemtypes.go (ProblemType, ProblemType.IsInternal)
 //
-// Regenerate with: pnpm --filter @trenova/graphql codegen
+// Regenerate with: bun run --filter @trenova/graphql codegen
 // Drift between these values and the Go source fails the codegen:check CI gate.
 import { z } from "zod";
 

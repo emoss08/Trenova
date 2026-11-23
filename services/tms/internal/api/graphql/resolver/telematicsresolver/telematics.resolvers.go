@@ -351,12 +351,8 @@ func (r *QueryResolver) WorkerHosLogs(ctx context.Context, workerID string, star
 	if err != nil {
 		return nil, err
 	}
-	if startTime <= 0 || endTime <= startTime {
-		return nil, errortypes.NewValidationError(
-			"startTime",
-			errortypes.ErrInvalid,
-			"startTime must be before endTime",
-		)
+	if err = telematics.RequireProviderWindow(int64(startTime), int64(endTime)); err != nil {
+		return nil, err
 	}
 
 	entries, err := r.TelematicsService.GetWorkerHOSLogs(
@@ -387,14 +383,8 @@ func (r *QueryResolver) WorkerHosDailyLogs(ctx context.Context, workerID string,
 	if err != nil {
 		return nil, err
 	}
-	for _, date := range []string{startDate, endDate} {
-		if _, parseErr := time.Parse("2006-01-02", date); parseErr != nil {
-			return nil, errortypes.NewValidationError(
-				"startDate",
-				errortypes.ErrInvalid,
-				"Dates must use the YYYY-MM-DD format",
-			)
-		}
+	if err = telematics.RequireProviderDays(startDate, endDate); err != nil {
+		return nil, err
 	}
 
 	days, err := r.TelematicsService.GetWorkerHOSDailyLogs(
@@ -493,12 +483,8 @@ func (r *QueryResolver) WorkerFormSubmissions(ctx context.Context, workerID stri
 	if err != nil {
 		return nil, err
 	}
-	if startTime <= 0 || endTime <= startTime {
-		return nil, errortypes.NewValidationError(
-			"startTime",
-			errortypes.ErrInvalid,
-			"startTime must be before endTime",
-		)
+	if err = telematics.RequireProviderWindow(int64(startTime), int64(endTime)); err != nil {
+		return nil, err
 	}
 
 	submissions, err := r.TelematicsService.GetWorkerFormSubmissions(

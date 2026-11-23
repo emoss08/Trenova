@@ -1,11 +1,12 @@
 import { SectionPanel } from "@/components/section-panel";
 import type { WorkerOverview } from "@/lib/graphql/worker-overview";
-import { dutyStatusLabel } from "@/lib/hos";
+import { dutyStatusLabel, dutyStatusVariant } from "@/lib/hos";
+import { formatHoursMinutes } from "@/lib/hours-format";
 import { PlanFeature } from "@/lib/plan-feature";
 import type { WorkerTarget } from "@/routes/worker/use-worker-state";
 import { WithheldValue } from "@trenova/shared/components/withheld-value";
 import { usePlanFeature } from "@trenova/shared/hooks/use-plan-feature";
-import { Badge, type BadgeVariant } from "@trenova/shared/components/ui/badge";
+import { Badge } from "@trenova/shared/components/ui/badge";
 import {
   DescriptionEmpty,
   DescriptionItem,
@@ -13,6 +14,7 @@ import {
 } from "@trenova/shared/components/ui/description-list";
 import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
 import {
+  daysUntil,
   formatRange,
   formatUnixDateTimeMedium,
   formatUnixMonthDay,
@@ -23,41 +25,18 @@ import { cn } from "@trenova/shared/lib/utils";
 import { CoffeeIcon } from "@trenova/shared/components/icons";
 import { HourRuler } from "@/components/hos/hour-ruler";
 import { withoutRecordIds } from "@/lib/record-ids";
-import type { ComplianceStatus } from "@trenova/graphql/generated/graphql";
-
-const DAY_S = 86_400;
-const MINUTE_MS = 60_000;
+import { HOUR_MS } from "@/lib/time-units";
+import { useNow } from "@trenova/shared/hooks/use-now";
+import { ComplianceBadge } from "../compliance-badge";
 
 type Hos = NonNullable<WorkerOverview["hos"]>;
 
-const DUTY_BADGES: Readonly<Record<string, BadgeVariant>> = {
-  driving: "accent-emerald",
-  onDuty: "accent-amber",
-  offDuty: "neutral",
-  sleeperBed: "accent-indigo",
-  yardMove: "accent-sky",
-  personalConveyance: "accent-violet",
-};
-
-const COMPLIANCE_BADGES: Record<ComplianceStatus, BadgeVariant> = {
-  Compliant: "success",
-  Pending: "warning",
-  NonCompliant: "danger",
-};
-
+/** Whether two instants fall on the same day in the reader's zone, where the time is shown. */
 function sameDay(a: number, b: number): boolean {
-  return Math.floor(a / DAY_S) === Math.floor(b / DAY_S);
+  return daysUntil(a, { now: b }) === 0;
 }
 
-const HOUR_MS = 60 * MINUTE_MS;
 const CYCLE_TICK_MS = 10 * HOUR_MS;
-
-/** A duration as the clocks write it: "6h 12m", "42m". */
-function clockDuration(ms: number, t: TranslateFn): string {
-  const minutes = Math.floor(Math.max(0, ms) / MINUTE_MS);
-  const hours = Math.floor(minutes / 60);
-  return hours > 0 ? t("{0}h {1}m", hours, minutes % 60) : t("{0}m", minutes % 60);
-}
 
 type Clock = {
   key: string;
@@ -77,7 +56,7 @@ function ClockRow({ clock }: { clock: Clock }) {
   if (clock.limitMs === null || clock.limitMs <= 0) {
     return (
       <p data-clock={clock.key} className="text-sm tabular-nums">
-        {t("{0}: {1} left", clock.name, clockDuration(clock.remainingMs, t))}
+        {t("{0}: {1} left", clock.name, formatHoursMinutes(t, clock.remainingMs))}
       </p>
     );
   }
@@ -160,7 +139,7 @@ function HosLine({ hos, asOf }: { hos: Hos; asOf: number }) {
       return (
         <div className="flex flex-col gap-3">
           <div className="flex flex-wrap items-center gap-2">
-            <Badge dot variant={(hos.dutyStatus && DUTY_BADGES[hos.dutyStatus]) || "neutral"}>
+            <Badge dot variant={dutyStatusVariant(hos.dutyStatus)}>
               {hos.dutyStatus ? dutyStatusLabel(hos.dutyStatus) : t("Duty status unknown")}
             </Badge>
             {line ? (
@@ -185,7 +164,7 @@ function HosLine({ hos, asOf }: { hos: Hos; asOf: number }) {
               <CoffeeIcon aria-hidden className="size-3" />
               {breakLeft <= 0
                 ? t("Break due now")
-                : t("Break due in {0}", clockDuration(breakLeft, t))}
+                : t("Break due in {0}", formatHoursMinutes(t, breakLeft))}
             </p>
           ) : null}
         </div>
@@ -221,6 +200,21 @@ function NextTimeOffValue({
     >
       {text}
     </button>
+  );
+}
+
+/** The day they were last home and how many days out since, moving at midnight. */
+function LastHomeLine({ lastHome }: { lastHome: number }) {
+  const t = useT();
+  const now = useNow("minute");
+  return (
+    <span className="tabular-nums">
+      {t(
+        "{0} · {1, plural, one {# day out} other {# days out}}",
+        formatUnixMonthDay(lastHome),
+        Math.max(0, -daysUntil(lastHome, { now })),
+      )}
+    </span>
   );
 }
 
@@ -272,17 +266,7 @@ export function RightNowPanel({
       ) : null}
       <DescriptionList layout="split" className="px-3 py-1">
         <DescriptionItem label={t("Last home")}>
-          {lastHome ? (
-            <span className="tabular-nums">
-              {t(
-                "{0} · {1, plural, one {# day out} other {# days out}}",
-                formatUnixMonthDay(lastHome),
-                Math.max(0, Math.floor((asOf - lastHome) / DAY_S)),
-              )}
-            </span>
-          ) : (
-            <DescriptionEmpty />
-          )}
+          {lastHome ? <LastHomeLine lastHome={lastHome} /> : <DescriptionEmpty />}
         </DescriptionItem>
         {canOpenTimeOff ? (
           <DescriptionItem label={t("Next time off")}>
@@ -324,13 +308,7 @@ export function AssignmentPanel({ overview }: { overview: WorkerOverview }) {
             ) : compliance === null ? (
               <WithheldValue plan={PlanFeature.WorkforceCompliance} />
             ) : (
-              <Badge dot variant={COMPLIANCE_BADGES[compliance]}>
-                {compliance === "Compliant"
-                  ? t("Compliant")
-                  : compliance === "Pending"
-                    ? t("Pending review")
-                    : t("Non-compliant")}
-              </Badge>
+              <ComplianceBadge status={compliance} />
             )}
           </DescriptionItem>
         ) : null}

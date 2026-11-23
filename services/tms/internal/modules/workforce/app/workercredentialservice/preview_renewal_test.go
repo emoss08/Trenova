@@ -4,6 +4,8 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/testutil/orgzonetest"
+
 	"github.com/emoss08/trenova/internal/modules/documents/domain/notificationtemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/drivernotificationservice"
@@ -65,6 +67,7 @@ func TestPreviewRenewal_IsTheAskRequestRenewalSends(t *testing.T) {
 			Templates:     resolver,
 			Notifications: notificationtest.New(notifications, realtime),
 		}),
+		Organizations: orgzonetest.Organizations{},
 	})
 	request := workercredentialservice.RenewalRequest{
 		TenantInfo:    h.tenant,

@@ -1,0 +1,195 @@
+"""
+Where a Desk conversation began.
+"""
+enum DeskConversationOrigin {
+  Panel
+  Desk
+  Watchtower
+  Briefing
+  Import
+  Formula
+}
+
+"""
+A timeframe over a conversation's last message, in the organization's time
+zone. Last7Days is today and the six days before it, Last30Days and Last90Days
+likewise; Last12Months starts on today's date a year ago; Custom runs from the
+start of fromDate to the end of toDate.
+"""
+enum DeskTranscriptTimeframePreset {
+  Last7Days
+  Last30Days
+  Last90Days
+  Last12Months
+  AllTime
+  Custom
+}
+
+enum DeskTranscriptExportKind {
+  "Conversations matching a timeframe and, optionally, a person, an agent or where they began."
+  Filter
+  "Conversations a person picked from the list."
+  Selection
+}
+
+enum DeskTranscriptExportStatus {
+  Pending
+  Running
+  Succeeded
+  Failed
+  Expired
+}
+
+input DeskTranscriptTimeframeInput {
+  preset: DeskTranscriptTimeframePreset!
+  "The first day of a Custom timeframe, as YYYY-MM-DD."
+  fromDate: String
+  "The last day of a Custom timeframe, as YYYY-MM-DD."
+  toDate: String
+}
+
+input DeskConversationFilterInput {
+  "All time when absent."
+  timeframe: DeskTranscriptTimeframeInput
+  "Only this person's conversations."
+  userId: ID
+  "Only conversations with this agent."
+  agentId: ID
+  "Only conversations that began in one of these places."
+  origins: [DeskConversationOrigin!]
+}
+
+"""
+One person's Desk conversation as an administrator lists it: who, with which
+agent, what it is called and when. Never a message's text.
+"""
+type DeskConversation {
+  id: ID!
+  ownerName: String!
+  agentName: String!
+  title: String!
+  origin: DeskConversationOrigin!
+  archived: Boolean!
+  messageCount: Int!
+  startedAt: Timestamp!
+  lastMessageAt: Timestamp
+}
+
+type DeskConversationEdge {
+  node: DeskConversation!
+  cursor: String!
+}
+
+type DeskConversationConnection {
+  edges: [DeskConversationEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
+}
+
+"""
+A conversation opened read-only by someone who may read other people's: its
+summary and what was said, bounded as a run's transcript is.
+"""
+type DeskConversationTranscript {
+  conversation: DeskConversation!
+  transcript: AgentRunTranscript
+}
+
+"""
+How many conversations an export of these filters would hold, counted up to
+one past the limit.
+"""
+type DeskTranscriptExportPreview {
+  count: Int!
+  "False when more conversations match than the limit, so count is the limit plus one."
+  exact: Boolean!
+  limit: Int!
+  withinLimit: Boolean!
+}
+
+type DeskTranscriptTimeframe {
+  preset: DeskTranscriptTimeframePreset!
+  fromDate: String
+  toDate: String
+}
+
+"""
+What an export covers, kept in names and dates when it was asked for.
+"""
+type DeskTranscriptExportCoverage {
+  kind: DeskTranscriptExportKind!
+  timeframe: DeskTranscriptTimeframe
+  personName: String
+  agentName: String
+  origins: [DeskConversationOrigin!]!
+  selectedCount: Int!
+  "The people whose conversations the file holds, at most twenty, by name."
+  ownerNames: [String!]!
+  ownerCount: Int!
+}
+
+type DeskTranscriptExport {
+  id: ID!
+  requestedByName: String!
+  kind: DeskTranscriptExportKind!
+  coverage: DeskTranscriptExportCoverage!
+  status: DeskTranscriptExportStatus!
+  conversationCount: Int!
+  byteSize: Int!
+  artifactExpiresAt: Timestamp
+  errorMessage: String
+  startedAt: Timestamp
+  completedAt: Timestamp
+  "Whether the reader may download the file now: they asked for it and it has not expired."
+  downloadable: Boolean!
+  createdAt: Timestamp!
+}
+
+type DeskTranscriptExportEdge {
+  node: DeskTranscriptExport!
+  cursor: String!
+}
+
+type DeskTranscriptExportConnection {
+  edges: [DeskTranscriptExportEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
+}
+
+"""
+A link to an export's file, good for a minute.
+"""
+type DeskTranscriptDownload {
+  url: String!
+  fileName: String!
+  expiresAt: Timestamp!
+}
+
+"""
+Exactly one of filter and conversationIds.
+"""
+input RequestDeskTranscriptExportInput {
+  filter: DeskConversationFilterInput
+  "At most 200 conversations picked from the list."
+  conversationIds: [ID!]
+}
+
+extend type Query {
+  deskConversations(
+    input: DataTableConnectionInput!
+    filter: DeskConversationFilterInput
+  ): DeskConversationConnection!
+  deskTranscriptExportPreview(filter: DeskConversationFilterInput!): DeskTranscriptExportPreview!
+  deskTranscriptExports(input: DataTableConnectionInput!): DeskTranscriptExportConnection!
+}
+
+extend type Mutation {
+  "Opens another person's conversation read-only. Every opening is written to the audit log."
+  openDeskConversation(id: ID!): DeskConversationTranscript!
+  requestDeskTranscriptExport(input: RequestDeskTranscriptExportInput!): DeskTranscriptExport!
+  deskTranscriptExportDownload(id: ID!): DeskTranscriptDownload!
+}

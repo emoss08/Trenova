@@ -32,6 +32,8 @@ import type {
   WaiveWorkerTrainingMutation,
   WaiveWorkerTrainingMutationVariables,
   WorkerTrainingRecordFieldsFragment,
+  WorkerTrainingRecordQuery,
+  WorkerTrainingRecordQueryVariables,
   WorkerTrainingRecordsQuery,
   WorkerTrainingRecordsQueryVariables,
   WorkerTrainingSummaryQuery,
@@ -51,9 +53,11 @@ import {
   TrainingCourseTableDocument,
   UpdateTrainingCourseDocument,
   WaiveWorkerTrainingDocument,
+  WorkerTrainingRecordDocument,
   WorkerTrainingRecordsDocument,
   WorkerTrainingSummaryDocument,
 } from "@trenova/graphql/generated/documents/worker-training/operations";
+import type { Connection } from "./connection";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import { defineDataTableGraphQLConfig } from "@trenova/shared/lib/graphql/data-table";
 
@@ -97,21 +101,38 @@ export async function fetchActiveTrainingCourses(options?: {
   return data.activeTrainingCourses as TrainingCourseRow[];
 }
 
+/**
+ * A page of a worker's training records, newest first, as the server's connection. Open
+ * assignments and, with `includeClosed`, the closed ones too.
+ */
 export async function fetchWorkerTrainingRecords(
-  workerId: string,
-  includeClosed = true,
+  variables: { workerId: string; includeClosed?: boolean; first?: number; after?: string },
   options?: { signal?: AbortSignal },
-): Promise<WorkerTrainingRecordRow[]> {
+): Promise<Connection<WorkerTrainingRecordRow>> {
   const data = await requestGraphQL<
     WorkerTrainingRecordsQuery,
     WorkerTrainingRecordsQueryVariables
   >({
     document: WorkerTrainingRecordsDocument,
     operationName: "WorkerTrainingRecords",
-    variables: { workerId, includeClosed },
+    variables,
     signal: options?.signal,
   });
-  return data.workerTrainingRecords as WorkerTrainingRecordRow[];
+  return data.workerTrainingRecords as Connection<WorkerTrainingRecordRow>;
+}
+
+/** One training record by id: a deep link to a record outside the pages already read. */
+export async function fetchWorkerTrainingRecord(
+  id: string,
+  options?: { signal?: AbortSignal },
+): Promise<WorkerTrainingRecordRow> {
+  const data = await requestGraphQL<WorkerTrainingRecordQuery, WorkerTrainingRecordQueryVariables>({
+    document: WorkerTrainingRecordDocument,
+    operationName: "WorkerTrainingRecord",
+    variables: { id },
+    signal: options?.signal,
+  });
+  return data.workerTrainingRecord as WorkerTrainingRecordRow;
 }
 
 export async function fetchWorkerTrainingSummary(

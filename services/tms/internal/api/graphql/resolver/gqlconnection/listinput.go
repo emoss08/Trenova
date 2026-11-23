@@ -136,6 +136,15 @@ func EntityCursorPageFromGraphQL(
 	return gqlEntityCursorPage{Cursor: cursor}, nil
 }
 
+func CursorFromArgs(ctx context.Context, first *int, after *string) (pagination.CursorInfo, error) {
+	page, err := EntityCursorPageFromGraphQL(ctx, GqlCursorPageInput{First: first, After: after})
+	if err != nil {
+		return pagination.CursorInfo{}, err
+	}
+
+	return page.Cursor, nil
+}
+
 const (
 	ConnectionTotalCountField      = "totalCount"
 	ConnectionTotalCountExactField = "totalCountExact"

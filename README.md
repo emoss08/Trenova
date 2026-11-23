@@ -80,7 +80,7 @@ The full catalog is at [trenova.app/features](https://trenova.app/features/), an
 
 ## Quick start
 
-To run Trenova from source, you need Go 1.27.4, Node.js 26 with pnpm, Docker and
+To run Trenova from source, you need Go 1.27.4, Bun 1.4.5, Docker and
 [Task](https://taskfile.dev/).
 
 ```bash
@@ -88,7 +88,7 @@ git clone https://github.com/emoss08/trenova.git && cd trenova
 cp .env.example .env
 docker compose -f dev/compose.yml up -d   # PostgreSQL, Redis, MinIO, Meilisearch and the rest
 task tms:run                              # the TMS API
-cd client && pnpm install && pnpm dev     # the web client
+cd client && bun install && bun run dev   # the web client
 ```
 
 The [local development guide](./docs/development.md) covers low-resource machines, malware

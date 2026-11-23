@@ -16,7 +16,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerpolicy/workerpolicydb"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/selfserviceports"
 	"github.com/emoss08/trenova/pkg/dberror"
+	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
@@ -152,11 +154,7 @@ func acknowledgementsQuery(
 	req *selfserviceports.ListPolicyAcknowledgementsRequest,
 ) keel.Query[*workerpolicy.WorkerPolicyAcknowledgement] {
 	a := workerpolicydb.WorkerPolicyAcknowledgements
-	q := a.Where(
-		keel.When(req.PolicyID.IsNotNil(), a.PolicyID.Eq(req.PolicyID)),
-		keel.When(req.WorkerID.IsNotNil(), a.WorkerID.Eq(req.WorkerID)),
-		keel.When(req.VersionLabel != "", a.VersionLabel.Eq(req.VersionLabel)),
-	).
+	q := acknowledgementsOf(req).
 		Order(a.AcknowledgedAt.Desc()).
 		Limit(limitOr(req.Limit, defaultAckPageSize))
 	if req.IncludeWorker {
@@ -164,6 +162,63 @@ func acknowledgementsQuery(
 	}
 
 	return q
+}
+
+func acknowledgementsOf(
+	req *selfserviceports.ListPolicyAcknowledgementsRequest,
+) keel.Query[*workerpolicy.WorkerPolicyAcknowledgement] {
+	a := workerpolicydb.WorkerPolicyAcknowledgements
+
+	return a.Where(
+		keel.When(req.PolicyID.IsNotNil(), a.PolicyID.Eq(req.PolicyID)),
+		keel.When(req.WorkerID.IsNotNil(), a.WorkerID.Eq(req.WorkerID)),
+		keel.When(req.VersionLabel != "", a.VersionLabel.Eq(req.VersionLabel)),
+	)
+}
+
+func (r *repository) PageAcknowledgements(
+	ctx context.Context,
+	req *selfserviceports.ListPolicyAcknowledgementsRequest,
+) (*pagination.CursorListResult[*workerpolicy.WorkerPolicyAcknowledgement], error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(
+			ctx context.Context,
+		) (*pagination.CursorListResult[*workerpolicy.WorkerPolicyAcknowledgement], error) {
+			a := workerpolicydb.WorkerPolicyAcknowledgements
+			desc := string(dbtype.SortDirectionDesc)
+			result, err := listquery.Connection(
+				ctx,
+				r.db.Keel(ctx),
+				acknowledgementsOf(req),
+				&listquery.Request[workerpolicy.WorkerPolicyAcknowledgement]{
+					Filter: &pagination.QueryOptions{TenantInfo: req.TenantInfo},
+					Cursor: req.Cursor,
+					Shape: func(
+						q keel.Query[*workerpolicy.WorkerPolicyAcknowledgement],
+					) keel.Query[*workerpolicy.WorkerPolicyAcknowledgement] {
+						if req.IncludeWorker {
+							return q.Load(a.Worker())
+						}
+						return q
+					},
+					Keyset: &listquery.Keyset{
+						Orders: []keel.Order{a.AcknowledgedAt.Desc(), a.ID.Desc()},
+						Shape: []pagination.CursorSortField{
+							{Field: "acknowledgedAt", Direction: desc},
+							{Field: "id", Direction: desc},
+						},
+					},
+				},
+			)
+			if err != nil {
+				return nil, fmt.Errorf("page policy acknowledgements: %w", err)
+			}
+
+			return result, nil
+		},
+	)
 }
 
 func (r *repository) ListAcknowledgements(

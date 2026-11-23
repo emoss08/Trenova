@@ -7,13 +7,13 @@ import { useQuery } from "@tanstack/react-query";
 import type { RecordWorkerEmploymentEventInput } from "@trenova/graphql/generated/graphql";
 import { AlertTriangleIcon, CheckIcon, ClockRewindIcon } from "@trenova/shared/components/icons";
 import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
-import { Button } from "@trenova/shared/components/ui/button";
+import { ErrorState } from "@trenova/shared/components/errors/error-state";
 import { useSettledValue } from "@trenova/shared/hooks/use-settled-value";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatUnixDateMedium } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
 import { describeEmploymentEffect } from "./employment-effects";
-import { pairValues, ValueChips } from "./timeline-list";
+import { pairValues, ValueChips } from "./employment-values";
 
 /** How long the inputs must rest before the preview is read again. */
 const SETTLE_MS = 300;
@@ -67,14 +67,13 @@ export function EventPreview({ input, waiting, workerName }: EventPreviewProps) 
       {input === null ? (
         <p className="text-xs text-muted-foreground">{waiting}</p>
       ) : preview.isError && settledKey === inputKey ? (
-        <div role="alert" className="flex items-center gap-2 text-xs text-muted-foreground">
-          <span className="flex-1">
-            {t("Could not read what this will change. Saving still works.")}
-          </span>
-          <Button type="button" size="xs" variant="outline" onClick={() => void preview.refetch()}>
-            {t("Try again")}
-          </Button>
-        </div>
+        <ErrorState
+          layout="compact"
+          error={preview.error}
+          title={t("What this will change could not be loaded")}
+          description={t("Saving still works.")}
+          onRetry={() => void preview.refetch()}
+        />
       ) : preview.data && settledKey === inputKey ? (
         <PreviewList
           key={settledKey}
@@ -95,6 +94,11 @@ export function EventPreview({ input, waiting, workerName }: EventPreviewProps) 
   );
 }
 
+/** An effect's identity in a plan: its kind and what it acts on; a plan never repeats both. */
+function effectKey(effect: EmploymentEffect): string {
+  return [effect.kind, effect.name ?? "", effect.ptoType ?? ""].join(":");
+}
+
 function PreviewList({
   effects,
   pairs,
@@ -107,12 +111,12 @@ function PreviewList({
     <div className="flex animate-rise flex-col gap-2 motion-reduce:animate-none">
       <ValueChips pairs={pairs} />
       <ul className="flex flex-col gap-1.5">
-        {effects.map((effect, index) => {
+        {effects.map((effect) => {
           const line = describeEmploymentEffect(effect, t, "will");
           const Icon = line.icon;
           return (
             <li
-              key={`${effect.kind}-${index}`}
+              key={effectKey(effect)}
               className={cn(
                 "flex items-start gap-2 text-sm",
                 line.danger && "text-danger-foreground",

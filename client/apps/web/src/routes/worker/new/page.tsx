@@ -11,7 +11,7 @@ import { Button } from "@trenova/shared/components/ui/button";
 import { Form } from "@trenova/shared/components/ui/form";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { workerFormSchema, type Worker } from "@trenova/shared/types/worker";
-import { FormProvider, useForm, type Resolver } from "react-hook-form";
+import { FormProvider, useForm, useFormState, type Resolver } from "react-hook-form";
 import { NEW_WORKER_VALUES } from "../[id]/_components/profile/worker-form-values";
 import {
   NewWorkerNote,
@@ -35,11 +35,10 @@ export function WorkerCreatePage() {
     resolver: zodResolver(workerFormSchema(true)) as Resolver<Worker>,
     defaultValues: NEW_WORKER_VALUES,
   });
-  const {
-    handleSubmit,
-    reset,
-    formState: { isDirty },
-  } = form;
+  const { handleSubmit, reset, control } = form;
+  // Followed through useFormState: `form.formState` is the same object every render, so the
+  // compiled component would keep the first answer.
+  const { isDirty } = useFormState({ control });
 
   const create = useApiMutation<Worker, Worker, unknown, Worker>({
     form,

@@ -1,4 +1,5 @@
 import { ReasonDialog } from "@/components/reason-dialog";
+import { lazyWorkPane, preloadOn } from "@/components/work-pane";
 import { usePermission } from "@/hooks/use-permission";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import {
@@ -11,7 +12,7 @@ import {
   type WorkerCredentialRow,
   type WorkerCredentialSummaryItem,
 } from "@/lib/graphql/worker-credential";
-import { worker as workerQueries } from "@/lib/queries/worker";
+import { workerOverviewQuery } from "@/lib/queries/worker";
 import { previewPendingRefetchMs } from "@/lib/resource-documents";
 import { useQuery } from "@tanstack/react-query";
 import { ErrorState } from "@trenova/shared/components/errors/error-state";
@@ -19,19 +20,42 @@ import { EmptyTableSketch } from "@trenova/shared/components/ui/empty-table";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useEffect, useRef, useState } from "react";
+import type { BoundedTableHandle } from "../../bounded-table";
+import { useRowFlash } from "../../use-row-flash";
+import { useWorkerInvalidation } from "../../use-worker-invalidation";
+import { WORKER_FORM_PANES } from "../../worker-form-panes";
 import { QualificationSkeletonBody } from "../qualification-skeleton";
 import { useQualificationRoute, type QualificationViewProps } from "../qualification-route";
-import { revealElement, useRowFlash } from "../use-row-flash";
-import { CredentialFormPane } from "./credential-form-pane";
 import { CredentialHistory } from "./credential-history";
-import { earlierVersions, credentialGroups } from "./credential-model";
+import { credentialGroups, earlierVersions } from "./credential-model";
 import { CredentialOverview } from "./credential-overview";
-import { CredentialReadPane } from "./credential-read-pane";
 import { CredentialTable, type CredentialPermissions } from "./credential-table";
-import { useCredentialInvalidation } from "./use-credential-invalidation";
 
 const VIEW = "credentials" as const;
 const ARCHIVE_REASON_MAX = 255;
+
+const CredentialReadPane = lazyWorkPane(
+  () => import("./credential-read-pane"),
+  (module) => module.CredentialReadPane,
+  {
+    title: (props, t) => props.credential?.credentialType?.name ?? t("Credential"),
+    openKey: (props) => props.credentialId,
+    fields: 3,
+  },
+);
+
+const CredentialFormPane = lazyWorkPane(
+  WORKER_FORM_PANES["add-credential"],
+  (module) => module.CredentialFormPane,
+  {
+    title: (props, t) =>
+      props.mode === "create"
+        ? t("Add credential")
+        : props.mode === "renew"
+          ? t("Renew credential")
+          : t("Edit credential"),
+  },
+);
 
 /**
  * The credentials on file: the standing and its runway, one table of required and other
@@ -43,14 +67,14 @@ export default function WorkerCredentialsTab({ workerId, open, onOpen }: Qualifi
   const t = useT();
   const { go, closeWhen } = useQualificationRoute(VIEW, onOpen);
   const { flash, flashOf } = useRowFlash();
-  const rows = useRef(new Map<string, HTMLTableRowElement>());
+  const table = useRef<BoundedTableHandle>(null);
 
   const { allowed: canCreate } = usePermission(Resource.WorkerCredential, Operation.Create);
   const { allowed: canUpdate } = usePermission(Resource.WorkerCredential, Operation.Update);
   const { allowed: canVerify } = usePermission(Resource.WorkerCredential, Operation.Approve);
   const { allowed: canArchive } = usePermission(Resource.WorkerCredential, Operation.Archive);
   const permissions: CredentialPermissions = { canCreate, canUpdate, canVerify, canArchive };
-  const invalidate = useCredentialInvalidation(workerId);
+  const invalidate = useWorkerInvalidation(workerId, "credentials");
 
   const summaryQuery = useQuery({
     queryKey: [WORKER_CREDENTIAL_SUMMARY_KEY, workerId],
@@ -58,11 +82,14 @@ export default function WorkerCredentialsTab({ workerId, open, onOpen }: Qualifi
   });
   const credentialsQuery = useQuery({
     queryKey: [WORKER_CREDENTIALS_KEY, workerId],
-    queryFn: ({ signal }) => fetchWorkerCredentials(workerId, true, { signal }),
+    queryFn: ({ signal }) => fetchWorkerCredentials({ workerId }, { signal }),
     refetchInterval: (query) =>
-      previewPendingRefetchMs((query.state.data ?? []).map((row) => row.document)),
+      previewPendingRefetchMs(
+        query,
+        (query.state.data ?? []).map((row) => row.document),
+      ),
   });
-  const overviewQuery = useQuery(workerQueries.overview(workerId));
+  const overviewQuery = useQuery(workerOverviewQuery(workerId));
 
   const verify = useApiMutation<WorkerCredentialRow, WorkerCredentialRow>({
     scope: { id: `worker-credential-verify:${workerId}` },
@@ -94,20 +121,30 @@ export default function WorkerCredentialsTab({ workerId, open, onOpen }: Qualifi
     },
   });
 
+  const items = summaryQuery.data?.items ?? [];
   const credentials = credentialsQuery.data ?? [];
   const byId = new Map(credentials.map((row) => [row.id, row]));
+  // A current credential is always in the summary, whatever the capped list holds.
+  const credentialOf = (id: string | null | undefined): WorkerCredentialRow | null => {
+    if (!id) return null;
+    const held = items.find((item) => item.credential?.id === id)?.credential;
+    return byId.get(id) ?? (held ? (held as WorkerCredentialRow) : null);
+  };
+  const rowKeyOf = (credentialId: string) =>
+    items.find((item) => item.credential?.id === credentialId)?.credentialType.id ?? null;
   const readOpen = open.credential != null && open.form == null;
-  const selected = open.credential ? (byId.get(open.credential) ?? null) : null;
+  const selected = credentialOf(open.credential);
   const formCredential =
     open.form === "renew-credential" || open.form === "edit-credential" ? selected : null;
 
   const lastShown = useRef<string | null>(null);
   useEffect(() => {
     const id = open.credential;
-    if (!id || id === lastShown.current || !byId.has(id)) return;
+    const key = id ? rowKeyOf(id) : null;
+    if (!id || !key || id === lastShown.current) return;
     lastShown.current = id;
     flash(id);
-    revealElement(rows.current.get(id));
+    table.current?.scrollToKey(key);
   });
 
   if (summaryQuery.isPending || credentialsQuery.isPending) {
@@ -119,7 +156,6 @@ export default function WorkerCredentialsTab({ workerId, open, onOpen }: Qualifi
         layout="sheet"
         error={summaryQuery.error ?? credentialsQuery.error}
         title={t("The credentials could not be loaded")}
-        description={t("This isn't an empty file. Try again in a moment.")}
         onRetry={() => {
           void summaryQuery.refetch();
           void credentialsQuery.refetch();
@@ -134,10 +170,7 @@ export default function WorkerCredentialsTab({ workerId, open, onOpen }: Qualifi
   const summary = summaryQuery.data;
   const { required, other } = credentialGroups(summary);
   const archived = credentials.filter((row) => row.status === "Archived");
-  const credentialOf = (item: WorkerCredentialSummaryItem) =>
-    item.credential
-      ? (byId.get(item.credential.id) ?? (item.credential as WorkerCredentialRow))
-      : null;
+  const itemCredential = (item: WorkerCredentialSummaryItem) => credentialOf(item.credential?.id);
   const target = (credentialId: string, form?: "renew-credential" | "edit-credential") => ({
     tab: "qualification" as const,
     view: VIEW,
@@ -158,6 +191,7 @@ export default function WorkerCredentialsTab({ workerId, open, onOpen }: Qualifi
         clearance={overviewQuery.data?.clearance}
         asOf={overviewQuery.data?.asOf ?? null}
         canCreate={canCreate}
+        addIntent={preloadOn(CredentialFormPane)}
         onAdd={() => go(addTarget())}
         onOpen={go}
       />
@@ -172,47 +206,48 @@ export default function WorkerCredentialsTab({ workerId, open, onOpen }: Qualifi
           permissions={permissions}
           verifyingId={verify.isPending ? (verify.variables?.id ?? null) : null}
           flashOf={flashOf}
-          rowRef={(key, element) => {
-            if (element) rows.current.set(key, element);
-            else rows.current.delete(key);
-          }}
+          handleRef={table}
+          rowIntent={preloadOn(CredentialReadPane)}
+          menuIntent={preloadOn(CredentialFormPane)}
           handlers={{
             onOpen: (item) => item.credential && go(target(item.credential.id)),
             onAdd: (item) => go(addTarget(item.credentialType.id)),
             onVerify: async (item) => {
-              const credential = credentialOf(item);
+              const credential = itemCredential(item);
               if (credential) await verifyCredential(credential);
             },
             onRenew: (item) =>
               item.credential && go(target(item.credential.id, "renew-credential")),
             onEdit: (item) => item.credential && go(target(item.credential.id, "edit-credential")),
-            onArchive: (item) => setArchiving(credentialOf(item)),
+            onArchive: (item) => setArchiving(itemCredential(item)),
           }}
         />
-        <CredentialHistory archived={archived} />
+        <CredentialHistory archived={archived} read={credentials.length} />
       </section>
 
-      <CredentialReadPane
+      <CredentialReadPane.Component
         open={readOpen}
         onOpenChange={closeWhen(readOpen)}
+        credentialId={readOpen ? (open.credential ?? null) : null}
         credential={readOpen ? selected : null}
-        loading={credentialsQuery.isFetching}
-        earlier={selected ? earlierVersions(credentials, selected) : []}
+        workerId={workerId}
+        loadedEarlier={selected ? earlierVersions(credentials, selected) : []}
         permissions={permissions}
         verifying={verify.isPending}
         onVerify={verifyCredential}
+        editIntent={preloadOn(CredentialFormPane)}
         onEdit={(credential) => go(target(credential.id, "edit-credential"))}
         onRenew={(credential) => go(target(credential.id, "renew-credential"))}
         onArchive={setArchiving}
       />
-      <CredentialFormPane
+      <CredentialFormPane.Component
         open={open.form === "add-credential" && canCreate}
         onOpenChange={closeWhen(open.form === "add-credential")}
         workerId={workerId}
         mode="create"
         credentialTypeId={open.form === "add-credential" ? open.kind : null}
       />
-      <CredentialFormPane
+      <CredentialFormPane.Component
         open={open.form === "renew-credential" && canCreate && formCredential != null}
         onOpenChange={closeWhen(open.form === "renew-credential")}
         workerId={workerId}
@@ -223,7 +258,7 @@ export default function WorkerCredentialsTab({ workerId, open, onOpen }: Qualifi
         }
         onSaved={(saved) => flash(saved.id)}
       />
-      <CredentialFormPane
+      <CredentialFormPane.Component
         open={open.form === "edit-credential" && canUpdate && formCredential != null}
         onOpenChange={closeWhen(open.form === "edit-credential")}
         workerId={workerId}
@@ -241,6 +276,7 @@ export default function WorkerCredentialsTab({ workerId, open, onOpen }: Qualifi
         }
         placeholder={t("e.g. Endorsement surrendered")}
         confirmLabel={t("Archive")}
+        cancelLabel={t("Cancel")}
         destructive
         maxLength={ARCHIVE_REASON_MAX}
         pending={archive.isPending}

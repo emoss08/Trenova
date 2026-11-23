@@ -15,6 +15,7 @@ const { fetchWorkerDrugAlcoholFile, cancelDotTest } = vi.hoisted(() => ({
   cancelDotTest: vi.fn(),
 }));
 const paneProps = vi.hoisted(() => ({ byName: {} as Record<string, Record<string, unknown>> }));
+const dialogModule = vi.hoisted(() => ({ read: false }));
 
 vi.mock("@/lib/graphql/worker-drug-alcohol", () => ({
   fetchWorkerDrugAlcoholFile,
@@ -39,7 +40,10 @@ vi.mock("../clearinghouse-panes", () => ({
   LogQueryPane: capture("log-query"),
   AnswerQueryPane: capture("answer-query"),
 }));
-vi.mock("../violation-progress-dialog", () => ({ ViolationProgressDialog: capture("violation") }));
+vi.mock("../violation-progress-dialog", () => {
+  dialogModule.read = true;
+  return { ViolationProgressDialog: capture("violation") };
+});
 
 const DAY = 86_400;
 const now = Math.floor(Date.now() / 1000);
@@ -91,6 +95,30 @@ const query = (id: string, overrides: Record<string, unknown> = {}) => ({
   updatedAt: 1,
   ...overrides,
 });
+
+const openViolation = {
+  id: "v_1",
+  workerId: "wrk_1",
+  violationType: "PositiveTest",
+  status: "SAPEvaluation",
+  occurredAt: now - 10 * DAY,
+  sourceTestId: "t_done",
+  reportedToClearinghouseAt: null,
+  sapName: null,
+  sapReferredAt: null,
+  sapEvaluationCompletedAt: null,
+  rtdTestId: null,
+  rtdCompletedAt: null,
+  followUpTestCount: 6,
+  followUpTestsCompleted: 0,
+  followUpEndsAt: null,
+  resolvedAt: null,
+  documentId: null,
+  notes: null,
+  version: 1,
+  createdAt: 1,
+  updatedAt: 1,
+};
 
 const clearFile = {
   standing: {
@@ -272,6 +300,20 @@ describe("WorkerTestingTab", () => {
     expect(await screen.findByRole("region", { name: "Return to duty" })).toBeInTheDocument();
     const selections = screen.getByRole("region", { name: "Random selections outstanding" });
     expect(within(selections).getByText("Alcohol")).toBeInTheDocument();
+  });
+
+  it("reads the return-to-duty dialog's code only when Update is first reached", async () => {
+    renderTab({
+      ...clearFile,
+      standing: { ...clearFile.standing, status: "Prohibited", returnToDuty: "SAPEvaluation" },
+      violations: [openViolation],
+    });
+
+    const panel = await screen.findByRole("region", { name: "Return to duty" });
+    expect(dialogModule.read).toBe(false);
+    fireEvent.click(within(panel).getByRole("button", { name: "Update" }));
+    expect(await screen.findByTestId("pane-violation")).toBeInTheDocument();
+    expect(dialogModule.read).toBe(true);
   });
 
   it("presets the collection pane from the random selection the address names", async () => {

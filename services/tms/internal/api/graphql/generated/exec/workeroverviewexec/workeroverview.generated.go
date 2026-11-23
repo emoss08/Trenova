@@ -737,6 +737,15 @@ var Shard = &gqlexec.Shard{
 				},
 				Marshal: gqlexec.Marshal(marshalOInt2ᚖint),
 			},
+			{
+				Name:     "closedChecklistCount",
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*workeroverviewservice.EmploymentSection)
+					return obj.ClosedChecklistCount, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOInt2ᚖint),
+			},
 		}},
 		{Object: "WorkerOverviewHos", Fields: []*gqlexec.Field{
 			{

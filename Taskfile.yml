@@ -43,32 +43,32 @@ tasks:
     desc: Extract user-facing strings, refresh the translation catalogs and emit the runtime catalogs
     dir: '{{.ROOT_DIR}}'
     cmds:
-      - node i18n/tools/i18n.mjs sync
-      - node i18n/tools/i18n.mjs emit
+      - bun i18n/tools/i18n.mjs sync
+      - bun i18n/tools/i18n.mjs emit
 
   i18n-report:
     desc: Show the translation inventory (add --rejected to audit the string filter)
     dir: '{{.ROOT_DIR}}'
     cmds:
-      - node i18n/tools/i18n.mjs report {{.CLI_ARGS}}
+      - bun i18n/tools/i18n.mjs report {{.CLI_ARGS}}
 
   i18n-codemod:
     desc: 'Wrap user-facing literals in t() under a directory: task i18n-codemod -- <dir> --write'
     dir: '{{.ROOT_DIR}}'
     cmds:
-      - node i18n/tools/i18n.mjs codemod {{.CLI_ARGS}}
+      - bun i18n/tools/i18n.mjs codemod {{.CLI_ARGS}}
 
   i18n-test:
     desc: Run the extraction and codemod tool tests
     dir: '{{.ROOT_DIR}}'
     cmds:
-      - node --test 'i18n/tools/*.test.mjs'
+      - bun test i18n/tools/
 
   i18n-check:
     desc: Verify every locale catalog is complete and up to date
     dir: '{{.ROOT_DIR}}'
     cmds:
-      - node i18n/tools/i18n.mjs check
+      - bun i18n/tools/i18n.mjs check
 
   imaging:corpus:
     desc: Generate the imaging benchmark corpus into .imagingbench/corpus

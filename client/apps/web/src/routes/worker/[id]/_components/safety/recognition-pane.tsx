@@ -24,11 +24,10 @@ import {
   recognitionKindSchema,
   type RecognitionFormValues,
 } from "@trenova/shared/types/worker-safety";
-import { useEffect } from "react";
 import { FormProvider, useForm, useWatch, type Resolver } from "react-hook-form";
-import { useSafetyInvalidation } from "./use-safety-invalidation";
+import { useWorkerInvalidation } from "../use-worker-invalidation";
 
-const KIND_OPTIONS = recognitionKindSchema.options.map((value) => ({
+const RECOGNITION_KIND_OPTIONS = recognitionKindSchema.options.map((value) => ({
   value,
   label: sourceLabels(RECOGNITION_KIND_LABELS)[value],
 }));
@@ -60,16 +59,12 @@ export function RecognitionPane({
   onSaved,
 }: RecognitionPaneProps) {
   const t = useT();
-  const invalidate = useSafetyInvalidation(workerId);
+  const invalidate = useWorkerInvalidation(workerId, "safety");
   const form = useForm<RecognitionFormValues>({
     resolver: zodResolver(recognitionFormSchema) as Resolver<RecognitionFormValues>,
     defaultValues: emptyRecognition(),
   });
-  const { control, handleSubmit, reset } = form;
-
-  useEffect(() => {
-    if (open) reset(emptyRecognition());
-  }, [open, reset]);
+  const { control, handleSubmit } = form;
 
   const visible = useWatch({ control, name: "visibleToWorker" });
 
@@ -90,8 +85,8 @@ export function RecognitionPane({
         occurredAt: values.occurredAt,
         visibleToWorker: values.visibleToWorker,
       }),
-    onSuccess: () => {
-      void invalidate();
+    onSuccess: async () => {
+      await invalidate();
       onSaved();
     },
   });
@@ -119,7 +114,7 @@ export function RecognitionPane({
                   control={control}
                   name="kind"
                   label={t("Kind")}
-                  options={KIND_OPTIONS}
+                  options={RECOGNITION_KIND_OPTIONS}
                   placeholder={t("Pick a kind")}
                   required
                 />
@@ -171,8 +166,8 @@ export function RecognitionPane({
           </WorkPaneBody>
           <WorkPaneFooter>
             <WorkPaneCancel />
-            <Button type="submit" size="sm" isLoading={isPending} loadingText={t("Saving...")}>
-              {t("Record recognition")}
+            <Button type="submit" size="sm" isLoading={isPending}>
+              {t("Add recognition")}
             </Button>
           </WorkPaneFooter>
         </Form>

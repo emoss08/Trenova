@@ -9,7 +9,15 @@ fails it, fix it in the same change if it is small, or name it in your report.
 
 - **Bounded.** No request does work that grows with the size of a tenant's data. Lists are
   keyset-paginated connections; counts run only when asked for; exports, reports, recalculations
-  and bulk changes start a workflow and return.
+  and bulk changes start a workflow and return. A list of one record's rows (a worker's events,
+  training, recognitions) is a connection too: it grows with that record's history. The one
+  exception is a list of one record that an agent tool reads whole (a worker's checklists,
+  credentials, safety events, shift patterns: see
+  [agent-graphql-reads.md](../agent-graphql-reads.md)): it stays a plain list, capped by the
+  server at one full page (`gqlconnection.RecordListLimit`), and the screen says when a page came
+  back full. A figure computed over a record's rows (a summary, a standing) reads only the rows
+  that decide it, or computes it in SQL, never the first page of a list
+  (`workertrainingrepository.CurrentForWorker`, `workersafetyrepository` `DecisiveAt`).
 - **Batched.** No query per row: dataloaders over `...ByIDs` in GraphQL, `IN (…)` and joins in
   repositories, one statement for a bulk update. Loops that call a repository are a defect.
 - **Indexed.** Every `WHERE`, `ORDER BY` and join a repository runs has an index that serves it,
@@ -110,8 +118,8 @@ fails it, fix it in the same change if it is small, or name it in your report.
 - Append-only tables (events, audit, usage, tracking) have a retention or rollup plan and an
   index on what the sweep deletes or folds by.
 - Large text and files live in object storage through `storedobject`, never in a row.
-- Anything that grows without bound per tenant (history, notifications, messages) is paginated
-  everywhere it is read.
+- Anything that grows without bound per tenant or per record (history, notifications, messages,
+  a worker's file) is paginated everywhere it is read.
 
 ## Observability
 

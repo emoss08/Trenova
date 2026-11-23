@@ -10,6 +10,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
@@ -165,7 +166,7 @@ func (r *QueryResolver) WorkerPolicyCompliance(ctx context.Context, id string) (
 }
 
 // WorkerPolicyAcknowledgements is the resolver for the workerPolicyAcknowledgements field.
-func (r *QueryResolver) WorkerPolicyAcknowledgements(ctx context.Context, workerID string) ([]*workerpolicy.WorkerPolicyAcknowledgement, error) {
+func (r *QueryResolver) WorkerPolicyAcknowledgements(ctx context.Context, workerID string, first *int, after *string) (*gqlmodel.WorkerPolicyAcknowledgementConnection, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceWorkerPolicy, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -176,13 +177,38 @@ func (r *QueryResolver) WorkerPolicyAcknowledgements(ctx context.Context, worker
 		return nil, gqlid.InvalidIDError("workerId", "Worker is invalid")
 	}
 
-	return r.SelfServiceService.ListAcknowledgements(
+	cursor, err := gqlconnection.CursorFromArgs(ctx, first, after)
+	if err != nil {
+		return nil, err
+	}
+	result, err := r.SelfServiceService.PageAcknowledgements(
 		ctx,
 		&selfserviceports.ListPolicyAcknowledgementsRequest{
 			TenantInfo: resolvercore.TenantInfo(authCtx),
 			WorkerID:   id,
+			Cursor:     cursor,
 		},
 	)
+	if err != nil {
+		return nil, err
+	}
+	page, err := gqlconnection.EntityCursorConnection(
+		result,
+		func(node *workerpolicy.WorkerPolicyAcknowledgement, edgeCursor string) *gqlmodel.WorkerPolicyAcknowledgementEdge {
+			return &gqlmodel.WorkerPolicyAcknowledgementEdge{Node: node, Cursor: edgeCursor}
+		},
+		func(edge *gqlmodel.WorkerPolicyAcknowledgementEdge) string { return edge.Cursor },
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return &gqlmodel.WorkerPolicyAcknowledgementConnection{
+		Edges:           page.Edges,
+		PageInfo:        page.PageInfo,
+		TotalCount:      page.TotalCount,
+		TotalCountExact: page.TotalCountExact,
+	}, nil
 }
 
 // ProfileChangeRequests is the resolver for the profileChangeRequests field.

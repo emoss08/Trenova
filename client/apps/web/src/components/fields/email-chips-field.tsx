@@ -35,7 +35,7 @@ export function EmailChipsField<T extends FieldValues>({
   control: Control<T>;
   name: FieldPath<T>;
   label?: string;
-  description?: string;
+  description?: React.ReactNode;
   placeholder?: string;
   required?: FieldRequired;
   rules?: RegisterOptions<T, FieldPath<T>>;

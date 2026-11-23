@@ -9,7 +9,7 @@
   },
   "scripts": {
     "typecheck": "tsc -b",
-    "icons:generate": "node scripts/icons/generate-icons.mjs",
+    "icons:generate": "bun scripts/icons/generate-icons.mjs",
     "test": "vitest run",
     "test:watch": "vitest"
   },

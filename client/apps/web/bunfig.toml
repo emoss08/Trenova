@@ -1,0 +1,4 @@
+# Bun reads bunfig.toml only from the folder a command starts in, and turbo starts each task
+# here: without this file `bun run` would start vite, vitest and tsc on Node.
+[run]
+bun = true

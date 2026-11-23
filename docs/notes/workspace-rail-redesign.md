@@ -89,8 +89,8 @@ Before, for comparison: ![Workspace today](workspace-rail/before-workspace-light
 
 ```sh
 cd client/apps/web
-MOCK_PALETTE=1 node e2e/mock-api/server.mjs   # terminal 1
-pnpm exec vite                                # terminal 2
+MOCK_PALETTE=1 bun e2e/mock-api/server.mjs    # terminal 1
+bunx --bun vite                               # terminal 2
 ```
 
 The mock returns no sidebar preferences and an empty attention summary, so the rail counts were

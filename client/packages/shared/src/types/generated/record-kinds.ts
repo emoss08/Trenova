@@ -3,7 +3,7 @@
 // Source of truth: services/tms/internal/modules/identity/domain/recordkind (record kinds), services/tms/internal/modules/agent/domain/agent/subjectrecord.go
 // (agent subjects) and services/tms/internal/modules/agent/app/assistantservice/assistantthreads/mentions.go (@ search).
 //
-// Regenerate with: pnpm --filter @trenova/graphql codegen
+// Regenerate with: bun run --filter @trenova/graphql codegen
 // Drift between these values and the Go source fails the codegen:check CI gate.
 
 /** Every kind of record the server knows, with the prefix each of its ids carries. */

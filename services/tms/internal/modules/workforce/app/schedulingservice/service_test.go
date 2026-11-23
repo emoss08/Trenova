@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerschedule"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerscheduleports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
+	"github.com/emoss08/trenova/internal/testutil/orgzonetest"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -139,10 +140,15 @@ func (r *fakeSchedulingRepo) RotaAssignedDays(
 }
 
 func newService(repo *fakeSchedulingRepo) *schedulingservice.Service {
+	return newServiceIn(repo, "UTC")
+}
+
+func newServiceIn(repo *fakeSchedulingRepo, zone string) *schedulingservice.Service {
 	return schedulingservice.New(schedulingservice.Params{
-		Logger:       zap.NewNop(),
-		Repo:         repo,
-		AuditService: &mocks.NoopAuditService{},
+		Logger:        zap.NewNop(),
+		Repo:          repo,
+		AuditService:  &mocks.NoopAuditService{},
+		Organizations: orgzonetest.Organizations{Timezone: zone},
 	})
 }
 
@@ -551,4 +557,66 @@ func TestRota_CountsAnAssignmentOnADayOffAsAConflict(t *testing.T) {
 	assert.Equal(t, 2, tuesdayCell.AssignmentCount)
 	assert.True(t, tuesdayCell.IsConflict())
 	assert.Equal(t, 1, rota.Conflicts)
+}
+
+// Midnight on a Monday in Tokyo is still Sunday in UTC: the pattern starts on
+// the Monday the office chose, not a day early.
+func TestAssignShift_StartsOnTheOrganizationsDateEastOfUTC(t *testing.T) {
+	t.Parallel()
+
+	tokyo, err := time.LoadLocation("Asia/Tokyo")
+	require.NoError(t, err)
+	monday := time.Unix(mondayEpoch(), 0).UTC()
+	localMidnight := time.Date(monday.Year(), monday.Month(), monday.Day(), 0, 0, 0, 0, tokyo).Unix()
+	template := activeTemplate(1)
+	repo := &fakeSchedulingRepo{template: template}
+
+	created, err := newServiceIn(repo, "Asia/Tokyo").AssignShift(
+		t.Context(),
+		&schedulingservice.AssignShiftRequest{
+			Entity: &workerschedule.WorkerShiftAssignment{
+				WorkerID:        "wrk_1",
+				ShiftTemplateID: template.ID,
+				EffectiveFrom:   localMidnight,
+			},
+			TenantInfo: tenant(),
+		},
+	)
+
+	require.NoError(t, err)
+	assert.Equal(t, mondayEpoch(), created.EffectiveFrom)
+}
+
+// Midnight in Tokyo is the previous day in UTC: a swap names the day the
+// office chose, both its own and the counterparty's, not a day early.
+func TestPreviewProposeSwap_NamesTheOrganizationsDatesEastOfUTC(t *testing.T) {
+	t.Parallel()
+
+	tokyo, err := time.LoadLocation("Asia/Tokyo")
+	require.NoError(t, err)
+	ahead := time.Now().In(tokyo).AddDate(0, 0, 10)
+	localMidnight := time.Date(ahead.Year(), ahead.Month(), ahead.Day(), 0, 0, 0, 0, tokyo)
+	counterMidnight := localMidnight.AddDate(0, 0, 1)
+
+	swap, err := newServiceIn(&fakeSchedulingRepo{}, "Asia/Tokyo").PreviewProposeSwap(
+		t.Context(),
+		&schedulingservice.ProposeSwapRequest{
+			Entity: &workerschedule.ShiftSwapRequest{
+				RequestingWorkerID:    "wrk_1",
+				CounterpartyWorkerID:  "wrk_2",
+				ShiftDate:             localMidnight.Unix(),
+				CounterpartyShiftDate: new(counterMidnight.Unix()),
+			},
+			TenantInfo: tenant(),
+		},
+	)
+
+	require.NoError(t, err)
+	assert.Equal(
+		t,
+		time.Date(ahead.Year(), ahead.Month(), ahead.Day(), 0, 0, 0, 0, time.UTC).Unix(),
+		swap.ShiftDate,
+	)
+	require.NotNil(t, swap.CounterpartyShiftDate)
+	assert.Equal(t, swap.ShiftDate+86_400, *swap.CounterpartyShiftDate)
 }

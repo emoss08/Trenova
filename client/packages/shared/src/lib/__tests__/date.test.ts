@@ -219,6 +219,16 @@ describe("daysUntil", () => {
     expect(daysUntil(now + 86400)).toBe(0);
     expect(daysUntil(now + 2 * 86400)).toBe(1);
   });
+
+  it("counts from the clock it is given instead of the wall clock", () => {
+    vi.useFakeTimers({ now: new Date("2026-06-15T18:00:00Z") });
+    setUserDatePreferences({ timezone: "America/Denver" });
+    const dueAt = Math.floor(new Date("2026-06-20T18:00:00Z").getTime() / 1000);
+    expect(daysUntil(dueAt)).toBe(5);
+    const at = (iso: string) => Math.floor(new Date(iso).getTime() / 1000);
+    expect(daysUntil(dueAt, { now: at("2026-06-17T05:30:00Z") })).toBe(4);
+    expect(daysUntil(dueAt, { now: at("2026-06-17T06:30:00Z") })).toBe(3);
+  });
 });
 
 describe("getTodayDate", () => {
@@ -552,6 +562,40 @@ describe("formatRange", () => {
     expect(words(ACROSS_MONTHS)).toBe("Aug 3 to Sep 2, 2026");
     expect(words(ACROSS_YEARS)).toBe("Dec 30, 2026 to Jan 2, 2027");
     expect(words(ONE_DAY)).toBe("Aug 3, 2026");
+  });
+
+  it("reads a span of months as month and year, in the given timezone", () => {
+    const months = (start: string, end: string, options: FormatRangeOptions = {}) =>
+      range(start, end, { unit: "month", join: "words", ...options });
+    expect(months("2020-09-13T05:00:00Z", "2022-04-15T05:00:00Z")).toBe("Sep 2020 to Apr 2022");
+    expect(months("2024-03-01T05:00:00Z", "2024-06-30T05:00:00Z")).toBe("Mar to Jun 2024");
+    expect(months("2024-03-01T05:00:00Z", "2024-03-30T05:00:00Z")).toBe("Mar 2024");
+    expect(months("2020-09-13T05:00:00Z", "2022-04-15T05:00:00Z", { join: "dash" })).toBe(
+      "Sep 2020–Apr 2022",
+    );
+    // A date entered as Oct 1 in Chicago is stored as that local midnight: October there,
+    // September an hour earlier.
+    expect(
+      formatRange(at("2020-10-01T05:00:00Z"), at("2022-05-01T05:00:00Z"), {
+        timezone: "America/Chicago",
+        unit: "month",
+        join: "words",
+      }),
+    ).toBe("Oct 2020 to May 2022");
+    expect(
+      formatRange(at("2020-10-01T05:00:00Z"), at("2022-05-01T05:00:00Z"), {
+        timezone: "Asia/Tokyo",
+        unit: "month",
+        join: "words",
+      }),
+    ).toBe("Oct 2020 to May 2022");
+    expect(
+      formatRange(at("2020-10-01T03:00:00Z"), at("2022-05-01T03:00:00Z"), {
+        timezone: "America/Chicago",
+        unit: "month",
+        join: "words",
+      }),
+    ).toBe("Sep 2020 to Apr 2022");
   });
 
   it("reads the same month in another year as a run across years, not one month", () => {

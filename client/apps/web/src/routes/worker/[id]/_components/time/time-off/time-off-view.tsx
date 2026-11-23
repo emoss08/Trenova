@@ -1,23 +1,21 @@
-import { HoverGlideGroup } from "@/components/hover-glide";
 import { SectionPanel } from "@/components/section-panel";
-import { useWorkPane } from "@/components/work-pane";
+import { VirtualRows } from "@/components/virtual-rows";
+import { lazyWorkPane, preloadOn, useWorkPane } from "@/components/work-pane";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { usePermission } from "@/hooks/use-permission";
 import {
+  fetchWorkerPto,
   fetchWorkerPtoBalances,
   fetchWorkerPtoPolicyAssignments,
+  fetchWorkerPtoRequests,
   runPtoAccrual,
   WORKER_PTO_ASSIGNMENTS_KEY,
   WORKER_PTO_BALANCES_KEY,
+  WORKER_PTO_REQUESTS_KEY,
   type PTOPolicyAssignment,
 } from "@/lib/graphql/pto-policy";
-import { worker as workerQueries } from "@/lib/queries/worker";
 import { PTOReasonDialog } from "@/routes/worker/_components/pto/pto-reason-dialog";
-import { usePTOInvalidation } from "@/routes/worker/_components/pto/use-pto-invalidation";
-import {
-  useWorkerPtoInvalidation,
-  WorkerPTOBalances,
-} from "@/routes/worker/_components/pto/worker-pto-balances";
+import { WorkerPTOBalances } from "@/routes/worker/_components/pto/worker-pto-balances";
 import type { WorkerTabProps } from "@/routes/worker/use-worker-state";
 import { useQuery } from "@tanstack/react-query";
 import { ErrorState } from "@trenova/shared/components/errors/error-state";
@@ -39,19 +37,47 @@ import {
   DropdownMenuTrigger,
 } from "@trenova/shared/components/ui/dropdown-menu";
 import { EmptySheet, GhostLine } from "@trenova/shared/components/ui/empty-sheet";
-import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { toast } from "@trenova/shared/components/ui/toast";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatRange, formatUnixDateMedium } from "@trenova/shared/lib/date";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { ConfirmDialog } from "@/components/confirm-dialog";
+import { ListMoreLine, type ListMore } from "../../list-more";
+import { useRecordById } from "../../use-record-by-id";
+import { useRowFlash } from "../../use-row-flash";
+import { useWorkerInvalidation } from "../../use-worker-invalidation";
+import { useWorkerList } from "../../use-worker-list";
+import { WORKER_FORM_PANES } from "../../worker-form-panes";
 import { TimeSkeleton } from "../time-skeleton";
-import { AdjustBalancePane } from "./adjust-balance-pane";
-import { ChangePolicyPane } from "./change-policy-pane";
 import { LedgerPanel } from "./ledger-panel";
 import { RequestsPanel, type RequestAction } from "./requests-panel";
-import { TimeOffPane } from "./request-time-off-pane";
+
+/** The requests read a page at a time; the server's most, so most workers need one. */
+const REQUESTS_PAGE_SIZE = 100;
+
+const TimeOffPane = lazyWorkPane(
+  WORKER_FORM_PANES["request-time-off"],
+  (module) => module.TimeOffPane,
+  {
+    openKey: (props) => props.pto?.id ?? "new",
+    // A recorded request's pane is an edit or a read by its status; its own title says which.
+    title: (props, t) => (props.pto ? undefined : t("Request time off")),
+  },
+);
+const ChangePolicyPane = lazyWorkPane(
+  WORKER_FORM_PANES["change-policy"],
+  (module) => module.ChangePolicyPane,
+  {
+    title: (props, t) => (props.currentPolicyId ? t("Change policy") : t("Enroll in a policy")),
+    fields: 3,
+  },
+);
+const AdjustBalancePane = lazyWorkPane(
+  WORKER_FORM_PANES["adjust-balance"],
+  (module) => module.AdjustBalancePane,
+  { title: (_props, t) => t("Adjust balance"), fields: 4 },
+);
 
 type TimeOffViewProps = Pick<WorkerTabProps, "workerId" | "worker" | "open" | "onOpen">;
 
@@ -65,26 +91,37 @@ export default function TimeOffView({ workerId, worker, open, onOpen }: TimeOffV
   const { allowed: canCreate } = usePermission(Resource.WorkerPTO, Operation.Create);
   const { allowed: canAssign } = usePermission(Resource.PTOPolicy, Operation.Assign);
   const { allowed: canManage } = usePermission(Resource.WorkerPTO, Operation.Manage);
-  const invalidateWorker = useWorkerPtoInvalidation(workerId);
-  const invalidateRoster = usePTOInvalidation();
+  const refresh = useWorkerInvalidation(workerId, "time-off");
   const [reason, setReason] = useState<RequestAction | null>(null);
-  const [changed, setChanged] = useState<{ id: string; tick: "a" | "b" } | null>(null);
   const [confirmAccrual, setConfirmAccrual] = useState(false);
-  const reasonIds = useMemo(() => (reason?.pto.id ? [reason.pto.id] : []), [reason]);
+  const { flash, flashOf } = useRowFlash();
 
   const balancesQuery = useQuery({
     queryKey: [WORKER_PTO_BALANCES_KEY, workerId],
     queryFn: ({ signal }) => fetchWorkerPtoBalances(workerId, { signal }),
   });
-  const assignmentsQuery = useQuery({
-    queryKey: [WORKER_PTO_ASSIGNMENTS_KEY, workerId],
-    queryFn: ({ signal }) => fetchWorkerPtoPolicyAssignments(workerId, { signal }),
+  const assignments = useWorkerList({
+    root: WORKER_PTO_ASSIGNMENTS_KEY,
+    workerId,
+    fetchPage: ({ first, after, signal }) =>
+      fetchWorkerPtoPolicyAssignments({ workerId, first, after }, { signal }),
   });
-  const historyQuery = useQuery(workerQueries.ptoHistory(workerId));
-
-  const refresh = () => Promise.all([invalidateWorker(), invalidateRoster()]);
-  const flash = (id: string) =>
-    setChanged((previous) => ({ id, tick: previous?.tick === "a" ? "b" : "a" }));
+  const requests = useWorkerList({
+    root: WORKER_PTO_REQUESTS_KEY,
+    workerId,
+    pageSize: REQUESTS_PAGE_SIZE,
+    fetchPage: ({ first, after, signal }) =>
+      fetchWorkerPtoRequests({ workerId, first, after }, { signal }),
+  });
+  // The request the address names: among the pages read, or past them, read by id.
+  const requestRecord = useRecordById({
+    root: WORKER_PTO_REQUESTS_KEY,
+    workerId,
+    id: open.timeOff,
+    rows: requests.rows,
+    rowsSettled: !requests.isPending,
+    fetchRecord: fetchWorkerPto,
+  });
 
   const accrual = useApiMutation({
     resourceName: "Accrual",
@@ -109,30 +146,29 @@ export default function TimeOffView({ workerId, worker, open, onOpen }: TimeOffV
     if (!next) onOpen({ tab: "time", view: "time-off" });
   };
 
-  if (balancesQuery.isPending || assignmentsQuery.isPending || historyQuery.isPending) {
+  if (balancesQuery.isPending || assignments.isPending || requests.isPending) {
     return <TimeSkeleton view="time-off" />;
   }
-  const failed = [balancesQuery, assignmentsQuery, historyQuery].find((query) => query.isError);
-  if (failed) {
+  if (balancesQuery.isError || assignments.isError || requests.isError) {
     return (
       <ErrorState
         layout="sheet"
-        error={failed.error}
+        error={balancesQuery.error ?? assignments.error ?? requests.error}
         onRetry={() => {
-          void balancesQuery.refetch();
-          void assignmentsQuery.refetch();
-          void historyQuery.refetch();
+          if (balancesQuery.isError) void balancesQuery.refetch();
+          if (assignments.isError) assignments.refetch();
+          if (requests.isError) requests.refetch();
         }}
-        title={t("Time off could not be loaded")}
+        title={t("The time off could not be loaded")}
       />
     );
   }
 
   const balances = balancesQuery.data ?? [];
-  const assignments = assignmentsQuery.data ?? [];
-  const entries = historyQuery.data ?? [];
-  const current = assignments.find((assignment) => assignment.effectiveTo == null) ?? null;
-  const record = open.timeOff ? (entries.find((entry) => entry.id === open.timeOff) ?? null) : null;
+  const entries = requests.rows;
+  // Newest first, so the policy in force (no end) is on the first page.
+  const current = assignments.rows.find((assignment) => assignment.effectiveTo == null) ?? null;
+  const record = requestRecord.record;
   const hasMenu = canAssign || (canManage && current !== null);
 
   return (
@@ -141,7 +177,7 @@ export default function TimeOffView({ workerId, worker, open, onOpen }: TimeOffV
         <PolicyLine assignment={current} />
         <div className="flex items-center gap-2">
           {canCreate ? (
-            <Button size="sm" onClick={() => go("request-time-off")}>
+            <Button size="sm" {...preloadOn(TimeOffPane)} onClick={() => go("request-time-off")}>
               <PlusIcon className="size-3.5" />
               {t("Request time off")}
             </Button>
@@ -159,6 +195,7 @@ export default function TimeOffView({ workerId, worker, open, onOpen }: TimeOffV
                 <DropdownMenuGroup>
                   {canAssign ? (
                     <DropdownMenuItem
+                      {...preloadOn(ChangePolicyPane)}
                       startContent={<SwitchHorizontal01Icon />}
                       title={current ? t("Change policy") : t("Enroll in a policy")}
                       onClick={() => go("change-policy")}
@@ -166,6 +203,7 @@ export default function TimeOffView({ workerId, worker, open, onOpen }: TimeOffV
                   ) : null}
                   {canManage && current ? (
                     <DropdownMenuItem
+                      {...preloadOn(AdjustBalancePane)}
                       startContent={<Sliders01Icon />}
                       title={t("Adjust balance")}
                       onClick={() => go("adjust-balance")}
@@ -203,7 +241,12 @@ export default function TimeOffView({ workerId, worker, open, onOpen }: TimeOffV
             )}
             action={
               canAssign ? (
-                <Button size="sm" variant="secondary" onClick={() => go("change-policy")}>
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  {...preloadOn(ChangePolicyPane)}
+                  onClick={() => go("change-policy")}
+                >
                   {t("Enroll in a policy")}
                 </Button>
               ) : undefined
@@ -215,20 +258,25 @@ export default function TimeOffView({ workerId, worker, open, onOpen }: TimeOffV
       <div className="grid min-w-0 items-start gap-4 lg:grid-cols-2">
         <RequestsPanel
           entries={entries}
+          total={requests.total}
+          more={requests}
           onOpenRequest={(id) =>
             pane.closeThen(() => onOpen({ tab: "time", view: "time-off", timeOff: id }))
           }
+          requestPane={TimeOffPane}
           onReason={setReason}
           onDecided={refresh}
-          changed={changed}
+          flashOf={flashOf}
           onChanged={flash}
         />
         {current ? <LedgerPanel workerId={workerId} /> : null}
       </div>
 
-      {assignments.length > 1 ? <PolicyHistory assignments={assignments} /> : null}
+      {assignments.rows.length > 1 || assignments.hasMore ? (
+        <PolicyHistory assignments={assignments.rows} more={assignments} />
+      ) : null}
 
-      <TimeOffPane
+      <TimeOffPane.Component
         open={open.form === "request-time-off" || record !== null}
         onOpenChange={closePane}
         workerId={workerId}
@@ -239,21 +287,21 @@ export default function TimeOffView({ workerId, worker, open, onOpen }: TimeOffV
         }}
       />
       {canAssign ? (
-        <ChangePolicyPane
+        <ChangePolicyPane.Component
           open={open.form === "change-policy"}
           onOpenChange={closePane}
           workerId={workerId}
           currentPolicyId={current?.ptoPolicyId ?? null}
-          onAssigned={() => void refresh()}
+          onAssigned={refresh}
         />
       ) : null}
       {canManage && current ? (
-        <AdjustBalancePane
+        <AdjustBalancePane.Component
           open={open.form === "adjust-balance"}
           onOpenChange={closePane}
           workerId={workerId}
           balances={balances}
-          onAdjusted={() => void refresh()}
+          onAdjusted={refresh}
         />
       ) : null}
       <PTOReasonDialog
@@ -261,7 +309,7 @@ export default function TimeOffView({ workerId, worker, open, onOpen }: TimeOffV
         onOpenChange={(next) => {
           if (!next) setReason(null);
         }}
-        ptoIds={reasonIds}
+        ptoIds={reason?.pto.id ? [reason.pto.id] : []}
         mode={reason?.kind ?? "reject"}
         onCompleted={() => {
           if (reason?.pto.id) flash(reason.pto.id);
@@ -312,39 +360,56 @@ function PolicyLine({ assignment }: { assignment: PTOPolicyAssignment | null }) 
   );
 }
 
-function PolicyHistory({ assignments }: { assignments: readonly PTOPolicyAssignment[] }) {
+function PolicyHistory({
+  assignments,
+  more,
+}: {
+  assignments: readonly PTOPolicyAssignment[];
+  more: ListMore;
+}) {
   const t = useT();
   return (
-    <SectionPanel title={t("Policy history")} count={assignments.length}>
-      <ScrollArea className="max-h-56" maskVariant="card">
-        <HoverGlideGroup>
-          <ul className="flex flex-col px-1.5 py-1">
-            {assignments.map((assignment) => (
-              <li
-                key={assignment.id}
-                data-glide-target
-                className="flex flex-wrap items-center gap-2 rounded-md px-1.5 py-2 text-xs"
-              >
-                <Badge variant="neutral" className="font-mono">
-                  {assignment.ptoPolicy?.code ?? t("Policy removed")}
-                </Badge>
-                <span className="font-mono text-muted-foreground tabular-nums">
-                  {assignment.effectiveTo
-                    ? formatRange(assignment.effectiveFrom, assignment.effectiveTo, {
-                        year: "always",
-                        join: "words",
-                      })
-                    : t("{0} to now", formatUnixDateMedium(assignment.effectiveFrom))}
-                </span>
-                {assignment.note ? (
-                  <span className="min-w-0 truncate text-muted-foreground">{assignment.note}</span>
-                ) : null}
-              </li>
-            ))}
-          </ul>
-        </HoverGlideGroup>
-      </ScrollArea>
+    <SectionPanel title={t("Policy history")} count={more.hasMore ? undefined : assignments.length}>
+      <VirtualRows
+        rows={assignments.map((assignment) => ({
+          key: assignment.id,
+          render: () => <PolicyHistoryRow assignment={assignment} />,
+        }))}
+        aria-label={t("Policy history")}
+        mask="card"
+        className="max-h-56"
+        contentClassName="px-1.5 py-1"
+        hoverGlide
+        estimateSize={36}
+        onEndReached={more.hasMore && !more.loadMoreFailed ? more.loadMore : undefined}
+        footer={<ListMoreLine more={more} />}
+      />
     </SectionPanel>
+  );
+}
+
+function PolicyHistoryRow({ assignment }: { assignment: PTOPolicyAssignment }) {
+  const t = useT();
+  return (
+    <div
+      data-glide-target
+      className="flex flex-wrap items-center gap-2 rounded-md px-1.5 py-2 text-xs"
+    >
+      <Badge variant="neutral" className="font-mono">
+        {assignment.ptoPolicy?.code ?? t("Policy removed")}
+      </Badge>
+      <span className="font-mono text-muted-foreground tabular-nums">
+        {assignment.effectiveTo
+          ? formatRange(assignment.effectiveFrom, assignment.effectiveTo, {
+              year: "always",
+              join: "words",
+            })
+          : t("{0} to now", formatUnixDateMedium(assignment.effectiveFrom))}
+      </span>
+      {assignment.note ? (
+        <span className="min-w-0 truncate text-muted-foreground">{assignment.note}</span>
+      ) : null}
+    </div>
   );
 }
 

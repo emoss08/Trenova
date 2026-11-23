@@ -2,8 +2,8 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { isBoardExhibit, type BoardArtifact, type BoardLayoutBlock } from "../../artifact-payloads";
 import type { CSSProperties, ReactNode } from "react";
-import { cutRows, figureRows, halfBlocks, writtenSegments } from "./board-card";
-import { LineBlank, RecordRowSketch, SourceLine } from "./board-parts";
+import { cutRows, figureRows, halfBlocks, measureIsTrack, writtenSegments } from "./board-card";
+import { EXHIBIT_CAPTION_CLASS, LineBlank, RecordRowSketch, SourceLine } from "./board-parts";
 import type { RowCut } from "./desk-board-body";
 import { BoardWords } from "./board-words";
 
@@ -14,15 +14,16 @@ const LOG_WIDTHS = [86, 64, 78, 52, 70];
 /**
  * A list's rows while it is read, in the rows' own boxes: as many as the call
  * listed (or a few when it did not say), cut where the list will be cut, with
- * what stands after them there.
+ * what stands after them there. In a list read by a track each row holds the
+ * track's place, as the drawn rows do.
  */
-function RowsSketch({ size, cut }: { size: number; cut?: RowCut }) {
+function RowsSketch({ size, track, cut }: { size: number; track: boolean; cut?: RowCut }) {
   const listed = Array.from({ length: size || SKETCH_ROWS }, (_, index) => index);
   const rows = cut ? cutRows(listed, cut.limit) : { shown: listed.slice(0, SKETCH_ROWS), more: 0 };
   return (
     <div className="dk-bd-rows">
       {rows.shown.map((index) => (
-        <RecordRowSketch key={index} />
+        <RecordRowSketch key={index} track={track} />
       ))}
       {cut?.after(rows.more)}
     </div>
@@ -32,7 +33,7 @@ function RowsSketch({ size, cut }: { size: number; cut?: RowCut }) {
 function BlockSketch({ block, cut }: { block: BoardLayoutBlock; cut?: RowCut }) {
   switch (block.type) {
     case "records":
-      return <RowsSketch size={block.size} cut={cut} />;
+      return <RowsSketch size={block.size} track={measureIsTrack(block.measure)} cut={cut} />;
     case "figures":
       // The same rows the figures are drawn in, so nothing moves when they land.
       return (
@@ -121,7 +122,7 @@ export function ExhibitSketch({
         <span>{block.title || t("Exhibit {0}", numeral)}</span>
       </div>
       {block.caption !== "" && (
-        <p className="-mt-0.5 mb-2.5 text-dsk-base leading-normal text-dsk-subtle">
+        <p className={EXHIBIT_CAPTION_CLASS}>
           <BoardWords segments={writtenSegments(block.caption)} board={null} />
         </p>
       )}

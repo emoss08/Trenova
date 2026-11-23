@@ -4,10 +4,17 @@ import type {
   WorkerDisciplinaryActionRow,
   WorkerSafetyEventRow,
 } from "@/lib/graphql/worker-safety";
+import type { TranslateFn } from "@trenova/shared/i18n/use-t";
+import { formatUnixDateMedium } from "@trenova/shared/lib/date";
+import { formatMinor } from "@trenova/shared/lib/money";
+import { describeSafetyEvent } from "@trenova/shared/lib/safety";
 import {
   disciplinaryLevelSchema,
   type DisciplinaryLevel,
+  type InspectionResult,
+  type SafetyEventKind,
   type SafetyEventStatus,
+  type SafetySeverity,
 } from "@trenova/shared/types/worker-safety";
 
 export const DISCIPLINE_STAIR: readonly DisciplinaryLevel[] = disciplinaryLevelSchema.options;
@@ -48,13 +55,18 @@ export function eventCarriesViolations(event: Pick<WorkerSafetyEventRow, "kind">
 }
 
 export type GaugeSegment = {
+  /** The event's id; `earlier` for the points of events not read yet. */
   id: string;
   points: number;
   /** Share of the filled length, 0 to 1. */
   share: number;
-  occurredAt: number;
+  /** Null on the `earlier` segment. */
+  occurredAt: number | null;
   rollsOffAt: number | null;
 };
+
+/** The id of the segment that holds the points of events past the pages read so far. */
+export const EARLIER_SEGMENT = "earlier";
 
 export type PointsGauge = {
   points: number;
@@ -72,7 +84,9 @@ export type PointsGauge = {
 
 /**
  * The points track: zero to two past the at-risk line (further when the points pass it), filled
- * to the active points with one segment per event still carrying points, oldest first.
+ * to the scorecard's active points. One segment per loaded event still carrying points, oldest
+ * first; points the scorecard counts on events not read yet (an older page) are one `earlier`
+ * segment ahead of them, so the shares always add up to the server's figure.
  */
 export function pointsGauge(
   scorecard: Pick<
@@ -88,14 +102,25 @@ export function pointsGauge(
   const carrying = events
     .filter((event) => event.activePoints > 0)
     .sort((a, b) => a.occurredAt - b.occurredAt);
-  const total = carrying.reduce((sum, event) => sum + event.activePoints, 0);
-  const segments = carrying.map((event) => ({
+  const loaded = carrying.reduce((sum, event) => sum + event.activePoints, 0);
+  const whole = Math.max(points, loaded);
+  const earlier = whole - loaded;
+  const segments: GaugeSegment[] = carrying.map((event) => ({
     id: event.id,
     points: event.activePoints,
-    share: total > 0 ? event.activePoints / total : 0,
+    share: whole > 0 ? event.activePoints / whole : 0,
     occurredAt: event.occurredAt,
     rollsOffAt: event.pointsExpireAt ?? null,
   }));
+  if (earlier > 0) {
+    segments.unshift({
+      id: EARLIER_SEGMENT,
+      points: earlier,
+      share: earlier / whole,
+      occurredAt: null,
+      rollsOffAt: null,
+    });
+  }
   const byDate = new Map<number, number>();
   for (const segment of segments) {
     if (segment.rollsOffAt == null) continue;
@@ -146,21 +171,76 @@ export function disciplineStair(
   }));
 }
 
-/** Active actions first, then the newest. */
-export function sortActions(
-  actions: readonly WorkerDisciplinaryActionRow[],
-): WorkerDisciplinaryActionRow[] {
-  return [...actions].sort((a, b) => {
-    const aActive = a.status === "Active";
-    const bActive = b.status === "Active";
-    if (aActive !== bActive) return aActive ? -1 : 1;
-    return b.issuedAt - a.issuedAt;
+/** The event in a few words: "Level 2 inspection — failed", "Preventable accident". */
+export function safetyEventHeadline(
+  event: Pick<
+    WorkerSafetyEventRow,
+    "kind" | "severity" | "preventable" | "inspectionResult" | "inspectionLevel"
+  >,
+): string {
+  return describeSafetyEvent({
+    kind: event.kind as SafetyEventKind,
+    severity: event.severity as SafetySeverity,
+    preventable: event.preventable,
+    inspectionResult: (event.inspectionResult ?? null) as InspectionResult | null,
+    inspectionLevel: event.inspectionLevel ?? null,
   });
 }
 
-/** A decimal amount the server sends as text, as money; empty when there is none. */
-export function decimalAmount(value: string | null | undefined): number | null {
+/**
+ * A fine or cost the server sends as decimal text, in minor units; null when there is none.
+ * Rounded to the cent once, here, so every figure after it is integer money.
+ */
+export function eventAmountMinor(value: string | null | undefined): number | null {
   if (value == null || value.trim() === "") return null;
   const amount = Number(value);
-  return Number.isFinite(amount) && amount !== 0 ? amount : null;
+  if (!Number.isFinite(amount)) return null;
+  const minor = Math.round(amount * 100);
+  return minor !== 0 ? minor : null;
+}
+
+/** A fine or cost as money in the reader's locale; null when there is none. */
+export function formatEventAmount(value: string | null | undefined): string | null {
+  const minor = eventAmountMinor(value);
+  return minor === null ? null : formatMinor(minor);
+}
+
+/**
+ * What an action's line says under its level. The stair's tooltips read the ladder's active
+ * actions, which carry fewer fields than a row of the list; what is missing is left out.
+ */
+export type ActionSummaryFields = Pick<
+  WorkerDisciplinaryActionRow,
+  "status" | "issuedAt" | "expiresAt"
+> &
+  Partial<
+    Pick<
+      WorkerDisciplinaryActionRow,
+      "rescindReason" | "issuedBy" | "suspensionDays" | "acknowledgedAt"
+    >
+  >;
+
+export function actionSummary(action: ActionSummaryFields, t: TranslateFn): string {
+  if (action.status === "Rescinded") {
+    return action.rescindReason ? t("Rescinded: {0}", action.rescindReason) : t("Rescinded");
+  }
+  const parts = [
+    action.issuedBy?.name
+      ? t("{0} by {1}", formatUnixDateMedium(action.issuedAt), action.issuedBy.name)
+      : formatUnixDateMedium(action.issuedAt),
+    action.suspensionDays
+      ? t("{0, plural, one {# day off} other {# days off}}", action.suspensionDays)
+      : null,
+    action.expiresAt
+      ? action.status === "Expired"
+        ? t("rolled off {0}", formatUnixDateMedium(action.expiresAt))
+        : t("rolls off {0}", formatUnixDateMedium(action.expiresAt))
+      : null,
+    action.status === "Active" && action.acknowledgedAt !== undefined
+      ? action.acknowledgedAt
+        ? t("Acknowledged")
+        : t("waiting for the acknowledgement")
+      : null,
+  ].filter(Boolean);
+  return parts.join(" · ");
 }

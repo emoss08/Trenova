@@ -18,6 +18,7 @@ without a reason that a reviewer would accept.
 
 | You are touching | Read |
 |---|---|
+| Any command: install, run, test, generate, add a dependency (Bun, never pnpm, npm, npx or Node) | `docs/engineering/client-commands.md` |
 | Any styling, a new page, a layout, colours, icons, a loading state | `docs/engineering/design-system.md` |
 | `vite.config.ts`, chunking, `main.tsx` imports, a heavy dependency, the service worker, the persisted cache, PDFs | `docs/engineering/web-build.md` |
 | User-facing text | `docs/engineering/generated-artifacts.md` → "i18n", and `i18n/README.md` |
@@ -96,7 +97,7 @@ Copyable patterns for the common tasks are in [patterns.md](patterns.md).
 - Gate actions with `usePermission(Resource.X, Operation.Y)`; the server checks again, so
   this is for the interface, not for security.
 - A new page, or a renamed button a product guide names, means
-  `pnpm --filter @trenova/web guide:generate`.
+  `bun run --filter @trenova/web guide:generate`.
 
 ## Data
 
@@ -107,7 +108,7 @@ Copyable patterns for the common tasks are in [patterns.md](patterns.md).
 - Every `queryFn` forwards TanStack's `signal`, and every GraphQL or REST wrapper takes a
   trailing `{ signal }`.
 - **GraphQL**: operations live in `packages/graphql/src/operations/<area>/*.graphql`; run
-  `pnpm --filter @trenova/graphql codegen` (or keep `pnpm dev` running). Documents are
+  `bun run --filter @trenova/graphql codegen` (or keep `bun run dev` running). Documents are
   hash-only at runtime. Import a document from its own module
   (`@trenova/graphql/generated/documents/<area>/<file>`, named after its `.graphql` file) and
   types from `@trenova/graphql/generated/graphql` with `import type` only; anything else loads
@@ -236,7 +237,7 @@ of sight, a bulk outcome, or a result that carries its next step (Undo, Download
 - Tokens only (`packages/shared/src/styles/tokens.css`): no palette classes (`bg-red-500`),
   no arbitrary font sizes, no hex, no shadows on anything that sits in the page, no
   hand-rolled focus rings (`ui-focus-ring`). Form controls spend `ui-field`. A missing colour
-  is a new token in both `:root` and `.dark`, checked by `pnpm lint:design`.
+  is a new token in both `:root` and `.dark`, checked by `bun run lint:design`.
 - Tone for things with a severity order, categorical accent for categories; a status map
   declares a lifecycle phase and the tone follows.
 - Sentence-case labels, no uppercase tracking. Weights mean something: 400 body, 500 label,
@@ -315,13 +316,13 @@ Format the files you edited, by path (`oxfmt <files>`), never a whole directory.
 for the person running the PR, exactly which of these the change needs. Run them locally
 only when asked:
 
-- `pnpm typecheck` (or `pnpm --filter <package> typecheck`)
-- `pnpm lint`, `pnpm lint:design`, `pnpm lint:skeletons`, `pnpm check:single-copies`
-- the tests you added or touched (`pnpm --filter @trenova/web exec vitest run <files>`)
+- `bun run typecheck` (or `bun run --filter <package> typecheck`)
+- `bun run lint`, `bun run lint:design`, `bun run lint:skeletons`, `bun run check:single-copies`
+- the tests you added or touched (from `client/apps/web`, `bunx --bun vitest run <files>`)
 - `task i18n` + translations + `task i18n-check` (text changed)
-- `pnpm --filter @trenova/graphql codegen` (an operation changed)
-- `pnpm --filter @trenova/web guide:generate` (a page or a guide-named label changed)
-- `pnpm --filter @trenova/web build` then `bundle:check` (imports, dependencies or chunking
+- `bun run --filter @trenova/graphql codegen` (an operation changed)
+- `bun run --filter @trenova/web guide:generate` (a page or a guide-named label changed)
+- `bun run --filter @trenova/web build` then `bundle:check` (imports, dependencies or chunking
   changed)
 
 Report what you changed, any rule you changed and why, and the list above.

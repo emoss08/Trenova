@@ -1,4 +1,5 @@
 import { AutoCompleteDateField } from "@/components/fields/date-field/date-field";
+import { FieldNote } from "@/components/fields/field-components";
 import { InputField } from "@/components/fields/input-field";
 import { SelectField } from "@/components/fields/select-field";
 import { TextareaField } from "@/components/fields/textarea-field";
@@ -15,25 +16,30 @@ import { ptoTypeLabel } from "@/routes/worker/_components/pto/worker-pto-balance
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form";
+import { formatNumber } from "@trenova/shared/i18n/format";
 import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
 import { getTodayDate } from "@trenova/shared/lib/date";
-import { cn } from "@trenova/shared/lib/utils";
 import {
   adjustPtoBalanceFormSchema,
   type AdjustPTOBalanceFormValues,
 } from "@trenova/shared/types/pto-policy";
-import { useEffect } from "react";
-import { FormProvider, useForm, useWatch, type Resolver } from "react-hook-form";
+import { FormProvider, useForm, useWatch, type Control, type Resolver } from "react-hook-form";
 
 export type AdjustBalancePaneProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   workerId: string;
   balances: readonly WorkerPTOBalanceView[];
-  onAdjusted: () => void;
+  /** Refreshes the figures the adjustment moved; the save holds until it settles. */
+  onAdjusted: () => Promise<unknown>;
 };
 
 export type AdjustmentPreview = { text: string; warn: boolean };
+
+/** A balance in days as the reader's language writes it, to two places: "1.50", "1,200.00". */
+function days(value: number): string {
+  return formatNumber(value, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
 
 /** What an adjustment does to the balance, in one line, before it is posted. */
 export function adjustmentPreview(
@@ -46,7 +52,7 @@ export function adjustmentPreview(
   const current = Number(balance.balanceDays);
   const change = Number(amount);
   if (!amount.trim() || !Number.isFinite(change) || change === 0) {
-    return { text: t("{0} is {1} days today.", name, current.toFixed(2)), warn: false };
+    return { text: t("{0} is {1} days today.", name, days(current)), warn: false };
   }
   const next = current + change;
   const cap = balance.maxBalanceDays ? Number(balance.maxBalanceDays) : null;
@@ -55,26 +61,21 @@ export function adjustmentPreview(
       text: t(
         "{0} goes from {1} to {2} days, over the {3} day cap.",
         name,
-        current.toFixed(2),
-        next.toFixed(2),
-        cap.toFixed(2),
+        days(current),
+        days(next),
+        days(cap),
       ),
       warn: true,
     };
   }
   if (next < 0) {
     return {
-      text: t(
-        "{0} goes from {1} to {2} days, below zero.",
-        name,
-        current.toFixed(2),
-        next.toFixed(2),
-      ),
+      text: t("{0} goes from {1} to {2} days, below zero.", name, days(current), days(next)),
       warn: true,
     };
   }
   return {
-    text: t("{0} goes from {1} to {2} days.", name, current.toFixed(2), next.toFixed(2)),
+    text: t("{0} goes from {1} to {2} days.", name, days(current), days(next)),
     warn: false,
   };
 }
@@ -107,18 +108,7 @@ export function AdjustBalancePane({
     resolver: zodResolver(adjustPtoBalanceFormSchema) as Resolver<AdjustPTOBalanceFormValues>,
     defaultValues: emptyValues(balances),
   });
-  const { control, handleSubmit, reset } = form;
-  const [ptoType, amountDays] = useWatch({ control, name: ["ptoType", "amountDays"] });
-
-  useEffect(() => {
-    if (open) reset(emptyValues(balances));
-  }, [open, reset, balances]);
-
-  const preview = adjustmentPreview(
-    t,
-    balances.find((balance) => balance.ptoType === ptoType),
-    amountDays ?? "",
-  );
+  const { control, handleSubmit } = form;
 
   const { mutateAsync, isPending } = useApiMutation<
     Awaited<ReturnType<typeof adjustWorkerPtoBalance>>,
@@ -137,8 +127,8 @@ export function AdjustBalancePane({
         effectiveAt: values.effectiveAt,
         note: values.note,
       }),
-    onSuccess: () => {
-      onAdjusted();
+    onSuccess: async () => {
+      await onAdjusted();
       onOpenChange(false);
     },
   });
@@ -147,7 +137,7 @@ export function AdjustBalancePane({
     <WorkPane
       open={open}
       onOpenChange={onOpenChange}
-      title={t("Adjust a balance")}
+      title={t("Adjust balance")}
       description={t(
         "A correction written to the ledger with your name and reason. Positive days add, negative days remove.",
       )}
@@ -174,14 +164,7 @@ export function AdjustBalancePane({
                 />
               </FormControl>
               <FormControl>
-                <InputField<AdjustPTOBalanceFormValues>
-                  control={control}
-                  name="amountDays"
-                  label={t("Adjustment")}
-                  placeholder={t("+1.0 or -0.5")}
-                  required
-                  className="font-mono"
-                />
+                <AdjustmentField control={control} balances={balances} />
               </FormControl>
               <FormControl>
                 <AutoCompleteDateField<AdjustPTOBalanceFormValues>
@@ -192,19 +175,6 @@ export function AdjustBalancePane({
                   required
                 />
               </FormControl>
-              {preview ? (
-                <FormControl cols="full">
-                  <p
-                    aria-live="polite"
-                    className={cn(
-                      "text-2xs tabular-nums",
-                      preview.warn ? "text-warning-foreground" : "text-muted-foreground",
-                    )}
-                  >
-                    {preview.text}
-                  </p>
-                </FormControl>
-              ) : null}
               <FormControl cols="full">
                 <TextareaField<AdjustPTOBalanceFormValues>
                   control={control}
@@ -227,5 +197,39 @@ export function AdjustBalancePane({
         </Form>
       </FormProvider>
     </WorkPane>
+  );
+}
+
+/** The adjustment, with what it does to the balance under it as it is typed. */
+function AdjustmentField({
+  control,
+  balances,
+}: {
+  control: Control<AdjustPTOBalanceFormValues>;
+  balances: readonly WorkerPTOBalanceView[];
+}) {
+  const t = useT();
+  const [ptoType, amountDays] = useWatch({ control, name: ["ptoType", "amountDays"] });
+  const preview = adjustmentPreview(
+    t,
+    balances.find((balance) => balance.ptoType === ptoType),
+    amountDays ?? "",
+  );
+  return (
+    <InputField<AdjustPTOBalanceFormValues>
+      control={control}
+      name="amountDays"
+      label={t("Adjustment")}
+      placeholder={t("+1.0 or -0.5")}
+      required
+      inputClassProps="font-mono"
+      description={
+        preview ? (
+          <FieldNote live tone={preview.warn ? "warning" : "muted"}>
+            {preview.text}
+          </FieldNote>
+        ) : undefined
+      }
+    />
   );
 }

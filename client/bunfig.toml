@@ -1,0 +1,13 @@
+[install]
+# One store under node_modules/.bun with each package linked where it is declared, as pnpm
+# did: a package can import only what its own package.json names.
+linker = "isolated"
+# A version must be a day old before an install resolves to it, so a compromised release is
+# usually pulled before it reaches the lockfile. Exempt a package by name in
+# minimumReleaseAgeExcludes only to take an urgent fix, and drop the entry once it is a day old.
+minimumReleaseAge = 86400
+
+[run]
+# `bun run` runs package binaries (vite, vitest, tsc, graphql-codegen) on Bun, not on Node,
+# even when their shebang names node.
+bun = true

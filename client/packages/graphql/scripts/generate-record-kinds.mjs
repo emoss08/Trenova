@@ -175,7 +175,7 @@ function render() {
 // Source of truth: ${RECORD_KIND} (record kinds), ${SOURCES.subjectKinds}
 // (agent subjects) and ${SOURCES.mentions} (@ search).
 //
-// Regenerate with: pnpm --filter @trenova/graphql codegen
+// Regenerate with: bun run --filter @trenova/graphql codegen
 // Drift between these values and the Go source fails the codegen:check CI gate.
 
 /** Every kind of record the server knows, with the prefix each of its ids carries. */

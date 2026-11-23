@@ -49,6 +49,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/deskboardexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/deskcaseexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/deskmemoryexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/desktranscriptexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/detentionexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/dispatchconsoleexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/dispatchstyleexec"
@@ -190,6 +191,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/deskboardresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/deskcaseresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/deskmemoryresolver"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/desktranscriptresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/detentionresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/dispatchconsoleresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/dispatchstyleresolver"
@@ -557,6 +559,10 @@ func FromServices(s *Services) *Resolver {
 	deskmemoryDeps := &deskmemoryresolver.Deps{
 		Core:               s.Core,
 		AgentMemoryService: s.AgentMemoryService,
+	}
+	desktranscriptDeps := &desktranscriptresolver.Deps{
+		Core:                  s.Core,
+		DeskTranscriptService: s.DeskTranscriptService,
 	}
 	detentionDeps := &detentionresolver.Deps{
 		Core:                         s.Core,
@@ -1225,6 +1231,7 @@ func FromServices(s *Services) *Resolver {
 	deskcaseDeskCaseOwnership := &deskcaseresolver.DeskCaseOwnershipResolver{Deps: deskcaseDeps}
 	deskcaseDeskCaseSegment := &deskcaseresolver.DeskCaseSegmentResolver{Deps: deskcaseDeps}
 	deskattentionDeskRecord := &deskattentionresolver.DeskRecordResolver{Deps: deskattentionDeps}
+	desktranscriptDeskTranscriptExport := &desktranscriptresolver.DeskTranscriptExportResolver{Deps: desktranscriptDeps}
 	detentionDetentionOccurrence := &detentionresolver.DetentionOccurrenceResolver{Deps: detentionDeps}
 	detentionDetentionPreviewResult := &detentionresolver.DetentionPreviewResultResolver{Deps: detentionDeps}
 	workersafetyDisciplinaryLadder := &workersafetyresolver.DisciplinaryLadderResolver{Deps: workersafetyDeps}
@@ -1359,6 +1366,7 @@ func FromServices(s *Services) *Resolver {
 	decisionsMutation := &decisionsresolver.MutationResolver{Deps: decisionsDeps}
 	deskcaseMutation := &deskcaseresolver.MutationResolver{Deps: deskcaseDeps}
 	deskmemoryMutation := &deskmemoryresolver.MutationResolver{Deps: deskmemoryDeps}
+	desktranscriptMutation := &desktranscriptresolver.MutationResolver{Deps: desktranscriptDeps}
 	detentionMutation := &detentionresolver.MutationResolver{Deps: detentionDeps}
 	dispatchconsoleMutation := &dispatchconsoleresolver.MutationResolver{Deps: dispatchconsoleDeps}
 	dispatchstyleMutation := &dispatchstyleresolver.MutationResolver{Deps: dispatchstyleDeps}
@@ -1490,6 +1498,7 @@ func FromServices(s *Services) *Resolver {
 	deskboardQuery := &deskboardresolver.QueryResolver{Deps: deskboardDeps}
 	deskcaseQuery := &deskcaseresolver.QueryResolver{Deps: deskcaseDeps}
 	deskmemoryQuery := &deskmemoryresolver.QueryResolver{Deps: deskmemoryDeps}
+	desktranscriptQuery := &desktranscriptresolver.QueryResolver{Deps: desktranscriptDeps}
 	detentionQuery := &detentionresolver.QueryResolver{Deps: detentionDeps}
 	dispatchconsoleQuery := &dispatchconsoleresolver.QueryResolver{Deps: dispatchconsoleDeps}
 	dispatchstyleQuery := &dispatchstyleresolver.QueryResolver{Deps: dispatchstyleDeps}
@@ -1789,6 +1798,7 @@ func FromServices(s *Services) *Resolver {
 			"DeskCaseOwnership@deskcase":                           deskcaseDeskCaseOwnership,
 			"DeskCaseSegment@deskcase":                             deskcaseDeskCaseSegment,
 			"DeskRecord@deskattention":                             deskattentionDeskRecord,
+			"DeskTranscriptExport@desktranscript":                  desktranscriptDeskTranscriptExport,
 			"DetentionOccurrence@detention":                        detentionDetentionOccurrence,
 			"DetentionPreviewResult@detention":                     detentionDetentionPreviewResult,
 			"DisciplinaryLadder@workersafety":                      workersafetyDisciplinaryLadder,
@@ -1923,6 +1933,7 @@ func FromServices(s *Services) *Resolver {
 			"Mutation@decisions":                                   decisionsMutation,
 			"Mutation@deskcase":                                    deskcaseMutation,
 			"Mutation@deskmemory":                                  deskmemoryMutation,
+			"Mutation@desktranscript":                              desktranscriptMutation,
 			"Mutation@detention":                                   detentionMutation,
 			"Mutation@dispatchconsole":                             dispatchconsoleMutation,
 			"Mutation@dispatchstyle":                               dispatchstyleMutation,
@@ -2054,6 +2065,7 @@ func FromServices(s *Services) *Resolver {
 			"Query@deskboard":                                      deskboardQuery,
 			"Query@deskcase":                                       deskcaseQuery,
 			"Query@deskmemory":                                     deskmemoryQuery,
+			"Query@desktranscript":                                 desktranscriptQuery,
 			"Query@detention":                                      detentionQuery,
 			"Query@dispatchconsole":                                dispatchconsoleQuery,
 			"Query@dispatchstyle":                                  dispatchstyleQuery,
@@ -2358,6 +2370,7 @@ var (
 	_ deskcaseexec.DeskCaseOwnershipResolver                           = (*deskcaseresolver.DeskCaseOwnershipResolver)(nil)
 	_ deskcaseexec.DeskCaseSegmentResolver                             = (*deskcaseresolver.DeskCaseSegmentResolver)(nil)
 	_ deskattentionexec.DeskRecordResolver                             = (*deskattentionresolver.DeskRecordResolver)(nil)
+	_ desktranscriptexec.DeskTranscriptExportResolver                  = (*desktranscriptresolver.DeskTranscriptExportResolver)(nil)
 	_ detentionexec.DetentionOccurrenceResolver                        = (*detentionresolver.DetentionOccurrenceResolver)(nil)
 	_ detentionexec.DetentionPreviewResultResolver                     = (*detentionresolver.DetentionPreviewResultResolver)(nil)
 	_ workersafetyexec.DisciplinaryLadderResolver                      = (*workersafetyresolver.DisciplinaryLadderResolver)(nil)
@@ -2492,6 +2505,7 @@ var (
 	_ decisionsexec.MutationResolver                                   = (*decisionsresolver.MutationResolver)(nil)
 	_ deskcaseexec.MutationResolver                                    = (*deskcaseresolver.MutationResolver)(nil)
 	_ deskmemoryexec.MutationResolver                                  = (*deskmemoryresolver.MutationResolver)(nil)
+	_ desktranscriptexec.MutationResolver                              = (*desktranscriptresolver.MutationResolver)(nil)
 	_ detentionexec.MutationResolver                                   = (*detentionresolver.MutationResolver)(nil)
 	_ dispatchconsoleexec.MutationResolver                             = (*dispatchconsoleresolver.MutationResolver)(nil)
 	_ dispatchstyleexec.MutationResolver                               = (*dispatchstyleresolver.MutationResolver)(nil)
@@ -2623,6 +2637,7 @@ var (
 	_ deskboardexec.QueryResolver                                      = (*deskboardresolver.QueryResolver)(nil)
 	_ deskcaseexec.QueryResolver                                       = (*deskcaseresolver.QueryResolver)(nil)
 	_ deskmemoryexec.QueryResolver                                     = (*deskmemoryresolver.QueryResolver)(nil)
+	_ desktranscriptexec.QueryResolver                                 = (*desktranscriptresolver.QueryResolver)(nil)
 	_ detentionexec.QueryResolver                                      = (*detentionresolver.QueryResolver)(nil)
 	_ dispatchconsoleexec.QueryResolver                                = (*dispatchconsoleresolver.QueryResolver)(nil)
 	_ dispatchstyleexec.QueryResolver                                  = (*dispatchstyleresolver.QueryResolver)(nil)

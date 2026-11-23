@@ -12,8 +12,8 @@
  * link to nowhere, or a **label** the app no longer shows all fail the build.
  *
  * Usage:
- *   node scripts/product-guide/generate.mjs           write the catalog
- *   node scripts/product-guide/generate.mjs --check   fail if it is stale
+ *   bun scripts/product-guide/generate.mjs           write the catalog
+ *   bun scripts/product-guide/generate.mjs --check  fail if it is stale
  */
 
 import { createHash } from "node:crypto";
@@ -404,7 +404,7 @@ if (CHECK) {
     : "";
   if (current !== serialized || currentDescriptions !== serializedDescriptions) {
     console.error(
-      "product guide: the catalog is stale. Run `pnpm --filter @trenova/web guide:generate` and commit.",
+      "product guide: the catalog is stale. Run `bun run --filter @trenova/web guide:generate` and commit.",
     );
     process.exit(1);
   }

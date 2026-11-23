@@ -4,6 +4,7 @@ import { AutoCompleteDateField } from "@/components/fields/date-field/date-field
 import { InputField } from "@/components/fields/input-field";
 import { TextareaField } from "@/components/fields/textarea-field";
 import {
+  PaneFormLoading,
   WorkPane,
   WorkPaneBody,
   WorkPaneCancel,
@@ -12,32 +13,34 @@ import {
 } from "@/components/work-pane";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { useProtectedFieldAccess } from "@/hooks/use-protected-fields";
-import { useSelectOption } from "@/hooks/use-select-option";
+import { selectOptionQueryOptions, useSelectOption } from "@/hooks/use-select-option";
 import {
   createWorkerCredential,
   updateWorkerCredential,
   type WorkerCredentialRow,
 } from "@/lib/graphql/worker-credential";
+import type { SelectOption } from "@/lib/graphql/select-options";
 import {
   selectOptionMetaBoolean,
   selectOptionMetaNumber,
   selectOptionMetaString,
 } from "@/lib/select-option-meta";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Badge } from "@trenova/shared/components/ui/badge";
+import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form";
-import { useT } from "@trenova/shared/i18n/use-t";
+import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
 import { suggestExpiryUnix } from "@trenova/shared/lib/credential";
-import { formatUnixDateMedium, getTodayDate } from "@trenova/shared/lib/date";
+import { formatRange, formatUnixDateMedium, getTodayDate } from "@trenova/shared/lib/date";
 import {
   credentialFormSchema,
   type CredentialFormValues,
 } from "@trenova/shared/types/worker-credential";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useState } from "react";
 import { Controller, FormProvider, useForm, useWatch, type Resolver } from "react-hook-form";
+import { useWorkerInvalidation } from "../../use-worker-invalidation";
+import { SubjectCard } from "../subject-card";
 import { healthLabel, healthTone } from "./credential-model";
-import { useCredentialInvalidation } from "./use-credential-invalidation";
 
 export type CredentialFormMode = "create" | "renew" | "edit";
 
@@ -81,11 +84,29 @@ function attachedDocumentOf(
     : null;
 }
 
+type TypeOption = SelectOption | null;
+
+/** What the type a form holds asks of it: a number, an expiry. */
+function credentialRequirements(
+  type: TypeOption,
+  numberWithheld: boolean,
+): Pick<CredentialFormValues, "requiresNumber" | "requiresExpiry"> {
+  return {
+    requiresNumber:
+      !numberWithheld && type ? selectOptionMetaBoolean(type, "requiresNumber") : false,
+    requiresExpiry: type ? selectOptionMetaString(type, "profileField") === "LicenseExpiry" : false,
+  };
+}
+
+function validityMonthsOf(type: TypeOption): number | null {
+  return type ? selectOptionMetaNumber(type, "validityMonths") : null;
+}
+
 function buildDefaults(
   mode: CredentialFormMode,
   credential: CredentialFormPaneProps["credential"],
   credentialTypeId: string | null | undefined,
-  today: number,
+  presetType: TypeOption,
   documentName: string,
 ): CredentialPaneValues {
   const typeId = credentialTypeId ?? credential?.credentialTypeId ?? "";
@@ -102,12 +123,13 @@ function buildDefaults(
       document: attachedDocumentOf(credential, documentName),
     };
   }
+  const today = getTodayDate();
   return {
     credentialTypeId: typeId,
     number: mode === "renew" ? (credential?.number ?? null) : null,
     issuingAuthority: mode === "renew" ? (credential?.issuingAuthority ?? null) : null,
     issuedAt: today,
-    expiresAt: null,
+    expiresAt: presetType ? suggestExpiryUnix(today, validityMonthsOf(presetType)) : null,
     notes: null,
     requiresNumber: false,
     requiresExpiry: false,
@@ -115,69 +137,121 @@ function buildDefaults(
   };
 }
 
+function paneCopy(t: TranslateFn, mode: CredentialFormMode) {
+  switch (mode) {
+    case "create":
+      return {
+        title: t("Add credential"),
+        description: t("It joins the file and the expiry runway as soon as you save."),
+        submit: t("Add credential"),
+      };
+    case "renew":
+      return {
+        title: t("Renew credential"),
+        description: t("The current one moves to Earlier versions when you save."),
+        submit: t("Renew credential"),
+      };
+    case "edit":
+      return {
+        title: t("Edit credential"),
+        description: t(
+          "Changing the number, dates or document clears any verification on this credential.",
+        ),
+        submit: t("Save changes"),
+      };
+  }
+}
+
 /**
  * Add, renew or edit a credential in the work pane beside the table. The type decides what must
  * be filled in and suggests the expiry from its validity until the person changes it; the
  * document is uploaded to the worker's files as it is dropped.
+ *
+ * The pane mounts fresh at each opening (`lazyWorkPane`). A new or renewed credential whose type
+ * is set before it opens waits for that type, so the suggested expiry is in the form's defaults.
  */
-export function CredentialFormPane({
-  open,
+export function CredentialFormPane(props: CredentialFormPaneProps) {
+  const { open, onOpenChange, mode, credential, credentialTypeId } = props;
+  const t = useT();
+  const copy = paneCopy(t, mode);
+  const presetTypeId = mode === "edit" ? null : (credentialTypeId ?? credential?.credentialTypeId);
+  const preset = useSelectOption("WORKER_CREDENTIAL_TYPE", presetTypeId);
+
+  return (
+    <WorkPane
+      open={open}
+      onOpenChange={onOpenChange}
+      title={copy.title}
+      description={copy.description}
+    >
+      {preset.isLoading ? (
+        <PaneFormLoading />
+      ) : (
+        <CredentialForm {...props} presetType={preset.option} submitLabel={copy.submit} />
+      )}
+    </WorkPane>
+  );
+}
+
+function CredentialForm({
   onOpenChange,
   workerId,
   mode,
   credential,
   credentialTypeId,
   onSaved,
-}: CredentialFormPaneProps) {
+  presetType,
+  submitLabel,
+}: CredentialFormPaneProps & { presetType: TypeOption; submitLabel: string }) {
   const t = useT();
-  const invalidate = useCredentialInvalidation(workerId);
-  const today = useMemo(() => getTodayDate(), []);
+  const queryClient = useQueryClient();
+  const invalidate = useWorkerInvalidation(workerId, "credentials");
   const isEdit = mode === "edit";
   const personalDetailsVisible = useProtectedFieldAccess("Personal");
   const numberWithheld = isEdit && !personalDetailsVisible;
-  const documentName = t("Attached document");
+  const schemaResolver = zodResolver(
+    credentialFormSchema,
+  ) as unknown as Resolver<CredentialPaneValues>;
 
   const form = useForm<CredentialPaneValues>({
-    resolver: zodResolver(credentialFormSchema) as unknown as Resolver<CredentialPaneValues>,
-    defaultValues: buildDefaults(mode, credential, credentialTypeId, today, documentName),
+    // What the type asks for is read at validation from the type the form holds then, so a
+    // change of type can never leave the rule a step behind.
+    resolver: async (values, context, options) => {
+      const type = values.credentialTypeId
+        ? await queryClient
+            .fetchQuery(selectOptionQueryOptions("WORKER_CREDENTIAL_TYPE", values.credentialTypeId))
+            .catch(() => null)
+        : null;
+      return schemaResolver(
+        { ...values, ...credentialRequirements(type, numberWithheld) },
+        context,
+        options,
+      );
+    },
+    defaultValues: buildDefaults(
+      mode,
+      credential,
+      credentialTypeId,
+      presetType,
+      t("Attached document"),
+    ),
   });
   const { control, handleSubmit, reset, setValue, getFieldState, getValues } = form;
 
-  const loadedFor = useRef<string | null>(null);
-  useEffect(() => {
-    const key = open ? `${mode}:${credential?.id ?? ""}:${credentialTypeId ?? ""}` : null;
-    if (key === loadedFor.current) return;
-    loadedFor.current = key;
-    if (key) reset(buildDefaults(mode, credential, credentialTypeId, today, documentName));
-  }, [open, mode, credential, credentialTypeId, today, documentName, reset]);
-
   const selectedTypeId = useWatch({ control, name: "credentialTypeId" });
-  const issuedAt = useWatch({ control, name: "issuedAt" });
   const { option: selectedType } = useSelectOption("WORKER_CREDENTIAL_TYPE", selectedTypeId);
-  const requiresNumber =
-    !numberWithheld && selectedType
-      ? selectOptionMetaBoolean(selectedType, "requiresNumber")
-      : false;
+  const { requiresNumber, requiresExpiry } = credentialRequirements(selectedType, numberWithheld);
   const requiresDocument = selectedType
     ? selectOptionMetaBoolean(selectedType, "requiresDocument")
     : false;
-  const requiresExpiry = selectedType
-    ? selectOptionMetaString(selectedType, "profileField") === "LicenseExpiry"
-    : false;
-  const validityMonths = selectedType
-    ? selectOptionMetaNumber(selectedType, "validityMonths")
-    : null;
+  const validityMonths = validityMonthsOf(selectedType);
 
-  useEffect(() => {
-    setValue("requiresNumber", requiresNumber);
-    setValue("requiresExpiry", requiresExpiry);
-  }, [requiresNumber, requiresExpiry, setValue]);
-
-  useEffect(() => {
-    if (isEdit || !selectedType) return;
-    if (getFieldState("expiresAt").isDirty) return;
-    setValue("expiresAt", suggestExpiryUnix(issuedAt, validityMonths), { shouldDirty: false });
-  }, [isEdit, selectedType, validityMonths, issuedAt, getFieldState, setValue]);
+  // The suggestion follows the type and the issue date as the person changes them, until they
+  // set the expiry themselves.
+  const suggestExpiry = (issuedAt: number | null, months: number | null) => {
+    if (isEdit || getFieldState("expiresAt").isDirty) return;
+    setValue("expiresAt", suggestExpiryUnix(issuedAt, months), { shouldDirty: false });
+  };
 
   const [uploading, setUploading] = useState(false);
   const { mutateAsync, isPending } = useApiMutation<
@@ -223,27 +297,9 @@ export function CredentialFormPane({
   });
 
   const lockType = mode !== "create" || Boolean(credentialTypeId);
-  const title =
-    mode === "create"
-      ? t("Add credential")
-      : mode === "renew"
-        ? t("Renew credential")
-        : t("Edit credential");
-  const description =
-    mode === "create"
-      ? t("It joins the file and the expiry runway as soon as you save.")
-      : mode === "renew"
-        ? t("The current one moves to Earlier versions when you save.")
-        : t("Changing the number, dates or document clears any verification on this credential.");
-  const submit =
-    mode === "create"
-      ? t("Add credential")
-      : mode === "renew"
-        ? t("Save renewal")
-        : t("Save changes");
 
   return (
-    <WorkPane open={open} onOpenChange={onOpenChange} title={title} description={description}>
+    <>
       <WorkPaneDirtyTracker form={form} />
       <FormProvider {...form}>
         <Form
@@ -266,6 +322,9 @@ export function CredentialFormPane({
                   required
                   placeholder={t("Choose a credential type")}
                   disabled={lockType}
+                  onOptionChange={(option) =>
+                    suggestExpiry(getValues("issuedAt"), validityMonthsOf(option))
+                  }
                   description={
                     validityMonths
                       ? t("Typically valid for {0} months.", String(validityMonths))
@@ -279,6 +338,7 @@ export function CredentialFormPane({
                   name="number"
                   label={t("Number")}
                   placeholder={numberWithheld ? t("Hidden") : t("e.g. 12345678")}
+                  inputClassProps="font-mono"
                   description={
                     numberWithheld ? t("Your role does not include personal details.") : undefined
                   }
@@ -301,6 +361,9 @@ export function CredentialFormPane({
                   label={t("Issued")}
                   placeholder={t("Date on the card")}
                   description={t("Used with the type's validity to suggest an expiry.")}
+                  rules={{
+                    onChange: () => suggestExpiry(getValues("issuedAt"), validityMonths),
+                  }}
                 />
               </FormControl>
               <FormControl>
@@ -349,12 +412,12 @@ export function CredentialFormPane({
           <WorkPaneFooter>
             <WorkPaneCancel />
             <Button type="submit" size="sm" isLoading={isPending} disabled={uploading}>
-              {submit}
+              {submitLabel}
             </Button>
           </WorkPaneFooter>
         </Form>
       </FormProvider>
-    </WorkPane>
+    </>
   );
 }
 
@@ -367,29 +430,21 @@ function CurrentCredential({
   const t = useT();
   const span =
     credential.issuedAt && credential.expiresAt
-      ? t(
-          "{0} to {1}",
-          formatUnixDateMedium(credential.issuedAt),
-          formatUnixDateMedium(credential.expiresAt),
-        )
+      ? formatRange(credential.issuedAt, credential.expiresAt, { year: "always", join: "words" })
       : credential.expiresAt
         ? t("Until {0}", formatUnixDateMedium(credential.expiresAt))
         : null;
   return (
-    <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-x-3 gap-y-0.5 rounded-md border border-border-subtle bg-sunken px-2.5 py-2">
-      <span className="truncate text-sm font-medium">
-        {credential.credentialType?.name ?? t("Current credential")}
-      </span>
-      {credential.health ? (
-        <Badge variant={healthTone(credential.health)} dot>
-          {healthLabel(t, credential.health)}
-        </Badge>
-      ) : (
-        <span />
-      )}
-      <span className="col-span-2 truncate text-xs text-muted-foreground tabular-nums">
-        {[credential.number, span, credential.document?.originalName].filter(Boolean).join(" · ")}
-      </span>
-    </div>
+    <SubjectCard
+      title={credential.credentialType?.name ?? t("Current credential")}
+      badge={
+        credential.health
+          ? { label: healthLabel(t, credential.health), variant: healthTone(credential.health) }
+          : null
+      }
+      detail={[credential.number, span, credential.document?.originalName]
+        .filter(Boolean)
+        .join(" · ")}
+    />
   );
 }

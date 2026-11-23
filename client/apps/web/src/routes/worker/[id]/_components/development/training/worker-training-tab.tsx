@@ -1,54 +1,47 @@
+import { ConfirmDialog } from "@/components/confirm-dialog";
+import { ReasonDialog } from "@/components/reason-dialog";
+import { preloadOn } from "@/components/work-pane";
 import { useApiMutation } from "@/hooks/use-api-mutation";
-import { useSingleFlight } from "@/hooks/use-single-flight";
 import { usePermission } from "@/hooks/use-permission";
+import { useSingleFlight } from "@/hooks/use-single-flight";
 import {
   assignRequiredWorkerTraining,
   cancelWorkerTraining,
+  waiveWorkerTraining,
   type WorkerTrainingRecordRow,
   type WorkerTrainingSummaryItem,
 } from "@/lib/graphql/worker-training";
 import { useQuery } from "@tanstack/react-query";
 import { ErrorState } from "@trenova/shared/components/errors/error-state";
+import { PlusIcon } from "@trenova/shared/components/icons";
 import { Button } from "@trenova/shared/components/ui/button";
 import { EmptySheet } from "@trenova/shared/components/ui/empty-sheet";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@trenova/shared/components/ui/table";
 import { toast } from "@trenova/shared/components/ui/toast";
-import { useT } from "@trenova/shared/i18n/use-t";
+import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
 import { trainingHealthMeta } from "@trenova/shared/lib/training";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useState } from "react";
-import { ListSketch } from "../../employment/list-sketch";
-import { ConfirmDialog } from "@/components/confirm-dialog";
+import {
+  BOUNDED_CELL_CLASS,
+  BoundedGroupRow,
+  BoundedTable,
+  type BoundedColumn,
+  type BoundedRow,
+} from "../../bounded-table";
+import { ListSketch } from "../../list-sketch";
+import { useWorkerInvalidation } from "../../use-worker-invalidation";
+import { useWorkerList } from "../../use-worker-list";
+import { AssignTrainingPane } from "../development-panes";
+import { trainingRecordsList, trainingSummaryQuery } from "../development-reads";
 import { TrainingSkeletonBody } from "../development-skeleton";
-import { trainingRecordsQuery, trainingSummaryQuery } from "../development-reads";
 import { TrainingHistory } from "./training-history";
+import { earlierRecords, openCourseIdsOf } from "./training-model";
 import { TrainingOverview } from "./training-overview";
 import {
-  isOpenRecord,
   TrainingSlotRow,
   type TrainingRowActions,
   type TrainingSlotPermissions,
-} from "./training-slot-card";
-import { useTrainingInvalidation } from "./use-training-invalidation";
-import { WaiveTrainingDialog } from "./waive-training-dialog";
-
-const CLOSED_STATUSES = new Set(["Completed", "Failed", "Expired", "Waived", "Cancelled"]);
-
-/** The courses with an open assignment, which cannot be assigned again. */
-export function openCourseIdsOf(items: readonly WorkerTrainingSummaryItem[]): Set<string> {
-  return new Set(
-    items
-      .filter((item) => isOpenRecord(item.record as WorkerTrainingRecordRow | null))
-      .map((item) => item.course.id),
-  );
-}
+} from "./training-slot-row";
 
 export type TrainingViewProps = {
   workerId: string;
@@ -56,6 +49,17 @@ export type TrainingViewProps = {
   onRecord: (item: WorkerTrainingSummaryItem) => void;
   onRead: (record: WorkerTrainingRecordRow) => void;
 };
+
+function courseColumns(t: TranslateFn): BoundedColumn[] {
+  return [
+    { key: "course", label: t("Course") },
+    { key: "assigned", label: t("Assigned") },
+    { key: "completed", label: t("Completed") },
+    { key: "valid", label: t("Valid until"), align: "end" },
+    { key: "health", label: t("Health") },
+    { key: "actions", label: <span className="sr-only">{t("Actions")}</span>, shrink: true },
+  ];
+}
 
 /**
  * Development › Training: the standing in one row, every course in one bounded table grouped
@@ -71,25 +75,25 @@ export default function WorkerTrainingTab({
   const { allowed: canAssign } = usePermission(Resource.WorkerTraining, Operation.Assign);
   const { allowed: canRecord } = usePermission(Resource.WorkerTraining, Operation.Update);
   const { allowed: canWaive } = usePermission(Resource.WorkerTraining, Operation.Cancel);
-  const invalidate = useTrainingInvalidation(workerId);
+  const invalidate = useWorkerInvalidation(workerId, "training");
   const [waiving, setWaiving] = useState<WorkerTrainingRecordRow | null>(null);
   const [cancelling, setCancelling] = useState<WorkerTrainingRecordRow | null>(null);
 
   const summaryQuery = useQuery(trainingSummaryQuery(workerId));
-  const recordsQuery = useQuery(trainingRecordsQuery(workerId));
+  const records = useWorkerList(trainingRecordsList(workerId));
 
   const assignRequired = useApiMutation({
     resourceName: "Training",
     scope: { id: `worker-training-assign-required:${workerId}` },
     mutationFn: () => assignRequiredWorkerTraining(workerId),
-    onSuccess: (records: WorkerTrainingRecordRow[]) => {
+    onSuccess: async (assigned: WorkerTrainingRecordRow[]) => {
       // The rows appear in the table; only an answer of nothing assigned needs saying.
-      if (records.length === 0) {
+      if (assigned.length === 0) {
         toast.info(t("Nothing to assign"), {
           description: t("Every required course is already open or current."),
         });
       }
-      void invalidate();
+      await invalidate();
     },
   });
   const cancel = useApiMutation({
@@ -97,9 +101,19 @@ export default function WorkerTrainingTab({
     scope: { id: `worker-training-cancel:${workerId}` },
     mutationFn: (record: WorkerTrainingRecordRow) =>
       cancelWorkerTraining({ id: record.id, version: record.version }),
-    onSuccess: () => {
+    onSuccess: async () => {
+      await invalidate();
       setCancelling(null);
-      void invalidate();
+    },
+  });
+  const waive = useApiMutation({
+    resourceName: "Training",
+    scope: { id: `worker-training-waive:${workerId}` },
+    mutationFn: ({ record, reason }: { record: WorkerTrainingRecordRow; reason: string }) =>
+      waiveWorkerTraining({ id: record.id, reason, version: record.version }),
+    onSuccess: async () => {
+      await invalidate();
+      setWaiving(null);
     },
   });
 
@@ -107,50 +121,99 @@ export default function WorkerTrainingTab({
   const cancelOnce = useSingleFlight((record: WorkerTrainingRecordRow) =>
     cancel.mutateAsync(record),
   );
+  const waiveOnce = useSingleFlight((input: { record: WorkerTrainingRecordRow; reason: string }) =>
+    waive.mutateAsync(input),
+  );
 
-  if (summaryQuery.isPending || recordsQuery.isPending) return <TrainingSkeletonBody />;
-
-  const failed = summaryQuery.isError ? summaryQuery : recordsQuery.isError ? recordsQuery : null;
-  if (failed) {
+  if (summaryQuery.isPending || records.isPending) return <TrainingSkeletonBody />;
+  if (summaryQuery.isError) {
     return (
       <ErrorState
         layout="sheet"
-        error={failed.error}
-        onRetry={() => {
-          void summaryQuery.refetch();
-          void recordsQuery.refetch();
-        }}
-        title={t("Couldn't load the training")}
+        error={summaryQuery.error}
+        onRetry={() => void summaryQuery.refetch()}
+        title={t("The training could not be loaded")}
         sketch={<ListSketch />}
       />
     );
   }
 
   const summary = summaryQuery.data;
-  if (!summary) return <TrainingSkeletonBody />;
   const items = summary.items;
   const required = items.filter((item) => item.required);
   const other = items.filter((item) => !item.required);
   const openCourseIds = openCourseIdsOf(items);
-  const gapCount = items.filter(
-    (item) =>
-      item.required && trainingHealthMeta(item.health).blocks && !openCourseIds.has(item.course.id),
+  const gapCount = required.filter(
+    (item) => trainingHealthMeta(item.health).blocks && !openCourseIds.has(item.course.id),
   ).length;
-  const history = (recordsQuery.data ?? []).filter(
-    (record) =>
-      CLOSED_STATUSES.has(record.status) &&
-      !items.some((item) => (item.record as WorkerTrainingRecordRow | null)?.id === record.id),
-  );
 
   const permissions: TrainingSlotPermissions = { canAssign, canRecord, canWaive };
   const actions: TrainingRowActions = {
-    onAssign: (courseId) => onAssign(courseId),
+    onAssign,
     onRecord,
     onRead,
     onWaive: setWaiving,
     onCancel: setCancelling,
   };
-  const busy = cancel.isPending || assignRequired.isPending;
+  const busy = cancel.isPending || assignRequired.isPending || waive.isPending;
+  const columns = courseColumns(t);
+  const slotRow = (item: WorkerTrainingSummaryItem): BoundedRow => ({
+    key: item.course.id,
+    render: (props) => (
+      <TrainingSlotRow
+        props={props}
+        item={item}
+        permissions={permissions}
+        busy={busy}
+        {...actions}
+      />
+    ),
+  });
+  const rows: BoundedRow[] = [
+    {
+      key: "group:required",
+      render: (props) => (
+        <BoundedGroupRow
+          props={props}
+          span={columns.length}
+          label={t("Required")}
+          count={required.length}
+        />
+      ),
+    },
+    ...(required.length === 0
+      ? [
+          {
+            key: "none:required",
+            render: (props) => (
+              <tr {...props}>
+                <td colSpan={columns.length} className={BOUNDED_CELL_CLASS}>
+                  <span className="text-xs text-muted-foreground">
+                    {t("No courses are required for this driver type.")}
+                  </span>
+                </td>
+              </tr>
+            ),
+          } satisfies BoundedRow,
+        ]
+      : required.map(slotRow)),
+    ...(other.length > 0
+      ? [
+          {
+            key: "group:other",
+            render: (props) => (
+              <BoundedGroupRow
+                props={props}
+                span={columns.length}
+                label={t("Other")}
+                count={other.length}
+              />
+            ),
+          } satisfies BoundedRow,
+          ...other.map(slotRow),
+        ]
+      : []),
+  ];
 
   return (
     <div className="flex flex-col gap-4">
@@ -163,6 +226,8 @@ export default function WorkerTrainingTab({
         onAssignRequired={() => void assignOnce.run()}
       />
 
+      {/* The courses panel has no title of its own (the standing above names it): the table,
+          then the history folded under it, as the mockup draws it. */}
       <section aria-label={t("Courses")} className="overflow-hidden rounded-lg border bg-card">
         {items.length === 0 ? (
           <EmptySheet
@@ -173,72 +238,47 @@ export default function WorkerTrainingTab({
             sketch={<ListSketch />}
             action={
               canAssign ? (
-                <Button size="sm" onClick={() => onAssign(null)}>
+                <Button size="sm" {...preloadOn(AssignTrainingPane)} onClick={() => onAssign(null)}>
+                  <PlusIcon className="size-3.5" />
                   {t("Assign course")}
                 </Button>
               ) : undefined
             }
           />
         ) : (
-          <Table containerClassName="max-h-[30rem]">
-            <TableHeader className="sticky top-0 z-10">
-              <TableRow className="hover:bg-transparent">
-                <TableHead>{t("Course")}</TableHead>
-                <TableHead>{t("Assigned")}</TableHead>
-                <TableHead>{t("Completed")}</TableHead>
-                <TableHead className="text-right">{t("Valid until")}</TableHead>
-                <TableHead>{t("Health")}</TableHead>
-                <TableHead className="w-9">
-                  <span className="sr-only">{t("Actions")}</span>
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              <GroupRow label={t("Required")} count={required.length} />
-              {required.length === 0 ? (
-                <TableRow className="hover:bg-transparent">
-                  <TableCell colSpan={6} className="text-xs text-muted-foreground">
-                    {t("No courses are required for this driver type.")}
-                  </TableCell>
-                </TableRow>
-              ) : (
-                required.map((item) => (
-                  <TrainingSlotRow
-                    key={item.course.id}
-                    item={item}
-                    permissions={permissions}
-                    busy={busy}
-                    {...actions}
-                  />
-                ))
-              )}
-              {other.length > 0 ? (
-                <>
-                  <GroupRow label={t("Other")} count={other.length} />
-                  {other.map((item) => (
-                    <TrainingSlotRow
-                      key={item.course.id}
-                      item={item}
-                      permissions={permissions}
-                      busy={busy}
-                      {...actions}
-                    />
-                  ))}
-                </>
-              ) : null}
-            </TableBody>
-          </Table>
+          <BoundedTable
+            label={t("Courses")}
+            columns={columns}
+            maxHeightClassName="max-h-120"
+            estimateRowHeight={52}
+            rows={rows}
+          />
         )}
-        <TrainingHistory records={history} onRead={onRead} />
+        <TrainingHistory
+          records={earlierRecords(records.rows, items)}
+          list={records}
+          onRead={onRead}
+        />
       </section>
 
-      <WaiveTrainingDialog
+      <ReasonDialog
         open={waiving !== null}
         onOpenChange={(open) => {
           if (!open) setWaiving(null);
         }}
-        workerId={workerId}
-        record={waiving}
+        title={t("Waive {0}", waiving?.course?.name ?? t("this course"))}
+        description={t(
+          "Use this when the worker already meets the requirement another way — prior experience, an equivalent certificate, a grandfathered rule. The waiver satisfies the matrix and is kept in the audit log with your reason.",
+        )}
+        placeholder={t("e.g. Completed at previous carrier; certificate on file")}
+        fieldDescription={t("Kept on the record and in the audit log.")}
+        maxLength={255}
+        confirmLabel={t("Waive course")}
+        cancelLabel={t("Cancel")}
+        pending={waiveOnce.pending}
+        onConfirm={(reason) => {
+          if (waiving) void waiveOnce.run({ record: waiving, reason });
+        }}
       />
       <ConfirmDialog
         open={cancelling !== null}
@@ -265,16 +305,5 @@ export default function WorkerTrainingTab({
         }}
       />
     </div>
-  );
-}
-
-function GroupRow({ label, count }: { label: string; count: number }) {
-  return (
-    <TableRow className="h-7 bg-sunken/60 hover:bg-sunken/60">
-      <TableCell colSpan={6} className="py-1 text-xs font-medium text-foreground-subtle">
-        {label}
-        <span className="ml-1.5 font-normal tabular-nums">{count}</span>
-      </TableCell>
-    </TableRow>
   );
 }

@@ -41,10 +41,10 @@ Read from those, never copied:
    prefix in `recordIDPrefixes` (`recordid.go`). Any other kind gets a
    `recordkind.Kind` constant and a `recordKinds` entry (`recordkind.go`). Then add the
    entity that mints it to the minting test in `recordid_test.go`.
-2. Run `pnpm --filter @trenova/graphql codegen`, which runs
+2. Run `bun run --filter @trenova/graphql codegen`, which runs
    `generate-record-kinds.mjs`.
 3. If it opens on a page, add it to `record-links.ts`. Then run
-   `pnpm --filter @trenova/web guide:generate`.
+   `bun run --filter @trenova/web guide:generate`.
 
 That is all a page needs: the assistant hears about the record from its own
 page with no further change. Each further feature is one entry in that

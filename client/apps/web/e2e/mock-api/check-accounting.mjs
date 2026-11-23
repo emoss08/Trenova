@@ -4,7 +4,7 @@
 // present, nothing unselected, no null on a non-null type, enums and scalars of the right kind.
 // Walks setup end to end for each provider, the refusals a write should make, and the catalog.
 //
-//   node e2e/mock-api/check-accounting.mjs        (mock on :8080, or MOCK_API_URL)
+//   bun e2e/mock-api/check-accounting.mjs        (mock on :8080, or MOCK_API_URL)
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import {

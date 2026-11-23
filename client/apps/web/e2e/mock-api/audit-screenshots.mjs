@@ -1,5 +1,5 @@
 // Walks through the audit log and Data retention against the mock API and writes one PNG per
-// state. Usage: node e2e/mock-api/audit-screenshots.mjs [outDir] [name,name,...]
+// state. Usage: bun e2e/mock-api/audit-screenshots.mjs [outDir] [name,name,...]
 import { mkdir } from "node:fs/promises";
 import { resolve } from "node:path";
 import { chromium } from "playwright";

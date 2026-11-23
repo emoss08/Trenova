@@ -10,6 +10,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/testutil/orgzonetest"
+
 	"github.com/emoss08/trenova/internal/testutil/entitlementtest"
 
 	"github.com/emoss08/keel"
@@ -332,6 +334,7 @@ func convertedListCases(
 		}),
 		WorkerTrainingService: workertrainingservice.New(workertrainingservice.Params{
 			Logger: logger, Repo: training, WorkerRepo: workers,
+			Organizations: orgzonetest.Organizations{},
 		}),
 		WorkerService: workerservice.New(workerservice.Params{
 			Logger: logger, Repo: workers, CacheRepo: workerCacheMiss{},

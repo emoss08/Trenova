@@ -75,6 +75,11 @@ function groupLabel(severity: WorkerConcernSeverity, t: TranslateFn): string {
   }
 }
 
+/** A concern's identity: its code and the record it is about (a subject when it names none). */
+function concernKey(concern: WorkerConcern): string {
+  return [concern.code, concern.destination.recordId ?? concern.subject ?? ""].join(":");
+}
+
 function ConcernRow({
   concern,
   primary,
@@ -155,7 +160,7 @@ export function AttentionList({
       {concerns.length === 0 ? (
         <SectionPanelQuiet>{t("Nothing needs attention right now.")}</SectionPanelQuiet>
       ) : (
-        <ScrollArea className="max-h-[34rem]">
+        <ScrollArea className="max-h-136">
           <HoverGlideGroup className="@container/attention bg-card px-1.5 pb-1.5">
             {groups.map((group) => (
               <section key={group.severity} aria-label={groupLabel(group.severity, t)}>
@@ -167,9 +172,9 @@ export function AttentionList({
                   {groupLabel(group.severity, t)}
                 </h4>
                 <ul className="flex flex-col gap-px">
-                  {group.items.map((concern, index) => (
+                  {group.items.map((concern) => (
                     <ConcernRow
-                      key={`${concern.code}-${concern.destination.recordId ?? index}`}
+                      key={concernKey(concern)}
                       concern={concern}
                       primary={concern === first}
                       onOpen={onOpen}

@@ -1,5 +1,11 @@
 import { DocumentPanePreview } from "@/components/documents/document-pane-preview";
-import { WorkPane, WorkPaneBody, WorkPaneCancel, WorkPaneFooter } from "@/components/work-pane";
+import {
+  preloadOn,
+  WorkPane,
+  WorkPaneBody,
+  WorkPaneCancel,
+  WorkPaneFooter,
+} from "@/components/work-pane";
 import type { WorkerTrainingRecordRow } from "@/lib/graphql/worker-training";
 import { TrainingHealthBadge } from "@trenova/shared/components/training-health-badge";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -19,6 +25,8 @@ import {
 } from "@trenova/shared/types/worker-training";
 import type { WorkerTrainingHealth } from "@trenova/shared/types/worker-training-health";
 import { useState } from "react";
+import { RecordTrainingResultPane } from "../development-panes";
+import { formatTrainingScore } from "./training-score";
 
 export type CoursePaneProps = {
   /** The training record to read; the pane is open while it is set. */
@@ -104,10 +112,10 @@ export function CoursePane({ record: requested, required, onRetake, onClose }: C
               <DescriptionItem label={t("Score")} numeric>
                 {score !== null ? (
                   <>
-                    {t("{0}%", Number(score.toFixed(0)))}
+                    {t("{0}%", formatTrainingScore(score))}
                     {passing !== null ? (
                       <span className="block text-xs text-muted-foreground">
-                        {t("passes at {0}%", Number(passing.toFixed(0)))}
+                        {t("passes at {0}%", formatTrainingScore(passing))}
                       </span>
                     ) : null}
                   </>
@@ -154,7 +162,12 @@ export function CoursePane({ record: requested, required, onRetake, onClose }: C
       <WorkPaneFooter>
         <WorkPaneCancel>{t("Close")}</WorkPaneCancel>
         {record && onRetake && record.status !== "Waived" ? (
-          <Button type="button" size="sm" onClick={() => onRetake(record)}>
+          <Button
+            type="button"
+            size="sm"
+            {...preloadOn(RecordTrainingResultPane)}
+            onClick={() => onRetake(record)}
+          >
             {t("Record a retake")}
           </Button>
         ) : null}

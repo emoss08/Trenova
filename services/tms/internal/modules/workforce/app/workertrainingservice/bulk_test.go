@@ -4,6 +4,8 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/testutil/orgzonetest"
+
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workertrainingservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workertraining"
@@ -66,12 +68,13 @@ func newBulkHarness(t *testing.T) *bulkHarness {
 	audit.EXPECT().LogAction(mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
 
 	h.svc = workertrainingservice.New(workertrainingservice.Params{
-		Logger:       zap.NewNop(),
-		Repo:         h.repo,
-		WorkerRepo:   workerRepo,
-		DocumentRepo: documentportsmock.NewMockDocumentRepository(t),
-		AuditService: audit,
-		Realtime:     &mocks.NoopRealtimeService{},
+		Logger:        zap.NewNop(),
+		Repo:          h.repo,
+		WorkerRepo:    workerRepo,
+		DocumentRepo:  documentportsmock.NewMockDocumentRepository(t),
+		AuditService:  audit,
+		Realtime:      &mocks.NoopRealtimeService{},
+		Organizations: orgzonetest.Organizations{},
 	})
 	return h
 }

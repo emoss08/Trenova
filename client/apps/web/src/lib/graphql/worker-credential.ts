@@ -105,15 +105,26 @@ export const workerCredentialTypeTableGraphQLConfig = defineDataTableGraphQLConf
     rootFields(node, "WorkerCredentialType", CREDENTIAL_TYPE_ROOT_FIELDS),
 });
 
+/**
+ * One worker's credentials, current and archived, newest first, capped by the server at 100. The
+ * current ones are also in the summary, one per type.
+ */
+/**
+ * A worker's credentials, archived ones included unless asked otherwise, capped by the server at
+ * the first 100; with `credentialTypeCode`, only those of that type (a credential's versions).
+ */
 export async function fetchWorkerCredentials(
-  workerId: string,
-  includeArchived = true,
+  variables: { workerId: string; includeArchived?: boolean; credentialTypeCode?: string },
   options?: { signal?: AbortSignal },
 ): Promise<WorkerCredentialRow[]> {
   const data = await requestGraphQL<WorkerCredentialsQuery, WorkerCredentialsQueryVariables>({
     document: WorkerCredentialsDocument,
     operationName: "WorkerCredentials",
-    variables: { workerId, includeArchived },
+    variables: {
+      workerId: variables.workerId,
+      includeArchived: variables.includeArchived ?? true,
+      credentialTypeCode: variables.credentialTypeCode,
+    },
     signal: options?.signal,
   });
   return data.workerCredentials as WorkerCredentialRow[];

@@ -4,6 +4,7 @@
 // read shows them. The variants (who reads, what the plan includes, whether telematics is
 // connected) are scenario fields: `workerAccess`, `workerPlan`, `workerHos` (see README).
 import { publishInvalidation } from "../realtime.mjs";
+import { connection } from "./aicontrol.mjs";
 import { TriageError } from "./triage-model.mjs";
 import { permissionManifest } from "../fixtures/session.mjs";
 import {
@@ -320,6 +321,7 @@ function overviewOut(state, file) {
       eventCount: file.employmentEvents.length,
       hiredAt: hired?.effectiveAt ?? null,
       openChecklistCount: file.checklists.filter((row) => row.status === "Open").length,
+      closedChecklistCount: file.checklists.filter((row) => row.status !== "Open").length,
     },
     checklist,
     pto: canRead(state, "worker_pto") ? ptoBalances(file) : null,
@@ -2202,12 +2204,15 @@ export function workerHandlers(base) {
 
     // ---- Training ----
     WorkerTrainingRecords: (state, v) => ({
-      workerTrainingRecords: fileOf(state, v.workerId)
-        .training.filter(
-          (row) => v.includeClosed || row.status === "Assigned" || row.status === "InProgress",
-        )
-        .map(trainingOut)
-        .sort(byNewest("assignedAt")),
+      workerTrainingRecords: connection(
+        fileOf(state, v.workerId)
+          .training.filter(
+            (row) => v.includeClosed || row.status === "Assigned" || row.status === "InProgress",
+          )
+          .map(trainingOut)
+          .sort(byNewest("assignedAt")),
+        { first: v.first, after: v.after },
+      ),
     }),
     WorkerTrainingSummary: (state, v) => ({
       workerTrainingSummary: trainingSummary(fileOf(state, v.workerId)),
@@ -2475,9 +2480,32 @@ export function workerHandlers(base) {
         .map(safetyEventOut),
     }),
     WorkerDisciplinaryActions: (state, v) => ({
-      workerDisciplinaryActions: [...fileOf(state, v.workerId).safety.actions]
-        .sort(byNewest("issuedAt"))
-        .map(disciplinaryOut),
+      workerDisciplinaryActions: connection(
+        [...fileOf(state, v.workerId).safety.actions]
+          .sort(byNewest("issuedAt"))
+          .map(disciplinaryOut),
+        { first: v.first, after: v.after },
+      ),
+    }),
+    WorkerSafetyEvent: (state, v) => ({
+      workerSafetyEvent: safetyEventOut(fileHolding(state, (f) => f.safety.events, v.id).row),
+    }),
+    WorkerDisciplinaryAction: (state, v) => ({
+      workerDisciplinaryAction: disciplinaryOut(
+        fileHolding(state, (f) => f.safety.actions, v.id).row,
+      ),
+    }),
+    WorkerInjury: (state, v) => ({
+      workerInjury: fileHolding(state, (f) => f.safety.injuries, v.id).row,
+    }),
+    WorkerTrainingRecord: (state, v) => ({
+      workerTrainingRecord: trainingOut(fileHolding(state, (f) => f.training, v.id).row),
+    }),
+    WorkerEmploymentEvent: (state, v) => ({
+      workerEmploymentEvent: fileHolding(state, (f) => f.employmentEvents, v.id).row,
+    }),
+    WorkerPto: (state, v) => ({
+      workerPTO: fileHolding(state, (f) => f.pto.requests, v.id).row,
     }),
     WorkerDisciplinaryLadder: (state, v) => ({
       workerDisciplinaryLadder: disciplinaryLadder(fileOf(state, v.workerId)),
@@ -2487,7 +2515,12 @@ export function workerHandlers(base) {
         byNewest("occurredAt"),
       ),
     }),
-    WorkerInjuries: (state, v) => ({ workerInjuries: fileOf(state, v.workerId).safety.injuries }),
+    WorkerInjuries: (state, v) => ({
+      workerInjuries: connection(fileOf(state, v.workerId).safety.injuries, {
+        first: v.first,
+        after: v.after,
+      }),
+    }),
     DefaultSafetyPoints: (_state, v) => ({ defaultSafetyPoints: defaultPoints(v) }),
     CreateWorkerSafetyEvent: (state, { input }) => {
       const file = fileOf(state, input.workerId);
@@ -2765,9 +2798,12 @@ export function workerHandlers(base) {
 
     // ---- Employment ----
     WorkerEmploymentEvents: (state, v) => ({
-      workerEmploymentEvents: [...fileOf(state, v.workerId).employmentEvents]
-        .filter((event) => !v.kinds?.length || v.kinds.includes(event.kind))
-        .sort(byNewest("effectiveAt")),
+      workerEmploymentEvents: connection(
+        [...fileOf(state, v.workerId).employmentEvents]
+          .filter((event) => !v.kinds?.length || v.kinds.includes(event.kind))
+          .sort(byNewest("effectiveAt")),
+        { first: v.first, after: v.after },
+      ),
     }),
     WorkerEmploymentEventOptions: (state, v) => ({
       workerEmploymentEventOptions: {
@@ -3025,8 +3061,9 @@ export function workerHandlers(base) {
       };
     },
     WorkerPtoPolicyAssignments: (state, v) => ({
-      workerPtoPolicyAssignments: [...fileOf(state, v.workerId).pto.policyAssignments].sort(
-        byNewest("effectiveFrom"),
+      workerPtoPolicyAssignments: connection(
+        [...fileOf(state, v.workerId).pto.policyAssignments].sort(byNewest("effectiveFrom")),
+        { first: v.first, after: v.after },
       ),
     }),
     AssignWorkerPtoPolicy: (state, { input }) => {
@@ -3343,9 +3380,12 @@ export function workerHandlers(base) {
       return { effectiveWorkerPayAssignment: row ? payAssignmentOut(row, true) : null };
     },
     WorkerPayAssignments: (state, v) => ({
-      workerPayAssignments: [...fileOf(state, v.workerId).pay.assignments]
-        .sort(byNewest("effectiveFrom"))
-        .map((row) => payAssignmentOut(row)),
+      workerPayAssignments: connection(
+        [...fileOf(state, v.workerId).pay.assignments]
+          .sort(byNewest("effectiveFrom"))
+          .map((row) => payAssignmentOut(row)),
+        { first: v.first, after: v.after },
+      ),
     }),
     WorkerEarningsSummary: (state, v) => ({
       workerEarningsSummary: { workerId: v.workerId, ...fileOf(state, v.workerId).pay.earnings },
@@ -3406,11 +3446,14 @@ export function workerHandlers(base) {
 
     // ---- Benefits ----
     WorkerBenefitEnrollments: (state, v) => ({
-      workerBenefitEnrollments: fileOf(state, v.workerId)
-        .benefits.enrollments.filter(
-          (row) => !v.openOnly || row.status === "Active" || row.status === "Pending",
-        )
-        .map(enrollmentOut),
+      workerBenefitEnrollments: connection(
+        fileOf(state, v.workerId)
+          .benefits.enrollments.filter(
+            (row) => !v.openOnly || row.status === "Active" || row.status === "Pending",
+          )
+          .map(enrollmentOut),
+        { first: v.first, after: v.after },
+      ),
     }),
     WorkerTotalCompensation: (state, v) => ({
       workerTotalCompensation: totalCompensation(fileOf(state, v.workerId), v.planYear),
@@ -3542,7 +3585,10 @@ export function workerHandlers(base) {
       return { revokeWorkerPortalAccess: true };
     },
     WorkerPolicyAcknowledgements: (state, v) => ({
-      workerPolicyAcknowledgements: fileOf(state, v.workerId).portal.acknowledgements,
+      workerPolicyAcknowledgements: connection(fileOf(state, v.workerId).portal.acknowledgements, {
+        first: v.first,
+        after: v.after,
+      }),
     }),
     ProfileChangeRequests: (state, v) => ({
       profileChangeRequests: profileChangesFor(state, v.filter ?? {}),

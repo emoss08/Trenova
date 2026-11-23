@@ -41,14 +41,14 @@ vi.mock("../worker-home-address-field", () => ({ WorkerHomeAddressField: () => n
 vi.mock("../profile-change-alert", () => ({ ProfileChangeAlert: () => null }));
 vi.mock("@/lib/queries/worker", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/lib/queries/worker")>();
+  const overview = (workerId: string) => ({
+    queryKey: ["worker", "overview", workerId],
+    queryFn: () => new Promise(() => undefined),
+  });
   return {
-    worker: {
-      ...actual.worker,
-      overview: (workerId: string) => ({
-        queryKey: ["worker", "overview", workerId],
-        queryFn: () => new Promise(() => undefined),
-      }),
-    },
+    ...actual,
+    worker: { ...actual.worker, overview },
+    workerOverviewQuery: (workerId: string) => ({ ...overview(workerId), refetchOnMount: false }),
   };
 });
 
@@ -259,5 +259,25 @@ describe("the Profile tab", () => {
     });
 
     expect(screen.queryByLabelText(/Hazmat endorsement expires/)).toBeNull();
+  });
+
+  it("says how soon the medical card runs out as the date field's own description", () => {
+    const worker = mariaRecord();
+    const inTwentyDays = Math.floor(Date.now() / 1000) + 20 * 86_400;
+    render(
+      tab({
+        ...worker,
+        profile: { ...worker.profile!, medicalCardExpiry: inTwentyDays },
+      } as WorkerRecord),
+      { wrapper: Wrapper },
+    );
+
+    const input = screen.getByLabelText(/Medical card expires/);
+    const note = screen.getByText("Expires in 20 days");
+    expect(note.id).toBe("input-profile.medicalCardExpiry-description");
+    expect(input.getAttribute("aria-describedby")).toBe(note.id);
+    expect(note.className).toContain("text-warning-foreground");
+    expect(note.getAttribute("aria-live")).toBe("polite");
+    expect(note.className).not.toMatch(/-mt-/);
   });
 });

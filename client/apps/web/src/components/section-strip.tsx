@@ -21,6 +21,8 @@ export type SectionStripProps<V extends string = string> = {
   "aria-label": string;
   /** The state lines are still being read: each cell draws a shimmer where its line goes. */
   loading?: boolean;
+  /** The pointer or focus rests on a cell: start reading that view's code. */
+  onValueIntent?: (value: V) => void;
   className?: string;
 };
 
@@ -43,6 +45,7 @@ export function SectionStrip<V extends string>({
   onValueChange,
   "aria-label": ariaLabel,
   loading = false,
+  onValueIntent,
   className,
 }: SectionStripProps<V>) {
   return (
@@ -67,6 +70,8 @@ export function SectionStrip<V extends string>({
               key={item.value}
               value={item.value}
               disabled={item.disabled}
+              onPointerEnter={onValueIntent ? () => onValueIntent(item.value) : undefined}
+              onFocus={onValueIntent ? () => onValueIntent(item.value) : undefined}
               className={cn(
                 "h-auto min-w-0 grow-0 flex-col items-stretch justify-start gap-0.5 px-3 py-2 text-left",
                 "sm:h-auto sm:text-sm text-sm hover:text-foreground",

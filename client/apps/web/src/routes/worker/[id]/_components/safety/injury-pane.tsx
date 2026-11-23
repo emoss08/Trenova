@@ -21,11 +21,13 @@ export type InjuryPaneProps = {
   onSaved: () => void;
 };
 
-/** The injury case form in the work pane, beside the worker's safety record. */
+/**
+ * The injury case form in the work pane, beside the worker's safety record. The page mounts it
+ * fresh at each opening (`lazyWorkPane`), so the form starts from the case it was opened on.
+ */
 export function InjuryPane({ open, onOpenChange, workerId, injury, onSaved }: InjuryPaneProps) {
   const t = useT();
   const { form, isEdit, isPending, submit } = useInjuryForm({
-    open,
     workerId,
     injury,
     onSaved,
@@ -49,7 +51,7 @@ export function InjuryPane({ open, onOpenChange, workerId, injury, onSaved }: In
           </WorkPaneBody>
           <WorkPaneFooter>
             <WorkPaneCancel />
-            <Button type="submit" size="sm" isLoading={isPending} loadingText={t("Saving...")}>
+            <Button type="submit" size="sm" isLoading={isPending}>
               {isEdit ? t("Save changes") : t("Record case")}
             </Button>
           </WorkPaneFooter>

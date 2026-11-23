@@ -8,7 +8,7 @@
     "dev:bundled": "vite --experimentalBundle",
     "typecheck": "tsc -b",
     "build": "vite build",
-    "bundle:check": "node scripts/bundle-budget.ts",
+    "bundle:check": "bun scripts/bundle-budget.ts",
     "lint": "oxlint",
     "lint:fix": "oxlint --fix",
     "fmt": "oxfmt",
@@ -20,11 +20,11 @@
     "test:storybook": "vitest run --project=storybook",
     "test:storybook:watch": "vitest --project=storybook",
     "test:e2e": "playwright test -c e2e/playwright.config.ts",
-    "doctor": "npx react-doctor@latest",
-    "guide:generate": "node scripts/product-guide/generate.mjs",
-    "guide:check": "node scripts/product-guide/generate.mjs --check",
-    "access:generate": "node scripts/page-access/generate.mjs",
-    "access:check": "node scripts/page-access/generate.mjs --check"
+    "doctor": "bunx react-doctor@latest",
+    "guide:generate": "bun scripts/product-guide/generate.mjs",
+    "guide:check": "bun scripts/product-guide/generate.mjs --check",
+    "access:generate": "bun scripts/page-access/generate.mjs",
+    "access:check": "bun scripts/page-access/generate.mjs --check"
   },
   "dependencies": {
     "@base-ui/react": "catalog:",

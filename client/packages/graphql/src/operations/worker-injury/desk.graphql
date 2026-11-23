@@ -3,35 +3,46 @@ query DeskWorkerInjuries(
   $caseYear: Int
   $recordableOnly: Boolean
   $openOnly: Boolean
-  $limit: Int
+  $first: Int
+  $after: String
 ) {
   workerInjuries(
     workerId: $workerId
     caseYear: $caseYear
     recordableOnly: $recordableOnly
     openOnly: $openOnly
-    limit: $limit
+    first: $first
+    after: $after
   ) {
-    id
-    workerId
-    caseNumber
-    caseYear
-    classification
-    illnessType
-    treatment
-    status
-    recordable
-    occurredAt
-    returnedToWorkAt
-    description
-    bodyPart
-    daysAway
-    daysRestricted
-    privacyCase
-    logName
-    claimStatus
-    worker {
-      ...WorkerReference
+    edges {
+      cursor
+      node {
+        id
+        workerId
+        caseNumber
+        caseYear
+        classification
+        illnessType
+        treatment
+        status
+        recordable
+        occurredAt
+        returnedToWorkAt
+        description
+        bodyPart
+        daysAway
+        daysRestricted
+        privacyCase
+        logName
+        claimStatus
+        worker {
+          ...WorkerReference
+        }
+      }
+    }
+    pageInfo {
+      hasNextPage
+      endCursor
     }
   }
 }

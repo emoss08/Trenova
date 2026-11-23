@@ -1,8 +1,14 @@
 import { translate } from "@trenova/shared/i18n/runtime";
-import { describe, expect, it } from "vitest";
+import { setUserDatePreferences } from "@trenova/shared/lib/date";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { buildLifecycle, describeTenure, monthsBetween } from "../lifecycle-model";
 
 const DAY = 86_400;
+
+// Every date here is read in one zone, whatever the machine's, so the tenure is the same on every
+// runner.
+beforeAll(() => setUserDatePreferences({ timezone: "America/Chicago" }));
+afterAll(() => setUserDatePreferences({ timezone: undefined }));
 const sep12_2022 = Date.UTC(2022, 8, 12, 12) / 1000;
 const oct3_2022 = Date.UTC(2022, 9, 3, 12) / 1000;
 const nov22_2026 = Date.UTC(2026, 10, 22, 12) / 1000;
@@ -29,7 +35,7 @@ describe("buildLifecycle", () => {
       ["offboarding", "ahead"],
       ["left", "ahead"],
     ]);
-    expect(stops[0].meta).toBe("Sep 12, 2022 to Oct 3, 2022 · 21 days");
+    expect(stops[0].meta).toBe("Sep 12 to Oct 3, 2022 · 21 days");
     expect(stops[1].meta).toBe("since Oct 3, 2022 · 4 years 1 month");
     expect(stops[3].meta).toBe("Still employed");
   });
@@ -91,6 +97,15 @@ describe("tenure", () => {
   it("counts a month only once its day has come round", () => {
     expect(monthsBetween(sep12_2022, Date.UTC(2022, 9, 11, 12) / 1000)).toBe(0);
     expect(monthsBetween(sep12_2022, Date.UTC(2022, 9, 12, 12) / 1000)).toBe(1);
+  });
+
+  it("counts the month in the reader's zone, not UTC's", () => {
+    // Hired Oct 1 in Tokyo: stored as that midnight, Sep 30 15:00 UTC.
+    const hiredInTokyo = Date.UTC(2022, 8, 30, 15) / 1000;
+    const oct31Tokyo = Date.UTC(2022, 9, 30, 16) / 1000;
+    const nov1Tokyo = Date.UTC(2022, 9, 31, 15) / 1000;
+    expect(monthsBetween(hiredInTokyo, oct31Tokyo, "Asia/Tokyo")).toBe(0);
+    expect(monthsBetween(hiredInTokyo, nov1Tokyo, "Asia/Tokyo")).toBe(1);
   });
 
   it("words years and months with plurals", () => {

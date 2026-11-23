@@ -1,24 +1,22 @@
 # The bundle is static files, the same on every platform: build it once on the
 # runner's own architecture instead of again under QEMU for each target.
-# Keep NODE_VERSION, and the digest that pins it, in step with client/.nvmrc.
-ARG NODE_VERSION=26
-FROM --platform=$BUILDPLATFORM node:${NODE_VERSION}-alpine@sha256:c6ad9e9c1d80f6eb607c26b4b0a132ff7a2344fad1c78ea3baa2a7d4c8de6d94 AS builder
-
-# Node 25+ no longer bundles corepack, so install it before activating pnpm.
-RUN npm install -g corepack@0.36.0 && corepack enable && corepack prepare pnpm@12.3.4 --activate
+# Keep BUN_VERSION, and the digest that pins it, in step with packageManager in
+# client/package.json.
+ARG BUN_VERSION=1.4.5
+FROM --platform=$BUILDPLATFORM oven/bun:${BUN_VERSION}-alpine@sha256:da816670775f4c2b4e990b6b1847cf5540dcdc721a42033dd331ce7a88ba6a3b AS builder
 
 WORKDIR /build
 
-COPY client/package.json client/pnpm-lock.yaml client/pnpm-workspace.yaml client/.npmrc ./
-COPY client/apps/web/package.json ./apps/web/
-COPY client/apps/dash/package.json ./apps/dash/
+COPY client/package.json client/bun.lock client/bunfig.toml ./
+COPY client/apps/web/package.json client/apps/web/bunfig.toml ./apps/web/
+COPY client/apps/dash/package.json client/apps/dash/bunfig.toml ./apps/dash/
 COPY client/packages/config/package.json ./packages/config/
-COPY client/packages/edition/package.json ./packages/edition/
-COPY client/packages/graphql/package.json ./packages/graphql/
-COPY client/packages/shared/package.json ./packages/shared/
+COPY client/packages/edition/package.json client/packages/edition/bunfig.toml ./packages/edition/
+COPY client/packages/graphql/package.json client/packages/graphql/bunfig.toml ./packages/graphql/
+COPY client/packages/shared/package.json client/packages/shared/bunfig.toml ./packages/shared/
 COPY client/patches ./patches/
 
-RUN pnpm install --frozen-lockfile
+RUN bun install --frozen-lockfile
 
 COPY client/ ./
 
@@ -31,8 +29,8 @@ ENV VITE_API_URL=${VITE_API_URL}
 ENV BROWSER=none
 ENV CI=true
 
-RUN pnpm --filter @trenova/web exec vite build
-RUN pnpm --filter @trenova/dash exec vite build
+RUN bun run --filter @trenova/web build
+RUN bun run --filter @trenova/dash build
 
 # The site Caddy serves: the web app at the root and Dash under /dash, which is
 # its Vite base. Dash emits its bundle to apps/dash/dist/dash.

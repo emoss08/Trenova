@@ -44,7 +44,7 @@ if (problems.length === 0) {
 
 process.stderr.write(
   `Generated artifacts are out of date with their source.\n\n${problems.join("\n\n")}\n\n` +
-    "Run `pnpm --filter @trenova/graphql codegen` and commit the result.\n" +
+    "Run `bun run --filter @trenova/graphql codegen` and commit the result.\n" +
     "GraphQL types come from services/tms/internal/api/graphql/schema/*.graphqls;\n" +
     "error enums come from services/tms/pkg/errortypes/enums.go and\n" +
     "services/tms/internal/api/helpers/problemtypes.go.\n",

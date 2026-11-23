@@ -1,26 +1,26 @@
 name: Setup Client
 description: >-
-  Installs pnpm and Node for the client Turborepo and restores the dependency
-  and Turborepo caches. Every client job needs the same setup, so it lives here
+  Installs Bun for the client Turborepo and restores the dependency and
+  Turborepo caches. Every client job needs the same setup, so it lives here
   rather than being repeated per job.
 
 runs:
   using: composite
   steps:
-    # No version pin: action-setup reads packageManager from client/package.json,
+    # No version pin here: setup-bun reads packageManager from client/package.json,
     # so CI cannot drift from what developers run locally.
-    - name: Setup pnpm
-      uses: pnpm/action-setup@v4
+    - name: Setup Bun
+      uses: oven-sh/setup-bun@v2
       with:
-        package_json_file: client/package.json
+        bun-version-file: client/package.json
 
-    # client/.nvmrc is the Node pin; deploy/Dockerfile.client's NODE_VERSION matches it.
-    - name: Setup Node.js
-      uses: actions/setup-node@v6
+    - name: Cache Bun packages
+      uses: actions/cache@v4
       with:
-        node-version-file: client/.nvmrc
-        cache: pnpm
-        cache-dependency-path: client/pnpm-lock.yaml
+        path: ~/.bun/install/cache
+        key: bun-${{ runner.os }}-${{ hashFiles('client/bun.lock') }}
+        restore-keys: |
+          bun-${{ runner.os }}-
 
     # Rolling key: the cache is saved on every run and restored from the newest
     # prefix match, so a task whose inputs did not change is never re-run.
@@ -35,4 +35,4 @@ runs:
     - name: Install dependencies
       shell: bash
       working-directory: ./client
-      run: pnpm install --frozen-lockfile
+      run: bun install --frozen-lockfile

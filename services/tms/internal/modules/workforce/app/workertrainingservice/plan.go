@@ -138,7 +138,11 @@ func (s *Service) PlanAssignRequiredFor(
 	tenantInfo pagination.TenantInfo,
 	wrk *worker.Worker,
 ) ([]*workertraining.TrainingCourse, error) {
-	summary, err := s.summarize(ctx, tenantInfo, wrk)
+	today, err := s.today(ctx, tenantInfo)
+	if err != nil {
+		return nil, err
+	}
+	summary, err := s.summarize(ctx, tenantInfo, wrk, today)
 	if err != nil {
 		return nil, err
 	}

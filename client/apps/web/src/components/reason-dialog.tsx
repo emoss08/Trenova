@@ -12,7 +12,7 @@ import {
 import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form";
 import { translate } from "@trenova/shared/i18n/runtime";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { useEffect, useId } from "react";
+import { useId, type ReactNode } from "react";
 import { FormProvider, useForm, type Resolver } from "react-hook-form";
 import { z } from "zod";
 
@@ -44,6 +44,10 @@ type ReasonDialogProps = {
   optional?: boolean;
   /** The field's label; "Reason" unless the words are a note rather than a reason. */
   label?: string;
+  /** Help under the field, such as who will read the reason. */
+  fieldDescription?: ReactNode;
+  /** What the field holds when the dialog opens, such as the record's current note. */
+  defaultReason?: string;
   /** The words on the button that backs out; "Back" unless the step needs its own words. */
   cancelLabel?: string;
   pending: boolean;
@@ -56,9 +60,22 @@ type ReasonDialogProps = {
  * manual journal rejected or cancelled. With `optional` it asks for a note
  * the person may leave empty, such as what they tell an agent when declining
  * its plan.
+ *
+ * The form lives inside the dialog's content, which is mounted only while the
+ * dialog is open, so every opening starts from `defaultReason` and nothing that
+ * refetches while it is open can replace what the person is typing.
  */
-export function ReasonDialog({
-  open,
+export function ReasonDialog({ open, onOpenChange, ...props }: ReasonDialogProps) {
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent size="md">
+        <ReasonForm {...props} onCancel={() => onOpenChange(false)} />
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function ReasonForm({
   title,
   description,
   placeholder,
@@ -67,66 +84,63 @@ export function ReasonDialog({
   maxLength = MAX_REASON_LENGTH,
   optional = false,
   label,
+  fieldDescription,
+  defaultReason = "",
   cancelLabel,
   pending,
   onConfirm,
-  onOpenChange,
-}: ReasonDialogProps) {
+  onCancel,
+}: Omit<ReasonDialogProps, "open" | "onOpenChange"> & { onCancel: () => void }) {
   const t = useT();
   const formId = useId();
   const form = useForm<ReasonValues>({
     resolver: zodResolver(reasonSchema(maxLength, optional)) as Resolver<ReasonValues>,
-    defaultValues: { reason: "" },
+    defaultValues: { reason: defaultReason },
   });
-  const { reset } = form;
-
-  useEffect(() => {
-    if (open) reset({ reason: "" });
-  }, [open, reset]);
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent size="md">
-        <DialogHeader>
-          <DialogTitle>{title}</DialogTitle>
-          <DialogDescription>{description}</DialogDescription>
-        </DialogHeader>
-        <FormProvider {...form}>
-          <Form
-            id={formId}
-            onSubmit={(event) => {
-              event.stopPropagation();
-              void form.handleSubmit((values) => onConfirm(values.reason.trim()))(event);
-            }}
-          >
-            <FormGroup cols={1}>
-              <FormControl>
-                <TextareaField
-                  control={form.control}
-                  name="reason"
-                  label={label ?? t("Reason")}
-                  placeholder={placeholder}
-                  rows={3}
-                  required={!optional}
-                />
-              </FormControl>
-            </FormGroup>
-          </Form>
-        </FormProvider>
-        <DialogFooter>
-          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-            {cancelLabel ?? t("Back")}
-          </Button>
-          <Button
-            type="submit"
-            form={formId}
-            variant={destructive ? "destructive" : "default"}
-            isLoading={pending}
-          >
-            {confirmLabel}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+    <>
+      <DialogHeader>
+        <DialogTitle>{title}</DialogTitle>
+        <DialogDescription>{description}</DialogDescription>
+      </DialogHeader>
+      <FormProvider {...form}>
+        <Form
+          id={formId}
+          onSubmit={(event) => {
+            event.stopPropagation();
+            void form.handleSubmit((values) => onConfirm(values.reason.trim()))(event);
+          }}
+        >
+          <FormGroup cols={1}>
+            <FormControl>
+              <TextareaField
+                control={form.control}
+                name="reason"
+                label={label ?? t("Reason")}
+                description={fieldDescription}
+                placeholder={placeholder}
+                rows={3}
+                required={!optional}
+              />
+            </FormControl>
+          </FormGroup>
+        </Form>
+      </FormProvider>
+      <DialogFooter>
+        <Button type="button" size="sm" variant="outline" onClick={onCancel}>
+          {cancelLabel ?? t("Back")}
+        </Button>
+        <Button
+          type="submit"
+          size="sm"
+          form={formId}
+          variant={destructive ? "destructive" : "default"}
+          isLoading={pending}
+        >
+          {confirmLabel}
+        </Button>
+      </DialogFooter>
+    </>
   );
 }

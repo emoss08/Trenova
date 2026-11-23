@@ -3,6 +3,7 @@ package workeremploymentservice_test
 import (
 	"context"
 	"errors"
+	"slices"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/fleetcode"
@@ -56,13 +57,49 @@ func (f *fakeEventRepo) List(
 	req *workeremploymentports.ListWorkerEmploymentEventsRequest,
 ) ([]*employment.WorkerEmploymentEvent, error) {
 	out := make([]*employment.WorkerEmploymentEvent, 0, len(f.order))
-	for _, id := range f.order {
-		event := f.events[id]
-		if event.WorkerID == req.WorkerID {
-			out = append(out, event)
+	for i := len(f.order) - 1; i >= 0; i-- {
+		event := f.events[f.order[i]]
+		if event.WorkerID != req.WorkerID {
+			continue
 		}
+		if len(req.Kinds) > 0 && !slices.Contains(req.Kinds, event.Kind) {
+			continue
+		}
+		out = append(out, event)
 	}
 	return out, nil
+}
+
+func (f *fakeEventRepo) ListPage(
+	ctx context.Context,
+	req *workeremploymentports.ListWorkerEmploymentEventsRequest,
+) (*pagination.CursorListResult[*employment.WorkerEmploymentEvent], error) {
+	items, err := f.List(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	return &pagination.CursorListResult[*employment.WorkerEmploymentEvent]{Items: items}, nil
+}
+
+func (f *fakeEventRepo) Summarize(
+	_ context.Context,
+	req *workeremploymentports.SummarizeWorkerEmploymentEventsRequest,
+) (*workeremploymentports.EmploymentEventSummary, error) {
+	summary := &workeremploymentports.EmploymentEventSummary{}
+	for _, id := range f.order {
+		event := f.events[id]
+		if event.WorkerID != req.WorkerID {
+			continue
+		}
+		summary.EventCount++
+		if event.Kind == employment.EmploymentEventHired ||
+			event.Kind == employment.EmploymentEventRehired {
+			if summary.LastHiredAt == nil || event.EffectiveAt > *summary.LastHiredAt {
+				summary.LastHiredAt = new(event.EffectiveAt)
+			}
+		}
+	}
+	return summary, nil
 }
 
 func (f *fakeEventRepo) GetByID(
@@ -770,8 +807,17 @@ func TestRecord_AnAtomicFailureFailsTheRecordAndRunsNothingAfterIt(t *testing.T)
 	assert.Empty(t, h.lists.spawned)
 }
 
-func TestRecord_TimeOffThatCannotBeCancelledIsReportedAsFailed(t *testing.T) {
+// Time off is cancelled inside the termination's transaction, before the
+// balance is settled: when a cancellation fails the termination fails with it,
+// so the transaction rolls back and approved time off is never left cancelled
+// for a worker who is still employed.
+func TestRecord_TimeOffThatCannotBeCancelledFailsTheTermination(t *testing.T) {
 	h := newHarness(t)
+	h.payRepo.assignment = &payassignment.WorkerPayAssignment{
+		ID:            pulid.MustNew("wpa_"),
+		EffectiveFrom: 1_700_000_000,
+	}
+	h.payRepo.err = nil
 	stuck := &worker.WorkerPTO{
 		ID:        pulid.MustNew("wrkpto_"),
 		Status:    worker.PTOStatusRequested,
@@ -782,12 +828,11 @@ func TestRecord_TimeOffThatCannotBeCancelledIsReportedAsFailed(t *testing.T) {
 	h.pto.upcoming = []*worker.WorkerPTO{stuck}
 	h.pto.cancelErr = map[pulid.ID]error{stuck.ID: errors.New("version moved")}
 
-	result, err := h.record(employment.EmploymentEventTerminated, 1_800_000_000, nil)
-	require.NoError(t, err)
-
-	cancelled := effectsOf(result.Effects, employment.EffectTimeOffCancelled)
-	require.Len(t, cancelled, 1)
-	assert.True(t, cancelled[0].Failed)
+	_, err := h.record(employment.EmploymentEventTerminated, 1_800_000_000, nil)
+	require.Error(t, err)
+	assert.Empty(t, h.ledger.settled, "nothing after the failed cancellation runs")
+	assert.Empty(t, h.pay.ended)
+	assert.Empty(t, h.portal.revoked, "nothing after commit runs when the commit failed")
 }
 
 func TestRecord_TerminationNeedsReason(t *testing.T) {

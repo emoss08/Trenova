@@ -3,28 +3,14 @@ import type { WorkerOverview } from "@/lib/graphql/worker-overview";
 import type { WorkerCredentialSummary } from "@/lib/graphql/worker-credential";
 import type { WorkerTarget } from "@/routes/worker/use-worker-state";
 import { PlusIcon } from "@trenova/shared/components/icons";
-import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
-import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
+import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
+import { ComplianceBadge } from "../../compliance-badge";
 import { ClearanceRunway } from "../../overview/clearance-runway";
 import { unverifiedCount } from "./credential-model";
 
 const RUNWAY_SOURCES = ["Credential"] as const;
-
-function complianceBadge(
-  t: TranslateFn,
-  status: string,
-): { label: string; variant: "success" | "danger" | "warning" } {
-  switch (status) {
-    case "Compliant":
-      return { label: t("Compliant"), variant: "success" };
-    case "NonCompliant":
-      return { label: t("Non-compliant"), variant: "danger" };
-    default:
-      return { label: t("Pending review"), variant: "warning" };
-  }
-}
 
 /**
  * The head of the credentials view: how many required credentials are in good standing, the
@@ -36,6 +22,7 @@ export function CredentialOverview({
   clearance,
   asOf,
   canCreate,
+  addIntent,
   onAdd,
   onOpen,
 }: {
@@ -43,13 +30,14 @@ export function CredentialOverview({
   clearance: WorkerOverview["clearance"] | null | undefined;
   asOf: number | null;
   canCreate: boolean;
+  /** Reads the add form's code as the pointer or focus reaches Add credential. */
+  addIntent: { onPointerEnter: () => void; onFocus: () => void };
   onAdd: () => void;
   onOpen: (target: WorkerTarget) => void;
 }) {
   const t = useT();
   const onFile = summary.requiredCount - summary.missingCount;
   const unverified = unverifiedCount(summary);
-  const badge = complianceBadge(t, summary.complianceStatus);
 
   return (
     <section
@@ -82,9 +70,7 @@ export function CredentialOverview({
           <span>{t("{0} unverified", unverified)}</span>
         </p>
         <span className="inline-flex items-center gap-1">
-          <Badge variant={badge.variant} dot>
-            {badge.label}
-          </Badge>
+          <ComplianceBadge status={summary.complianceStatus} />
           <InfoTooltip label={t("Compliance")}>
             {t(
               "Graded from the credentials on file. Non-compliant while a required credential is expired or missing; one expiring soon still counts as good standing.",
@@ -92,7 +78,7 @@ export function CredentialOverview({
           </InfoTooltip>
         </span>
         {canCreate ? (
-          <Button size="sm" className="ml-auto" onClick={onAdd}>
+          <Button size="sm" className="ml-auto" {...addIntent} onClick={onAdd}>
             <PlusIcon className="size-3.5" />
             {t("Add credential")}
           </Button>

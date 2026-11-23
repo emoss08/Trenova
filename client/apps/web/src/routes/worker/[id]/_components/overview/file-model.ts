@@ -11,10 +11,8 @@ import type { WorkerArea, WorkerTab, WorkerView } from "@/routes/worker/use-work
 import { quotedPayRate } from "../overview-model";
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import { formatNumber } from "@trenova/shared/i18n/format";
-import { formatUnixDateMedium, formatUnixMonthDay } from "@trenova/shared/lib/date";
+import { daysUntil, formatUnixDateMedium, formatUnixMonthDay } from "@trenova/shared/lib/date";
 import { formatMinor } from "@trenova/shared/lib/money";
-
-const DAY_S = 86_400;
 
 export type FileCellKey =
   | "credentials"
@@ -309,7 +307,7 @@ function benefitsCell(overview: WorkerOverview, t: TranslateFn): Words {
     : { state, note: null };
 }
 
-function portalCell(overview: WorkerOverview, t: TranslateFn): Words {
+function portalCell(overview: WorkerOverview, t: TranslateFn, now: number): Words {
   const portal = overview.portal;
   if (!portal) return WITHHELD;
   const state =
@@ -329,7 +327,7 @@ function portalCell(overview: WorkerOverview, t: TranslateFn): Words {
     };
   }
   if (portal.lastSignInAt) {
-    const days = Math.max(0, Math.floor((overview.asOf - portal.lastSignInAt) / DAY_S));
+    const days = Math.max(0, -daysUntil(portal.lastSignInAt, { now }));
     return {
       state,
       note: note(
@@ -342,7 +340,10 @@ function portalCell(overview: WorkerOverview, t: TranslateFn): Words {
   return { state, note: portal.access === "Linked" ? note(t("Never signed in")) : null };
 }
 
-const CELL_WORDS: Record<FileCellKey, (overview: WorkerOverview, t: TranslateFn) => Words> = {
+const CELL_WORDS: Record<
+  FileCellKey,
+  (overview: WorkerOverview, t: TranslateFn, now: number) => Words
+> = {
   credentials: credentialsCell,
   "dq-file": dqFileCell,
   "drug-and-alcohol": drugAlcoholCell,
@@ -394,13 +395,15 @@ export function fileCells(
   overview: WorkerOverview,
   areas: Pick<WorkerAreas, "isDrawable">,
   t: TranslateFn,
+  /** Unix seconds, from the reader's `useNow`, for the counts of days since. */
+  now: number,
 ): FileCell[] {
   return FILE_CELL_AREAS.filter(({ tab, view }) => areas.isDrawable({ tab, view })).map(
     ({ key, tab, view }) => ({
       key,
       area: { tab, view },
       label: cellLabel(key, t),
-      ...CELL_WORDS[key](overview, t),
+      ...CELL_WORDS[key](overview, t, now),
     }),
   );
 }

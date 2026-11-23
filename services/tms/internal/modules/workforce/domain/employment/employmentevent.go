@@ -266,6 +266,16 @@ type EmploymentState struct {
 	OpenSuspension bool
 }
 
+func StateKinds() []EmploymentEventKind {
+	return []EmploymentEventKind{
+		EmploymentEventLeaveStarted,
+		EmploymentEventLeaveEnded,
+		EmploymentEventSuspended,
+		EmploymentEventReinstated,
+		EmploymentEventTerminated,
+	}
+}
+
 func EmploymentStateOf(wrk *worker.Worker, history []*WorkerEmploymentEvent) EmploymentState {
 	state := EmploymentState{}
 	if wrk == nil {

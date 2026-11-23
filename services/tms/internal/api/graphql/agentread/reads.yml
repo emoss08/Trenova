@@ -99,8 +99,6 @@ reads:
     operation: DeskWorkerDotTests
     reason: Drug and alcohol tests are read by workerDotTests, one worker's or every worker's.
   - tool: worker_list_injuries
-    operation: DeskWorkerInjuries
-    reason: Injury cases are read by workerInjuries, one worker's or the whole log.
   - tool: worker_list_employment_verifications
     operation: DeskWorkerEmploymentVerifications
     reason: Previous employers are read by workerEmploymentVerifications, one driver's or every driver's.

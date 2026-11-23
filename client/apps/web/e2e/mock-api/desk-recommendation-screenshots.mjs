@@ -3,7 +3,7 @@
 // (Hand off), the settings that govern it and the AI analytics card. Run with
 // the mock API and the web app up (see README.md):
 //
-//   node e2e/mock-api/desk-recommendation-screenshots.mjs [outDir] [name,name,...]
+//   bun e2e/mock-api/desk-recommendation-screenshots.mjs [outDir] [name,name,...]
 //
 // A fresh browser starts on the first agent by name, Billing. The question is
 // about a customer's ETA, which Customer service holds the tools for, so the

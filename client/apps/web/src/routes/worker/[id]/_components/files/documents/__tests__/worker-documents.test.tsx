@@ -151,6 +151,11 @@ function renderView(open: Partial<WorkerOpenState> = {}) {
   return onOpen;
 }
 
+async function loadedPane(name: string) {
+  await screen.findByRole("group", { name: "Files to upload" });
+  return screen.getByRole("dialog", { name });
+}
+
 afterEach(() => {
   cleanup();
   vi.clearAllMocks();
@@ -194,8 +199,8 @@ describe("WorkerDocuments", () => {
 
     await user.clear(search);
     await user.type(search, "nothing like this");
-    expect(screen.getByText("No documents match.")).toBeTruthy();
-    await user.click(screen.getByRole("button", { name: "Clear the filters" }));
+    expect(screen.getByText("No documents match")).toBeTruthy();
+    await user.click(screen.getByRole("button", { name: "Clear filters" }));
     expect(screen.getAllByTestId(/^document-/)).toHaveLength(3);
   });
 
@@ -218,7 +223,7 @@ describe("WorkerDocuments", () => {
     renderView({ form: "upload-document" });
     const user = userEvent.setup();
 
-    const pane = await screen.findByRole("dialog", { name: "Upload documents" });
+    const pane = await loadedPane("Upload documents");
     const file = new File(["x"], "med-card-2026.pdf", { type: "application/pdf" });
     const input = pane.querySelector('input[type="file"]') as HTMLInputElement;
     fireEvent.change(input, { target: { files: [file] } });
@@ -226,7 +231,32 @@ describe("WorkerDocuments", () => {
     expect(await within(pane).findByText("med-card-2026.pdf")).toBeTruthy();
     expect(mocks.uploadFiles).not.toHaveBeenCalled();
     await user.click(within(pane).getByRole("button", { name: "Upload" }));
-    expect(mocks.uploadFiles).toHaveBeenCalledWith([file]);
+    expect(mocks.uploadFiles).toHaveBeenCalledWith([file], undefined);
+  });
+
+  it("uploads a new version under the document's lineage, one file only", async () => {
+    mocks.getByResource.mockResolvedValue(docs);
+    mocks.getPacketSummary.mockResolvedValue({ totalRules: 0 });
+    renderView({ form: "upload-document", kind: "lin_w4" });
+    const user = userEvent.setup();
+
+    const pane = await loadedPane("Upload a new version");
+    const input = pane.querySelector('input[type="file"]') as HTMLInputElement;
+    expect(input.multiple).toBe(false);
+    const file = new File(["x"], "w4-2026-v2.pdf", { type: "application/pdf" });
+    fireEvent.change(input, { target: { files: [file] } });
+    await user.click(await within(pane).findByRole("button", { name: "Upload" }));
+    expect(mocks.uploadFiles).toHaveBeenCalledWith([file], { lineageId: "lin_w4" });
+  });
+
+  it("does not read the upload pane until it is first opened", async () => {
+    mocks.getByResource.mockResolvedValue(docs);
+    mocks.getPacketSummary.mockResolvedValue({ totalRules: 0 });
+    renderView();
+
+    await screen.findByTestId("document-doc_w4");
+    expect(screen.queryByRole("dialog", { name: "Upload documents" })).toBeNull();
+    expect(screen.queryByLabelText("Files to upload")).toBeNull();
   });
 
   it("asks for a file before uploading", async () => {
@@ -234,7 +264,7 @@ describe("WorkerDocuments", () => {
     mocks.getPacketSummary.mockResolvedValue({ totalRules: 0 });
     renderView({ form: "upload-document" });
 
-    const pane = await screen.findByRole("dialog", { name: "Upload documents" });
+    const pane = await loadedPane("Upload documents");
     await userEvent.setup().click(within(pane).getByRole("button", { name: "Upload" }));
     expect(within(pane).getByText("Add a file before you upload.")).toBeTruthy();
     expect(mocks.uploadFiles).not.toHaveBeenCalled();

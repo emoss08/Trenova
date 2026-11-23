@@ -631,7 +631,7 @@ Reason codes for placing a shipment on hold.
 ## Regenerating
 
 1. Start the infrastructure and API: `cd services/tms && task docker-up && task run-watch`
-2. Start the web client: `cd client && pnpm --filter @trenova/web dev`
+2. Start the web client: `cd client && bun run --filter @trenova/web dev`
 3. Sign in as an org administrator. Note that the post-login **role activation gate**
    must be cleared before any route will render — an un-activated session returns
    `403 Missing <resource>:Read` on every page.

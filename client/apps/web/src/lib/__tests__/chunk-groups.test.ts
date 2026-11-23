@@ -1,10 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { chunkGroups, packageTest } from "../../../vite/chunk-groups";
 
-const PNPM = "/repo/client/node_modules/.pnpm";
+// Bun's isolated store: one folder per installed copy, named `<name with / as +>@<version>` and
+// suffixed `+<peer hash>` when the package has peers.
+const STORE = "/repo/client/node_modules/.bun";
 
-function pnpmModule(folder: string, pkg: string, file: string): string {
-  return `${PNPM}/${folder}/node_modules/${pkg}/${file}`;
+function storeModule(folder: string, pkg: string, file: string): string {
+  return `${STORE}/${folder}/node_modules/${pkg}/${file}`;
 }
 
 // Rolldown places a module in the first group whose test matches it; a group tagged
@@ -20,20 +22,20 @@ function groupOf(id: string, { startup = false } = {}): string | null {
 }
 
 describe("packageTest", () => {
-  it("matches a package by its own folder in pnpm's layout", () => {
+  it("matches a package by its own folder in the install store", () => {
     const test = packageTest("date-fns");
-    expect(test.test(pnpmModule("date-fns@4.4.0", "date-fns", "format.js"))).toBe(true);
+    expect(test.test(storeModule("date-fns@4.4.0", "date-fns", "format.js"))).toBe(true);
     expect(test.test("/repo/client/node_modules/date-fns/index.js")).toBe(true);
   });
 
-  it("does not match a package that only names it as a peer", () => {
-    const baseUi = pnpmModule(
-      "@base-ui+react@1.8.0_@date-fns+tz@1.4.1_date-fns@4.4.0_react@19.2.8",
+  it("does not match a store folder that only contains its name", () => {
+    const baseUi = storeModule(
+      "@base-ui+react@1.9.0+670a94236aee320d",
       "@base-ui/react",
       "esm/button/Button.js",
     );
-    expect(packageTest("date-fns").test(baseUi)).toBe(false);
-    expect(packageTest("@date-fns/*").test(baseUi)).toBe(false);
+    expect(packageTest("react").test(baseUi)).toBe(false);
+    expect(packageTest("@base-ui/*").test(baseUi)).toBe(true);
   });
 
   it("does not match app code whose path contains the package's name", () => {
@@ -46,35 +48,39 @@ describe("packageTest", () => {
   });
 
   it("does not match a package whose name merely starts with the given one", () => {
-    expect(packageTest("react").test(pnpmModule("react-dom@19.2.8", "react-dom", "index.js"))).toBe(
-      false,
-    );
-    expect(packageTest("motion").test(pnpmModule("motion-dom@12.0.0", "motion-dom", "a.js"))).toBe(
+    expect(
+      packageTest("react").test(storeModule("react-dom@19.2.8", "react-dom", "index.js")),
+    ).toBe(false);
+    expect(packageTest("motion").test(storeModule("motion-dom@12.0.0", "motion-dom", "a.js"))).toBe(
       false,
     );
   });
 
   it("expands * within one path segment", () => {
     const tiptap = packageTest("@tiptap/*", "prosemirror-*");
-    expect(tiptap.test(pnpmModule("@tiptap+core@3.0.0", "@tiptap/core", "dist/index.js"))).toBe(
+    expect(tiptap.test(storeModule("@tiptap+core@3.0.0", "@tiptap/core", "dist/index.js"))).toBe(
       true,
     );
-    expect(tiptap.test(pnpmModule("prosemirror-view@1.0.0", "prosemirror-view", "dist/a.js"))).toBe(
-      true,
-    );
-    expect(tiptap.test(pnpmModule("@tiptapx+core@1.0.0", "@tiptapx/core", "a.js"))).toBe(false);
+    expect(
+      tiptap.test(storeModule("prosemirror-view@1.0.0", "prosemirror-view", "dist/a.js")),
+    ).toBe(true);
+    expect(tiptap.test(storeModule("@tiptapx+core@1.0.0", "@tiptapx/core", "a.js"))).toBe(false);
   });
 
   it("matches a subpath of a package and nothing else in it", () => {
     const flags = packageTest("react-phone-number-input/flags");
     expect(
       flags.test(
-        pnpmModule("react-phone-number-input@3.4.18", "react-phone-number-input", "flags/index.js"),
+        storeModule(
+          "react-phone-number-input@3.4.18",
+          "react-phone-number-input",
+          "flags/index.js",
+        ),
       ),
     ).toBe(true);
     expect(
       flags.test(
-        pnpmModule("react-phone-number-input@3.4.18", "react-phone-number-input", "core/index.js"),
+        storeModule("react-phone-number-input@3.4.18", "react-phone-number-input", "core/index.js"),
       ),
     ).toBe(false);
   });
@@ -82,7 +88,7 @@ describe("packageTest", () => {
   it("reads Windows paths the same way", () => {
     expect(
       packageTest("@tanstack/react-table").test(
-        "C:\\repo\\client\\node_modules\\.pnpm\\@tanstack+react-table@9.2.4\\node_modules\\@tanstack\\react-table\\dist\\index.js",
+        "C:\\repo\\client\\node_modules\\.bun\\@tanstack+react-table@9.3.1+ab9c01e4ccdf52df\\node_modules\\@tanstack\\react-table\\dist\\index.js",
       ),
     ).toBe(true);
   });
@@ -91,12 +97,14 @@ describe("packageTest", () => {
 describe("chunkGroups", () => {
   it("leaves Base UI, icons and date-fns to per-route chunks", () => {
     expect(
-      groupOf(pnpmModule("@base-ui+react@1.8.0_date-fns@4.4.0", "@base-ui/react", "esm/index.js")),
+      groupOf(
+        storeModule("@base-ui+react@1.9.0+670a94236aee320d", "@base-ui/react", "esm/index.js"),
+      ),
     ).toBeNull();
     expect(
-      groupOf(pnpmModule("@untitledui+icons@0.0.20", "@untitledui/icons", "dist/a.js")),
+      groupOf(storeModule("@untitledui+icons@0.0.20", "@untitledui/icons", "dist/a.js")),
     ).toBeNull();
-    expect(groupOf(pnpmModule("date-fns@4.4.0", "date-fns", "format.js"))).toBeNull();
+    expect(groupOf(storeModule("date-fns@4.4.0", "date-fns", "format.js"))).toBeNull();
   });
 
   it("keeps the app's own code out of every group", () => {
@@ -109,7 +117,7 @@ describe("chunkGroups", () => {
     const startup = { startup: true };
     expect(
       groupOf(
-        pnpmModule("@base-ui+react@1.8.0_date-fns@4.4.0", "@base-ui/react", "esm/index.js"),
+        storeModule("@base-ui+react@1.9.0+670a94236aee320d", "@base-ui/react", "esm/index.js"),
         startup,
       ),
     ).toBe("initial-vendor");
@@ -133,7 +141,7 @@ describe("chunkGroups", () => {
     );
     expect(
       groupOf(
-        pnpmModule(
+        storeModule(
           "react-lazy-load-image-component@1.6.3",
           "react-lazy-load-image-component",
           "src/effects/blur.css",
@@ -147,7 +155,7 @@ describe("chunkGroups", () => {
     const startup = { startup: true };
     expect(
       groupOf(
-        pnpmModule("@untitledui+icons@0.0.20", "@untitledui/icons", "dist/Truck01.mjs"),
+        storeModule("@untitledui+icons@0.0.20", "@untitledui/icons", "dist/Truck01.mjs"),
         startup,
       ),
     ).toBeNull();
@@ -159,7 +167,7 @@ describe("chunkGroups", () => {
 
   it("leaves a startup library that has its own chunk in that chunk", () => {
     expect(
-      groupOf(pnpmModule("react-dom@19.2.8", "react-dom", "client.js"), { startup: true }),
+      groupOf(storeModule("react-dom@19.2.8", "react-dom", "client.js"), { startup: true }),
     ).toBe("react-vendor");
   });
 
@@ -170,23 +178,27 @@ describe("chunkGroups", () => {
   });
 
   it("puts TanStack Store with Query, not with the lazily loaded table", () => {
-    expect(groupOf(pnpmModule("@tanstack+store@0.8.0", "@tanstack/store", "dist/index.js"))).toBe(
+    expect(groupOf(storeModule("@tanstack+store@0.8.0", "@tanstack/store", "dist/index.js"))).toBe(
       "tanstack-query",
     );
     expect(
-      groupOf(pnpmModule("@tanstack+table-core@9.2.4", "@tanstack/table-core", "dist/index.js")),
+      groupOf(storeModule("@tanstack+table-core@9.2.4", "@tanstack/table-core", "dist/index.js")),
     ).toBe("tanstack-table");
   });
 
   it("puts the lazily imported flag barrel with the flags, ahead of the phone input", () => {
     expect(
       groupOf(
-        pnpmModule("react-phone-number-input@3.4.18", "react-phone-number-input", "flags/index.js"),
+        storeModule(
+          "react-phone-number-input@3.4.18",
+          "react-phone-number-input",
+          "flags/index.js",
+        ),
       ),
     ).toBe("country-flags");
     expect(
       groupOf(
-        pnpmModule("react-phone-number-input@3.4.18", "react-phone-number-input", "min/index.js"),
+        storeModule("react-phone-number-input@3.4.18", "react-phone-number-input", "min/index.js"),
       ),
     ).toBe("phone-utils");
   });

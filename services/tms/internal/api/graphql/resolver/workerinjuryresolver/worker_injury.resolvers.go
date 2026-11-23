@@ -144,7 +144,7 @@ func (r *OSHAAnnualSummaryResolver) SubmittedAt(ctx context.Context, obj *worker
 	return gqlscalar.IntPtr(obj.SubmittedAt), nil
 }
 
-func (r *QueryResolver) WorkerInjuries(ctx context.Context, workerID *string, caseYear *int, recordableOnly *bool, openOnly *bool, limit *int) ([]*workerinjury.WorkerInjury, error) {
+func (r *QueryResolver) WorkerInjuries(ctx context.Context, workerID *string, caseYear *int, recordableOnly *bool, openOnly *bool, first *int, after *string) (*gqlmodel.WorkerInjuryConnection, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceWorkerInjury, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -158,7 +158,11 @@ func (r *QueryResolver) WorkerInjuries(ctx context.Context, workerID *string, ca
 	if err != nil {
 		return nil, err
 	}
-	return r.WorkerInjuryService.ListInjuries(ctx, &workersafetyports.ListWorkerInjuriesRequest{
+	cursor, err := gqlconnection.CursorFromArgs(ctx, first, after)
+	if err != nil {
+		return nil, err
+	}
+	result, err := r.WorkerInjuryService.PageInjuries(ctx, &workersafetyports.ListWorkerInjuriesRequest{
 		TenantInfo:      resolvercore.TenantInfo(authCtx),
 		WorkerID:        id,
 		CaseYear:        year,
@@ -167,8 +171,28 @@ func (r *QueryResolver) WorkerInjuries(ctx context.Context, workerID *string, ca
 		IncludeWorker:   true,
 		IncludeDocument: true,
 		IncludeEvent:    true,
-		Limit:           gqlconnection.RecordListLimit(limit, id.IsNotNil()),
+		Cursor:          cursor,
 	})
+	if err != nil {
+		return nil, err
+	}
+	page, err := gqlconnection.EntityCursorConnection(
+		result,
+		func(node *workerinjury.WorkerInjury, edgeCursor string) *gqlmodel.WorkerInjuryEdge {
+			return &gqlmodel.WorkerInjuryEdge{Node: node, Cursor: edgeCursor}
+		},
+		func(edge *gqlmodel.WorkerInjuryEdge) string { return edge.Cursor },
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return &gqlmodel.WorkerInjuryConnection{
+		Edges:           page.Edges,
+		PageInfo:        page.PageInfo,
+		TotalCount:      page.TotalCount,
+		TotalCountExact: page.TotalCountExact,
+	}, nil
 }
 
 func (r *QueryResolver) WorkerInjury(ctx context.Context, id string) (*workerinjury.WorkerInjury, error) {

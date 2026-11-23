@@ -5,15 +5,22 @@ import {
   type WorkerRecord,
 } from "@/routes/worker/use-worker-state";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
+import { act, cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useController, type Control } from "react-hook-form";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
+import {
+  AssignTrainingPane,
+  CoursePane,
+  EditReviewPane,
+  RecordTrainingResultPane,
+} from "../development-panes";
 import DevelopmentTab from "../development-tab";
 
 const mocks = vi.hoisted(() => ({
   fetchWorkerTrainingSummary: vi.fn(),
   fetchWorkerTrainingRecords: vi.fn(),
+  fetchWorkerTrainingRecord: vi.fn(),
   completeWorkerTraining: vi.fn(),
   attachWorkerTrainingDocument: vi.fn(),
   fetchWorkerPerformanceReviews: vi.fn(),
@@ -23,6 +30,7 @@ const mocks = vi.hoisted(() => ({
 vi.mock("@/lib/graphql/worker-training", () => ({
   fetchWorkerTrainingSummary: mocks.fetchWorkerTrainingSummary,
   fetchWorkerTrainingRecords: mocks.fetchWorkerTrainingRecords,
+  fetchWorkerTrainingRecord: mocks.fetchWorkerTrainingRecord,
   completeWorkerTraining: mocks.completeWorkerTraining,
   attachWorkerTrainingDocument: mocks.attachWorkerTrainingDocument,
   assignWorkerTraining: vi.fn(),
@@ -168,7 +176,7 @@ function renderTab(open: Partial<WorkerOpenState>, view: "training" | "reviews" 
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
   });
   const onOpen = vi.fn();
-  render(
+  const view_ = render(
     <QueryClientProvider client={client}>
       <WorkPaneProvider>
         <WorkPaneHost>
@@ -184,8 +192,26 @@ function renderTab(open: Partial<WorkerOpenState>, view: "training" | "reviews" 
       </WorkPaneProvider>
     </QueryClientProvider>,
   );
-  return { onOpen };
+  return { onOpen, client, ...view_ };
 }
+
+/** One page of the records connection, as the server answers `WorkerTrainingRecords`. */
+function page(nodes: unknown[]) {
+  return {
+    edges: nodes.map((node, index) => ({ cursor: `c${index}`, node })),
+    pageInfo: { hasNextPage: false, endCursor: null },
+  };
+}
+
+// The panes load on demand; read their code once up front so the first test's wait is for the
+// pane, not for the test runner transforming the module.
+beforeAll(async () => {
+  await Promise.all(
+    [AssignTrainingPane, RecordTrainingResultPane, CoursePane, EditReviewPane].map((pane) =>
+      pane.preload(),
+    ),
+  );
+});
 
 afterEach(() => {
   cleanup();
@@ -195,30 +221,28 @@ afterEach(() => {
 describe("DevelopmentTab panes from the address", () => {
   it("opens the result pane for the assignment the address names, with its course locked", async () => {
     mocks.fetchWorkerTrainingSummary.mockResolvedValue(summary);
-    mocks.fetchWorkerTrainingRecords.mockResolvedValue([hazmatRecord]);
+    mocks.fetchWorkerTrainingRecords.mockResolvedValue(page([hazmatRecord]));
     renderTab({ form: "record-training-result", training: "wtrn_hazmat" });
 
     const pane = await screen.findByRole("dialog", {
-      name: "Record a result: Hazmat awareness refresher",
+      name: "Record result: Hazmat awareness refresher",
     });
-    expect(within(pane).getByLabelText("Course")).toBeDisabled();
-    expect(within(pane).getByTestId("score-line")).toHaveTextContent("Passes at 80%.");
+    expect(await within(pane).findByLabelText("Course")).toBeDisabled();
+    expect(within(pane).getByText("Passes at 80%.")).toBeInTheDocument();
   });
 
   it("says a score below the mark fails before saving, and records the fail on the assignment", async () => {
     mocks.fetchWorkerTrainingSummary.mockResolvedValue(summary);
-    mocks.fetchWorkerTrainingRecords.mockResolvedValue([hazmatRecord]);
+    mocks.fetchWorkerTrainingRecords.mockResolvedValue(page([hazmatRecord]));
     mocks.completeWorkerTraining.mockResolvedValue({ ...hazmatRecord, status: "Failed" });
     const { onOpen } = renderTab({ form: "record-training-result", training: "wtrn_hazmat" });
     const user = userEvent.setup();
 
     const pane = await screen.findByRole("dialog", {
-      name: "Record a result: Hazmat awareness refresher",
+      name: "Record result: Hazmat awareness refresher",
     });
-    await user.type(within(pane).getByLabelText(/Score/), "70");
-    expect(within(pane).getByTestId("score-line")).toHaveTextContent(
-      "Passes at 80%. This would fail.",
-    );
+    await user.type(await within(pane).findByLabelText(/Score/), "70");
+    expect(within(pane).getByText("Passes at 80%. This would fail.")).toBeInTheDocument();
     await user.click(within(pane).getByRole("button", { name: "Record fail" }));
 
     await waitFor(() => expect(mocks.completeWorkerTraining).toHaveBeenCalledTimes(1));
@@ -239,17 +263,17 @@ describe("DevelopmentTab panes from the address", () => {
     mocks.fetchWorkerTrainingSummary.mockResolvedValue(summary);
     renderTab({ form: "assign-training", course: "trnc_hazmat" });
 
-    const pane = await screen.findByRole("dialog", { name: "Assign a course" });
-    expect(within(pane).getByLabelText("Course")).toHaveValue("trnc_hazmat");
+    const pane = await screen.findByRole("dialog", { name: "Assign course" });
+    expect(await within(pane).findByLabelText("Course")).toHaveValue("trnc_hazmat");
   });
 
   it("reads a course in the pane when the address names a record without a form", async () => {
     mocks.fetchWorkerTrainingSummary.mockResolvedValue(summary);
-    mocks.fetchWorkerTrainingRecords.mockResolvedValue([hazmatRecord]);
+    mocks.fetchWorkerTrainingRecords.mockResolvedValue(page([hazmatRecord]));
     renderTab({ training: "wtrn_hazmat" });
 
     const pane = await screen.findByRole("dialog", { name: "Hazmat awareness refresher" });
-    expect(within(pane).getByText("None attached")).toBeInTheDocument();
+    expect(await within(pane).findByText("None attached")).toBeInTheDocument();
   });
 
   it("opens the draft the address names in the edit pane, with the overall score live", async () => {
@@ -259,12 +283,12 @@ describe("DevelopmentTab panes from the address", () => {
     const user = userEvent.setup();
 
     const pane = await screen.findByRole("dialog", { name: "Edit 2026 annual review" });
-    const overall = within(pane).getByTestId("review-overall");
+    const overall = await within(pane).findByTestId("review-overall");
     expect(overall).toHaveTextContent("4.0");
     expect(overall).toHaveTextContent("1 of 2 rated");
 
     await user.click(
-      within(pane).getByRole("button", { name: "On-time performance: 1, Needs work" }),
+      within(pane).getByRole("radio", { name: "On-time performance: 1, Needs work" }),
     );
     expect(overall).toHaveTextContent("2.5");
     expect(overall).toHaveTextContent("2 of 2 rated");
@@ -277,5 +301,74 @@ describe("DevelopmentTab panes from the address", () => {
 
     await waitFor(() => expect(mocks.fetchWorkerPerformanceReviews).toHaveBeenCalled());
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
+  it("reads an earlier record the address names from the records list when no course stands on it", async () => {
+    const earlier = {
+      ...hazmatRecord,
+      id: "wtrn_earlier",
+      status: "Completed",
+      completedAt: 1_700_000_000,
+      score: "91.00",
+      health: "Current",
+    };
+    mocks.fetchWorkerTrainingSummary.mockResolvedValue(summary);
+    mocks.fetchWorkerTrainingRecords.mockResolvedValue(page([hazmatRecord, earlier]));
+    renderTab({ training: "wtrn_earlier" });
+
+    const pane = await screen.findByRole("dialog", { name: "Hazmat awareness refresher" });
+    expect(await within(pane).findByText("91%")).toBeInTheDocument();
+  });
+
+  it("does not read the training records for a record the summary already holds", async () => {
+    mocks.fetchWorkerTrainingSummary.mockResolvedValue(summary);
+    renderTab({ training: "wtrn_hazmat" });
+
+    await screen.findByRole("dialog", { name: "Hazmat awareness refresher" });
+    expect(mocks.fetchWorkerTrainingRecords).not.toHaveBeenCalled();
+  });
+
+  it("reads nothing for training while the reviews are showing and no pane is open", async () => {
+    mocks.fetchWorkerPerformanceReviews.mockResolvedValue([]);
+    renderTab({}, "reviews");
+
+    await waitFor(() => expect(mocks.fetchWorkerTrainingSummary).not.toHaveBeenCalled());
+    expect(mocks.fetchWorkerTrainingRecords).not.toHaveBeenCalled();
+  });
+
+  it("keeps what is typed in the edit pane when the draft is read again", async () => {
+    mocks.fetchWorkerPerformanceReviews.mockResolvedValue([draft]);
+    const { client } = renderTab({ form: "edit-review", review: "prv_2026" }, "reviews");
+    const user = userEvent.setup();
+
+    const pane = await screen.findByRole("dialog", { name: "Edit 2026 annual review" });
+    const title = await within(pane).findByLabelText(/Title/);
+    await user.clear(title);
+    await user.type(title, "Annual review, revised");
+
+    act(() => {
+      client.setQueryData(["worker-reviews", "wrk_1"], [{ ...draft, version: 3 }]);
+    });
+    expect(within(pane).getByLabelText(/Title/)).toHaveValue("Annual review, revised");
+  });
+
+  it("sets a rating from the keyboard and clears it with Delete", async () => {
+    mocks.fetchWorkerPerformanceReviews.mockResolvedValue([draft]);
+    renderTab({ form: "edit-review", review: "prv_2026" }, "reviews");
+    const user = userEvent.setup();
+
+    const pane = await screen.findByRole("dialog", { name: "Edit 2026 annual review" });
+    const safety = await within(pane).findByRole("radio", {
+      name: "Safety and compliance: 4, Strong",
+    });
+    expect(safety).toHaveAttribute("aria-checked", "true");
+    safety.focus();
+    await user.keyboard("{ArrowRight}");
+    expect(within(pane).getByRole("radio", { name: /^Safety and compliance: 5,/ })).toHaveAttribute(
+      "aria-checked",
+      "true",
+    );
+    await user.keyboard("{Delete}");
+    expect(within(pane).getByTestId("review-overall")).toHaveTextContent("Not rated yet");
   });
 });

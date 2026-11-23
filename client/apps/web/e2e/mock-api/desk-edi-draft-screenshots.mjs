@@ -2,7 +2,7 @@
 // partner's implementation guide. Run with the mock API and the web app up
 // (see README.md):
 //
-//   node e2e/mock-api/desk-edi-draft-screenshots.mjs [outDir] [name,name,...]
+//   bun e2e/mock-api/desk-edi-draft-screenshots.mjs [outDir] [name,name,...]
 //
 // Each shot sets the `ediDraft` stage it needs, so the conversation is drawn
 // at that point: one value held, ready, proposed, or a revised guide.

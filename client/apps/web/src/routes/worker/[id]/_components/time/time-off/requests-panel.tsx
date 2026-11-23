@@ -1,28 +1,30 @@
-import { HoverGlideGroup } from "@/components/hover-glide";
-import { formatRange } from "@trenova/shared/lib/date";
 import { SectionPanel } from "@/components/section-panel";
+import { RowActionsMenu, type RowAction } from "@/components/row-actions-menu";
+import { preloadOn } from "@/components/work-pane";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { usePermission } from "@/hooks/use-permission";
 import { approveWorkerPTO } from "@/lib/graphql/worker-mutations";
 import { canApplyPTOAction } from "@/routes/worker/_components/pto/pto-actions";
 import { ptoDaysOf } from "@/routes/worker/_components/pto/pto-columns";
 import { ptoTypeLabel } from "@/routes/worker/_components/pto/worker-pto-balances";
-import { DotsHorizontalIcon } from "@trenova/shared/components/icons";
 import { Badge } from "@trenova/shared/components/ui/badge";
-import { DescriptionEmpty } from "@trenova/shared/components/ui/description-list";
 import { Button } from "@trenova/shared/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@trenova/shared/components/ui/dropdown-menu";
+import { DescriptionEmpty } from "@trenova/shared/components/ui/description-list";
 import { EmptyTable } from "@trenova/shared/components/ui/empty-table";
-import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
-import { useT } from "@trenova/shared/i18n/use-t";
+import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
+import { formatRange } from "@trenova/shared/lib/date";
+import { cn } from "@trenova/shared/lib/utils";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import type { WorkerPTO } from "@trenova/shared/types/worker";
+import type { KeyboardEvent } from "react";
+import {
+  BOUNDED_CELL_CLASS,
+  BoundedTable,
+  type BoundedColumn,
+  type BoundedMore,
+  type BoundedRowProps,
+} from "../../bounded-table";
+import { ROW_CHANGED_CLASS, type FlashPhase } from "../../use-row-flash";
 import {
   REQUEST_STATUS_LABELS,
   REQUEST_STATUS_VARIANTS,
@@ -32,14 +34,21 @@ import {
 export type RequestAction = { kind: "reject" | "cancel"; pto: WorkerPTO };
 
 export type RequestsPanelProps = {
+  /** The requests read so far, latest start first. */
   entries: readonly WorkerPTO[];
+  /** Every request on file, from the first page's count; null until it is known. */
+  total: number | null;
+  /** The pages after the first, read as the table nears its end. */
+  more: BoundedMore;
   /** Opens one request in the work pane: edit while requested, read once decided. */
   onOpenRequest: (id: string) => void;
+  /** The pane a row opens, preloaded when the row is pointed at or focused. */
+  requestPane: { preload: () => Promise<unknown> };
   onReason: (action: RequestAction) => void;
   /** Refreshes the balances, the ledger and the roster once a decision lands. */
   onDecided: () => Promise<unknown>;
-  /** The row a decision just changed, which takes a brief wash. */
-  changed: { id: string; tick: "a" | "b" } | null;
+  /** The wash a row takes after a decision changed it. */
+  flashOf: (id: string) => FlashPhase | undefined;
   onChanged: (id: string) => void;
 };
 
@@ -51,33 +60,48 @@ const COLUMNS = [
   { label: "Decision" },
 ] as const;
 
+function requestColumns(t: TranslateFn): BoundedColumn[] {
+  return [
+    { key: "dates", label: t("Dates") },
+    { key: "type", label: t("Type") },
+    { key: "days", label: t("Days"), align: "end" },
+    { key: "status", label: t("Status") },
+    { key: "decision", label: t("Decision") },
+    { key: "actions", label: <span className="sr-only">{t("Actions")}</span>, shrink: true },
+  ];
+}
+
 /**
- * Every time off request the worker has made or had made for them, newest first, with the
- * decision in the row while one is waiting.
+ * Every time off request the worker has made or had made for them, latest first, with the
+ * decision in the row while one is waiting. It reads a page at a time as the reader scrolls to
+ * the end, and mounts only the rows in view.
  */
 export function RequestsPanel({
   entries,
+  total,
+  more,
   onOpenRequest,
+  requestPane,
   onReason,
   onDecided,
-  changed,
+  flashOf,
   onChanged,
 }: RequestsPanelProps) {
   const t = useT();
-  const waiting = entries.filter((entry) => entry.status === "Requested").length;
+  // Only a whole list can say how many wait; a partial one would undercount.
+  const waiting = more.hasMore
+    ? null
+    : entries.filter((entry) => entry.status === "Requested").length;
 
   return (
     <SectionPanel
       title={t("Requests")}
-      count={entries.length}
+      count={total ?? undefined}
       hint={
-        entries.length === 0
+        entries.length === 0 || waiting === null
           ? undefined
           : waiting > 0
-            ? t(
-                "{0, plural, one {# waiting on a decision} other {# waiting on a decision}}",
-                waiting,
-              )
+            ? t("{0} waiting on a decision", waiting)
             : t("Nothing waiting")
       }
     >
@@ -90,55 +114,50 @@ export function RequestsPanel({
           columns={COLUMNS}
         />
       ) : (
-        <ScrollArea className="max-h-88" maskVariant="card">
-          <HoverGlideGroup>
-            <table className="w-full min-w-[35rem] text-sm">
-              <thead className="sticky top-0 z-10 bg-card">
-                <tr className="border-b text-left text-xs text-foreground-subtle">
-                  <th className="px-3 py-2 font-medium">{t("Dates")}</th>
-                  <th className="px-3 py-2 font-medium">{t("Type")}</th>
-                  <th className="px-3 py-2 text-right font-medium">{t("Days")}</th>
-                  <th className="px-3 py-2 font-medium">{t("Status")}</th>
-                  <th className="px-3 py-2 font-medium">{t("Decision")}</th>
-                  <th className="w-10 px-2 py-2">
-                    <span className="sr-only">{t("Actions")}</span>
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {entries.map((entry) => (
-                  <RequestRow
-                    key={entry.id}
-                    entry={entry}
-                    onOpenRequest={onOpenRequest}
-                    onReason={onReason}
-                    onDecided={onDecided}
-                    changed={changed && changed.id === entry.id ? changed.tick : null}
-                    onChanged={onChanged}
-                  />
-                ))}
-              </tbody>
-            </table>
-          </HoverGlideGroup>
-        </ScrollArea>
+        <BoundedTable
+          label={t("Requests")}
+          columns={requestColumns(t)}
+          maxHeightClassName="max-h-88"
+          estimateRowHeight={45}
+          rows={entries.map((entry) => ({
+            key: entry.id ?? "",
+            render: (props) => (
+              <RequestRow
+                props={props}
+                entry={entry}
+                onOpenRequest={onOpenRequest}
+                requestPane={requestPane}
+                onReason={onReason}
+                onDecided={onDecided}
+                changed={flashOf(entry.id ?? "")}
+                onChanged={onChanged}
+              />
+            ),
+          }))}
+          more={more}
+        />
       )}
     </SectionPanel>
   );
 }
 
 function RequestRow({
+  props,
   entry,
   onOpenRequest,
+  requestPane,
   onReason,
   onDecided,
   changed,
   onChanged,
 }: {
+  props: BoundedRowProps;
   entry: WorkerPTO;
   onOpenRequest: (id: string) => void;
+  requestPane: { preload: () => Promise<unknown> };
   onReason: (action: RequestAction) => void;
   onDecided: () => Promise<unknown>;
-  changed: "a" | "b" | null;
+  changed: FlashPhase | undefined;
   onChanged: (id: string) => void;
 }) {
   const t = useT();
@@ -162,35 +181,65 @@ function RequestRow({
   const showEdit = canUpdate && entry.status === "Requested";
   const decision = requestDecision(t, entry);
   const range = formatRange(entry.startDate, entry.endDate, { year: "always", join: "words" });
+  const actions: RowAction[] = [
+    ...(showEdit
+      ? [
+          {
+            id: "edit",
+            label: t("Edit"),
+            preload: requestPane.preload,
+            onSelect: () => onOpenRequest(id),
+          },
+        ]
+      : []),
+    ...(showCancel
+      ? [
+          {
+            id: "cancel",
+            label: t("Cancel request…"),
+            destructive: true,
+            onSelect: () => onReason({ kind: "cancel", pto: entry }),
+          },
+        ]
+      : []),
+  ];
+  const openOnKey = (event: KeyboardEvent<HTMLTableRowElement>) => {
+    if (event.target !== event.currentTarget) return;
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      onOpenRequest(id);
+    }
+  };
 
   return (
     <tr
+      {...props}
+      {...preloadOn(requestPane)}
       data-glide-target
-      data-changed={changed ?? undefined}
-      className="border-b border-border-subtle last:border-0 data-[changed=a]:[&>td]:animate-row-changed-a data-[changed=b]:[&>td]:animate-row-changed-b"
+      data-changed={changed}
+      tabIndex={0}
+      aria-label={t("Open the request for {0}", range)}
+      onClick={() => onOpenRequest(id)}
+      onKeyDown={openOnKey}
+      className={cn("cursor-pointer ui-focus-ring", ROW_CHANGED_CLASS)}
     >
-      <td className="px-3 py-2">
-        <button
-          type="button"
-          onClick={() => onOpenRequest(id)}
-          className="rounded-sm ui-focus-ring text-left font-mono text-xs tabular-nums hover:underline"
-          aria-label={t("Open the request for {0}", range)}
-        >
-          {range}
-        </button>
-      </td>
-      <td className="px-3 py-2">{t(ptoTypeLabel(entry.type))}</td>
-      <td className="px-3 py-2 text-right font-mono text-xs tabular-nums">
+      <td className={cn(BOUNDED_CELL_CLASS, "font-mono text-xs tabular-nums")}>{range}</td>
+      <td className={BOUNDED_CELL_CLASS}>{t(ptoTypeLabel(entry.type))}</td>
+      <td className={cn(BOUNDED_CELL_CLASS, "text-right font-mono text-xs tabular-nums")}>
         {String(ptoDaysOf(entry))}
       </td>
-      <td className="px-3 py-2">
+      <td className={BOUNDED_CELL_CLASS}>
         <Badge variant={REQUEST_STATUS_VARIANTS[entry.status]} dot>
           {REQUEST_STATUS_LABELS[entry.status]}
         </Badge>
       </td>
-      <td className="max-w-56 px-3 py-2">
+      <td className={cn(BOUNDED_CELL_CLASS, "max-w-56")}>
         {entry.status === "Requested" && (showApprove || showReject) ? (
-          <div className="flex gap-1.5">
+          <div
+            className="flex gap-1.5"
+            onClick={(event) => event.stopPropagation()}
+            onKeyDown={(event) => event.stopPropagation()}
+          >
             {showApprove ? (
               <Button
                 size="xs"
@@ -224,32 +273,12 @@ function RequestRow({
           </span>
         )}
       </td>
-      <td className="px-2 py-2 text-right">
-        {showEdit || showCancel ? (
-          <DropdownMenu>
-            <DropdownMenuTrigger
-              render={
-                <Button size="icon-xs" variant="ghost" aria-label={t("Request options")}>
-                  <DotsHorizontalIcon />
-                </Button>
-              }
-            />
-            <DropdownMenuContent side="bottom" align="end">
-              <DropdownMenuGroup>
-                {showEdit ? (
-                  <DropdownMenuItem title={t("Edit")} onClick={() => onOpenRequest(id)} />
-                ) : null}
-                {showCancel ? (
-                  <DropdownMenuItem
-                    title={t("Cancel request…")}
-                    color="danger"
-                    onClick={() => onReason({ kind: "cancel", pto: entry })}
-                  />
-                ) : null}
-              </DropdownMenuGroup>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        ) : null}
+      <td
+        className={cn(BOUNDED_CELL_CLASS, "text-right")}
+        onClick={(event) => event.stopPropagation()}
+        onKeyDown={(event) => event.stopPropagation()}
+      >
+        <RowActionsMenu label={t("Request options")} actions={actions} />
       </td>
     </tr>
   );

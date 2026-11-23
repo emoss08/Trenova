@@ -42,6 +42,7 @@ func TestAcceptInvitationRefusesAWeakPasswordBeforeLookingUpTheToken(t *testing.
 				l:          zap.NewNop(),
 				portalRepo: portalRepo,
 				features:   plantest.AllFeatures(),
+				checklists: noRefresh{},
 			}
 
 			result, err := svc.AcceptInvitation(t.Context(), &AcceptInvitationRequest{
@@ -70,7 +71,12 @@ func TestAcceptInvitationRefusesAPasswordContainingTheInvitedEmail(t *testing.T)
 		GetInvitationByTokenHash(mock.Anything, tokenutils.Hash("invite-token")).
 		Return(invitation, nil).
 		Once()
-	svc := &Service{l: zap.NewNop(), portalRepo: portalRepo, features: plantest.AllFeatures()}
+	svc := &Service{
+		l:          zap.NewNop(),
+		portalRepo: portalRepo,
+		features:   plantest.AllFeatures(),
+		checklists: noRefresh{},
+	}
 
 	result, err := svc.AcceptInvitation(t.Context(), &AcceptInvitationRequest{
 		Token:    "invite-token",

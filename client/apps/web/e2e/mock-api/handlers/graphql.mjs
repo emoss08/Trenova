@@ -19,6 +19,7 @@ import { FORMULA_HANDLERS, formulaSelectRows } from "./formula.mjs";
 import { FORMULA_LIBRARY_HANDLERS } from "./formula-library.mjs";
 import { ACCOUNTING_HANDLERS } from "./accounting.mjs";
 import { AUDIT_HANDLERS } from "./audit.mjs";
+import { DESK_TRANSCRIPT_HANDLERS } from "./desktranscripts.mjs";
 import { NOTIFICATION_HANDLERS } from "./notifications.mjs";
 import { FREIGHT_OUTLOOK_HANDLERS } from "./freightoutlook.mjs";
 import { ORGANIZATION_HANDLERS } from "./organization.mjs";
@@ -1196,6 +1197,7 @@ const HANDLERS = {
   ...FORMULA_LIBRARY_HANDLERS,
   ...ACCOUNTING_HANDLERS,
   ...AUDIT_HANDLERS,
+  ...DESK_TRANSCRIPT_HANDLERS,
   ...NOTIFICATION_HANDLERS,
   ...FREIGHT_OUTLOOK_HANDLERS,
   ...ORGANIZATION_HANDLERS,

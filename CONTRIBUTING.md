@@ -70,13 +70,18 @@ task test
 task lint
 ```
 
-For the frontend client:
+For the frontend client, which uses [Bun](https://bun.sh) (not Node or pnpm) since November 2026:
 
 ```bash
 cd client
-pnpm build
-pnpm lint
+bun install
+bun run build
+bun run lint
+bun run test
 ```
+
+Every client command, and what replaced each pnpm one, is in
+[docs/engineering/client-commands.md](./docs/engineering/client-commands.md).
 
 For local infrastructure:
 

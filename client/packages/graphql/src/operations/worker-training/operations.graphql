@@ -117,9 +117,18 @@ query ActiveTrainingCourses {
   }
 }
 
-query WorkerTrainingRecords($workerId: ID!, $includeClosed: Boolean) {
-  workerTrainingRecords(workerId: $workerId, includeClosed: $includeClosed) {
-    ...WorkerTrainingRecordFields
+query WorkerTrainingRecords($workerId: ID!, $includeClosed: Boolean, $first: Int, $after: String) {
+  workerTrainingRecords(workerId: $workerId, includeClosed: $includeClosed, first: $first, after: $after) {
+    edges {
+      cursor
+      node {
+        ...WorkerTrainingRecordFields
+      }
+    }
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
   }
 }
 
@@ -306,6 +315,12 @@ mutation CancelWorkerTraining($input: CancelWorkerTrainingInput!) {
 
 mutation AttachWorkerTrainingDocument($input: AttachWorkerTrainingDocumentInput!) {
   attachWorkerTrainingDocument(input: $input) {
+    ...WorkerTrainingRecordFields
+  }
+}
+
+query WorkerTrainingRecord($id: ID!) {
+  workerTrainingRecord(id: $id) {
     ...WorkerTrainingRecordFields
   }
 }

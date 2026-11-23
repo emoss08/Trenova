@@ -6,6 +6,7 @@ import { SelectField } from "@/components/fields/select-field";
 import { SwitchField } from "@/components/fields/switch-field";
 import { TextareaField } from "@/components/fields/textarea-field";
 import {
+  PaneFormLoading,
   WorkPane,
   WorkPaneBody,
   WorkPaneCancel,
@@ -15,12 +16,11 @@ import {
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import {
   createWorkerSafetyEvent,
-  fetchDefaultSafetyPoints,
   updateWorkerSafetyEvent,
   type WorkerSafetyEventRow,
 } from "@/lib/graphql/worker-safety";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form";
 import { sourceLabels } from "@trenova/shared/i18n/labels";
@@ -39,18 +39,12 @@ import {
   type SafetyEventKind,
   type SafetySeverity,
 } from "@trenova/shared/types/worker-safety";
-import { useEffect, useRef, useState } from "react";
-import {
-  Controller,
-  FormProvider,
-  useForm,
-  useFormState,
-  useWatch,
-  type Resolver,
-} from "react-hook-form";
-import { useSafetyInvalidation } from "./use-safety-invalidation";
+import { useEffect, useState } from "react";
+import { Controller, FormProvider, useForm, useWatch, type Resolver } from "react-hook-form";
+import { useWorkerInvalidation } from "../use-worker-invalidation";
+import { defaultSafetyPointsQuery, type SafetyPointsFacts } from "./safety-reads";
 
-const KIND_OPTIONS = safetyEventKindSchema.options.map((value) => ({
+const EVENT_KIND_OPTIONS = safetyEventKindSchema.options.map((value) => ({
   value,
   label: sourceLabels(SAFETY_EVENT_KIND_LABELS)[value],
 }));
@@ -89,16 +83,46 @@ const resolveSafetyEvent: Resolver<SafetyEventPaneValues> = async (values, conte
   };
 };
 
-export function safetyEventDefaults(event: WorkerSafetyEventRow | null): SafetyEventPaneValues {
+/** What a new event starts as, so its first points suggestion can be read before the form. */
+const NEW_EVENT_FACTS: SafetyPointsFacts = {
+  kind: "Incident",
+  severity: "Minor",
+  preventable: false,
+  inspectionResult: null,
+};
+
+function factsOf(values: Pick<SafetyEventPaneValues, keyof SafetyPointsFacts>): SafetyPointsFacts {
+  return {
+    kind: values.kind,
+    severity: values.severity,
+    preventable: values.preventable,
+    inspectionResult: values.inspectionResult,
+  };
+}
+
+function sameFacts(a: SafetyPointsFacts, b: SafetyPointsFacts): boolean {
+  return (
+    a.kind === b.kind &&
+    a.severity === b.severity &&
+    a.preventable === b.preventable &&
+    a.inspectionResult === b.inspectionResult
+  );
+}
+
+/** The form's values at mount: the event's, or a new one's with the house scale's points. */
+export function safetyEventDefaults(
+  event: WorkerSafetyEventRow | null,
+  suggestedPoints: number | null = null,
+): SafetyEventPaneValues {
   if (!event) {
     return {
-      kind: "Incident",
-      severity: "Minor",
+      kind: NEW_EVENT_FACTS.kind,
+      severity: NEW_EVENT_FACTS.severity,
       occurredAt: getTodayDate(),
       location: null,
       description: "",
-      preventable: false,
-      points: 1,
+      preventable: NEW_EVENT_FACTS.preventable,
+      points: suggestedPoints ?? 1,
       referenceNumber: null,
       shipmentId: null,
       inspectionLevel: null,
@@ -146,37 +170,76 @@ export type RecordSafetyEventPaneProps = {
 /**
  * Records a safety event, or edits one, beside the events list. What happened decides the fields
  * that apply (an inspection's outcome and level, an accident's preventability) and where the
- * points suggestion starts; once somebody types points of their own the suggestion stops.
+ * points suggestion starts; once somebody types points of their own the suggestion stops. A new
+ * event's form mounts once the first suggestion is read, so it starts on it.
  */
-export function RecordSafetyEventPane({
-  open,
-  onOpenChange,
+export function RecordSafetyEventPane(props: RecordSafetyEventPaneProps) {
+  const t = useT();
+  const { open, onOpenChange, event } = props;
+  const isEdit = event !== null;
+  const initial = useQuery({ ...defaultSafetyPointsQuery(NEW_EVENT_FACTS), enabled: !isEdit });
+  const waiting = !isEdit && initial.isPending;
+
+  return (
+    <WorkPane
+      open={open}
+      onOpenChange={onOpenChange}
+      title={isEdit ? t("Edit safety event") : t("Record a safety event")}
+      description={
+        isEdit
+          ? t("Changes to the points move the score at once.")
+          : t("Adds it to the events and counts its points toward the score.")
+      }
+      contentKey={event?.id ?? "new"}
+    >
+      {waiting ? (
+        <PaneFormLoading fields={6} />
+      ) : (
+        <SafetyEventForm {...props} suggestedPoints={initial.data ?? null} />
+      )}
+    </WorkPane>
+  );
+}
+
+function SafetyEventForm({
   workerId,
   event,
   onSaved,
-}: RecordSafetyEventPaneProps) {
+  suggestedPoints,
+}: RecordSafetyEventPaneProps & { suggestedPoints: number | null }) {
   const t = useT();
-  const invalidate = useSafetyInvalidation(workerId);
+  const queryClient = useQueryClient();
+  const invalidate = useWorkerInvalidation(workerId, "safety");
   const isEdit = event !== null;
   const form = useForm<SafetyEventPaneValues>({
     resolver: resolveSafetyEvent,
-    defaultValues: safetyEventDefaults(event),
+    defaultValues: safetyEventDefaults(event, suggestedPoints),
   });
-  const { control, handleSubmit, reset, setValue } = form;
-  const { dirtyFields } = useFormState({ control, name: "points" });
-  const pointsTouched = isEdit || Boolean(dirtyFields.points);
+  const { control, handleSubmit, setValue } = form;
 
-  const loaded = useRef<string | null>(null);
-  useEffect(() => {
-    if (!open) {
-      loaded.current = null;
-      return;
-    }
-    const key = event ? `${event.id}:${event.version}` : "new";
-    if (loaded.current === key) return;
-    loaded.current = key;
-    reset(safetyEventDefaults(event));
-  }, [open, event, reset]);
+  // When what happened changes, the points follow the house scale until somebody types their
+  // own. Driven by the change itself (a subscription, not a render), and a suggestion that comes
+  // back after the facts moved on is dropped.
+  useEffect(
+    () =>
+      form.subscribe({
+        name: ["kind", "severity", "preventable", "inspectionResult"],
+        formState: { values: true },
+        callback: ({ values }) => {
+          if (isEdit || form.getFieldState("points").isDirty) return;
+          const facts = factsOf(values);
+          queryClient
+            .fetchQuery(defaultSafetyPointsQuery(facts))
+            .then((points) => {
+              if (form.getFieldState("points").isDirty) return;
+              if (!sameFacts(factsOf(form.getValues()), facts)) return;
+              setValue("points", points);
+            })
+            .catch(() => undefined);
+        },
+      }),
+    [form, isEdit, queryClient, setValue],
+  );
 
   const [kind, severity, preventable, inspectionResult] = useWatch({
     control,
@@ -184,29 +247,17 @@ export function RecordSafetyEventPane({
   });
   const isInspection = kind === "Inspection";
   const isAccident = kind === "Accident";
-  const effectiveResult = isInspection ? inspectionResult : null;
+  const suggested = useQuery(
+    defaultSafetyPointsQuery({ kind, severity, preventable, inspectionResult }),
+  );
 
-  const suggested = useQuery({
-    queryKey: ["default-safety-points", kind, severity, preventable, effectiveResult],
-    queryFn: ({ signal }) =>
-      fetchDefaultSafetyPoints(
-        { kind, severity, preventable, inspectionResult: effectiveResult },
-        { signal },
-      ),
-    enabled: open,
-    staleTime: 60 * 60 * 1000,
-  });
-
-  useEffect(() => {
-    if (pointsTouched || suggested.data == null) return;
-    setValue("points", suggested.data);
-  }, [pointsTouched, suggested.data, setValue]);
-
-  useEffect(() => {
-    if (isInspection) return;
+  // Only an inspection carries an outcome and a level: changing what happened away from one
+  // drops them, as the change, not after it.
+  const changeKind = (value: string) => {
+    if (value === "Inspection") return;
     setValue("inspectionResult", null);
     setValue("inspectionLevel", null);
-  }, [isInspection, setValue]);
+  };
 
   const [uploading, setUploading] = useState(false);
   const { mutateAsync, isPending } = useApiMutation<
@@ -243,24 +294,14 @@ export function RecordSafetyEventPane({
           })
         : createWorkerSafetyEvent({ ...shared, workerId, points: values.points });
     },
-    onSuccess: () => {
-      void invalidate();
+    onSuccess: async () => {
+      await invalidate();
       onSaved();
     },
   });
 
   return (
-    <WorkPane
-      open={open}
-      onOpenChange={onOpenChange}
-      title={isEdit ? t("Edit safety event") : t("Record a safety event")}
-      description={
-        isEdit
-          ? t("Changes to the points move the score at once.")
-          : t("Adds it to the events and counts its points toward the score.")
-      }
-      contentKey={event?.id ?? "new"}
-    >
+    <>
       <WorkPaneDirtyTracker form={form} />
       <FormProvider {...form}>
         <Form
@@ -277,8 +318,9 @@ export function RecordSafetyEventPane({
                   control={control}
                   name="kind"
                   label={t("What happened")}
-                  options={KIND_OPTIONS}
+                  options={EVENT_KIND_OPTIONS}
                   placeholder={t("Pick an event type")}
+                  onValueChange={changeKind}
                   required
                 />
               </FormControl>
@@ -420,18 +462,12 @@ export function RecordSafetyEventPane({
           </WorkPaneBody>
           <WorkPaneFooter>
             <WorkPaneCancel />
-            <Button
-              type="submit"
-              size="sm"
-              isLoading={isPending}
-              disabled={uploading}
-              loadingText={t("Saving...")}
-            >
+            <Button type="submit" size="sm" isLoading={isPending} disabled={uploading}>
               {isEdit ? t("Save changes") : t("Record event")}
             </Button>
           </WorkPaneFooter>
         </Form>
       </FormProvider>
-    </WorkPane>
+    </>
   );
 }

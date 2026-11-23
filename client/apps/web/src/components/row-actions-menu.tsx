@@ -15,7 +15,19 @@ export type RowAction = {
   onSelect: () => void;
   disabled?: boolean;
   destructive?: boolean;
+  /**
+   * Starts reading what the action opens (a lazy pane's or dialog's `preload`). Called when the
+   * menu's trigger or the item is hovered or focused, so the pane is there by the time it opens.
+   */
+  preload?: () => unknown;
 };
+
+function warm(preload: RowAction["preload"]) {
+  if (!preload) return;
+  Promise.resolve()
+    .then(preload)
+    .catch(() => undefined);
+}
 
 type RowActionsMenuProps = {
   /** Accessible name of the trigger, e.g. "Actions for CDL". */
@@ -35,6 +47,12 @@ export function RowActionsMenu({ label, actions, disabled, className }: RowActio
 
   if (actions.length === 0) return null;
 
+  const warmAll = () => {
+    for (const action of actions) {
+      if (!action.disabled) warm(action.preload);
+    }
+  };
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
@@ -45,6 +63,8 @@ export function RowActionsMenu({ label, actions, disabled, className }: RowActio
             className={className}
             aria-label={label}
             disabled={disabled}
+            onPointerEnter={warmAll}
+            onFocus={warmAll}
           />
         }
       >
@@ -60,6 +80,8 @@ export function RowActionsMenu({ label, actions, disabled, className }: RowActio
               startContent={Icon ? <Icon className="size-3.5" /> : undefined}
               color={action.destructive ? "danger" : undefined}
               disabled={action.disabled}
+              onPointerEnter={action.preload ? () => warm(action.preload) : undefined}
+              onFocus={action.preload ? () => warm(action.preload) : undefined}
               onClick={action.onSelect}
             />
           );

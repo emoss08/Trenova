@@ -283,7 +283,7 @@ shards or `ResolverParams`, so regenerate after `task gqlgen` whenever either mo
 (`client/packages/graphql/src/operations/reference/reference.graphql`) and the client's copy of the
 views (`client/packages/shared/src/types/generated/reference-views.ts`) from each kind's
 `ReferenceView` in the permission registry. Run it after changing a view or adding a `@kind`
-type, then `pnpm --filter @trenova/graphql codegen`; `TestReferenceFragmentsAreGenerated` fails
+type, then `bun run --filter @trenova/graphql codegen`; `TestReferenceFragmentsAreGenerated` fails
 until both are current. Editing a client operation can fail `TestEveryLinkedFieldIsDeclared` (it
 selects a linked record's field outside its view without `@requiresRead`) or
 `TestEveryDeclaredLinkedFieldIsNullable` (the field it declares is non-null). These are Go tests
@@ -297,7 +297,7 @@ access manifest and the role editor's words (below). See [reference-views.md](re
 editor's words for each reference view. Both come from two generators, in this order:
 
 ```bash
-pnpm --filter @trenova/web access:generate   # client/apps/web: writes pkg/pageaccess/screens_gen.json
+bun run --filter @trenova/web access:generate   # client/apps/web: writes pkg/pageaccess/screens_gen.json
 cd services/tms && go run ./internal/api/graphql/gqlext/refgen   # writes manifest_gen.json and viewwords_gen.go
 ```
 
@@ -344,10 +344,10 @@ names; `keel_verify_integration_test.go` fails when a model and the migrated sch
 
 ## Client checks are narrower than they look
 
-- `pnpm lint` runs `turbo run lint`, and **only `apps/web` and `apps/dash` define a `lint`
+- `bun run lint` runs `turbo run lint`, and **only `apps/web` and `apps/dash` define a `lint`
   script**. `packages/shared` is not linted at all, so an error there will not fail CI and
   will not show up in a repo-wide `oxlint` run you might do by hand.
-- `pnpm fmt:check` is not wired into any workflow. Formatting is convention, not a gate.
+- `bun run fmt:check` is not wired into any workflow. Formatting is convention, not a gate.
 - There is no `test` script in `packages/graphql`; its safety net is `tsc -b` plus the
   codegen check.
 - **Never run the formatter over a `generated/` directory.** `oxfmt src` will happily
@@ -360,7 +360,7 @@ names; `keel_verify_integration_test.go` fails when a model and the migrated sch
 
 `services/tms/pkg/productguide/catalog_gen.json` is built from the web app's router,
 navigation, page headers and record-link registry plus `docs/product-guide/**.md`, and the
-server embeds it. `pnpm --filter @trenova/web guide:check` (the Checks job in
+server embeds it. `bun run --filter @trenova/web guide:check` (the Checks job in
 `test-client.yml`) fails when:
 
 - a routed page has no guide — adding a page means writing its guide;
@@ -369,7 +369,7 @@ server embeds it. `pnpm --filter @trenova/web guide:check` (the Checks job in
   the check: the bold is the promise that the words are on screen. A label the app builds
   at runtime ("Publish {n} rows") or passes around untranslated is described in plain words;
 - the catalog differs from what the generator writes. Run
-  `pnpm --filter @trenova/web guide:generate` and commit the catalog with the change.
+  `bun run --filter @trenova/web guide:generate` and commit the catalog with the change.
 
 The check also runs when only `i18n/messages.en.json` changes, because the label check reads
 it. See [product-guide.md](product-guide.md).
@@ -479,9 +479,6 @@ These look like real failures and are not:
   the package's own binary instead (`cd apps/web && ./node_modules/.bin/tsc -b`).
 - **`golangci-lint` refuses to run** when it was built with an older Go than the module
   targets. That needs CI, not a workaround.
-- **`node --test i18n/tools/`** resolves a bare directory as a module on Node 22 and fails
-  before running anything. Node 26, the pinned version, runs it fine; on older Node,
-  pass a glob.
 
 These are real, and only look like something else:
 

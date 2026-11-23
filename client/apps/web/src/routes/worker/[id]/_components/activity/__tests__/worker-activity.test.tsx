@@ -2,7 +2,8 @@ import { WorkPaneHost, WorkPaneProvider } from "@/components/work-pane";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { stubLayout } from "@/test/layout";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import WorkerActivity from "../worker-activity";
 
 const mocks = vi.hoisted(() => ({ fetchWorkerActivity: vi.fn() }));
@@ -23,46 +24,53 @@ vi.mock("@trenova/shared/stores/auth-store", () => ({
     select({ user: { id: "usr_me" } }),
 }));
 
+const rows = [
+  {
+    id: "ae_1",
+    timestamp: Date.UTC(2025, 10, 20, 14, 41) / 1000,
+    resource: "profile_change_request",
+    resourceId: "pcr_1",
+    operation: "create",
+    entityRef: null,
+    comment: null,
+    channel: "portal",
+    principalType: "user",
+    principalId: "usr_maria",
+    actorName: "Maria Alvarez",
+    changes: null,
+    subjectResource: "worker",
+    subjectId: "wrk_1",
+    user: { id: "usr_maria", name: "Maria Alvarez" },
+  },
+  {
+    id: "ae_2",
+    timestamp: Date.UTC(2025, 2, 4, 8, 0) / 1000,
+    resource: "worker",
+    resourceId: "wrk_1",
+    operation: "update",
+    entityRef: "Maria Alvarez",
+    comment: null,
+    channel: "web",
+    principalType: "user",
+    principalId: "usr_2",
+    actorName: null,
+    changes: { fleetCode: { from: "CHI-LOCAL", to: "MW-OTR", type: "updated" } },
+    subjectResource: "worker",
+    subjectId: "wrk_1",
+    user: { id: "usr_2", name: "Marcus Bell" },
+  },
+];
+
 const page = {
-  rows: [
-    {
-      id: "ae_1",
-      timestamp: Date.UTC(2025, 10, 20, 14, 41) / 1000,
-      resource: "profile_change_request",
-      resourceId: "pcr_1",
-      operation: "create",
-      entityRef: null,
-      comment: null,
-      channel: "portal",
-      principalType: "user",
-      principalId: "usr_maria",
-      actorName: "Maria Alvarez",
-      changes: null,
-      subjectResource: "worker",
-      subjectId: "wrk_1",
-      user: { id: "usr_maria", name: "Maria Alvarez" },
-    },
-    {
-      id: "ae_2",
-      timestamp: Date.UTC(2025, 2, 4, 8, 0) / 1000,
-      resource: "worker",
-      resourceId: "wrk_1",
-      operation: "update",
-      entityRef: "Maria Alvarez",
-      comment: null,
-      channel: "web",
-      principalType: "user",
-      principalId: "usr_2",
-      actorName: null,
-      changes: { fleetCode: { from: "CHI-LOCAL", to: "MW-OTR", type: "updated" } },
-      subjectResource: "worker",
-      subjectId: "wrk_1",
-      user: { id: "usr_2", name: "Marcus Bell" },
-    },
-  ],
-  total: 2,
-  endCursor: null,
-  hasNextPage: false,
+  edges: rows.map((node) => ({ node })),
+  pageInfo: { hasNextPage: false, endCursor: null },
+  totalCount: 2,
+};
+
+const emptyPage = {
+  edges: [],
+  pageInfo: { hasNextPage: false, endCursor: null },
+  totalCount: 0,
 };
 
 function renderActivity() {
@@ -80,7 +88,14 @@ function renderActivity() {
   return onOpen;
 }
 
+// jsdom lays nothing out; the trail is a windowed list, which needs a size to open its window.
+let restoreLayout = () => {};
+beforeEach(() => {
+  restoreLayout = stubLayout(320);
+});
+
 afterEach(() => {
+  restoreLayout();
   cleanup();
   vi.clearAllMocks();
 });
@@ -112,7 +127,7 @@ describe("WorkerActivity", () => {
     expect(fromWeb.getByText("Web")).toBeTruthy();
     expect(fromWeb.getByText("CHI-LOCAL")).toBeTruthy();
     expect(fromWeb.getByText("MW-OTR")).toBeTruthy();
-    expect(screen.getByRole("region", { name: "Tuesday, Mar 4, 2025" })).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "Tuesday, Mar 4, 2025" })).toBeTruthy();
   });
 
   it("opens the record an entry is about on this page", async () => {
@@ -124,12 +139,7 @@ describe("WorkerActivity", () => {
   });
 
   it("searches on the server and offers to clear the filters when nothing matches", async () => {
-    mocks.fetchWorkerActivity.mockResolvedValueOnce(page).mockResolvedValue({
-      rows: [],
-      total: 0,
-      endCursor: null,
-      hasNextPage: false,
-    });
+    mocks.fetchWorkerActivity.mockResolvedValueOnce(page).mockResolvedValue(emptyPage);
     renderActivity();
     const user = userEvent.setup();
 
@@ -150,12 +160,7 @@ describe("WorkerActivity", () => {
   });
 
   it("says nothing has happened yet on an empty file", async () => {
-    mocks.fetchWorkerActivity.mockResolvedValue({
-      rows: [],
-      total: 0,
-      endCursor: null,
-      hasNextPage: false,
-    });
+    mocks.fetchWorkerActivity.mockResolvedValue(emptyPage);
     renderActivity();
 
     expect(await screen.findByText("No activity yet")).toBeTruthy();
@@ -166,5 +171,23 @@ describe("WorkerActivity", () => {
     renderActivity();
 
     expect(await screen.findByText("The activity could not be loaded")).toBeTruthy();
+  });
+
+  it("reads the next page when the end of the trail comes into view, and only then", async () => {
+    mocks.fetchWorkerActivity
+      .mockResolvedValueOnce({ ...page, pageInfo: { hasNextPage: true, endCursor: "cursor-2" } })
+      .mockResolvedValue({ ...emptyPage, totalCount: null });
+    renderActivity();
+
+    await screen.findByTestId("activity-ae_1");
+    await waitFor(() =>
+      expect(mocks.fetchWorkerActivity).toHaveBeenLastCalledWith(
+        "wrk_1",
+        { first: 30, after: "cursor-2" },
+        { query: "", fieldFilters: [] },
+        { signal: expect.any(AbortSignal) },
+      ),
+    );
+    expect(mocks.fetchWorkerActivity).toHaveBeenCalledTimes(2);
   });
 });

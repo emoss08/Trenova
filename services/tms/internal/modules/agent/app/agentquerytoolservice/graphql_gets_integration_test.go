@@ -6,6 +6,9 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/testutil/checklisttest"
+	"github.com/emoss08/trenova/internal/testutil/orgzonetest"
+
 	"github.com/emoss08/trenova/internal/testutil/entitlementtest"
 
 	"github.com/emoss08/trenova/internal/api/graphql/agentread/agentreadtest"
@@ -113,6 +116,8 @@ func TestConvertedGets_ReadOneRecordOfTheTenantUnderRowLevelSecurity(t *testing.
 	)
 	services.WorkerCredentialService = workercredentialservice.New(workercredentialservice.Params{
 		Logger: logger, Repo: credentials, WorkerRepo: workers,
+		Checklists:    checklisttest.NoRefresh{},
+		Organizations: orgzonetest.Organizations{},
 	})
 	draws := workerdrugalcoholrepository.New(
 		workerdrugalcoholrepository.Params{

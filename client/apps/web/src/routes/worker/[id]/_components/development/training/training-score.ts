@@ -1,3 +1,4 @@
+import { formatNumber } from "@trenova/shared/i18n/format";
 import type { TranslateFn } from "@trenova/shared/i18n/runtime";
 
 export type ScoreProjection =
@@ -26,9 +27,14 @@ export function projectScore(
   return { kind: "waiting", passing: mark };
 }
 
+/** A score or passing mark as a whole percentage figure, without the sign: "92". */
+export function formatTrainingScore(score: string | number): string {
+  return formatNumber(Number(score), { maximumFractionDigits: 0 });
+}
+
 /** The live line under the score field. */
 export function scoreLine(projection: ScoreProjection, t: TranslateFn): string {
-  const mark = (passing: number) => Number(passing.toFixed(0));
+  const mark = formatTrainingScore;
   switch (projection.kind) {
     case "unscored":
       return t("This course has no passing mark; a score is optional.");
@@ -41,4 +47,11 @@ export function scoreLine(projection: ScoreProjection, t: TranslateFn): string {
     case "fail":
       return t("Passes at {0}%. This would fail.", mark(projection.passing));
   }
+}
+
+/** The tone of that line: whether the typed score passes, fails or is not yet a score. */
+export function scoreTone(projection: ScoreProjection): "muted" | "success" | "danger" {
+  if (projection.kind === "pass") return "success";
+  if (projection.kind === "fail" || projection.kind === "invalid") return "danger";
+  return "muted";
 }

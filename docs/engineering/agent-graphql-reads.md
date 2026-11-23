@@ -274,7 +274,7 @@ three rules:
 - Like the namespace ratchet, the count of unconverted tools may only fall. It is pinned in the
   test and lowered by each module's PR.
 
-When a module's operation changes on the client, `pnpm --filter @trenova/graphql codegen`
+When a module's operation changes on the client, `bun run --filter @trenova/graphql codegen`
 re-hashes it and `task gqlgen` (or `go run ./internal/api/graphql/agentread/gen`) rebinds the tool.
 A field the operation stops selecting leaves the tool's result and its parameters, and the catalog
 snapshot shows it.
@@ -384,8 +384,10 @@ from the binding, so a spec does not say which it is.
 The record a list is keyed by may be optional: `workerInjuries` and `workerDotTests` read one
 worker's records, or every worker's when no worker is named, as the repository tools did. Such a
 field takes a `limit` argument, which the tool offers with the list bounds (25 unless asked, at
-most 100, the server's page), and the resolver reads every row of a named record when no limit is
-sent and one default page when no record is named (`gqlconnection.RecordListLimit`). An unpaged list has
+most 100, the server's page), and the resolver reads one full page of a named record when no
+limit is sent and one default page when no record is named (`gqlconnection.RecordListLimit`).
+Only a list an agent tool reads whole stays unpaged; every other list of one record's rows is a
+connection ([scale.md](backend/scale.md)). An unpaged list has
 no next page, so when the rows fill the limit the result's `note` says more may exist and how to
 narrow the call. Any other `Int` argument is a parameter only when the schema describes it
 (`caseYear`). A default that holds only when the call names no record goes in the spec's
@@ -1113,7 +1115,7 @@ since its arguments are sent as the call gives them. An amount the schema holds 
 Size: a `*Table` operation selects what a table row shows, which can be large; shipments are
 about 3 KB a row. The rule therefore prefers `Desk*` operations, which were written to be read by
 the Desk. Where a list has none, its module's PR either adds a `Desk<Plural>` operation in
-`client/packages/graphql/src/operations/` (then `pnpm --filter @trenova/graphql codegen`) or
+`client/packages/graphql/src/operations/` (then `bun run --filter @trenova/graphql codegen`) or
 records in the PR why the table's selection is the right one. Each module's PR records the
 result's encoded size, before and after, for its largest list.
 
@@ -1178,7 +1180,7 @@ classes, each with a rule:
 |---|---|---|
 | `op`: a persisted operation reads the same records | 119 | Converts the tool to the operation. |
 | `partial`: the root field reads the records but lacks a parameter the tool has (an `openOnly`, an `asOf`, a list of ids, a per-row value) | 30 | Adds what is missing to the GraphQL input or type, additively (`task gqlschema-diff` must report no breaking change), with the resolver and its permission check, then converts. A tool never loses a capability to convert. |
-| `field-no-op`: the root field exists but no persisted query selects it | 6 | Adds a `Desk*` operation in `client/packages/graphql/src/operations/`, runs `pnpm --filter @trenova/graphql codegen`, then converts. |
+| `field-no-op`: the root field exists but no persisted query selects it | 6 | Adds a `Desk*` operation in `client/packages/graphql/src/operations/`, runs `bun run --filter @trenova/graphql codegen`, then converts. |
 | `none`: no root field | 21 | Stays on its current path, in `agentread.NoGraphQL` with its reason. |
 
 The `none` reasons:
@@ -1232,7 +1234,7 @@ Each PR, per the Phase 3 discipline:
 - records held-out recall@5 and top-1 before and after in the Phase 3 table of
   `desk-harness-review.md`, never tuned against the held-out cases;
 - runs `task gqlschema-diff` (no breaking change), `authzlint`, and, where operations changed,
-  `task gqlgen` and `pnpm --filter @trenova/graphql codegen`.
+  `task gqlgen` and `bun run --filter @trenova/graphql codegen`.
 
 ## Decisions
 

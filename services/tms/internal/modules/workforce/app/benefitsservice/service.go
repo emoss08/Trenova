@@ -213,6 +213,13 @@ func (s *Service) ListEnrollments(
 	return s.repo.ListEnrollments(ctx, req)
 }
 
+func (s *Service) PageEnrollments(
+	ctx context.Context,
+	req *driverpayports.ListBenefitEnrollmentsRequest,
+) (*pagination.CursorListResult[*paybenefit.WorkerBenefitEnrollment], error) {
+	return s.repo.PageEnrollments(ctx, req)
+}
+
 func (s *Service) BenefitCosts(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,

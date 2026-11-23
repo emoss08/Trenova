@@ -238,6 +238,7 @@ extend type Query {
     limit: Int
   ): [ShiftTemplate!]!
   shiftTemplate(id: ID!): ShiftTemplate!
+  "A worker's shift patterns, newest first; at most 100."
   workerShiftAssignments(
     workerId: ID!
     "Only the pattern the worker is on today, leaving out past and future ones."

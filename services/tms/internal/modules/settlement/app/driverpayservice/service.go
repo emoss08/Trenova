@@ -191,11 +191,11 @@ func (s *Service) UpdateProfile(
 	return updated, nil
 }
 
-func (s *Service) ListWorkerAssignments(
+func (s *Service) PageWorkerAssignments(
 	ctx context.Context,
 	req driverpayports.ListWorkerPayAssignmentsRequest,
-) ([]*payassignment.WorkerPayAssignment, error) {
-	return s.assignmentRepo.ListForWorker(ctx, req)
+) (*pagination.CursorListResult[*payassignment.WorkerPayAssignment], error) {
+	return s.assignmentRepo.PageForWorker(ctx, req)
 }
 
 func (s *Service) ListProfileAssignments(

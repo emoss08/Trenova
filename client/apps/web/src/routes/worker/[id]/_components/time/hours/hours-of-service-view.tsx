@@ -1,12 +1,10 @@
 import { SectionPanel } from "@/components/section-panel";
 import { telematics } from "@/lib/queries/telematics";
-import { worker } from "@/lib/queries/worker";
+import { workerOverviewQuery } from "@/lib/queries/worker";
 import { useQuery } from "@tanstack/react-query";
 import { ErrorState } from "@trenova/shared/components/errors/error-state";
 import { useNow } from "@trenova/shared/hooks/use-now";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { userWallClockNow } from "@trenova/shared/lib/date";
-import { format, subDays } from "date-fns";
 import { useState } from "react";
 import { TimeSkeleton } from "../time-skeleton";
 import { DailyLogPanel } from "./daily-log-panel";
@@ -15,15 +13,11 @@ import { HosLinkState } from "./hos-link-state";
 import {
   buildDaySlots,
   buildLogSegments,
-  DAILY_LOG_DAYS,
-  DAY_KEY_FORMAT,
+  HOS_LIVE_REFRESH_MS,
+  hosWindow,
   laneTotalsMs,
 } from "./hos-model";
 import { DriverFormsPanel, ViolationsPanel } from "./hos-records-panels";
-
-const REFETCH_INTERVAL_MS = 60_000;
-const STALE_TIME_MS = 60_000;
-const THIRTY_DAYS_SECONDS = 30 * 86_400;
 
 /**
  * Hours of service: whether there is anything to show comes from the overview the page already
@@ -31,7 +25,7 @@ const THIRTY_DAYS_SECONDS = 30 * 86_400;
  */
 export default function HoursOfServiceView({ workerId }: { workerId: string }) {
   const t = useT();
-  const overview = useQuery(worker.overview(workerId));
+  const overview = useQuery(workerOverviewQuery(workerId));
 
   if (overview.isPending) return <TimeSkeleton view="hours-of-service" />;
   if (overview.isError) {
@@ -40,7 +34,7 @@ export default function HoursOfServiceView({ workerId }: { workerId: string }) {
         layout="sheet"
         error={overview.error}
         onRetry={() => void overview.refetch()}
-        title={t("Hours of service could not be loaded")}
+        title={t("The hours of service could not be loaded")}
       />
     );
   }
@@ -52,36 +46,30 @@ export default function HoursOfServiceView({ workerId }: { workerId: string }) {
 
 function HoursReporting({ workerId }: { workerId: string }) {
   const t = useT();
-  const nowSec = useNow();
-  const [range] = useState(() => {
-    const today = userWallClockNow();
-    const now = Math.floor(Date.now() / 1000);
-    return {
-      startDate: format(subDays(today, DAILY_LOG_DAYS - 1), DAY_KEY_FORMAT),
-      endDate: format(today, DAY_KEY_FORMAT),
-      since: now - THIRTY_DAYS_SECONDS,
-      until: now,
-    };
-  });
+  // The view's reads cover whole days, and today's open segment runs to now: both follow one
+  // minute clock, so the window turns over at midnight and the band's figures move each minute.
+  const nowSec = useNow("minute");
+  const span = hosWindow(nowSec);
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
 
   const clocksQuery = useQuery({
     ...telematics.workerHosClocks(workerId),
-    refetchInterval: REFETCH_INTERVAL_MS,
+    refetchInterval: HOS_LIVE_REFRESH_MS,
   });
   const dailyLogsQuery = useQuery({
-    ...telematics.workerHosDailyLogs(workerId, range.startDate, range.endDate),
-    staleTime: STALE_TIME_MS,
-    refetchInterval: REFETCH_INTERVAL_MS,
+    ...telematics.workerHosDailyLogs(workerId, span.startDate, span.endDate),
+    staleTime: HOS_LIVE_REFRESH_MS,
   });
-  const slots = buildDaySlots(dailyLogsQuery.data ?? []);
+  const slots = buildDaySlots(dailyLogsQuery.data ?? [], span.today);
   const today = slots[slots.length - 1];
   const selected = slots.find((slot) => slot.key === selectedKey) ?? today;
+  // Today's log is the one live log read: the daily log panel reads the same key when today is
+  // selected, so one request a minute serves both.
   const todayLogsQuery = useQuery({
     ...telematics.workerHosLogs(workerId, today.startAt, today.endAt),
     enabled: dailyLogsQuery.isSuccess,
-    staleTime: STALE_TIME_MS,
-    refetchInterval: REFETCH_INTERVAL_MS,
+    staleTime: HOS_LIVE_REFRESH_MS,
+    refetchInterval: HOS_LIVE_REFRESH_MS,
   });
   const todaySegments = buildLogSegments(
     todayLogsQuery.data ?? [],
@@ -133,12 +121,13 @@ function HoursReporting({ workerId }: { workerId: string }) {
           workerId={workerId}
           slots={slots}
           selected={selected}
+          nowSec={nowSec}
           onSelect={setSelectedKey}
         />
       )}
       <div className="grid items-start gap-4 lg:grid-cols-2">
-        <ViolationsPanel workerId={workerId} since={range.since} />
-        <DriverFormsPanel workerId={workerId} startTime={range.since} endTime={range.until} />
+        <ViolationsPanel workerId={workerId} since={span.since} />
+        <DriverFormsPanel workerId={workerId} startTime={span.since} endTime={span.until} />
       </div>
     </div>
   );

@@ -5,6 +5,8 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/testutil/orgzonetest"
+
 	"github.com/emoss08/trenova/internal/modules/identity/domain/protectedfield"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
@@ -120,8 +122,9 @@ func setupTest(t *testing.T) *testDeps {
 			Repo:   noDefaultPTOPolicy{},
 		}),
 		credentialService: workercredentialservice.New(workercredentialservice.Params{
-			Logger: logger,
-			Repo:   noCredentialTypes{},
+			Logger:        logger,
+			Repo:          noCredentialTypes{},
+			Organizations: orgzonetest.Organizations{},
 		}),
 		planFields: plantest.Keeper(nil),
 		formatter:  formatter,

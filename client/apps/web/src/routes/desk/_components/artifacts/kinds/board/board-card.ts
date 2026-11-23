@@ -11,7 +11,12 @@ import type {
 } from "@/lib/graphql/desk-board-card";
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import { formatDurationFromSeconds } from "@trenova/shared/lib/date";
-import { cardMomentAfter, cardTime, money } from "../../record-card/record-card-values";
+import {
+  cardDayAfter,
+  cardMomentAfter,
+  cardTime,
+  money,
+} from "../../record-card/record-card-values";
 
 /** How much a board's block asks of the reader: blocks it, worth a look, worth knowing, clear. */
 export type BoardTone = "bad" | "warn" | "info" | "ok" | "";
@@ -377,8 +382,15 @@ export function checkGroups(
 
 /** A record's measure, read beside its row: what it is measured against, and how it stands. */
 export type MeasureReading = {
-  /** What the measure is held against: "Due 2:00 PM", "Delivered 4:52 PM". */
+  /** What the measure is held against, whole: "Due Mar 19, 11:00 AM at Rockford, IL". */
   against: string;
+  /** What the row draws of it, written as precisely as its age needs: "Due Mar 19". */
+  shown: string;
+  /**
+   * The stop it is measured at, when it names one and a moment: the row draws the moment and
+   * then the stop in a span of its own, the first thing to go when the row is narrow.
+   */
+  at: { verb: "due" | "delivered"; when: string; place: string } | null;
   /** How the record stands: "1h 40m behind", "on time". */
   standing: string;
   tone: BoardTone;
@@ -389,6 +401,21 @@ export type MeasureReading = {
   /** The lateness is the estimate's, for a window still open. */
   projected: boolean;
 };
+
+const WEEK_SECONDS = 7 * 24 * 60 * 60;
+
+/**
+ * How precisely a row writes a moment. A date (when an invoice falls due, the day it is dated)
+ * is its day: `invoice.DueDateFromPaymentTerm` adds whole days to the invoice date, so its time
+ * of day means nothing. A moment within a week of now, either way, keeps its time, as a load's
+ * appointment today does; one further off is its day, as a load 248 days late needs no minute.
+ * A day carries its year only when it is not now's.
+ */
+export function measureMoment(now: number, at: number, kind: "date" | "moment"): string {
+  if (!at) return "";
+  if (kind === "moment" && Math.abs(at - now) <= WEEK_SECONDS) return cardMomentAfter(now, at);
+  return cardDayAfter(now, at);
+}
 
 function seconds(value: DeskBoardValue): number {
   const number = Number(value.number);
@@ -406,67 +433,88 @@ export function measureReading(
   const at = measure.at ?? 0;
   const value = measure.value.kind === "duration" ? seconds(measure.value) : 0;
   const fraction = furthest > 0 ? Math.min(1, value / furthest) : 0;
-  const base = { tone, fraction, held: false, projected: false };
+  const base = { tone, fraction, held: false, projected: false, at: null };
 
-  const moment = at ? cardMomentAfter(now, at) : "";
-  const due = () => {
-    if (!moment) return measure.place ? t("At {0}", measure.place) : "";
-    return measure.place ? t("Due {0} at {1}", moment, measure.place) : t("Due {0}", moment);
+  const whole = at ? cardMomentAfter(now, at) : "";
+  const when = measureMoment(now, at, "moment");
+  const day = measureMoment(now, at, "date");
+  const place = measure.place;
+  const due = (): Pick<MeasureReading, "against" | "shown" | "at"> => {
+    if (!at) {
+      const text = place ? t("At {0}", place) : "";
+      return { against: text, shown: text, at: null };
+    }
+    if (!place) return { against: t("Due {0}", whole), shown: t("Due {0}", when), at: null };
+    return {
+      against: t("Due {0} at {1}", whole, place),
+      shown: t("Due {0}", when),
+      at: { verb: "due", when, place },
+    };
   };
-  const delivered = () => {
-    if (!moment) return t("Delivered");
-    return measure.place
-      ? t("Delivered {0} at {1}", moment, measure.place)
-      : t("Delivered {0}", moment);
+  const delivered = (): Pick<MeasureReading, "against" | "shown" | "at"> => {
+    if (!at) return { against: t("Delivered"), shown: t("Delivered"), at: null };
+    if (!place) {
+      return { against: t("Delivered {0}", whole), shown: t("Delivered {0}", when), at: null };
+    }
+    return {
+      against: t("Delivered {0} at {1}", whole, place),
+      shown: t("Delivered {0}", when),
+      at: { verb: "delivered", when, place },
+    };
   };
+  const plain = (text: string): Pick<MeasureReading, "against" | "shown"> => ({
+    against: text,
+    shown: text,
+  });
 
   switch (measure.measure) {
     case "lateness":
       switch (measure.state) {
         case "late":
-          return { ...base, against: due(), standing: t("{0} behind", amount) };
+          return { ...base, ...due(), standing: t("{0} behind", amount) };
         case "held":
-          return { ...base, held: true, against: due(), standing: t("{0} at the stop", amount) };
+          return { ...base, held: true, ...due(), standing: t("{0} at the stop", amount) };
         case "projected":
           return {
             ...base,
             projected: true,
-            against: due(),
+            ...due(),
             standing: t("estimated {0} late", amount),
           };
         case "due":
-          return { ...base, fraction: 0, against: due(), standing: t("not estimated") };
+          return { ...base, fraction: 0, ...due(), standing: t("not estimated") };
         case "delivered":
           return {
             ...base,
             fraction: 0,
-            against: delivered(),
+            ...delivered(),
             standing: value > 0 ? t("{0} late", amount) : t("on time"),
           };
         default:
-          return { ...base, fraction: 0, against: due(), standing: t("on time") };
+          return { ...base, fraction: 0, ...due(), standing: t("on time") };
       }
     case "amountDue":
       return {
         ...base,
         fraction: 0,
-        against: moment ? t("Due {0}", moment) : "",
+        ...plain(day ? t("Due {0}", day) : ""),
         standing: measure.state === "settled" ? t("paid") : t("{0} due", amount),
       };
     case "pendingFor":
       return {
         ...base,
-        against: moment ? t("Since {0}", moment) : "",
+        against: whole ? t("Since {0}", whole) : "",
+        shown: when ? t("Since {0}", when) : "",
         standing: measure.state === "settled" ? t("settled") : t("waiting {0}", amount),
       };
     case "age":
       return {
         ...base,
-        against: moment ? t("Dated {0}", moment) : "",
+        ...plain(day ? t("Dated {0}", day) : ""),
         standing: t("{0} old", amount),
       };
     default:
-      return { ...base, fraction: 0, against: "", standing: amount };
+      return { ...base, fraction: 0, against: "", shown: "", standing: amount };
   }
 }
 
@@ -537,4 +585,45 @@ export function halfBlocks(blocks: readonly Pick<DeskBoardBlock, "half">[]): boo
     run = 0;
   }
   return halves;
+}
+
+/**
+ * Where a reply's foot stands: inside the last block when that block is an
+ * exhibit drawn full width, else as one full-width line under the desk, which
+ * closes the ragged bottom of two exhibits of unequal height side by side and
+ * never cramps the foot into half the reply. A desk with no blocks has it under.
+ */
+export function replyFootPlace(
+  blocks: readonly { type: string }[],
+  halves: readonly boolean[],
+  isExhibit: (type: string) => boolean,
+): "inside" | "under" {
+  const last = blocks.length - 1;
+  return last >= 0 && isExhibit(blocks[last].type) && !halves[last] ? "inside" : "under";
+}
+
+/** A run of words: plain, or a token that must stand whole on one line. */
+export type WordRun = { text: string; whole: boolean };
+
+const UNBREAKABLE = /[\p{L}\p{N}]+(?:-[\p{L}\p{N}]+)+/gu;
+const DIGIT = /\p{N}/u;
+
+/**
+ * Words cut into plain runs and the tokens a line must never break inside: groups
+ * of letters and digits joined by hyphens that hold a digit, such as a record's
+ * number ("SEED-INV-0006") or a date ("2026-11-29"), which a browser would
+ * otherwise break after a hyphen. The runs joined give back the words unchanged.
+ */
+export function wordRuns(text: string): WordRun[] {
+  const runs: WordRun[] = [];
+  let last = 0;
+  for (const match of text.matchAll(UNBREAKABLE)) {
+    if (!DIGIT.test(match[0])) continue;
+    const at = match.index ?? 0;
+    if (at > last) runs.push({ text: text.slice(last, at), whole: false });
+    runs.push({ text: match[0], whole: true });
+    last = at + match[0].length;
+  }
+  if (last < text.length) runs.push({ text: text.slice(last), whole: false });
+  return runs;
 }

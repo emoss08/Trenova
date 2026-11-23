@@ -24,7 +24,7 @@ export type TextareaPreset = {
 
 type BaseTextareaFieldProps = Omit<TextareaProps, "name" | "bare" | "required"> & {
   label: string;
-  description?: string;
+  description?: React.ReactNode;
   presets?: TextareaPreset[];
   /**
    * Drawn inside the field's frame under the text, such as suggestions and a send

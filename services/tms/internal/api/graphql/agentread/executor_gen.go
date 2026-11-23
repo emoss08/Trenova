@@ -1150,8 +1150,8 @@ var operations = []Operation{
 	},
 	{
 		Name:     "WorkerPayAssignments",
-		Hash:     "sha256:1bf635cd5fa402d1768672762dcc0cca45e44bfd28abb08b7c7caa1a7efc6528",
-		Document: "query WorkerPayAssignments($workerId: ID!) { workerPayAssignments(workerId: $workerId) { createdAt effectiveFrom effectiveTo id notes payProfile { classification components { description id kind method rate } id name } payProfileId rateOverrides { componentId rate } splitPercent version workerId } }",
+		Hash:     "sha256:28778dec1589ffbc94f5460da3fd4df4946578ddc9c8c4d3abcefea836c40f08",
+		Document: "query WorkerPayAssignments($after: String, $first: Int, $workerId: ID!) { workerPayAssignments(workerId: $workerId, first: $first, after: $after) { edges { cursor node { createdAt effectiveFrom effectiveTo id notes payProfile { classification components { description id kind method rate } id name } payProfileId rateOverrides { componentId rate } splitPercent version workerId } } pageInfo { endCursor hasNextPage } } }",
 	},
 	{
 		Name:     "DeskPayCodeOptions",
@@ -1265,8 +1265,8 @@ var operations = []Operation{
 	},
 	{
 		Name:     "DeskWorkerInjuries",
-		Hash:     "sha256:672958ce24165d06b824167089505bbc6f0a85879c6a7171ce8310a56ef98d1a",
-		Document: "fragment FleetCodeReference on FleetCode { code color id } fragment WorkerReference on Worker { assignmentBlocked canBeAssigned firstName fleetCode { ...FleetCodeReference } fleetCodeId id lastName profilePicUrl status type wholeName } query DeskWorkerInjuries($caseYear: Int, $limit: Int, $openOnly: Boolean, $recordableOnly: Boolean, $workerId: ID) { workerInjuries( workerId: $workerId caseYear: $caseYear recordableOnly: $recordableOnly openOnly: $openOnly limit: $limit ) { bodyPart caseNumber caseYear claimStatus classification daysAway daysRestricted description id illnessType logName occurredAt privacyCase recordable returnedToWorkAt status treatment worker { ...WorkerReference } workerId } }",
+		Hash:     "sha256:707afa3bb96af0277e8874e4a6aac225944ca1390a87314911c69e0ec55fa41c",
+		Document: "fragment FleetCodeReference on FleetCode { code color id } fragment WorkerReference on Worker { assignmentBlocked canBeAssigned firstName fleetCode { ...FleetCodeReference } fleetCodeId id lastName profilePicUrl status type wholeName } query DeskWorkerInjuries($after: String, $caseYear: Int, $first: Int, $openOnly: Boolean, $recordableOnly: Boolean, $workerId: ID) { workerInjuries( workerId: $workerId caseYear: $caseYear recordableOnly: $recordableOnly openOnly: $openOnly first: $first after: $after ) { edges { cursor node { bodyPart caseNumber caseYear claimStatus classification daysAway daysRestricted description id illnessType logName occurredAt privacyCase recordable returnedToWorkAt status treatment worker { ...WorkerReference } workerId } } pageInfo { endCursor hasNextPage } } }",
 	},
 	{
 		Name:     "DeskWorkerLeaveCases",
@@ -1305,8 +1305,8 @@ var operations = []Operation{
 	},
 	{
 		Name:     "DeskWorkerTrainingRecords",
-		Hash:     "sha256:3417c37a15878e4f877d8a5404e92f68989f92810ac70e8b55f07c8c48d26dd2",
-		Document: "fragment TrainingCourseReference on TrainingCourse { category code contentUrl delivery description dueDaysAfterAssignment durationMinutes id isRequired name passingScore renewalWindowDays requiredForDriverTypes requiresAcknowledgement sortOrder status validityMonths } query DeskWorkerTrainingRecords($includeClosed: Boolean, $workerId: ID!) { workerTrainingRecords(workerId: $workerId, includeClosed: $includeClosed) { assignedAt completedAt course { ...TrainingCourseReference } courseId dueAt expiresAt id passed score status } }",
+		Hash:     "sha256:34e6c73c6cedfa5a2674a39ecb3f651e13a8cf0a35fc116c1bd81106ddd00cfb",
+		Document: "fragment TrainingCourseReference on TrainingCourse { category code contentUrl delivery description dueDaysAfterAssignment durationMinutes id isRequired name passingScore renewalWindowDays requiredForDriverTypes requiresAcknowledgement sortOrder status validityMonths } query DeskWorkerTrainingRecords($after: String, $first: Int, $includeClosed: Boolean, $workerId: ID!) { workerTrainingRecords( workerId: $workerId includeClosed: $includeClosed first: $first after: $after ) { edges { cursor node { assignedAt completedAt course { ...TrainingCourseReference } courseId dueAt expiresAt id passed score status } } pageInfo { endCursor hasNextPage } } }",
 	},
 	{
 		Name:     "TrainingCourseTable",

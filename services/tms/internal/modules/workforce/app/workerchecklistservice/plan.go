@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerchecklist"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerchecklistports"
@@ -201,7 +202,8 @@ func (s *Service) planSettleItem(
 		if docErr != nil {
 			return nil, docErr
 		}
-		if doc.ResourceType != workerResourceType || doc.ResourceID != checklist.WorkerID.String() {
+		if doc.ResourceType != permission.ResourceWorker.String() ||
+			doc.ResourceID != checklist.WorkerID.String() {
 			return nil, errortypes.NewValidationError(
 				"evidenceDocumentId",
 				errortypes.ErrInvalid,

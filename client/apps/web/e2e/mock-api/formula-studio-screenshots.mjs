@@ -1,8 +1,8 @@
 // Screenshots of the Formula Studio and the formula libraries on Tariff, against the mock API.
 //
-//   node e2e/mock-api/server.mjs
-//   pnpm --filter @trenova/web dev
-//   node e2e/mock-api/formula-studio-screenshots.mjs [outDir] [name,name,...]
+//   bun e2e/mock-api/server.mjs
+//   bun run --filter @trenova/web dev
+//   bun e2e/mock-api/formula-studio-screenshots.mjs [outDir] [name,name,...]
 //
 // Every shot starts from a fresh scenario, so a save, a test or a submit one makes never leaks
 // into the next.

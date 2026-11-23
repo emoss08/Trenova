@@ -3,13 +3,17 @@ import {
   CLOSED_WORKER_OPEN_STATE as CLOSED,
   type WorkerTabProps,
 } from "@/routes/worker/use-worker-state";
+import { lazyComponent } from "@/lib/lazy-component";
 import { LazyComponent } from "@trenova/shared/components/error-boundary";
-import { lazy } from "react";
+import { WORKER_VIEW_MODULES } from "../worker-view-modules";
 import { QualificationSkeleton } from "./qualification-skeleton";
 
-const Credentials = lazy(() => import("./credentials/worker-credentials-tab"));
-const DQFile = lazy(() => import("./dq-file/worker-dqf-tab"));
-const DrugAlcohol = lazy(() => import("./drug-alcohol/worker-testing-tab"));
+const Credentials = lazyComponent(WORKER_VIEW_MODULES.credentials, (module) => module.default);
+const DQFile = lazyComponent(WORKER_VIEW_MODULES["dq-file"], (module) => module.default);
+const DrugAlcohol = lazyComponent(
+  WORKER_VIEW_MODULES["drug-and-alcohol"],
+  (module) => module.default,
+);
 
 /**
  * The Qualification tab: the shell draws its section strip; this draws the selected view, each
@@ -21,7 +25,7 @@ export default function QualificationTab({ workerId, view, open, onOpen }: Worke
     <>
       <Kept shown={selected === "credentials"}>
         <LazyComponent fallback={<QualificationSkeleton view="credentials" />}>
-          <Credentials
+          <Credentials.Component
             workerId={workerId}
             open={selected === "credentials" ? open : CLOSED}
             onOpen={onOpen}
@@ -30,7 +34,7 @@ export default function QualificationTab({ workerId, view, open, onOpen }: Worke
       </Kept>
       <Kept shown={selected === "dq-file"}>
         <LazyComponent fallback={<QualificationSkeleton view="dq-file" />}>
-          <DQFile
+          <DQFile.Component
             workerId={workerId}
             open={selected === "dq-file" ? open : CLOSED}
             onOpen={onOpen}
@@ -39,7 +43,7 @@ export default function QualificationTab({ workerId, view, open, onOpen }: Worke
       </Kept>
       <Kept shown={selected === "drug-and-alcohol"}>
         <LazyComponent fallback={<QualificationSkeleton view="drug-and-alcohol" />}>
-          <DrugAlcohol
+          <DrugAlcohol.Component
             workerId={workerId}
             open={selected === "drug-and-alcohol" ? open : CLOSED}
             onOpen={onOpen}

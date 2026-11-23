@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"testing"
+	"time"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
@@ -22,7 +23,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerdqfservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workeroverviewservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workersafetyservice"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/employment"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/portalinvitation"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/profilechange"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/safetyscorecard"
@@ -47,6 +47,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerreviewports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerscheduleports"
 	"github.com/emoss08/trenova/internal/testutil/mocks/workerportsmock"
+	"github.com/emoss08/trenova/internal/testutil/orgzonetest"
 	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -64,13 +65,15 @@ const testNow = int64(1_800_000_000)
 
 type fakeCredentials struct {
 	calls   int
+	asOf    int64
 	summary *workercredential.WorkerCredentialSummary
 }
 
 func (f *fakeCredentials) SummaryFor(
-	_ context.Context, _ pagination.TenantInfo, _ *worker.Worker,
+	_ context.Context, _ pagination.TenantInfo, _ *worker.Worker, asOf int64,
 ) (*workercredential.WorkerCredentialSummary, error) {
 	f.calls++
+	f.asOf = asOf
 	return f.summary, nil
 }
 
@@ -80,7 +83,7 @@ type fakeTraining struct {
 }
 
 func (f *fakeTraining) SummaryFor(
-	_ context.Context, _ pagination.TenantInfo, _ *worker.Worker,
+	_ context.Context, _ pagination.TenantInfo, _ *worker.Worker, _ int64,
 ) (*workertraining.WorkerTrainingSummary, error) {
 	f.calls++
 	return f.summary, nil
@@ -102,8 +105,15 @@ func (f *fakeSafety) Evidence(
 }
 
 type fakeChecklists struct {
+	closed     int
 	calls      int
 	checklists []*workerchecklist.WorkerChecklist
+}
+
+func (f *fakeChecklists) CountClosed(
+	_ context.Context, _ pagination.TenantInfo, _ pulid.ID,
+) (int, error) {
+	return f.closed, nil
 }
 
 func (f *fakeChecklists) ListForWorker(
@@ -212,15 +222,18 @@ func (f *fakeQualification) FileFor(
 }
 
 type fakeEvents struct {
-	calls  int
-	events []*employment.WorkerEmploymentEvent
+	calls   int
+	summary *workeremploymentports.EmploymentEventSummary
 }
 
-func (f *fakeEvents) List(
-	_ context.Context, _ *workeremploymentports.ListWorkerEmploymentEventsRequest,
-) ([]*employment.WorkerEmploymentEvent, error) {
+func (f *fakeEvents) Summarize(
+	_ context.Context, _ *workeremploymentports.SummarizeWorkerEmploymentEventsRequest,
+) (*workeremploymentports.EmploymentEventSummary, error) {
 	f.calls++
-	return f.events, nil
+	if f.summary == nil {
+		return &workeremploymentports.EmploymentEventSummary{}, nil
+	}
+	return f.summary, nil
 }
 
 type fakeShifts struct {
@@ -415,11 +428,13 @@ type overviewHarness struct {
 
 type harnessOptions struct {
 	features platformcatalogports.FeatureGate
+	zone     string
+	now      int64
 }
 
 func newOverviewHarness(t *testing.T, opts ...func(*harnessOptions)) *overviewHarness {
 	t.Helper()
-	options := &harnessOptions{features: plantest.AllFeatures()}
+	options := &harnessOptions{features: plantest.AllFeatures(), now: testNow}
 	for _, opt := range opts {
 		opt(options)
 	}
@@ -479,7 +494,8 @@ func newOverviewHarness(t *testing.T, opts ...func(*harnessOptions)) *overviewHa
 
 	h.svc = workeroverviewservice.New(workeroverviewservice.Params{
 		Logger:         zap.NewNop(),
-		Clock:          func() int64 { return testNow },
+		Organizations:  orgzonetest.Organizations{Timezone: options.zone},
+		Clock:          func() int64 { return options.now },
 		Features:       options.features,
 		WorkerRepo:     workerRepo,
 		ReviewCounts:   h.reviewCounts,
@@ -572,6 +588,7 @@ func TestGet_ReadsTheWorkerRowOnce(t *testing.T) {
 		Once()
 	svc := workeroverviewservice.New(workeroverviewservice.Params{
 		Logger:         zap.NewNop(),
+		Organizations:  orgzonetest.Organizations{},
 		Clock:          func() int64 { return testNow },
 		Features:       plantest.AllFeatures(),
 		WorkerRepo:     workerRepo,
@@ -780,13 +797,12 @@ func TestGet_PicksTheNewestOpenChecklist(t *testing.T) {
 	assert.Equal(t, 2, *overview.Employment.OpenChecklistCount)
 }
 
-func TestGet_EmploymentCountsEventsAndFindsTheLatestHire(t *testing.T) {
+func TestGet_EmploymentReportsTheStoredSummary(t *testing.T) {
 	t.Parallel()
 	h := newOverviewHarness(t)
-	h.events.events = []*employment.WorkerEmploymentEvent{
-		{Kind: employment.EmploymentEventTransferred, EffectiveAt: 5_000},
-		{Kind: employment.EmploymentEventRehired, EffectiveAt: 4_000},
-		{Kind: employment.EmploymentEventHired, EffectiveAt: 1_000},
+	h.events.summary = &workeremploymentports.EmploymentEventSummary{
+		EventCount:  3,
+		LastHiredAt: new(int64(4_000)),
 	}
 
 	overview := h.get(t, workeroverviewservice.Sections{Employment: true})
@@ -1339,4 +1355,25 @@ func TestGet_AProhibitionIsNamedToADrugAndAlcoholReader(t *testing.T) {
 		codes = append(codes, concern.Code)
 	}
 	assert.Contains(t, codes, workercompliance.ConcernDrugAlcoholProhibited)
+}
+
+func TestGet_CountsDaysInTheOrganizationsCalendar(t *testing.T) {
+	t.Parallel()
+	chicago, err := time.LoadLocation("America/Chicago")
+	require.NoError(t, err)
+	evening := time.Date(2026, time.November, 23, 21, 0, 0, 0, chicago).Unix()
+	h := newOverviewHarness(t, func(o *harnessOptions) {
+		o.zone = "America/Chicago"
+		o.now = evening
+	})
+
+	overview := h.get(t, workeroverviewservice.Sections{Credentials: true})
+
+	assert.Equal(t, evening, overview.AsOf, "asOf stays the instant the page was read")
+	assert.Equal(
+		t,
+		time.Date(2026, time.November, 23, 0, 0, 0, 0, time.UTC).Unix(),
+		h.credentials.asOf,
+		"at 9pm in Chicago it is still the 23rd, though UTC is already on the 24th",
+	)
 }

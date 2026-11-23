@@ -115,7 +115,7 @@ func Build(in *Inputs) (*pageaccess.Manifest, error) {
 	if len(missing) > 0 {
 		return nil, fmt.Errorf(
 			"screens run operations no client .graphql file defines (regenerate "+
-				"screens_gen.json with `pnpm --filter @trenova/web access:generate`):\n  %s",
+				"screens_gen.json with `bun run --filter @trenova/web access:generate`):\n  %s",
 			strings.Join(missing, "\n  "),
 		)
 	}

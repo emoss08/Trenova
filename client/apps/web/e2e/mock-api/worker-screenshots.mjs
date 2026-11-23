@@ -3,7 +3,7 @@
 // each variant's Overview and the page at 1280 and 400 wide. The browser clock is frozen at the
 // fixture's "now", Sunday 22 November 2026, 4:08 PM UTC (fixtures/worker/base.mjs).
 //
-// Usage: node e2e/mock-api/worker-screenshots.mjs [outDir] [name,name,...]
+// Usage: bun e2e/mock-api/worker-screenshots.mjs [outDir] [name,name,...]
 // Env: MOCK_API_URL, APP_URL, CHROMIUM_PATH, SETTLE_MS (default 2500), SCALE (default 1).
 import { mkdir } from "node:fs/promises";
 import { resolve } from "node:path";

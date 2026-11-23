@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workertrainingports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
+	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -77,7 +78,9 @@ func (r *repository) ListCourses(
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) (*pagination.CursorListResult[*workertraining.TrainingCourse], error) {
+		func(
+			ctx context.Context,
+		) (*pagination.CursorListResult[*workertraining.TrainingCourse], error) {
 			c := workertrainingdb.TrainingCourses
 			q := c.Where(
 				keel.When(req.Status != "", c.Status.Eq(domaintypes.Status(req.Status))),
@@ -313,23 +316,112 @@ func (r *repository) ListForWorker(
 		r.db,
 		func(ctx context.Context) ([]*workertraining.WorkerTrainingRecord, error) {
 			tr := workertrainingdb.WorkerTrainingRecords
-			loads := make([]keel.Loader, 0, 4)
-			loads = append(loads, listquery.When(req.IncludeCourse, tr.Course())...)
-			loads = append(loads, listquery.When(req.IncludeDocument, tr.Document())...)
-			loads = append(
-				loads,
-				listquery.When(req.IncludeActors, tr.AssignedBy(), tr.RecordedBy())...)
-
-			entities, err := tr.Where(
-				tr.WorkerID.Eq(req.WorkerID),
-				keel.When(!req.IncludeClosed, tr.Status.In(openTrainingStatuses...)),
-			).
-				Load(loads...).
+			entities, err := recordsOf(req).
+				Load(recordLoads(req)...).
 				Order(tr.AssignedAt.Desc(), tr.CreatedAt.Desc()).
 				All(ctx, r.db.Keel(ctx))
 			if err != nil {
 				r.l.Error("failed to list worker training records", zap.Error(err))
 				return nil, err
+			}
+
+			return entities, nil
+		},
+	)
+}
+
+func recordsOf(
+	req *workertrainingports.ListWorkerTrainingRequest,
+) keel.Query[*workertraining.WorkerTrainingRecord] {
+	tr := workertrainingdb.WorkerTrainingRecords
+
+	return tr.Where(
+		tr.WorkerID.Eq(req.WorkerID),
+		keel.When(!req.IncludeClosed, tr.Status.In(openTrainingStatuses...)),
+	)
+}
+
+func recordLoads(req *workertrainingports.ListWorkerTrainingRequest) []keel.Loader {
+	tr := workertrainingdb.WorkerTrainingRecords
+	loads := make([]keel.Loader, 0, 4)
+	loads = append(loads, listquery.When(req.IncludeCourse, tr.Course())...)
+	loads = append(loads, listquery.When(req.IncludeDocument, tr.Document())...)
+
+	return append(loads, listquery.When(req.IncludeActors, tr.AssignedBy(), tr.RecordedBy())...)
+}
+
+func (r *repository) PageForWorker(
+	ctx context.Context,
+	req *workertrainingports.ListWorkerTrainingRequest,
+) (*pagination.CursorListResult[*workertraining.WorkerTrainingRecord], error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(
+			ctx context.Context,
+		) (*pagination.CursorListResult[*workertraining.WorkerTrainingRecord], error) {
+			tr := workertrainingdb.WorkerTrainingRecords
+			desc := string(dbtype.SortDirectionDesc)
+			result, err := listquery.Connection(
+				ctx,
+				r.db.Keel(ctx),
+				recordsOf(req),
+				&listquery.Request[workertraining.WorkerTrainingRecord]{
+					Filter: &pagination.QueryOptions{TenantInfo: req.TenantInfo},
+					Cursor: req.Cursor,
+					Shape: func(
+						q keel.Query[*workertraining.WorkerTrainingRecord],
+					) keel.Query[*workertraining.WorkerTrainingRecord] {
+						return q.Load(recordLoads(req)...)
+					},
+					Keyset: &listquery.Keyset{
+						Orders: []keel.Order{tr.AssignedAt.Desc(), tr.CreatedAt.Desc(), tr.ID.Desc()},
+						Shape: []pagination.CursorSortField{
+							{Field: "assignedAt", Direction: desc},
+							{Field: "createdAt", Direction: desc},
+							{Field: "id", Direction: desc},
+						},
+					},
+				},
+			)
+			if err != nil {
+				return nil, fmt.Errorf("page worker training records: %w", err)
+			}
+
+			return result, nil
+		},
+	)
+}
+
+func (r *repository) CurrentForWorker(
+	ctx context.Context,
+	req *workertrainingports.ListWorkerTrainingRequest,
+) ([]*workertraining.WorkerTrainingRecord, error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*workertraining.WorkerTrainingRecord, error) {
+			tr := workertrainingdb.WorkerTrainingRecords
+			rank := keel.CaseInt32().
+				When(tr.Status.In(openTrainingStatuses...), keel.Int32(0)).
+				When(tr.Status.Eq(workertraining.TrainingStatusCompleted), keel.Int32(1)).
+				When(tr.Status.Eq(workertraining.TrainingStatusWaived), keel.Int32(2)).
+				When(tr.Status.Eq(workertraining.TrainingStatusExpired), keel.Int32(3)).
+				When(tr.Status.Eq(workertraining.TrainingStatusFailed), keel.Int32(4)).
+				Else(keel.Int32(5))
+			moment := keel.CaseInt64().
+				When(tr.CompletedAt.Gt(0), tr.CompletedAt).
+				Else(tr.UpdatedAt)
+			entities, err := tr.Where(
+				tr.WorkerID.Eq(req.WorkerID),
+				tr.Status.Ne(workertraining.TrainingStatusCancelled),
+			).
+				DistinctOn(tr.CourseID).
+				Load(recordLoads(req)...).
+				Order(tr.CourseID.Asc(), rank.Asc(), moment.Desc(), tr.ID.Desc()).
+				All(ctx, r.db.Keel(ctx))
+			if err != nil {
+				return nil, fmt.Errorf("read current worker training records: %w", err)
 			}
 
 			return entities, nil

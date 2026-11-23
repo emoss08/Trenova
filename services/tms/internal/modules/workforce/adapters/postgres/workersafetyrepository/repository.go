@@ -17,7 +17,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workersafetyports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
+	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/listquery"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -59,18 +61,60 @@ func eventLoads(includeDocument, includeActors, includeWorker bool) []keel.Loade
 	return append(loads, listquery.When(includeWorker, e.Worker())...)
 }
 
-func eventsQuery(
+func eventsOf(
 	req *workersafetyports.ListWorkerSafetyEventsRequest,
 ) keel.Query[*workersafety.WorkerSafetyEvent] {
 	e := workersafetydb.WorkerSafetyEvents
-	q := e.Where(
+
+	return e.Where(
 		keel.When(req.WorkerID.IsNotNil(), e.WorkerID.Eq(req.WorkerID)),
 		keel.When(req.OpenOnly, e.Status.In(
 			workersafety.SafetyEventStatusOpen,
 			workersafety.SafetyEventStatusUnderReview,
 		)),
 		keel.When(req.Since > 0, e.OccurredAt.Gte(req.Since)),
-	).
+		keel.When(req.DecisiveAt > 0, keel.Or(
+			e.OccurredAt.Gte(req.DecisiveSince),
+			e.Status.Ne(workersafety.SafetyEventStatusClosed),
+			keel.And(
+				e.Points.Gt(0),
+				keel.Or(
+					e.PointsExpireAt.IsNull(),
+					e.PointsExpireAt.Lte(0),
+					e.PointsExpireAt.Gt(req.DecisiveAt),
+				),
+			),
+		)),
+	)
+}
+
+func (r *repository) LastCountingEventAt(
+	ctx context.Context,
+	req *workersafetyports.LastCountingSafetyEventRequest,
+) (*int64, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*int64, error) {
+		e := workersafetydb.WorkerSafetyEvents
+		last, err := keel.IntoOne[*int64](
+			ctx,
+			r.db.Keel(ctx),
+			e.Pick(e.OccurredAt.Max()).Where(
+				e.WorkerID.Eq(req.WorkerID),
+				e.Kind.In(workersafety.CountingKinds()...),
+			),
+		)
+		if err != nil {
+			return nil, fmt.Errorf("read last counting safety event: %w", err)
+		}
+
+		return last, nil
+	})
+}
+
+func eventsQuery(
+	req *workersafetyports.ListWorkerSafetyEventsRequest,
+) keel.Query[*workersafety.WorkerSafetyEvent] {
+	e := workersafetydb.WorkerSafetyEvents
+	q := eventsOf(req).
 		Load(eventLoads(req.IncludeDocument, req.IncludeActors, req.IncludeWorker)...).
 		Order(e.OccurredAt.Desc(), e.CreatedAt.Desc())
 	if req.Limit > 0 {
@@ -97,6 +141,19 @@ func (r *repository) ListEvents(
 			return entities, nil
 		},
 	)
+}
+
+func newestFirst(at keel.Order, atField string, created, id keel.Order) *listquery.Keyset {
+	desc := string(dbtype.SortDirectionDesc)
+
+	return &listquery.Keyset{
+		Orders: []keel.Order{at, created, id},
+		Shape: []pagination.CursorSortField{
+			{Field: atField, Direction: desc},
+			{Field: "createdAt", Direction: desc},
+			{Field: "id", Direction: desc},
+		},
+	}
 }
 
 func (r *repository) GetEventByID(
@@ -185,11 +242,8 @@ func (r *repository) ListActions(
 		r.db,
 		func(ctx context.Context) ([]*workerdiscipline.WorkerDisciplinaryAction, error) {
 			a := workerdisciplinedb.WorkerDisciplinaryActions
-			loads := listquery.When(req.IncludeEvent, a.SafetyEvent())
-			loads = append(loads, listquery.When(req.IncludeActors, a.IssuedBy())...)
-
-			entities, err := a.Where(a.WorkerID.Eq(req.WorkerID)).
-				Load(loads...).
+			entities, err := actionsOf(req).
+				Load(actionLoads(req)...).
 				Order(a.IssuedAt.Desc(), a.CreatedAt.Desc()).
 				All(ctx, r.db.Keel(ctx))
 			if err != nil {
@@ -198,6 +252,59 @@ func (r *repository) ListActions(
 			}
 
 			return entities, nil
+		},
+	)
+}
+
+func actionsOf(
+	req *workersafetyports.ListWorkerDisciplinaryActionsRequest,
+) keel.Query[*workerdiscipline.WorkerDisciplinaryAction] {
+	a := workerdisciplinedb.WorkerDisciplinaryActions
+
+	return a.Where(
+		a.WorkerID.Eq(req.WorkerID),
+		keel.When(req.ActiveOnly, a.Status.Eq(workerdiscipline.DisciplinaryStatusActive)),
+	)
+}
+
+func actionLoads(req *workersafetyports.ListWorkerDisciplinaryActionsRequest) []keel.Loader {
+	a := workerdisciplinedb.WorkerDisciplinaryActions
+	loads := listquery.When(req.IncludeEvent, a.SafetyEvent())
+
+	return append(loads, listquery.When(req.IncludeActors, a.IssuedBy())...)
+}
+
+func (r *repository) ActionsPage(
+	ctx context.Context,
+	req *workersafetyports.ListWorkerDisciplinaryActionsRequest,
+) (*pagination.CursorListResult[*workerdiscipline.WorkerDisciplinaryAction], error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(
+			ctx context.Context,
+		) (*pagination.CursorListResult[*workerdiscipline.WorkerDisciplinaryAction], error) {
+			a := workerdisciplinedb.WorkerDisciplinaryActions
+			result, err := listquery.Connection(
+				ctx,
+				r.db.Keel(ctx),
+				actionsOf(req),
+				&listquery.Request[workerdiscipline.WorkerDisciplinaryAction]{
+					Filter: &pagination.QueryOptions{TenantInfo: req.TenantInfo},
+					Cursor: req.Cursor,
+					Shape: func(
+						q keel.Query[*workerdiscipline.WorkerDisciplinaryAction],
+					) keel.Query[*workerdiscipline.WorkerDisciplinaryAction] {
+						return q.Load(actionLoads(req)...)
+					},
+					Keyset: newestFirst(a.IssuedAt.Desc(), "issuedAt", a.CreatedAt.Desc(), a.ID.Desc()),
+				},
+			)
+			if err != nil {
+				return nil, fmt.Errorf("page disciplinary actions: %w", err)
+			}
+
+			return result, nil
 		},
 	)
 }
@@ -212,7 +319,10 @@ func (r *repository) GetActionByID(
 		func(ctx context.Context) (*workerdiscipline.WorkerDisciplinaryAction, error) {
 			a := workerdisciplinedb.WorkerDisciplinaryActions
 			entity, err := a.Where(a.ID.Eq(req.ID)).
-				Load(listquery.When(req.IncludeEvent, a.SafetyEvent())...).
+				Load(actionLoads(&workersafetyports.ListWorkerDisciplinaryActionsRequest{
+					IncludeEvent:  req.IncludeEvent,
+					IncludeActors: req.IncludeActors,
+				})...).
 				One(ctx, r.db.Keel(ctx))
 			if err != nil {
 				return nil, actionErrors.Map(err, req.ID.String())
@@ -270,13 +380,13 @@ func (r *repository) ListRecognitions(
 		r.db,
 		func(ctx context.Context) ([]*workerdiscipline.WorkerRecognition, error) {
 			rc := workerdisciplinedb.WorkerRecognitions
-			entities, err := rc.Where(
-				rc.WorkerID.Eq(req.WorkerID),
-				keel.When(req.VisibleOnly, rc.VisibleToWorker.IsTrue()),
-			).
+			q := recognitionsOf(req).
 				Load(listquery.When(req.IncludeActors, rc.AwardedBy())...).
-				Order(rc.OccurredAt.Desc()).
-				All(ctx, r.db.Keel(ctx))
+				Order(rc.OccurredAt.Desc(), rc.CreatedAt.Desc(), rc.ID.Desc())
+			if req.Limit > 0 {
+				q = q.Limit(req.Limit)
+			}
+			entities, err := q.All(ctx, r.db.Keel(ctx))
 			if err != nil {
 				r.l.Error("failed to list recognitions", zap.Error(err))
 				return nil, fmt.Errorf("list recognitions: %w", err)
@@ -284,6 +394,18 @@ func (r *repository) ListRecognitions(
 
 			return entities, nil
 		},
+	)
+}
+
+func recognitionsOf(
+	req *workersafetyports.ListWorkerRecognitionsRequest,
+) keel.Query[*workerdiscipline.WorkerRecognition] {
+	rc := workerdisciplinedb.WorkerRecognitions
+
+	return rc.Where(
+		rc.WorkerID.Eq(req.WorkerID),
+		keel.When(req.VisibleOnly, rc.VisibleToWorker.IsTrue()),
+		keel.When(req.Since > 0, rc.OccurredAt.Gte(req.Since)),
 	)
 }
 

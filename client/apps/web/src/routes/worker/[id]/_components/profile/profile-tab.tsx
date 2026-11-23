@@ -2,7 +2,7 @@ import { useWorkPane } from "@/components/work-pane";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { usePermission } from "@/hooks/use-permission";
 import { useProtectedFieldAccess } from "@/hooks/use-protected-fields";
-import { worker as workerQueries } from "@/lib/queries/worker";
+import { workerOverviewQuery } from "@/lib/queries/worker";
 import {
   workerFormTarget,
   type WorkerRecord,
@@ -11,7 +11,7 @@ import {
 import { useWorkerAreas } from "@/routes/worker/worker-areas";
 import { workerService } from "@/services/worker";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { Form } from "@trenova/shared/components/ui/form";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { workerFormSchema, type Worker } from "@trenova/shared/types/worker";
@@ -21,6 +21,7 @@ import { ProfileChangeAlert } from "./profile-change-alert";
 import { ProfileDockReporter, profileFormId, type ProfileDock } from "./profile-dock";
 import { workerFormValues, workerSaveValues } from "./worker-form-values";
 import { WorkerProfileCards } from "./worker-profile-cards";
+import { useWorkerInvalidation } from "../use-worker-invalidation";
 
 export type ProfileTabProps = WorkerTabProps & {
   /**
@@ -42,7 +43,7 @@ function versionOf(record: WorkerRecord): string {
  * the edits instead of over them.
  */
 export default function ProfileTab({ workerId, worker, onOpen, shown, onDock }: ProfileTabProps) {
-  const queryClient = useQueryClient();
+  const invalidate = useWorkerInvalidation(workerId, "profile");
   const { closeThen } = useWorkPane();
   const areas = useWorkerAreas();
   const personalVisible = useProtectedFieldAccess("Personal");
@@ -51,7 +52,7 @@ export default function ProfileTab({ workerId, worker, onOpen, shown, onDock }: 
     Resource.WorkerEmploymentEvent,
     Operation.Create,
   );
-  const overview = useQuery(workerQueries.overview(workerId));
+  const overview = useQuery(workerOverviewQuery(workerId));
 
   const form = useForm<Worker>({
     resolver: zodResolver(workerFormSchema(personalVisible)) as Resolver<Worker>,
@@ -77,8 +78,7 @@ export default function ProfileTab({ workerId, worker, onOpen, shown, onDock }: 
     mutationFn: (values) => workerService.update(workerId, workerSaveValues(values)),
     onSuccess: (_saved, values) => {
       reset(values);
-      void queryClient.invalidateQueries({ queryKey: workerQueries._def });
-      void queryClient.invalidateQueries({ queryKey: ["worker-list"] });
+      void invalidate();
     },
   });
 

@@ -269,3 +269,9 @@ mutation BulkWorkerPtoAction($input: BulkWorkerPTOActionInput!) {
     failureCount
   }
 }
+
+query WorkerPto($id: ID!) {
+  workerPTO(id: $id) {
+    ...WorkerPtoRowFields
+  }
+}

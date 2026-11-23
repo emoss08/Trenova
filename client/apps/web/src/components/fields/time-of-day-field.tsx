@@ -22,7 +22,7 @@ import type { Period } from "./time-picker/time-picker-utils";
 
 type TimeOfDayFieldProps<T extends FieldValues> = FormControlProps<T> & {
   label?: string;
-  description?: string;
+  description?: React.ReactNode;
   className?: string;
   disabled?: boolean;
 };

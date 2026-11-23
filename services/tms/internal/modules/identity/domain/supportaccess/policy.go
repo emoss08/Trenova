@@ -65,6 +65,7 @@ var denied = map[permission.Resource]rule{ //nolint:exhaustive // a deny list: a
 	permission.ResourceDocumentTemplate:      {denyWrites, LimitDocumentTemplates},
 	permission.ResourceEDI:                   {denyWrites, LimitEDI},
 	permission.ResourceCustomerCommunication: {denyWrites, LimitOutbound},
+	permission.ResourceDeskTranscript:        {denyAll, LimitDeskConversations},
 }
 
 // reviewed lists the sensitive resources a support session may use as its scope allows, each

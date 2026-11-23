@@ -32,6 +32,19 @@ func (s *Service) ListActions(
 	})
 }
 
+func (s *Service) GetAction(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	id pulid.ID,
+) (*workerdiscipline.WorkerDisciplinaryAction, error) {
+	return s.repo.GetActionByID(ctx, &workersafetyports.GetWorkerDisciplinaryActionByIDRequest{
+		ID:            id,
+		TenantInfo:    tenantInfo,
+		IncludeEvent:  true,
+		IncludeActors: true,
+	})
+}
+
 // Ladder is where the worker stands and what the next rung would be.
 func (s *Service) Ladder(
 	ctx context.Context,
@@ -39,13 +52,24 @@ func (s *Service) Ladder(
 	workerID pulid.ID,
 ) (*workerdiscipline.DisciplinaryLadder, error) {
 	actions, err := s.repo.ListActions(ctx, &workersafetyports.ListWorkerDisciplinaryActionsRequest{
-		TenantInfo: tenantInfo,
-		WorkerID:   workerID,
+		TenantInfo:    tenantInfo,
+		WorkerID:      workerID,
+		ActiveOnly:    true,
+		IncludeActors: true,
 	})
 	if err != nil {
 		return nil, err
 	}
 	return workerdiscipline.BuildDisciplinaryLadder(actions, timeutils.NowUnix()), nil
+}
+
+func (s *Service) ActionsPage(
+	ctx context.Context,
+	req *workersafetyports.ListWorkerDisciplinaryActionsRequest,
+) (*pagination.CursorListResult[*workerdiscipline.WorkerDisciplinaryAction], error) {
+	req.IncludeEvent = true
+	req.IncludeActors = true
+	return s.repo.ActionsPage(ctx, req)
 }
 
 type IssueActionRequest struct {

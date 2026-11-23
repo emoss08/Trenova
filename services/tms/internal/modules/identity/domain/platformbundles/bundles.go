@@ -11,6 +11,7 @@ func All() []permissionspec.Bundle {
 		customersRecordsBundle(),
 		reportingReportsBundle(),
 		reportingAIUsageBundle(),
+		deskTranscriptOversightBundle(),
 		platformAssistantBundle(),
 		deskDecisionsBundle(),
 		deskCaseLeadBundle(),
@@ -136,6 +137,21 @@ func reportingAIUsageBundle() permissionspec.Bundle {
 		Grants: []permissionspec.BundleGrant{
 			{
 				Resource:   permission.ResourceAIUsage,
+				Operations: []permission.Operation{permission.OpRead, permission.OpExport},
+			},
+		},
+	}
+}
+
+func deskTranscriptOversightBundle() permissionspec.Bundle {
+	return permissionspec.Bundle{
+		ID:          "desk.transcript-oversight",
+		Module:      "Administration",
+		Label:       "Read and export other people's Desk conversations",
+		Description: "List and read every person's Desk conversations, and take them out of Trenova as transcripts, one at a time or many at once. A conversation shows whatever its owner was shown, including data the reader's own role may not otherwise reach.",
+		Grants: []permissionspec.BundleGrant{
+			{
+				Resource:   permission.ResourceDeskTranscript,
 				Operations: []permission.Operation{permission.OpRead, permission.OpExport},
 			},
 		},

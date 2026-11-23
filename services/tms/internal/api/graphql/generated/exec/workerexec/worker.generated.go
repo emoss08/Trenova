@@ -329,6 +329,20 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNWorkerPTOConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐWorkerPTOConnection),
 			},
 			{
+				Name:       "workerPTO",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "WorkerPTO",
+				Args:       field_Query_workerPTO_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[QueryResolver](ec, "Query@worker").WorkerPTO(ctx, fc.Args["id"].(string))
+				},
+				Marshal: gqlexec.Marshal(marshalNWorkerPTO2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerPTO),
+			},
+			{
 				Name:       "upcomingWorkerPTO",
 				NonNull:    true,
 				IsResolver: true,
@@ -1588,6 +1602,7 @@ type QueryResolver interface {
 	Workers(ctx context.Context, input gqlmodel.DataTableConnectionInput, withoutCredential *string) (*gqlmodel.WorkerConnection, error)
 	Worker(ctx context.Context, id string) (*worker.Worker, error)
 	WorkerPTOEntries(ctx context.Context, input gqlmodel.WorkerPTOEntriesInput) (*gqlmodel.WorkerPTOConnection, error)
+	WorkerPTO(ctx context.Context, id string) (*worker.WorkerPTO, error)
 	UpcomingWorkerPTO(ctx context.Context, input gqlmodel.UpcomingWorkerPTOInput) (*gqlmodel.WorkerPTOConnection, error)
 	WorkerPTOChartData(ctx context.Context, input gqlmodel.WorkerPTOChartInput) ([]*workerptoports.PTOChartDataPoint, error)
 }
@@ -1794,6 +1809,19 @@ func field_Query_workerPTOEntries_args(ctx context.Context, ec *gqlexec.Exec, ra
 		return nil, err
 	}
 	args["input"] = arg0
+	return args, nil
+}
+
+func field_Query_workerPTO_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
 	return args, nil
 }
 

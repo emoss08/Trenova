@@ -18,12 +18,13 @@ type ListWorkerInjuriesRequest struct {
 	CaseYear int16 `json:"caseYear"`
 	// RecordableOnly narrows to the cases that are the 300 log; the rest stay
 	// on file because the decision not to record is itself worth a record.
-	RecordableOnly  bool `json:"recordableOnly"`
-	OpenOnly        bool `json:"openOnly"`
-	IncludeWorker   bool `json:"includeWorker"`
-	IncludeDocument bool `json:"includeDocument"`
-	IncludeEvent    bool `json:"includeEvent"`
-	Limit           int  `json:"limit"`
+	RecordableOnly  bool                  `json:"recordableOnly"`
+	OpenOnly        bool                  `json:"openOnly"`
+	IncludeWorker   bool                  `json:"includeWorker"`
+	IncludeDocument bool                  `json:"includeDocument"`
+	IncludeEvent    bool                  `json:"includeEvent"`
+	Limit           int                   `json:"limit"`
+	Cursor          pagination.CursorInfo `json:"cursor"`
 }
 
 type GetWorkerInjuryByIDRequest struct {
@@ -56,6 +57,10 @@ type WorkerInjuryRepository interface {
 		ctx context.Context,
 		req *ListWorkerInjuriesRequest,
 	) ([]*workerinjury.WorkerInjury, error)
+	PageInjuries(
+		ctx context.Context,
+		req *ListWorkerInjuriesRequest,
+	) (*pagination.CursorListResult[*workerinjury.WorkerInjury], error)
 	GetInjuryByID(
 		ctx context.Context,
 		req *GetWorkerInjuryByIDRequest,

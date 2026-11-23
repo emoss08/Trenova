@@ -855,6 +855,27 @@ server.
   may read the kind, else link to their page. An actions block is its buttons, the first solid
   and the rest quiet (`BoardActions`). A half block pairs with its neighbour; one left alone
   draws full width (`halfBlocks`).
+- **A value never wraps; the layout changes at the container.** A record number, amount,
+  duration, date, count or status holds one line on every board part; where there is not room the
+  part changes anatomy at its exhibit's width (`.dk-bd-ex` is the `dkbdex` container), never a
+  second line or a column narrower than the value. Only a subtitle (customer, lane, a face's
+  name, a row's stop) gives way, with an ellipsis and its text in `title`. A record
+  row (`RowBody`) has one anatomy at every width, each line its own box so neither narrows the
+  other: the number (`dk-bd-id`) left and the standing value (`dk-bd-val`) right in `dk-bd-l1`;
+  the subtitle, a dot, the moment and the stop as one phrase from the left, then the status, in
+  `dk-bd-line` (`dk-bd-sub`, `dk-bd-at`, `dk-bd-place`, `dk-bd-st`); a track (`dk-bd-track`)
+  under them, full width, in a list read by one. On the second line the stop gives way first,
+  then the subtitle down to 5ch; the moment never does, and below 17rem of exhibit content a
+  row with a moment drops its subtitle rather than cut it. Its lines are fixed heights (61px, 75px with a
+  track), so every row of a list is one height, and `RecordRowSketch` (with `track` when the
+  block's `measure` is one) is the same box. How precisely a moment is written is one rule
+  (`measureMoment`): a date (an invoice's due day, its date) is its day; a moment within seven
+  days of now keeps its time, one further off is its day; a day carries its year only when it
+  is not this year's. A stop a moment is measured at is drawn after it in `dk-bd-place`, shown
+  from 32rem of exhibit content. A head to head puts each measure's name over the values below
+  30rem. Blocks are as tall as their own content and align at the top (`align-items: start` on
+  both desks). Words never break inside a hyphenated token holding a digit ("SEED-INV-0006",
+  "2026-11-29": `wordRuns`), and the verdict, captions, prose and notes wrap `pretty`.
 - **One words component.** `BoardWords` (`board-words.tsx`) draws every run of a board's words
   (the verdict, a prose block, a note, an exhibit's caption) in the pane and in the conversation.
   A caption is one plain line under the exhibit's tab, above its source line, drawn only when the
@@ -876,10 +897,13 @@ server.
   turn whose words link one of them (the reply the server wrote, which ends the turn). That reply
   draws the boards (`board-reply.tsx`) and not its words: the verdict in the conversation's own
   prose (no title, question or byline), each block as an exhibit drawn by the board's own block
-  parts inside a container query, two half blocks side by side and stacked under 34rem, prose
-  and notes as the board draws them, actions as `BoardActions`, a list cut to six rows with "n
-  more on the board" (`cutRows`), and "Open the board", which opens the same artifact in the
-  pane through the artifact opener. A record that opens in place on the board opens the board
+  parts inside a container query, two half blocks side by side and stacked under 38rem (each
+  half keeps about 300px, a narrow record row whole; the pane stacks under 660px for the same
+  reason), prose and notes as the board draws them, actions as `BoardActions`, a list cut to six
+  rows with "n more on the board" (`cutRows`), and "Open the board", which opens the same
+  artifact in the pane through the artifact opener. Its foot stands inside the last exhibit only
+  when that exhibit is full width, else as one full-width line under the desk
+  (`replyFootPlace`, shared with the skeleton). A record that opens in place on the board opens the board
   there: the pane cannot yet be opened at one record. Hovering or focusing a cited phrase or its
   numeral lights the exhibit it cites (`dk-bd-lit`), and nothing changes size. Every other
   surface (the page assistant, the assistant panel, the inbox hand-off, the margin) supplies no
@@ -971,7 +995,7 @@ The steps below are the rules it follows.
    range, and draws each group as a `CardMeter` of its share, folding the groups past
    the first few into one.
 3. Add the entry to `cards/registry.tsx`, and the card's mark to `desk-art-kinds.tsx`
-   when it should not read as a plain record. Run `pnpm --filter @trenova/web
+   when it should not read as a plain record. Run `bun run --filter @trenova/web
    guide:generate`, which marks the kind as having a card for the server.
 4. Name the permission resource the card reads in its registry entry (`resource`), so
    other cards open it in place only for someone who may read it.

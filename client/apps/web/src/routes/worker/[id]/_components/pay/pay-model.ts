@@ -1,7 +1,4 @@
-import type {
-  EffectiveWorkerPayAssignment,
-  WorkerPayAssignmentRow,
-} from "@/lib/graphql/driver-settlement";
+import type { EffectiveWorkerPayAssignment } from "@/lib/graphql/driver-settlement";
 import { defineLabels } from "@trenova/shared/i18n/labels";
 import { formatNumber } from "@trenova/shared/i18n/format";
 
@@ -93,9 +90,4 @@ export function overrideStart(
       String(Number(override.rate)),
     ]),
   );
-}
-
-/** Newest first, so the assignment in force heads the history. */
-export function sortAssignments(rows: readonly WorkerPayAssignmentRow[]): WorkerPayAssignmentRow[] {
-  return [...rows].sort((a, b) => b.effectiveFrom - a.effectiveFrom);
 }

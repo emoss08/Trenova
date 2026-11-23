@@ -16,6 +16,7 @@ import {
   lockedReading,
   readingSource,
   wordPieces,
+  wordRuns,
   type WordPiece,
 } from "./board-card";
 
@@ -32,7 +33,7 @@ export type CiteLight = { lit: number; onLight: (numeral: number) => void };
 export type WordsArrival = { landAt: number };
 
 const READING_CLASS =
-  "mx-0 inline rounded-t-[3px] border-0 border-b border-dotted border-dsk-b-strong bg-transparent px-0.5 py-0 font-plex-mono text-[0.9em] leading-[1.3] font-medium tracking-[-0.015em] text-dsk-fg tabular-nums transition-colors duration-150 ui-focus-ring hover:border-dsk-fg hover:bg-dsk-sunken data-popup-open:border-dsk-fg data-popup-open:bg-dsk-sunken";
+  "mx-0 inline rounded-t-[3px] whitespace-nowrap border-0 border-b border-dotted border-dsk-b-strong bg-transparent px-0.5 py-0 font-plex-mono text-[0.9em] leading-[1.3] font-medium tracking-[-0.015em] text-dsk-fg tabular-nums transition-colors duration-150 ui-focus-ring hover:border-dsk-fg hover:bg-dsk-sunken data-popup-open:border-dsk-fg data-popup-open:bg-dsk-sunken";
 
 const MOVED_CLASS =
   "border-solid border-dsk-warn bg-[color-mix(in_oklab,var(--dsk-warn)_14%,transparent)] hover:border-dsk-warn hover:bg-[color-mix(in_oklab,var(--dsk-warn)_22%,transparent)] data-popup-open:border-dsk-warn data-popup-open:bg-[color-mix(in_oklab,var(--dsk-warn)_22%,transparent)]";
@@ -103,7 +104,7 @@ function Reading({
   const t = useT();
   if (!reading || !reading.value) {
     return (
-      <span className="inline-flex items-center gap-1 rounded-md bg-[repeating-linear-gradient(-45deg,transparent_0_5px,var(--dsk-b-sub)_5px_6px)] py-px pr-1.5 pl-1 align-baseline text-[0.82em] leading-[1.3] text-dsk-subtle ring-1 ring-dsk-b ring-inset">
+      <span className="inline-flex items-center gap-1 rounded-md bg-[repeating-linear-gradient(-45deg,transparent_0_5px,var(--dsk-b-sub)_5px_6px)] py-px pr-1.5 pl-1 align-baseline text-[0.82em] leading-[1.3] whitespace-nowrap text-dsk-subtle ring-1 ring-dsk-b ring-inset">
         <ArtIcon name="lock" size={11} stroke={2} />
         {reading ? lockedReading(reading, t) : t("a figure that could not be read")}
       </span>
@@ -208,8 +209,21 @@ function piece(
   },
 ) {
   if (part.kind === "text") {
-    // oxlint-disable-next-line react/no-array-index-key -- the words are a fixed run of the text
-    return <span key={index}>{part.text}</span>;
+    return (
+      // oxlint-disable-next-line react/no-array-index-key -- the words are a fixed run of the text
+      <span key={index}>
+        {wordRuns(part.text).map((run, at) =>
+          run.whole ? (
+            // oxlint-disable-next-line react/no-array-index-key -- runs are a fixed cut of the text
+            <span key={at} className="whitespace-nowrap">
+              {run.text}
+            </span>
+          ) : (
+            run.text
+          ),
+        )}
+      </span>
+    );
   }
   if (part.kind === "cite") {
     // oxlint-disable-next-line react/no-array-index-key -- the words are a fixed run of the text

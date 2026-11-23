@@ -1,17 +1,17 @@
 # Mock API
 
-A dependency-free Node server that stands in for the TMS API, so the shipments board
+A dependency-free Bun server that stands in for the TMS API, so the shipments board
 (`/shipment-management/shipments`, with each shipment's Customer tracking tab), the customer
 tracking page (`/shipment-tracking/<token>`), AI control (`/admin/agent-control`), Triage (`/triage`, the
 redesign of `/inbox`), the Desk (`/desk`), the Formula Studio
 (`/billing/configuration-files/formula-templates/new`, `…/<id>/edit`), the formula libraries, the
 Lading studio (`/edi/lading/<partnerId>`), the integrations page with its accounting setup
 (`/admin/integrations?type=QuickBooksOnline`), the audit log (`/admin/audit-logs`, with its
-exports, legal holds and alerts; `node e2e/mock-api/audit-screenshots.mjs` shoots every state), the
-notification panel (the bell on any page; `node e2e/mock-api/notifications-screenshots.mjs` shoots
+exports, legal holds and alerts; `bun e2e/mock-api/audit-screenshots.mjs` shoots every state), the
+notification panel (the bell on any page; `bun e2e/mock-api/notifications-screenshots.mjs` shoots
 every part of it), organization settings (`/admin/organization-settings`, whose logo and icon uploads are kept
 and served back), the freight outlook (`/dispatch/outlook`;
-`node e2e/mock-api/freight-outlook-screenshots.mjs` shoots it) and
+`bun e2e/mock-api/freight-outlook-screenshots.mjs` shoots it) and
 Data retention (`/organization/data-retention`) can be run, clicked through and screenshotted without Postgres, Redis,
 Temporal or an AI provider. It answers the REST session endpoints the app shell needs, every
 GraphQL operation those pages send, and the realtime stream, from a deterministic fixture.
@@ -20,10 +20,10 @@ GraphQL operation those pages send, and the realtime stream, from a deterministi
 
 ```bash
 # terminal 1 — the mock API on :8080 (the dev client's API origin)
-node e2e/mock-api/server.mjs
+bun e2e/mock-api/server.mjs
 
 # terminal 2 — the web app on :5173
-pnpm --filter @trenova/web dev
+bun run --filter @trenova/web dev
 ```
 
 Open <http://localhost:5173/shipment-management/shipments> (or `/triage`). You are signed in as
@@ -64,6 +64,7 @@ anchor. A scenario is set from the environment when the server starts, or at any
 | `accountingAuth`     | `signIn` \| `certificate`                        | `signIn`        | NetSuite only: connected with a sign-in or a certificate |
 | `managedPlan`        | `selfHosted` \| `managed` \| `bare` \| `ending` \| `endingBare` | `selfHosted`    | "Your plan" (`/admin/plan`, `handlers/managedplan.mjs`): a self-hosted install (the page is not routed), a managed instance with this period's usage, an add-on set to end and the link to the Trenova account, a managed instance before the control plane has sent usage or the link, the managed plan set to end at the close of its period (the notice with Keep plan, and a final backup kept 7 days rather than the default 30, so a screenshot shows the number is not fixed text), or that end without the account link (the notice alone). Any value but `selfHosted` makes the public config say `managed` |
 | `supportLogs`        | `history` \| `empty` \| `inFlight` \| `limit`    | `history`       | "Send logs to Trenova support" on `/admin/support-access` (`handlers/supportlogs.mjs`), shown when `managedPlan` is not `selfHosted`: one request sent and one failed, none yet, one being collected (the button held), or five sent in the last 24 hours (the daily limit). A request the page makes moves to Collecting after 4s and Sent after 12s, each announced on the realtime stream |
+| `deskTranscripts` | `full` \| `empty` \| `hold` | `full` | The administrator's Desk conversations page (`/admin/desk-conversations`, `handlers/desktranscripts.mjs`): twelve conversations by four people with three exports (one ready, one another person's, one failed), nothing at all, or every list left open (the skeleton). Opening a row returns its transcript; an export the page requests is Running, then Ready after 4s; a row's Download serves a short Markdown file |
 | `workerAccess` | `full` \| `dispatcher` | `full` | The worker page's reader (`handlers/worker.mjs`): every permission, or a role without the Personal field group (`protected_personal`) and without credential read (`worker_credential`), so date of birth, license number and TWIC number come back withheld, the overview's `clearance` and `credentials` are null and Credentials is not drawn |
 | `workerPlan` | `full` \| `core` | `full` | The worker page's plan: everything, or off `workforce.compliance` and `workforce.time_off` (the manifest's `unavailableFeatures`), so Credentials, DQ file, Drug and alcohol, Time off and Leave and their strip cells go, and the overview's sections for them are null |
 | `workerHos` | `reporting` \| `notConnected` | `reporting` | Hours of service on the worker page: stored state for every linked driver, or no telematics connected (`WorkerOverview.hos.link` is `NotConnected`, `TelematicsStatus` not configured). Kenji Tanaka is never linked, so his Hours view shows the not-linked state in either |
@@ -155,7 +156,7 @@ fixture.
 **Checking the contract.** With the mock running:
 
 ```bash
-node e2e/mock-api/check-triage.mjs     # MOCK_API_URL to point it elsewhere
+bun e2e/mock-api/check-triage.mjs     # MOCK_API_URL to point it elsewhere
 ```
 
 It loads `inbox.graphql` and `triage.graphql` with the `graphql` package, sends every operation in
@@ -214,7 +215,7 @@ curl -X POST localhost:8080/__mock/scenario -H 'content-type: application/json' 
 ```
 
 ```bash
-node e2e/mock-api/worker-screenshots.mjs [outDir] [name,name,...]
+bun e2e/mock-api/worker-screenshots.mjs [outDir] [name,name,...]
 ```
 
 shoots every tab and view of Maria at 1600 by 900 in light and dark, the work panes (adding a
@@ -237,14 +238,14 @@ freight and holds hidden, as the fixture's settings say. The tab's queries keep 
 shipment for the scenario, so issuing and revoking change what the next read returns.
 
 ```bash
-node e2e/mock-api/customer-tracking-screenshots.mjs [outDir] [name,name,...]
+bun e2e/mock-api/customer-tracking-screenshots.mjs [outDir] [name,name,...]
 ```
 
 ## Formula Studio and formula libraries
 
 The Formula Studio (`/billing/configuration-files/formula-templates/new` and `…/<id>/edit`) and
 the formula libraries (`/billing/configuration-files/formula-libraries`, `…/new`, `…/<id>/edit`)
-run on Tariff. `rules.mjs` loads the client's own `packages/shared/src/rules/rules.wasm` in Node,
+run on Tariff. `rules.mjs` loads the client's own `packages/shared/src/rules/rules.wasm` in Bun,
 so every check, test run, bill, trace and scaffolded test the mock serves is the rules module's
 answer, and the Studio's tests panel, the server's readiness, the backtest and Nova agree.
 `SAMPLE_RECORD` is the module's sample record, read back through a trace; a shipment's record is
@@ -380,7 +381,7 @@ partner with no project yet) reads its routes from `handlers/lading.mjs`, which 
 `ediladinghandler`'s routes serve: the context, the catalog, projects, versions, drafts, settings,
 runs, tests, certify, activate, archive, shadow, shadow results and replays, and the partner the
 page header reads from `edisetuphandler`. Every check, test, run, replay and shadow comparison is the answer of the
-client's own `edi.wasm`, loaded in Node by `edi.mjs`, so the studio and the mock agree the way the
+client's own `edi.wasm`, loaded in Bun by `edi.mjs`, so the studio and the mock agree the way the
 studio and the TMS do.
 
 `fixtures/lading.mjs` builds Acme Retail Group's project from the module's carrier starter:
@@ -396,7 +397,7 @@ errors, every test passing, every flow clause tested, and a clean replay of ever
 since the last save.
 
 ```bash
-node e2e/mock-api/lading-studio-screenshots.mjs [outDir] [name,name,...]
+bun e2e/mock-api/lading-studio-screenshots.mjs [outDir] [name,name,...]
 ```
 
 walks the studio in light and dark at 1600 by 1000 and 1.5x: the partner file, a map with a
@@ -439,8 +440,8 @@ Writes keep the server's rules, so setup clicks through from connecting to sendi
   secret) and Disconnect, after which the system shows as connected before.
 
 ```bash
-node e2e/mock-api/check-accounting.mjs        # MOCK_API_URL to point it elsewhere
-node e2e/mock-api/accounting-screenshots.mjs [outDir] [name,name,...]
+bun e2e/mock-api/check-accounting.mjs        # MOCK_API_URL to point it elsewhere
+bun e2e/mock-api/accounting-screenshots.mjs [outDir] [name,name,...]
 ```
 
 The check holds every operation the modal sends to its selection set in
@@ -453,9 +454,9 @@ To run beside a real API on :8080, give the mock and the app their own ports:
 
 ```bash
 MOCK_API_PORT=8091 MOCK_API_ORIGINS=http://localhost:5174 MOCK_WEB_ORIGIN=http://localhost:5174 \
-  node e2e/mock-api/server.mjs
-VITE_API_URL=http://localhost:8091/api/v1 pnpm --filter @trenova/web exec vite --port 5174
-MOCK_API_URL=http://localhost:8091 APP_URL=http://localhost:5174 node e2e/mock-api/accounting-screenshots.mjs
+  bun e2e/mock-api/server.mjs
+(cd client/apps/web && VITE_API_URL=http://localhost:8091/api/v1 bunx --bun vite --port 5174)
+MOCK_API_URL=http://localhost:8091 APP_URL=http://localhost:5174 bun e2e/mock-api/accounting-screenshots.mjs
 ```
 
 ## Screenshots
@@ -463,7 +464,7 @@ MOCK_API_URL=http://localhost:8091 APP_URL=http://localhost:5174 node e2e/mock-a
 With both servers running:
 
 ```bash
-node e2e/mock-api/screenshots.mjs [outDir] [name,name,...]
+bun e2e/mock-api/screenshots.mjs [outDir] [name,name,...]
 ```
 
 The script freezes the browser clock at the scenario anchor, walks through every scenario
@@ -481,7 +482,7 @@ makes the script exit non-zero.
 Triage has its own walkthrough:
 
 ```bash
-node e2e/mock-api/triage-screenshots.mjs [outDir] [name,name,...]
+bun e2e/mock-api/triage-screenshots.mjs [outDir] [name,name,...]
 ```
 
 It writes to `e2e/mock-api/screenshots/triage` by default, freezes the clock at `triageAnchor` in
@@ -502,7 +503,7 @@ each step's wait. With `MOCK_API_URL` set to a mock on another port, the browser
 AI control has its own walkthrough, the same way:
 
 ```bash
-node e2e/mock-api/ai-control-screenshots.mjs [outDir] [name,name,...]
+bun e2e/mock-api/ai-control-screenshots.mjs [outDir] [name,name,...]
 ```
 
 It writes to `e2e/mock-api/screenshots/ai-control` by default and covers every tab in its
@@ -529,7 +530,7 @@ outside UTC.
 The Desk's resource cards have their own walkthrough:
 
 ```bash
-node e2e/mock-api/desk-cards-screenshots.mjs [outDir] [name,name,...]
+bun e2e/mock-api/desk-cards-screenshots.mjs [outDir] [name,name,...]
 ```
 
 It opens each card where people see it, beside the conversation that looked the record up
@@ -566,7 +567,7 @@ not hold answers not found.
 The Desk home suggesting the agent with the tools for a question has its own walkthrough:
 
 ```bash
-node e2e/mock-api/desk-recommendation-screenshots.mjs [outDir] [name,name,...]
+bun e2e/mock-api/desk-recommendation-screenshots.mjs [outDir] [name,name,...]
 ```
 
 It types a customer ETA question while Billing is chosen and shoots the suggestion of Customer
@@ -578,7 +579,7 @@ by default.
 A Desk case and a reply under way have their own walkthrough:
 
 ```bash
-node e2e/mock-api/desk-case-screenshots.mjs [outDir] [name,name,...]
+bun e2e/mock-api/desk-case-screenshots.mjs [outDir] [name,name,...]
 ```
 
 It opens two conversations from `handlers/deskcase.mjs`. The first, `/desk/t/athr_desk_case`, is a
@@ -607,7 +608,7 @@ conversation the mock serves, ordered and banded by when each was last touched, 
 An EDI connection drafted from a trading partner's implementation guide has its own walkthrough:
 
 ```bash
-node e2e/mock-api/desk-edi-draft-screenshots.mjs [outDir] [name,name,...]
+bun e2e/mock-api/desk-edi-draft-screenshots.mjs [outDir] [name,name,...]
 ```
 
 It opens `/desk/t/athr_desk_edi_guide` (`handlers/deskedidraft.mjs`), a conversation with the EDI
@@ -623,7 +624,7 @@ to `e2e/mock-api/screenshots/desk-edi-draft` by default.
 A plan, several of an agent's writes decided as one, has its own walkthrough:
 
 ```bash
-node e2e/mock-api/desk-plan-screenshots.mjs [outDir] [name,name,...]
+bun e2e/mock-api/desk-plan-screenshots.mjs [outDir] [name,name,...]
 ```
 
 It opens `/desk/c/athr_desk_plan/a/recover-s-240201` (`handlers/deskplan.mjs`), the Dispatch
@@ -641,7 +642,7 @@ A table that pages, a list the agent read in part and the person pages through w
 access, has its own walkthrough:
 
 ```bash
-node e2e/mock-api/desk-table-screenshots.mjs [outDir] [name,name,...]
+bun e2e/mock-api/desk-table-screenshots.mjs [outDir] [name,name,...]
 ```
 
 It opens `/desk/c/athr_desk_table/a/acme-shipments-in-transit` (`handlers/desktable.mjs`): Acme
@@ -659,7 +660,7 @@ default.
 A report the agent ran, and the preview it read first, have their own walkthrough:
 
 ```bash
-node e2e/mock-api/desk-report-screenshots.mjs [outDir] [name,name,...]
+bun e2e/mock-api/desk-report-screenshots.mjs [outDir] [name,name,...]
 ```
 
 It opens `/desk/c/athr_desk_report/a/revenue-by-customer` (`handlers/deskreport.mjs`): Billing
@@ -675,7 +676,7 @@ default.
 Boards the agent laid out with `show_board` have their own walkthrough:
 
 ```bash
-node e2e/mock-api/desk-board-screenshots.mjs [outDir] [name,name,...]
+bun e2e/mock-api/desk-board-screenshots.mjs [outDir] [name,name,...]
 ```
 
 It opens `/desk/c/athr_desk_board/a/six-late-shipments` (`handlers/deskboard.mjs`): Dispatch Desk
@@ -700,7 +701,7 @@ The Desk's extraction artifact, what document intelligence read off a file, has 
 walkthrough:
 
 ```bash
-node e2e/mock-api/desk-extraction-screenshots.mjs [outDir] [name,name,...]
+bun e2e/mock-api/desk-extraction-screenshots.mjs [outDir] [name,name,...]
 ```
 
 It opens `/desk/t/athr_desk_extract` (`handlers/deskextraction.mjs`), a conversation about a file
@@ -724,7 +725,7 @@ to `e2e/mock-api/screenshots/desk-extraction` by default.
 Settings has its own walkthrough, the same way:
 
 ```bash
-node e2e/mock-api/settings-screenshots.mjs [outDir] [name,name,...]
+bun e2e/mock-api/settings-screenshots.mjs [outDir] [name,name,...]
 ```
 
 It opens the Settings page from the shipments board with ⌘⇧S and captures each section in
@@ -739,8 +740,8 @@ The command palette has its own walkthrough. Start the mock with `MOCK_PALETTE=1
 serves the palette's records, the counts under "Needs you" and Nova's streamed answer:
 
 ```bash
-MOCK_PALETTE=1 node e2e/mock-api/server.mjs
-node e2e/mock-api/palette-screenshots.mjs [outDir] [name,name,...]
+MOCK_PALETTE=1 bun e2e/mock-api/server.mjs
+bun e2e/mock-api/palette-screenshots.mjs [outDir] [name,name,...]
 ```
 
 It seeds "Jump back in" in local storage, then captures Home in light and dark, the matcher on
@@ -753,7 +754,7 @@ operations in `handlers/palette.mjs`. It writes to `e2e/mock-api/screenshots/pal
 The freight outlook has its own walkthrough:
 
 ```bash
-node e2e/mock-api/freight-outlook-screenshots.mjs [outDir] [name,name,...]
+bun e2e/mock-api/freight-outlook-screenshots.mjs [outDir] [name,name,...]
 ```
 
 It captures the page in dark and light, the 48-hour reading, one area opened, a move hovered so
@@ -784,8 +785,8 @@ fixtures/freight-outlook.mjs  The freight outlook: areas, windows, moves, custom
 handlers/freightoutlook.mjs  The freight outlook's reads, sending a driver, calling it off, and page tours
 fixtures/triage.mjs   Triage's sources, messages, rules, templates and team, from the prototype
 fixtures/formula.mjs  Tariff sources for the templates, libraries and standards, the shipments and the team
-rules.mjs             The client's rules.wasm in Node: every check, test, bill and scaffold
-edi.mjs               The client's edi.wasm in Node: every Lading check, test, run and replay
+rules.mjs             The client's rules.wasm in Bun: every check, test, bill and scaffold
+edi.mjs               The client's edi.wasm in Bun: every Lading check, test, run and replay
 fixtures/lading.mjs   Acme Retail Group's Lading project, its versions and samples, and a month of its 204s
 fixtures/accounting.mjs  Accounting providers' profiles, companies, mappings and reference records
 fixtures/integration-catalog.mjs  The integration catalog, ported from integrationports.CatalogDefinitions

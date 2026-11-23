@@ -335,10 +335,33 @@ input PTOAvailabilityInput {
   excludePtoId: ID
 }
 
+type WorkerPTOPolicyAssignmentEdge {
+  node: WorkerPTOPolicyAssignment!
+  cursor: String!
+}
+
+"""
+A worker's time off policy assignments, a page at a time. totalCount is counted only when it is selected.
+"""
+type WorkerPTOPolicyAssignmentConnection {
+  edges: [WorkerPTOPolicyAssignmentEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
+}
+
 extend type Query {
   ptoPolicies(input: PTOPoliciesInput!): PTOPolicyConnection!
   ptoPolicy(id: ID!): PTOPolicy!
-  workerPtoPolicyAssignments(workerId: ID!): [WorkerPTOPolicyAssignment!]! @authorizes(resource: "pto_policy")
+  "A worker's time off policy assignments, newest first, a page at a time."
+  workerPtoPolicyAssignments(
+    workerId: ID!
+    "How many to read, from 1 to 100; 20 when left out."
+    first: Int
+    "The endCursor of the page before this one."
+    after: String
+  ): WorkerPTOPolicyAssignmentConnection! @authorizes(resource: "pto_policy")
   workerPtoBalances(workerId: ID!): [WorkerPTOBalance!]!
   workerPtoLedger(input: WorkerPTOLedgerInput!): WorkerPTOLedgerConnection!
   workerPtoAvailability(input: PTOAvailabilityInput!): PTOAvailability!

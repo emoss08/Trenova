@@ -157,7 +157,7 @@ export function ChecklistItemRow({
   }
 
   return (
-    <li
+    <div
       data-glide-target
       data-testid={`checklist-item-${item.id}`}
       data-status={status}
@@ -209,6 +209,6 @@ export function ChecklistItemRow({
       ) : (
         <RowActionsMenu label={t("Actions for {0}", item.label)} actions={actions} />
       )}
-    </li>
+    </div>
   );
 }

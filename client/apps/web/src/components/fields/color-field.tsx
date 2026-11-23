@@ -20,7 +20,7 @@ import { fieldInvalidClass, fieldTriggerClass } from "@trenova/shared/lib/varian
 
 export type ColorFieldProps<TFieldValues extends FieldValues> = {
   hideHeader?: boolean;
-  description?: string;
+  description?: React.ReactNode;
   label?: string;
   className?: string;
   disabled?: boolean;

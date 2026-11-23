@@ -1,4 +1,5 @@
 import { AutoCompleteDateField } from "@/components/fields/date-field/date-field";
+import { ErrorMessage } from "@/components/fields/field-components";
 import { InputField } from "@/components/fields/input-field";
 import { SelectField } from "@/components/fields/select-field";
 import { TextareaField } from "@/components/fields/textarea-field";
@@ -27,7 +28,8 @@ import {
   reviewGoalStatusSchema,
   type ReviewDraftFormValues,
 } from "@trenova/shared/types/performance-review";
-import { useEffect, useRef, useState } from "react";
+import { useFieldRegistration } from "@trenova/shared/lib/form-field-registry";
+import { useId, useState } from "react";
 import {
   Controller,
   FormProvider,
@@ -37,26 +39,26 @@ import {
   useWatch,
   type Resolver,
 } from "react-hook-form";
+import { useWorkerInvalidation } from "../../use-worker-invalidation";
 import { RatingScaleInput, scoreWord } from "./rating-scale";
 import { OverallScore } from "./review-card";
-import { useReviewInvalidation } from "./use-review-invalidation";
 
-function draftDefaults(review: PerformanceReviewRow | null): ReviewDraftFormValues {
+function draftDefaults(review: PerformanceReviewRow): ReviewDraftFormValues {
   return {
-    title: review?.title ?? "",
-    periodStart: review?.periodStart ?? 0,
-    periodEnd: review?.periodEnd ?? 0,
-    ratings: (review?.ratings ?? []).map((rating) => ({
+    title: review.title,
+    periodStart: review.periodStart,
+    periodEnd: review.periodEnd,
+    ratings: review.ratings.map((rating) => ({
       key: rating.key,
       label: rating.label,
       weight: rating.weight,
       score: rating.score ?? null,
       comment: rating.comment ?? null,
     })),
-    summary: review?.summary ?? null,
-    strengths: review?.strengths ?? null,
-    improvements: review?.improvements ?? null,
-    goals: (review?.goals ?? []).map((goal) => ({
+    summary: review.summary ?? null,
+    strengths: review.strengths ?? null,
+    improvements: review.improvements ?? null,
+    goals: review.goals.map((goal) => ({
       id: goal.id,
       title: goal.title,
       dueAt: goal.dueAt ?? null,
@@ -73,28 +75,24 @@ export type EditReviewPaneProps = {
 };
 
 /**
- * Edit a draft review beside it: each criterion set by clicking its bar on the five-step
- * scale, the overall score updating as it goes, then the summary and goals.
+ * Edit a draft review beside it: each criterion set on the five-step scale, the overall score
+ * updating as it goes, then the summary and goals.
+ *
+ * Mounted fresh at each opening (`lazyWorkPane`, only once the draft is read), so the form starts
+ * from the draft as it was opened and saves against that version: a refetch while it is open never
+ * replaces what is typed, and a change someone else saved meanwhile comes back as a refusal
+ * rather than being overwritten.
  */
 export function EditReviewPane({ review: requested, workerId, onClose }: EditReviewPaneProps) {
   const t = useT();
-  const invalidate = useReviewInvalidation(workerId);
-  const [held, setHeld] = useState(requested);
-  if (requested !== null && requested !== held) setHeld(requested);
-  const review = requested ?? held;
+  const invalidate = useWorkerInvalidation(workerId, "reviews");
+  const [review] = useState(requested);
 
   const form = useForm<ReviewDraftFormValues>({
     resolver: zodResolver(reviewDraftFormSchema) as Resolver<ReviewDraftFormValues>,
-    defaultValues: draftDefaults(review),
+    defaultValues: review ? draftDefaults(review) : undefined,
   });
-  const { control, handleSubmit, reset } = form;
-
-  const loadedFor = useRef<string | null>(null);
-  useEffect(() => {
-    const key = requested ? `${requested.id}:${requested.version}` : null;
-    if (key !== null && loadedFor.current !== key) reset(draftDefaults(requested));
-    loadedFor.current = key;
-  }, [requested, reset]);
+  const { control, handleSubmit } = form;
 
   const save = useApiMutation<
     PerformanceReviewRow,
@@ -129,8 +127,8 @@ export function EditReviewPane({ review: requested, workerId, onClose }: EditRev
         version: review.version,
       });
     },
-    onSuccess: () => {
-      void invalidate();
+    onSuccess: async () => {
+      await invalidate();
       onClose();
     },
   });
@@ -144,7 +142,6 @@ export function EditReviewPane({ review: requested, workerId, onClose }: EditRev
       }}
       title={review ? t("Edit {0}", review.title) : t("Edit review")}
       description={t("Click a bar to set the score; nothing reaches the worker until you submit.")}
-      contentKey={review?.id}
     >
       <FormProvider {...form}>
         <WorkPaneDirtyTracker form={form} />
@@ -204,7 +201,7 @@ export function EditReviewPane({ review: requested, workerId, onClose }: EditRev
           <WorkPaneFooter>
             <WorkPaneCancel />
             <Button type="submit" size="sm" isLoading={submit.pending} disabled={!review}>
-              {t("Save draft")}
+              {t("Save changes")}
             </Button>
           </WorkPaneFooter>
         </Form>
@@ -246,23 +243,7 @@ function RatingRows() {
     <>
       {fields.map((field, index) => (
         <div key={field.fieldKey} className="flex flex-col gap-1.5">
-          <Controller
-            control={control}
-            name={`ratings.${index}.score`}
-            render={({ field: score }) => (
-              <div className="flex items-center gap-3">
-                <span className="min-w-0 flex-1 text-sm font-medium">{field.label}</span>
-                <RatingScaleInput
-                  value={score.value ?? null}
-                  label={field.label}
-                  onChange={score.onChange}
-                />
-                <span className="w-22 text-right text-xs text-muted-foreground">
-                  {scoreWord(score.value) ?? t("Not rated yet")}
-                </span>
-              </div>
-            )}
-          />
+          <RatingField index={index} label={field.label} />
           <TextareaField<ReviewDraftFormValues>
             control={control}
             name={`ratings.${index}.comment`}
@@ -274,6 +255,51 @@ function RatingRows() {
         </div>
       ))}
     </>
+  );
+}
+
+/**
+ * One criterion's score as a registered field: its label names the scale, the word follows the
+ * score, and a refusal the server sends for `ratings.N.score` shows under it. The scale is the
+ * mockup's own control (five ruled bars that fill to the score and clear on a second press), which
+ * no shared field draws, so it is built here on the shared field's parts.
+ */
+function RatingField({ index, label }: { index: number; label: string }) {
+  const t = useT();
+  const id = useId();
+  const name = `ratings.${index}.score` as const;
+  const { control } = useFormContext<ReviewDraftFormValues>();
+  useFieldRegistration(name, label);
+  return (
+    <Controller
+      control={control}
+      name={name}
+      render={({ field, fieldState }) => (
+        <div className="flex flex-col gap-0.5">
+          <div className="flex items-center gap-3">
+            <span id={`${id}-label`} className="min-w-0 flex-1 text-sm font-medium">
+              {label}
+            </span>
+            <RatingScaleInput
+              value={field.value ?? null}
+              label={label}
+              labelledBy={`${id}-label`}
+              describedBy={fieldState.error ? `${id}-error` : undefined}
+              invalid={fieldState.invalid}
+              disabled={field.disabled}
+              onChange={field.onChange}
+              onBlur={field.onBlur}
+            />
+            <span className="w-22 text-right text-xs text-muted-foreground">
+              {scoreWord(field.value) ?? t("Not rated yet")}
+            </span>
+          </div>
+          {fieldState.error?.message ? (
+            <ErrorMessage formError={fieldState.error.message} id={`${id}-error`} />
+          ) : null}
+        </div>
+      )}
+    />
   );
 }
 
@@ -292,11 +318,11 @@ function GoalRows() {
         <h4 className="text-xs font-medium text-foreground-subtle">{t("Goals")}</h4>
         <Button
           type="button"
-          size="xs"
+          size="sm"
           variant="outline"
           onClick={() => goals.append({ id: null, title: "", dueAt: null, status: "Open" })}
         >
-          <PlusIcon className="size-3" />
+          <PlusIcon className="size-3.5" />
           {t("Add goal")}
         </Button>
       </div>

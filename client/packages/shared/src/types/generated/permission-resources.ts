@@ -3,7 +3,7 @@
 // Source of truth: services/tms/internal/modules/identity/domain/permission/resource_gen.go,
 // services/tms/internal/modules/identity/domain/permission/operations.go and services/tms/internal/modules/identity/domain/permission/sensitivity.go
 //
-// Regenerate with: pnpm --filter @trenova/graphql codegen
+// Regenerate with: bun run --filter @trenova/graphql codegen
 // Drift between these values and the Go source fails the codegen:check CI gate.
 
 export const Resource = {
@@ -154,6 +154,7 @@ export const Resource = {
   Watchtower: "watchtower",
   Briefing: "briefing",
   RecordShare: "record_share",
+  DeskTranscript: "desk_transcript",
 
   // Customers
   Customer: "customer",

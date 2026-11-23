@@ -7,7 +7,7 @@
  * failing: the class stays in the markup and simply does nothing. This answers
  * "does this class exist, and what does it resolve to" in a second, without a build.
  *
- * Usage (from client/): node scripts/tw-probe.mjs bleed:px-3 text-warning ui-field
+ * Usage (from client/): bun scripts/tw-probe.mjs bleed:px-3 text-warning ui-field
  * A class that prints MISS is not being generated.
  */
 import { readFileSync, existsSync } from "node:fs";

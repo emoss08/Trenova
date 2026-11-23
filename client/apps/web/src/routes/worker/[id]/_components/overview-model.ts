@@ -26,9 +26,8 @@ import {
 } from "@trenova/shared/components/icons";
 import { formatDuration, formatNumber } from "@trenova/shared/i18n/format";
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
-import { formatShiftDate } from "@trenova/shared/lib/scheduling";
-
-const SECONDS_IN_DAY = 86_400;
+import { formatUnixDateMedium, toUserWallClock } from "@trenova/shared/lib/date";
+import { HOUR_MS, SECONDS_IN_DAY } from "@/lib/time-units";
 
 /** How one view of the record stands, in one line and a tone, or nothing when it cannot be said. */
 export type StripState = { state: string | null; tone: SectionStripTone };
@@ -102,7 +101,9 @@ function historyState(o: WorkerOverview, t: TranslateFn): StripState {
     employment.eventCount === 0
       ? t("No events yet")
       : t("{0, plural, one {# event} other {# events}}", employment.eventCount);
-  const hired = employment.hiredAt ? t("hired {0}", formatShiftDate(employment.hiredAt)) : null;
+  const hired = employment.hiredAt
+    ? t("hired {0}", formatUnixDateMedium(employment.hiredAt))
+    : null;
   return { state: joined(events, hired), tone: "none" };
 }
 
@@ -227,27 +228,31 @@ function trainingState(o: WorkerOverview, t: TranslateFn): StripState {
 function reviewsState(o: WorkerOverview, t: TranslateFn): StripState {
   if (o.openReview) {
     return {
-      state: t("Under way · period ends {0}", formatShiftDate(o.openReview.periodEnd)),
+      state: t("Under way · period ends {0}", formatUnixDateMedium(o.openReview.periodEnd)),
       tone: "none",
     };
   }
   if (o.nextReviewAt != null) {
     const days = daysBetween(o.asOf, o.nextReviewAt);
     if (days < 0) {
-      return { state: t("Overdue since {0}", formatShiftDate(o.nextReviewAt)), tone: "danger" };
+      return {
+        state: t("Overdue since {0}", formatUnixDateMedium(o.nextReviewAt)),
+        tone: "danger",
+      };
     }
     return {
-      state: t("Next due {0}", formatShiftDate(o.nextReviewAt)),
+      state: t("Next due {0}", formatUnixDateMedium(o.nextReviewAt)),
       tone: days <= 30 ? "warning" : "none",
     };
   }
   if (o.lastReview) {
-    return { state: t("Last closed {0}", formatShiftDate(o.lastReview.periodEnd)), tone: "none" };
+    return {
+      state: t("Last closed {0}", formatUnixDateMedium(o.lastReview.periodEnd)),
+      tone: "none",
+    };
   }
   return { state: t("No reviews yet"), tone: "none" };
 }
-
-const HOUR_MS = 3_600_000;
 
 function hoursState(o: WorkerOverview, t: TranslateFn): StripState {
   const hos = o.hos;
@@ -588,17 +593,17 @@ export function workerTenure(
   nowSeconds: number,
   t: TranslateFn,
 ): string | null {
-  if (terminationDate) return t("Left {0}", formatShiftDate(terminationDate));
+  if (terminationDate) return t("Left {0}", formatUnixDateMedium(terminationDate));
   if (!hireDate) return null;
-  if (hireDate > nowSeconds) return t("Starts {0}", formatShiftDate(hireDate));
-  const start = new Date(hireDate * 1000);
-  const now = new Date(nowSeconds * 1000);
-  let months =
-    (now.getUTCFullYear() - start.getUTCFullYear()) * 12 + now.getUTCMonth() - start.getUTCMonth();
-  if (now.getUTCDate() < start.getUTCDate()) months -= 1;
+  if (hireDate > nowSeconds) return t("Starts {0}", formatUnixDateMedium(hireDate));
+  // Counted on the reader's calendar, the zone a date-only field is entered and shown in.
+  const start = toUserWallClock(hireDate) ?? new Date(hireDate * 1000);
+  const now = toUserWallClock(nowSeconds) ?? new Date(nowSeconds * 1000);
+  let months = (now.getFullYear() - start.getFullYear()) * 12 + now.getMonth() - start.getMonth();
+  if (now.getDate() < start.getDate()) months -= 1;
   const years = Math.floor(months / 12);
   const rest = months % 12;
-  if (years === 0 && rest === 0) return t("Started {0}", formatShiftDate(hireDate));
+  if (years === 0 && rest === 0) return t("Started {0}", formatUnixDateMedium(hireDate));
   if (years === 0) return t("{0, plural, one {# month in} other {# months in}}", rest);
   if (rest === 0) return t("{0, plural, one {# year in} other {# years in}}", years);
   return t(

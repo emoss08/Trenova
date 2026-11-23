@@ -18,9 +18,10 @@ type DrugAlcoholSection struct {
 }
 
 type EmploymentSection struct {
-	EventCount         int
-	HiredAt            *int64
-	OpenChecklistCount *int
+	EventCount           int
+	HiredAt              *int64
+	OpenChecklistCount   *int
+	ClosedChecklistCount *int
 }
 
 type ScheduleSection struct {

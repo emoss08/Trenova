@@ -46,7 +46,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aituneup"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/briefing"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/desklens"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/desktranscript"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentcapabilityports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentqualityports"
@@ -153,6 +155,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/fuelpurchase"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/ifta"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/payadvance"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payassignment"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/paybenefit"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/paycode"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/payescrow"
@@ -3899,6 +3902,30 @@ type DeskBoardWorkSignal struct {
 	DueAt *int   `json:"dueAt,omitempty"`
 }
 
+type DeskConversationConnection struct {
+	Edges      []*DeskConversationEdge `json:"edges"`
+	PageInfo   *PageInfo               `json:"pageInfo"`
+	TotalCount *int                    `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
+}
+
+type DeskConversationEdge struct {
+	Node   *desktranscript.Conversation `json:"node"`
+	Cursor string                       `json:"cursor"`
+}
+
+type DeskConversationFilterInput struct {
+	// All time when absent.
+	Timeframe *DeskTranscriptTimeframeInput `json:"timeframe,omitempty"`
+	// Only this person's conversations.
+	UserID *string `json:"userId,omitempty"`
+	// Only conversations with this agent.
+	AgentID *string `json:"agentId,omitempty"`
+	// Only conversations that began in one of these places.
+	Origins []conversation.ThreadOrigin `json:"origins,omitempty"`
+}
+
 type DeskMemoriesInput struct {
 	// Page size; 50 when left out, at most 100.
 	First *int    `json:"first,omitempty"`
@@ -3995,6 +4022,27 @@ type DeskMemorySettings struct {
 	CanShareWithOrganization bool `json:"canShareWithOrganization"`
 	// The person manages agent memory: what they write for a team or the organization is kept at once, and they may change what others share.
 	ManagesShared bool `json:"managesShared"`
+}
+
+type DeskTranscriptExportConnection struct {
+	Edges      []*DeskTranscriptExportEdge `json:"edges"`
+	PageInfo   *PageInfo                   `json:"pageInfo"`
+	TotalCount *int                        `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
+}
+
+type DeskTranscriptExportEdge struct {
+	Node   *desktranscript.Export `json:"node"`
+	Cursor string                 `json:"cursor"`
+}
+
+type DeskTranscriptTimeframeInput struct {
+	Preset desktranscript.TimeframePreset `json:"preset"`
+	// The first day of a Custom timeframe, as YYYY-MM-DD.
+	FromDate *string `json:"fromDate,omitempty"`
+	// The last day of a Custom timeframe, as YYYY-MM-DD.
+	ToDate *string `json:"toDate,omitempty"`
 }
 
 type DetachPayEventInput struct {
@@ -10078,6 +10126,13 @@ type RequestAuditExportInput struct {
 	Filters         *AuditExportFiltersInput `json:"filters,omitempty"`
 }
 
+// Exactly one of filter and conversationIds.
+type RequestDeskTranscriptExportInput struct {
+	Filter *DeskConversationFilterInput `json:"filter,omitempty"`
+	// At most 200 conversations picked from the list.
+	ConversationIds []string `json:"conversationIds,omitempty"`
+}
+
 type RequestMissingFactoringDocumentsInput struct {
 	InvoiceID string `json:"invoiceId"`
 	// Ask for these only. Defaults to every document the invoice is missing.
@@ -14187,6 +14242,20 @@ type WithdrawInvoiceDisputeInput struct {
 	Notes     *string `json:"notes,omitempty"`
 }
 
+// A worker's benefit enrollments, a page at a time. totalCount is counted only when it is selected.
+type WorkerBenefitEnrollmentConnection struct {
+	Edges      []*WorkerBenefitEnrollmentEdge `json:"edges"`
+	PageInfo   *PageInfo                      `json:"pageInfo"`
+	TotalCount *int                           `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
+}
+
+type WorkerBenefitEnrollmentEdge struct {
+	Node   *paybenefit.WorkerBenefitEnrollment `json:"node"`
+	Cursor string                              `json:"cursor"`
+}
+
 type WorkerChecklistItemActionInput struct {
 	ID                 string  `json:"id"`
 	Note               *string `json:"note,omitempty"`
@@ -14304,9 +14373,37 @@ type WorkerCredentialTypesInput struct {
 	Category     *workercredential.CredentialCategory `json:"category,omitempty"`
 }
 
+// A worker's disciplinary actions, a page at a time. totalCount is counted only when it is selected.
+type WorkerDisciplinaryActionConnection struct {
+	Edges      []*WorkerDisciplinaryActionEdge `json:"edges"`
+	PageInfo   *PageInfo                       `json:"pageInfo"`
+	TotalCount *int                            `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
+}
+
+type WorkerDisciplinaryActionEdge struct {
+	Node   *workerdiscipline.WorkerDisciplinaryAction `json:"node"`
+	Cursor string                                     `json:"cursor"`
+}
+
 type WorkerEdge struct {
 	Node   *worker.Worker `json:"node"`
 	Cursor string         `json:"cursor"`
+}
+
+// A worker's employment events, a page at a time. totalCount is counted only when it is selected.
+type WorkerEmploymentEventConnection struct {
+	Edges      []*WorkerEmploymentEventEdge `json:"edges"`
+	PageInfo   *PageInfo                    `json:"pageInfo"`
+	TotalCount *int                         `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
+}
+
+type WorkerEmploymentEventEdge struct {
+	Node   *employment.WorkerEmploymentEvent `json:"node"`
+	Cursor string                            `json:"cursor"`
 }
 
 // One key/value the event moved. Keys are stable identifiers (fleetCodeId,
@@ -14392,6 +14489,20 @@ type WorkerHosViolation struct {
 	DetectedAt       int     `json:"detectedAt"`
 }
 
+// Injury and illness cases, a page at a time. totalCount is counted only when it is selected.
+type WorkerInjuryConnection struct {
+	Edges      []*WorkerInjuryEdge `json:"edges"`
+	PageInfo   *PageInfo           `json:"pageInfo"`
+	TotalCount *int                `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
+}
+
+type WorkerInjuryEdge struct {
+	Node   *workerinjury.WorkerInjury `json:"node"`
+	Cursor string                     `json:"cursor"`
+}
+
 type WorkerPTOChartInput struct {
 	StartDateFrom int             `json:"startDateFrom"`
 	StartDateTo   int             `json:"startDateTo"`
@@ -14458,6 +14569,20 @@ type WorkerPTOLedgerInput struct {
 	IncludeWorker *bool                   `json:"includeWorker,omitempty"`
 }
 
+// A worker's time off policy assignments, a page at a time. totalCount is counted only when it is selected.
+type WorkerPTOPolicyAssignmentConnection struct {
+	Edges      []*WorkerPTOPolicyAssignmentEdge `json:"edges"`
+	PageInfo   *PageInfo                        `json:"pageInfo"`
+	TotalCount *int                             `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
+}
+
+type WorkerPTOPolicyAssignmentEdge struct {
+	Node   *pto.WorkerPTOPolicyAssignment `json:"node"`
+	Cursor string                         `json:"cursor"`
+}
+
 type WorkerPatchInput struct {
 	// Omit to leave unchanged; null is rejected.
 	Status graphql.Omittable[*domaintypes.Status] `json:"status,omitempty"`
@@ -14465,6 +14590,34 @@ type WorkerPatchInput struct {
 	Type graphql.Omittable[*worker.WorkerType] `json:"type,omitempty"`
 	// Omit to leave unchanged; null is rejected.
 	DriverType graphql.Omittable[*worker.DriverType] `json:"driverType,omitempty"`
+}
+
+// A worker's pay profile assignments, a page at a time. totalCount is counted only when it is selected.
+type WorkerPayAssignmentConnection struct {
+	Edges      []*WorkerPayAssignmentEdge `json:"edges"`
+	PageInfo   *PageInfo                  `json:"pageInfo"`
+	TotalCount *int                       `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
+}
+
+type WorkerPayAssignmentEdge struct {
+	Node   *payassignment.WorkerPayAssignment `json:"node"`
+	Cursor string                             `json:"cursor"`
+}
+
+// A worker's policy signatures, a page at a time. totalCount is counted only when it is selected.
+type WorkerPolicyAcknowledgementConnection struct {
+	Edges      []*WorkerPolicyAcknowledgementEdge `json:"edges"`
+	PageInfo   *PageInfo                          `json:"pageInfo"`
+	TotalCount *int                               `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
+}
+
+type WorkerPolicyAcknowledgementEdge struct {
+	Node   *workerpolicy.WorkerPolicyAcknowledgement `json:"node"`
+	Cursor string                                    `json:"cursor"`
 }
 
 type WorkerPolicyInput struct {
@@ -14508,6 +14661,20 @@ type WorkerSafetyEventInput struct {
 	FineAmount       *string                        `json:"fineAmount,omitempty"`
 	CostAmount       *string                        `json:"costAmount,omitempty"`
 	DocumentID       *string                        `json:"documentId,omitempty"`
+}
+
+// A worker's training assignments, a page at a time. totalCount is counted only when it is selected.
+type WorkerTrainingRecordConnection struct {
+	Edges      []*WorkerTrainingRecordEdge `json:"edges"`
+	PageInfo   *PageInfo                   `json:"pageInfo"`
+	TotalCount *int                        `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
+}
+
+type WorkerTrainingRecordEdge struct {
+	Node   *workertraining.WorkerTrainingRecord `json:"node"`
+	Cursor string                               `json:"cursor"`
 }
 
 type WriteOffPayAdvanceInput struct {

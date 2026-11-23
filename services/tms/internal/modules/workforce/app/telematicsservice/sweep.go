@@ -4,8 +4,8 @@ import (
 	"context"
 	"errors"
 	"slices"
-	"strings"
 
+	"github.com/emoss08/trenova/internal/modules/workforce/app/vehiclematch"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/telematics"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/telematicsports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -85,89 +85,6 @@ func (s *Service) loadSweepDrivers(
 	}, nil
 }
 
-type unitMappingCandidate struct {
-	unitID     pulid.ID
-	externalID string
-	vin        string
-	code       string
-}
-
-type unitExternalIDMatch struct {
-	unitID     pulid.ID
-	externalID string
-}
-
-func matchUnitsToProviderVehicles(
-	candidates []unitMappingCandidate,
-	vehicles []telematicsports.ProviderVehicle,
-	unmatched *int,
-) []unitExternalIDMatch {
-	assignedExternalIDs := make(map[string]struct{}, len(candidates))
-	unmappedByVin := make(map[string]pulid.ID)
-	unmappedByCode := make(map[string]pulid.ID)
-	for _, candidate := range candidates {
-		if candidate.externalID != "" {
-			assignedExternalIDs[candidate.externalID] = struct{}{}
-			continue
-		}
-		if vin := strings.ToUpper(strings.TrimSpace(candidate.vin)); vin != "" {
-			unmappedByVin[vin] = candidate.unitID
-		}
-		if code := strings.ToLower(strings.TrimSpace(candidate.code)); code != "" {
-			unmappedByCode[code] = candidate.unitID
-		}
-	}
-
-	if len(unmappedByVin) == 0 && len(unmappedByCode) == 0 {
-		return nil
-	}
-
-	matches := make([]unitExternalIDMatch, 0)
-	claimedUnits := make(map[pulid.ID]struct{})
-	for i := range vehicles {
-		vehicle := &vehicles[i]
-		if _, taken := assignedExternalIDs[vehicle.ID]; taken {
-			continue
-		}
-
-		unitID, matched := matchVehicleToUnit(vehicle, unmappedByVin, unmappedByCode)
-		if !matched {
-			if unmatched != nil {
-				*unmatched++
-			}
-			continue
-		}
-		if _, claimed := claimedUnits[unitID]; claimed {
-			continue
-		}
-		claimedUnits[unitID] = struct{}{}
-		assignedExternalIDs[vehicle.ID] = struct{}{}
-		matches = append(matches, unitExternalIDMatch{
-			unitID:     unitID,
-			externalID: vehicle.ID,
-		})
-	}
-	return matches
-}
-
-func matchVehicleToUnit(
-	vehicle *telematicsports.ProviderVehicle,
-	unmappedByVin map[string]pulid.ID,
-	unmappedByCode map[string]pulid.ID,
-) (pulid.ID, bool) {
-	if vin := strings.ToUpper(strings.TrimSpace(vehicle.VIN)); vin != "" {
-		if unitID, ok := unmappedByVin[vin]; ok {
-			return unitID, true
-		}
-	}
-	if name := strings.ToLower(strings.TrimSpace(vehicle.Name)); name != "" {
-		if unitID, ok := unmappedByCode[name]; ok {
-			return unitID, true
-		}
-	}
-	return pulid.Nil, false
-}
-
 func (s *Service) syncVehicleMappings(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
@@ -179,17 +96,17 @@ func (s *Service) syncVehicleMappings(
 		return err
 	}
 
-	candidates := make([]unitMappingCandidate, 0, len(mappings))
+	candidates := make([]vehiclematch.Candidate, 0, len(mappings))
 	unmapped := 0
 	for _, mapping := range mappings {
 		if mapping.ExternalID == "" {
 			unmapped++
 		}
-		candidates = append(candidates, unitMappingCandidate{
-			unitID:     mapping.TractorID,
-			externalID: mapping.ExternalID,
-			vin:        mapping.Vin,
-			code:       mapping.Code,
+		candidates = append(candidates, vehiclematch.Candidate{
+			UnitID:     mapping.TractorID,
+			ExternalID: mapping.ExternalID,
+			VIN:        mapping.Vin,
+			Code:       mapping.Code,
 		})
 	}
 	if unmapped == 0 {
@@ -201,7 +118,7 @@ func (s *Service) syncVehicleMappings(
 		return err
 	}
 
-	matches := matchUnitsToProviderVehicles(
+	matches := vehiclematch.Match(
 		candidates,
 		providerVehicles,
 		&result.VehiclesUnmatched,
@@ -213,8 +130,8 @@ func (s *Service) syncVehicleMappings(
 	assignments := make([]telematicsports.TractorExternalIDAssignment, 0, len(matches))
 	for _, match := range matches {
 		assignments = append(assignments, telematicsports.TractorExternalIDAssignment{
-			TractorID:  match.unitID,
-			ExternalID: match.externalID,
+			TractorID:  match.UnitID,
+			ExternalID: match.ExternalID,
 		})
 	}
 
@@ -248,17 +165,17 @@ func (s *Service) syncTrailerMappings(
 		return err
 	}
 
-	candidates := make([]unitMappingCandidate, 0, len(mappings))
+	candidates := make([]vehiclematch.Candidate, 0, len(mappings))
 	unmapped := 0
 	for _, mapping := range mappings {
 		if mapping.ExternalID == "" {
 			unmapped++
 		}
-		candidates = append(candidates, unitMappingCandidate{
-			unitID:     mapping.TrailerID,
-			externalID: mapping.ExternalID,
-			vin:        mapping.Vin,
-			code:       mapping.Code,
+		candidates = append(candidates, vehiclematch.Candidate{
+			UnitID:     mapping.TrailerID,
+			ExternalID: mapping.ExternalID,
+			VIN:        mapping.Vin,
+			Code:       mapping.Code,
 		})
 	}
 	if unmapped == 0 {
@@ -270,7 +187,7 @@ func (s *Service) syncTrailerMappings(
 		return err
 	}
 
-	matches := matchUnitsToProviderVehicles(candidates, providerTrailers, nil)
+	matches := vehiclematch.Match(candidates, providerTrailers, nil)
 	if len(matches) == 0 {
 		return nil
 	}
@@ -278,8 +195,8 @@ func (s *Service) syncTrailerMappings(
 	assignments := make([]telematicsports.TrailerExternalIDAssignment, 0, len(matches))
 	for _, match := range matches {
 		assignments = append(assignments, telematicsports.TrailerExternalIDAssignment{
-			TrailerID:  match.unitID,
-			ExternalID: match.externalID,
+			TrailerID:  match.UnitID,
+			ExternalID: match.ExternalID,
 		})
 	}
 

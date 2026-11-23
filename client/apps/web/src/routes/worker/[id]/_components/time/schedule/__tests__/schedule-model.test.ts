@@ -1,12 +1,6 @@
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import { describe, expect, it } from "vitest";
-import {
-  availabilitySummary,
-  daysOut,
-  nextApprovedTimeOff,
-  shiftClashes,
-  weekBars,
-} from "../schedule-model";
+import { availabilitySummary, shiftClashes, weekBars } from "../schedule-model";
 
 const t = ((text: string, ...values: unknown[]) =>
   text.replace(/\{(\d+)\}/g, (_, index: string) => String(values[Number(index)]))) as TranslateFn;
@@ -81,30 +75,5 @@ describe("availabilitySummary", () => {
         shortDay,
       ),
     ).toBe("not Mon, Tue");
-  });
-});
-
-describe("home time", () => {
-  it("counts whole days out since the worker was last home", () => {
-    expect(daysOut(1_800_000_000, 1_800_000_000 + 8 * 86_400 + 3_600)).toBe(8);
-    expect(daysOut(null, 1_800_000_000)).toBeNull();
-  });
-
-  it("finds the earliest approved time off that has not ended", () => {
-    const now = 1_800_000_000;
-    const later = { status: "Approved", startDate: now + 20 * 86_400, endDate: now + 22 * 86_400 };
-    const sooner = { status: "Approved", startDate: now + 5 * 86_400, endDate: now + 6 * 86_400 };
-    expect(
-      nextApprovedTimeOff(
-        [
-          later,
-          { status: "Requested", startDate: now + 86_400, endDate: now + 2 * 86_400 },
-          { status: "Approved", startDate: now - 10 * 86_400, endDate: now - 9 * 86_400 },
-          sooner,
-        ],
-        now,
-      ),
-    ).toBe(sooner);
-    expect(nextApprovedTimeOff([], now)).toBeNull();
   });
 });

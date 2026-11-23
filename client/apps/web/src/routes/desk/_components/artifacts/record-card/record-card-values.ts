@@ -54,6 +54,22 @@ export function cardDay(seconds: number | null | undefined): string {
   });
 }
 
+/**
+ * The second of two moments as a day, written beside the first: the day alone
+ * in the first's year, with the year in any other. For a moment that is a date,
+ * such as when an invoice falls due, whose time of day means nothing.
+ */
+export function cardDayAfter(first: number, second: number): string {
+  if (!second) return "";
+  const day = new Date(second * 1000);
+  const sameYear = day.getFullYear() === new Date(first * 1000).getFullYear();
+  return day.toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+    ...(sameYear ? {} : { year: "numeric" }),
+  });
+}
+
 /** A unix second as a card writes a date that may be in another year: the day and the year. */
 export function cardDate(seconds: number | null | undefined): string {
   return formatUnixDateMedium(seconds, { fallback: "" });

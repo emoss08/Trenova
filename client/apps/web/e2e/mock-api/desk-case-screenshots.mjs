@@ -1,7 +1,7 @@
 // Screenshots of a Desk case and of a reply under way. Run with the mock API
 // and the web app up (see README.md):
 //
-//   node e2e/mock-api/desk-case-screenshots.mjs [outDir] [name,name,...]
+//   bun e2e/mock-api/desk-case-screenshots.mjs [outDir] [name,name,...]
 //
 // Every shot starts from a fresh scenario, so the writes one makes (a snooze,
 // a wait, a tick, a steer) never leak into the next.

@@ -93,6 +93,23 @@ function PhoneItem({ phone }: { phone: string }) {
   );
 }
 
+/**
+ * How long they have been (or were) employed. The minute clock lives here, in the one leaf that
+ * reads it, so its tick redraws this line and not the header.
+ */
+function TenureItem({
+  hireDate,
+  terminationDate,
+}: {
+  hireDate: number | null;
+  terminationDate: number | null;
+}) {
+  const t = useT();
+  const now = useNow("minute");
+  const tenure = workerTenure({ hireDate, terminationDate }, now, t);
+  return tenure ? <MetaItem icon={<ClockIcon />}>{tenure}</MetaItem> : null;
+}
+
 export type WorkerHeaderProps = {
   worker: WorkerRecord;
   overview: WorkerOverview | undefined;
@@ -103,7 +120,7 @@ export type WorkerHeaderProps = {
   tabs: readonly WorkerTab[];
   tab: WorkerTab;
   onTab: (tab: WorkerTab) => void;
-  /** The pointer is on a tab: start reading its code. */
+  /** The pointer or focus is on a tab, or on an Add entry for it: start reading its code. */
   onTabIntent: (tab: WorkerTab) => void;
   /** The Profile tab holds edits not saved, so its tab is marked from any other. */
   profileUnsaved: boolean;
@@ -130,18 +147,9 @@ export function WorkerHeader({
   onOpen,
 }: WorkerHeaderProps) {
   const t = useT();
-  const now = useNow("minute");
   const name = worker.wholeName || `${worker.firstName} ${worker.lastName}`.trim();
   const marks = workerTabMarks(overview, t);
   const place = [worker.city, worker.state?.abbreviation].filter(Boolean).join(", ");
-  const tenure = workerTenure(
-    {
-      hireDate: worker.profile?.hireDate ?? null,
-      terminationDate: worker.profile?.terminationDate ?? null,
-    },
-    now,
-    t,
-  );
 
   return (
     <RecordHeader
@@ -205,7 +213,10 @@ export function WorkerHeader({
           ) : null}
           {place ? <MetaItem icon={<MarkerPin01Icon />}>{place}</MetaItem> : null}
           {worker.phoneNumber ? <PhoneItem phone={worker.phoneNumber} /> : null}
-          {tenure ? <MetaItem icon={<ClockIcon />}>{tenure}</MetaItem> : null}
+          <TenureItem
+            hireDate={worker.profile?.hireDate ?? null}
+            terminationDate={worker.profile?.terminationDate ?? null}
+          />
         </>
       }
       actions={
@@ -214,6 +225,7 @@ export function WorkerHeader({
           hasFleetCode={worker.fleetCode != null}
           terminated={Boolean(worker.profile?.terminationDate)}
           onOpen={onOpen}
+          onIntent={(target) => onTabIntent(target.tab)}
         />
       }
     >
@@ -230,7 +242,12 @@ export function WorkerHeader({
         {tabs.map((key) => {
           const mark = marks[key];
           return (
-            <TabsTab key={key} value={key} onPointerEnter={() => onTabIntent(key)}>
+            <TabsTab
+              key={key}
+              value={key}
+              onPointerEnter={() => onTabIntent(key)}
+              onFocus={() => onTabIntent(key)}
+            >
               {workerTabLabel(key, t)}
               {key === "profile" && profileUnsaved ? (
                 <TabDot tone="warning" label={t("Unsaved changes")} />

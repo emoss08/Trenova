@@ -24,10 +24,9 @@ import {
   dotTestTypeSchema,
   type DOTTestFormValues,
 } from "@trenova/shared/types/worker-drug-alcohol";
-import { useEffect, useRef } from "react";
 import { substanceLabel } from "./drug-alcohol-labels";
 import { FormProvider, useForm, useWatch, type Resolver } from "react-hook-form";
-import { useTestingInvalidation } from "./use-testing-invalidation";
+import { useWorkerInvalidation } from "../../use-worker-invalidation";
 
 const TYPE_OPTIONS = dotTestTypeSchema.options.map((value) => ({
   value,
@@ -73,20 +72,12 @@ export function RecordCollectionPane({
     label: substanceLabel(t, value),
   }));
 
-  const invalidate = useTestingInvalidation(workerId);
+  const invalidate = useWorkerInvalidation(workerId, "testing");
   const form = useForm<DOTTestFormValues>({
     resolver: zodResolver(dotTestFormSchema) as Resolver<DOTTestFormValues>,
     defaultValues: emptyValues(drawEntryId, defaultSubstance),
   });
   const { control, handleSubmit, reset } = form;
-
-  const loadedFor = useRef<string | null>(null);
-  useEffect(() => {
-    const key = open ? `${drawEntryId ?? ""}:${defaultSubstance}` : null;
-    if (key === loadedFor.current) return;
-    loadedFor.current = key;
-    if (key !== null) reset(emptyValues(drawEntryId, defaultSubstance));
-  }, [open, drawEntryId, defaultSubstance, reset]);
 
   const [testType] = useWatch({ control, name: ["testType"] });
   const needsReason = testType === "ReasonableSuspicion" || testType === "PostAccident";
@@ -129,7 +120,7 @@ export function RecordCollectionPane({
     <WorkPane
       open={open}
       onOpenChange={onOpenChange}
-      title={t("Record a collection")}
+      title={t("Record collection")}
       description={t(
         "One record per substance analyzed. A collection covering both drug and alcohol is two records.",
       )}
@@ -234,6 +225,7 @@ export function RecordCollectionPane({
                   name="specimenId"
                   label={t("Specimen ID")}
                   placeholder={t("CCF specimen number")}
+                  inputClassProps="font-mono"
                   description={t(
                     "The specimen ID from the custody and control form, for matching the laboratory report.",
                   )}

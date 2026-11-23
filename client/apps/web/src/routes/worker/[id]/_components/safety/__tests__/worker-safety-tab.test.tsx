@@ -1,10 +1,23 @@
 import { WorkPaneHost, WorkPaneProvider } from "@/components/work-pane";
+import { stubLayout } from "@/test/layout";
 import { CLOSED_WORKER_OPEN_STATE, type WorkerOpenState } from "@/routes/worker/use-worker-state";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import WorkerSafetyTab from "../worker-safety-tab";
+
+const loaded = vi.hoisted(() => ({ issuePane: false, recordPane: false }));
+
+vi.mock("../issue-action-pane", async (importOriginal) => {
+  loaded.issuePane = true;
+  return importOriginal();
+});
+
+vi.mock("../record-safety-event-pane", async (importOriginal) => {
+  loaded.recordPane = true;
+  return importOriginal();
+});
 
 const mocks = vi.hoisted(() => ({
   fetchWorkerSafetyScorecard: vi.fn(),
@@ -15,6 +28,9 @@ const mocks = vi.hoisted(() => ({
   deleteWorkerSafetyEvent: vi.fn(),
   reviewWorkerSafetyEvent: vi.fn(),
   fetchWorkerInjuries: vi.fn(),
+  fetchWorkerSafetyEvent: vi.fn(),
+  fetchWorkerDisciplinaryAction: vi.fn(),
+  fetchWorkerInjury: vi.fn(),
   toast: { success: vi.fn(), error: vi.fn(), info: vi.fn() },
 }));
 
@@ -24,6 +40,8 @@ vi.mock("@/lib/graphql/worker-safety", () => ({
   fetchWorkerDisciplinaryActions: mocks.fetchWorkerDisciplinaryActions,
   fetchWorkerDisciplinaryLadder: mocks.fetchWorkerDisciplinaryLadder,
   fetchWorkerRecognitions: mocks.fetchWorkerRecognitions,
+  fetchWorkerSafetyEvent: mocks.fetchWorkerSafetyEvent,
+  fetchWorkerDisciplinaryAction: mocks.fetchWorkerDisciplinaryAction,
   deleteWorkerSafetyEvent: mocks.deleteWorkerSafetyEvent,
   reviewWorkerSafetyEvent: mocks.reviewWorkerSafetyEvent,
   reopenWorkerSafetyEvent: vi.fn(),
@@ -42,6 +60,7 @@ vi.mock("@/lib/graphql/worker-safety", () => ({
 
 vi.mock("@/lib/graphql/worker-injury", () => ({
   fetchWorkerInjuries: mocks.fetchWorkerInjuries,
+  fetchWorkerInjury: mocks.fetchWorkerInjury,
   deleteWorkerInjury: vi.fn(),
   recordWorkerInjury: vi.fn(),
   updateWorkerInjury: vi.fn(),
@@ -196,13 +215,21 @@ const action = {
   updatedAt: 1,
 };
 
+/** One page of a connection, the last one. */
+function page<Row>(rows: Row[]) {
+  return {
+    edges: rows.map((node) => ({ cursor: `c_${String((node as { id: string }).id)}`, node })),
+    pageInfo: { hasNextPage: false, endCursor: null },
+  };
+}
+
 function mockAll() {
   mocks.fetchWorkerSafetyScorecard.mockResolvedValue(scorecard);
   mocks.fetchWorkerSafetyEvents.mockResolvedValue([closedIncident, openInspection]);
-  mocks.fetchWorkerDisciplinaryActions.mockResolvedValue([action]);
+  mocks.fetchWorkerDisciplinaryActions.mockResolvedValue(page([action]));
   mocks.fetchWorkerDisciplinaryLadder.mockResolvedValue(ladder);
   mocks.fetchWorkerRecognitions.mockResolvedValue([]);
-  mocks.fetchWorkerInjuries.mockResolvedValue([]);
+  mocks.fetchWorkerInjuries.mockResolvedValue(page([]));
 }
 
 function renderTab(open: Partial<WorkerOpenState> = {}) {
@@ -234,7 +261,32 @@ afterEach(() => {
   vi.clearAllMocks();
 });
 
+// The virtual lists measure their region; jsdom lays nothing out, so give every box a size.
+let restoreLayout: () => void = () => undefined;
+beforeEach(() => {
+  restoreLayout = stubLayout(320);
+});
+afterEach(() => restoreLayout());
+
 describe("WorkerSafetyTab", () => {
+  // First in the file: a pane module, once read, stays read for the rest of it.
+  it("reads a form pane's code only when it is first opened", async () => {
+    mockAll();
+    renderTab();
+    await screen.findByTestId("safety-scorecard");
+    expect(loaded.issuePane).toBe(false);
+    expect(loaded.recordPane).toBe(false);
+
+    cleanup();
+    renderTab({ form: "issue-action" });
+    // The pane's code is read when it first opens; the first read transforms it.
+    expect(
+      await screen.findByRole("button", { name: "Issue written warning" }, { timeout: 5000 }),
+    ).toBeTruthy();
+    expect(loaded.issuePane).toBe(true);
+    expect(loaded.recordPane).toBe(false);
+  }, 10_000);
+
   it("draws the scorecard band: score and rating, the points against the thresholds, the ruled facts", async () => {
     mockAll();
     renderTab();
@@ -293,10 +345,11 @@ describe("WorkerSafetyTab", () => {
     const user = userEvent.setup();
 
     const pane = await screen.findByRole("dialog", { name: "Level 2 inspection — failed" });
-    expect(within(pane).getByText("IL4417002931")).toBeTruthy();
+    // The pane's code is read when it first opens; the first read transforms it.
+    expect(await within(pane).findByText("IL4417002931", {}, { timeout: 25000 })).toBeTruthy();
     await user.click(within(pane).getByRole("button", { name: "Close event" }));
     expect(screen.getByTestId("close-dialog")).toHaveTextContent("wsev_open");
-  });
+  }, 30_000);
 
   it("deletes an event only after the confirmation", async () => {
     mockAll();
@@ -339,6 +392,105 @@ describe("WorkerSafetyTab", () => {
 
     await user.click(screen.getByRole("button", { name: "Issue action" }));
     expect(onOpen).toHaveBeenCalledWith({ tab: "safety", form: "issue-action" });
+  });
+
+  it("previews the suggested step on the stair while the issue pane is open", async () => {
+    mockAll();
+    renderTab({ form: "issue-action" });
+
+    await screen.findByRole("button", { name: "Issue written warning" });
+    const stair = screen.getByTestId("discipline-stair");
+    expect(stair.querySelector('[data-level="WrittenWarning"]')?.getAttribute("data-state")).toBe(
+      "preview",
+    );
+  });
+
+  it("takes the open count from the scorecard, not from the events read", async () => {
+    mockAll();
+    mocks.fetchWorkerSafetyScorecard.mockResolvedValue({ ...scorecard, openEvents: 3 });
+    renderTab();
+
+    expect(await screen.findByRole("radio", { name: /Open 3/ })).toBeTruthy();
+    expect(screen.getByRole("radio", { name: /All 2/ })).toBeTruthy();
+    expect(screen.queryByText(/Showing the newest/)).toBeNull();
+  });
+
+  it("says a full list is the newest hundred and gives no total it cannot know", async () => {
+    mockAll();
+    mocks.fetchWorkerSafetyEvents.mockResolvedValue(
+      Array.from({ length: 100 }, (_, index) => ({
+        ...closedIncident,
+        id: `wsev_${index}`,
+        occurredAt: 1_790_000_000 - index,
+      })),
+    );
+    renderTab();
+
+    expect(await screen.findByText("Showing the newest 100")).toBeTruthy();
+    expect(screen.getByRole("radio", { name: "All" })).toBeTruthy();
+  });
+
+  it("asks the server for the open events once the whole list came back full", async () => {
+    mockAll();
+    const olderOpen = { ...openInspection, id: "wsev_older_open", occurredAt: 1_700_000_000 };
+    mocks.fetchWorkerSafetyEvents.mockImplementation(
+      (_workerId: string, filters: { openOnly?: boolean }) =>
+        Promise.resolve(
+          filters.openOnly
+            ? [olderOpen]
+            : Array.from({ length: 100 }, (_, index) => ({
+                ...closedIncident,
+                id: `wsev_${index}`,
+                occurredAt: 1_790_000_000 - index,
+              })),
+        ),
+    );
+    renderTab();
+    const user = userEvent.setup();
+
+    await screen.findByText("Showing the newest 100");
+    expect(mocks.fetchWorkerSafetyEvents).toHaveBeenCalledTimes(1);
+    await user.click(screen.getByRole("radio", { name: /Open/ }));
+    expect(await screen.findByTestId("safety-event-wsev_older_open")).toBeTruthy();
+    expect(mocks.fetchWorkerSafetyEvents).toHaveBeenCalledWith(
+      "wrk_1",
+      { openOnly: true },
+      expect.anything(),
+    );
+  });
+
+  it("filters the open events itself while the whole list fits under the cap", async () => {
+    mockAll();
+    renderTab();
+    const user = userEvent.setup();
+
+    await screen.findByTestId("safety-event-wsev_closed");
+    await user.click(screen.getByRole("radio", { name: /Open/ }));
+    expect(screen.queryByTestId("safety-event-wsev_closed")).toBeNull();
+    expect(mocks.fetchWorkerSafetyEvents).toHaveBeenCalledTimes(1);
+  });
+
+  it("reads an event the address names by id when it is past the newest 100", async () => {
+    mockAll();
+    const past = { ...openInspection, id: "wsev_past" };
+    mocks.fetchWorkerSafetyEvent.mockResolvedValue(past);
+    renderTab({ safetyEvent: "wsev_past" });
+
+    expect(
+      await screen.findByRole("dialog", { name: "Level 2 inspection — failed" }, { timeout: 5000 }),
+    ).toBeTruthy();
+    expect(mocks.fetchWorkerSafetyEvent).toHaveBeenCalledWith("wsev_past", expect.anything());
+  });
+
+  it("lists the disciplinary actions from the paged read", async () => {
+    mockAll();
+    renderTab();
+
+    expect(await screen.findByTestId("discipline-wdac_1")).toBeTruthy();
+    expect(mocks.fetchWorkerDisciplinaryActions).toHaveBeenCalledWith(
+      expect.objectContaining({ workerId: "wrk_1", first: 50, after: null }),
+      expect.anything(),
+    );
   });
 
   it("says the record could not be loaded when a read fails", async () => {

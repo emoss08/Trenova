@@ -411,7 +411,7 @@ func (r *QueryResolver) PTOPolicy(ctx context.Context, id string) (*pto.PTOPolic
 	})
 }
 
-func (r *QueryResolver) WorkerPTOPolicyAssignments(ctx context.Context, workerID string) ([]*pto.WorkerPTOPolicyAssignment, error) {
+func (r *QueryResolver) WorkerPTOPolicyAssignments(ctx context.Context, workerID string, first *int, after *string) (*gqlmodel.WorkerPTOPolicyAssignmentConnection, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourcePTOPolicy, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -422,11 +422,36 @@ func (r *QueryResolver) WorkerPTOPolicyAssignments(ctx context.Context, workerID
 		return nil, err
 	}
 
-	return r.PtoPolicyService.ListAssignments(ctx, &ptopolicyports.ListPTOAssignmentsRequest{
+	cursor, err := gqlconnection.CursorFromArgs(ctx, first, after)
+	if err != nil {
+		return nil, err
+	}
+	result, err := r.PtoPolicyService.PageAssignments(ctx, &ptopolicyports.ListPTOAssignmentsRequest{
 		TenantInfo:    resolvercore.TenantInfo(authCtx),
 		WorkerID:      id,
 		IncludePolicy: true,
+		Cursor:        cursor,
 	})
+	if err != nil {
+		return nil, err
+	}
+	page, err := gqlconnection.EntityCursorConnection(
+		result,
+		func(node *pto.WorkerPTOPolicyAssignment, edgeCursor string) *gqlmodel.WorkerPTOPolicyAssignmentEdge {
+			return &gqlmodel.WorkerPTOPolicyAssignmentEdge{Node: node, Cursor: edgeCursor}
+		},
+		func(edge *gqlmodel.WorkerPTOPolicyAssignmentEdge) string { return edge.Cursor },
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return &gqlmodel.WorkerPTOPolicyAssignmentConnection{
+		Edges:           page.Edges,
+		PageInfo:        page.PageInfo,
+		TotalCount:      page.TotalCount,
+		TotalCountExact: page.TotalCountExact,
+	}, nil
 }
 
 func (r *QueryResolver) WorkerPTOBalances(ctx context.Context, workerID string) ([]*ptoledgerservice.BalanceView, error) {

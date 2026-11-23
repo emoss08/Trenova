@@ -137,7 +137,7 @@ var jobTemplates = []permissionspec.JobTemplate{
 	{
 		ID:             "read_only",
 		Label:          "Read-only",
-		Description:    "Can read every record except HR, medical, drug testing and pay records, and change nothing.",
+		Description:    "Can read every record except HR, medical, drug testing and pay records and other people's Desk conversations, and change nothing.",
 		MaxSensitivity: permission.SensitivityInternal,
 		ReadEverything: true,
 		ReadExcept:     ownGrantKinds,
@@ -154,4 +154,5 @@ var ownGrantKinds = []permission.Resource{
 	permission.ResourcePerformanceReview,
 	permission.ResourceTimesheet,
 	permission.ResourceProfileChangeRequest,
+	permission.ResourceDeskTranscript,
 }

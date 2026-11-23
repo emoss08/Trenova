@@ -37,14 +37,8 @@ import {
   workersCompClaimStatusSchema,
   type InjuryFormValues,
 } from "@trenova/shared/types/worker-injury";
-import { useEffect, useRef } from "react";
-import {
-  useForm,
-  useFormState,
-  useWatch,
-  type Resolver,
-  type UseFormReturn,
-} from "react-hook-form";
+import { useEffect } from "react";
+import { useForm, useWatch, type Resolver, type UseFormReturn } from "react-hook-form";
 
 const STATUS_LABELS = defineLabels({
   Open: "Open, days may still accrue",
@@ -114,7 +108,6 @@ export function injuryDefaults(
 }
 
 export type InjuryFormOptions = {
-  open: boolean;
   workerId: string;
   injury: WorkerInjuryRow | null;
   /** Set when the case is opened from a safety event. */
@@ -133,9 +126,12 @@ export type InjuryFormController = {
  * The injury and illness case form behind both its hosts, the OSHA log's dialog and the worker
  * page's work pane: its schema, the classification suggestion that follows the facts until
  * somebody makes the judgement, and the record or update mutation.
+ *
+ * Both hosts mount it fresh at each opening (the pane is mounted per opening, the dialog's form
+ * lives inside its content), so its values are the case's at mount and a refetch of the case
+ * while it is open never replaces what is typed.
  */
 export function useInjuryForm({
-  open,
   workerId,
   injury,
   safetyEventId = null,
@@ -147,34 +143,29 @@ export function useInjuryForm({
     resolver: zodResolver(injuryFormSchema) as Resolver<InjuryFormValues>,
     defaultValues: injuryDefaults(injury, safetyEventId),
   });
-  const { control, handleSubmit, reset, setValue } = form;
+  const { handleSubmit, setValue } = form;
 
-  // A refetch hands over a new object for the same case; only a different case or version is
-  // loaded again, so edits in progress survive it.
-  const loaded = useRef<string | null>(null);
-  useEffect(() => {
-    if (!open) {
-      loaded.current = null;
-      return;
-    }
-    const key = injury ? `${injury.id}:${injury.version}` : `new:${safetyEventId ?? ""}`;
-    if (loaded.current === key) return;
-    loaded.current = key;
-    reset(injuryDefaults(injury, safetyEventId));
-  }, [open, injury, safetyEventId, reset]);
-
-  const [treatment, daysAway, daysRestricted] = useWatch({
-    control,
-    name: ["treatment", "daysAway", "daysRestricted"],
-  });
-  const { dirtyFields } = useFormState({ control, name: "classification" });
-  const chosen = isEdit || Boolean(dirtyFields.classification);
-  const suggested = suggestClassification(treatment, daysAway, daysRestricted);
-
-  useEffect(() => {
-    if (chosen) return;
-    setValue("classification", suggested as InjuryFormValues["classification"]);
-  }, [chosen, suggested, setValue]);
+  // Until somebody makes the judgement, the classification follows the treatment and the days
+  // as they change: driven by the change (a subscription), not by a render.
+  useEffect(
+    () =>
+      form.subscribe({
+        name: ["treatment", "daysAway", "daysRestricted"],
+        formState: { values: true },
+        callback: ({ values }) => {
+          if (isEdit || form.getFieldState("classification").isDirty) return;
+          setValue(
+            "classification",
+            suggestClassification(
+              values.treatment,
+              values.daysAway,
+              values.daysRestricted,
+            ) as InjuryFormValues["classification"],
+          );
+        },
+      }),
+    [form, isEdit, setValue],
+  );
 
   const { mutateAsync, isPending } = useApiMutation<
     SavedCase,
@@ -215,9 +206,11 @@ export function useInjuryForm({
           })
         : recordWorkerInjury({ ...shared, workerId });
     },
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: [WORKER_INJURIES_KEY, workerId] });
-      void queryClient.invalidateQueries({ queryKey: [OSHA_LOG_KEY] });
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: [WORKER_INJURIES_KEY, workerId] }),
+        queryClient.invalidateQueries({ queryKey: [OSHA_LOG_KEY] }),
+      ]);
       onSaved();
     },
   });

@@ -19,6 +19,7 @@ import (
 	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/documentportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/workerportsmock"
+	"github.com/emoss08/trenova/internal/testutil/orgzonetest"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -38,6 +39,7 @@ type fakeRepo struct {
 	credentials map[pulid.ID]*workercredential.WorkerCredential
 	createReqs  []*workercredentialports.CreateWorkerCredentialRequest
 	expiring    *workercredentialports.ListExpiringWorkerCredentialsRequest
+	held        *workercredentialports.ListWorkerCredentialsRequest
 	ensured     int
 }
 
@@ -175,6 +177,7 @@ func (f *fakeRepo) ListForWorker(
 	_ context.Context,
 	req *workercredentialports.ListWorkerCredentialsRequest,
 ) ([]*workercredential.WorkerCredential, error) {
+	f.held = req
 	out := make([]*workercredential.WorkerCredential, 0, len(f.credentials))
 	for _, cred := range f.credentials {
 		if !slices.Contains(req.WorkerIDs, cred.WorkerID) {
@@ -247,6 +250,20 @@ func (f *fakeRepo) Update(
 	return entity, nil
 }
 
+func (f *fakeRepo) CountArchivedForWorker(
+	_ context.Context,
+	_ pagination.TenantInfo,
+	workerID pulid.ID,
+) (int, error) {
+	count := 0
+	for _, cred := range f.credentials {
+		if cred.WorkerID == workerID && !cred.IsActive() {
+			count++
+		}
+	}
+	return count, nil
+}
+
 func (f *fakeRepo) ListExpiring(
 	_ context.Context,
 	req *workercredentialports.ListExpiringWorkerCredentialsRequest,
@@ -267,6 +284,20 @@ type harness struct {
 	medCard    *workercredential.WorkerCredentialType
 	forklift   *workercredential.WorkerCredentialType
 	userID     pulid.ID
+	refreshed  *refreshedWorkers
+}
+
+type refreshedWorkers struct {
+	workers []pulid.ID
+}
+
+func (r *refreshedWorkers) RefreshEvidence(
+	_ context.Context,
+	_ pagination.TenantInfo,
+	workerID pulid.ID,
+) error {
+	r.workers = append(r.workers, workerID)
+	return nil
 }
 
 func (h *harness) actor() *permissionports.RequestActor {
@@ -348,14 +379,17 @@ func newHarnessSeeing(t *testing.T, fields permissionports.FieldAccess) *harness
 		return typ
 	}
 
+	refreshed := &refreshedWorkers{}
 	svc := workercredentialservice.New(workercredentialservice.Params{
-		Logger:       zap.NewNop(),
-		Repo:         repo,
-		WorkerRepo:   workerRepo,
-		DocumentRepo: docRepo,
-		AuditService: audit,
-		Realtime:     &mocks.NoopRealtimeService{},
-		Fields:       fields,
+		Logger:        zap.NewNop(),
+		Repo:          repo,
+		WorkerRepo:    workerRepo,
+		DocumentRepo:  docRepo,
+		AuditService:  audit,
+		Realtime:      &mocks.NoopRealtimeService{},
+		Fields:        fields,
+		Checklists:    refreshed,
+		Organizations: orgzonetest.Organizations{},
 	})
 
 	return &harness{
@@ -378,8 +412,9 @@ func newHarnessSeeing(t *testing.T, fields permissionports.FieldAccess) *harness
 			true,
 			workercredential.CredentialProfileFieldMedicalCardExpiry,
 		),
-		forklift: addType("FORKLIFT", false, false, workercredential.CredentialProfileFieldNone),
-		userID:   pulid.MustNew("usr_"),
+		forklift:  addType("FORKLIFT", false, false, workercredential.CredentialProfileFieldNone),
+		userID:    pulid.MustNew("usr_"),
+		refreshed: refreshed,
 	}
 }
 
@@ -711,4 +746,18 @@ func TestSummary_SeedsSystemTypesOnce(t *testing.T) {
 func TestDaysUntilAgreesWithForecastWindow(t *testing.T) {
 	now := int64(1_800_000_000)
 	assert.Equal(t, int64(7), workercredential.DaysUntil(now+7*day, now))
+}
+
+func TestCreate_RefreshesTheWorkersChecklists(t *testing.T) {
+	h := newHarness(t)
+	h.fileDocumentsOnWorker()
+
+	_, err := h.svc.Create(t.Context(), &workercredentialservice.CreateRequest{
+		Entity: h.credential(h.forklift, 1_950_000_000),
+		UserID: h.userID,
+	})
+	require.NoError(t, err)
+
+	assert.Equal(t, []pulid.ID{h.wrk.ID}, h.refreshed.workers,
+		"a new credential may satisfy a checklist item, so the worker's checklists are refreshed")
 }

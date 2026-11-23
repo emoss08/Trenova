@@ -139,11 +139,34 @@ input ProfileChangeFilterInput {
   limit: Int
 }
 
+type WorkerPolicyAcknowledgementEdge {
+  node: WorkerPolicyAcknowledgement!
+  cursor: String!
+}
+
+"""
+A worker's policy signatures, a page at a time. totalCount is counted only when it is selected.
+"""
+type WorkerPolicyAcknowledgementConnection {
+  edges: [WorkerPolicyAcknowledgementEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
+}
+
 extend type Query {
   workerPolicies(activeOnly: Boolean, limit: Int): [WorkerPolicy!]!
   workerPolicy(id: ID!): WorkerPolicy!
   workerPolicyCompliance(id: ID!): PolicyCompliance!
-  workerPolicyAcknowledgements(workerId: ID!): [WorkerPolicyAcknowledgement!]!
+  "A worker's policy signatures, newest first, a page at a time."
+  workerPolicyAcknowledgements(
+    workerId: ID!
+    "How many to read, from 1 to 100; 20 when left out."
+    first: Int
+    "The endCursor of the page before this one."
+    after: String
+  ): WorkerPolicyAcknowledgementConnection!
   profileChangeRequests(filter: ProfileChangeFilterInput): [WorkerProfileChangeRequest!]!
 }
 

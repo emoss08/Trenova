@@ -119,6 +119,8 @@ func (a *WorkerPayAssignment) IsEffectiveAt(ts int64) bool {
 
 func (a *WorkerPayAssignment) GetID() pulid.ID { return a.ID }
 
+func (a *WorkerPayAssignment) GetCreatedAt() int64 { return a.CreatedAt }
+
 func (a *WorkerPayAssignment) GetOrganizationID() pulid.ID { return a.OrganizationID }
 
 func (a *WorkerPayAssignment) GetBusinessUnitID() pulid.ID { return a.BusinessUnitID }

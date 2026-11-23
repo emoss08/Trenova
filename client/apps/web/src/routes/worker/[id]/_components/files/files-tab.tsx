@@ -1,12 +1,19 @@
 import { Kept } from "@/components/kept";
-import type { WorkerTabProps } from "@/routes/worker/use-worker-state";
+import { lazyComponent } from "@/lib/lazy-component";
+import {
+  CLOSED_WORKER_OPEN_STATE as CLOSED,
+  type WorkerTabProps,
+} from "@/routes/worker/use-worker-state";
 import { LazyComponent } from "@trenova/shared/components/error-boundary";
-import { lazy } from "react";
+import { WORKER_VIEW_MODULES } from "../worker-view-modules";
 import { FilesSkeleton } from "./files-skeleton";
 
-const Documents = lazy(() => import("./documents/worker-documents"));
-const DriverPortal = lazy(() => import("./driver-portal/worker-portal-tab"));
-const AgentMemory = lazy(() => import("./agent-memory/worker-memories"));
+const Documents = lazyComponent(WORKER_VIEW_MODULES.documents, (module) => module.default);
+const DriverPortal = lazyComponent(
+  WORKER_VIEW_MODULES["driver-portal"],
+  (module) => module.default,
+);
+const AgentMemory = lazyComponent(WORKER_VIEW_MODULES["agent-memory"], (module) => module.default);
 
 /**
  * The worker's files: their documents, their side of Dash, and what agents remember about them.
@@ -18,17 +25,22 @@ export default function FilesTab({ workerId, worker, view, open, onOpen }: Worke
     <>
       <Kept shown={selected === "documents"}>
         <LazyComponent fallback={<FilesSkeleton view="documents" />}>
-          <Documents workerId={workerId} worker={worker} open={open} onOpen={onOpen} />
+          <Documents.Component
+            workerId={workerId}
+            worker={worker}
+            open={selected === "documents" ? open : CLOSED}
+            onOpen={onOpen}
+          />
         </LazyComponent>
       </Kept>
       <Kept shown={selected === "driver-portal"}>
         <LazyComponent fallback={<FilesSkeleton view="driver-portal" />}>
-          <DriverPortal workerId={workerId} worker={worker} onOpen={onOpen} />
+          <DriverPortal.Component workerId={workerId} worker={worker} onOpen={onOpen} />
         </LazyComponent>
       </Kept>
       <Kept shown={selected === "agent-memory"}>
         <LazyComponent fallback={<FilesSkeleton view="agent-memory" />}>
-          <AgentMemory workerId={workerId} workerName={worker.firstName} />
+          <AgentMemory.Component workerId={workerId} workerName={worker.firstName} />
         </LazyComponent>
       </Kept>
     </>

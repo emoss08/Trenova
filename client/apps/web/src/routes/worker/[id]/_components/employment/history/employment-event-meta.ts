@@ -68,6 +68,11 @@ export function isEmploymentEventKind(value: string): value is EmploymentEventKi
   return (ALL_EMPLOYMENT_EVENT_KINDS as readonly string[]).includes(value);
 }
 
+/** The kinds a filter group holds, as the history read asks the server for them. */
+export function employmentEventKindsIn(group: EmploymentEventGroup): EmploymentEventKind[] {
+  return ALL_EMPLOYMENT_EVENT_KINDS.filter((kind) => META[kind].group === group);
+}
+
 export function employmentEventMeta(kind: string): EmploymentEventMeta {
   return isEmploymentEventKind(kind) ? META[kind] : META.ProbationEnded;
 }
@@ -89,7 +94,9 @@ export function employmentEventHint(kind: EmploymentEventKind): string {
     case "Promoted":
       return translate("Moves the worker to a new driver type or worker type.");
     case "Transferred":
-      return translate("Moves the worker to another fleet or manager.");
+      return translate(
+        "Moves the worker to another fleet or manager. Choose a fleet code, a manager or both.",
+      );
     case "RateChanged":
       return translate("Notes a pay change. Pay profiles still drive settlement.");
     case "LeaveStarted":

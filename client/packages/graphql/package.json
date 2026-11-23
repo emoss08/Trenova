@@ -16,14 +16,13 @@
   "scripts": {
     "typecheck": "tsc -b",
     "codegen": "graphql-codegen --config codegen.ts",
-    "codegen:watch": "graphql-codegen --config codegen.ts --watch",
-    "dev": "graphql-codegen --config codegen.ts --watch",
-    "enums": "node scripts/generate-error-enums.mjs",
-    "resources": "node scripts/generate-permission-resources.mjs",
-    "record-kinds": "node scripts/generate-record-kinds.mjs",
-    "tool-namespaces": "node scripts/generate-tool-namespaces.mjs",
-    "codegen:check": "pnpm codegen && node scripts/assert-codegen-clean.mjs",
-    "test": "node --test \"scripts/**/*.test.mjs\""
+    "dev": "bun scripts/watch.mjs",
+    "enums": "bun scripts/generate-error-enums.mjs",
+    "resources": "bun scripts/generate-permission-resources.mjs",
+    "record-kinds": "bun scripts/generate-record-kinds.mjs",
+    "tool-namespaces": "bun scripts/generate-tool-namespaces.mjs",
+    "codegen:check": "bun run codegen && bun scripts/assert-codegen-clean.mjs",
+    "test": "bun test scripts"
   },
   "dependencies": {
     "@graphql-typed-document-node/core": "^3.2.0"

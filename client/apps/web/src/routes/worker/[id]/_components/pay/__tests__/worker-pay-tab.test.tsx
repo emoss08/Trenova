@@ -106,6 +106,13 @@ const history = [
   },
 ];
 
+function connection<Row extends { id: string }>(rows: Row[]) {
+  return {
+    edges: rows.map((node) => ({ cursor: node.id, node })),
+    pageInfo: { hasNextPage: false, endCursor: null },
+  };
+}
+
 function grant(...pairs: [string, number][]) {
   granted.keys = new Set(pairs.map(([resource, operation]) => `${resource}:${operation}`));
 }
@@ -141,7 +148,7 @@ describe("WorkerPayTab", () => {
   it("marks the driver's override against the profile rate and shows the guaranteed minimum", async () => {
     grant([Resource.DriverPayProfile, Operation.Read]);
     mocks.fetchEffectiveWorkerPayAssignment.mockResolvedValue(assignment);
-    mocks.fetchWorkerPayAssignments.mockResolvedValue(history);
+    mocks.fetchWorkerPayAssignments.mockResolvedValue(connection([...history].reverse()));
     renderTab();
 
     const override = await screen.findByText("$0.62");
@@ -154,7 +161,7 @@ describe("WorkerPayTab", () => {
   it("lists the assignment history newest first with the one in force marked current", async () => {
     grant([Resource.DriverPayProfile, Operation.Read]);
     mocks.fetchEffectiveWorkerPayAssignment.mockResolvedValue(assignment);
-    mocks.fetchWorkerPayAssignments.mockResolvedValue(history);
+    mocks.fetchWorkerPayAssignments.mockResolvedValue(connection([...history].reverse()));
     renderTab();
 
     const table = (await screen.findByText("Local hourly")).closest("tbody") as HTMLElement;
@@ -168,7 +175,7 @@ describe("WorkerPayTab", () => {
   it("offers no change or end to a reader who may not assign pay profiles, and reads no earnings without settlement read", async () => {
     grant([Resource.DriverPayProfile, Operation.Read]);
     mocks.fetchEffectiveWorkerPayAssignment.mockResolvedValue(assignment);
-    mocks.fetchWorkerPayAssignments.mockResolvedValue([]);
+    mocks.fetchWorkerPayAssignments.mockResolvedValue(connection([]));
     renderTab();
 
     await screen.findByText("OTR mileage, company driver");
@@ -180,7 +187,7 @@ describe("WorkerPayTab", () => {
   it("opens the change in the work pane", async () => {
     grant([Resource.DriverPayProfile, Operation.Assign]);
     mocks.fetchEffectiveWorkerPayAssignment.mockResolvedValue(assignment);
-    mocks.fetchWorkerPayAssignments.mockResolvedValue([]);
+    mocks.fetchWorkerPayAssignments.mockResolvedValue(connection([]));
     const onOpen = renderTab();
 
     await userEvent.setup().click(await screen.findByRole("button", { name: "Change profile" }));
@@ -194,7 +201,7 @@ describe("WorkerPayTab", () => {
   it("ends the assignment only after the confirmation", async () => {
     grant([Resource.DriverPayProfile, Operation.Assign]);
     mocks.fetchEffectiveWorkerPayAssignment.mockResolvedValue(assignment);
-    mocks.fetchWorkerPayAssignments.mockResolvedValue([]);
+    mocks.fetchWorkerPayAssignments.mockResolvedValue(connection([]));
     mocks.endWorkerPayAssignment.mockResolvedValue({ id: "wpa_1" });
     renderTab();
     const user = userEvent.setup();
@@ -216,7 +223,7 @@ describe("WorkerPayTab", () => {
   it("shows what is owed and held to a reader of settlements", async () => {
     grant([Resource.DriverPayProfile, Operation.Read], [Resource.DriverSettlement, Operation.Read]);
     mocks.fetchEffectiveWorkerPayAssignment.mockResolvedValue(null);
-    mocks.fetchWorkerPayAssignments.mockResolvedValue([]);
+    mocks.fetchWorkerPayAssignments.mockResolvedValue(connection([]));
     mocks.fetchWorkerEarningsSummary.mockResolvedValue({
       workerId: "wrk_1",
       accruedEventCount: 6,

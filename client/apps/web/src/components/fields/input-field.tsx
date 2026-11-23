@@ -89,6 +89,8 @@ export function InputField<T extends FieldValues>({
             labelAction={labelAction}
             required={isRequired(rules, required)}
             description={description}
+            descriptionId={descriptionId}
+            errorId={errorId}
             error={fieldState.error?.message}
             className={className}
             layout={layout}
@@ -105,7 +107,9 @@ export function InputField<T extends FieldValues>({
               className={inputClassProps}
               aria-label={props["aria-label"] ?? (typeof label === "string" ? label : undefined)}
               aria-invalid={fieldState.invalid}
-              aria-describedby={(description && descriptionId) || (fieldState.error && errorId)}
+              aria-describedby={
+                fieldState.error ? errorId : description ? descriptionId : undefined
+              }
             />
           </FieldWrapper>
         );

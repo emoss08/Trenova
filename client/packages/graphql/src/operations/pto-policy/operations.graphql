@@ -146,9 +146,18 @@ query PtoPolicy($id: ID!) {
   }
 }
 
-query WorkerPtoPolicyAssignments($workerId: ID!) {
-  workerPtoPolicyAssignments(workerId: $workerId) {
-    ...PtoPolicyAssignmentFields
+query WorkerPtoPolicyAssignments($workerId: ID!, $first: Int, $after: String) {
+  workerPtoPolicyAssignments(workerId: $workerId, first: $first, after: $after) {
+    edges {
+      cursor
+      node {
+        ...PtoPolicyAssignmentFields
+      }
+    }
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
   }
 }
 

@@ -117,17 +117,18 @@ From a checkout of the public repository at the commit the overlay targets:
 ```bash
 cp -R <private>/cloud client/packages/cloud      # the whole package directory
 cd client
-pnpm install --no-frozen-lockfile                 # adds only the packages/cloud importer
-pnpm --filter @trenova/cloud typecheck && pnpm --filter @trenova/cloud test
-pnpm --filter @trenova/web build                  # dist/ now contains the Cloud UI
+bun install                                       # adds only the packages/cloud workspace entry
+bun run --filter @trenova/cloud typecheck && bun run --filter @trenova/cloud test
+bun run --filter @trenova/web build               # dist/ now contains the Cloud UI
 ```
 
-`pnpm install --frozen-lockfile` cannot be used on the first install: pnpm requires
-every workspace project to have an importer entry, and the public lockfile only keeps
+`bun install --frozen-lockfile` cannot be used on the first install: bun.lock must list
+every workspace project, and the public lockfile only keeps
 the overlay's while the package is in the public tree. Because the overlay's
-specifiers all match the host's, the non-frozen install records the importer from
+specifiers all match the host's, the non-frozen install records the workspace from
 versions that are already locked and downloads nothing new; a private CI should
-assert that the lockfile diff touches nothing outside `importers['packages/cloud']`.
+assert that the lockfile diff only adds `workspaces["packages/cloud"]` and the
+`packages["@trenova/cloud"]` workspace entry.
 
 Build-time settings an edition usually sets (all optional, none have vendor defaults
 in public code):

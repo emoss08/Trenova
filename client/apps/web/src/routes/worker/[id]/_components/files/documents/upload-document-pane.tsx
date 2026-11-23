@@ -1,7 +1,13 @@
 import { DocumentFileTypeIcon } from "@/components/documents/document-file-type-icon";
 import { formatFileSize } from "@/components/documents/document-upload-zone";
-import { WorkPane, WorkPaneBody, WorkPaneCancel, WorkPaneFooter } from "@/components/work-pane";
-import { useDocumentUpload } from "@/hooks/use-document-upload";
+import {
+  WorkPane,
+  WorkPaneBody,
+  WorkPaneCancel,
+  WorkPaneDirtyTracker,
+  WorkPaneFooter,
+} from "@/components/work-pane";
+import type { useDocumentUpload } from "@/hooks/use-document-upload";
 import {
   DOCUMENT_UPLOAD_ACCEPT,
   DOCUMENT_UPLOAD_MAX_SIZE,
@@ -15,14 +21,23 @@ import { Button } from "@trenova/shared/components/ui/button";
 import { useRichT } from "@trenova/shared/i18n/rich";
 import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
-import type { Document } from "@trenova/shared/types/document";
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
-import { WORKER_DOCUMENT_RESOURCE } from "./use-worker-documents";
+import { useForm } from "react-hook-form";
 
 /** Upload states the session is done with; anything else is still moving. */
 const SETTLED = new Set<UploadState["status"]>(["success", "error", "quarantined"]);
 
 type Chosen = { key: string; file: File };
+
+/** What the pane holds in its form: the keys of the files chosen and not yet uploaded. */
+type ChosenValues = { files: string[] };
+
+function chosenFrom(files: readonly File[]): Chosen[] {
+  return files.map((file) => ({
+    key: `${file.name}:${file.size}:${file.lastModified}:${Math.random()}`,
+    file,
+  }));
+}
 
 export function uploadStatusLine(upload: UploadState, t: TranslateFn): string {
   switch (upload.status) {
@@ -53,89 +68,71 @@ export function uploadStatusLine(upload: UploadState, t: TranslateFn): string {
 export type UploadDocumentPaneProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  workerId: string;
   workerName: string;
   /** Uploading a new version of one document: its lineage, and one file only. */
   lineageId: string | null;
   canUpload: boolean;
-  /** Files dropped straight onto the table, handed to the pane as it opens. */
-  dropped: readonly File[];
-  onDroppedTaken: () => void;
-  /** Told each document an upload became, so its row can flash when it lands. */
-  onUploaded: (document: Document) => void;
+  /** Files dropped straight onto the table, chosen as the pane opens. */
+  droppedFiles: readonly File[];
+  /**
+   * The page's upload session, held above the pane so a transfer keeps running, and shows its
+   * progress again, when the pane is closed and opened.
+   */
+  uploader: ReturnType<typeof useDocumentUpload>;
   onDone: () => void;
 };
 
 /**
  * Uploads documents to the worker's file beside the table: choose or drop files, see each as a
  * chip, then upload them together. Each chip shows its progress and can be cancelled while it
- * runs, retried when it fails, or taken off. The pane closes once every file has landed.
+ * runs, retried when it fails, or taken off. The pane closes once every file has landed. Files
+ * chosen and not uploaded count as unsaved work.
  */
 export function UploadDocumentPane({
   open,
   onOpenChange,
-  workerId,
   workerName,
   lineageId,
   canUpload,
-  dropped,
-  onDroppedTaken,
-  onUploaded,
+  droppedFiles,
+  uploader,
   onDone,
 }: UploadDocumentPaneProps) {
   const t = useT();
   const rt = useRichT();
   const inputId = useId();
   const inputRef = useRef<HTMLInputElement>(null);
-  const [chosen, setChosen] = useState<Chosen[]>([]);
-  const [rejected, setRejected] = useState<RejectedFile[]>([]);
+  const single = lineageId !== null;
+  const [dropped] = useState(() => sortUploadFiles(droppedFiles, { multiple: !single }));
+  const [chosen, setChosen] = useState<Chosen[]>(() =>
+    chosenFrom(dropped.accepted).slice(0, single ? 1 : undefined),
+  );
+  const [rejected, setRejected] = useState<RejectedFile[]>(dropped.rejected);
   const [over, setOver] = useState(false);
   const [missing, setMissing] = useState(false);
   const [submitted, setSubmitted] = useState(false);
-  const single = lineageId !== null;
-
   const { uploads, uploadFiles, cancelUpload, retryUpload, removeUpload, clearCompleted } =
-    useDocumentUpload({
-      resourceId: workerId,
-      resourceType: WORKER_DOCUMENT_RESOURCE,
-      uploadMetadata: lineageId ? { lineageId } : undefined,
-      onSuccess: (document) => onUploaded(document),
-    });
+    uploader;
+  const form = useForm<ChosenValues>({
+    defaultValues: { files: [] },
+    values: { files: chosen.map((item) => item.key) },
+    resetOptions: { keepDefaultValues: true },
+  });
 
   const take = (files: Iterable<File>) => {
     const sorted = sortUploadFiles(files, { multiple: !single });
     setRejected(sorted.rejected);
     if (sorted.accepted.length === 0) return;
     setMissing(false);
-    const next = sorted.accepted.map((file) => ({
-      key: `${file.name}:${file.size}:${file.lastModified}:${Math.random()}`,
-      file,
-    }));
-    setChosen((current) => (single ? next.slice(0, 1) : [...current, ...next]));
+    const next = chosenFrom(sorted.accepted);
+    setChosen(single ? next.slice(0, 1) : [...chosen, ...next]);
   };
-
-  useEffect(() => {
-    if (!open || dropped.length === 0) return;
-    take(dropped);
-    onDroppedTaken();
-    // `take` reads only state setters and the pane's mode.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, dropped, onDroppedTaken]);
-
-  useEffect(() => {
-    if (open) return;
-    setChosen([]);
-    setRejected([]);
-    setMissing(false);
-    setSubmitted(false);
-  }, [open]);
 
   const settled = uploads.length > 0 && uploads.every((upload) => SETTLED.has(upload.status));
   const allLanded = settled && uploads.every((upload) => upload.status === "success");
   useEffect(() => {
     if (!submitted || !allLanded) return;
     clearCompleted();
-    setSubmitted(false);
     onDone();
   }, [submitted, allLanded, clearCompleted, onDone]);
 
@@ -145,7 +142,10 @@ export function UploadDocumentPane({
       setMissing(true);
       return;
     }
-    uploadFiles(chosen.map((item) => item.file));
+    uploadFiles(
+      chosen.map((item) => item.file),
+      lineageId ? { lineageId } : undefined,
+    );
     setChosen([]);
     setSubmitted(true);
   };
@@ -161,87 +161,90 @@ export function UploadDocumentPane({
           : t("Adds them to {0}'s file.", workerName)
       }
     >
+      <WorkPaneDirtyTracker form={form} />
       <WorkPaneBody className="text-sm">
-        <div
-          role="group"
-          aria-label={t("Files to upload")}
-          onDragOver={(event) => {
-            event.preventDefault();
-            setOver(true);
-          }}
-          onDragLeave={() => setOver(false)}
-          onDrop={(event) => {
-            event.preventDefault();
-            setOver(false);
-            if (canUpload) take(Array.from(event.dataTransfer.files));
-          }}
-          className={cn(
-            "flex flex-col items-center gap-1 rounded-md border border-dashed border-border-strong px-4 py-5 text-center transition-colors",
-            over && "border-ring bg-brand-subtle",
-            missing && "border-danger-border",
-          )}
-        >
-          <UploadCloud01Icon className="mb-1 size-5 text-muted-foreground" />
-          <p className="text-sm text-muted-foreground">
-            {rt(
-              single
-                ? "<b>Drop the new version here</b> or <pick>choose a file</pick>."
-                : "<b>Drop documents here</b> or <pick>choose files</pick>.",
-              {
-                b: (chunk) => <b className="font-medium text-foreground">{chunk}</b>,
-                pick: (chunk) => (
-                  <button
-                    type="button"
-                    disabled={!canUpload}
-                    onClick={() => inputRef.current?.click()}
-                    className="rounded-sm ui-focus-ring text-sm text-brand hover:underline"
-                  >
-                    {chunk}
-                  </button>
-                ),
-              },
-            )}
-          </p>
-          <p className="text-xs text-muted-foreground">
-            {t(
-              "PDF, images, Word, Excel and text files, up to {0} each.",
-              formatFileSize(DOCUMENT_UPLOAD_MAX_SIZE),
-            )}
-          </p>
-          <input
-            ref={inputRef}
-            id={inputId}
-            type="file"
-            className="sr-only"
-            tabIndex={-1}
-            accept={DOCUMENT_UPLOAD_ACCEPT}
-            multiple={!single}
-            onChange={(event) => {
-              if (event.target.files) take(Array.from(event.target.files));
-              event.target.value = "";
+        <div className="flex flex-col gap-1.5">
+          <div
+            role="group"
+            aria-label={t("Files to upload")}
+            onDragOver={(event) => {
+              event.preventDefault();
+              setOver(true);
             }}
-          />
+            onDragLeave={() => setOver(false)}
+            onDrop={(event) => {
+              event.preventDefault();
+              setOver(false);
+              if (canUpload) take(Array.from(event.dataTransfer.files));
+            }}
+            className={cn(
+              "flex flex-col items-center gap-1 rounded-md border border-dashed border-border-strong px-4 py-5 text-center transition-colors",
+              over && "border-ring bg-brand-subtle",
+              missing && "border-danger-border",
+            )}
+          >
+            <UploadCloud01Icon className="mb-1 size-5 text-muted-foreground" />
+            <p className="text-sm text-muted-foreground">
+              {rt(
+                single
+                  ? "<b>Drop the new version here</b> or <pick>choose a file</pick>."
+                  : "<b>Drop documents here</b> or <pick>choose files</pick>.",
+                {
+                  b: (chunk) => <b className="font-medium text-foreground">{chunk}</b>,
+                  pick: (chunk) => (
+                    <button
+                      type="button"
+                      disabled={!canUpload}
+                      onClick={() => inputRef.current?.click()}
+                      className="rounded-sm ui-focus-ring text-sm text-brand hover:underline"
+                    >
+                      {chunk}
+                    </button>
+                  ),
+                },
+              )}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              {t(
+                "PDF, images, Word, Excel and text files, up to {0} each.",
+                formatFileSize(DOCUMENT_UPLOAD_MAX_SIZE),
+              )}
+            </p>
+            <input
+              ref={inputRef}
+              id={inputId}
+              type="file"
+              className="sr-only"
+              tabIndex={-1}
+              accept={DOCUMENT_UPLOAD_ACCEPT}
+              multiple={!single}
+              onChange={(event) => {
+                if (event.target.files) take(Array.from(event.target.files));
+                event.target.value = "";
+              }}
+            />
+          </div>
+          {missing ? (
+            <p role="alert" className="text-xs text-danger-foreground">
+              {t("Add a file before you upload.")}
+            </p>
+          ) : null}
+          {rejected.length > 0 ? (
+            <ul role="alert" className="flex flex-col gap-0.5 text-xs text-danger-foreground">
+              {rejected.map(({ file, reason }) => (
+                <li key={`${file.name}:${file.size}`}>
+                  {reason === "size"
+                    ? t(
+                        "{0} is larger than {1}.",
+                        file.name,
+                        formatFileSize(DOCUMENT_UPLOAD_MAX_SIZE),
+                      )
+                    : t("{0} is not a kind of file that can be uploaded.", file.name)}
+                </li>
+              ))}
+            </ul>
+          ) : null}
         </div>
-        {missing ? (
-          <p role="alert" className="-mt-2 text-xs text-danger-foreground">
-            {t("Add a file before you upload.")}
-          </p>
-        ) : null}
-        {rejected.length > 0 ? (
-          <ul role="alert" className="-mt-2 flex flex-col gap-0.5 text-xs text-danger-foreground">
-            {rejected.map(({ file, reason }) => (
-              <li key={`${file.name}:${file.size}`}>
-                {reason === "size"
-                  ? t(
-                      "{0} is larger than {1}.",
-                      file.name,
-                      formatFileSize(DOCUMENT_UPLOAD_MAX_SIZE),
-                    )
-                  : t("{0} is not a kind of file that can be uploaded.", file.name)}
-              </li>
-            ))}
-          </ul>
-        ) : null}
         {chosen.length > 0 || uploads.length > 0 ? (
           <ul className="flex flex-col gap-1.5" aria-label={t("Files")}>
             {uploads.map((item) => (
@@ -302,9 +305,7 @@ export function UploadDocumentPane({
                     size="icon-xs"
                     variant="ghost"
                     aria-label={t("Take {0} off the list", item.file.name)}
-                    onClick={() =>
-                      setChosen((current) => current.filter((entry) => entry.key !== item.key))
-                    }
+                    onClick={() => setChosen(chosen.filter((entry) => entry.key !== item.key))}
                   >
                     <XCloseIcon className="size-3.5" />
                   </Button>

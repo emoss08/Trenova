@@ -75,6 +75,6 @@ document, operationName, connectionKey })` derives the row type from the unmaske
 - Routes warm the cache through `lib/route-prefetch.ts` (`loader: pageLoader(prefetch)` in
   the route file under `src/pages/`); a page module exports `prefetch` returning the query
   options it will read on mount, using the same key factories as the components.
-- After editing a `.graphql` operation run `pnpm --filter @trenova/graphql codegen`
-  (or keep `pnpm dev` running, which watches); the server reloads the safelist on an
+- After editing a `.graphql` operation run `bun run --filter @trenova/graphql codegen`
+  (or keep `bun run dev` running, which watches); the server reloads the safelist on an
   unknown hash outside production.

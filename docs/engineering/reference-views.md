@@ -279,7 +279,7 @@ embeds it, so a build always describes the app it was built with.
 
 It is derived, never written by hand, in two steps:
 
-1. `pnpm --filter @trenova/web access:generate` (`client/apps/web/scripts/page-access/`) reads the
+1. `bun run --filter @trenova/web access:generate` (`client/apps/web/scripts/page-access/`) reads the
    route tree the product guide reads (`scripts/product-guide/sources.mjs`) and, for each route,
    every module reachable from its page module through static and dynamic imports, short of the
    app shell (what `main.tsx` loads statically). A module that imports documents is held to the
@@ -355,7 +355,7 @@ its fields, as `DeskWorkerCredentialList` needs `profile.complianceStatus`, decl
 The change needs a security review on the pull request, which names every screen it is for. Then:
 
 1. add the field to the kind's `ReferenceView`;
-2. run `go run ./internal/api/graphql/gqlext/refgen` and `pnpm --filter @trenova/graphql codegen`;
+2. run `go run ./internal/api/graphql/gqlext/refgen` and `bun run --filter @trenova/graphql codegen`;
 3. drop any `@requiresRead` the operation no longer needs;
 4. run `task i18n` and translate the field's new words, if the role editor names it in a way no
    view did before.

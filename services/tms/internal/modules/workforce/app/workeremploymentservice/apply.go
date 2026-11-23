@@ -35,7 +35,6 @@ func (s *Service) apply(ctx context.Context, plan *RecordPlan) (*RecordResult, e
 	)
 
 	carried := make([]*employment.Effect, 0, len(plan.steps))
-	carried = append(carried, s.runBestEffort(ctx, plan, phaseBefore, log)...)
 
 	var atomic []*employment.Effect
 	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {

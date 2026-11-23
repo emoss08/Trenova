@@ -5,12 +5,12 @@ import type {
 import type { WorkerOverview } from "@/lib/graphql/worker-overview";
 import { workerDestinationTarget } from "@/lib/worker-concerns";
 import { workerFormTarget, type WorkerTarget } from "@/routes/worker/use-worker-state";
+import { SECONDS_IN_DAY } from "@/lib/time-units";
 
 export type WorkerClearance = NonNullable<WorkerOverview["clearance"]>;
 export type WorkerClearanceItem = WorkerClearance["items"][number];
 
-const DAY_S = 86_400;
-const DAY_MS = DAY_S * 1000;
+const DAY_MS = SECONDS_IN_DAY * 1000;
 
 export const RUNWAY_RANGES = [6, 12, 24] as const;
 export type RunwayRange = (typeof RUNWAY_RANGES)[number];
@@ -36,7 +36,7 @@ export function runwayTone(daysUntil: number): RunwayTone {
 }
 
 function utcDayStart(unix: number): number {
-  return Math.floor(unix / DAY_S) * DAY_MS;
+  return Math.floor(unix / SECONDS_IN_DAY) * DAY_MS;
 }
 
 function daysInMonth(year: number, month: number): number {

@@ -102,7 +102,7 @@ function render(entries, operations, scopes) {
 // Source of truth: ${SOURCE},
 // ${OPERATIONS_SOURCE} and ${SCOPES_SOURCE}
 //
-// Regenerate with: pnpm --filter @trenova/graphql codegen
+// Regenerate with: bun run --filter @trenova/graphql codegen
 // Drift between these values and the Go source fails the codegen:check CI gate.
 
 export const Resource = {

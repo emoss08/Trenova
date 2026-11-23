@@ -9,6 +9,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqldecimal"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
@@ -16,6 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workeremploymentservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/employment"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workeremploymentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -61,7 +63,7 @@ func (r *MutationResolver) AmendWorkerEmploymentEvent(ctx context.Context, input
 	})
 }
 
-func (r *QueryResolver) WorkerEmploymentEvents(ctx context.Context, workerID string, kinds []employment.EmploymentEventKind) ([]*employment.WorkerEmploymentEvent, error) {
+func (r *QueryResolver) WorkerEmploymentEvents(ctx context.Context, workerID string, kinds []employment.EmploymentEventKind, first *int, after *string) (*gqlmodel.WorkerEmploymentEventConnection, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceWorkerEmploymentEvent, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -72,7 +74,36 @@ func (r *QueryResolver) WorkerEmploymentEvents(ctx context.Context, workerID str
 		return nil, err
 	}
 
-	return r.WorkerEmploymentService.List(ctx, resolvercore.TenantInfo(authCtx), wid, kinds)
+	cursor, err := gqlconnection.CursorFromArgs(ctx, first, after)
+	if err != nil {
+		return nil, err
+	}
+	result, err := r.WorkerEmploymentService.ListPage(ctx, &workeremploymentports.ListWorkerEmploymentEventsRequest{
+		TenantInfo: resolvercore.TenantInfo(authCtx),
+		WorkerID:   wid,
+		Kinds:      kinds,
+		Cursor:     cursor,
+	})
+	if err != nil {
+		return nil, err
+	}
+	page, err := gqlconnection.EntityCursorConnection(
+		result,
+		func(node *employment.WorkerEmploymentEvent, edgeCursor string) *gqlmodel.WorkerEmploymentEventEdge {
+			return &gqlmodel.WorkerEmploymentEventEdge{Node: node, Cursor: edgeCursor}
+		},
+		func(edge *gqlmodel.WorkerEmploymentEventEdge) string { return edge.Cursor },
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return &gqlmodel.WorkerEmploymentEventConnection{
+		Edges:           page.Edges,
+		PageInfo:        page.PageInfo,
+		TotalCount:      page.TotalCount,
+		TotalCountExact: page.TotalCountExact,
+	}, nil
 }
 
 func (r *QueryResolver) WorkerEmploymentEvent(ctx context.Context, id string) (*employment.WorkerEmploymentEvent, error) {

@@ -15,7 +15,7 @@ import { fieldInvalidClass } from "@trenova/shared/lib/variants/field";
 type JsonEditorFieldProps<T extends FieldValues> = FormControlProps<T> &
   Omit<ReactCodeMirrorProps, "value" | "onChange" | "theme" | "extensions"> & {
     label: string;
-    description?: string;
+    description?: React.ReactNode;
     disabled?: boolean;
     className?: string;
     editorClassName?: string;

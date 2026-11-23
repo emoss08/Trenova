@@ -125,6 +125,6 @@ panel, because the sheet's own close button can hold the focus.
 
 ## Checking it
 
-`node e2e/mock-api/notifications-screenshots.mjs` shoots every part of the panel against the
+`bun e2e/mock-api/notifications-screenshots.mjs` shoots every part of the panel against the
 mock API (`handlers/notifications.mjs`, `fixtures/notifications.mjs`): the four parts, a
 counted row expanded, both menus, an action taken, the empty state, light and phone width.

@@ -65,8 +65,9 @@ func transcriptIDSuffix(id pulid.ID) string {
 }
 
 type transcriptInput struct {
-	Thread    *conversation.Thread
-	AgentName string
+	Thread     *conversation.Thread
+	AgentName  string
+	PersonName string
 	// Delegates names the agents the conversation's agent handed tasks to.
 	Delegates map[pulid.ID]string
 	Messages  []conversation.Message
@@ -109,7 +110,10 @@ func renderTranscript(in *transcriptInput) string {
 		title = "Conversation"
 	}
 
-	facts := make([]transcriptFact, 0, 6)
+	facts := make([]transcriptFact, 0, 7)
+	if in.PersonName != "" {
+		facts = append(facts, transcriptFact{Name: "Person", Value: in.PersonName})
+	}
 	facts = append(facts,
 		transcriptFact{Name: "Agent", Value: in.AgentName},
 		transcriptFact{Name: "Started", Value: transcriptTime(in.Thread.CreatedAt)},
@@ -133,13 +137,14 @@ func renderTranscript(in *transcriptInput) string {
 	)
 
 	return renderTranscriptDocument(&transcriptDocument{
-		Title:     title,
-		Facts:     facts,
-		AgentName: in.AgentName,
-		Delegates: in.Delegates,
-		Messages:  in.Messages,
-		Proposals: in.Proposals,
-		Chapters:  in.Chapters,
+		Title:      title,
+		Facts:      facts,
+		AgentName:  in.AgentName,
+		PersonName: in.PersonName,
+		Delegates:  in.Delegates,
+		Messages:   in.Messages,
+		Proposals:  in.Proposals,
+		Chapters:   in.Chapters,
 	})
 }
 
@@ -154,16 +159,17 @@ type transcriptGap struct {
 }
 
 type transcriptDocument struct {
-	Title     string
-	Facts     []transcriptFact
-	AgentName string
-	Delegates map[pulid.ID]string
-	Messages  []conversation.Message
-	Trimmed   []bool
-	Gap       transcriptGap
-	Empty     string
-	Proposals []*agent.AgentProposal
-	Chapters  map[int]string
+	Title      string
+	Facts      []transcriptFact
+	AgentName  string
+	PersonName string
+	Delegates  map[pulid.ID]string
+	Messages   []conversation.Message
+	Trimmed    []bool
+	Gap        transcriptGap
+	Empty      string
+	Proposals  []*agent.AgentProposal
+	Chapters   map[int]string
 }
 
 func (d *transcriptDocument) delegateName(id pulid.ID) string {
@@ -235,7 +241,7 @@ func renderTranscriptDocument(doc *transcriptDocument) string {
 		}
 
 		var section strings.Builder
-		writeTranscriptMessage(&section, message, doc.AgentName, doc.trimmed(i))
+		writeDocumentMessage(&section, message, doc, doc.trimmed(i))
 		writeSection(&b, section.String())
 		i++
 	}
@@ -311,6 +317,22 @@ func writeTranscriptMessage(
 	}
 }
 
+func writeDocumentMessage(
+	b *strings.Builder,
+	m *conversation.Message,
+	doc *transcriptDocument,
+	trimmed bool,
+) {
+	if doc.PersonName == "" || m.Role != conversation.RoleUser {
+		writeTranscriptMessage(b, m, doc.AgentName, trimmed)
+		return
+	}
+	if writeTranscriptNote(b, m) {
+		return
+	}
+	writePersonMessage(b, m, doc.PersonName, trimmed)
+}
+
 func writeTranscriptNote(b *strings.Builder, m *conversation.Message) bool {
 	if m.Role == conversation.RoleUser && m.Kind == conversation.MessageKindDecisionNote {
 		writeTranscriptDecision(b, m)
@@ -356,9 +378,17 @@ func writeTranscriptNote(b *strings.Builder, m *conversation.Message) bool {
 }
 
 func writeUserMessage(b *strings.Builder, m *conversation.Message, trimmed bool) {
-	heading := "You"
+	writePersonMessage(b, m, "", trimmed)
+}
+
+func writePersonMessage(b *strings.Builder, m *conversation.Message, person string, trimmed bool) {
+	speaker := person
+	if speaker == "" {
+		speaker = "You"
+	}
+	heading := speaker
 	if m.Kind == conversation.MessageKindSteer {
-		heading = "You, while it worked"
+		heading = speaker + ", while it worked"
 	}
 	fmt.Fprintf(b, "## %s · %s\n\n", heading, transcriptTime(m.CreatedAt))
 	if m.PageContext != nil && (m.PageContext.Title != "" || m.PageContext.Path != "") {

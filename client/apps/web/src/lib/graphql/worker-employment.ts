@@ -12,6 +12,8 @@ import type {
   WorkerEmploymentEventKind,
   WorkerEmploymentEventOptionsQuery,
   WorkerEmploymentEventOptionsQueryVariables,
+  WorkerEmploymentEventQuery,
+  WorkerEmploymentEventQueryVariables,
   WorkerEmploymentEventsQuery,
   WorkerEmploymentEventsQueryVariables,
 } from "@trenova/graphql/generated/graphql";
@@ -19,10 +21,12 @@ import {
   AmendWorkerEmploymentEventDocument,
   PreviewWorkerEmploymentEventDocument,
   RecordWorkerEmploymentEventDocument,
+  WorkerEmploymentEventDocument,
   WorkerEmploymentEventOptionsDocument,
   WorkerEmploymentEventsDocument,
 } from "@trenova/graphql/generated/documents/worker-employment/operations";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
+import type { Connection } from "./connection";
 
 export type WorkerEmploymentEventRow = WorkerEmploymentEventFieldsFragment;
 /** One consequence of an event beyond the event itself, as previewed or as carried out. */
@@ -42,21 +46,49 @@ export const WORKER_EMPLOYMENT_EVENTS_KEY = "worker-employment-events";
 export const WORKER_EMPLOYMENT_OPTIONS_KEY = "worker-employment-event-options";
 export const WORKER_EMPLOYMENT_PREVIEW_KEY = "worker-employment-event-preview";
 
+/** A worker's employment events, newest first, a page at a time; `kinds` narrows them. */
 export async function fetchWorkerEmploymentEvents(
-  workerId: string,
-  kinds?: WorkerEmploymentEventKind[],
+  input: {
+    workerId: string;
+    kinds?: readonly WorkerEmploymentEventKind[];
+    first: number;
+    after?: string | null;
+  },
   options?: { signal?: AbortSignal },
-): Promise<WorkerEmploymentEventRow[]> {
+): Promise<Connection<WorkerEmploymentEventRow>> {
   const data = await requestGraphQL<
     WorkerEmploymentEventsQuery,
     WorkerEmploymentEventsQueryVariables
   >({
     document: WorkerEmploymentEventsDocument,
     operationName: "WorkerEmploymentEvents",
-    variables: { workerId, kinds: kinds && kinds.length > 0 ? kinds : undefined },
+    variables: {
+      workerId: input.workerId,
+      kinds: input.kinds && input.kinds.length > 0 ? [...input.kinds] : undefined,
+      first: input.first,
+      after: input.after ?? undefined,
+      includeTotalCount: !input.after,
+    },
     signal: options?.signal,
   });
-  return data.workerEmploymentEvents as WorkerEmploymentEventRow[];
+  return data.workerEmploymentEvents as Connection<WorkerEmploymentEventRow>;
+}
+
+/** One employment event by id: a deep link to an event outside the pages already read. */
+export async function fetchWorkerEmploymentEvent(
+  id: string,
+  options?: { signal?: AbortSignal },
+): Promise<WorkerEmploymentEventRow> {
+  const data = await requestGraphQL<
+    WorkerEmploymentEventQuery,
+    WorkerEmploymentEventQueryVariables
+  >({
+    document: WorkerEmploymentEventDocument,
+    operationName: "WorkerEmploymentEvent",
+    variables: { id },
+    signal: options?.signal,
+  });
+  return data.workerEmploymentEvent as WorkerEmploymentEventRow;
 }
 
 export async function recordWorkerEmploymentEvent(

@@ -1,16 +1,16 @@
 import { SectionPanel, SectionPanelQuiet } from "@/components/section-panel";
+import { VirtualRows, type VirtualRow } from "@/components/virtual-rows";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { usePermission } from "@/hooks/use-permission";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 import type { WorkerTabProps } from "@/routes/worker/use-worker-state";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { ErrorState } from "@trenova/shared/components/errors/error-state";
 import { CheckIcon, Copy01Icon } from "@trenova/shared/components/icons";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Input } from "@trenova/shared/components/ui/input";
 import { Label } from "@trenova/shared/components/ui/label";
-import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { toast } from "@trenova/shared/components/ui/toast";
 import { WithheldValue } from "@trenova/shared/components/withheld-value";
 import { useCanReadKind } from "@trenova/shared/hooks/use-can-read-kind";
@@ -18,6 +18,7 @@ import { defineLabels } from "@trenova/shared/i18n/labels";
 import { useRichT } from "@trenova/shared/i18n/rich";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatUnixDateMedium, formatUnixDateTimeMedium } from "@trenova/shared/lib/date";
+import { cn } from "@trenova/shared/lib/utils";
 import {
   fetchWorkerPortalStatus,
   inviteWorkerToPortal,
@@ -29,8 +30,9 @@ import { ConfirmDialog } from "@/components/confirm-dialog";
 import { FilesSkeleton } from "../files-skeleton";
 import { PolicyAcknowledgements } from "./policy-acknowledgements";
 import { ProfileChangeList } from "./profile-change-list";
+import { useWorkerInvalidation } from "../../use-worker-invalidation";
 
-const WORKER_PORTAL_STATUS_KEY = "worker-portal-status";
+export const WORKER_PORTAL_STATUS_KEY = "worker-portal-status";
 
 const INVITATION_STATUS_LABELS: Record<string, string> = defineLabels({
   Pending: "Pending",
@@ -56,7 +58,6 @@ export default function WorkerPortalTab({ workerId, worker, onOpen }: DriverPort
   const t = useT();
   const rt = useRichT();
   const emailId = useId();
-  const queryClient = useQueryClient();
   const canReadUsers = useCanReadKind("user");
   const { allowed: canView } = usePermission(Resource.DriverPortal, Operation.Read);
   const { allowed: canInvite } = usePermission(Resource.DriverPortal, Operation.Create);
@@ -72,32 +73,28 @@ export default function WorkerPortalTab({ workerId, worker, onOpen }: DriverPort
     enabled: canView,
   });
 
-  const invalidate = () =>
-    Promise.all([
-      queryClient.invalidateQueries({ queryKey: [WORKER_PORTAL_STATUS_KEY, workerId] }),
-      queryClient.invalidateQueries({ queryKey: ["worker"] }),
-    ]);
+  const invalidate = useWorkerInvalidation(workerId, "portal");
 
   const invite = useApiMutation({
     scope: { id: `worker-portal:${workerId}` },
     resourceName: "Invitation",
     mutationFn: () => inviteWorkerToPortal({ workerId, email: inviteEmail.trim() || undefined }),
-    onSuccess: (result) => {
+    onSuccess: async (result) => {
       setInviteUrl(result.inviteUrl ?? null);
       setInviteEmail("");
       if (!result.emailSent) {
         toast.info(t("No email provider is set up. Share the invitation link instead."));
       }
-      void invalidate();
+      await invalidate();
     },
   });
   const revoke = useApiMutation({
     scope: { id: `worker-portal:${workerId}` },
     resourceName: "Dash access",
     mutationFn: () => revokeWorkerPortalAccess(workerId),
-    onSuccess: () => {
+    onSuccess: async () => {
       setInviteUrl(null);
-      void invalidate();
+      await invalidate();
     },
   });
 
@@ -126,6 +123,44 @@ export default function WorkerPortalTab({ workerId, worker, onOpen }: DriverPort
 
   const data = status.data;
   const pending = data.pendingInvitation;
+  const invitationRows: VirtualRow[] = data.invitations.map((invitation, index) => ({
+    key: invitation.id,
+    render: () => (
+      <div
+        role="listitem"
+        className={cn(
+          "flex items-start justify-between gap-3 p-2",
+          index > 0 && "border-t border-border-subtle",
+        )}
+      >
+        <div className="min-w-0">
+          <p className="truncate text-sm font-medium">{invitation.email}</p>
+          <p className="mt-0.5 text-xs text-muted-foreground tabular-nums">
+            {[
+              invitation.invitedBy
+                ? t(
+                    "Sent {0} by {1}",
+                    formatUnixDateMedium(invitation.createdAt),
+                    invitation.invitedBy.name,
+                  )
+                : t("Sent {0}", formatUnixDateMedium(invitation.createdAt)),
+              invitation.acceptedAt
+                ? t("accepted {0}", formatUnixDateMedium(invitation.acceptedAt))
+                : null,
+            ]
+              .filter(Boolean)
+              .join(" · ")}
+          </p>
+        </div>
+        <Badge
+          variant={INVITATION_STATUS_TONE[invitation.status] ?? "neutral"}
+          dot={invitation.status !== "Revoked"}
+        >
+          {INVITATION_STATUS_LABELS[invitation.status] ?? t("Unknown")}
+        </Badge>
+      </div>
+    ),
+  }));
 
   return (
     <div className="@container text-sm">
@@ -197,7 +232,9 @@ export default function WorkerPortalTab({ workerId, worker, onOpen }: DriverPort
                 }}
               >
                 <div className="flex items-center gap-2">
-                  <Badge variant="neutral">{t("Not set up")}</Badge>
+                  <Badge variant="neutral" dot>
+                    {t("Not set up")}
+                  </Badge>
                   <p className="text-xs text-muted-foreground">
                     {t(
                       "Invite {0} to Dash to see loads, settlements and pay, and to raise pay questions from a phone.",
@@ -252,39 +289,15 @@ export default function WorkerPortalTab({ workerId, worker, onOpen }: DriverPort
           {data.invitations.length === 0 ? (
             <SectionPanelQuiet>{t("No invitations sent.")}</SectionPanelQuiet>
           ) : (
-            <ScrollArea viewportClassName="max-h-96" maskVariant="card">
-              <ul className="flex flex-col divide-y divide-border-subtle px-1.5 py-1">
-                {data.invitations.map((invitation) => (
-                  <li key={invitation.id} className="flex items-start justify-between gap-3 p-2">
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-medium">{invitation.email}</p>
-                      <p className="mt-0.5 text-xs text-muted-foreground tabular-nums">
-                        {[
-                          invitation.invitedBy
-                            ? t(
-                                "Sent {0} by {1}",
-                                formatUnixDateMedium(invitation.createdAt),
-                                invitation.invitedBy.name,
-                              )
-                            : t("Sent {0}", formatUnixDateMedium(invitation.createdAt)),
-                          invitation.acceptedAt
-                            ? t("accepted {0}", formatUnixDateMedium(invitation.acceptedAt))
-                            : null,
-                        ]
-                          .filter(Boolean)
-                          .join(" · ")}
-                      </p>
-                    </div>
-                    <Badge
-                      variant={INVITATION_STATUS_TONE[invitation.status] ?? "neutral"}
-                      dot={invitation.status !== "Revoked"}
-                    >
-                      {INVITATION_STATUS_LABELS[invitation.status] ?? t("Unknown")}
-                    </Badge>
-                  </li>
-                ))}
-              </ul>
-            </ScrollArea>
+            <VirtualRows
+              rows={invitationRows}
+              estimateSize={52}
+              className="max-h-96"
+              contentClassName="px-1.5 py-1"
+              aria-label={t("Invitations")}
+              role="list"
+              mask="card"
+            />
           )}
         </SectionPanel>
       </div>

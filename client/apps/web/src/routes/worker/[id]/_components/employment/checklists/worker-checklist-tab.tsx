@@ -6,7 +6,9 @@ import { usePermission } from "@/hooks/use-permission";
 import {
   cancelWorkerChecklist,
   completeWorkerChecklistItem,
+  markWorkerChecklistItemNotApplicable,
   reopenWorkerChecklistItem,
+  skipWorkerChecklistItem,
   startWorkerChecklist,
   type WorkerChecklistItemRow,
   type WorkerChecklistRow,
@@ -28,17 +30,16 @@ import { useState } from "react";
 import { ChecklistsSkeletonBody } from "../employment-skeleton";
 import {
   checklistTemplatesQuery,
-  employmentEventsQuery,
+  employmentCycleEventsQuery,
   workerChecklistsQuery,
 } from "../employment-reads";
-import { ListSketch } from "../list-sketch";
+import { ListSketch } from "../../list-sketch";
 import { ChecklistCard } from "./checklist-card";
 import { buildEmploymentCycles } from "./checklist-cycles";
 import { ClosedChecklists } from "./closed-checklists";
-import { ItemNoteDialog, type ItemNoteMode } from "./item-note-dialog";
-import { useChecklistInvalidation } from "./use-checklist-invalidation";
+import { useWorkerInvalidation } from "../../use-worker-invalidation";
 
-type NoteState = { mode: ItemNoteMode; item: WorkerChecklistItemRow };
+type NoteState = { mode: "skip" | "notApplicable"; item: WorkerChecklistItemRow };
 
 export type ChecklistsViewProps = {
   workerId: string;
@@ -56,39 +57,56 @@ export default function WorkerChecklistTab({ workerId, focusId }: ChecklistsView
   const { allowed: canStart } = usePermission(Resource.WorkerChecklist, Operation.Create);
   const { allowed: canUpdate } = usePermission(Resource.WorkerChecklist, Operation.Update);
   const { allowed: canCancel } = usePermission(Resource.WorkerChecklist, Operation.Cancel);
-  const invalidate = useChecklistInvalidation(workerId);
+  const invalidate = useWorkerInvalidation(workerId, "checklists");
   const [noteState, setNoteState] = useState<NoteState | null>(null);
   const [cancelling, setCancelling] = useState<WorkerChecklistRow | null>(null);
 
   const checklistsQuery = useQuery(workerChecklistsQuery(workerId));
-  const eventsQuery = useQuery(employmentEventsQuery(workerId));
+  const eventsQuery = useQuery(employmentCycleEventsQuery(workerId));
 
   const complete = useApiMutation({
     resourceName: "Checklist item",
     scope: { id: `worker-checklist-items:${workerId}` },
     mutationFn: (item: WorkerChecklistItemRow) =>
       completeWorkerChecklistItem({ id: item.id, version: item.version }),
-    onSuccess: () => void invalidate(),
+    onSuccess: () => invalidate(),
   });
   const reopen = useApiMutation({
     resourceName: "Checklist item",
     scope: { id: `worker-checklist-items:${workerId}` },
     mutationFn: (item: WorkerChecklistItemRow) => reopenWorkerChecklistItem(item.id, item.version),
-    onSuccess: () => void invalidate(),
+    onSuccess: () => invalidate(),
+  });
+  const settle = useApiMutation({
+    resourceName: "Checklist item",
+    scope: { id: `worker-checklist-items:${workerId}` },
+    mutationFn: ({ mode, item, note }: NoteState & { note: string }) => {
+      const input = { id: item.id, note, version: item.version };
+      return mode === "skip"
+        ? skipWorkerChecklistItem(input)
+        : markWorkerChecklistItemNotApplicable(input);
+    },
+    onSuccess: async () => {
+      await invalidate();
+      setNoteState(null);
+    },
   });
   const cancel = useApiMutation({
     resourceName: "Checklist",
     scope: { id: `worker-checklist-cancel:${workerId}` },
     mutationFn: ({ checklist, reason }: { checklist: WorkerChecklistRow; reason: string }) =>
       cancelWorkerChecklist({ id: checklist.id, reason, version: checklist.version }),
-    onSuccess: () => {
+    onSuccess: async () => {
+      await invalidate();
       setCancelling(null);
-      void invalidate();
     },
   });
 
   const itemOnce = useSingleFlight((action: "complete" | "reopen", item: WorkerChecklistItemRow) =>
     action === "complete" ? complete.mutateAsync(item) : reopen.mutateAsync(item),
+  );
+  const settleOnce = useSingleFlight((input: NoteState & { note: string }) =>
+    settle.mutateAsync(input),
   );
   const cancelOnce = useSingleFlight((input: { checklist: WorkerChecklistRow; reason: string }) =>
     cancel.mutateAsync(input),
@@ -110,7 +128,7 @@ export default function WorkerChecklistTab({ workerId, focusId }: ChecklistsView
           void checklistsQuery.refetch();
           void eventsQuery.refetch();
         }}
-        title={t("Couldn't load the checklists")}
+        title={t("The checklists could not be loaded")}
         sketch={<ListSketch />}
       />
     );
@@ -169,18 +187,37 @@ export default function WorkerChecklistTab({ workerId, focusId }: ChecklistsView
         ) : null}
         <ClosedChecklists
           checklists={closed}
+          readCount={checklists.length}
           expandedId={focusId && !openIds.has(focusId) ? focusId : null}
         />
       </div>
 
-      <ItemNoteDialog
+      <ReasonDialog
         open={noteState !== null}
-        onOpenChange={(isOpen) => {
-          if (!isOpen) setNoteState(null);
+        title={noteState?.mode === "notApplicable" ? t("Mark not applicable") : t("Skip item")}
+        description={
+          noteState?.mode === "notApplicable"
+            ? t("Use this when “{0}” does not apply to this worker at all.", noteState.item.label)
+            : t(
+                "“{0}” settles without being done. It still counts toward closing the checklist, so say why.",
+                noteState?.item.label ?? "",
+              )
+        }
+        label={t("Note")}
+        fieldDescription={t("Kept on the item so an auditor can see why it was not done.")}
+        placeholder={t("e.g. Completed at the previous terminal")}
+        confirmLabel={
+          noteState?.mode === "notApplicable" ? t("Mark not applicable") : t("Skip item")
+        }
+        cancelLabel={t("Cancel")}
+        pending={settleOnce.pending}
+        onConfirm={(note) => {
+          if (!noteState) return;
+          void settleOnce.run({ ...noteState, note });
         }}
-        workerId={workerId}
-        mode={noteState?.mode ?? "skip"}
-        item={noteState?.item ?? null}
+        onOpenChange={(isOpen) => {
+          if (!isOpen && !settleOnce.pending) setNoteState(null);
+        }}
       />
       <ReasonDialog
         open={cancelling !== null}
@@ -213,16 +250,16 @@ function StartChecklistPanel({
   openTemplateIds: ReadonlySet<string | null>;
 }) {
   const t = useT();
-  const invalidate = useChecklistInvalidation(workerId);
+  const invalidate = useWorkerInvalidation(workerId, "checklists");
   const [templateId, setTemplateId] = useState("");
   const templatesQuery = useQuery(checklistTemplatesQuery());
   const start = useApiMutation({
     resourceName: "Checklist",
     scope: { id: `worker-checklist-start:${workerId}` },
     mutationFn: (id: string) => startWorkerChecklist({ workerId, templateId: id }),
-    onSuccess: () => {
+    onSuccess: async () => {
+      await invalidate();
       setTemplateId("");
-      void invalidate();
     },
   });
 
@@ -242,7 +279,7 @@ function StartChecklistPanel({
             onValueChange={(value) => setTemplateId(value as string)}
             disabled={templatesQuery.isPending || items.length === 0}
           >
-            <SelectTrigger size="sm" aria-label={t("Template")}>
+            <SelectTrigger aria-label={t("Template")}>
               <SelectValue
                 placeholder={
                   templatesQuery.isError

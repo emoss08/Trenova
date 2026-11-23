@@ -6,7 +6,9 @@ the [self-hosting guide](./self-hosting/README.md) instead.
 ## Prerequisites
 
 - Go 1.27.4
-- Node.js 26 (`client/.nvmrc`) with pnpm
+- Bun 1.4.5 (the `packageManager` field in `client/package.json`). The client moved from Node and
+  pnpm to Bun in November 2026; you do not need Node. Its commands are in
+  [client-commands](./engineering/client-commands.md).
 - Docker
 - [Task](https://taskfile.dev/)
 
@@ -24,7 +26,7 @@ docker compose -f dev/compose.yml up -d
 task tms:run
 
 # Run the web client
-cd client && pnpm install && pnpm dev
+cd client && bun install && bun run dev
 ```
 
 Run `task list` to see every available task.
@@ -46,7 +48,7 @@ On Windows, `setx LOW_RESOURCE true` sets it for every new terminal.
 
 `LOW_RESOURCE_JOBS=2` allows two packages at a time with two threads each; that is a sensible
 setting on a 16 GB machine. Run only the client app you are working on
-(`pnpm --filter @trenova/web dev`) rather than `pnpm dev`, which starts both.
+(`bun run --filter @trenova/web dev`) rather than `bun run dev`, which starts both.
 
 ## Malware scanning
 

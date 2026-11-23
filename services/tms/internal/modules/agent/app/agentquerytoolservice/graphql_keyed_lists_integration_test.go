@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/testutil/orgzonetest"
+
 	"github.com/emoss08/trenova/internal/testutil/entitlementtest"
 
 	"github.com/emoss08/trenova/internal/api/graphql/agentread/agentreadtest"
@@ -651,7 +653,7 @@ func TestConvertedLists_KeyedListsReadWhatTheRepositoryToolsReadUnderRowLevelSec
 	services := &agentreadServices{
 		checklists: checklists, training: training, reviews: reviews,
 		checklistService: workerchecklistservice.New(workerchecklistservice.Params{
-			Logger: logger, Repo: checklists, WorkerRepo: workers,
+			Logger: logger, DB: conn, Repo: checklists, WorkerRepo: workers,
 			CredentialRepo: workercredentialrepository.New(
 				workercredentialrepository.Params{
 					Entitlements: entitlementtest.Instance(),
@@ -718,6 +720,8 @@ func TestConvertedLists_KeyedListsReadWhatTheRepositoryToolsReadUnderRowLevelSec
 	)
 	services.credentialService = workercredentialservice.New(workercredentialservice.Params{
 		Logger: logger, Repo: services.credentials, WorkerRepo: workers,
+		Checklists:    services.checklistService,
+		Organizations: orgzonetest.Organizations{},
 	})
 	resolvers.WorkerCredentialService = services.credentialService
 

@@ -78,7 +78,9 @@ func (r *repository) ListTypes(
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) (*pagination.CursorListResult[*workercredential.WorkerCredentialType], error) {
+		func(
+			ctx context.Context,
+		) (*pagination.CursorListResult[*workercredential.WorkerCredentialType], error) {
 			t := workercredentialdb.WorkerCredentialTypes
 			q := t.Where(
 				keel.When(req.Status != "", t.Status.Eq(domaintypes.Status(req.Status))),
@@ -382,16 +384,17 @@ func (r *repository) ListForWorker(
 				listquery.When(req.IncludeDocument, c.Document())...,
 			)
 
-			entities, err := c.Where(
-				c.WorkerID.In(req.WorkerIDs...),
-				keel.When(
-					!req.IncludeArchived,
-					c.Status.Eq(workercredential.CredentialStatusActive),
-				),
-			).
+			q := heldBy(req).
 				Load(loads...).
-				Order(c.WorkerID.Asc(), c.Status.Asc(), c.CreatedAt.Desc(), c.ID.Asc()).
-				All(ctx, r.db.Keel(ctx))
+				Order(c.WorkerID.Asc(), c.Status.Asc(), c.CreatedAt.Desc(), c.ID.Asc())
+			if req.Limit > 0 {
+				q = q.Limit(req.Limit)
+			}
+			if req.Offset > 0 {
+				q = q.Offset(req.Offset)
+			}
+
+			entities, err := q.All(ctx, r.db.Keel(ctx))
 			if err != nil {
 				r.l.Error("failed to list worker credentials", zap.Error(err))
 				return nil, err
@@ -519,7 +522,6 @@ func expiringQuery(
 ) keel.Query[*workercredential.WorkerCredential] {
 	c := workercredentialdb.WorkerCredentials
 	ct := c.CredentialType()
-	grace, horizon := expiryWindow(req)
 	limit := req.Limit
 	if limit <= 0 {
 		limit = defaultExpiringPageSize
@@ -530,19 +532,7 @@ func expiringQuery(
 		order = []keel.Order{c.ExpiresAt.Asc(), c.ID.Asc()}
 	}
 
-	q := c.Where(
-		entitled,
-		c.Status.Eq(workercredential.CredentialStatusActive),
-		keel.When(!req.AnyExpiry, c.ExpiresAt.Between(grace, horizon)),
-		c.Worker().Status.Eq(domaintypes.StatusActive),
-		ct.Status.Eq(domaintypes.StatusActive),
-		keel.When(len(req.WorkerIDs) > 0, c.WorkerID.In(req.WorkerIDs...)),
-		keel.When(req.TenantInfo.OrgID.IsNotNil(), c.OrganizationID.Eq(req.TenantInfo.OrgID)),
-		keel.When(req.TenantInfo.BuID.IsNotNil(), c.BusinessUnitID.Eq(req.TenantInfo.BuID)),
-		keel.When(req.AfterID.IsNotNil(), c.ID.Gt(req.AfterID)),
-		keel.When(req.RequiredOnly, ct.IsRequired.IsTrue()),
-		keel.When(len(req.CredentialTypeCodes) > 0, ct.Code.In(req.CredentialTypeCodes...)),
-	).
+	q := expiringOf(req, entitled).
 		Load(ct, c.Worker().Profile()).
 		Order(order...).
 		Limit(limit)
@@ -554,6 +544,62 @@ func expiringQuery(
 	}
 
 	return q
+}
+
+func expiringOf(
+	req *workercredentialports.ListExpiringWorkerCredentialsRequest,
+	entitled keel.Pred,
+) keel.Query[*workercredential.WorkerCredential] {
+	c := workercredentialdb.WorkerCredentials
+	ct := c.CredentialType()
+	grace, horizon := expiryWindow(req)
+
+	return c.Where(
+		entitled,
+		c.Status.Eq(workercredential.CredentialStatusActive),
+		keel.When(!req.AnyExpiry, c.ExpiresAt.Between(grace, horizon)),
+		c.Worker().Status.Eq(domaintypes.StatusActive),
+		ct.Status.Eq(domaintypes.StatusActive),
+		keel.When(len(req.WorkerIDs) > 0, c.WorkerID.In(req.WorkerIDs...)),
+		keel.When(req.TenantInfo.OrgID.IsNotNil(), c.OrganizationID.Eq(req.TenantInfo.OrgID)),
+		keel.When(req.TenantInfo.BuID.IsNotNil(), c.BusinessUnitID.Eq(req.TenantInfo.BuID)),
+		keel.When(req.AfterID.IsNotNil(), c.ID.Gt(req.AfterID)),
+		keel.When(req.RequiredOnly, ct.IsRequired.IsTrue()),
+		keel.When(len(req.CredentialTypeCodes) > 0, ct.Code.In(req.CredentialTypeCodes...)),
+	)
+}
+
+func (r *repository) CountArchivedForWorker(
+	ctx context.Context,
+	_ pagination.TenantInfo,
+	workerID pulid.ID,
+) (int, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
+		c := workercredentialdb.WorkerCredentials
+		count, err := c.Where(
+			c.WorkerID.Eq(workerID),
+			c.Status.Eq(workercredential.CredentialStatusArchived),
+		).Count(ctx, r.db.Keel(ctx))
+		if err != nil {
+			return 0, fmt.Errorf("count archived worker credentials: %w", err)
+		}
+		return int(count), nil
+	})
+}
+
+func heldBy(
+	req *workercredentialports.ListWorkerCredentialsRequest,
+) keel.Query[*workercredential.WorkerCredential] {
+	c := workercredentialdb.WorkerCredentials
+	ct := c.CredentialType()
+	code := strings.ToUpper(strings.TrimSpace(req.CredentialTypeCode))
+
+	return c.Where(
+		c.WorkerID.In(req.WorkerIDs...),
+		keel.When(!req.IncludeArchived, c.Status.Eq(workercredential.CredentialStatusActive)),
+		keel.When(code != "", ct.Code.Eq(code)),
+		keel.When(req.RequiredOnly, ct.IsRequired.IsTrue()),
+	)
 }
 
 func (r *repository) ListExpiring(

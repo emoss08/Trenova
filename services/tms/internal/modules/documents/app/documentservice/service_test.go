@@ -635,6 +635,13 @@ func TestService_GetPacketSummary_Integration(t *testing.T) {
 	}
 
 	assert.Equal(t, documentpacketrule.ItemStatusMissing, itemByType[missingDocType.ID].Status)
+	for _, docType := range []*documenttype.DocumentType{
+		missingDocType, needsReviewDocType, expiredDocType, expiringSoonDocType, currentOnlyDocType,
+	} {
+		assert.Equal(t, docType.Name, itemByType[docType.ID].DocumentTypeName,
+			"every rule's type is named from the one batched read")
+		assert.Equal(t, docType.Code, itemByType[docType.ID].DocumentTypeCode)
+	}
 	assert.Equal(
 		t,
 		documentpacketrule.ItemStatusNeedsReview,

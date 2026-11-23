@@ -7,7 +7,6 @@ package driverportalresolver
 
 import (
 	"context"
-	"time"
 
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlctx"
@@ -36,6 +35,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/app/driverportalservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/approvaldelegation"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/profilechange"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/telematics"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerpolicy"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerschedule"
@@ -961,14 +961,8 @@ func (r *QueryResolver) MyHosDailyLogs(ctx context.Context, startDate string, en
 	if err != nil {
 		return nil, err
 	}
-	for _, date := range []string{startDate, endDate} {
-		if _, parseErr := time.Parse("2006-01-02", date); parseErr != nil {
-			return nil, errortypes.NewValidationError(
-				"startDate",
-				errortypes.ErrInvalid,
-				"Dates must use the YYYY-MM-DD format",
-			)
-		}
+	if err = telematics.RequireProviderDays(startDate, endDate); err != nil {
+		return nil, err
 	}
 	wrk, err := r.DriverPortalService.ResolveWorker(ctx, resolvercore.TenantInfo(authCtx))
 	if err != nil {

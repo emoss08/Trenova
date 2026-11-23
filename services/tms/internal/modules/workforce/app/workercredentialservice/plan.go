@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential"
@@ -166,7 +167,7 @@ func (s *Service) PlanAttachDocument(
 	}
 	ownedByCredential := doc.ResourceType == credentialResourceID &&
 		doc.ResourceID == original.ID.String()
-	ownedByWorker := doc.ResourceType == workerResourceType &&
+	ownedByWorker := doc.ResourceType == permission.ResourceWorker.String() &&
 		doc.ResourceID == original.WorkerID.String()
 	if !ownedByCredential && !ownedByWorker {
 		return nil, errortypes.NewValidationError(

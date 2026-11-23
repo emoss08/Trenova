@@ -6,9 +6,12 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workercredentialports"
@@ -33,7 +36,6 @@ const (
 
 	supersededReason     = "Superseded by renewal"
 	clearedOnProfile     = "Cleared on worker profile"
-	workerResourceType   = "worker"
 	credentialResourceID = "worker_credential"
 )
 
@@ -65,98 +67,78 @@ func (r *ListRequest) fallingDue() bool {
 		(len(r.WorkerIDs) == 0 && strings.TrimSpace(r.CredentialTypeCode) == "")
 }
 
-// List reads the credentials the workers named hold, with their types and
-// documents, those falling due, or who holds a type. Credential type codes are stored upper-case, so a code
-// is matched whatever its case.
+// List reads the credentials the workers named hold, narrowed by type and
+// required in the query, those falling due, or who holds a type.
 func (s *Service) List(
 	ctx context.Context,
 	req *ListRequest,
 ) ([]*workercredential.WorkerCredential, error) {
-	if req.TenantInfo.OrgID.IsNil() || req.TenantInfo.BuID.IsNil() {
-		return nil, errortypes.NewValidationError(
+	if err := req.validate(); err != nil {
+		return nil, err
+	}
+	code := strings.ToUpper(strings.TrimSpace(req.CredentialTypeCode))
+	if req.fallingDue() || len(req.WorkerIDs) == 0 {
+		var codes []string
+		if code != "" {
+			codes = []string{code}
+		}
+		return s.repo.ListExpiring(ctx, &workercredentialports.ListExpiringWorkerCredentialsRequest{
+			TenantInfo:          req.TenantInfo,
+			HorizonDays:         req.horizonDays(),
+			GraceDays:           req.graceDays(),
+			RequiredOnly:        req.RequiredOnly,
+			CredentialTypeCodes: codes,
+			WorkerIDs:           req.WorkerIDs,
+			SoonestFirst:        true,
+			Limit:               req.Limit,
+			Offset:              max(req.Offset, 0),
+			AnyExpiry:           !req.fallingDue(),
+		})
+	}
+
+	return s.repo.ListForWorker(ctx, &workercredentialports.ListWorkerCredentialsRequest{
+		TenantInfo:         req.TenantInfo,
+		WorkerIDs:          req.WorkerIDs,
+		IncludeArchived:    req.IncludeArchived,
+		IncludeType:        true,
+		IncludeDocument:    true,
+		CredentialTypeCode: code,
+		RequiredOnly:       req.RequiredOnly,
+		Limit:              req.Limit,
+		Offset:             max(req.Offset, 0),
+	})
+}
+
+func (r *ListRequest) validate() error {
+	if r.TenantInfo.OrgID.IsNil() || r.TenantInfo.BuID.IsNil() {
+		return errortypes.NewValidationError(
 			"tenantInfo",
 			errortypes.ErrRequired,
 			"Credentials are listed within one organization",
 		)
 	}
-	if len(req.WorkerIDs) > MaxListedWorkers {
-		return nil, errortypes.NewValidationError(
+	if len(r.WorkerIDs) > MaxListedWorkers {
+		return errortypes.NewValidationError(
 			"workerIds",
 			errortypes.ErrInvalid,
 			fmt.Sprintf("At most %d workers are listed at once", MaxListedWorkers),
 		)
 	}
-	code := strings.ToUpper(strings.TrimSpace(req.CredentialTypeCode))
-	if req.fallingDue() || len(req.WorkerIDs) == 0 {
-		return s.listAcross(ctx, req, code)
-	}
-
-	held, err := s.repo.ListForWorker(ctx, &workercredentialports.ListWorkerCredentialsRequest{
-		TenantInfo:      req.TenantInfo,
-		WorkerIDs:       req.WorkerIDs,
-		IncludeArchived: req.IncludeArchived,
-		IncludeType:     true,
-		IncludeDocument: true,
-	})
-	if err != nil {
-		return nil, err
-	}
-	out := make([]*workercredential.WorkerCredential, 0, len(held))
-	for _, credential := range held {
-		if admitted(credential, code, req.RequiredOnly) {
-			out = append(out, credential)
-		}
-	}
-	out = out[min(max(req.Offset, 0), len(out)):]
-	if req.Limit > 0 && len(out) > req.Limit {
-		out = out[:req.Limit]
-	}
-
-	return out, nil
+	return nil
 }
 
-// listAcross reads what falls due, or, when the list is not falling due,
-// every active credential of the type named, soonest expiring first and
-// those that never expire last.
-func (s *Service) listAcross(
-	ctx context.Context,
-	req *ListRequest,
-	code string,
-) ([]*workercredential.WorkerCredential, error) {
-	horizon := DefaultExpiryHorizonDays
-	if req.ExpiringWithinDays > 0 {
-		horizon = min(req.ExpiringWithinDays, MaxExpiryHorizonDays)
+func (r *ListRequest) horizonDays() int {
+	if r.ExpiringWithinDays > 0 {
+		return min(r.ExpiringWithinDays, MaxExpiryHorizonDays)
 	}
-	grace := 0
-	if req.IncludeExpired {
-		grace = ExpiredGraceDays
-	}
-	var codes []string
-	if code != "" {
-		codes = []string{code}
-	}
-
-	return s.repo.ListExpiring(ctx, &workercredentialports.ListExpiringWorkerCredentialsRequest{
-		TenantInfo:          req.TenantInfo,
-		HorizonDays:         horizon,
-		GraceDays:           grace,
-		RequiredOnly:        req.RequiredOnly,
-		CredentialTypeCodes: codes,
-		WorkerIDs:           req.WorkerIDs,
-		SoonestFirst:        true,
-		Limit:               req.Limit,
-		Offset:              max(req.Offset, 0),
-		AnyExpiry:           !req.fallingDue(),
-	})
+	return DefaultExpiryHorizonDays
 }
 
-func admitted(credential *workercredential.WorkerCredential, code string, requiredOnly bool) bool {
-	kind := credential.CredentialType
-	if requiredOnly && (kind == nil || !kind.IsRequired) {
-		return false
+func (r *ListRequest) graceDays() int {
+	if r.IncludeExpired {
+		return ExpiredGraceDays
 	}
-
-	return code == "" || (kind != nil && strings.EqualFold(kind.Code, code))
+	return 0
 }
 
 func (s *Service) Get(
@@ -430,9 +412,10 @@ func (s *Service) loadForChange(
 	req *StatusRequest,
 ) (*workercredential.WorkerCredential, error) {
 	original, err := s.repo.GetByID(ctx, &workercredentialports.GetWorkerCredentialByIDRequest{
-		ID:          req.ID,
-		TenantInfo:  req.TenantInfo,
-		IncludeType: true,
+		ID:              req.ID,
+		TenantInfo:      req.TenantInfo,
+		IncludeType:     true,
+		IncludeDocument: true,
 	})
 	if err != nil {
 		return nil, err
@@ -481,10 +464,13 @@ func (s *Service) prepare(
 		entity.ValidateAgainstType(typ, multiErr)
 	}
 
+	entity.Document = nil
 	if !entity.DocumentID.IsNil() {
-		if err := s.validateDocumentOwnership(ctx, entity); err != nil {
+		doc, err := s.validateDocumentOwnership(ctx, entity)
+		if err != nil {
 			return nil, err
 		}
+		entity.Document = doc
 	}
 
 	if multiErr.HasErrors() {
@@ -496,26 +482,26 @@ func (s *Service) prepare(
 func (s *Service) validateDocumentOwnership(
 	ctx context.Context,
 	entity *workercredential.WorkerCredential,
-) error {
+) (*document.Document, error) {
 	doc, err := s.documentRepo.GetByID(ctx, documentports.GetDocumentByIDRequest{
 		ID:         entity.DocumentID,
 		TenantInfo: credentialTenant(entity),
 	})
 	if err != nil {
-		return err
+		return nil, err
 	}
 	ownedByCredential := doc.ResourceType == credentialResourceID &&
 		!entity.ID.IsNil() && doc.ResourceID == entity.ID.String()
-	ownedByWorker := doc.ResourceType == workerResourceType &&
+	ownedByWorker := doc.ResourceType == permission.ResourceWorker.String() &&
 		doc.ResourceID == entity.WorkerID.String()
 	if !ownedByCredential && !ownedByWorker {
-		return errortypes.NewValidationError(
+		return nil, errortypes.NewValidationError(
 			"documentId",
 			errortypes.ErrInvalid,
 			"Document does not belong to this worker",
 		)
 	}
-	return nil
+	return doc, nil
 }
 
 func (s *Service) loadWorker(
@@ -547,6 +533,23 @@ func (s *Service) afterChange(
 	}
 	s.publish(ctx, tenantInfo, realtimeResource, operation, entity.ID, userID)
 	s.publish(ctx, tenantInfo, realtimeWorkers, permission.OpUpdate, entity.WorkerID, userID)
+	s.refreshChecklists(ctx, tenantInfo, entity.WorkerID)
+}
+
+// refreshChecklists ticks the checklist items a credential write may have
+// satisfied, once the write is committed.
+func (s *Service) refreshChecklists(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	workerID pulid.ID,
+) {
+	kernelports.AfterCommit(ctx, func(committed context.Context) {
+		if err := s.checklists.RefreshEvidence(committed, tenantInfo, workerID); err != nil {
+			s.l.Warn("failed to refresh checklists after a credential change",
+				zap.String("workerId", workerID.String()),
+				zap.Error(err))
+		}
+	})
 }
 
 // mirrorToProfile copies a mirrored credential's expiry (and number, for the
@@ -611,23 +614,43 @@ func (s *Service) Summary(
 	if err != nil {
 		return nil, err
 	}
-	return s.summarize(ctx, tenantInfo, wrk)
+	today, err := s.today(ctx, tenantInfo)
+	if err != nil {
+		return nil, err
+	}
+	return s.summarize(ctx, tenantInfo, wrk, today)
 }
 
+// SummaryFor grades a worker already read, as of asOf: the organization's
+// calendar date as the instant it starts in UTC (timeutils.LocalDateAsUTC).
 func (s *Service) SummaryFor(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	wrk *worker.Worker,
+	asOf int64,
 ) (*workercredential.WorkerCredentialSummary, error) {
-	return s.summarize(ctx, tenantInfo, wrk)
+	return s.summarize(ctx, tenantInfo, wrk, asOf)
+}
+
+func (s *Service) today(ctx context.Context, tenantInfo pagination.TenantInfo) (int64, error) {
+	loc, err := tenantports.OrganizationLocation(ctx, s.organizations, tenantInfo)
+	if err != nil {
+		return 0, err
+	}
+	return timeutils.LocalDateAsUTC(timeutils.NowUnix(), loc), nil
 }
 
 func (s *Service) summarize(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	wrk *worker.Worker,
+	asOf int64,
 ) (*workercredential.WorkerCredentialSummary, error) {
 	types, err := s.ActiveTypes(ctx, tenantInfo)
+	if err != nil {
+		return nil, err
+	}
+	archived, err := s.repo.CountArchivedForWorker(ctx, tenantInfo, wrk.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -643,12 +666,9 @@ func (s *Service) summarize(
 	if err != nil {
 		return nil, err
 	}
-	return workercredential.BuildCredentialSummary(
-		wrk,
-		types,
-		credentials,
-		timeutils.NowUnix(),
-	), nil
+	summary := workercredential.BuildCredentialSummary(wrk, types, credentials, asOf)
+	summary.ArchivedCount = archived
+	return summary, nil
 }
 
 // RefreshCompliance re-grades the worker and writes the roll-up onto the
@@ -662,7 +682,11 @@ func (s *Service) RefreshCompliance(
 	if err != nil {
 		return nil, err
 	}
-	summary, err := s.summarize(ctx, tenantInfo, wrk)
+	today, err := s.today(ctx, tenantInfo)
+	if err != nil {
+		return nil, err
+	}
+	summary, err := s.summarize(ctx, tenantInfo, wrk, today)
 	if err != nil {
 		return nil, err
 	}
@@ -770,6 +794,7 @@ func (s *Service) SyncFromProfile(ctx context.Context, wrk *worker.Worker, userI
 		if _, err = s.RefreshCompliance(ctx, tenantInfo, wrk.ID); err != nil {
 			log.Warn("failed to refresh compliance after profile sync", zap.Error(err))
 		}
+		s.refreshChecklists(ctx, tenantInfo, wrk.ID)
 		s.publish(ctx, tenantInfo, realtimeResource, permission.OpUpdate, wrk.ID, userID)
 	}
 	return nil
@@ -884,7 +909,10 @@ func (s *Service) ExpiryForecast(
 		return nil, err
 	}
 
-	now := timeutils.NowUnix()
+	now, err := s.today(ctx, tenantInfo)
+	if err != nil {
+		return nil, err
+	}
 	forecast := &ExpiryForecast{
 		HorizonDays: horizonDays,
 		Items:       make([]*ExpiryForecastItem, 0, len(page)),

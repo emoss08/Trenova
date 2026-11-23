@@ -36,18 +36,27 @@ query WorkerPolicyCompliance($id: ID!) {
   }
 }
 
-query WorkerPolicyAcknowledgements($workerId: ID!) {
-  workerPolicyAcknowledgements(workerId: $workerId) {
-    id
-    policyId
-    versionLabel
-    acknowledgedAt
-    signatureName
-    documentChecksum
-    policy {
-      id
-      title
-      versionLabel
+query WorkerPolicyAcknowledgements($workerId: ID!, $first: Int, $after: String) {
+  workerPolicyAcknowledgements(workerId: $workerId, first: $first, after: $after) {
+    edges {
+      cursor
+      node {
+        id
+        policyId
+        versionLabel
+        acknowledgedAt
+        signatureName
+        documentChecksum
+        policy {
+          id
+          title
+          versionLabel
+        }
+      }
+    }
+    pageInfo {
+      hasNextPage
+      endCursor
     }
   }
 }

@@ -107,6 +107,7 @@ import {
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import { rootFields, type RootFields } from "@trenova/shared/lib/reference-access";
 import { defineDataTableGraphQLConfig } from "@trenova/shared/lib/graphql/data-table";
+import type { Connection } from "./connection";
 
 export type PayProfileRow = NonNullable<
   PayProfileTableQuery["payProfiles"]["edges"]
@@ -152,9 +153,8 @@ export type DriverSettlementDetail = RootFields<
   (typeof DRIVER_SETTLEMENT_ROOT_FIELDS)[number]
 >;
 export type DriverSettlementLineRow = NonNullable<DriverSettlementDetail["lines"]>[number];
-export type WorkerPayAssignmentRow = NonNullable<
-  WorkerPayAssignmentsQuery["workerPayAssignments"]
->[number];
+export type WorkerPayAssignmentRow =
+  WorkerPayAssignmentsQuery["workerPayAssignments"]["edges"][number]["node"];
 export type EffectiveWorkerPayAssignment = NonNullable<
   EffectiveWorkerPayAssignmentQuery["effectiveWorkerPayAssignment"]
 >;
@@ -288,14 +288,15 @@ export async function fetchPayProfileDetail(id: string, options?: { signal?: Abo
   return data.payProfile;
 }
 
+/** One page of a worker's pay assignments, newest first, as the connection the server returns. */
 export async function fetchWorkerPayAssignments(
-  workerId: string,
+  args: { workerId: string; first?: number; after?: string | null },
   options?: { signal?: AbortSignal },
-) {
+): Promise<Connection<WorkerPayAssignmentRow>> {
   const data = await requestGraphQL({
     document: WorkerPayAssignmentsDocument,
     operationName: "WorkerPayAssignments",
-    variables: { workerId },
+    variables: { workerId: args.workerId, first: args.first, after: args.after },
     signal: options?.signal,
   });
   return data.workerPayAssignments;

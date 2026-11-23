@@ -11,7 +11,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerinjury/workerinjurydb"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workersafetyports"
 	"github.com/emoss08/trenova/pkg/dberror"
+	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/listquery"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -72,15 +74,66 @@ func injuriesQuery(
 ) keel.Query[*workerinjury.WorkerInjury] {
 	i := workerinjurydb.WorkerInjuries
 
+	return injuriesOf(req).
+		Load(injuryLoads(req.IncludeWorker, req.IncludeDocument, req.IncludeEvent)...).
+		Order(i.CaseYear.Desc(), i.CaseNumber.Desc()).
+		Limit(limitOr(req.Limit, defaultInjuryPageSize))
+}
+
+func injuriesOf(
+	req *workersafetyports.ListWorkerInjuriesRequest,
+) keel.Query[*workerinjury.WorkerInjury] {
+	i := workerinjurydb.WorkerInjuries
+
 	return i.Where(
 		keel.When(req.WorkerID.IsNotNil(), i.WorkerID.Eq(req.WorkerID)),
 		keel.When(req.CaseYear > 0, i.CaseYear.Eq(req.CaseYear)),
 		keel.When(req.RecordableOnly, i.Classification.In(recordableClassifications...)),
 		keel.When(req.OpenOnly, i.Status.Eq(workerinjury.InjuryCaseOpen)),
-	).
-		Load(injuryLoads(req.IncludeWorker, req.IncludeDocument, req.IncludeEvent)...).
-		Order(i.CaseYear.Desc(), i.CaseNumber.Desc()).
-		Limit(limitOr(req.Limit, defaultInjuryPageSize))
+	)
+}
+
+func (r *repository) PageInjuries(
+	ctx context.Context,
+	req *workersafetyports.ListWorkerInjuriesRequest,
+) (*pagination.CursorListResult[*workerinjury.WorkerInjury], error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.CursorListResult[*workerinjury.WorkerInjury], error) {
+			i := workerinjurydb.WorkerInjuries
+			desc := string(dbtype.SortDirectionDesc)
+			result, err := listquery.Connection(
+				ctx,
+				r.db.Keel(ctx),
+				injuriesOf(req),
+				&listquery.Request[workerinjury.WorkerInjury]{
+					Filter: &pagination.QueryOptions{TenantInfo: req.TenantInfo},
+					Cursor: req.Cursor,
+					Shape: func(
+						q keel.Query[*workerinjury.WorkerInjury],
+					) keel.Query[*workerinjury.WorkerInjury] {
+						return q.Load(
+							injuryLoads(req.IncludeWorker, req.IncludeDocument, req.IncludeEvent)...,
+						)
+					},
+					Keyset: &listquery.Keyset{
+						Orders: []keel.Order{i.CaseYear.Desc(), i.CaseNumber.Desc(), i.ID.Desc()},
+						Shape: []pagination.CursorSortField{
+							{Field: "caseYear", Direction: desc},
+							{Field: "caseNumber", Direction: desc},
+							{Field: "id", Direction: desc},
+						},
+					},
+				},
+			)
+			if err != nil {
+				return nil, fmt.Errorf("page injuries: %w", err)
+			}
+
+			return result, nil
+		},
+	)
 }
 
 func (r *repository) ListInjuries(

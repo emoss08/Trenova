@@ -29,6 +29,7 @@ func (s *Service) ListRecognitions(
 		WorkerID:      workerID,
 		VisibleOnly:   visibleOnly,
 		IncludeActors: true,
+		Limit:         pagination.MaxLimit,
 	})
 }
 

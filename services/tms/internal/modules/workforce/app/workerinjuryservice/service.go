@@ -121,6 +121,13 @@ func (s *Service) publish(
 	}
 }
 
+func (s *Service) PageInjuries(
+	ctx context.Context,
+	req *workersafetyports.ListWorkerInjuriesRequest,
+) (*pagination.CursorListResult[*workerinjury.WorkerInjury], error) {
+	return s.repo.PageInjuries(ctx, req)
+}
+
 func (s *Service) ListInjuries(
 	ctx context.Context,
 	req *workersafetyports.ListWorkerInjuriesRequest,

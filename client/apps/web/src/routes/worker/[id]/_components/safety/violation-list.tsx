@@ -1,7 +1,11 @@
+import { preloadOn } from "@/components/work-pane";
 import { useApiMutation } from "@/hooks/use-api-mutation";
+import { useOpenedOnce } from "@/hooks/use-opened-once";
 import { usePermission } from "@/hooks/use-permission";
+import { lazyComponent } from "@/lib/lazy-component";
 import { deleteSafetyViolation, type SafetyViolationRow } from "@/lib/graphql/fleet-safety";
 import type { WorkerSafetyEventRow } from "@/lib/graphql/worker-safety";
+import { LazyComponent } from "@trenova/shared/components/error-boundary";
 import { Edit02Icon, PlusIcon, Trash01Icon } from "@trenova/shared/components/icons";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -9,7 +13,11 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { csaBasicLabel } from "@trenova/shared/lib/csa";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useState } from "react";
-import { ViolationDialog } from "./violation-dialog";
+
+const ViolationDialog = lazyComponent(
+  () => import("./violation-dialog"),
+  (module) => module.ViolationDialog,
+);
 
 /**
  * The violations cited on one safety event, as the read pane shows them: each one with its BASIC,
@@ -27,6 +35,7 @@ export function ViolationList({
   const { allowed: canRecord } = usePermission(Resource.WorkerSafetyEvent, Operation.Create);
   const { allowed: canDelete } = usePermission(Resource.WorkerSafetyEvent, Operation.Delete);
   const [dialog, setDialog] = useState<{ violation: SafetyViolationRow | null } | null>(null);
+  const opened = useOpenedOnce(dialog !== null);
   const violations = (event.violations ?? []) as SafetyViolationRow[];
   const suggestedBasic =
     event.kind === "Citation"
@@ -62,7 +71,9 @@ export function ViolationList({
                 {violation.code ? <span className="font-mono">{violation.code}</span> : null}
                 <span className="min-w-0">{violation.description}</span>
                 {violation.outOfService ? (
-                  <Badge variant="danger">{t("Out of service")}</Badge>
+                  <Badge variant="danger" dot>
+                    {t("Out of service")}
+                  </Badge>
                 ) : null}
                 <span className="text-muted-foreground tabular-nums">
                   {t("weight {0}", violation.severityWeight)}
@@ -74,6 +85,7 @@ export function ViolationList({
                     size="icon-xs"
                     variant="ghost"
                     aria-label={t("Correct {0}", violation.description)}
+                    {...preloadOn(ViolationDialog)}
                     onClick={() => setDialog({ violation })}
                   >
                     <Edit02Icon className="size-3" />
@@ -101,20 +113,25 @@ export function ViolationList({
           size="xs"
           variant="quiet"
           className="self-start"
+          {...preloadOn(ViolationDialog)}
           onClick={() => setDialog({ violation: null })}
         >
-          <PlusIcon className="size-3" />
+          <PlusIcon className="size-3.5" />
           {t("Cite a violation")}
         </Button>
       ) : null}
-      <ViolationDialog
-        open={dialog !== null}
-        onOpenChange={(open) => !open && setDialog(null)}
-        safetyEventId={event.id}
-        suggestedBasic={suggestedBasic}
-        violation={dialog?.violation ?? null}
-        onSaved={onChanged}
-      />
+      {opened ? (
+        <LazyComponent fallback={null}>
+          <ViolationDialog.Component
+            open={dialog !== null}
+            onOpenChange={(open) => !open && setDialog(null)}
+            safetyEventId={event.id}
+            suggestedBasic={suggestedBasic}
+            violation={dialog?.violation ?? null}
+            onSaved={onChanged}
+          />
+        </LazyComponent>
+      ) : null}
     </div>
   );
 }

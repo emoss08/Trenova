@@ -1,14 +1,10 @@
 import type { WorkerTabProps } from "@/routes/worker/use-worker-state";
-import { LazyComponent } from "@trenova/shared/components/error-boundary";
-import { lazy } from "react";
-import { ActivitySkeleton } from "./activity-skeleton";
+import WorkerActivity from "./worker-activity";
 
-const WorkerActivity = lazy(() => import("./worker-activity"));
-
+/**
+ * The Activity tab is one view, so its chunk is the view: the page lazy-loads this module behind
+ * the tab's skeleton, and nothing waits on a second read after it.
+ */
 export default function ActivityTab({ workerId, onOpen }: WorkerTabProps) {
-  return (
-    <LazyComponent fallback={<ActivitySkeleton />}>
-      <WorkerActivity workerId={workerId} onOpen={onOpen} />
-    </LazyComponent>
-  );
+  return <WorkerActivity workerId={workerId} onOpen={onOpen} />;
 }

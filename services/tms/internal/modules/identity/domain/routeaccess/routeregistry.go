@@ -417,6 +417,16 @@ func (rr *RouteRegistry) registerAdministrationRoutes() {
 	})
 
 	_ = rr.Register(&RouteDefinition{
+		Path:      "/admin/desk-conversations",
+		MatchType: RouteMatchExact,
+		Requirements: []RouteRequirement{
+			{Resource: permission.ResourceDeskTranscript, Operation: permission.OpRead},
+		},
+		DisplayName: "Desk Conversations",
+		Category:    "Administration",
+	})
+
+	_ = rr.Register(&RouteDefinition{
 		Path:      "/admin/sequence-configs",
 		MatchType: RouteMatchExact,
 		Requirements: []RouteRequirement{

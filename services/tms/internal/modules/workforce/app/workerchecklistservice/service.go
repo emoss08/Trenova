@@ -7,12 +7,12 @@ package workerchecklistservice
 
 import (
 	"context"
-	"sync"
 
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerchecklist"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerchecklistports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workercredentialports"
@@ -37,6 +37,7 @@ type Params struct {
 	fx.In
 
 	Logger         *zap.Logger
+	DB             kernelports.Transactor
 	Repo           workerchecklistports.WorkerChecklistRepository
 	WorkerRepo     workerports.WorkerRepository
 	CredentialRepo workercredentialports.WorkerCredentialRepository
@@ -53,7 +54,7 @@ type Service struct {
 	documentRepo   documentports.DocumentRepository
 	auditService   auditports.AuditService
 	realtime       realtimeports.RealtimeService
-	refreshLocks   sync.Map
+	db             kernelports.Transactor
 }
 
 func New(p Params) *Service {
@@ -65,6 +66,7 @@ func New(p Params) *Service {
 		documentRepo:   p.DocumentRepo,
 		auditService:   p.AuditService,
 		realtime:       p.Realtime,
+		db:             p.DB,
 	}
 }
 

@@ -35,6 +35,8 @@ export function SensitiveField<T extends FieldValues>({
           name={name}
           label={label}
           description={description}
+          descriptionId={descriptionId}
+          errorId={errorId}
           required={isRequired(rules, required)}
           error={fieldState.error?.message}
           className={className}
@@ -46,7 +48,9 @@ export function SensitiveField<T extends FieldValues>({
               {...props}
               id={inputId}
               type={show ? "text" : "password"}
-              aria-describedby={(description && descriptionId) || (fieldState.error && errorId)}
+              aria-describedby={
+                fieldState.error ? errorId : description ? descriptionId : undefined
+              }
               aria-invalid={fieldState.invalid}
               rightElement={
                 field.value && !fieldState.invalid ? (

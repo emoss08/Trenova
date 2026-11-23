@@ -25,6 +25,8 @@ export function WorkPaneProvider({
   const [dirtyId, setDirtyId] = useState<string | null>(null);
   const [host, setHost] = useState<HTMLDivElement | null>(null);
 
+  // Kept by hand, not left to the compiler: every pane registers in an effect keyed on `api`, and a
+  // new object (an uncompiled render, a test) would re-register them all and loop on `register`.
   const api = useMemo<WorkPaneApi>(() => {
     const closeThen = (then: () => void) => {
       const id = activeRef.current;
@@ -66,10 +68,7 @@ export function WorkPaneProvider({
     onDirtyChange?.(isDirty);
   }, [isDirty, onDirtyChange]);
 
-  const state = useMemo<WorkPaneState>(
-    () => ({ activeId, isDirty, host }),
-    [activeId, isDirty, host],
-  );
+  const state: WorkPaneState = { activeId, isDirty, host };
 
   return (
     <WorkPaneApiContext.Provider value={api}>

@@ -46,6 +46,7 @@ type ListBenefitEnrollmentsRequest struct {
 	IncludePlan   bool                                 `json:"includePlan"`
 	IncludeWorker bool                                 `json:"includeWorker"`
 	Limit         int                                  `json:"limit"`
+	Cursor        pagination.CursorInfo                `json:"cursor"`
 }
 
 type GetBenefitEnrollmentByIDRequest struct {
@@ -100,6 +101,10 @@ type BenefitRepository interface {
 		ctx context.Context,
 		req *ListBenefitEnrollmentsRequest,
 	) ([]*paybenefit.WorkerBenefitEnrollment, error)
+	PageEnrollments(
+		ctx context.Context,
+		req *ListBenefitEnrollmentsRequest,
+	) (*pagination.CursorListResult[*paybenefit.WorkerBenefitEnrollment], error)
 	GetEnrollmentByID(
 		ctx context.Context,
 		req *GetBenefitEnrollmentByIDRequest,

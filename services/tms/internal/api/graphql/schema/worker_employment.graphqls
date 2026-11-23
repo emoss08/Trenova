@@ -161,11 +161,32 @@ input AmendWorkerEmploymentEventInput {
   version: Int
 }
 
+type WorkerEmploymentEventEdge {
+  node: WorkerEmploymentEvent!
+  cursor: String!
+}
+
+"""
+A worker's employment events, a page at a time. totalCount is counted only when it is selected.
+"""
+type WorkerEmploymentEventConnection {
+  edges: [WorkerEmploymentEventEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
+}
+
 extend type Query {
+  "A worker's employment timeline, newest first, a page at a time."
   workerEmploymentEvents(
     workerId: ID!
     kinds: [WorkerEmploymentEventKind!]
-  ): [WorkerEmploymentEvent!]!
+    "How many to read, from 1 to 100; 20 when left out."
+    first: Int
+    "The endCursor of the page before this one."
+    after: String
+  ): WorkerEmploymentEventConnection!
   workerEmploymentEvent(id: ID!): WorkerEmploymentEvent!
   "Needs worker_employment_event read."
   workerEmploymentEventOptions(workerId: ID!): WorkerEmploymentEventOptions!

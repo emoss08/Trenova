@@ -1,6 +1,6 @@
-import { HoverGlideGroup } from "@/components/hover-glide";
 import { SectionPanel, SectionPanelQuiet } from "@/components/section-panel";
-import { useWorkPane } from "@/components/work-pane";
+import { VirtualRows } from "@/components/virtual-rows";
+import { lazyWorkPane, preloadOn, useWorkPane } from "@/components/work-pane";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { usePermission } from "@/hooks/use-permission";
 import {
@@ -9,27 +9,30 @@ import {
   fetchShiftSwapRequests,
   fetchWorkerAvailabilityPreferences,
   fetchWorkerShiftAssignments,
-  ROTA_KEY,
   setWorkerAvailabilityPreference,
   SHIFT_ASSIGNMENTS_KEY,
   SHIFT_SWAPS_KEY,
   type ShiftAssignmentRow,
   type ShiftSwapRow,
 } from "@/lib/graphql/scheduling";
-import { worker as workerQueries } from "@/lib/queries/worker";
+import { workerOverviewQuery } from "@/lib/queries/worker";
 import type { WorkerRecord, WorkerTabProps } from "@/routes/worker/use-worker-state";
 import { useWorkerAreas } from "@/routes/worker/worker-areas";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { ErrorState } from "@trenova/shared/components/errors/error-state";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import { DescriptionItem, DescriptionList } from "@trenova/shared/components/ui/description-list";
-import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { SegmentedControl } from "@trenova/shared/components/ui/segmented-control";
 import { WithheldValue } from "@trenova/shared/components/withheld-value";
 import { useNow } from "@trenova/shared/hooks/use-now";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { formatRange, getTodayDate } from "@trenova/shared/lib/date";
+import {
+  daysUntil,
+  formatRange,
+  formatUnixDateMedium,
+  getTodayDate,
+} from "@trenova/shared/lib/date";
 import {
   describeShiftPattern,
   formatShiftDate,
@@ -40,18 +43,24 @@ import { Operation, Resource } from "@trenova/shared/types/permission";
 import type { AvailabilityPreferenceValue } from "@trenova/shared/types/scheduling";
 import { useState } from "react";
 import { ConfirmDialog } from "@/components/confirm-dialog";
+import { WORKER_FORM_PANES } from "../../worker-form-panes";
+import { ListCapLine } from "../../list-more";
+import { useWorkerInvalidation } from "../../use-worker-invalidation";
 import { TimeSkeleton } from "../time-skeleton";
-import { AssignShiftPane } from "./assign-shift-pane";
 import {
   availabilitySummary,
-  daysOut,
   longWeekday,
-  nextApprovedTimeOff,
   shortWeekday,
   WEEK_ORDER,
   type StatedPreference,
 } from "./schedule-model";
 import { WeekPattern } from "./week-pattern";
+
+const AssignShiftPane = lazyWorkPane(
+  WORKER_FORM_PANES["assign-shift"],
+  (module) => module.AssignShiftPane,
+  { title: (props, t) => (props.moving ? t("Move to another shift") : t("Put on a shift")) },
+);
 
 type PreferenceChoice = AvailabilityPreferenceValue | "None";
 
@@ -63,7 +72,6 @@ type ScheduleViewProps = Pick<WorkerTabProps, "workerId" | "worker" | "open" | "
  */
 export default function ScheduleView({ workerId, worker, open, onOpen }: ScheduleViewProps) {
   const t = useT();
-  const queryClient = useQueryClient();
   const pane = useWorkPane();
   const { allowed: canAssign } = usePermission(Resource.WorkerSchedule, Operation.Assign);
   const { allowed: canReadSwaps } = usePermission(Resource.ShiftSwap, Operation.Read);
@@ -77,12 +85,7 @@ export default function ScheduleView({ workerId, worker, open, onOpen }: Schedul
     queryFn: ({ signal }) => fetchWorkerAvailabilityPreferences(workerId, { signal }),
   });
 
-  const invalidate = () =>
-    Promise.all([
-      queryClient.invalidateQueries({ queryKey: [SHIFT_ASSIGNMENTS_KEY, workerId] }),
-      queryClient.invalidateQueries({ queryKey: [ROTA_KEY] }),
-      queryClient.invalidateQueries({ queryKey: workerQueries.overview(workerId).queryKey }),
-    ]);
+  const invalidate = useWorkerInvalidation(workerId, "schedule");
 
   if (assignmentsQuery.isPending) return <TimeSkeleton view="schedule" />;
   if (assignmentsQuery.isError) {
@@ -96,6 +99,7 @@ export default function ScheduleView({ workerId, worker, open, onOpen }: Schedul
     );
   }
 
+  // The server returns the newest 100 (SERVER_LIST_CAP), so the one in force (no end) is here.
   const assignments = assignmentsQuery.data;
   const current = assignments.find((row) => !row.effectiveTo) ?? null;
   const history = assignments.filter((row) => row.id !== current?.id);
@@ -111,6 +115,7 @@ export default function ScheduleView({ workerId, worker, open, onOpen }: Schedul
           worker={worker}
           current={current}
           history={history}
+          assignmentCount={assignments.length}
           canAssign={canAssign}
           onAssign={() =>
             pane.closeThen(() => onOpen({ tab: "time", view: "schedule", form: "assign-shift" }))
@@ -130,7 +135,7 @@ export default function ScheduleView({ workerId, worker, open, onOpen }: Schedul
         {canReadSwaps ? <SwapsPanel workerId={workerId} /> : null}
       </div>
       {canAssign ? (
-        <AssignShiftPane
+        <AssignShiftPane.Component
           open={open.form === "assign-shift"}
           onOpenChange={(next) => {
             if (!next) onOpen({ tab: "time", view: "schedule" });
@@ -138,7 +143,7 @@ export default function ScheduleView({ workerId, worker, open, onOpen }: Schedul
           workerId={workerId}
           moving={current !== null}
           preferences={preferences}
-          onAssigned={() => void invalidate()}
+          onAssigned={invalidate}
         />
       ) : null}
     </div>
@@ -149,6 +154,7 @@ function ShiftPanel({
   worker,
   current,
   history,
+  assignmentCount,
   canAssign,
   onAssign,
   onEnded,
@@ -156,6 +162,8 @@ function ShiftPanel({
   worker: WorkerRecord;
   current: ShiftAssignmentRow | null;
   history: readonly ShiftAssignmentRow[];
+  /** How many assignments the server returned; at its cap, older ones are not shown. */
+  assignmentCount: number;
   canAssign: boolean;
   onAssign: () => void;
   onEnded: () => Promise<unknown>;
@@ -229,7 +237,12 @@ function ShiftPanel({
                 {t("End today")}
               </Button>
             ) : null}
-            <Button size="sm" variant="secondary" onClick={onAssign}>
+            <Button
+              size="sm"
+              variant="secondary"
+              {...preloadOn(AssignShiftPane)}
+              onClick={onAssign}
+            >
               {current ? t("Move to another shift") : t("Put on a shift")}
             </Button>
           </div>
@@ -248,15 +261,19 @@ function ShiftPanel({
           <p className="px-3 pt-2.5 pb-1 text-xs font-medium text-foreground-subtle">
             {t("Earlier shifts")}
           </p>
-          <ScrollArea className="max-h-44" maskVariant="card">
-            <HoverGlideGroup>
-              <ul className="flex flex-col px-1.5 pb-1.5">
-                {history.map((row) => (
-                  <PastAssignment key={row.id} assignment={row} />
-                ))}
-              </ul>
-            </HoverGlideGroup>
-          </ScrollArea>
+          <VirtualRows
+            rows={history.map((row) => ({
+              key: row.id,
+              render: () => <PastAssignment assignment={row} />,
+            }))}
+            aria-label={t("Earlier shifts")}
+            mask="card"
+            className="max-h-44"
+            contentClassName="px-1.5 pb-1.5"
+            hoverGlide
+            estimateSize={30}
+            footer={<ListCapLine count={assignmentCount} />}
+          />
         </div>
       ) : null}
       {current ? (
@@ -281,7 +298,7 @@ function ShiftPanel({
 function PastAssignment({ assignment }: { assignment: ShiftAssignmentRow }) {
   const t = useT();
   return (
-    <li
+    <div
       data-glide-target
       className="flex items-center justify-between gap-3 rounded-md px-1.5 py-1.5 text-xs"
     >
@@ -300,10 +317,11 @@ function PastAssignment({ assignment }: { assignment: ShiftAssignmentRow }) {
           ? formatRange(assignment.effectiveFrom, assignment.effectiveTo, {
               year: "always",
               join: "words",
+              timezone: "UTC",
             })
           : formatShiftDate(assignment.effectiveFrom)}
       </span>
-    </li>
+    </div>
   );
 }
 
@@ -321,7 +339,7 @@ function AvailabilityPanel({
   onRetry: () => void;
 }) {
   const t = useT();
-  const queryClient = useQueryClient();
+  const invalidate = useWorkerInvalidation(workerId, "schedule");
   const { allowed: canSet } = usePermission(Resource.WorkerSchedule, Operation.Update);
   const [changed, setChanged] = useState<{ day: number; tick: "a" | "b" } | null>(null);
   const save = useApiMutation({
@@ -334,10 +352,7 @@ function AvailabilityPanel({
         day: input.dayOfWeek,
         tick: previous?.tick === "a" ? "b" : "a",
       }));
-      return Promise.all([
-        queryClient.invalidateQueries({ queryKey: [AVAILABILITY_PREFERENCES_KEY, workerId] }),
-        queryClient.invalidateQueries({ queryKey: [ROTA_KEY] }),
-      ]);
+      return invalidate();
     },
   });
   const items: { value: PreferenceChoice; label: string; disabled: boolean }[] = [
@@ -361,7 +376,7 @@ function AvailabilityPanel({
             layout="compact"
             error={error}
             onRetry={onRetry}
-            title={t("Stated availability could not be loaded")}
+            title={t("The stated availability could not be loaded")}
           />
         </div>
       ) : (
@@ -427,21 +442,24 @@ function SwapsPanel({ workerId }: { workerId: string }) {
             layout="compact"
             error={query.error}
             onRetry={() => void query.refetch()}
-            title={t("Swaps could not be loaded")}
+            title={t("The swaps could not be loaded")}
           />
         </div>
       ) : swaps.length === 0 ? (
         <SectionPanelQuiet>{t("No swap requests.")}</SectionPanelQuiet>
       ) : (
-        <ScrollArea className="max-h-60" maskVariant="card">
-          <HoverGlideGroup>
-            <ul className="flex flex-col px-1.5 py-1">
-              {swaps.map((swap) => (
-                <SwapRow key={swap.id} swap={swap} workerId={workerId} />
-              ))}
-            </ul>
-          </HoverGlideGroup>
-        </ScrollArea>
+        <VirtualRows
+          rows={swaps.map((swap) => ({
+            key: swap.id,
+            render: () => <SwapRow swap={swap} workerId={workerId} />,
+          }))}
+          aria-label={t("Swaps")}
+          mask="card"
+          className="max-h-60"
+          contentClassName="px-1.5 py-1"
+          hoverGlide
+          estimateSize={48}
+        />
       )}
     </SectionPanel>
   );
@@ -454,7 +472,7 @@ function SwapRow({ swap, workerId }: { swap: ShiftSwapRow; workerId: string }) {
   const other = outgoing ? swap.counterpartyWorker : swap.requestingWorker;
   const otherName = other ? `${other.firstName} ${other.lastName}` : null;
   return (
-    <li
+    <div
       data-glide-target
       className="flex items-center justify-between gap-2 rounded-md px-1.5 py-2 text-xs"
     >
@@ -475,18 +493,16 @@ function SwapRow({ swap, workerId }: { swap: ShiftSwapRow; workerId: string }) {
       <Badge variant={tone.variant} dot>
         {t(tone.label)}
       </Badge>
-    </li>
+    </div>
   );
 }
 
 function HomeTimePanel({ workerId, worker }: { workerId: string; worker: WorkerRecord }) {
   const t = useT();
-  const nowSec = useNow();
   const areas = useWorkerAreas();
   const canReadTimeOff = areas.isDrawable({ tab: "time", view: "time-off" });
-  const ptoQuery = useQuery({ ...workerQueries.ptoHistory(workerId), enabled: canReadTimeOff });
-  const out = daysOut(worker.lastHomeAt, nowSec);
-  const next = ptoQuery.data ? nextApprovedTimeOff(ptoQuery.data, nowSec) : null;
+  const overview = useQuery(workerOverviewQuery(workerId));
+  const next = overview.data?.nextTimeOff ?? null;
   const home = [worker.city, worker.state?.abbreviation].filter(Boolean).join(", ");
 
   return (
@@ -495,27 +511,24 @@ function HomeTimePanel({ workerId, worker }: { workerId: string; worker: WorkerR
         <DescriptionList layout="split">
           <DescriptionItem label={t("Last home")} numeric>
             {worker.lastHomeAt ? (
-              <>
-                {formatShiftDate(worker.lastHomeAt)}
-                {out !== null ? (
-                  <span className="text-muted-foreground">
-                    {" "}
-                    {t("· {0, plural, one {# day out} other {# days out}}", out)}
-                  </span>
-                ) : null}
-              </>
+              <LastHome lastHomeAt={worker.lastHomeAt} />
             ) : (
               <span className="text-muted-foreground">{t("Not recorded")}</span>
             )}
           </DescriptionItem>
           {canReadTimeOff ? (
-            <DescriptionItem label={t("Next approved time off")} numeric>
-              {ptoQuery.isPending ? (
+            <DescriptionItem label={t("Next time off")} numeric>
+              {overview.isPending ? (
                 <span aria-hidden className="inline-block h-3 w-24 ui-shimmer rounded-sm" />
-              ) : ptoQuery.isError ? (
+              ) : overview.isError ? (
                 <span className="text-muted-foreground">{t("Could not be loaded")}</span>
               ) : next ? (
-                formatRange(next.startDate, next.endDate, { year: "always", join: "words" })
+                <>
+                  {formatRange(next.startDate, next.endDate, { year: "always", join: "words" })}
+                  {next.status === "Requested" ? (
+                    <span className="text-muted-foreground"> {t("· waiting on a decision")}</span>
+                  ) : null}
+                </>
               ) : (
                 <span className="text-muted-foreground">{t("None booked")}</span>
               )}
@@ -527,5 +540,21 @@ function HomeTimePanel({ workerId, worker }: { workerId: string; worker: WorkerR
         </DescriptionList>
       </div>
     </SectionPanel>
+  );
+}
+
+/** The day they were last home and how many days ago, moving at midnight. */
+function LastHome({ lastHomeAt }: { lastHomeAt: number }) {
+  const t = useT();
+  const now = useNow("minute");
+  const out = Math.max(0, -daysUntil(lastHomeAt, { now }));
+  return (
+    <>
+      {formatUnixDateMedium(lastHomeAt)}
+      <span className="text-muted-foreground">
+        {" "}
+        {t("· {0, plural, one {# day out} other {# days out}}", out)}
+      </span>
+    </>
   );
 }

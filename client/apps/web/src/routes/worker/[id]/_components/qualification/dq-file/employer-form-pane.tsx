@@ -28,9 +28,9 @@ import {
   employmentVerificationStatusSchema,
   type EmploymentVerificationFormValues,
 } from "@trenova/shared/types/worker-dqf";
-import { useEffect, useRef, type ReactNode } from "react";
 import { FormProvider, useForm, useWatch, type Resolver } from "react-hook-form";
-import { useDqfInvalidation } from "./use-dqf-invalidation";
+import { useWorkerInvalidation } from "../../use-worker-invalidation";
+import { PaneFormSection } from "../../pane-section";
 
 export type EmployerFormPaneProps = {
   open: boolean;
@@ -98,7 +98,7 @@ export function EmployerFormPane({
 }: EmployerFormPaneProps) {
   const t = useT();
 
-  const invalidate = useDqfInvalidation(workerId);
+  const invalidate = useWorkerInvalidation(workerId, "dq-file");
   const isEdit = Boolean(verification);
   const statusOptions = employmentVerificationStatusSchema.options.map((value) => ({
     value,
@@ -115,14 +115,6 @@ export function EmployerFormPane({
     defaultValues: defaultsFor(verification),
   });
   const { control, handleSubmit, reset } = form;
-
-  const loadedFor = useRef<string | null>(null);
-  useEffect(() => {
-    const key = open ? (verification?.id ?? "new") : null;
-    if (key === loadedFor.current) return;
-    loadedFor.current = key;
-    if (key) reset(defaultsFor(verification));
-  }, [open, verification, reset]);
 
   const [status, wasDotRegulated, hadAccidents] = useWatch({
     control,
@@ -179,7 +171,7 @@ export function EmployerFormPane({
     <WorkPane
       open={open}
       onOpenChange={onOpenChange}
-      title={isEdit ? t("Edit previous employer") : t("Add a previous employer")}
+      title={isEdit ? t("Edit previous employer") : t("Add previous employer")}
       description={t(
         "Every DOT-regulated employer in the three years before hire gets a safety history request within thirty days (49 CFR 391.23).",
       )}
@@ -196,7 +188,7 @@ export function EmployerFormPane({
           }}
         >
           <WorkPaneBody>
-            <PaneSection title={t("The employer")}>
+            <PaneFormSection title={t("The employer")}>
               <FormControl cols="full">
                 <InputField<EmploymentVerificationFormValues>
                   control={control}
@@ -212,6 +204,7 @@ export function EmployerFormPane({
                   name="employerDotNumber"
                   label={t("USDOT number")}
                   placeholder={t("e.g. 1234567")}
+                  inputClassProps="font-mono"
                   description={t("Identifies the carrier when the request is sent.")}
                 />
               </FormControl>
@@ -221,6 +214,7 @@ export function EmployerFormPane({
                   name="employerMcNumber"
                   label={t("MC number")}
                   placeholder={t("e.g. MC-123456")}
+                  inputClassProps="font-mono"
                 />
               </FormControl>
               <FormControl>
@@ -250,9 +244,9 @@ export function EmployerFormPane({
                   )}
                 />
               </FormControl>
-            </PaneSection>
+            </PaneFormSection>
 
-            <PaneSection title={t("Contact")}>
+            <PaneFormSection title={t("Contact")}>
               <FormControl cols="full">
                 <InputField<EmploymentVerificationFormValues>
                   control={control}
@@ -277,9 +271,9 @@ export function EmployerFormPane({
                   placeholder={t("e.g. (555) 123-4567")}
                 />
               </FormControl>
-            </PaneSection>
+            </PaneFormSection>
 
-            <PaneSection title={t("Request")}>
+            <PaneFormSection title={t("Request")}>
               <FormControl>
                 <SelectField<EmploymentVerificationFormValues>
                   control={control}
@@ -333,10 +327,10 @@ export function EmployerFormPane({
                   ) : null}
                 </>
               ) : null}
-            </PaneSection>
+            </PaneFormSection>
 
             {isEdit && answered ? (
-              <PaneSection title={t("What they reported")}>
+              <PaneFormSection title={t("What they reported")}>
                 <FormControl>
                   <SwitchField<EmploymentVerificationFormValues>
                     control={control}
@@ -373,7 +367,7 @@ export function EmployerFormPane({
                     maxLength={4000}
                   />
                 </FormControl>
-              </PaneSection>
+              </PaneFormSection>
             ) : null}
 
             <FormGroup cols={1}>
@@ -384,34 +378,25 @@ export function EmployerFormPane({
                   label={t("Notes")}
                   placeholder={t("e.g. Left a voicemail with HR")}
                   maxLength={2000}
+                  description={
+                    isEdit
+                      ? undefined
+                      : t(
+                          "Record the response by editing this employer once it arrives. Each chase is kept as the record of a good-faith effort.",
+                        )
+                  }
                 />
               </FormControl>
             </FormGroup>
-            {isEdit ? null : (
-              <p className="text-xs text-muted-foreground">
-                {t(
-                  "Record the response by editing this employer once it arrives. Each chase is kept as the record of a good-faith effort.",
-                )}
-              </p>
-            )}
           </WorkPaneBody>
           <WorkPaneFooter>
             <WorkPaneCancel />
             <Button type="submit" size="sm" isLoading={isPending}>
-              {isEdit ? t("Save changes") : t("Add employer")}
+              {isEdit ? t("Save changes") : t("Add previous employer")}
             </Button>
           </WorkPaneFooter>
         </Form>
       </FormProvider>
     </WorkPane>
-  );
-}
-
-function PaneSection({ title, children }: { title: string; children: ReactNode }) {
-  return (
-    <section aria-label={title} className="flex flex-col gap-3">
-      <h4 className="text-sm font-semibold">{title}</h4>
-      <FormGroup cols={2}>{children}</FormGroup>
-    </section>
   );
 }

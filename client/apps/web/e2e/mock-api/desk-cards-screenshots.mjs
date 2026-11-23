@@ -2,7 +2,7 @@
 // beside the conversation that looked the record up, and on its own page at
 // full length. Run with the mock API and the web app up (see README.md):
 //
-//   node e2e/mock-api/desk-cards-screenshots.mjs [outDir] [name,name,...]
+//   bun e2e/mock-api/desk-cards-screenshots.mjs [outDir] [name,name,...]
 //
 // Every card is shot loaded (light and dark), with something wrong on it,
 // empty, as its skeleton (the mock holds the card's requests open), unreadable,

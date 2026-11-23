@@ -8,12 +8,13 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/equipment/ports/tractorports"
 	"github.com/emoss08/trenova/internal/modules/identity/app/ptoledgerservice"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/paybenefit"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerdqfservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workersafetyservice"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/employment"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/profilechange"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerchecklist"
@@ -34,13 +35,12 @@ import (
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/timeutils"
 	"golang.org/x/sync/errgroup"
 )
 
 const (
 	overviewConcurrency = 6
-	workerResourceType  = "worker"
-	employmentEventCap  = 500
 	benefitPlanCap      = 200
 	benefitEnrolmentCap = 200
 	profileChangeCap    = 100
@@ -51,10 +51,11 @@ type gathered struct {
 	training      *workertraining.WorkerTrainingSummary
 	safety        *workersafetyservice.Evidence
 	checklists    []*workerchecklist.WorkerChecklist
+	closedLists   int
 	balances      []*ptoledgerservice.BalanceView
 	reviews       []*workerreview.PerformanceReview
 	drugAlcohol   *workerdot.DrugAlcoholStanding
-	events        []*employment.WorkerEmploymentEvent
+	employment    *workeremploymentports.EmploymentEventSummary
 	leave         *workerleave.LeaveEntitlement
 	schedule      *ScheduleSection
 	hos           *HOSSection
@@ -69,9 +70,10 @@ type gathered struct {
 }
 
 type gatherInput struct {
-	req *GetRequest
-	wrk *worker.Worker
-	now int64
+	req   *GetRequest
+	wrk   *worker.Worker
+	now   int64
+	today int64
 }
 
 func (s *Service) Get(ctx context.Context, req *GetRequest) (*Overview, error) {
@@ -87,7 +89,16 @@ func (s *Service) Get(ctx context.Context, req *GetRequest) (*Overview, error) {
 		return nil, err
 	}
 
-	in := &gatherInput{req: req, wrk: wrk, now: now}
+	loc, err := tenantports.OrganizationLocation(ctx, s.organizations, req.TenantInfo)
+	if err != nil {
+		return nil, err
+	}
+	in := &gatherInput{
+		req:   req,
+		wrk:   wrk,
+		now:   now,
+		today: timeutils.LocalDateAsUTC(now, loc),
+	}
 	g := &gathered{}
 	if err = s.gather(ctx, in, g); err != nil {
 		return nil, err
@@ -108,7 +119,7 @@ func (s *Service) gather(ctx context.Context, in *gatherInput, g *gathered) erro
 	if sections.Credentials || sections.Qualification {
 		group.Go(func() error {
 			var err error
-			g.credentials, err = s.credentials.SummaryFor(ctx, tenantInfo, in.wrk)
+			g.credentials, err = s.credentials.SummaryFor(ctx, tenantInfo, in.wrk, in.today)
 			return err
 		})
 	}
@@ -125,7 +136,7 @@ func (s *Service) gather(ctx context.Context, in *gatherInput, g *gathered) erro
 	if sections.Training {
 		group.Go(func() error {
 			var err error
-			g.training, err = s.training.SummaryFor(ctx, tenantInfo, in.wrk)
+			g.training, err = s.training.SummaryFor(ctx, tenantInfo, in.wrk, in.today)
 			return err
 		})
 	}
@@ -147,6 +158,13 @@ func (s *Service) gather(ctx context.Context, in *gatherInput, g *gathered) erro
 			g.checklists, err = s.checklists.ListForWorker(ctx, tenantInfo, workerID, false)
 			return err
 		})
+		if sections.Employment {
+			group.Go(func() error {
+				var err error
+				g.closedLists, err = s.checklists.CountClosed(ctx, tenantInfo, workerID)
+				return err
+			})
+		}
 	}
 	if sections.PTO {
 		group.Go(func() error {
@@ -170,12 +188,11 @@ func (s *Service) gather(ctx context.Context, in *gatherInput, g *gathered) erro
 	if sections.Employment {
 		group.Go(func() error {
 			var err error
-			g.events, err = s.employment.List(
+			g.employment, err = s.employment.Summarize(
 				ctx,
-				&workeremploymentports.ListWorkerEmploymentEventsRequest{
+				&workeremploymentports.SummarizeWorkerEmploymentEventsRequest{
 					TenantInfo: tenantInfo,
 					WorkerID:   workerID,
-					Limit:      employmentEventCap,
 				},
 			)
 			return err
@@ -232,7 +249,7 @@ func (s *Service) gather(ctx context.Context, in *gatherInput, g *gathered) erro
 				ctx,
 				&documentports.CountDocumentsByResourceRequest{
 					TenantInfo:   tenantInfo,
-					ResourceType: workerResourceType,
+					ResourceType: permission.ResourceWorker.String(),
 					ResourceID:   workerID.String(),
 				},
 			)
@@ -266,7 +283,7 @@ func (s *Service) gatherDependent(ctx context.Context, in *gatherInput, g *gathe
 				Worker:      in.wrk,
 				Credentials: g.credentials,
 				DrugAlcohol: g.drugAlcohol,
-				Now:         in.now,
+				Now:         in.today,
 			})
 			return err
 		})
@@ -277,12 +294,12 @@ func (s *Service) gatherDependent(ctx context.Context, in *gatherInput, g *gathe
 			g.dispatch, err = s.dispatch.Verdicts(ctx, &workerclearanceports.DispatchRequest{
 				TenantInfo: in.req.TenantInfo,
 				Worker:     in.wrk,
-				Now:        in.now,
+				Now:        in.today,
 				Probes: workercompliance.DispatchProbes(workercompliance.ClearanceInput{
 					Worker:      in.wrk,
 					Credentials: g.credentials,
 					DrugAlcohol: visibleDrugAlcohol(sections, g.drugAlcohol),
-					Now:         in.now,
+					Now:         in.today,
 				}),
 			})
 			return err
@@ -349,10 +366,13 @@ func assemble(in *gatherInput, g *gathered) *Overview {
 	drugAlcohol := visibleDrugAlcohol(sections, g.drugAlcohol)
 	dispatch := visibleDispatch(sections, g.dispatch)
 	if drugAlcohol != nil {
-		overview.DrugAlcohol = drugAlcoholSection(drugAlcohol, in.now)
+		overview.DrugAlcohol = drugAlcoholSection(drugAlcohol, in.today)
 	}
 	if sections.Employment {
-		overview.Employment = employmentSection(g.events, g.checklists, sections.Checklists)
+		overview.Employment = employmentSection(g.employment, g.checklists, sections.Checklists)
+		if sections.Checklists {
+			overview.Employment.ClosedChecklistCount = new(g.closedLists)
+		}
 	}
 
 	standingIn := workercompliance.StandingInput{
@@ -364,7 +384,7 @@ func assemble(in *gatherInput, g *gathered) *Overview {
 		ReviewDueAt: overview.NextReviewAt,
 		DrugAlcohol: drugAlcohol,
 		Dispatch:    dispatch,
-		Now:         in.now,
+		Now:         in.today,
 	}
 	if sections.Safety && g.safety != nil {
 		standingIn.SafetyEvents = g.safety.Events
@@ -388,7 +408,7 @@ func assemble(in *gatherInput, g *gathered) *Overview {
 			DrugAlcohol: drugAlcohol,
 			ReviewDueAt: overview.NextReviewAt,
 			Dispatch:    dispatch,
-			Now:         in.now,
+			Now:         in.today,
 		})
 	}
 	return overview
@@ -404,23 +424,14 @@ func drugAlcoholSection(standing *workerdot.DrugAlcoholStanding, now int64) *Dru
 }
 
 func employmentSection(
-	events []*employment.WorkerEmploymentEvent,
+	summary *workeremploymentports.EmploymentEventSummary,
 	checklists []*workerchecklist.WorkerChecklist,
 	checklistsVisible bool,
 ) *EmploymentSection {
-	section := &EmploymentSection{EventCount: len(events)}
-	for _, event := range events {
-		if event == nil {
-			continue
-		}
-		if event.Kind != employment.EmploymentEventHired &&
-			event.Kind != employment.EmploymentEventRehired {
-			continue
-		}
-		if section.HiredAt == nil || event.EffectiveAt > *section.HiredAt {
-			hiredAt := event.EffectiveAt
-			section.HiredAt = &hiredAt
-		}
+	section := &EmploymentSection{}
+	if summary != nil {
+		section.EventCount = summary.EventCount
+		section.HiredAt = summary.LastHiredAt
 	}
 	if checklistsVisible {
 		open := 0
@@ -561,7 +572,7 @@ func (s *Service) benefitsSection(
 	plans, err := s.benefits.ListPlans(ctx, &driverpayports.ListBenefitPlansRequest{
 		TenantInfo: in.req.TenantInfo,
 		ActiveOnly: true,
-		PlanYear:   planYearOf(in.now),
+		PlanYear:   planYearOf(in.today),
 		Limit:      benefitPlanCap,
 	})
 	if err != nil {

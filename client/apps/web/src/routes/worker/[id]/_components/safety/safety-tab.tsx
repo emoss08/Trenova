@@ -1,14 +1,5 @@
-import type { WorkerTabProps } from "@/routes/worker/use-worker-state";
-import { LazyComponent } from "@trenova/shared/components/error-boundary";
-import { lazy } from "react";
-import { SafetySkeleton } from "./safety-skeleton";
-
-const Safety = lazy(() => import("./worker-safety-tab"));
-
-export default function SafetyTab(props: WorkerTabProps) {
-  return (
-    <LazyComponent fallback={<SafetySkeleton />}>
-      <Safety {...props} />
-    </LazyComponent>
-  );
-}
+/**
+ * The Safety tab's entry, read lazily by the page with `SafetySkeleton` as its fallback. Safety
+ * is one view, so its code is this module's own chunk: no second lazy step after the first.
+ */
+export { default } from "./worker-safety-tab";

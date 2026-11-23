@@ -1,4 +1,5 @@
 import { RowActionsMenu, type RowAction } from "@/components/row-actions-menu";
+import type { PreloadIntent } from "@/components/work-pane";
 import type { WorkerCredentialSummaryItem } from "@/lib/graphql/worker-credential";
 import {
   ArchiveIcon,
@@ -13,14 +14,17 @@ import { Badge } from "@trenova/shared/components/ui/badge";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatUnixDateMedium } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
-import type { KeyboardEvent } from "react";
+import type { KeyboardEvent, Ref } from "react";
 import {
   BOUNDED_CELL_CLASS,
   BoundedGroupRow,
   BoundedTable,
   type BoundedColumn,
-} from "../bounded-table";
-import { ROW_CHANGED_CLASS, type FlashPhase } from "../use-row-flash";
+  type BoundedRow,
+  type BoundedRowProps,
+  type BoundedTableHandle,
+} from "../../bounded-table";
+import { ROW_CHANGED_CLASS, type FlashPhase } from "../../use-row-flash";
 import {
   credentialCaption,
   expiryPhrase,
@@ -58,7 +62,9 @@ export function CredentialTable({
   permissions,
   verifyingId,
   flashOf,
-  rowRef,
+  handleRef,
+  rowIntent,
+  menuIntent,
   handlers,
 }: {
   required: readonly WorkerCredentialSummaryItem[];
@@ -66,7 +72,12 @@ export function CredentialTable({
   permissions: CredentialPermissions;
   verifyingId: string | null;
   flashOf: (key: string) => FlashPhase | undefined;
-  rowRef: (key: string, element: HTMLTableRowElement | null) => void;
+  /** Brings a row into view by its type's id. */
+  handleRef: Ref<BoundedTableHandle>;
+  /** Reads the read pane's code as the pointer or focus reaches a row. */
+  rowIntent: PreloadIntent;
+  /** Reads the form pane's code as the pointer or focus reaches a row's menu. */
+  menuIntent: PreloadIntent;
   handlers: CredentialRowHandlers;
 }) {
   const t = useT();
@@ -79,57 +90,81 @@ export function CredentialTable({
     { key: "actions", label: <span className="sr-only">{t("Actions")}</span>, shrink: true },
   ];
 
-  const rows = (items: readonly WorkerCredentialSummaryItem[]) =>
-    items.map((item) => (
+  const itemRow = (item: WorkerCredentialSummaryItem): BoundedRow => ({
+    key: item.credentialType.id,
+    render: (props) => (
       <CredentialRow
-        key={item.credentialType.id}
+        props={props}
         item={item}
         permissions={permissions}
         verifying={item.credential != null && item.credential.id === verifyingId}
         flash={item.credential ? flashOf(item.credential.id) : undefined}
-        rowRef={rowRef}
+        rowIntent={rowIntent}
+        menuIntent={menuIntent}
         handlers={handlers}
       />
-    ));
+    ),
+  });
+  const groupRow = (key: string, label: string, count: number): BoundedRow => ({
+    key,
+    render: (props) => (
+      <BoundedGroupRow props={props} span={columns.length} label={label} count={count} />
+    ),
+  });
+
+  const rows: BoundedRow[] = [
+    groupRow("group:required", t("Required"), required.length),
+    ...(required.length === 0
+      ? [
+          {
+            key: "required:none",
+            render: (props: BoundedRowProps) => (
+              <tr {...props}>
+                <td
+                  colSpan={columns.length}
+                  className={cn(BOUNDED_CELL_CLASS, "text-xs text-muted-foreground")}
+                >
+                  {t("No credential type is required for this worker.")}
+                </td>
+              </tr>
+            ),
+          },
+        ]
+      : required.map(itemRow)),
+    ...(other.length > 0
+      ? [groupRow("group:other", t("Other"), other.length), ...other.map(itemRow)]
+      : []),
+  ];
 
   return (
-    <BoundedTable columns={columns} label={t("Credentials on file")} maxHeightClassName="max-h-152">
-      <BoundedGroupRow span={columns.length} label={t("Required")} count={required.length} />
-      {required.length === 0 ? (
-        <tr>
-          <td
-            colSpan={columns.length}
-            className={cn(BOUNDED_CELL_CLASS, "text-xs text-muted-foreground")}
-          >
-            {t("No credential type is required for this worker.")}
-          </td>
-        </tr>
-      ) : (
-        rows(required)
-      )}
-      {other.length > 0 ? (
-        <>
-          <BoundedGroupRow span={columns.length} label={t("Other")} count={other.length} />
-          {rows(other)}
-        </>
-      ) : null}
-    </BoundedTable>
+    <BoundedTable
+      columns={columns}
+      label={t("Credentials on file")}
+      maxHeightClassName="max-h-152"
+      estimateRowHeight={52}
+      handleRef={handleRef}
+      rows={rows}
+    />
   );
 }
 
 function CredentialRow({
+  props,
   item,
   permissions,
   verifying,
   flash,
-  rowRef,
+  rowIntent,
+  menuIntent,
   handlers,
 }: {
+  props: BoundedRowProps;
   item: WorkerCredentialSummaryItem;
   permissions: CredentialPermissions;
   verifying: boolean;
   flash: FlashPhase | undefined;
-  rowRef: (key: string, element: HTMLTableRowElement | null) => void;
+  rowIntent: PreloadIntent;
+  menuIntent: PreloadIntent;
   handlers: CredentialRowHandlers;
 }) {
   const t = useT();
@@ -143,6 +178,7 @@ function CredentialRow({
       id: "open",
       label: t("Open"),
       icon: EyeIcon,
+      preload: rowIntent.onFocus,
       onSelect: () => handlers.onOpen(item),
     });
     if (!credential.verifiedAt && permissions.canVerify) {
@@ -159,6 +195,7 @@ function CredentialRow({
         id: "renew",
         label: t("Renew"),
         icon: RefreshCw01Icon,
+        preload: menuIntent.onFocus,
         onSelect: () => handlers.onRenew(item),
       });
     }
@@ -167,6 +204,7 @@ function CredentialRow({
         id: "edit",
         label: t("Edit"),
         icon: Edit03Icon,
+        preload: menuIntent.onFocus,
         onSelect: () => handlers.onEdit(item),
       });
     }
@@ -184,6 +222,7 @@ function CredentialRow({
       id: "add",
       label: t("Add {0}", type.name),
       icon: PlusIcon,
+      preload: menuIntent.onFocus,
       onSelect: () => handlers.onAdd(item),
     });
   }
@@ -202,7 +241,8 @@ function CredentialRow({
 
   return (
     <tr
-      ref={(element) => rowRef(credential?.id ?? type.id, element)}
+      {...props}
+      {...(credential ? rowIntent : {})}
       data-glide-target
       data-testid={`credential-row-${type.id}`}
       data-health={item.health}

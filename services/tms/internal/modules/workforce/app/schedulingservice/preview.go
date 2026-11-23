@@ -34,7 +34,11 @@ func (s *Service) planAssignShift(
 	entity.OrganizationID = req.TenantInfo.OrgID
 	entity.BusinessUnitID = req.TenantInfo.BuID
 	entity.AssignedByID = req.UserID
-	entity.EffectiveFrom = startOfDayUTC(entity.EffectiveFrom)
+	effectiveFrom, err := s.calendarDate(ctx, req.TenantInfo, entity.EffectiveFrom)
+	if err != nil {
+		return nil, err
+	}
+	entity.EffectiveFrom = effectiveFrom
 
 	multiErr := errortypes.NewMultiError()
 	entity.Validate(multiErr)
@@ -159,7 +163,10 @@ func (s *Service) planEndAssignment(
 	}
 
 	previous := *assignment
-	endAt := startOfDayUTC(req.EffectiveTo)
+	endAt, err := s.calendarDate(ctx, req.TenantInfo, req.EffectiveTo)
+	if err != nil {
+		return nil, nil, err
+	}
 	assignment.EffectiveTo = &endAt
 
 	multiErr := errortypes.NewMultiError()
@@ -232,22 +239,39 @@ func (s *Service) planSetPreference(
 }
 
 func (s *Service) PreviewProposeSwap(
+	ctx context.Context,
 	req *ProposeSwapRequest,
 ) (*workerschedule.ShiftSwapRequest, error) {
-	return s.planProposeSwap(req)
+	return s.planProposeSwap(ctx, req)
 }
 
 func (s *Service) planProposeSwap(
+	ctx context.Context,
 	req *ProposeSwapRequest,
 ) (*workerschedule.ShiftSwapRequest, error) {
 	entity := req.Entity
 	entity.OrganizationID = req.TenantInfo.OrgID
 	entity.BusinessUnitID = req.TenantInfo.BuID
 	entity.Status = workerschedule.SwapProposed
-	entity.ShiftDate = startOfDayUTC(entity.ShiftDate)
+	shiftDate, err := s.calendarDate(ctx, req.TenantInfo, entity.ShiftDate)
+	if err != nil {
+		return nil, err
+	}
+	entity.ShiftDate = shiftDate
 	if entity.CounterpartyShiftDate != nil {
-		counterDate := startOfDayUTC(*entity.CounterpartyShiftDate)
+		counterDate, counterErr := s.calendarDate(
+			ctx,
+			req.TenantInfo,
+			*entity.CounterpartyShiftDate,
+		)
+		if counterErr != nil {
+			return nil, counterErr
+		}
 		entity.CounterpartyShiftDate = &counterDate
+	}
+	today, err := s.calendarDate(ctx, req.TenantInfo, timeutils.NowUnix())
+	if err != nil {
+		return nil, err
 	}
 
 	multiErr := errortypes.NewMultiError()
@@ -256,7 +280,7 @@ func (s *Service) planProposeSwap(
 		return nil, multiErr
 	}
 
-	if entity.ShiftDate < startOfDayUTC(timeutils.NowUnix()) {
+	if entity.ShiftDate < today {
 		return nil, errortypes.NewValidationError(
 			"shiftDate",
 			errortypes.ErrInvalid,

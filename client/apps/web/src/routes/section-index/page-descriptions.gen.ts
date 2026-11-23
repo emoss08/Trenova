@@ -38,6 +38,8 @@ export const PAGE_DESCRIPTIONS = defineLabels({
   "/admin/audit-logs":
     "Every change, access and administrative action in your organization, sealed against tampering",
   "/admin/custom-fields": "Define custom fields for trailers, workers, and other resources",
+  "/admin/desk-conversations":
+    "Read the Desk conversations of everyone in your organization, and download their transcripts. Every conversation you open or download is recorded in the audit log.",
   "/admin/distance-overrides":
     "Override calculated distances between location pairs for routing and billing adjustments",
   "/admin/distance-profiles": "Manage business-unit routing policy used by distance calculations",

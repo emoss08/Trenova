@@ -15,20 +15,20 @@ function operationMeta(documentNode: DocumentNode): Record<string, string> | und
 
 const config: CodegenConfig = {
   schema: "../../../services/tms/internal/api/graphql/schema/*.graphqls",
-  documents: "src/operations/**/*.graphql",
   hooks: {
     afterAllFileWrite: [
-      "node scripts/strip-fragment-text.mjs",
-      "node scripts/split-documents.mjs",
-      "node scripts/sync-graphql-persisted-documents.mjs",
-      "node scripts/generate-error-enums.mjs",
-      "node scripts/generate-permission-resources.mjs",
-      "node scripts/generate-record-kinds.mjs",
-      "node scripts/generate-tool-namespaces.mjs",
+      "bun scripts/strip-fragment-text.mjs",
+      "bun scripts/split-documents.mjs",
+      "bun scripts/sync-graphql-persisted-documents.mjs",
+      "bun scripts/generate-error-enums.mjs",
+      "bun scripts/generate-permission-resources.mjs",
+      "bun scripts/generate-record-kinds.mjs",
+      "bun scripts/generate-tool-namespaces.mjs",
     ],
   },
   generates: {
     "src/generated/": {
+      documents: "src/operations/**/*.graphql",
       preset: "client",
       presetConfig: {
         persistedDocuments: { mode: "replaceDocumentWithHash" },

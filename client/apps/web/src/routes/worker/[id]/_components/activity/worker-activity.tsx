@@ -1,6 +1,7 @@
-import { HoverGlideGroup } from "@/components/hover-glide";
 import { initialsOf } from "@/components/record-header";
+import { SearchInput } from "@/components/search-input";
 import { SectionPanel } from "@/components/section-panel";
+import { VirtualRows, type VirtualRow } from "@/components/virtual-rows";
 import { useWorkPane } from "@/components/work-pane";
 import { useUserTimezone } from "@/hooks/use-user-timezone";
 import { dayKey } from "@/lib/day-grouping";
@@ -15,17 +16,10 @@ import {
 } from "@/routes/admin/audit-logs/_components/audit-entry-sentence";
 import { useWorkerAreas } from "@/routes/worker/worker-areas";
 import type { WorkerTabProps, WorkerTarget } from "@/routes/worker/use-worker-state";
-import { useInfiniteQuery } from "@tanstack/react-query";
 import { ErrorState } from "@trenova/shared/components/errors/error-state";
-import {
-  ArrowRightIcon,
-  BotIcon,
-  SearchLgIcon,
-  XCloseIcon,
-} from "@trenova/shared/components/icons";
+import { ArrowRightIcon, BotIcon } from "@trenova/shared/components/icons";
 import { Button } from "@trenova/shared/components/ui/button";
-import { EmptySheet, GhostLine } from "@trenova/shared/components/ui/empty-sheet";
-import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
+import { EmptySheet } from "@trenova/shared/components/ui/empty-sheet";
 import {
   Select,
   SelectContent,
@@ -39,9 +33,10 @@ import {
 import { useDebounce } from "@trenova/shared/hooks/use-debounce";
 import { dateTimeFormatter } from "@trenova/shared/i18n/format";
 import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
+import { useNow } from "@trenova/shared/hooks/use-now";
 import { cn } from "@trenova/shared/lib/utils";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import {
   ACTIVITY_KIND_LABELS,
   ACTIVITY_KINDS,
@@ -56,29 +51,69 @@ import {
   type ActorFilter,
 } from "./activity-model";
 import { ActivitySkeleton } from "./activity-skeleton";
+import { ListMoreLine } from "../list-more";
+import { LineSketch } from "../list-sketch";
+import { useWorkerList } from "../use-worker-list";
+import { SECONDS_IN_DAY } from "@/lib/time-units";
 
 const PAGE_SIZE = 30;
 const CHIP_LIMIT = 3;
 const KINDS = Object.keys(ACTIVITY_KINDS) as ActivityKind[];
 
-function dayLabel(timestamp: number, key: string, timezone: string, t: TranslateFn): string {
-  const now = Math.floor(Date.now() / 1000);
-  if (key === dayKey(now, timezone)) return t("Today");
-  if (key === dayKey(now - 86_400, timezone)) return t("Yesterday");
-  const sameYear = key.slice(0, 4) === dayKey(now, timezone).slice(0, 4);
+/** "Today", "Yesterday", else the weekday and date, the year only when it is not this one. */
+function dayLabel(
+  timestamp: number,
+  key: string,
+  now: number,
+  timezone: string,
+  t: TranslateFn,
+): string {
+  const today = dayKey(now, timezone);
+  if (key === today) return t("Today");
+  if (key === dayKey(now - SECONDS_IN_DAY, timezone)) return t("Yesterday");
   return dateTimeFormatter({
     weekday: "long",
     month: "short",
     day: "numeric",
-    year: sameYear ? undefined : "numeric",
+    year: key.slice(0, 4) === today.slice(0, 4) ? undefined : "numeric",
     timeZone: timezone,
   }).format(new Date(timestamp * 1000));
 }
 
 /**
+ * A day's heading, pinned while its changes scroll under it. The minute clock lives here, the one
+ * place that reads it, so "Today" turns into "Yesterday" at midnight without redrawing the list.
+ */
+function DayHeading({
+  timestamp,
+  dayKeyValue,
+  count,
+  timezone,
+}: {
+  timestamp: number;
+  dayKeyValue: string;
+  count: number;
+  timezone: string;
+}) {
+  const t = useT();
+  const now = useNow("minute");
+  return (
+    <h4 className="-mx-1.5 flex items-baseline gap-2 border-b border-border-subtle bg-card px-3.5 pt-2.5 pb-1.5 text-xs font-medium">
+      {dayLabel(timestamp, dayKeyValue, now, timezone, t)}
+      {count > 1 ? (
+        <span className="font-normal text-foreground-subtle tabular-nums">
+          {t("{0, plural, one {# change} other {# changes}}", count)}
+        </span>
+      ) : null}
+    </h4>
+  );
+}
+
+/**
  * The worker's whole file as a trail: every change to the worker and their sub-records, newest
- * first, grouped by day, in a bounded region that reads more as it scrolls. Search, who and what
- * narrow it on the server. An entry about a record still on this page opens it.
+ * first, grouped by day, in a bounded region that mounts only the changes in view and reads more
+ * as it scrolls. Search, who and what narrow it on the server. An entry about a record still on
+ * this page opens it.
  */
 export default function WorkerActivity({
   workerId,
@@ -96,36 +131,20 @@ export default function WorkerActivity({
   const fieldFilters = activityFieldFilters(actor, kind, currentUserId);
   const filtered = query.trim() !== "" || actor !== "all" || kind !== "all";
 
-  const activity = useInfiniteQuery({
-    queryKey: [WORKER_ACTIVITY_KEY, workerId, query.trim(), fieldFilters],
-    queryFn: ({ pageParam, signal }) =>
-      fetchWorkerActivity(
-        workerId,
-        { first: PAGE_SIZE, after: pageParam },
-        { query, fieldFilters },
-        { signal },
-      ),
-    initialPageParam: null as string | null,
-    getNextPageParam: (last) => (last.hasNextPage ? last.endCursor : null),
-    placeholderData: (previous) => previous,
+  const activity = useWorkerList({
+    root: WORKER_ACTIVITY_KEY,
+    workerId,
+    variables: [query.trim(), fieldFilters],
+    pageSize: PAGE_SIZE,
+    keepPreviousRows: true,
+    fetchPage: ({ first, after, signal }) =>
+      fetchWorkerActivity(workerId, { first, after }, { query, fieldFilters }, { signal }),
   });
+  const entries = activity.rows;
 
-  const { hasNextPage, isFetchingNextPage, fetchNextPage } = activity;
-  const sentinel = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    const target = sentinel.current;
-    if (!target || typeof IntersectionObserver === "undefined") return undefined;
-    const observer = new IntersectionObserver((records) => {
-      if (records[0]?.isIntersecting && hasNextPage && !isFetchingNextPage) {
-        void fetchNextPage();
-      }
-    });
-    observer.observe(target);
-    return () => observer.disconnect();
-  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
-
+  // Everyone the trail has shown, kept as the filters narrow it, so the person picked in "Who"
+  // stays in the list it was picked from. Remembered from earlier renders, set during render.
   const [people, setPeople] = useState<{ id: string; name: string }[]>([]);
-  const entries = activity.data?.pages.flatMap((page) => page.rows) ?? [];
   const seen = activityPeople(entries);
   if (seen.some((person) => !people.some((known) => known.id === person.id))) {
     const merged = new Map(people.map((person) => [person.id, person.name]));
@@ -139,57 +158,71 @@ export default function WorkerActivity({
 
   if (activity.isPending) return <ActivitySkeleton />;
 
-  const total = activity.data?.pages[0]?.total ?? null;
-  const days = activityDays(entries, timezone);
   const clearFilters = () => {
     setSearch("");
     setActor("all");
     setKind("all");
   };
   const open = (target: WorkerTarget) => closeThen(() => onOpen(target));
+  const others = people.filter((person) => person.id !== currentUserId);
 
   const actorItems: { value: ActorFilter; label: string }[] = [
     { value: "all", label: t("Everyone") },
     ...(currentUserId ? [{ value: "me" as ActorFilter, label: t("You") }] : []),
     { value: "dash", label: t("From Dash") },
     { value: "agents", label: t("Any agent") },
-    ...people
-      .filter((person) => person.id !== currentUserId)
-      .map((person) => ({ value: `user:${person.id}` as ActorFilter, label: person.name })),
+    ...others.map((person) => ({ value: `user:${person.id}` as ActorFilter, label: person.name })),
   ];
   const kindItems = [
     { value: "all", label: t("All changes") },
     ...KINDS.map((value) => ({ value, label: t(ACTIVITY_KIND_LABELS[value]) })),
   ];
 
+  const rows: VirtualRow[] = activityDays(entries, timezone).flatMap((day) => [
+    {
+      key: `day:${day.key}`,
+      sticky: true,
+      render: () => (
+        <DayHeading
+          timestamp={day.entries[0].timestamp}
+          dayKeyValue={day.key}
+          count={day.entries.length}
+          timezone={timezone}
+        />
+      ),
+    },
+    ...day.entries.map((entry, index) => ({
+      key: entry.id,
+      render: () => (
+        <div className={cn("pb-px", index === 0 && "pt-1")}>
+          <ActivityRow
+            entry={entry}
+            timezone={timezone}
+            target={drawableTarget(entry, isDrawable)}
+            onOpen={open}
+          />
+        </div>
+      ),
+    })),
+  ]);
+
   return (
     <SectionPanel
       className="text-sm"
       title={t("Activity")}
-      hint={total !== null ? t("{0, plural, one {# change} other {# changes}}", total) : undefined}
+      hint={
+        activity.total !== null
+          ? t("{0, plural, one {# change} other {# changes}}", activity.total)
+          : undefined
+      }
       action={
         <div className="flex flex-wrap items-center justify-end gap-2">
-          <label className="flex h-7 w-56 items-center gap-1.5 rounded-md border ui-container-focus-ring border-input bg-card px-2 text-muted-foreground">
-            <SearchLgIcon className="size-3.5 shrink-0" />
-            <input
-              value={search}
-              onChange={(changeEvent) => setSearch(changeEvent.target.value)}
-              placeholder={t("Search changes")}
-              aria-label={t("Search changes")}
-              className="min-w-0 flex-1 bg-transparent text-sm text-foreground outline-none placeholder:text-foreground-subtle"
-            />
-            {search !== "" ? (
-              <Button
-                type="button"
-                size="icon-xs"
-                variant="ghost"
-                aria-label={t("Clear the search")}
-                onClick={() => setSearch("")}
-              >
-                <XCloseIcon className="size-3" />
-              </Button>
-            ) : null}
-          </label>
+          <SearchInput
+            value={search}
+            onValueChange={setSearch}
+            placeholder={t("Search changes")}
+            className="w-56"
+          />
           <Select
             value={actor}
             onValueChange={(value) => setActor((value ?? "all") as ActorFilter)}
@@ -203,18 +236,16 @@ export default function WorkerActivity({
               {currentUserId ? <SelectItem value="me">{t("You")}</SelectItem> : null}
               <SelectItem value="dash">{t("From Dash")}</SelectItem>
               <SelectItem value="agents">{t("Any agent")}</SelectItem>
-              {people.some((person) => person.id !== currentUserId) ? (
+              {others.length > 0 ? (
                 <>
                   <SelectSeparator />
                   <SelectGroup>
                     <SelectLabel>{t("People in this file")}</SelectLabel>
-                    {people
-                      .filter((person) => person.id !== currentUserId)
-                      .map((person) => (
-                        <SelectItem key={person.id} value={`user:${person.id}`}>
-                          {person.name}
-                        </SelectItem>
-                      ))}
+                    {others.map((person) => (
+                      <SelectItem key={person.id} value={`user:${person.id}`}>
+                        {person.name}
+                      </SelectItem>
+                    ))}
                   </SelectGroup>
                 </>
               ) : null}
@@ -244,13 +275,13 @@ export default function WorkerActivity({
           error={activity.error}
           layout="sheet"
           title={t("The activity could not be loaded")}
-          onRetry={() => void activity.refetch()}
+          onRetry={activity.refetch}
         />
       ) : entries.length === 0 ? (
         filtered ? (
           <div className="flex flex-col items-center gap-2 px-4 py-7 text-xs text-muted-foreground">
             <p>{t("No changes match.")}</p>
-            <Button size="xs" variant="outline" onClick={clearFilters}>
+            <Button size="sm" variant="outline" onClick={clearFilters}>
               {t("Clear the filters")}
             </Button>
           </div>
@@ -260,69 +291,24 @@ export default function WorkerActivity({
             description={t(
               "Every change to this worker's file is written here as it happens: who made it, when, and what it changed.",
             )}
-            sketch={
-              <div className="flex flex-col gap-2 rounded-md border bg-card p-4">
-                <GhostLine className="w-2/3" />
-                <GhostLine className="w-1/2" />
-                <GhostLine className="w-3/4" />
-              </div>
-            }
+            sketch={<LineSketch widths={["w-2/3", "w-1/2", "w-3/4"]} />}
           />
         )
       ) : (
-        <ScrollArea
-          viewportClassName="max-h-[40rem] min-h-48"
-          maskVariant="card"
-          className={cn(activity.isPlaceholderData && "opacity-60 transition-opacity")}
-        >
-          <div className="@container px-1.5 pb-1.5">
-            {days.map((day) => (
-              <section
-                key={day.key}
-                aria-label={dayLabel(day.entries[0].timestamp, day.key, timezone, t)}
-              >
-                <h4 className="sticky top-0 z-10 -mx-1.5 flex items-baseline gap-2 border-b border-border-subtle bg-card px-3.5 pt-2.5 pb-1.5 text-xs font-medium">
-                  {dayLabel(day.entries[0].timestamp, day.key, timezone, t)}
-                  {day.entries.length > 1 ? (
-                    <span className="font-normal text-foreground-subtle tabular-nums">
-                      {t("{0, plural, one {# change} other {# changes}}", day.entries.length)}
-                    </span>
-                  ) : null}
-                </h4>
-                <HoverGlideGroup className="flex flex-col gap-px pt-1">
-                  {day.entries.map((entry) => (
-                    <ActivityRow
-                      key={entry.id}
-                      entry={entry}
-                      timezone={timezone}
-                      target={drawableTarget(entry, isDrawable)}
-                      onOpen={open}
-                    />
-                  ))}
-                </HoverGlideGroup>
-              </section>
-            ))}
-            <div ref={sentinel} className="h-px" />
-            {isFetchingNextPage ? (
-              <div
-                aria-busy
-                aria-label={t("Loading more changes")}
-                className="flex flex-col gap-2 p-2"
-              >
-                <span className="block h-3 w-3/5 ui-shimmer rounded-sm" />
-                <span className="block h-3 w-2/5 ui-shimmer rounded-sm" />
-              </div>
-            ) : null}
-            {activity.isError && entries.length > 0 ? (
-              <div className="flex items-center justify-center gap-2 p-2 text-xs text-muted-foreground">
-                {t("More changes could not be loaded.")}
-                <Button size="xs" variant="outline" onClick={() => void fetchNextPage()}>
-                  {t("Try again")}
-                </Button>
-              </div>
-            ) : null}
-          </div>
-        </ScrollArea>
+        <VirtualRows
+          rows={rows}
+          aria-label={t("Activity")}
+          mask="card"
+          className={cn("max-h-160 min-h-48", activity.isStale && "opacity-60 transition-opacity")}
+          contentClassName="@container px-1.5 pb-1.5"
+          hoverGlide
+          rowNavigation
+          estimateSize={56}
+          onEndReached={
+            activity.hasMore && !activity.loadMoreFailed ? activity.loadMore : undefined
+          }
+          footer={<ListMoreLine more={activity} />}
+        />
       )}
       <p className="border-t border-border-subtle px-3 py-2.5 text-xs text-muted-foreground">
         {t(
