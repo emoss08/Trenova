@@ -190,7 +190,12 @@ export function overviewFixture(overrides: Partial<WorkerOverview> = {}): Worker
       recognitions: 2,
       daysSinceLastEvent: 41,
     },
-    employment: { eventCount: 4, hiredAt: Date.UTC(2022, 8, 12) / 1000, openChecklistCount: 1 },
+    employment: {
+      eventCount: 4,
+      hiredAt: Date.UTC(2022, 8, 12) / 1000,
+      openChecklistCount: 1,
+      closedChecklistCount: 3,
+    },
     checklist: {
       id: "chk_1",
       name: "Annual file review 2026",

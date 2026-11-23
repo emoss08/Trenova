@@ -59,7 +59,7 @@ export async function fetchWorkerInjuries(
     variables: { ...variables, includeTotalCount: !variables.after },
     signal: options?.signal,
   });
-  return data.workerInjuries as Connection<WorkerInjuryRow>;
+  return data.workerInjuries;
 }
 
 /** One injury or illness case by id: a deep link to a case outside the pages already read. */

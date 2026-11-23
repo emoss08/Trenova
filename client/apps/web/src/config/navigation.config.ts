@@ -1,7 +1,5 @@
 import type { SidebarLink } from "@/components/sidebar-nav";
 import { PlanFeature } from "@/lib/plan-feature";
-import { OrganizationCapability } from "@trenova/shared/types/organization-capability";
-import { Operation, Resource } from "@trenova/shared/types/permission";
 import {
   BarChart07Icon,
   CalculatorIcon,
@@ -21,6 +19,8 @@ import {
   Users01Icon,
   Wallet02Icon,
 } from "@trenova/shared/components/icons";
+import { OrganizationCapability } from "@trenova/shared/types/organization-capability";
+import { Operation, Resource } from "@trenova/shared/types/permission";
 import type { ModuleId, NavigationConfig, NavModule } from "./navigation.types";
 
 interface AppModuleGroup {
@@ -1690,6 +1690,7 @@ export const adminLinks: SidebarLink[] = [
     keywords: ["transcripts", "conversations", "desk", "ai", "oversight", "export"],
     title: "Desk conversations",
     group: "AI & Automation",
+    includeBetaTag: true,
     resource: Resource.DeskTranscript,
     requiredOperation: Operation.Read,
     planFeature: PlanFeature.AIDesk,

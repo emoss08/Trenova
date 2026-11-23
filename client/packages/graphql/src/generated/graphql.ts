@@ -12932,10 +12932,11 @@ export type WorkerBenefitEnrollmentsQueryVariables = Exact<{
   openOnly?: boolean | null | undefined;
   first?: number | null | undefined;
   after?: string | null | undefined;
+  includeTotalCount?: boolean | null | undefined;
 }>;
 
 
-export type WorkerBenefitEnrollmentsQuery = { workerBenefitEnrollments: { edges: Array<{ cursor: string, node: { id: string, workerId: string, benefitPlanId: string, status: BenefitEnrollmentStatus, coverageTier: CoverageTier, effectiveFrom: number, effectiveTo: number | null, employeeCostMinor: number, employerCostMinor: number, recurringDeductionId: string | null, waivedReason: string | null, notes: string | null, version: number, benefitPlan: { id: string, code: string, name: string, planType: BenefitPlanType, carrier: string | null } | null } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
+export type WorkerBenefitEnrollmentsQuery = { workerBenefitEnrollments: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ cursor: string, node: { id: string, workerId: string, benefitPlanId: string, status: BenefitEnrollmentStatus, coverageTier: CoverageTier, effectiveFrom: number, effectiveTo: number | null, employeeCostMinor: number, employerCostMinor: number, recurringDeductionId: string | null, waivedReason: string | null, notes: string | null, version: number, benefitPlan: { id: string, code: string, name: string, planType: BenefitPlanType, carrier: string | null } | null } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
 
 export type BenefitEnrollmentsQueryVariables = Exact<{
   planId?: string | number | null | undefined;
@@ -15016,10 +15017,11 @@ export type WorkerPayAssignmentsQueryVariables = Exact<{
   workerId: string | number;
   first?: number | null | undefined;
   after?: string | null | undefined;
+  includeTotalCount?: boolean | null | undefined;
 }>;
 
 
-export type WorkerPayAssignmentsQuery = { workerPayAssignments: { edges: Array<{ cursor: string, node: { id: string, workerId: string, payProfileId: string, effectiveFrom: number, effectiveTo: number | null, splitPercent: string, notes: string, version: number, createdAt: number, rateOverrides: Array<{ componentId: string, rate: string }> | null, payProfile: { id: string, name: string, classification: PayeeClassification, components: Array<{ id: string, kind: PayComponentKind, method: PayCalcMethod, description: string, rate: string }> | null } | null } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
+export type WorkerPayAssignmentsQuery = { workerPayAssignments: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ cursor: string, node: { id: string, workerId: string, payProfileId: string, effectiveFrom: number, effectiveTo: number | null, splitPercent: string, notes: string, version: number, createdAt: number, rateOverrides: Array<{ componentId: string, rate: string }> | null, payProfile: { id: string, name: string, classification: PayeeClassification, components: Array<{ id: string, kind: PayComponentKind, method: PayCalcMethod, description: string, rate: string }> | null } | null } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
 
 export type EffectiveWorkerPayAssignmentQueryVariables = Exact<{
   workerId: string | number;
@@ -19642,10 +19644,11 @@ export type WorkerPolicyAcknowledgementsQueryVariables = Exact<{
   workerId: string | number;
   first?: number | null | undefined;
   after?: string | null | undefined;
+  includeTotalCount?: boolean | null | undefined;
 }>;
 
 
-export type WorkerPolicyAcknowledgementsQuery = { workerPolicyAcknowledgements: { edges: Array<{ cursor: string, node: { id: string, policyId: string, versionLabel: string, acknowledgedAt: number, signatureName: string | null, documentChecksum: string | null, policy: { id: string, title: string, versionLabel: string } | null } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
+export type WorkerPolicyAcknowledgementsQuery = { workerPolicyAcknowledgements: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ cursor: string, node: { id: string, policyId: string, versionLabel: string, acknowledgedAt: number, signatureName: string | null, documentChecksum: string | null, policy: { id: string, title: string, versionLabel: string } | null } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
 
 export type ProfileChangeRequestsQueryVariables = Exact<{
   filter?: ProfileChangeFilterInput | null | undefined;

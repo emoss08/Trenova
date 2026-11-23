@@ -14,7 +14,7 @@ import { formatUnixDateMedium } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useWorkerList } from "../../use-worker-list";
-import { LoadMoreFooter } from "../load-more-footer";
+import { ListMoreLine } from "../../list-more";
 
 /**
  * Every policy version this worker has signed. A signature on a superseded version stays listed:
@@ -79,7 +79,7 @@ export function PolicyAcknowledgements({ workerId }: { workerId: string }) {
   return (
     <SectionPanel
       title={t("Policies signed")}
-      count={acks.hasMore ? (acks.total ?? undefined) : acks.rows.length}
+      count={acks.total ?? (acks.hasMore || acks.isPending ? undefined : acks.rows.length)}
     >
       {acks.isPending ? (
         <div
@@ -91,12 +91,14 @@ export function PolicyAcknowledgements({ workerId }: { workerId: string }) {
           <span className="block h-3 w-2/5 ui-shimmer rounded-sm" />
         </div>
       ) : acks.isError ? (
-        <ErrorState
-          error={acks.error}
-          layout="compact"
-          title={t("The policies signed could not be loaded")}
-          onRetry={acks.refetch}
-        />
+        <div className="p-3">
+          <ErrorState
+            error={acks.error}
+            layout="compact"
+            title={t("The policies signed could not be loaded")}
+            onRetry={acks.refetch}
+          />
+        </div>
       ) : acks.rows.length === 0 ? (
         <SectionPanelQuiet>
           {t("Nothing signed yet. Policies are signed from Dash, under Profile.")}
@@ -110,18 +112,8 @@ export function PolicyAcknowledgements({ workerId }: { workerId: string }) {
           aria-label={t("Policies signed")}
           role="list"
           mask="card"
-          onEndReached={() => {
-            if (!acks.loadMoreFailed) acks.loadMore();
-          }}
-          footer={
-            <LoadMoreFooter
-              loading={acks.loadingMore}
-              failed={acks.loadMoreFailed}
-              error={null}
-              failedTitle={t("More policies could not be loaded")}
-              onRetry={acks.loadMore}
-            />
-          }
+          onEndReached={acks.hasMore && !acks.loadMoreFailed ? acks.loadMore : undefined}
+          footer={<ListMoreLine more={acks} />}
         />
       )}
     </SectionPanel>

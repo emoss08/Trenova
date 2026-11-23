@@ -50,7 +50,7 @@ export function ViolationsPanel({ workerId, since }: { workerId: string; since: 
           />
         </div>
       ) : violations.length === 0 ? (
-        <SectionPanelQuiet>{t("None.")}</SectionPanelQuiet>
+        <SectionPanelQuiet>{t("No violations in the last 30 days.")}</SectionPanelQuiet>
       ) : (
         <VirtualRows
           rows={violations.map((violation) => ({

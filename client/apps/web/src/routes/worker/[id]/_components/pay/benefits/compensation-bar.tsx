@@ -1,8 +1,7 @@
 import type { TotalCompensationSummary } from "@/lib/graphql/benefits";
-import { formatNumber } from "@trenova/shared/i18n/format";
 import { useRichT } from "@trenova/shared/i18n/rich";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { formatMinor } from "@trenova/shared/lib/money";
+import { formatMinor, formatMinorCompact } from "@trenova/shared/lib/money";
 import type { ReactNode } from "react";
 import { useDrawn } from "@/hooks/use-drawn";
 
@@ -69,17 +68,6 @@ export function compensationShape(
 
 function pct(share: number): string {
   return `${(share * 100).toFixed(3)}%`;
-}
-
-/** The axis's short money ("$20k"), whole dollars below a thousand. */
-function compactMinor(minor: number): string {
-  const dollars = minor / 100;
-  return formatNumber(dollars, {
-    style: "currency",
-    currency: "USD",
-    notation: dollars >= 1000 ? "compact" : "standard",
-    maximumFractionDigits: dollars >= 1000 ? 1 : 0,
-  });
 }
 
 export function CompensationBar({ summary }: { summary: TotalCompensationSummary }) {
@@ -165,7 +153,7 @@ export function CompensationBar({ summary }: { summary: TotalCompensationSummary
                       transform: last ? "translateX(-100%)" : undefined,
                     }}
                   >
-                    {compactMinor(tick)}
+                    {formatMinorCompact(tick)}
                   </span>
                 );
               })}

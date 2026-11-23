@@ -36,7 +36,12 @@ query WorkerPolicyCompliance($id: ID!) {
   }
 }
 
-query WorkerPolicyAcknowledgements($workerId: ID!, $first: Int, $after: String) {
+query WorkerPolicyAcknowledgements(
+  $workerId: ID!
+  $first: Int
+  $after: String
+  $includeTotalCount: Boolean = true
+) {
   workerPolicyAcknowledgements(workerId: $workerId, first: $first, after: $after) {
     edges {
       cursor
@@ -58,6 +63,8 @@ query WorkerPolicyAcknowledgements($workerId: ID!, $first: Int, $after: String) 
       hasNextPage
       endCursor
     }
+    totalCount @include(if: $includeTotalCount)
+    totalCountExact @include(if: $includeTotalCount)
   }
 }
 

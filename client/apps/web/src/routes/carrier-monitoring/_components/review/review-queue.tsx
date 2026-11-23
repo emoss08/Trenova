@@ -169,7 +169,7 @@ function ReviewDetailSheet({
 
   return (
     <Sheet open={item !== null} onOpenChange={onOpenChange}>
-      <SheetContent className="w-full gap-0 overflow-y-auto p-0 sm:max-w-lg">
+      <SheetContent size="lg" className="gap-0 overflow-y-auto p-0">
         {item ? (
           <>
             <SheetHeader className="border-border gap-3 border-b px-4 py-3">

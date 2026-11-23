@@ -78,7 +78,7 @@ export function PolicyComplianceDialog({ policy, onOpenChange }: PolicyComplianc
 
   return (
     <Sheet open={policy !== null} onOpenChange={onOpenChange}>
-      <SheetContent className="sm:max-w-lg">
+      <SheetContent size="lg">
         <SheetHeader>
           <SheetTitle className="flex items-center gap-2">
             <FileEditIcon className="text-muted-foreground size-4" />

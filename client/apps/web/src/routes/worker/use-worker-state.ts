@@ -97,11 +97,45 @@ export const WORKER_FORM_HOMES = {
 
 export type WorkerForm = keyof typeof WORKER_FORM_HOMES;
 
+/**
+ * The record a form edits, for the forms that edit one: the address must name it (`event=` for
+ * `form=amend-event`), or the form cannot open. A form not listed needs no record.
+ */
+export const WORKER_FORM_RECORDS = {
+  "amend-event": "event",
+  "renew-credential": "credential",
+  "edit-credential": "credential",
+  "edit-employer": "employer",
+  "record-test-result": "test",
+  "answer-query": "query",
+  "edit-review": "review",
+} as const satisfies Partial<Record<WorkerForm, WorkerRecordParam>>;
+
+/**
+ * Whether the address names a form that cannot open whatever the data says: one that edits a
+ * record the address does not name, one away from its own tab, or one whose view the reader may
+ * not draw. The page drops such a form from the address; a form that names a record which turns
+ * out missing or not editable is refused by its tab through `useWorkerFormGate`.
+ */
+export function workerFormBlockedByAddress(
+  state: { tab: WorkerTab; form: WorkerForm | null } & WorkerRecordRefsState,
+  isDrawable: (area: WorkerArea) => boolean,
+): boolean {
+  const { form } = state;
+  if (form === null) return false;
+  const home: WorkerArea = WORKER_FORM_HOMES[form];
+  if (home.tab !== state.tab || !isDrawable(home)) return true;
+  const record = (WORKER_FORM_RECORDS as Partial<Record<WorkerForm, WorkerRecordParam>>)[form];
+  return record !== undefined && !state[record];
+}
+
 export const WORKER_FORMS = Object.keys(WORKER_FORM_HOMES) as WorkerForm[];
 
 export type WorkerArea = { tab: WorkerTab; view: WorkerView | null };
 
 export type WorkerRecordRefs = Partial<Record<WorkerRecordParam, string>>;
+
+type WorkerRecordRefsState = { [K in WorkerRecordParam]: string | null };
 
 type TargetFor<T extends WorkerTab> = {
   tab: T;
@@ -233,6 +267,9 @@ export function useWorkerState() {
 
   const closeWork = () => setState({ ...CLOSED_WORKER_OPEN_STATE });
 
+  /** Takes a form that cannot open out of the address, in place, keeping what else it names. */
+  const dropForm = () => setState({ form: null, kind: null }, { history: "replace" });
+
   return {
     state,
     openState: (tab: WorkerTab) => workerOpenStateFor(state, tab),
@@ -240,5 +277,6 @@ export function useWorkerState() {
     selectView,
     open,
     closeWork,
+    dropForm,
   };
 }

@@ -1,4 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { worker } from "@/lib/queries/worker";
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { stubLayout } from "@/test/layout";
@@ -44,6 +45,11 @@ vi.mock("@/lib/graphql/worker-employment", () => ({
   fetchWorkerEmploymentEventOptions: vi.fn(),
   WORKER_EMPLOYMENT_EVENTS_KEY: "worker-employment-events",
   WORKER_EMPLOYMENT_OPTIONS_KEY: "worker-employment-event-options",
+}));
+
+// A write refreshes the page's overview; the test answers that read rather than the network.
+vi.mock("@/lib/graphql/worker-overview", () => ({
+  fetchWorkerOverview: vi.fn().mockResolvedValue({ employment: null }),
 }));
 
 vi.mock("@/hooks/use-permission", () => ({
@@ -168,12 +174,20 @@ async function openActions(scope: HTMLElement, name: string) {
   return user;
 }
 
-function renderTab(events: unknown[] = [], focusId: string | null = null) {
+function renderTab(
+  events: unknown[] = [],
+  focusId: string | null = null,
+  closedChecklistCount: number | null = null,
+) {
   fetchWorkerEmploymentEvents.mockResolvedValue({
     edges: events.map((node, index) => ({ cursor: String(index + 1), node })),
     pageInfo: { hasNextPage: false, endCursor: null },
   });
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  // The page's overview is already read when a tab draws; the closed count comes from it.
+  queryClient.setQueryData(worker.overview("wrk_1").queryKey, {
+    employment: closedChecklistCount === null ? null : { closedChecklistCount },
+  } as never);
   render(
     <QueryClientProvider client={queryClient}>
       <WorkerChecklistTab workerId="wrk_1" focusId={focusId} />
@@ -460,6 +474,24 @@ describe("WorkerChecklistTab", () => {
     expect(closed.queryByText("100")).toBeNull();
     // Only the rows near the view are mounted.
     expect(closed.getAllByTestId(/^closed-checklist-/).length).toBeLessThan(100);
+  });
+
+  it("counts every closed checklist from the overview even when the list stopped at the cap", async () => {
+    const closedRows = Array.from({ length: 100 }, (_, index) => ({
+      ...checklist,
+      id: `wcl_c${index}`,
+      name: `Annual review ${index}`,
+      status: "Completed",
+      completedAt: 1_700_000_000 + index,
+      items: [],
+    }));
+    fetchWorkerChecklists.mockResolvedValue(closedRows);
+    fetchActiveWorkerChecklistTemplates.mockResolvedValue([]);
+    renderTab([], null, 137);
+
+    const closed = within(await screen.findByRole("region", { name: "Closed" }));
+    expect(closed.getByText("137")).toBeInTheDocument();
+    expect(closed.getByText("Showing the newest 100")).toBeInTheDocument();
   });
 
   it("counts the closed checklists and says nothing of a cap under it", async () => {

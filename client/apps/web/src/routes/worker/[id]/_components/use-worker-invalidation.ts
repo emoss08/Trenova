@@ -128,8 +128,8 @@ export const WORKER_WRITE_REACH = {
     roster: true,
   },
   // Requests, decisions, policy changes, adjustments and accruals: the worker's book, the
-  // organisation's balance summary and PTO table, the overview's time off line and the roster's
-  // time off column.
+  // organisation's balance summary, PTO table, upcoming list and chart (the roster's time off
+  // views), the overview's time off line and the roster's time off column.
   "time-off": {
     keys: (id) => [
       [PTO_BALANCES, id],
@@ -138,6 +138,8 @@ export const WORKER_WRITE_REACH = {
       [PTO_REQUESTS, id],
       [PTO_BALANCE_SUMMARY],
       [PTO_TABLE],
+      workerQueries.listUpcomingPTO._def,
+      workerQueries.ptoChartData._def,
     ],
     overview: true,
     record: false,

@@ -22,6 +22,7 @@ import { useQualificationRoute, type QualificationViewProps } from "../qualifica
 import type { BoundedTableHandle } from "../../bounded-table";
 import { useRowFlash } from "../../use-row-flash";
 import { useWorkerInvalidation } from "../../use-worker-invalidation";
+import { useWorkerFormGate } from "../../use-worker-form-gate";
 import { WORKER_FORM_PANES } from "../../worker-form-panes";
 import {
   DrugAlcoholBand,
@@ -113,6 +114,23 @@ export default function WorkerTestingTab({ workerId, open, onOpen }: Qualificati
     table.current?.scrollToKey(id);
   });
 
+  // The test or query a form names, while it can still take a result or an answer.
+  const resultTest =
+    open.form === "record-test-result" && open.test
+      ? (file?.tests.find((test) => test.id === open.test && testIsOpen(test)) ?? null)
+      : null;
+  const answerQuery =
+    open.form === "answer-query" && open.query
+      ? (file?.queries.find((query) => query.id === open.query && query.result === "Pending") ??
+        null)
+      : null;
+  const opens = useWorkerFormGate(open.form, {
+    "record-collection": canRecord,
+    "log-query": canRecord,
+    "record-test-result": file ? canUpdate && resultTest !== null : "waiting",
+    "answer-query": file ? canUpdate && answerQuery !== null : "waiting",
+  });
+
   if (fileQuery.isPending) return <QualificationSkeletonBody view={VIEW} />;
   if (fileQuery.isError || !file) {
     return (
@@ -134,15 +152,6 @@ export default function WorkerTestingTab({ workerId, open, onOpen }: Qualificati
     return (b.collectedAt ?? b.createdAt) - (a.collectedAt ?? a.createdAt);
   });
   const openViolation = file.violations.find((violation) => violation.status !== "Resolved");
-  const resultTest =
-    open.form === "record-test-result" && open.test
-      ? (file.tests.find((test) => test.id === open.test && testIsOpen(test)) ?? null)
-      : null;
-  const answerQuery =
-    open.form === "answer-query" && open.query
-      ? (file.queries.find((query) => query.id === open.query && query.result === "Pending") ??
-        null)
-      : null;
   const selection =
     open.form === "record-collection" && open.kind
       ? (file.selections.find((entry) => entry.id === open.kind) ?? null)
@@ -207,7 +216,7 @@ export default function WorkerTestingTab({ workerId, open, onOpen }: Qualificati
       </div>
 
       <RecordCollectionPane.Component
-        open={open.form === "record-collection" && canRecord}
+        open={opens("record-collection")}
         onOpenChange={closeWhen(open.form === "record-collection")}
         workerId={workerId}
         drawEntryId={selection?.id ?? null}
@@ -215,20 +224,20 @@ export default function WorkerTestingTab({ workerId, open, onOpen }: Qualificati
         onSaved={flash}
       />
       <RecordResultPane.Component
-        open={open.form === "record-test-result" && canUpdate && resultTest != null}
+        open={opens("record-test-result")}
         onOpenChange={closeWhen(open.form === "record-test-result")}
         workerId={workerId}
         test={resultTest}
         onSaved={flash}
       />
       <LogQueryPane.Component
-        open={open.form === "log-query" && canRecord}
+        open={opens("log-query")}
         onOpenChange={closeWhen(open.form === "log-query")}
         workerId={workerId}
         onSaved={flash}
       />
       <AnswerQueryPane.Component
-        open={open.form === "answer-query" && canUpdate && answerQuery != null}
+        open={opens("answer-query")}
         onOpenChange={closeWhen(open.form === "answer-query")}
         workerId={workerId}
         query={answerQuery}

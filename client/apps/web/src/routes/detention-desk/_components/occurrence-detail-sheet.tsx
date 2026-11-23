@@ -427,7 +427,7 @@ export function OccurrenceDetailSheet({ occurrenceId, onOpenChange }: Occurrence
 
   return (
     <Sheet open={Boolean(occurrenceId)} onOpenChange={onOpenChange}>
-      <SheetContent className="flex w-full flex-col gap-0 overflow-hidden p-0 sm:max-w-lg">
+      <SheetContent size="lg" className="flex flex-col gap-0 overflow-hidden p-0">
         {isLoading || !detail || !occurrence ? (
           <DetailSkeleton />
         ) : (

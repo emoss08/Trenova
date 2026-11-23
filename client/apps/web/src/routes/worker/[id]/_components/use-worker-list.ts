@@ -67,6 +67,7 @@ export function useWorkerList<Row>({
   enabled = true,
   keepPreviousRows = false,
   refetchInterval,
+  queryKey,
 }: {
   /** The area's key root, the one its `WORKER_WRITE_REACH` row names. */
   root: string;
@@ -84,9 +85,15 @@ export function useWorkerList<Row>({
    * the query, whose identity lasts as long as the read.
    */
   refetchInterval?: (rows: Row[], query: object) => number | false;
+  /**
+   * The key prefix, for a read another surface keys its own way (a record's agent memories,
+   * under `[DESK_MEMORIES_KEY, "record", "Worker", id]`): it replaces `[root, workerId, "list",
+   * ...variables]`, and must still sit under what the area's `WORKER_WRITE_REACH` row refreshes.
+   */
+  queryKey?: readonly unknown[];
 }): WorkerList<Row> {
   const query = useInfiniteQuery({
-    queryKey: [...workerListKey(root, workerId, variables), pageSize],
+    queryKey: [...(queryKey ?? workerListKey(root, workerId, variables)), pageSize],
     queryFn: ({ pageParam, signal }) => fetchPage({ first: pageSize, after: pageParam, signal }),
     initialPageParam: null as string | null,
     getNextPageParam: (page: Connection<Row>) =>

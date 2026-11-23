@@ -105,7 +105,9 @@ export function DrugAlcoholBand({
             {t(meta.label)}
           </Badge>
           {standing.returnToDuty !== "NotRequired" ? (
-            <Badge variant="neutral">{returnToDutyLabel(standing.returnToDuty)}</Badge>
+            <Badge variant="neutral" dot>
+              {returnToDutyLabel(standing.returnToDuty)}
+            </Badge>
           ) : null}
           <InfoTooltip label={t("Testing standing")}>
             {t(
@@ -206,7 +208,7 @@ export function ReturnToDutyPanel({
       title={t("Return to duty")}
       action={
         canManage ? (
-          <Button size="sm" variant="outline" {...updateIntent} onClick={onUpdate}>
+          <Button size="sm" variant="secondary" {...updateIntent} onClick={onUpdate}>
             {t("Update")}
           </Button>
         ) : undefined

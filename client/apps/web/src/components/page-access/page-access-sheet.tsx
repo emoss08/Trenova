@@ -54,7 +54,7 @@ export function PageAccessSheet() {
 
   return (
     <Sheet open={open} onOpenChange={(next) => setDialogOpen("page-access", next)}>
-      <SheetContent side="right" className="w-full gap-0 p-0 sm:max-w-lg">
+      <SheetContent side="right" size="lg" className="gap-0 p-0">
         {open ? (
           <Suspense fallback={<PageAccessPanelSkeleton />}>
             <Panel.Component location={pathname} canPreview={canPreview} />

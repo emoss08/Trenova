@@ -54,7 +54,7 @@ export function OshaCaseSheet({
 }: OshaCaseSheetProps) {
   return (
     <Sheet open={entry !== null} onOpenChange={onOpenChange}>
-      <SheetContent className="sm:max-w-md">
+      <SheetContent size="md">
         {entry ? (
           <CaseDetail
             entry={entry}

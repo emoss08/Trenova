@@ -40,10 +40,7 @@ export function BacktestSheet({ open, onOpenChange, form, template }: BacktestSh
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent
-        side="right"
-        className="flex w-full flex-col gap-0 sm:w-[620px] sm:max-w-[620px]"
-      >
+      <SheetContent side="right" size="xl" className="flex flex-col gap-0">
         <SheetHeader className="border-b pb-3">
           <SheetTitle className="flex items-center gap-2">
             <ClockRewindIcon className="size-4" />

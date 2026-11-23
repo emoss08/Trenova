@@ -64,7 +64,7 @@ export function InsightDetailPanel({
 
   return (
     <Sheet open onOpenChange={(open) => !open && onClose()}>
-      <SheetContent className="w-full overflow-y-auto sm:max-w-xl">
+      <SheetContent size="xl" className="overflow-y-auto">
         {detailQuery.isLoading || !detail ? (
           <div className="flex flex-col gap-4 p-6">
             <Skeleton className="h-8 w-3/4" />

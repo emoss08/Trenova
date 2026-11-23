@@ -31,6 +31,22 @@ export function formatMinor(minor: number, currency?: string | null): string {
   return formatCurrency(minor / 100, currency || "USD");
 }
 
+/**
+ * A minor-unit amount as short money for an axis or a tight label: "$20K" from a thousand up
+ * (one decimal at most, "$1.5K"), whole units below it ("$450"). A record with no currency reads
+ * as US dollars.
+ */
+export function formatMinorCompact(minor: number, currency?: string | null): string {
+  const units = minor / 100;
+  const large = Math.abs(units) >= 1000;
+  return numberFormatter({
+    style: "currency",
+    currency: currency || "USD",
+    notation: large ? "compact" : "standard",
+    maximumFractionDigits: large ? 1 : 0,
+  }).format(units);
+}
+
 const symbols = new Map<string, string>();
 
 /**

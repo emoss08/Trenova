@@ -56,7 +56,7 @@ export function CollectionAccountSheet({
 
   return (
     <Sheet open={customerId !== null} onOpenChange={(open) => !open && onClose()}>
-      <SheetContent side="right" className="w-[min(92vw,640px)] gap-0 p-0 sm:max-w-none">
+      <SheetContent side="right" size="2xl" className="gap-0 p-0">
         <SheetHeader className="border-b px-4 py-3">
           <SheetTitle>{view?.row.customerName ?? t("Collections account")}</SheetTitle>
           <SheetDescription>

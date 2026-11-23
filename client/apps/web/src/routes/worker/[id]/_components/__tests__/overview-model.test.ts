@@ -1,9 +1,11 @@
+import { setUserDatePreferences } from "@trenova/shared/lib/date";
 import type { WorkerOverview } from "@/lib/graphql/worker-overview";
 import { translate } from "@trenova/shared/i18n/runtime";
 import { describe, expect, it } from "vitest";
 import {
   payRateText,
   workerStripItems,
+  reviewDueInDays,
   workerStripState,
   workerTabMarks,
   workerTenure,
@@ -123,7 +125,12 @@ function maria(): WorkerOverview {
       expiredCount: 0,
       missingCount: 0,
     },
-    employment: { eventCount: 9, hiredAt: SEP_12_2022, openChecklistCount: 1 },
+    employment: {
+      eventCount: 9,
+      hiredAt: SEP_12_2022,
+      openChecklistCount: 1,
+      closedChecklistCount: 3,
+    },
     checklist: {
       id: "wcl_1",
       name: "Onboarding",
@@ -314,6 +321,24 @@ describe("the section strips' state lines", () => {
       state: "Under way · period ends Dec 1, 2026",
       tone: "none",
     });
+  });
+
+  it("counts a review due today as due, and overdue only from the next calendar day", () => {
+    setUserDatePreferences({ timezone: "America/Chicago" });
+    const o = maria();
+    // Read at 15:00 in Chicago on Nov 22; the review falls due that day, at its local midnight.
+    o.asOf = Date.UTC(2026, 10, 22, 21) / 1000;
+    o.nextReviewAt = Date.UTC(2026, 10, 22, 6) / 1000;
+    expect(workerStripState("reviews", o, t)).toEqual({
+      state: "Next due Nov 22, 2026",
+      tone: "warning",
+    });
+    expect(reviewDueInDays(o.nextReviewAt, o.asOf)).toBe(0);
+
+    o.nextReviewAt = Date.UTC(2026, 10, 21, 6) / 1000;
+    expect(workerStripState("reviews", o, t).tone).toBe("danger");
+    expect(reviewDueInDays(o.nextReviewAt, o.asOf)).toBe(-1);
+    setUserDatePreferences({ timezone: undefined });
   });
 
   it("marks a portal with nothing waiting, and benefits not started", () => {

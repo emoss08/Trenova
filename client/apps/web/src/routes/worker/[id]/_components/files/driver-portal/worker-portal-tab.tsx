@@ -115,7 +115,7 @@ export default function WorkerPortalTab({ workerId, worker, onOpen }: DriverPort
       <ErrorState
         error={status.error}
         layout="sheet"
-        title={t("Dash access could not be loaded")}
+        title={t("The Dash access could not be loaded")}
         onRetry={() => void status.refetch()}
       />
     );

@@ -542,7 +542,7 @@ export function EventInbox({ canUpdate, scopeCounts }: EventInboxProps) {
             if (!open) setOpenEvent(null);
           }}
         >
-          <SheetContent className="w-full overflow-y-auto p-0 sm:max-w-lg">
+          <SheetContent size="lg" className="overflow-y-auto p-0">
             <SheetHeader className="sr-only">
               <SheetTitle>{openEvent ? present(openEvent).title : t("Carrier change")}</SheetTitle>
               <SheetDescription>

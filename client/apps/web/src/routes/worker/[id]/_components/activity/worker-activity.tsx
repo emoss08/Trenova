@@ -281,7 +281,7 @@ export default function WorkerActivity({
         filtered ? (
           <div className="flex flex-col items-center gap-2 px-4 py-7 text-xs text-muted-foreground">
             <p>{t("No changes match.")}</p>
-            <Button size="sm" variant="outline" onClick={clearFilters}>
+            <Button size="sm" variant="secondary" onClick={clearFilters}>
               {t("Clear the filters")}
             </Button>
           </div>

@@ -44,8 +44,8 @@ import {
   ArchiveTrainingCourseDocument,
   AssignRequiredWorkerTrainingDocument,
   AssignWorkerTrainingDocument,
-  BulkAssignTrainingDocument,
   AttachWorkerTrainingDocumentDocument,
+  BulkAssignTrainingDocument,
   CancelWorkerTrainingDocument,
   CompleteWorkerTrainingDocument,
   CreateTrainingCourseDocument,
@@ -54,10 +54,11 @@ import {
   UpdateTrainingCourseDocument,
   WaiveWorkerTrainingDocument,
   WorkerTrainingRecordDocument,
+  WorkerTrainingRecordFieldsFragmentDoc,
   WorkerTrainingRecordsDocument,
   WorkerTrainingSummaryDocument,
 } from "@trenova/graphql/generated/documents/worker-training/operations";
-import type { Connection } from "./connection";
+import { unmaskConnection, type Connection } from "./connection";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import { defineDataTableGraphQLConfig } from "@trenova/shared/lib/graphql/data-table";
 
@@ -118,7 +119,7 @@ export async function fetchWorkerTrainingRecords(
     variables,
     signal: options?.signal,
   });
-  return data.workerTrainingRecords as Connection<WorkerTrainingRecordRow>;
+  return unmaskConnection(WorkerTrainingRecordFieldsFragmentDoc, data.workerTrainingRecords);
 }
 
 /** One training record by id: a deep link to a record outside the pages already read. */

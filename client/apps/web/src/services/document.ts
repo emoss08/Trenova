@@ -192,8 +192,13 @@ export class DocumentService {
     await api.post(`/documents/${documentId}/shipment-draft/reextract/`);
   }
 
-  public async getVersions(documentId: string): Promise<Document[]> {
-    const response = await api.get<Document[]>(`/documents/${documentId}/versions/`);
+  public async getVersions(
+    documentId: string,
+    options?: { signal?: AbortSignal },
+  ): Promise<Document[]> {
+    const response = await api.get<Document[]>(`/documents/${documentId}/versions/`, {
+      signal: options?.signal,
+    });
     return safeParse(z.array(documentSchema), response, "Document Versions");
   }
 
@@ -258,9 +263,11 @@ export class DocumentService {
   public async getPacketSummary(
     resourceType: string,
     resourceId: string,
+    options?: { signal?: AbortSignal },
   ): Promise<DocumentPacketSummary> {
     const response = await api.get<DocumentPacketSummary>(
       `/documents/resource/${resourceType}/${resourceId}/packet-summary/`,
+      { signal: options?.signal },
     );
     return safeParse(documentPacketSummarySchema, response, "Document Packet Summary");
   }

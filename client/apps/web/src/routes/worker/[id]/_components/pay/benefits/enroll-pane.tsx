@@ -204,7 +204,7 @@ export function EnrollPane({
           </WorkPaneBody>
           <WorkPaneFooter>
             <WorkPaneCancel />
-            <Button type="submit" size="sm" isLoading={isPending} loadingText={t("Saving...")}>
+            <Button type="submit" size="sm" isLoading={isPending}>
               {waive ? t("Record") : t("Enroll")}
             </Button>
           </WorkPaneFooter>

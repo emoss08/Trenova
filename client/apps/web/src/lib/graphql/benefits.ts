@@ -82,6 +82,7 @@ export async function fetchWorkerBenefitEnrollments(
       openOnly: args.openOnly ?? false,
       first: args.first,
       after: args.after,
+      includeTotalCount: !args.after,
     },
     signal: options?.signal,
   });

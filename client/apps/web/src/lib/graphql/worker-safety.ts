@@ -57,8 +57,10 @@ import {
   ReopenWorkerSafetyEventDocument,
   RescindDisciplinaryActionDocument,
   ReviewWorkerSafetyEventDocument,
+  SafetyScorecardFieldsFragmentDoc,
   UpdateWorkerSafetyEventDocument,
   WorkerDisciplinaryActionDocument,
+  WorkerDisciplinaryActionFieldsFragmentDoc,
   WorkerDisciplinaryActionsDocument,
   WorkerDisciplinaryLadderDocument,
   WorkerRecognitionsDocument,
@@ -66,13 +68,19 @@ import {
   WorkerSafetyEventsDocument,
   WorkerSafetyScorecardDocument,
 } from "@trenova/graphql/generated/documents/worker-safety/operations";
+import { getFragmentData } from "@trenova/graphql/fragment-data";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
-import type { Connection } from "./connection";
+import { unmaskConnection, type Connection } from "./connection";
 
 export type WorkerSafetyEventRow = WorkerSafetyEventFieldsFragment;
 export type WorkerDisciplinaryActionRow = WorkerDisciplinaryActionFieldsFragment;
 export type WorkerRecognitionRow = WorkerRecognitionFieldsFragment;
-export type SafetyScorecard = SafetyScorecardFieldsFragment;
+type ScorecardRead = WorkerSafetyScorecardQuery["workerSafetyScorecard"];
+/** One event still carrying points: its share of the gauge and the day it rolls off. */
+export type ActivePointEvent = ScorecardRead["activePointEvents"][number];
+export type SafetyScorecard = SafetyScorecardFieldsFragment & {
+  activePointEvents: ActivePointEvent[];
+};
 export type DisciplinaryLadder = WorkerDisciplinaryLadderQuery["workerDisciplinaryLadder"];
 
 export const WORKER_SAFETY_EVENTS_KEY = "worker-safety-events";
@@ -126,7 +134,11 @@ export async function fetchWorkerSafetyScorecard(
     variables: { workerId },
     signal: options?.signal,
   });
-  return data.workerSafetyScorecard as SafetyScorecard;
+  const scorecard = data.workerSafetyScorecard;
+  return {
+    ...getFragmentData(SafetyScorecardFieldsFragmentDoc, scorecard),
+    activePointEvents: scorecard.activePointEvents,
+  };
 }
 
 /** A page of a worker's disciplinary actions, newest first, as the server's connection. */
@@ -143,7 +155,10 @@ export async function fetchWorkerDisciplinaryActions(
     variables: { ...variables, includeTotalCount: !variables.after },
     signal: options?.signal,
   });
-  return data.workerDisciplinaryActions as Connection<WorkerDisciplinaryActionRow>;
+  return unmaskConnection(
+    WorkerDisciplinaryActionFieldsFragmentDoc,
+    data.workerDisciplinaryActions,
+  );
 }
 
 /** One disciplinary action by id: a deep link to an action outside the pages already read. */

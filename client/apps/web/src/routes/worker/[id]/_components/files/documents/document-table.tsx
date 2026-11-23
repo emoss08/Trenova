@@ -3,6 +3,7 @@ import { DocumentReviewBadge } from "@/components/documents/document-review-badg
 import { DocumentSignatureBadge } from "@/components/documents/document-signature-badge";
 import { formatFileSize } from "@/components/documents/document-upload-zone";
 import { RowActionsMenu, type RowAction } from "@/components/row-actions-menu";
+import type { PreloadIntent } from "@/components/work-pane";
 import { documentNeedsSignature } from "@/lib/document-signature";
 import { Checkbox } from "@trenova/shared/components/ui/checkbox";
 import { useT } from "@trenova/shared/i18n/use-t";
@@ -33,7 +34,7 @@ type DocumentTableProps = {
   onRead: (document: Document) => void;
   handleRef: Ref<BoundedTableHandle>;
   /** Warms the code of what a row opens; called when a row is hovered or focused. */
-  rowIntent: { onPointerEnter: () => void; onFocus: () => void };
+  rowIntent: PreloadIntent;
 };
 
 /**
@@ -67,16 +68,23 @@ export function DocumentTable({
                 aria-label={t("Select every document shown")}
               />
             ),
-            shrink: true,
+            width: "w-10",
+            headClassName: "pr-0",
           },
         ]
       : []),
+    // Name takes what the fixed columns leave, so it is never squeezed by a long uploader.
     { key: "name", label: t("Name") },
-    { key: "type", label: t("Type") },
-    { key: "added-by", label: t("Added by") },
-    { key: "added", label: t("Added") },
-    { key: "size", label: t("Size"), align: "end" },
-    { key: "actions", label: <span className="sr-only">{t("Actions")}</span>, shrink: true },
+    { key: "type", label: t("Type"), width: "w-28" },
+    { key: "added-by", label: t("Added by"), width: "w-40" },
+    { key: "added", label: t("Added"), width: "w-28" },
+    { key: "size", label: t("Size"), align: "end", width: "w-20" },
+    {
+      key: "actions",
+      label: <span className="sr-only">{t("Actions")}</span>,
+      width: "w-12",
+      headClassName: "px-2",
+    },
   ];
 
   return (
@@ -84,6 +92,7 @@ export function DocumentTable({
       columns={columns}
       label={t("Documents")}
       maxHeightClassName="max-h-128"
+      minWidthClassName="min-w-186"
       estimateRowHeight={41}
       handleRef={handleRef}
       rows={documents.map((document) => ({
@@ -128,7 +137,7 @@ function DocumentRow({
   uploaderName: string | null;
   actions: RowAction[];
   onRead: (document: Document) => void;
-  intent: { onPointerEnter: () => void; onFocus: () => void };
+  intent: PreloadIntent;
 }) {
   const t = useT();
   return (
@@ -155,7 +164,7 @@ function DocumentRow({
     >
       {selecting ? (
         <td
-          className={BOUNDED_CELL_CLASS}
+          className={cn(BOUNDED_CELL_CLASS, "pr-0")}
           onClick={(event) => event.stopPropagation()}
           onKeyDown={(event) => event.stopPropagation()}
         >
@@ -166,7 +175,7 @@ function DocumentRow({
           />
         </td>
       ) : null}
-      <td className={cn(BOUNDED_CELL_CLASS, "w-full max-w-0")}>
+      <td className={BOUNDED_CELL_CLASS}>
         <span className="flex min-w-0 items-center gap-2">
           <DocumentFileTypeIcon
             fileType={document.fileType}
@@ -181,8 +190,10 @@ function DocumentRow({
           {documentNeedsSignature(document) ? <DocumentSignatureBadge document={document} /> : null}
         </span>
       </td>
-      <td className={cn(BOUNDED_CELL_CLASS, "max-w-40 truncate")}>{documentTypeName(document)}</td>
-      <td className={cn(BOUNDED_CELL_CLASS, "max-w-44 truncate")}>
+      <td className={cn(BOUNDED_CELL_CLASS, "truncate")} title={documentTypeName(document)}>
+        {documentTypeName(document)}
+      </td>
+      <td className={cn(BOUNDED_CELL_CLASS, "truncate")}>
         {uploaderName ?? <span className="text-muted-foreground">{t("Not known")}</span>}
       </td>
       <td className={cn(BOUNDED_CELL_CLASS, "font-mono text-xs whitespace-nowrap tabular-nums")}>
@@ -197,7 +208,7 @@ function DocumentRow({
         {formatFileSize(document.fileSize)}
       </td>
       <td
-        className={BOUNDED_CELL_CLASS}
+        className={cn(BOUNDED_CELL_CLASS, "px-2")}
         onClick={(event) => event.stopPropagation()}
         onKeyDown={(event) => event.stopPropagation()}
       >

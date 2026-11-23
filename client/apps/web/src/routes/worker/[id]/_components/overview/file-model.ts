@@ -8,7 +8,7 @@ import type { WorkerOverview } from "@/lib/graphql/worker-overview";
 import { withoutRecordIds } from "@/lib/record-ids";
 import type { WorkerAreas } from "@/routes/worker/worker-areas";
 import type { WorkerArea, WorkerTab, WorkerView } from "@/routes/worker/use-worker-state";
-import { quotedPayRate } from "../overview-model";
+import { quotedPayRate, reviewDueInDays } from "../overview-model";
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import { formatNumber } from "@trenova/shared/i18n/format";
 import { daysUntil, formatUnixDateMedium, formatUnixMonthDay } from "@trenova/shared/lib/date";
@@ -187,7 +187,7 @@ function reviewsCell(overview: WorkerOverview, t: TranslateFn): Words {
         ? t("Last: {0}", withoutRecordIds(lastReview.title))
         : t("No review yet");
   if (nextReviewAt) {
-    const overdue = nextReviewAt < overview.asOf;
+    const overdue = reviewDueInDays(nextReviewAt, overview.asOf) < 0;
     return {
       state,
       note: overdue

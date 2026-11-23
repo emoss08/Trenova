@@ -46,6 +46,7 @@ import { ConfirmDialog } from "@/components/confirm-dialog";
 import { WORKER_FORM_PANES } from "../../worker-form-panes";
 import { ListCapLine } from "../../list-more";
 import { useWorkerInvalidation } from "../../use-worker-invalidation";
+import { useWorkerFormGate } from "../../use-worker-form-gate";
 import { TimeSkeleton } from "../time-skeleton";
 import {
   availabilitySummary,
@@ -86,6 +87,8 @@ export default function ScheduleView({ workerId, worker, open, onOpen }: Schedul
   });
 
   const invalidate = useWorkerInvalidation(workerId, "schedule");
+
+  const opens = useWorkerFormGate(open.form, { "assign-shift": canAssign });
 
   if (assignmentsQuery.isPending) return <TimeSkeleton view="schedule" />;
   if (assignmentsQuery.isError) {
@@ -136,7 +139,7 @@ export default function ScheduleView({ workerId, worker, open, onOpen }: Schedul
       </div>
       {canAssign ? (
         <AssignShiftPane.Component
-          open={open.form === "assign-shift"}
+          open={opens("assign-shift")}
           onOpenChange={(next) => {
             if (!next) onOpen({ tab: "time", view: "schedule" });
           }}

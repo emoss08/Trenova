@@ -48,6 +48,5 @@
   "{0, plural, one {# disputed} other {# disputed}}": "{0, plural, one {# en disputa} other {# en disputa}}",
   "{0} by {1}, promised to {2}": "{0} para el {1}, prometido a {2}",
   "{0} overdue of {1} open across {2, plural, one {# invoice} other {# invoices}}": "{0} vencido de {1} abierto en {2, plural, one {# factura} other {# facturas}}",
-  "{0} paid since ({1}%)": "{0} pagado desde entonces ({1} %)",
-  "{0} with {1}": "{0} con {1}"
+  "{0} paid since ({1}%)": "{0} pagado desde entonces ({1} %)"
 }

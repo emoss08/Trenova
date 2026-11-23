@@ -153,7 +153,7 @@ describe("HoursOfServiceView", () => {
     expect(screen.getByRole("meter", { name: "Shift" })).toBeInTheDocument();
     expect(screen.getByRole("meter", { name: "Cycle" })).toBeInTheDocument();
     expect(screen.getByText("of 11h driving")).toBeInTheDocument();
-    expect(await screen.findByText("None.")).toBeInTheDocument();
+    expect(await screen.findByText("No violations in the last 30 days.")).toBeInTheDocument();
   });
 
   it("falls back to the no-data sheet when the clocks read finds no stored state", async () => {

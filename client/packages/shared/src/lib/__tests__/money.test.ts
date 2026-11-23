@@ -5,6 +5,7 @@ import {
   currencySymbol,
   formatMinor,
   formatMinorAmount,
+  formatMinorCompact,
   isMinorAmountField,
   minorToAmountText,
   parseAmountToMinor,
@@ -130,5 +131,15 @@ describe("an amount as the text a field holds", () => {
 describe("amountSeparators", () => {
   it("are the marks the reader's locale writes an amount with", () => {
     expect(amountSeparators()).toEqual({ decimal: ".", group: "," });
+  });
+});
+
+describe("formatMinorCompact", () => {
+  it("shortens a thousand and up, and keeps whole units below it", () => {
+    expect(formatMinorCompact(2_000_000)).toBe("$20K");
+    expect(formatMinorCompact(150_000)).toBe("$1.5K");
+    expect(formatMinorCompact(45_000)).toBe("$450");
+    expect(formatMinorCompact(0)).toBe("$0");
+    expect(formatMinorCompact(-250_000)).toBe("-$2.5K");
   });
 });

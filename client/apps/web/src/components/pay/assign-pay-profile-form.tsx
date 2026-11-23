@@ -53,14 +53,14 @@ export type AssignPayProfileController = {
 /**
  * The pay assignment form behind its hosts (the pay profile page's dialog, the worker page's work
  * pane): the assignment, the driver's per-component overrides, and the mutation that starts it.
- * A rate left empty pays the profile's own.
+ * A rate left empty pays the profile's own. Its defaults are read once, at mount: each host
+ * mounts the form fresh at every opening (the pane through `lazyWorkPane`, the dialog inside its
+ * content), so nothing resets it and a refetch never replaces what is typed.
  */
 export function useAssignPayProfileForm({
-  open,
   start,
   onAssigned,
 }: {
-  open: boolean;
   start: AssignPayProfileStart;
   onAssigned: () => void;
 }): AssignPayProfileController {
@@ -69,21 +69,7 @@ export function useAssignPayProfileForm({
     resolver: zodResolver(assignWithOverridesSchema) as Resolver<AssignPayProfileValues>,
     defaultValues: startValues(start),
   });
-  const { handleSubmit, reset } = form;
-
-  const startKey = `${start.workerId ?? ""}:${start.payProfileId ?? ""}:${JSON.stringify(start.overrides ?? {})}`;
-  const loaded = useRef<string | null>(null);
-  useEffect(() => {
-    if (!open) {
-      loaded.current = null;
-      return;
-    }
-    if (loaded.current === startKey) return;
-    loaded.current = startKey;
-    reset(startValues(start));
-    // `start` is read through its key, so a new object with the same contents does not reset.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, reset, startKey]);
+  const { handleSubmit } = form;
 
   const mutation = useApiMutation({
     form,

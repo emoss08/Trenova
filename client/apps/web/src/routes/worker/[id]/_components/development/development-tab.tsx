@@ -14,6 +14,7 @@ import { useQuery } from "@tanstack/react-query";
 import { LazyComponent } from "@trenova/shared/components/error-boundary";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useRecordById } from "../use-record-by-id";
+import { useWorkerFormGate } from "../use-worker-form-gate";
 import { useWorkerList } from "../use-worker-list";
 import { WORKER_VIEW_MODULES } from "../worker-view-modules";
 import {
@@ -89,18 +90,26 @@ export default function DevelopmentTab({ workerId, worker, view, open, onOpen }:
   // the assignment rather than on a bare course and then again.
   const lookingUp = trainingRecord.isPending;
 
-  const resultOpen = open.form === "record-training-result" && canRecord && !lookingUp;
+  const reviewById = open.review
+    ? ((reviewsQuery.data ?? []).find((review) => review.id === open.review) ?? null)
+    : null;
+  const opens = useWorkerFormGate(open.form, {
+    "assign-training": canAssign,
+    // A named record must be found; without one the result is recorded against a course.
+    "record-training-result": lookingUp
+      ? "waiting"
+      : canRecord && (open.training === null || requested !== null),
+    "start-review": canCreateReview,
+    "edit-review": reviewsQuery.isPending
+      ? "waiting"
+      : canUpdateReview && reviewById?.status === "Draft",
+  });
+  const resultOpen = opens("record-training-result");
   const resultRecord = resultOpen && requested && isOpenRecord(requested) ? requested : null;
   const resultCourse = resultOpen && !resultRecord ? (requested?.courseId ?? presetCourseId) : null;
   const readRecord = open.form === null ? requested : null;
 
-  const reviewById = open.review
-    ? ((reviewsQuery.data ?? []).find((review) => review.id === open.review) ?? null)
-    : null;
-  const editing =
-    open.form === "edit-review" && canUpdateReview && reviewById?.status === "Draft"
-      ? reviewById
-      : null;
+  const editing = opens("edit-review") ? reviewById : null;
   const readingReview = open.form === null && reviewById?.status === "Closed" ? reviewById : null;
 
   const assign = (courseId: string | null) =>
@@ -149,7 +158,7 @@ export default function DevelopmentTab({ workerId, worker, view, open, onOpen }:
       </Kept>
 
       <AssignTrainingPane.Component
-        open={open.form === "assign-training" && canAssign}
+        open={opens("assign-training")}
         presetCourseId={presetCourseId}
         workerId={workerId}
         onClose={closePane}
@@ -172,7 +181,7 @@ export default function DevelopmentTab({ workerId, worker, view, open, onOpen }:
         onClose={closePane}
       />
       <StartReviewPane.Component
-        open={open.form === "start-review" && canCreateReview}
+        open={opens("start-review")}
         workerId={workerId}
         workerName={worker.wholeName}
         onStarted={(review) =>

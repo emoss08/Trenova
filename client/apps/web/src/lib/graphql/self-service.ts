@@ -80,7 +80,12 @@ export async function fetchWorkerPolicyAcknowledgements(
   >({
     document: WorkerPolicyAcknowledgementsDocument,
     operationName: "WorkerPolicyAcknowledgements",
-    variables: { workerId: args.workerId, first: args.first, after: args.after },
+    variables: {
+      workerId: args.workerId,
+      first: args.first,
+      after: args.after,
+      includeTotalCount: !args.after,
+    },
     signal: options?.signal,
   });
   return data.workerPolicyAcknowledgements;

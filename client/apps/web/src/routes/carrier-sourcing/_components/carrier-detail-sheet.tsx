@@ -312,10 +312,7 @@ export function CarrierDetailSheet({ target, onOpenChange, ...rest }: CarrierDet
 
   return (
     <Sheet open={target !== null} onOpenChange={onOpenChange}>
-      <SheetContent
-        side="right"
-        className="gap-0 overflow-hidden p-0 data-[side=right]:w-[calc(100%-2rem)] data-[side=right]:sm:max-w-[600px]"
-      >
+      <SheetContent side="right" size="xl" className="gap-0 overflow-hidden p-0">
         {shown ? <CarrierSheetBody key={shown.dotNumber} target={shown} {...rest} /> : null}
       </SheetContent>
     </Sheet>

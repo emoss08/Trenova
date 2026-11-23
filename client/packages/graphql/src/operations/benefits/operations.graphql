@@ -25,7 +25,13 @@ query BenefitPlans($activeOnly: Boolean, $planYear: Int) {
   }
 }
 
-query WorkerBenefitEnrollments($workerId: ID!, $openOnly: Boolean, $first: Int, $after: String) {
+query WorkerBenefitEnrollments(
+  $workerId: ID!
+  $openOnly: Boolean
+  $first: Int
+  $after: String
+  $includeTotalCount: Boolean = true
+) {
   workerBenefitEnrollments(workerId: $workerId, openOnly: $openOnly, first: $first, after: $after) {
     edges {
       cursor
@@ -56,6 +62,8 @@ query WorkerBenefitEnrollments($workerId: ID!, $openOnly: Boolean, $first: Int, 
       hasNextPage
       endCursor
     }
+    totalCount @include(if: $includeTotalCount)
+    totalCountExact @include(if: $includeTotalCount)
   }
 }
 

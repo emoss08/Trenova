@@ -23015,7 +23015,7 @@
     ]
   },
   "Added": {
-    "sites": 10,
+    "sites": 9,
     "scope": [
       "ts"
     ],
@@ -23083,7 +23083,7 @@
     ]
   },
   "Added by": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -24781,7 +24781,7 @@
     ]
   },
   "Agent": {
-    "sites": 42,
+    "sites": 41,
     "scope": [
       "go",
       "ts"
@@ -62036,7 +62036,7 @@
     ]
   },
   "Clear the filters": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -69265,15 +69265,6 @@
     ],
     "areas": [
       "apps/web/components"
-    ]
-  },
-  "Conversation compacted": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Conversation is not one Trenova knows": {
@@ -78051,15 +78042,6 @@
     ]
   },
   "Dash access": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/worker"
-    ]
-  },
-  "Dash access could not be loaded": {
     "sites": 1,
     "scope": [
       "ts"
@@ -91689,15 +91671,6 @@
   },
   "Driver forms": {
     "sites": 2,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/worker"
-    ]
-  },
-  "Driver forms could not be loaded": {
-    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -124843,6 +124816,15 @@
       "routes/freight-outlook"
     ]
   },
+  "Google Maps rejected the API key. Check that the key is valid and that the Places API (New) is enabled for its Google Cloud project.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Google Vertex AI": {
     "sites": 1,
     "scope": [
@@ -129354,15 +129336,6 @@
     ]
   },
   "Hours of service are not on your plan": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/worker"
-    ]
-  },
-  "Hours of service could not be loaded": {
     "sites": 1,
     "scope": [
       "ts"
@@ -140439,15 +140412,6 @@
       "packages/shared/types"
     ]
   },
-  "Issuing...": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/worker"
-    ]
-  },
   "It also dates the default title.": {
     "sites": 1,
     "scope": [
@@ -146318,7 +146282,7 @@
     ]
   },
   "Last message": {
-    "sites": 4,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -146327,11 +146291,12 @@
     ]
   },
   "Last message {0}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/admin",
       "routes/desk"
     ]
   },
@@ -152971,7 +152936,7 @@
     ]
   },
   "Loading more": {
-    "sites": 4,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -154012,13 +153977,12 @@
     ]
   },
   "Loading the form": {
-    "sites": 6,
+    "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components",
-      "routes/worker"
+      "apps/web/components"
     ]
   },
   "Loading the formatting…": {
@@ -162383,7 +162347,7 @@
     ]
   },
   "Messages": {
-    "sites": 8,
+    "sites": 7,
     "scope": [
       "ts"
     ],
@@ -165478,15 +165442,6 @@
       "routes/agent-control"
     ]
   },
-  "More notes could not be loaded": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/worker"
-    ]
-  },
   "More of the street address": {
     "sites": 2,
     "scope": [
@@ -165499,15 +165454,6 @@
     ]
   },
   "More past these": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/worker"
-    ]
-  },
-  "More policies could not be loaded": {
     "sites": 1,
     "scope": [
       "ts"
@@ -167563,7 +167509,7 @@
     ]
   },
   "Name": {
-    "sites": 160,
+    "sites": 159,
     "scope": [
       "go",
       "ts"
@@ -172633,7 +172579,7 @@
       "routes/worker"
     ]
   },
-  "No accidents, incidents, citations or inspections on record.": {
+  "No accidents, incidents, citations or inspections yet.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -173879,7 +173825,7 @@
       "routes/osha"
     ]
   },
-  "No cases on record.": {
+  "No cases yet.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -174851,7 +174797,7 @@
       "routes/admin"
     ]
   },
-  "No disciplinary actions on record.": {
+  "No disciplinary actions yet.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -174977,7 +174923,7 @@
       "apps/web/components"
     ]
   },
-  "No documents match": {
+  "No documents match.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -181202,6 +181148,15 @@
       "packages/shared/lib"
     ]
   },
+  "No violations in the last 30 days.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/worker"
+    ]
+  },
   "No violations — nice work.": {
     "sites": 1,
     "scope": [
@@ -182357,15 +182312,6 @@
     ],
     "areas": [
       "routes/customer"
-    ]
-  },
-  "None.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/worker"
     ]
   },
   "Normal": {
@@ -184051,12 +183997,13 @@
     ]
   },
   "Not sent to the agent": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "routes/admin"
     ]
   },
   "Not sent to {0}": {
@@ -186466,15 +186413,6 @@
     ]
   },
   "Nothing on file": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/worker"
-    ]
-  },
-  "Nothing on file fits this search and type.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -198804,6 +198742,15 @@
       "routes/auth"
     ]
   },
+  "Opening {0}'s conversation was recorded in the audit log. Nothing here changes it for them.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Opening {0}...": {
     "sites": 2,
     "scope": [
@@ -210327,7 +210274,7 @@
     ]
   },
   "Person": {
-    "sites": 16,
+    "sites": 15,
     "scope": [
       "go",
       "ts"
@@ -226813,7 +226760,7 @@
     ]
   },
   "Reason cannot exceed 255 characters": {
-    "sites": 11,
+    "sites": 10,
     "scope": [
       "go",
       "ts"
@@ -248777,7 +248724,7 @@
     ]
   },
   "Saving...": {
-    "sites": 57,
+    "sites": 52,
     "scope": [
       "ts"
     ],
@@ -249545,14 +249492,12 @@
     ]
   },
   "Say why the course is waived": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
-      "go",
-      "ts"
+      "go"
     ],
     "areas": [
-      "go/other",
-      "packages/shared/types"
+      "go/other"
     ]
   },
   "Say why the cover was declined": {
@@ -250760,15 +250705,6 @@
     ],
     "areas": [
       "apps/web/config"
-    ]
-  },
-  "Scheduled request": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Scheduled requests": {
@@ -258774,12 +258710,13 @@
     ]
   },
   "Sent while it was working": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "routes/admin"
     ]
   },
   "Sent with each message so the agent knows what you're looking at": {
@@ -265466,7 +265403,7 @@
     ]
   },
   "Showing the newest {0}": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -267026,7 +266963,7 @@
     ]
   },
   "Size": {
-    "sites": 15,
+    "sites": 14,
     "scope": [
       "go",
       "ts"
@@ -271452,7 +271389,7 @@
     ]
   },
   "Started": {
-    "sites": 12,
+    "sites": 11,
     "scope": [
       "ts"
     ],
@@ -271599,12 +271536,13 @@
     ]
   },
   "Started {0}": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "routes/admin",
       "routes/my-team",
       "routes/worker"
     ]
@@ -272157,15 +272095,6 @@
     ]
   },
   "Stated availability": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/worker"
-    ]
-  },
-  "Stated availability could not be loaded": {
     "sites": 1,
     "scope": [
       "ts"
@@ -276125,15 +276054,6 @@
     "areas": [
       "apps/dash/_components",
       "routes/scheduling",
-      "routes/worker"
-    ]
-  },
-  "Swaps could not be loaded": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
       "routes/worker"
     ]
   },
@@ -281907,6 +281827,15 @@
     ],
     "areas": [
       "routes/customer"
+    ]
+  },
+  "The Dash access could not be loaded": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/worker"
     ]
   },
   "The Desk cases this person owns. Approvals stay with them.": {
@@ -288140,6 +288069,15 @@
       "go/other"
     ]
   },
+  "The driver forms could not be loaded": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/worker"
+    ]
+  },
   "The driver has no driver portal access, so the message would not reach them.": {
     "sites": 1,
     "scope": [
@@ -288467,6 +288405,15 @@
     ]
   },
   "The earlier records could not be loaded": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/worker"
+    ]
+  },
+  "The earlier versions could not be loaded": {
     "sites": 1,
     "scope": [
       "ts"
@@ -291513,6 +291460,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "The hours of service could not be loaded": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/worker"
     ]
   },
   "The hours of service could not be read.": {
@@ -295664,6 +295620,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "The open events could not be loaded": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/worker"
     ]
   },
   "The open invoices most worth a call, ordered by how far past due they are and how much is at stake. Disputes and short payments are marked.": {
@@ -302352,6 +302317,15 @@
       "routes/rate-zone"
     ]
   },
+  "The stated availability could not be loaded": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/worker"
+    ]
+  },
   "The statement could not be parsed; fix the file and stage it again.": {
     "sites": 1,
     "scope": [
@@ -302833,6 +302807,15 @@
     "areas": [
       "apps/web/rules",
       "rules/tariff"
+    ]
+  },
+  "The swaps could not be loaded": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/worker"
     ]
   },
   "The sweep emails the customer the moment the notice window opens, using their configured recipients.": {
@@ -304879,6 +304862,15 @@
     ]
   },
   "The violation as written on the inspection report.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/worker"
+    ]
+  },
+  "The violations could not be loaded": {
     "sites": 1,
     "scope": [
       "ts"
@@ -323607,7 +323599,7 @@
     ]
   },
   "Type": {
-    "sites": 58,
+    "sites": 57,
     "scope": [
       "go",
       "ts"
@@ -332617,15 +332609,6 @@
   },
   "Violations cited": {
     "sites": 2,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/worker"
-    ]
-  },
-  "Violations could not be loaded": {
-    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -341645,7 +341628,7 @@
     ]
   },
   "Where it began": {
-    "sites": 6,
+    "sites": 5,
     "scope": [
       "ts"
     ],
@@ -349539,15 +349522,6 @@
     ],
     "areas": [
       "go/other"
-    ]
-  },
-  "You are reading {0}'s conversation as they saw it. Opening it was recorded in the audit log; nothing here changes it for them.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "You are running out of recovery codes. Create new ones and store them safely.": {
@@ -369336,11 +369310,12 @@
     ]
   },
   "{0, plural, one {# message} other {# messages}}": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/admin",
       "routes/desk"
     ]
   },
@@ -370389,15 +370364,6 @@
     ],
     "areas": [
       "routes/benefits"
-    ]
-  },
-  "{0, plural, one {# point from earlier events} other {# points from earlier events}}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/worker"
     ]
   },
   "{0, plural, one {# point} other {# points}}": {
@@ -372186,6 +372152,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "{0, plural, one {# working note} other {# working notes}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "{0, plural, one {# would have needed a person — narrow the sender to avoid it} other {# would have needed a person — narrow the sender to avoid them}}": {
@@ -388833,7 +388808,7 @@
     ]
   },
   "{0} to {1}": {
-    "sites": 31,
+    "sites": 26,
     "scope": [
       "go",
       "ts"
@@ -388862,15 +388837,6 @@
     ],
     "areas": [
       "routes/desk"
-    ]
-  },
-  "{0} to {1} · {2, plural, one {# day} other {# days}}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/worker"
     ]
   },
   "{0} to {1} · {2}": {
@@ -389727,11 +389693,12 @@
     ]
   },
   "{0} with {1}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/admin",
       "routes/collections"
     ]
   },
@@ -390719,6 +390686,15 @@
       "routes/worker"
     ]
   },
+  "{0} · {1, plural, one {# day} other {# days}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/worker"
+    ]
+  },
   "{0} · {1, plural, one {# invoice} other {# invoices}}": {
     "sites": 2,
     "scope": [
@@ -391508,15 +391484,6 @@
       "routes/desk"
     ]
   },
-  "{0}'s conversation with {1}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "{0}'s hours": {
     "sites": 2,
     "scope": [
@@ -391814,15 +391781,6 @@
     ],
     "areas": [
       "routes/desk"
-    ]
-  },
-  "{0}, while it worked": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "{0}, with {1}": {

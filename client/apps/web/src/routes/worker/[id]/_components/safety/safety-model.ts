@@ -1,4 +1,5 @@
 import type {
+  ActivePointEvent,
   DisciplinaryLadder,
   SafetyScorecard,
   WorkerDisciplinaryActionRow,
@@ -55,18 +56,14 @@ export function eventCarriesViolations(event: Pick<WorkerSafetyEventRow, "kind">
 }
 
 export type GaugeSegment = {
-  /** The event's id; `earlier` for the points of events not read yet. */
+  /** The event's id. */
   id: string;
   points: number;
   /** Share of the filled length, 0 to 1. */
   share: number;
-  /** Null on the `earlier` segment. */
-  occurredAt: number | null;
-  rollsOffAt: number | null;
+  /** The event the points come from, as the scorecard reports it. */
+  event: ActivePointEvent;
 };
-
-/** The id of the segment that holds the points of events past the pages read so far. */
-export const EARLIER_SEGMENT = "earlier";
 
 export type PointsGauge = {
   points: number;
@@ -84,47 +81,37 @@ export type PointsGauge = {
 
 /**
  * The points track: zero to two past the at-risk line (further when the points pass it), filled
- * to the scorecard's active points. One segment per loaded event still carrying points, oldest
- * first; points the scorecard counts on events not read yet (an older page) are one `earlier`
- * segment ahead of them, so the shares always add up to the server's figure.
+ * to the scorecard's active points. One segment per event the scorecard says still carries
+ * points, oldest first, so the segments and the roll-off dates come from the same read as the
+ * figure, whatever the events list has loaded.
  */
 export function pointsGauge(
   scorecard: Pick<
     SafetyScorecard,
-    "activePoints" | "pointsWatchThreshold" | "pointsAtRiskThreshold"
+    "activePoints" | "pointsWatchThreshold" | "pointsAtRiskThreshold" | "activePointEvents"
   >,
-  events: readonly WorkerSafetyEventRow[],
 ): PointsGauge {
   const points = Math.max(0, scorecard.activePoints);
   const watch = scorecard.pointsWatchThreshold;
   const atRisk = scorecard.pointsAtRiskThreshold;
   const max = Math.max(atRisk + 2, points, 1);
-  const carrying = events
+  const carrying = scorecard.activePointEvents
     .filter((event) => event.activePoints > 0)
     .sort((a, b) => a.occurredAt - b.occurredAt);
-  const loaded = carrying.reduce((sum, event) => sum + event.activePoints, 0);
-  const whole = Math.max(points, loaded);
-  const earlier = whole - loaded;
+  const whole = Math.max(
+    points,
+    carrying.reduce((sum, event) => sum + event.activePoints, 0),
+  );
   const segments: GaugeSegment[] = carrying.map((event) => ({
     id: event.id,
     points: event.activePoints,
     share: whole > 0 ? event.activePoints / whole : 0,
-    occurredAt: event.occurredAt,
-    rollsOffAt: event.pointsExpireAt ?? null,
+    event,
   }));
-  if (earlier > 0) {
-    segments.unshift({
-      id: EARLIER_SEGMENT,
-      points: earlier,
-      share: earlier / whole,
-      occurredAt: null,
-      rollsOffAt: null,
-    });
-  }
   const byDate = new Map<number, number>();
-  for (const segment of segments) {
-    if (segment.rollsOffAt == null) continue;
-    byDate.set(segment.rollsOffAt, (byDate.get(segment.rollsOffAt) ?? 0) + segment.points);
+  for (const event of carrying) {
+    if (event.pointsExpireAt == null) continue;
+    byDate.set(event.pointsExpireAt, (byDate.get(event.pointsExpireAt) ?? 0) + event.activePoints);
   }
   const rollOffs = [...byDate.entries()]
     .map(([date, sum]) => ({ date, points: sum }))
@@ -209,16 +196,12 @@ export function formatEventAmount(value: string | null | undefined): string | nu
  * What an action's line says under its level. The stair's tooltips read the ladder's active
  * actions, which carry fewer fields than a row of the list; what is missing is left out.
  */
+/** What a summary reads: a list row has all of it; the ladder's active actions all but the rescind reason. */
 export type ActionSummaryFields = Pick<
   WorkerDisciplinaryActionRow,
-  "status" | "issuedAt" | "expiresAt"
+  "status" | "issuedAt" | "expiresAt" | "issuedBy" | "suspensionDays" | "acknowledgedAt"
 > &
-  Partial<
-    Pick<
-      WorkerDisciplinaryActionRow,
-      "rescindReason" | "issuedBy" | "suspensionDays" | "acknowledgedAt"
-    >
-  >;
+  Partial<Pick<WorkerDisciplinaryActionRow, "rescindReason">>;
 
 export function actionSummary(action: ActionSummaryFields, t: TranslateFn): string {
   if (action.status === "Rescinded") {
@@ -236,7 +219,7 @@ export function actionSummary(action: ActionSummaryFields, t: TranslateFn): stri
         ? t("rolled off {0}", formatUnixDateMedium(action.expiresAt))
         : t("rolls off {0}", formatUnixDateMedium(action.expiresAt))
       : null,
-    action.status === "Active" && action.acknowledgedAt !== undefined
+    action.status === "Active"
       ? action.acknowledgedAt
         ? t("Acknowledged")
         : t("waiting for the acknowledgement")

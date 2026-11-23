@@ -47,6 +47,7 @@ import { ListMoreLine, type ListMore } from "../../list-more";
 import { useRecordById } from "../../use-record-by-id";
 import { useRowFlash } from "../../use-row-flash";
 import { useWorkerInvalidation } from "../../use-worker-invalidation";
+import { useWorkerFormGate } from "../../use-worker-form-gate";
 import { useWorkerList } from "../../use-worker-list";
 import { WORKER_FORM_PANES } from "../../worker-form-panes";
 import { TimeSkeleton } from "../time-skeleton";
@@ -145,6 +146,14 @@ export default function TimeOffView({ workerId, worker, open, onOpen }: TimeOffV
   const closePane = (next: boolean) => {
     if (!next) onOpen({ tab: "time", view: "time-off" });
   };
+
+  // The policy in force decides whether a balance can be adjusted.
+  const policyInForce = assignments.rows.some((assignment) => assignment.effectiveTo == null);
+  const opens = useWorkerFormGate(open.form, {
+    "request-time-off": canCreate,
+    "change-policy": canAssign,
+    "adjust-balance": assignments.isPending ? "waiting" : canManage && policyInForce,
+  });
 
   if (balancesQuery.isPending || assignments.isPending || requests.isPending) {
     return <TimeSkeleton view="time-off" />;
@@ -277,7 +286,7 @@ export default function TimeOffView({ workerId, worker, open, onOpen }: TimeOffV
       ) : null}
 
       <TimeOffPane.Component
-        open={open.form === "request-time-off" || record !== null}
+        open={opens("request-time-off") || record !== null}
         onOpenChange={closePane}
         workerId={workerId}
         pto={open.form === "request-time-off" ? null : record}
@@ -288,7 +297,7 @@ export default function TimeOffView({ workerId, worker, open, onOpen }: TimeOffV
       />
       {canAssign ? (
         <ChangePolicyPane.Component
-          open={open.form === "change-policy"}
+          open={opens("change-policy")}
           onOpenChange={closePane}
           workerId={workerId}
           currentPolicyId={current?.ptoPolicyId ?? null}
@@ -297,7 +306,7 @@ export default function TimeOffView({ workerId, worker, open, onOpen }: TimeOffV
       ) : null}
       {canManage && current ? (
         <AdjustBalancePane.Component
-          open={open.form === "adjust-balance"}
+          open={opens("adjust-balance")}
           onOpenChange={closePane}
           workerId={workerId}
           balances={balances}

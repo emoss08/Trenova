@@ -30,9 +30,34 @@ export function AssignPayProfileDialog({
   payProfileId?: string;
   onAssigned?: () => void;
 }) {
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent size="lg" className="max-h-[85vh] overflow-y-auto">
+        <AssignPayProfileDialogForm
+          onOpenChange={onOpenChange}
+          workerId={workerId}
+          payProfileId={payProfileId}
+          onAssigned={onAssigned}
+        />
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+/** The dialog's form, mounted with its content, so every opening starts from what it was given. */
+function AssignPayProfileDialogForm({
+  onOpenChange,
+  workerId,
+  payProfileId,
+  onAssigned,
+}: {
+  onOpenChange: (open: boolean) => void;
+  workerId?: string;
+  payProfileId?: string;
+  onAssigned?: () => void;
+}) {
   const t = useT();
   const { form, isPending, submit } = useAssignPayProfileForm({
-    open,
     start: { workerId, payProfileId },
     onAssigned: () => {
       onOpenChange(false);
@@ -41,50 +66,44 @@ export function AssignPayProfileDialog({
   });
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent size="lg" className="max-h-[85vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>{t("Assign pay profile")}</DialogTitle>
-          <DialogDescription>
-            {t(
-              "The driver's pay is computed from this profile for every shipment delivered on or after the effective date. Any currently-open assignment ends automatically — no cleanup needed.",
-            )}
-          </DialogDescription>
-        </DialogHeader>
-        <FormProvider {...form}>
-          <Form id="assign-pay-profile-form" onSubmit={(event) => void submit(event)}>
-            <AssignPayProfileFields
-              form={form}
-              showWorker={!workerId}
-              showProfile={!payProfileId}
-            />
-          </Form>
-        </FormProvider>
-        <PayOverrideFields
-          form={form}
-          open={open}
-          initialProfileId={payProfileId}
-          className="rounded-lg border p-3"
-          heading={
-            <div>
-              <p className="text-xs font-medium">{t("Driver-specific rate overrides")}</p>
-              <p className="text-xs text-muted-foreground">
-                {t(
-                  "Leave blank to use the profile rate. An override replaces the component's base rate and any mileage bands for this driver only.",
-                )}
-              </p>
-            </div>
-          }
-        />
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            {t("Cancel")}
-          </Button>
-          <Button form="assign-pay-profile-form" type="submit" isLoading={isPending}>
-            {t("Assign profile")}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+    <>
+      <DialogHeader>
+        <DialogTitle>{t("Assign pay profile")}</DialogTitle>
+        <DialogDescription>
+          {t(
+            "The driver's pay is computed from this profile for every shipment delivered on or after the effective date. Any currently-open assignment ends automatically — no cleanup needed.",
+          )}
+        </DialogDescription>
+      </DialogHeader>
+      <FormProvider {...form}>
+        <Form id="assign-pay-profile-form" onSubmit={(event) => void submit(event)}>
+          <AssignPayProfileFields form={form} showWorker={!workerId} showProfile={!payProfileId} />
+        </Form>
+      </FormProvider>
+      <PayOverrideFields
+        form={form}
+        open
+        initialProfileId={payProfileId}
+        className="rounded-lg border p-3"
+        heading={
+          <div>
+            <p className="text-xs font-medium">{t("Driver-specific rate overrides")}</p>
+            <p className="text-xs text-muted-foreground">
+              {t(
+                "Leave blank to use the profile rate. An override replaces the component's base rate and any mileage bands for this driver only.",
+              )}
+            </p>
+          </div>
+        }
+      />
+      <DialogFooter>
+        <Button variant="outline" onClick={() => onOpenChange(false)}>
+          {t("Cancel")}
+        </Button>
+        <Button form="assign-pay-profile-form" type="submit" isLoading={isPending}>
+          {t("Assign profile")}
+        </Button>
+      </DialogFooter>
+    </>
   );
 }

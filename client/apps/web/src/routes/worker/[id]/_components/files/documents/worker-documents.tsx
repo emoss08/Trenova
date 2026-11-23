@@ -1,10 +1,5 @@
 import { ConfirmDialog } from "@/components/confirm-dialog";
-import {
-  CaptureButton,
-  CaptureRequestsPanel,
-  CaptureStacksPanel,
-  useCaptureKind,
-} from "@/components/documents/capture/capture-panel";
+import { useCaptureKind } from "@/components/documents/capture/use-capture-kind";
 import { DocumentStorageAlert } from "@/components/documents/document-storage-alert";
 import { ExtractionNeedsProviderAlert } from "@/components/documents/extraction-needs-provider-alert";
 import { PacketCompletenessPanel } from "@/components/documents/packet-completeness-panel";
@@ -46,7 +41,6 @@ import {
   DropdownMenuTrigger,
 } from "@trenova/shared/components/ui/dropdown-menu";
 import { EmptySheet } from "@trenova/shared/components/ui/empty-sheet";
-import { EmptyTable } from "@trenova/shared/components/ui/empty-table";
 import {
   Select,
   SelectContent,
@@ -65,9 +59,10 @@ import { useRef, useState } from "react";
 import type { BoundedTableHandle } from "../../bounded-table";
 import { LineSketch } from "../../list-sketch";
 import { useRowFlash } from "../../use-row-flash";
+import { useWorkerFormGate } from "../../use-worker-form-gate";
 import { WORKER_FORM_PANES } from "../../worker-form-panes";
 import { FilesSkeleton } from "../files-skeleton";
-import { DocumentDialogs } from "./document-dialogs";
+import { DOCUMENT_DIALOG_PRELOADS, DocumentDialogs } from "./document-dialogs";
 import { DocumentTable } from "./document-table";
 import {
   DOCUMENT_KIND_LABELS,
@@ -97,6 +92,14 @@ const DocumentPane = lazyWorkPane(
     fields: 3,
   },
 );
+/*
+ * Capture (scan, print into the record, cover sheets) is read only where the person may capture
+ * into this record: its pieces and their dialogs stay out of the documents chunk.
+ */
+const loadCapture = () => import("@/components/documents/capture/capture-panel");
+const CaptureButton = lazyComponent(loadCapture, (module) => module.CaptureButton);
+const CaptureRequestsPanel = lazyComponent(loadCapture, (module) => module.CaptureRequestsPanel);
+const CaptureStacksPanel = lazyComponent(loadCapture, (module) => module.CaptureStacksPanel);
 const BulkActionDock = lazyComponent(
   () => import("@/components/documents/document-bulk-action-dock"),
   (module) => module.DocumentBulkActionDock,
@@ -160,6 +163,10 @@ export default function WorkerDocuments({ workerId, worker, open, onOpen }: Docu
     if (result.data?.name) names.set(uploaderIds[index], result.data.name);
   });
   const uploaderName = (id: string) => names.get(id) ?? null;
+
+  const uploadAllowed = useWorkerFormGate(open.form, { "upload-document": canUpload })(
+    "upload-document",
+  );
 
   if (documents.documentsQuery.isPending) return <FilesSkeleton view="documents" />;
   if (documents.documentsQuery.isError) {
@@ -235,6 +242,7 @@ export default function WorkerDocuments({ workerId, worker, open, onOpen }: Docu
         id: "inspect",
         label: t("What was read from it"),
         icon: BrainCircuitIcon,
+        preload: DOCUMENT_DIALOG_PRELOADS.inspect,
         onSelect: () => setInspecting(document),
       });
     }
@@ -242,6 +250,7 @@ export default function WorkerDocuments({ workerId, worker, open, onOpen }: Docu
       id: "versions",
       label: t("Versions"),
       icon: ClockRewindIcon,
+      preload: DOCUMENT_DIALOG_PRELOADS.versions,
       onSelect: () => setVersionOf(document),
     });
     if (canUpload) {
@@ -249,6 +258,7 @@ export default function WorkerDocuments({ workerId, worker, open, onOpen }: Docu
         id: "new-version",
         label: t("Upload a new version"),
         icon: Upload01Icon,
+        preload: UploadPane.preload,
         onSelect: () => openUpload(document.lineageId),
       });
     }
@@ -266,6 +276,7 @@ export default function WorkerDocuments({ workerId, worker, open, onOpen }: Docu
         id: "reject",
         label: t("Reject…"),
         icon: SlashCircle01Icon,
+        preload: DOCUMENT_DIALOG_PRELOADS.reject,
         onSelect: () => setRejecting(document),
       });
     }
@@ -274,6 +285,7 @@ export default function WorkerDocuments({ workerId, worker, open, onOpen }: Docu
         id: "signature",
         label: t("Record the signature"),
         icon: Edit05Icon,
+        preload: DOCUMENT_DIALOG_PRELOADS.signature,
         onSelect: () => setSigning(document),
       });
     }
@@ -326,9 +338,11 @@ export default function WorkerDocuments({ workerId, worker, open, onOpen }: Docu
         <PacketCompletenessPanel summary={documents.packetSummary} />
       ) : null}
       {captureKind !== null ? (
-        <CaptureRequestsPanel kind={captureKind} recordId={workerId} />
+        <LazyComponent fallback={null}>
+          <CaptureRequestsPanel.Component kind={captureKind} recordId={workerId} />
+          <CaptureStacksPanel.Component kind={captureKind} recordId={workerId} />
+        </LazyComponent>
       ) : null}
-      {captureKind !== null ? <CaptureStacksPanel kind={captureKind} recordId={workerId} /> : null}
 
       <SectionPanel
         title={t("Documents")}
@@ -400,7 +414,15 @@ export default function WorkerDocuments({ workerId, worker, open, onOpen }: Docu
               </DropdownMenu>
             ) : null}
             {captureKind !== null ? (
-              <CaptureButton kind={captureKind} recordId={workerId} disabled={!canUpload} />
+              <LazyComponent
+                fallback={<span aria-hidden className="block h-7 w-24 ui-shimmer rounded-md" />}
+              >
+                <CaptureButton.Component
+                  kind={captureKind}
+                  recordId={workerId}
+                  disabled={!canUpload}
+                />
+              </LazyComponent>
             ) : null}
             {canUpload ? (
               <Button size="sm" {...preloadOn(UploadPane)} onClick={() => openUpload()}>
@@ -431,18 +453,12 @@ export default function WorkerDocuments({ workerId, worker, open, onOpen }: Docu
               }
             />
           ) : shown.length === 0 ? (
-            <EmptyTable
-              title={t("No documents match")}
-              description={t("Nothing on file fits this search and type.")}
-              columns={[
-                { label: t("Name") },
-                { label: t("Type") },
-                { label: t("Added by") },
-                { label: t("Added") },
-                { label: t("Size"), numeric: true },
-              ]}
-              onClearFilters={clearFilters}
-            />
+            <div className="flex flex-col items-center gap-2 px-4 py-7 text-xs text-muted-foreground">
+              <p>{t("No documents match.")}</p>
+              <Button size="sm" variant="secondary" onClick={clearFilters}>
+                {t("Clear the filters")}
+              </Button>
+            </div>
           ) : (
             <DocumentTable
               documents={shown}
@@ -494,7 +510,7 @@ export default function WorkerDocuments({ workerId, worker, open, onOpen }: Docu
       ) : null}
 
       <UploadPane.Component
-        open={uploadOpen && canUpload}
+        open={uploadAllowed}
         onOpenChange={(next) => !next && closeUpload()}
         workerName={worker.firstName}
         lineageId={lineageId}

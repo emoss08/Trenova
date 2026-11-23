@@ -798,6 +798,12 @@ hyphen.
 - A dialog, a sheet and a table panel all close the same way: footer right-aligned,
   Cancel (`outline`) then the primary (ink, or `destructive`). `DialogContent` takes
   `size` (`xs`…`2xl`) instead of an arbitrary `sm:max-w-[520px]`.
+- A sheet from the left or right takes its width from `SheetContent`'s `size` (`sm`, the
+  default, through `md`, `lg`, `xl`, `2xl`, `3xl` and `5xl`), never from a width in
+  `className`: the side's own classes select on `data-side`, which outranks a caller's
+  `sm:max-w-*` or `w-*`, and eighteen sheets that asked for 26 to 69rem drew at 24rem. Every
+  size past `sm` takes a phone's whole width but for the inset. Something to read (a
+  conversation, a document, a drill-through) is `3xl` or wider.
 - An inline callout is `<Alert variant size="sm">`, not a hand-tinted box.
   `bg-warning/10 rounded-md p-3` was written sixty times at fifteen opacities.
 - A picture someone uploads (a logo, an icon, a person's photo) goes through

@@ -28,6 +28,7 @@ import { useEffect, useRef, useState } from "react";
 import { LeaveStandingStrip } from "../../time/leave/leave-standing-strip";
 import { ListSketch } from "../../list-sketch";
 import { useRecordById } from "../../use-record-by-id";
+import { useWorkerFormGate } from "../../use-worker-form-gate";
 import { useWorkerList } from "../../use-worker-list";
 import { WORKER_FORM_PANES } from "../../worker-form-panes";
 import { HistorySkeletonBody } from "../employment-skeleton";
@@ -122,6 +123,10 @@ export default function WorkerTimelineTab({
     if (highlighted && highlightId) listRef.current?.scrollToKey(highlightId);
   }, [highlighted, highlightId]);
 
+  const opens = useWorkerFormGate(amendingId === null ? null : "amend-event", {
+    "amend-event": amendRecord.isPending ? "waiting" : canAmend && amendRecord.record !== null,
+  });
+
   if (events.isPending) return <HistorySkeletonBody />;
 
   if (events.isError) {
@@ -138,7 +143,7 @@ export default function WorkerTimelineTab({
 
   const total = overview.data?.employment?.eventCount ?? null;
   const hasAny = filter !== "all" || rows.length > 0 || (total ?? 0) > 0;
-  const amending = amendRecord.record;
+  const amending = opens("amend-event") ? amendRecord.record : null;
   // The overview's count for every event; a kind's own count is the server's, on its first page.
   const count = filter === "all" ? total : events.isStale ? null : events.total;
   const filterItems = [

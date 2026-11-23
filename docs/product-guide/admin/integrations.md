@@ -47,6 +47,19 @@ Keywords: set up integration, add API key, enable integration, turn on mileage
 4. Where offered, select **Test connection** to check the credentials work.
 5. Select **Save changes** (or **Save configuration** for Samsara).
 
+### Set up the Google Maps API key
+Keywords: Google Cloud APIs to enable, Places API (New), Maps JavaScript API, address search not working, Google Maps rejected the API key, REQUEST_DENIED, legacy API, key restrictions
+1. In the Google Cloud console, in the project that will hold the key, enable the Maps JavaScript
+   API (every map in Trenova) and Places API (New) (address search). Trenova does not use the
+   legacy Places API, Geocoding, Directions or Distance Matrix, so leave those off.
+2. Create an API key and restrict it to those two APIs. Do not add a website (HTTP referrer) or IP
+   address restriction: Trenova's server searches addresses with the same key, and Google rejects
+   those requests when the key is limited to a website.
+3. Open [Integrations](/admin/integrations), open the Google Maps card, turn on
+   **Enable Google maps**, paste the key and select **Save changes**.
+4. If address search says Google Maps rejected the API key, Places API (New) is not enabled in the
+   key's project or the key's restrictions block it.
+
 ### Style Google maps in light and dark
 Keywords: Google Maps Map ID, dark mode map, map style, map markers
 1. In the Google Cloud console, open Map management in the project that holds your Google Maps

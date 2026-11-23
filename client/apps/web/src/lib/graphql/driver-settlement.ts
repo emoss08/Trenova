@@ -296,7 +296,12 @@ export async function fetchWorkerPayAssignments(
   const data = await requestGraphQL({
     document: WorkerPayAssignmentsDocument,
     operationName: "WorkerPayAssignments",
-    variables: { workerId: args.workerId, first: args.first, after: args.after },
+    variables: {
+      workerId: args.workerId,
+      first: args.first,
+      after: args.after,
+      includeTotalCount: !args.after,
+    },
     signal: options?.signal,
   });
   return data.workerPayAssignments;

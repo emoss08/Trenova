@@ -33,6 +33,7 @@ import {
 import { useState } from "react";
 import { ListCapLine, SERVER_LIST_CAP } from "../list-more";
 import { useRecordById } from "../use-record-by-id";
+import { useWorkerFormGate } from "../use-worker-form-gate";
 import { useWorkerInvalidation } from "../use-worker-invalidation";
 import { WORKER_FORM_PANES } from "../worker-form-panes";
 import { CloseEventDialog } from "./close-event-dialog";
@@ -220,6 +221,19 @@ export default function WorkerSafetyTab({ workerId, worker, open, onOpen }: Work
     onSuccess: () => invalidate(),
   });
 
+  const opens = useWorkerFormGate(open.form, {
+    // Editing names its event, which must be found; recording names none.
+    "record-safety-event":
+      open.safetyEvent === null
+        ? canRecord
+        : eventRecord.isPending
+          ? "waiting"
+          : canUpdate && eventRecord.record !== null,
+    "issue-action": canDiscipline,
+    "add-recognition": canRecognise,
+    "record-injury": canReadInjury && canRecordInjury,
+  });
+
   if (scorecardQuery.isPending || eventsQuery.isPending || ladderQuery.isPending) {
     return <SafetySkeleton />;
   }
@@ -298,7 +312,6 @@ export default function WorkerSafetyTab({ workerId, worker, open, onOpen }: Work
     <div className="flex min-w-0 flex-col gap-4 text-sm">
       <SafetyScorecardCard
         scorecard={scorecard}
-        events={events}
         canRecord={canRecord}
         canRecognise={canRecognise}
         onRecordEvent={() => go({ form: "record-safety-event" })}
@@ -350,7 +363,7 @@ export default function WorkerSafetyTab({ workerId, worker, open, onOpen }: Work
           >
             {events.length === 0 ? (
               <SectionPanelQuiet>
-                {t("No accidents, incidents, citations or inspections on record.")}
+                {t("No accidents, incidents, citations or inspections yet.")}
               </SectionPanelQuiet>
             ) : fromServer && openQuery.isError ? (
               <div className="p-3">
@@ -444,17 +457,14 @@ export default function WorkerSafetyTab({ workerId, worker, open, onOpen }: Work
         onViolationsChanged={invalidate}
       />
       <RecordSafetyEventPane.Component
-        open={
-          open.form === "record-safety-event" &&
-          (open.safetyEvent === null ? canRecord : canUpdate && formEvent !== null)
-        }
+        open={opens("record-safety-event")}
         onOpenChange={(next) => !next && close()}
         workerId={workerId}
         event={formEvent}
         onSaved={close}
       />
       <IssueActionPane.Component
-        open={open.form === "issue-action" && canDiscipline}
+        open={opens("issue-action")}
         onOpenChange={(next) => !next && close()}
         workerId={workerId}
         workerName={workerName}
@@ -465,7 +475,7 @@ export default function WorkerSafetyTab({ workerId, worker, open, onOpen }: Work
         onSaved={close}
       />
       <RecognitionPane.Component
-        open={open.form === "add-recognition" && canRecognise}
+        open={opens("add-recognition")}
         onOpenChange={(next) => !next && close()}
         workerId={workerId}
         workerName={workerName}
@@ -474,7 +484,7 @@ export default function WorkerSafetyTab({ workerId, worker, open, onOpen }: Work
       <InjuryPane.Component
         open={
           canReadInjury &&
-          ((open.form === "record-injury" && canRecordInjury) ||
+          (opens("record-injury") ||
             (open.form === null && editingInjury !== null && canUpdateInjury))
         }
         onOpenChange={(next) => !next && close()}

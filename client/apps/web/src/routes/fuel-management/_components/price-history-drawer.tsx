@@ -88,7 +88,7 @@ export function PriceHistoryDrawer({
 
   return (
     <Sheet open={!!entry} onOpenChange={(open) => !open && onOpenChange()}>
-      <SheetContent className="flex w-full flex-col sm:max-w-md">
+      <SheetContent size="md" className="flex flex-col">
         <SheetHeader>
           <SheetTitle>{entry?.index.name}</SheetTitle>
           <SheetDescription>

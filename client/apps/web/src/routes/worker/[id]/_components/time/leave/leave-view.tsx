@@ -52,6 +52,7 @@ import {
   type BoundedRowProps,
 } from "../../bounded-table";
 import { useWorkerInvalidation } from "../../use-worker-invalidation";
+import { useWorkerFormGate } from "../../use-worker-form-gate";
 import { WORKER_FORM_PANES } from "../../worker-form-panes";
 
 const LeaveCasePane = lazyWorkPane(
@@ -117,6 +118,8 @@ export default function LeaveView({ workerId, open, onOpen }: LeaveViewProps) {
       />
     );
   }
+  const opens = useWorkerFormGate(open.form, { "open-leave-case": canRecord });
+
   if (fileQuery.isPending) return <TimeSkeleton view="leave" />;
   if (fileQuery.isError) {
     return (
@@ -171,7 +174,7 @@ export default function LeaveView({ workerId, open, onOpen }: LeaveViewProps) {
       <EntitlementPanel entitlement={entitlement} canRecord={canRecord} onOpenCase={openCase} />
       {canRecord || canUpdate ? (
         <LeaveCasePane.Component
-          open={open.form === "open-leave-case" || editing !== null}
+          open={opens("open-leave-case") || editing !== null}
           onOpenChange={(next) => {
             if (!next) onOpen({ tab: "time", view: "leave" });
           }}

@@ -213,7 +213,7 @@ export function DisciplineStair({
           />
         </div>
       ) : rows.length === 0 ? (
-        <SectionPanelQuiet>{t("No disciplinary actions on record.")}</SectionPanelQuiet>
+        <SectionPanelQuiet>{t("No disciplinary actions yet.")}</SectionPanelQuiet>
       ) : (
         <VirtualRows
           rows={rows}

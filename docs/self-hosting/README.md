@@ -256,6 +256,10 @@ Configuration lives in two files next to `compose.yml`:
 | `.env` | Image versions, hostnames, every secret, optional integration keys |
 | `config/config.yaml` | Everything else: timeouts, rate limits, AI, rendering, logging |
 
+Every Google Cloud API Trenova calls (Maps, Places, Vertex AI, Claude Platform on Google Cloud,
+Cloud KMS), what to enable for each and how to restrict its keys is in
+[Google Cloud APIs](google-cloud.md).
+
 `compose.yml` turns `.env` into `TRENOVA_<SECTION>_<KEY>` environment variables, which
 override `config/config.yaml` (for example `TRENOVA_SECURITY_SESSION_SECRET` overrides
 `security.session.secret`). Values in `config/config.yaml` marked "from .env" are placeholders; a

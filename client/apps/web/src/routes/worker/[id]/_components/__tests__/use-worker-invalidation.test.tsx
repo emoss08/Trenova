@@ -43,6 +43,8 @@ describe("workerWriteKeys", () => {
       ["worker-pto-requests", "wrk_1"],
       ["pto-balance-summary"],
       ["worker-pto-list"],
+      worker.listUpcomingPTO._def,
+      worker.ptoChartData._def,
       worker.overview("wrk_1").queryKey,
       ["worker-list"],
     ]);

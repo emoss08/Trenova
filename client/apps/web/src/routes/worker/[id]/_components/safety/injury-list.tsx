@@ -122,7 +122,7 @@ export function InjuryList({
           />
         </div>
       ) : rows.length === 0 ? (
-        <SectionPanelQuiet>{t("No cases on record.")}</SectionPanelQuiet>
+        <SectionPanelQuiet>{t("No cases yet.")}</SectionPanelQuiet>
       ) : (
         <VirtualRows
           rows={rows}

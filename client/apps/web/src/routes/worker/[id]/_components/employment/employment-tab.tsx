@@ -7,6 +7,7 @@ import { LazyComponent } from "@trenova/shared/components/error-boundary";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { ChecklistsSkeletonBody, HistorySkeletonBody } from "./employment-skeleton";
 import { EmploymentLifecycle } from "./lifecycle/employment-lifecycle";
+import { useWorkerFormGate } from "../use-worker-form-gate";
 import { WORKER_FORM_PANES } from "../worker-form-panes";
 import { WORKER_VIEW_MODULES } from "../worker-view-modules";
 import { WorkerSectionStrip } from "../worker-strip-slot";
@@ -30,6 +31,7 @@ export default function EmploymentTab({ workerId, worker, view, open, onOpen }: 
   const selected: WorkerViewOf<"employment"> = view === "checklists" ? "checklists" : "history";
   const { closeThen } = useWorkPane();
   const { allowed: canRecord } = usePermission(Resource.WorkerEmploymentEvent, Operation.Create);
+  const opens = useWorkerFormGate(open.form, { "record-event": canRecord });
 
   const go = (target: Omit<Extract<WorkerTarget, { tab: "employment" }>, "tab">) =>
     closeThen(() => onOpen({ tab: "employment", ...target }));
@@ -67,7 +69,7 @@ export default function EmploymentTab({ workerId, worker, view, open, onOpen }: 
       </Kept>
 
       <RecordEventPane.Component
-        open={open.form === "record-event" && canRecord}
+        open={opens("record-event")}
         presetKind={open.kind}
         workerId={workerId}
         worker={worker}

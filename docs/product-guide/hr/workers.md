@@ -132,7 +132,7 @@ Keywords: CDL, medical card, TWIC, hazmat endorsement, license, certificate
    button in the table.
 3. Pick the **Credential type**, fill in **Number**, **Issuing authority**, **Issued** and
    **Expires**, and drop the scan into **Document**.
-4. Select **Add credential** (or **Save renewal** when renewing, **Save changes** when editing).
+4. Select **Add credential** (or **Renew credential** when renewing, **Save changes** when editing).
    A renewal moves the current credential to **Earlier versions**.
 
 ### Verify a credential
@@ -166,13 +166,13 @@ Keywords: DQ file, DQF, previous employer, safety performance history, 391.51, 3
 Keywords: drug test, alcohol test, random test, pre-employment test, Clearinghouse, MRO result
 1. Open the worker, go to **Qualification** and open **Drug and alcohol**, or choose **Add to
    record**, then **Drug or alcohol collection** or **Clearinghouse query**.
-2. Select **Record a collection**, pick the **Reason for the test** and **What is analyzed**,
-   fill in when and where it was collected, and select **Record collection**.
+2. Select **Record collection**, pick the **Reason for the test** and **What is analyzed**,
+   fill in when and where it was collected, and save it with the same button.
 3. When the result arrives, open the test's actions and choose **Record result**, enter the
    **Result**, **Laboratory** and **Medical review officer**, and select **Record result**.
    **Void test** removes one entered against the wrong driver.
-4. Select **Log a query**, pick the **Query** type and **Requested on**, add the consent dates
-   and **Reference**, and select **Log query**. When the Clearinghouse answers, choose **Record
+4. Select **Log query**, pick the **Query** type and **Requested on**, add the consent dates
+   and **Reference**, and save it with the same button. When the Clearinghouse answers, choose **Record
    answer** on the query. A query that is still pending does not restart the 12-month clock.
 
 ### Assign training
@@ -199,9 +199,9 @@ Keywords: completed course, passed, failed, certificate, waive course
 Keywords: driver review, annual review, performance review
 1. Open the worker, go to **Development** and open **Reviews**.
 2. Select **Start a review**, pick the **Template**, set **Period from** and **Period to**, and
-   select **Start review**.
+   start it.
 3. Rate the criteria, write the **Summary**, **Strengths** and **Where to improve**, add
-   **Goals**, then **Save draft**. When it is ready, send it to the worker with the submit button.
+   **Goals**, then **Save changes**. When it is ready, send it to the worker with the submit button.
 
 ### Record a safety event and issue an action
 Keywords: accident, citation, inspection, discipline, warning, suspension, recognition, kudos
@@ -243,8 +243,8 @@ Keywords: PTO approval, deny vacation, cancel time off
 Keywords: FMLA, medical leave, family leave, leave of absence, certification
 1. Open the worker, go to **Time** and open **Leave**, or choose **Add to record**, then
    **Leave case**.
-2. Select **Open a case**, pick the **Type of leave** and **How it is taken**, give the
-   **Qualifying reason**, **Leave begins** and **Expected to end**, and select **Open case**.
+2. Select **Open a leave case**, pick the **Type of leave** and **How it is taken**, give the
+   **Qualifying reason**, **Leave begins** and **Expected to end**, and select **Open a leave case** again to save it.
 3. On the case, choose **Approve and designate FMLA** or **Approve only**, or **Deny**. Use
    **Request certification** and **Mark received** to track the medical certification, **Record
    a day** for each day taken, and **Close** when it ends.

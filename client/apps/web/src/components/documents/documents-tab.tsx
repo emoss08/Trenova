@@ -34,12 +34,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { searchBoolean } from "@trenova/shared/lib/router/search-codec";
 import { useCallback, useDeferredValue, useMemo, useState } from "react";
 import { toast } from "@trenova/shared/components/ui/toast";
-import {
-  CaptureButton,
-  CaptureRequestsPanel,
-  CaptureStacksPanel,
-  useCaptureKind,
-} from "./capture/capture-panel";
+import { CaptureButton, CaptureRequestsPanel, CaptureStacksPanel } from "./capture/capture-panel";
+import { useCaptureKind } from "./capture/use-capture-kind";
 import { DocumentBulkActionDock } from "./document-bulk-action-dock";
 import { DocumentIntelligenceDialog } from "./document-intelligence-dialog";
 import { DocumentList } from "./document-list";
@@ -213,15 +209,17 @@ export function DocumentsTab({ resourceId, resourceType, disabled = false }: Doc
 
   const { data: packetSummary } = useQuery<DocumentPacketSummary>({
     queryKey: ["document-packet-summary", resourceType, resourceId],
-    queryFn: () => documentService.getPacketSummary(resourceType, resourceId),
+    queryFn: ({ signal }) => documentService.getPacketSummary(resourceType, resourceId, { signal }),
     enabled: !!resourceId,
   });
   const versionDocumentID = versionDocument?.id;
 
   const { data: versionHistory = [], isLoading: isLoadingVersions } = useQuery({
     queryKey: ["document-versions", versionDocumentID],
-    queryFn: () =>
-      versionDocumentID ? documentService.getVersions(versionDocumentID) : Promise.resolve([]),
+    queryFn: ({ signal }) =>
+      versionDocumentID
+        ? documentService.getVersions(versionDocumentID, { signal })
+        : Promise.resolve([]),
     enabled: !!versionDocumentID,
   });
 

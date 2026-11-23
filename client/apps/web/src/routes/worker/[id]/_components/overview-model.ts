@@ -26,8 +26,8 @@ import {
 } from "@trenova/shared/components/icons";
 import { formatDuration, formatNumber } from "@trenova/shared/i18n/format";
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
-import { formatUnixDateMedium, toUserWallClock } from "@trenova/shared/lib/date";
-import { HOUR_MS, SECONDS_IN_DAY } from "@/lib/time-units";
+import { daysUntil, formatUnixDateMedium, toUserWallClock } from "@trenova/shared/lib/date";
+import { HOUR_MS } from "@/lib/time-units";
 
 /** How one view of the record stands, in one line and a tone, or nothing when it cannot be said. */
 export type StripState = { state: string | null; tone: SectionStripTone };
@@ -90,8 +90,13 @@ function joined(...parts: (string | null | undefined | false)[]): string {
   return parts.filter((part): part is string => Boolean(part)).join(" · ");
 }
 
-function daysBetween(fromSeconds: number, toSeconds: number): number {
-  return Math.floor((toSeconds - fromSeconds) / SECONDS_IN_DAY);
+/**
+ * Calendar days from the overview's read to the next review's due date, in the reader's zone:
+ * negative once the day has passed. The Overview strip, the file grid and the Reviews view all
+ * count a review overdue this one way, so a review due today is due, not overdue.
+ */
+export function reviewDueInDays(nextReviewAt: number, asOf: number): number {
+  return daysUntil(nextReviewAt, { now: asOf });
 }
 
 function historyState(o: WorkerOverview, t: TranslateFn): StripState {
@@ -233,7 +238,7 @@ function reviewsState(o: WorkerOverview, t: TranslateFn): StripState {
     };
   }
   if (o.nextReviewAt != null) {
-    const days = daysBetween(o.asOf, o.nextReviewAt);
+    const days = reviewDueInDays(o.nextReviewAt, o.asOf);
     if (days < 0) {
       return {
         state: t("Overdue since {0}", formatUnixDateMedium(o.nextReviewAt)),

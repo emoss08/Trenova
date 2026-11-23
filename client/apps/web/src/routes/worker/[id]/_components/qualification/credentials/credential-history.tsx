@@ -1,30 +1,33 @@
 import { VirtualRows } from "@/components/virtual-rows";
 import type { WorkerCredentialRow } from "@/lib/graphql/worker-credential";
 import { ChevronRightIcon } from "@trenova/shared/components/icons";
+import { formatNumber } from "@trenova/shared/i18n/format";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatRange, formatUnixDateMedium } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
 import { useId, useState } from "react";
-import { ListCapLine, SERVER_LIST_CAP } from "../../list-more";
+import { ListCapLine } from "../../list-more";
 
 /**
  * Archived credentials and renewals, folded under the table. They stay because an auditor asks
- * what was held and when, not because anybody reads them day to day. The server returns a worker's
- * newest credentials up to its cap (`read` is how many came back), so once the cap is reached
- * the count is left out and the list says it shows the newest.
+ * what was held and when, not because anybody reads them day to day. The count is the summary's
+ * (`archivedCount`), so it is real even when the list, which the server caps at the newest
+ * credentials (`read` is how many came back), says it shows only the newest.
  */
 export function CredentialHistory({
   archived,
+  count,
   read,
 }: {
   archived: readonly WorkerCredentialRow[];
+  /** Every archived credential the worker has, from the summary. */
+  count: number;
   read: number;
 }) {
   const t = useT();
   const listId = useId();
   const [open, setOpen] = useState(false);
-  if (archived.length === 0) return null;
-  const capped = read >= SERVER_LIST_CAP;
+  if (archived.length === 0 && count === 0) return null;
 
   return (
     <div className="border-t">
@@ -43,9 +46,9 @@ export function CredentialHistory({
           )}
         />
         {t("History")}
-        {capped ? null : (
-          <span className="font-normal text-foreground-subtle tabular-nums">{archived.length}</span>
-        )}
+        <span className="font-normal text-foreground-subtle tabular-nums">
+          {formatNumber(Math.max(count, archived.length))}
+        </span>
         <span className="ml-1 font-normal text-muted-foreground group-hover:text-foreground">
           {t("archived credentials and renewals")}
         </span>

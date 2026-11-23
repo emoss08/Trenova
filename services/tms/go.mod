@@ -4,6 +4,7 @@ go 1.27.4
 
 require (
 	cloud.google.com/go/kms v1.36.1
+	cloud.google.com/go/maps v1.45.0
 	github.com/99designs/gqlgen v0.17.98
 	github.com/SherClockHolmes/webpush-go v1.4.0
 	github.com/anthropics/anthropic-sdk-go v1.84.0
@@ -22,6 +23,7 @@ require (
 	github.com/gin-contrib/requestid v1.0.9
 	github.com/gin-contrib/zap v1.1.10
 	github.com/gin-gonic/gin v1.12.0
+	github.com/go-jose/go-jose/v4 v4.1.8
 	github.com/go-ozzo/ozzo-validation/v4 v4.5.0
 	github.com/go-playground/validator/v10 v10.30.6
 	github.com/goccy/go-yaml v1.19.2
@@ -88,7 +90,6 @@ require (
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20261104224025-d1e00e9f33ab
 	google.golang.org/grpc v1.85.0
 	google.golang.org/protobuf v1.36.12
-	googlemaps.github.io/maps v1.7.0
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
 	gopkg.in/yaml.v3 v3.0.1
 )
@@ -171,7 +172,6 @@ require (
 	github.com/fsnotify/fsnotify v1.10.1 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.16 // indirect
 	github.com/gin-contrib/sse v1.2.0 // indirect
-	github.com/go-jose/go-jose/v4 v4.1.8
 	github.com/go-logr/logr v1.4.4 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-ole/go-ole v1.3.0 // indirect

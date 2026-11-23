@@ -103,6 +103,30 @@ const scorecard = {
   daysSinceLastEvent: 41,
   lastEventAt: 1_797_000_000,
   recognitions: 1,
+  activePointEvents: [
+    {
+      id: "wsev_open",
+      kind: "Inspection",
+      severity: "Moderate",
+      preventable: false,
+      inspectionResult: "Fail",
+      inspectionLevel: 2,
+      occurredAt: 1_799_000_000,
+      activePoints: 4,
+      pointsExpireAt: 1_860_000_000,
+    },
+    {
+      id: "wsev_closed",
+      kind: "Incident",
+      severity: "Minor",
+      preventable: true,
+      inspectionResult: null,
+      inspectionLevel: null,
+      occurredAt: 1_790_000_000,
+      activePoints: 3,
+      pointsExpireAt: 1_850_000_000,
+    },
+  ],
 };
 
 const base = {
@@ -344,12 +368,15 @@ describe("WorkerSafetyTab", () => {
     renderTab({ safetyEvent: "wsev_open" });
     const user = userEvent.setup();
 
-    const pane = await screen.findByRole("dialog", { name: "Level 2 inspection — failed" });
-    // The pane's code is read when it first opens; the first read transforms it.
-    expect(await within(pane).findByText("IL4417002931", {}, { timeout: 25000 })).toBeTruthy();
-    await user.click(within(pane).getByRole("button", { name: "Close event" }));
+    // The pane's code is read when it first opens (the first read transforms it), and the pane
+    // that arrives replaces its stand-in, so the dialog is looked up again once it has.
+    const pane = () => screen.getByRole("dialog", { name: "Level 2 inspection — failed" });
+    await waitFor(() => expect(within(pane()).getByText("IL4417002931")).toBeTruthy(), {
+      timeout: 5000,
+    });
+    await user.click(within(pane()).getByRole("button", { name: "Close event" }));
     expect(screen.getByTestId("close-dialog")).toHaveTextContent("wsev_open");
-  }, 30_000);
+  }, 10_000);
 
   it("deletes an event only after the confirmation", async () => {
     mockAll();
@@ -499,5 +526,14 @@ describe("WorkerSafetyTab", () => {
     renderTab();
 
     expect(await screen.findByText("The safety record could not be loaded")).toBeTruthy();
+  });
+
+  it("names the gauge's segments and roll-off dates from the scorecard, not from the events read", async () => {
+    mockAll();
+    mocks.fetchWorkerSafetyEvents.mockResolvedValue([]);
+    renderTab();
+
+    const band = within(await screen.findByTestId("safety-scorecard"));
+    expect(band.getByText(/4 roll off .*2028 · 3 roll off .*2028/)).toBeTruthy();
   });
 });

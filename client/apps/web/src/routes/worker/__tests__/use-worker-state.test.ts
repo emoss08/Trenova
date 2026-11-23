@@ -8,6 +8,8 @@ import {
   WORKER_VIEWS,
   isWorkerViewOf,
   resolveWorkerView,
+  WORKER_FORM_RECORDS,
+  workerFormBlockedByAddress,
   workerFormTarget,
   workerOpenStateFor,
   workerPageParsers,
@@ -207,5 +209,54 @@ describe("workerOpenStateFor", () => {
     expect(
       workerOpenStateFor({ ...state, form: null, kind: "medical" }, "qualification").kind,
     ).toBeNull();
+  });
+});
+
+describe("workerFormBlockedByAddress", () => {
+  const everything = () => true;
+  const state = (query: string) => {
+    const read_ = read(query);
+    return { ...read_, tab: read_.tab };
+  };
+
+  it("blocks a form that edits a record the address does not name", () => {
+    for (const [form, param] of Object.entries(WORKER_FORM_RECORDS)) {
+      const home = WORKER_FORM_HOMES[form as keyof typeof WORKER_FORM_HOMES];
+      const base = `tab=${home.tab}${home.view ? `&view=${home.view}` : ""}&form=${form}`;
+      expect(workerFormBlockedByAddress(state(base), everything), form).toBe(true);
+      expect(
+        workerFormBlockedByAddress(state(`${base}&${param}=rec_1`), everything),
+        form,
+      ).toBe(false);
+    }
+  });
+
+  it("lets a form that needs no record through, with or without a record named", () => {
+    expect(
+      workerFormBlockedByAddress(
+        state("tab=development&view=training&form=record-training-result"),
+        everything,
+      ),
+    ).toBe(false);
+    expect(
+      workerFormBlockedByAddress(
+        state("tab=development&view=training&form=record-training-result&training=wtr_x"),
+        everything,
+      ),
+    ).toBe(false);
+  });
+
+  it("blocks a form whose view the reader may not draw, or one away from its own tab", () => {
+    const noReviews = ({ view }: { view: string | null }) => view !== "reviews";
+    expect(
+      workerFormBlockedByAddress(
+        state("tab=development&view=reviews&form=start-review"),
+        noReviews,
+      ),
+    ).toBe(true);
+    expect(
+      workerFormBlockedByAddress(state("tab=safety&form=start-review"), everything),
+    ).toBe(true);
+    expect(workerFormBlockedByAddress(state("tab=safety"), everything)).toBe(false);
   });
 });

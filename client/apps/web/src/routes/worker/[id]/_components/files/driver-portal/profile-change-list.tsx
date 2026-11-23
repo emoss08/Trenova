@@ -92,12 +92,14 @@ export function ProfileChangeList({
           <span className="block h-5 w-2/3 ui-shimmer rounded-sm" />
         </div>
       ) : requests.isError ? (
-        <ErrorState
-          error={requests.error}
-          layout="compact"
-          title={t("The profile changes could not be loaded")}
-          onRetry={() => void requests.refetch()}
-        />
+        <div className="p-3">
+          <ErrorState
+            error={requests.error}
+            layout="compact"
+            title={t("The profile changes could not be loaded")}
+            onRetry={() => void requests.refetch()}
+          />
+        </div>
       ) : rows.length === 0 ? (
         <SectionPanelQuiet>{t("No changes asked for from Dash.")}</SectionPanelQuiet>
       ) : (
@@ -126,7 +128,7 @@ export function ProfileChangeList({
                   {canReject ? (
                     <Button
                       size="sm"
-                      variant="outline"
+                      variant="secondary"
                       disabled={approve.isPending}
                       onClick={() => onReview(request.id)}
                     >

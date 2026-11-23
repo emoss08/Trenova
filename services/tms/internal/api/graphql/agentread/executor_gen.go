@@ -1150,8 +1150,8 @@ var operations = []Operation{
 	},
 	{
 		Name:     "WorkerPayAssignments",
-		Hash:     "sha256:28778dec1589ffbc94f5460da3fd4df4946578ddc9c8c4d3abcefea836c40f08",
-		Document: "query WorkerPayAssignments($after: String, $first: Int, $workerId: ID!) { workerPayAssignments(workerId: $workerId, first: $first, after: $after) { edges { cursor node { createdAt effectiveFrom effectiveTo id notes payProfile { classification components { description id kind method rate } id name } payProfileId rateOverrides { componentId rate } splitPercent version workerId } } pageInfo { endCursor hasNextPage } } }",
+		Hash:     "sha256:5cc3574f04145842f1654c39de4caacaa999753a41aaa640f67a47ab662613e6",
+		Document: "query WorkerPayAssignments($after: String, $first: Int, $includeTotalCount: Boolean = true, $workerId: ID!) { workerPayAssignments(workerId: $workerId, first: $first, after: $after) { edges { cursor node { createdAt effectiveFrom effectiveTo id notes payProfile { classification components { description id kind method rate } id name } payProfileId rateOverrides { componentId rate } splitPercent version workerId } } pageInfo { endCursor hasNextPage } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
 	},
 	{
 		Name:     "DeskPayCodeOptions",

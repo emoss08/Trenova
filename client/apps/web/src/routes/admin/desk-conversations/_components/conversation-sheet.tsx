@@ -1,16 +1,12 @@
 import {
   openDeskConversation,
+  type DeskConversation,
   type DeskConversationRow,
   type OpenedDeskConversation,
 } from "@/lib/graphql/desk-transcripts";
 import { downloadDeskConversation } from "@/lib/desk-transcripts";
 import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
 import { Button } from "@trenova/shared/components/ui/button";
-import {
-  DescriptionEmpty,
-  DescriptionItem,
-  DescriptionList,
-} from "@trenova/shared/components/ui/description-list";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import {
   Sheet,
@@ -39,9 +35,11 @@ type ConversationSheetProps = {
 };
 
 /**
- * Another person's conversation, read-only: whose it is, that opening it was
- * recorded, and what was said. Nothing here can post, rename, pin, snooze,
- * delete or continue it; Download is the only action, for holders of Export.
+ * Another person's conversation, read-only, wide enough to read as the Desk
+ * draws it: whose it is and when in the head, that opening it was recorded,
+ * and what was said. Nothing here can post, rename, pin, snooze, delete or
+ * continue it; Download, beside the title, is the only action, for holders of
+ * Export.
  */
 export function ConversationSheet({ row, canExport, onClose }: ConversationSheetProps) {
   const t = useT();
@@ -62,23 +60,23 @@ export function ConversationSheet({ row, canExport, onClose }: ConversationSheet
     mutate(row.id);
   }, [row, mutate, reset]);
 
-  const title = row?.title || t("Untitled conversation");
+  const conversation = opened.data?.conversation ?? row;
+  const title = conversation?.title || t("Untitled conversation");
 
   return (
     <Sheet open={row !== null} onOpenChange={(open) => !open && onClose()}>
-      <SheetContent side="right" className="w-full sm:max-w-3xl">
-        <SheetHeader className="gap-1 pr-12">
-          <SheetTitle className="truncate">{title}</SheetTitle>
-          {row ? (
-            <SheetDescription>
-              {t("{0}'s conversation with {1}", row.ownerName, row.agentName)}
-            </SheetDescription>
-          ) : null}
+      <SheetContent side="right" size="3xl" className="gap-0">
+        <SheetHeader className="border-border gap-1 border-b pr-12">
+          <div className="flex min-w-0 items-center gap-3">
+            <SheetTitle className="min-w-0 flex-1 truncate">{title}</SheetTitle>
+            {row && canExport && opened.status === "success" ? (
+              <DownloadButton conversationId={row.id} />
+            ) : null}
+          </div>
+          {conversation ? <ConversationFacts conversation={conversation} /> : null}
         </SheetHeader>
         {row ? (
           <SheetBody
-            row={row}
-            canExport={canExport}
             state={opened.status}
             data={opened.data ?? null}
             error={opened.error}
@@ -90,21 +88,43 @@ export function ConversationSheet({ row, canExport, onClose }: ConversationSheet
   );
 }
 
-function SheetBody({
-  row,
-  canExport,
-  state,
-  data,
-  error,
-  onRetry,
+/** Whose conversation it is, where it began, how long it is and when it was held, as one line. */
+function ConversationFacts({
+  conversation,
 }: {
-  row: DeskConversationRow;
-  canExport: boolean;
-  state: "idle" | "pending" | "success" | "error";
-  data: OpenedDeskConversation | null;
-  error: Error | null;
-  onRetry: () => void;
+  conversation: Pick<
+    DeskConversation,
+    "ownerName" | "agentName" | "origin" | "messageCount" | "startedAt" | "lastMessageAt"
+  >;
 }) {
+  const t = useT();
+  const facts = [
+    t("{0} with {1}", conversation.ownerName, conversation.agentName),
+    originLabel(t, conversation.origin),
+    t("{0, plural, one {# message} other {# messages}}", conversation.messageCount),
+    t("Started {0}", formatUnixDateTimeMedium(conversation.startedAt)),
+    ...(conversation.lastMessageAt
+      ? [t("Last message {0}", formatUnixDateTimeMedium(conversation.lastMessageAt))]
+      : []),
+  ];
+
+  return (
+    <SheetDescription className="flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-0.5">
+      {facts.map((fact, index) => (
+        <span key={fact} className="flex min-w-0 items-center gap-x-1.5">
+          {index > 0 ? (
+            <span aria-hidden className="text-foreground-subtle">
+              ·
+            </span>
+          ) : null}
+          <span className="min-w-0 break-words">{fact}</span>
+        </span>
+      ))}
+    </SheetDescription>
+  );
+}
+
+function DownloadButton({ conversationId }: { conversationId: string }) {
   const t = useT();
   const [downloading, setDownloading] = useState(false);
 
@@ -114,7 +134,7 @@ function SheetBody({
     }
     setDownloading(true);
     try {
-      await downloadDeskConversation(row.id);
+      await downloadDeskConversation(conversationId);
     } catch (downloadError) {
       toast.error(t("The transcript could not be downloaded"), {
         description: graphQLErrorMessage(downloadError, t("Try again shortly.")),
@@ -124,10 +144,37 @@ function SheetBody({
     }
   };
 
+  return (
+    <Button
+      type="button"
+      size="sm"
+      className="shrink-0"
+      isLoading={downloading}
+      onClick={() => void download()}
+    >
+      <Download01Icon className="size-3.5" />
+      {t("Download")}
+    </Button>
+  );
+}
+
+function SheetBody({
+  state,
+  data,
+  error,
+  onRetry,
+}: {
+  state: "idle" | "pending" | "success" | "error";
+  data: OpenedDeskConversation | null;
+  error: Error | null;
+  onRetry: () => void;
+}) {
+  const t = useT();
+
   if (state === "error") {
     const kind = describeError(error).kind;
     return (
-      <div className="flex flex-col gap-3 px-4 pb-4">
+      <div className="flex flex-col gap-3 p-4 sm:px-5">
         <Alert variant="destructive" size="sm">
           <AlertDescription>
             {kind === "forbidden"
@@ -155,52 +202,21 @@ function SheetBody({
   const conversation = data.conversation;
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-4 px-4 pb-4">
-      <Alert variant="info" size="sm">
-        <EyeIcon />
-        <AlertDescription>
-          {t(
-            "You are reading {0}'s conversation as they saw it. Opening it was recorded in the audit log; nothing here changes it for them.",
-            conversation.ownerName,
-          )}
-        </AlertDescription>
-      </Alert>
-      <div className="flex items-start gap-4">
-        <DescriptionList className="flex-1">
-          <DescriptionItem label={t("Person")}>{conversation.ownerName}</DescriptionItem>
-          <DescriptionItem label={t("Agent")}>{conversation.agentName}</DescriptionItem>
-          <DescriptionItem label={t("Where it began")}>
-            {originLabel(t, conversation.origin)}
-          </DescriptionItem>
-          <DescriptionItem label={t("Messages")} numeric>
-            {conversation.messageCount}
-          </DescriptionItem>
-          <DescriptionItem label={t("Started")}>
-            {formatUnixDateTimeMedium(conversation.startedAt)}
-          </DescriptionItem>
-          <DescriptionItem label={t("Last message")}>
-            {conversation.lastMessageAt ? (
-              formatUnixDateTimeMedium(conversation.lastMessageAt)
-            ) : (
-              <DescriptionEmpty />
-            )}
-          </DescriptionItem>
-        </DescriptionList>
-        {canExport ? (
-          <Button type="button" size="sm" isLoading={downloading} onClick={() => void download()}>
-            <Download01Icon className="size-3.5" />
-            {t("Download")}
-          </Button>
-        ) : null}
+    <ScrollArea className="min-h-0 flex-1">
+      <div className="flex min-w-0 flex-col gap-6 overflow-x-clip pt-4 pb-8">
+        <div className="px-4 sm:px-5">
+          <Alert variant="info" size="sm">
+            <EyeIcon />
+            <AlertDescription>
+              {t(
+                "Opening {0}'s conversation was recorded in the audit log. Nothing here changes it for them.",
+                conversation.ownerName,
+              )}
+            </AlertDescription>
+          </Alert>
+        </div>
+        <ConversationTranscript conversationId={conversation.id} transcript={data.transcript} />
       </div>
-      <ScrollArea className="min-h-0 flex-1">
-        <ConversationTranscript
-          conversationId={conversation.id}
-          transcript={data.transcript}
-          ownerName={conversation.ownerName}
-          agentName={conversation.agentName}
-        />
-      </ScrollArea>
-    </div>
+    </ScrollArea>
   );
 }

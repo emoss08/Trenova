@@ -1,9 +1,9 @@
-import type { WorkerSafetyEventRow } from "@/lib/graphql/worker-safety";
+import type { ActivePointEvent, WorkerSafetyEventRow } from "@/lib/graphql/worker-safety";
+import { translate } from "@trenova/shared/i18n/runtime";
 import { describe, expect, it } from "vitest";
 import {
   actionSummary,
   disciplineStair,
-  EARLIER_SEGMENT,
   eventAmountMinor,
   filterEvents,
   formatEventAmount,
@@ -29,13 +29,32 @@ function event(overrides: Partial<WorkerSafetyEventRow>): WorkerSafetyEventRow {
 
 const thresholds = { pointsWatchThreshold: 6, pointsAtRiskThreshold: 10 };
 
+/** One event the scorecard says still carries points, as `activePointEvents` reports it. */
+function carrying(overrides: Partial<ActivePointEvent>): ActivePointEvent {
+  return {
+    id: "wsev",
+    kind: "Incident",
+    severity: "Minor",
+    preventable: false,
+    inspectionResult: null,
+    inspectionLevel: null,
+    occurredAt: 1_700_000_000,
+    activePoints: 1,
+    pointsExpireAt: null,
+    ...overrides,
+  } as ActivePointEvent;
+}
+
 describe("pointsGauge", () => {
   it("runs the track two past the at-risk line and fills one segment per event carrying points, oldest first", () => {
-    const gauge = pointsGauge({ ...thresholds, activePoints: 7 }, [
-      event({ id: "inspection", occurredAt: 300, activePoints: 4, pointsExpireAt: 3_000 }),
-      event({ id: "citation", occurredAt: 100, activePoints: 0, points: 2 }),
-      event({ id: "incident", occurredAt: 200, activePoints: 3, pointsExpireAt: 2_000 }),
-    ]);
+    const gauge = pointsGauge({
+      ...thresholds,
+      activePoints: 7,
+      activePointEvents: [
+        carrying({ id: "inspection", occurredAt: 300, activePoints: 4, pointsExpireAt: 3_000 }),
+        carrying({ id: "incident", occurredAt: 200, activePoints: 3, pointsExpireAt: 2_000 }),
+      ],
+    });
 
     expect(gauge.max).toBe(12);
     expect(gauge.tone).toBe("watch");
@@ -52,22 +71,49 @@ describe("pointsGauge", () => {
   });
 
   it("adds up points that roll off on the same day", () => {
-    const gauge = pointsGauge({ ...thresholds, activePoints: 5 }, [
-      event({ id: "a", activePoints: 2, pointsExpireAt: 9_000 }),
-      event({ id: "b", activePoints: 3, pointsExpireAt: 9_000 }),
-    ]);
+    const gauge = pointsGauge({
+      ...thresholds,
+      activePoints: 5,
+      activePointEvents: [
+        carrying({ id: "a", activePoints: 2, pointsExpireAt: 9_000 }),
+        carrying({ id: "b", activePoints: 3, pointsExpireAt: 9_000 }),
+      ],
+    });
     expect(gauge.rollOffs).toEqual([{ date: 9_000, points: 5 }]);
   });
 
+  it("names every event the scorecard counts, however few of the events list has loaded", () => {
+    const gauge = pointsGauge({
+      ...thresholds,
+      activePoints: 9,
+      activePointEvents: [
+        carrying({ id: "old", occurredAt: 100, activePoints: 6, pointsExpireAt: 4_000 }),
+        carrying({ id: "recent", occurredAt: 500, activePoints: 3, pointsExpireAt: 5_000 }),
+      ],
+    });
+    expect(gauge.segments.map((segment) => [segment.id, segment.share])).toEqual([
+      ["old", 6 / 9],
+      ["recent", 3 / 9],
+    ]);
+    expect(gauge.rollOffs).toEqual([
+      { date: 5_000, points: 3 },
+      { date: 4_000, points: 6 },
+    ]);
+  });
+
   it("widens the track past the points when they pass it, and turns to at risk", () => {
-    const gauge = pointsGauge({ ...thresholds, activePoints: 15 }, []);
+    const gauge = pointsGauge({ ...thresholds, activePoints: 15, activePointEvents: [] });
     expect(gauge.max).toBe(15);
     expect(gauge.fill).toBe(1);
     expect(gauge.tone).toBe("risk");
   });
 
   it("is calm and empty with no active points", () => {
-    const gauge = pointsGauge({ ...thresholds, activePoints: 0 }, [event({ points: 3 })]);
+    const gauge = pointsGauge({
+      ...thresholds,
+      activePoints: 0,
+      activePointEvents: [carrying({ activePoints: 0 })],
+    });
     expect(gauge.tone).toBe("calm");
     expect(gauge.segments).toEqual([]);
     expect(gauge.rollOffs).toEqual([]);
@@ -152,32 +198,34 @@ describe("eventAmountMinor", () => {
   });
 });
 
-describe("pointsGauge against the scorecard", () => {
-  it("puts points on events not read yet into one earlier segment, so the shares add up to the scorecard", () => {
-    const gauge = pointsGauge({ ...thresholds, activePoints: 9 }, [
-      event({ id: "recent", occurredAt: 500, activePoints: 3, pointsExpireAt: 5_000 }),
-    ]);
-    expect(gauge.segments.map((segment) => [segment.id, segment.points])).toEqual([
-      [EARLIER_SEGMENT, 6],
-      ["recent", 3],
-    ]);
-    expect(gauge.segments[0].share).toBeCloseTo(6 / 9);
-    expect(gauge.segments[1].share).toBeCloseTo(3 / 9);
-    expect(gauge.rollOffs).toEqual([{ date: 5_000, points: 3 }]);
-  });
-});
-
 describe("actionSummary", () => {
-  it("leaves out what a ladder's active action does not carry", () => {
-    expect(
-      actionSummary({ status: "Active", issuedAt: 1_790_100_000, expiresAt: null }, t),
-    ).not.toMatch(/acknowledg/);
-  });
-
-  it("says whether an active row of the list was acknowledged", () => {
+  it("names who issued an active action, the days off and whether it was acknowledged", () => {
     expect(
       actionSummary(
-        { status: "Active", issuedAt: 1_790_100_000, expiresAt: null, acknowledgedAt: null },
+        {
+          status: "Active",
+          issuedAt: 1_790_100_000,
+          expiresAt: null,
+          issuedBy: { id: "usr_1", name: "Dana Whitfield" },
+          suspensionDays: 3,
+          acknowledgedAt: 1_790_200_000,
+        },
+        translate,
+      ),
+    ).toMatch(/ by Dana Whitfield · 3 days off · Acknowledged$/);
+  });
+
+  it("says when an active action still waits for the acknowledgement", () => {
+    expect(
+      actionSummary(
+        {
+          status: "Active",
+          issuedAt: 1_790_100_000,
+          expiresAt: null,
+          issuedBy: null,
+          suspensionDays: null,
+          acknowledgedAt: null,
+        },
         t,
       ),
     ).toMatch(/waiting for the acknowledgement$/);

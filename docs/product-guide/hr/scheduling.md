@@ -45,7 +45,7 @@ Keywords: assign shift, roster a driver, move to another shift
 2. Select **Put on a shift** (or **Move to another shift**).
 3. Pick the **Shift**, the **Effective from** date and, for rotating shifts, the
    **Rotation offset (weeks)**; add **Notes** if useful.
-4. Select **Put on shift** (or **Move to shift**). Their row appears on the board.
+4. Select **Put on a shift** (or **Move to another shift**). Their row appears on the board.
 
 ### Approve or reject a shift swap
 Keywords: swap request, trade shifts, shift change request

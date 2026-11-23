@@ -62,8 +62,11 @@ vi.mock("@trenova/shared/hooks/use-plan-feature", () => ({
   usePlanFeature: () => ({ available: false }),
 }));
 
-vi.mock("@/components/documents/capture/capture-panel", () => ({
+vi.mock("@/components/documents/capture/use-capture-kind", () => ({
   useCaptureKind: () => null,
+}));
+
+vi.mock("@/components/documents/capture/capture-panel", () => ({
   CaptureButton: () => null,
   CaptureRequestsPanel: () => null,
   CaptureStacksPanel: () => null,
@@ -199,8 +202,8 @@ describe("WorkerDocuments", () => {
 
     await user.clear(search);
     await user.type(search, "nothing like this");
-    expect(screen.getByText("No documents match")).toBeTruthy();
-    await user.click(screen.getByRole("button", { name: "Clear filters" }));
+    expect(screen.getByText("No documents match.")).toBeTruthy();
+    await user.click(screen.getByRole("button", { name: "Clear the filters" }));
     expect(screen.getAllByTestId(/^document-/)).toHaveLength(3);
   });
 

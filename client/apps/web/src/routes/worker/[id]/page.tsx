@@ -45,10 +45,12 @@ import { WorkerPageSkeleton } from "./_components/worker-page-skeleton";
 import { preloadWorkerForm } from "./_components/worker-form-panes";
 import { preloadWorkerView } from "./_components/worker-view-modules";
 import { WorkerStripProvider } from "./_components/worker-strip-slot";
+import { WorkerFormDropContext } from "./_components/use-worker-form-gate";
 import {
   CLOSED_WORKER_OPEN_STATE,
   WORKER_TABS,
   useWorkerState,
+  workerFormBlockedByAddress,
   type WorkerRecord,
   type WorkerTab,
   type WorkerTabProps,
@@ -57,6 +59,7 @@ import {
   type WorkerViewOf,
 } from "../use-worker-state";
 import { useWorkerAreas } from "../worker-areas";
+import { usePermissionStore } from "@trenova/shared/stores/permission-store";
 
 const pick = <P extends object>(module: { default: (props: P) => ReactNode }) => module.default;
 
@@ -284,7 +287,7 @@ function WorkerFile({
 }) {
   const t = useT();
   const { closeThen, isOpen: paneOpen } = useWorkPane();
-  const { state, openState, open } = useWorkerState();
+  const { state, openState, open, dropForm } = useWorkerState();
   // The Profile form's save dock, handed up by the Profile tab once it has been shown. It lives in
   // this worker's keyed subtree, so stepping to another worker drops it with the old form.
   const [profileDock, setProfileDock] = useState<ProfileDock | null>(null);
@@ -304,8 +307,18 @@ function WorkerFile({
     });
   }, [idleViews]);
 
+  // A form the address alone rules out (its record not named, its view not drawable) leaves the
+  // address at once; one whose record turns out missing is refused by its tab
+  // (`useWorkerFormGate`). Drawability is known once the reader's permissions are.
+  const permissionsKnown = usePermissionStore((store) => store.manifest) !== null;
+  const blockedForm =
+    permissionsKnown && workerFormBlockedByAddress({ ...state, tab }, areas.isDrawable);
+  useEffect(() => {
+    if (blockedForm) dropForm();
+  }, [blockedForm, dropForm]);
+
   // A link that opens a form reads the form's pane alongside the tab, not after it.
-  const deepLinkedForm = state.form;
+  const deepLinkedForm = blockedForm ? null : state.form;
   useEffect(() => {
     if (deepLinkedForm) preloadWorkerForm(deepLinkedForm);
   }, [deepLinkedForm]);
@@ -419,13 +432,15 @@ function WorkerFile({
           profileUnsaved={profileDirty}
           onOpen={go}
         />
-        <WorkPaneHost className="flex-1 text-sm">
-          {areas.tabs.map((key) =>
-            key === "profile"
-              ? pane(key, <ProfileEntry.Component {...tabProps(key)} onDock={setProfileDock} />)
-              : entry(key),
-          )}
-        </WorkPaneHost>
+        <WorkerFormDropContext value={dropForm}>
+          <WorkPaneHost className="flex-1 text-sm">
+            {areas.tabs.map((key) =>
+              key === "profile"
+                ? pane(key, <ProfileEntry.Component {...tabProps(key)} onDock={setProfileDock} />)
+                : entry(key),
+            )}
+          </WorkPaneHost>
+        </WorkerFormDropContext>
         <ProfileChange.Component
           workerId={worker.id}
           workerFirstName={worker.firstName}

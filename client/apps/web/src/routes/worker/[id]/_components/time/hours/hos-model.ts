@@ -17,6 +17,14 @@ export const HOS_LIVE_REFRESH_MS = 60_000;
 /** How far back the violations and driver forms reach. */
 export const HOS_RECORDS_DAYS = 30;
 
+/**
+ * The records' window as a length in seconds: thirty days of 86,400 seconds, counted back from
+ * midnight tonight. The server takes at most 31 such days per read, and a window built from wall
+ * clock days would run an hour over that across the end of daylight saving time; counted in
+ * seconds it stays a day inside the bound by construction, whatever the zone or the date.
+ */
+export const HOS_RECORDS_SECONDS = HOS_RECORDS_DAYS * SECONDS_IN_DAY;
+
 /** What the Hours view reads, as whole days in the reader's zone, so it moves only at midnight. */
 export type HosWindow = {
   /** Midnight today on the reader's wall clock. */
@@ -24,19 +32,20 @@ export type HosWindow = {
   /** The daily logs' first and last day keys (`yyyy-MM-dd`). */
   startDate: string;
   endDate: string;
-  /** The records' window in unix seconds: midnight 30 days ago to midnight tonight. */
+  /** The records' window in unix seconds: `HOS_RECORDS_SECONDS` up to midnight tonight. */
   since: number;
   until: number;
 };
 
 export function hosWindow(nowSec: number): HosWindow {
   const today = startOfDay(toUserWallClock(nowSec) ?? userWallClockNow());
+  const until = fromUserWallClock(addDays(today, 1)) ?? 0;
   return {
     today,
     startDate: format(subDays(today, DAILY_LOG_DAYS - 1), DAY_KEY_FORMAT),
     endDate: format(today, DAY_KEY_FORMAT),
-    since: fromUserWallClock(subDays(today, HOS_RECORDS_DAYS)) ?? 0,
-    until: fromUserWallClock(addDays(today, 1)) ?? 0,
+    since: until - HOS_RECORDS_SECONDS,
+    until,
   };
 }
 

@@ -39,6 +39,7 @@ import { useQualificationRoute, type QualificationViewProps } from "../qualifica
 import { ATTENTION_CLASS, revealElement, useRowFlash } from "../../use-row-flash";
 import { useWorkerInvalidation } from "../../use-worker-invalidation";
 import { WORKER_FORM_PANES } from "../../worker-form-panes";
+import { useWorkerFormGate } from "../../use-worker-form-gate";
 import {
   dqNextSteps,
   dqSpine,
@@ -141,6 +142,15 @@ export default function WorkerDQFTab({ workerId, open, onOpen }: QualificationVi
     employers.current?.scrollToKey(id);
   });
 
+  const editingEmployer =
+    open.form === "edit-employer" && open.employer
+      ? (file?.verifications.find((row) => row.id === open.employer) ?? null)
+      : null;
+  const opens = useWorkerFormGate(open.form, {
+    "add-employer": canCreate,
+    "edit-employer": file ? canUpdate && editingEmployer !== null : "waiting",
+  });
+
   if (fileQuery.isPending) return <QualificationSkeletonBody view={VIEW} />;
   if (fileQuery.isError || !file) {
     return (
@@ -171,10 +181,7 @@ export default function WorkerDQFTab({ workerId, open, onOpen }: QualificationVi
   };
   const spine = dqSpine(file);
   const deadline = { dueAt: file.safetyHistoryDueAt, late: file.safetyHistoryLate };
-  const editing =
-    open.form === "edit-employer" && open.employer
-      ? (file.verifications.find((row) => row.id === open.employer) ?? null)
-      : null;
+  const editing = editingEmployer;
   const busyStep = requested.isPending
     ? `verification:${requested.variables}`
     : followUp.isPending
@@ -332,14 +339,14 @@ export default function WorkerDQFTab({ workerId, open, onOpen }: QualificationVi
       </div>
 
       <EmployerFormPane.Component
-        open={open.form === "add-employer" && canCreate}
+        open={opens("add-employer")}
         onOpenChange={closeWhen(open.form === "add-employer")}
         workerId={workerId}
         verification={null}
         onSaved={flash}
       />
       <EmployerFormPane.Component
-        open={open.form === "edit-employer" && canUpdate && editing != null}
+        open={opens("edit-employer")}
         onOpenChange={closeWhen(open.form === "edit-employer")}
         workerId={workerId}
         verification={editing}

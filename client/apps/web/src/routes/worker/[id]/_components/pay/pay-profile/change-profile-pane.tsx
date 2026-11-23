@@ -43,7 +43,6 @@ export function ChangeProfilePane({
   const t = useT();
   const initialOverrides = overrideStart(current);
   const { form, isPending, submit } = useAssignPayProfileForm({
-    open,
     start: {
       workerId,
       payProfileId: current?.payProfileId ?? undefined,
@@ -87,7 +86,7 @@ export function ChangeProfilePane({
           </WorkPaneBody>
           <WorkPaneFooter>
             <WorkPaneCancel />
-            <Button type="submit" size="sm" isLoading={isPending} loadingText={t("Saving...")}>
+            <Button type="submit" size="sm" isLoading={isPending}>
               {current ? t("Change profile") : t("Assign profile")}
             </Button>
           </WorkPaneFooter>

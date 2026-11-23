@@ -15,6 +15,14 @@ export type BoundedColumn = {
   align?: "start" | "end" | "center";
   /** Takes only the width its content needs (a menu, a mark). */
   shrink?: boolean;
+  /**
+   * A fixed width, as a Tailwind class (`w-28`). Once any column has one the table lays out by
+   * its columns (`table-fixed`): those columns keep their width and the columns without one share
+   * the rest, so a long name cannot squeeze the others or be squeezed to a few characters.
+   */
+  width?: string;
+  /** Classes for the head cell beyond the shared ones (a narrow checkbox column's padding). */
+  headClassName?: string;
 };
 
 /** What a row's `tr` spreads: its key for the table, and the measuring ref when virtualised. */
@@ -56,6 +64,8 @@ type BoundedTableProps = {
   /** A guess at a row's height before it is measured, for a long table; 37 (one line). */
   estimateRowHeight?: number;
   handleRef?: Ref<BoundedTableHandle>;
+  /** The table's least width, as a Tailwind class (`min-w-186`); the region scrolls sideways below it. */
+  minWidthClassName?: string;
 } & (
   | {
       /** A growing table's rows; long ones are virtualised. */
@@ -89,7 +99,15 @@ type BoundedTableProps = {
  * the region hugs its rows up to its cap either way.
  */
 export function BoundedTable(props: BoundedTableProps) {
-  const { columns, label, maxHeightClassName, estimateRowHeight = 37, handleRef } = props;
+  const {
+    columns,
+    label,
+    maxHeightClassName,
+    estimateRowHeight = 37,
+    handleRef,
+    minWidthClassName,
+  } = props;
+  const fixed = columns.some((column) => column.width !== undefined);
   const [viewport, setViewport] = useState<HTMLDivElement | null>(null);
   // Read through a ref, not the viewport state, so a deep link's first commit can already
   // scroll to its row (the state is still null until the commit after the ref attaches).
@@ -121,8 +139,19 @@ export function BoundedTable(props: BoundedTableProps) {
         <table
           ref={tableRef}
           aria-label={label}
-          className="w-full border-separate border-spacing-0 text-sm"
+          className={cn(
+            "w-full border-separate border-spacing-0 text-sm",
+            fixed && "table-fixed",
+            minWidthClassName,
+          )}
         >
+          {fixed ? (
+            <colgroup>
+              {columns.map((column) => (
+                <col key={column.key} className={column.width} />
+              ))}
+            </colgroup>
+          ) : null}
           <thead className="sticky top-0 z-10">
             <tr>
               {columns.map((column) => (
@@ -132,7 +161,8 @@ export function BoundedTable(props: BoundedTableProps) {
                   className={cn(
                     "h-8 border-b border-border-subtle bg-sunken px-3 text-xs font-medium whitespace-nowrap text-foreground-subtle first:pl-4",
                     ALIGN[column.align ?? "start"],
-                    column.shrink && "w-px",
+                    column.shrink && !fixed && "w-px",
+                    column.headClassName,
                   )}
                 >
                   {column.label}

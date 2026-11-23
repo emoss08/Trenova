@@ -419,7 +419,7 @@ function TimesheetSheet({
 
   return (
     <Sheet open={Boolean(id)} onOpenChange={onOpenChange}>
-      <SheetContent className="sm:max-w-lg">
+      <SheetContent size="lg">
         <SheetHeader className="pr-10">
           <SheetTitle className="flex items-center gap-2">
             {sheet ? sheetWorkerName(sheet) : t("Timesheet")}

@@ -186,7 +186,7 @@ export function VersionHistoryPanel({
   return (
     <>
       <Sheet open={open} onOpenChange={onOpenChange}>
-        <SheetContent side="right" className="w-[500px] gap-0 sm:max-w-[500px]">
+        <SheetContent side="right" size="lg" className="gap-0">
           <SheetHeader className="border-border border-b pb-2">
             <SheetTitle className="flex items-center gap-2">
               <ClockIcon className="size-5" />

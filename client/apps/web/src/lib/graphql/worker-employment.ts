@@ -22,11 +22,12 @@ import {
   PreviewWorkerEmploymentEventDocument,
   RecordWorkerEmploymentEventDocument,
   WorkerEmploymentEventDocument,
+  WorkerEmploymentEventFieldsFragmentDoc,
   WorkerEmploymentEventOptionsDocument,
   WorkerEmploymentEventsDocument,
 } from "@trenova/graphql/generated/documents/worker-employment/operations";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
-import type { Connection } from "./connection";
+import { unmaskConnection, type Connection } from "./connection";
 
 export type WorkerEmploymentEventRow = WorkerEmploymentEventFieldsFragment;
 /** One consequence of an event beyond the event itself, as previewed or as carried out. */
@@ -71,7 +72,7 @@ export async function fetchWorkerEmploymentEvents(
     },
     signal: options?.signal,
   });
-  return data.workerEmploymentEvents as Connection<WorkerEmploymentEventRow>;
+  return unmaskConnection(WorkerEmploymentEventFieldsFragmentDoc, data.workerEmploymentEvents);
 }
 
 /** One employment event by id: a deep link to an event outside the pages already read. */

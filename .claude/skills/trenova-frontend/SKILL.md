@@ -153,7 +153,7 @@ Copyable patterns for the common tasks are in [patterns.md](patterns.md).
 React Hook Form with a zod schema from `@trenova/shared/types/<entity>` and `zodResolver`;
 field components from `apps/web/src/components/fields/`; table panels through
 `FormCreatePanel`/`FormEditPanel`. Footers are right-aligned, Cancel (`outline`) then the
-primary. Dialogs take `size`, never an arbitrary max-width.
+primary. Dialogs and sheets take `size`, never an arbitrary max-width or width.
 
 A settings page is `SettingsPage` (`components/settings/settings-page.tsx`) around a form
 that is `SettingsForm` (`settings-form.tsx`): the shell owns the form, the optimistic save,

@@ -10,6 +10,7 @@ import { VirtualRows, type VirtualRow } from "@/components/virtual-rows";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import {
   createDeskMemory,
+  DESK_MEMORIES_KEY,
   fetchDeskMemories,
   reviseDeskMemory,
   setDeskMemoryStatus,
@@ -17,7 +18,7 @@ import {
   type DeskMemorySubject,
 } from "@/lib/graphql/desk-memories";
 import { workerOverviewQuery } from "@/lib/queries/worker";
-import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { ErrorState } from "@trenova/shared/components/errors/error-state";
 import { BotIcon, Edit02Icon, Trash01Icon, User01Icon } from "@trenova/shared/components/icons";
 import { Badge } from "@trenova/shared/components/ui/badge";
@@ -31,7 +32,8 @@ import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { useState } from "react";
 import { FilesSkeleton } from "../files-skeleton";
 import { useWorkerInvalidation } from "../../use-worker-invalidation";
-import { LoadMoreFooter } from "../load-more-footer";
+import { ListMoreLine } from "../../list-more";
+import { useWorkerList } from "../../use-worker-list";
 
 /** How many notes one read brings; the list asks for the next page as it is scrolled to. */
 const PAGE_SIZE = 50;
@@ -57,19 +59,26 @@ export default function WorkerMemories({
   const [adding, setAdding] = useState(false);
   const [forgetting, setForgetting] = useState<DeskMemory | null>(null);
 
-  const memoriesQuery = useInfiniteQuery({
+  // The record memories panel keys its reads under the memory's subject, so the area's
+  // invalidation row and the Desk's writes reach this list too.
+  const memoriesList = useWorkerList<DeskMemory>({
+    root: DESK_MEMORIES_KEY,
+    workerId,
     queryKey: [...recordMemoriesQueryKey(subject), "pages"],
-    queryFn: ({ pageParam, signal }) =>
-      fetchDeskMemories(
-        { scope: null, roleId: null, query: "", subject },
-        pageParam,
-        PAGE_SIZE,
-        signal,
-      ),
-    initialPageParam: null as string | null,
-    getNextPageParam: (page) => page.next,
-    select: (data) => data.pages.flatMap((page) => page.items),
+    pageSize: PAGE_SIZE,
     enabled: available,
+    fetchPage: async ({ first, after, signal }) => {
+      const page = await fetchDeskMemories(
+        { scope: null, roleId: null, query: "", subject },
+        after,
+        first,
+        signal,
+      );
+      return {
+        edges: page.items.map((node) => ({ node })),
+        pageInfo: { hasNextPage: page.next !== null, endCursor: page.next },
+      };
+    },
   });
   const overview = useQuery({ ...workerOverviewQuery(workerId), enabled: available });
   const refresh = useWorkerInvalidation(workerId, "agent-memory");
@@ -82,9 +91,9 @@ export default function WorkerMemories({
   });
 
   if (!available) return null;
-  if (memoriesQuery.isPending) return <FilesSkeleton view="agent-memory" />;
+  if (memoriesList.isPending) return <FilesSkeleton view="agent-memory" />;
 
-  const memories = memoriesQuery.data ?? [];
+  const memories = memoriesList.rows;
   const rows: VirtualRow[] = memories.map((memory, index) => ({
     key: memory.id,
     render: () => (
@@ -119,13 +128,15 @@ export default function WorkerMemories({
             onSaved={refresh}
           />
         ) : null}
-        {memoriesQuery.isError && !memoriesQuery.isFetchNextPageError ? (
-          <ErrorState
-            error={memoriesQuery.error}
-            layout="compact"
-            title={t("The notes could not be loaded")}
-            onRetry={() => void memoriesQuery.refetch()}
-          />
+        {memoriesList.isError ? (
+          <div className="p-3">
+            <ErrorState
+              error={memoriesList.error}
+              layout="compact"
+              title={t("The notes could not be loaded")}
+              onRetry={memoriesList.refetch}
+            />
+          </div>
         ) : memories.length === 0 ? (
           <SectionPanelQuiet>
             {t(
@@ -142,24 +153,12 @@ export default function WorkerMemories({
             aria-label={t("What agents remember about {0}", workerName)}
             role="list"
             mask="card"
-            onEndReached={() => {
-              if (
-                memoriesQuery.hasNextPage &&
-                !memoriesQuery.isFetching &&
-                !memoriesQuery.isFetchNextPageError
-              ) {
-                void memoriesQuery.fetchNextPage();
-              }
-            }}
-            footer={
-              <LoadMoreFooter
-                loading={memoriesQuery.isFetchingNextPage}
-                failed={memoriesQuery.isFetchNextPageError}
-                error={memoriesQuery.error}
-                failedTitle={t("More notes could not be loaded")}
-                onRetry={() => void memoriesQuery.fetchNextPage()}
-              />
+            onEndReached={
+              memoriesList.hasMore && !memoriesList.loadMoreFailed
+                ? memoriesList.loadMore
+                : undefined
             }
+            footer={<ListMoreLine more={memoriesList} />}
           />
         )}
         <p className="border-t border-border-subtle px-3 py-2.5 text-xs text-muted-foreground">

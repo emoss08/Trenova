@@ -60,6 +60,7 @@ import {
   PreviewWorkerPtoAccrualDocument,
   PtoBalanceSummaryDocument,
   PtoLiabilityReportDocument,
+  PtoPolicyAssignmentFieldsFragmentDoc,
   PtoPolicyTableDocument,
   RestorePtoPolicyDocument,
   RunPtoAccrualDocument,
@@ -67,11 +68,12 @@ import {
   WorkerPtoAvailabilityDocument,
   WorkerPtoBalancesDocument,
   WorkerPtoLedgerDocument,
+  WorkerPtoLedgerEntryFieldsFragmentDoc,
   WorkerPtoPolicyAssignmentsDocument,
 } from "@trenova/graphql/generated/documents/pto-policy/operations";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import { defineDataTableGraphQLConfig } from "@trenova/shared/lib/graphql/data-table";
-import type { Connection } from "./connection";
+import { unmaskConnection, type Connection } from "./connection";
 
 export type PTOPolicyRow = PtoPolicyFieldsFragment;
 export type PTOPolicyAssignment = PtoPolicyAssignmentFieldsFragment;
@@ -148,7 +150,7 @@ export async function fetchWorkerPtoPolicyAssignments(
     variables: { workerId: args.workerId, first: args.first ?? null, after: args.after ?? null },
     signal: options?.signal,
   });
-  return data.workerPtoPolicyAssignments as Connection<PTOPolicyAssignment>;
+  return unmaskConnection(PtoPolicyAssignmentFieldsFragmentDoc, data.workerPtoPolicyAssignments);
 }
 
 /**
@@ -215,7 +217,7 @@ export async function fetchWorkerPtoLedger(
     variables: { input },
     signal: options?.signal,
   });
-  return data.workerPtoLedger as Connection<WorkerPTOLedgerEntry>;
+  return unmaskConnection(WorkerPtoLedgerEntryFieldsFragmentDoc, data.workerPtoLedger);
 }
 
 export async function fetchWorkerPtoAvailability(

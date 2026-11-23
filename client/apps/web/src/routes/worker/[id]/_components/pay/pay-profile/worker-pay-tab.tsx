@@ -37,6 +37,7 @@ import {
 } from "../../bounded-table";
 import { LineSketch } from "../../list-sketch";
 import { useWorkerInvalidation } from "../../use-worker-invalidation";
+import { useWorkerFormGate } from "../../use-worker-form-gate";
 import { useWorkerList } from "../../use-worker-list";
 import { WORKER_FORM_PANES } from "../../worker-form-panes";
 import { formatPayRate, PAY_METHOD_UNITS, payComponentLines } from "../pay-model";
@@ -99,6 +100,8 @@ export default function WorkerPayTab({ workerId, worker, open, onOpen }: PayProf
     onSuccess: () => invalidate(),
   });
 
+  const opens = useWorkerFormGate(open.form, { "assign-pay-profile": canAssign });
+
   if (assignmentQuery.isPending) return <PaySkeleton view="pay-profile" />;
   if (assignmentQuery.isError) {
     return (
@@ -151,19 +154,21 @@ export default function WorkerPayTab({ workerId, worker, open, onOpen }: PayProf
 
           <SectionPanel
             title={t("Assignment history")}
-            count={history.hasMore ? (history.total ?? undefined) : history.rows.length}
+            count={history.total ?? (history.hasMore ? undefined : history.rows.length)}
           >
             {history.isPending ? (
               <div aria-busy aria-label={t("Loading the assignment history")} className="p-3">
                 <span className="block h-3 w-1/2 ui-shimmer rounded-sm" />
               </div>
             ) : history.isError ? (
-              <ErrorState
-                error={history.error}
-                layout="compact"
-                title={t("The assignment history could not be loaded")}
-                onRetry={history.refetch}
-              />
+              <div className="p-3">
+                <ErrorState
+                  error={history.error}
+                  layout="compact"
+                  title={t("The assignment history could not be loaded")}
+                  onRetry={history.refetch}
+                />
+              </div>
             ) : history.rows.length === 0 ? (
               <SectionPanelQuiet>{t("No assignments yet.")}</SectionPanelQuiet>
             ) : (
@@ -171,6 +176,7 @@ export default function WorkerPayTab({ workerId, worker, open, onOpen }: PayProf
                 label={t("Assignment history")}
                 columns={historyColumns(t)}
                 maxHeightClassName="max-h-64"
+                minWidthClassName="min-w-128"
                 rows={history.rows.map((row) => ({
                   key: row.id,
                   render: (props) => (
@@ -200,12 +206,14 @@ export default function WorkerPayTab({ workerId, worker, open, onOpen }: PayProf
                 <span className="block h-3 w-1/2 ui-shimmer rounded-sm" />
               </div>
             ) : earningsQuery.isError ? (
-              <ErrorState
-                error={earningsQuery.error}
-                layout="compact"
-                title={t("What is owed could not be loaded")}
-                onRetry={() => void earningsQuery.refetch()}
-              />
+              <div className="p-3">
+                <ErrorState
+                  error={earningsQuery.error}
+                  layout="compact"
+                  title={t("What is owed could not be loaded")}
+                  onRetry={() => void earningsQuery.refetch()}
+                />
+              </div>
             ) : earningsQuery.data ? (
               <DescriptionList layout="split" className="px-3">
                 <DescriptionItem label={t("Unsettled earnings")} numeric>
@@ -250,7 +258,7 @@ export default function WorkerPayTab({ workerId, worker, open, onOpen }: PayProf
       </div>
 
       <ChangeProfilePane.Component
-        open={open.form === "assign-pay-profile" && canAssign}
+        open={opens("assign-pay-profile")}
         onOpenChange={(next) => !next && close()}
         workerId={workerId}
         workerName={worker.firstName}
@@ -351,6 +359,7 @@ function CurrentProfile({
           label={t("Pay components")}
           columns={componentColumns(t)}
           maxHeightClassName="max-h-96"
+          minWidthClassName="min-w-104"
         >
           {lines.map((line) => {
             const unit = t(PAY_METHOD_UNITS[line.method] ?? "");
@@ -367,8 +376,8 @@ function CurrentProfile({
                     </span>
                   ) : null}
                 </td>
-                <td className={cn(BOUNDED_CELL_CLASS, "text-right")}>
-                  <span className="font-mono text-xs tabular-nums">
+                <td className={cn(BOUNDED_CELL_CLASS, "text-right whitespace-nowrap")}>
+                  <span className="font-mono tabular-nums">
                     {formatPayRate(line.method, line.profileRate)}
                   </span>{" "}
                   <span className="text-xs text-muted-foreground">{unit}</span>
@@ -377,13 +386,13 @@ function CurrentProfile({
                   data-override={line.override !== null ? "" : undefined}
                   className={cn(
                     BOUNDED_CELL_CLASS,
-                    "text-right",
+                    "text-right whitespace-nowrap",
                     line.override !== null
                       ? "bg-brand-subtle font-medium"
                       : "text-muted-foreground",
                   )}
                 >
-                  <span className="font-mono text-xs tabular-nums">
+                  <span className="font-mono tabular-nums">
                     {formatPayRate(line.method, line.override ?? line.profileRate)}
                   </span>{" "}
                   <span className="text-xs font-normal text-muted-foreground">{unit}</span>

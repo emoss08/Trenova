@@ -40,6 +40,7 @@ import {
 } from "../../bounded-table";
 import { LineSketch } from "../../list-sketch";
 import { useWorkerInvalidation } from "../../use-worker-invalidation";
+import { useWorkerFormGate } from "../../use-worker-form-gate";
 import { useWorkerList } from "../../use-worker-list";
 import { WORKER_FORM_PANES } from "../../worker-form-panes";
 import { PaySkeleton } from "../pay-skeleton";
@@ -102,6 +103,8 @@ export function WorkerBenefitsSection({ workerId, open, onOpen }: BenefitsViewPr
     },
   });
 
+  const opens = useWorkerFormGate(open.form, { "enroll-benefit": canEnroll });
+
   if (enrollmentsQuery.isPending) return <PaySkeleton view="benefits" />;
   if (enrollmentsQuery.isError) {
     return (
@@ -159,7 +162,7 @@ export function WorkerBenefitsSection({ workerId, open, onOpen }: BenefitsViewPr
       <SectionPanel
         title={t("Enrollments")}
         count={
-          enrollmentsQuery.hasMore ? (enrollmentsQuery.total ?? undefined) : enrollments.length
+          enrollmentsQuery.total ?? (enrollmentsQuery.hasMore ? undefined : enrollments.length)
         }
         action={
           canEnroll && enrollments.length > 0 ? (
@@ -242,7 +245,7 @@ export function WorkerBenefitsSection({ workerId, open, onOpen }: BenefitsViewPr
       </SectionPanel>
 
       <EnrollPane.Component
-        open={open.form === "enroll-benefit" && canEnroll}
+        open={opens("enroll-benefit")}
         onOpenChange={(next) => !next && close()}
         workerId={workerId}
         planId={presetPlan}
@@ -355,6 +358,7 @@ function EnrollmentRow({
                 id: "change",
                 label: t("Change coverage"),
                 icon: Edit02Icon,
+                preload: EnrollPane.preload,
                 onSelect: () => onElect(row.benefitPlanId),
               },
               {

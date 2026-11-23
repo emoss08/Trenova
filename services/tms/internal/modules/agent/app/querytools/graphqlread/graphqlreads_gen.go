@@ -7720,6 +7720,7 @@ var Reads = map[string]Read{
 		Variables: []Variable{
 			{Name: "after", Type: "String", NonNull: false, List: false, Kind: "scalar", Description: "The endCursor of the page before this one."},
 			{Name: "first", Type: "Int", NonNull: false, List: false, Kind: "scalar", Description: "How many to read, from 1 to 100; 20 when left out."},
+			{Name: "includeTotalCount", Type: "Boolean", NonNull: false, List: false, Kind: "scalar", Description: "true also returns totalCountExact: Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."},
 			{Name: "workerId", Type: "ID", NonNull: true, List: false, Kind: "scalar"},
 		},
 		Fields: []Field{

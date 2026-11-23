@@ -61,11 +61,7 @@ export function DrillThroughSheet({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent
-        side="right"
-        className="w-full sm:max-w-3xl"
-        aria-describedby="drill-description"
-      >
+      <SheetContent side="right" size="3xl" aria-describedby="drill-description">
         <SheetHeader>
           <SheetTitle>{t("Records behind this number")}</SheetTitle>
           <SheetDescription id="drill-description">

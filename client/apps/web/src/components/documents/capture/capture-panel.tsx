@@ -8,7 +8,6 @@ import {
   captureRequestFailureLabel,
   captureRequestStatusAttrs,
   captureRequestsToShow,
-  isCaptureRecordKind,
   type CaptureRecordKind,
 } from "@/lib/capture";
 import {
@@ -46,25 +45,6 @@ import { CoverSheetDialog } from "./cover-sheet-dialog";
 const nowInSeconds = () => Math.floor(Date.now() / 1000);
 /** A request in flight changes by the minute; the panel re-reads the clock this often. */
 const CLOCK_TICK_MS = 15_000;
-
-/**
- * The kind of record capture can file onto, when this record is one and the
- * person may scan and print into it. Null otherwise, including while access
- * is still loading, so nothing capture-related shows until it is known.
- */
-export function useCaptureKind(resourceType: string): CaptureRecordKind | null {
-  const kind = isCaptureRecordKind(resourceType) ? resourceType : null;
-  const accessQuery = useQuery({
-    ...capture.access(),
-    staleTime: 5 * 60 * 1000,
-    enabled: kind !== null,
-  });
-  const access = accessQuery.data;
-  if (kind === null || access === undefined || !access.enabled || !access.canCapture) {
-    return null;
-  }
-  return kind;
-}
 
 /**
  * "Scan" beside Upload in the Documents tab, with printing into the record and

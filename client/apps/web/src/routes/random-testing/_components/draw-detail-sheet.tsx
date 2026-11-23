@@ -66,7 +66,7 @@ export function DrawDetailSheet({ drawId, onOpenChange }: DrawDetailSheetProps) 
 
   return (
     <Sheet open={Boolean(drawId)} onOpenChange={onOpenChange}>
-      <SheetContent className="w-full sm:max-w-xl">
+      <SheetContent size="xl">
         <SheetHeader>
           <SheetTitle>{draw ? t("Round {0}", draw.periodKey) : t("Round")}</SheetTitle>
           <SheetDescription>

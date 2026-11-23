@@ -1,6 +1,6 @@
 import { InfoTooltip } from "@/components/info-tooltip";
 import type { PreloadIntent } from "@/components/work-pane";
-import type { SafetyScorecard, WorkerSafetyEventRow } from "@/lib/graphql/worker-safety";
+import type { SafetyScorecard } from "@/lib/graphql/worker-safety";
 import { Award01Icon, PlusIcon } from "@trenova/shared/components/icons";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -15,7 +15,6 @@ import type { SafetyRating } from "@trenova/shared/types/worker-safety";
 import type { CSSProperties } from "react";
 import { useDrawn } from "@/hooks/use-drawn";
 import {
-  EARLIER_SEGMENT,
   pointsGauge,
   safetyEventHeadline,
   type GaugeSegment,
@@ -24,8 +23,6 @@ import {
 
 type SafetyScorecardCardProps = {
   scorecard: SafetyScorecard;
-  /** The events loaded so far: they name the gauge's segments; the figures are the scorecard's. */
-  events: readonly WorkerSafetyEventRow[];
   canRecord: boolean;
   canRecognise: boolean;
   onRecordEvent: () => void;
@@ -53,7 +50,6 @@ const FILL_TONE: Record<PointsGauge["tone"], string> = {
  */
 export function SafetyScorecardCard({
   scorecard,
-  events,
   canRecord,
   canRecognise,
   onRecordEvent,
@@ -64,7 +60,7 @@ export function SafetyScorecardCard({
   const t = useT();
   const meta = safetyRatingMeta(scorecard.rating as SafetyRating);
   const quiet = scorecard.daysSinceLastEvent;
-  const gauge = pointsGauge(scorecard, events);
+  const gauge = pointsGauge(scorecard);
 
   return (
     <section
@@ -116,7 +112,7 @@ export function SafetyScorecardCard({
           ) : null}
         </div>
 
-        <PointsGaugeView gauge={gauge} events={events} />
+        <PointsGaugeView gauge={gauge} />
 
         <DescriptionList
           layout="ruled"
@@ -158,16 +154,9 @@ function at(value: number, max: number): string {
  * It fills to the active points once, the first time it is shown, one segment per event still
  * carrying points.
  */
-function PointsGaugeView({
-  gauge,
-  events,
-}: {
-  gauge: PointsGauge;
-  events: readonly WorkerSafetyEventRow[];
-}) {
+function PointsGaugeView({ gauge }: { gauge: PointsGauge }) {
   const t = useT();
   const drawn = useDrawn();
-  const byId = new Map(events.map((event) => [event.id, event]));
 
   return (
     <div className="flex min-w-0 flex-col px-5 pt-3.5 pb-4 @5xl:border-r-0">
@@ -209,7 +198,7 @@ function PointsGaugeView({
                   }
                 />
                 <TooltipContent>
-                  <SegmentNote segment={segment} event={byId.get(segment.id)} />
+                  <SegmentNote segment={segment} />
                 </TooltipContent>
               </Tooltip>
             ))}
@@ -276,24 +265,9 @@ function PointsGaugeView({
 }
 
 /** What a segment of the gauge stands for: its event and when its points roll off. */
-function SegmentNote({
-  segment,
-  event,
-}: {
-  segment: GaugeSegment;
-  event: WorkerSafetyEventRow | undefined;
-}) {
+function SegmentNote({ segment }: { segment: GaugeSegment }) {
   const t = useT();
-  if (segment.id === EARLIER_SEGMENT || !event || segment.occurredAt === null) {
-    return (
-      <span className="block font-medium">
-        {t(
-          "{0, plural, one {# point from earlier events} other {# points from earlier events}}",
-          segment.points,
-        )}
-      </span>
-    );
-  }
+  const { event } = segment;
   return (
     <>
       <span className="block font-medium">
@@ -304,13 +278,13 @@ function SegmentNote({
         )}
       </span>
       <span className="block">
-        {segment.rollsOffAt
+        {event.pointsExpireAt
           ? t(
               "{0}. Rolls off {1}.",
-              formatUnixDateMedium(segment.occurredAt),
-              formatUnixDateMedium(segment.rollsOffAt),
+              formatUnixDateMedium(event.occurredAt),
+              formatUnixDateMedium(event.pointsExpireAt),
             )
-          : formatUnixDateMedium(segment.occurredAt)}
+          : formatUnixDateMedium(event.occurredAt)}
       </span>
     </>
   );

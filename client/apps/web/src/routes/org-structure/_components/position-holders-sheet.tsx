@@ -101,7 +101,7 @@ export function PositionHoldersSheet({ position, onOpenChange }: PositionHolders
 
   return (
     <Sheet open={Boolean(position)} onOpenChange={onOpenChange}>
-      <SheetContent className="sm:max-w-lg">
+      <SheetContent size="lg">
         <SheetHeader>
           <SheetTitle className="flex items-center gap-2">
             {position?.title ?? t("Position")}

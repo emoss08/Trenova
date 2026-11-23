@@ -101,7 +101,8 @@ export function NotificationSheet({
 
       <SheetContent
         side="right"
-        className="w-[min(26rem,calc(100vw-2rem))] gap-0 overflow-hidden sm:max-w-none"
+        size="md"
+        className="gap-0 overflow-hidden"
         onKeyDown={(event) => panelKeys.current?.(event)}
       >
         {mounted ? (

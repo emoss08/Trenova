@@ -1,6 +1,6 @@
 import type { WorkerArea } from "@/routes/worker/use-worker-state";
 import { translate } from "@trenova/shared/i18n/runtime";
-import { formatUnixDateMedium } from "@trenova/shared/lib/date";
+import { formatUnixDateMedium, setUserDatePreferences } from "@trenova/shared/lib/date";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { payRateText } from "../../overview-model";
 import { fileCellRules, fileCells, fileColumns } from "../file-model";
@@ -179,5 +179,29 @@ describe("the driver portal cell's last sign-in", () => {
     const lastNight = new Date(2026, 10, 22, 23, 0).getTime() / 1000;
     expect(signedInAt(lastNight)).toBe("Signed in 1 day ago");
     expect(signedInAt(new Date(2026, 10, 23, 1, 0).getTime() / 1000)).toBe("Signed in today");
+  });
+});
+
+describe("the reviews cell", () => {
+  afterEach(() => setUserDatePreferences({ timezone: undefined }));
+
+  it("agrees with the strip: a review due today is due, the day after it is overdue", () => {
+    setUserDatePreferences({ timezone: "America/Chicago" });
+    const asOf = Date.UTC(2026, 10, 22, 21) / 1000;
+    const reviews = (nextReviewAt: number) =>
+      fileCells(
+        overviewFixture({ asOf, nextReviewAt, openReview: null }),
+        everything,
+        t,
+        asOf,
+      ).find((cell) => cell.key === "reviews")?.note;
+
+    expect(reviews(Date.UTC(2026, 10, 22, 6) / 1000)).toMatchObject({
+      text: "Next due Nov 22, 2026",
+    });
+    expect(reviews(Date.UTC(2026, 10, 21, 6) / 1000)).toMatchObject({
+      text: "Overdue since Nov 21, 2026",
+      tone: "danger",
+    });
   });
 });

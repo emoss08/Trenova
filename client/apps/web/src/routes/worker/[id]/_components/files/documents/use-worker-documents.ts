@@ -43,12 +43,14 @@ export function useWorkerDocuments(workerId: string, versionOf: Document | null)
   });
   const packetQuery = useQuery<DocumentPacketSummary>({
     queryKey: ["document-packet-summary", WORKER_DOCUMENT_RESOURCE, workerId],
-    queryFn: () => documentService.getPacketSummary(WORKER_DOCUMENT_RESOURCE, workerId),
+    queryFn: ({ signal }) =>
+      documentService.getPacketSummary(WORKER_DOCUMENT_RESOURCE, workerId, { signal }),
   });
   const versionId = versionOf?.id ?? null;
   const versionsQuery = useQuery({
     queryKey: ["document-versions", versionId],
-    queryFn: () => (versionId ? documentService.getVersions(versionId) : Promise.resolve([])),
+    queryFn: ({ signal }) =>
+      versionId ? documentService.getVersions(versionId, { signal }) : Promise.resolve([]),
     enabled: versionId !== null,
   });
 

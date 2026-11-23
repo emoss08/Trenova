@@ -173,6 +173,7 @@ const summary = {
   expiringCount: 1,
   expiredCount: 0,
   missingCount: 1,
+  archivedCount: 1,
   items: [
     {
       health: "ExpiringSoon",
@@ -504,6 +505,27 @@ describe("WorkerCredentialsTab", () => {
     fireEvent.click(toggle);
     const row = await screen.findByTestId("credential-history-wcred_old");
     expect(within(row).getByText("Superseded by renewal")).toBeInTheDocument();
+  });
+
+  it("counts the history from the summary even when the list stopped at the newest 100", async () => {
+    fetchWorkerCredentialSummary.mockResolvedValue({ ...summary, archivedCount: 140 });
+    fetchWorkerCredentials.mockResolvedValue([
+      cdlCred,
+      forkCred,
+      ...Array.from({ length: 98 }, (_, index) =>
+        credential(`wcred_old_${index}`, "wct_cdl", {
+          status: "Archived",
+          archivedAt: 1_750_000_000 - index,
+          credentialType: cdl,
+        }),
+      ),
+    ]);
+    renderTab();
+
+    const toggle = await screen.findByRole("button", { name: /History/ });
+    expect(within(toggle).getByText("140")).toBeInTheDocument();
+    fireEvent.click(toggle);
+    expect(await screen.findByText("Showing the newest 100")).toBeInTheDocument();
   });
 
   it("says a failed read plainly instead of drawing an empty file", async () => {

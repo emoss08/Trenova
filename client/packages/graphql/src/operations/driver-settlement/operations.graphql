@@ -46,7 +46,12 @@ query PayProfileTable($input: DataTableConnectionInput!, $includeTotalCount: Boo
   }
 }
 
-query WorkerPayAssignments($workerId: ID!, $first: Int, $after: String) {
+query WorkerPayAssignments(
+  $workerId: ID!
+  $first: Int
+  $after: String
+  $includeTotalCount: Boolean = true
+) {
   workerPayAssignments(workerId: $workerId, first: $first, after: $after) {
     edges {
       cursor
@@ -82,6 +87,8 @@ query WorkerPayAssignments($workerId: ID!, $first: Int, $after: String) {
       hasNextPage
       endCursor
     }
+    totalCount @include(if: $includeTotalCount)
+    totalCountExact @include(if: $includeTotalCount)
   }
 }
 

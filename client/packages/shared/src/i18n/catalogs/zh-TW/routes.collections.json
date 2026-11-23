@@ -48,6 +48,5 @@
   "{0, plural, one {# disputed} other {# disputed}}": "{0, plural, other {# 張爭議中}}",
   "{0} by {1}, promised to {2}": "{0}，於 {1} 前，向 {2} 承諾",
   "{0} overdue of {1} open across {2, plural, one {# invoice} other {# invoices}}": "{1} 未結中 {0} 已逾期，共 {2, plural, other {# 張發票}}",
-  "{0} paid since ({1}%)": "此後已付 {0}（{1}%）",
-  "{0} with {1}": "{0} 與 {1}"
+  "{0} paid since ({1}%)": "此後已付 {0}（{1}%）"
 }

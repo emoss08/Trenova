@@ -1,5 +1,5 @@
 {
-  "version": "sha256:91494a48fc2c07d35e435cf9cbf8bdc372693154f3b7e797a220ec11784f754c",
+  "version": "sha256:05f14dba9d9a20cad4e6b4de4457a79c343365938e43085c36c5b961a199442d",
   "modules": [
     {
       "id": "home",
@@ -5190,6 +5190,25 @@
             "Turn on the service's enable switch (for example **Enable Google maps** or **Enable Samsara**) and enter its credentials, such as the API key. When a key is already saved, leave the field blank to keep it.",
             "Where offered, select **Test connection** to check the credentials work.",
             "Select **Save changes** (or **Save configuration** for Samsara)."
+          ]
+        },
+        {
+          "title": "Set up the Google Maps API key",
+          "keywords": [
+            "Google Cloud APIs to enable",
+            "Places API (New)",
+            "Maps JavaScript API",
+            "address search not working",
+            "Google Maps rejected the API key",
+            "REQUEST_DENIED",
+            "legacy API",
+            "key restrictions"
+          ],
+          "steps": [
+            "In the Google Cloud console, in the project that will hold the key, enable the Maps JavaScript API (every map in Trenova) and Places API (New) (address search). Trenova does not use the legacy Places API, Geocoding, Directions or Distance Matrix, so leave those off.",
+            "Create an API key and restrict it to those two APIs. Do not add a website (HTTP referrer) or IP address restriction: Trenova's server searches addresses with the same key, and Google rejects those requests when the key is limited to a website.",
+            "Open [Integrations](/admin/integrations), open the Google Maps card, turn on **Enable Google maps**, paste the key and select **Save changes**.",
+            "If address search says Google Maps rejected the API key, Places API (New) is not enabled in the key's project or the key's restrictions block it."
           ]
         },
         {
@@ -16464,7 +16483,7 @@
             "Open [Workers](/hr/workers), select the worker, go to the **Time** tab and open the **Schedule** view.",
             "Select **Put on a shift** (or **Move to another shift**).",
             "Pick the **Shift**, the **Effective from** date and, for rotating shifts, the **Rotation offset (weeks)**; add **Notes** if useful.",
-            "Select **Put on shift** (or **Move to shift**). Their row appears on the board."
+            "Select **Put on a shift** (or **Move to another shift**). Their row appears on the board."
           ]
         },
         {
@@ -16784,7 +16803,7 @@
             "Open [Workers](/hr/workers), select the worker's row, go to **Qualification** and open **Credentials**. You can also choose **Add to record**, then **Credential**.",
             "Select **Add credential**, or open the actions on a credential on file and choose **Renew**, **Edit**, **Verify** or **Archive**. A required type that is not on file has its own add button in the table.",
             "Pick the **Credential type**, fill in **Number**, **Issuing authority**, **Issued** and **Expires**, and drop the scan into **Document**.",
-            "Select **Add credential** (or **Save renewal** when renewing, **Save changes** when editing). A renewal moves the current credential to **Earlier versions**."
+            "Select **Add credential** (or **Renew credential** when renewing, **Save changes** when editing). A renewal moves the current credential to **Earlier versions**."
           ]
         },
         {
@@ -16845,9 +16864,9 @@
           ],
           "steps": [
             "Open the worker, go to **Qualification** and open **Drug and alcohol**, or choose **Add to record**, then **Drug or alcohol collection** or **Clearinghouse query**.",
-            "Select **Record a collection**, pick the **Reason for the test** and **What is analyzed**, fill in when and where it was collected, and select **Record collection**.",
+            "Select **Record collection**, pick the **Reason for the test** and **What is analyzed**, fill in when and where it was collected, and save it with the same button.",
             "When the result arrives, open the test's actions and choose **Record result**, enter the **Result**, **Laboratory** and **Medical review officer**, and select **Record result**. **Void test** removes one entered against the wrong driver.",
-            "Select **Log a query**, pick the **Query** type and **Requested on**, add the consent dates and **Reference**, and select **Log query**. When the Clearinghouse answers, choose **Record answer** on the query. A query that is still pending does not restart the 12-month clock."
+            "Select **Log query**, pick the **Query** type and **Requested on**, add the consent dates and **Reference**, and save it with the same button. When the Clearinghouse answers, choose **Record answer** on the query. A query that is still pending does not restart the 12-month clock."
           ]
         },
         {
@@ -16890,8 +16909,8 @@
           ],
           "steps": [
             "Open the worker, go to **Development** and open **Reviews**.",
-            "Select **Start a review**, pick the **Template**, set **Period from** and **Period to**, and select **Start review**.",
-            "Rate the criteria, write the **Summary**, **Strengths** and **Where to improve**, add **Goals**, then **Save draft**. When it is ready, send it to the worker with the submit button."
+            "Select **Start a review**, pick the **Template**, set **Period from** and **Period to**, and start it.",
+            "Rate the criteria, write the **Summary**, **Strengths** and **Where to improve**, add **Goals**, then **Save changes**. When it is ready, send it to the worker with the submit button."
           ]
         },
         {
@@ -16956,7 +16975,7 @@
           ],
           "steps": [
             "Open the worker, go to **Time** and open **Leave**, or choose **Add to record**, then **Leave case**.",
-            "Select **Open a case**, pick the **Type of leave** and **How it is taken**, give the **Qualifying reason**, **Leave begins** and **Expected to end**, and select **Open case**.",
+            "Select **Open a leave case**, pick the **Type of leave** and **How it is taken**, give the **Qualifying reason**, **Leave begins** and **Expected to end**, and select **Open a leave case** again to save it.",
             "On the case, choose **Approve and designate FMLA** or **Approve only**, or **Deny**. Use **Request certification** and **Mark received** to track the medical certification, **Record a day** for each day taken, and **Close** when it ends."
           ]
         },

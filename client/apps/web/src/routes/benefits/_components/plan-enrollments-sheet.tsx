@@ -71,7 +71,7 @@ export function PlanEnrollmentsSheet({ plan, now, onOpenChange }: PlanEnrollment
 
   return (
     <Sheet open={Boolean(plan)} onOpenChange={onOpenChange}>
-      <SheetContent className="sm:max-w-lg">
+      <SheetContent size="lg">
         <SheetHeader>
           <SheetTitle>{plan?.name ?? t("Plan")}</SheetTitle>
           <SheetDescription>

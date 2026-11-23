@@ -38,11 +38,14 @@ export function closedLine(checklist: WorkerChecklistRow): string {
 export function ClosedChecklists({
   checklists,
   readCount,
+  total,
   expandedId,
 }: {
   checklists: readonly WorkerChecklistRow[];
   /** How many checklists the read returned, open ones included: at the server's cap, older ones exist. */
   readCount: number;
+  /** Every closed checklist the worker has, from the overview; real even past the cap. */
+  total: number | null;
   /** A closed checklist a link sent the reader to: opened when first drawn. */
   expandedId: string | null;
 }) {
@@ -87,7 +90,7 @@ export function ClosedChecklists({
   }));
 
   return (
-    <SectionPanel title={t("Closed")} count={capped ? undefined : sorted.length}>
+    <SectionPanel title={t("Closed")} count={total ?? (capped ? undefined : sorted.length)}>
       {sorted.length === 0 ? (
         <SectionPanelQuiet>{t("No closed checklists yet.")}</SectionPanelQuiet>
       ) : (

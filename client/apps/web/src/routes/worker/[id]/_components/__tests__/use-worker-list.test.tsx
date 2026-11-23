@@ -108,4 +108,34 @@ describe("useWorkerList", () => {
       "open",
     ]);
   });
+
+  it("reads under the key it is given, so a read keyed elsewhere is still refreshed by its area", async () => {
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const wrapper = ({ children }: { children: ReactNode }) => (
+      <QueryClientProvider client={client}>{children}</QueryClientProvider>
+    );
+    const fetchPage = vi.fn(async () => connection(["a"], null));
+    const { result } = renderHook(
+      () =>
+        useWorkerList({
+          root: "desk-memories",
+          workerId: "wrk_1",
+          queryKey: ["desk-memories", "record", "Worker", "wrk_1", "pages"],
+          fetchPage,
+        }),
+      { wrapper },
+    );
+    await waitFor(() => expect(result.current.rows).toHaveLength(1));
+    expect(
+      client
+        .getQueryCache()
+        .findAll({ queryKey: ["desk-memories", "record", "Worker", "wrk_1"] })
+        .map((query) => query.queryKey),
+    ).toEqual([["desk-memories", "record", "Worker", "wrk_1", "pages", 50]]);
+
+    await act(() =>
+      client.invalidateQueries({ queryKey: ["desk-memories", "record", "Worker", "wrk_1"] }),
+    );
+    expect(fetchPage).toHaveBeenCalledTimes(2);
+  });
 });

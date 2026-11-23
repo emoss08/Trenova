@@ -22,6 +22,14 @@ const VersionDialog = lazyComponent(
   (module) => module.DocumentVersionDialog,
 );
 
+/** Reads each dialog's code ahead of its menu item being chosen (`RowAction.preload`). */
+export const DOCUMENT_DIALOG_PRELOADS = {
+  inspect: IntelligenceDialog.preload,
+  reject: RejectDialog.preload,
+  signature: SignatureDialog.preload,
+  versions: VersionDialog.preload,
+} as const;
+
 type DocumentDialogsProps = {
   workerId: string;
   inspecting: Document | null;

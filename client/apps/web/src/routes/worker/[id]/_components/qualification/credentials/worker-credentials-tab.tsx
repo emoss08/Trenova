@@ -24,6 +24,7 @@ import type { BoundedTableHandle } from "../../bounded-table";
 import { useRowFlash } from "../../use-row-flash";
 import { useWorkerInvalidation } from "../../use-worker-invalidation";
 import { WORKER_FORM_PANES } from "../../worker-form-panes";
+import { useWorkerFormGate } from "../../use-worker-form-gate";
 import { QualificationSkeletonBody } from "../qualification-skeleton";
 import { useQualificationRoute, type QualificationViewProps } from "../qualification-route";
 import { CredentialHistory } from "./credential-history";
@@ -147,6 +148,13 @@ export default function WorkerCredentialsTab({ workerId, open, onOpen }: Qualifi
     table.current?.scrollToKey(key);
   });
 
+  const loaded = summaryQuery.isSuccess && credentialsQuery.isSuccess;
+  const opens = useWorkerFormGate(open.form, {
+    "add-credential": canCreate,
+    "renew-credential": loaded ? canCreate && formCredential !== null : "waiting",
+    "edit-credential": loaded ? canUpdate && formCredential !== null : "waiting",
+  });
+
   if (summaryQuery.isPending || credentialsQuery.isPending) {
     return <QualificationSkeletonBody view={VIEW} />;
   }
@@ -222,7 +230,11 @@ export default function WorkerCredentialsTab({ workerId, open, onOpen }: Qualifi
             onArchive: (item) => setArchiving(itemCredential(item)),
           }}
         />
-        <CredentialHistory archived={archived} read={credentials.length} />
+        <CredentialHistory
+          archived={archived}
+          count={summary.archivedCount}
+          read={credentials.length}
+        />
       </section>
 
       <CredentialReadPane.Component
@@ -241,14 +253,14 @@ export default function WorkerCredentialsTab({ workerId, open, onOpen }: Qualifi
         onArchive={setArchiving}
       />
       <CredentialFormPane.Component
-        open={open.form === "add-credential" && canCreate}
+        open={opens("add-credential")}
         onOpenChange={closeWhen(open.form === "add-credential")}
         workerId={workerId}
         mode="create"
         credentialTypeId={open.form === "add-credential" ? open.kind : null}
       />
       <CredentialFormPane.Component
-        open={open.form === "renew-credential" && canCreate && formCredential != null}
+        open={opens("renew-credential")}
         onOpenChange={closeWhen(open.form === "renew-credential")}
         workerId={workerId}
         mode="renew"
@@ -259,7 +271,7 @@ export default function WorkerCredentialsTab({ workerId, open, onOpen }: Qualifi
         onSaved={(saved) => flash(saved.id)}
       />
       <CredentialFormPane.Component
-        open={open.form === "edit-credential" && canUpdate && formCredential != null}
+        open={opens("edit-credential")}
         onOpenChange={closeWhen(open.form === "edit-credential")}
         workerId={workerId}
         mode="edit"

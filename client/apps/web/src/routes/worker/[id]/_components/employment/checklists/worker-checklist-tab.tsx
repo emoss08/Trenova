@@ -13,6 +13,7 @@ import {
   type WorkerChecklistItemRow,
   type WorkerChecklistRow,
 } from "@/lib/graphql/worker-checklist";
+import { workerOverviewQuery } from "@/lib/queries/worker";
 import { useQuery } from "@tanstack/react-query";
 import { ErrorState } from "@trenova/shared/components/errors/error-state";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -63,6 +64,7 @@ export default function WorkerChecklistTab({ workerId, focusId }: ChecklistsView
 
   const checklistsQuery = useQuery(workerChecklistsQuery(workerId));
   const eventsQuery = useQuery(employmentCycleEventsQuery(workerId));
+  const overviewQuery = useQuery(workerOverviewQuery(workerId));
 
   const complete = useApiMutation({
     resourceName: "Checklist item",
@@ -188,6 +190,7 @@ export default function WorkerChecklistTab({ workerId, focusId }: ChecklistsView
         <ClosedChecklists
           checklists={closed}
           readCount={checklists.length}
+          total={overviewQuery.data?.employment?.closedChecklistCount ?? null}
           expandedId={focusId && !openIds.has(focusId) ? focusId : null}
         />
       </div>
