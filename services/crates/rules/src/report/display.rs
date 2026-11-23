@@ -16,6 +16,7 @@ use crate::report::band::Band;
 use crate::report::rules::Rule;
 use serde::Deserialize;
 use serde::Serialize;
+use std::collections::BTreeMap;
 
 /// The most decimal places a display may show.
 pub const MAX_DECIMALS: i64 = 10;
@@ -68,6 +69,11 @@ pub struct Display {
     /// The ranges a banded column groups into.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub band: Option<Band>,
+    /// An enum column's stored values mapped to the translated labels shown for them; text is
+    /// looked up here before anything else, so an enum's code is never shown.
+    #[serde(skip_serializing_if = "BTreeMap::is_empty")]
+    #[serde(deserialize_with = "nullable")]
+    pub labels: BTreeMap<String, String>,
 }
 
 impl Display {
@@ -210,6 +216,7 @@ fn baseline(field_type: &str, hint: &str) -> Display {
         null_text: String::new(),
         rules: Vec::new(),
         band: None,
+        labels: BTreeMap::new(),
     };
     match field_type {
         "epoch" => display.style = String::from("date"),

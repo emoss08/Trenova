@@ -14,8 +14,8 @@ const (
 )
 
 var runtimeTools = []string{
-	"find_tools", "ask_user", "publish_artifact", "delegate_task", "request_decision",
-	"withdraw_proposal", "name_plan",
+	"find_tools", "ask_user", "publish_artifact", "show_answer", "show_board", "delegate_task",
+	"request_decision", "withdraw_proposal", "name_plan",
 }
 
 func IsRuntimeTool(name string) bool {

@@ -14,7 +14,7 @@ export type EntityRefConfig<TEntity, TParent> = {
    * any other opens at `basePath`.
    */
   kind?: ReferenceKind;
-  basePath: string;
+  basePath?: string;
   getId: (entity: TEntity) => string | undefined;
   getDisplayText: (entity: TEntity) => string;
   getHeaderText?: string;

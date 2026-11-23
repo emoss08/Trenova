@@ -259,7 +259,7 @@ func (s *Service) settle(ctx context.Context, p settleParams) error {
 			s.watchtower.Resolve(
 				runCtx,
 				p.req.TenantInfo,
-				watchtower.SourceDetentionOccurrence,
+				watchtower.SourceKindDetentionOccurrence,
 				updated.ID.String(),
 			)
 		}

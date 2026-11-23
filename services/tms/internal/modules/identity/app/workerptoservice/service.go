@@ -135,7 +135,7 @@ func (s *Service) Create(
 		CurrentState:   jsonutils.MustToJSON(createdEntity),
 		OrganizationID: createdEntity.GetOrganizationID(),
 		BusinessUnitID: createdEntity.GetBusinessUnitID(),
-	}, auditservice.WithComment("PTO created")); err != nil {
+	}, auditservice.WithComment("PTO created"), auditservice.WithSubjectOf(createdEntity)); err != nil {
 		log.Error("failed to log audit action", zap.Error(err))
 		return nil, err
 	}
@@ -175,7 +175,9 @@ func (s *Service) Update(
 		CurrentState:   jsonutils.MustToJSON(updated),
 		OrganizationID: updated.GetOrganizationID(),
 		BusinessUnitID: updated.GetBusinessUnitID(),
-	}, auditservice.WithComment("PTO updated"), auditservice.WithDiff(current, updated)); err != nil {
+	}, auditservice.WithComment("PTO updated"),
+		auditservice.WithDiff(current, updated),
+		auditservice.WithSubjectOf(updated)); err != nil {
 		log.Error("failed to log audit action", zap.Error(err))
 	}
 
@@ -408,7 +410,9 @@ func (s *Service) logTransitionAudit(
 		CurrentState:   jsonutils.MustToJSON(updated),
 		OrganizationID: updated.GetOrganizationID(),
 		BusinessUnitID: updated.GetBusinessUnitID(),
-	}, auditservice.WithComment(comment), auditservice.WithDiff(previous, updated)); err != nil {
+	}, auditservice.WithComment(comment),
+		auditservice.WithDiff(previous, updated),
+		auditservice.WithSubjectOf(updated)); err != nil {
 		log.Error("failed to log audit action", zap.Error(err))
 	}
 }

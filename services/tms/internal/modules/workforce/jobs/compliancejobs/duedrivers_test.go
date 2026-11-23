@@ -117,7 +117,7 @@ func TestRaiseDueDrivers_OncePerDriverHoweverManyPapers(t *testing.T) {
 
 	require.Len(t, projector.items, 1)
 	item := projector.items[0]
-	require.Equal(t, watchtower.SourceWorkerCredential, item.SourceKind)
+	require.Equal(t, watchtower.SourceKindWorkerCredential, item.SourceKind)
 	require.Equal(t, workerID.String(), item.SourceID)
 	require.Equal(t, agent.SubjectWorker, item.SubjectType)
 	require.Contains(t, item.Title, "Dana Reyes")
@@ -144,7 +144,11 @@ func TestRaiseDueDrivers_SeparateDriversAreSeparateSubjects(t *testing.T) {
 	state.recordDueDriver(credentialOf(second, "CDL", 30), tenantInfo, 30)
 
 	publisher := &recordingPublisher{}
-	activities := &Activities{watchtower: mocks.NoopWatchtowerProjector{}, logger: zap.NewNop(), publisher: publisher}
+	activities := &Activities{
+		watchtower: mocks.NoopWatchtowerProjector{},
+		logger:     zap.NewNop(),
+		publisher:  publisher,
+	}
 	activities.raiseDueDrivers(t.Context(), state)
 
 	require.Len(t, publisher.events, 2)

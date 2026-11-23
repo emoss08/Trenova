@@ -2312,9 +2312,10 @@ type CancelFuelCardInput struct {
 }
 
 type CancelWorkerChecklistInput struct {
-	ID      string  `json:"id"`
-	Reason  *string `json:"reason,omitempty"`
-	Version *int    `json:"version,omitempty"`
+	ID string `json:"id"`
+	// Why the checklist is cancelled. Required; a blank reason is refused.
+	Reason  string `json:"reason"`
+	Version *int   `json:"version,omitempty"`
 }
 
 type CancelWorkerTrainingInput struct {
@@ -3696,19 +3697,21 @@ type DeskBoardBlock struct {
 	// The block's exhibit numeral; 0 for prose and notes.
 	Numeral int `json:"numeral"`
 	// ready, empty or unreadable.
-	State    string              `json:"state"`
-	Tone     string              `json:"tone"`
-	Source   *DeskBoardSource    `json:"source"`
-	Figures  []*DeskBoardFigure  `json:"figures"`
-	Measure  string              `json:"measure"`
-	Rows     []*DeskBoardRow     `json:"rows"`
-	Compare  *DeskBoardCompare   `json:"compare,omitempty"`
-	Table    *DeskBoardTable     `json:"table,omitempty"`
-	Chart    map[string]any      `json:"chart,omitempty"`
-	Events   []*DeskBoardEvent   `json:"events"`
-	Checks   []*DeskBoardCheck   `json:"checks"`
-	Meter    *DeskBoardMeter     `json:"meter,omitempty"`
-	Text     []*DeskBoardSegment `json:"text"`
+	State   string              `json:"state"`
+	Tone    string              `json:"tone"`
+	Source  *DeskBoardSource    `json:"source"`
+	Figures []*DeskBoardFigure  `json:"figures"`
+	Measure string              `json:"measure"`
+	Rows    []*DeskBoardRow     `json:"rows"`
+	Compare *DeskBoardCompare   `json:"compare,omitempty"`
+	Table   *DeskBoardTable     `json:"table,omitempty"`
+	Chart   map[string]any      `json:"chart,omitempty"`
+	Events  []*DeskBoardEvent   `json:"events"`
+	Checks  []*DeskBoardCheck   `json:"checks"`
+	Meter   *DeskBoardMeter     `json:"meter,omitempty"`
+	Text    []*DeskBoardSegment `json:"text"`
+	// One plain line under the exhibit's tab, with readings placed in it; empty when the block has none.
+	Caption  []*DeskBoardSegment `json:"caption"`
 	NoteTone string              `json:"noteTone"`
 	Chips    []*DeskBoardRow     `json:"chips"`
 	Work     []*DeskBoardWorkRow `json:"work"`
@@ -3728,9 +3731,15 @@ type DeskBoardCard struct {
 	Question   string `json:"question"`
 	AnsweredAt int    `json:"answeredAt"`
 	ReadAt     int    `json:"readAt"`
-	// The answer in a sentence or two, split where it cites a block.
+	// Where the board is drawn: conversation (in the conversation, as the reply of
+	// the turn that showed it) or beside (a page beside the conversation).
+	Place string `json:"place"`
+	// The answer in a sentence or two, split where it cites a block and where it
+	// places a reading.
 	Verdict []*DeskBoardSegment `json:"verdict"`
-	Blocks  []*DeskBoardBlock   `json:"blocks"`
+	// The figures the board's words place, each read now and kept as answered.
+	Readings []*DeskBoardReading `json:"readings"`
+	Blocks   []*DeskBoardBlock   `json:"blocks"`
 	// The board as it reads now, in markdown: what Copy as text copies.
 	Markdown string `json:"markdown"`
 }
@@ -3789,6 +3798,23 @@ type DeskBoardMeter struct {
 	Percent *DeskBoardValue `json:"percent,omitempty"`
 }
 
+// A figure the board's words place as {key}: what it reads, its value now, the
+// value it had when the board was shown when it has moved since, and where it was
+// read from.
+type DeskBoardReading struct {
+	Key   string `json:"key"`
+	Label string `json:"label"`
+	// Absent when the reader may not read it or it could not be read.
+	Value *DeskBoardValue `json:"value,omitempty"`
+	// What it was when the board was shown, when it has moved since.
+	Was    *DeskBoardValue  `json:"was,omitempty"`
+	Source *DeskBoardSource `json:"source"`
+	// The records' measure it adds up; empty for a metric or an analysis figure.
+	Measure string `json:"measure"`
+	// count, sum or max over the records; empty for a metric or an analysis figure.
+	Aggregate string `json:"aggregate"`
+}
+
 // A record a block names. A record the reader may not read, or that no longer
 // exists, has readable false and nothing else.
 type DeskBoardRow struct {
@@ -3817,12 +3843,15 @@ type DeskBoardRowMeasure struct {
 
 // A run of words, and the block it cites when it cites one: the block's numeral,
 // whether the block holds something to act on (warn) or not (info), and whether
-// it could not be read.
+// it could not be read. A segment that places a reading names its key, and its
+// text is the reading's value as answered, empty when it could not be read.
 type DeskBoardSegment struct {
 	Text    string `json:"text"`
 	Numeral int    `json:"numeral"`
 	Tone    string `json:"tone"`
 	Struck  bool   `json:"struck"`
+	// The key of the reading the segment places; empty when it places none.
+	Reading string `json:"reading"`
 }
 
 // Where a block was read from: records (with how many it names and how many the
@@ -9411,7 +9440,9 @@ type RecordWorkerEmploymentEventInput struct {
 	DocumentID  *string                        `json:"documentId,omitempty"`
 	// Transferred: the destination fleet. Pass null to leave the worker unassigned.
 	FleetCodeID *string `json:"fleetCodeId,omitempty"`
-	ManagerID   *string `json:"managerId,omitempty"`
+	// Transferred: the new manager. Left out, the manager is unchanged. A transfer
+	// needs fleetCodeId or managerId.
+	ManagerID *string `json:"managerId,omitempty"`
 	// Promoted: the new driver type and/or worker type.
 	DriverType *worker.DriverType `json:"driverType,omitempty"`
 	WorkerType *worker.WorkerType `json:"workerType,omitempty"`
@@ -13878,15 +13909,22 @@ type UpdateSettlementControlInput struct {
 	EscrowInterestFrequencyMonths int                                  `json:"escrowInterestFrequencyMonths"`
 }
 
+// The credential as it should stand after the edit: a field sent empty or left
+// out is cleared, so send every value the credential keeps. The number is kept
+// as stored when the editor may not see personal details.
 type UpdateWorkerCredentialInput struct {
 	ID               string  `json:"id"`
 	Number           *string `json:"number,omitempty"`
 	IssuingAuthority *string `json:"issuingAuthority,omitempty"`
 	IssuedAt         *int    `json:"issuedAt,omitempty"`
 	ExpiresAt        *int    `json:"expiresAt,omitempty"`
-	DocumentID       *string `json:"documentId,omitempty"`
-	Notes            *string `json:"notes,omitempty"`
-	Version          int     `json:"version"`
+	// The supporting document, filed on the worker or on this credential. Send the
+	// current one to keep it; null or left out removes it from the credential (the
+	// file stays in the worker's files). A different document, or none, clears the
+	// credential's verification.
+	DocumentID *string `json:"documentId,omitempty"`
+	Notes      *string `json:"notes,omitempty"`
+	Version    int     `json:"version"`
 }
 
 type UpdateWorkerInjuryInput struct {
@@ -14316,11 +14354,13 @@ type WorkerHosLogEntry struct {
 }
 
 type WorkerHosState struct {
-	WorkerID                string  `json:"workerId"`
-	WorkerName              string  `json:"workerName"`
-	Provider                string  `json:"provider"`
-	ProviderDriverID        string  `json:"providerDriverId"`
-	DutyStatus              *string `json:"dutyStatus,omitempty"`
+	WorkerID         string  `json:"workerId"`
+	WorkerName       string  `json:"workerName"`
+	Provider         string  `json:"provider"`
+	ProviderDriverID string  `json:"providerDriverId"`
+	DutyStatus       *string `json:"dutyStatus,omitempty"`
+	// When the current duty status began, from the open log segment. Null when no open segment is stored.
+	DutyStatusSince         *int    `json:"dutyStatusSince,omitempty"`
 	DriveRemainingMs        int     `json:"driveRemainingMs"`
 	ShiftRemainingMs        int     `json:"shiftRemainingMs"`
 	CycleRemainingMs        int     `json:"cycleRemainingMs"`

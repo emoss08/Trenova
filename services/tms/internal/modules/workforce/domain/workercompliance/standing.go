@@ -1,16 +1,19 @@
 package workercompliance
 
 import (
-	"fmt"
 	"sort"
 
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/employment"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/safetyscorecard"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerchecklist"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerdiscipline"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerdot"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerpage"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workertraining"
 	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/shared/timeutils"
 )
 
 // Standing is the one-word answer to "is this worker in good standing right
@@ -52,94 +55,126 @@ func concernRank(severity ConcernSeverity) int {
 	}
 }
 
-// Concern is one thing wrong with a worker's record, named in the words the
-// office would use and pointing at the tab that fixes it. Code is the stable
-// key the client draws an icon from; Headline and Detail are prose.
-type Concern struct {
-	Severity ConcernSeverity
-	Code     string
-	Headline string
-	Detail   string
-	Tab      string
-}
+type ConcernCode string
 
-// Concern codes are part of the API contract: the client maps them to icons
-// and the tests name them, so they must not be reworded casually.
 const (
-	ConcernNotEmployed        = "not_employed"
-	ConcernNotAssignable      = "not_assignable"
-	ConcernCredentialsExpired = "credentials_expired"
-	ConcernCredentialsMissing = "credentials_missing"
-	ConcernCredentialsSoon    = "credentials_expiring"
-	ConcernTrainingOverdue    = "training_overdue"
-	ConcernTrainingMissing    = "training_missing"
-	ConcernTrainingExpired    = "training_expired"
-	ConcernTrainingDue        = "training_due"
-	ConcernSafetyRating       = "safety_rating"
-	ConcernOutOfService       = "out_of_service"
-	ConcernDiscipline         = "active_discipline"
-	ConcernOpenSafetyEvents   = "open_safety_events"
-	ConcernChecklistOverdue   = "checklist_overdue"
-	ConcernChecklistOpen      = "checklist_open"
-	ConcernReviewOverdue      = "review_overdue"
+	ConcernNotEmployed                       = ConcernCode("NotEmployed")
+	ConcernNotAssignable                     = ConcernCode("NotAssignable")
+	ConcernCredentialExpired                 = ConcernCode("CredentialExpired")
+	ConcernCredentialMissing                 = ConcernCode("CredentialMissing")
+	ConcernCredentialExpiring                = ConcernCode("CredentialExpiring")
+	ConcernTrainingExpired                   = ConcernCode("TrainingExpired")
+	ConcernTrainingMissing                   = ConcernCode("TrainingMissing")
+	ConcernTrainingOverdue                   = ConcernCode("TrainingOverdue")
+	ConcernTrainingDue                       = ConcernCode("TrainingDue")
+	ConcernSafetyRating                      = ConcernCode("SafetyRating")
+	ConcernOutOfService                      = ConcernCode("OutOfService")
+	ConcernActiveDiscipline                  = ConcernCode("ActiveDiscipline")
+	ConcernOpenSafetyEvent                   = ConcernCode("OpenSafetyEvent")
+	ConcernChecklistOverdue                  = ConcernCode("ChecklistOverdue")
+	ConcernChecklistOpen                     = ConcernCode("ChecklistOpen")
+	ConcernReviewOverdue                     = ConcernCode("ReviewOverdue")
+	ConcernReviewDue                         = ConcernCode("ReviewDue")
+	ConcernClearinghouseQueryOverdue         = ConcernCode("ClearinghouseQueryOverdue")
+	ConcernClearinghouseQueryDue             = ConcernCode("ClearinghouseQueryDue")
+	ConcernDrugAlcoholProhibited             = ConcernCode("DrugAlcoholProhibited")
+	ConcernEmploymentVerificationOutstanding = ConcernCode("EmploymentVerificationOutstanding")
 )
 
-// StandingInput carries whichever roll-ups the caller was allowed to read. A
-// nil section is one the signed-in user cannot see, and it contributes no
-// concerns rather than being treated as clean.
-type StandingInput struct {
-	Worker      *worker.Worker
-	Credentials *workercredential.WorkerCredentialSummary
-	Training    *workertraining.WorkerTrainingSummary
-	Safety      *safetyscorecard.SafetyScorecard
-	Checklist   *workerchecklist.WorkerChecklist
-	ReviewDueAt *int64
-	Now         int64
+func (c ConcernCode) String() string { return string(c) }
+
+type Concern struct {
+	Severity        ConcernSeverity
+	Code            ConcernCode
+	Subject         *string
+	Count           int
+	OccurredAt      *int64
+	DueAt           *int64
+	DaysUntil       *int64
+	StopsAssignment bool
+	Destination     workerpage.Destination
 }
 
-// BuildStanding reduces the roll-ups to a verdict and the ranked list of
-// reasons behind it. A worker who is not currently employed short-circuits: an
-// expired licence on somebody who left last year is not a finding.
+const (
+	ClearinghouseDueSoonDays = 30
+	reviewDueSoonDays        = 30
+)
+
+type StandingInput struct {
+	Worker             *worker.Worker
+	Credentials        *workercredential.WorkerCredentialSummary
+	Training           *workertraining.WorkerTrainingSummary
+	Safety             *safetyscorecard.SafetyScorecard
+	SafetyEvents       []*workersafety.WorkerSafetyEvent
+	Checklist          *workerchecklist.WorkerChecklist
+	ReviewDueAt        *int64
+	DrugAlcohol        *workerdot.DrugAlcoholStanding
+	Verifications      []*employment.WorkerEmploymentVerification
+	SafetyHistoryDueAt int64
+	Dispatch           *DispatchVerdicts
+	Now                int64
+}
+
 func BuildStanding(in StandingInput) (Standing, []Concern) {
 	if in.Worker == nil {
 		return StandingGood, []Concern{}
 	}
 	if in.Worker.Status != domaintypes.StatusActive {
 		return StandingBlocked, []Concern{{
-			Severity: ConcernInfo,
-			Code:     ConcernNotEmployed,
-			Headline: "Not currently employed",
-			Detail:   "The record is kept for retention. Nothing else on it needs action.",
-			Tab:      "timeline",
+			Severity:        ConcernInfo,
+			Code:            ConcernNotEmployed,
+			Count:           1,
+			StopsAssignment: true,
+			Destination:     workerpage.AtView(workerpage.TabEmployment, workerpage.ViewHistory),
 		}}
 	}
 
-	concerns := make([]Concern, 0, 8)
+	concerns := make([]Concern, 0, 16)
 	blocked := !in.Worker.CanBeAssigned
 	if blocked {
 		concerns = append(concerns, Concern{
-			Severity: ConcernCritical,
-			Code:     ConcernNotAssignable,
-			Headline: "Cannot be assigned",
-			Detail:   "The worker is off the dispatch board until this is lifted.",
-			Tab:      "timeline",
+			Severity:        ConcernCritical,
+			Code:            ConcernNotAssignable,
+			Count:           1,
+			StopsAssignment: true,
+			Destination:     workerpage.At(workerpage.TabProfile),
 		})
 	}
 
-	concerns = appendCredentialConcerns(concerns, in.Credentials)
+	concerns = appendCredentialConcerns(concerns, in)
 	if in.Credentials != nil &&
 		in.Credentials.ComplianceStatus == worker.ComplianceStatusNonCompliant {
 		blocked = true
 	}
-	concerns = appendTrainingConcerns(concerns, in.Training)
-	concerns = appendSafetyConcerns(concerns, in.Safety)
+	concerns = appendTrainingConcerns(concerns, in)
+	concerns = appendSafetyConcerns(concerns, in)
 	concerns = appendChecklistConcerns(concerns, in.Checklist, in.Now)
 	concerns = appendReviewConcern(concerns, in.ReviewDueAt, in.Now)
+	concerns = appendDrugAlcoholConcerns(concerns, in)
+	concerns = appendVerificationConcerns(concerns, in)
 
-	sort.SliceStable(concerns, func(i, j int) bool {
-		return concernRank(concerns[i].Severity) < concernRank(concerns[j].Severity)
-	})
+	rankConcerns(concerns)
 	return standingFor(blocked, concerns), concerns
+}
+
+func rankConcerns(concerns []Concern) {
+	sort.SliceStable(concerns, func(i, j int) bool {
+		a, b := concerns[i], concerns[j]
+		if rankA, rankB := concernRank(a.Severity), concernRank(b.Severity); rankA != rankB {
+			return rankA < rankB
+		}
+		if a.StopsAssignment != b.StopsAssignment {
+			return a.StopsAssignment
+		}
+		switch {
+		case a.DueAt != nil && b.DueAt != nil:
+			return *a.DueAt < *b.DueAt
+		case a.DueAt != nil:
+			return true
+		default:
+			return false
+		}
+	})
 }
 
 func standingFor(blocked bool, concerns []Concern) Standing {
@@ -159,188 +194,162 @@ func standingFor(blocked bool, concerns []Concern) Standing {
 	return StandingGood
 }
 
-func appendCredentialConcerns(
-	concerns []Concern,
-	summary *workercredential.WorkerCredentialSummary,
-) []Concern {
-	if summary == nil {
+func datedConcern(dueAt *int64, now int64, concern Concern) Concern {
+	if dueAt == nil || *dueAt <= 0 {
+		return concern
+	}
+	due := *dueAt
+	days := workercredential.DaysUntil(due, now)
+	concern.DueAt = &due
+	concern.DaysUntil = &days
+	return concern
+}
+
+func subjectOf(name string) *string {
+	if name == "" {
+		return nil
+	}
+	return &name
+}
+
+func appendCredentialConcerns(concerns []Concern, in StandingInput) []Concern {
+	if in.Credentials == nil {
 		return concerns
 	}
-	if summary.ExpiredCount > 0 {
-		concerns = append(concerns, Concern{
-			Severity: ConcernCritical,
-			Code:     ConcernCredentialsExpired,
-			Headline: plural(
-				summary.ExpiredCount,
-				"credential has expired",
-				"credentials have expired",
-			),
-			Detail: "The worker is not qualified to drive until these are renewed.",
-			Tab:    "credentials",
-		})
-	}
-	if summary.MissingCount > 0 {
-		concerns = append(concerns, Concern{
-			Severity: ConcernCritical,
-			Code:     ConcernCredentialsMissing,
-			Headline: plural(
-				summary.MissingCount,
-				"required credential is missing",
-				"required credentials are missing",
-			),
-			Detail: "Nothing has been recorded for these at all.",
-			Tab:    "credentials",
-		})
-	}
-	if summary.ExpiringCount > 0 {
-		concerns = append(concerns, Concern{
-			Severity: ConcernWarning,
-			Code:     ConcernCredentialsSoon,
-			Headline: plural(
-				summary.ExpiringCount,
-				"credential expires soon",
-				"credentials expire soon",
-			),
-			Detail: "Start the renewal before it lapses.",
-			Tab:    "credentials",
-		})
+	for _, item := range in.Credentials.Items {
+		if item == nil || item.CredentialType == nil {
+			continue
+		}
+		concern := Concern{
+			Subject:     subjectOf(item.CredentialType.Name),
+			Count:       1,
+			Destination: credentialDestination(item),
+		}
+		switch item.Health {
+		case workercredential.CredentialHealthExpired:
+			concern.Severity = ConcernCritical
+			concern.Code = ConcernCredentialExpired
+		case workercredential.CredentialHealthMissing:
+			concern.Severity = ConcernCritical
+			concern.Code = ConcernCredentialMissing
+		case workercredential.CredentialHealthExpiringSoon:
+			concern.Severity = ConcernWarning
+			concern.Code = ConcernCredentialExpiring
+		case workercredential.CredentialHealthValid:
+			continue
+		default:
+			continue
+		}
+		concern.StopsAssignment = credentialRuling(item, in.Dispatch).stopsAll()
+		if item.Credential != nil {
+			concern.OccurredAt = item.Credential.IssuedAt
+			concern = datedConcern(item.Credential.ExpiresAt, in.Now, concern)
+		}
+		concerns = append(concerns, concern)
 	}
 	return concerns
 }
 
-func appendTrainingConcerns(
-	concerns []Concern,
-	summary *workertraining.WorkerTrainingSummary,
-) []Concern {
-	if summary == nil {
+func appendTrainingConcerns(concerns []Concern, in StandingInput) []Concern {
+	if in.Training == nil {
 		return concerns
 	}
-	if summary.ExpiredCount > 0 {
-		concerns = append(concerns, Concern{
-			Severity: ConcernCritical,
-			Code:     ConcernTrainingExpired,
-			Headline: plural(
-				summary.ExpiredCount,
-				"certification has expired",
-				"certifications have expired",
-			),
-			Detail: "Assign the renewal to bring the worker back into date.",
-			Tab:    "training",
-		})
-	}
-	if summary.MissingCount > 0 {
-		concerns = append(concerns, Concern{
-			Severity: ConcernCritical,
-			Code:     ConcernTrainingMissing,
-			Headline: plural(
-				summary.MissingCount,
-				"required course was never assigned",
-				"required courses were never assigned",
-			),
-			Detail: "These are required for the worker's role and nothing is open.",
-			Tab:    "training",
-		})
-	}
-	if summary.OverdueCount > 0 {
-		concerns = append(concerns, Concern{
-			Severity: ConcernCritical,
-			Code:     ConcernTrainingOverdue,
-			Headline: plural(
-				summary.OverdueCount,
-				"course is past its due date",
-				"courses are past their due date",
-			),
-			Detail: "Assigned but not finished by the date it was due.",
-			Tab:    "training",
-		})
-	}
-	if soon := summary.DueCount + summary.ExpiringCount; soon > 0 {
-		concerns = append(concerns, Concern{
-			Severity: ConcernWarning,
-			Code:     ConcernTrainingDue,
-			Headline: plural(
-				soon,
-				"course needs attention soon",
-				"courses need attention soon",
-			),
-			Detail: "Due or expiring inside the reminder window.",
-			Tab:    "training",
-		})
+	for _, item := range in.Training.Items {
+		if item == nil || item.Course == nil {
+			continue
+		}
+		concern := Concern{
+			Subject:     subjectOf(item.Course.Name),
+			Count:       1,
+			Destination: trainingDestination(item),
+		}
+		switch item.Health {
+		case worker.TrainingHealthExpired:
+			concern.Severity = ConcernCritical
+			concern.Code = ConcernTrainingExpired
+		case worker.TrainingHealthMissing, worker.TrainingHealthFailed:
+			concern.Severity = ConcernCritical
+			concern.Code = ConcernTrainingMissing
+		case worker.TrainingHealthOverdue:
+			concern.Severity = ConcernCritical
+			concern.Code = ConcernTrainingOverdue
+		case worker.TrainingHealthScheduled,
+			worker.TrainingHealthDueSoon,
+			worker.TrainingHealthExpiringSoon:
+			concern.Severity = ConcernWarning
+			concern.Code = ConcernTrainingDue
+		case worker.TrainingHealthCurrent:
+			continue
+		default:
+			continue
+		}
+		if item.Record != nil {
+			assignedAt := item.Record.AssignedAt
+			if assignedAt > 0 {
+				concern.OccurredAt = &assignedAt
+			}
+			concern = datedConcern(trainingDueAt(item), in.Now, concern)
+		}
+		concerns = append(concerns, concern)
 	}
 	return concerns
 }
 
-func appendSafetyConcerns(concerns []Concern, card *safetyscorecard.SafetyScorecard) []Concern {
+func appendSafetyConcerns(concerns []Concern, in StandingInput) []Concern {
+	card := in.Safety
 	if card == nil {
 		return concerns
 	}
+	safety := workerpage.At(workerpage.TabSafety)
 	switch card.Rating {
 	case worker.SafetyRatingAtRisk:
 		concerns = append(concerns, Concern{
-			Severity: ConcernCritical,
-			Code:     ConcernSafetyRating,
-			Headline: fmt.Sprintf("Safety score is %d, at risk", card.Score),
-			Detail: fmt.Sprintf(
-				"%d active points against a threshold of %d.",
-				card.ActivePoints,
-				card.PointsAtRiskThreshold,
-			),
-			Tab: "safety",
+			Severity:    ConcernCritical,
+			Code:        ConcernSafetyRating,
+			Count:       int(card.ActivePoints),
+			Destination: safety,
 		})
 	case worker.SafetyRatingWatch:
 		concerns = append(concerns, Concern{
-			Severity: ConcernWarning,
-			Code:     ConcernSafetyRating,
-			Headline: fmt.Sprintf("Safety score is %d, worth watching", card.Score),
-			Detail: fmt.Sprintf(
-				"%d active points against a threshold of %d.",
-				card.ActivePoints,
-				card.PointsWatchThreshold,
-			),
-			Tab: "safety",
+			Severity:    ConcernWarning,
+			Code:        ConcernSafetyRating,
+			Count:       int(card.ActivePoints),
+			Destination: safety,
 		})
 	default:
 	}
-	if card.OutOfServiceOrders > 0 {
-		concerns = append(concerns, Concern{
-			Severity: ConcernCritical,
-			Code:     ConcernOutOfService,
-			Headline: plural(
-				int(card.OutOfServiceOrders),
-				"out-of-service order in the last year",
-				"out-of-service orders in the last year",
-			),
-			Detail: "Roadside put the worker or the vehicle out of service.",
-			Tab:    "safety",
-		})
+	windowStart := safetyscorecard.WindowStart(in.Now)
+	for _, event := range in.SafetyEvents {
+		if event == nil {
+			continue
+		}
+		occurredAt := event.OccurredAt
+		dest := safety.WithRecord(workerpage.RecordEvent, event.ID)
+		if event.OccurredAt >= windowStart && safetyscorecard.IsOutOfServiceOrder(event) {
+			concerns = append(concerns, Concern{
+				Severity:    ConcernCritical,
+				Code:        ConcernOutOfService,
+				Count:       1,
+				OccurredAt:  &occurredAt,
+				Destination: dest,
+			})
+		}
+		if !event.IsClosed() {
+			concerns = append(concerns, Concern{
+				Severity:    ConcernInfo,
+				Code:        ConcernOpenSafetyEvent,
+				Count:       1,
+				OccurredAt:  &occurredAt,
+				Destination: dest,
+			})
+		}
 	}
 	if card.ActiveDiscipline > 0 {
 		concerns = append(concerns, Concern{
-			Severity: ConcernWarning,
-			Code:     ConcernDiscipline,
-			Headline: plural(
-				int(card.ActiveDiscipline),
-				"disciplinary action is active",
-				"disciplinary actions are active",
-			),
-			Detail: fmt.Sprintf(
-				"The highest still standing is a %s.",
-				disciplineWords(card.HighestDiscipline),
-			),
-			Tab: "safety",
-		})
-	}
-	if card.OpenEvents > 0 {
-		concerns = append(concerns, Concern{
-			Severity: ConcernInfo,
-			Code:     ConcernOpenSafetyEvents,
-			Headline: plural(
-				int(card.OpenEvents),
-				"safety event is still open",
-				"safety events are still open",
-			),
-			Detail: "They stay open until somebody records the outcome.",
-			Tab:    "safety",
+			Severity:    ConcernWarning,
+			Code:        ConcernActiveDiscipline,
+			Count:       int(card.ActiveDiscipline),
+			Destination: safety,
 		})
 	}
 	return concerns
@@ -351,59 +360,121 @@ func appendChecklistConcerns(
 	checklist *workerchecklist.WorkerChecklist,
 	now int64,
 ) []Concern {
-	if checklist == nil || checklist.Status != workerchecklist.ChecklistStatusOpen {
+	if checklist == nil || !checklist.IsOpen() {
 		return concerns
 	}
-	progress := checklist.Progress(now)
-	if progress.Overdue > 0 {
-		return append(concerns, Concern{
-			Severity: ConcernWarning,
-			Code:     ConcernChecklistOverdue,
-			Headline: plural(
-				progress.Overdue,
-				"checklist item is overdue",
-				"checklist items are overdue",
-			),
-			Detail: fmt.Sprintf("%s is %d%% done.", checklist.Name, progress.Percent),
-			Tab:    "checklist",
-		})
+	startedAt := checklist.StartedAt
+	concern := Concern{
+		Severity:   ConcernInfo,
+		Code:       ConcernChecklistOpen,
+		Subject:    subjectOf(checklist.Name),
+		Count:      1,
+		OccurredAt: &startedAt,
+		Destination: workerpage.AtView(workerpage.TabEmployment, workerpage.ViewChecklists).
+			WithRecord(workerpage.RecordChecklist, checklist.ID),
 	}
-	return append(concerns, Concern{
-		Severity: ConcernInfo,
-		Code:     ConcernChecklistOpen,
-		Headline: fmt.Sprintf("%s is %d%% done", checklist.Name, progress.Percent),
-		Detail: fmt.Sprintf(
-			"%d of %d required items are settled.",
-			progress.RequiredDone,
-			progress.RequiredTotal,
-		),
-		Tab: "checklist",
-	})
+	concern = datedConcern(checklist.DueAt, now, concern)
+	if progress := checklist.Progress(now); progress.Overdue > 0 {
+		concern.Severity = ConcernWarning
+		concern.Code = ConcernChecklistOverdue
+		concern.Count = progress.Overdue
+	}
+	return append(concerns, concern)
 }
 
 func appendReviewConcern(concerns []Concern, dueAt *int64, now int64) []Concern {
-	if dueAt == nil || *dueAt <= 0 || *dueAt > now {
+	if dueAt == nil || *dueAt <= 0 {
 		return concerns
 	}
-	return append(concerns, Concern{
-		Severity: ConcernWarning,
-		Code:     ConcernReviewOverdue,
-		Headline: "Performance review is overdue",
-		Detail:   "The next review was due and has not been started.",
-		Tab:      "reviews",
-	})
+	dest := workerpage.AtView(workerpage.TabDevelopment, workerpage.ViewReviews)
+	switch {
+	case *dueAt < now:
+		return append(concerns, datedConcern(dueAt, now, Concern{
+			Severity:    ConcernWarning,
+			Code:        ConcernReviewOverdue,
+			Count:       1,
+			Destination: dest,
+		}))
+	case *dueAt <= now+reviewDueSoonDays*timeutils.SecondsPerDay:
+		return append(concerns, datedConcern(dueAt, now, Concern{
+			Severity:    ConcernInfo,
+			Code:        ConcernReviewDue,
+			Count:       1,
+			Destination: dest,
+		}))
+	default:
+		return concerns
+	}
 }
 
-func plural(count int, one string, many string) string {
-	if count == 1 {
-		return "1 " + one
+func appendDrugAlcoholConcerns(concerns []Concern, in StandingInput) []Concern {
+	standing := in.DrugAlcohol
+	if standing == nil {
+		return concerns
 	}
-	return fmt.Sprintf("%d %s", count, many)
+	dest := workerpage.AtView(workerpage.TabQualification, workerpage.ViewDrugAndAlcohol)
+	if standing.Status.Normalized() == worker.DrugAlcoholProhibited {
+		concerns = append(concerns, Concern{
+			Severity:        ConcernCritical,
+			Code:            ConcernDrugAlcoholProhibited,
+			Count:           1,
+			StopsAssignment: in.Dispatch.RefusesTodayOn(DispatchRequirementDrugAlcohol),
+			Destination:     dest,
+		})
+	}
+	due := clearinghouseDue(standing)
+	if due == nil {
+		return concerns
+	}
+	concern := Concern{
+		Count:           1,
+		OccurredAt:      standing.LastClearinghouseQueryAt,
+		StopsAssignment: clearinghouseRuling(*due, in.Dispatch).stopsAll(),
+		Destination:     dest,
+	}
+	switch {
+	case *due < in.Now:
+		concern.Code = ConcernClearinghouseQueryOverdue
+		concern.Severity = ConcernWarning
+		if concern.StopsAssignment {
+			concern.Severity = ConcernCritical
+		}
+	case *due <= in.Now+ClearinghouseDueSoonDays*timeutils.SecondsPerDay:
+		concern.Code = ConcernClearinghouseQueryDue
+		concern.Severity = ConcernInfo
+	default:
+		return concerns
+	}
+	return append(concerns, datedConcern(due, in.Now, concern))
 }
 
-func disciplineWords(level workerdiscipline.DisciplinaryLevel) string {
-	if level == "" {
-		return "disciplinary action"
+func appendVerificationConcerns(concerns []Concern, in StandingInput) []Concern {
+	for _, verification := range in.Verifications {
+		if verification == nil {
+			continue
+		}
+		awaitingDrugAlcohol := verification.Status == employment.VerificationReceived &&
+			verification.NeedsDrugAlcoholAnswer()
+		if !verification.IsOutstanding() && !awaitingDrugAlcohol {
+			continue
+		}
+		concern := Concern{
+			Severity:   ConcernInfo,
+			Code:       ConcernEmploymentVerificationOutstanding,
+			Subject:    subjectOf(verification.EmployerName),
+			Count:      1,
+			OccurredAt: verification.RequestedAt,
+			Destination: workerpage.AtView(workerpage.TabQualification, workerpage.ViewDqFile).
+				WithRecord(workerpage.RecordEmployer, verification.ID),
+		}
+		if in.SafetyHistoryDueAt > 0 {
+			due := in.SafetyHistoryDueAt
+			concern = datedConcern(&due, in.Now, concern)
+			if due < in.Now {
+				concern.Severity = ConcernWarning
+			}
+		}
+		concerns = append(concerns, concern)
 	}
-	return level.Label()
+	return concerns
 }

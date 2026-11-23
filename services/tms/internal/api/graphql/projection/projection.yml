@@ -503,6 +503,7 @@ virtuals:
     - workerName
   WorkerHosState:
     - workerName
+    - dutyStatusSince
     - driveLimitMs
     - shiftLimitMs
     - cycleLimitMs

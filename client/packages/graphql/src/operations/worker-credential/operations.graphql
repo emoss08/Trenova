@@ -63,6 +63,7 @@ fragment WorkerCredentialFields on WorkerCredential {
     originalName
     fileType
     fileSize
+    previewStatus
     createdAt
   }
   verifiedBy {

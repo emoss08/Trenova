@@ -864,7 +864,7 @@ func (r *Recorder) showBoard(
 		return nil, errBoardStore
 	}
 	author := r.author()
-	payload := &board.Payload{Board: request.Board, Snapshot: filled.Snapshot(), Author: author}
+	payload := board.NewPayload(&request.Board, filled.Snapshot(), author)
 	fields, err := payload.Map()
 	if err != nil {
 		return nil, errBoardStore
@@ -888,6 +888,10 @@ func (r *Recorder) showBoard(
 	}
 
 	shown := toolartifacts.ShownArtifact(saved)
+	shown.Place = string(payload.Place)
+	if payload.Place == board.PlaceConversation {
+		shown.Answer = boardmarkdown.Answer(filled)
+	}
 	shown.Brief = boardmarkdown.Markdown(filled, boardmarkdown.MarkdownMeta{
 		Author:     author,
 		AnsweredAt: saved.CreatedAt,

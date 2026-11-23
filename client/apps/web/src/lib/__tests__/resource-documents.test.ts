@@ -1,6 +1,11 @@
 import type { Document } from "@trenova/shared/types/document";
 import { describe, expect, it, vi } from "vitest";
-import { hasPendingDocumentWork, resourceDocumentsQuery } from "../resource-documents";
+import {
+  hasPendingDocumentWork,
+  PENDING_DOCUMENTS_REFETCH_MS,
+  previewPendingRefetchMs,
+  resourceDocumentsQuery,
+} from "../resource-documents";
 
 const documentService = vi.hoisted(() => ({ getByResource: vi.fn() }));
 
@@ -49,5 +54,25 @@ describe("hasPendingDocumentWork", () => {
     ).toBe(true);
     expect(hasPendingDocumentWork(document({ ...rateConfirmation }))).toBe(false);
     expect(hasPendingDocumentWork(document({ contentStatus: "Extracting" }))).toBe(false);
+  });
+});
+
+describe("previewPendingRefetchMs", () => {
+  it("reads again while any document's preview is being drawn", () => {
+    expect(
+      previewPendingRefetchMs([null, { previewStatus: "Ready" }, { previewStatus: "Pending" }]),
+    ).toBe(PENDING_DOCUMENTS_REFETCH_MS);
+  });
+
+  it("stops once every preview has settled, and never starts for rows without documents", () => {
+    expect(
+      previewPendingRefetchMs([
+        { previewStatus: "Ready" },
+        { previewStatus: "Failed" },
+        { previewStatus: "Unsupported" },
+      ]),
+    ).toBe(false);
+    expect(previewPendingRefetchMs([null, undefined])).toBe(false);
+    expect(previewPendingRefetchMs([])).toBe(false);
   });
 });

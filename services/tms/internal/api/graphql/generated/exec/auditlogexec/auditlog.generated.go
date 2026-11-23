@@ -639,6 +639,28 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalOString2string),
 			},
 			{
+				Name:       "subjectResource",
+				IsResolver: true,
+				Concurrent: true,
+				ChildErr:   errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*audit.Entry)
+					return gqlexec.Resolver[AuditEntryResolver](ec, "AuditEntry@auditlog").SubjectResource(ctx, obj)
+				},
+				Marshal: gqlexec.Marshal(marshalOString2ᚖstring),
+			},
+			{
+				Name:       "subjectId",
+				IsResolver: true,
+				Concurrent: true,
+				ChildErr:   errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*audit.Entry)
+					return gqlexec.Resolver[AuditEntryResolver](ec, "AuditEntry@auditlog").SubjectID(ctx, obj)
+				},
+				Marshal: gqlexec.Marshal(marshalOString2ᚖstring),
+			},
+			{
 				Name:      "user",
 				HasChild:  true,
 				ChildType: "User",
@@ -1972,6 +1994,20 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNAuditEntryConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAuditEntryConnection),
 			},
 			{
+				Name:       "auditEntriesBySubject",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "AuditEntryConnection",
+				Args:       field_Query_auditEntriesBySubject_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[QueryResolver](ec, "Query@auditlog").AuditEntriesBySubject(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput), fc.Args["subjectId"].(string))
+				},
+				Marshal: gqlexec.Marshal(marshalNAuditEntryConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAuditEntryConnection),
+			},
+			{
 				Name:       "auditEntry",
 				IsResolver: true,
 				Concurrent: true,
@@ -2078,6 +2114,8 @@ type AuditEntryResolver interface {
 	Resource(ctx context.Context, obj *audit.Entry) (string, error)
 	Operation(ctx context.Context, obj *audit.Entry) (string, error)
 	Channel(ctx context.Context, obj *audit.Entry) (string, error)
+	SubjectResource(ctx context.Context, obj *audit.Entry) (*string, error)
+	SubjectID(ctx context.Context, obj *audit.Entry) (*string, error)
 }
 
 type AuditExportResolver interface {
@@ -2112,6 +2150,7 @@ type QueryResolver interface {
 	AuditEntryReview(ctx context.Context, entryID string) (*auditreviewservice.View, error)
 	AuditEntries(ctx context.Context, input gqlmodel.DataTableConnectionInput, onePerRequest *bool) (*gqlmodel.AuditEntryConnection, error)
 	AuditEntriesByResourceID(ctx context.Context, input gqlmodel.DataTableConnectionInput, resourceID string, field *string) (*gqlmodel.AuditEntryConnection, error)
+	AuditEntriesBySubject(ctx context.Context, input gqlmodel.DataTableConnectionInput, subjectID string) (*gqlmodel.AuditEntryConnection, error)
 	AuditEntry(ctx context.Context, id string) (*audit.Entry, error)
 	AuditChainStatus(ctx context.Context) (*auditintegrity.ChainStatus, error)
 	AuditLegalHolds(ctx context.Context, input gqlmodel.DataTableConnectionInput, activeOnly *bool) (*gqlmodel.AuditLegalHoldConnection, error)
@@ -2321,6 +2360,27 @@ func field_Query_auditEntriesByResourceId_args(ctx context.Context, ec *gqlexec.
 		return nil, err
 	}
 	args["field"] = arg2
+	return args, nil
+}
+
+func field_Query_auditEntriesBySubject_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 2)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.DataTableConnectionInput, error) {
+			return unmarshalNDataTableConnectionInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDataTableConnectionInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "subjectId",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["subjectId"] = arg1
 	return args, nil
 }
 

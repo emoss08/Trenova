@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -109,15 +110,50 @@ func (r *Deps) recordAccess(
 		return access, nil
 	}
 
+	if err := r.requireRecordRead(ctx, authCtx, resource); err != nil {
+		return auditports.EntryAccess{}, err
+	}
+
+	return auditports.EntryAccess{
+		Resources:       []permission.Resource{resource},
+		IncludeSecurity: includeSecurity,
+	}, nil
+}
+
+func (r *Deps) subjectAccess(
+	ctx context.Context,
+	authCtx *authctx.AuthContext,
+	subjectID pulid.ID,
+) (auditports.EntryAccess, error) {
+	resource, known := recordkind.ResourceOfIDPrefix(subjectID.Prefix())
+	if !known || !audit.KeepsFile(resource) {
+		return auditports.EntryAccess{}, errortypes.NewValidationError(
+			"subjectId",
+			errortypes.ErrInvalid,
+			"This kind of record has no file history",
+		)
+	}
+	if err := r.requireRecordRead(ctx, authCtx, resource); err != nil {
+		return auditports.EntryAccess{}, err
+	}
+
+	return r.readableResources(ctx, authCtx)
+}
+
+func (r *Deps) requireRecordRead(
+	ctx context.Context,
+	authCtx *authctx.AuthContext,
+	resource permission.Resource,
+) error {
 	result, err := r.PermissionEngine.Check(
 		ctx,
 		middleware.BuildPermissionCheckRequest(authCtx, resource.String(), permission.OpRead),
 	)
 	if err != nil {
-		return auditports.EntryAccess{}, err
+		return err
 	}
 	if result == nil || !result.Allowed {
-		return auditports.EntryAccess{}, permissionports.DeniedError(
+		return permissionports.DeniedError(
 			result,
 			errortypes.NewAuthorizationError(
 				"You don't have permission to read this record's history",
@@ -125,13 +161,9 @@ func (r *Deps) recordAccess(
 		)
 	}
 	if narrowed(result.DataScope) {
-		return auditports.EntryAccess{}, errortypes.NewAuthorizationError(
+		return errortypes.NewAuthorizationError(
 			"Your access to these records is limited to your own or your team's, so their history is not shown",
 		)
 	}
-
-	return auditports.EntryAccess{
-		Resources:       []permission.Resource{resource},
-		IncludeSecurity: includeSecurity,
-	}, nil
+	return nil
 }

@@ -268,6 +268,10 @@ type TelematicsProvider interface {
 }
 
 type TelematicsProviderFactory interface {
+	ConnectedType(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+	) (integration.Type, bool, error)
 	ProviderFor(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,

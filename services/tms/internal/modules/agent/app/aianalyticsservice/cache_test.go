@@ -124,6 +124,13 @@ func (r *refreshRepo) RefreshProviderHours(
 	return 0, r.hoursErr
 }
 
+func (r *refreshRepo) RefreshDailyUsage(
+	context.Context,
+	aianalyticsports.RefreshRequest,
+) (int, error) {
+	return 0, nil
+}
+
 func (r *refreshRepo) UnkeyedModels(
 	context.Context,
 	aianalyticsports.ModelKeyRequest,

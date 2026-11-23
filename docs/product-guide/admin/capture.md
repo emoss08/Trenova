@@ -15,8 +15,8 @@ Scanning and printing is where administrators run Trenova Capture, the Windows c
 ### Turn on scanning and printing
 Keywords: enable Trenova Capture, allow scanning, turn on virtual printer
 1. Open [Scanning and printing](/admin/capture) and select **Settings**.
-2. Turn on **Turn on scanning and printing into Trenova**.
-3. Optionally turn on **File documents behind a cover sheet on their own**, and set **Keep unfiled pages for (days)**.
+2. Turn on **Scanning and printing**.
+3. Optionally turn on **File behind cover sheets on their own**, and set **Keep unfiled pages for**.
 4. Select **Save changes**.
 
 ### Add a scan profile

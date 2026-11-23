@@ -93,7 +93,7 @@ func (o *PodDocumentObserver) DocumentsChanged(
 	open, err := o.exceptions.forKind(
 		ctx,
 		change.TenantInfo,
-		watchtower.SourcePodMissing,
+		watchtower.SourceKindPODMissing,
 		shipmentIDs,
 	)
 	if err != nil {
@@ -109,7 +109,7 @@ func (o *PodDocumentObserver) DocumentsChanged(
 	for _, shipmentID := range shipmentIDs {
 		o.reconciler.ReconcileSubject(ctx, &watchtowerports.ReconcileSubjectRequest{
 			TenantInfo: change.TenantInfo,
-			SourceKind: watchtower.SourcePodMissing,
+			SourceKind: watchtower.SourceKindPODMissing,
 			SubjectID:  shipmentID,
 			Open:       bySubject[shipmentID],
 		})

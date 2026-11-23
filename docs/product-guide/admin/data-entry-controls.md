@@ -31,7 +31,7 @@ Keywords: uppercase, lowercase, title case, as entered
      changed.
    - **Cities** applies to the city on workers, customers, carriers (including the remit-to
      city), factoring companies and locations.
-3. The formats are **As entered** (kept exactly as typed), **UPPER**, **lower** and
+3. The formats are **As entered** (kept exactly as typed), upper case, lower case and
    **Title case** (the first letter of each word capitalized and the rest left as typed, so
    "acme freight LLC" becomes "Acme Freight LLC"). Email addresses offer every format except
    **Title case**.

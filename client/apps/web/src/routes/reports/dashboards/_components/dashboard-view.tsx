@@ -1,5 +1,6 @@
 import { Link } from "@trenova/shared/components/link";
 import { dashboardFilterToKeel, parameterToKeel } from "@/lib/report-definition";
+import { dashboardParameterOptions } from "@/lib/report-parameter-options";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -57,7 +58,11 @@ import { DashboardTileBody, TileFooterLink } from "./dashboard-tile";
 import { nextTileId, packTiles } from "./dashboard-state";
 import { DashboardSettingsDialog } from "./dashboard-settings-dialog";
 import { TileEditorDialog } from "./tile-editor-dialog";
-import { useDashboardFilterCandidates, useTileReport } from "./use-tile-report";
+import {
+  useDashboardFilterCandidates,
+  useDashboardTileReports,
+  useTileReport,
+} from "./use-tile-report";
 import {
   crossFilterDefinitions,
   crossFilterFor,
@@ -274,6 +279,12 @@ export function DashboardView({ dashboard, canEdit }: DashboardViewProps) {
   const index = useMemo(
     () => (catalog.data ? buildCatalogIndex(catalog.data) : null),
     [catalog.data],
+  );
+  const tileReports = useDashboardTileReports(layout.tiles);
+  const parameterOptions = dashboardParameterOptions(
+    parameters,
+    tileReports.map(({ tile, ir }) => ({ ir, bindings: tile.paramBindings })),
+    catalog.data,
   );
 
   // Filter values live outside the layout: the layout says what can be
@@ -540,6 +551,7 @@ export function DashboardView({ dashboard, canEdit }: DashboardViewProps) {
                 param={param}
                 value={params[param.name]}
                 compact
+                options={parameterOptions[param.name]}
                 onChange={(value) => setParams((prev) => ({ ...prev, [param.name]: value }))}
               />
             </div>

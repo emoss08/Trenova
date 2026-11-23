@@ -30,7 +30,7 @@ var summaryColumns = []string{
 	"operation", "action", "category", "retention_class", "channel", "principal_type",
 	"principal_id", "user_id", "api_key_id", "actor_name", "ai_run_id", "entity_ref",
 	"correlation_id", "trace_id", "ip_address", "user_agent", "comment", "sensitive_data",
-	"critical",
+	"critical", "subject_resource", "subject_id",
 }
 
 type Params struct {
@@ -133,14 +133,9 @@ func (r *repository) ListConnection(
 				}
 			}
 
-			e := auditdb.Entries
-			if req.ResourceID != "" {
-				preds = append(preds, e.ResourceID.Eq(req.ResourceID))
-			}
-			if req.ChangedField != "" {
-				preds = append(preds, e.Changes.HasKey(req.ChangedField))
-			}
-			if req.OnePerRequest && req.ResourceID == "" && !narrowed(req.Filter) {
+			preds = append(preds, recordPreds(req)...)
+			if req.OnePerRequest && req.ResourceID == "" && req.SubjectID.IsNil() &&
+				!narrowed(req.Filter) {
 				preds = append(preds, firstOfRequest(req.Access))
 			}
 
@@ -157,7 +152,12 @@ func (r *repository) ListConnection(
 				lq.Columns = summaryColumns
 			}
 
-			result, err := listquery.Connection(ctx, r.db.Keel(ctx), e.Where(preds...), lq)
+			result, err := listquery.Connection(
+				ctx,
+				r.db.Keel(ctx),
+				auditdb.Entries.Where(preds...),
+				lq,
+			)
 			if err != nil {
 				r.l.Error("failed to list audit entry connection", zap.Error(err))
 				return nil, err
@@ -166,6 +166,21 @@ func (r *repository) ListConnection(
 			return result, nil
 		},
 	)
+}
+
+func recordPreds(req *auditports.ListAuditEntriesRequest) []keel.Pred {
+	e := auditdb.Entries
+	preds := make([]keel.Pred, 0, 3)
+	if req.ResourceID != "" {
+		preds = append(preds, e.ResourceID.Eq(req.ResourceID))
+	}
+	if req.SubjectID.IsNotNil() {
+		preds = append(preds, e.SubjectID.Eq(req.SubjectID))
+	}
+	if req.ChangedField != "" {
+		preds = append(preds, e.Changes.HasKey(req.ChangedField))
+	}
+	return preds
 }
 
 func (r *repository) GetByID(

@@ -3,7 +3,6 @@
   "A signature is pinned to the version label it was given for. Correcting the text under the same label keeps every signature; publishing a new label asks everybody it applies to to read and sign again from Dash.": "Una firma queda ligada a la etiqueta de versión para la que se dio. Corregir el texto bajo la misma etiqueta conserva todas las firmas; publicar una etiqueta nueva pide a todos los afectados que vuelvan a leer y firmar desde Dash.",
   "Applies to": "Se aplica a",
   "Attach a PDF or an image": "Adjunte un PDF o una imagen",
-  "Attached document": "Documento adjunto",
   "Choose a status": "Elija un estado",
   "Choose who it binds": "Elija a quién obliga",
   "Could not attach the document": "No se pudo adjuntar el documento",

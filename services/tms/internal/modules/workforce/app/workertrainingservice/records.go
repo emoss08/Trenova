@@ -169,23 +169,27 @@ func (s *Service) AssignRequired(
 	workerID pulid.ID,
 	userID pulid.ID,
 ) ([]*workertraining.WorkerTrainingRecord, error) {
+	gaps, err := s.PlanAssignRequired(ctx, tenantInfo, workerID)
+	if err != nil {
+		return nil, err
+	}
+	return s.AssignPlanned(ctx, tenantInfo, workerID, gaps, userID), nil
+}
+
+func (s *Service) AssignPlanned(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	workerID pulid.ID,
+	courses []*workertraining.TrainingCourse,
+	userID pulid.ID,
+) []*workertraining.WorkerTrainingRecord {
 	log := s.l.With(
-		zap.String("operation", "AssignRequired"),
+		zap.String("operation", "AssignPlanned"),
 		zap.String("workerId", workerID.String()),
 	)
 
-	wrk, err := s.loadWorker(ctx, tenantInfo, workerID)
-	if err != nil {
-		return nil, err
-	}
-	summary, err := s.summarize(ctx, tenantInfo, wrk)
-	if err != nil {
-		return nil, err
-	}
-
-	gaps := summary.RequiredGaps()
-	created := make([]*workertraining.WorkerTrainingRecord, 0, len(gaps))
-	for _, course := range gaps {
+	created := make([]*workertraining.WorkerTrainingRecord, 0, len(courses))
+	for _, course := range courses {
 		record, assignErr := s.Assign(ctx, &AssignRequest{
 			TenantInfo: tenantInfo,
 			WorkerID:   workerID,
@@ -200,7 +204,7 @@ func (s *Service) AssignRequired(
 		}
 		created = append(created, record)
 	}
-	return created, nil
+	return created
 }
 
 type CompleteRequest struct {

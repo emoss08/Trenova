@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workercredentialservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerpage"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -154,7 +155,11 @@ func (s *Service) notifyCredentialUpload(
 		"Credential document uploaded",
 		wrk.FirstName+" "+wrk.LastName+" uploaded a document for their "+name+
 			". Review it and renew the credential.",
-		"/hr/workers?tab=credentials",
+		workerpage.Path(
+			wrk.ID,
+			workerpage.AtView(workerpage.TabQualification, workerpage.ViewCredentials).
+				WithRecord(workerpage.RecordCredential, cred.ID),
+		),
 		map[string]any{relatedWorkerIDKey: wrk.ID.String(), "credentialId": cred.ID.String()},
 	)
 }

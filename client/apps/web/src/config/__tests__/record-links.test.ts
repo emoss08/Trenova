@@ -31,19 +31,27 @@ describe("record links", () => {
     });
   });
 
-  it("opens a list record in the table's edit panel", () => {
-    const url = new URL(recordPath("worker", "wrk_1"), "http://localhost");
+  it("opens a worker on the worker's own page", () => {
+    expect(recordPath("worker", "wrk_1")).toBe("/hr/workers/wrk_1");
+  });
 
-    expect(url.pathname).toBe("/hr/workers");
+  it("opens a list record in the table's edit panel", () => {
+    const url = new URL(recordPath("customer", "cus_1"), "http://localhost");
+
+    expect(url.pathname).toBe("/billing/configuration-files/customers");
     expect(url.searchParams.get("panelType")).toBe("edit");
-    expect(url.searchParams.get("panelEntityId")).toBe("wrk_1");
+    expect(url.searchParams.get("panelEntityId")).toBe("cus_1");
   });
 
   it("carries extra parameters such as the tab to open", () => {
-    const url = new URL(recordPath("worker", "wrk_1", { tab: "hos" }), "http://localhost");
+    expect(recordPath("worker", "wrk_1", { tab: "time", view: "hours-of-service" })).toBe(
+      "/hr/workers/wrk_1?tab=time&view=hours-of-service",
+    );
+  });
 
-    expect(url.searchParams.get("tab")).toBe("hos");
-    expect(url.searchParams.get("panelEntityId")).toBe("wrk_1");
+  it("never reads a create page as a record named new", () => {
+    expect(recordAtLocation("/hr/workers/new", "")).toBeNull();
+    expect(recordAtLocation("/billing/configuration-files/factoring-companies/new", "")).toBeNull();
   });
 
   it("encodes an id in a path segment and in a parameter", () => {
@@ -96,7 +104,8 @@ describe("record links", () => {
 
   it("does not claim a page records do not open on", () => {
     expect(recordAtLocation("/reports/ifta", "?item=x")).toBeNull();
-    expect(recordAtLocation("/hr/workers/extra", "")).toBeNull();
+    expect(recordAtLocation("/hr/workers/wrk_1/extra", "")).toBeNull();
+    expect(recordAtLocation("/hr/workers", "")).toBeNull();
   });
 
   it("knows its own entity types", () => {

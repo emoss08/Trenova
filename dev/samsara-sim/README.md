@@ -17,15 +17,50 @@ Server defaults:
 - live map: `GET /_sim/map` (tractors as circles, trailers as squares with
   reefer temperatures; toggle trailers from the toolbar)
 
-## Configure TMS
+## Connect TMS
 
-Point TMS to the simulator:
+The Samsara connection is an organization's integration record, saved through
+TMS, not a config key. `integrations.allowPrivateNetworks: true` in the TMS
+config (the development default) is what lets its base URL be a plain-http
+localhost address. A database reset removes the record, so repeat these steps
+after one.
 
-```yaml
-samsara:
-  token: dev-samsara-token
-  baseURL: http://localhost:8091
-```
+1. **Save the integration.** In TMS open Admin > Integrations > Samsara and
+   save API Token `dev-samsara-token` and Base URL `http://localhost:8091`,
+   enabled (`PUT /api/v1/integrations/Samsara/config/`). TMS generates the
+   webhook token and shows the webhook URL; Test Connection lists one driver.
+2. **Create the webhook in the simulator** with that URL, using a host the
+   container can reach (`host.docker.internal`, not `localhost`), and the event
+   types to deliver:
+
+   ```bash
+   curl -X POST http://localhost:8091/webhooks \
+     -H 'Authorization: Bearer dev-samsara-token' -H 'Content-Type: application/json' \
+     -d '{"name":"Trenova TMS (local dev)","version":"2021-06-09",
+          "url":"http://host.docker.internal:8080/api/v1/webhooks/samsara/<webhook token>/",
+          "eventTypes":["GeofenceEntry","GeofenceExit","RouteStopArrival","RouteStopDeparture",
+                        "RouteStopEtaUpdated","FormSubmitted","FormUpdated","DocumentSubmitted",
+                        "DvirSubmitted","AlertIncident","DriverCreated","DriverUpdated",
+                        "VehicleCreated","VehicleUpdated"]}'
+   ```
+
+   Save the `secretKey` from the response as the integration's Webhook Secret
+   in TMS. The signature timestamp is simulation time and TMS rejects a large
+   skew, so webhooks only verify while `/_sim/time` tracks the wall clock.
+3. **Line up the fleet.** TMS maps a tractor to a simulator vehicle by VIN (or
+   tractor code equal to the vehicle name) and a worker to a driver by the
+   driver's `trenovaWorkerId` external ID. For each truck to follow,
+   `PATCH /fleet/vehicles/{id}` with the TMS tractor's `vin`, and
+   `PATCH /fleet/drivers/{id}` with
+   `{"name": "<worker name>", "externalIds": {"trenovaWorkerId": "<worker id>"}}`
+   for its driver (a driver PATCH replaces `externalIds`).
+4. **Map in TMS.** Run drift detection, then repair only the tagged workers
+   (`POST /api/v1/integrations/samsara/workers/sync/drift/detect/`, then
+   `.../drift/repair/` with `{"workerIds": [...]}`). The Sync Workers button
+   instead creates a simulator driver for every active worker. Tractors map on
+   the next `samsara-telematics-sweep` and positions and HOS clocks arrive on
+   the next `samsara-telematics-poll`; `temporal schedule trigger --schedule-id
+   <id>` runs either now.
 
 ## Fleet API Surface
 

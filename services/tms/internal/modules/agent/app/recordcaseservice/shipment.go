@@ -119,7 +119,7 @@ func (c *shipmentCase) build() *subject {
 	if stops := c.timeline(); stops != nil {
 		out.exhibits = append(out.exhibits, *stops)
 		if c.snapshot.Estimate != nil && c.snapshot.Estimate.EstimatedArrival > 0 {
-			out.absorbs[watchtower.SourceEtaAtRisk] = struct{}{}
+			out.absorbs[watchtower.SourceKindEtaAtRisk] = struct{}{}
 		}
 	}
 	out.unchanged = c.unchanged()

@@ -358,10 +358,15 @@ func (fx *workflowEffects) Observe(
 	var a *Activities
 	ctx := workflow.WithActivityOptions(fx.ctx, fx.publishOptions())
 
+	ran := *call
+	if outcome.RanWith != nil {
+		ran.Arguments = outcome.RanWith
+	}
+
 	var result ToolResult
 	err := workflow.ExecuteActivity(ctx, a.PublishArtifactActivity, &PublishInput{
 		Run:  fx.run,
-		Call: *call,
+		Call: ran,
 	}).Get(ctx, &result)
 	if err != nil {
 		return runtimetools.UnkeptOutcome(call.Name)

@@ -147,4 +147,16 @@ describe("the hover glide", () => {
 
     expect(glide).toHaveAttribute("data-state", "hidden");
   });
+
+  // The glide is an opaque positioned box drawn first, so anything left unpositioned (a table
+  // row, a bare list item) painted under it and its text vanished on hover. The group positions
+  // its own children at zero specificity, so they paint after the glide while a child's own
+  // position (and the glide's `absolute`) still wins.
+  it("positions its own children so they paint above the glide", () => {
+    const { group, glide } = renderGroup();
+
+    expect(group).toHaveClass("relative", "[:where(&>*)]:relative");
+    expect(group.firstElementChild).toBe(glide);
+    expect(glide).toHaveClass("absolute");
+  });
 });

@@ -118,6 +118,7 @@ func (s *Service) audit(ctx context.Context, p *auditParams) {
 		BusinessUnitID: p.tenant.BuID,
 	}
 	opts := []auditports.LogOption{auditservice.WithComment(p.comment)}
+	opts = append(opts, auditservice.WithSubjectOf(p.current, p.previous))
 	if p.previous != nil {
 		params.PreviousState = jsonutils.MustToJSON(p.previous)
 		opts = append(opts, auditservice.WithDiff(p.previous, p.current))
@@ -246,30 +247,11 @@ func (s *Service) scorecard(
 	if _, err := s.loadWorker(ctx, tenantInfo, workerID); err != nil {
 		return nil, err
 	}
-	events, err := s.repo.ListEvents(ctx, &workersafetyports.ListWorkerSafetyEventsRequest{
-		TenantInfo: tenantInfo,
-		WorkerID:   workerID,
-	})
+	evidence, err := s.evidence(ctx, tenantInfo, workerID, actions, timeutils.NowUnix())
 	if err != nil {
 		return nil, err
 	}
-	recognitions, err := s.repo.ListRecognitions(
-		ctx,
-		&workersafetyports.ListWorkerRecognitionsRequest{
-			TenantInfo: tenantInfo,
-			WorkerID:   workerID,
-		},
-	)
-	if err != nil {
-		return nil, err
-	}
-	return safetyscorecard.BuildSafetyScorecard(
-		workerID,
-		events,
-		actions,
-		recognitions,
-		timeutils.NowUnix(),
-	), nil
+	return evidence.Scorecard, nil
 }
 
 func eventTenant(entity *workersafety.WorkerSafetyEvent) pagination.TenantInfo {

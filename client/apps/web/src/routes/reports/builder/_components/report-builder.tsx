@@ -27,6 +27,7 @@ import { AnimatePresence, m } from "motion/react";
 import { useMemo, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { toast } from "@trenova/shared/components/ui/toast";
+import { reportParameterOptions } from "@/lib/report-parameter-options";
 import { RunReportDialog } from "../../_components/run-report-dialog";
 import {
   buildCatalogIndex,
@@ -128,6 +129,7 @@ export function ReportBuilder({ catalog, definition }: ReportBuilderProps) {
   const entity = index.entities.get(ir.entity);
   const rootBlocked = ir.entity !== "" && !entity?.readable;
   const parameters: ReportParameterDef[] = ir.parameters ?? [];
+  const parameterOptions = reportParameterOptions(ir, catalog);
 
   const tabCounts: Record<InspectorTab, number> = {
     columns: ir.columns.length,
@@ -425,6 +427,7 @@ export function ReportBuilder({ catalog, definition }: ReportBuilderProps) {
           reportName={meta.name || definition.name}
           defaultFormat={meta.defaultFormat}
           parameters={parameters}
+          parameterOptions={parameterOptions}
         />
       )}
     </div>

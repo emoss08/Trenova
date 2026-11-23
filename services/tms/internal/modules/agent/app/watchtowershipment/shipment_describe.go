@@ -64,7 +64,7 @@ func DescribeTelematicsStopVisit(
 			OrgID: event.OrganizationID,
 			BuID:  event.BusinessUnitID,
 		},
-		SourceKind:  watchtower.SourceTelematicsStopVisit,
+		SourceKind:  watchtower.SourceKindTelematicsStopVisit,
 		SourceID:    TelematicsStopVisitSourceID(event),
 		Severity:    watchtower.SeverityWarning,
 		Title:       stringutils.TruncateRunes(title, maxStopVisitTitleLength),
@@ -115,7 +115,7 @@ func DescribeNoCheckCall(
 
 	return watchtowerports.WatchtowerItemInput{
 		TenantInfo:  tenant,
-		SourceKind:  watchtower.SourceNoCheckCall,
+		SourceKind:  watchtower.SourceKindNoCheckCall,
 		SourceID:    move.MoveID.String(),
 		Severity:    severity,
 		Title:       title,
@@ -204,7 +204,7 @@ func DescribeEtaRisk(
 
 	return watchtowerports.WatchtowerItemInput{
 		TenantInfo:  tenant,
-		SourceKind:  watchtower.SourceEtaAtRisk,
+		SourceKind:  watchtower.SourceKindEtaAtRisk,
 		SourceID:    row.ShipmentID.String(),
 		Severity:    severity,
 		Title:       title,

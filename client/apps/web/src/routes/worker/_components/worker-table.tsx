@@ -11,6 +11,10 @@ import type { DataTableToolbarSlots, DockAction } from "@trenova/shared/types/da
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import type { Worker } from "@trenova/shared/types/worker";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useNavigate, useRouter } from "@tanstack/react-router";
+import { useSearchValue } from "@trenova/shared/hooks/use-search-state";
+import { searchString } from "@trenova/shared/lib/router/search-codec";
+import { getTodayDate } from "@trenova/shared/lib/date";
 import {
   CheckCircleIcon,
   GraduationHat01Icon,
@@ -22,45 +26,51 @@ import { toast } from "@trenova/shared/components/ui/toast";
 import { BulkAssignTrainingDialog } from "./bulk-assign-training-dialog";
 import { MissingCredentialMenu } from "./missing-credential-menu";
 import { getColumns } from "./worker-columns";
-import { WorkerPanel } from "./worker-panel";
+import { NEW_WORKER_PATH, workerPath } from "../use-worker-state";
+import { captureRosterContext, rosterLabel, useRosterContextStore } from "../roster-context-store";
+
+export const MISSING_CREDENTIAL_PARAM = "missing";
 
 export default function WorkerTable() {
   const t = useT();
 
   const queryClient = useQueryClient();
   const columns = useMemo(() => getColumns(t), [t]);
-  // Held here rather than inside the dock so the dialog keeps the selection
-  // after the dock closes it.
   const [trainingTargets, setTrainingTargets] = useState<WorkerRow[] | null>(null);
   const { allowed: readsCredentials } = usePermission(Resource.WorkerCredential, Operation.Read);
   const trainingOnPlan = usePlanFeature(PlanFeature.WorkforceTalent).available;
-  const [withoutCredential, setWithoutCredential] = useState<string | null>(null);
+  const navigate = useNavigate();
+  const router = useRouter();
+  const setRosterContext = useRosterContextStore((state) => state.setContext);
+  const [missingParam, setMissing] = useSearchValue(MISSING_CREDENTIAL_PARAM, searchString);
+  const withoutCredential = missingParam || null;
+  const setWithoutCredential = (code: string | null) => void setMissing(code, { history: "push" });
   const graphql = useMemo(() => workerTableGraphQLConfig(withoutCredential), [withoutCredential]);
   const choices = useQuery({
     ...worker.credentialTypeChoices(),
     enabled: withoutCredential !== null,
   });
-  const missingName =
-    choices.data?.find((type) => type.code === withoutCredential)?.name ?? withoutCredential;
-  const toolbar = useMemo<DataTableToolbarSlots | undefined>(() => {
-    if (!readsCredentials) return undefined;
-    return {
-      trailing: <MissingCredentialMenu value={withoutCredential} onChange={setWithoutCredential} />,
-      chips:
-        withoutCredential === null
-          ? undefined
-          : {
-              items: [
-                {
-                  key: "withoutCredential",
-                  label: t("Missing {0}", missingName ?? ""),
-                  onRemove: () => setWithoutCredential(null),
-                },
-              ],
-              onClear: () => setWithoutCredential(null),
-            },
-    };
-  }, [missingName, readsCredentials, t, withoutCredential]);
+  const missingName = choices.data?.find((type) => type.code === withoutCredential)?.name ?? null;
+  const toolbar: DataTableToolbarSlots | undefined = readsCredentials
+    ? {
+        trailing: (
+          <MissingCredentialMenu value={withoutCredential} onChange={setWithoutCredential} />
+        ),
+        chips:
+          withoutCredential === null
+            ? undefined
+            : {
+                items: [
+                  {
+                    key: "withoutCredential",
+                    label: missingName ? t("Missing {0}", missingName) : t("Missing a credential"),
+                    onRemove: () => setWithoutCredential(null),
+                  },
+                ],
+                onClear: () => setWithoutCredential(null),
+              },
+      }
+    : undefined;
 
   const handleBulkStatusUpdate = useCallback(
     async (rows: WorkerRow[], status: string) => {
@@ -198,7 +208,25 @@ export default function WorkerTable() {
         toolbar={toolbar}
         dockActions={dockActions}
         enableRowSelection
-        TablePanel={WorkerPanel}
+        onAddRecord={() => void navigate({ to: NEW_WORKER_PATH })}
+        onRowClick={(row) => {
+          const workerId = row.original.id;
+          if (!workerId) return;
+          setRosterContext(
+            captureRosterContext(queryClient, {
+              workerId,
+              graphql,
+              search: router.state.location.searchStr,
+              label: (options) =>
+                rosterLabel(t, {
+                  options,
+                  missingCredential: withoutCredential === null ? null : { name: missingName },
+                  now: getTodayDate(),
+                }),
+            }),
+          );
+          void navigate({ to: workerPath(workerId) });
+        }}
       />
       {trainingOnPlan ? (
         <BulkAssignTrainingDialog

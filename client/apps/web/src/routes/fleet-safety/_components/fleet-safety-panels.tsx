@@ -10,7 +10,7 @@ import { formatUnixDate } from "@trenova/shared/lib/date";
 import { cn, getNameInitials } from "@trenova/shared/lib/utils";
 import { Award01Icon, Building07Icon, ShieldAlertIcon } from "@trenova/shared/components/icons";
 import { useMemo } from "react";
-import { workerRecordHref } from "@/lib/route-utils";
+import { workerPath } from "@/routes/worker/use-worker-state";
 
 type TerminalsPanelProps = {
   terminals: readonly FleetSafetyTerminalRow[];
@@ -173,7 +173,7 @@ export function RankList({ title, kind, empty, rows }: RankListProps) {
           {rows.map((row) => (
             <li key={row.workerId}>
               <Link
-                to={workerRecordHref(row.workerId, "safety")}
+                to={workerPath(row.workerId, { tab: "safety" })}
                 className="hover:bg-accent grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-3 py-2 transition-colors"
               >
                 <span className="flex min-w-0 items-center gap-2.5">

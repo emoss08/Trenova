@@ -70,6 +70,7 @@ fragment WorkerTrainingRecordFields on WorkerTrainingRecord {
     originalName
     fileType
     fileSize
+    previewStatus
     createdAt
   }
   assignedById
@@ -204,6 +205,7 @@ query WorkerTrainingSummary($workerId: ID!) {
           originalName
           fileType
           fileSize
+          previewStatus
           createdAt
         }
         assignedById

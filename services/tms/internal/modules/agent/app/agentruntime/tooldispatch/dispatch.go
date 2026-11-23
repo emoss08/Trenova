@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/argcheck"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/proposalledger"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/recordnumbers"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/toolaccess"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/toolcall"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/toolresult"
@@ -147,9 +148,7 @@ func (s *Dispatcher) dispatchQuery(
 		call.Arguments = inheritScriptName(call.Arguments, p.gate.Continues)
 	}
 	asked := call.Arguments
-	contract, err := argcheck.ContractCall(
-		s.arguments, call.Name, tool.ParamSchema(), call.Arguments, organizationToday(req),
-	)
+	contract, err := s.contract(ctx, req, &call, tool.ParamSchema())
 	if err != nil {
 		return argcheck.Refusal(call.Name, tool.ParamSchema(), err)
 	}
@@ -158,6 +157,17 @@ func (s *Dispatcher) dispatchQuery(
 	if runsScript {
 		return s.runScriptTool(ctx, p, tool, &call)
 	}
+	listed, err := s.numbers.ListQuery(ctx, &recordnumbers.ListQuery{
+		Actor:      req.Actor,
+		DataAccess: req.Definition.DataAccessSensitivity(),
+		Resource:   tool.Policy().Resource,
+		Schema:     tool.ParamSchema(),
+		Args:       call.Arguments,
+	})
+	if err != nil {
+		return argcheck.Refusal(call.Name, tool.ParamSchema(), err)
+	}
+	call.Arguments = listed.Args
 
 	outcome := s.runQueryToolWith(ctx, req, tool, &call, &queryExtras{
 		fitPage:  p.caller != aitrace.CallerScript,
@@ -165,8 +175,10 @@ func (s *Dispatcher) dispatchQuery(
 		asked:    asked,
 	})
 	outcome.RanWith = call.Arguments
-	if note := contract.Note(); note != "" && !outcome.Failed {
-		outcome.Content += "\n\n[" + note + "]"
+	for _, note := range []string{contract.Note(), listed.Note} {
+		if note != "" && !outcome.Failed {
+			outcome.Content += "\n\n[" + note + "]"
+		}
 	}
 
 	return outcome
@@ -292,9 +304,7 @@ func (s *Dispatcher) prepareActionCall(
 		}
 	}
 
-	contract, err := argcheck.ContractCall(
-		s.arguments, call.Name, tool.ParamSchema(), call.Arguments, organizationToday(req),
-	)
+	contract, err := s.contract(ctx, req, &call, tool.ParamSchema())
 	if err != nil {
 		return argcheck.Refusal(call.Name, tool.ParamSchema(), err), true
 	}

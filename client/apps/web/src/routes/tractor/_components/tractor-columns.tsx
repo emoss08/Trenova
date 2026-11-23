@@ -84,7 +84,6 @@ export function getColumns(t: TranslateFn): ColumnDef<TractorRow>[] {
             entity={primaryWorker}
             config={{
               kind: "worker",
-              basePath: "/workers",
               getId: (worker) => worker.id,
               getDisplayText: (worker) =>
                 [worker.firstName, worker.lastName].filter(Boolean).join(" "),

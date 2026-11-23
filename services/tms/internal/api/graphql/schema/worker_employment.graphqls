@@ -46,40 +46,77 @@ type WorkerEmploymentEvent {
 }
 
 """
-What a status-changing event did beyond the worker row.
+One consequence of an employment event beyond the event itself. The preview
+lists exactly the effects the write then carries out, and the write returns
+the effects it carried out.
 """
-type WorkerEmploymentCascade {
-  ptoAssignmentEnded: Boolean!
-  payAssignmentEnded: Boolean!
-  upcomingPtoCancelled: Int!
-  defaultPolicyApplied: Boolean!
-  checklistStarted: Boolean!
-  """
-  Open checklists the event made moot and closed: an unfinished onboarding on
-  a termination, an unfinished offboarding on a hire or rehire.
-  """
-  checklistsClosed: Int!
-  """
-  Days paid out / forfeited when a termination closed the PTO balances.
-  """
-  ptoPaidOutDays: Decimal!
-  ptoForfeitedDays: Decimal!
-  """
-  Required courses opened for the worker by a hire, rehire or promotion.
-  """
-  trainingAssigned: Int!
-  """
-  Whether a termination shut off the worker's Dash sign-in, and why it could
-  not be shut off when it failed. The termination itself still stands, so an
-  empty string means there was nothing wrong, not that nothing was tried.
-  """
-  portalAccessRevoked: Boolean!
-  portalRevocationError: String!
+enum WorkerEmploymentEffectKind {
+  "CanBeAssigned and AvailableForDispatch are turned off (Suspended, LeaveStarted)."
+  DispatchRemoved
+  "CanBeAssigned and AvailableForDispatch are turned on (Reinstated, LeaveEnded)."
+  DispatchRestored
+  "The time off policy assignment ends; name is the policy's."
+  PtoPolicyEnded
+  "A time off balance is paid out on termination; ptoType and days say which and how much."
+  PtoPaidOut
+  "A time off balance is forfeited on termination; ptoType and days say which and how much."
+  PtoForfeited
+  "One upcoming time off request is cancelled; ptoType, startDate, endDate and days describe it."
+  TimeOffCancelled
+  "The pay profile assignment in force ends; name is the profile's."
+  PayAssignmentEnded
+  "Dash sign-in is shut off. failed is true when it could not be."
+  PortalAccessRevoked
+  "A checklist is started from a template; name is the template's."
+  ChecklistStarted
+  "Open checklists the event makes moot are closed; count says how many, name the checklist's when there is one."
+  ChecklistClosed
+  "Required courses are assigned; count says how many."
+  TrainingAssigned
+  "The organization's default time off policy is applied; name is the policy's."
+  DefaultPtoPolicyApplied
+}
+
+type WorkerEmploymentEffect {
+  kind: WorkerEmploymentEffectKind!
+  "The name of the record the effect touches (policy, profile, template, checklist). Null when it has none."
+  name: String
+  "How many records it touches. Null when the kind is about one record."
+  count: Int
+  "Days of time off moved: paid out, forfeited or cancelled. Null for other kinds."
+  days: Decimal
+  ptoType: PTOType
+  startDate: Timestamp
+  endDate: Timestamp
+  "Only on a recorded event: true when the effect was attempted and failed after the event stood (portal revocation). Always false on a preview."
+  failed: Boolean!
+}
+
+"""
+What recording an event would do, read before saving. It runs the same plan
+the write runs and writes nothing.
+"""
+type WorkerEmploymentEventPreview {
+  kind: WorkerEmploymentEventKind!
+  effectiveAt: Timestamp!
+  fromValues: [WorkerEmploymentValue!]!
+  toValues: [WorkerEmploymentValue!]!
+  effects: [WorkerEmploymentEffect!]!
+}
+
+"""
+Which events may be recorded for a worker now, from the server's own rule
+(EmploymentEventKind.CanRecord over the worker's state and history).
+"""
+type WorkerEmploymentEventOptions {
+  recordableKinds: [WorkerEmploymentEventKind!]!
+  "Kinds whose reason is required."
+  reasonRequiredKinds: [WorkerEmploymentEventKind!]!
 }
 
 type RecordWorkerEmploymentEventPayload {
   event: WorkerEmploymentEvent!
-  cascade: WorkerEmploymentCascade!
+  effects: [WorkerEmploymentEffect!]!
 }
 
 input RecordWorkerEmploymentEventInput {
@@ -93,6 +130,10 @@ input RecordWorkerEmploymentEventInput {
   Transferred: the destination fleet. Pass null to leave the worker unassigned.
   """
   fleetCodeId: ID
+  """
+  Transferred: the new manager. Left out, the manager is unchanged. A transfer
+  needs fleetCodeId or managerId.
+  """
   managerId: ID
   """
   Promoted: the new driver type and/or worker type.
@@ -126,6 +167,12 @@ extend type Query {
     kinds: [WorkerEmploymentEventKind!]
   ): [WorkerEmploymentEvent!]!
   workerEmploymentEvent(id: ID!): WorkerEmploymentEvent!
+  "Needs worker_employment_event read."
+  workerEmploymentEventOptions(workerId: ID!): WorkerEmploymentEventOptions!
+  "Needs worker_employment_event create, the write's own permission."
+  previewWorkerEmploymentEvent(
+    input: RecordWorkerEmploymentEventInput!
+  ): WorkerEmploymentEventPreview!
 }
 
 extend type Mutation {

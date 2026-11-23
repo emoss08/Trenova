@@ -86,7 +86,7 @@ export function groupByReportCategory<T extends { category: string }>(
       group.items.push(item);
       continue;
     }
-    groups.set(key, { key, label: reportCategoryLabel(key), items: [item] });
+    groups.set(key, { key, label: reportCategoryLabel(item.category), items: [item] });
   }
   return Array.from(groups.values()).sort((left, right) => {
     const leftOrder = categoryOrder.get(left.key) ?? Number.MAX_SAFE_INTEGER;

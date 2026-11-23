@@ -37,6 +37,7 @@ type WorkerHOSState struct {
 	CurrentTractorID        pulid.ID   `json:"currentTractorId"        keel:"current_tractor_id,nullzero"`
 	RecordedAt              int64      `json:"recordedAt"              keel:"recorded_at"`
 	ReceivedAt              int64      `json:"receivedAt"              keel:"received_at"`
+	DutyStatusSince         *int64     `json:"dutyStatusSince"         keel:"-"`
 
 	Worker *worker.Worker `json:"worker,omitempty" keel:"belongs:worker_id"`
 }

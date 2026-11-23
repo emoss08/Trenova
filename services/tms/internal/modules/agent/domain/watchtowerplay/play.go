@@ -31,14 +31,14 @@ func AllKinds() []Kind {
 // "this kind of item starts with this move" is written.
 func Of(kind watchtower.SourceKind) Kind {
 	switch kind { //nolint:exhaustive // every other kind has no play
-	case watchtower.SourcePodMissing:
+	case watchtower.SourceKindPODMissing:
 		return AskForPOD
-	case watchtower.SourceMissedPickup,
-		watchtower.SourceMissedDelivery,
-		watchtower.SourceEtaAtRisk,
-		watchtower.SourceNoCheckCall:
+	case watchtower.SourceKindMissedPickup,
+		watchtower.SourceKindMissedDelivery,
+		watchtower.SourceKindEtaAtRisk,
+		watchtower.SourceKindNoCheckCall:
 		return AskForStatus
-	case watchtower.SourceTenderExhausted:
+	case watchtower.SourceKindTenderExhausted:
 		return TenderAgain
 	default:
 		return None

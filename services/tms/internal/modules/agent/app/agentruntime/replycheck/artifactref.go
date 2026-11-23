@@ -22,6 +22,10 @@ func ArtifactRef(shown *agentruntimeports.ShownArtifact) string {
 	return artifactRefOf(shown.ID.String(), shown.Title)
 }
 
+func AttachRef(line string, shown *agentruntimeports.ShownArtifact) string {
+	return attachRefs(line, []string{ArtifactRef(shown)})
+}
+
 func artifactRefOf(id, title string) string {
 	return "[" + escapeLinkText(title) + "](" + ArtifactHrefScheme + id + ")"
 }

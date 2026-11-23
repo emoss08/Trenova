@@ -1140,3 +1140,142 @@ func TestNewTestValidator(t *testing.T) {
 	v := NewTestValidator()
 	require.NotNil(t, v)
 }
+
+type capturedHires struct {
+	workers []*worker.Worker
+	userIDs []pulid.ID
+}
+
+func (c *capturedHires) RecordHired(
+	_ context.Context,
+	wrk *worker.Worker,
+	userID pulid.ID,
+) error {
+	c.workers = append(c.workers, wrk)
+	c.userIDs = append(c.userIDs, userID)
+	return nil
+}
+
+// Creating a worker opens their timeline through the employment recorder,
+// which records the hire and assigns the required courses, so the New worker
+// page's promise that creation starts training holds.
+func TestCreate_HandsTheNewWorkerToTheHireRecorder(t *testing.T) {
+	t.Parallel()
+	deps := setupTest(t)
+	hires := &capturedHires{}
+	deps.svc.SetEmploymentRecorder(hires)
+	entity := newCreateWorker()
+	userID := pulid.MustNew("usr_")
+	created := newTestWorker()
+
+	deps.repo.On("Create", mock.Anything, entity).Return(created, nil)
+	deps.audit.On("LogAction", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+
+	_, err := deps.svc.Create(
+		t.Context(),
+		entity,
+		internaltestutil.NewSessionActor(userID, entity.OrganizationID, entity.BusinessUnitID),
+	)
+
+	require.NoError(t, err)
+	require.Len(t, hires.workers, 1)
+	assert.Same(t, created, hires.workers[0])
+	assert.Equal(t, []pulid.ID{userID}, hires.userIDs)
+}
+
+func storedRollups(p *worker.WorkerProfile) {
+	credentialExpiry := int64(1_900_000_000)
+	trainingDue := int64(1_850_000_000)
+	lastQuery := int64(1_790_000_000)
+	nextQuery := int64(1_820_000_000)
+	p.ComplianceStatus = worker.ComplianceStatusNonCompliant
+	p.NextCredentialExpiry = &credentialExpiry
+	p.TrainingHealth = worker.TrainingHealthOverdue
+	p.NextTrainingDue = &trainingDue
+	p.SafetyRating = worker.SafetyRatingAtRisk
+	p.SafetyScore = 42
+	p.DrugAlcoholStatus = worker.DrugAlcoholProhibited
+	p.ReturnToDutyStatus = worker.ReturnToDutyFollowUpTesting
+	p.LastClearinghouseQueryAt = &lastQuery
+	p.NextClearinghouseQueryDue = &nextQuery
+}
+
+// The profile form sends the whole record back, and GraphQL does not expose
+// every rollup, so a save carries zero values for fields only the server
+// writes. They keep what the server stored.
+func TestUpdate_KeepsTheProfileFieldsTheServerOwns(t *testing.T) {
+	t.Parallel()
+	deps := setupTest(t)
+	userID := pulid.MustNew("usr_")
+	entity := newTestWorker()
+	entity.Profile.ComplianceStatus = worker.ComplianceStatusCompliant
+	entity.Profile.SafetyScore = 0
+	entity.Profile.MedicalExaminerName = "Dr. Patel"
+
+	original := newTestWorker()
+	original.ID = entity.ID
+	original.OrganizationID = entity.OrganizationID
+	original.BusinessUnitID = entity.BusinessUnitID
+	storedRollups(original.Profile)
+	want := *original.Profile
+
+	deps.repo.On("GetByID", mock.Anything, mock.Anything).Return(original, nil)
+	var saved *worker.WorkerProfile
+	deps.repo.On("Update", mock.Anything, mock.MatchedBy(func(w *worker.Worker) bool {
+		saved = w.Profile
+		return true
+	})).Return(entity, nil)
+	deps.audit.On("LogAction", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+
+	_, err := deps.svc.Update(
+		t.Context(),
+		entity,
+		internaltestutil.NewSessionActor(userID, entity.OrganizationID, entity.BusinessUnitID),
+	)
+	require.NoError(t, err)
+
+	require.NotNil(t, saved)
+	assert.Equal(t, want.ComplianceStatus, saved.ComplianceStatus)
+	assert.Equal(t, want.NextCredentialExpiry, saved.NextCredentialExpiry)
+	assert.Equal(t, want.TrainingHealth, saved.TrainingHealth)
+	assert.Equal(t, want.NextTrainingDue, saved.NextTrainingDue)
+	assert.Equal(t, want.SafetyRating, saved.SafetyRating)
+	assert.Equal(t, want.SafetyScore, saved.SafetyScore)
+	assert.Equal(t, want.DrugAlcoholStatus, saved.DrugAlcoholStatus)
+	assert.Equal(t, want.ReturnToDutyStatus, saved.ReturnToDutyStatus)
+	assert.Equal(t, want.LastClearinghouseQueryAt, saved.LastClearinghouseQueryAt)
+	assert.Equal(t, want.NextClearinghouseQueryDue, saved.NextClearinghouseQueryDue)
+	assert.Equal(t, "Dr. Patel", saved.MedicalExaminerName, "fields a person edits still save")
+}
+
+func TestCreate_TakesNoServerOwnedProfileFieldsFromTheRequest(t *testing.T) {
+	t.Parallel()
+	deps := setupTest(t)
+	userID := pulid.MustNew("usr_")
+	entity := newCreateWorker()
+	storedRollups(entity.Profile)
+
+	deps.repo.On("Create", mock.Anything, mock.MatchedBy(func(w *worker.Worker) bool {
+		p := w.Profile
+		return p.ComplianceStatus == worker.ComplianceStatusPending &&
+			p.NextCredentialExpiry == nil &&
+			p.TrainingHealth == worker.TrainingHealthCurrent &&
+			p.NextTrainingDue == nil &&
+			p.SafetyRating == worker.SafetyRatingExcellent &&
+			p.SafetyScore == worker.DefaultSafetyScore &&
+			p.DrugAlcoholStatus == worker.DrugAlcoholUnknown &&
+			p.ReturnToDutyStatus == worker.ReturnToDutyNotRequired &&
+			p.LastClearinghouseQueryAt == nil &&
+			p.NextClearinghouseQueryDue == nil
+	})).Return(newTestWorker(), nil)
+	deps.audit.On("LogAction", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+
+	_, err := deps.svc.Create(
+		t.Context(),
+		entity,
+		internaltestutil.NewSessionActor(userID, entity.OrganizationID, entity.BusinessUnitID),
+	)
+
+	require.NoError(t, err)
+	deps.repo.AssertExpectations(t)
+}

@@ -331,6 +331,11 @@ func (r *repository) Resolve(
 		}); err != nil {
 			return nil, err
 		}
+		if err = r.recordResolutions(ctx, db, []*watchtower.Resolution{
+			watchtower.ResolutionOf(item, watchtower.ResolvedViaSourceCleared),
+		}); err != nil {
+			return nil, err
+		}
 
 		return item, nil
 	})
@@ -341,7 +346,7 @@ func sourceResolveSets(resolvedAt int64) []keel.Assignment {
 	return []keel.Assignment{
 		it.ResolvedAt.To(resolvedAt),
 		it.Status.To(watchtower.StatusResolved),
-		it.ResolutionCode.To(watchtower.ResolutionCleared),
+		it.ResolutionCode.To(watchtower.ResolutionCodeCleared),
 		it.ResolvedByID.ToNull(),
 		it.SnoozedUntil.ToNull(),
 	}
@@ -363,7 +368,7 @@ func (r *repository) ResolveMissing(
 		db := r.db.Keel(ctx)
 		it := watchtowerdb.Items
 
-		rows, err := it.Pick(it.ID).
+		rows, err := it.Pick(resolutionColumns(it)...).
 			Where(notOpenSources(req), it.ResolvedAt.IsNull()).
 			UpdateReturning(ctx, db, sourceResolveSets(req.ResolvedAt)...)
 		if err != nil {
@@ -384,13 +389,21 @@ func (r *repository) ResolveMissing(
 			return 0, nil
 		}
 		events := make([]*watchtower.Event, 0, len(rows))
+		resolutions := make([]*watchtower.Resolution, 0, len(rows))
 		for _, row := range rows {
 			events = append(
 				events,
 				watchtower.NewEvent(row, watchtower.EventSourceResolved, pulid.Nil),
 			)
+			resolutions = append(
+				resolutions,
+				watchtower.ResolutionOf(row, watchtower.ResolvedViaSourceCleared),
+			)
 		}
 		if err = r.insertEvents(ctx, db, events); err != nil {
+			return 0, err
+		}
+		if err = r.recordResolutions(ctx, db, resolutions); err != nil {
 			return 0, err
 		}
 
@@ -445,9 +458,67 @@ func (r *repository) UpdateWorkflow(
 		if err = r.insertEvents(ctx, db, req.Events); err != nil {
 			return nil, err
 		}
+		if req.ResolvedVia != "" {
+			if err = r.recordResolutions(ctx, db, []*watchtower.Resolution{
+				watchtower.ResolutionOf(item, req.ResolvedVia),
+			}); err != nil {
+				return nil, err
+			}
+		}
 
 		return item, nil
 	})
+}
+
+func resolutionColumns(it *watchtowerdb.ItemsTable) []keel.Expr {
+	return []keel.Expr{
+		it.ID,
+		it.BusinessUnitID,
+		it.OrganizationID,
+		it.Version,
+		it.SourceKind,
+		it.Severity,
+		it.AboutID,
+		it.AssigneeID,
+		it.OccurredAt,
+		it.AcknowledgedAt,
+		it.DueAt,
+		it.ResolvedAt,
+		it.ResolutionCode,
+		it.EscalationLevel,
+		it.AgentHandedAt,
+	}
+}
+
+func (r *repository) recordResolutions(
+	ctx context.Context,
+	db *keel.DB,
+	resolutions []*watchtower.Resolution,
+) error {
+	rows := make([]*watchtower.Resolution, 0, len(resolutions))
+	for _, resolution := range resolutions {
+		if resolution != nil {
+			rows = append(rows, resolution)
+		}
+	}
+	if len(rows) == 0 {
+		return nil
+	}
+
+	wr := watchtowerdb.Resolutions
+	if _, err := wr.CreateOrSkip(
+		ctx,
+		db,
+		rows,
+		wr.OrganizationID,
+		wr.BusinessUnitID,
+		wr.ItemID,
+		wr.ItemVersion,
+	); err != nil {
+		return fmt.Errorf("record watchtower resolutions: %w", err)
+	}
+
+	return nil
 }
 
 func (r *repository) InsertEvents(ctx context.Context, events []*watchtower.Event) error {
@@ -1023,6 +1094,50 @@ func (r *repository) DeleteResolvedBefore(
 			Delete(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return 0, fmt.Errorf("delete resolved watchtower items: %w", err)
+		}
+
+		return int(n), nil
+	})
+}
+
+func resolutionsBefore(
+	stale *watchtowerdb.ResolutionsTable,
+	entitled keel.Pred,
+	before int64,
+	limit int,
+) keel.Pred {
+	wr := watchtowerdb.Resolutions
+	return wr.ID.InQuery(stale.AllTenants().
+		Pick(stale.ID).
+		Where(entitled, stale.ResolvedAt.Lt(before)).
+		Limit(limit))
+}
+
+func (r *repository) DeleteResolutionsBefore(
+	ctx context.Context,
+	req watchtowerports.DeleteResolvedWatchtowerItemsRequest,
+) (int, error) {
+	ctx = dbscope.WithSystem(
+		ctx,
+		"delete watchtower resolutions past retention across every organization",
+	)
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
+		limit := req.Limit
+		if limit <= 0 || limit > maxDeleteBatch {
+			limit = maxDeleteBatch
+		}
+
+		wr := watchtowerdb.Resolutions
+		stale := wr.As("stale")
+		entitled, entitledErr := r.entitlements.ForWork(ctx, stale.OrganizationID.Col)
+		if entitledErr != nil {
+			return 0, entitledErr
+		}
+		n, err := wr.AllTenants().
+			Where(resolutionsBefore(stale, entitled, req.Before, limit)).
+			Delete(ctx, r.db.Keel(ctx))
+		if err != nil {
+			return 0, fmt.Errorf("delete watchtower resolutions: %w", err)
 		}
 
 		return int(n), nil

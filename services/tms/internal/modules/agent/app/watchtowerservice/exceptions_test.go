@@ -56,11 +56,13 @@ func newExceptionFixture(t *testing.T, perms permissionports.PermissionEngine) *
 		Features:      plantest.AllFeatures(),
 	})
 	exceptions := NewExceptions(ExceptionsParams{
-		Owners:        &agenttest.OpenCases{},
-		Logger:        zap.NewNop(),
-		Repo:          repo,
-		Projector:     projector,
-		Router:        NewRouter(RouterParams{Logger: zap.NewNop(), Controls: &scopedControlRepo{}}),
+		Owners:    &agenttest.OpenCases{},
+		Logger:    zap.NewNop(),
+		Repo:      repo,
+		Projector: projector,
+		Router: NewRouter(
+			RouterParams{Logger: zap.NewNop(), Controls: &scopedControlRepo{}},
+		),
 		Permissions:   perms,
 		Audit:         &mocks.NoopAuditService{},
 		Notifications: notificationtest.Discarding(),
@@ -70,7 +72,7 @@ func newExceptionFixture(t *testing.T, perms permissionports.PermissionEngine) *
 	actor := testActor()
 	in := input(
 		actor.TenantInfo(),
-		watchtower.SourceServiceFailure,
+		watchtower.SourceKindServiceFailure,
 		"sf_1",
 		watchtower.SeverityWarning,
 		100,
@@ -167,7 +169,7 @@ func TestApplyException_RefusesAReaderWhoCannotSeeTheKind(t *testing.T) {
 
 	_, err := f.exceptions.ResolveException(t.Context(), &watchtowerports.ResolveExceptionRequest{
 		ExceptionTarget: f.target(),
-		Code:            watchtower.ResolutionFixed,
+		Code:            watchtower.ResolutionCodeFixed,
 	}, f.actor)
 	require.Error(t, err)
 	var authErr *errortypes.AuthorizationError
@@ -182,21 +184,25 @@ func TestResolveException_RequiresANoteForOtherAndRefusesTheSystemCode(t *testin
 
 	_, err := f.exceptions.ResolveException(t.Context(), &watchtowerports.ResolveExceptionRequest{
 		ExceptionTarget: f.target(),
-		Code:            watchtower.ResolutionOther,
+		Code:            watchtower.ResolutionCodeOther,
 	}, f.actor)
 	require.Error(t, err)
 
 	_, err = f.exceptions.ResolveException(t.Context(), &watchtowerports.ResolveExceptionRequest{
 		ExceptionTarget: f.target(),
-		Code:            watchtower.ResolutionCleared,
+		Code:            watchtower.ResolutionCodeCleared,
 	}, f.actor)
 	require.Error(t, err)
 
-	saved, err := f.exceptions.ResolveException(t.Context(), &watchtowerports.ResolveExceptionRequest{
-		ExceptionTarget: f.target(),
-		Code:            watchtower.ResolutionOther,
-		Note:            "Customer called it in",
-	}, f.actor)
+	saved, err := f.exceptions.ResolveException(
+		t.Context(),
+		&watchtowerports.ResolveExceptionRequest{
+			ExceptionTarget: f.target(),
+			Code:            watchtower.ResolutionCodeOther,
+			Note:            "Customer called it in",
+		},
+		f.actor,
+	)
 	require.NoError(t, err)
 	assert.Equal(t, watchtower.StatusResolved, saved.Status)
 	assert.Equal(t, f.actor.UserID, saved.ResolvedByID)
@@ -210,7 +216,7 @@ func TestReopenException_ClearsTheResolutionAndSetsAFreshDueTime(t *testing.T) {
 	f := newExceptionFixture(t, &agenttest.StubPermissions{})
 	_, err := f.exceptions.ResolveException(t.Context(), &watchtowerports.ResolveExceptionRequest{
 		ExceptionTarget: f.target(),
-		Code:            watchtower.ResolutionFixed,
+		Code:            watchtower.ResolutionCodeFixed,
 	}, f.actor)
 	require.NoError(t, err)
 
@@ -270,10 +276,14 @@ func TestCommentOnException_KeepsTheCommentInTheHistory(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, "Carrier says 30 minutes out", event.Note)
 
-	history, err := f.exceptions.ExceptionHistory(t.Context(), &watchtowerports.ExceptionHistoryRequest{
-		TenantInfo: f.actor.TenantInfo(),
-		ItemID:     f.item.ID,
-	}, f.actor)
+	history, err := f.exceptions.ExceptionHistory(
+		t.Context(),
+		&watchtowerports.ExceptionHistoryRequest{
+			TenantInfo: f.actor.TenantInfo(),
+			ItemID:     f.item.ID,
+		},
+		f.actor,
+	)
 	require.NoError(t, err)
 	require.Len(t, history, 1)
 	assert.Equal(t, watchtower.EventCommented, history[0].Kind)
@@ -287,18 +297,26 @@ func TestDryRun_PreviewsWithoutWriting(t *testing.T) {
 	target := f.target()
 	target.DryRun = true
 
-	preview, err := f.exceptions.ResolveException(t.Context(), &watchtowerports.ResolveExceptionRequest{
-		ExceptionTarget: target,
-		Code:            watchtower.ResolutionFixed,
-	}, f.actor)
+	preview, err := f.exceptions.ResolveException(
+		t.Context(),
+		&watchtowerports.ResolveExceptionRequest{
+			ExceptionTarget: target,
+			Code:            watchtower.ResolutionCodeFixed,
+		},
+		f.actor,
+	)
 	require.NoError(t, err)
 	assert.Equal(t, watchtower.StatusResolved, preview.Status)
 	assert.Equal(t, watchtower.StatusOpen, f.repo.items["ServiceFailure:sf_1"].Status)
 
-	_, err = f.exceptions.CommentOnException(t.Context(), &watchtowerports.CommentOnExceptionRequest{
-		ExceptionTarget: target,
-		Body:            "Checked with the carrier",
-	}, f.actor)
+	_, err = f.exceptions.CommentOnException(
+		t.Context(),
+		&watchtowerports.CommentOnExceptionRequest{
+			ExceptionTarget: target,
+			Body:            "Checked with the carrier",
+		},
+		f.actor,
+	)
 	require.NoError(t, err)
 	assert.Empty(t, f.repo.events)
 }

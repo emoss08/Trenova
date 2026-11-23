@@ -47,6 +47,54 @@ describe("the Desk rail", () => {
       activeArtifactByThread: { thr_1: "art_1" },
       sharePage: true,
     });
+    expect(partialize?.(useDeskStore.getState())).not.toHaveProperty("artifactRecord");
+  });
+});
+
+/**
+ * The record a board's row opened in the pane, in place of the board. It
+ * belongs to one artifact: the pane never shows it under another.
+ */
+describe("the record opened from a board", () => {
+  const record = {
+    artifactId: "art_1",
+    entity: "shipment",
+    recordId: "shp_2",
+    order: ["shp_1", "shp_2", "shp_3"],
+  };
+
+  beforeEach(() => {
+    useDeskStore.setState({ artifactRecord: null, activeArtifactByThread: {} });
+  });
+
+  it("is set, and cleared with null", () => {
+    useDeskStore.getState().openArtifactRecord(record);
+    expect(useDeskStore.getState().artifactRecord).toEqual(record);
+
+    useDeskStore.getState().openArtifactRecord(null);
+    expect(useDeskStore.getState().artifactRecord).toBeNull();
+  });
+
+  it("is dropped when another artifact is opened", () => {
+    useDeskStore.getState().openArtifactRecord(record);
+    useDeskStore.getState().setActiveArtifact("thr_1", "art_2");
+
+    expect(useDeskStore.getState().artifactRecord).toBeNull();
+    expect(useDeskStore.getState().activeArtifactByThread).toEqual({ thr_1: "art_2" });
+  });
+
+  it("is kept when the artifact it belongs to is opened", () => {
+    useDeskStore.getState().openArtifactRecord(record);
+    useDeskStore.getState().setActiveArtifact("thr_1", "art_1");
+
+    expect(useDeskStore.getState().artifactRecord).toEqual(record);
+  });
+
+  it("is dropped when the session is cleared", () => {
+    useDeskStore.getState().openArtifactRecord(record);
+    useDeskStore.getState().clearSession();
+
+    expect(useDeskStore.getState().artifactRecord).toBeNull();
   });
 });
 

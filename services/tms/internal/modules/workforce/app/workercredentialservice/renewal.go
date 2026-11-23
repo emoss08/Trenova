@@ -212,7 +212,7 @@ func (s *Service) auditRenewal(
 		},
 	}, auditservice.WithComment(
 		"Credential renewal requested: "+renewalSubject(named),
-	)); err != nil {
+	), auditservice.WithSubject(permission.ResourceWorker, req.WorkerID)); err != nil {
 		s.l.Warn("failed to audit credential renewal request")
 	}
 }

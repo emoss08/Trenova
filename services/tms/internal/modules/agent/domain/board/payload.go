@@ -6,8 +6,17 @@ import (
 
 type Payload struct {
 	Board    Board    `json:"board"`
+	Place    Place    `json:"place"`
 	Snapshot Snapshot `json:"snapshot"`
 	Author   string   `json:"author,omitempty"`
+}
+
+func NewPayload(layout *Board, snapshot Snapshot, author string) *Payload {
+	payload := &Payload{Board: *layout, Snapshot: snapshot, Author: author}
+	payload.Board.Place = layout.Placed()
+	payload.Place = payload.Board.Place
+
+	return payload
 }
 
 func (p *Payload) Map() (map[string]any, error) {
@@ -24,6 +33,8 @@ func PayloadOf(raw map[string]any) (*Payload, error) {
 	if err := jsonutils.Convert(raw, payload); err != nil {
 		return nil, err
 	}
+	payload.Board.Place = payload.Board.Placed()
+	payload.Place = payload.Board.Place
 
 	return payload, nil
 }

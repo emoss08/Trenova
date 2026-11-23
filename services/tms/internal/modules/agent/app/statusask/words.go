@@ -41,19 +41,19 @@ func driverWords(item *watchtower.Item, hauler *haulerports.Hauler) (title, mess
 	where := at(item)
 
 	switch item.SourceKind { //nolint:exhaustive // only the kinds this playbook works
-	case watchtower.SourceMissedPickup:
+	case watchtower.SourceKindMissedPickup:
 		title = "Pickup status needed: " + load
 		message = fmt.Sprintf(
 			"Hi %s, the pickup window%s for %s has closed and we have no arrival recorded. "+
 				"Are you on site? Please mark your arrival in Dash, or reply with where you "+
 				"are and when you expect to be there.", name, where, load)
-	case watchtower.SourceMissedDelivery:
+	case watchtower.SourceKindMissedDelivery:
 		title = "Delivery status needed: " + load
 		message = fmt.Sprintf(
 			"Hi %s, the delivery window%s for %s has closed and we have no arrival recorded. "+
 				"Are you on site? Please mark your arrival in Dash, or reply with where you "+
 				"are and when you expect to be there.", name, where, load)
-	case watchtower.SourceEtaAtRisk:
+	case watchtower.SourceKindEtaAtRisk:
 		title = "ETA needed: " + load
 		message = fmt.Sprintf(
 			"Hi %s, %s is projected to arrive%s after its window. Please reply with where "+
@@ -77,15 +77,15 @@ func emailWords(item *watchtower.Item, hauler *haulerports.Hauler) (subject, bod
 	subject = "Status needed: " + loadName(hauler, "your load")
 
 	switch item.SourceKind { //nolint:exhaustive // only the kinds this playbook works
-	case watchtower.SourceMissedPickup:
+	case watchtower.SourceKindMissedPickup:
 		body = fmt.Sprintf(
 			"The pickup window%s for %s has closed and we have no arrival recorded. Where "+
 				"is the truck now, and when do you expect it to arrive?", where, load)
-	case watchtower.SourceMissedDelivery:
+	case watchtower.SourceKindMissedDelivery:
 		body = fmt.Sprintf(
 			"The delivery window%s for %s has closed and we have no arrival recorded. Where "+
 				"is the truck now, and when do you expect it to arrive?", where, load)
-	case watchtower.SourceEtaAtRisk:
+	case watchtower.SourceKindEtaAtRisk:
 		body = fmt.Sprintf(
 			"%s is projected to arrive%s after its window. Where is the truck now, and what "+
 				"is your best arrival time? Please tell us if anything is holding it up.",

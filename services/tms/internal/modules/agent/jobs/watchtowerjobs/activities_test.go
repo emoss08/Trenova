@@ -102,7 +102,7 @@ func TestNoCheckCallSweepReconcilesEachMonitoringTenantInItsScope(t *testing.T) 
 	assert.Equal(t, []string{broken.OrgID.String()}, result.FailedOrganizations)
 	require.Len(t, tower.calls, 2)
 	for _, call := range tower.calls {
-		assert.Equal(t, watchtower.SourceNoCheckCall, call.kind)
+		assert.Equal(t, watchtower.SourceKindNoCheckCall, call.kind)
 		assert.True(t, call.scoped, "each tenant runs under its own scope")
 	}
 }
@@ -288,7 +288,7 @@ func TestFactoringSweepReconcilesTheFactoringKindForEachOrganization(t *testing.
 		a.tenants.(*fakeTenantSync).needs,
 		"the sweep pages only through the organizations with the watchtower")
 	for _, call := range tower.calls {
-		assert.Equal(t, watchtower.SourceFactoring, call.kind)
+		assert.Equal(t, watchtower.SourceKindFactoring, call.kind)
 		assert.True(t, call.scoped, "each organization runs under its own scope")
 	}
 	assert.Equal(t, healthy, tower.calls[0].tenant)
@@ -365,7 +365,7 @@ func TestDecisionSweepReconcilesProposalsAndPlansForEachOrganization(t *testing.
 		assert.True(t, call.scoped, "each organization runs under its own scope")
 	}
 	assert.Equal(t, []watchtower.SourceKind{
-		watchtower.SourceAgentProposal, watchtower.SourceAgentPlan,
-		watchtower.SourceAgentProposal, watchtower.SourceAgentPlan,
+		watchtower.SourceKindAgentProposal, watchtower.SourceKindAgentPlan,
+		watchtower.SourceKindAgentProposal, watchtower.SourceKindAgentPlan,
 	}, kinds)
 }

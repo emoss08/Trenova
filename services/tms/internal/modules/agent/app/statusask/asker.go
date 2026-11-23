@@ -185,9 +185,9 @@ func haulerRequest(req *watchtowerports.PlanRequest) *haulerports.HaulerRequest 
 	item := req.Item
 	out := &haulerports.HaulerRequest{TenantInfo: req.TenantInfo}
 	switch item.SourceKind { //nolint:exhaustive // only the kinds this playbook works
-	case watchtower.SourceNoCheckCall:
+	case watchtower.SourceKindNoCheckCall:
 		out.MoveID = item.SubjectID
-	case watchtower.SourceMissedPickup, watchtower.SourceMissedDelivery:
+	case watchtower.SourceKindMissedPickup, watchtower.SourceKindMissedDelivery:
 		out.ShipmentID = item.SubjectID
 		if stopID, err := pulid.Parse(item.SourceID); err == nil {
 			out.StopID = stopID
@@ -207,10 +207,20 @@ func unreachable(hauler *haulerports.Hauler) *errortypes.BusinessError {
 	driver, carrier := hauler.Driver, hauler.Carrier
 	switch {
 	case driver != nil && carrier != nil:
-		return errortypes.NewBusinessError("{0} has no Dash login or email on file, and {1} has no email on file, so neither can be asked from here. Call them, or add a way to reach them.", driver.Name, carrier.Name)
+		return errortypes.NewBusinessError(
+			"{0} has no Dash login or email on file, and {1} has no email on file, so neither can be asked from here. Call them, or add a way to reach them.",
+			driver.Name,
+			carrier.Name,
+		)
 	case driver != nil:
-		return errortypes.NewBusinessError("{0} has no Dash login or email on file, so they cannot be asked from here. Call them, or add a way to reach them.", driver.Name)
+		return errortypes.NewBusinessError(
+			"{0} has no Dash login or email on file, so they cannot be asked from here. Call them, or add a way to reach them.",
+			driver.Name,
+		)
 	default:
-		return errortypes.NewBusinessError("{0} has no email on file, so they cannot be asked from here. Call them, or add their email.", carrier.Name)
+		return errortypes.NewBusinessError(
+			"{0} has no email on file, so they cannot be asked from here. Call them, or add their email.",
+			carrier.Name,
+		)
 	}
 }

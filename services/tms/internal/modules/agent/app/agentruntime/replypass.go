@@ -77,6 +77,13 @@ func (t *Turn) keepShown(outcome *toolcall.Result) {
 	t.artifacts = append(t.artifacts, *outcome.Shown)
 }
 
+func (t *Turn) sendBack(fx TurnEffects, back replycheck.SendBack) {
+	for _, event := range back.Events {
+		fx.Emit(event)
+	}
+	t.messages = append(t.messages, back.Messages...)
+}
+
 func (t *Turn) foldReplaced(table *agentruntimeports.ShownArtifact) {
 	if table == nil || len(table.Replaces) == 0 {
 		return
@@ -100,11 +107,13 @@ func (t *Turn) foldReplaced(table *agentruntimeports.ShownArtifact) {
 		t.artifacts = slices.Delete(t.artifacts, idx, idx+1)
 		for msgIdx := unread; msgIdx < len(t.messages); msgIdx++ {
 			msg := &t.messages[msgIdx]
-			if msg.Role != llmports.RoleTool || !strings.HasSuffix(msg.Content, stale) {
+			if msg.Role != llmports.RoleTool {
 				continue
 			}
-			msg.Content = strings.TrimSuffix(msg.Content, stale) + folded
-			replycheck.Refold(t, msg.ToolCallID, stale, folded)
+			if refolded, ok := replycheck.ReplaceShownNote(msg.Content, stale, folded); ok {
+				msg.Content = refolded
+				replycheck.Refold(t, msg.ToolCallID, stale, folded)
+			}
 		}
 	}
 }

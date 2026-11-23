@@ -8,62 +8,62 @@ import "github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 type SourceKind string
 
 const (
-	SourceInsight                  = SourceKind("Insight")
-	SourceAgentProposal            = SourceKind("AgentProposal")
-	SourceAgentPlan                = SourceKind("AgentPlan")
-	SourceAgentRunFailed           = SourceKind("AgentRunFailed")
-	SourceAgentException           = SourceKind("AgentException")
-	SourceServiceFailure           = SourceKind("ServiceFailure")
-	SourceCarrierIntelEvent        = SourceKind("CarrierIntelEvent")
-	SourceHOSViolation             = SourceKind("HOSViolation")
-	SourceEDIInboundQuarantined    = SourceKind("EDIInboundQuarantined")
-	SourceBillingException         = SourceKind("BillingException")
-	SourceDetentionOccurrence      = SourceKind("DetentionOccurrence")
-	SourceInboundMessage           = SourceKind("InboundMessage")
-	SourceWorkerCredential         = SourceKind("WorkerCredential")
-	SourceMoveCoverage             = SourceKind("MoveCoverage")
-	SourceTelematicsStopVisit      = SourceKind("TelematicsStopVisit")
-	SourceAgentQualityRegression   = SourceKind("AgentQualityRegression")
-	SourceAccountingSync           = SourceKind("AccountingSync")
-	SourceAccountingReconciliation = SourceKind("AccountingReconciliation")
-	SourceNoCheckCall              = SourceKind("NoCheckCall")
-	SourceEtaAtRisk                = SourceKind("EtaAtRisk")
-	SourceMissedPickup             = SourceKind("MissedPickup")
-	SourceMissedDelivery           = SourceKind("MissedDelivery")
-	SourcePodMissing               = SourceKind("PodMissing")
-	SourceTenderExhausted          = SourceKind("TenderExhausted")
-	SourceFactoring                = SourceKind("Factoring")
+	SourceKindInsight                  = SourceKind("Insight")
+	SourceKindAgentProposal            = SourceKind("AgentProposal")
+	SourceKindAgentPlan                = SourceKind("AgentPlan")
+	SourceKindAgentRunFailed           = SourceKind("AgentRunFailed")
+	SourceKindAgentException           = SourceKind("AgentException")
+	SourceKindServiceFailure           = SourceKind("ServiceFailure")
+	SourceKindCarrierIntelEvent        = SourceKind("CarrierIntelEvent")
+	SourceKindHOSViolation             = SourceKind("HOSViolation")
+	SourceKindEDIInboundQuarantined    = SourceKind("EDIInboundQuarantined")
+	SourceKindBillingException         = SourceKind("BillingException")
+	SourceKindDetentionOccurrence      = SourceKind("DetentionOccurrence")
+	SourceKindInboundMessage           = SourceKind("InboundMessage")
+	SourceKindWorkerCredential         = SourceKind("WorkerCredential")
+	SourceKindMoveCoverage             = SourceKind("MoveCoverage")
+	SourceKindTelematicsStopVisit      = SourceKind("TelematicsStopVisit")
+	SourceKindAgentQualityRegression   = SourceKind("AgentQualityRegression")
+	SourceKindAccountingSync           = SourceKind("AccountingSync")
+	SourceKindAccountingReconciliation = SourceKind("AccountingReconciliation")
+	SourceKindNoCheckCall              = SourceKind("NoCheckCall")
+	SourceKindEtaAtRisk                = SourceKind("EtaAtRisk")
+	SourceKindMissedPickup             = SourceKind("MissedPickup")
+	SourceKindMissedDelivery           = SourceKind("MissedDelivery")
+	SourceKindPODMissing               = SourceKind("PodMissing")
+	SourceKindTenderExhausted          = SourceKind("TenderExhausted")
+	SourceKindFactoring                = SourceKind("Factoring")
 )
 
 // readResources is the permission a reader needs to be shown items of each
 // kind: the same read that opens the source record, so the watchtower never
 // shows someone a headline about a record they could not open.
 var readResources = map[SourceKind]permission.Resource{
-	SourceInsight:                  permission.ResourceInsight,
-	SourceAgentProposal:            permission.ResourceAgentProposal,
-	SourceAgentPlan:                permission.ResourceAgentProposal,
-	SourceAgentRunFailed:           permission.ResourceAgentRun,
-	SourceAgentException:           permission.ResourceAgentException,
-	SourceServiceFailure:           permission.ResourceServiceFailure,
-	SourceCarrierIntelEvent:        permission.ResourceCarrierIntelligence,
-	SourceHOSViolation:             permission.ResourceWorker,
-	SourceEDIInboundQuarantined:    permission.ResourceEDI,
-	SourceBillingException:         permission.ResourceBillingQueue,
-	SourceDetentionOccurrence:      permission.ResourceDetention,
-	SourceInboundMessage:           permission.ResourceInboundMessage,
-	SourceWorkerCredential:         permission.ResourceWorker,
-	SourceMoveCoverage:             permission.ResourceShipmentMove,
-	SourceTelematicsStopVisit:      permission.ResourceShipmentMove,
-	SourceAgentQualityRegression:   permission.ResourceAgentEvalSuite,
-	SourceAccountingSync:           permission.ResourceAccountingSync,
-	SourceAccountingReconciliation: permission.ResourceAccountingReconciliation,
-	SourceNoCheckCall:              permission.ResourceShipmentMove,
-	SourceEtaAtRisk:                permission.ResourceShipment,
-	SourceMissedPickup:             permission.ResourceShipment,
-	SourceMissedDelivery:           permission.ResourceShipment,
-	SourcePodMissing:               permission.ResourceShipment,
-	SourceTenderExhausted:          permission.ResourceTender,
-	SourceFactoring:                permission.ResourceInvoice,
+	SourceKindInsight:                  permission.ResourceInsight,
+	SourceKindAgentProposal:            permission.ResourceAgentProposal,
+	SourceKindAgentPlan:                permission.ResourceAgentProposal,
+	SourceKindAgentRunFailed:           permission.ResourceAgentRun,
+	SourceKindAgentException:           permission.ResourceAgentException,
+	SourceKindServiceFailure:           permission.ResourceServiceFailure,
+	SourceKindCarrierIntelEvent:        permission.ResourceCarrierIntelligence,
+	SourceKindHOSViolation:             permission.ResourceWorker,
+	SourceKindEDIInboundQuarantined:    permission.ResourceEDI,
+	SourceKindBillingException:         permission.ResourceBillingQueue,
+	SourceKindDetentionOccurrence:      permission.ResourceDetention,
+	SourceKindInboundMessage:           permission.ResourceInboundMessage,
+	SourceKindWorkerCredential:         permission.ResourceWorker,
+	SourceKindMoveCoverage:             permission.ResourceShipmentMove,
+	SourceKindTelematicsStopVisit:      permission.ResourceShipmentMove,
+	SourceKindAgentQualityRegression:   permission.ResourceAgentEvalSuite,
+	SourceKindAccountingSync:           permission.ResourceAccountingSync,
+	SourceKindAccountingReconciliation: permission.ResourceAccountingReconciliation,
+	SourceKindNoCheckCall:              permission.ResourceShipmentMove,
+	SourceKindEtaAtRisk:                permission.ResourceShipment,
+	SourceKindMissedPickup:             permission.ResourceShipment,
+	SourceKindMissedDelivery:           permission.ResourceShipment,
+	SourceKindPODMissing:               permission.ResourceShipment,
+	SourceKindTenderExhausted:          permission.ResourceTender,
+	SourceKindFactoring:                permission.ResourceInvoice,
 }
 
 func (k SourceKind) IsValid() bool {
@@ -82,55 +82,55 @@ func (k SourceKind) ReadResource() permission.Resource {
 // Label is the kind in the reader's words, for a filter chip.
 func (k SourceKind) Label() string {
 	switch k {
-	case SourceInsight:
+	case SourceKindInsight:
 		return "Insight"
-	case SourceAgentProposal:
+	case SourceKindAgentProposal:
 		return "Proposal"
-	case SourceAgentPlan:
+	case SourceKindAgentPlan:
 		return "Plan"
-	case SourceAgentRunFailed:
+	case SourceKindAgentRunFailed:
 		return "Agent run failed"
-	case SourceAgentException:
+	case SourceKindAgentException:
 		return "Agent exception"
-	case SourceServiceFailure:
+	case SourceKindServiceFailure:
 		return "Service failure"
-	case SourceCarrierIntelEvent:
+	case SourceKindCarrierIntelEvent:
 		return "Carrier change"
-	case SourceHOSViolation:
+	case SourceKindHOSViolation:
 		return "Hours of service"
-	case SourceEDIInboundQuarantined:
+	case SourceKindEDIInboundQuarantined:
 		return "EDI quarantined"
-	case SourceBillingException:
+	case SourceKindBillingException:
 		return "Billing exception"
-	case SourceDetentionOccurrence:
+	case SourceKindDetentionOccurrence:
 		return "Detention"
-	case SourceInboundMessage:
+	case SourceKindInboundMessage:
 		return "Inbound message"
-	case SourceWorkerCredential:
+	case SourceKindWorkerCredential:
 		return "Credential expiring"
-	case SourceMoveCoverage:
+	case SourceKindMoveCoverage:
 		return "Coverage at risk"
-	case SourceTelematicsStopVisit:
+	case SourceKindTelematicsStopVisit:
 		return "Stop visit not recorded"
-	case SourceAgentQualityRegression:
+	case SourceKindAgentQualityRegression:
 		return "Agent quality regressed"
-	case SourceAccountingSync:
+	case SourceKindAccountingSync:
 		return "Accounting sync"
-	case SourceAccountingReconciliation:
+	case SourceKindAccountingReconciliation:
 		return "Accounting reconciliation"
-	case SourceNoCheckCall:
+	case SourceKindNoCheckCall:
 		return "No check call"
-	case SourceEtaAtRisk:
+	case SourceKindEtaAtRisk:
 		return "ETA at risk"
-	case SourceMissedPickup:
+	case SourceKindMissedPickup:
 		return "Missed pickup"
-	case SourceMissedDelivery:
+	case SourceKindMissedDelivery:
 		return "Missed delivery"
-	case SourcePodMissing:
+	case SourceKindPODMissing:
 		return "POD missing"
-	case SourceTenderExhausted:
+	case SourceKindTenderExhausted:
 		return "Tender exhausted"
-	case SourceFactoring:
+	case SourceKindFactoring:
 		return "Factoring"
 	default:
 		return string(k)
@@ -139,31 +139,31 @@ func (k SourceKind) Label() string {
 
 func AllSourceKinds() []SourceKind {
 	return []SourceKind{
-		SourceInsight,
-		SourceAgentProposal,
-		SourceAgentPlan,
-		SourceAgentRunFailed,
-		SourceAgentException,
-		SourceServiceFailure,
-		SourceCarrierIntelEvent,
-		SourceHOSViolation,
-		SourceEDIInboundQuarantined,
-		SourceBillingException,
-		SourceDetentionOccurrence,
-		SourceInboundMessage,
-		SourceWorkerCredential,
-		SourceMoveCoverage,
-		SourceTelematicsStopVisit,
-		SourceAgentQualityRegression,
-		SourceAccountingSync,
-		SourceAccountingReconciliation,
-		SourceNoCheckCall,
-		SourceEtaAtRisk,
-		SourceMissedPickup,
-		SourceMissedDelivery,
-		SourcePodMissing,
-		SourceTenderExhausted,
-		SourceFactoring,
+		SourceKindInsight,
+		SourceKindAgentProposal,
+		SourceKindAgentPlan,
+		SourceKindAgentRunFailed,
+		SourceKindAgentException,
+		SourceKindServiceFailure,
+		SourceKindCarrierIntelEvent,
+		SourceKindHOSViolation,
+		SourceKindEDIInboundQuarantined,
+		SourceKindBillingException,
+		SourceKindDetentionOccurrence,
+		SourceKindInboundMessage,
+		SourceKindWorkerCredential,
+		SourceKindMoveCoverage,
+		SourceKindTelematicsStopVisit,
+		SourceKindAgentQualityRegression,
+		SourceKindAccountingSync,
+		SourceKindAccountingReconciliation,
+		SourceKindNoCheckCall,
+		SourceKindEtaAtRisk,
+		SourceKindMissedPickup,
+		SourceKindMissedDelivery,
+		SourceKindPODMissing,
+		SourceKindTenderExhausted,
+		SourceKindFactoring,
 	}
 }
 
@@ -205,32 +205,32 @@ func (s Severity) Rank() int {
 
 func (k SourceKind) OverseesAgents() bool {
 	switch k {
-	case SourceAgentProposal,
-		SourceAgentPlan,
-		SourceAgentRunFailed,
-		SourceAgentException,
-		SourceAgentQualityRegression:
+	case SourceKindAgentProposal,
+		SourceKindAgentPlan,
+		SourceKindAgentRunFailed,
+		SourceKindAgentException,
+		SourceKindAgentQualityRegression:
 		return true
-	case SourceInsight,
-		SourceServiceFailure,
-		SourceCarrierIntelEvent,
-		SourceHOSViolation,
-		SourceEDIInboundQuarantined,
-		SourceBillingException,
-		SourceDetentionOccurrence,
-		SourceInboundMessage,
-		SourceWorkerCredential,
-		SourceMoveCoverage,
-		SourceTelematicsStopVisit,
-		SourceAccountingSync,
-		SourceAccountingReconciliation,
-		SourceNoCheckCall,
-		SourceEtaAtRisk,
-		SourceMissedPickup,
-		SourceMissedDelivery,
-		SourcePodMissing,
-		SourceTenderExhausted,
-		SourceFactoring:
+	case SourceKindInsight,
+		SourceKindServiceFailure,
+		SourceKindCarrierIntelEvent,
+		SourceKindHOSViolation,
+		SourceKindEDIInboundQuarantined,
+		SourceKindBillingException,
+		SourceKindDetentionOccurrence,
+		SourceKindInboundMessage,
+		SourceKindWorkerCredential,
+		SourceKindMoveCoverage,
+		SourceKindTelematicsStopVisit,
+		SourceKindAccountingSync,
+		SourceKindAccountingReconciliation,
+		SourceKindNoCheckCall,
+		SourceKindEtaAtRisk,
+		SourceKindMissedPickup,
+		SourceKindMissedDelivery,
+		SourceKindPODMissing,
+		SourceKindTenderExhausted,
+		SourceKindFactoring:
 		return false
 	default:
 		return false

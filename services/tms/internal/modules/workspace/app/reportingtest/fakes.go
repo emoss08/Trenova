@@ -3,6 +3,7 @@ package reportingtest
 import (
 	"context"
 	"errors"
+	"slices"
 	"sync"
 	"testing"
 
@@ -168,12 +169,24 @@ type Plan interface {
 type PermissionReader struct {
 	permissionports.PermissionEngine
 
-	denied map[string]bool
-	plan   Plan
+	denied   map[string]bool
+	withheld map[string][]permission.Operation
+	plan     Plan
 }
 
 func (c *PermissionReader) WithPlan(plan Plan) *PermissionReader {
 	c.plan = plan
+	return c
+}
+
+func (c *PermissionReader) Withholding(
+	resource permission.Resource,
+	operation permission.Operation,
+) *PermissionReader {
+	if c.withheld == nil {
+		c.withheld = make(map[string][]permission.Operation)
+	}
+	c.withheld[resource.String()] = append(c.withheld[resource.String()], operation)
 	return c
 }
 
@@ -214,10 +227,22 @@ func (c *PermissionReader) detail(
 	resource string,
 ) (*permissionports.ResourcePermissionDetail, error) {
 	detail := &permissionports.ResourcePermissionDetail{
-		Resource:       resource,
-		Operations:     []permission.Operation{permission.OpRead, permission.OpExport},
+		Resource: resource,
+		Operations: []permission.Operation{
+			permission.OpRead,
+			permission.OpExport,
+			permission.OpManage,
+		},
 		DataScope:      permission.DataScopeOrganization,
 		MaxSensitivity: permission.SensitivityConfidential,
+	}
+	if withheld := c.withheld[resource]; len(withheld) > 0 {
+		detail.Operations = slices.DeleteFunc(
+			detail.Operations,
+			func(op permission.Operation) bool {
+				return slices.Contains(withheld, op)
+			},
+		)
 	}
 	if c.denied[resource] {
 		detail.Operations = nil

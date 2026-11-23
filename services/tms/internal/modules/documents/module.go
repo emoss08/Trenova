@@ -84,6 +84,7 @@ func SharedOptions() fx.Option {
 			documenttemplaterepository.NewAssignmentRepository,
 			documenttemplaterepository.NewGeneratedRepository,
 			documentrepository.New,
+			documentrepository.NewResourceCounter,
 			documentmeter.New,
 			storagequotaservice.New,
 			storagequotaservice.NewWarnings,

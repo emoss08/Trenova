@@ -47,6 +47,7 @@ const (
 	ReaskCommand     = "command"
 	ReaskGrounding   = "grounding"
 	ReaskPlacement   = "placement"
+	ReaskBoard       = "board"
 	ReaskBudgetSpent = "budget_spent"
 	ReaskStuck       = "stuck"
 )

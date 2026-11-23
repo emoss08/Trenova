@@ -12,7 +12,8 @@ import (
 type ListPTORequest struct {
 	Filter        *pagination.QueryOptions `json:"filter"`
 	Cursor        pagination.CursorInfo    `json:"cursor"`
-	Status        string                   `json:"status"`        // Filter by PTO status (Requested, Approved, Rejected, Cancelled)
+	Status        string                   `json:"status"` // Filter by PTO status (Requested, Approved, Rejected, Cancelled)
+	Statuses      []worker.PTOStatus       `json:"statuses"`
 	Type          string                   `json:"type"`          // Filter by PTO type (Vacation, Sick, etc.)
 	StartDateFrom int64                    `json:"startDateFrom"` // Filter PTO starting from this date
 	StartDateTo   int64                    `json:"startDateTo"`   // Filter PTO starting up to this date

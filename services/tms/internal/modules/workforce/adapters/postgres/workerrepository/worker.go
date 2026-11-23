@@ -146,7 +146,7 @@ func (r *repository) List(
 					Filter: req.Filter,
 					Cursor: req.Cursor,
 					Shape: func(q keel.Query[*worker.Worker]) keel.Query[*worker.Worker] {
-						return q.Load(w.FleetCode(), w.State(), w.Profile())
+						return q.Load(listLoads(req)...)
 					},
 				})
 			if err != nil {
@@ -193,11 +193,18 @@ func validCredential(typeID pulid.ID, now int64) keel.Query[*workercredential.Wo
 	)
 }
 
+func listLoads(req *workerports.ListWorkersRequest) []keel.Loader {
+	w := workerdb.Workers
+	loads := []keel.Loader{w.FleetCode(), w.State(), w.Profile()}
+	loads = append(loads, listquery.When(req.IncludeManager, w.Manager())...)
+	return append(loads, listquery.When(req.IncludePosition, w.Position())...)
+}
+
 func workerQuery(req *workerports.GetWorkerByIDRequest) keel.Query[*worker.Worker] {
 	w := workerdb.Workers
 	profile := w.Profile()
 
-	loads := make([]keel.Loader, 0, 5)
+	loads := make([]keel.Loader, 0, 7)
 	switch {
 	case req.IncludeProfile && req.IncludeLicenseState:
 		loads = append(loads, profile.LicenseState())
@@ -207,6 +214,8 @@ func workerQuery(req *workerports.GetWorkerByIDRequest) keel.Query[*worker.Worke
 	loads = append(loads, listquery.When(req.IncludeState, w.State())...)
 	loads = append(loads, listquery.When(req.IncludeFleetCode, w.FleetCode())...)
 	loads = append(loads, listquery.When(req.IncludeManager, w.Manager())...)
+	loads = append(loads, listquery.When(req.IncludePosition, w.Position())...)
+	loads = append(loads, listquery.When(req.IncludePortalUser, w.PortalUser())...)
 
 	return w.Where(w.ID.Eq(req.ID)).Load(loads...)
 }

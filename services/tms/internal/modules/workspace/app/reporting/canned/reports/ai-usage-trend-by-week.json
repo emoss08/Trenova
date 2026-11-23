@@ -1,0 +1,129 @@
+{
+  "key": "ai-usage-trend-by-week",
+  "version": "1.0.0",
+  "name": "AI Usage and Cost by Week",
+  "description": "Model calls, tokens and estimated cost week by week, with how many people the calls were made for and the calls whose provider carries no price",
+  "category": "Desk",
+  "tags": [
+    "ai",
+    "tokens",
+    "cost",
+    "usage",
+    "trend"
+  ],
+  "defaultFormat": "xlsx",
+  "definition": {
+    "version": 2,
+    "entity": "daily_usage",
+    "columns": [
+      {
+        "id": "week",
+        "label": "Week",
+        "dimension": {
+          "field": "usageDate",
+          "bucket": "week"
+        }
+      },
+      {
+        "id": "calls",
+        "label": "Calls",
+        "measure": {
+          "field": "calls",
+          "agg": "sum"
+        },
+        "display": {
+          "style": "number",
+          "decimals": 0,
+          "grouping": true
+        }
+      },
+      {
+        "id": "people",
+        "label": "People",
+        "measure": {
+          "field": "user.id",
+          "agg": "count_distinct"
+        },
+        "display": {
+          "style": "number",
+          "decimals": 0,
+          "grouping": true
+        }
+      },
+      {
+        "id": "total_tokens",
+        "label": "Total Tokens",
+        "measure": {
+          "field": "totalTokens",
+          "agg": "sum"
+        },
+        "display": {
+          "style": "number",
+          "decimals": 0,
+          "grouping": true
+        }
+      },
+      {
+        "id": "cost",
+        "label": "Estimated Cost",
+        "measure": {
+          "field": "costUSD",
+          "agg": "sum"
+        },
+        "display": {
+          "style": "currency",
+          "decimals": 2,
+          "negative": "parentheses"
+        }
+      },
+      {
+        "id": "unpriced",
+        "label": "Calls Without a Price",
+        "measure": {
+          "field": "unpricedCalls",
+          "agg": "sum"
+        },
+        "display": {
+          "style": "number",
+          "decimals": 0,
+          "grouping": true
+        }
+      }
+    ],
+    "filters": {
+      "and": [
+        {
+          "field": "usageDate",
+          "op": "last_n_days",
+          "param": "windowDays"
+        }
+      ]
+    },
+    "sort": [
+      {
+        "column": "week",
+        "desc": true
+      }
+    ],
+    "parameters": [
+      {
+        "name": "windowDays",
+        "label": "Window (days)",
+        "type": "int",
+        "required": true,
+        "default": 90
+      }
+    ],
+    "charts": [
+      {
+        "id": "trend",
+        "type": "line",
+        "title": "Estimated cost",
+        "x": "week",
+        "series": [
+          "cost"
+        ]
+      }
+    ]
+  }
+}

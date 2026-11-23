@@ -11,7 +11,7 @@ Training courses is the catalog of courses workers can be put through. Each cour
 it is delivered and what passes, whether it is required and for which driver types, how long a
 worker has to finish it, and how long a completion stays valid before a renewal is assigned.
 Safety and HR administrators maintain the catalog; courses are assigned and completed on each
-worker's **Training** tab.
+worker's page, on the **Development** tab under **Training**.
 
 ## Tasks
 

@@ -326,7 +326,7 @@ func TestSetMine_AWatchtowerItemIsCreditedToTheAgentBehindIt(t *testing.T) {
 	proposalID := pulid.MustNew("aprop_")
 	h.watchtower.item = &watchtower.Item{
 		ID:         pulid.MustNew("wt_"),
-		SourceKind: watchtower.SourceAgentProposal,
+		SourceKind: watchtower.SourceKindAgentProposal,
 		SourceID:   proposalID.String(),
 		Title:      "Hold load 12",
 		Summary:    "The agent proposes a hold",
@@ -370,7 +370,7 @@ func TestSetMine_AWatchtowerItemFromAnInsightIsCreditedToItsDetector(t *testing.
 	h.insights.byID[source.ID] = source
 	h.watchtower.item = &watchtower.Item{
 		ID:         pulid.MustNew("wt_"),
-		SourceKind: watchtower.SourceInsight,
+		SourceKind: watchtower.SourceKindInsight,
 		SourceID:   source.ID.String(),
 		Title:      "Unbilled detention",
 	}
@@ -396,7 +396,7 @@ func TestSetMine_AWatchtowerItemNotRaisedByAIIsRefused(t *testing.T) {
 	actor := person(tenant)
 	h.watchtower.item = &watchtower.Item{
 		ID:         pulid.MustNew("wt_"),
-		SourceKind: watchtower.SourceMissedPickup,
+		SourceKind: watchtower.SourceKindMissedPickup,
 		SourceID:   pulid.MustNew("shp_").String(),
 		Title:      "Missed pickup",
 	}

@@ -34,6 +34,14 @@ and announce what happened. The reference is
   validate and load the original as a `kernelports.RecordChange{Before, After}`; the service then
   writes through the repository and records the audit entry (`LogAction` with `WithDiff`). A pure
   plan step is what lets agents preview the same write ([proposal-previews.md](../proposal-previews.md)).
+- **A write with consequences plans them as typed steps.** When a write sets off effects in
+  other services (an employment event ends pay, settles time off, starts checklists), the plan
+  is a list of steps, each carrying the effects it would cause and the function that causes
+  them, tagged before, inside or after the transaction; the preview returns the steps' effects
+  and the write runs exactly those steps, so the two cannot drift
+  (`workeremploymentservice/plan.go`). Collaborators expose a read-only planning function that
+  their write takes as input (`ptoledgerservice.PreviewTerminationSettlement`, then
+  `SettleOnTermination(plan)`), never a second copy of the rule.
 - Bulk changes are one plan over many records (`statuschange.Plan`,
   `auditservice.BuildBulkLogEntries`), one statement, one batch of audit entries.
 - A use case that spans several repositories runs in one transaction on the context; the

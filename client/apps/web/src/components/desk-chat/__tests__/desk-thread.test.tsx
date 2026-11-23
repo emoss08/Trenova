@@ -2,6 +2,15 @@ import { TestRouter } from "@trenova/shared/testing/test-router";
 import { placeholderOf, writeInBox } from "../composer/editor/editor-test-kit";
 import type { ThreadAsks, ThreadAskRequest } from "@/components/assistant/ask-requests";
 import { approvalQueue } from "@/components/assistant/approval-queue";
+import {
+  ReplyBoardsProvider,
+  type ReplyBoardRenderer,
+} from "@/components/assistant/artifact-opener";
+import {
+  initialTurnState,
+  type TurnSegment,
+  type TurnState,
+} from "@/components/assistant/turn-stream";
 import type { AssistantMessage, AssistantThread } from "@/types/assistant";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
@@ -34,6 +43,8 @@ const conversation = vi.hoisted(() => ({
   more: [] as unknown[],
   /** The decision the dock asks, and the whole queue it was picked from. */
   queue: [] as unknown[],
+  /** The turn being written, or null when none runs. */
+  turn: null as unknown,
 }));
 
 vi.mock("@/lib/queries/assistant", async (importOriginal) => ({
@@ -133,7 +144,7 @@ vi.mock("@/components/assistant/use-thread-model", () => ({
       ...conversation.more,
     ],
     placements: new Map(),
-    turn: null,
+    turn: conversation.turn,
     isActive: false,
     compaction: {
       usage: null,
@@ -187,6 +198,7 @@ afterEach(() => {
   conversation.providersReady = true;
   conversation.more = [];
   conversation.queue = [];
+  conversation.turn = null;
 });
 
 const thread = {
@@ -650,5 +662,197 @@ describe("DeskThread approves only on purpose", () => {
     });
 
     await waitFor(() => expect(decideMyProposal).toHaveBeenCalledTimes(1));
+  });
+});
+
+/** How the Desk draws boards, as plain stand-ins: the saved boards by id, the running turn's skeleton. */
+const STAND_IN_BOARDS: ReplyBoardRenderer = {
+  Boards: ({ boards }) => <p>Board {boards.map((item) => item.artifact.id).join(", ")}</p>,
+  Pending: ({ tool }) => (
+    <div aria-busy="true" aria-label="Reading the board…">
+      Skeleton of {tool}
+    </div>
+  ),
+};
+
+function renderDeskThread() {
+  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  const tree = () => (
+    <QueryClientProvider client={queryClient}>
+      <TestRouter initialEntries={["/shipments"]}>
+        <ReplyBoardsProvider renderer={STAND_IN_BOARDS}>
+          <div className="dk-chat">
+            <DeskThread thread={thread} agent={null} agentsUnavailable={false} threads={[]} />
+          </div>
+        </ReplyBoardsProvider>
+      </TestRouter>
+    </QueryClientProvider>
+  );
+  const view = render(tree());
+  return { ...view, redraw: () => view.rerender(tree()) };
+}
+
+const NOTE = "I'll find the open GlobalTrade loads.";
+const SECOND_NOTE = "Found four of them.";
+const ANSWER_ARGS = {
+  title: "Open GlobalTrade loads",
+  answer: "There are {count} open loads.",
+  groups: [{ title: "Open", records: ["shp_1"] }],
+};
+
+/** A turn being written, as the stream builds it (`turn-stream.ts`). */
+function runningTurn(segments: TurnSegment[]): TurnState {
+  return {
+    ...initialTurnState("Which GlobalTrade loads are open?"),
+    status: "working",
+    segments,
+  };
+}
+
+const lookup: TurnSegment = {
+  kind: "tool",
+  callId: "call_lookup",
+  name: "search_records",
+  arguments: {},
+  status: "done",
+  content: "",
+};
+
+const answering: TurnSegment = {
+  kind: "tool",
+  callId: "call_art_a",
+  name: "show_answer",
+  arguments: ANSWER_ARGS,
+  status: "running",
+  content: "",
+};
+
+/** The same turn once saved: the notes, the step that drew the board, the reply that links it. */
+function savedBoardTurn() {
+  conversation.reply = NOTE;
+  conversation.more = [
+    {
+      kind: "assistant",
+      message: message({ id: "msg_s2", role: "Assistant", content: SECOND_NOTE, sequence: 3 }),
+      tools: [
+        { call: { id: "call_art_a", name: "show_answer", arguments: ANSWER_ARGS }, result: null },
+      ],
+    },
+    {
+      kind: "assistant",
+      message: message({
+        id: "msg_final",
+        role: "Assistant",
+        content: "There are 4 open loads ([Open GlobalTrade loads](artifact:art_a)).",
+        sequence: 4,
+      }),
+      tools: [],
+    },
+  ];
+}
+
+/*
+A board placed in the conversation is the reply; the notes the agent wrote on
+the way to it are not. While the turn runs they stream as words, since nothing
+says yet which step is the answer. The moment the board is known they fold away
+under its skeleton (out of reach while they go, then gone), so when the turn is
+saved, and the saved turn leaves them out, nothing on the page moves. jsdom
+draws no layout, so the fold's motion itself (height and opacity closing over
+220ms) is not asserted here; that it starts, is out of reach and ends is.
+*/
+/** The running turn's words as drawn, each streamed run of prose. */
+function streamedProse(): Element[] {
+  return [...document.querySelectorAll(".dk-prose.dk-streaming")];
+}
+
+describe("the notes before a board in the conversation", () => {
+  it("streams the notes as the reply while no board is known", () => {
+    conversation.turn = runningTurn([{ kind: "text", text: `${NOTE} `, closed: true }, lookup]);
+    renderDeskThread();
+
+    const [note] = streamedProse();
+    expect(streamedProse().map((prose) => prose.textContent)).toEqual([NOTE]);
+    expect(note.closest("[inert]")).toBeNull();
+    expect(note.closest("[aria-hidden]")).toBeNull();
+    expect(screen.queryByLabelText("Reading the board…")).not.toBeInTheDocument();
+  });
+
+  it("folds the notes away under the board's skeleton the moment the board is known, out of reach while they go", async () => {
+    conversation.turn = runningTurn([{ kind: "text", text: `${NOTE} `, closed: true }, lookup]);
+    const { redraw } = renderDeskThread();
+    const [streaming] = streamedProse();
+
+    conversation.turn = runningTurn([
+      { kind: "text", text: `${NOTE} `, closed: true },
+      lookup,
+      { kind: "text", text: SECOND_NOTE, closed: true },
+      answering,
+    ]);
+    redraw();
+
+    const [leaving] = streamedProse();
+    expect(streamedProse()).toHaveLength(1);
+    expect(leaving).toBe(streaming);
+    expect(leaving.textContent).toBe(`${NOTE} ${SECOND_NOTE}`);
+    expect(leaving.closest("[inert]")).toHaveAttribute("aria-hidden", "true");
+    expect(screen.getByLabelText("Reading the board…")).toHaveTextContent(
+      "Skeleton of show_answer",
+    );
+
+    await waitFor(() => expect(streamedProse()).toHaveLength(0));
+    expect(document.querySelector("[inert]")).toBeNull();
+    expect(screen.getByLabelText("Reading the board…")).toBeInTheDocument();
+  });
+
+  it("draws no notes when a turn already placing its board is first drawn", () => {
+    conversation.turn = runningTurn([
+      { kind: "text", text: `${NOTE} `, closed: true },
+      lookup,
+      answering,
+    ]);
+    renderDeskThread();
+
+    expect(streamedProse()).toHaveLength(0);
+    expect(document.querySelector("[inert]")).toBeNull();
+    expect(screen.getByLabelText("Reading the board…")).toBeInTheDocument();
+  });
+
+  it("draws the saved turn as its board alone, with none of the notes", async () => {
+    savedBoardTurn();
+    conversation.artifacts = [
+      {
+        id: "art_a",
+        kind: "board",
+        title: "Open GlobalTrade loads",
+        payload: { place: "conversation" },
+        sourceToolCallId: "call_art_a",
+        lineageId: "",
+        lineageSeq: 1,
+      } as unknown as { id: string; kind: string; title: string },
+    ];
+    renderDeskThread();
+
+    expect(await screen.findByText("Board art_a")).toBeInTheDocument();
+    expect(document.body).not.toHaveTextContent(NOTE);
+    expect(document.body).not.toHaveTextContent(SECOND_NOTE);
+    expect(document.querySelector("[inert]")).toBeNull();
+  });
+
+  it("hands the running turn over to the saved one with the notes never coming back", () => {
+    conversation.turn = runningTurn([
+      { kind: "text", text: `${NOTE} `, closed: true },
+      lookup,
+      answering,
+    ]);
+    const { redraw } = renderDeskThread();
+    expect(document.body).not.toHaveTextContent(NOTE);
+
+    savedBoardTurn();
+    redraw();
+
+    expect(screen.getByText("Board art_a")).toBeInTheDocument();
+    expect(screen.queryByLabelText("Reading the board…")).not.toBeInTheDocument();
+    expect(document.body).not.toHaveTextContent(NOTE);
+    expect(document.body).not.toHaveTextContent(SECOND_NOTE);
   });
 });

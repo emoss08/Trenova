@@ -1,6 +1,7 @@
 package workforce
 
 import (
+	"github.com/emoss08/trenova/internal/modules/equipment/ports/tractorports"
 	"github.com/emoss08/trenova/internal/modules/workforce/adapters/postgres/orgholidayrepository"
 	"github.com/emoss08/trenova/internal/modules/workforce/adapters/postgres/performancereviewrepository"
 	"github.com/emoss08/trenova/internal/modules/workforce/adapters/postgres/permitrepository"
@@ -48,8 +49,11 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workertrainingservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/jobs/samsarajobs/samsaracontract"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/portalaccessports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/selfserviceports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerchecklistports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workeremploymentports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerptoports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerreviewports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workertrainingports"
 	"go.uber.org/fx"
@@ -81,12 +85,37 @@ func SharedOptions() fx.Option {
 			workerchecklistservice.New,
 			func(s *workercredentialservice.Service) workeroverviewservice.CredentialSummarizer { return s },
 			func(s *workertrainingservice.Service) workeroverviewservice.TrainingSummarizer { return s },
-			func(s *workersafetyservice.Service) workeroverviewservice.SafetyScorer { return s },
+			func(s *workersafetyservice.Service) workeroverviewservice.SafetyReader { return s },
 			func(s *workercredentialservice.Service) workerdqfservice.CredentialSummarizer { return s },
 			func(s *workerdrugalcoholservice.Service) workerdqfservice.DrugAlcoholStander { return s },
 			func(s *workerchecklistservice.Service) workeroverviewservice.ChecklistLister { return s },
 			func(s *performancereviewservice.Service) workeroverviewservice.ReviewLister { return s },
 			func(s *workerleaveservice.Service) workeroverviewservice.LeaveCounter { return s },
+			func(s *workerleaveservice.Service) workeroverviewservice.LeaveEntitler { return s },
+			func(s *workerdrugalcoholservice.Service) workeroverviewservice.DrugAlcoholStander {
+				return s
+			},
+			func(s *workerdqfservice.Service) workeroverviewservice.QualificationFiler { return s },
+			func(
+				r workeremploymentports.WorkerEmploymentEventRepository,
+			) workeroverviewservice.EmploymentEventLister {
+				return r
+			},
+			func(s *schedulingservice.Service) workeroverviewservice.ShiftLister { return s },
+			func(s *telematicsservice.Service) workeroverviewservice.HOSLinker { return s },
+			func(r tractorports.TractorRepository) workeroverviewservice.TractorReader { return r },
+			func(s workerptoports.WorkerPTOService) workeroverviewservice.TimeOffLister { return s },
+			func(s *benefitsservice.Service) workeroverviewservice.BenefitReader { return s },
+			func(
+				r portalaccessports.PortalAccessRepository,
+			) workeroverviewservice.PortalInvitationReader {
+				return r
+			},
+			func(
+				r selfserviceports.SelfServiceRepository,
+			) workeroverviewservice.ProfileChangeLister {
+				return r
+			},
 			func(s *workerleaveservice.Service) driverportalrecordsservice.LeaveReader { return s },
 			orgholidayservice.New,
 			func(s *workerchecklistservice.Service) workerchecklistports.ChecklistSpawner { return s },

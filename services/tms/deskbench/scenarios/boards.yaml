@@ -1,0 +1,168 @@
+defaults:
+  agent: Dispatch desk
+  tags: [dispatch, read, board]
+
+scenarios:
+  - name: two-loads-side-by-side-in-the-conversation
+    description: >
+      A small question across a few named loads. The answer is a board drawn in the
+      conversation as the reply: its verdict states its figures as readings Trenova reads, its
+      blocks show the two loads, and the turn ends on the board without a sentence written
+      after it or the model asked again.
+    steps:
+      - say: "put SEED-SHP-008 and SEED-SHP-010 side by side for me. which one is further behind, and what does each bring in?"
+        expect:
+          calls: ["shipment_get|shipment_list", "show_answer|show_board"]
+          maxCalls: 6
+          maxFailedCalls: 1
+          noProposals: true
+          noRecordIds: true
+          board: { place: conversation, minReadings: 1, reads: [lateness, revenue] }
+          replyIncludes: ["behind|late|on time|revenue"]
+          rubric: >
+            Reads both loads, then answers with one board of at most four blocks placed in the
+            conversation: a verdict that says which of SEED-SHP-008 (Sunbelt, Dallas to Chicago
+            rolling) and SEED-SHP-010 (Phoenix to LA, Delayed) is further behind and what each
+            brings in, with how far behind read from the lateness measure and what it brings in
+            read from the revenue measure, never one measure's value in the other's sentence and
+            never time added across the two loads, and blocks that show both loads. The reply is the board's own sentence and its link; nothing
+            is written after it.
+
+  - name: late-loads-and-why-on-a-board
+    description: >
+      A question that weighs the late loads together: how many, and why each one is late. The
+      answer is a board in the conversation whose verdict places the count as a reading, not a
+      prose list of pro numbers. Without the board steer the agent answered this in prose.
+    steps:
+      - say: "which loads are running late right now, and why is each one late?"
+        expect:
+          calls: ["shipment_list|dispatch_get_board|exception_list_service_failures", "show_answer|show_board"]
+          maxCalls: 9
+          maxFailedCalls: 1
+          noProposals: true
+          noRecordIds: true
+          board: { place: conversation, minReadings: 1 }
+          rubric: >
+            Reads the late loads, then answers with one board placed in the conversation: a
+            verdict that says how many loads are late with a number that is true (the list's own
+            total as the result gave it, or a reading of the records shown said as such, never
+            the shown records' count stated as the whole list's) and at least one figure placed
+            as a reading, and blocks that show the late loads with what makes each late. The reply is the board's own sentence
+            and its link; nothing is written after it.
+
+  - name: one-customers-unpaid-invoices-and-their-total
+    description: >
+      One customer's unpaid invoices and what they add up to: a total across a few records,
+      which belongs in an answer whose reading Trenova sums, not a figure the model adds up in
+      its head. The receivables seed leaves Peak Distributing three invoices with a balance
+      (SEED-INV-0005, SEED-INV-0006 and SEED-INV-0007, the last partly paid and credited),
+      $6,175.00 in all. A question across every customer returned hundreds of invoices on the
+      volume data, more than a board lists.
+    agent: Receivables
+    tags: [receivables]
+    steps:
+      - say: "which of peak distributing's invoices are still unpaid, and what do they add up to?"
+        expect:
+          calls: ["receivable_list_open_items|invoice_list|receivable_get_statement|receivable_get_aging", "show_answer|show_board"]
+          maxCalls: 6
+          maxFailedCalls: 1
+          noProposals: true
+          noRecordIds: true
+          board: { place: conversation, minReadings: 1, reads: [amountDue] }
+          rubric: >
+            Reads Peak Distributing's open invoices, then answers in the conversation with the
+            three unpaid invoices (SEED-INV-0005, SEED-INV-0006, SEED-INV-0007) and what they
+            still owe, $6,175.00 in all, with the total placed as a reading Trenova sums from
+            the invoices' amounts due rather than typed.
+
+  - name: one-customers-open-loads-and-what-they-bring-in
+    description: >
+      A total and a comparison across one customer's loads. GlobalTrade Imports has two open
+      loads in the seed, SEED-SHP-003 and SEED-SHP-006; the answer is a board whose readings
+      carry the revenue, not a sentence that adds the two charges up.
+    steps:
+      - say: "what do the globaltrade loads we have open bring in altogether, and which one is worth the most?"
+        expect:
+          calls: ["shipment_list|shipment_get", "show_answer|show_board"]
+          maxCalls: 6
+          maxFailedCalls: 1
+          noProposals: true
+          noRecordIds: true
+          board: { place: conversation, minReadings: 1, reads: [revenue] }
+          rubric: >
+            Reads GlobalTrade Imports' open loads, then answers with one board placed in the
+            conversation: a verdict that states their combined revenue as a reading and names the
+            one worth the most, and blocks that show SEED-SHP-003 and SEED-SHP-006 with their
+            revenue. No amount is typed into the words.
+
+  - name: one-load-rundown-is-a-sentence
+    description: >
+      A question about one record. The answer is a few sentences about that load; a board is
+      for answers across records, so none is shown and the reply is not sent back for one.
+    steps:
+      - say: "give me the rundown on SEED-SHP-009: where it's at, who it's for and what it bills"
+        expect:
+          calls: ["shipment_get|shipment_list"]
+          maxCalls: 4
+          maxFailedCalls: 1
+          noProposals: true
+          noRecordIds: true
+          noBoard: true
+          replyIncludes: ["SEED-SHP-009"]
+          rubric: >
+            Answers in a few sentences: SEED-SHP-009 is Peak Distributing's load, ready to
+            invoice, with its total charge from the record. No board is shown.
+
+  - name: one-fact-is-a-sentence
+    description: >
+      A single fact, found through a search that can return more than one load (FreshHaul has two
+      reefer loads). The result carries the board note, and the answer is still one sentence.
+    steps:
+      - say: "whats the BOL on the freshhaul reefer going to LA?"
+        expect:
+          calls: ["shipment_list|shipment_get"]
+          maxCalls: 4
+          maxFailedCalls: 1
+          noProposals: true
+          noRecordIds: true
+          noBoard: true
+          replyIncludes: ["BOL-2026-0010"]
+          rubric: >
+            Gives the BOL of SEED-SHP-010, the FreshHaul reefer from Phoenix to Los Angeles, in a
+            sentence. No board is shown.
+
+  - name: a-list-to-look-through-is-the-table
+    description: >
+      A list the person only asked to see. The answer points to the table the read kept beside
+      the conversation, with the count; it is not a board and is not sent back for one.
+    steps:
+      - say: "pull up the loads that are still new, i just want to look through them"
+        expect:
+          calls: ["shipment_list"]
+          maxCalls: 4
+          maxFailedCalls: 1
+          noProposals: true
+          noRecordIds: true
+          noBoard: true
+          rubric: >
+            Says how many loads are still New and points to the table of them in a sentence,
+            without writing the rows out. No board is shown.
+
+  - name: a-change-is-not-a-board
+    description: >
+      A change across two named loads. The reply is about the proposals waiting for approval,
+      which is not a board, so none is shown and the reply that names both loads is not sent
+      back for one. Nothing is approved, so the loads are left as they are. No read is required
+      first: a record's own number sent where its id belongs is read as that record.
+    tags: [write]
+    steps:
+      - say: "put a note on SEED-SHP-008 and SEED-SHP-010 that the customer wants a call before delivery"
+        expect:
+          proposals: [{ tool: shipment_add_comment }]
+          maxFailedCalls: 1
+          noRecordIds: true
+          noBoard: true
+          rubric: >
+            Proposes a comment on each of SEED-SHP-008 and SEED-SHP-010 carrying the customer's
+            request, and says they wait for approval rather than claiming they were added. No
+            board is shown.

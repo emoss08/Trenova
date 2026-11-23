@@ -40,6 +40,7 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -513,8 +514,16 @@ func (s *service) CheckWorkerCompliance(
 	}
 
 	multiErr := errortypes.NewMultiError()
+	now := timeutils.NowUnix()
 
-	runWorkerComplianceChecks(primaryWorker, dc, hasHazmatCommodities, "primaryWorker", multiErr)
+	runWorkerComplianceChecks(
+		primaryWorker,
+		dc,
+		hasHazmatCommodities,
+		"primaryWorker",
+		now,
+		multiErr,
+	)
 
 	if err = s.runHOSComplianceChecks(
 		ctx,
@@ -533,6 +542,7 @@ func (s *service) CheckWorkerCompliance(
 			dc,
 			hasHazmatCommodities,
 			"secondaryWorker",
+			now,
 			multiErr,
 		)
 	}

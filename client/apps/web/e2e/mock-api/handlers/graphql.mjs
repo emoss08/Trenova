@@ -24,6 +24,7 @@ import { FREIGHT_OUTLOOK_HANDLERS } from "./freightoutlook.mjs";
 import { ORGANIZATION_HANDLERS } from "./organization.mjs";
 import { MANAGED_PLAN_HANDLERS } from "./managedplan.mjs";
 import { SUPPORT_LOG_HANDLERS } from "./supportlogs.mjs";
+import { workerHandlers } from "./worker.mjs";
 import { hash, stageOf, stageRankOf, STAGE_RANKS } from "../state.mjs";
 
 const HOUR = 3600;
@@ -1446,6 +1447,7 @@ function presentedError(error, operationName) {
 }
 
 Object.assign(HANDLERS, paletteHandlers({ ...HANDLERS }));
+Object.assign(HANDLERS, workerHandlers({ ...HANDLERS }));
 
 export async function handleGraphQL(state, body) {
   const handler = Object.hasOwn(HANDLERS, body.operationName)

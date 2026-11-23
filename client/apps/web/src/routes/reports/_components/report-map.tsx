@@ -1,3 +1,4 @@
+import { useRules } from "@trenova/shared/hooks/use-rules";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { integration } from "@/lib/queries/integration";
 import type { ReportChartSpec } from "@/types/report";
@@ -7,12 +8,15 @@ import { APIProvider, Map } from "@vis.gl/react-google-maps";
 import { useMapStyle } from "@/hooks/use-map-style";
 import { cn } from "@trenova/shared/lib/utils";
 import { useMemo } from "react";
+import { createValueFormatter, type ReportCellColumn } from "./report-cells";
 
 type ReportMapProps = {
   chart: ReportChartSpec;
-  columns: { id: string; label: string }[];
+  columns: (ReportCellColumn & { id: string; label: string })[];
   rows: unknown[][];
   className?: string;
+  /** The zone the result's dates are written in, for a date column used as the pin's title. */
+  timeZone?: string;
 };
 
 type MapPoint = {
@@ -37,19 +41,9 @@ function toCoordinate(value: unknown, limit: number): number | null {
   return Math.abs(numeric) <= limit ? numeric : null;
 }
 
-/**
- * Marker titles come from an arbitrary result column, so only values that
- * already read as text are used — an object would stringify to
- * "[object Object]" and label every pin identically.
- */
-function pinLabel(value: unknown): string {
-  if (typeof value === "string") return value;
-  if (typeof value === "number" || typeof value === "boolean") return String(value);
-  return "";
-}
-
-export function ReportMap({ chart, columns, rows, className }: ReportMapProps) {
+export function ReportMap({ chart, columns, rows, className, timeZone }: ReportMapProps) {
   const t = useT();
+  const rules = useRules();
 
   const { mapId, colorScheme } = useMapStyle();
   const { data: googleMaps } = useQuery({
@@ -65,6 +59,17 @@ export function ReportMap({ chart, columns, rows, className }: ReportMapProps) {
     if (latIndex < 0 || lngIndex < 0) return [];
 
     const labelIndex = indexOf(chart.labelColumnId);
+    // A pin's title is the label column's cell as the grid writes it: an enum's label rather
+    // than its code, a number or date in the column's display, an object as empty.
+    const pinLabel =
+      labelIndex >= 0
+        ? createValueFormatter(
+            rules,
+            columns[labelIndex],
+            rows.map((row) => row[labelIndex]),
+            timeZone,
+          )
+        : null;
     const collected: MapPoint[] = [];
 
     rows.forEach((row, rowIndex) => {
@@ -76,12 +81,12 @@ export function ReportMap({ chart, columns, rows, className }: ReportMapProps) {
         key: `${rowIndex}:${lat},${lng}`,
         lat,
         lng,
-        label: labelIndex >= 0 ? pinLabel(row[labelIndex]) : "",
+        label: pinLabel ? pinLabel(row[labelIndex]) : "",
       });
     });
 
     return collected;
-  }, [chart.latColumnId, chart.lngColumnId, chart.labelColumnId, columns, rows]);
+  }, [rules, chart.latColumnId, chart.lngColumnId, chart.labelColumnId, columns, rows, timeZone]);
 
   // Centring on the mean keeps every pin roughly in frame without needing the
   // map instance, which is what lets this render identically in a tile and in
@@ -121,7 +126,7 @@ export function ReportMap({ chart, columns, rows, className }: ReportMapProps) {
               <AdvancedMarker
                 key={point.key}
                 position={{ lat: point.lat, lng: point.lng }}
-                title={t(point.label)}
+                title={point.label}
               />
             ))}
           </Map>

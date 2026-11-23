@@ -2,6 +2,7 @@ package watchtowerports
 
 import (
 	"context"
+
 	"github.com/emoss08/trenova/internal/modules/agent/domain/caseowner"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
@@ -116,6 +117,7 @@ type UpdateWatchtowerWorkflowRequest struct {
 	Item            *watchtower.Item
 	ExpectedVersion int64
 	Events          []*watchtower.Event
+	ResolvedVia     watchtower.ResolvedVia
 }
 
 type ListWatchtowerEventsRequest struct {
@@ -195,4 +197,8 @@ type WatchtowerRepository interface {
 	CountCleared(ctx context.Context, req CountClearedWatchtowerItemsRequest) (int, error)
 	SetCursor(ctx context.Context, cursor *watchtower.Cursor) (*watchtower.Cursor, error)
 	DeleteResolvedBefore(ctx context.Context, req DeleteResolvedWatchtowerItemsRequest) (int, error)
+	DeleteResolutionsBefore(
+		ctx context.Context,
+		req DeleteResolvedWatchtowerItemsRequest,
+	) (int, error)
 }

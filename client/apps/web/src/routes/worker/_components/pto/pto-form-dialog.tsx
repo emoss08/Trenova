@@ -34,8 +34,8 @@ import {
   type PTOType,
   type WorkerPTO,
 } from "@trenova/shared/types/worker";
-import { useCallback, useEffect, useMemo } from "react";
-import { FormProvider, useForm, useWatch, type Resolver } from "react-hook-form";
+import { useCallback, useEffect, useMemo, type ReactNode } from "react";
+import { FormProvider, useForm, useWatch, type Control, type Resolver } from "react-hook-form";
 import { ptoDecision, type PTODecisionSource } from "./pto-columns";
 import { usePTOInvalidation } from "./use-pto-invalidation";
 
@@ -82,25 +82,30 @@ export function normalizePTODates(values: PTOFormValues): PTOFormValues {
   };
 }
 
-function DaysPreview({
-  workerId,
-  ptoType,
-  startDate,
-  endDate,
-  excludePtoId,
-}: {
+export type PTOAvailabilityInput = {
   workerId: string;
   ptoType: PTOFormValues["type"];
   startDate: number;
   endDate: number;
   excludePtoId?: string;
-}) {
-  const t = useT();
+};
 
+/**
+ * What the policy says about a request before it is sent: the days it counts and what the
+ * balance has left on the start date. Settled for a moment so typing a date does not ask on
+ * every keystroke.
+ */
+export function usePTOAvailability({
+  workerId,
+  ptoType,
+  startDate,
+  endDate,
+  excludePtoId,
+}: PTOAvailabilityInput) {
   const hasDates = !!startDate && !!endDate && endDate >= startDate;
   const ready = hasDates && !!workerId;
   const debounced = useDebounce({ workerId, ptoType, startDate, endDate }, 400);
-  const availability = useQuery({
+  return useQuery({
     queryKey: ["worker-pto-availability", debounced, excludePtoId ?? null],
     queryFn: ({ signal }) => {
       const normalized = normalizePTODates({
@@ -124,7 +129,14 @@ function DaysPreview({
     enabled: ready && !!debounced.workerId && !!debounced.startDate && !!debounced.endDate,
     staleTime: 30 * 1000,
   });
+}
 
+function DaysPreview(input: PTOAvailabilityInput) {
+  const t = useT();
+  const { ptoType, startDate, endDate } = input;
+  const availability = usePTOAvailability(input);
+
+  const hasDates = !!startDate && !!endDate && endDate >= startDate;
   if (!hasDates) {
     return null;
   }
@@ -133,12 +145,16 @@ function DaysPreview({
 
   return (
     <div className="flex flex-col gap-0.5">
-      <p className="text-muted-foreground text-xs" data-testid="pto-days-preview">
-        {t("{0, plural, one {# day} other {# days}} · {1}", days, formatRange(startDate, endDate))}
+      <p className="text-xs text-muted-foreground" data-testid="pto-days-preview">
+        {t(
+          "{0, plural, one {# day} other {# days}} · {1}",
+          days,
+          formatRange(startDate, endDate, { year: "always", join: "words" }),
+        )}
       </p>
       {result?.tracked ? (
         <p
-          className={result.allowed ? "text-muted-foreground text-xs" : "text-destructive text-xs"}
+          className={result.allowed ? "text-xs text-muted-foreground" : "text-xs text-destructive"}
           data-testid="pto-availability-hint"
         >
           {result.allowed
@@ -155,7 +171,7 @@ function DaysPreview({
   );
 }
 
-function ReadOnlyPTO({ pto }: { pto: PTOFormDialogRecord }) {
+export function ReadOnlyPTO({ pto }: { pto: PTOFormDialogRecord }) {
   const t = useT();
 
   const decision = ptoDecision(pto);
@@ -164,7 +180,7 @@ function ReadOnlyPTO({ pto }: { pto: PTOFormDialogRecord }) {
     <div className="flex flex-col gap-3 pb-2 text-sm">
       <div className="flex items-center gap-2">
         <PTOStatusBadge status={pto.status} />
-        <span className="text-muted-foreground text-xs">
+        <span className="text-xs text-muted-foreground">
           {t("Only requested time off can be edited.")}
         </span>
       </div>
@@ -179,7 +195,7 @@ function ReadOnlyPTO({ pto }: { pto: PTOFormDialogRecord }) {
         <dd className="tabular-nums">
           {t(
             "{0} ({1} days)",
-            formatRange(pto.startDate, pto.endDate),
+            formatRange(pto.startDate, pto.endDate, { year: "always", join: "words" }),
             inclusiveDays(pto.startDate, pto.endDate),
           )}
         </dd>
@@ -191,7 +207,7 @@ function ReadOnlyPTO({ pto }: { pto: PTOFormDialogRecord }) {
             <dd>
               {decision.actor}
               {decision.note ? (
-                <span className="text-muted-foreground block text-xs">{decision.note}</span>
+                <span className="block text-xs text-muted-foreground">{decision.note}</span>
               ) : null}
             </dd>
           </>
@@ -201,17 +217,28 @@ function ReadOnlyPTO({ pto }: { pto: PTOFormDialogRecord }) {
   );
 }
 
-export function PTOFormDialog({
+export type UsePTOFormOptions = {
+  open: boolean;
+  pto?: PTOFormDialogRecord | null;
+  defaultWorkerId?: string;
+  defaultRange?: { start: number; end: number } | null;
+  onSaved?: (pto: WorkerPTO) => void;
+  /** Closes the host once the request is saved. */
+  onDone: () => void;
+};
+
+/**
+ * The time off form without its frame: the form, its save and whether the record can still be
+ * edited. The roster's dialog and the worker page's work pane both host it.
+ */
+export function usePTOForm({
   open,
-  onOpenChange,
   pto,
   defaultWorkerId,
   defaultRange,
-  lockWorker = false,
   onSaved,
-}: PTOFormDialogProps) {
-  const t = useT();
-
+  onDone,
+}: UsePTOFormOptions) {
   const invalidate = usePTOInvalidation();
   const isEdit = !!pto?.id;
   const editable = !isEdit || pto?.status === "Requested";
@@ -220,12 +247,7 @@ export function PTOFormDialog({
     resolver: zodResolver(ptoFormSchema) as Resolver<PTOFormValues>,
     defaultValues: buildDefaults(pto, defaultWorkerId, defaultRange),
   });
-  const {
-    control,
-    handleSubmit,
-    reset,
-    formState: { isSubmitting },
-  } = form;
+  const { reset } = form;
 
   useEffect(() => {
     if (open) {
@@ -233,15 +255,15 @@ export function PTOFormDialog({
     }
   }, [open, pto, defaultWorkerId, defaultRange, reset]);
 
-  const [workerId, ptoType, startDate, endDate] = useWatch({
-    control,
-    name: ["workerId", "type", "startDate", "endDate"],
-  });
-  const hasDateRange = !!startDate && !!endDate && endDate >= startDate;
-
-  const { mutateAsync } = useApiMutation<WorkerPTO, PTOFormValues, unknown, PTOFormValues>({
+  const { mutateAsync, isPending } = useApiMutation<
+    WorkerPTO,
+    PTOFormValues,
+    unknown,
+    PTOFormValues
+  >({
     form,
     resourceName: "PTO",
+    scope: { id: `worker-pto-form:${pto?.id ?? defaultWorkerId ?? "new"}` },
     mutationFn: async (values) => {
       const normalized = normalizePTODates(values);
       if (isEdit && pto?.id) {
@@ -265,21 +287,147 @@ export function PTOFormDialog({
     onSuccess: (saved) => {
       void invalidate();
       onSaved?.(saved);
-      onOpenChange(false);
+      onDone();
     },
   });
 
-  const onSubmit = useCallback(
-    async (values: PTOFormValues) => {
-      await mutateAsync(values);
-    },
-    [mutateAsync],
+  const submit = useCallback(
+    () =>
+      form.handleSubmit(async (values) => {
+        await mutateAsync(values);
+      })(),
+    [form, mutateAsync],
   );
 
+  return { form, submit, isSubmitting: isPending, isEdit, editable };
+}
+
+export type PTOFormPreviewState = PTOAvailabilityInput & { hasDateRange: boolean };
+
+export type PTOFormFieldsProps = {
+  control: Control<PTOFormValues>;
+  /** Whether the worker can be picked, is shown but fixed, or is left out (the worker's own page). */
+  workerField: "editable" | "locked" | "hidden";
+  excludePtoId?: string;
+  /** Draws what the chosen days come to; the dialog's line under the dates by default. */
+  renderPreview?: (state: PTOFormPreviewState) => ReactNode;
+};
+
+function defaultPreview(state: PTOFormPreviewState): ReactNode {
+  if (!state.hasDateRange) return null;
+  return (
+    <FormControl cols="full">
+      <DaysPreview {...state} />
+    </FormControl>
+  );
+}
+
+/** The time off form's fields: worker, type, the two days, what they come to and the reason. */
+export function PTOFormFields({
+  control,
+  workerField,
+  excludePtoId,
+  renderPreview = defaultPreview,
+}: PTOFormFieldsProps) {
+  const t = useT();
+  const [workerId, ptoType, startDate, endDate] = useWatch({
+    control,
+    name: ["workerId", "type", "startDate", "endDate"],
+  });
+  const hasDateRange = !!startDate && !!endDate && endDate >= startDate;
+
+  return (
+    <FormGroup cols={2}>
+      {workerField === "hidden" ? null : (
+        <FormControl cols="full">
+          <WorkerAutocompleteField<PTOFormValues>
+            control={control}
+            name="workerId"
+            label={t("Worker")}
+            required
+            placeholder={t("Select worker")}
+            description={t("The worker taking time off.")}
+            disabled={workerField === "locked"}
+          />
+        </FormControl>
+      )}
+      <FormControl cols="full">
+        <SelectField<PTOFormValues>
+          control={control}
+          name="type"
+          label={t("Type")}
+          required
+          options={ptoTypeChoices}
+          placeholder={t("Select type")}
+          description={t("Decides which balance the days are taken from.")}
+        />
+      </FormControl>
+      <FormControl>
+        <AutoCompleteDateField<PTOFormValues>
+          control={control}
+          name="startDate"
+          label={t("First day")}
+          required
+          placeholder={t("First day off")}
+          description={t("The first day off; weekends count only if the policy says so.")}
+        />
+      </FormControl>
+      <FormControl>
+        <AutoCompleteDateField<PTOFormValues>
+          control={control}
+          name="endDate"
+          label={t("Last day")}
+          required
+          placeholder={t("Last day off")}
+          description={t("The last day off, counted inclusively.")}
+        />
+      </FormControl>
+      {renderPreview({
+        workerId,
+        ptoType,
+        startDate,
+        endDate,
+        excludePtoId,
+        hasDateRange,
+      })}
+      <FormControl cols="full">
+        <TextareaField<PTOFormValues>
+          control={control}
+          name="reason"
+          label={t("Reason")}
+          required
+          placeholder={t("e.g. Family wedding")}
+          maxLength={255}
+          description={t("Seen by whoever reviews the request.")}
+        />
+      </FormControl>
+    </FormGroup>
+  );
+}
+
+export function PTOFormDialog({
+  open,
+  onOpenChange,
+  pto,
+  defaultWorkerId,
+  defaultRange,
+  lockWorker = false,
+  onSaved,
+}: PTOFormDialogProps) {
+  const t = useT();
+  const { form, submit, isSubmitting, isEdit, editable } = usePTOForm({
+    open,
+    pto,
+    defaultWorkerId,
+    defaultRange,
+    onSaved,
+    onDone: () => onOpenChange(false),
+  });
+
   const title = useMemo(() => {
-    if (!isEdit) return "Request PTO";
-    return editable ? "Edit PTO Request" : "PTO Request";
-  }, [editable, isEdit]);
+    if (!isEdit) return t("Request PTO");
+    return editable ? t("Edit PTO Request") : t("PTO Request");
+  }, [editable, isEdit, t]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -312,84 +460,23 @@ export function PTOFormDialog({
               onSubmit={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                void handleSubmit(onSubmit)(e);
+                void submit();
               }}
             >
-              <FormGroup cols={2}>
-                <FormControl cols="full">
-                  <WorkerAutocompleteField<PTOFormValues>
-                    control={control}
-                    name="workerId"
-                    label={t("Worker")}
-                    required
-                    placeholder={t("Select worker")}
-                    description={t("The worker taking time off.")}
-                    disabled={isEdit || lockWorker}
-                  />
-                </FormControl>
-                <FormControl cols="full">
-                  <SelectField<PTOFormValues>
-                    control={control}
-                    name="type"
-                    label={t("Type")}
-                    required
-                    options={ptoTypeChoices}
-                    placeholder={t("Select type")}
-                    description={t("Decides which balance the days are taken from.")}
-                  />
-                </FormControl>
-                <FormControl>
-                  <AutoCompleteDateField<PTOFormValues>
-                    control={control}
-                    name="startDate"
-                    label={t("First day")}
-                    required
-                    placeholder={t("First day off")}
-                    description={t("The first day off; weekends count only if the policy says so.")}
-                  />
-                </FormControl>
-                <FormControl>
-                  <AutoCompleteDateField<PTOFormValues>
-                    control={control}
-                    name="endDate"
-                    label={t("Last day")}
-                    required
-                    placeholder={t("Last day off")}
-                    description={t("The last day off, counted inclusively.")}
-                  />
-                </FormControl>
-                {hasDateRange ? (
-                  <FormControl cols="full">
-                    <DaysPreview
-                      workerId={workerId}
-                      ptoType={ptoType}
-                      startDate={startDate}
-                      endDate={endDate}
-                      excludePtoId={pto?.id ?? undefined}
-                    />
-                  </FormControl>
-                ) : null}
-                <FormControl cols="full">
-                  <TextareaField<PTOFormValues>
-                    control={control}
-                    name="reason"
-                    label={t("Reason")}
-                    required
-                    placeholder={t("e.g. Family wedding")}
-                    maxLength={255}
-                    description={t("Seen by whoever reviews the request.")}
-                  />
-                </FormControl>
-              </FormGroup>
+              <PTOFormFields
+                control={form.control}
+                workerField={isEdit || lockWorker ? "locked" : "editable"}
+                excludePtoId={pto?.id ?? undefined}
+              />
               <DialogFooter>
                 <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
                   {t("Cancel")}
                 </Button>
                 <Button
                   type="button"
-                  onClick={() => void handleSubmit(onSubmit)()}
+                  onClick={() => void submit()}
                   isLoading={isSubmitting}
-                  loadingText={isEdit ? "Saving..." : "Requesting..."}
+                  loadingText={isEdit ? t("Saving...") : t("Requesting...")}
                 >
                   {isEdit ? t("Save changes") : t("Request PTO")}
                 </Button>

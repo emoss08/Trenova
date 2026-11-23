@@ -132,9 +132,13 @@ func (s *WorkerCredentialSummary) add(item *CredentialSummaryItem) {
 	case CredentialHealthMissing:
 		s.MissingCount++
 	}
-	if item.Required && item.Health.Blocks() {
+	if item.BlocksWhenLapsed() && item.Health.Blocks() {
 		s.ComplianceStatus = worker.ComplianceStatusNonCompliant
 	}
+}
+
+func (i *CredentialSummaryItem) BlocksWhenLapsed() bool {
+	return i.Required
 }
 
 // Attention returns the slots that need action, worst first.

@@ -10,7 +10,6 @@ import type {
   DeskBoardFigure,
   DeskBoardMeter,
   DeskBoardRow,
-  DeskBoardSegment,
 } from "@/lib/graphql/desk-board-card";
 import { lazyComponent } from "@/lib/lazy-component";
 import type { AnalysisChart } from "@/types/analysis";
@@ -25,6 +24,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { shipmentStatusSchema } from "@trenova/shared/types/shipment";
 import type { CSSProperties, ReactNode } from "react";
+import { BoardWords, Numeral, type BoardReadings } from "./board-words";
 import { ArtIcon } from "../../desk-art-kinds";
 import { CardIcon } from "../../record-card/record-card";
 import { activityActor, activitySentence } from "../../record-card/record-activity";
@@ -42,6 +42,7 @@ import {
   sourceLine,
   toneClass,
   unreadableRecord,
+  readableIds,
 } from "./board-card";
 
 const boardChart = lazyComponent(
@@ -76,27 +77,6 @@ export function BoardStatus({ resource, status }: { resource: string; status: st
     );
   }
   return <StatusBadge status={status} />;
-}
-
-/** An exhibit's numeral: a circled figure the verdict cites it by. */
-export function Numeral({ n, struck = false }: { n: number; struck?: boolean }) {
-  return <span className={cn("dk-bd-n", struck && "dk-off")}>{n}</span>;
-}
-
-/** The answer's words, with the phrases it rests on marked and citing their exhibit. */
-export function Segments({ segments }: { segments: readonly DeskBoardSegment[] }) {
-  return segments.map((segment, index) =>
-    segment.numeral > 0 ? (
-      // oxlint-disable-next-line react/no-array-index-key -- segments are a fixed run of the text
-      <span key={index}>
-        <span className={cn("dk-bd-hl", segment.tone === "warn" && "dk-warn")}>{segment.text}</span>
-        <Numeral n={segment.numeral} struck={segment.struck} />
-      </span>
-    ) : (
-      // oxlint-disable-next-line react/no-array-index-key -- segments are a fixed run of the text
-      <span key={index}>{segment.text}</span>
-    ),
-  );
 }
 
 /** A record named in the words or in a check: its label, opening the record. */
@@ -136,7 +116,7 @@ export function RecordChips(props: {
 }) {
   const readable = props.rows.filter((row) => row.readable);
   if (readable.length === 0) return null;
-  const order = readable.map((row) => row.id);
+  const order = readableIds(props.rows);
   return (
     <div className="dk-bd-chips">
       {readable.map((row) => (
@@ -152,17 +132,30 @@ export function RecordChips(props: {
   );
 }
 
-/** An exhibit: printed by Trenova on a tab that names what it shows, with where it read it from. */
+/**
+ * An exhibit: printed by Trenova on a tab that names what it shows, the line
+ * the agent wrote under it when it wrote one, and where it read it from.
+ */
 export function Exhibit({
   block,
+  board,
   stamp,
   half,
+  lit = false,
+  className,
+  style,
   children,
 }: {
   block: DeskBoardBlock;
+  /** The board's readings, for a caption that places one. */
+  board: BoardReadings;
   /** When it was read: "live · 9:15 AM". */
   stamp: string;
   half: boolean;
+  /** A phrase citing it is pointed at or focused. */
+  lit?: boolean;
+  className?: string;
+  style?: CSSProperties;
   children: ReactNode;
 }) {
   const t = useT();
@@ -170,21 +163,79 @@ export function Exhibit({
   const line = sourceLine(block.source, t);
   return (
     <section
-      className={cn("dk-bd-ex", half && "dk-bd-half", unreadable && "dk-unread")}
+      className={cn(
+        "dk-bd-ex",
+        half && "dk-bd-half",
+        unreadable && "dk-unread",
+        lit && "dk-bd-lit",
+        className,
+      )}
+      style={style}
       aria-label={block.title || t("Exhibit {0}", block.numeral)}
     >
       <div className="dk-bd-tab">
         <Numeral n={block.numeral} struck={unreadable} />
         <span>{block.title || t("Exhibit {0}", block.numeral)}</span>
       </div>
-      {!unreadable && (line !== "" || stamp !== "") && (
-        <div className="dk-bd-src">
-          <span>{line}</span>
-          <span>{stamp}</span>
-        </div>
+      {block.caption.length > 0 && (
+        <p className="-mt-0.5 mb-2.5 text-dsk-base leading-normal text-dsk-subtle">
+          <BoardWords segments={block.caption} board={board} />
+        </p>
       )}
+      {!unreadable && (line !== "" || stamp !== "") && <SourceLine line={line} stamp={stamp} />}
       {children}
     </section>
+  );
+}
+
+/**
+ * Where an exhibit was read from and when, in one line under its tab. Its
+ * skeleton draws the same line with a blank in each place, so the line is the
+ * same height before the exhibit is read as after.
+ */
+export function SourceLine({ line, stamp }: { line: ReactNode; stamp: ReactNode }) {
+  return (
+    <div className="dk-bd-src">
+      <span>{line}</span>
+      <span>{stamp}</span>
+    </div>
+  );
+}
+
+/**
+ * A blank set in a line of words while they are read: a bar on the line, with
+ * a zero-width character beside it so the line keeps the height of its font,
+ * as the words that replace it do.
+ */
+export function LineBlank({ className }: { className?: string }) {
+  return (
+    <>
+      <i className={cn("dk-bd-wait-line ui-shimmer", className)} aria-hidden="true" />
+      {"\u200b"}
+    </>
+  );
+}
+
+/**
+ * A record's row while the list is read, in the row's own box: the name and
+ * the line under it, each a blank in its own font, so a row read is the height
+ * of the row drawn. The line under the name is always drawn, as nearly every
+ * record has one, and it is what sets the row's height either way.
+ */
+export function RecordRowSketch() {
+  return (
+    <div className="dk-bd-row">
+      <span className="dk-bd-who">
+        <b>
+          <LineBlank className="w-28" />
+        </b>
+        <span>
+          <LineBlank className="w-40" />
+        </span>
+      </span>
+      <span />
+      <span />
+    </div>
   );
 }
 
@@ -375,14 +426,19 @@ export function RecordRows({
   now,
   open,
   opensInPlace,
+  more,
+  order = readableIds(rows),
 }: {
   rows: DeskBoardRow[];
+  /** The records a record opened from here steps through; the rows drawn unless the list was cut. */
+  order?: readonly string[];
   now: number;
   open: OpenRecord;
   opensInPlace: OpensInPlace;
+  /** The line after the rows saying how many more the board holds, when the list was cut. */
+  more?: ReactNode;
 }) {
   const furthest = furthestOf(rows);
-  const order = rows.filter((row) => row.readable).map((row) => row.id);
   return (
     <div className="dk-bd-rows">
       {rows.map((row, index) => {
@@ -413,6 +469,7 @@ export function RecordRows({
           </div>
         );
       })}
+      {more}
     </div>
   );
 }
@@ -498,7 +555,7 @@ export function HeadToHead({
   opensInPlace: OpensInPlace;
 }) {
   const t = useT();
-  const order = compare.columns.filter((column) => column.readable).map((column) => column.id);
+  const order = readableIds(compare.columns);
   const lines = compare.lines.length;
   return (
     <table className="dk-bd-h2h">
@@ -728,26 +785,35 @@ export { AnalysisTableView as BoardTable };
 /** A note: the agent's own words on a slip, with the records it names. */
 export function Note({
   block,
+  board,
   half,
   open,
   opensInPlace,
+  className,
+  style,
 }: {
   block: DeskBoardBlock;
+  board: BoardReadings;
   half: boolean;
   open: OpenRecord;
   opensInPlace: OpensInPlace;
+  className?: string;
+  style?: CSSProperties;
 }) {
   const t = useT();
   const tone = boardTone(block.noteTone) || "info";
   return (
-    <aside className={cn("dk-bd-note", toneClass(tone), half && "dk-bd-half")}>
+    <aside
+      className={cn("dk-bd-note", toneClass(tone), half && "dk-bd-half", className)}
+      style={style}
+    >
       <div className="dk-bd-note-h">
         <CardIcon name={tone === "bad" ? "x" : tone === "warn" ? "warn" : "check"} size={11} />
         {noteLabel(tone, t)}
       </div>
       <b>{block.title}</b>
       <p>
-        <Segments segments={block.text} />
+        <BoardWords segments={block.text} board={board} />
       </p>
       <RecordChips rows={block.chips} open={open} opensInPlace={opensInPlace} />
     </aside>

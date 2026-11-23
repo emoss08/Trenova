@@ -20,6 +20,7 @@
   "Required items must settle before the checklist closes.": "必需项目须先结清，检查清单才会关闭。",
   "Select a kind": "选择种类",
   "Select a team": "选择团队",
+  "Select an event": "选择事件",
   "Short unique identifier; saved in uppercase.": "简短的唯一标识符；会以大写存储。",
   "Shown as the line the owner ticks off on the worker's checklist.": "在司机的检查清单上，显示为负责人勾选的项目。",
   "Shown on the worker's Checklist tab once a checklist is started from this template.": "自此模板启动检查清单后，会显示在司机的“检查清单”标签页上。",

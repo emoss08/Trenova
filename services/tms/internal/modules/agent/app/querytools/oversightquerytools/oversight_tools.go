@@ -522,33 +522,33 @@ func outsideMark(item *watchtower.Item) (agent.SourcedRef, bool) {
 	var source agent.TaintSource
 	var entity string
 	switch item.SourceKind {
-	case watchtower.SourceInboundMessage:
+	case watchtower.SourceKindInboundMessage:
 		source, entity = agent.TaintSourceInboundMessage, agent.TaintEntityInboundMessage
-	case watchtower.SourceEDIInboundQuarantined:
+	case watchtower.SourceKindEDIInboundQuarantined:
 		source, entity = agent.TaintSourceEDI, agent.TaintEntityEDIInboundFile
-	case watchtower.SourceInsight,
-		watchtower.SourceAgentProposal,
-		watchtower.SourceAgentPlan,
-		watchtower.SourceAgentRunFailed,
-		watchtower.SourceAgentException,
-		watchtower.SourceServiceFailure,
-		watchtower.SourceCarrierIntelEvent,
-		watchtower.SourceHOSViolation,
-		watchtower.SourceBillingException,
-		watchtower.SourceDetentionOccurrence,
-		watchtower.SourceWorkerCredential,
-		watchtower.SourceMoveCoverage,
-		watchtower.SourceTelematicsStopVisit,
-		watchtower.SourceNoCheckCall,
-		watchtower.SourceEtaAtRisk,
-		watchtower.SourceMissedPickup,
-		watchtower.SourceMissedDelivery,
-		watchtower.SourcePodMissing,
-		watchtower.SourceTenderExhausted,
-		watchtower.SourceAgentQualityRegression,
-		watchtower.SourceAccountingSync,
-		watchtower.SourceAccountingReconciliation,
-		watchtower.SourceFactoring:
+	case watchtower.SourceKindInsight,
+		watchtower.SourceKindAgentProposal,
+		watchtower.SourceKindAgentPlan,
+		watchtower.SourceKindAgentRunFailed,
+		watchtower.SourceKindAgentException,
+		watchtower.SourceKindServiceFailure,
+		watchtower.SourceKindCarrierIntelEvent,
+		watchtower.SourceKindHOSViolation,
+		watchtower.SourceKindBillingException,
+		watchtower.SourceKindDetentionOccurrence,
+		watchtower.SourceKindWorkerCredential,
+		watchtower.SourceKindMoveCoverage,
+		watchtower.SourceKindTelematicsStopVisit,
+		watchtower.SourceKindNoCheckCall,
+		watchtower.SourceKindEtaAtRisk,
+		watchtower.SourceKindMissedPickup,
+		watchtower.SourceKindMissedDelivery,
+		watchtower.SourceKindPODMissing,
+		watchtower.SourceKindTenderExhausted,
+		watchtower.SourceKindAgentQualityRegression,
+		watchtower.SourceKindAccountingSync,
+		watchtower.SourceKindAccountingReconciliation,
+		watchtower.SourceKindFactoring:
 	}
 	if source == "" {
 		return agent.SourcedRef{}, false
@@ -568,35 +568,35 @@ func outsideMark(item *watchtower.Item) (agent.SourcedRef, bool) {
 
 func (w *watchtowerRunIDs) add(item *watchtower.Item) {
 	switch item.SourceKind {
-	case watchtower.SourceAgentRunFailed:
+	case watchtower.SourceKindAgentRunFailed:
 		w.link(item, nil)
-	case watchtower.SourceAgentProposal:
+	case watchtower.SourceKindAgentProposal:
 		w.link(item, w.proposals)
-	case watchtower.SourceAgentPlan:
+	case watchtower.SourceKindAgentPlan:
 		w.link(item, w.plans)
-	case watchtower.SourceAgentException:
+	case watchtower.SourceKindAgentException:
 		w.link(item, w.exceptions)
-	case watchtower.SourceInsight,
-		watchtower.SourceServiceFailure,
-		watchtower.SourceCarrierIntelEvent,
-		watchtower.SourceHOSViolation,
-		watchtower.SourceEDIInboundQuarantined,
-		watchtower.SourceBillingException,
-		watchtower.SourceDetentionOccurrence,
-		watchtower.SourceInboundMessage,
-		watchtower.SourceWorkerCredential,
-		watchtower.SourceMoveCoverage,
-		watchtower.SourceTelematicsStopVisit,
-		watchtower.SourceNoCheckCall,
-		watchtower.SourceEtaAtRisk,
-		watchtower.SourceMissedPickup,
-		watchtower.SourceMissedDelivery,
-		watchtower.SourcePodMissing,
-		watchtower.SourceTenderExhausted,
-		watchtower.SourceAgentQualityRegression,
-		watchtower.SourceAccountingSync,
-		watchtower.SourceAccountingReconciliation,
-		watchtower.SourceFactoring:
+	case watchtower.SourceKindInsight,
+		watchtower.SourceKindServiceFailure,
+		watchtower.SourceKindCarrierIntelEvent,
+		watchtower.SourceKindHOSViolation,
+		watchtower.SourceKindEDIInboundQuarantined,
+		watchtower.SourceKindBillingException,
+		watchtower.SourceKindDetentionOccurrence,
+		watchtower.SourceKindInboundMessage,
+		watchtower.SourceKindWorkerCredential,
+		watchtower.SourceKindMoveCoverage,
+		watchtower.SourceKindTelematicsStopVisit,
+		watchtower.SourceKindNoCheckCall,
+		watchtower.SourceKindEtaAtRisk,
+		watchtower.SourceKindMissedPickup,
+		watchtower.SourceKindMissedDelivery,
+		watchtower.SourceKindPODMissing,
+		watchtower.SourceKindTenderExhausted,
+		watchtower.SourceKindAgentQualityRegression,
+		watchtower.SourceKindAccountingSync,
+		watchtower.SourceKindAccountingReconciliation,
+		watchtower.SourceKindFactoring:
 	}
 }
 

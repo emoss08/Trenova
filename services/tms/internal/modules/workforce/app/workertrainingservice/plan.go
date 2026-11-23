@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workertraining"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workertrainingports"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -129,6 +130,14 @@ func (s *Service) PlanAssignRequired(
 	if err != nil {
 		return nil, err
 	}
+	return s.PlanAssignRequiredFor(ctx, tenantInfo, wrk)
+}
+
+func (s *Service) PlanAssignRequiredFor(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	wrk *worker.Worker,
+) ([]*workertraining.TrainingCourse, error) {
 	summary, err := s.summarize(ctx, tenantInfo, wrk)
 	if err != nil {
 		return nil, err

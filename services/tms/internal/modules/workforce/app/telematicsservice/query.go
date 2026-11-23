@@ -77,12 +77,19 @@ func (s *Service) ListWorkerHOSStates(
 	if err := s.requireSamsara(ctx); err != nil {
 		return nil, err
 	}
-	return s.repo.ListWorkerHOSStates(ctx, &telematicsports.ListWorkerHOSStatesRequest{
+	states, err := s.repo.ListWorkerHOSStates(ctx, &telematicsports.ListWorkerHOSStatesRequest{
 		TenantInfo:    tenantInfo,
 		WorkerIDs:     workerIDs,
 		IncludeWorker: true,
 		Limit:         limit,
 	})
+	if err != nil {
+		return nil, err
+	}
+	if err = s.attachDutyStatusSince(ctx, tenantInfo, states); err != nil {
+		return nil, err
+	}
+	return states, nil
 }
 
 func (s *Service) GetWorkerHOSState(
@@ -98,6 +105,13 @@ func (s *Service) GetWorkerHOSState(
 		WorkerID:   workerID,
 	})
 	if err != nil {
+		return nil, err
+	}
+	if err = s.attachDutyStatusSince(
+		ctx,
+		tenantInfo,
+		[]*telematics.WorkerHOSState{state},
+	); err != nil {
 		return nil, err
 	}
 	return state, nil

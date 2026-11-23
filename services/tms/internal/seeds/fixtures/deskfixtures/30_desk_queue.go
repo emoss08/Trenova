@@ -164,7 +164,7 @@ func (r *deskSeedRefs) queueSpecs() []queueSeedSpec {
 	return []queueSeedSpec{
 		{
 			key:      "late-007",
-			kind:     watchtower.SourceEtaAtRisk,
+			kind:     watchtower.SourceKindEtaAtRisk,
 			severity: watchtower.SeverityCritical,
 			title:    "SEED-SHP-007 will miss its delivery window",
 			summary: "Stuck behind the I-35 storm near Ames. Minneapolis dock closes at 7 PM; " +
@@ -190,7 +190,7 @@ func (r *deskSeedRefs) queueSpecs() []queueSeedSpec {
 		},
 		{
 			key:      "insurance-lakeshore",
-			kind:     watchtower.SourceCarrierIntelEvent,
+			kind:     watchtower.SourceKindCarrierIntelEvent,
 			severity: watchtower.SeverityCritical,
 			title:    "Lakeshore Logistics' cargo insurance lapses in 9 days",
 			summary:  "They're on 4 tendered loads next week. Their certificate on file expires Oct 11.",
@@ -216,7 +216,7 @@ func (r *deskSeedRefs) queueSpecs() []queueSeedSpec {
 		},
 		{
 			key:      "cash-lockbox",
-			kind:     watchtower.SourceAgentRunFailed,
+			kind:     watchtower.SourceKindAgentRunFailed,
 			severity: watchtower.SeverityCritical,
 			title:    "Cash Application stopped partway through a lockbox file",
 			summary:  "Matched 212 of 340 payments, then lost access to the bank feed.",
@@ -238,7 +238,7 @@ func (r *deskSeedRefs) queueSpecs() []queueSeedSpec {
 		},
 		{
 			key:      "detention-001",
-			kind:     watchtower.SourceDetentionOccurrence,
+			kind:     watchtower.SourceKindDetentionOccurrence,
 			severity: watchtower.SeverityWarning,
 			title:    "Detention clock passed 2 hours at Acme Plant 2",
 			summary: "SEED-SHP-001 has been at the dock since 1:40 PM. Billable after 2 free " +
@@ -263,7 +263,7 @@ func (r *deskSeedRefs) queueSpecs() []queueSeedSpec {
 		},
 		{
 			key:      "edi-bluewater",
-			kind:     watchtower.SourceEDIInboundQuarantined,
+			kind:     watchtower.SourceKindEDIInboundQuarantined,
 			severity: watchtower.SeverityWarning,
 			title:    "3 load tenders quarantined from Bluewater",
 			summary:  "The 204s reference a location code we don't have mapped (BW-DC-17).",
@@ -286,7 +286,7 @@ func (r *deskSeedRefs) queueSpecs() []queueSeedSpec {
 		},
 		{
 			key:      "credential-medical",
-			kind:     watchtower.SourceWorkerCredential,
+			kind:     watchtower.SourceKindWorkerCredential,
 			severity: watchtower.SeverityWarning,
 			title:    dana + "'s medical card expires in 12 days",
 			summary:  "Assigned to SEED-SHP-004 next week.",
@@ -308,7 +308,7 @@ func (r *deskSeedRefs) queueSpecs() []queueSeedSpec {
 		},
 		{
 			key:      "billing-biller",
-			kind:     watchtower.SourceBillingException,
+			kind:     watchtower.SourceKindBillingException,
 			severity: watchtower.SeverityWarning,
 			title:    "11 invoices can't post without a biller",
 			summary:  "Ready for review, but nobody is assigned as biller.",
@@ -322,7 +322,7 @@ func (r *deskSeedRefs) queueSpecs() []queueSeedSpec {
 		},
 		{
 			key:       "service-harbor",
-			kind:      watchtower.SourceServiceFailure,
+			kind:      watchtower.SourceKindServiceFailure,
 			severity:  watchtower.SeverityWarning,
 			title:     "Two late deliveries for Harbor Supply this week",
 			summary:   "A second service failure in 5 days. Their contract has a 95% on-time clause.",
@@ -336,7 +336,7 @@ func (r *deskSeedRefs) queueSpecs() []queueSeedSpec {
 		},
 		{
 			key:      "late-002",
-			kind:     watchtower.SourceEtaAtRisk,
+			kind:     watchtower.SourceKindEtaAtRisk,
 			severity: watchtower.SeverityInfo,
 			title:    "SEED-SHP-002 running about 2 hours late",
 			summary:  "Weather near Des Moines. Still inside the delivery window.",
@@ -357,7 +357,7 @@ func (r *deskSeedRefs) queueSpecs() []queueSeedSpec {
 		},
 		{
 			key:       "credential-hazmat",
-			kind:      watchtower.SourceWorkerCredential,
+			kind:      watchtower.SourceKindWorkerCredential,
 			severity:  watchtower.SeverityInfo,
 			title:     tom + "'s hazmat endorsement renews next month",
 			summary:   "No loads need hazmat before then.",
@@ -373,7 +373,7 @@ func (r *deskSeedRefs) queueSpecs() []queueSeedSpec {
 		},
 		{
 			key:      "edi-acme-214",
-			kind:     watchtower.SourceEDIInboundQuarantined,
+			kind:     watchtower.SourceKindEDIInboundQuarantined,
 			severity: watchtower.SeverityInfo,
 			title:    "Acme sent 6 status updates we didn't expect",
 			summary:  "214s for loads already delivered. Probably a resend.",

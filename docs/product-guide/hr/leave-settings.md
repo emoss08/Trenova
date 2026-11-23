@@ -11,7 +11,7 @@ related:
 Leave settings is where HR sets how family and medical leave (FMLA) is measured for the whole
 organization: which twelve-month period entitlements are counted against, how many weeks of leave
 an eligible employee gets, how long a week is in hours, and what an employee needs to qualify.
-The leave cases themselves are opened and tracked on each worker's **Leave** tab.
+The leave cases themselves are opened and tracked on each worker's page, on the **Time** tab under **Leave**.
 
 ## Tasks
 

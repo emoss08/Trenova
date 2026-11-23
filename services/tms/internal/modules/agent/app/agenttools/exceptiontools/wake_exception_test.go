@@ -27,7 +27,7 @@ func (f *fakeExceptions) UnsnoozeException(
 }
 
 func snoozedExceptions() *fakeExceptions {
-	exceptions := newFakeExceptions(watchtower.SourceMissedPickup)
+	exceptions := newFakeExceptions(watchtower.SourceKindMissedPickup)
 	until := int64(1_790_100_000)
 	exceptions.item.Status = watchtower.StatusSnoozed
 	exceptions.item.SnoozedUntil = &until
@@ -64,7 +64,7 @@ func TestWakeException_PreviewsThenBringsItBackToTheQueue(t *testing.T) {
 func TestWakeException_RefusesAnExceptionThatIsNotSnoozed(t *testing.T) {
 	t.Parallel()
 
-	exceptions := newFakeExceptions(watchtower.SourceMissedPickup)
+	exceptions := newFakeExceptions(watchtower.SourceKindMissedPickup)
 	tool := NewWakeExceptionTool(exceptions)
 	params := agenttoolstest.ExecuteParams(map[string]any{
 		paramWatchtowerItemID: exceptions.item.ID.String(),

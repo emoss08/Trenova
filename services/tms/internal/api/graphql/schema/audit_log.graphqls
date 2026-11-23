@@ -45,6 +45,10 @@ type AuditEntry {
   sensitiveData: Boolean!
   critical: Boolean!
   entityRef: String
+  "The kind of the record whose file this entry belongs to: the worker for a change to one of the worker's credentials, or the record itself for a root record. Null on entries written before subjects were recorded."
+  subjectResource: String
+  "The id of that record. Null exactly when subjectResource is null."
+  subjectId: String
   user: User
   "How many entries the caller can read that the same request wrote, this one included; 0 when the entry names no request."
   requestEntryCount: Int!
@@ -367,6 +371,11 @@ extend type Query {
     input: DataTableConnectionInput!
     resourceId: ID!
     field: String
+  ): AuditEntryConnection!
+  "A record's whole file: every entry whose subject is the record, its sub-records' included, newest first. Needs organization-wide read on the subject's kind; an entry about a sub-record shows only to a reader of that sub-record's kind."
+  auditEntriesBySubject(
+    input: DataTableConnectionInput!
+    subjectId: ID!
   ): AuditEntryConnection!
   auditEntry(id: ID!): AuditEntry
   auditChainStatus: AuditChainStatus!

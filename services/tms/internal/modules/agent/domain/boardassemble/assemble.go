@@ -50,9 +50,11 @@ func (r *Reads) summary(resource permission.Resource, id pulid.ID) (Summary, boo
 func Assemble(layout *board.Board, reads *Reads) *board.Filled {
 	numerals := layout.Numerals()
 	filled := &board.Filled{
-		Title:  layout.Title,
-		Blocks: make([]board.FilledBlock, 0, len(layout.Blocks)),
-		ReadAt: reads.Now,
+		Title:    layout.Title,
+		Place:    layout.Placed(),
+		Readings: assembleReadings(layout.Readings, reads),
+		Blocks:   make([]board.FilledBlock, 0, len(layout.Blocks)),
+		ReadAt:   reads.Now,
 	}
 	for idx := range layout.Blocks {
 		block := assembleBlock(layout, idx, reads)
@@ -61,19 +63,66 @@ func Assemble(layout *board.Board, reads *Reads) *board.Filled {
 	}
 	filled.Verdict = segmentsOf(filled, layout.Verdict)
 	for idx := range layout.Blocks {
-		if layout.Blocks[idx].Type == board.BlockProse {
+		switch layout.Blocks[idx].Type {
+		case board.BlockProse:
 			filled.Blocks[idx].Text = segmentsOf(filled, layout.Blocks[idx].Text)
+		case board.BlockNote:
+			filled.Blocks[idx].Text = segmentsOf(filled, board.PlainText(layout.Blocks[idx].Text))
+		case board.BlockFigures, board.BlockRecords, board.BlockCompare, board.BlockTable,
+			board.BlockChart, board.BlockTimeline, board.BlockChecks, board.BlockMeter,
+			board.BlockWork, board.BlockActions:
+		}
+		if caption := layout.Blocks[idx].Caption; caption != "" {
+			filled.Blocks[idx].Caption = segmentsOf(filled, board.PlainText(caption))
 		}
 	}
+	filled.WriteReadings()
 
 	return filled
+}
+
+func assembleReadings(readings []board.Reading, reads *Reads) []board.FilledReading {
+	out := make([]board.FilledReading, 0, len(readings))
+	for idx := range readings {
+		source := &readings[idx].FigureSource
+		filled := board.FilledReading{
+			Key:       readings[idx].Key,
+			Label:     source.Label,
+			Measure:   source.Measure,
+			Aggregate: source.Aggregate,
+		}
+		switch {
+		case source.Metric != "":
+			filled.Value = reads.Metrics[source.Metric]
+			filled.Source = board.Source{Kind: board.SourceMetrics}
+		case source.Records != nil:
+			filled.Value, _ = aggregate(source, reads)
+			filled.Source = board.Source{
+				Kind:     board.SourceRecords,
+				Resource: source.Records.Resource,
+				Count:    len(source.Records.IDs),
+			}
+			if reads.Readable[source.Records.Resource] {
+				_, filled.Source.Readable = measured(source, reads)
+			}
+		case source.Analysis.IsNotNil():
+			filled.Value = analysisFigure(reads.Analyses[source.Analysis], source.Index)
+			filled.Source = board.Source{Kind: board.SourceAnalysis}
+			if read := reads.Analyses[source.Analysis]; read != nil {
+				filled.Source.Title = read.Title
+			}
+		}
+		out = append(out, filled)
+	}
+
+	return out
 }
 
 func segmentsOf(f *board.Filled, text string) []board.FilledSegment {
 	raw := board.Segments(text)
 	out := make([]board.FilledSegment, 0, len(raw))
 	for _, segment := range raw {
-		shown := board.FilledSegment{Text: segment.Text}
+		shown := board.FilledSegment{Text: segment.Text, Reading: segment.Reading}
 		if segment.Cite > 0 && segment.Cite <= len(f.Blocks) {
 			cited := &f.Blocks[segment.Cite-1]
 			shown.Numeral = cited.Numeral
@@ -117,7 +166,6 @@ func assembleBlock(layout *board.Board, idx int, reads *Reads) board.FilledBlock
 	case board.BlockProse:
 	case board.BlockNote:
 		block.NoteTone = spec.Tone
-		block.Text = []board.FilledSegment{{Text: board.PlainText(spec.Text)}}
 		if !spec.Records.Empty() {
 			block.Chips, _ = rowsOf(spec.Records, reads)
 		}

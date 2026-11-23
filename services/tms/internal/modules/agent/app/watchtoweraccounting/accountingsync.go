@@ -111,7 +111,7 @@ func DescribeAccountingSyncAttention(
 
 	return watchtowerports.WatchtowerItemInput{
 		TenantInfo:  tenantOf(conn),
-		SourceKind:  watchtower.SourceAccountingSync,
+		SourceKind:  watchtower.SourceKindAccountingSync,
 		SourceID:    AccountingSyncAttentionSourceID(conn, key),
 		Severity:    severity,
 		Title:       stringutils.TruncateRunes(title, 200),
@@ -139,7 +139,7 @@ func DescribeAccountingSyncPaused(
 	}
 	return watchtowerports.WatchtowerItemInput{
 		TenantInfo:  tenantOf(conn),
-		SourceKind:  watchtower.SourceAccountingSync,
+		SourceKind:  watchtower.SourceKindAccountingSync,
 		SourceID:    AccountingSyncPausedSourceID(conn),
 		Severity:    watchtower.SeverityWarning,
 		Title:       "Sync to " + provider + " has been paused for over a day",
@@ -162,7 +162,7 @@ func DescribeAccountingSafetyNet(
 	}
 	return watchtowerports.WatchtowerItemInput{
 		TenantInfo: tenantOf(conn),
-		SourceKind: watchtower.SourceAccountingSync,
+		SourceKind: watchtower.SourceKindAccountingSync,
 		SourceID:   AccountingSafetyNetSourceID(conn),
 		Severity:   watchtower.SeverityInfo,
 		Title:      documentsLabel(found) + " were posted without being queued for the books",

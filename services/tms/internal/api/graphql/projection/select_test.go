@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/manualjournal/manualjournaldb"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/document/documentdb"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -132,4 +133,19 @@ func TestColumnNames_NamesTheGeneratedColumns(t *testing.T) {
 
 	r := manualjournaldb.Requests
 	assert.Equal(t, []string{"total_debit_minor", "total_credit_minor"}, ColumnNames(r.TotalDebit.Col, r.TotalCredit.Col))
+}
+
+func TestSelect_WorkerCredentialDocumentPreviewStatusReadsItsColumn(t *testing.T) {
+	t.Parallel()
+
+	selection := Select(WorkerCredentialDocumentSpec, func(path string) bool {
+		return path == "previewStatus" || path == "fileType"
+	}, SelectOptions{})
+
+	d := documentdb.Documents
+	assert.Equal(
+		t,
+		append([]string{"id", "created_at"}, ColumnNames(d.FileType.Col, d.PreviewStatus.Col)...),
+		selection.Columns,
+	)
 }

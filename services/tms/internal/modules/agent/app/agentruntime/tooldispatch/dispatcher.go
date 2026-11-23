@@ -3,6 +3,7 @@ package tooldispatch
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/recordnumbers"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/toolaccess"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/codemode"
@@ -47,6 +48,9 @@ type DispatcherParams struct {
 	Brokers ScriptBrokers
 	// Labels names the records a read was narrowed by.
 	Labels agentruntimeports.RecordLabeler
+	// Numbers reads a record's own number, sent where its id belonged, as
+	// that record.
+	Numbers *recordnumbers.Resolver
 }
 
 // Dispatcher runs one tool call the loop has decided to make: it checks the
@@ -71,6 +75,7 @@ type Dispatcher struct {
 	shadow    ShadowVerdicts
 	brokers   ScriptBrokers
 	labels    agentruntimeports.RecordLabeler
+	numbers   *recordnumbers.Resolver
 }
 
 func NewDispatcher(p *DispatcherParams) *Dispatcher {
@@ -91,6 +96,7 @@ func NewDispatcher(p *DispatcherParams) *Dispatcher {
 		shadow:      p.Shadow,
 		brokers:     p.Brokers,
 		labels:      p.Labels,
+		numbers:     p.Numbers,
 	}
 }
 

@@ -6,12 +6,13 @@ import {
 import { useNavigate } from "@tanstack/react-router";
 import { useCallback } from "react";
 import type { LocalShipmentComment } from "@/lib/shipment-comment-cache";
+import { isRecordEntityType, recordPath, type RecordEntityType } from "@/config/record-links";
 
-const ENTITY_REF_BASE_PATHS: Record<string, string> = {
-  shipment: "/shipment-management/shipments",
-  worker: "/hr/workers",
-  customer: "/billing/configuration-files/customers",
-};
+const COMMENT_REF_KINDS: ReadonlySet<RecordEntityType> = new Set([
+  "shipment",
+  "worker",
+  "customer",
+]);
 
 export function CommentBody({ comment }: { comment: LocalShipmentComment }) {
   const t = useT();
@@ -20,10 +21,9 @@ export function CommentBody({ comment }: { comment: LocalShipmentComment }) {
 
   const handleEntityRefClick = useCallback(
     (attrs: CommentBodyEntityRefAttrs) => {
-      const basePath = ENTITY_REF_BASE_PATHS[attrs.entityType];
-      if (!basePath || !attrs.entityId) return;
-      const params = new URLSearchParams({ panelType: "edit", panelEntityId: attrs.entityId });
-      void navigate({ to: `${basePath}?${params.toString()}` });
+      const kind = attrs.entityType;
+      if (!attrs.entityId || !isRecordEntityType(kind) || !COMMENT_REF_KINDS.has(kind)) return;
+      void navigate({ to: recordPath(kind, attrs.entityId) });
     },
     [navigate],
   );

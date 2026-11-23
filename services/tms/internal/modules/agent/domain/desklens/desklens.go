@@ -29,9 +29,9 @@ func (l Lens) String() string { return string(l) }
 // Of is the lens a kind of item is read through.
 func Of(kind watchtower.SourceKind) Lens {
 	switch kind { //nolint:exhaustive // every other kind is the Watchtower's own
-	case watchtower.SourceAgentProposal, watchtower.SourceAgentPlan:
+	case watchtower.SourceKindAgentProposal, watchtower.SourceKindAgentPlan:
 		return Decisions
-	case watchtower.SourceInboundMessage:
+	case watchtower.SourceKindInboundMessage:
 		return Triage
 	default:
 		return Watchtower

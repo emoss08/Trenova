@@ -69,6 +69,7 @@ func Evaluate(in EvaluateInput) *Evaluation {
 		Worker:               in.Candidate.Worker,
 		Control:              in.Control,
 		HasHazmatCommodities: in.Requirements.HasHazmatCommodities,
+		Now:                  now,
 	}))
 
 	if in.TelematicsActive {

@@ -25,6 +25,12 @@ copy of another shipment. Choose a rating method on the shipment, or set a fallb
 template here. Minimums, maximums and rounding are not set here or on an agreement: each tariff
 writes them in its own source.
 
+The fallback formula template and margin floors are offered on plans that include rating.
+
+Raised late charges post the way invoices do: while **Post invoices** is **Manual review
+required**, the memos the nightly run raises wait for someone to post them, and the tab says so
+with a link to **Automation**.
+
 Billing managers and finance leads use it. These settings affect revenue processing and
 invoicing, so change them only after review.
 
@@ -79,8 +85,6 @@ Keywords: unrated shipments, fallback formula, margin floor, rate override reaso
    floors** as needed.
 5. Select **Save changes**.
 
-The fallback formula template and margin floors are offered on plans that include rating.
-
 ### Turn on automatic late charges
 Keywords: late fees, overdue invoices, debit memo, finance charges
 1. Open [Billing controls](/admin/billing-controls) and select the **Collections** tab.
@@ -88,10 +92,6 @@ Keywords: late fees, overdue invoices, debit memo, finance charges
    **Automatic**.
 3. Set the **Minimum late charge**; customers whose charges for a run add up to less are skipped.
 4. Select **Save changes**.
-
-Raised late charges post the way invoices do: while **Post invoices** is **Manual review
-required**, the memos the nightly run raises wait for someone to post them, and the tab says so
-with a link to **Automation**.
 
 ### Email customers payment reminders
 Keywords: dunning, overdue reminder, past due email, collection letter

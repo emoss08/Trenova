@@ -334,6 +334,7 @@ func (r *repository) Prune(ctx context.Context, req aianalyticsports.PruneReques
 		w := aianalyticsdb.WorkUnits
 		h := aianalyticsdb.ProviderHours
 		s := agentsuggestiondb.Suggestions
+		d := aiusagedb.DailyUsages
 		for _, query := range []interface {
 			Delete(context.Context, *keel.DB) (int64, error)
 		}{
@@ -341,6 +342,7 @@ func (r *repository) Prune(ctx context.Context, req aianalyticsports.PruneReques
 			w.Where(w.FinishedAt.Lt(req.Before)),
 			h.Where(h.Hour.Lt(floorHour(req.Before))),
 			s.Where(s.CreatedAt.Lt(req.Before)),
+			d.Where(d.UsageDate.Lt(req.DailyUsageBefore)),
 		} {
 			if _, err := query.Delete(ctx, db); err != nil {
 				r.l.Error("failed to prune ai analytics", zap.Error(err))

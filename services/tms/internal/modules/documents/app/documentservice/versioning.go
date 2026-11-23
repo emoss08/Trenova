@@ -196,7 +196,8 @@ func (s *Service) RestoreVersion(
 		CurrentState:   jsonutils.MustToJSON(target),
 		OrganizationID: target.OrganizationID,
 		BusinessUnitID: target.BusinessUnitID,
-	}, auditservice.WithComment("Document version restored as current")); err != nil {
+	}, auditservice.WithComment("Document version restored as current"),
+		auditservice.WithSubjectOf(target)); err != nil {
 		s.l.Warn("failed to log document version restore", zap.Error(err))
 	}
 
@@ -440,7 +441,8 @@ func (s *Service) AttachLineageToResource(
 		CurrentState:   jsonutils.MustToJSON(updated),
 		OrganizationID: updated.OrganizationID,
 		BusinessUnitID: updated.BusinessUnitID,
-	}, auditservice.WithComment("Document lineage attached to shipment")); err != nil {
+	}, auditservice.WithComment("Document lineage attached to shipment"),
+		auditservice.WithSubjectOf(updated)); err != nil {
 		s.l.Warn("failed to log document lineage reassignment", zap.Error(err))
 	}
 

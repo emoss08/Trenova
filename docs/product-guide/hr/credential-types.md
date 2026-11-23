@@ -12,7 +12,7 @@ Credential types is the list of licences, cards, endorsements and certificates w
 such as a CDL, a medical card or a TWIC card. Each type says whether it is required and for which
 driver types, how far ahead of expiry it is flagged, its typical validity, and whether a number
 or a scanned document is needed. HR and safety administrators maintain the list; the credentials
-themselves are recorded on each worker's **Credentials** tab.
+themselves are recorded on each worker's page, on the **Qualification** tab under **Credentials**.
 
 ## Tasks
 

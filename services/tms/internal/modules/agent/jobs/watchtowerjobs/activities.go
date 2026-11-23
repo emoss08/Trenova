@@ -26,25 +26,28 @@ import (
 // the record.
 const retentionDays = 30
 
-// retentionBatch bounds one delete so a first sweep over a long-running
-// deployment does not hold a transaction open across millions of rows.
-const retentionBatch = 5000
+const secondsPerDay = 24 * 60 * 60
 
-// retentionPasses bounds how many batches one run deletes, so a sweep that
-// finds a very large backlog ends in a predictable time and the next run
-// continues where it stopped.
-const retentionPasses = 20
+// retentionBatch bounds one delete so a first sweep over a long-running
+// deployment does not hold a transaction open across millions of rows. It is
+// the most the repository deletes at once, so a full batch means more remain.
+const retentionBatch = 1000
+
+// retentionPasses bounds how many batches one run deletes from each table, so
+// a sweep that finds a very large backlog ends in a predictable time and the
+// next run continues where it stopped.
+const retentionPasses = 100
 
 var shipmentExceptionKinds = []watchtower.SourceKind{
-	watchtower.SourceMissedPickup,
-	watchtower.SourceMissedDelivery,
-	watchtower.SourcePodMissing,
-	watchtower.SourceTenderExhausted,
+	watchtower.SourceKindMissedPickup,
+	watchtower.SourceKindMissedDelivery,
+	watchtower.SourceKindPODMissing,
+	watchtower.SourceKindTenderExhausted,
 }
 
 var decisionKinds = []watchtower.SourceKind{
-	watchtower.SourceAgentProposal,
-	watchtower.SourceAgentPlan,
+	watchtower.SourceKindAgentProposal,
+	watchtower.SourceKindAgentPlan,
 }
 
 type ActivitiesParams struct {
@@ -103,7 +106,7 @@ func (a *Activities) NoCheckCallSweepActivity(
 		swept, sErr := a.watchtower.ReconcileKind(
 			tenantCtx,
 			tenant,
-			watchtower.SourceNoCheckCall,
+			watchtower.SourceKindNoCheckCall,
 		)
 		if sErr != nil {
 			a.l.Error("no check call sweep failed for organization",
@@ -236,7 +239,7 @@ func (a *Activities) FactoringSweepActivity(
 		ctx context.Context,
 		tenant pagination.TenantInfo,
 	) (*watchtowerports.WatchtowerSweepResult, error) {
-		return a.watchtower.ReconcileKind(ctx, tenant, watchtower.SourceFactoring)
+		return a.watchtower.ReconcileKind(ctx, tenant, watchtower.SourceKindFactoring)
 	})
 }
 
@@ -273,36 +276,70 @@ func (a *Activities) BackfillActivity(
 	return result, nil
 }
 
-// WatchtowerRetentionActivity removes items resolved more than a month ago, a batch
-// at a time across every tenant.
+// WatchtowerRetentionActivity removes items resolved more than a month ago and
+// resolutions older than their own retention, a batch at a time across every
+// tenant.
 func (a *Activities) WatchtowerRetentionActivity(
 	ctx context.Context,
 ) (*WatchtowerRetentionResult, error) {
-	before := timeutils.NowUnix() - retentionDays*24*60*60
+	now := timeutils.NowUnix()
 	result := &WatchtowerRetentionResult{}
 
-	for pass := range retentionPasses {
-		activity.RecordHeartbeat(ctx, pass)
-
-		deleted, err := a.repo.DeleteResolvedBefore(
+	deleted, err := pruneInBatches(ctx, func(ctx context.Context) (int, error) {
+		return a.repo.DeleteResolvedBefore(
 			ctx,
 			watchtowerports.DeleteResolvedWatchtowerItemsRequest{
-				Before: before,
+				Before: now - retentionDays*secondsPerDay,
 				Limit:  retentionBatch,
 			},
 		)
+	})
+	if err != nil {
+		return nil, fmt.Errorf("delete resolved watchtower items: %w", err)
+	}
+	result.Deleted = deleted
+
+	deleted, err = pruneInBatches(ctx, func(ctx context.Context) (int, error) {
+		return a.repo.DeleteResolutionsBefore(
+			ctx,
+			watchtowerports.DeleteResolvedWatchtowerItemsRequest{
+				Before: now - watchtower.ResolutionRetentionDays*secondsPerDay,
+				Limit:  retentionBatch,
+			},
+		)
+	})
+	if err != nil {
+		return nil, fmt.Errorf("delete watchtower resolutions: %w", err)
+	}
+	result.ResolutionsDeleted = deleted
+
+	a.l.Info("watchtower retention sweep complete",
+		zap.Int("deleted", result.Deleted),
+		zap.Int("resolutionsDeleted", result.ResolutionsDeleted),
+	)
+
+	return result, nil
+}
+
+func pruneInBatches(
+	ctx context.Context,
+	deleteBatch func(context.Context) (int, error),
+) (int, error) {
+	total := 0
+	for pass := range retentionPasses {
+		activity.RecordHeartbeat(ctx, pass)
+
+		deleted, err := deleteBatch(ctx)
 		if err != nil {
-			return nil, fmt.Errorf("delete resolved watchtower items: %w", err)
+			return total, err
 		}
-		result.Deleted += deleted
+		total += deleted
 		if deleted < retentionBatch {
 			break
 		}
 	}
 
-	a.l.Info("watchtower retention sweep complete", zap.Int("deleted", result.Deleted))
-
-	return result, nil
+	return total, nil
 }
 
 // sweepAll runs one sweep per tenant. A tenant whose sweep fails outright

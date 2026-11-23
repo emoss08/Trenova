@@ -7,7 +7,10 @@
 //! 3. A number in a usable banded column shows the range it stands for.
 //! 4. Otherwise the kind of value decides: a number in a date column is a date (the host writes
 //!    it, since dates use time zones the module does not have), any other number is formatted
-//!    by the numeric style, a boolean by the boolean style, and text with the prefix and suffix.
+//!    by the numeric style, a boolean by the boolean style, and text is replaced by its enum
+//!    label when the column has one for it, then shows the null text when empty or is written
+//!    with the prefix and suffix (`appendText`). Only text is looked up: a number, a boolean or
+//!    an array or object never is, and neither is anything in a raw display.
 //!
 //! A number is formatted exactly: a percent is shifted two places, compact notation picks K, M,
 //! B or T on the unrounded magnitude, and the digits are rounded half away from zero
@@ -73,7 +76,7 @@ fn render_value(display: &Display, value: &Value<'_>) -> Rendered {
         Value::Number(number) => Rendered::Text(numeric(display, *number)),
         Value::Bool(flag) => Rendered::Text(boolean(&display.bool_style, *flag).to_owned()),
         Value::Text(text) => Rendered::Text(text_value(display, text)),
-        Value::Null | Value::Other => Rendered::Text(text_value(display, "")),
+        Value::Null | Value::Other => Rendered::Text(display.null_text.clone()),
     }
 }
 
@@ -87,6 +90,7 @@ fn raw(value: &Value<'_>) -> String {
 }
 
 fn text_value(display: &Display, text: &str) -> String {
+    let text = display.labels.get(text).map_or(text, String::as_str);
     if text.is_empty() {
         return display.null_text.clone();
     }

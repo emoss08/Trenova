@@ -220,3 +220,25 @@ func TestMaxAllowedUnix(t *testing.T) {
 		assert.Equal(t, from, result)
 	})
 }
+
+func TestAtVariantsJudgeAgainstTheInstantGiven(t *testing.T) {
+	t.Parallel()
+
+	at := time.Date(2030, time.June, 15, 12, 0, 0, 0, time.UTC).Unix()
+	day := int64(timeutils.SecondsPerDay)
+
+	assert.True(t, timeutils.IsExpiredAt(at-1, at))
+	assert.False(t, timeutils.IsExpiredAt(at, at))
+	assert.True(t, timeutils.IsExpiredAt(0, at), "no expiry on file counts as expired")
+
+	assert.True(t, timeutils.IsOverdueAt(at-1, at))
+	assert.False(t, timeutils.IsOverdueAt(at, at))
+	assert.False(t, timeutils.IsOverdueAt(0, at), "no due date is never overdue")
+
+	assert.True(t, timeutils.IsWithinMonthsOf(at-30*day, 12, at))
+	assert.False(t, timeutils.IsWithinMonthsOf(at-400*day, 12, at))
+
+	dob := time.Date(2009, time.June, 15, 12, 0, 0, 0, time.UTC).Unix()
+	assert.True(t, timeutils.IsAtLeastAgeAt(dob, 21, at))
+	assert.False(t, timeutils.IsAtLeastAgeAt(dob, 21, at-day))
+}

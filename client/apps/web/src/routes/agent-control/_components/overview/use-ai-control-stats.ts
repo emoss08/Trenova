@@ -1,6 +1,8 @@
+import { usePermission } from "@/hooks/use-permission";
 import { aiControl } from "@/lib/queries/ai-control";
 import { aiProvider } from "@/lib/queries/ai-provider";
 import { fetchAgentActivityCounts } from "@/lib/graphql/agent-activity";
+import { Operation, Resource } from "@trenova/shared/types/permission";
 import { type QueryClient, useQuery } from "@tanstack/react-query";
 
 const COUNTS_QUERY_KEY = ["ai-control", "activity-counts"] as const;
@@ -19,9 +21,11 @@ export function useAIControlStats() {
     refetchInterval: 60_000,
   });
 
+  const { allowed: canReadUsage } = usePermission(Resource.AIUsage, Operation.Read);
   const usageQuery = useQuery({
     ...aiProvider.usage(USAGE_WINDOW_DAYS),
     refetchInterval: 60_000,
+    enabled: canReadUsage,
   });
 
   const providers = providersQuery.data ?? [];

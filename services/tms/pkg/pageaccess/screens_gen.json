@@ -47,6 +47,7 @@
         "VehicleInspections",
         "VehiclePositions",
         "WorkerFormSubmissions",
+        "WorkerHosClocks",
         "WorkerHosDailyLogs",
         "WorkerHosLogs",
         "WorkerHosState",
@@ -2486,6 +2487,7 @@
         "VehicleInspections",
         "VehiclePositions",
         "WorkerFormSubmissions",
+        "WorkerHosClocks",
         "WorkerHosDailyLogs",
         "WorkerHosLogs",
         "WorkerHosState",
@@ -2624,6 +2626,7 @@
         "VehicleInspections",
         "VehiclePositions",
         "WorkerFormSubmissions",
+        "WorkerHosClocks",
         "WorkerHosDailyLogs",
         "WorkerHosLogs",
         "WorkerHosState",
@@ -2783,6 +2786,7 @@
         "VehicleInspections",
         "VehiclePositions",
         "WorkerFormSubmissions",
+        "WorkerHosClocks",
         "WorkerHosDailyLogs",
         "WorkerHosLogs",
         "WorkerHosState",
@@ -8057,8 +8061,10 @@
         "VoidDriverSettlement",
         "VoidInvoice",
         "WorkerCredentialTypeChoices",
+        "WorkerOverview",
         "WorkerPtoChartData",
-        "WorkerPtoTable"
+        "WorkerPtoTable",
+        "WorkerRecord"
       ],
       "rest": [
         {
@@ -9031,8 +9037,10 @@
         "VoidDriverSettlement",
         "VoidInvoice",
         "WorkerCredentialTypeChoices",
+        "WorkerOverview",
         "WorkerPtoChartData",
-        "WorkerPtoTable"
+        "WorkerPtoTable",
+        "WorkerRecord"
       ],
       "rest": [
         {
@@ -9936,8 +9944,10 @@
         "VoidDriverSettlement",
         "VoidInvoice",
         "WorkerCredentialTypeChoices",
+        "WorkerOverview",
         "WorkerPtoChartData",
-        "WorkerPtoTable"
+        "WorkerPtoTable",
+        "WorkerRecord"
       ],
       "rest": [
         {
@@ -11286,8 +11296,10 @@
         "VoidDriverSettlement",
         "VoidInvoice",
         "WorkerCredentialTypeChoices",
+        "WorkerOverview",
         "WorkerPtoChartData",
-        "WorkerPtoTable"
+        "WorkerPtoTable",
+        "WorkerRecord"
       ],
       "rest": [
         {
@@ -15001,6 +15013,7 @@
         "VehicleInspections",
         "VehiclePositions",
         "WorkerFormSubmissions",
+        "WorkerHosClocks",
         "WorkerHosDailyLogs",
         "WorkerHosLogs",
         "WorkerHosState",
@@ -15386,6 +15399,7 @@
         "VehicleInspections",
         "VehiclePositions",
         "WorkerFormSubmissions",
+        "WorkerHosClocks",
         "WorkerHosDailyLogs",
         "WorkerHosLogs",
         "WorkerHosState",
@@ -15984,6 +15998,7 @@
         "VehicleInspections",
         "VehiclePositions",
         "WorkerFormSubmissions",
+        "WorkerHosClocks",
         "WorkerHosDailyLogs",
         "WorkerHosLogs",
         "WorkerHosState",
@@ -16741,6 +16756,64 @@
         }
       ],
       "operations": [
+        "ActiveTrainingCourses",
+        "ApproveWorkerPto",
+        "BulkAssignTraining",
+        "BulkEditFields",
+        "BulkWorkerPtoAction",
+        "CancelWorkerPto",
+        "CreateWorkerPto",
+        "DataTableAggregates",
+        "DataTableFacets",
+        "DataTableInsightFields",
+        "DeskWorkerCard",
+        "DeskWorkerCredentials",
+        "DeskWorkerHos",
+        "DeskWorkerStanding",
+        "ExportTableView",
+        "MyBulkEdit",
+        "MyTableLayout",
+        "PatchWorker",
+        "PreviewBulkEdit",
+        "PtoBalanceSummary",
+        "PtoLiabilityReport",
+        "RejectWorkerPto",
+        "ResetMyTableLayout",
+        "SaveMyTableLayout",
+        "ScheduleTableView",
+        "StartBulkEdit",
+        "UndoMyBulkEdit",
+        "UpcomingWorkerPto",
+        "UpdateWorkerPto",
+        "WorkerCredentialTypeChoices",
+        "WorkerOverview",
+        "WorkerPtoAvailability",
+        "WorkerPtoChartData",
+        "WorkerPtoTable",
+        "WorkerRecord",
+        "WorkerTable"
+      ],
+      "rest": [
+        {
+          "method": "GET",
+          "path": "/tables/"
+        },
+        {
+          "method": "POST",
+          "path": "/tables/:param/compose/"
+        }
+      ]
+    },
+    {
+      "path": "/hr/workers/$id",
+      "name": "Worker",
+      "requires": [
+        {
+          "resource": "worker",
+          "operation": "read"
+        }
+      ],
+      "operations": [
         "AccountingBackfills",
         "AccountingBriefing",
         "AccountingDriftFinding",
@@ -16756,8 +16829,6 @@
         "AccountingSyncRecord",
         "AccountingSyncStatus",
         "AccountingSyncSummary",
-        "ActivePerformanceReviewTemplates",
-        "ActiveTrainingCourses",
         "ActiveWorkerChecklistTemplates",
         "AdjustWorkerPtoBalance",
         "AmendWorkerEmploymentEvent",
@@ -16781,6 +16852,7 @@
         "AssignWorkerPtoPolicy",
         "AssignWorkerShift",
         "AssignWorkerTraining",
+        "AttachWorkerTrainingDocument",
         "AvailableCaptureProfiles",
         "BillingQueueFormulaTemplate",
         "BillingQueueItems",
@@ -16789,8 +16861,6 @@
         "BillingTransferCandidates",
         "BillingTransferRun",
         "BillingTransferRunItems",
-        "BulkAssignTraining",
-        "BulkEditFields",
         "BulkWorkerPtoAction",
         "CancelCaptureRequest",
         "CancelDotTest",
@@ -16820,14 +16890,12 @@
         "CreateWorkerCredential",
         "CreateWorkerPto",
         "CreateWorkerSafetyEvent",
+        "CurrentSettlementPeriod",
         "CustomFieldFormFields",
         "CustomFieldResourceTypes",
         "CustomerStatusNotifications",
         "CustomerTrackingLinks",
         "CustomerTrackingProfile",
-        "DataTableAggregates",
-        "DataTableFacets",
-        "DataTableInsightFields",
         "DecideLeaveCase",
         "DecideProfileChange",
         "DefaultSafetyPoints",
@@ -16854,7 +16922,6 @@
         "EndWorkerPayAssignment",
         "EndWorkerShiftAssignment",
         "EnrollBenefit",
-        "ExportTableView",
         "GiveWorkerRecognition",
         "GrantCarrierIntelOverride",
         "HosCertificationSummary",
@@ -16866,17 +16933,13 @@
         "MarkEmploymentVerificationRequested",
         "MarkWorkerChecklistItemNotApplicable",
         "MyActiveBillingTransferRun",
-        "MyBulkEdit",
         "MyCaptureAccess",
         "MyCaptureDevices",
-        "MyTableLayout",
         "OpenLeaveCase",
         "PatchWorker",
         "PayProfileDetail",
-        "PreviewBulkEdit",
+        "PreviewWorkerEmploymentEvent",
         "ProfileChangeRequests",
-        "PtoBalanceSummary",
-        "PtoLiabilityReport",
         "RecordClearinghouseQuery",
         "RecordDotTest",
         "RecordDotTestResult",
@@ -16893,14 +16956,11 @@
         "ReopenWorkerSafetyEvent",
         "RequestLeaveCertification",
         "RescindDisciplinaryAction",
-        "ResetMyTableLayout",
         "ReviewWorkerSafetyEvent",
         "ReviseDeskMemory",
         "RevokeCarrierTrackingLink",
         "RevokeWorkerPortalAccess",
         "RunPtoAccrual",
-        "SaveMyTableLayout",
-        "ScheduleTableView",
         "SetDeskMemoryStatus",
         "SetWorkerAvailabilityPreference",
         "ShiftSwapRequests",
@@ -16912,12 +16972,10 @@
         "ShipmentInvoices",
         "ShipmentProfitability",
         "SkipWorkerChecklistItem",
-        "StartBulkEdit",
         "StartWorkerChecklist",
         "SubmitPerformanceReview",
         "TelematicsFormMappings",
         "TelematicsStatus",
-        "UndoMyBulkEdit",
         "UpcomingWorkerPto",
         "UpdateDotViolation",
         "UpdateEmploymentVerification",
@@ -16932,6 +16990,7 @@
         "VehiclePositions",
         "VerifyWorkerCredential",
         "WaiveWorkerTraining",
+        "WorkerActivity",
         "WorkerAvailabilityPreferences",
         "WorkerBenefitEnrollments",
         "WorkerChecklists",
@@ -16942,8 +17001,10 @@
         "WorkerDisciplinaryLadder",
         "WorkerDrugAlcoholFile",
         "WorkerEarningsSummary",
+        "WorkerEmploymentEventOptions",
         "WorkerEmploymentEvents",
         "WorkerFormSubmissions",
+        "WorkerHosClocks",
         "WorkerHosDailyLogs",
         "WorkerHosLogs",
         "WorkerHosState",
@@ -16963,11 +17024,10 @@
         "WorkerPtoPolicyAssignments",
         "WorkerPtoTable",
         "WorkerRecognitions",
+        "WorkerRecord",
         "WorkerSafetyEvents",
         "WorkerSafetyScorecard",
-        "WorkerSafetyViolations",
         "WorkerShiftAssignments",
-        "WorkerTable",
         "WorkerTotalCompensation",
         "WorkerTrainingRecords",
         "WorkerTrainingSummary"
@@ -17274,24 +17334,68 @@
           "path": "/shipments/:param/permits/"
         },
         {
-          "method": "GET",
-          "path": "/tables/"
-        },
-        {
-          "method": "POST",
-          "path": "/tables/:param/compose/"
-        },
-        {
           "method": "POST",
           "path": "/trailers/:param/locate/"
         },
         {
-          "method": "POST",
-          "path": "/workers/"
-        },
-        {
           "method": "PUT",
           "path": "/workers/:param/"
+        }
+      ]
+    },
+    {
+      "path": "/hr/workers/new",
+      "name": "New worker",
+      "requires": [
+        {
+          "resource": "worker",
+          "operation": "create"
+        }
+      ],
+      "operations": [
+        "CustomFieldFormFields",
+        "CustomFieldResourceTypes"
+      ],
+      "rest": [
+        {
+          "method": "GET",
+          "path": "/api-keys/"
+        },
+        {
+          "method": "GET",
+          "path": "/api-keys/:param/"
+        },
+        {
+          "method": "POST",
+          "path": "/google-maps/autocomplete/"
+        },
+        {
+          "method": "GET",
+          "path": "/integrations/:param/config/"
+        },
+        {
+          "method": "GET",
+          "path": "/integrations/:param/runtime-config/"
+        },
+        {
+          "method": "GET",
+          "path": "/integrations/catalog/"
+        },
+        {
+          "method": "GET",
+          "path": "/integrations/GoogleMaps/runtime-config/"
+        },
+        {
+          "method": "GET",
+          "path": "/integrations/samsara/workers/sync/drift/"
+        },
+        {
+          "method": "GET",
+          "path": "/integrations/samsara/workers/sync/readiness/"
+        },
+        {
+          "method": "POST",
+          "path": "/workers/"
         }
       ]
     },
@@ -18690,6 +18794,7 @@
         "VehicleInspections",
         "VehiclePositions",
         "WorkerFormSubmissions",
+        "WorkerHosClocks",
         "WorkerHosDailyLogs",
         "WorkerHosLogs",
         "WorkerHosState",

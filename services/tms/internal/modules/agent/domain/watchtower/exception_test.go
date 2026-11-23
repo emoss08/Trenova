@@ -17,7 +17,7 @@ func openItem() *Item {
 		ID:             pulid.MustNew("wt_"),
 		OrganizationID: pulid.MustNew("org_"),
 		BusinessUnitID: pulid.MustNew("bu_"),
-		SourceKind:     SourceServiceFailure,
+		SourceKind:     SourceKindServiceFailure,
 		SourceID:       "sf_1",
 		Severity:       SeverityWarning,
 		Status:         StatusOpen,
@@ -108,12 +108,16 @@ func TestResolve_ChecksTheCodeAndNote(t *testing.T) {
 		note string
 		ok   bool
 	}{
-		{name: "selectable code", code: ResolutionCarrierDelay, ok: true},
-		{name: "system code", code: ResolutionCleared},
+		{name: "selectable code", code: ResolutionCodeCarrierDelay, ok: true},
+		{name: "system code", code: ResolutionCodeCleared},
 		{name: "unknown code", code: ResolutionCode("Vanished")},
-		{name: "other without note", code: ResolutionOther, note: "  "},
-		{name: "other with note", code: ResolutionOther, note: "Phoned in", ok: true},
-		{name: "note too long", code: ResolutionFixed, note: strings.Repeat("x", MaxNoteLength+1)},
+		{name: "other without note", code: ResolutionCodeOther, note: "  "},
+		{name: "other with note", code: ResolutionCodeOther, note: "Phoned in", ok: true},
+		{
+			name: "note too long",
+			code: ResolutionCodeFixed,
+			note: strings.Repeat("x", MaxNoteLength+1),
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -139,10 +143,10 @@ func TestResolvedItemRefusesWorkUntilReopened(t *testing.T) {
 
 	item := openItem()
 	item.EscalationLevel = 2
-	require.NoError(t, item.Resolve(ResolutionFixed, "", pulid.MustNew("usr_"), testNow))
+	require.NoError(t, item.Resolve(ResolutionCodeFixed, "", pulid.MustNew("usr_"), testNow))
 	require.Error(t, item.Acknowledge(testNow))
 	require.Error(t, item.Assign(pulid.MustNew("usr_")))
-	require.Error(t, item.Resolve(ResolutionFixed, "", pulid.Nil, testNow))
+	require.Error(t, item.Resolve(ResolutionCodeFixed, "", pulid.Nil, testNow))
 
 	require.NoError(t, item.Reopen())
 	assert.Equal(t, StatusOpen, item.Status)

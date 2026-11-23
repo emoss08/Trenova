@@ -45,7 +45,7 @@ var runtimePolicySpecs = []runtimePolicySpec{
 			"only they read it.",
 	},
 	{
-		name:      "show_board",
+		name:      ShowBoardTool,
 		operation: permission.OpRead,
 		scope:     agenttooltrust.ToolScopeRun,
 		egress:    agent.EgressPersonal,
@@ -53,6 +53,16 @@ var runtimePolicySpecs = []runtimePolicySpec{
 		rationale: "Lays out an answer as a board in the caller's own conversation. It writes " +
 			"no business record, and every value on it is read again with the viewer's " +
 			"access when the board is opened.",
+	},
+	{
+		name:      ShowAnswerTool,
+		operation: permission.OpRead,
+		scope:     agenttooltrust.ToolScopeRun,
+		egress:    agent.EgressPersonal,
+		effect:    agenttooltrust.ToolEffectPresent,
+		rationale: "Answers in the caller's own conversation with the records the answer " +
+			"rests on, drawn as a board. It writes no business record, and every value on it " +
+			"is read again with the viewer's access when the board is opened.",
 	},
 	{
 		name:      "request_decision",

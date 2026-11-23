@@ -1,5 +1,4 @@
 import { appAdminLinks, appNavigationModules } from "@/config/app-navigation";
-import { recordPath } from "@/config/record-links";
 import { isNavGroup } from "@/config/navigation.types";
 import { normalizePath } from "@/lib/navigation-paths";
 import { navigationSections } from "@/lib/navigation-sections";
@@ -252,12 +251,4 @@ export function getPageTitle(pathname: string): string {
   }
 
   return generateFallbackTitle(pathname);
-}
-
-/**
- * The link that opens a worker's record from anywhere in the app. The page
- * reads the entity from the query string, so a tab can be named as well.
- */
-export function workerRecordHref(workerId: string, tab?: string): string {
-  return recordPath("worker", workerId, tab ? { tab } : undefined);
 }

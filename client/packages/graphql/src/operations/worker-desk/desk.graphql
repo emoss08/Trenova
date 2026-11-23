@@ -94,8 +94,12 @@ query DeskWorkerStanding($workerId: ID!) {
     concerns {
       severity
       code
-      headline
-      detail
+      subject
+      count
+      occurredAt
+      dueAt
+      daysUntil
+      stopsAssignment
     }
   }
 }

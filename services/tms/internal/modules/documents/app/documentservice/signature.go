@@ -105,6 +105,7 @@ func (s *Service) SetSignature(
 		BusinessUnitID: updated.BusinessUnitID,
 	},
 		auditservice.WithComment(signatureAuditComments[updated.SignatureStatus]),
+		auditservice.WithSubjectOf(updated),
 		auditservice.WithDiff(current, updated),
 		auditservice.WithMetadata(map[string]any{
 			metadataResourceID:   updated.ResourceID,

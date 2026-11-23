@@ -10,6 +10,7 @@ func All() []permissionspec.Bundle {
 		ediExchangeBundle(),
 		customersRecordsBundle(),
 		reportingReportsBundle(),
+		reportingAIUsageBundle(),
 		platformAssistantBundle(),
 		deskDecisionsBundle(),
 		deskCaseLeadBundle(),
@@ -126,6 +127,21 @@ func reportingReportsBundle() permissionspec.Bundle {
 	}
 }
 
+func reportingAIUsageBundle() permissionspec.Bundle {
+	return permissionspec.Bundle{
+		ID:          "reporting.ai-usage",
+		Module:      "Reporting",
+		Label:       "AI usage and spend",
+		Description: "See, run and export what the organization's model calls used and cost, by person, feature and model, in reports and AI control.",
+		Grants: []permissionspec.BundleGrant{
+			{
+				Resource:   permission.ResourceAIUsage,
+				Operations: []permission.Operation{permission.OpRead, permission.OpExport},
+			},
+		},
+	}
+}
+
 func platformAssistantBundle() permissionspec.Bundle {
 	return permissionspec.Bundle{
 		ID:          "platform.assistant",
@@ -199,7 +215,7 @@ func deskCaseLeadBundle() permissionspec.Bundle {
 		ID:          "desk.case-lead",
 		Module:      "Desk",
 		Label:       "Case lead",
-		Description: "See the cases other people own, give a case to someone and take one over.",
+		Description: "See the cases other people own, give a case to someone and take one over, and run and export the case reports.",
 		Grants: []permissionspec.BundleGrant{
 			deskRoom(),
 			permissionspec.ShareRecords(),
@@ -210,6 +226,7 @@ func deskCaseLeadBundle() permissionspec.Bundle {
 					permission.OpUpdate,
 					permission.OpAssign,
 					permission.OpManage,
+					permission.OpExport,
 				},
 			},
 		},

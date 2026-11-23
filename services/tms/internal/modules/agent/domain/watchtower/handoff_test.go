@@ -23,7 +23,7 @@ func TestHandTo_StartsTheExceptionAndRefusesAResolvedOne(t *testing.T) {
 	require.NotNil(t, item.AcknowledgedAt)
 
 	resolved := openItem()
-	require.NoError(t, resolved.Resolve(ResolutionFixed, "", pulid.Nil, testNow))
+	require.NoError(t, resolved.Resolve(ResolutionCodeFixed, "", pulid.Nil, testNow))
 	require.Error(
 		t,
 		resolved.HandTo(pulid.MustNew("adef_"), pulid.MustNew("ar_"), pulid.Nil, testNow),

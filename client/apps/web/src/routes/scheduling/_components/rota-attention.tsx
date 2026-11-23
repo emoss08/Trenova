@@ -18,12 +18,12 @@ import {
   Repeat01Icon,
 } from "@trenova/shared/components/icons";
 import { useMemo, useState } from "react";
-import { workerRecordHref } from "@/lib/route-utils";
+import { workerPath } from "@/routes/worker/use-worker-state";
 
 const SHOWN_LIMIT = 6;
 
 function workerHref(workerId: string): string {
-  return workerRecordHref(workerId);
+  return workerPath(workerId, { tab: "time", view: "schedule" });
 }
 
 type RotaAttentionProps = {

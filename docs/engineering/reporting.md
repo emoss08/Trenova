@@ -61,9 +61,29 @@ edges from the model, and a tag option is written only where the derived default
 graph error (an edge to a model that is not reportable, a bad pick, two entities with one key)
 is a `catalog` error and the process does not start.
 
-81 models are reportable, by category: Accounting 16, Billing 20, Configuration 2, Equipment 10,
-Freight 2, Operations 6, Parties 13, Payroll 10, Reporting 2. `reportaccess/kinds.go` has one row
-for each (see [Access](#access)).
+86 models are reportable, by category: Accounting 16, Billing 20, Configuration 2, Desk 5,
+Equipment 10, Freight 2, Operations 6, Parties 13, Payroll 10, Reporting 2. `reportaccess/kinds.go`
+has one row for each (see [Access](#access)). Desk holds the people of an organization
+(`person`), Watchtower items (`item`), the resolution ledger (`resolution`), case owners (`owner`)
+and the daily AI usage rollup (`daily_usage`).
+
+### People
+
+A report names a person through `tenant.Person` (`person`), a model over the
+`organization_people` view: a membership joined to its user, keyed by the user id and carrying the
+membership's `organization_id` and `business_unit_id`. Never relate a reportable model to
+`tenant.User`: `users` carries only a business unit, so keel refuses the join (joined tables must
+share their tenant columns) and a join that did go through would reach people of other
+organizations in the business unit. Through the view, keel's own tenancy limits every join to
+members of the caller's organization, with no policy rule; the view is `security_invoker`, so the
+reporting pool reads `users` and the memberships under their own row-level security. A person who
+has left the organization is no longer in the view, and work they did reads as the column's
+`nullText`. `person` exposes the name (in the user resource's reference view, so a reader of a
+linking record sees it without user read), job title, account status and when they joined;
+credentials, sessions, pictures, contact details and preferences are not in the view. A
+relation is `Assignee *tenant.Person` `keel:"belongs:assignee_id"`; group by its `name` beside a
+hidden dimension on its `id`, so two people with one name stay apart, and give the name a
+`nullText` ("Unassigned").
 
 ### Keys
 
@@ -144,7 +164,7 @@ version it was saved against; a definition stores the version it was last checke
 (`kinds.go`). It fails, and with it `reporting.Service` and the process, when an entity has no
 row, names an unregistered resource or names an ownership column the table lacks.
 
-A row says three things:
+A row says up to four things:
 
 - `resource`: the kind whose grant decides the entity (`"customer": {resource:
   permission.ResourceCustomer}`);
@@ -152,7 +172,18 @@ A row says three things:
   It is decided by the parent's grant, never uses a reference view, and its protected-group path
   is prefixed with the parent's edge to it;
 - `ownership`: the column an `own` data scope narrows by (`shipment`, `order` and
-  `report_definition` name `owner_id`).
+  `report_definition` name `owner_id`);
+- `requires`: an operation on the resource the entity needs beyond read. The Watchtower
+  entities (`item`, `resolution`, `owner`) require `watchtower:manage` ("See every case"), the
+  permission the Desk asks before it shows anyone else's cases, so a person who sees only their
+  own cases cannot open, build, run or schedule a report over everyone's. `New` fails when the
+  operation is not declared on the resource. Because a report cannot apply the Desk's per-kind
+  visibility to free text, these entities are work metrics only: titles, summaries, notes,
+  labels, paths, facts and every JSON column are `noreport`. A run, schedule or download needs
+  each kind's `export` as well (export mode), so Watchtower declares an Export operation
+  ("Run, schedule and download reports over Watchtower items…"), granted with See every case by
+  `desk.case-lead`. The usage dataset (`daily_usage`) is decided by `ai_usage` (AI usage and
+  spend: View, Export), the resource AI control's usage views read, never by `ai_provider`.
 
 The resource also decides the plan: a table belongs to the add-on of its resource's feature,
 so a table of an add-on must map to a resource of that add-on (`invoice_state`, factoring
@@ -172,6 +203,7 @@ per entity, field and edge the request touches.
 | `needs_field_group` | the field is in a protected field group the caller's role does not grant |
 | `needs_export` | export mode, and the caller reads the kind without its `export` |
 | `own_scope_unsupported` | the caller's scope on the kind is `own` and the kind has no ownership column |
+| `needs_operation` | the entity's kind `requires` an operation the caller does not hold; decided for the entity, every field and edge on it, and every edge into it, reference views included |
 
 - **What the plan includes** ([permissions.md](permissions.md#what-the-plan-includes)) is
   decided first, from the same batch read. An entity is `not_on_plan` when its kind's
@@ -209,6 +241,12 @@ per entity, field and edge the request touches.
   longer has against it and `unavailable-fields-alert.tsx` lists it as "… is part of the
   <Add-on> add-on, which is not on your plan". Plan-withheld refs are never offered for
   removal: adding the add-on is the fix, and the report keeps them.
+- **An entity that needs an operation the caller lacks is not offered.** `CatalogFor` leaves it
+  out (not in `WithheldByPlan`, since adding an add-on would not help), and `CannedLibrary`
+  leaves out every canned report that reaches one (`Access.MissingOperation` over its reach).
+  Forking or customizing one is refused by `RequireCannedAvailable` ("\"Cases Handled by
+  Person\" needs the \"See every case\" permission on Watchtower"), and the engine refuses a
+  preview, run or schedule of it with the same reason.
 - **Canned reports carry their availability.** `Service.CannedLibrary` returns every canned
   report with `available` and, when not, the `PlanDenial` of the first thing it reads that is
   off. What a definition reads (`reportaccess.Reach`: the root entity and every edge and field
@@ -219,7 +257,7 @@ per entity, field and edge the request touches.
   plan change is seen on the next request (within the plan gate's own cache) and nothing
   about the plan is cached by reporting. The library draws an unavailable report as a locked
   card by name (`PlanLockedNotice`), the dashboard picker does not offer it, a tile pointing at
-  it draws a locked card, and running, customizing (`RequireCannedOnPlan`) or exploring it is
+  it draws a locked card, and running, customizing (`RequireCannedAvailable`) or exploring it is
   refused with `PLAN_RESTRICTED`. On a base-only plan the reports built on add-on tables are
   locked (13 of 43 by their tables alone; more as field features are declared on base tables,
   `TestCannedLibrary_ABaseOnlyPlanLocksEveryReportThatReadsAnAddOn` derives the count from the
@@ -273,7 +311,10 @@ bumps after a write through it commits
 session setting rather than an argument, which is why a narrowed run never reads the cache. The
 TTL (`resultCache.ttl`, 15 min) is the backstop for writes keel does not see.
 
-The runners have no rollup router, so every report reads its base tables. The detention rollups
+The runners have no rollup router, so every report reads its base tables. The one stored
+projection that is itself reportable is `ai_usage_daily` (`daily_usage`), a plain table the AI
+analytics refresh folds ([ai-analytics.md](ai-analytics.md#daily-usage)), so usage reports read a
+row per person per feature per day instead of every model call. The detention rollups
 ([backend/data-access.md](backend/data-access.md#rollups)) are bucketed in each organization's own
 zone, which keel's router refuses, and are read directly by detention intelligence. `Primary: true`: reports run on the primary, not a replica.
 

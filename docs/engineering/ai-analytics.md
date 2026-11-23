@@ -45,7 +45,7 @@ agent runtime    ─▶ agent_runs / assistant_turns (status, fingerprint.stoppe
 | Routing change | `airouting.PlanRouteTo`, `AIProviderService.RouteTask`, mutation `routeAITask` |
 | GraphQL | `schema/aianalytics.graphqls`, `resolver/aianalyticsresolver` (permission `AgentRun` Read) |
 | Web | `routes/agent-control/_components/analytics/`, query keys `queries.aiAnalytics` |
-| Migrations | `20261231009250_ai_analytics.tx`, `20261231009260_ai_analytics_indexes`, `20261231009290_ai_analytics_refresh_indexes`, `20261231009950_ai_work_unit_cache_tokens.tx`, `20261231010210_ai_work_unit_advisor.tx` |
+| Migrations | `20261231023930_desk_reports` (daily usage), `20261231009250_ai_analytics.tx`, `20261231009260_ai_analytics_indexes`, `20261231009290_ai_analytics_refresh_indexes`, `20261231009950_ai_work_unit_cache_tokens.tx`, `20261231010210_ai_work_unit_advisor.tx` |
 | Development seed | `seeds/development/38_ai_analytics.go` |
 
 ## What is recorded
@@ -142,6 +142,35 @@ rebuilds the last 30 days from the sources.
   the advisor's cost; `advisor_cost_usd` is its part. Migration
   `20261231010210_ai_work_unit_advisor` added them and set every organization's
   `refreshed_through` to 0, so the next refresh rebuilds the retention window with them.
+
+## Daily usage
+
+`ai_usage_daily` (`aiusage.DailyUsage`, reportable as `daily_usage`) adds model calls up by the
+organization's local day, the person they were made for, feature, surface, model and provider
+protocol: calls, failed calls, calls without a price (so an unpriced call never reads as free),
+uncached input, cache read, cache write, output, reasoning and advisor tokens, total tokens and
+the estimated cost of the priced calls. It is what the Desk usage reports read, instead of
+`ai_usage_records`, which holds every attempt.
+
+- **Folded by the refresh.** `RefreshDailyUsage` runs in each refresh chunk after the provider
+  hours, under the same tenant advisory lock, and recomputes every whole local day the chunk
+  touches from all the calls on it (`dailyUsageSource`; the organization's zone through
+  `rollupread.OrganizationZone`). A chunk boundary inside a day never splits its sums, and the
+  overlap only recomputes the current day. The id is `aiud_` and the md5 of the key, so the fold
+  is an upsert that rewrites a row only when a sum changed (`IS DISTINCT FROM`).
+- **Tokens** follow the unit rules: input is stored uncached, with the OpenAI protocols' cached
+  part taken out. Total tokens are uncached input, cache reads, cache writes, output and the
+  advisor's tokens; reasoning tokens are part of output and are not added again. The cost
+  includes the advisor's.
+- **Retention.** 25 months (`aiusage.DailyRetentionDays`), pruned with the rest of the rollup at
+  most once an hour. `ai_usage_records` itself is not pruned, so the rollup can be rebuilt.
+- **Backfill.** Migration `20261231023930_desk_reports` built it from every usage record. A
+  change of the organization's time zone is not rebuilt: days already folded keep the old
+  zone's boundaries.
+- **Index.** `idx_ai_usage_daily_tenant_date` serves the reports' day window and the prune.
+- **Who reads it.** `ai_usage` (AI usage and spend), the permission `aiUsageSummary`,
+  `aiUsageDaily` and `aiUsageFeatures` take too. The Analytics tab stays on agent run read: it
+  breaks work down by model, provider, agent and task, never by person.
 
 ## The query
 

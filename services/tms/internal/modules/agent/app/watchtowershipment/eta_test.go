@@ -62,7 +62,7 @@ func (p *recordingProjector) Resolve(
 	kind watchtower.SourceKind,
 	sourceID string,
 ) {
-	if kind == watchtower.SourceEtaAtRisk {
+	if kind == watchtower.SourceKindEtaAtRisk {
 		p.resolved = append(p.resolved, sourceID)
 	}
 }
@@ -105,7 +105,7 @@ func TestDescribeEtaRisks_OneItemPerShipmentForTheWorstStop(t *testing.T) {
 	items := DescribeEtaRisks(tenant, []*stopetaports.AttentionStop{risky, late}, etaTestNow)
 	require.Len(t, items, 1)
 	item := items[0]
-	assert.Equal(t, watchtower.SourceEtaAtRisk, item.SourceKind)
+	assert.Equal(t, watchtower.SourceKindEtaAtRisk, item.SourceKind)
 	assert.Equal(t, shipmentID.String(), item.SourceID)
 	assert.Equal(t, watchtower.SeverityCritical, item.Severity)
 	assert.Equal(t, "Projected late on PRO-7", item.Title)

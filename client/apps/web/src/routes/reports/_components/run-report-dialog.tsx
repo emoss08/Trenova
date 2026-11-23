@@ -18,6 +18,7 @@ import {
 } from "@trenova/shared/components/ui/select";
 import { useRunReport } from "@/hooks/use-reports";
 import { graphQLErrorMessage } from "@trenova/shared/lib/graphql";
+import type { ReportParameterOptions } from "@/lib/report-parameter-options";
 import { REPORT_FORMAT_CHOICES, type ReportParameterDef } from "@/types/report";
 import { useCallback, useMemo, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
@@ -40,6 +41,8 @@ type RunReportDialogProps = {
   reportName: string;
   defaultFormat: string;
   parameters: ReportParameterDef[];
+  /** The named options of the parameters that have allowed values (`useReportParameterOptions`). */
+  parameterOptions?: ReportParameterOptions;
   /** Seeds the form with values the caller already collected (e.g. Explore). */
   initialParams?: Record<string, unknown>;
 };
@@ -51,6 +54,7 @@ export function RunReportDialog({
   reportName,
   defaultFormat,
   parameters,
+  parameterOptions,
   initialParams,
 }: RunReportDialogProps) {
   const t = useT();
@@ -170,6 +174,7 @@ export function RunReportDialog({
               key={param.name}
               param={param}
               value={paramValues[param.name]}
+              options={parameterOptions?.[param.name]}
               onChange={(value) => handleParamChange(param.name, value)}
             />
           ))}

@@ -446,11 +446,11 @@ func (s *Service) resolveWatchtowerItem(
 
 func aiSourceKind(kind watchtower.SourceKind) bool {
 	switch kind {
-	case watchtower.SourceInsight,
-		watchtower.SourceAgentProposal,
-		watchtower.SourceAgentPlan,
-		watchtower.SourceAgentRunFailed,
-		watchtower.SourceAgentException:
+	case watchtower.SourceKindInsight,
+		watchtower.SourceKindAgentProposal,
+		watchtower.SourceKindAgentPlan,
+		watchtower.SourceKindAgentRunFailed,
+		watchtower.SourceKindAgentException:
 		return true
 	default:
 		return false
@@ -474,7 +474,7 @@ func (s *Service) creditWatchtowerSource(
 	)
 
 	switch item.SourceKind {
-	case watchtower.SourceInsight:
+	case watchtower.SourceKindInsight:
 		entity, iErr := s.insights.GetByID(ctx, insightports.GetInsightByIDRequest{
 			ID:         sourceID,
 			TenantInfo: tenant,
@@ -489,7 +489,7 @@ func (s *Service) creditWatchtowerSource(
 		resolved.providerID = entity.ProviderID
 
 		return
-	case watchtower.SourceAgentProposal:
+	case watchtower.SourceKindAgentProposal:
 		proposal, pErr := s.proposals.GetByID(ctx, agentproposalports.GetAgentProposalByIDRequest{
 			ID:         sourceID,
 			TenantInfo: &tenant,
@@ -499,7 +499,7 @@ func (s *Service) creditWatchtowerSource(
 			break
 		}
 		runID = proposal.RunID
-	case watchtower.SourceAgentPlan:
+	case watchtower.SourceKindAgentPlan:
 		plan, pErr := s.plans.GetByID(ctx, agentplanports.GetAgentPlanByIDRequest{
 			ID:         sourceID,
 			TenantInfo: tenant,
@@ -509,9 +509,9 @@ func (s *Service) creditWatchtowerSource(
 			break
 		}
 		runID = plan.RunID
-	case watchtower.SourceAgentRunFailed:
+	case watchtower.SourceKindAgentRunFailed:
 		runID = sourceID
-	case watchtower.SourceAgentException:
+	case watchtower.SourceKindAgentException:
 		exception, xErr := s.exceptions.GetByID(
 			ctx,
 			agentexceptionports.GetAgentExceptionByIDRequest{

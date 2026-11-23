@@ -1,55 +1,28 @@
-import { useT } from "@trenova/shared/i18n/use-t";
-import { formatPtoDays } from "@trenova/shared/lib/pto";
-import { InfoPopover } from "@/components/info-popover";
-import { usePermission } from "@/hooks/use-permission";
 import { ptoTypeChoices } from "@/lib/choices";
 import {
-  fetchWorkerPtoBalances,
-  fetchWorkerPtoLedger,
-  fetchWorkerPtoPolicyAssignments,
   PTO_BALANCE_SUMMARY_KEY,
-  runPtoAccrual,
   WORKER_PTO_ASSIGNMENTS_KEY,
   WORKER_PTO_BALANCES_KEY,
   WORKER_PTO_LEDGER_KEY,
-  type PTOPolicyAssignment,
   type WorkerPTOBalanceView,
-  type WorkerPTOLedgerEntry,
 } from "@/lib/graphql/pto-policy";
+import { worker } from "@/lib/queries/worker";
+import { useQueryClient } from "@tanstack/react-query";
 import { Badge } from "@trenova/shared/components/ui/badge";
-import { Button } from "@trenova/shared/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@trenova/shared/components/ui/dropdown-menu";
-import { Skeleton } from "@trenova/shared/components/ui/skeleton";
-import { formatUnixDateMedium } from "@trenova/shared/lib/date";
+import { useT } from "@trenova/shared/i18n/use-t";
+import { formatUnixMonthDay } from "@trenova/shared/lib/date";
+import { formatPtoDayTotal } from "@trenova/shared/lib/pto";
 import { cn } from "@trenova/shared/lib/utils";
-import { Operation, Resource } from "@trenova/shared/types/permission";
-import { PTO_LEDGER_ENTRY_LABELS } from "@trenova/shared/types/pto-policy";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import {
-  CalendarSyncIcon,
-  DotsHorizontalIcon,
-  Scales01Icon,
-  ShieldTickIcon,
-} from "@trenova/shared/components/icons";
-import { useCallback, useMemo, useState } from "react";
-import { toast } from "@trenova/shared/components/ui/toast";
-import { AdjustBalanceDialog } from "./adjust-balance-dialog";
-import { AssignPolicyDialog } from "./assign-policy-dialog";
-
-const LEDGER_PAGE_SIZE = 25;
+import { useCallback, useEffect, useState, type CSSProperties } from "react";
 
 export function ptoTypeLabel(ptoType: string): string {
   return ptoTypeChoices.find((choice) => choice.value === ptoType)?.label ?? ptoType;
 }
 
+/**
+ * Everything one worker's time off figures are read from: the balances and ledger, the policy
+ * assignments, the request history, the roster's balance summary and the page's overview strip.
+ */
 export function useWorkerPtoInvalidation(workerId: string) {
   const queryClient = useQueryClient();
   return useCallback(async () => {
@@ -58,400 +31,188 @@ export function useWorkerPtoInvalidation(workerId: string) {
       queryClient.invalidateQueries({ queryKey: [WORKER_PTO_LEDGER_KEY, workerId] }),
       queryClient.invalidateQueries({ queryKey: [WORKER_PTO_ASSIGNMENTS_KEY, workerId] }),
       queryClient.invalidateQueries({ queryKey: [PTO_BALANCE_SUMMARY_KEY] }),
+      queryClient.invalidateQueries({ queryKey: worker.ptoHistory(workerId).queryKey }),
+      queryClient.invalidateQueries({ queryKey: worker.overview(workerId).queryKey }),
     ]);
   }, [queryClient, workerId]);
 }
 
-export function WorkerPTOBalances({ workerId }: { workerId: string }) {
-  const t = useT();
+/** The most days a cap bar draws one tick per day for; a longer cap would be a solid comb. */
+const MAX_DAY_TICKS = 40;
 
-  const { allowed: canAssign } = usePermission(Resource.PTOPolicy, Operation.Assign);
-  const { allowed: canManage } = usePermission(Resource.WorkerPTO, Operation.Manage);
-  const invalidate = useWorkerPtoInvalidation(workerId);
-  const [assignOpen, setAssignOpen] = useState(false);
-  const [adjustOpen, setAdjustOpen] = useState(false);
+export type CapBar = {
+  /** Days the full width of the bar stands for. */
+  scale: number;
+  /** Share of the bar, 0 to 100, for days free to take now. */
+  availablePercent: number;
+  /** Share of the bar for days held by requests awaiting a decision, hatched. */
+  pendingPercent: number;
+  /** The balance stands above the cap, so the bar is drawn longer than the cap. */
+  overCap: boolean;
+  /** One tick per day of the cap, or null when there is no cap or it is too long to tick. */
+  ticks: number | null;
+};
 
-  const balancesQuery = useQuery({
-    queryKey: [WORKER_PTO_BALANCES_KEY, workerId],
-    queryFn: ({ signal }) => fetchWorkerPtoBalances(workerId, { signal }),
-  });
-  const assignmentsQuery = useQuery({
-    queryKey: [WORKER_PTO_ASSIGNMENTS_KEY, workerId],
-    queryFn: ({ signal }) => fetchWorkerPtoPolicyAssignments(workerId, { signal }),
-  });
-
-  const balances = useMemo(() => balancesQuery.data ?? [], [balancesQuery.data]);
-  const assignments = useMemo(() => assignmentsQuery.data ?? [], [assignmentsQuery.data]);
-  const current = useMemo(
-    () => assignments.find((assignment) => assignment.effectiveTo == null) ?? null,
-    [assignments],
-  );
-
-  const accrual = useMutation({
-    mutationFn: () => runPtoAccrual({ workerId }),
-    onSuccess: (result) => {
-      toast.success(t("Accrual run complete"), {
-        description: t(
-          "{0} posted, {1} capped, {2} already posted.",
-          result.entriesPosted,
-          result.entriesCapped,
-          result.entriesSkipped,
-        ),
-      });
-      void invalidate();
-    },
-    onError: (error: Error) => {
-      toast.error(t("Accrual run failed"), { description: error.message });
-    },
-  });
-
-  if (balancesQuery.isLoading || assignmentsQuery.isLoading) {
-    return (
-      <div className="flex flex-col gap-3">
-        <Skeleton className="h-10 w-full" />
-        <Skeleton className="h-24 w-full" />
-      </div>
-    );
-  }
-
-  return (
-    <div className="flex flex-col gap-4">
-      <div className="flex items-start justify-between gap-2">
-        <div>
-          <div className="flex items-center gap-1.5">
-            <h3 className="text-sm font-semibold">{t("Balances")}</h3>
-            <InfoPopover title={t("Balances")}>
-              <p>
-                {t(
-                  "Kept in days and built from the ledger: accruals post from the policy on its schedule, approved time off draws down, adjustments correct by hand. Available is the balance less requests still awaiting a decision.",
-                )}
-              </p>
-              <p>
-                {t(
-                  "A cap on the policy, or on the worker's tenure tier, stops accrual above it. A policy marked informational shows the figures without holding requests to them.",
-                )}
-              </p>
-            </InfoPopover>
-          </div>
-          <PolicyChip assignment={current} />
-        </div>
-        <div className="flex items-center gap-2">
-          {canAssign ? (
-            <Button size="sm" variant="outline" onClick={() => setAssignOpen(true)}>
-              <ShieldTickIcon className="size-3.5" />
-              {current ? t("Change policy") : t("Assign policy")}
-            </Button>
-          ) : null}
-          {canManage && current ? (
-            <DropdownMenu>
-              <DropdownMenuTrigger
-                render={
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="size-8"
-                    aria-label={t("Balance actions")}
-                  >
-                    <DotsHorizontalIcon />
-                  </Button>
-                }
-              />
-              <DropdownMenuContent side="bottom" align="end">
-                <DropdownMenuGroup>
-                  <DropdownMenuLabel>{t("Manage")}</DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    title={t("Adjust balance")}
-                    description={t("Post a manual correction")}
-                    onClick={() => setAdjustOpen(true)}
-                  />
-                  <DropdownMenuItem
-                    title={t("Run accrual now")}
-                    description={t("Post anything due since the last run")}
-                    onClick={() => accrual.mutate()}
-                  />
-                </DropdownMenuGroup>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          ) : null}
-        </div>
-      </div>
-
-      {current ? (
-        <BalanceCards balances={balances} />
-      ) : (
-        <div className="rounded-lg border border-dashed p-5 text-center">
-          <Scales01Icon className="text-muted-foreground mx-auto size-6" />
-          <p className="mt-2 text-sm font-medium">{t("No PTO policy assigned")}</p>
-          <p className="text-muted-foreground mx-auto mt-1 max-w-md text-xs">
-            {t(
-              "Time off is not tracked against a balance until this worker is enrolled in a policy.",
-            )}
-          </p>
-        </div>
-      )}
-
-      {current ? <LedgerTable workerId={workerId} /> : null}
-
-      {assignments.length > 1 ? <AssignmentHistory assignments={assignments} /> : null}
-
-      <AssignPolicyDialog
-        open={assignOpen}
-        onOpenChange={setAssignOpen}
-        workerId={workerId}
-        currentPolicyId={current?.ptoPolicyId}
-        onAssigned={() => void invalidate()}
-      />
-      <AdjustBalanceDialog
-        open={adjustOpen}
-        onOpenChange={setAdjustOpen}
-        workerId={workerId}
-        balances={balances}
-        onAdjusted={() => void invalidate()}
-      />
-    </div>
-  );
+/**
+ * A balance against its cap: what is free now and what pending requests hold, as shares of the
+ * cap (or of the balance when the policy sets no cap). Neither part draws below zero.
+ */
+export function capBarParts({
+  balanceDays,
+  pendingDays,
+  availableDays,
+  maxBalanceDays,
+}: Pick<
+  WorkerPTOBalanceView,
+  "balanceDays" | "pendingDays" | "availableDays" | "maxBalanceDays"
+>): CapBar {
+  const available = Math.max(0, Number(availableDays) || 0);
+  const pending = Math.max(0, Number(pendingDays) || 0);
+  const balance = Math.max(0, Number(balanceDays) || 0);
+  const cap = maxBalanceDays ? Number(maxBalanceDays) : 0;
+  const held = available + pending;
+  const hasCap = Number.isFinite(cap) && cap > 0;
+  const scale = hasCap ? Math.max(cap, held) : Math.max(held, balance, 1);
+  return {
+    scale,
+    availablePercent: (available / scale) * 100,
+    pendingPercent: (pending / scale) * 100,
+    overCap: hasCap && held > cap,
+    ticks: hasCap && cap <= MAX_DAY_TICKS ? Math.round(scale) : null,
+  };
 }
 
-function PolicyChip({ assignment }: { assignment: PTOPolicyAssignment | null }) {
-  const t = useT();
-
-  if (!assignment?.ptoPolicy) {
-    return <p className="text-muted-foreground text-xs">{t("Not enrolled in a policy.")}</p>;
-  }
-  return (
-    <p className="text-muted-foreground flex items-center gap-1.5 text-xs">
-      <Badge variant="neutral" className="px-1.5 py-0 text-2xs">
-        {assignment.ptoPolicy.code}
-      </Badge>
-      {t(
-        "{0} · since {1}{2}",
-        assignment.ptoPolicy.name,
-        formatUnixDateMedium(assignment.effectiveFrom),
-        !assignment.ptoPolicy.enforceBalance ? ` ${t("· informational")}` : "",
-      )}
-    </p>
-  );
+function oneDecimal(value: string): string {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed.toFixed(1) : value;
 }
 
-function BalanceCards({ balances }: { balances: WorkerPTOBalanceView[] }) {
-  const t = useT();
+const TICKS_STYLE: CSSProperties = {
+  backgroundImage:
+    "repeating-linear-gradient(to right, transparent 0, transparent calc(var(--tick) - 1px), var(--color-card) calc(var(--tick) - 1px), var(--color-card) var(--tick))",
+};
 
+const PENDING_STYLE: CSSProperties = {
+  backgroundImage:
+    "repeating-linear-gradient(135deg, var(--color-ink) 0, var(--color-ink) 1px, transparent 1px, transparent 4px)",
+};
+
+/**
+ * The tracked balances as one joined strip: each type's days free now, a cap bar with the part
+ * pending requests hold hatched, and the figures the balance is built from.
+ */
+export function WorkerPTOBalances({ balances }: { balances: readonly WorkerPTOBalanceView[] }) {
+  const t = useT();
   const tracked = balances.filter((balance) => balance.tracked);
   if (tracked.length === 0) {
     return (
-      <p className="text-muted-foreground text-xs">
-        {t("The assigned policy does not track any PTO type yet.")}
+      <p className="rounded-lg border bg-card px-4 py-3 text-xs text-muted-foreground">
+        {t("The policy does not track any type of time off yet.")}
       </p>
     );
   }
   return (
-    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-3">
-      {tracked.map((balance) => (
-        <BalanceCard key={balance.ptoType} balance={balance} />
-      ))}
-    </div>
+    <section aria-label={t("Balances")} className="@container/balances rounded-lg border bg-card">
+      <div className="grid grid-cols-1 @min-[44rem]/balances:auto-cols-fr @min-[44rem]/balances:grid-flow-col">
+        {tracked.map((balance) => (
+          <BalanceCell key={balance.ptoType} balance={balance} />
+        ))}
+      </div>
+    </section>
   );
 }
 
-function BalanceCard({ balance }: { balance: WorkerPTOBalanceView }) {
+function BalanceCell({ balance }: { balance: WorkerPTOBalanceView }) {
   const t = useT();
-
-  const max = balance.maxBalanceDays ? Number(balance.maxBalanceDays) : null;
-  const ratio = max && max > 0 ? Math.min(1, Math.max(0, Number(balance.balanceDays) / max)) : null;
+  const [drawn, setDrawn] = useState(false);
+  useEffect(() => {
+    if (drawn) return;
+    const frame = requestAnimationFrame(() => setDrawn(true));
+    return () => cancelAnimationFrame(frame);
+  }, [drawn]);
+  const bar = capBarParts(balance);
   const available = Number(balance.availableDays);
+  const name = t(ptoTypeLabel(balance.ptoType));
+  const pending = Number(balance.pendingDays) || 0;
+  const line = [
+    t("{0} balance", oneDecimal(balance.balanceDays)),
+    pending > 0 ? t("{0} pending", formatPtoDayTotal(balance.pendingDays)) : null,
+    t("{0} accrued", formatPtoDayTotal(balance.accruedYtdDays)),
+    t("{0} used this year", formatPtoDayTotal(balance.usedYtdDays)),
+  ].filter((part): part is string => part !== null);
 
   return (
     <div
-      className="bg-muted/30 rounded-lg border p-3"
       data-testid={`pto-balance-${balance.ptoType}`}
+      className="flex min-w-0 flex-col border-border-subtle px-4 pt-3 pb-3.5 not-first:border-t @min-[44rem]/balances:not-first:border-t-0 @min-[44rem]/balances:not-first:border-l"
     >
-      <div className="flex items-center justify-between">
-        <p className="text-muted-foreground text-xs font-medium">
-          {t(ptoTypeLabel(balance.ptoType))}
-        </p>
-        {!balance.enforced ? (
-          <Badge variant="neutral" appearance="outline" className="px-1.5 py-0 text-2xs">
-            {t("Not enforced")}
-          </Badge>
+      <div className="flex items-baseline justify-between gap-2">
+        <span className="text-xs font-medium text-foreground-subtle">{name}</span>
+        <span className="flex items-center gap-1.5 text-2xs text-foreground-subtle tabular-nums">
+          {balance.enforced ? null : <Badge variant="neutral">{t("Not enforced")}</Badge>}
+          {balance.maxBalanceDays
+            ? t("cap {0}", formatPtoDayTotal(balance.maxBalanceDays))
+            : t("no cap")}
+        </span>
+      </div>
+      <div className="mt-1 mb-2.5 flex items-baseline gap-2">
+        <b
+          className={cn(
+            "text-2xl font-semibold tabular-nums",
+            available < 0 && "text-danger-foreground",
+          )}
+        >
+          {oneDecimal(balance.availableDays)}
+        </b>
+        <span className="text-muted-foreground">{t("days available")}</span>
+      </div>
+      <div
+        role="img"
+        aria-label={
+          balance.maxBalanceDays
+            ? t(
+                "{0} available of a {1} day cap, {2} pending.",
+                oneDecimal(balance.availableDays),
+                formatPtoDayTotal(balance.maxBalanceDays),
+                formatPtoDayTotal(balance.pendingDays),
+              )
+            : t(
+                "{0} available, {1} pending.",
+                oneDecimal(balance.availableDays),
+                formatPtoDayTotal(balance.pendingDays),
+              )
+        }
+        className="relative flex h-2.5 overflow-hidden rounded-xs bg-surface-active"
+        style={bar.ticks ? ({ "--tick": `calc(100% / ${bar.ticks})` } as CSSProperties) : undefined}
+      >
+        <span
+          className="h-full origin-left bg-ink transition-[flex-basis,transform] duration-320 ease-settle motion-reduce:transition-none"
+          style={{
+            flex: `0 0 ${bar.availablePercent}%`,
+            transform: `scaleX(${drawn ? 1 : 0})`,
+          }}
+        />
+        {bar.pendingPercent > 0 ? (
+          <span
+            data-slot="cap-bar-pending"
+            className="h-full bg-card ring-1 ring-ink transition-[flex-basis] duration-320 ease-settle ring-inset motion-reduce:transition-none"
+            style={{ ...PENDING_STYLE, flex: `0 0 ${bar.pendingPercent}%` }}
+          />
+        ) : null}
+        {bar.ticks ? (
+          <span aria-hidden className="pointer-events-none absolute inset-0" style={TICKS_STYLE} />
         ) : null}
       </div>
-      <p
-        className={cn(
-          "mt-1 text-xl font-semibold tabular-nums",
-          available < 0 && "text-destructive",
-        )}
-      >
-        {formatPtoDays(balance.availableDays)}
-        <span className="text-muted-foreground ml-1 text-xs font-normal">available</span>
-      </p>
-      <dl className="text-muted-foreground mt-2 grid grid-cols-2 gap-x-3 gap-y-0.5 text-xs">
-        <dt>{t("Balance")}</dt>
-        <dd className="text-right tabular-nums">{formatPtoDays(balance.balanceDays)}</dd>
-        <dt>{t("Pending")}</dt>
-        <dd className="text-right tabular-nums">{formatPtoDays(balance.pendingDays)}</dd>
-        <dt>{t("Accrued YTD")}</dt>
-        <dd className="text-right tabular-nums">{formatPtoDays(balance.accruedYtdDays)}</dd>
-        <dt>{t("Used YTD")}</dt>
-        <dd className="text-right tabular-nums">{formatPtoDays(balance.usedYtdDays)}</dd>
-      </dl>
-      {ratio !== null ? (
-        <div className="mt-2">
-          <div className="bg-muted h-1.5 w-full overflow-hidden rounded-full">
-            <div className="bg-primary h-full rounded-full" style={{ width: `${ratio * 100}%` }} />
-          </div>
-          <p className="text-muted-foreground mt-0.5 text-2xs">
-            {t("Cap {0} days", formatPtoDays(balance.maxBalanceDays ?? "0"))}
-          </p>
-        </div>
-      ) : null}
+      <p className="mt-2 text-xs text-muted-foreground tabular-nums">{line.join(" · ")}</p>
       {balance.nextAccrual ? (
-        <p className="text-muted-foreground mt-2 flex items-center gap-1 text-xs">
-          <CalendarSyncIcon className="size-3" />
+        <p className="mt-0.5 text-xs text-muted-foreground tabular-nums">
           {t(
             "+{0} on {1}",
-            formatPtoDays(balance.nextAccrual.nominalDays),
-            formatUnixDateMedium(balance.nextAccrual.effectiveAt),
+            formatPtoDayTotal(balance.nextAccrual.nominalDays),
+            formatUnixMonthDay(balance.nextAccrual.effectiveAt),
           )}
         </p>
       ) : null}
-    </div>
-  );
-}
-
-function entryTone(entry: WorkerPTOLedgerEntry): string {
-  if (Number(entry.amountDays) < 0) return "text-destructive";
-  if (entry.entryType === "Adjustment") return "text-warning";
-  return "text-success";
-}
-
-function LedgerTable({ workerId }: { workerId: string }) {
-  const t = useT();
-
-  const [cursor, setCursor] = useState<string | null>(null);
-  const [pages, setPages] = useState<WorkerPTOLedgerEntry[][]>([]);
-
-  const query = useQuery({
-    queryKey: [WORKER_PTO_LEDGER_KEY, workerId, cursor],
-    queryFn: ({ signal }) =>
-      fetchWorkerPtoLedger(
-        {
-          workerId,
-          first: LEDGER_PAGE_SIZE,
-          after: cursor ?? undefined,
-          sort: [{ field: "effectiveAt", direction: "desc" }],
-        },
-        { signal },
-      ),
-  });
-
-  const entries = useMemo(() => {
-    const seen = new Set<string>();
-    const merged: WorkerPTOLedgerEntry[] = [];
-    for (const page of [...pages, query.data?.entries ?? []]) {
-      for (const entry of page) {
-        if (!seen.has(entry.id)) {
-          seen.add(entry.id);
-          merged.push(entry);
-        }
-      }
-    }
-    return merged;
-  }, [pages, query.data]);
-
-  const loadMore = () => {
-    if (!query.data?.hasNextPage || !query.data.endCursor) return;
-    setPages((prev) => [...prev, query.data?.entries ?? []]);
-    setCursor(query.data.endCursor);
-  };
-
-  if (query.isLoading && entries.length === 0) {
-    return <Skeleton className="h-32 w-full" />;
-  }
-
-  return (
-    <div className="flex flex-col gap-2">
-      <h4 className="text-sm font-semibold">{t("Ledger")}</h4>
-      <div className="overflow-hidden rounded-lg border">
-        <table className="w-full text-xs">
-          <thead className="bg-muted/50">
-            <tr>
-              <th className="px-3 py-2 text-left font-medium">{t("Date")}</th>
-              <th className="px-3 py-2 text-left font-medium">{t("Type")}</th>
-              <th className="px-3 py-2 text-left font-medium">{t("Entry")}</th>
-              <th className="px-3 py-2 text-right font-medium">{t("Days")}</th>
-              <th className="px-3 py-2 text-right font-medium">{t("Balance")}</th>
-              <th className="px-3 py-2 text-left font-medium">{t("Note")}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {entries.length === 0 ? (
-              <tr>
-                <td colSpan={6} className="text-muted-foreground px-3 py-6 text-center">
-                  {t("No ledger entries yet. Accruals post nightly from the effective date.")}
-                </td>
-              </tr>
-            ) : (
-              entries.map((entry) => (
-                <tr key={entry.id} className="border-t">
-                  <td className="px-3 py-2 tabular-nums">
-                    {formatUnixDateMedium(entry.effectiveAt)}
-                  </td>
-                  <td className="px-3 py-2">{t(ptoTypeLabel(entry.ptoType))}</td>
-                  <td className="px-3 py-2">
-                    {PTO_LEDGER_ENTRY_LABELS[entry.entryType]}
-                    {entry.periodKey ? (
-                      <span className="text-muted-foreground ml-1 text-2xs">{entry.periodKey}</span>
-                    ) : null}
-                  </td>
-                  <td className={cn("px-3 py-2 text-right tabular-nums", entryTone(entry))}>
-                    {Number(entry.amountDays) > 0 ? "+" : ""}
-                    {formatPtoDays(entry.amountDays)}
-                  </td>
-                  <td className="px-3 py-2 text-right tabular-nums">
-                    {formatPtoDays(entry.balanceAfterDays)}
-                  </td>
-                  <td
-                    className="text-muted-foreground max-w-[220px] truncate px-3 py-2"
-                    title={entry.note ?? undefined}
-                  >
-                    {entry.note ?? (entry.actorType === "System" ? t("Nightly accrual") : "—")}
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
-      {query.data?.hasNextPage ? (
-        <Button size="sm" variant="ghost" className="self-center" onClick={loadMore}>
-          {t("Load more")}
-        </Button>
-      ) : null}
-    </div>
-  );
-}
-
-function AssignmentHistory({ assignments }: { assignments: PTOPolicyAssignment[] }) {
-  const t = useT();
-
-  return (
-    <div className="flex flex-col gap-1">
-      <h4 className="text-sm font-semibold">{t("Policy history")}</h4>
-      <ul className="text-muted-foreground flex flex-col gap-0.5 text-xs">
-        {assignments.map((assignment) => (
-          <li key={assignment.id} className="flex items-center gap-2">
-            <Badge variant="neutral" className="px-1.5 py-0 text-2xs">
-              {assignment.ptoPolicy?.code ?? "—"}
-            </Badge>
-            <span>
-              {formatUnixDateMedium(assignment.effectiveFrom)} –{" "}
-              {assignment.effectiveTo ? formatUnixDateMedium(assignment.effectiveTo) : "present"}
-            </span>
-            {assignment.note ? <span className="truncate">· {assignment.note}</span> : null}
-          </li>
-        ))}
-      </ul>
     </div>
   );
 }

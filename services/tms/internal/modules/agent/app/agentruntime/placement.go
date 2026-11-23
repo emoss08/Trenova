@@ -6,7 +6,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/replycheck"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantstreamports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
-	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 )
 
 func (s *Service) placeArtifacts(
@@ -49,31 +48,16 @@ func (s *Service) placeArtifacts(
 
 	if !state.Retried {
 		state.Retried = true
-		fx.Emit(kernelports.StreamEvent{
-			Event: assistantstreamports.AssistantEventRetrying,
-			Data: assistantstreamports.AssistantRetryingEvent{
-				Attempt: 1,
-				Reason:  replycheck.PlacementRetryReason,
-				Kind:    llmports.RetryKindRestart,
-			},
-		})
-		fx.Emit(
+		t.sendBack(fx, replycheck.SendBackDraft(
+			completion,
+			replycheck.PlacementRetryReason,
 			replycheck.PassEvent(
 				assistantstreamports.RegroundRelinkArtifacts,
 				replycheck.PlacementRetryReason,
 				nil,
 			),
-		)
-		t.messages = append(
-			t.messages,
-			llmports.Message{
-				Role:          llmports.RoleAssistant,
-				Content:       completion.Text,
-				ReplyID:       completion.ProviderMessageID,
-				ReplyProvider: completion.ProviderID,
-			},
-			llmports.NoticeMessage(replycheck.PlacementCorrection(t, &problems)),
-		)
+			replycheck.PlacementCorrection(t, &problems),
+		))
 
 		return true
 	}

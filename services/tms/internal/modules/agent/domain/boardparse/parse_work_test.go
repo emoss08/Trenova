@@ -71,7 +71,7 @@ func TestParse_ActionsAskAndNeverCountAsData(t *testing.T) {
 	assert.Len(t, layout.Records()[permission.ResourceShipment], 5)
 }
 
-func TestParse_ActionsRefuseFiguresAndUnknownFields(t *testing.T) {
+func TestParse_ActionsRefuseFiguresAndIgnoreUnknownFields(t *testing.T) {
 	_, problems := boardparse.Parse(workBoard(map[string]any{
 		"type": "actions",
 		"actions": []any{
@@ -80,7 +80,7 @@ func TestParse_ActionsRefuseFiguresAndUnknownFields(t *testing.T) {
 	}))
 
 	joined := strings.Join(problems, "\n")
-	assert.Contains(t, joined, "takes a label, the words it asks and its records, not \"tool\"")
+	assert.NotContains(t, joined, "tool")
 	assert.Contains(t, joined, "blocks[2].actions[1].label states")
 }
 

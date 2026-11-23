@@ -20,6 +20,7 @@
   "Required items must settle before the checklist closes.": "Los elementos obligatorios deben resolverse antes de que la lista de comprobación se cierre.",
   "Select a kind": "Seleccione un tipo",
   "Select a team": "Seleccione un equipo",
+  "Select an event": "Seleccione un evento",
   "Short unique identifier; saved in uppercase.": "Identificador único corto; se guarda en mayúsculas.",
   "Shown as the line the owner ticks off on the worker's checklist.": "Se muestra como la línea que el responsable marca en la lista de comprobación del trabajador.",
   "Shown on the worker's Checklist tab once a checklist is started from this template.": "Se muestra en la pestaña Lista de comprobación del trabajador cuando se inicia una lista desde esta plantilla.",

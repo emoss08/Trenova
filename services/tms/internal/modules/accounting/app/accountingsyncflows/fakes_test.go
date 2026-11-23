@@ -1500,7 +1500,7 @@ func (f *fakeWatchtower) Resolve(
 ) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
-	if kind != watchtower.SourceAccountingSync {
+	if kind != watchtower.SourceKindAccountingSync {
 		panic("resolved with the wrong kind: " + string(kind))
 	}
 	delete(f.upserts, sourceID)

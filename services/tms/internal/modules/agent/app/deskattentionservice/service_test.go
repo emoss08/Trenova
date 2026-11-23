@@ -72,10 +72,10 @@ func TestFirstGroups_StopsAtTheFirstPageAndSaysMoreWait(t *testing.T) {
 
 func TestLensCounts_SumsEachKindIntoItsLens(t *testing.T) {
 	counts := lensCounts(&watchtowerports.WatchtowerCounts{ByKind: map[watchtower.SourceKind]int{
-		watchtower.SourceEtaAtRisk:      4,
-		watchtower.SourceInboundMessage: 2,
-		watchtower.SourceAgentProposal:  1,
-		watchtower.SourceAgentPlan:      1,
+		watchtower.SourceKindEtaAtRisk:      4,
+		watchtower.SourceKindInboundMessage: 2,
+		watchtower.SourceKindAgentProposal:  1,
+		watchtower.SourceKindAgentPlan:      1,
 	}})
 
 	assert.Equal(t, 8, counts.Everything)
@@ -87,14 +87,14 @@ func TestLensCounts_SumsEachKindIntoItsLens(t *testing.T) {
 func TestKindCounts_ListsWhatIsOpenMostFirstAndNamesAnAskedKindWithNothingOpen(t *testing.T) {
 	kinds := kindCounts(
 		&watchtowerports.WatchtowerCounts{ByKind: map[watchtower.SourceKind]int{
-			watchtower.SourceEtaAtRisk:      4,
-			watchtower.SourcePodMissing:     9,
-			watchtower.SourceAgentPlan:      4,
-			watchtower.SourceInboundMessage: 0,
+			watchtower.SourceKindEtaAtRisk:      4,
+			watchtower.SourceKindPODMissing:     9,
+			watchtower.SourceKindAgentPlan:      4,
+			watchtower.SourceKindInboundMessage: 0,
 		}},
 		[]watchtower.SourceKind{
-			watchtower.SourceMissedPickup,
-			watchtower.SourcePodMissing,
+			watchtower.SourceKindMissedPickup,
+			watchtower.SourceKindPODMissing,
 			watchtower.SourceKind("Made up"),
 		},
 	)
@@ -106,22 +106,22 @@ func TestKindCounts_ListsWhatIsOpenMostFirstAndNamesAnAskedKindWithNothingOpen(t
 		assert.Equal(t, desklens.Of(entry.Kind), entry.Lens)
 	}
 	require.Len(t, kinds, 4)
-	assert.Equal(t, watchtower.SourcePodMissing, kinds[0].Kind)
+	assert.Equal(t, watchtower.SourceKindPODMissing, kinds[0].Kind)
 	assert.Equal(t, 9, kinds[0].Count)
 	assert.ElementsMatch(
 		t,
-		[]watchtower.SourceKind{watchtower.SourceEtaAtRisk, watchtower.SourceAgentPlan},
+		[]watchtower.SourceKind{watchtower.SourceKindEtaAtRisk, watchtower.SourceKindAgentPlan},
 		got[1:3],
 		"kinds with as much open are in label order",
 	)
-	assert.Equal(t, watchtower.SourceMissedPickup, kinds[3].Kind)
+	assert.Equal(t, watchtower.SourceKindMissedPickup, kinds[3].Kind)
 	assert.Equal(t, 0, kinds[3].Count, "a kind the list is narrowed to is named with nothing open")
 }
 
 func TestKindCounts_LeavesOutAKindWithNothingOpenThatNobodyAskedFor(t *testing.T) {
 	kinds := kindCounts(
 		&watchtowerports.WatchtowerCounts{ByKind: map[watchtower.SourceKind]int{
-			watchtower.SourceInboundMessage: 0,
+			watchtower.SourceKindInboundMessage: 0,
 		}},
 		nil,
 	)

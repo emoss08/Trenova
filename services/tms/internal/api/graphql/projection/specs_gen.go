@@ -5056,6 +5056,14 @@ func init() {
 				Special: "entityRef",
 			},
 			{
+				Name:   "subjectResource",
+				Column: "subject_resource",
+			},
+			{
+				Name:   "subjectId",
+				Column: "subject_id",
+			},
+			{
 				Name:   "user",
 				Column: "user_id",
 				Relation: &RelationSpec{
@@ -29418,6 +29426,13 @@ func init() {
 				},
 			},
 			{
+				Name:   "position",
+				Column: "position_id",
+				Relation: &RelationSpec{
+					Target: &JobPositionSpec,
+				},
+			},
+			{
 				Name: "profile",
 				Relation: &RelationSpec{
 					Target: &WorkerProfileSpec,
@@ -30142,6 +30157,10 @@ func init() {
 			{
 				Name:   "fileSize",
 				Column: "file_size",
+			},
+			{
+				Name:   "previewStatus",
+				Column: "preview_status",
 			},
 			{
 				Name:   "createdAt",
@@ -30931,6 +30950,10 @@ func init() {
 			{
 				Name:   "dutyStatus",
 				Column: "duty_status",
+			},
+			{
+				Name:    "dutyStatusSince",
+				Special: "dutyStatusSince",
 			},
 			{
 				Name:   "driveRemainingMs",

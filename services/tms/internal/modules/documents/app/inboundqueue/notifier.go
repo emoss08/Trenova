@@ -112,7 +112,7 @@ func (n *Notifier) project(ctx context.Context, message *inboundmessage.InboundM
 		n.watchtower.Resolve(
 			ctx,
 			TenantOfMessage(message),
-			watchtower.SourceInboundMessage,
+			watchtower.SourceKindInboundMessage,
 			message.ID.String(),
 		)
 

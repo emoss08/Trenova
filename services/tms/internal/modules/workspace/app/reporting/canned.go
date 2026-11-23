@@ -29,6 +29,10 @@ var cannedPlanMessage = errortypes.BaseError{
 	Message: "\"{0}\" is part of the {1} add-on, which is not on your plan",
 }
 
+var cannedOperationMessage = errortypes.BaseError{
+	Message: "\"{0}\" needs the \"{1}\" permission on {2}",
+}
+
 func (s *Service) ListCanned() []*canned.Entry {
 	return s.canned.All()
 }
@@ -56,13 +60,16 @@ func (s *Service) CannedLibrary(ctx context.Context, req *Request) ([]CannedRepo
 	entries := s.canned.All()
 	out := make([]CannedReport, 0, len(entries))
 	for _, entry := range entries {
+		if _, missing := s.cannedOperation(access, entry); missing {
+			continue
+		}
 		denial := s.cannedPlan(ctx, access, entry)
 		out = append(out, CannedReport{Entry: entry, Available: denial == nil, Plan: denial})
 	}
 	return out, nil
 }
 
-func (s *Service) RequireCannedOnPlan(
+func (s *Service) RequireCannedAvailable(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 	entry *canned.Entry,
@@ -70,6 +77,15 @@ func (s *Service) RequireCannedOnPlan(
 	access, err := s.access.For(ctx, tenant, reportaccess.ModeRead)
 	if err != nil {
 		return err
+	}
+	if use, missing := s.cannedOperation(access, entry); missing {
+		locale := i18n.FromContext(ctx)
+		return errortypes.NewAuthorizationError(
+			cannedOperationMessage.Message,
+			entry.Name,
+			s.access.OperationLabel(locale, use.Kind, use.Operation),
+			s.access.ResourceLabel(locale, use.Kind),
+		)
 	}
 	denial := s.cannedPlan(ctx, access, entry)
 	if denial == nil {
@@ -81,6 +97,17 @@ func (s *Service) RequireCannedOnPlan(
 		restriction.Args = []any{entry.Name, i18n.Term(denial.AddOnName)}
 	}
 	return restriction
+}
+
+func (s *Service) cannedOperation(
+	access *reportaccess.Access,
+	entry *canned.Entry,
+) (reportaccess.Use, bool) {
+	reach, ok := s.cannedReach(entry.Key)
+	if !ok {
+		return reportaccess.Use{}, false
+	}
+	return access.MissingOperation(reach)
 }
 
 func (s *Service) cannedPlan(
@@ -130,7 +157,7 @@ func (s *Service) ForkCanned(
 	if err != nil {
 		return nil, err
 	}
-	if err = s.RequireCannedOnPlan(ctx, req.TenantInfo, entry); err != nil {
+	if err = s.RequireCannedAvailable(ctx, req.TenantInfo, entry); err != nil {
 		return nil, err
 	}
 

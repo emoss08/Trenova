@@ -24,6 +24,11 @@ const HIDDEN: Glide = { x: 0, y: 0, width: 0, height: 0, shown: false, travel: f
  * flyout, tooltip or menu is portalled out of the group, so pointer travel inside
  * them leaves it on the target that opened them.
  *
+ * The glide is positioned and opaque, and a positioned box paints over every box that is not, so
+ * the group positions each of its own children (`relative` unless the child sets a position):
+ * they then paint after the glide, in tree order, with everything inside them. Callers mark
+ * nothing; a table's rows, a list's items and a bare target all sit above it.
+ *
  * Targets give up their own hover background so the glide is the only one. In a
  * scrolling list the group goes inside the scrolled content, so the glide scrolls
  * with the target it sits on.
@@ -91,7 +96,7 @@ export function HoverGlideGroup({
       ref={groupRef}
       onPointerOver={handlePointerOver}
       onPointerLeave={hide}
-      className={cn("relative bg-background", className)}
+      className={cn("relative bg-background [:where(&>*)]:relative", className)}
     >
       <span
         aria-hidden

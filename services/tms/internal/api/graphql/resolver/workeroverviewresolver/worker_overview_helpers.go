@@ -3,58 +3,63 @@ package workeroverviewresolver
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/api/actorutil"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workeroverviewservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/approvaldelegation"
 	"github.com/emoss08/trenova/pkg/authctx"
 )
 
-// overviewSections turns the signed-in user's permissions into the set of
-// roll-ups the overview may compose. A section the user cannot read is left
-// out entirely rather than returned empty, so a dispatcher without safety
-// access sees a verdict drawn only from what they are allowed to see instead
-// of one that quietly claims the safety record is clean.
 func (r *Deps) OverviewSections(
 	ctx context.Context,
 	authCtx *authctx.AuthContext,
 ) workeroverviewservice.Sections {
-	return workeroverviewservice.Sections{
-		Credentials: r.HasPermission(
+	can := func(resource permission.Resource) bool {
+		return r.HasPermission(ctx, authCtx, resource, permission.OpRead)
+	}
+	sections := workeroverviewservice.Sections{
+		Credentials:    can(permission.ResourceWorkerCredential),
+		Qualification:  can(permission.ResourceQualification),
+		DrugAlcohol:    can(permission.ResourceWorkerDOTTest),
+		Training:       can(permission.ResourceWorkerTraining),
+		Safety:         can(permission.ResourceWorkerSafetyEvent),
+		Discipline:     can(permission.ResourceWorkerDisciplinaryAction),
+		Employment:     can(permission.ResourceWorkerEmploymentEvent),
+		Checklists:     can(permission.ResourceWorkerChecklist),
+		PTO:            can(permission.ResourceWorkerPTO),
+		Leave:          can(permission.ResourceWorkerLeave),
+		Reviews:        can(permission.ResourcePerformanceReview),
+		Schedule:       can(permission.ResourceWorkerSchedule),
+		HOS:            true,
+		Tractor:        can(permission.ResourceTractor),
+		Pay:            can(permission.ResourceDriverPayProfile),
+		Benefits:       can(permission.ResourceBenefitPlan),
+		Portal:         can(permission.ResourceDriverPortal),
+		ProfileChanges: can(permission.ResourceProfileChangeRequest),
+		Documents:      can(permission.ResourceDocument),
+		AgentMemory:    can(permission.ResourceAssistant),
+	}
+	sections.ProfileChanges = sections.ProfileChanges && sections.Portal
+	return sections
+}
+
+func (r *Deps) OverviewMemoryActor(
+	ctx context.Context,
+	authCtx *authctx.AuthContext,
+	sections workeroverviewservice.Sections,
+) *agentmemoryports.DeskMemoryActor {
+	actor := actorutil.FromAuthContext(authCtx)
+	if !sections.AgentMemory || !actor.IsUser() || actor.UserID.IsNil() {
+		return nil
+	}
+	return &agentmemoryports.DeskMemoryActor{
+		Actor: actor,
+		MayManageShared: r.HasPermission(
 			ctx,
 			authCtx,
-			permission.ResourceWorkerCredential,
-			permission.OpRead,
-		),
-		Training: r.HasPermission(
-			ctx,
-			authCtx,
-			permission.ResourceWorkerTraining,
-			permission.OpRead,
-		),
-		Safety: r.HasPermission(
-			ctx,
-			authCtx,
-			permission.ResourceWorkerSafetyEvent,
-			permission.OpRead,
-		),
-		Discipline: r.HasPermission(
-			ctx,
-			authCtx,
-			permission.ResourceWorkerDisciplinaryAction,
-			permission.OpRead,
-		),
-		Checklists: r.HasPermission(
-			ctx,
-			authCtx,
-			permission.ResourceWorkerChecklist,
-			permission.OpRead,
-		),
-		PTO: r.HasPermission(ctx, authCtx, permission.ResourceWorkerPTO, permission.OpRead),
-		Reviews: r.HasPermission(
-			ctx,
-			authCtx,
-			permission.ResourcePerformanceReview,
-			permission.OpRead,
+			permission.ResourceAgentMemory,
+			permission.OpManage,
 		),
 	}
 }

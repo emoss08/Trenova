@@ -61,6 +61,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/app/dispatchcandidateservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/dispatchconsoleservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/dispatchcontrolservice"
+	"github.com/emoss08/trenova/internal/modules/operations/app/dispatcheligibility"
 	"github.com/emoss08/trenova/internal/modules/operations/app/dispatchlearningservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/dispatchmarketservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/dispatchplanservice"
@@ -169,6 +170,7 @@ func SharedOptions() fx.Option {
 			shipmentinsightrepository.NewInsightSource,
 			weatheralertrepository.New,
 			dispatchcontrolrepository.New,
+			dispatcheligibility.NewClearanceCheck,
 			documentshipmentdraftrepository.New,
 			triageoverlaprepository.New,
 			triagelookuprepository.New,

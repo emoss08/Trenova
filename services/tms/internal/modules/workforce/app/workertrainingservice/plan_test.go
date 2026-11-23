@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workertrainingservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workertraining"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -97,4 +98,29 @@ func TestPlanCompleteWaiveCancelAttach(t *testing.T) {
 	assert.Equal(t, workertraining.TrainingStatusCancelled, cancelled.After.Status)
 	assert.Equal(t, "Assigned twice", cancelled.After.Notes)
 	assert.Equal(t, workertraining.TrainingStatusAssigned, h.repo.records[0].Status)
+}
+
+// The employment plan asks for the courses the worker the event makes would
+// be missing, so the gaps follow the worker it is handed, not the stored row.
+func TestPlanAssignRequiredFor_PlansAgainstTheWorkerItIsGiven(t *testing.T) {
+	h := newHarness(t)
+	local := h.course("CITY", true, func(c *workertraining.TrainingCourse) {
+		c.RequiredForDriverTypes = []worker.DriverType{worker.DriverTypeLocal}
+	})
+
+	stored, err := h.svc.PlanAssignRequired(t.Context(), h.tenant, h.wrk.ID)
+	require.NoError(t, err)
+	assert.Empty(t, stored, "the stored OTR driver needs no local course")
+
+	projected := *h.wrk
+	projected.DriverType = worker.DriverTypeLocal
+	gaps, err := h.svc.PlanAssignRequiredFor(t.Context(), h.tenant, &projected)
+	require.NoError(t, err)
+	require.Len(t, gaps, 1)
+	assert.Equal(t, local.ID, gaps[0].ID)
+	assert.Empty(t, h.repo.records, "planning assigns nothing")
+
+	created := h.svc.AssignPlanned(t.Context(), h.tenant, h.wrk.ID, gaps, h.userID)
+	require.Len(t, created, 1)
+	assert.Equal(t, local.ID, created[0].CourseID)
 }

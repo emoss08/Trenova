@@ -802,7 +802,7 @@ func (s *DeskCaseSeed) messageItem(
 		ID:             pulid.MustNew("wt_"),
 		OrganizationID: refs.org.ID,
 		BusinessUnitID: refs.org.BusinessUnitID,
-		SourceKind:     watchtower.SourceInboundMessage,
+		SourceKind:     watchtower.SourceKindInboundMessage,
 		SourceID:       "seed-case-message-" + shp.ID.String(),
 		Severity:       watchtower.SeverityWarning,
 		Title:          "ETA for " + CaseShipmentPro + "?",

@@ -1,6 +1,7 @@
 {
   "Charges the empty miles to reach a pickup to the shipment's cost.": "将前往提货点的空驶里程计入运单成本。",
   "Choose which categories use GL actuals, and their accounts, on Cost rates.": "请在“成本费率”中选择哪些类别使用总账实际数及其科目。",
+  "Configure the cost-per-mile model that powers shipment profitability estimates": "配置驱动运单盈利能力估算的每英里成本模型",
   "Cost basis": "成本基准",
   "Cost rates": "成本费率",
   "Costs that grow with every mile driven.": "随行驶里程增加的成本。",

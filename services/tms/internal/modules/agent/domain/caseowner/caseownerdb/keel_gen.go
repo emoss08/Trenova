@@ -10,6 +10,8 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/keel/schema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/caseowner"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
 	"github.com/emoss08/trenova/pkg/keelkinds"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -20,21 +22,27 @@ var ownersTable = schema.Table{
 	Quoted: `"record_case_owners"`,
 	Alias:  "rco",
 	Model:  "caseowner.Owner",
-	Label:  `Owner`,
-	Plural: `Owners`,
+	Label:  `Case Owner`,
+	Plural: `Case Owners`,
+	Doc:    `Case owners: who owns the case on a record, how they came to own it and since when. A record with open Watchtower items and no owner here is unowned.`,
+	Report: &schema.TableReport{Category: `Desk`},
 	Columns: []schema.Column{
-		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
-		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
-		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`, JSON: `organizationId`},
-		{Name: "record_kind", Quoted: `"record_kind"`, Field: "RecordKind", Kind: schema.KindString, Flags: 0, Label: `Record Kind`, JSON: `recordKind`, Enum: enumRecordkindKind[:]},
-		{Name: "record_id", Quoted: `"record_id"`, Field: "RecordID", Kind: schema.KindString, Flags: 0, Label: `Record ID`, JSON: `recordId`},
-		{Name: "owner_id", Quoted: `"owner_id"`, Field: "OwnerID", Kind: schema.KindString, Flags: 0, Label: `Owner ID`, JSON: `ownerId`},
-		{Name: "source", Quoted: `"source"`, Field: "Source", Kind: schema.KindString, Flags: 0, Label: `Source`, JSON: `source`, Enum: enumSource[:]},
-		{Name: "assigned_by_id", Quoted: `"assigned_by_id"`, Field: "AssignedByID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Assigned By ID`, JSON: `assignedById`},
-		{Name: "assigned_at", Quoted: `"assigned_at"`, Field: "AssignedAt", Kind: schema.KindInt64, Flags: 0, Label: `Assigned At`, JSON: `assignedAt`},
-		{Name: "version", Quoted: `"version"`, Field: "Version", Kind: schema.KindInt64, Flags: schema.FlagVersion, Label: `Version`, JSON: `version`},
-		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, JSON: `createdAt`},
-		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, JSON: `updatedAt`},
+		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`, Report: &reportDimString},
+		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`, Report: &reportDimStringHidden},
+		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`, JSON: `organizationId`, Report: &reportDimStringHidden},
+		{Name: "record_kind", Quoted: `"record_kind"`, Field: "RecordKind", Kind: schema.KindString, Flags: 0, Label: `Record Kind`, JSON: `recordKind`, Enum: enumRecordkindKind[:], Report: &reportDimEnumHidden},
+		{Name: "record_id", Quoted: `"record_id"`, Field: "RecordID", Kind: schema.KindString, Flags: 0, Label: `Record ID`, JSON: `recordId`, Report: &reportDimStringHidden},
+		{Name: "owner_id", Quoted: `"owner_id"`, Field: "OwnerID", Kind: schema.KindString, Flags: 0, Label: `Owner ID`, JSON: `ownerId`, Report: &reportDimStringHidden},
+		{Name: "source", Quoted: `"source"`, Field: "Source", Kind: schema.KindString, Flags: 0, Label: `How Owned`, Doc: `How the owner came to own the case: routed to them, claimed or assigned`, JSON: `source`, Enum: enumSource[:], Report: &reportDimEnum},
+		{Name: "assigned_by_id", Quoted: `"assigned_by_id"`, Field: "AssignedByID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Assigned By ID`, JSON: `assignedById`, Report: &reportDimStringHidden},
+		{Name: "assigned_at", Quoted: `"assigned_at"`, Field: "AssignedAt", Kind: schema.KindInt64, Flags: 0, Label: `Owned Since`, Doc: `When the owner was given the case`, JSON: `assignedAt`, Report: &reportDimEpoch},
+		{Name: "version", Quoted: `"version"`, Field: "Version", Kind: schema.KindInt64, Flags: schema.FlagVersion, Label: `Version`, JSON: `version`, Report: &reportMeasureIntegerHidden},
+		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, JSON: `createdAt`, Report: &reportDimEpochHidden},
+		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, JSON: `updatedAt`, Report: &reportDimEpochHidden},
+	},
+	Relations: []schema.Relation{
+		{Name: "Owner", Alias: "o", Kind: schema.BelongsTo, Local: []int32{5}, Remote: []int32{0}, Label: `Owner`, Doc: `The person who owns the case`},
+		{Name: "AssignedBy", Alias: "ab", Kind: schema.BelongsTo, Local: []int32{7}, Remote: []int32{0}, Label: `Assigned By`, Doc: `The person who assigned it, when someone did`},
 	},
 	PK:         []int32{0, 1, 2},
 	Tenant:     []int32{1, 2},
@@ -52,6 +60,7 @@ var ownersTable = schema.Table{
 	Size:       unsafe.Sizeof(caseowner.Owner{}),
 	Ptr:        ptrOwner,
 	Value:      valueOwner,
+	Attach:     attachOwner,
 }
 
 var ownersRef = keel.Ref{Table: &ownersTable}
@@ -114,6 +123,16 @@ func OwnersSchema() *schema.Table { return &ownersTable }
 
 // As returns a handle that references record_case_owners under its own alias.
 func (t *OwnersTable) As(alias string) *OwnersTable { return keel.Alias(t.Ref, alias, BuildOwners) }
+
+// Owner is the belongs relation.
+func (t *OwnersTable) Owner() *tenantdb.PersonsTable {
+	return keel.Path(t.Ref, 0, tenantdb.BuildPersons)
+}
+
+// AssignedBy is the belongs relation.
+func (t *OwnersTable) AssignedBy() *tenantdb.PersonsTable {
+	return keel.Path(t.Ref, 1, tenantdb.BuildPersons)
+}
 
 // Get returns the record_case_owners row with the given key, or keel.ErrNotFound.
 func (t *OwnersTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*caseowner.Owner, error) {
@@ -556,6 +575,21 @@ func valueOwner(p unsafe.Pointer, c int32) any {
 	return nil
 }
 
+func attachOwner(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
+	r := (*caseowner.Owner)(p)
+	switch rel {
+	case 0:
+		r.Owner = (*tenant.Person)(child)
+	case 1:
+		r.AssignedBy = (*tenant.Person)(child)
+	}
+}
+
+func init() {
+	ownersTable.Relations[0].Target = tenantdb.PersonsSchema()
+	ownersTable.Relations[1].Target = tenantdb.PersonsSchema()
+}
+
 var enumRecordkindKind = [...]schema.EnumValue{
 	{Value: `employment_verification`, Label: `Employment Verification`},
 	{Value: `clearinghouse_query`, Label: `Clearinghouse Query`},
@@ -620,10 +654,24 @@ var enumRecordkindKind = [...]schema.EnumValue{
 }
 
 var enumSource = [...]schema.EnumValue{
-	{Value: `Auto`, Label: `Auto`},
-	{Value: `Claimed`, Label: `Claimed`},
-	{Value: `Assigned`, Label: `Assigned`},
+	{Value: `Auto`, Label: `Auto`, Doc: `Routed to the person the record names`},
+	{Value: `Claimed`, Label: `Claimed`, Doc: `Claimed by the owner`},
+	{Value: `Assigned`, Label: `Assigned`, Doc: `Given to the owner by someone else`},
 }
+
+var reportDimEnum = schema.ReportInfo{Included: true, Kind: schema.Dimension, Type: schema.ValueEnum, Aggs: schema.AggsCount}
+
+var reportDimEnumHidden = schema.ReportInfo{Kind: schema.Dimension, Type: schema.ValueEnum, Aggs: schema.AggsCount}
+
+var reportDimEpoch = schema.ReportInfo{Included: true, Kind: schema.Dimension, Type: schema.ValueEpoch, Aggs: schema.AggsOrdered}
+
+var reportDimEpochHidden = schema.ReportInfo{Kind: schema.Dimension, Type: schema.ValueEpoch, Aggs: schema.AggsOrdered}
+
+var reportDimString = schema.ReportInfo{Included: true, Kind: schema.Dimension, Type: schema.ValueString, Aggs: schema.AggsOrdered}
+
+var reportDimStringHidden = schema.ReportInfo{Kind: schema.Dimension, Type: schema.ValueString, Aggs: schema.AggsOrdered}
+
+var reportMeasureIntegerHidden = schema.ReportInfo{Kind: schema.Measure, Type: schema.ValueInt, Aggs: schema.AggsNumeric}
 
 // SourceCol is a column of caseowner.Source values.
 type SourceCol struct{ keel.TypedStringCol }

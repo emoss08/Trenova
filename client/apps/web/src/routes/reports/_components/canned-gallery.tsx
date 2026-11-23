@@ -10,7 +10,7 @@ import { usePermissions } from "@/hooks/use-permission";
 import { graphQLErrorMessage } from "@trenova/shared/lib/graphql";
 import type { CannedReport } from "@/lib/graphql/reports";
 import { Resource } from "@trenova/shared/types/permission";
-import { parseReportIR, type ReportParameterDef } from "@/types/report";
+import { parseReportIR, type ReportIR } from "@/types/report";
 import { PlayIcon, RulerIcon, TableIcon } from "@trenova/shared/components/icons";
 import { useId, useMemo, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
@@ -23,6 +23,7 @@ import {
 } from "../reports-page-state";
 import { CategoryGroupHeader, ReportCard, ReportGridEmpty } from "./report-card-chrome";
 import { RunReportDialog, type RunReportTarget } from "./run-report-dialog";
+import { useReportParameterOptions } from "@/hooks/use-report-parameter-options";
 
 /**
  * Whether the person chose to see the gallery reports their plan's add-ons leave out. Off by
@@ -34,7 +35,7 @@ type RunDialogState = {
   target: RunReportTarget;
   name: string;
   defaultFormat: string;
-  parameters: ReportParameterDef[];
+  report: ReportIR | null;
 };
 
 function CannedReportCard({
@@ -123,6 +124,7 @@ export function CannedGallery({
   const forkCanned = useForkCannedReport();
   const { canCreate, canExport } = usePermissions(Resource.Report);
   const [runDialog, setRunDialog] = useState<RunDialogState | null>(null);
+  const runParameterOptions = useReportParameterOptions(runDialog?.report, runDialog !== null);
   const [customizingKey, setCustomizingKey] = useState<string | null>(null);
   const [showAddOnReports, setShowAddOnReports] = useLocalStorage(
     SHOW_ADD_ON_REPORTS_STORAGE_KEY,
@@ -255,7 +257,7 @@ export function CannedGallery({
                           target: { cannedKey: report.key },
                           name: report.name,
                           defaultFormat: report.defaultFormat,
-                          parameters: parseReportIR(report.definition)?.parameters ?? [],
+                          report: parseReportIR(report.definition),
                         })
                       }
                       onCustomize={() => handleCustomize(report)}
@@ -283,7 +285,8 @@ export function CannedGallery({
         target={runDialog?.target ?? null}
         reportName={runDialog?.name ?? ""}
         defaultFormat={runDialog?.defaultFormat ?? "csv"}
-        parameters={runDialog?.parameters ?? []}
+        parameters={runDialog?.report?.parameters ?? []}
+        parameterOptions={runParameterOptions}
       />
     </>
   );

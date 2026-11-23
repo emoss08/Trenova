@@ -1,0 +1,160 @@
+{
+  "key": "open-case-load-by-owner",
+  "version": "1.0.0",
+  "name": "Open Case Load by Owner",
+  "description": "The cases with something still open on them, by the person who owns each case, unowned cases included: how many cases, how many open Watchtower items they hold, how many of those are overdue or critical, and the oldest",
+  "category": "Desk",
+  "tags": [
+    "desk",
+    "watchtower",
+    "cases",
+    "workload",
+    "people"
+  ],
+  "defaultFormat": "xlsx",
+  "definition": {
+    "version": 2,
+    "entity": "item",
+    "columns": [
+      {
+        "id": "owner",
+        "label": "Owner",
+        "dimension": {
+          "field": "caseOwner.owner.name"
+        },
+        "display": {
+          "nullText": "Unowned"
+        }
+      },
+      {
+        "id": "owner_key",
+        "hidden": true,
+        "dimension": {
+          "field": "caseOwner.owner.id"
+        }
+      },
+      {
+        "id": "record_cases",
+        "hidden": true,
+        "measure": {
+          "field": "aboutID",
+          "agg": "count_distinct"
+        }
+      },
+      {
+        "id": "lone_cases",
+        "measure": {
+          "field": "id",
+          "agg": "count",
+          "filter": {
+            "field": "aboutID",
+            "op": "is_null"
+          }
+        },
+        "display": {
+          "style": "number",
+          "decimals": 0,
+          "grouping": true
+        },
+        "hidden": true
+      },
+      {
+        "id": "cases",
+        "label": "Open Cases",
+        "calc": "[record_cases] + [lone_cases]",
+        "display": {
+          "style": "number",
+          "decimals": 0,
+          "grouping": true
+        }
+      },
+      {
+        "id": "open",
+        "measure": {
+          "field": "id",
+          "agg": "count"
+        },
+        "display": {
+          "style": "number",
+          "decimals": 0,
+          "grouping": true
+        },
+        "label": "Open Items"
+      },
+      {
+        "id": "overdue",
+        "measure": {
+          "field": "id",
+          "agg": "count",
+          "filter": {
+            "calc": "{dueAt} < now()"
+          }
+        },
+        "display": {
+          "style": "number",
+          "decimals": 0,
+          "grouping": true
+        },
+        "label": "Overdue"
+      },
+      {
+        "id": "critical",
+        "measure": {
+          "field": "id",
+          "agg": "count",
+          "filter": {
+            "field": "severity",
+            "op": "eq",
+            "value": "Critical"
+          }
+        },
+        "display": {
+          "style": "number",
+          "decimals": 0,
+          "grouping": true
+        },
+        "label": "Critical"
+      },
+      {
+        "id": "oldest_occurred",
+        "hidden": true,
+        "measure": {
+          "field": "occurredAt",
+          "agg": "min"
+        }
+      },
+      {
+        "id": "oldest_age",
+        "label": "Oldest",
+        "calc": "date_diff('second', [oldest_occurred], now())",
+        "display": {
+          "style": "duration",
+          "durationUnit": "seconds",
+          "durationStyle": "compact"
+        }
+      }
+    ],
+    "filters": {
+      "and": [
+        {
+          "field": "resolvedAt",
+          "op": "is_null"
+        }
+      ]
+    },
+    "groupings": {
+      "total": true
+    },
+    "sort": [
+      {
+        "column": "cases",
+        "desc": true
+      },
+      {
+        "column": "open",
+        "desc": true
+      }
+    ],
+    "parameters": []
+  }
+}

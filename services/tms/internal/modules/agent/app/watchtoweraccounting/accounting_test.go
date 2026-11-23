@@ -43,7 +43,7 @@ func TestDescribeAccountingConnectionHealth(t *testing.T) {
 		item, open := DescribeAccountingConnectionHealth(conn)
 		require.True(t, open, status)
 		assert.Equal(t, severity, item.Severity, status)
-		assert.Equal(t, watchtower.SourceAccountingSync, item.SourceKind)
+		assert.Equal(t, watchtower.SourceKindAccountingSync, item.SourceKind)
 		assert.Equal(t, conn.ID.String(), item.SourceID)
 		assert.Equal(t, agent.SubjectAccountingConnection, item.SubjectType)
 		assert.Equal(t, agenttrigger.EventAccountingConnectionDegraded, item.EventKind)

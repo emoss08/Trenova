@@ -2,6 +2,7 @@ import type {
   DeskBoardBlock,
   DeskBoardCard,
   DeskBoardRow,
+  DeskBoardSegment,
   DeskBoardValue,
 } from "@/lib/graphql/desk-board-card";
 import type { AssistantArtifact } from "@/types/assistant";
@@ -60,6 +61,7 @@ export function block(overrides: Partial<DeskBoardBlock>): DeskBoardBlock {
     title: "",
     half: false,
     numeral: 0,
+    caption: [],
     state: "ready",
     tone: "",
     measure: "",
@@ -91,11 +93,13 @@ export function lateBoard(): DeskBoardCard {
     question: "Which Dallas loads are late and why?",
     answeredAt: ANSWERED_AT,
     readAt: READ_AT,
+    place: "beside",
+    readings: [],
     markdown: "# Six loads are running late on the Dallas lanes\n\nFour are held at the dock.\n",
     verdict: [
-      { text: "Four are ", numeral: 0, tone: "", struck: false },
-      { text: "held at the dock", numeral: 1, tone: "warn", struck: false },
-      { text: " and two are on the road.", numeral: 0, tone: "", struck: false },
+      { text: "Four are ", numeral: 0, tone: "", struck: false, reading: "" },
+      { text: "held at the dock", numeral: 1, tone: "warn", struck: false, reading: "" },
+      { text: " and two are on the road.", numeral: 0, tone: "", struck: false, reading: "" },
     ],
     blocks: [
       block({
@@ -139,7 +143,7 @@ export function lateBoard(): DeskBoardCard {
         title: "Call the Memphis consignee",
         half: true,
         noteTone: "warn",
-        text: [{ text: "They close at five.", numeral: 0, tone: "", struck: false }],
+        text: [{ text: "They close at five.", numeral: 0, tone: "", struck: false, reading: "" }],
         chips: [shipmentRow()],
       }),
       block({
@@ -168,7 +172,9 @@ export function lateBoard(): DeskBoardCard {
       }),
       block({
         type: "prose",
-        text: [{ text: "The rest are on schedule.", numeral: 0, tone: "", struck: false }],
+        text: [
+          { text: "The rest are on schedule.", numeral: 0, tone: "", struck: false, reading: "" },
+        ],
       }),
     ],
   };
@@ -179,7 +185,9 @@ export function closeBoard(): DeskBoardCard {
   return {
     ...lateBoard(),
     title: "October can close once two entries post",
-    verdict: [{ text: "Two entries still wait.", numeral: 0, tone: "", struck: false }],
+    verdict: [
+      { text: "Two entries still wait.", numeral: 0, tone: "", struck: false, reading: "" },
+    ],
     blocks: [
       block({
         type: "checks",
@@ -234,6 +242,141 @@ export function closeBoard(): DeskBoardCard {
     ],
   };
 }
+
+export function segment(text: string, fields: Partial<DeskBoardSegment> = {}): DeskBoardSegment {
+  return { text, numeral: 0, tone: "", struck: false, reading: "", ...fields };
+}
+
+const LATE_LOADS = { kind: "records", resource: "shipment", count: 6, readable: 4, title: "" };
+
+/**
+ * Six late loads, placed in the conversation: three readings in the verdict
+ * (one read now, one that moved since the answer, one the reader may not read
+ * because two of its loads are not theirs), a list of eight rows of which one
+ * is unread, and an action. A reading segment's text is its value as answered
+ * (`Filled.WriteReadings`), empty where it could not be read.
+ */
+export function conversationBoard(): DeskBoardCard {
+  const rows = Array.from({ length: 8 }, (_, index) =>
+    index === 3
+      ? unreadableRow()
+      : shipmentRow({ id: `shp_${index + 1}`, label: `S-2411${index}` }),
+  );
+  return {
+    ...lateBoard(),
+    artifactId: "art_inline",
+    title: "Six late loads on the Dallas lanes",
+    place: "conversation",
+    readings: [
+      {
+        key: "late",
+        label: "Late now",
+        value: count(6),
+        was: null,
+        source: LATE_LOADS,
+        measure: "lateness",
+        aggregate: "count",
+      },
+      {
+        key: "furthest",
+        label: "Furthest behind",
+        value: duration(100 * 60),
+        was: duration(190 * 60),
+        source: LATE_LOADS,
+        measure: "lateness",
+        aggregate: "max",
+      },
+      {
+        key: "owed",
+        label: "Still owed on them",
+        value: null,
+        was: null,
+        source: LATE_LOADS,
+        measure: "amountDue",
+        aggregate: "sum",
+      },
+    ],
+    verdict: [
+      segment("There are "),
+      segment("6", { reading: "late" }),
+      segment(" late loads, the furthest "),
+      segment("3h 10m", { reading: "furthest" }),
+      segment(" behind, with "),
+      segment("", { reading: "owed" }),
+      segment(" owed. "),
+      segment("Four wait on one driver's hours", { numeral: 1, tone: "warn" }),
+      segment("."),
+    ],
+    blocks: [
+      block({
+        type: "records",
+        title: "The late loads, furthest behind first",
+        numeral: 1,
+        measure: "lateness",
+        source: { ...LATE_LOADS, count: 8, readable: 7 },
+        rows,
+      }),
+      block({
+        type: "actions",
+        actions: [
+          {
+            label: "Ask the Memphis dock",
+            ask: "Ask the Memphis dock for an unload time",
+            records: [],
+          },
+        ],
+      }),
+    ],
+  };
+}
+
+/** A board as a thread's artifact summary lists it: `place` kept, the layout left out. */
+export function summaryBoard(overrides: Partial<AssistantArtifact> = {}): AssistantArtifact {
+  return {
+    ...boardArtifact(),
+    id: "art_inline",
+    title: "Six late loads on the Dallas lanes",
+    payload: { place: "conversation" },
+    sourceToolCallId: "call_inline",
+    ...overrides,
+  };
+}
+
+/** The show_board call that laid the conversation board out, as its arguments were saved. */
+export const CONVERSATION_SPEC = {
+  title: "Six late loads on the Dallas lanes",
+  place: "conversation",
+  verdict:
+    "There are {late} late loads, the furthest {furthest} behind, with {owed} owed. [Four wait on one driver's hours][1].",
+  readings: [
+    {
+      key: "late",
+      label: "Late now",
+      records: { resource: "shipment", ids: [] },
+      aggregate: "count",
+    },
+    {
+      key: "furthest",
+      label: "Furthest behind",
+      records: { resource: "shipment", ids: [] },
+      aggregate: "max",
+    },
+    {
+      key: "owed",
+      label: "Still owed on them",
+      records: { resource: "shipment", ids: [] },
+      aggregate: "sum",
+    },
+  ],
+  blocks: [
+    {
+      type: "records",
+      title: "The late loads, furthest behind first",
+      records: { resource: "shipment", ids: ["shp_1", "shp_2", "shp_3"] },
+    },
+    { type: "actions", actions: [{ label: "Ask the Memphis dock", ask: "Ask the Memphis dock" }] },
+  ],
+};
 
 export function boardArtifact(): AssistantArtifact {
   return {

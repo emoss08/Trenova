@@ -9,22 +9,28 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
-// ChecklistSpawner starts the default checklist an employment event calls
-// for. The employment service depends on this port rather than the checklist
-// service so the two can evolve without an import cycle.
+type EventPlan struct {
+	Worker   *worker.Worker
+	Template *workerchecklist.WorkerChecklistTemplate
+	Close    []*workerchecklist.WorkerChecklist
+}
+
 type ChecklistSpawner interface {
+	PlanForEvent(
+		ctx context.Context,
+		kind employment.EmploymentEventKind,
+		wrk *worker.Worker,
+	) (*EventPlan, error)
 	SpawnForEvent(
 		ctx context.Context,
 		event *employment.WorkerEmploymentEvent,
-		wrk *worker.Worker,
+		plan *EventPlan,
 		userID pulid.ID,
 	) (*workerchecklist.WorkerChecklist, error)
-	// CloseForEvent cancels the open checklists the event makes moot and
-	// reports how many it closed.
 	CloseForEvent(
 		ctx context.Context,
 		event *employment.WorkerEmploymentEvent,
-		wrk *worker.Worker,
+		plan *EventPlan,
 		userID pulid.ID,
 	) (int, error)
 }

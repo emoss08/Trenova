@@ -49,7 +49,7 @@ import {
   TrendUp01Icon,
   Truck01Icon,
 } from "@trenova/shared/components/icons";
-import { workerRecordHref } from "@/lib/route-utils";
+import { workerPath } from "@/routes/worker/use-worker-state";
 import { recordPath } from "@/config/record-links";
 
 export function notificationDataString(
@@ -262,9 +262,15 @@ const REPORT_READY: NotificationDescriptor = {
   getLink: reportRunsLink,
 };
 
-function workerCredentialsLink(notification: Pick<Notification, "data">): string {
+function workerCredentialsLink(notification: Notification): string {
   const workerId = notificationDataString(notification, "workerId");
-  return workerId ? workerRecordHref(workerId, "credentials") : "/hr/workers";
+  if (!workerId) return "/hr/workers";
+  const credential = notificationRelatedId(notification, "credentialId");
+  return workerPath(workerId, {
+    tab: "qualification",
+    view: "credentials",
+    ...(credential ? { credential } : {}),
+  });
 }
 
 const aiControlLink = (notification: Notification) =>

@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aianalytics"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aianalyticsports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"go.uber.org/zap"
@@ -64,8 +65,9 @@ func (s *Service) Refresh(
 
 	if pruneDue(state, now) {
 		if err = s.refresher.Prune(ctx, aianalyticsports.PruneRequest{
-			TenantInfo: tenant,
-			Before:     now - RetentionDays*secondsPerDay,
+			TenantInfo:       tenant,
+			Before:           now - RetentionDays*secondsPerDay,
+			DailyUsageBefore: now - aiusage.DailyRetentionDays*secondsPerDay,
 		}); err != nil {
 			return nil, err
 		}
@@ -76,6 +78,7 @@ func (s *Service) Refresh(
 		zap.Bool("active", active),
 		zap.Int("units", result.Units),
 		zap.Int("hours", result.Hours),
+		zap.Int("usageDays", result.UsageDays),
 		zap.Bool("caughtUp", result.CaughtUp),
 	)
 
@@ -132,6 +135,11 @@ func (s *Service) refreshChunks(ctx context.Context, run *chunkRun) error {
 			return err
 		}
 		result.Hours += hours
+		usageDays, err := s.refresher.RefreshDailyUsage(ctx, req)
+		if err != nil {
+			return err
+		}
+		result.UsageDays += usageDays
 		if err = s.keyModels(ctx, aianalyticsports.ModelKeyRequest{
 			TenantInfo: tenant,
 			Stamp:      stamp,

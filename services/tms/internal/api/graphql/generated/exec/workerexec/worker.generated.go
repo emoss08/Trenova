@@ -764,6 +764,16 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUser),
 			},
 			{
+				Name:      "position",
+				HasChild:  true,
+				ChildType: "JobPosition",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*worker.Worker)
+					return obj.Position, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOJobPosition2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐJobPosition),
+			},
+			{
 				Name:      "profile",
 				HasChild:  true,
 				ChildType: "WorkerProfile",
@@ -2823,6 +2833,13 @@ func marshalOJSON2map(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSe
 	}
 	res := graphql.MarshalMap(v)
 	return res
+}
+
+func marshalOJobPosition2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐJobPosition(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *worker.JobPosition) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "JobPosition", v)
 }
 
 func marshalOOrganization2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐOrganization(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *tenant.Organization) graphql.Marshaler {

@@ -65,7 +65,7 @@ func newRig(hauler *haulerports.Hauler, mail *playsendtest.Mail) *rig {
 
 func missedDelivery(shipmentID, stopID pulid.ID) *watchtower.Item {
 	return &watchtower.Item{
-		SourceKind:  watchtower.SourceMissedDelivery,
+		SourceKind:  watchtower.SourceKindMissedDelivery,
 		SourceID:    stopID.String(),
 		SubjectType: agent.SubjectShipment,
 		SubjectID:   shipmentID,
@@ -90,7 +90,13 @@ func (r *rig) plan(t *testing.T, item *watchtower.Item) (*watchtowerports.Planne
 func TestPlaybookAsksTheDriverOnDashAboutTheMissedStop(t *testing.T) {
 	t.Parallel()
 
-	shipmentID, stopID, workerID := pulid.MustNew("shp_"), pulid.MustNew("stp_"), pulid.MustNew("wrk_")
+	shipmentID, stopID, workerID := pulid.MustNew(
+		"shp_",
+	), pulid.MustNew(
+		"stp_",
+	), pulid.MustNew(
+		"wrk_",
+	)
 	r := newRig(&haulerports.Hauler{
 		ShipmentID: shipmentID,
 		ProNumber:  "S100",
@@ -112,7 +118,10 @@ func TestPlaybookAsksTheDriverOnDashAboutTheMissedStop(t *testing.T) {
 		{Resource: permission.ResourceDriverMessage, Operation: permission.OpCreate},
 	}, planned.Needs)
 
-	require.NoError(t, planned.Send(t.Context(), &watchtowerports.PlaySending{Message: "Where are you?"}))
+	require.NoError(
+		t,
+		planned.Send(t.Context(), &watchtowerports.PlaySending{Message: "Where are you?"}),
+	)
 	require.Len(t, r.drivers.Notified, 1)
 	words, ok := r.drivers.Notified[0].Context.(notificationtemplate.DriverNotificationContext)
 	require.True(t, ok)
@@ -130,11 +139,14 @@ func TestPlaybookEmailsTheCarrierThatHasTheLoad(t *testing.T) {
 	r := newRig(&haulerports.Hauler{
 		ShipmentID: pulid.MustNew("shp_"),
 		ProNumber:  "S200",
-		Carrier:    &podchaseports.Carrier{Name: "Northline Carriers", Email: "dispatch@northline.test"},
+		Carrier: &podchaseports.Carrier{
+			Name:  "Northline Carriers",
+			Email: "dispatch@northline.test",
+		},
 	}, mail)
 
 	planned, err := r.plan(t, &watchtower.Item{
-		SourceKind:  watchtower.SourceNoCheckCall,
+		SourceKind:  watchtower.SourceKindNoCheckCall,
 		SourceID:    moveID.String(),
 		SubjectType: agent.SubjectShipmentMove,
 		SubjectID:   moveID,
@@ -179,7 +191,7 @@ func TestPlaybookFallsFromDashToEmail(t *testing.T) {
 	}
 	item := func(h *haulerports.Hauler) *watchtower.Item {
 		return &watchtower.Item{
-			SourceKind: watchtower.SourceEtaAtRisk, SubjectType: agent.SubjectShipment, SubjectID: h.ShipmentID,
+			SourceKind: watchtower.SourceKindEtaAtRisk, SubjectType: agent.SubjectShipment, SubjectID: h.ShipmentID,
 		}
 	}
 	known := playsendtest.Driver{Name: "Theresa Aguilar"}
@@ -207,7 +219,7 @@ func TestPlaybookSaysWhyNobodyCanBeAsked(t *testing.T) {
 
 	shipmentID := pulid.MustNew("shp_")
 	item := &watchtower.Item{
-		SourceKind: watchtower.SourceEtaAtRisk, SubjectType: agent.SubjectShipment, SubjectID: shipmentID,
+		SourceKind: watchtower.SourceKindEtaAtRisk, SubjectType: agent.SubjectShipment, SubjectID: shipmentID,
 	}
 
 	unassigned := newRig(&haulerports.Hauler{ShipmentID: shipmentID}, playsendtest.NewMail())
@@ -219,7 +231,10 @@ func TestPlaybookSaysWhyNobodyCanBeAsked(t *testing.T) {
 	mail.NoProfile = true
 	noProfile := newRig(&haulerports.Hauler{
 		ShipmentID: shipmentID,
-		Carrier:    &podchaseports.Carrier{Name: "Northline Carriers", Email: "dispatch@northline.test"},
+		Carrier: &podchaseports.Carrier{
+			Name:  "Northline Carriers",
+			Email: "dispatch@northline.test",
+		},
 	}, mail)
 	_, err = noProfile.plan(t, item)
 	require.Error(t, err)
@@ -236,7 +251,7 @@ func TestWordsNameALoadWithNoPROWithoutItsID(t *testing.T) {
 		ShipmentID: pulid.MustNew("shp_"),
 		Driver:     &podchaseports.Driver{Name: "Laura Wright"},
 	}
-	item := &watchtower.Item{SourceKind: watchtower.SourceMissedPickup}
+	item := &watchtower.Item{SourceKind: watchtower.SourceKindMissedPickup}
 
 	title, message := driverWords(item, hauler)
 	assert.Contains(t, message, "your load")

@@ -1401,8 +1401,12 @@
   --animate-flow-down: flow-down 1.5s linear infinite;
   --animate-rise: rise 180ms var(--ease-settle) both;
   /* A pane's content arriving in place of its skeleton: it settles out of a soft blur as
-     it rises, so the swap from outline to record reads as one motion. */
-  --animate-reveal: reveal 420ms var(--ease-settle) both;
+     it rises, so the swap from outline to record reads as one motion.
+     These arrivals wrap whole pages and panes and end at the element's own style, so they fill
+     backwards only: an animation that still fills after it ends keeps its transform and filter
+     in effect, and the wrapper stays the containing block of every position: fixed thing
+     inside it (a dock, a bulk bar), which then sits at the bottom of the content. */
+  --animate-reveal: reveal 420ms var(--ease-settle) backwards;
   --animate-confirm: confirm 320ms var(--ease-spring) both;
   --animate-shimmer: shimmer 1.6s linear infinite;
 
@@ -1422,10 +1426,10 @@
   --animate-attention-a: attention-a 1600ms var(--ease-swift);
   --animate-attention-b: attention-b 1600ms var(--ease-swift);
   --animate-expand-in: expand-in 280ms var(--ease-settle) both;
-  --animate-panel-in: panel-in 320ms var(--ease-settle) both;
-  --animate-slide-in: slide-in 360ms var(--ease-settle) both;
+  --animate-panel-in: panel-in 320ms var(--ease-settle) backwards;
+  --animate-slide-in: slide-in 360ms var(--ease-settle) backwards;
   /* The same arrival from the other side: a tab's content coming in from the tab to its left. */
-  --animate-slide-in-back: slide-in-back 360ms var(--ease-settle) both;
+  --animate-slide-in-back: slide-in-back 360ms var(--ease-settle) backwards;
   --animate-pop-in: pop-in 200ms var(--ease-settle) both;
   --animate-leave: leave 320ms var(--ease-swift) both;
   --animate-success: success 360ms var(--ease-spring) both;

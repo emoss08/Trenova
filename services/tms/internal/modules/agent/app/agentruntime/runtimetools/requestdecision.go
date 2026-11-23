@@ -372,7 +372,7 @@ func UnkeptOutcome(name string) toolcall.Outcome {
 			Failed: true,
 		}
 	}
-	if name == "show_board" {
+	if name == ShowBoardTool || name == ShowAnswerTool {
 		return toolcall.Outcome{
 			Content: fmt.Sprintf("Tool %q could not show the board just now. Answer in your "+
 				"reply instead.", name),

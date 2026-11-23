@@ -12,12 +12,25 @@ import {
 import { useState } from "react";
 
 interface DocumentThumbnailProps {
-  fileType: string;
+  /** The file's MIME type; null when the read did not carry it. */
+  fileType: string | null;
   fileName: string;
-  previewStatus: DocumentPreviewStatus;
-  previewUrl?: string;
+  /**
+   * Where the server's preview stands. Absent or null when the read did not carry it: the
+   * preview is then tried, and a file with none falls back to its icon.
+   */
+  previewStatus?: DocumentPreviewStatus | null;
+  previewUrl?: string | null;
+  /** The frame: its size when it holds an icon or a spinner, and the cropped image's box. */
   className?: string;
   size?: "sm" | "md" | "lg";
+  /**
+   * `cover` crops the preview to the frame (a card's square). `natural` draws it at its own
+   * proportions, sized by `imageClassName`, so a landscape license and a letter page each read
+   * as themselves; the frame shows the file's icon until the image has loaded.
+   */
+  fit?: "cover" | "natural";
+  imageClassName?: string;
 }
 
 const sizeClasses = {
@@ -32,9 +45,28 @@ const iconSizes = {
   lg: "size-8",
 };
 
-function supportsThumbnail(fileType: string): boolean {
+/** Whether the server draws a preview for a file of this type: images and PDFs. */
+export function supportsThumbnail(fileType: string): boolean {
   const type = fileType.toLowerCase();
   return type.startsWith("image/") || type === "application/pdf";
+}
+
+function FileTypeIcon({ fileType, className }: { fileType: string | null; className: string }) {
+  const type = (fileType ?? "").toLowerCase();
+  if (type.startsWith("image/")) return <Image01Icon aria-hidden className={className} />;
+  if (type.startsWith("video/")) return <VideoRecorderIcon aria-hidden className={className} />;
+  if (type.includes("spreadsheet") || type.includes("excel") || type === "text/csv") {
+    return <FileSpreadsheetIcon aria-hidden className={className} />;
+  }
+  if (
+    type.includes("pdf") ||
+    type.includes("document") ||
+    type.includes("word") ||
+    type === "text/plain"
+  ) {
+    return <File06Icon aria-hidden className={className} />;
+  }
+  return <File04Icon aria-hidden className={className} />;
 }
 
 export function DocumentThumbnail({
@@ -44,86 +76,82 @@ export function DocumentThumbnail({
   previewUrl,
   className,
   size = "md",
+  fit = "cover",
+  imageClassName,
 }: DocumentThumbnailProps) {
   const t = useT();
+  const [failedUrl, setFailedUrl] = useState<string | null>(null);
+  const [loadedUrl, setLoadedUrl] = useState<string | null>(null);
 
-  const iconType = fileType.toLowerCase();
-  const [imageError, setImageError] = useState(false);
-  const canHaveThumbnail = supportsThumbnail(fileType);
-  const showThumbnail = canHaveThumbnail && previewStatus === "Ready" && previewUrl && !imageError;
+  const statusKnown = previewStatus !== undefined && previewStatus !== null;
+  const canHaveThumbnail = fileType === null || supportsThumbnail(fileType);
+  const src =
+    canHaveThumbnail && previewUrl && (!statusKnown || previewStatus === "Ready")
+      ? previewUrl
+      : null;
+  const showImage = src !== null && failedUrl !== src;
   const isGenerating = canHaveThumbnail && previewStatus === "Pending";
 
-  if (showThumbnail) {
+  const frameClass = cn(
+    "flex items-center justify-center rounded-md bg-muted",
+    sizeClasses[size],
+    className,
+  );
+
+  if (showImage && fit === "cover") {
     return (
       <div
-        className={cn("bg-muted relative overflow-hidden rounded-md", sizeClasses[size], className)}
+        className={cn("relative overflow-hidden rounded-md bg-muted", sizeClasses[size], className)}
       >
         <img
-          src={previewUrl}
+          src={src}
           alt={fileName}
-          className="size-full object-cover"
-          onError={() => setImageError(true)}
+          decoding="async"
+          className="size-full object-cover object-top"
+          onError={() => setFailedUrl(src)}
         />
       </div>
     );
   }
 
+  if (showImage && fit === "natural") {
+    const loaded = loadedUrl === src;
+    return (
+      <>
+        <img
+          src={src}
+          alt={fileName}
+          decoding="async"
+          className={cn("block rounded-md", imageClassName, !loaded && "hidden")}
+          onLoad={() => setLoadedUrl(src)}
+          onError={() => setFailedUrl(src)}
+        />
+        {loaded ? null : (
+          <div className={frameClass}>
+            <FileTypeIcon
+              fileType={fileType}
+              className={cn("text-muted-foreground", iconSizes[size])}
+            />
+          </div>
+        )}
+      </>
+    );
+  }
+
   if (isGenerating) {
     return (
-      <div
-        className={cn(
-          "bg-muted flex items-center justify-center rounded-md",
-          sizeClasses[size],
-          className,
-        )}
-        title={t("Generating thumbnail...")}
-      >
-        <SpinnerIcon className={cn("text-muted-foreground animate-spin", iconSizes[size])} />
+      <div className={frameClass} title={t("Generating thumbnail...")}>
+        <SpinnerIcon className={cn("animate-spin text-muted-foreground", iconSizes[size])} />
       </div>
     );
   }
 
   return (
     <div
-      className={cn(
-        "bg-muted flex items-center justify-center rounded-md",
-        sizeClasses[size],
-        className,
-      )}
-      title={previewStatus === "Failed" ? "Preview unavailable" : undefined}
+      className={frameClass}
+      title={previewStatus === "Failed" ? t("Preview unavailable") : undefined}
     >
-      {iconType.startsWith("image/") && (
-        <Image01Icon className={cn("text-muted-foreground", iconSizes[size])} />
-      )}
-      {iconType.startsWith("video/") && (
-        <VideoRecorderIcon className={cn("text-muted-foreground", iconSizes[size])} />
-      )}
-      {(iconType === "application/pdf" || iconType.includes("pdf")) && (
-        <File06Icon className={cn("text-muted-foreground", iconSizes[size])} />
-      )}
-      {(iconType.includes("spreadsheet") ||
-        iconType.includes("excel") ||
-        iconType === "text/csv") && (
-        <FileSpreadsheetIcon className={cn("text-muted-foreground", iconSizes[size])} />
-      )}
-      {(iconType.includes("document") ||
-        iconType.includes("word") ||
-        iconType === "text/plain") && (
-        <File06Icon className={cn("text-muted-foreground", iconSizes[size])} />
-      )}
-      {!iconType.startsWith("image/") &&
-        !iconType.startsWith("video/") &&
-        !(iconType === "application/pdf" || iconType.includes("pdf")) &&
-        !(
-          iconType.includes("spreadsheet") ||
-          iconType.includes("excel") ||
-          iconType === "text/csv"
-        ) &&
-        !(
-          iconType.includes("document") ||
-          iconType.includes("word") ||
-          iconType === "text/plain"
-        ) && <File04Icon className={cn("text-muted-foreground", iconSizes[size])} />}
+      <FileTypeIcon fileType={fileType} className={cn("text-muted-foreground", iconSizes[size])} />
     </div>
   );
 }

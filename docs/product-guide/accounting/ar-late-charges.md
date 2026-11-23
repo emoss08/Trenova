@@ -39,7 +39,7 @@ Keywords: assess late fees, run late charges, create debit memo, bill late fees
 ### Turn automatic late charges on or off
 Keywords: late charge mode, nightly late charges, enable late fees
 1. Open **Billing controls** in the organization settings.
-2. In the **Late charges** card, set **Assessment mode** to **Disabled**, **Preview only** or
+2. In the **Late charges** card, set **Assess late charges** to **Disabled**, **Preview only** or
    **Automatic**, and optionally a **Minimum late charge**.
 3. Save the billing controls.
 

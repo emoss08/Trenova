@@ -50,6 +50,6 @@ Keywords: search segregation rules, filter by class
 ## Notes
 Viewing the page needs read access to hazmat segregation rules; **New hazmat segregation rule**
 appears only for people who can create them. Whether shipments are checked against these rules is
-turned on with **Check Hazmat segregation** on [Shipment controls](/admin/shipment-controls). The
+turned on with **Check hazmat segregation** on [Shipment controls](/admin/shipment-controls). The
 hazardous material records themselves are kept on
 [Hazardous materials](/shipment-management/configuration-files/hazardous-materials).

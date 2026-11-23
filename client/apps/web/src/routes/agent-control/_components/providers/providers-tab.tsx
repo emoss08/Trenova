@@ -98,6 +98,7 @@ export default function ProvidersTab() {
   const { allowed: canUpdate } = usePermission(Resource.AIProvider, Operation.Update);
   const { allowed: canDelete } = usePermission(Resource.AIProvider, Operation.Delete);
   const { allowed: canManage } = usePermission(Resource.AIProvider, Operation.Manage);
+  const { allowed: canReadUsage } = usePermission(Resource.AIUsage, Operation.Read);
 
   const listQuery = useQuery(aiProvider.list());
   const catalogQuery = useQuery(aiProvider.catalog());
@@ -110,6 +111,7 @@ export default function ProvidersTab() {
   const usageQuery = useQuery({
     ...aiProvider.usage(WEEK_DAYS),
     staleTime: USAGE_STALE_MS,
+    enabled: canReadUsage,
   });
 
   const saved = useMemo(() => listQuery.data ?? [], [listQuery.data]);
@@ -148,6 +150,7 @@ export default function ProvidersTab() {
     queries: saved.map((provider) => ({
       ...aiProvider.daily(provider.id, WEEK_DAYS, timezone),
       staleTime: USAGE_STALE_MS,
+      enabled: canReadUsage,
     })),
     combine: dailyData,
   });

@@ -59,12 +59,15 @@ describe("human resource management module", () => {
   });
 
   it("points the worker quick actions at the HR module", () => {
-    const workerActions = (navigationConfig.quickActions ?? []).filter((action) =>
-      ["create-worker", "request-worker-pto"].includes(action.id),
+    const actions = new Map(
+      (navigationConfig.quickActions ?? []).map((action) => [action.id, action]),
     );
-    expect(workerActions).toHaveLength(2);
-    for (const action of workerActions) {
-      expect(action.path).toBe("/hr/workers");
-    }
+    expect(actions.get("create-worker")?.path).toBe("/hr/workers/new");
+    expect(actions.get("create-worker")?.query).toBeUndefined();
+    expect(actions.get("request-worker-pto")?.path).toBe("/hr/workers");
+    expect(actions.get("request-worker-pto")?.query).toEqual({
+      pageTab: "pto",
+      panelType: "create",
+    });
   });
 });

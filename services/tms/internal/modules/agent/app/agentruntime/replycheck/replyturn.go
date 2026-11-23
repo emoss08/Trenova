@@ -17,6 +17,7 @@ type Turn interface {
 	Result() *agentruntimeports.RunResult
 	Artifacts() []agentruntimeports.ShownArtifact
 	Holds(name string) bool
+	Offers(name string) bool
 }
 
 // SpecFor is the spec of a tool by its name, false for a tool nobody

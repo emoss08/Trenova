@@ -1,17 +1,7 @@
-// Package workeremploymentservice keeps a worker's employment timeline and is
-// the only path that moves employment state. Recording an event validates it
-// against the worker's current state, applies its effect to the worker record
-// through the worker service (so audit, mirroring and realtime fan-out are the
-// same as an edit), runs the cascade the event implies (termination ends the
-// PTO and pay assignments and cancels upcoming time off; a rehire re-enrols the
-// worker in the default PTO policy), then appends the event. Amendments correct
-// what was written without replaying effects.
 package workeremploymentservice
 
 import (
 	"context"
-	"fmt"
-	"strconv"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
@@ -20,16 +10,17 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/app/ptoledgerservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/driverpayservice"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/payassignment"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
+	"github.com/emoss08/trenova/internal/modules/workforce/app/driverportalinvitationservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/ptopolicyservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/employment"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/pto"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/portalaccessports"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/ptopolicyports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerchecklistports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workeremploymentports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
@@ -43,7 +34,6 @@ import (
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/shopspring/decimal"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -53,9 +43,9 @@ const (
 	realtimeWorkers         = "workers"
 	terminationCancelReason = "Employment ended"
 	upcomingPTOPageSize     = 100
+	teamChangeAction        = "worker.team_changed"
 )
 
-// WorkerUpdater is the slice of the worker service the timeline needs.
 type WorkerUpdater interface {
 	UpdateFromEmployment(
 		ctx context.Context,
@@ -64,37 +54,38 @@ type WorkerUpdater interface {
 	) (*worker.Worker, error)
 }
 
-// PTOPolicyManager is the slice of the PTO policy service the cascade needs.
 type PTOPolicyManager interface {
-	ListAssignments(
+	ActiveAssignment(
 		ctx context.Context,
-		req *ptopolicyports.ListPTOAssignmentsRequest,
-	) ([]*pto.WorkerPTOPolicyAssignment, error)
+		tenantInfo pagination.TenantInfo,
+		workerID pulid.ID,
+	) (*pto.WorkerPTOPolicyAssignment, error)
 	EndAssignment(
 		ctx context.Context,
 		req *ptopolicyservice.EndAssignmentRequest,
 	) (*pto.WorkerPTOPolicyAssignment, error)
-	AssignDefaultPolicy(
+	DefaultPolicy(ctx context.Context, tenantInfo pagination.TenantInfo) (*pto.PTOPolicy, error)
+	AssignAtHire(ctx context.Context, req *ptopolicyservice.HireAssignment) error
+}
+
+type PTOSettler interface {
+	PreviewTerminationSettlement(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 		workerID pulid.ID,
-		effectiveFrom int64,
-		userID pulid.ID,
-	) error
-}
-
-// PTOSettler closes out PTO balances when employment ends.
-type PTOSettler interface {
+		effectiveAt int64,
+		released []ptoledgerservice.ReleasedUsage,
+	) (*ptoledgerservice.TerminationPlan, error)
 	SettleOnTermination(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 		workerID pulid.ID,
 		effectiveAt int64,
+		plan *ptoledgerservice.TerminationPlan,
 		actor ptoledgerservice.Actor,
 	) (*ptoledgerservice.TerminationSettlement, error)
 }
 
-// PayAssignmentManager is the slice of the driver pay service the cascade needs.
 type PayAssignmentManager interface {
 	EndAssignment(
 		ctx context.Context,
@@ -105,21 +96,38 @@ type PayAssignmentManager interface {
 	) (*payassignment.WorkerPayAssignment, error)
 }
 
+type PortalAccess interface {
+	GetPortalStatus(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+		workerID pulid.ID,
+	) (*driverportalinvitationservice.PortalStatus, error)
+	RevokeAccess(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+		workerID pulid.ID,
+		actor *permissionports.RequestActor,
+	) error
+}
+
 type Params struct {
 	fx.In
 
 	Logger        *zap.Logger
+	DB            kernelports.Transactor
 	Repo          workeremploymentports.WorkerEmploymentEventRepository
 	WorkerRepo    workerports.WorkerRepository
 	FleetCodeRepo fleetcodeports.FleetCodeRepository
 	DocumentRepo  documentports.DocumentRepository
 	PayAssignRepo driverpayports.WorkerPayAssignmentRepository
+	Users         tenantports.UserRepository
 	Workers       *workerservice.Service
 	PTOPolicies   *ptopolicyservice.Service
 	PTO           workerptoports.WorkerPTOService
 	PTOLedger     *ptoledgerservice.Service
 	DriverPay     *driverpayservice.Service
 	AuditService  auditports.AuditService
+	Security      permissionports.SecurityAuditor
 	Realtime      realtimeports.RealtimeService
 	Checklists    workerchecklistports.ChecklistSpawner
 	Training      workertrainingports.TrainingAssigner
@@ -127,48 +135,51 @@ type Params struct {
 
 type Service struct {
 	l             *zap.Logger
+	db            kernelports.Transactor
 	repo          workeremploymentports.WorkerEmploymentEventRepository
 	workerRepo    workerports.WorkerRepository
 	fleetCodeRepo fleetcodeports.FleetCodeRepository
 	documentRepo  documentports.DocumentRepository
 	payAssignRepo driverpayports.WorkerPayAssignmentRepository
+	users         tenantports.UserRepository
 	workers       WorkerUpdater
 	ptoPolicies   PTOPolicyManager
 	pto           workerptoports.WorkerPTOService
 	ptoLedger     PTOSettler
 	driverPay     PayAssignmentManager
 	auditService  auditports.AuditService
+	security      permissionports.SecurityAuditor
 	realtime      realtimeports.RealtimeService
 	checklists    workerchecklistports.ChecklistSpawner
 	training      workertrainingports.TrainingAssigner
-	portal        portalaccessports.PortalAccessRevoker
+	portal        PortalAccess
 }
 
 func New(p Params) *Service {
 	return &Service{
 		l:             p.Logger.Named("service.worker-employment"),
+		db:            p.DB,
 		repo:          p.Repo,
 		workerRepo:    p.WorkerRepo,
 		fleetCodeRepo: p.FleetCodeRepo,
 		documentRepo:  p.DocumentRepo,
 		payAssignRepo: p.PayAssignRepo,
+		users:         p.Users,
 		workers:       p.Workers,
 		ptoPolicies:   p.PTOPolicies,
 		pto:           p.PTO,
 		ptoLedger:     p.PTOLedger,
 		driverPay:     p.DriverPay,
 		auditService:  p.AuditService,
+		security:      p.Security,
 		realtime:      p.Realtime,
 		checklists:    p.Checklists,
 		training:      p.Training,
 	}
 }
 
-// SetPortalRevoker breaks the construction cycle between this service and the
-// driver portal service, which reaches back here through the safety service to
-// record a termination. The revoker arrives after both are built.
-func (s *Service) SetPortalRevoker(revoker portalaccessports.PortalAccessRevoker) {
-	s.portal = revoker
+func (s *Service) SetPortalRevoker(portal PortalAccess) {
+	s.portal = portal
 }
 
 func (s *Service) List(
@@ -199,8 +210,6 @@ func (s *Service) Get(
 	})
 }
 
-// RecordRequest carries the typed inputs a kind can use; the service turns them
-// into the event's from/to values so the timeline renders what actually moved.
 type RecordRequest struct {
 	TenantInfo  pagination.TenantInfo
 	WorkerID    pulid.ID
@@ -219,571 +228,51 @@ type RecordRequest struct {
 	UserID      pulid.ID
 }
 
-// CascadeSummary reports what a status-changing event did beyond the worker
-// row, so the office sees the consequences in one place.
-type CascadeSummary struct {
-	PTOAssignmentEnded   bool
-	PayAssignmentEnded   bool
-	UpcomingPTOCancelled int
-	DefaultPolicyApplied bool
-	ChecklistStarted     bool
-	// ChecklistsClosed counts the open checklists the event made moot: an
-	// unfinished onboarding on a termination, an unfinished offboarding on a
-	// hire or rehire.
-	ChecklistsClosed int
-	PTOPaidOutDays   decimal.Decimal
-	PTOForfeitedDays decimal.Decimal
-	TrainingAssigned int
-	// PortalAccessRevoked reports that a termination shut off the worker's
-	// Dash sign-in. PortalRevocationError carries why it could not be shut
-	// off, because a termination that is already recorded must still be
-	// reported honestly rather than rolled back.
-	PortalAccessRevoked   bool
-	PortalRevocationError string
-}
-
 type RecordResult struct {
 	Event   *employment.WorkerEmploymentEvent
-	Cascade CascadeSummary
+	Effects []*employment.Effect
 }
 
-func (s *Service) Record(ctx context.Context, req *RecordRequest) (*RecordResult, error) {
-	log := s.l.With(
-		zap.String("operation", "Record"),
-		zap.String("workerId", req.WorkerID.String()),
-		zap.String("kind", req.Kind.String()),
-	)
-
+func (s *Service) loadState(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	workerID pulid.ID,
+	includeTeam bool,
+) (*worker.Worker, []*employment.WorkerEmploymentEvent, error) {
 	wrk, err := s.workerRepo.GetByID(ctx, workerports.GetWorkerByIDRequest{
-		ID:             req.WorkerID,
-		TenantInfo:     req.TenantInfo,
-		IncludeProfile: true,
-		IncludeState:   true,
+		ID:               workerID,
+		TenantInfo:       tenantInfo,
+		IncludeProfile:   true,
+		IncludeFleetCode: includeTeam,
+		IncludeManager:   includeTeam,
 	})
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-
 	history, err := s.repo.List(ctx, &workeremploymentports.ListWorkerEmploymentEventsRequest{
-		TenantInfo: req.TenantInfo,
-		WorkerID:   req.WorkerID,
+		TenantInfo: tenantInfo,
+		WorkerID:   workerID,
 		Ascending:  true,
 	})
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
+	return wrk, history, nil
+}
 
-	event := &employment.WorkerEmploymentEvent{
-		OrganizationID: req.TenantInfo.OrgID,
-		BusinessUnitID: req.TenantInfo.BuID,
-		WorkerID:       req.WorkerID,
-		Kind:           req.Kind,
-		EffectiveAt:    req.EffectiveAt,
-		Reason:         strings.TrimSpace(req.Reason),
-		Notes:          strings.TrimSpace(req.Notes),
-		DocumentID:     req.DocumentID,
-		RecordedByID:   req.UserID,
-		FromValues:     map[string]string{},
-		ToValues:       map[string]string{},
-	}
-
-	multiErr := errortypes.NewMultiError()
-	event.Validate(multiErr)
-	if multiErr.HasErrors() {
-		return nil, multiErr
-	}
-	if err = req.Kind.CanRecord(employment.EmploymentStateOf(wrk, history)); err != nil {
-		return nil, err
-	}
-	if err = s.populateValues(ctx, req, wrk, event); err != nil {
-		return nil, err
-	}
-	if !event.DocumentID.IsNil() {
-		if err = s.requireWorkerDocument(
-			ctx,
-			req.TenantInfo,
-			wrk.ID,
-			event.DocumentID,
-		); err != nil {
-			return nil, err
-		}
-	}
-
-	actor := s.actor(req.TenantInfo, req.UserID)
-	if event.Apply(wrk) {
-		if _, err = s.workers.UpdateFromEmployment(ctx, wrk, actor); err != nil {
-			log.Error("failed to apply employment event to worker", zap.Error(err))
-			return nil, err
-		}
-	}
-
-	cascade, err := s.cascade(ctx, req, wrk, actor, log)
+func (s *Service) Options(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	workerID pulid.ID,
+) (*Options, error) {
+	wrk, history, err := s.loadState(ctx, tenantInfo, workerID, false)
 	if err != nil {
 		return nil, err
 	}
-
-	created, err := s.repo.Create(ctx, event)
-	if err != nil {
-		log.Error("failed to record employment event", zap.Error(err))
-		return nil, err
-	}
-
-	s.audit(ctx, created, nil, permission.OpCreate, req.UserID, "Employment event recorded", log)
-	s.publish(ctx, req.TenantInfo, created, permission.OpCreate, req.UserID)
-	cascade.ChecklistsClosed = s.closeChecklists(ctx, created, wrk, req.UserID, log)
-	cascade.ChecklistStarted = s.spawnChecklist(ctx, created, wrk, req.UserID, log)
-
-	return &RecordResult{Event: created, Cascade: cascade}, nil
-}
-
-// RecordHired opens a timeline for a freshly created worker. It is best-effort
-// from the worker service's point of view and never applies effects, because
-// the worker row was just written with the hire date already on it.
-func (s *Service) RecordHired(ctx context.Context, wrk *worker.Worker, userID pulid.ID) error {
-	if wrk == nil || wrk.Profile == nil || wrk.Profile.HireDate <= 0 {
-		return nil
-	}
-	tenantInfo := pagination.TenantInfo{OrgID: wrk.OrganizationID, BuID: wrk.BusinessUnitID}
-	event := &employment.WorkerEmploymentEvent{
-		OrganizationID: tenantInfo.OrgID,
-		BusinessUnitID: tenantInfo.BuID,
-		WorkerID:       wrk.ID,
-		Kind:           employment.EmploymentEventHired,
-		EffectiveAt:    wrk.Profile.HireDate,
-		RecordedByID:   userID,
-		FromValues:     map[string]string{},
-		ToValues: map[string]string{
-			employment.EmploymentValueHireDate: strconv.FormatInt(wrk.Profile.HireDate, 10),
-		},
-	}
-	if !wrk.FleetCodeID.IsNil() {
-		event.ToValues[employment.EmploymentValueFleetCodeID] = wrk.FleetCodeID.String()
-	}
-	created, err := s.repo.Create(ctx, event)
-	if err != nil {
-		return err
-	}
-	s.publish(ctx, tenantInfo, created, permission.OpCreate, userID)
-	log := s.l.With(zap.String("operation", "RecordHired"))
-	s.closeChecklists(ctx, created, wrk, userID, log)
-	s.spawnChecklist(ctx, created, wrk, userID, log)
-	return nil
-}
-
-// closeChecklists cancels the checklists the event makes moot. Best-effort
-// for the same reason spawnChecklist is: the employment change is already
-// recorded and stands regardless.
-func (s *Service) closeChecklists(
-	ctx context.Context,
-	event *employment.WorkerEmploymentEvent,
-	wrk *worker.Worker,
-	userID pulid.ID,
-	log *zap.Logger,
-) int {
-	closed, err := s.checklists.CloseForEvent(ctx, event, wrk, userID)
-	if err != nil {
-		log.Warn("failed to close checklists for employment event", zap.Error(err))
-	}
-	return closed
-}
-
-// spawnChecklist starts the default onboarding/offboarding checklist for the
-// event. It is best-effort: a checklist that fails to start must not undo an
-// employment change that has already been recorded.
-func (s *Service) spawnChecklist(
-	ctx context.Context,
-	event *employment.WorkerEmploymentEvent,
-	wrk *worker.Worker,
-	userID pulid.ID,
-	log *zap.Logger,
-) bool {
-	checklist, err := s.checklists.SpawnForEvent(ctx, event, wrk, userID)
-	if err != nil {
-		log.Warn("failed to start checklist for employment event", zap.Error(err))
-		return false
-	}
-	return checklist != nil
-}
-
-func (s *Service) populateValues(
-	ctx context.Context,
-	req *RecordRequest,
-	wrk *worker.Worker,
-	event *employment.WorkerEmploymentEvent,
-) error {
-	switch req.Kind {
-	case employment.EmploymentEventHired, employment.EmploymentEventRehired:
-		if wrk.Profile != nil && wrk.Profile.HireDate > 0 {
-			event.FromValues[employment.EmploymentValueHireDate] = strconv.FormatInt(
-				wrk.Profile.HireDate,
-				10,
-			)
-		}
-		event.ToValues[employment.EmploymentValueHireDate] = strconv.FormatInt(req.EffectiveAt, 10)
-		event.FromValues[employment.EmploymentValueStatus] = wrk.Status.String()
-		event.ToValues[employment.EmploymentValueStatus] = "Active"
-	case employment.EmploymentEventTerminated:
-		event.FromValues[employment.EmploymentValueStatus] = wrk.Status.String()
-		event.ToValues[employment.EmploymentValueStatus] = "Inactive"
-		event.ToValues[employment.EmploymentValueTerminationDate] = strconv.FormatInt(
-			req.EffectiveAt,
-			10,
-		)
-	case employment.EmploymentEventSuspended:
-		event.FromValues[employment.EmploymentValueCanBeAssigned] = strconv.FormatBool(
-			wrk.CanBeAssigned,
-		)
-		event.ToValues[employment.EmploymentValueCanBeAssigned] = "false"
-	case employment.EmploymentEventLeaveStarted:
-		if req.LeaveType == nil || !req.LeaveType.IsValid() {
-			return errortypes.NewValidationError(
-				"leaveType",
-				errortypes.ErrRequired,
-				"Choose the kind of leave",
-			)
-		}
-		event.FromValues[employment.EmploymentValueCanBeAssigned] = strconv.FormatBool(
-			wrk.CanBeAssigned,
-		)
-		event.ToValues[employment.EmploymentValueCanBeAssigned] = "false"
-		event.ToValues[employment.EmploymentValueLeaveType] = req.LeaveType.String()
-	case employment.EmploymentEventReinstated:
-		event.FromValues[employment.EmploymentValueCanBeAssigned] = strconv.FormatBool(
-			wrk.CanBeAssigned,
-		)
-		event.ToValues[employment.EmploymentValueCanBeAssigned] = "true"
-	case employment.EmploymentEventLeaveEnded:
-		event.FromValues[employment.EmploymentValueCanBeAssigned] = strconv.FormatBool(
-			wrk.CanBeAssigned,
-		)
-		event.ToValues[employment.EmploymentValueCanBeAssigned] = "true"
-		if wrk.LeaveType != "" {
-			event.FromValues[employment.EmploymentValueLeaveType] = wrk.LeaveType.String()
-		}
-	case employment.EmploymentEventTransferred:
-		return s.populateTransfer(ctx, req, wrk, event)
-	case employment.EmploymentEventPromoted:
-		return populatePromotion(req, wrk, event)
-	case employment.EmploymentEventRateChanged:
-		rate := strings.TrimSpace(req.Rate)
-		if rate == "" {
-			return errortypes.NewValidationError(
-				"rate",
-				errortypes.ErrRequired,
-				"Enter the new rate",
-			)
-		}
-		event.ToValues[employment.EmploymentValueRate] = rate
-		if unit := strings.TrimSpace(req.RateUnit); unit != "" {
-			event.ToValues[employment.EmploymentValueRateUnit] = unit
-		}
-	case employment.EmploymentEventProbationEnded:
-	}
-	return nil
-}
-
-func (s *Service) populateTransfer(
-	ctx context.Context,
-	req *RecordRequest,
-	wrk *worker.Worker,
-	event *employment.WorkerEmploymentEvent,
-) error {
-	if req.FleetCodeID == nil && req.ManagerID == nil {
-		return errortypes.NewValidationError(
-			"fleetCodeId",
-			errortypes.ErrRequired,
-			"A transfer needs a new fleet code or manager",
-		)
-	}
-	if req.FleetCodeID != nil {
-		if *req.FleetCodeID == wrk.FleetCodeID {
-			return errortypes.NewValidationError(
-				"fleetCodeId",
-				errortypes.ErrInvalid,
-				"The worker is already in that fleet",
-			)
-		}
-		if !wrk.FleetCodeID.IsNil() {
-			event.FromValues[employment.EmploymentValueFleetCodeID] = wrk.FleetCodeID.String()
-			if wrk.FleetCode != nil {
-				event.FromValues[employment.EmploymentValueFleetCode] = wrk.FleetCode.Code
-			}
-		}
-		if req.FleetCodeID.IsNil() {
-			event.ToValues[employment.EmploymentValueFleetCodeID] = ""
-		} else {
-			tenantInfo := req.TenantInfo
-			fleet, err := s.fleetCodeRepo.GetByID(ctx, fleetcodeports.GetFleetCodeByIDRequest{
-				ID:         *req.FleetCodeID,
-				TenantInfo: &tenantInfo,
-			})
-			if err != nil {
-				return err
-			}
-			event.ToValues[employment.EmploymentValueFleetCodeID] = fleet.ID.String()
-			event.ToValues[employment.EmploymentValueFleetCode] = fleet.Code
-		}
-	}
-	if req.ManagerID != nil {
-		if !wrk.ManagerID.IsNil() {
-			event.FromValues[employment.EmploymentValueManagerID] = wrk.ManagerID.String()
-		}
-		event.ToValues[employment.EmploymentValueManagerID] = req.ManagerID.String()
-	}
-	return nil
-}
-
-func populatePromotion(
-	req *RecordRequest,
-	wrk *worker.Worker,
-	event *employment.WorkerEmploymentEvent,
-) error {
-	if req.DriverType == nil && req.WorkerType == nil {
-		return errortypes.NewValidationError(
-			"driverType",
-			errortypes.ErrRequired,
-			"A promotion needs a new driver type or worker type",
-		)
-	}
-	changed := false
-	if req.DriverType != nil {
-		if !req.DriverType.IsValid() {
-			return errortypes.NewValidationError(
-				"driverType",
-				errortypes.ErrInvalid,
-				"Unknown driver type",
-			)
-		}
-		if *req.DriverType != wrk.DriverType {
-			event.FromValues[employment.EmploymentValueDriverType] = wrk.DriverType.String()
-			event.ToValues[employment.EmploymentValueDriverType] = req.DriverType.String()
-			changed = true
-		}
-	}
-	if req.WorkerType != nil {
-		if !req.WorkerType.IsValid() {
-			return errortypes.NewValidationError(
-				"workerType",
-				errortypes.ErrInvalid,
-				"Unknown worker type",
-			)
-		}
-		if *req.WorkerType != wrk.Type {
-			event.FromValues[employment.EmploymentValueWorkerType] = wrk.Type.String()
-			event.ToValues[employment.EmploymentValueWorkerType] = req.WorkerType.String()
-			changed = true
-		}
-	}
-	if !changed {
-		return errortypes.NewValidationError(
-			"driverType",
-			errortypes.ErrInvalid,
-			"Nothing changes — the worker already has that type",
-		)
-	}
-	return nil
-}
-
-func (s *Service) cascade(
-	ctx context.Context,
-	req *RecordRequest,
-	wrk *worker.Worker,
-	actor *permissionports.RequestActor,
-	log *zap.Logger,
-) (CascadeSummary, error) {
-	var summary CascadeSummary
-	switch req.Kind {
-	case employment.EmploymentEventTerminated:
-		ended, err := s.endPTOAssignment(ctx, req)
-		if err != nil {
-			return summary, err
-		}
-		summary.PTOAssignmentEnded = ended
-		payEnded, err := s.endPayAssignment(ctx, req, actor)
-		if err != nil {
-			return summary, err
-		}
-		summary.PayAssignmentEnded = payEnded
-		cancelled, err := s.cancelUpcomingPTO(ctx, req, log)
-		if err != nil {
-			return summary, err
-		}
-		summary.UpcomingPTOCancelled = cancelled
-		settlement, settleErr := s.ptoLedger.SettleOnTermination(
-			ctx, req.TenantInfo, req.WorkerID, req.EffectiveAt,
-			ptoledgerservice.UserActor(req.UserID),
-		)
-		if settleErr != nil {
-			return summary, fmt.Errorf("settle PTO balances: %w", settleErr)
-		}
-		summary.PTOPaidOutDays = settlement.PaidOutDays
-		summary.PTOForfeitedDays = settlement.ForfeitedDays
-
-		summary.PortalAccessRevoked, summary.PortalRevocationError = s.revokePortalAccess(
-			ctx, req, actor, log,
-		)
-	case employment.EmploymentEventRehired:
-		if err := s.ptoPolicies.AssignDefaultPolicy(
-			ctx, req.TenantInfo, wrk.ID, req.EffectiveAt, req.UserID,
-		); err != nil {
-			log.Warn("failed to re-enrol rehired worker in default PTO policy", zap.Error(err))
-		} else {
-			summary.DefaultPolicyApplied = true
-		}
-	case employment.EmploymentEventHired, employment.EmploymentEventProbationEnded,
-		employment.EmploymentEventPromoted, employment.EmploymentEventTransferred,
-		employment.EmploymentEventLeaveStarted, employment.EmploymentEventLeaveEnded,
-		employment.EmploymentEventSuspended, employment.EmploymentEventReinstated,
-		employment.EmploymentEventRateChanged:
-	}
-	switch req.Kind {
-	case employment.EmploymentEventHired,
-		employment.EmploymentEventRehired,
-		employment.EmploymentEventPromoted:
-		summary.TrainingAssigned = s.assignTraining(ctx, req, log)
-	default:
-	}
-	return summary, nil
-}
-
-// revokePortalAccess shuts off Dash for a worker whose employment has ended.
-// The worker row is already Inactive by the time the cascade runs, so a portal
-// failure is reported rather than raised: aborting here would lose the
-// timeline event for a termination that has already taken effect. The
-// offboarding checklist keeps its item as the human backstop.
-func (s *Service) revokePortalAccess(
-	ctx context.Context,
-	req *RecordRequest,
-	actor *permissionports.RequestActor,
-	log *zap.Logger,
-) (bool, string) {
-	if s.portal == nil {
-		return false, ""
-	}
-	revoked, err := s.portal.RevokeOnTermination(ctx, req.TenantInfo, req.WorkerID, actor)
-	if err != nil {
-		log.Error("failed to revoke portal access on termination", zap.Error(err))
-		return false, err.Error()
-	}
-	return revoked, ""
-}
-
-// assignTraining opens the required courses the worker is missing after a
-// hire, rehire or driver-type change. Best-effort: a training gap must not
-// undo an employment change that has already been recorded.
-func (s *Service) assignTraining(ctx context.Context, req *RecordRequest, log *zap.Logger) int {
-	records, err := s.training.AssignRequired(ctx, req.TenantInfo, req.WorkerID, req.UserID)
-	if err != nil {
-		log.Warn("failed to assign required training", zap.Error(err))
-		return 0
-	}
-	return len(records)
-}
-
-func (s *Service) endPTOAssignment(ctx context.Context, req *RecordRequest) (bool, error) {
-	assignments, err := s.ptoPolicies.ListAssignments(
-		ctx,
-		&ptopolicyports.ListPTOAssignmentsRequest{
-			TenantInfo: req.TenantInfo,
-			WorkerID:   req.WorkerID,
-		},
-	)
-	if err != nil {
-		return false, err
-	}
-	for _, assignment := range assignments {
-		if !assignment.IsOpen() {
-			continue
-		}
-		effectiveTo := req.EffectiveAt
-		if effectiveTo <= assignment.EffectiveFrom {
-			effectiveTo = assignment.EffectiveFrom + 1
-		}
-		if _, err = s.ptoPolicies.EndAssignment(ctx, &ptopolicyservice.EndAssignmentRequest{
-			TenantInfo:   req.TenantInfo,
-			AssignmentID: assignment.ID,
-			EffectiveTo:  effectiveTo,
-			Version:      assignment.Version,
-			UserID:       req.UserID,
-		}); err != nil {
-			return false, fmt.Errorf("end PTO policy assignment: %w", err)
-		}
-		return true, nil
-	}
-	return false, nil
-}
-
-func (s *Service) endPayAssignment(
-	ctx context.Context,
-	req *RecordRequest,
-	actor *permissionports.RequestActor,
-) (bool, error) {
-	assignment, err := s.payAssignRepo.GetEffectiveForWorker(
-		ctx,
-		driverpayports.GetWorkerPayAssignmentRequest{
-			TenantInfo: req.TenantInfo,
-			WorkerID:   req.WorkerID,
-			AsOf:       req.EffectiveAt,
-		},
-	)
-	if err != nil {
-		if errortypes.IsNotFoundError(err) {
-			return false, nil
-		}
-		return false, err
-	}
-	if assignment == nil || assignment.EffectiveTo != nil {
-		return false, nil
-	}
-	endDate := req.EffectiveAt
-	if endDate <= assignment.EffectiveFrom {
-		endDate = assignment.EffectiveFrom + 1
-	}
-	if _, err = s.driverPay.EndAssignment(
-		ctx, req.TenantInfo, assignment.ID, endDate, actor,
-	); err != nil {
-		return false, fmt.Errorf("end pay assignment: %w", err)
-	}
-	return true, nil
-}
-
-func (s *Service) cancelUpcomingPTO(
-	ctx context.Context,
-	req *RecordRequest,
-	log *zap.Logger,
-) (int, error) {
-	cancelled := 0
-	for _, status := range []worker.PTOStatus{worker.PTOStatusApproved, worker.PTOStatusRequested} {
-		result, err := s.pto.List(ctx, &workerptoports.ListPTORequest{
-			Filter: &pagination.QueryOptions{
-				TenantInfo: req.TenantInfo,
-				Pagination: pagination.Info{Limit: upcomingPTOPageSize},
-			},
-			Status:        status.String(),
-			StartDateFrom: req.EffectiveAt,
-			WorkerID:      req.WorkerID,
-		})
-		if err != nil {
-			return cancelled, err
-		}
-		for _, pto := range result.Items {
-			if _, err = s.pto.Cancel(ctx, &workerptoports.UpdatePTOStatusRequest{
-				ID:              pto.ID,
-				TenantInfo:      req.TenantInfo,
-				Status:          worker.PTOStatusCancelled,
-				UserID:          req.UserID,
-				Reason:          terminationCancelReason,
-				ExpectedVersion: pto.Version,
-			}); err != nil {
-				log.Warn("failed to cancel upcoming PTO on termination",
-					zap.String("ptoId", pto.ID.String()),
-					zap.Error(err))
-				continue
-			}
-			cancelled++
-		}
-	}
-	return cancelled, nil
+	return &Options{
+		RecordableKinds:     employment.RecordableKinds(employment.EmploymentStateOf(wrk, history)),
+		ReasonRequiredKinds: employment.ReasonRequiredKinds(),
+	}, nil
 }
 
 type AmendRequest struct {
@@ -798,9 +287,6 @@ type AmendRequest struct {
 	UserID        pulid.ID
 }
 
-// Amend corrects the narrative of an event. Effects are never replayed: a
-// corrected termination date does not move the worker's termination date,
-// because that would silently rewrite what the cascade already did.
 func (s *Service) Amend(
 	ctx context.Context,
 	req *AmendRequest,
@@ -867,7 +353,9 @@ func (s *Service) Amend(
 		return nil, err
 	}
 
-	s.audit(ctx, saved, original, permission.OpUpdate, req.UserID, "Employment event amended", log)
+	if err = s.audit(ctx, saved, original, permission.OpUpdate, req.UserID, "Employment event amended"); err != nil {
+		log.Error("failed to log audit action", zap.Error(err))
+	}
 	s.publish(ctx, req.TenantInfo, saved, permission.OpUpdate, req.UserID)
 
 	return saved, nil
@@ -914,10 +402,9 @@ func (s *Service) audit(
 	operation permission.Operation,
 	userID pulid.ID,
 	comment string,
-	log *zap.Logger,
-) {
+) error {
 	if userID.IsNil() {
-		return
+		return nil
 	}
 	params := &auditports.LogActionParams{
 		Resource:       permission.ResourceWorkerEmploymentEvent,
@@ -928,14 +415,15 @@ func (s *Service) audit(
 		OrganizationID: current.OrganizationID,
 		BusinessUnitID: current.BusinessUnitID,
 	}
-	opts := []auditports.LogOption{auditservice.WithComment(comment)}
+	opts := []auditports.LogOption{
+		auditservice.WithComment(comment),
+		auditservice.WithSubjectOf(current),
+	}
 	if previous != nil {
 		params.PreviousState = jsonutils.MustToJSON(previous)
 		opts = append(opts, auditservice.WithDiff(previous, current))
 	}
-	if err := s.auditService.LogAction(ctx, params, opts...); err != nil {
-		log.Error("failed to log audit action", zap.Error(err))
-	}
+	return s.auditService.LogAction(ctx, params, opts...)
 }
 
 func (s *Service) publish(
@@ -949,11 +437,7 @@ func (s *Service) publish(
 		return
 	}
 	for _, resource := range []string{realtimeResource, realtimeWorkers} {
-		recordID := event.ID
-		if resource == realtimeWorkers {
-			recordID = event.WorkerID
-		}
-		if err := realtimeinvalidation.Publish(ctx, s.realtime, &realtimeinvalidation.PublishParams{
+		params := &realtimeinvalidation.PublishParams{
 			OrganizationID: tenantInfo.OrgID,
 			BusinessUnitID: tenantInfo.BuID,
 			ActorUserID:    userID,
@@ -961,9 +445,15 @@ func (s *Service) publish(
 			ActorID:        userID,
 			Resource:       resource,
 			Action:         string(operation),
-			RecordID:       recordID,
-		}); err != nil {
-			s.l.Warn("failed to publish employment invalidation", zap.Error(err))
+			RecordID:       event.ID,
 		}
+		if resource == realtimeWorkers {
+			params.RecordID = event.WorkerID
+		}
+		kernelports.AfterCommit(ctx, func(committed context.Context) {
+			if err := realtimeinvalidation.Publish(committed, s.realtime, params); err != nil {
+				s.l.Warn("failed to publish employment invalidation", zap.Error(err))
+			}
+		})
 	}
 }

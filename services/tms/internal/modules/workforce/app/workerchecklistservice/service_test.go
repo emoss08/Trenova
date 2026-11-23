@@ -348,7 +348,7 @@ func TestSpawnForEvent_UsesDefaultTemplateAndAutoSatisfies(t *testing.T) {
 		EffectiveAt: 1_800_000_000,
 	}
 
-	checklist, err := h.svc.SpawnForEvent(context.Background(), event, h.wrk, h.userID)
+	checklist, err := h.spawnForEvent(event, h.wrk, h.userID)
 	require.NoError(t, err)
 	require.NotNil(t, checklist)
 	assert.Equal(t, workerchecklist.ChecklistStatusOpen, checklist.Status)
@@ -371,7 +371,7 @@ func TestSpawnForEvent_UsesDefaultTemplateAndAutoSatisfies(t *testing.T) {
 	)
 	assert.Empty(t, h.qualified, "the required equipment item keeps onboarding open")
 
-	again, err := h.svc.SpawnForEvent(context.Background(), event, h.wrk, h.userID)
+	again, err := h.spawnForEvent(event, h.wrk, h.userID)
 	require.NoError(t, err)
 	assert.Equal(
 		t,
@@ -380,8 +380,7 @@ func TestSpawnForEvent_UsesDefaultTemplateAndAutoSatisfies(t *testing.T) {
 		"a second spawn from the same template returns the open checklist",
 	)
 
-	none, err := h.svc.SpawnForEvent(
-		context.Background(),
+	none, err := h.spawnForEvent(
 		&employment.WorkerEmploymentEvent{Kind: employment.EmploymentEventPromoted},
 		h.wrk,
 		h.userID,
@@ -594,7 +593,7 @@ func TestSpawnForEvent_OncePerEvent(t *testing.T) {
 		Kind:        employment.EmploymentEventHired,
 		EffectiveAt: 1_700_000_000,
 	}
-	first, err := h.svc.SpawnForEvent(context.Background(), hired, h.wrk, h.userID)
+	first, err := h.spawnForEvent(hired, h.wrk, h.userID)
 	require.NoError(t, err)
 	require.NotNil(t, first)
 
@@ -607,7 +606,7 @@ func TestSpawnForEvent_OncePerEvent(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, workerchecklist.ChecklistStatusCancelled, cancelled.Status)
 
-	again, err := h.svc.SpawnForEvent(context.Background(), hired, h.wrk, h.userID)
+	again, err := h.spawnForEvent(hired, h.wrk, h.userID)
 	require.NoError(t, err)
 	assert.Equal(
 		t,
@@ -622,7 +621,7 @@ func TestSpawnForEvent_OncePerEvent(t *testing.T) {
 		EffectiveAt: 1_800_000_000,
 	}
 	h.template.Trigger = workerchecklist.ChecklistTriggerRehired
-	fresh, err := h.svc.SpawnForEvent(context.Background(), rehired, h.wrk, h.userID)
+	fresh, err := h.spawnForEvent(rehired, h.wrk, h.userID)
 	require.NoError(t, err)
 	require.NotNil(t, fresh)
 	assert.NotEqual(t, first.ID, fresh.ID, "a new employment gets its own onboarding")
@@ -637,7 +636,7 @@ func TestCloseForEvent_CancelsWhatTheEventMakesMoot(t *testing.T) {
 		Kind:        employment.EmploymentEventHired,
 		EffectiveAt: 1_700_000_000,
 	}
-	onboarding, err := h.svc.SpawnForEvent(context.Background(), hired, h.wrk, h.userID)
+	onboarding, err := h.spawnForEvent(hired, h.wrk, h.userID)
 	require.NoError(t, err)
 	require.Equal(t, workerchecklist.ChecklistStatusOpen, onboarding.Status)
 
@@ -645,7 +644,7 @@ func TestCloseForEvent_CancelsWhatTheEventMakesMoot(t *testing.T) {
 		ID:   pulid.MustNew("wee_"),
 		Kind: employment.EmploymentEventPromoted,
 	}
-	closed, err := h.svc.CloseForEvent(context.Background(), promoted, h.wrk, h.userID)
+	closed, err := h.closeForEvent(promoted, h.wrk, h.userID)
 	require.NoError(t, err)
 	assert.Equal(t, 0, closed, "a promotion leaves onboarding running")
 
@@ -654,14 +653,100 @@ func TestCloseForEvent_CancelsWhatTheEventMakesMoot(t *testing.T) {
 		Kind:        employment.EmploymentEventTerminated,
 		EffectiveAt: 1_750_000_000,
 	}
-	closed, err = h.svc.CloseForEvent(context.Background(), terminated, h.wrk, h.userID)
+	closed, err = h.closeForEvent(terminated, h.wrk, h.userID)
 	require.NoError(t, err)
 	assert.Equal(t, 1, closed)
 	stored := h.repo.checklists[onboarding.ID]
 	assert.Equal(t, workerchecklist.ChecklistStatusCancelled, stored.Status)
 	assert.Equal(t, "Superseded by terminated event", stored.CancelReason)
 
-	closed, err = h.svc.CloseForEvent(context.Background(), terminated, h.wrk, h.userID)
+	closed, err = h.closeForEvent(terminated, h.wrk, h.userID)
 	require.NoError(t, err)
 	assert.Equal(t, 0, closed, "closing is idempotent")
+}
+
+func (h *harness) spawnForEvent(
+	event *employment.WorkerEmploymentEvent,
+	wrk *worker.Worker,
+	userID pulid.ID,
+) (*workerchecklist.WorkerChecklist, error) {
+	plan, err := h.svc.PlanForEvent(context.Background(), event.Kind, wrk)
+	if err != nil {
+		return nil, err
+	}
+	return h.svc.SpawnForEvent(context.Background(), event, plan, userID)
+}
+
+func (h *harness) closeForEvent(
+	event *employment.WorkerEmploymentEvent,
+	wrk *worker.Worker,
+	userID pulid.ID,
+) (int, error) {
+	plan, err := h.svc.PlanForEvent(context.Background(), event.Kind, wrk)
+	if err != nil {
+		return 0, err
+	}
+	return h.svc.CloseForEvent(context.Background(), event, plan, userID)
+}
+
+func TestPlanForEvent_ListsWhatTheEventWouldCloseAndStartWithoutWriting(t *testing.T) {
+	h := newHarness(t)
+	hired := &employment.WorkerEmploymentEvent{
+		ID:          pulid.MustNew("wee_"),
+		Kind:        employment.EmploymentEventHired,
+		EffectiveAt: 1_700_000_000,
+	}
+	onboarding, err := h.spawnForEvent(hired, h.wrk, h.userID)
+	require.NoError(t, err)
+
+	h.template.Trigger = workerchecklist.ChecklistTriggerTerminated
+	plan, err := h.svc.PlanForEvent(t.Context(), employment.EmploymentEventTerminated, h.wrk)
+	require.NoError(t, err)
+
+	require.Len(t, plan.Close, 1)
+	assert.Equal(t, onboarding.ID, plan.Close[0].ID)
+	require.NotNil(t, plan.Template)
+	assert.Equal(t, h.template.ID, plan.Template.ID)
+	assert.Equal(
+		t,
+		workerchecklist.ChecklistStatusOpen,
+		h.repo.checklists[onboarding.ID].Status,
+		"planning closes nothing",
+	)
+
+	nothing, err := h.svc.PlanForEvent(t.Context(), employment.EmploymentEventRateChanged, h.wrk)
+	require.NoError(t, err)
+	assert.Empty(t, nothing.Close)
+	assert.Nil(t, nothing.Template)
+}
+
+func TestCancel_RefusesABlankReason(t *testing.T) {
+	h := newHarness(t)
+	checklist, err := h.svc.Start(context.Background(), &workerchecklistservice.StartRequest{
+		TenantInfo:    h.tenant,
+		WorkerID:      h.wrk.ID,
+		TemplateID:    h.template.ID,
+		UserID:        h.userID,
+		SourceEventID: pulid.MustNew("wee_"),
+	})
+	require.NoError(t, err)
+
+	for _, reason := range []string{"", "   "} {
+		_, err = h.svc.Cancel(context.Background(), &workerchecklistservice.CancelRequest{
+			ID:         checklist.ID,
+			TenantInfo: h.tenant,
+			Reason:     reason,
+			UserID:     h.userID,
+		})
+		var verr *errortypes.Error
+		require.ErrorAs(t, err, &verr)
+		assert.Equal(t, "reason", verr.Field())
+		assert.Equal(t, errortypes.ErrRequired, verr.Code)
+	}
+	assert.Equal(
+		t,
+		workerchecklist.ChecklistStatusOpen,
+		h.repo.checklists[checklist.ID].Status,
+		"a refused cancel leaves the checklist open",
+	)
 }

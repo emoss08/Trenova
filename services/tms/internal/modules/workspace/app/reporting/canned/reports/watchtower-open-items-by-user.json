@@ -1,0 +1,197 @@
+{
+  "key": "watchtower-open-items-by-user",
+  "version": "1.0.0",
+  "name": "Open Watchtower Items by Person",
+  "description": "Every open Watchtower item by the person it is assigned to, unassigned ones included: how many nobody has said they are on yet, how many are acknowledged, in progress or snoozed, how many are overdue or have escalated, and how long the oldest has been waiting",
+  "category": "Desk",
+  "tags": [
+    "desk",
+    "watchtower",
+    "exceptions",
+    "workload",
+    "people"
+  ],
+  "defaultFormat": "xlsx",
+  "definition": {
+    "version": 2,
+    "entity": "item",
+    "columns": [
+      {
+        "id": "person",
+        "label": "Person",
+        "dimension": {
+          "field": "assignee.name"
+        },
+        "display": {
+          "nullText": "Unassigned"
+        }
+      },
+      {
+        "id": "person_key",
+        "hidden": true,
+        "dimension": {
+          "field": "assignee.id"
+        }
+      },
+      {
+        "id": "open",
+        "measure": {
+          "field": "id",
+          "agg": "count"
+        },
+        "display": {
+          "style": "number",
+          "decimals": 0,
+          "grouping": true
+        },
+        "label": "Open"
+      },
+      {
+        "id": "unhandled",
+        "measure": {
+          "field": "id",
+          "agg": "count",
+          "filter": {
+            "field": "status",
+            "op": "eq",
+            "value": "Open"
+          }
+        },
+        "display": {
+          "style": "number",
+          "decimals": 0,
+          "grouping": true
+        },
+        "label": "Not Yet Picked Up"
+      },
+      {
+        "id": "acknowledged",
+        "measure": {
+          "field": "id",
+          "agg": "count",
+          "filter": {
+            "field": "status",
+            "op": "eq",
+            "value": "Acknowledged"
+          }
+        },
+        "display": {
+          "style": "number",
+          "decimals": 0,
+          "grouping": true
+        },
+        "label": "Acknowledged"
+      },
+      {
+        "id": "in_progress",
+        "measure": {
+          "field": "id",
+          "agg": "count",
+          "filter": {
+            "field": "status",
+            "op": "eq",
+            "value": "InProgress"
+          }
+        },
+        "display": {
+          "style": "number",
+          "decimals": 0,
+          "grouping": true
+        },
+        "label": "In Progress"
+      },
+      {
+        "id": "snoozed",
+        "measure": {
+          "field": "id",
+          "agg": "count",
+          "filter": {
+            "field": "status",
+            "op": "eq",
+            "value": "Snoozed"
+          }
+        },
+        "display": {
+          "style": "number",
+          "decimals": 0,
+          "grouping": true
+        },
+        "label": "Snoozed"
+      },
+      {
+        "id": "overdue",
+        "measure": {
+          "field": "id",
+          "agg": "count",
+          "filter": {
+            "calc": "{dueAt} < now()"
+          }
+        },
+        "display": {
+          "style": "number",
+          "decimals": 0,
+          "grouping": true
+        },
+        "label": "Overdue"
+      },
+      {
+        "id": "escalated",
+        "measure": {
+          "field": "id",
+          "agg": "count",
+          "filter": {
+            "field": "escalationLevel",
+            "op": "gt",
+            "value": 0
+          }
+        },
+        "display": {
+          "style": "number",
+          "decimals": 0,
+          "grouping": true
+        },
+        "label": "Escalated"
+      },
+      {
+        "id": "oldest_occurred",
+        "hidden": true,
+        "measure": {
+          "field": "occurredAt",
+          "agg": "min"
+        }
+      },
+      {
+        "id": "oldest_age",
+        "label": "Oldest",
+        "calc": "date_diff('second', [oldest_occurred], now())",
+        "display": {
+          "style": "duration",
+          "durationUnit": "seconds",
+          "durationStyle": "compact"
+        }
+      }
+    ],
+    "filters": {
+      "and": [
+        {
+          "field": "resolvedAt",
+          "op": "is_null"
+        }
+      ]
+    },
+    "groupings": {
+      "total": true
+    },
+    "sort": [
+      {
+        "column": "unhandled",
+        "desc": true
+      },
+      {
+        "column": "open",
+        "desc": true
+      }
+    ],
+    "parameters": []
+  }
+}

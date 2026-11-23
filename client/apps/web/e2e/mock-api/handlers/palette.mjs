@@ -9,7 +9,7 @@ const SHIPMENT_HREF = (id) =>
   `/shipment-management/shipments?expanded=${id}&panelEntityId=${id}&panelType=edit`;
 const CUSTOMER_HREF = (id) =>
   `/billing/configuration-files/customers?panelEntityId=${id}&panelType=edit`;
-const WORKER_HREF = (id) => `/hr/workers?panelEntityId=${id}&panelType=edit`;
+const WORKER_HREF = (id) => `/hr/workers/${id}`;
 const MINOR = (value) => (value / 100).toFixed(2);
 const DAY = 86400;
 

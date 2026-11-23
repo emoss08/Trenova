@@ -26,12 +26,13 @@ func (r *QueryResolver) WorkerOverview(ctx context.Context, workerID string) (*w
 		return nil, err
 	}
 
-	return r.WorkerOverviewService.Get(
-		ctx,
-		resolvercore.TenantInfo(authCtx),
-		wid,
-		r.OverviewSections(ctx, authCtx),
-	)
+	sections := r.OverviewSections(ctx, authCtx)
+	return r.WorkerOverviewService.Get(ctx, &workeroverviewservice.GetRequest{
+		TenantInfo:  resolvercore.TenantInfo(authCtx),
+		WorkerID:    wid,
+		Sections:    sections,
+		MemoryActor: r.OverviewMemoryActor(ctx, authCtx, sections),
+	})
 }
 
 func (r *QueryResolver) WorkerRosterAttention(ctx context.Context) (*workeroverviewservice.RosterAttention, error) {
@@ -52,4 +53,8 @@ func (r *WorkerRosterAttentionResolver) PTOLiabilityDays(ctx context.Context, ob
 	}
 	liability := gqldecimal.DecimalString(*obj.PTOLiabilityDays)
 	return &liability, nil
+}
+
+func (r *WorkerOverviewPayRateResolver) Rate(ctx context.Context, obj *workeroverviewservice.PayRate) (string, error) {
+	return obj.Rate.String(), nil
 }

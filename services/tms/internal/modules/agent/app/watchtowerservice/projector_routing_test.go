@@ -70,7 +70,13 @@ func TestUpsert_RoutesANewItemToTheOwnerWithADueTimeBySeverity(t *testing.T) {
 	tenant := testActor().TenantInfo()
 	owner := pulid.MustNew("usr_")
 
-	in := input(tenant, watchtower.SourceServiceFailure, "sf_1", watchtower.SeverityCritical, 100)
+	in := input(
+		tenant,
+		watchtower.SourceKindServiceFailure,
+		"sf_1",
+		watchtower.SeverityCritical,
+		100,
+	)
 	in.OwnerID = owner
 	require.NoError(t, projector.upsert(t.Context(), in))
 
@@ -79,7 +85,13 @@ func TestUpsert_RoutesANewItemToTheOwnerWithADueTimeBySeverity(t *testing.T) {
 	require.NotNil(t, item.DueAt)
 	assert.Equal(t, int64(1_700_000_000+30*60), *item.DueAt)
 
-	other := input(tenant, watchtower.SourceServiceFailure, "sf_2", watchtower.SeverityInfo, 100)
+	other := input(
+		tenant,
+		watchtower.SourceKindServiceFailure,
+		"sf_2",
+		watchtower.SeverityInfo,
+		100,
+	)
 	require.NoError(t, projector.upsert(t.Context(), other))
 	second := repo.items["ServiceFailure:sf_2"]
 	assert.Equal(t, fallback, second.AssigneeID)
@@ -105,7 +117,7 @@ func TestUpsert_SkipsAnOwnerWhoCannotSeeTheItem(t *testing.T) {
 	)
 	in := input(
 		testActor().TenantInfo(),
-		watchtower.SourceServiceFailure,
+		watchtower.SourceKindServiceFailure,
 		"sf_1",
 		watchtower.SeverityWarning,
 		100,
@@ -123,7 +135,7 @@ func TestUpsert_LeavesARoutedItemAloneOnTheNextReport(t *testing.T) {
 	projector, _ := newRoutingProjector(repo, &agenttest.StubPermissions{}, nil)
 	in := input(
 		testActor().TenantInfo(),
-		watchtower.SourceServiceFailure,
+		watchtower.SourceKindServiceFailure,
 		"sf_1",
 		watchtower.SeverityWarning,
 		100,
@@ -146,22 +158,40 @@ func TestReconcileSubject_RaisesWhatIsOpenAndResolvesTheRest(t *testing.T) {
 	tenant := testActor().TenantInfo()
 	shipmentID := pulid.MustNew("shp_")
 
-	stale := input(tenant, watchtower.SourceMissedPickup, "stp_old", watchtower.SeverityWarning, 100)
+	stale := input(
+		tenant,
+		watchtower.SourceKindMissedPickup,
+		"stp_old",
+		watchtower.SeverityWarning,
+		100,
+	)
 	stale.SubjectType = agent.SubjectShipment
 	stale.SubjectID = shipmentID
 	require.NoError(t, projector.upsert(t.Context(), stale))
 
-	other := input(tenant, watchtower.SourceMissedPickup, "stp_other", watchtower.SeverityWarning, 100)
+	other := input(
+		tenant,
+		watchtower.SourceKindMissedPickup,
+		"stp_other",
+		watchtower.SeverityWarning,
+		100,
+	)
 	other.SubjectType = agent.SubjectShipment
 	other.SubjectID = pulid.MustNew("shp_")
 	require.NoError(t, projector.upsert(t.Context(), other))
 
-	fresh := input(tenant, watchtower.SourceMissedPickup, "stp_new", watchtower.SeverityWarning, 200)
+	fresh := input(
+		tenant,
+		watchtower.SourceKindMissedPickup,
+		"stp_new",
+		watchtower.SeverityWarning,
+		200,
+	)
 	fresh.SubjectType = agent.SubjectShipment
 	fresh.SubjectID = shipmentID
 	projector.ReconcileSubject(t.Context(), &watchtowerports.ReconcileSubjectRequest{
 		TenantInfo: tenant,
-		SourceKind: watchtower.SourceMissedPickup,
+		SourceKind: watchtower.SourceKindMissedPickup,
 		SubjectID:  shipmentID,
 		Open:       []watchtowerports.WatchtowerItemInput{fresh},
 	})
@@ -186,7 +216,7 @@ func TestUpsert_ProjectsNothingWithoutTheWatchtower(t *testing.T) {
 
 	in := input(
 		testActor().TenantInfo(),
-		watchtower.SourceServiceFailure,
+		watchtower.SourceKindServiceFailure,
 		"sf_1",
 		watchtower.SeverityCritical,
 		100,

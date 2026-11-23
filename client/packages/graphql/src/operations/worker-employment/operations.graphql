@@ -45,23 +45,24 @@ query WorkerEmploymentEvents($workerId: ID!, $kinds: [WorkerEmploymentEventKind!
   }
 }
 
+fragment WorkerEmploymentEffectFields on WorkerEmploymentEffect {
+  kind
+  name
+  count
+  days
+  ptoType
+  startDate
+  endDate
+  failed
+}
+
 mutation RecordWorkerEmploymentEvent($input: RecordWorkerEmploymentEventInput!) {
   recordWorkerEmploymentEvent(input: $input) {
     event {
       ...WorkerEmploymentEventFields
     }
-    cascade {
-      ptoAssignmentEnded
-      payAssignmentEnded
-      upcomingPtoCancelled
-      defaultPolicyApplied
-      checklistStarted
-      checklistsClosed
-      ptoPaidOutDays
-      ptoForfeitedDays
-      trainingAssigned
-      portalAccessRevoked
-      portalRevocationError
+    effects {
+      ...WorkerEmploymentEffectFields
     }
   }
 }
@@ -69,5 +70,30 @@ mutation RecordWorkerEmploymentEvent($input: RecordWorkerEmploymentEventInput!) 
 mutation AmendWorkerEmploymentEvent($input: AmendWorkerEmploymentEventInput!) {
   amendWorkerEmploymentEvent(input: $input) {
     ...WorkerEmploymentEventFields
+  }
+}
+
+query WorkerEmploymentEventOptions($workerId: ID!) {
+  workerEmploymentEventOptions(workerId: $workerId) {
+    recordableKinds
+    reasonRequiredKinds
+  }
+}
+
+query PreviewWorkerEmploymentEvent($input: RecordWorkerEmploymentEventInput!) {
+  previewWorkerEmploymentEvent(input: $input) {
+    kind
+    effectiveAt
+    fromValues {
+      key
+      value
+    }
+    toValues {
+      key
+      value
+    }
+    effects {
+      ...WorkerEmploymentEffectFields
+    }
   }
 }

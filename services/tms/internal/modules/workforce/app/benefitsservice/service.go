@@ -74,6 +74,7 @@ func (s *Service) audit(
 		BusinessUnitID: tenantInfo.BuID,
 	}
 	opts := []auditports.LogOption{auditservice.WithComment(comment)}
+	opts = append(opts, auditservice.WithSubjectOf(current, previous))
 	if previous != nil {
 		params.PreviousState = jsonutils.MustToJSON(previous)
 		opts = append(opts, auditservice.WithDiff(previous, current))

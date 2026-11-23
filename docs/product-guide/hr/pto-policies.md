@@ -41,9 +41,12 @@ Keywords: change accrual rate, update carryover
 
 ### Assign a policy to a worker
 Keywords: enrol worker in PTO policy, change worker's PTO policy
-1. Open [Workers](/hr/workers), select the worker and go to the **Time off** tab.
-2. Select **Assign policy** (or **Change policy**).
-3. Pick the **Policy** and the **Effective from** date, and confirm. Accruals start from that date
+1. Open [Workers](/hr/workers), select the worker, go to the **Time** tab and open the
+   **Time off** view.
+2. Open **Time off options** and choose **Enroll in a policy** (or **Change policy** when the
+   worker already has one).
+3. Pick the **Policy** and the **Effective from** date, optionally enter **Opening balances**, and
+   confirm with **Enroll** (or **Change policy**). Accruals start from that date
    on the next nightly run.
 
 ### Archive or restore a policy

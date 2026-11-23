@@ -32,7 +32,7 @@ import { PlusIcon, XCloseIcon } from "@trenova/shared/components/icons";
 import { useEffect } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { toast } from "@trenova/shared/components/ui/toast";
-import { workerRecordHref } from "@/lib/route-utils";
+import { workerPath } from "@/routes/worker/use-worker-state";
 
 type PickerValues = { holderId: string };
 
@@ -45,7 +45,7 @@ export function positionHoldersQuery(positionId: string) {
 
 function holderHref(holder: PositionHolderRow): string {
   return holder.kind === "Worker"
-    ? workerRecordHref(holder.id)
+    ? workerPath(holder.id)
     : `/admin/users?entityId=${holder.id}&modType=edit`;
 }
 

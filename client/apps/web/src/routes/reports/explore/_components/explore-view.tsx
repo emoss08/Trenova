@@ -9,6 +9,7 @@ import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { Spinner } from "@trenova/shared/components/ui/spinner";
 import { useDebounce } from "@trenova/shared/hooks/use-debounce";
 import { useReportPreview } from "@/hooks/use-reports";
+import { useReportParameterOptions } from "@/hooks/use-report-parameter-options";
 import { graphQLErrorMessage } from "@trenova/shared/lib/graphql";
 import { planRestrictionOf } from "@trenova/shared/lib/plan-limit";
 import { PlanLockedNotice } from "@trenova/shared/components/plan-locked";
@@ -65,6 +66,7 @@ export function ExploreView({
 
   const ir = useMemo<ReportIR | null>(() => parseReportIR(definition), [definition]);
   const parameters: ReportParameterDef[] = ir?.parameters ?? [];
+  const parameterOptions = useReportParameterOptions(ir);
 
   const [paramValues, setParamValues] = useState<Record<string, unknown>>(() =>
     defaultParamValues(parameters),
@@ -153,6 +155,7 @@ export function ExploreView({
                 param={param}
                 value={paramValues[param.name]}
                 compact
+                options={parameterOptions[param.name]}
                 onChange={(value) => setParamValues((prev) => ({ ...prev, [param.name]: value }))}
               />
             </div>
@@ -309,6 +312,7 @@ export function ExploreView({
         reportName={name}
         defaultFormat={defaultFormat}
         parameters={parameters}
+        parameterOptions={parameterOptions}
         initialParams={paramValues}
       />
     </div>

@@ -197,7 +197,8 @@ input WorkerChecklistItemActionInput {
 
 input CancelWorkerChecklistInput {
   id: ID!
-  reason: String
+  "Why the checklist is cancelled. Required; a blank reason is refused."
+  reason: String!
   version: Int
 }
 

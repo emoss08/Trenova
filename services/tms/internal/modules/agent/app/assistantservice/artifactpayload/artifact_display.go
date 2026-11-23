@@ -3,6 +3,7 @@ package artifactpayload
 import (
 	"maps"
 	"slices"
+	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/pkg/productguide"
@@ -80,7 +81,7 @@ func ProjectTable(entity string, declared []string, rows []any) tableProjection 
 		})
 	}
 
-	recordEntity := RecordEntityOf(entity)
+	recordEntity := RowsEntityOf(entity, declared)
 
 	return tableProjection{
 		Columns:      columns,
@@ -103,7 +104,7 @@ func ProjectRows(
 			}
 		}
 		if recordEntity != "" {
-			if id := typeutils.StringOfTrimmed(record[RecordIDKey]); id != "" {
+			if id := RecordIDOf(record, recordEntity); id != "" {
 				row[RecordIDKey] = id
 			}
 		}
@@ -173,6 +174,30 @@ func ProjectRecord(record map[string]any, order []string) []assistantartifact.Di
 
 // RecordEntityOf is the record-link registry's name for a list's entity, when
 // its records have a page: "shipments" opens as "shipment".
+func RowsEntityOf(entity string, declared []string) string {
+	if recordEntity := RecordEntityOf(entity); recordEntity != "" || len(declared) == 0 {
+		return recordEntity
+	}
+	kind, isID := strings.CutSuffix(declared[0], "Id")
+	if !isID || kind == "" {
+		return ""
+	}
+	snake := textcase.ConvertCamelToSnake(kind)
+	if _, ok := productguide.Default.Record(snake); ok {
+		return snake
+	}
+
+	return ""
+}
+
+func RecordIDOf(record map[string]any, recordEntity string) string {
+	if id := typeutils.StringOfTrimmed(record[RecordIDKey]); id != "" {
+		return id
+	}
+
+	return typeutils.StringOfTrimmed(record[textcase.LowerCamel(recordEntity)+"Id"])
+}
+
 func RecordEntityOf(entity string) string {
 	for _, candidate := range []string{entity, inflect.SingularNoun(entity)} {
 		if candidate == "" {

@@ -78,6 +78,7 @@ var reviewed = map[permission.Resource]string{ //nolint:exhaustive // an allow l
 	permission.ResourceEmailLog:              "what was sent, never a credential",
 	permission.ResourceEmailSuppression:      "suppressed addresses",
 	permission.ResourceTableChangeAlert:      "table change alerts",
+	permission.ResourceAIUsage:               "model call counts, tokens and estimated cost; never a provider credential or endpoint",
 	permission.ResourceHomeLayoutPreset:      "home screen presets",
 	permission.ResourceDataEntryControl:      "data entry rules",
 	permission.ResourceAuditLog:              "reading the audit log; exports are refused to every support session",

@@ -1037,8 +1037,8 @@ from the result (`ReportPreview.timezone`) and passes it to `reportCellText`.
 **The order of decisions** (`Resolved.String`): empty → `nullText`; style `""` → the raw value
 (a decimal normalised, a boolean as `true`/`false`, text as is); a number in a column with a
 usable band → its range; a number in a date column → a date; any other number → the numeric
-style; a boolean → the boolean style (whatever the column's style); text → `prefix + text +
-suffix`, or `nullText` when empty.
+style; a boolean → the boolean style (whatever the column's style); text → its enum label, then
+`prefix + text + suffix`, or `nullText` when empty.
 
 **Numbers.**
 
@@ -1069,6 +1069,16 @@ suffix are added.
 below the value (a value below the first edge is in the first range), and the top range is
 open: "$5,000.00+". Both ends render through the column's display, with a trailing suffix written
 once: "10,000 – 15,000 lbs". Bounds are exact decimals.
+
+**Enum labels** (`appendText`). An enum column's display carries `labels`, its stored values
+mapped to their translated labels (keel puts them on a dimension over an enum field; GraphQL
+sends them as a JSON object, or `null` when there are none; `report.resolve` leaves them out). An
+enum's code is never shown, so text is replaced by its label before anything else: a value
+without a label is written as it is, the label (or the value) takes the prefix and suffix, and a
+label or value that is empty shows `nullText`. Because the lookup comes before the empty check,
+a label keyed by `""` applies to an empty string; a `null` shows `nullText` without being looked
+up. Only text is looked up: a number, a boolean, a string a numeric or `bool` column reads as one,
+an array or object (empty) and anything in a raw display (style `""`) never are.
 
 **Tones** (`ToneFor`). Rules are tried in order and the first match gives the tone: `gt`, `gte`,
 `lt`, `lte`, `eq`, and `between` (inclusive). Only numbers are toned, compared exactly; a percent

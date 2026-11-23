@@ -31,6 +31,10 @@ err := s.audit.LogAction(ctx, &auditports.LogActionParams{
 - An update with a diff stores only the diff. Secrets are left out and identifying numbers
   fingerprinted by field name (`Redactor`); name a field after what it holds.
 - `LogActions` writes a batch in one statement.
+- Pass `WithSubjectOf(current, previous)` when the record belongs to another record's file (a
+  worker's credential, test or document): the record's `AuditSubject()` names the owner and the
+  entry joins that file's trail (`auditEntriesBySubject`). `Record` and `BuildBulkLogEntries` do
+  it for you; `WithSubject(resource, id)` names the owner when no record is at hand.
 
 A failed write returns an error and logs the entry in full. There is no buffer to fall back on.
 

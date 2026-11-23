@@ -38,41 +38,41 @@ func (s Status) IsOpen() bool {
 type ResolutionCode string
 
 const (
-	ResolutionFixed            = ResolutionCode("Fixed")
-	ResolutionCarrierDelay     = ResolutionCode("CarrierDelay")
-	ResolutionShipperDelay     = ResolutionCode("ShipperDelay")
-	ResolutionReceiverDelay    = ResolutionCode("ReceiverDelay")
-	ResolutionCustomerChange   = ResolutionCode("CustomerChange")
-	ResolutionRescheduled      = ResolutionCode("Rescheduled")
-	ResolutionWeather          = ResolutionCode("Weather")
-	ResolutionEquipment        = ResolutionCode("Equipment")
-	ResolutionDriverIssue      = ResolutionCode("DriverIssue")
-	ResolutionDocumentReceived = ResolutionCode("DocumentReceived")
-	ResolutionDataCorrected    = ResolutionCode("DataCorrected")
-	ResolutionDuplicate        = ResolutionCode("Duplicate")
-	ResolutionNoActionNeeded   = ResolutionCode("NoActionNeeded")
-	ResolutionOther            = ResolutionCode("Other")
-	ResolutionCleared          = ResolutionCode("Cleared")
+	ResolutionCodeFixed            = ResolutionCode("Fixed")
+	ResolutionCodeCarrierDelay     = ResolutionCode("CarrierDelay")
+	ResolutionCodeShipperDelay     = ResolutionCode("ShipperDelay")
+	ResolutionCodeReceiverDelay    = ResolutionCode("ReceiverDelay")
+	ResolutionCodeCustomerChange   = ResolutionCode("CustomerChange")
+	ResolutionCodeRescheduled      = ResolutionCode("Rescheduled")
+	ResolutionCodeWeather          = ResolutionCode("Weather")
+	ResolutionCodeEquipment        = ResolutionCode("Equipment")
+	ResolutionCodeDriverIssue      = ResolutionCode("DriverIssue")
+	ResolutionCodeDocumentReceived = ResolutionCode("DocumentReceived")
+	ResolutionCodeDataCorrected    = ResolutionCode("DataCorrected")
+	ResolutionCodeDuplicate        = ResolutionCode("Duplicate")
+	ResolutionCodeNoActionNeeded   = ResolutionCode("NoActionNeeded")
+	ResolutionCodeOther            = ResolutionCode("Other")
+	ResolutionCodeCleared          = ResolutionCode("Cleared")
 )
 
 func (c ResolutionCode) String() string { return string(c) }
 
 func SelectableResolutionCodes() []ResolutionCode {
 	return []ResolutionCode{
-		ResolutionFixed,
-		ResolutionCarrierDelay,
-		ResolutionShipperDelay,
-		ResolutionReceiverDelay,
-		ResolutionCustomerChange,
-		ResolutionRescheduled,
-		ResolutionWeather,
-		ResolutionEquipment,
-		ResolutionDriverIssue,
-		ResolutionDocumentReceived,
-		ResolutionDataCorrected,
-		ResolutionDuplicate,
-		ResolutionNoActionNeeded,
-		ResolutionOther,
+		ResolutionCodeFixed,
+		ResolutionCodeCarrierDelay,
+		ResolutionCodeShipperDelay,
+		ResolutionCodeReceiverDelay,
+		ResolutionCodeCustomerChange,
+		ResolutionCodeRescheduled,
+		ResolutionCodeWeather,
+		ResolutionCodeEquipment,
+		ResolutionCodeDriverIssue,
+		ResolutionCodeDocumentReceived,
+		ResolutionCodeDataCorrected,
+		ResolutionCodeDuplicate,
+		ResolutionCodeNoActionNeeded,
+		ResolutionCodeOther,
 	}
 }
 
@@ -96,7 +96,7 @@ func SelectableResolutionCodeOptions() []*ResolutionCodeOption {
 }
 
 func (c ResolutionCode) IsValid() bool {
-	return c == ResolutionCleared || c.IsSelectable()
+	return c == ResolutionCodeCleared || c.IsSelectable()
 }
 
 func (c ResolutionCode) IsSelectable() bool {
@@ -109,40 +109,40 @@ func (c ResolutionCode) IsSelectable() bool {
 }
 
 func (c ResolutionCode) RequiresNote() bool {
-	return c == ResolutionOther
+	return c == ResolutionCodeOther
 }
 
 func (c ResolutionCode) Label() string {
 	switch c {
-	case ResolutionFixed:
+	case ResolutionCodeFixed:
 		return "Fixed"
-	case ResolutionCarrierDelay:
+	case ResolutionCodeCarrierDelay:
 		return "Carrier delay"
-	case ResolutionShipperDelay:
+	case ResolutionCodeShipperDelay:
 		return "Shipper delay"
-	case ResolutionReceiverDelay:
+	case ResolutionCodeReceiverDelay:
 		return "Receiver delay"
-	case ResolutionCustomerChange:
+	case ResolutionCodeCustomerChange:
 		return "Customer change"
-	case ResolutionRescheduled:
+	case ResolutionCodeRescheduled:
 		return "Rescheduled"
-	case ResolutionWeather:
+	case ResolutionCodeWeather:
 		return "Weather"
-	case ResolutionEquipment:
+	case ResolutionCodeEquipment:
 		return "Equipment"
-	case ResolutionDriverIssue:
+	case ResolutionCodeDriverIssue:
 		return "Driver issue"
-	case ResolutionDocumentReceived:
+	case ResolutionCodeDocumentReceived:
 		return "Document received"
-	case ResolutionDataCorrected:
+	case ResolutionCodeDataCorrected:
 		return "Data corrected"
-	case ResolutionDuplicate:
+	case ResolutionCodeDuplicate:
 		return "Duplicate"
-	case ResolutionNoActionNeeded:
+	case ResolutionCodeNoActionNeeded:
 		return "No action needed"
-	case ResolutionOther:
+	case ResolutionCodeOther:
 		return "Other"
-	case ResolutionCleared:
+	case ResolutionCodeCleared:
 		return "Cleared by the source"
 	default:
 		return string(c)

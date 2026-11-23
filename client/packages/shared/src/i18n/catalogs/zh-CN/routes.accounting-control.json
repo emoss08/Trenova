@@ -9,6 +9,7 @@
   "Checking the OANDA connection.": "正在检查 OANDA 连接。",
   "Close & reconciliation": "结账与对账",
   "Configure OANDA": "配置 OANDA",
+  "Configure and manage your accounting control settings": "配置与管理您的会计控制设置",
   "Connect OANDA to set exchange rate policies and FX accounts.": "连接 OANDA 以设置汇率政策和外汇科目。",
   "Credited for a driver's net pay until the settlement is paid. Settlements cannot post without it.": "在结算支付前，贷记司机的净薪酬。未设置此科目时结算无法过账。",
   "Credited for escrow withheld from drivers' settlements.": "贷记从司机结算中扣留的履约保证金。",

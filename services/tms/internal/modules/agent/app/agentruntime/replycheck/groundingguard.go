@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/inflect"
 	"github.com/emoss08/trenova/shared/numberguard"
+	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/textcase"
 	"github.com/shopspring/decimal"
 )
@@ -545,7 +546,10 @@ func (r readResults) hold(after string) bool {
 		if valueRunes(phrase) < minReadValueRunes {
 			return false
 		}
-		if slices.ContainsFunc(r, func(read string) bool { return containsWords(read, phrase) }) {
+		if slices.ContainsFunc(
+			r,
+			func(read string) bool { return stringutils.ContainsWords(read, phrase) },
+		) {
 			return true
 		}
 	}
@@ -597,7 +601,7 @@ func (f filedCalls) holds(label schemaLabel) bool {
 		}
 	}
 	for _, result := range f.results {
-		if containsWords(result, label.words) {
+		if stringutils.ContainsWords(result, label.words) {
 			return true
 		}
 	}
@@ -698,7 +702,7 @@ func claimedPhrases(reply string) replyClaims {
 func (c replyClaims) withoutOffers() replyClaims {
 	return slices.DeleteFunc(slices.Clone(c), func(sentence string) bool {
 		return slices.ContainsFunc(offerPhrases, func(phrase string) bool {
-			return containsWords(sentence, phrase)
+			return stringutils.ContainsWords(sentence, phrase)
 		})
 	})
 }
@@ -710,9 +714,9 @@ func (c replyClaims) readFrom(words string, reads readResults) bool {
 	singular := inflect.SingularNoun(words)
 	named := false
 	for _, sentence := range c {
-		at, size := indexWords(sentence, words), len(words)
+		at, size := stringutils.IndexWords(sentence, words), len(words)
 		if at < 0 && singular != words {
-			at, size = indexWords(sentence, singular), len(singular)
+			at, size = stringutils.IndexWords(sentence, singular), len(singular)
 		}
 		if at < 0 {
 			continue
@@ -728,15 +732,15 @@ func (c replyClaims) readFrom(words string, reads readResults) bool {
 
 func speaksOfChange(sentence string) bool {
 	return slices.ContainsFunc(changeSpeak, func(words string) bool {
-		return containsWords(sentence, words)
+		return stringutils.ContainsWords(sentence, words)
 	})
 }
 
 func (c replyClaims) names(words string) bool {
 	singular := inflect.SingularNoun(words)
 	for _, sentence := range c {
-		if containsWords(sentence, words) ||
-			(singular != words && containsWords(sentence, singular)) {
+		if stringutils.ContainsWords(sentence, words) ||
+			(singular != words && stringutils.ContainsWords(sentence, singular)) {
 			return true
 		}
 	}
@@ -754,33 +758,4 @@ func negated(sentence string) bool {
 	}
 
 	return false
-}
-
-func containsWords(text, words string) bool {
-	return indexWords(text, words) >= 0
-}
-
-func indexWords(text, words string) int {
-	for offset := 0; offset < len(text); {
-		idx := strings.Index(text[offset:], words)
-		if idx < 0 {
-			return -1
-		}
-		start := offset + idx
-		if boundary(text, start-1) && boundary(text, start+len(words)) {
-			return start
-		}
-		offset = start + 1
-	}
-
-	return -1
-}
-
-func boundary(text string, idx int) bool {
-	if idx < 0 || idx >= len(text) {
-		return true
-	}
-	r := rune(text[idx])
-
-	return !unicode.IsLetter(r) && !unicode.IsDigit(r)
 }

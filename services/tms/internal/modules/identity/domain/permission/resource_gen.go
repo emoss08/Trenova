@@ -135,6 +135,7 @@ const (
 	ResourceAgentException   Resource = "agent_exception"
 	ResourceAgentControl     Resource = "agent_control"
 	ResourceAIProvider       Resource = "ai_provider"
+	ResourceAIUsage          Resource = "ai_usage"
 	ResourceAgentExtension   Resource = "agent_extension"
 	ResourceWebResearch      Resource = "web_research"
 	ResourcePortalAutomation Resource = "portal_automation"

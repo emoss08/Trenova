@@ -1,0 +1,130 @@
+{
+  "key": "watchtower-response-times-by-week",
+  "version": "1.0.0",
+  "name": "Watchtower Response Times by Week",
+  "description": "How quickly Watchtower items were acknowledged and resolved, week by week and by kind, with the share resolved after they were due",
+  "category": "Desk",
+  "tags": [
+    "desk",
+    "watchtower",
+    "exceptions",
+    "response-time",
+    "trend"
+  ],
+  "defaultFormat": "xlsx",
+  "definition": {
+    "version": 2,
+    "entity": "resolution",
+    "columns": [
+      {
+        "id": "week",
+        "label": "Week Resolved",
+        "dimension": {
+          "field": "resolvedAt",
+          "bucket": "week"
+        }
+      },
+      {
+        "id": "kind",
+        "label": "Kind",
+        "dimension": {
+          "field": "kind"
+        }
+      },
+      {
+        "id": "resolved",
+        "measure": {
+          "field": "id",
+          "agg": "count"
+        },
+        "display": {
+          "style": "number",
+          "decimals": 0,
+          "grouping": true
+        },
+        "label": "Resolutions"
+      },
+      {
+        "id": "avg_time_to_acknowledge",
+        "label": "Average Time to Acknowledge",
+        "measure": {
+          "field": "secondsToAcknowledge",
+          "agg": "avg"
+        },
+        "display": {
+          "style": "duration",
+          "durationUnit": "seconds",
+          "durationStyle": "compact"
+        }
+      },
+      {
+        "id": "avg_time_to_resolve",
+        "label": "Average Time to Resolve",
+        "measure": {
+          "field": "secondsToResolve",
+          "agg": "avg"
+        },
+        "display": {
+          "style": "duration",
+          "durationUnit": "seconds",
+          "durationStyle": "compact"
+        }
+      },
+      {
+        "id": "resolved_late",
+        "measure": {
+          "field": "id",
+          "agg": "count",
+          "filter": {
+            "field": "pastDue",
+            "op": "eq",
+            "value": true
+          }
+        },
+        "display": {
+          "style": "number",
+          "decimals": 0,
+          "grouping": true
+        },
+        "label": "Resolved After Due"
+      },
+      {
+        "id": "late_share",
+        "label": "Resolved Late",
+        "calc": "[resolved_late] / nullif([resolved], 0)",
+        "display": {
+          "style": "percent",
+          "decimals": 1
+        }
+      }
+    ],
+    "filters": {
+      "and": [
+        {
+          "field": "resolvedAt",
+          "op": "last_n_days",
+          "param": "windowDays"
+        }
+      ]
+    },
+    "sort": [
+      {
+        "column": "week",
+        "desc": true
+      },
+      {
+        "column": "resolved",
+        "desc": true
+      }
+    ],
+    "parameters": [
+      {
+        "name": "windowDays",
+        "label": "Window (days)",
+        "type": "int",
+        "required": true,
+        "default": 90
+      }
+    ]
+  }
+}

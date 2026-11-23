@@ -109,7 +109,7 @@ func (d *Dismisser) Dismiss(
 			ItemID:          id,
 			ExpectedVersion: change.Before.Version,
 		},
-		Code: watchtower.ResolutionNoActionNeeded,
+		Code: watchtower.ResolutionCodeNoActionNeeded,
 	}, actor)
 }
 
@@ -134,7 +134,7 @@ func (d *Dismisser) PlanDismiss(
 	dismissed := *item
 	if !dismissed.IsResolved() {
 		if err = dismissed.Resolve(
-			watchtower.ResolutionNoActionNeeded,
+			watchtower.ResolutionCodeNoActionNeeded,
 			"",
 			actorUserID(actor),
 			d.exceptions.now(),

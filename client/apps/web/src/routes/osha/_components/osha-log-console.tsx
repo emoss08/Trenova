@@ -18,7 +18,7 @@ import {
   yearsOffered,
   type CaseFilter,
 } from "@/lib/osha-log";
-import { InjuryDialog } from "@/routes/worker/_components/safety/injury-dialog";
+import { InjuryDialog } from "@/components/injury/injury-dialog";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   AlertDialog,

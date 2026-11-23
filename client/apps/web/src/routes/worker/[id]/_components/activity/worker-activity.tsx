@@ -1,0 +1,423 @@
+import { HoverGlideGroup } from "@/components/hover-glide";
+import { initialsOf } from "@/components/record-header";
+import { SectionPanel } from "@/components/section-panel";
+import { useWorkPane } from "@/components/work-pane";
+import { useUserTimezone } from "@/hooks/use-user-timezone";
+import { dayKey } from "@/lib/day-grouping";
+import {
+  fetchWorkerActivity,
+  WORKER_ACTIVITY_KEY,
+  type WorkerActivityEntry,
+} from "@/lib/graphql/worker-activity";
+import {
+  entrySentence,
+  changeChips,
+} from "@/routes/admin/audit-logs/_components/audit-entry-sentence";
+import { useWorkerAreas } from "@/routes/worker/worker-areas";
+import type { WorkerTabProps, WorkerTarget } from "@/routes/worker/use-worker-state";
+import { useInfiniteQuery } from "@tanstack/react-query";
+import { ErrorState } from "@trenova/shared/components/errors/error-state";
+import {
+  ArrowRightIcon,
+  BotIcon,
+  SearchLgIcon,
+  XCloseIcon,
+} from "@trenova/shared/components/icons";
+import { Button } from "@trenova/shared/components/ui/button";
+import { EmptySheet, GhostLine } from "@trenova/shared/components/ui/empty-sheet";
+import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectSeparator,
+  SelectTrigger,
+  SelectValue,
+} from "@trenova/shared/components/ui/select";
+import { useDebounce } from "@trenova/shared/hooks/use-debounce";
+import { dateTimeFormatter } from "@trenova/shared/i18n/format";
+import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
+import { cn } from "@trenova/shared/lib/utils";
+import { useAuthStore } from "@trenova/shared/stores/auth-store";
+import { useEffect, useRef, useState } from "react";
+import {
+  ACTIVITY_KIND_LABELS,
+  ACTIVITY_KINDS,
+  ACTIVITY_SOURCE_LABELS,
+  activityDays,
+  activityFieldFilters,
+  activityPeople,
+  activitySource,
+  actorName,
+  drawableTarget,
+  type ActivityKind,
+  type ActorFilter,
+} from "./activity-model";
+import { ActivitySkeleton } from "./activity-skeleton";
+
+const PAGE_SIZE = 30;
+const CHIP_LIMIT = 3;
+const KINDS = Object.keys(ACTIVITY_KINDS) as ActivityKind[];
+
+function dayLabel(timestamp: number, key: string, timezone: string, t: TranslateFn): string {
+  const now = Math.floor(Date.now() / 1000);
+  if (key === dayKey(now, timezone)) return t("Today");
+  if (key === dayKey(now - 86_400, timezone)) return t("Yesterday");
+  const sameYear = key.slice(0, 4) === dayKey(now, timezone).slice(0, 4);
+  return dateTimeFormatter({
+    weekday: "long",
+    month: "short",
+    day: "numeric",
+    year: sameYear ? undefined : "numeric",
+    timeZone: timezone,
+  }).format(new Date(timestamp * 1000));
+}
+
+/**
+ * The worker's whole file as a trail: every change to the worker and their sub-records, newest
+ * first, grouped by day, in a bounded region that reads more as it scrolls. Search, who and what
+ * narrow it on the server. An entry about a record still on this page opens it.
+ */
+export default function WorkerActivity({
+  workerId,
+  onOpen,
+}: Pick<WorkerTabProps, "workerId" | "onOpen">) {
+  const t = useT();
+  const timezone = useUserTimezone();
+  const currentUserId = useAuthStore((state) => state.user?.id ?? null);
+  const { isDrawable } = useWorkerAreas();
+  const { closeThen } = useWorkPane();
+  const [search, setSearch] = useState("");
+  const [actor, setActor] = useState<ActorFilter>("all");
+  const [kind, setKind] = useState<ActivityKind | "all">("all");
+  const query = useDebounce(search, 250);
+  const fieldFilters = activityFieldFilters(actor, kind, currentUserId);
+  const filtered = query.trim() !== "" || actor !== "all" || kind !== "all";
+
+  const activity = useInfiniteQuery({
+    queryKey: [WORKER_ACTIVITY_KEY, workerId, query.trim(), fieldFilters],
+    queryFn: ({ pageParam, signal }) =>
+      fetchWorkerActivity(
+        workerId,
+        { first: PAGE_SIZE, after: pageParam },
+        { query, fieldFilters },
+        { signal },
+      ),
+    initialPageParam: null as string | null,
+    getNextPageParam: (last) => (last.hasNextPage ? last.endCursor : null),
+    placeholderData: (previous) => previous,
+  });
+
+  const { hasNextPage, isFetchingNextPage, fetchNextPage } = activity;
+  const sentinel = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const target = sentinel.current;
+    if (!target || typeof IntersectionObserver === "undefined") return undefined;
+    const observer = new IntersectionObserver((records) => {
+      if (records[0]?.isIntersecting && hasNextPage && !isFetchingNextPage) {
+        void fetchNextPage();
+      }
+    });
+    observer.observe(target);
+    return () => observer.disconnect();
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
+
+  const [people, setPeople] = useState<{ id: string; name: string }[]>([]);
+  const entries = activity.data?.pages.flatMap((page) => page.rows) ?? [];
+  const seen = activityPeople(entries);
+  if (seen.some((person) => !people.some((known) => known.id === person.id))) {
+    const merged = new Map(people.map((person) => [person.id, person.name]));
+    for (const person of seen) merged.set(person.id, person.name);
+    setPeople(
+      [...merged.entries()]
+        .map(([id, name]) => ({ id, name }))
+        .sort((a, b) => a.name.localeCompare(b.name)),
+    );
+  }
+
+  if (activity.isPending) return <ActivitySkeleton />;
+
+  const total = activity.data?.pages[0]?.total ?? null;
+  const days = activityDays(entries, timezone);
+  const clearFilters = () => {
+    setSearch("");
+    setActor("all");
+    setKind("all");
+  };
+  const open = (target: WorkerTarget) => closeThen(() => onOpen(target));
+
+  const actorItems: { value: ActorFilter; label: string }[] = [
+    { value: "all", label: t("Everyone") },
+    ...(currentUserId ? [{ value: "me" as ActorFilter, label: t("You") }] : []),
+    { value: "dash", label: t("From Dash") },
+    { value: "agents", label: t("Any agent") },
+    ...people
+      .filter((person) => person.id !== currentUserId)
+      .map((person) => ({ value: `user:${person.id}` as ActorFilter, label: person.name })),
+  ];
+  const kindItems = [
+    { value: "all", label: t("All changes") },
+    ...KINDS.map((value) => ({ value, label: t(ACTIVITY_KIND_LABELS[value]) })),
+  ];
+
+  return (
+    <SectionPanel
+      className="text-sm"
+      title={t("Activity")}
+      hint={total !== null ? t("{0, plural, one {# change} other {# changes}}", total) : undefined}
+      action={
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          <label className="flex h-7 w-56 items-center gap-1.5 rounded-md border ui-container-focus-ring border-input bg-card px-2 text-muted-foreground">
+            <SearchLgIcon className="size-3.5 shrink-0" />
+            <input
+              value={search}
+              onChange={(changeEvent) => setSearch(changeEvent.target.value)}
+              placeholder={t("Search changes")}
+              aria-label={t("Search changes")}
+              className="min-w-0 flex-1 bg-transparent text-sm text-foreground outline-none placeholder:text-foreground-subtle"
+            />
+            {search !== "" ? (
+              <Button
+                type="button"
+                size="icon-xs"
+                variant="ghost"
+                aria-label={t("Clear the search")}
+                onClick={() => setSearch("")}
+              >
+                <XCloseIcon className="size-3" />
+              </Button>
+            ) : null}
+          </label>
+          <Select
+            value={actor}
+            onValueChange={(value) => setActor((value ?? "all") as ActorFilter)}
+            items={actorItems}
+          >
+            <SelectTrigger className="min-w-32" aria-label={t("Who")}>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{t("Everyone")}</SelectItem>
+              {currentUserId ? <SelectItem value="me">{t("You")}</SelectItem> : null}
+              <SelectItem value="dash">{t("From Dash")}</SelectItem>
+              <SelectItem value="agents">{t("Any agent")}</SelectItem>
+              {people.some((person) => person.id !== currentUserId) ? (
+                <>
+                  <SelectSeparator />
+                  <SelectGroup>
+                    <SelectLabel>{t("People in this file")}</SelectLabel>
+                    {people
+                      .filter((person) => person.id !== currentUserId)
+                      .map((person) => (
+                        <SelectItem key={person.id} value={`user:${person.id}`}>
+                          {person.name}
+                        </SelectItem>
+                      ))}
+                  </SelectGroup>
+                </>
+              ) : null}
+            </SelectContent>
+          </Select>
+          <Select
+            value={kind}
+            onValueChange={(value) => setKind((value ?? "all") as ActivityKind | "all")}
+            items={kindItems}
+          >
+            <SelectTrigger className="min-w-32" aria-label={t("Kind of change")}>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {kindItems.map((item) => (
+                <SelectItem key={item.value} value={item.value}>
+                  {item.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      }
+    >
+      {activity.isError && entries.length === 0 ? (
+        <ErrorState
+          error={activity.error}
+          layout="sheet"
+          title={t("The activity could not be loaded")}
+          onRetry={() => void activity.refetch()}
+        />
+      ) : entries.length === 0 ? (
+        filtered ? (
+          <div className="flex flex-col items-center gap-2 px-4 py-7 text-xs text-muted-foreground">
+            <p>{t("No changes match.")}</p>
+            <Button size="xs" variant="outline" onClick={clearFilters}>
+              {t("Clear the filters")}
+            </Button>
+          </div>
+        ) : (
+          <EmptySheet
+            title={t("No activity yet")}
+            description={t(
+              "Every change to this worker's file is written here as it happens: who made it, when, and what it changed.",
+            )}
+            sketch={
+              <div className="flex flex-col gap-2 rounded-md border bg-card p-4">
+                <GhostLine className="w-2/3" />
+                <GhostLine className="w-1/2" />
+                <GhostLine className="w-3/4" />
+              </div>
+            }
+          />
+        )
+      ) : (
+        <ScrollArea
+          viewportClassName="max-h-[40rem] min-h-48"
+          maskVariant="card"
+          className={cn(activity.isPlaceholderData && "opacity-60 transition-opacity")}
+        >
+          <div className="@container px-1.5 pb-1.5">
+            {days.map((day) => (
+              <section
+                key={day.key}
+                aria-label={dayLabel(day.entries[0].timestamp, day.key, timezone, t)}
+              >
+                <h4 className="sticky top-0 z-10 -mx-1.5 flex items-baseline gap-2 border-b border-border-subtle bg-card px-3.5 pt-2.5 pb-1.5 text-xs font-medium">
+                  {dayLabel(day.entries[0].timestamp, day.key, timezone, t)}
+                  {day.entries.length > 1 ? (
+                    <span className="font-normal text-foreground-subtle tabular-nums">
+                      {t("{0, plural, one {# change} other {# changes}}", day.entries.length)}
+                    </span>
+                  ) : null}
+                </h4>
+                <HoverGlideGroup className="flex flex-col gap-px pt-1">
+                  {day.entries.map((entry) => (
+                    <ActivityRow
+                      key={entry.id}
+                      entry={entry}
+                      timezone={timezone}
+                      target={drawableTarget(entry, isDrawable)}
+                      onOpen={open}
+                    />
+                  ))}
+                </HoverGlideGroup>
+              </section>
+            ))}
+            <div ref={sentinel} className="h-px" />
+            {isFetchingNextPage ? (
+              <div
+                aria-busy
+                aria-label={t("Loading more changes")}
+                className="flex flex-col gap-2 p-2"
+              >
+                <span className="block h-3 w-3/5 ui-shimmer rounded-sm" />
+                <span className="block h-3 w-2/5 ui-shimmer rounded-sm" />
+              </div>
+            ) : null}
+            {activity.isError && entries.length > 0 ? (
+              <div className="flex items-center justify-center gap-2 p-2 text-xs text-muted-foreground">
+                {t("More changes could not be loaded.")}
+                <Button size="xs" variant="outline" onClick={() => void fetchNextPage()}>
+                  {t("Try again")}
+                </Button>
+              </div>
+            ) : null}
+          </div>
+        </ScrollArea>
+      )}
+      <p className="border-t border-border-subtle px-3 py-2.5 text-xs text-muted-foreground">
+        {t(
+          "Kept for as long as the record is. Changes from Dash and from agents are marked so you can tell who made them.",
+        )}
+      </p>
+    </SectionPanel>
+  );
+}
+
+function ActivityRow({
+  entry,
+  timezone,
+  target,
+  onOpen,
+}: {
+  entry: WorkerActivityEntry;
+  timezone: string;
+  target: WorkerTarget | null;
+  onOpen: (target: WorkerTarget) => void;
+}) {
+  const t = useT();
+  const source = activitySource(entry.channel);
+  const name = actorName(entry) ?? t("Someone");
+  const { chips, more } = changeChips(entry.changes, CHIP_LIMIT);
+  const time = dateTimeFormatter({ hour: "numeric", minute: "2-digit", timeZone: timezone }).format(
+    new Date(entry.timestamp * 1000),
+  );
+  const body = (
+    <>
+      <span className="pt-0.5 font-mono text-xs text-muted-foreground">{time}</span>
+      <span className="flex min-w-0 items-center gap-2">
+        <span
+          aria-hidden
+          className="flex size-6 shrink-0 items-center justify-center rounded-md border border-border-subtle bg-sunken text-2xs font-medium text-muted-foreground"
+        >
+          {source === "agent" ? <BotIcon className="size-3" /> : initialsOf(name)}
+        </span>
+        <span className="truncate">{name}</span>
+      </span>
+      <span className="mt-0.5 justify-self-end rounded-sm border border-border-subtle px-1.5 text-2xs text-muted-foreground @3xl:order-last">
+        {t(ACTIVITY_SOURCE_LABELS[source])}
+      </span>
+      <span className="col-span-full min-w-0 pt-0.5 text-pretty @3xl:col-span-1">
+        {entrySentence({
+          operation: entry.operation,
+          resource: entry.resource,
+          entityRef: entry.entityRef,
+        })}
+        {chips.map((chip) => (
+          <span
+            key={chip.path}
+            className="mx-0.5 inline-flex max-w-full flex-wrap items-center gap-1 rounded-md border border-border-subtle bg-sunken px-1.5 py-px align-[1px] text-xs"
+          >
+            <span className="text-muted-foreground">{chip.field}</span>
+            {chip.from !== null ? (
+              <>
+                <del className="text-muted-foreground decoration-foreground-subtle">
+                  {chip.from}
+                </del>
+                {chip.to !== null ? (
+                  <ArrowRightIcon className="size-3 text-muted-foreground" />
+                ) : null}
+              </>
+            ) : null}
+            {chip.to !== null ? <ins className="font-medium no-underline">{chip.to}</ins> : null}
+          </span>
+        ))}
+        {more > 0 ? (
+          <span className="text-xs text-muted-foreground">
+            {t("{0, plural, one {and # more field} other {and # more fields}}", more)}
+          </span>
+        ) : null}
+        {entry.comment ? (
+          <span className="block text-xs text-muted-foreground">{entry.comment}</span>
+        ) : null}
+      </span>
+    </>
+  );
+  const layout =
+    "grid w-full grid-cols-[4rem_minmax(0,1fr)_auto] items-start gap-x-3 gap-y-1 rounded-md p-2 text-left @3xl:grid-cols-[4.5rem_10.5rem_minmax(0,1fr)_auto]";
+
+  return target ? (
+    <button
+      type="button"
+      data-glide-target
+      data-testid={`activity-${entry.id}`}
+      onClick={() => onOpen(target)}
+      className={cn(layout, "cursor-pointer ui-focus-ring")}
+    >
+      {body}
+    </button>
+  ) : (
+    <div data-glide-target data-testid={`activity-${entry.id}`} className={layout}>
+      {body}
+    </div>
+  );
+}

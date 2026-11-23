@@ -1,4 +1,5 @@
 import type { ToolStep } from "@/components/assistant/activity";
+import { useReplyBoards, type ReplyBoard } from "@/components/assistant/artifact-opener";
 import type { ThreadAsk } from "@/components/assistant/ask-requests";
 import { ReportRunCard } from "@/components/assistant/report-run-card";
 import { reportRunsFrom } from "@/components/assistant/report-runs";
@@ -14,7 +15,7 @@ import type {
 import { Button } from "@trenova/shared/components/ui/button";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
-import { memo, useMemo, type ReactNode } from "react";
+import { memo, useCallback, useMemo, useState, type ReactNode } from "react";
 import { DeskMentionText } from "../composer/desk-mentions";
 import { DeskMessageAttachments } from "../composer/desk-uploads";
 import { DeskMemoryRecall, DeskMemorySavedList } from "../memory/desk-memory-notes";
@@ -172,6 +173,7 @@ export function DeskInlineArtifact({
 
 const NO_IDS: readonly string[] = [];
 const NO_ASKS: readonly ThreadAsk[] = [];
+const NO_BOARDS: readonly ReplyBoard[] = [];
 
 const CUT_NOTE = /\s*_This reply was cut off before it finished\.[^_]*_\s*$/u;
 
@@ -181,17 +183,23 @@ export function withoutCutNote(content: string): string {
 }
 
 /**
- * A saved reply: its words, what it produced, and the actions under it.
+ * A saved reply: its words, what it produced, and the actions under it. A
+ * reply whose turn placed boards in the conversation draws those boards in
+ * place of its words, where the surface supplies a way to draw them
+ * (`ReplyBoardsProvider`); everywhere else it draws its words.
  * Memoized, so a reply arriving below does not set every earlier one again.
  */
 export const DeskReply = memo(function DeskReply({
   entry,
   steps,
   threadArtifacts,
+  boards = NO_BOARDS,
+  arrives = false,
   asks = NO_ASKS,
   dockedAskId = null,
   sentAnswer = null,
   closesTurn = false,
+  tail = true,
   onStartChapter,
   onOpenArtifact,
 }: {
@@ -200,6 +208,10 @@ export const DeskReply = memo(function DeskReply({
   steps: readonly ToolStep[];
   /** The conversation's artifacts, so a cited step can offer the one it made. */
   threadArtifacts: readonly AssistantArtifact[];
+  /** The boards the reply's turn placed in the conversation, drawn in place of its words. */
+  boards?: readonly ReplyBoard[];
+  /** The reply landed while the person was watching: its boards arrive rather than appear. */
+  arrives?: boolean;
   /** The questions the reply asked, each with the message that answered it once one has. */
   asks?: readonly ThreadAsk[];
   /** The reply's question that waits above the composer, if one of its questions does. */
@@ -211,6 +223,13 @@ export const DeskReply = memo(function DeskReply({
    * did not go through, between its words and the actions under them.
    */
   closesTurn?: boolean;
+  /**
+   * The reply is the last step of its answer. A reply that took several model
+   * steps is saved as several messages; only the last carries the actions, so
+   * the steps read as one answer and not as several replies with a bar's
+   * height of nothing between them.
+   */
+  tail?: boolean;
   /** Starts a chapter where the reply's question was asked. Left out, the reply offers none. */
   onStartChapter?: () => void;
   onOpenArtifact: (id: string) => void;
@@ -232,21 +251,42 @@ export const DeskReply = memo(function DeskReply({
     [citations, content, webSources],
   );
   const overrides = useCitationOverrides(citations, threadArtifacts, onOpenArtifact);
+  const replyBoards = useReplyBoards();
+  // Settled when the reply first mounts, not where its board's code arrives: a
+  // reply read from history never arrives, however late that code loads.
+  const [arrived] = useState(arrives);
+  // A reply drawn as boards keeps its actions until the boards are drawn, so
+  // they never stand under the boards' skeleton.
+  const drawsBoards = replyBoards !== null && boards.length > 0;
+  const [boardsDrawn, setBoardsDrawn] = useState(false);
+  const markBoardsDrawn = useCallback(() => setBoardsDrawn(true), []);
   const usedMemories = message.usedMemoryIds ?? NO_IDS;
   const savedMemories = useMemo(
     () => (message.savedMemories ?? []).map((saved) => saved.id),
     [message.savedMemories],
   );
+  const prose =
+    cited !== "" ? (
+      <div className={cn("dk-prose", entry.message.truncated && "dk-cut")}>
+        <DeskWebCites sources={webSources}>
+          <AiMarkdown content={cited} className="dk-md" overrides={overrides} deskSubset />
+        </DeskWebCites>
+      </div>
+    ) : null;
 
   return (
     <>
       {usedMemories.length > 0 && <DeskMemoryRecall ids={usedMemories} served={message.memories} />}
-      {cited !== "" && (
-        <div className={cn("dk-prose", entry.message.truncated && "dk-cut")}>
-          <DeskWebCites sources={webSources}>
-            <AiMarkdown content={cited} className="dk-md" overrides={overrides} deskSubset />
-          </DeskWebCites>
-        </div>
+      {drawsBoards ? (
+        <replyBoards.Boards
+          boards={boards}
+          fallback={prose}
+          answeredAt={message.createdAt}
+          arrives={arrived}
+          onDrawn={markBoardsDrawn}
+        />
+      ) : (
+        prose
       )}
       {closesTurn && <DeskWebSources sources={webSources} query={webQueryOf(steps)} />}
       {reportRuns.map((run) => (
@@ -271,7 +311,7 @@ export const DeskReply = memo(function DeskReply({
       {savedMemories.length > 0 && (
         <DeskMemorySavedList ids={savedMemories} served={message.memories} />
       )}
-      {message.content !== "" && (
+      {tail && message.content !== "" && (!drawsBoards || boardsDrawn) && (
         <DeskMessageActions text={content} onStartChapter={onStartChapter} />
       )}
     </>

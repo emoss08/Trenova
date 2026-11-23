@@ -9,7 +9,7 @@ related:
 ## What it's for
 Review templates define what a performance review rates and how much each item counts toward
 the overall score. HR administrators set them up; managers pick a template when they start a
-review from a worker's **Reviews** tab. A template can repeat on a schedule, so closing a review
+review from a worker's page, on the **Development** tab under **Reviews**. A template can repeat on a schedule, so closing a review
 schedules the next one.
 
 ## Tasks

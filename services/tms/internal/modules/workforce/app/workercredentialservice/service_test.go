@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workercredentialports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/documentportsmock"
@@ -259,6 +260,7 @@ type harness struct {
 	repo       *fakeRepo
 	workerRepo *workerportsmock.MockWorkerRepository
 	docRepo    *documentportsmock.MockDocumentRepository
+	audits     *auditLog
 	tenant     pagination.TenantInfo
 	wrk        *worker.Worker
 	cdl        *workercredential.WorkerCredentialType
@@ -275,6 +277,10 @@ func (h *harness) actor() *permissionports.RequestActor {
 		OrganizationID: h.tenant.OrgID,
 		BusinessUnitID: h.tenant.BuID,
 	}
+}
+
+type auditLog struct {
+	entries []*auditports.LogActionParams
 }
 
 type fixedFieldAccess protectedfield.GroupSet
@@ -297,7 +303,14 @@ func newHarnessSeeing(t *testing.T, fields permissionports.FieldAccess) *harness
 	workerRepo := workerportsmock.NewMockWorkerRepository(t)
 	docRepo := documentportsmock.NewMockDocumentRepository(t)
 	audit := auditportsmock.NewMockAuditService(t)
-	audit.EXPECT().LogAction(mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
+	audits := &auditLog{}
+	audit.EXPECT().
+		LogAction(mock.Anything, mock.Anything, mock.Anything).
+		Run(func(_ context.Context, params *auditports.LogActionParams, _ ...auditports.LogOption) {
+			audits.entries = append(audits.entries, params)
+		}).
+		Return(nil).
+		Maybe()
 
 	tenant := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
 	wrk := &worker.Worker{
@@ -350,6 +363,7 @@ func newHarnessSeeing(t *testing.T, fields permissionports.FieldAccess) *harness
 		repo:       repo,
 		workerRepo: workerRepo,
 		docRepo:    docRepo,
+		audits:     audits,
 		tenant:     tenant,
 		wrk:        wrk,
 		cdl: addType(

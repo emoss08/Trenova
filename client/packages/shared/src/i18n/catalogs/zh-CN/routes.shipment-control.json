@@ -8,6 +8,7 @@
   "Cancels shipments that were entered and never moved past New.": "取消已录入但从未离开“新增”状态的运单。",
   "Check for duplicate BOLs": "检查重复的提单",
   "Check hazmat segregation": "检查危险品隔离",
+  "Configure and manage your shipment control settings": "配置并管理运单控制项",
   "Default policy": "默认政策",
   "Delays": "延误",
   "Entry checks": "录入检查",

@@ -62,8 +62,7 @@ export const RECORD_LINKS = {
   },
   worker: {
     label: "Worker",
-    path: "/hr/workers",
-    params: { panelType: "edit", panelEntityId: "{id}" },
+    path: "/hr/workers/{id}",
   },
   tractor: {
     label: "Tractor",
@@ -288,6 +287,8 @@ export type RecordEntityType = keyof typeof RECORD_LINKS;
 
 const ID = "{id}";
 
+const CREATE_SEGMENT = "new";
+
 export function isRecordEntityType(value: string): value is RecordEntityType {
   return Object.hasOwn(RECORD_LINKS, value);
 }
@@ -371,7 +372,7 @@ export function recordAtLocation(pathname: string, search: string): RecordAtLoca
   let first: { locator: Locator; match: RegExpExecArray } | null = null;
   for (const locator of LOCATORS) {
     const match = locator.pattern.exec(pathname);
-    if (!match) {
+    if (!match || match[1] === CREATE_SEGMENT) {
       continue;
     }
     first ??= { locator, match };

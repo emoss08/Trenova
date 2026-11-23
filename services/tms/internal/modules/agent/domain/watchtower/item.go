@@ -10,8 +10,10 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/caseowner"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtowerpanel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -25,89 +27,98 @@ const (
 	maxPathLength     = 500
 )
 
-// Item is one thing worth a person's attention, projected from the record
-// that raised it. It paginates by time, carries a severity, and resolves
-// when its source does; the source stays authoritative by kind and id.
+// Watchtower items: what the operation is working or has recently closed, with each item's kind,
+// severity, status, owner, due time and escalations. Resolved items are removed after 30 days;
+// Watchtower Resolutions keep the history. Says nothing about what an item reads.
 type Item struct {
-	keel.Table `keel:"watchtower_items"`
+	keel.Table `keel:"watchtower_items,report=Desk,label=Watchtower Item"`
 
 	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:wt_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
 
-	SourceKind SourceKind `json:"sourceKind" keel:"source_kind"`
-	SourceID   string     `json:"sourceId"   keel:"source_id"`
-	Severity   Severity   `json:"severity"   keel:"severity"`
-	Title      string     `json:"title"      keel:"title"`
-	Summary    string     `json:"summary"    keel:"summary,nullzero"`
+	// The kind of item
+	SourceKind SourceKind `json:"sourceKind" keel:"source_kind,label=Kind"`
+	SourceID   string     `json:"sourceId"   keel:"source_id,noreport"`
+	// How severe the item is now, escalations included
+	Severity Severity `json:"severity"   keel:"severity"`
+	Title    string   `json:"title"      keel:"title,noreport"`
+	Summary  string   `json:"summary"    keel:"summary,nullzero,noreport"`
 
-	// SubjectType and SubjectID name the record an agent would work on if
-	// the item is handed to one; EventKind is the event that hand-off
-	// publishes. Empty when the source has no agent subject.
-	SubjectType agent.SubjectType      `json:"subjectType" keel:"subject_type,nullzero"`
-	SubjectID   pulid.ID               `json:"subjectId"   keel:"subject_id,nullzero"`
-	EventKind   agenttrigger.EventKind `json:"eventKind"   keel:"event_kind,nullzero"`
+	SubjectType agent.SubjectType      `json:"subjectType" keel:"subject_type,nullzero,noreport"`
+	SubjectID   pulid.ID               `json:"subjectId"   keel:"subject_id,nullzero,noreport"`
+	EventKind   agenttrigger.EventKind `json:"eventKind"   keel:"event_kind,nullzero,noreport"`
 
-	// Path opens the source record. It is built by the server and validated
-	// like an insight's link, so a stored path can only be an application path.
-	Path string `json:"path" keel:"path,nullzero"`
+	Path string `json:"path" keel:"path,nullzero,noreport"`
 
-	OccurredAt int64  `json:"occurredAt" keel:"occurred_at"`
-	ResolvedAt *int64 `json:"resolvedAt" keel:"resolved_at"`
+	// When the problem occurred
+	OccurredAt int64 `json:"occurredAt" keel:"occurred_at"`
+	// When the item was resolved; empty while it is open
+	ResolvedAt *int64 `json:"resolvedAt" keel:"resolved_at,label=Resolved"`
 
-	Status          Status         `json:"status"          keel:"status"`
-	AssigneeID      pulid.ID       `json:"assigneeId"      keel:"assignee_id,nullzero"`
-	DueAt           *int64         `json:"dueAt"           keel:"due_at"`
-	SnoozedUntil    *int64         `json:"snoozedUntil"    keel:"snoozed_until"`
-	AcknowledgedAt  *int64         `json:"acknowledgedAt"  keel:"acknowledged_at"`
-	ResolutionCode  ResolutionCode `json:"resolutionCode"  keel:"resolution_code,nullzero"`
-	ResolutionNote  string         `json:"resolutionNote"  keel:"resolution_note,nullzero"`
-	ResolvedByID    pulid.ID       `json:"resolvedById"    keel:"resolved_by_id,nullzero"`
-	SourceClearedAt *int64         `json:"sourceClearedAt" keel:"source_cleared_at"`
-	EscalationLevel int16          `json:"escalationLevel" keel:"escalation_level"`
-	LastEscalatedAt *int64         `json:"lastEscalatedAt" keel:"last_escalated_at"`
+	// Where the item stands: open (nobody has said they are on it), acknowledged, in
+	// progress, snoozed or resolved
+	Status     Status   `json:"status"          keel:"status"`
+	AssigneeID pulid.ID `json:"assigneeId"      keel:"assignee_id,nullzero"`
+	// When the item is due to be dealt with
+	DueAt *int64 `json:"dueAt"           keel:"due_at,label=Due"`
+	// When a snoozed item comes back
+	SnoozedUntil *int64 `json:"snoozedUntil"    keel:"snoozed_until"`
+	// When someone first said they had seen it
+	AcknowledgedAt *int64 `json:"acknowledgedAt"  keel:"acknowledged_at"`
+	// Why a resolved item was closed
+	ResolutionCode ResolutionCode `json:"resolutionCode"  keel:"resolution_code,nullzero,label=Reason"`
+	ResolutionNote string         `json:"resolutionNote"  keel:"resolution_note,nullzero,noreport"`
+	ResolvedByID   pulid.ID       `json:"resolvedById"    keel:"resolved_by_id,nullzero"`
+	// When the source stopped reporting the problem after a person had resolved it
+	SourceClearedAt *int64 `json:"sourceClearedAt" keel:"source_cleared_at"`
+	// How many times the item has escalated
+	EscalationLevel int16 `json:"escalationLevel" keel:"escalation_level,label=Escalations"`
+	// When it last escalated
+	LastEscalatedAt *int64 `json:"lastEscalatedAt" keel:"last_escalated_at"`
 
-	DueLabel  string    `json:"dueLabel"  keel:"due_label,nullzero"`
+	DueLabel string `json:"dueLabel"  keel:"due_label,nullzero,noreport"`
+	// Where the due time came from: the record's own deadline, the organization's policy or a
+	// person
 	DueSource DueSource `json:"dueSource" keel:"due_source,nullzero"`
 
-	RecordKind  recordkind.Kind `json:"recordKind"  keel:"record_kind,nullzero"`
-	RecordLabel string          `json:"recordLabel" keel:"record_label,nullzero"`
+	RecordKind  recordkind.Kind `json:"recordKind"  keel:"record_kind,nullzero,noreport"`
+	RecordLabel string          `json:"recordLabel" keel:"record_label,nullzero,noreport"`
 
-	// AboutKind and AboutID name the business record the item is about, which
-	// the Desk groups by. Empty when the item is about nothing beyond itself.
-	AboutKind recordkind.Kind        `json:"aboutKind" keel:"about_kind,nullzero"`
-	AboutID   pulid.ID               `json:"aboutId"   keel:"about_id,nullzero"`
-	Facts     []Fact                 `json:"facts"       keel:"facts,jsonb"`
-	Impact    []string               `json:"impact"      keel:"impact,jsonb"`
-	Trail     []TrailEvent           `json:"trail"       keel:"trail,jsonb"`
-	Panel     *watchtowerpanel.Panel `json:"panel"       keel:"panel,jsonb"`
+	AboutKind recordkind.Kind `json:"aboutKind" keel:"about_kind,nullzero,noreport"`
+	// The record the item is about, which is its case; empty when it is about nothing
+	// beyond itself. Count it to count cases.
+	AboutID pulid.ID               `json:"aboutId"   keel:"about_id,nullzero,report,label=Case"`
+	Facts   []Fact                 `json:"facts"     keel:"facts,jsonb,noreport"`
+	Impact  []string               `json:"impact"    keel:"impact,jsonb,noreport"`
+	Trail   []TrailEvent           `json:"trail"     keel:"trail,jsonb,noreport"`
+	Panel   *watchtowerpanel.Panel `json:"panel"     keel:"panel,jsonb,noreport"`
 
-	AgentDefinitionID pulid.ID `json:"agentDefinitionId" keel:"agent_definition_id,nullzero"`
-	AgentRunID        pulid.ID `json:"agentRunId"        keel:"agent_run_id,nullzero"`
-	AgentHandedAt     *int64   `json:"agentHandedAt"     keel:"agent_handed_at"`
-	AgentHandedByID   pulid.ID `json:"agentHandedById"   keel:"agent_handed_by_id,nullzero"`
+	AgentDefinitionID pulid.ID `json:"agentDefinitionId" keel:"agent_definition_id,nullzero,noreport"`
+	AgentRunID        pulid.ID `json:"agentRunId"        keel:"agent_run_id,nullzero,noreport"`
+	// When the item was handed to an agent; empty when it never was
+	AgentHandedAt   *int64   `json:"agentHandedAt"     keel:"agent_handed_at,label=Handed to an Agent"`
+	AgentHandedByID pulid.ID `json:"agentHandedById"   keel:"agent_handed_by_id,nullzero,noreport"`
 
-	// LastRequest is the last play a person sent for the item; nil when
-	// none has been.
-	LastRequest *Request `json:"lastRequest" keel:"last_request,jsonb"`
+	LastRequest *Request `json:"lastRequest" keel:"last_request,jsonb,noreport"`
 
-	// DescribedAt is when what the item says last changed. An agent handed
-	// the item reads that description, so it is what "the record changed
-	// since the agent looked" is measured against.
-	DescribedAt int64 `json:"describedAt" keel:"described_at"`
+	DescribedAt int64 `json:"describedAt" keel:"described_at,noreport"`
 
-	Version   int64 `json:"version"   keel:"version,version"`
-	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
+	Version int64 `json:"version"   keel:"version,version"`
+	// When the item was raised
+	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate,label=Raised"`
+	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate,noreport"`
 
-	// Seen says whether this reader had already been shown the item, from
-	// their cursor. Filled by the service, never stored.
-	Seen bool `json:"seen"`
-	// Inserted is set by an upsert that reports whether the row was created
-	// rather than replaced; it is never selected on its own.
-	Inserted bool `json:"-" keel:"inserted,computed"`
-	// Reopened is set by an upsert that brought a resolved item back.
-	Reopened  bool `json:"-" keel:"reopened,computed"`
+	// The person the item is assigned to
+	Assignee *tenant.Person `json:"-" keel:"belongs:assignee_id"`
+	// The person who resolved it, or for whom an agent resolved it
+	ResolvedBy *tenant.Person `json:"-" keel:"belongs:resolved_by_id,label=Resolved By"`
+	// Who owns the case the item belongs to
+	CaseOwner *caseowner.Owner `json:"-" keel:"belongs:about_id=record_id"`
+
+	Seen      bool `json:"seen"`
+	Inserted  bool `json:"-"    keel:"inserted,computed"`
+	Reopened  bool `json:"-"    keel:"reopened,computed"`
 	Unchanged bool `json:"-"`
 }
 

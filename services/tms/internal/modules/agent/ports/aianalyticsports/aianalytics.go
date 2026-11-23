@@ -34,8 +34,9 @@ type ModelKey struct {
 }
 
 type PruneRequest struct {
-	TenantInfo pagination.TenantInfo
-	Before     int64
+	TenantInfo       pagination.TenantInfo
+	Before           int64
+	DailyUsageBefore int64
 }
 
 type Filter struct {
@@ -271,6 +272,7 @@ type AnalyticsRefresher interface {
 	HasActivity(ctx context.Context, req RefreshRequest) (bool, error)
 	RefreshUnits(ctx context.Context, req RefreshRequest) (int, error)
 	RefreshProviderHours(ctx context.Context, req RefreshRequest) (int, error)
+	RefreshDailyUsage(ctx context.Context, req RefreshRequest) (int, error)
 	UnkeyedModels(ctx context.Context, req ModelKeyRequest) ([]string, error)
 	SetModelKeys(ctx context.Context, req ModelKeyRequest, keys []ModelKey) error
 	Prune(ctx context.Context, req PruneRequest) error

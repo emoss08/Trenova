@@ -10,7 +10,7 @@ import {
   logColumn,
   type CaseFilter,
 } from "@/lib/osha-log";
-import { workerRecordHref } from "@/lib/route-utils";
+import { workerPath } from "@/routes/worker/use-worker-state";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Input } from "@trenova/shared/components/ui/input";
 import { SegmentedControl } from "@trenova/shared/components/ui/segmented-control";
@@ -194,7 +194,7 @@ export function OshaCaseTable({
                     label: t("Open worker"),
                     icon: User01Icon,
                     onSelect: () =>
-                      void navigate({ to: workerRecordHref(entry.workerId, "safety") }),
+                      void navigate({ to: workerPath(entry.workerId, { tab: "safety" }) }),
                   },
                 ];
                 if (canUpdate) {

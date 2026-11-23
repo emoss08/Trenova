@@ -7,6 +7,7 @@ import type {
   TelematicsFormMappingsQuery,
   VehicleInspectionsQuery,
   WorkerFormSubmissionsQuery,
+  WorkerHosClocksQuery,
   WorkerHosDailyLogsQuery,
   WorkerHosLogsQuery,
   VehiclePositionsQuery,
@@ -21,6 +22,7 @@ import {
   ShipmentDriverFeasibilityDocument,
   ShipmentFormSubmissionsDocument,
   TelematicsStatusDocument,
+  WorkerHosClocksDocument,
   WorkerHosDailyLogsDocument,
   WorkerHosLogsDocument,
   VehiclePositionsDocument,
@@ -74,6 +76,21 @@ export async function getWorkerHosStateGraphQL(
   const data = await requestGraphQL({
     document: WorkerHosStateDocument,
     operationName: "WorkerHosState",
+    variables: { workerId },
+    signal: options?.signal,
+  });
+  return data.workerHosState;
+}
+
+export type WorkerHosClocks = NonNullable<WorkerHosClocksQuery["workerHosState"]>;
+
+export async function getWorkerHosClocksGraphQL(
+  workerId: string,
+  options?: { signal?: AbortSignal },
+): Promise<WorkerHosClocks | null> {
+  const data = await requestGraphQL({
+    document: WorkerHosClocksDocument,
+    operationName: "WorkerHosClocks",
     variables: { workerId },
     signal: options?.signal,
   });

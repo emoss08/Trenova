@@ -34,6 +34,7 @@ const (
 	NeedsExport
 	OwnScopeUnsupported
 	NotOnPlan
+	NeedsOperation
 )
 
 func (d Decision) String() string {
@@ -52,13 +53,15 @@ func (d Decision) String() string {
 		return "own_scope_unsupported"
 	case NotOnPlan:
 		return permissionports.ReasonNotOnPlan
+	case NeedsOperation:
+		return "needs_operation"
 	default:
 		return "unknown"
 	}
 }
 
 func DecisionOf(reason string) Decision {
-	for d := Available; d <= NotOnPlan; d++ {
+	for d := Available; d <= NeedsOperation; d++ {
 		if d.String() == reason {
 			return d
 		}
@@ -69,6 +72,7 @@ func DecisionOf(reason string) Decision {
 type Use struct {
 	Decision    Decision
 	Kind        permission.Resource
+	Operation   permission.Operation
 	Sensitivity permission.FieldSensitivity
 	Reference   bool
 	Group       protectedfield.Group
@@ -147,6 +151,14 @@ func New(p Params) (*Resolver, error) {
 			return nil, fmt.Errorf(
 				"report access: entity %q names unregistered resource %q",
 				e.Key,
+				k.resource,
+			)
+		}
+		if k.requires != "" && !p.Registry.Declares(k.resource.String(), k.requires) {
+			return nil, fmt.Errorf(
+				"report access: entity %q requires undeclared operation %q on %q",
+				e.Key,
+				k.requires,
 				k.resource,
 			)
 		}
@@ -369,6 +381,18 @@ func (a *Access) Denials() []Denial {
 	return slices.Clone(a.denials)
 }
 
+func (a *Access) lacksRequired(k kind) bool {
+	return k.requires != "" && !hasOperation(a.cached(k.resource), k.requires)
+}
+
+func (a *Access) LacksOperation(e *analytics.Entity) bool {
+	return a.lacksRequired(a.resolver.kinds[e])
+}
+
+func (k kind) operationUse() Use {
+	return Use{Decision: NeedsOperation, Kind: k.resource, Operation: k.requires}
+}
+
 func (a *Access) EntityUse(e *analytics.Entity) Use {
 	k := a.resolver.kinds[e]
 	if denial := a.kindPlan(k.resource); denial != nil {
@@ -378,6 +402,8 @@ func (a *Access) EntityUse(e *analytics.Entity) Use {
 	switch {
 	case !kind.Reads:
 		return Use{Decision: NeedsKindRead, Kind: k.resource}
+	case a.lacksRequired(k):
+		return k.operationUse()
 	case a.export && !kind.Exports:
 		return Use{Decision: NeedsExport, Kind: k.resource}
 	case kind.Scope == permission.DataScopeOwn && k.ownership == "":
@@ -426,6 +452,8 @@ func (a *Access) FieldUse(ctx context.Context, f *analytics.Field) Use {
 		use.Kind = k.resource
 	case use.Decision == NeedsKindRead:
 		use.Kind = k.resource
+	case use.Decision == NeedsOperation:
+		use.Kind, use.Operation = k.resource, k.requires
 	case use.Decision == Available && use.Group != "" && !use.HoldsGroup:
 		use.Decision = NeedsFieldGroup
 	case use.Decision == Available && a.needsExport(k, use.Reference):
@@ -461,6 +489,10 @@ func (a *Access) EdgeUse(ctx context.Context, g *analytics.Edge) Use {
 		use.Kind = k.resource
 		return use
 	}
+	if use.Decision == NeedsOperation {
+		use.Kind, use.Operation = k.resource, k.requires
+		return use
+	}
 	if use.Decision != Available {
 		return use
 	}
@@ -473,6 +505,11 @@ func (a *Access) EdgeUse(ctx context.Context, g *analytics.Edge) Use {
 		}
 	}
 	target := r.kinds[g.Target]
+	if a.lacksRequired(target) {
+		denied := target.operationUse()
+		denied.Reference = use.Reference
+		return denied
+	}
 	if a.Kind(target.resource).Scope == permission.DataScopeOwn && target.ownership == "" {
 		return Use{Decision: OwnScopeUnsupported, Kind: target.resource, Reference: use.Reference}
 	}
@@ -535,6 +572,9 @@ func (a *Access) decideGrant(
 	sensitivity *permission.FieldSensitivity,
 ) Decision {
 	detail := a.cached(k.resource)
+	if a.lacksRequired(k) {
+		return NeedsOperation
+	}
 	if hasOperation(detail, permission.OpRead) {
 		if sensitivity != nil && !detail.MaxSensitivity.CanAccess(*sensitivity) {
 			return WithheldByCeiling

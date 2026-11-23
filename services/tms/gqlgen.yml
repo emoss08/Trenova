@@ -319,6 +319,9 @@ models:
   WorkerCredentialDocument:
     model:
       - github.com/emoss08/trenova/internal/modules/documents/domain/document.Document
+  DocumentPreviewStatus:
+    model:
+      - github.com/emoss08/trenova/internal/modules/documents/domain/document.PreviewStatus
   WorkerCredential:
     model:
       - github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential.WorkerCredential
@@ -370,14 +373,26 @@ models:
         resolver: true
       amendedById:
         resolver: true
-  WorkerEmploymentCascade:
+  WorkerEmploymentEffectKind:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/app/workeremploymentservice.CascadeSummary
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/employment.EffectKind
+  WorkerEmploymentEffect:
+    model:
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/employment.Effect
     fields:
-      ptoPaidOutDays:
+      days:
         resolver: true
-      ptoForfeitedDays:
+  WorkerEmploymentEventPreview:
+    model:
+      - github.com/emoss08/trenova/internal/modules/workforce/app/workeremploymentservice.Preview
+    fields:
+      fromValues:
         resolver: true
+      toValues:
+        resolver: true
+  WorkerEmploymentEventOptions:
+    model:
+      - github.com/emoss08/trenova/internal/modules/workforce/app/workeremploymentservice.Options
   RecordWorkerEmploymentEventPayload:
     model:
       - github.com/emoss08/trenova/internal/modules/workforce/app/workeremploymentservice.RecordResult
@@ -1412,6 +1427,75 @@ models:
   WorkerOverview:
     model:
       - github.com/emoss08/trenova/internal/modules/workforce/app/workeroverviewservice.Overview
+  WorkerConcernCode:
+    model:
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workercompliance.ConcernCode
+  WorkerPageTab:
+    model:
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerpage.Tab
+  WorkerPageView:
+    model:
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerpage.View
+  WorkerPageRecord:
+    model:
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerpage.Record
+  WorkerDestination:
+    model:
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerpage.Destination
+  WorkerClearanceLane:
+    model:
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workercompliance.ClearanceLane
+  WorkerClearanceSource:
+    model:
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workercompliance.ClearanceSource
+  WorkerClearanceEffect:
+    model:
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workercompliance.ClearanceEffect
+  WorkerClearanceRule:
+    model:
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workercompliance.ClearanceRule
+  WorkerClearanceBlock:
+    model:
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workercompliance.ClearanceBlock
+  WorkerClearanceItem:
+    model:
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workercompliance.ClearanceItem
+  WorkerClearance:
+    model:
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workercompliance.Clearance
+  WorkerOverviewDrugAlcohol:
+    model:
+      - github.com/emoss08/trenova/internal/modules/workforce/app/workeroverviewservice.DrugAlcoholSection
+  WorkerOverviewEmployment:
+    model:
+      - github.com/emoss08/trenova/internal/modules/workforce/app/workeroverviewservice.EmploymentSection
+  WorkerOverviewSchedule:
+    model:
+      - github.com/emoss08/trenova/internal/modules/workforce/app/workeroverviewservice.ScheduleSection
+  WorkerHosLink:
+    model:
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/telematics.HOSLink
+  WorkerOverviewHos:
+    model:
+      - github.com/emoss08/trenova/internal/modules/workforce/app/workeroverviewservice.HOSSection
+  WorkerOverviewPayRate:
+    model:
+      - github.com/emoss08/trenova/internal/modules/workforce/app/workeroverviewservice.PayRate
+    fields:
+      rate:
+        resolver: true
+  WorkerOverviewPay:
+    model:
+      - github.com/emoss08/trenova/internal/modules/workforce/app/workeroverviewservice.PaySection
+  WorkerOverviewBenefits:
+    model:
+      - github.com/emoss08/trenova/internal/modules/workforce/app/workeroverviewservice.BenefitsSection
+  WorkerPortalAccess:
+    model:
+      - github.com/emoss08/trenova/internal/modules/workforce/app/workeroverviewservice.PortalAccess
+  WorkerOverviewPortal:
+    model:
+      - github.com/emoss08/trenova/internal/modules/workforce/app/workeroverviewservice.PortalSection
   WorkerRosterAttention:
     model:
       - github.com/emoss08/trenova/internal/modules/workforce/app/workeroverviewservice.RosterAttention
@@ -5318,6 +5402,10 @@ models:
       - github.com/emoss08/trenova/internal/modules/workspace/domain/audit.Entry
     fields:
       changes:
+        resolver: true
+      subjectResource:
+        resolver: true
+      subjectId:
         resolver: true
       previousState:
         resolver: true

@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/safetyscorecard"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerdiscipline"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerpage"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -69,7 +70,7 @@ func (s *Service) AcknowledgeMyDisciplinaryAction(
 		"disciplinary_acknowledged",
 		"Disciplinary action acknowledged",
 		wrk.FirstName+" "+wrk.LastName+" acknowledged their "+saved.Level.String()+".",
-		"/hr/workers?tab=safety",
+		workerpage.Path(wrk.ID, workerpage.At(workerpage.TabSafety)),
 		map[string]any{
 			relatedWorkerIDKey:     wrk.ID.String(),
 			"disciplinaryActionId": saved.ID.String(),

@@ -7,6 +7,7 @@
   "Add range": "Agregar rango",
   "An exact key, like a zone code or a freight class": "Una clave exacta, como un código de zona o una clase de flete",
   "Applied to both the stored key and the value a formula looks up, so a ZIP+4 finds its ZIP3 zone and case does not matter.": "Se aplica tanto a la clave almacenada como al valor que busca una fórmula, de modo que un ZIP+4 encuentra su zona ZIP3 y las mayúsculas no importan.",
+  "Archive {0}": "Archivar {0}",
   "Archived. No new template version can read it; those that pin a version keep reading it.": "Archivada. Ninguna versión de plantilla nueva puede leerla; las que fijan una versión siguen leyéndola.",
   "Axes": "Ejes",
   "Axis {0}": "Eje {0}",

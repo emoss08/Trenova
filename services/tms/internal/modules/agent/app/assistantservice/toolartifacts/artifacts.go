@@ -138,11 +138,20 @@ func ShownArtifact(artifact *assistantartifact.Artifact) *agentruntimeports.Show
 		Actionable:   actionableTable(artifact),
 		Opens:        opensView(artifact),
 		OpensRecords: opensRecords(artifact),
+		RowKind:      rowKind(artifact),
 		Ranked:       rankedTable(artifact),
 		Paged:        artifactpayload.PagedTable(artifact),
 		Written:      writtenPhrase(artifact),
 		Lineage:      lineageRoot(artifact),
 	}
+}
+
+func rowKind(artifact *assistantartifact.Artifact) string {
+	if !tabularKind(artifact.Kind) {
+		return ""
+	}
+
+	return typeutils.StringOfTrimmed(artifact.Payload["recordEntity"])
 }
 
 func lineageRoot(artifact *assistantartifact.Artifact) pulid.ID {

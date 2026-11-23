@@ -26,9 +26,13 @@ var (
 )
 
 func Figures(text string) []string {
-	masked := fixedMoment.ReplaceAllStringFunc(text, func(moment string) string {
-		return strings.Repeat(" ", len(moment))
-	})
+	blank := func(found string) string {
+		return strings.Repeat(" ", len(found))
+	}
+	masked := fixedMoment.ReplaceAllStringFunc(
+		readingToken.ReplaceAllStringFunc(text, blank),
+		blank,
+	)
 	found := make([]string, 0, 2)
 	for _, at := range figureNumber.FindAllStringIndex(masked, -1) {
 		start, end := at[0], at[1]

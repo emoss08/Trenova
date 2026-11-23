@@ -20,7 +20,7 @@ var updateSplits = flag.Bool("update", false, "rewrite deskbench/splits.yaml")
 const (
 	scenarioDir    = "../../../deskbench/scenarios"
 	splitLedger    = "../../../deskbench/splits.yaml"
-	splitsCommand  = "go test -count=1 -run TestScenarioSplits ./internal/deskbench/ -update"
+	splitsCommand  = "go test -count=1 -run TestScenarioSplits ./internal/deskbench/benchscenario/ -update"
 	splitLedgerTop = "# The held-out scenarios, by desk and by chat or unattended. Generated from the rule in\n" +
 		"# docs/engineering/desk-bench.md (Labels and splits) by running, in services/tms:\n" +
 		"#   " + splitsCommand + "\n" +

@@ -138,7 +138,7 @@ export function PTOActionsMenu({ pto, className }: PTOActionsMenuProps) {
                 "{0} {1} will be notified in Dash that their time off ({2}) is approved.",
                 pto.worker?.firstName,
                 pto.worker?.lastName,
-                formatRange(pto.startDate, pto.endDate),
+                formatRange(pto.startDate, pto.endDate, { join: "words" }),
               )}
             </AlertDialogDescription>
           </AlertDialogHeader>

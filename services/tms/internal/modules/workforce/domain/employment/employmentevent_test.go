@@ -221,3 +221,85 @@ func TestWorkerEmploymentEvent_Validate(t *testing.T) {
 	}
 	assert.False(t, fields["reason"], "promotions may omit the reason")
 }
+
+func TestRecordableKinds_AgreesWithCanRecordForEveryState(t *testing.T) {
+	t.Parallel()
+
+	terminated := int64(1_750_000_000)
+	states := map[string]employment.EmploymentState{
+		"never hired": {Status: domaintypes.StatusActive},
+		"active":      activeState(),
+		"on leave": func() employment.EmploymentState {
+			s := activeState()
+			s.OpenLeave = true
+			return s
+		}(),
+		"suspended": func() employment.EmploymentState {
+			s := activeState()
+			s.OpenSuspension = true
+			return s
+		}(),
+		"suspended on leave": func() employment.EmploymentState {
+			s := activeState()
+			s.OpenLeave = true
+			s.OpenSuspension = true
+			return s
+		}(),
+		"inactive": {
+			Status:          domaintypes.StatusInactive,
+			HireDate:        1_700_000_000,
+			TerminationDate: &terminated,
+		},
+		"inactive never hired": {Status: domaintypes.StatusInactive},
+	}
+
+	for name, state := range states {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			want := make([]employment.EmploymentEventKind, 0)
+			for _, kind := range employment.EmploymentEventKinds() {
+				if kind.CanRecord(state) == nil {
+					want = append(want, kind)
+				}
+			}
+			assert.Equal(t, want, employment.RecordableKinds(state))
+		})
+	}
+}
+
+func TestRecordableKinds_ActiveWorkerWithAHireIsNotOfferedHired(t *testing.T) {
+	t.Parallel()
+
+	assert.Equal(t, []employment.EmploymentEventKind{
+		employment.EmploymentEventProbationEnded,
+		employment.EmploymentEventPromoted,
+		employment.EmploymentEventTransferred,
+		employment.EmploymentEventLeaveStarted,
+		employment.EmploymentEventSuspended,
+		employment.EmploymentEventTerminated,
+		employment.EmploymentEventRateChanged,
+	}, employment.RecordableKinds(activeState()))
+}
+
+func TestRecordableKinds_InactiveWorkerIsOfferedOnlyAReturn(t *testing.T) {
+	t.Parallel()
+
+	inactive := employment.EmploymentState{Status: domaintypes.StatusInactive, HireDate: 1}
+
+	assert.Equal(t, []employment.EmploymentEventKind{
+		employment.EmploymentEventHired,
+		employment.EmploymentEventRehired,
+	}, employment.RecordableKinds(inactive))
+}
+
+func TestReasonRequiredKinds_MatchRequiresReason(t *testing.T) {
+	t.Parallel()
+
+	assert.Equal(t, []employment.EmploymentEventKind{
+		employment.EmploymentEventLeaveStarted,
+		employment.EmploymentEventSuspended,
+		employment.EmploymentEventTerminated,
+		employment.EmploymentEventRateChanged,
+	}, employment.ReasonRequiredKinds())
+}

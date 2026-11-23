@@ -1,5 +1,6 @@
 import { TestRouter } from "@trenova/shared/testing/test-router";
 import type { DeskBoardCard } from "@/lib/graphql/desk-board-card";
+import { useDeskStore } from "@/stores/desk-store";
 import { clearPermissions, seedPermissions } from "@/test/permissions";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
@@ -51,6 +52,7 @@ function exhibit(name: string): HTMLElement {
 }
 
 beforeEach(() => {
+  useDeskStore.setState({ artifactRecord: null });
   seedPermissions({ [Resource.Shipment]: Operation.Read });
   fetchers.card.mockReset();
 });
@@ -70,7 +72,9 @@ describe("DeskBoardBody", () => {
         name: "Six loads are running late on the Dallas lanes",
       }),
     ).toBeInTheDocument();
-    expect(within(waiting).getByText("Which Dallas loads are late and why?")).toBeInTheDocument();
+    expect(
+      within(waiting).queryByText("Which Dallas loads are late and why?"),
+    ).not.toBeInTheDocument();
     expect(within(waiting).getByText("Where they stand")).toBeInTheDocument();
     expect(within(waiting).getByText("The late loads")).toBeInTheDocument();
     const halves = [...container.querySelectorAll(".dk-bd-desk > *")].map((part) =>
@@ -87,6 +91,9 @@ describe("DeskBoardBody", () => {
     expect(
       screen.getByRole("heading", { name: "Six loads are running late on the Dallas lanes" }),
     ).toBeInTheDocument();
+    // The question is the conversation's, right beside the board: the board does not repeat it.
+    expect(screen.queryByText("Which Dallas loads are late and why?")).not.toBeInTheDocument();
+    expect(screen.queryByText("You asked")).not.toBeInTheDocument();
     const verdict = container.querySelector(".dk-bd-verdict") as HTMLElement;
     expect(verdict).toHaveTextContent("Four are held at the dock1 and two are on the road.");
     expect(verdict.querySelector(".dk-bd-hl")).toHaveClass("dk-warn");
@@ -137,6 +144,35 @@ describe("DeskBoardBody", () => {
     expect(
       await screen.findByRole("heading", { name: /Six loads are running late/u, level: 2 }),
     ).toBeInTheDocument();
+  });
+
+  it("draws the record the store holds for this board in the board's place", async () => {
+    useDeskStore.getState().openArtifactRecord({
+      artifactId: "art_board",
+      entity: "shipment",
+      recordId: "shp_2",
+      order: ["shp_1", "shp_2"],
+    });
+    draw(lateBoard());
+
+    expect(await screen.findByText("Shipment card shp_2")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Back to the board" })).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { level: 2 })).not.toBeInTheDocument();
+  });
+
+  it("draws the board when the store's record belongs to another artifact", async () => {
+    useDeskStore.getState().openArtifactRecord({
+      artifactId: "art_other",
+      entity: "shipment",
+      recordId: "shp_2",
+      order: ["shp_2"],
+    });
+    draw(lateBoard());
+
+    expect(
+      await screen.findByRole("heading", { name: /Six loads are running late/u, level: 2 }),
+    ).toBeInTheDocument();
+    expect(screen.queryByText("Shipment card shp_2")).not.toBeInTheDocument();
   });
 
   it("links a record to its page for a reader without its card", async () => {

@@ -25,7 +25,7 @@ func NewTelematicsStopVisitSource(
 }
 
 func (s *TelematicsStopVisitSource) Kind() watchtower.SourceKind {
-	return watchtower.SourceTelematicsStopVisit
+	return watchtower.SourceKindTelematicsStopVisit
 }
 
 func (s *TelematicsStopVisitSource) Snapshot(

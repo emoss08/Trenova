@@ -63,6 +63,7 @@ func ShownBoard(t *testing.T, revises pulid.ID) agentruntimeports.ToolObservatio
 	parsed, problems := boardparse.Parse(map[string]any{
 		"title":   "Six late shipments",
 		"verdict": "Four are [held][1].",
+		"place":   "conversation",
 		"blocks": []any{map[string]any{"type": "figures", "figures": []any{map[string]any{
 			"label":   "Late now",
 			"records": []any{pulid.MustNew("shp_").String()},

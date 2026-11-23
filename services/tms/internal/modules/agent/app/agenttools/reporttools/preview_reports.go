@@ -238,7 +238,7 @@ func (t *ForkReportTool) Preview(
 	if err != nil {
 		return nil, err
 	}
-	if err = t.reports.RequireCannedOnPlan(ctx, request.TenantInfo, entry); err != nil {
+	if err = t.reports.RequireCannedAvailable(ctx, request.TenantInfo, entry); err != nil {
 		return nil, err
 	}
 

@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerleave"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerleaveports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
@@ -88,6 +89,7 @@ func (s *Service) audit(ctx context.Context, p *auditParams) {
 		BusinessUnitID: p.tenant.BuID,
 	}
 	opts := []auditports.LogOption{auditservice.WithComment(p.comment)}
+	opts = append(opts, auditservice.WithSubjectOf(p.current, p.previous))
 	if p.previous != nil {
 		params.PreviousState = jsonutils.MustToJSON(p.previous)
 		opts = append(opts, auditservice.WithDiff(p.previous, p.current))
@@ -270,6 +272,16 @@ func (s *Service) Entitlement(
 		return workerleave.LeaveEntitlement{}, err
 	}
 
+	return s.EntitlementFor(ctx, tenantInfo, wrk, asOf)
+}
+
+func (s *Service) EntitlementFor(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	wrk *worker.Worker,
+	asOf int64,
+) (workerleave.LeaveEntitlement, error) {
+	workerID := wrk.ID
 	control, err := s.repo.GetControl(ctx, tenantInfo)
 	if err != nil {
 		return workerleave.LeaveEntitlement{}, err

@@ -20,7 +20,7 @@ func openItem() *watchtower.Item {
 		ID:             pulid.MustNew("wt_"),
 		OrganizationID: pulid.MustNew("org_"),
 		BusinessUnitID: pulid.MustNew("bu_"),
-		SourceKind:     watchtower.SourceServiceFailure,
+		SourceKind:     watchtower.SourceKindServiceFailure,
 		SourceID:       "sf_1",
 		Severity:       watchtower.SeverityWarning,
 		Status:         watchtower.StatusOpen,

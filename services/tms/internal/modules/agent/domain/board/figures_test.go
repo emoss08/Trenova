@@ -41,6 +41,18 @@ func TestFiguresFindsWhatTheBoardShouldReadLive(t *testing.T) {
 			"over the last 3 days, 40 moves ran 22h late",
 			[]string{"40 moves", "22h"},
 		},
+		"a placed reading is not a figure": {
+			"There are {late} late loads, the furthest {furthest_2} behind",
+			[]string{},
+		},
+		"a placed reading with capitals is not a figure": {
+			"There are {lateSix} late loads, {Behind2} behind",
+			[]string{},
+		},
+		"a figure in braces that is not a reading key is still a figure": {
+			"There are {3h} to go and {late}4 more",
+			[]string{"3h", "4 more"},
+		},
 	}
 
 	for name, tc := range cases {
@@ -61,7 +73,8 @@ func TestParseRefusesFiguresWrittenIntoTheWords(t *testing.T) {
 
 	assert.Equal(t, []string{
 		`verdict states "22h", "33m"; the board reads every figure live from its blocks, ` +
-			"so take it out of the words. Where the board should show it, add a block that " +
+			"so take it out of the words. Where the words must say it, declare a reading and " +
+			"write its {key} where the value goes. Where the board should show it, add a block that " +
 			"reads it (records or checks for the loads it counts, figures for a metric) and " +
 			"cite that block; never point at a block the board does not have",
 	}, problems)

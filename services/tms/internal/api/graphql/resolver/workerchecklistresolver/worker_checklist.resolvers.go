@@ -177,7 +177,7 @@ func (r *MutationResolver) CancelWorkerChecklist(ctx context.Context, input gqlm
 	return r.WorkerChecklistService.Cancel(ctx, &workerchecklistservice.CancelRequest{
 		ID:         checklistID,
 		TenantInfo: resolvercore.TenantInfo(authCtx),
-		Reason:     gqlscalar.StringValue(input.Reason),
+		Reason:     input.Reason,
 		Version:    int64(gqlscalar.IntValue(input.Version)),
 		UserID:     authCtx.UserID,
 	})

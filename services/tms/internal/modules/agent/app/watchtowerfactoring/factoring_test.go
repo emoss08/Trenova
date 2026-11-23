@@ -172,11 +172,11 @@ func assertStorable(t *testing.T, input watchtowerports.WatchtowerItemInput) {
 func TestFactoringKindReadsAsInvoices(t *testing.T) {
 	t.Parallel()
 
-	assert.True(t, watchtower.SourceFactoring.IsValid())
-	assert.Equal(t, permission.ResourceInvoice, watchtower.SourceFactoring.ReadResource())
-	assert.Equal(t, "Factoring", watchtower.SourceFactoring.Label())
-	assert.False(t, watchtower.SourceFactoring.OverseesAgents())
-	assert.Contains(t, watchtower.AllSourceKinds(), watchtower.SourceFactoring)
+	assert.True(t, watchtower.SourceKindFactoring.IsValid())
+	assert.Equal(t, permission.ResourceInvoice, watchtower.SourceKindFactoring.ReadResource())
+	assert.Equal(t, "Factoring", watchtower.SourceKindFactoring.Label())
+	assert.False(t, watchtower.SourceKindFactoring.OverseesAgents())
+	assert.Contains(t, watchtower.AllSourceKinds(), watchtower.SourceKindFactoring)
 }
 
 func TestDescribeFactoringReadyUnsubmitted(t *testing.T) {
@@ -194,7 +194,7 @@ func TestDescribeFactoringReadyUnsubmitted(t *testing.T) {
 
 	item, open := DescribeFactoringReadyUnsubmitted(tenant, state, label, factoringNow)
 	require.True(t, open)
-	assert.Equal(t, watchtower.SourceFactoring, item.SourceKind)
+	assert.Equal(t, watchtower.SourceKindFactoring, item.SourceKind)
 	assert.Equal(t, "ready:"+state.InvoiceID.String(), item.SourceID)
 	assert.Equal(t, FactoringReadySourceID(state.InvoiceID), item.SourceID)
 	assert.Equal(t, watchtower.SeverityWarning, item.Severity)
@@ -273,7 +273,7 @@ func TestDescribeFactoringMissingNoaWithNoNotice(t *testing.T) {
 
 	item, open := DescribeFactoringMissingNoa(tenant, row, factoringNow)
 	require.True(t, open)
-	assert.Equal(t, watchtower.SourceFactoring, item.SourceKind)
+	assert.Equal(t, watchtower.SourceKindFactoring, item.SourceKind)
 	assert.Equal(
 		t,
 		"noa-missing:"+row.CustomerID.String()+":"+row.FactoringCompanyID.String(),
@@ -403,7 +403,7 @@ func TestDescribeFactoringNoaExpiring(t *testing.T) {
 
 	item, open := DescribeFactoringNoaExpiring(tenant, row, factoringNow)
 	require.True(t, open)
-	assert.Equal(t, watchtower.SourceFactoring, item.SourceKind)
+	assert.Equal(t, watchtower.SourceKindFactoring, item.SourceKind)
 	assert.Equal(t, "noa-expiring:"+row.NoaID.String(), item.SourceID)
 	assert.Equal(t, watchtower.SeverityWarning, item.Severity)
 	assert.Equal(
@@ -470,7 +470,7 @@ func TestFactoringSourceSnapshot(t *testing.T) {
 	}
 	source := newTestFactoringSource(states, reader)
 
-	assert.Equal(t, watchtower.SourceFactoring, source.Kind())
+	assert.Equal(t, watchtower.SourceKindFactoring, source.Kind())
 
 	items, err := source.Snapshot(t.Context(), tenant)
 	require.NoError(t, err)
@@ -486,7 +486,7 @@ func TestFactoringSourceSnapshot(t *testing.T) {
 
 	ids := make(map[string]struct{}, len(items))
 	for _, item := range items {
-		assert.Equal(t, watchtower.SourceFactoring, item.SourceKind)
+		assert.Equal(t, watchtower.SourceKindFactoring, item.SourceKind)
 		assert.Equal(t, tenant, item.TenantInfo)
 		ids[item.SourceID] = struct{}{}
 	}

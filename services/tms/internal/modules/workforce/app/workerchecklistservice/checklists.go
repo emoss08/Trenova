@@ -149,83 +149,96 @@ func (s *Service) Start(
 	return created, nil
 }
 
-// SpawnForEvent implements services.ChecklistSpawner: it starts the default
-// template for the trigger the event maps to, if the organisation has one.
+func (s *Service) PlanForEvent(
+	ctx context.Context,
+	kind employment.EmploymentEventKind,
+	wrk *worker.Worker,
+) (*workerchecklistports.EventPlan, error) {
+	plan := &workerchecklistports.EventPlan{Worker: wrk}
+	if wrk == nil {
+		return plan, nil
+	}
+	tenantInfo := pagination.TenantInfo{OrgID: wrk.OrganizationID, BuID: wrk.BusinessUnitID}
+
+	if closes, ok := workerchecklist.ChecklistKindClosedByEvent(kind); ok {
+		checklists, err := s.repo.ListForWorker(
+			ctx,
+			&workerchecklistports.ListWorkerChecklistsRequest{
+				TenantInfo: tenantInfo,
+				WorkerID:   wrk.ID,
+			},
+		)
+		if err != nil {
+			return nil, err
+		}
+		for _, checklist := range checklists {
+			if checklist.Kind == closes && checklist.IsOpen() {
+				plan.Close = append(plan.Close, checklist)
+			}
+		}
+	}
+
+	if trigger, ok := workerchecklist.ChecklistTriggerForEvent(kind); ok {
+		template, err := s.repo.GetDefaultTemplate(
+			ctx,
+			&workerchecklistports.GetDefaultChecklistTemplateRequest{
+				TenantInfo: tenantInfo,
+				Trigger:    trigger,
+			},
+		)
+		switch {
+		case err == nil:
+			plan.Template = template
+		case errortypes.IsNotFoundError(err):
+		default:
+			return nil, err
+		}
+	}
+	return plan, nil
+}
+
 func (s *Service) SpawnForEvent(
 	ctx context.Context,
 	event *employment.WorkerEmploymentEvent,
-	wrk *worker.Worker,
+	plan *workerchecklistports.EventPlan,
 	userID pulid.ID,
 ) (*workerchecklist.WorkerChecklist, error) {
-	if event == nil || wrk == nil {
-		return nil, nil //nolint:nilnil // nothing to spawn
+	if event == nil || plan == nil || plan.Worker == nil || plan.Template == nil {
+		return nil, nil //nolint:nilnil // the plan starts nothing
 	}
-	trigger, ok := workerchecklist.ChecklistTriggerForEvent(event.Kind)
-	if !ok {
-		return nil, nil //nolint:nilnil // informational events spawn nothing
-	}
-	tenantInfo := pagination.TenantInfo{OrgID: wrk.OrganizationID, BuID: wrk.BusinessUnitID}
-	template, err := s.repo.GetDefaultTemplate(
-		ctx,
-		&workerchecklistports.GetDefaultChecklistTemplateRequest{
-			TenantInfo: tenantInfo,
-			Trigger:    trigger,
-		},
-	)
-	if err != nil {
-		if errortypes.IsNotFoundError(err) {
-			return nil, nil //nolint:nilnil // no default template configured
-		}
-		return nil, err
-	}
+	wrk := plan.Worker
 	return s.Start(ctx, &StartRequest{
-		TenantInfo:    tenantInfo,
+		TenantInfo:    pagination.TenantInfo{OrgID: wrk.OrganizationID, BuID: wrk.BusinessUnitID},
 		WorkerID:      wrk.ID,
-		TemplateID:    template.ID,
+		TemplateID:    plan.Template.ID,
 		StartedAt:     event.EffectiveAt,
 		SourceEventID: event.ID,
 		UserID:        userID,
 	})
 }
 
-// CloseForEvent implements services.ChecklistSpawner: it cancels the open
-// checklists the event makes moot, so a driver who leaves mid-onboarding does
-// not keep an onboarding open, and one who is rehired mid-offboarding does
-// not keep being offboarded.
 func (s *Service) CloseForEvent(
 	ctx context.Context,
 	event *employment.WorkerEmploymentEvent,
-	wrk *worker.Worker,
+	plan *workerchecklistports.EventPlan,
 	userID pulid.ID,
 ) (int, error) {
-	if event == nil || wrk == nil {
+	if event == nil || plan == nil || plan.Worker == nil || len(plan.Close) == 0 {
 		return 0, nil
 	}
-	kind, ok := workerchecklist.ChecklistKindClosedByEvent(event.Kind)
-	if !ok {
-		return 0, nil
-	}
+	wrk := plan.Worker
 	tenantInfo := pagination.TenantInfo{OrgID: wrk.OrganizationID, BuID: wrk.BusinessUnitID}
-	open, err := s.repo.ListForWorker(ctx, &workerchecklistports.ListWorkerChecklistsRequest{
-		TenantInfo:   tenantInfo,
-		WorkerID:     wrk.ID,
-		IncludeItems: true,
-	})
-	if err != nil {
-		return 0, err
-	}
-
 	reason := "Superseded by " + strings.ToLower(string(event.Kind)) + " event"
 	log := s.l.With(
 		zap.String("operation", "CloseForEvent"),
 		zap.String("eventId", event.ID.String()),
 	)
 	closed := 0
-	for _, checklist := range open {
-		if checklist.Kind != kind || !checklist.IsOpen() {
+	for _, checklist := range plan.Close {
+		if !checklist.IsOpen() {
 			continue
 		}
-		if _, err = s.cancelChecklist(ctx, checklist, reason, tenantInfo, userID, log); err != nil {
+		if _, err := s.cancelChecklist(ctx, checklist, reason, tenantInfo, userID, log); err != nil {
 			return closed, err
 		}
 		closed++
@@ -295,6 +308,7 @@ func (s *Service) settleItem(
 		userID:     req.UserID,
 		tenant:     req.TenantInfo,
 		current:    item,
+		owner:      checklist,
 		comment:    comment + ": " + item.Label,
 		log:        log,
 	})
@@ -350,6 +364,7 @@ func (s *Service) ReopenItem(
 		userID:     req.UserID,
 		tenant:     req.TenantInfo,
 		current:    item,
+		owner:      checklist,
 		comment:    "Checklist item reopened: " + item.Label,
 		log:        log,
 	})

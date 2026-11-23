@@ -5,6 +5,7 @@ import type {
   DeskWorkerStanding,
 } from "@/lib/graphql/worker-card";
 import { choiceLabel, endorsementTypeChoices } from "@/lib/choices";
+import type { WorkerConcernCode } from "@trenova/graphql/generated/graphql";
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import { worstFirst, type DueCheck } from "../../record-card/due-checks";
 import type { CardCheckState, CardFact, CardTone } from "../../record-card/record-card";
@@ -330,12 +331,12 @@ export function standingLabel(standing: DeskWorkerStanding["standing"], t: Trans
  * worker can be dispatched is the pill at its head, and their credentials are
  * the qualifications and other credentials below.
  */
-const SHOWN_ELSEWHERE = new Set([
-  "not_employed",
-  "not_assignable",
-  "credentials_expired",
-  "credentials_missing",
-  "credentials_expiring",
+const SHOWN_ELSEWHERE: ReadonlySet<WorkerConcernCode> = new Set<WorkerConcernCode>([
+  "NotEmployed",
+  "NotAssignable",
+  "CredentialExpired",
+  "CredentialMissing",
+  "CredentialExpiring",
 ]);
 
 /** What stands against the worker beyond what the card shows elsewhere, kept worst first. */

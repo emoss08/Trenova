@@ -37,7 +37,7 @@ import { toast } from "@trenova/shared/components/ui/toast";
 import { z } from "zod";
 import { LastSuccessfulSyncCard } from "./last-successful-sync-card";
 import { RunConsoleLoadingState } from "./run-console-state";
-import { workerRecordHref } from "@/lib/route-utils";
+import { workerPath } from "@/routes/worker/use-worker-state";
 
 const RunConsole = lazy(() => import("./run-console"));
 
@@ -675,7 +675,7 @@ export function SamsaraWorkerSyncCard({
       return;
     }
 
-    window.open(workerRecordHref(workerID), "_blank", "noopener,noreferrer");
+    window.open(workerPath(workerID), "_blank", "noopener,noreferrer");
   };
 
   const activeStatusVariant = getStatusVariant(normalizedStatus, failedRecords);

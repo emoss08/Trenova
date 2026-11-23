@@ -243,6 +243,13 @@ func (s *Service) PlanReopenItem(ctx context.Context, req *ReopenItemRequest) (*
 }
 
 func (s *Service) PlanCancel(ctx context.Context, req *CancelRequest) (*ChecklistChange, error) {
+	if strings.TrimSpace(req.Reason) == "" {
+		return nil, errortypes.NewValidationError(
+			"reason",
+			errortypes.ErrRequired,
+			"Say why the checklist is being cancelled",
+		)
+	}
 	original, err := s.repo.GetByID(ctx, &workerchecklistports.GetWorkerChecklistByIDRequest{
 		ID:           req.ID,
 		TenantInfo:   req.TenantInfo,

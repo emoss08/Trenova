@@ -86,6 +86,9 @@ func CatalogFor(
 		if !ok {
 			continue
 		}
+		if access.LacksOperation(entity) {
+			continue
+		}
 		if use := access.EntityUse(entity); use.Decision == reportaccess.NotOnPlan {
 			out.WithheldByPlan = append(out.WithheldByPlan, PlanWithheld{
 				Entity:      ev.Key,

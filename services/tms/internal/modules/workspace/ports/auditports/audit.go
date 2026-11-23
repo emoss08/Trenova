@@ -26,6 +26,7 @@ type ListAuditEntriesRequest struct {
 	Cursor         pagination.CursorInfo    `json:"-"`
 	Access         EntryAccess              `json:"-"`
 	ResourceID     string                   `json:"resourceId"`
+	SubjectID      pulid.ID                 `json:"subjectId"`
 	ChangedField   string                   `json:"changedField"`
 	IncludeDetail  bool                     `json:"-"`
 	IncludeChanges bool                     `json:"-"`

@@ -104,6 +104,7 @@ func (s *Service) SetDeliveryFacts(
 		BusinessUnitID: updated.BusinessUnitID,
 	},
 		auditservice.WithComment("Delivery details recorded"),
+		auditservice.WithSubjectOf(updated),
 		auditservice.WithDiff(current, updated),
 		auditservice.WithMetadata(map[string]any{
 			metadataResourceID:   updated.ResourceID,

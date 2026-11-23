@@ -3,27 +3,36 @@ import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import { describe, expect, it } from "vitest";
 import { cardMomentAfter, cardTime } from "../../../record-card/record-card-values";
 import {
+  boardArrival,
   boardReads,
   checkGroups,
+  cutRows,
   figureRows,
   formatBoardValue,
   furthestOf,
   halfBlocks,
   initialsOf,
+  lockedReading,
   measureReading,
+  readableIds,
+  readingSource,
   readStamp,
   sourceLine,
   toneClass,
+  wordPieces,
+  writtenSegments,
 } from "../board-card";
 import {
   ANSWERED_AT,
   HOUR,
   READ_AT,
   closeBoard,
+  conversationBoard,
   count,
   duration,
   lateBoard,
   money,
+  segment,
   shipmentRow,
 } from "./fixtures";
 
@@ -331,5 +340,184 @@ describe("figureRows", () => {
     expect(figureRows(6)).toEqual([3, 3]);
     expect(figureRows(7)).toEqual([4, 3]);
     expect(figureRows(8)).toEqual([4, 4]);
+  });
+});
+
+/*
+A reply's board is drawn from the words the agent wrote while it is read: the
+client splits them as the server does (board.Segments), so a cite becomes the
+exhibit's numeral and a {key} the reading's blank, in the same order.
+*/
+describe("writtenSegments", () => {
+  it("splits the words into cites and readings as the server does", () => {
+    expect(
+      writtenSegments("There are {late} late loads. [Four wait on hours][1] and {far} behind."),
+    ).toEqual([
+      segment("There are "),
+      segment("", { reading: "late" }),
+      segment(" late loads. "),
+      segment("Four wait on hours", { numeral: 1 }),
+      segment(" and "),
+      segment("", { reading: "far" }),
+      segment(" behind."),
+    ]);
+  });
+
+  it("leaves words with no cite or reading as one run, and a cite of 0 as words", () => {
+    expect(writtenSegments("Nothing is late.")).toEqual([segment("Nothing is late.")]);
+    expect(writtenSegments("[Not a cite][0].")).toEqual([
+      segment("Not a cite", { numeral: 0 }),
+      segment("."),
+    ]);
+    expect(writtenSegments("{2late} stays")).toEqual([segment("{2late} stays")]);
+    expect(writtenSegments("{lateSix} late")).toEqual([
+      segment("", { reading: "lateSix" }),
+      segment(" late"),
+    ]);
+  });
+});
+
+describe("wordPieces", () => {
+  it("cuts the words into the phrases they arrive by, a reading and a cite with their clause", () => {
+    const { pieces, phrases } = wordPieces(conversationBoard().verdict);
+
+    expect(phrases).toBe(4);
+    expect(
+      pieces.map((piece) =>
+        piece.kind === "text" ? [piece.phrase, piece.text] : [piece.phrase, piece.kind],
+      ),
+    ).toEqual([
+      [0, "There are "],
+      [0, "reading"],
+      [0, " late loads, "],
+      [1, "the furthest "],
+      [1, "reading"],
+      [1, " behind, "],
+      [2, "with "],
+      [2, "reading"],
+      [2, " owed. "],
+      [3, "cite"],
+      [3, "."],
+    ]);
+  });
+
+  it("counts a last phrase that ends without punctuation", () => {
+    expect(wordPieces([segment("Two wait, "), segment("one moved")]).phrases).toBe(2);
+    expect(wordPieces([]).phrases).toBe(0);
+  });
+});
+
+describe("readingSource", () => {
+  it("says where a reading was read from, with its aggregate in words", () => {
+    const [late, furthest, owed] = conversationBoard().readings;
+
+    expect(readingSource(late, t)).toBe("Counted from 6 shipments · 4 you may read");
+    expect(readingSource({ ...furthest, source: { ...furthest.source, readable: 6 } }, t)).toBe(
+      "The largest of 6 shipments",
+    );
+    expect(readingSource({ ...owed, source: { ...owed.source, readable: 6 } }, t)).toBe(
+      "Summed from 6 shipments",
+    );
+  });
+
+  it("names a metric's or an analysis's source as an exhibit's source line does", () => {
+    const [late] = conversationBoard().readings;
+    const metric = {
+      ...late,
+      measure: "",
+      aggregate: "",
+      source: { kind: "metrics", resource: "", count: 0, readable: 0, title: "" },
+    };
+    expect(readingSource(metric, t)).toBe("Read from Trenova's figures");
+    expect(
+      readingSource(
+        { ...metric, source: { ...metric.source, kind: "analysis", title: "Weekly revenue" } },
+        t,
+      ),
+    ).toBe("Read from the analysis “Weekly revenue”");
+  });
+});
+
+describe("lockedReading", () => {
+  it("says a reading the reader may not read in words, by what it reads", () => {
+    const [late, furthest, owed] = conversationBoard().readings;
+
+    expect(lockedReading(owed, t)).toBe("an amount you may not read");
+    expect(lockedReading(late, t)).toBe("a count you may not read");
+    expect(lockedReading(furthest, t)).toBe("a time you may not read");
+  });
+
+  it("says one that could not be read when every record behind it is the reader's", () => {
+    const [, , owed] = conversationBoard().readings;
+    const metric = {
+      ...owed,
+      measure: "",
+      aggregate: "",
+      source: { kind: "metrics", resource: "", count: 0, readable: 0, title: "" },
+    };
+
+    expect(lockedReading({ ...owed, source: { ...owed.source, readable: 6 } }, t)).toBe(
+      "an amount that could not be read",
+    );
+    expect(lockedReading(metric, t)).toBe("a figure that could not be read");
+  });
+});
+
+/*
+The conversation draws a list to six rows and says how many more the board
+holds; a list of six or fewer is drawn whole.
+*/
+describe("cutRows", () => {
+  it("draws six rows and counts the rest", () => {
+    const rows = conversationBoard().blocks[0].rows;
+    const { shown, more } = cutRows(rows);
+
+    expect(shown.map((row) => row.label)).toEqual([
+      "S-24110",
+      "S-24111",
+      "S-24112",
+      "",
+      "S-24114",
+      "S-24115",
+    ]);
+    expect(more).toBe(2);
+  });
+
+  it("draws a list of six or fewer whole", () => {
+    expect(cutRows([1, 2, 3, 4, 5, 6])).toEqual({ shown: [1, 2, 3, 4, 5, 6], more: 0 });
+    expect(cutRows([])).toEqual({ shown: [], more: 0 });
+  });
+});
+
+describe("boardArrival", () => {
+  it("times the words, then each block, then the rows and the readings, a beat apart", () => {
+    const arrival = boardArrival(3, 2);
+
+    expect(arrival.exhibitAt(0)).toBe(720);
+    expect(arrival.exhibitAt(1)).toBe(960);
+    expect(arrival.rowsAt(0)).toBe(1440);
+    expect(arrival.rowsAt(1)).toBe(1680);
+    expect(arrival.landAt).toBe(1440);
+  });
+});
+
+/*
+A record opened from a list steps through the records of that list a person may
+read, in the order drawn; one they may not read is never a stop.
+*/
+describe("readableIds", () => {
+  it("lists the ids of the readable records in order, leaving out one that cannot be read", () => {
+    const rows = conversationBoard().blocks[0].rows;
+
+    expect(readableIds(rows)).toEqual([
+      "shp_1",
+      "shp_2",
+      "shp_3",
+      "shp_5",
+      "shp_6",
+      "shp_7",
+      "shp_8",
+    ]);
+    expect(readableIds([])).toEqual([]);
   });
 });

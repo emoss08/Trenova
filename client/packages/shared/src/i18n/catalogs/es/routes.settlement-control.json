@@ -8,6 +8,7 @@
   "An advance larger than a settlement's net pay is taken in full and the shortfall carries to the next settlement. Off, recovery stops at zero net pay.": "Un anticipo mayor que el pago neto de una liquidación se descuenta completo y el faltante pasa a la siguiente liquidación. Desactivado, la recuperación se detiene cuando el pago neto llega a cero.",
   "Approve clean settlements automatically": "Aprobar automáticamente las liquidaciones sin incidencias",
   "Average over": "Promediar sobre",
+  "Configure pay periods, accrual triggers, exception policies, and escrow interest": "Configure los períodos de pago, los activadores de devengo, las políticas de excepción y los intereses del depósito en garantía",
   "Earning pay": "Devengo del pago",
   "Escrow interest": "Intereses del depósito en garantía",
   "Flag a change in net pay over": "Marcar una variación del pago neto superior a",

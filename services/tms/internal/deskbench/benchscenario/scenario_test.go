@@ -251,3 +251,23 @@ func TestLoadScenarios_APortalScenarioNeedsTheBrowserExtensionFromItsDefaults(t 
 			scenario.Name)
 	}
 }
+
+func TestValidate_NoBoardAndABoardCannotBothBeExpected(t *testing.T) {
+	t.Parallel()
+
+	scenario := &benchscenario.Scenario{
+		Name:  "board-case",
+		Agent: "Dispatch desk",
+		Steps: []benchscenario.Step{{
+			Say: "which loads are late?",
+			Expect: benchscenario.Expect{
+				NoBoard: true,
+				Board:   &benchscenario.ExpectedBoard{Place: "conversation"},
+			},
+		}},
+	}
+	require.ErrorContains(t, scenario.Validate(), "noBoard and board cannot both be expected")
+
+	scenario.Steps[0].Expect.Board = nil
+	require.NoError(t, scenario.Validate())
+}

@@ -90,6 +90,10 @@ func TestEnumCheckConstraintsAcceptEveryDeclaredValue(t *testing.T) {
 			values: stringsOf(watchtower.AllDueSources()),
 		},
 		{
+			name:   "ck_watchtower_resolutions_resolved_via",
+			values: stringsOf(watchtower.AllResolvedVia()),
+		},
+		{
 			name:   "ck_ai_work_units_source",
 			values: stringsOf(aianalytics.AllSources()),
 		},

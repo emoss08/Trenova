@@ -23,6 +23,8 @@ type WorkerHosState {
   provider: String!
   providerDriverId: String!
   dutyStatus: String
+  "When the current duty status began, from the open log segment. Null when no open segment is stored."
+  dutyStatusSince: Timestamp
   driveRemainingMs: Int!
   shiftRemainingMs: Int!
   cycleRemainingMs: Int!

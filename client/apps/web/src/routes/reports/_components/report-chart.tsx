@@ -443,7 +443,15 @@ function FormattedReportChart(props: ReportChartProps) {
   // A map plots raw rows at coordinates rather than a Recharts series, so it
   // bypasses the shared point/series pipeline entirely.
   if (chart.type === "map") {
-    return <ReportMap chart={chart} columns={columns} rows={rows} className={className} />;
+    return (
+      <ReportMap
+        chart={chart}
+        columns={columns}
+        rows={rows}
+        className={className}
+        timeZone={timeZone}
+      />
+    );
   }
   if (seriesIds.length === 0) {
     return <EmptyChart message={t("Choose at least one measure to plot.")} />;

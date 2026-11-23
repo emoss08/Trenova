@@ -2,6 +2,7 @@ package telematicsrepository
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/entitlementports"
@@ -626,6 +627,53 @@ func (r *repository) ListWorkerMappings(
 			return rows, nil
 		},
 	)
+}
+
+func (r *repository) GetWorkerExternalID(
+	ctx context.Context,
+	_ pagination.TenantInfo,
+	workerID pulid.ID,
+) (string, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (string, error) {
+		w := workerdb.Workers
+		externalID, err := keel.IntoOne[string](ctx, r.db.Keel(ctx), w.
+			Pick(w.ExternalID.Coalesce("")).
+			Where(w.ID.Eq(workerID)))
+		if err != nil {
+			if errors.Is(err, keel.ErrNotFound) {
+				return "", nil
+			}
+			return "", fmt.Errorf("get worker telematics mapping: %w", err)
+		}
+
+		return externalID, nil
+	})
+}
+
+func (r *repository) ListOpenWorkerHOSLogs(
+	ctx context.Context,
+	_ pagination.TenantInfo,
+	workerIDs []pulid.ID,
+) ([]*telematics.WorkerHOSLog, error) {
+	if len(workerIDs) == 0 {
+		return []*telematics.WorkerHOSLog{}, nil
+	}
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*telematics.WorkerHOSLog, error) {
+		hl := telematicsdb.WorkerHOSLogs
+		entities, err := hl.Where(
+			hl.WorkerID.In(workerIDs...),
+			hl.LogEndAt.IsNull(),
+		).
+			DistinctOn(hl.WorkerID).
+			Order(hl.WorkerID.Asc(), hl.LogStartAt.Desc()).
+			Limit(len(workerIDs)).
+			List(ctx, r.db.Keel(ctx))
+		if err != nil {
+			return nil, fmt.Errorf("list open worker hos logs: %w", err)
+		}
+
+		return entities, nil
+	})
 }
 
 func (r *repository) ListTractorMappings(

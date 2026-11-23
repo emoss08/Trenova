@@ -185,6 +185,13 @@ type fixedProviderFactory struct {
 	provider telematicsports.TelematicsProvider
 }
 
+func (f fixedProviderFactory) ConnectedType(
+	context.Context,
+	pagination.TenantInfo,
+) (integration.Type, bool, error) {
+	return integration.TypeSamsara, true, nil
+}
+
 func (f fixedProviderFactory) ProviderFor(
 	context.Context,
 	pagination.TenantInfo,

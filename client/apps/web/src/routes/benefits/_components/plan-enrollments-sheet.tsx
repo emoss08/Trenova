@@ -27,10 +27,10 @@ import { initials } from "@trenova/shared/lib/utils";
 import { SearchLgIcon } from "@trenova/shared/components/icons";
 import { useMemo, useState } from "react";
 import { planEnrollmentsQuery } from "./queries";
-import { workerRecordHref } from "@/lib/route-utils";
+import { workerPath } from "@/routes/worker/use-worker-state";
 
 function workerHref(workerId: string): string {
-  return workerRecordHref(workerId);
+  return workerPath(workerId, { tab: "pay", view: "benefits" });
 }
 
 export function enrollmentWorkerName(entry: BenefitEnrollmentListRow): string {

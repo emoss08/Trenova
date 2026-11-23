@@ -77,7 +77,7 @@ func (wp *WorkerProfile) BeforeCreate(_ context.Context) error {
 		wp.SafetyRating = SafetyRatingExcellent
 	}
 	if wp.SafetyScore == 0 {
-		wp.SafetyScore = 100
+		wp.SafetyScore = DefaultSafetyScore
 	}
 	if wp.DrugAlcoholStatus == "" {
 		wp.DrugAlcoholStatus = DrugAlcoholUnknown

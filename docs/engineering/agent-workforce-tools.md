@@ -42,6 +42,16 @@ Four lines decide where a write lands:
   pay is Propose, run only from a person's approval** (`ToolExecuteParams.ApprovedFromProposal()`),
   as that person.
 
+Recording an employment event (`recordWorkerEmploymentEvent`) stays the person's
+(`attestation`); no tool records one. The screen previews it first with
+`previewWorkerEmploymentEvent`, which runs `workeremploymentservice.Plan`, the plan the write
+runs: the effects it lists (dispatch removed or restored, time off cancelled, balances paid out
+or forfeited, PTO policy and pay assignment ended, portal access revoked, checklists closed and
+started, required courses assigned, default PTO policy applied) are exactly what the write
+then does, and the write returns the effects it carried out, `failed` on one that did not
+happen after the event committed. Which kinds may be recorded comes from
+`workerEmploymentEventOptions` (`employment.RecordableKinds`), not a client copy of the rule.
+
 Drug and alcohol, injury, leave, qualification and pay records keep the permission their
 resolver checks: a read tool is gated on the same resource's read, and its free text
 (descriptions, findings, notes, medical detail) follows the field sensitivity the person, or
@@ -117,6 +127,8 @@ recording the provider's certification is the person who received it: both attes
 `worker_assign_training` takes up to 50 workers and 10 courses; one pair goes through
 `Assign`, more through `BulkAssign`, and a run that would assign nothing is refused.
 `worker_update_checklist_item` completes, skips, marks not applicable or reopens one item.
+`worker_cancel_checklist` needs a reason, as the screen does: `PlanCancel` refuses a blank one,
+so a proposal without one is refused for the same reason the write would be.
 `worker_update_performance_review` merges scores by rating key, refuses a key the review does not
 have, and replaces the goals only when it is given them; submitting, reopening and closing a
 review are the reviewer's sign-off.

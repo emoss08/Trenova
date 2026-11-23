@@ -15,6 +15,8 @@ type ListWorkersRequest struct {
 	// WithoutCredential keeps the workers with no valid credential of the
 	// type this code names: none on file, archived, or expired.
 	WithoutCredential string `json:"withoutCredential"`
+	IncludeManager    bool   `json:"includeManager"`
+	IncludePosition   bool   `json:"includePosition"`
 }
 
 type WorkerSelectOptionsRequest struct {
@@ -34,6 +36,8 @@ type GetWorkerByIDRequest struct {
 	IncludeState        bool                  `json:"includeState"`
 	IncludeFleetCode    bool                  `json:"includeFleetCode"`
 	IncludeManager      bool                  `json:"includeManager"`
+	IncludePosition     bool                  `json:"includePosition"`
+	IncludePortalUser   bool                  `json:"includePortalUser"`
 	IncludeLicenseState bool                  `json:"includeLicenseState"`
 }
 

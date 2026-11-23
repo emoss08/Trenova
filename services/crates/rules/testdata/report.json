@@ -378,6 +378,52 @@
       ]}
     },
     {
+      "name": "enum labels: a value shows its label, a value without one shows itself, and an empty label or value shows the null text",
+      "input": {"columns": [
+        {"display": {"style": "text", "nullText": "—", "labels": {"AgentTurn": "Agent Turn", "MissedPickup": "Missed Pickup", "InProgress": "In Progress", "Cleared": ""}}, "valueType": "enum", "values": ["AgentTurn", "MissedPickup", "InProgress", "Unlisted", null, "", "Cleared"]}
+      ]},
+      "exact": true,
+      "output": {"columns": [
+        {"values": [{"text": "Agent Turn"}, {"text": "Missed Pickup"}, {"text": "In Progress"}, {"text": "Unlisted"}, {"text": "—"}, {"text": "—"}, {"text": "—"}]}
+      ]}
+    },
+    {
+      "name": "enum labels: the label is looked up before the empty check and takes the prefix and suffix; a null is never looked up",
+      "input": {"columns": [
+        {"display": {"style": "text", "prefix": "[", "suffix": "]", "nullText": "n/a", "labels": {"InProgress": "In Progress", "": "None"}}, "valueType": "enum", "values": ["InProgress", "Done", "", null]}
+      ]},
+      "exact": true,
+      "output": {"columns": [
+        {"values": [{"text": "[In Progress]"}, {"text": "[Done]"}, {"text": "[None]"}, {"text": "n/a"}]}
+      ]}
+    },
+    {
+      "name": "enum labels: a raw display writes the stored value, and null labels are none",
+      "input": {"columns": [
+        {"display": {"style": "", "labels": {"InProgress": "In Progress"}}, "valueType": "enum", "values": ["InProgress"]},
+        {"display": {"style": "text", "labels": null}, "valueType": "enum", "values": ["InProgress"]}
+      ]},
+      "exact": true,
+      "output": {"columns": [
+        {"values": [{"text": "InProgress"}]},
+        {"values": [{"text": "InProgress"}]}
+      ]}
+    },
+    {
+      "name": "enum labels: only text is looked up; numbers, booleans and strings read as either keep their styles, and objects read as empty",
+      "input": {"columns": [
+        {"display": {"style": "text", "nullText": "—", "labels": {"1": "One", "true": "Active", "": "None"}}, "valueType": "enum", "values": [1, true, {"a": 1}]},
+        {"display": {"style": "number", "decimals": 0, "labels": {"1": "One", "n/a": "Not applicable"}}, "valueType": "decimal", "values": ["1", "n/a"]},
+        {"display": {"style": "bool", "boolStyle": "onOff", "labels": {"true": "Active", "True": "Truthy"}}, "valueType": "bool", "values": ["true", true, "True"]}
+      ]},
+      "exact": true,
+      "output": {"columns": [
+        {"values": [{"text": "1"}, {"text": "Yes"}, {"text": "—"}]},
+        {"values": [{"text": "1"}, {"text": "Not applicable"}]},
+        {"values": [{"text": "On"}, {"text": "On"}, {"text": "Truthy"}]}
+      ]}
+    },
+    {
       "name": "resolve: defaults from type and format hint",
       "op": "report.resolve",
       "input": {"columns": [
@@ -393,7 +439,7 @@
         {"type": "enum", "hint": "money"}
       ]},
       "output": {"displays": [
-        {"style": "currency", "decimals": 2, "grouping": true, "currency": "USD", "negative": "parentheses", "notation": "standard", "prefix": "", "suffix": "", "dateStyle": "dateTime", "boolStyle": "yesNo", "durationUnit": "seconds", "durationStyle": "clock", "nullText": "", "rules": "$absent", "band": "$absent"},
+        {"style": "currency", "decimals": 2, "grouping": true, "currency": "USD", "negative": "parentheses", "notation": "standard", "prefix": "", "suffix": "", "dateStyle": "dateTime", "boolStyle": "yesNo", "durationUnit": "seconds", "durationStyle": "clock", "nullText": "", "rules": "$absent", "band": "$absent", "labels": "$absent"},
         {"style": "number", "decimals": 0},
         {"style": "number", "decimals": 1, "suffix": " mi"},
         {"style": "date"},

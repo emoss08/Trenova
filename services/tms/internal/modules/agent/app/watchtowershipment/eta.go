@@ -35,7 +35,7 @@ func NewEtaAtRiskSource(p EtaAtRiskParams) watchtowerports.WatchtowerSource {
 }
 
 func (s *EtaAtRiskSource) Kind() watchtower.SourceKind {
-	return watchtower.SourceEtaAtRisk
+	return watchtower.SourceKindEtaAtRisk
 }
 
 func (s *EtaAtRiskSource) Snapshot(
@@ -209,7 +209,7 @@ func (o *EtaAtRiskObserver) StopEtasRefreshed(
 
 	for _, id := range shipmentIDs {
 		if _, ok := raised[id.String()]; !ok {
-			o.projector.Resolve(ctx, tenant, watchtower.SourceEtaAtRisk, id.String())
+			o.projector.Resolve(ctx, tenant, watchtower.SourceKindEtaAtRisk, id.String())
 		}
 	}
 }

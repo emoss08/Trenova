@@ -3,7 +3,6 @@
   "A signature is pinned to the version label it was given for. Correcting the text under the same label keeps every signature; publishing a new label asks everybody it applies to to read and sign again from Dash.": "簽署會繫結至當時所適用的版本標籤。在同一標籤下更正文字會保留所有簽署；發布新標籤則會要求所有適用者於 Dash 中重新閱讀並簽署。",
   "Applies to": "適用對象",
   "Attach a PDF or an image": "附加 PDF 或圖片",
-  "Attached document": "附件文件",
   "Choose a status": "選擇狀態",
   "Choose who it binds": "選擇其拘束對象",
   "Could not attach the document": "無法附加文件",

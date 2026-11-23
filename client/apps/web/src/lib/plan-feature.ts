@@ -28,6 +28,7 @@ export const PlanFeature = {
   Rating: "tms.rating",
   Samsara: "integrations.samsara",
   TableChangeAlerts: "platform.table_change_alerts",
+  WorkforceBenefits: "workforce.benefits",
   WorkforceCompliance: "workforce.compliance",
   WorkforceSafety: "workforce.safety",
   WorkforceTalent: "workforce.talent",

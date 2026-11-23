@@ -1,0 +1,39 @@
+# A worker's whole file, newest first, a page at a time: every entry whose subject is the worker,
+# its sub-records' included, for the worker page's Activity tab. The count is read with the first
+# page only.
+query WorkerActivity(
+  $subjectId: ID!
+  $input: DataTableConnectionInput!
+  $includeTotalCount: Boolean!
+) {
+  auditEntriesBySubject(subjectId: $subjectId, input: $input) {
+    edges {
+      node {
+        id
+        timestamp
+        resource
+        resourceId
+        operation
+        entityRef
+        comment
+        channel
+        principalType
+        principalId
+        actorName
+        changes
+        subjectResource
+        subjectId
+        user {
+          id
+          name
+        }
+      }
+    }
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+    totalCount @include(if: $includeTotalCount)
+    totalCountExact @include(if: $includeTotalCount)
+  }
+}

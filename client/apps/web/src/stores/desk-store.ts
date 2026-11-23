@@ -47,6 +47,13 @@ interface DeskState {
    * saved. Only a conversation with a reply under way has an entry. Not kept.
    */
   liveHandoff: Record<string, TurnHandoff>;
+  /**
+   * The record open in an artifact's place: a row of a board, opened as that
+   * record's own card where the board stood. It is here and not in the board
+   * so that a row clicked in the conversation opens the pane at the record,
+   * not at the board. Opening another artifact drops it. Not kept.
+   */
+  artifactRecord: ArtifactRecord | null;
 
   setRail: (rail: DeskRailState) => void;
   toggleRail: () => void;
@@ -58,6 +65,8 @@ interface DeskState {
   clearSession: () => void;
   setBrowsing: (browsing: boolean) => void;
   askAgent: (threadId: string, question: string) => void;
+  /** Opens a record in its artifact's place, or with null goes back to the artifact. */
+  openArtifactRecord: (record: ArtifactRecord | null) => void;
   takeAsk: (threadId: string) => string | null;
   noteDocumentAsk: (documentId: string, ask: Omit<DocumentAsk, "at">) => void;
   setLiveHandoff: (threadId: string, live: TurnHandoff | null) => void;
@@ -107,6 +116,14 @@ export function rememberActiveArtifact(
   return Object.fromEntries(entries.slice(Math.max(0, entries.length - MAX_REMEMBERED_ARTIFACTS)));
 }
 
+/** A record a board names, and the records listed with it, to step through in their order. */
+export type ArtifactRecord = {
+  artifactId: string;
+  entity: string;
+  recordId: string;
+  order: readonly string[];
+};
+
 export const useDeskStore = create<DeskState>()(
   persist(
     (set, get) => ({
@@ -119,6 +136,7 @@ export const useDeskStore = create<DeskState>()(
       asks: {},
       documentAsks: {},
       liveHandoff: {},
+      artifactRecord: null,
 
       setRail: (rail) => set({ rail }),
       toggleRail: () => set((state) => ({ rail: state.rail === "open" ? "closed" : "open" })),
@@ -131,10 +149,13 @@ export const useDeskStore = create<DeskState>()(
             threadId,
             artifactId,
           ),
+          artifactRecord:
+            state.artifactRecord?.artifactId === artifactId ? state.artifactRecord : null,
         })),
       markTermsSeen: () => set({ termsSeen: true }),
       setSharePage: (sharePage) => set({ sharePage }),
-      clearSession: () => set({ activeArtifactByThread: {} }),
+      clearSession: () => set({ activeArtifactByThread: {}, artifactRecord: null }),
+      openArtifactRecord: (artifactRecord) => set({ artifactRecord }),
       setBrowsing: (browsing) => set({ browsing }),
       askAgent: (threadId, question) =>
         set((state) => ({ asks: { ...state.asks, [threadId]: question } })),

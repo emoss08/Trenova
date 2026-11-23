@@ -367,7 +367,7 @@ func (s *Service) refreshAttention(
 		s.watchtower.Resolve(
 			ctx,
 			tenant,
-			watchtower.SourceAccountingReconciliation,
+			watchtower.SourceKindAccountingReconciliation,
 			watchtoweraccounting.AccountingInboundAttentionSourceID(conn, reason),
 		)
 	}

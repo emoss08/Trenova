@@ -53,7 +53,7 @@ func (e *Effects) RefreshAttention(
 		e.watchtower.Resolve(
 			ctx,
 			tenant,
-			watchtower.SourceAccountingSync,
+			watchtower.SourceKindAccountingSync,
 			watchtoweraccounting.AccountingSyncAttentionSourceID(conn, key),
 		)
 	}
@@ -73,7 +73,7 @@ func (e *Effects) RefreshPaused(
 	e.watchtower.Resolve(
 		ctx,
 		TenantOf(conn),
-		watchtower.SourceAccountingSync,
+		watchtower.SourceKindAccountingSync,
 		watchtoweraccounting.AccountingSyncPausedSourceID(conn),
 	)
 }

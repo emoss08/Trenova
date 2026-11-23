@@ -12,6 +12,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent/agentdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider/aiproviderdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
 	"github.com/emoss08/trenova/pkg/keelkinds"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -896,6 +898,648 @@ func valueAIUsageRecord(p unsafe.Pointer, c int32) any {
 	return nil
 }
 
+// dailyUsagesTable is the schema of aiusage.DailyUsage.
+var dailyUsagesTable = schema.Table{
+	Name:   "ai_usage_daily",
+	Quoted: `"ai_usage_daily"`,
+	Alias:  "aud",
+	Model:  "aiusage.DailyUsage",
+	Label:  `AI Usage by Day`,
+	Plural: `AI Usage by Day`,
+	Doc:    `AI usage by day: model calls added up by the organization's day, by the person they were made for, the feature that made them, the surface and the model, with their tokens and estimated cost. Calls whose provider carries no price are counted apart, so an unpriced call never reads as free.`,
+	Report: &schema.TableReport{Category: `Desk`},
+	Columns: []schema.Column{
+		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK, Label: `ID`, JSON: `id`, Report: &reportDimString},
+		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`, Report: &reportDimStringHidden},
+		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`, JSON: `organizationId`, Report: &reportDimStringHidden},
+		{Name: "usage_date", Quoted: `"usage_date"`, Field: "UsageDate", Kind: schema.KindInt64, Flags: 0, Label: `Day`, Doc: `The day in the organization's time zone`, JSON: `usageDate`, Report: &reportDimEpoch},
+		{Name: "user_id", Quoted: `"user_id"`, Field: "UserID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `User ID`, JSON: `userId`, Report: &reportDimStringHidden},
+		{Name: "feature", Quoted: `"feature"`, Field: "Feature", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Feature`, Doc: `The product feature that made the calls; empty for calls that named none`, JSON: `feature`, Enum: enumFeature[:], Report: &reportDimEnum},
+		{Name: "surface", Quoted: `"surface"`, Field: "Surface", Kind: schema.KindString, Flags: 0, Label: `Surface`, Doc: `Which part of the system made the calls`, JSON: `surface`, Enum: enumSurface[:], Report: &reportDimEnum},
+		{Name: "model", Quoted: `"model"`, Field: "Model", Kind: schema.KindString, Flags: 0, Label: `Model`, Doc: `The model that answered, as the provider named it`, JSON: `model`, Report: &reportDimString},
+		{Name: "provider_kind", Quoted: `"provider_kind"`, Field: "ProviderKind", Kind: schema.KindString, Flags: 0, Label: `Provider Kind`, JSON: `providerKind`, Enum: enumAiproviderKind[:], Report: &reportDimEnumHidden},
+		{Name: "calls", Quoted: `"calls"`, Field: "Calls", Kind: schema.KindInt64, Flags: 0, Label: `Calls`, Doc: `Model calls, every attempt included`, JSON: `calls`, Report: &reportMeasureIntegerCount},
+		{Name: "failed_calls", Quoted: `"failed_calls"`, Field: "FailedCalls", Kind: schema.KindInt64, Flags: 0, Label: `Failed Calls`, Doc: `Calls that failed`, JSON: `failedCalls`, Report: &reportMeasureIntegerCount},
+		{Name: "unpriced_calls", Quoted: `"unpriced_calls"`, Field: "UnpricedCalls", Kind: schema.KindInt64, Flags: 0, Label: `Calls Without a Price`, Doc: `Calls whose provider carries no price; their cost is not in the estimate`, JSON: `unpricedCalls`, Report: &reportMeasureIntegerCount},
+		{Name: "input_tokens", Quoted: `"input_tokens"`, Field: "InputTokens", Kind: schema.KindInt64, Flags: 0, Label: `Uncached Input Tokens`, Doc: `Input tokens the provider's cache did not serve`, JSON: `inputTokens`, Report: &reportMeasureIntegerCount},
+		{Name: "cache_read_tokens", Quoted: `"cache_read_tokens"`, Field: "CacheReadTokens", Kind: schema.KindInt64, Flags: 0, Label: `Cache Read Tokens`, Doc: `Input tokens served from the provider's prompt cache`, JSON: `cacheReadTokens`, Report: &reportMeasureIntegerCount},
+		{Name: "cache_write_tokens", Quoted: `"cache_write_tokens"`, Field: "CacheWriteTokens", Kind: schema.KindInt64, Flags: 0, Label: `Cache Write Tokens`, Doc: `Input tokens written to the provider's prompt cache`, JSON: `cacheWriteTokens`, Report: &reportMeasureIntegerCount},
+		{Name: "output_tokens", Quoted: `"output_tokens"`, Field: "OutputTokens", Kind: schema.KindInt64, Flags: 0, Label: `Output Tokens`, Doc: `Tokens the model wrote, reasoning included`, JSON: `outputTokens`, Report: &reportMeasureIntegerCount},
+		{Name: "reasoning_tokens", Quoted: `"reasoning_tokens"`, Field: "ReasoningTokens", Kind: schema.KindInt64, Flags: 0, Label: `Reasoning Tokens`, Doc: `Of the output, the tokens the model spent reasoning`, JSON: `reasoningTokens`, Report: &reportMeasureIntegerCount},
+		{Name: "advisor_tokens", Quoted: `"advisor_tokens"`, Field: "AdvisorTokens", Kind: schema.KindInt64, Flags: 0, Label: `Advisor Tokens`, Doc: `Tokens an advisor model read and wrote for these calls`, JSON: `advisorTokens`, Report: &reportMeasureIntegerCount},
+		{Name: "total_tokens", Quoted: `"total_tokens"`, Field: "TotalTokens", Kind: schema.KindInt64, Flags: 0, Label: `Total Tokens`, Doc: `Every token billed: uncached input, cache reads, cache writes, output and the advisor's`, JSON: `totalTokens`, Report: &reportMeasureIntegerCount},
+		{Name: "cost_usd", Quoted: `"cost_usd"`, Field: "CostUSD", Kind: schema.KindOther, Flags: 0, Label: `Estimated Cost`, Doc: `Estimated cost in US dollars of the calls that carried a price, the advisor's included`, JSON: `costUsd`, Report: &reportMeasureDecimalMoney},
+		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: 0, Label: `Updated At`, JSON: `updatedAt`, Report: &reportDimEpochHidden},
+	},
+	Relations: []schema.Relation{
+		{Name: "User", Alias: "u", Kind: schema.BelongsTo, Local: []int32{4}, Remote: []int32{0}, Label: `Person`, Doc: `The person the calls were made for`},
+	},
+	PK:         []int32{0, 1, 2},
+	Tenant:     []int32{1, 2},
+	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20},
+	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20},
+	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20},
+	Returning:  nil,
+	Version:    -1,
+	AutoID:     -1,
+	AutoCreate: -1,
+	AutoUpdate: -1,
+	IDPrefix:   "",
+	New:        newDailyUsage,
+	NewN:       newNDailyUsage,
+	Size:       unsafe.Sizeof(aiusage.DailyUsage{}),
+	Ptr:        ptrDailyUsage,
+	Value:      valueDailyUsage,
+	Attach:     attachDailyUsage,
+}
+
+var dailyUsagesRef = keel.Ref{Table: &dailyUsagesTable}
+
+// DailyUsagesTable is the table of aiusage.DailyUsage.
+type DailyUsagesTable struct {
+	keel.TableBase
+	ID               keelkinds.PulidIDCol
+	BusinessUnitID   keelkinds.PulidIDCol
+	OrganizationID   keelkinds.PulidIDCol
+	UsageDate        keel.Int64Col
+	UserID           keelkinds.PulidIDCol
+	Feature          FeatureCol
+	Surface          SurfaceCol
+	Model            keel.StringCol
+	ProviderKind     aiproviderdb.KindCol
+	Calls            keel.Int64Col
+	FailedCalls      keel.Int64Col
+	UnpricedCalls    keel.Int64Col
+	InputTokens      keel.Int64Col
+	CacheReadTokens  keel.Int64Col
+	CacheWriteTokens keel.Int64Col
+	OutputTokens     keel.Int64Col
+	ReasoningTokens  keel.Int64Col
+	AdvisorTokens    keel.Int64Col
+	TotalTokens      keel.Int64Col
+	CostUSD          keelkinds.DecimalDecimalCol
+	UpdatedAt        keel.Int64Col
+}
+
+// DailyUsages references the ai_usage_daily table.
+var DailyUsages = &DailyUsagesTable{
+	TableBase:        keel.TableBase{Ref: &dailyUsagesRef},
+	ID:               keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &dailyUsagesRef, Index: 0}}},
+	BusinessUnitID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &dailyUsagesRef, Index: 1}}},
+	OrganizationID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &dailyUsagesRef, Index: 2}}},
+	UsageDate:        keel.Int64Col{Col: keel.Col{Ref: &dailyUsagesRef, Index: 3}},
+	UserID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &dailyUsagesRef, Index: 4}}},
+	Feature:          FeatureCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &dailyUsagesRef, Index: 5}}},
+	Surface:          SurfaceCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &dailyUsagesRef, Index: 6}}},
+	Model:            keel.StringCol{Col: keel.Col{Ref: &dailyUsagesRef, Index: 7}},
+	ProviderKind:     aiproviderdb.KindCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &dailyUsagesRef, Index: 8}}},
+	Calls:            keel.Int64Col{Col: keel.Col{Ref: &dailyUsagesRef, Index: 9}},
+	FailedCalls:      keel.Int64Col{Col: keel.Col{Ref: &dailyUsagesRef, Index: 10}},
+	UnpricedCalls:    keel.Int64Col{Col: keel.Col{Ref: &dailyUsagesRef, Index: 11}},
+	InputTokens:      keel.Int64Col{Col: keel.Col{Ref: &dailyUsagesRef, Index: 12}},
+	CacheReadTokens:  keel.Int64Col{Col: keel.Col{Ref: &dailyUsagesRef, Index: 13}},
+	CacheWriteTokens: keel.Int64Col{Col: keel.Col{Ref: &dailyUsagesRef, Index: 14}},
+	OutputTokens:     keel.Int64Col{Col: keel.Col{Ref: &dailyUsagesRef, Index: 15}},
+	ReasoningTokens:  keel.Int64Col{Col: keel.Col{Ref: &dailyUsagesRef, Index: 16}},
+	AdvisorTokens:    keel.Int64Col{Col: keel.Col{Ref: &dailyUsagesRef, Index: 17}},
+	TotalTokens:      keel.Int64Col{Col: keel.Col{Ref: &dailyUsagesRef, Index: 18}},
+	CostUSD:          keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &dailyUsagesRef, Index: 19}}},
+	UpdatedAt:        keel.Int64Col{Col: keel.Col{Ref: &dailyUsagesRef, Index: 20}},
+}
+
+// BuildDailyUsages builds the table of ai_usage_daily for ref. Generated relation and alias methods call it.
+func BuildDailyUsages(r *keel.Ref) *DailyUsagesTable {
+	return &DailyUsagesTable{
+		TableBase:        keel.TableBase{Ref: r},
+		ID:               keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		UsageDate:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 3}},
+		UserID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		Feature:          FeatureCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		Surface:          SurfaceCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		Model:            keel.StringCol{Col: keel.Col{Ref: r, Index: 7}},
+		ProviderKind:     aiproviderdb.KindCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 8}}},
+		Calls:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 9}},
+		FailedCalls:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 10}},
+		UnpricedCalls:    keel.Int64Col{Col: keel.Col{Ref: r, Index: 11}},
+		InputTokens:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 12}},
+		CacheReadTokens:  keel.Int64Col{Col: keel.Col{Ref: r, Index: 13}},
+		CacheWriteTokens: keel.Int64Col{Col: keel.Col{Ref: r, Index: 14}},
+		OutputTokens:     keel.Int64Col{Col: keel.Col{Ref: r, Index: 15}},
+		ReasoningTokens:  keel.Int64Col{Col: keel.Col{Ref: r, Index: 16}},
+		AdvisorTokens:    keel.Int64Col{Col: keel.Col{Ref: r, Index: 17}},
+		TotalTokens:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 18}},
+		CostUSD:          keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 19}}},
+		UpdatedAt:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 20}},
+	}
+}
+
+// DailyUsagesSchema returns the schema of ai_usage_daily.
+func DailyUsagesSchema() *schema.Table { return &dailyUsagesTable }
+
+// As returns a handle that references ai_usage_daily under its own alias.
+func (t *DailyUsagesTable) As(alias string) *DailyUsagesTable {
+	return keel.Alias(t.Ref, alias, BuildDailyUsages)
+}
+
+// User is the belongs relation.
+func (t *DailyUsagesTable) User() *tenantdb.PersonsTable {
+	return keel.Path(t.Ref, 0, tenantdb.BuildPersons)
+}
+
+// Get returns the ai_usage_daily row with the given key, or keel.ErrNotFound.
+func (t *DailyUsagesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*aiusage.DailyUsage, error) {
+	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// DailyUsagesQuery is a query over aiusage.DailyUsage.
+type DailyUsagesQuery struct{ keel.QueryCore }
+
+var _ keel.Query[*aiusage.DailyUsage] = (*DailyUsagesQuery)(nil)
+
+// Query starts a query over the table.
+func (t *DailyUsagesTable) Query() keel.Query[*aiusage.DailyUsage] {
+	return &DailyUsagesQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see DailyUsagesQuery.Where.
+func (t *DailyUsagesTable) Where(ps ...keel.Pred) keel.Query[*aiusage.DailyUsage] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see DailyUsagesQuery.Pick.
+func (t *DailyUsagesTable) Pick(es ...keel.Expr) keel.Query[*aiusage.DailyUsage] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see DailyUsagesQuery.Load.
+func (t *DailyUsagesTable) Load(ls ...keel.Loader) keel.Query[*aiusage.DailyUsage] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see DailyUsagesQuery.Omit.
+func (t *DailyUsagesTable) Omit(cols ...keel.Column) keel.Query[*aiusage.DailyUsage] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see DailyUsagesQuery.Order.
+func (t *DailyUsagesTable) Order(os ...keel.Order) keel.Query[*aiusage.DailyUsage] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see DailyUsagesQuery.Limit.
+func (t *DailyUsagesTable) Limit(n int) keel.Query[*aiusage.DailyUsage] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see DailyUsagesQuery.Group.
+func (t *DailyUsagesTable) Group(es ...keel.Expr) keel.Query[*aiusage.DailyUsage] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see DailyUsagesQuery.GroupingSets.
+func (t *DailyUsagesTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*aiusage.DailyUsage] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see DailyUsagesQuery.Rollup.
+func (t *DailyUsagesTable) Rollup(es ...keel.Expr) keel.Query[*aiusage.DailyUsage] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see DailyUsagesQuery.Cube.
+func (t *DailyUsagesTable) Cube(es ...keel.Expr) keel.Query[*aiusage.DailyUsage] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see DailyUsagesQuery.AllTenants.
+func (t *DailyUsagesTable) AllTenants() keel.Query[*aiusage.DailyUsage] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see DailyUsagesQuery.Join.
+func (t *DailyUsagesTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*aiusage.DailyUsage] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see DailyUsagesQuery.LeftJoin.
+func (t *DailyUsagesTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*aiusage.DailyUsage] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see DailyUsagesQuery.LeftJoinLateral.
+func (t *DailyUsagesTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*aiusage.DailyUsage] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see DailyUsagesQuery.JoinLateral.
+func (t *DailyUsagesTable) JoinLateral(sub keel.LateralSource) keel.Query[*aiusage.DailyUsage] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see DailyUsagesQuery.Lock.
+func (t *DailyUsagesTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*aiusage.DailyUsage] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see DailyUsagesQuery.DistinctOn.
+func (t *DailyUsagesTable) DistinctOn(es ...keel.Expr) keel.Query[*aiusage.DailyUsage] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see DailyUsagesQuery.Cache.
+func (t *DailyUsagesTable) Cache(opts ...keel.CacheOption) keel.Query[*aiusage.DailyUsage] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see DailyUsagesQuery.LoadStrategy.
+func (t *DailyUsagesTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*aiusage.DailyUsage] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see DailyUsagesQuery.With.
+func (t *DailyUsagesTable) With(ctes ...*keel.CTETable) keel.Query[*aiusage.DailyUsage] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see DailyUsagesQuery.Compute.
+func (t *DailyUsagesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*aiusage.DailyUsage] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *DailyUsagesTable) Create(ctx context.Context, db *keel.DB, row *aiusage.DailyUsage) error {
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *DailyUsagesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*aiusage.DailyUsage) error {
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
+}
+
+// Save updates row by its primary key.
+func (t *DailyUsagesTable) Save(ctx context.Context, db *keel.DB, row *aiusage.DailyUsage, cols ...keel.Column) error {
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *DailyUsagesTable) SaveExcept(ctx context.Context, db *keel.DB, row *aiusage.DailyUsage, cols ...keel.Column) error {
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *DailyUsagesTable) DeleteRow(ctx context.Context, db *keel.DB, row *aiusage.DailyUsage) error {
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *DailyUsagesTable) Upsert(ctx context.Context, db *keel.DB, rows []*aiusage.DailyUsage, c keel.Conflict) ([]bool, error) {
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *DailyUsagesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*aiusage.DailyUsage, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *DailyUsagesTable) Copy(ctx context.Context, db *keel.DB, rows []*aiusage.DailyUsage) (int64, error) {
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *DailyUsagesQuery) Where(ps ...keel.Pred) keel.Query[*aiusage.DailyUsage] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *DailyUsagesQuery) Pick(es ...keel.Expr) keel.Query[*aiusage.DailyUsage] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *DailyUsagesQuery) Omit(cols ...keel.Column) keel.Query[*aiusage.DailyUsage] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *DailyUsagesQuery) Load(ls ...keel.Loader) keel.Query[*aiusage.DailyUsage] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *DailyUsagesQuery) Order(os ...keel.Order) keel.Query[*aiusage.DailyUsage] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *DailyUsagesQuery) Distinct() keel.Query[*aiusage.DailyUsage] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *DailyUsagesQuery) Group(es ...keel.Expr) keel.Query[*aiusage.DailyUsage] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *DailyUsagesQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*aiusage.DailyUsage] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *DailyUsagesQuery) Rollup(es ...keel.Expr) keel.Query[*aiusage.DailyUsage] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *DailyUsagesQuery) Cube(es ...keel.Expr) keel.Query[*aiusage.DailyUsage] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *DailyUsagesQuery) Window(name string, w keel.Window) keel.Query[*aiusage.DailyUsage] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *DailyUsagesQuery) Having(ps ...keel.Pred) keel.Query[*aiusage.DailyUsage] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *DailyUsagesQuery) Limit(n int) keel.Query[*aiusage.DailyUsage] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *DailyUsagesQuery) Offset(n int) keel.Query[*aiusage.DailyUsage] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *DailyUsagesQuery) DistinctOn(es ...keel.Expr) keel.Query[*aiusage.DailyUsage] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *DailyUsagesQuery) AllTenants() keel.Query[*aiusage.DailyUsage] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *DailyUsagesQuery) CustomPlan() keel.Query[*aiusage.DailyUsage] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *DailyUsagesQuery) Timeout(d time.Duration) keel.Query[*aiusage.DailyUsage] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *DailyUsagesQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*aiusage.DailyUsage] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *DailyUsagesQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*aiusage.DailyUsage] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *DailyUsagesQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*aiusage.DailyUsage] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *DailyUsagesQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*aiusage.DailyUsage] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *DailyUsagesQuery) JoinLateral(sub keel.LateralSource) keel.Query[*aiusage.DailyUsage] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *DailyUsagesQuery) Cache(opts ...keel.CacheOption) keel.Query[*aiusage.DailyUsage] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *DailyUsagesQuery) With(ctes ...*keel.CTETable) keel.Query[*aiusage.DailyUsage] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *DailyUsagesQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*aiusage.DailyUsage] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *DailyUsagesQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*aiusage.DailyUsage] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *DailyUsagesQuery) Clone() keel.Query[*aiusage.DailyUsage] {
+	return &DailyUsagesQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *DailyUsagesQuery) One(ctx context.Context, db *keel.DB) (*aiusage.DailyUsage, error) {
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*aiusage.DailyUsage)(row), err
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *DailyUsagesQuery) First(ctx context.Context, db *keel.DB) (*aiusage.DailyUsage, error) {
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*aiusage.DailyUsage)(row), err
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *DailyUsagesQuery) List(ctx context.Context, db *keel.DB) ([]*aiusage.DailyUsage, error) {
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*aiusage.DailyUsage)(unsafe.Pointer(&rows)), err
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *DailyUsagesQuery) All(ctx context.Context, db *keel.DB) ([]*aiusage.DailyUsage, error) {
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*aiusage.DailyUsage)(unsafe.Pointer(&rows)), err
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *DailyUsagesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*aiusage.DailyUsage, error) {
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*aiusage.DailyUsage)(unsafe.Pointer(&rows)), err
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *DailyUsagesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*aiusage.DailyUsage], error) {
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*aiusage.DailyUsage])(unsafe.Pointer(&page)), err
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *DailyUsagesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*aiusage.DailyUsage) error) error {
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*aiusage.DailyUsage)(unsafe.Pointer(&rows)))
+	})
+}
+
+func newDailyUsage() unsafe.Pointer { return unsafe.Pointer(new(aiusage.DailyUsage)) }
+
+func newNDailyUsage(n int) unsafe.Pointer {
+	return unsafe.Pointer(unsafe.SliceData(make([]aiusage.DailyUsage, n)))
+}
+
+func ptrDailyUsage(p unsafe.Pointer, c int32) any {
+	r := (*aiusage.DailyUsage)(p)
+	switch c {
+	case 0:
+		return (*string)(unsafe.Pointer(&r.ID))
+	case 1:
+		return (*string)(unsafe.Pointer(&r.BusinessUnitID))
+	case 2:
+		return (*string)(unsafe.Pointer(&r.OrganizationID))
+	case 3:
+		return &r.UsageDate
+	case 4:
+		return (*string)(unsafe.Pointer(&r.UserID))
+	case 5:
+		return (*string)(unsafe.Pointer(&r.Feature))
+	case 6:
+		return (*string)(unsafe.Pointer(&r.Surface))
+	case 7:
+		return &r.Model
+	case 8:
+		return (*string)(unsafe.Pointer(&r.ProviderKind))
+	case 9:
+		return &r.Calls
+	case 10:
+		return &r.FailedCalls
+	case 11:
+		return &r.UnpricedCalls
+	case 12:
+		return &r.InputTokens
+	case 13:
+		return &r.CacheReadTokens
+	case 14:
+		return &r.CacheWriteTokens
+	case 15:
+		return &r.OutputTokens
+	case 16:
+		return &r.ReasoningTokens
+	case 17:
+		return &r.AdvisorTokens
+	case 18:
+		return &r.TotalTokens
+	case 19:
+		return &r.CostUSD
+	case 20:
+		return &r.UpdatedAt
+	}
+	return nil
+}
+
+func valueDailyUsage(p unsafe.Pointer, c int32) any {
+	r := (*aiusage.DailyUsage)(p)
+	switch c {
+	case 0:
+		return string(r.ID)
+	case 1:
+		return string(r.BusinessUnitID)
+	case 2:
+		return string(r.OrganizationID)
+	case 3:
+		return r.UsageDate
+	case 4:
+		if r.UserID == "" {
+			return nil
+		}
+		return string(r.UserID)
+	case 5:
+		if r.Feature == "" {
+			return nil
+		}
+		return string(r.Feature)
+	case 6:
+		return string(r.Surface)
+	case 7:
+		return r.Model
+	case 8:
+		return string(r.ProviderKind)
+	case 9:
+		return r.Calls
+	case 10:
+		return r.FailedCalls
+	case 11:
+		return r.UnpricedCalls
+	case 12:
+		return r.InputTokens
+	case 13:
+		return r.CacheReadTokens
+	case 14:
+		return r.CacheWriteTokens
+	case 15:
+		return r.OutputTokens
+	case 16:
+		return r.ReasoningTokens
+	case 17:
+		return r.AdvisorTokens
+	case 18:
+		return r.TotalTokens
+	case 19:
+		return r.CostUSD
+	case 20:
+		return r.UpdatedAt
+	}
+	return nil
+}
+
+func attachDailyUsage(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
+	r := (*aiusage.DailyUsage)(p)
+	switch rel {
+	case 0:
+		r.User = (*tenant.Person)(child)
+	}
+}
+
+func init() {
+	dailyUsagesTable.Relations[0].Target = tenantdb.PersonsSchema()
+}
+
 // intIs64 fails the build where int is not 64 bits: int fields are read through *int64.
 const intIs64 = unsafe.Sizeof(int(0)) - 8
 
@@ -977,6 +1621,22 @@ var enumSurface = [...]schema.EnumValue{
 	{Value: `Indexing`, Label: `Indexing`},
 	{Value: `Retrieval`, Label: `Retrieval`},
 }
+
+var reportDimEnum = schema.ReportInfo{Included: true, Kind: schema.Dimension, Type: schema.ValueEnum, Aggs: schema.AggsCount}
+
+var reportDimEnumHidden = schema.ReportInfo{Kind: schema.Dimension, Type: schema.ValueEnum, Aggs: schema.AggsCount}
+
+var reportDimEpoch = schema.ReportInfo{Included: true, Kind: schema.Dimension, Type: schema.ValueEpoch, Aggs: schema.AggsOrdered}
+
+var reportDimEpochHidden = schema.ReportInfo{Kind: schema.Dimension, Type: schema.ValueEpoch, Aggs: schema.AggsOrdered}
+
+var reportDimString = schema.ReportInfo{Included: true, Kind: schema.Dimension, Type: schema.ValueString, Aggs: schema.AggsOrdered}
+
+var reportDimStringHidden = schema.ReportInfo{Kind: schema.Dimension, Type: schema.ValueString, Aggs: schema.AggsOrdered}
+
+var reportMeasureDecimalMoney = schema.ReportInfo{Included: true, Kind: schema.Measure, Type: schema.ValueDecimal, Aggs: schema.AggsNumeric, Format: `money`}
+
+var reportMeasureIntegerCount = schema.ReportInfo{Included: true, Kind: schema.Measure, Type: schema.ValueInt, Aggs: schema.AggsNumeric, Format: `count`}
 
 // FeatureCol is a column of aiusage.Feature values.
 type FeatureCol struct{ keel.TypedStringCol }

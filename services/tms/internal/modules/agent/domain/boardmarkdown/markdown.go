@@ -27,13 +27,13 @@ func Markdown(f *board.Filled, meta MarkdownMeta) string {
 		sb.WriteString(question)
 		sb.WriteString("\n")
 	}
-	if verdict := segmentsText(f.Verdict); verdict != "" {
+	if verdict := wordsText(f, f.Verdict); verdict != "" {
 		sb.WriteString("\n")
 		sb.WriteString(verdict)
 		sb.WriteString("\n")
 	}
 	for idx := range f.Blocks {
-		writeBlock(&sb, &f.Blocks[idx], meta.Location)
+		writeBlock(&sb, f, &f.Blocks[idx], meta.Location)
 	}
 	sb.WriteString("\n---\n")
 	sb.WriteString("Read live at ")
@@ -54,15 +54,20 @@ func Markdown(f *board.Filled, meta MarkdownMeta) string {
 	return sb.String()
 }
 
-func writeBlock(sb *strings.Builder, block *board.FilledBlock, location *time.Location) {
+func writeBlock(
+	sb *strings.Builder,
+	f *board.Filled,
+	block *board.FilledBlock,
+	location *time.Location,
+) {
 	switch block.Type {
 	case board.BlockProse:
 		sb.WriteString("\n")
-		sb.WriteString(segmentsText(block.Text))
+		sb.WriteString(wordsText(f, block.Text))
 		sb.WriteString("\n")
 		return
 	case board.BlockNote:
-		writeNote(sb, block)
+		writeNote(sb, f, block)
 		return
 	case board.BlockActions:
 		writeActions(sb, block.Actions)
@@ -83,6 +88,11 @@ func writeBlock(sb *strings.Builder, block *board.FilledBlock, location *time.Lo
 	sb.WriteString(". ")
 	sb.WriteString(blockHeading(block))
 	sb.WriteString("\n\n")
+	if caption := wordsText(f, block.Caption); caption != "" {
+		sb.WriteString("_")
+		sb.WriteString(caption)
+		sb.WriteString("_\n\n")
+	}
 	if block.State == board.StateUnreadable {
 		sb.WriteString("_Could not be read._\n")
 		return
@@ -376,13 +386,13 @@ func writeMeter(sb *strings.Builder, meter *board.FilledMeter) {
 	fmt.Fprintf(sb, "%d of %d clear\n", meter.Clear, meter.Total)
 }
 
-func writeNote(sb *strings.Builder, block *board.FilledBlock) {
+func writeNote(sb *strings.Builder, f *board.Filled, block *board.FilledBlock) {
 	sb.WriteString("\n**")
 	sb.WriteString(NoteLabel(block.NoteTone))
 	sb.WriteString(": ")
 	sb.WriteString(oneLine(block.Title))
 	sb.WriteString(".** ")
-	sb.WriteString(segmentsText(block.Text))
+	sb.WriteString(wordsText(f, block.Text))
 	if labels := rowLabels(block.Chips); labels != "" {
 		fmt.Fprintf(sb, " (%s)", labels)
 	}
@@ -432,9 +442,13 @@ func rowLabels(rows []board.Row) string {
 	return strings.Join(labels, ", ")
 }
 
-func segmentsText(segments []board.FilledSegment) string {
+func wordsText(f *board.Filled, segments []board.FilledSegment) string {
 	var sb strings.Builder
 	for _, segment := range segments {
+		if segment.Reading != "" {
+			sb.WriteString(readingText(f.Reading(segment.Reading)))
+			continue
+		}
 		sb.WriteString(segment.Text)
 		if segment.Numeral > 0 {
 			fmt.Fprintf(&sb, " [%d]", segment.Numeral)
@@ -442,6 +456,37 @@ func segmentsText(segments []board.FilledSegment) string {
 	}
 
 	return strings.TrimSpace(sb.String())
+}
+
+const unreadReading = "—"
+
+func readingText(reading *board.FilledReading) string {
+	if reading == nil || reading.Answered() == nil {
+		return unreadReading
+	}
+	text := board.FormatValue(reading.Answered())
+	if reading.Was != nil && reading.Value != nil {
+		text += " (now " + board.FormatValue(reading.Value) + ")"
+	}
+
+	return text
+}
+
+func Answer(f *board.Filled) string {
+	var sb strings.Builder
+	for _, segment := range f.Verdict {
+		if segment.Reading == "" {
+			sb.WriteString(segment.Text)
+			continue
+		}
+		if reading := f.Reading(segment.Reading); reading != nil && reading.Answered() != nil {
+			sb.WriteString(board.FormatValue(reading.Answered()))
+			continue
+		}
+		sb.WriteString(unreadReading)
+	}
+
+	return oneLine(sb.String())
 }
 
 func writeRow(sb *strings.Builder, cells []string) {

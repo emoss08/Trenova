@@ -3,6 +3,7 @@ package boardcardservice
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/analysis"
@@ -162,13 +163,16 @@ func (s *Service) checkArtifacts(ctx context.Context, req *assistantports.BoardF
 					"name it by the artifactId its result gave you", at)
 			}
 		}
-		if err := s.checkFigures(ctx, req, block, at); err != nil {
-			return err
+		where := fmt.Sprintf("block %d", at)
+		for figure := range block.Figures {
+			if err := s.checkFigure(ctx, req, &block.Figures[figure], where); err != nil {
+				return err
+			}
 		}
 		if block.Analysis.IsNil() {
 			continue
 		}
-		display, err := s.analysisFor(ctx, req, block.Analysis, at)
+		display, err := s.analysisFor(ctx, req, block.Analysis, where)
 		if err != nil {
 			return err
 		}
@@ -176,29 +180,33 @@ func (s *Service) checkArtifacts(ctx context.Context, req *assistantports.BoardF
 			return err
 		}
 	}
+	for idx := range req.Board.Readings {
+		reading := &req.Board.Readings[idx]
+		where := "the reading " + reading.Key
+		if err := s.checkFigure(ctx, req, &reading.FigureSource, where); err != nil {
+			return err
+		}
+	}
 
 	return nil
 }
 
-func (s *Service) checkFigures(
+func (s *Service) checkFigure(
 	ctx context.Context,
 	req *assistantports.BoardFillRequest,
-	block *board.Block,
-	at int,
+	source *board.FigureSource,
+	where string,
 ) error {
-	for figure := range block.Figures {
-		source := &block.Figures[figure]
-		if source.Analysis.IsNil() {
-			continue
-		}
-		display, err := s.analysisFor(ctx, req, source.Analysis, at)
-		if err != nil {
-			return err
-		}
-		if source.Index >= len(display.Figures) {
-			return mistake("block %d asks for figure %d of an analysis that showed %d",
-				at, source.Index+1, len(display.Figures))
-		}
+	if source.Analysis.IsNil() {
+		return nil
+	}
+	display, err := s.analysisFor(ctx, req, source.Analysis, where)
+	if err != nil {
+		return err
+	}
+	if source.Index >= len(display.Figures) {
+		return mistake("%s asks for figure %d of an analysis that showed %d",
+			where, source.Index+1, len(display.Figures))
 	}
 
 	return nil
@@ -230,16 +238,16 @@ func (s *Service) analysisFor(
 	ctx context.Context,
 	req *assistantports.BoardFillRequest,
 	id pulid.ID,
-	at int,
+	where string,
 ) (*analysis.Display, error) {
 	artifact, err := s.artifact(ctx, req, id)
 	if err != nil || artifact.Kind != assistantartifact.KindAnalysis {
-		return nil, mistake("block %d names an analysis that is not one an analysis_run result "+
-			"kept in this conversation; name it by its artifactId", at)
+		return nil, mistake("%s names an analysis that is not one an analysis_run result "+
+			"kept in this conversation; name it by its artifactId", where)
 	}
 	read, ok := analysisOf(artifact)
 	if !ok {
-		return nil, mistake("block %d names an analysis that could not be read", at)
+		return nil, mistake("%s names an analysis that could not be read", where)
 	}
 
 	return &read.Display, nil

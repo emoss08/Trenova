@@ -174,7 +174,7 @@ func (s *Service) AssignWorkers(
 						assignment.WorkerID,
 						policy.Code,
 					),
-				)},
+				), auditservice.WithSubjectOf(assignment)},
 			})
 		}
 		if err = s.auditService.LogActions(ctx, entries); err != nil {
@@ -316,11 +316,26 @@ func (s *Service) EndAssignment(
 		OrganizationID: updated.OrganizationID,
 		BusinessUnitID: updated.BusinessUnitID,
 	}, auditservice.WithComment("PTO policy assignment ended"),
-		auditservice.WithDiff(&original, updated)); err != nil {
+		auditservice.WithDiff(&original, updated),
+		auditservice.WithSubjectOf(updated)); err != nil {
 		log.Error("failed to log audit action", zap.Error(err))
 	}
 
 	return updated, nil
+}
+
+func (s *Service) DefaultPolicy(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+) (*pto.PTOPolicy, error) {
+	policy, err := s.repo.GetDefault(ctx, tenantInfo)
+	if err != nil {
+		if errortypes.IsNotFoundError(err) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return policy, nil
 }
 
 func (s *Service) AssignDefaultPolicy(
@@ -330,25 +345,41 @@ func (s *Service) AssignDefaultPolicy(
 	effectiveFrom int64,
 	userID pulid.ID,
 ) error {
-	policy, err := s.repo.GetDefault(ctx, tenantInfo)
-	if err != nil {
-		if errortypes.IsNotFoundError(err) {
-			return nil
-		}
+	policy, err := s.DefaultPolicy(ctx, tenantInfo)
+	if err != nil || policy == nil {
 		return err
 	}
+	return s.AssignAtHire(ctx, &HireAssignment{
+		TenantInfo:    tenantInfo,
+		PolicyID:      policy.ID,
+		WorkerID:      workerID,
+		EffectiveFrom: effectiveFrom,
+		UserID:        userID,
+	})
+}
+
+type HireAssignment struct {
+	TenantInfo    pagination.TenantInfo
+	PolicyID      pulid.ID
+	WorkerID      pulid.ID
+	EffectiveFrom int64
+	UserID        pulid.ID
+}
+
+func (s *Service) AssignAtHire(ctx context.Context, req *HireAssignment) error {
+	effectiveFrom := req.EffectiveFrom
 	if effectiveFrom <= 0 {
 		effectiveFrom = time.Now().Unix()
 	}
 
 	result, err := s.AssignWorkers(ctx, &AssignWorkersRequest{
-		TenantInfo:    tenantInfo,
-		PolicyID:      policy.ID,
-		WorkerIDs:     []pulid.ID{workerID},
+		TenantInfo:    req.TenantInfo,
+		PolicyID:      req.PolicyID,
+		WorkerIDs:     []pulid.ID{req.WorkerID},
 		EffectiveFrom: effectiveFrom,
 		Note:          "Default policy applied at hire",
-		UserID:        userID,
-		SystemActor:   userID.IsNil(),
+		UserID:        req.UserID,
+		SystemActor:   req.UserID.IsNil(),
 	})
 	if err != nil {
 		return err

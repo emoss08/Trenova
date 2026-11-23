@@ -12,11 +12,13 @@ func runWorkerComplianceChecks(
 	dc *dispatchcontrol.DispatchControl,
 	hasHazmatCommodities bool,
 	prefix string,
+	now int64,
 	multiErr *errortypes.MultiError,
 ) {
 	dispatcheligibility.EvaluateWorkerCompliance(dispatcheligibility.WorkerComplianceInput{
 		Worker:               w,
 		Control:              dc,
 		HasHazmatCommodities: hasHazmatCommodities,
+		Now:                  now,
 	}).AppendToMultiError(multiErr, prefix)
 }

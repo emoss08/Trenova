@@ -445,6 +445,8 @@ scenarios:
 | `noRecordIds` | the reply shows no internal record id, by the same detector the reply pass uses (`shared/recordids`), so an `artifact:` link is not counted |
 | `formula` | on a formula scenario: the studio's draft Tariff source, after the step, contains each entry (`a\|b`, `/pattern/`) |
 | `refused` | the scope guard refused (`true`) or answered (`false`) |
+| `board` | a board was shown, by `show_answer` or `show_board`, with this `place` (`conversation` or `beside`) whose words place at least `minReadings` readings and, for each measure in `reads`, a reading that sums or takes the largest of that measure (so an answer asked for lateness and revenue must read both, each from its own measure); a conversation board must be the one the reply links |
+| `noBoard` | no board was shown in the step, in the conversation or beside it; cannot be set with `board` |
 | `proposals` | a proposal of `tool` was filed whose arguments contain `args` (strings compared case-insensitively, numbers by value) |
 | `noProposals` | nothing was proposed |
 | `executed` | on a decide step: every approved change ran without an error |

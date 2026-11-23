@@ -24,7 +24,7 @@ func NewNoCheckCallSource(
 }
 
 func (s *NoCheckCallSource) Kind() watchtower.SourceKind {
-	return watchtower.SourceNoCheckCall
+	return watchtower.SourceKindNoCheckCall
 }
 
 func (s *NoCheckCallSource) Snapshot(
@@ -72,7 +72,7 @@ func (o *NoCheckCallObserver) CheckCallRecorded(
 	if moveID.IsNil() {
 		return
 	}
-	o.projector.Resolve(ctx, tenant, watchtower.SourceNoCheckCall, moveID.String())
+	o.projector.Resolve(ctx, tenant, watchtower.SourceKindNoCheckCall, moveID.String())
 }
 
 func (o *NoCheckCallObserver) ObserverFeature() platformcatalog.FeatureKey {

@@ -55,7 +55,7 @@ func (w *towerRecorder) Resolve(
 	kind watchtower.SourceKind,
 	sourceID string,
 ) {
-	if kind == watchtower.SourceTelematicsStopVisit {
+	if kind == watchtower.SourceKindTelematicsStopVisit {
 		w.resolved = append(w.resolved, sourceID)
 	}
 }
@@ -234,7 +234,7 @@ func TestApplyStopEvent_NeverFallsBackToTheNextOpenStop(t *testing.T) {
 
 		require.Len(t, h.tower.upserts, 1)
 		item := h.tower.upserts[0]
-		assert.Equal(t, watchtower.SourceTelematicsStopVisit, item.SourceKind)
+		assert.Equal(t, watchtower.SourceKindTelematicsStopVisit, item.SourceKind)
 		assert.Equal(t, "Arrival at Acme DC not recorded", item.Title)
 		assert.Equal(t, h.move.ID, item.SubjectID)
 		assert.Equal(t, int64(1_700_000_000), item.OccurredAt)

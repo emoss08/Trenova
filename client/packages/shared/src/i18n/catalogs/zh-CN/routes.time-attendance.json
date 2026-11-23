@@ -101,7 +101,6 @@
   "ends before it begins": "结束时间早于开始时间",
   "handed over {0}": "于 {0} 移交",
   "on your team": "在您的团队中",
-  "since {0} · {1}": "自 {0} 起 · {1}",
   "{0, plural, one {# person in the period} other {# people in the period}}": "{0, plural, other {期间内 # 人}}",
   "{0, plural, one {# punch} other {# punches}}": "{0, plural, other {# 笔打卡记录}}",
   "{0, plural, one {# punch} other {# punches}} · {1}": "{0, plural, other {# 笔打卡记录}} · {1}",

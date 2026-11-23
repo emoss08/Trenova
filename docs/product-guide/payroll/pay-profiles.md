@@ -45,4 +45,4 @@ Keywords: retire pay profile, disable pay profile
 ## Notes
 Needs read access to driver pay profiles to open the page; creating and editing need the matching permissions. The page is only available when the organization has the Asset operations capability.
 
-A deactivated profile can no longer be assigned, but drivers already on it keep being paid under it. Drivers can also be assigned from the Pay tab on the worker in [Workers](/hr/workers).
+A deactivated profile can no longer be assigned, but drivers already on it keep being paid under it. Drivers can also be assigned from the **Pay profile** view of the **Pay** tab on the worker's page in [Workers](/hr/workers).

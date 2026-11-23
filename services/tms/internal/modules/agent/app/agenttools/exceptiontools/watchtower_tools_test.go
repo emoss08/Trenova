@@ -54,7 +54,7 @@ func TestDismissWatchtowerItem_LeavesAgentOversightForAPerson(t *testing.T) {
 
 	items := &fakeWatchtower{guard: &agenttoolstest.WriteGuard{}, item: &watchtower.Item{
 		ID:         pulid.MustNew("wti_"),
-		SourceKind: watchtower.SourceNoCheckCall,
+		SourceKind: watchtower.SourceKindNoCheckCall,
 		Severity:   watchtower.Severity("Warning"),
 		Title:      "No check call on SEED-SHP-010",
 		Version:    1,
@@ -80,7 +80,7 @@ func TestDismissWatchtowerItem_LeavesAgentOversightForAPerson(t *testing.T) {
 	assert.True(t, items.dismissed)
 
 	items.dismissed = false
-	items.item.SourceKind = watchtower.SourceAgentRunFailed
+	items.item.SourceKind = watchtower.SourceKindAgentRunFailed
 	require.Error(t, tool.Execute(t.Context(), params))
 	assert.False(t, items.dismissed)
 	require.Error(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(), params))

@@ -191,3 +191,21 @@ scenarios:
           rubric: >
             Says it cannot quote from here and where a quote is made in Trenova, offering what it
             can do (past loads on the lane, the rate agreement), without stating a price.
+
+  - name: two-loads-by-their-numbers
+    description: >
+      People name loads by their numbers. The number sent where shipment_get takes an id is read
+      as that load by the runtime, so the comparison is one call, never refused for the number
+      and never preceded by a lookup to find the ids.
+    agent: Dispatch desk
+    tags: [read]
+    steps:
+      - say: "put SEED-SHP-008 and SEED-SHP-010 side by side: status, customer, where each is going"
+        expect:
+          calls: [shipment_get]
+          noProposals: true
+          maxFailedCalls: 0
+          noRecordIds: true
+          rubric: >
+            Compares SEED-SHP-008 and SEED-SHP-010 by status, customer and destination, naming
+            each by its PRO number, without saying it could not find either load.

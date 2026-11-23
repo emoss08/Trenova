@@ -383,6 +383,7 @@ modules:
       - workerdot
       - workerinjury
       - workerleave
+      - workerpage
       - workerpolicy
       - workerreview
       - workersafety

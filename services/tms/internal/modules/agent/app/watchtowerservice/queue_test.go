@@ -35,7 +35,7 @@ func newHandOffFixture(t *testing.T) *handOffFixture {
 
 	in := input(
 		actor.TenantInfo(),
-		watchtower.SourceDetentionOccurrence,
+		watchtower.SourceKindDetentionOccurrence,
 		"dto_1",
 		watchtower.SeverityWarning,
 		100,
@@ -124,13 +124,13 @@ func TestMarkItemSeen_MarksTheItemForThisReaderOnly(t *testing.T) {
 	svc := newService(repo, &agenttest.StubPermissions{})
 	svc.projector.Upsert(
 		t.Context(),
-		input(tenant, watchtower.SourceInsight, "ins_1", watchtower.SeverityInfo, 300),
+		input(tenant, watchtower.SourceKindInsight, "ins_1", watchtower.SeverityInfo, 300),
 	)
 	svc.projector.Upsert(
 		t.Context(),
-		input(tenant, watchtower.SourceInsight, "ins_2", watchtower.SeverityInfo, 300),
+		input(tenant, watchtower.SourceKindInsight, "ins_2", watchtower.SeverityInfo, 300),
 	)
-	opened := repo.items[repo.key(watchtower.SourceInsight, "ins_1")]
+	opened := repo.items[repo.key(watchtower.SourceKindInsight, "ins_1")]
 
 	item, err := svc.MarkItemSeen(t.Context(), watchtowerports.GetWatchtowerItemRequest{
 		ID:         opened.ID,
@@ -242,7 +242,7 @@ func TestProjector_TakesTheSourcesDeadlineInsteadOfThePolicy(t *testing.T) {
 	svc := newService(repo, &agenttest.StubPermissions{})
 	in := input(
 		actor.TenantInfo(),
-		watchtower.SourceEtaAtRisk,
+		watchtower.SourceKindEtaAtRisk,
 		"shp_1",
 		watchtower.SeverityCritical,
 		100,
@@ -276,7 +276,7 @@ func TestProjector_RoutesAPolicyDueOnlyWhereNobodyChoseOne(t *testing.T) {
 	svc := newService(repo, &agenttest.StubPermissions{})
 	in := input(
 		actor.TenantInfo(),
-		watchtower.SourceInsight,
+		watchtower.SourceKindInsight,
 		"ins_1",
 		watchtower.SeverityWarning,
 		100,

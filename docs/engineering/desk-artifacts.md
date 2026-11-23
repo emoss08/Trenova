@@ -50,7 +50,11 @@ artifacts/
     <kind>/               one kind's body and everything only it uses: table,
                           report, document, extraction, edi-connection-draft,
                           analysis, portal, record, rate, diff, plan, email,
-                          view, decision, each with its __tests__/
+                          view, decision, board, each with its __tests__/
+    board/                also draws a board in the conversation as the reply
+                          (board-reply.tsx, handed to the thread lazily by
+                          board-reply-lazy.tsx), with the words both surfaces
+                          share (board-words.tsx)
   record-card/            the parts every card is built from: head, stepper, status,
                           sections, checks, timeline, a list's next page, the
                           "could not be read" head, bottom bar (record-card.tsx),
@@ -312,7 +316,7 @@ ask what the record looks like to the person who reads it, and draw that:
 
 | Card | Its own parts |
 | --- | --- |
-| Worker | hours of service as `RingGauge`s (`HosRings`, the tones from `hosClockTone`, as the worker panel draws them), credentials as a wallet of tiles, `tel:`/`mailto:` ways to reach them beside their record |
+| Worker | hours of service as `RingGauge`s (`HosRings`, the tones from `hosClockTone`, as the worker page draws them), credentials as a wallet of tiles, `tel:`/`mailto:` ways to reach them beside their record |
 | Order | its lifecycle as one segmented track, its legs down a numbered route, its charges as a ledger with what is invoiced against what is still to invoice, its references as chips |
 | Tractor | an ink dashboard of its last report (speed, heading, fuel ring, engine, odometer), its drivers as seats, a specification sheet |
 | Trailer | a service calendar a season back and a year ahead with each date its papers hang on, a data plate |
@@ -667,9 +671,139 @@ preview's payload.
 
 ## A board
 
-A `board` is an answer the agent laid out with `show_board`: a title, a verdict, and up to eight
-blocks (figures, records, compare, table, chart, timeline, checks, meter, prose, note, work,
-actions; two notes at most). The agent writes only words; every value is read by the server.
+A `board` is an answer the agent laid out with `show_answer` or `show_board`: a title, a verdict,
+and up to eight blocks (figures, records, compare, table, chart, timeline, checks, meter, prose,
+note, work, actions; two notes at most). The agent writes only words; every value is read by the
+server.
+
+- **`show_answer` is the small form.** Measured on Haiku 5.5, about two thirds of `show_board`
+  calls were refused by the board's own validation, so the answer in the conversation has a
+  tool of its own: `title` (80), `answer` (600), one to three `groups` (each a `title` of 60, 1 to
+  25 `records` of one kind a board takes, an optional `note` of 300), an optional `measure` and
+  at most two `actions`. `boardanswer.Translate` makes it a `board.Board` placed in the
+  conversation: the answer is the verdict, each group a records block (`half` when there are
+  two; three are stacked full width) with its note as the block's caption, and the actions an actions block. From there it is
+  the board's own path (`BoardRequest`, the recorder, fill, the `board` artifact, the turn ending
+  on it). Figures are a fixed vocabulary the server declares as readings: `{count}`, `{total}`,
+  `{largest}`, and with two or three groups `{count_1}` to `{count_3}`, `{total_1}` to
+  `{total_3}` and `{largest_1}` to `{largest_3}`, one per group (`_1` is also taken with one
+  group). The description spells each group's figures out and says a comparison puts each
+  record in a group of its own and writes `{total_1}` against `{total_2}`: written as
+  `{total_n}`, Haiku copied the `_n` literally, and with only the board-wide names it wrote
+  "{largest} against {total} across the two loads", one load's figure against the sum of both. `{total}` or `{largest}`
+  without a usable `measure` is refused, unless the records' kind has exactly one measure,
+  which is then used. A figure typed into the title, the answer, a group's title or a note is
+  held to the same standard as a reply that filed nothing, by the same code
+  (`replycheck.UnreadAmounts`, the grounding guard's `readFinding`): only money and percentages
+  are checked, each against what the conversation read and the person's own figures, with the
+  guard's rounding and the working the words show (a sum, difference, product or quotient of
+  figures they state, two steps, and the total of a list); a count, a duration ("4 days", "22
+  hours", "2d") or a time passes as it does in a reply. An amount nothing supports is refused,
+  naming it. A `measure` written as the field a tool result gave it is read as the measure it
+  means (`board.MeasureNamed`, the `named` column of the measure table: a shipment's
+  `totalCharge` is revenue, its `lateMinutes` lateness), for `show_board` too. An id whose body
+  the conversation read under another kind's prefix is refused saying what it is, and, when the
+  object that held it carries one id of the wanted kind, which id to send and by which field.
+  Repaired rather than refused: a `measure` the records' kind does not have is dropped, an unknown field is ignored, an empty second group is
+  dropped, actions past two and an action with no label or no ask are left off. Still refused:
+  no title, no answer, no records, more than two groups, records of mixed kinds or of a kind a
+  board does not take, a record no tool returned, text over its limit, an unknown `{name}`.
+- **A block's caption.** A block that reads data takes `caption` (`board.MaxCaptionRunes`, 300):
+  one plain line under its tab, with readings allowed (`Block.Caption`, filled as segments,
+  written in the brief in italics, `DeskBoardBlock.caption`).
+- **A board has a place.** `conversation` draws it in the conversation as the reply itself;
+  `beside` keeps it a page beside the conversation. `show_answer` is always `conversation`.
+  `show_board` takes an optional `place`, and the server decides (`board.PlaceFor`, in
+  `boardparse.Parse`): `conversation` only when asked for and the board holds at most
+  `board.MaxConversationBlocks` (4) blocks, otherwise `beside`, the default. `show_board`
+  repairs what it used to refuse: a field a block does not take is ignored, a figure that cannot
+  be read is left off (refused only when none of the block's figures can be), a reading with no
+  usable source is dropped unless the words place it, and the verdict takes 600 characters.
+  Typed figures in a board's words are still refused there. A board asked for in the conversation that does not fit is
+  put beside and its tool result says so; place is never a refusal. A stored board with no
+  place is beside (`Board.Placed`). The payload keeps it twice, as `board.place` and as a
+  top-level `place` that `assistantartifact.SummaryPayloadKeys` keeps in a thread's artifact
+  summaries, so the Desk knows which replies draw a board before any board is read. The tool
+  result's JSON carries it too: `{"artifactId","title","status":"shown","place"}`.
+- **Readings put figures in the words.** A board declares up to `board.MaxReadings` (6)
+  readings: a `key` (`^[A-Za-z][A-Za-z0-9_]{0,31}$`, case-sensitive: `{lateSix}` places the
+  reading declared as `lateSix`), a `label` and one source with the shape and rules
+  of a figure (a metric, records with a measure and an aggregate, or an analysis figure). The
+  verdict, a prose block and a note place one as `{key}`; it is the only way a figure reaches
+  the words, so `board.Figures` masks a `{key}` and still refuses a typed figure. A `{key}` no
+  reading declares, a `{key}` inside cited words `[...][n]` and a `{key}` in any other text
+  field (a title, a label, an action) are refused; a declared reading the words never place is
+  dropped. A reading's records, metric and analysis count as the board's own everywhere
+  (`Board.Records`, the unread-record refusal, `MaxBoardRecords`, the permission checks). Filled,
+  each reading has its value, its `was` when it moved since the answer (snapshot key
+  `board.ReadingKey`), its source, measure and aggregate; a reading the reader may not read or
+  that could not be read has no value. A segment that places a reading carries its key, and
+  its text is the value as answered (`Filled.WriteReadings`), so the sentence keeps what was
+  answered while the readings are live. The brief and Copy as text write each value in, with
+  "(now …)" after one that moved, and `—` for one that could not be read.
+- **A board in the conversation is the reply.** Its turn ends on it (see "A board in the
+  conversation ends the turn" in [agent-runtime.md](agent-runtime.md)), and the reply the
+  conversation records is made by the server: the verdict with each reading's value written in
+  and the cite marks removed (`boardmarkdown.Answer`), with the artifact link attached in
+  parentheses before its closing punctuation (`replycheck.AttachRef`), so the link stands
+  inside the sentence.
+  That text is what search, exports, other surfaces and the next turn read.
+- **Figures say what they measure, and only what is true.** One record's own figure names its
+  measure and the record, by the number a tool result gave it: `{revenue:SEED-SHP-010}`,
+  `{lateness:SEED-SHP-008}` (either order; `boardrecords.Read.FigureNumbers` reads the number as
+  the record's id, and `boardanswer/figures.go` declares a reading keyed `revenue_of_1`, the
+  record's place on the board, aggregate max over that one record). That is how records are
+  compared, and one answer reads as many measures as it needs. Any other figure may name its
+  measure after a colon (`{total:revenue}`); the rows keep the answer's `measure` (or, with none,
+  the first named one), and a measure the kind does not have is refused naming the ones it has.
+  Two live failures led here. "brings in more: {largest} against {total}" under
+  `measure: lateness` drew "4d 3h against 6d 7h": one measure in the other's sentence, and time
+  added across two loads. With per-group figures (`{total_1:revenue}` against
+  `{total_2:revenue}`) Haiku took the groups the wrong way round in two of three trials,
+  drawing "SEED-SHP-008 brings in $4,925.00". So a group figure (`{total_n}`, `{largest_n}`) of
+  a group that holds one record is rewritten as the figure of the record its clause names
+  (`boardrecords.Read.GroupFigures`: the nearest number in the same clause, split at commas,
+  semicolons and words such as "and", "against", "while", else the last number earlier in the
+  sentence, else the group's own record); the translator refuses any such figure it is still
+  handed. Time is never summed across records (`board.Measure.Summable`: lateness, age and
+  pending time are durations): `{total}` of a duration over more than one record is refused
+  with what to write ({largest}, a record's own figure, or an amount's measure), and
+  `show_board` refuses an `aggregate: sum` of a duration over several records. A sum over one
+  record is that record's value, labelled "Time behind". `{count}` counts only the records
+  shown, so it is refused when they come from a result that holds more (`hasMore`, or `total`
+  above `count`; `boardrecords.Read.Longer`), naming the list's own number when the result gave
+  one and offering a group's count for "of them"; `show_board` holds count readings and figures
+  to the same rule. A refusal's example number (`A-1001`) is replaced by the number of a record
+  the call shows (`Read.WithExample`), so the model is shown its own record.
+- **A board shows the records its words name.** Records in `show_answer` and `show_board` are
+  ids, but a record number written where an id goes (`records`, a timeline's `record`) is read
+  as the record a tool result in this conversation gave that number, when exactly one did
+  (`boardrecords.Read.Numbers`; a row that carries `shipmentId` with `proNumber`, or `invoiceId`
+  with `invoiceNumber`, such as a dispatch board's move or a receivables row, gives its record's
+  number too), and a `groups`, `actions`, `blocks` or `readings` list sent as JSON text is read
+  as the list it holds (`boardrecords.DecodeLists`). Words (title, verdict or answer, block and group titles, prose,
+  captions and notes, checks) that name, as whole words, a record a tool result returned, of a
+  kind the board shows, that no group or block holds, would state something about a record the
+  board does not show: a board titled "SEED-SHP-010 and SEED-SHP-008 compared" once showed
+  SEED-SHP-010 and SEED-SHP-001, the id the model misremembered for SEED-SHP-008. When the
+  repair is one for one (one record named and not shown, exactly one shown record of that kind
+  that the words never name, every label known), the named record takes that one's place
+  everywhere the call names it (`boardrecords.Read.SwapFor`, `Swap.Apply`); otherwise the call
+  is refused naming the number, its kind and its id. The repaired call is the outcome's
+  `RanWith`, which the durable publish step is sent in place of the model's call
+  (`agentflow.workflowEffects.Observe`), so both paths build the same board; the model's own
+  call stays as it sent it.
+- **How a board comes to be shown.** Only the model shows one, by calling `show_answer` or
+  `show_board`; nothing
+  turns a prose reply into a board. Three things steer it there: the prompt says when a board is
+  the answer (`artifactSection`, `buildOutputSection`), a tool result holding two or more records
+  of kinds a board takes ends with a note naming `show_answer`, after the table note, which it overrides
+  for an answer across records (`replycheck.WithBoardNote`), and a reply that names two or more such records
+  in prose, with no kept table reprinted and either no artifact linked or the records written out
+  beside the link (every row of a kept table of records, or records the turn itself looked up), is
+  sent back once for a board (`replycheck.AskForBoard`).
+  Both are described under "Steering an answer onto a board" in
+  [agent-runtime.md](agent-runtime.md); a model that still answers in prose is taken at its word.
 
 - **Work and actions turn an answer into work.** A `work` block names up to 12 records of one kind
   and is filled, in the board's one read, with what is open about each from Needs you
@@ -718,12 +852,72 @@ actions; two notes at most). The agent writes only words; every value is read by
   its phrases highlighted and numbered), a dotted desk of exhibits on folder tabs naming where
   each was read, notes on folded slips, and a foot that lists what each numeral read and copies
   the board as text. Records open in place as their own cards (`recordCardFor`) when the reader
-  may read the kind, else link to their page. There are no actions on a board. A half block
-  pairs with its neighbour; one left alone draws full width (`halfBlocks`).
+  may read the kind, else link to their page. An actions block is its buttons, the first solid
+  and the rest quiet (`BoardActions`). A half block pairs with its neighbour; one left alone
+  draws full width (`halfBlocks`).
+- **One words component.** `BoardWords` (`board-words.tsx`) draws every run of a board's words
+  (the verdict, a prose block, a note, an exhibit's caption) in the pane and in the conversation.
+  A caption is one plain line under the exhibit's tab, above its source line, drawn only when the
+  block has one: a cited phrase marked
+  and numbered, and a reading as a button whose popover (the shared `Popover`, opening on hover
+  and on press, on `deskPopoverClass`) says its label, where it was read from with the aggregate
+  in words (`readingSource`: counted, summed, the largest), and when it was read and that it was
+  read with the reader's access. A reading that moved keeps the value answered in the sentence,
+  marked amber, and its popover says what it was when answered and what it is now. A reading
+  with no value is said in words where it would stand (`lockedReading`: "an amount you may not
+  read", "a count that could not be read"), never a blank or a zero.
+- **In the conversation the board is the reply.** The Desk's conversation supplies a renderer
+  through `ReplyBoardsProvider` (`components/assistant/artifact-opener.tsx`), lazily
+  (`board-reply-lazy.tsx`, read while the Desk is idle); `components/desk-chat` never imports a
+  route. `replyBoardsByEntry` (`desk-chat/conversation/reply-boards.ts`) works out from the thread
+  which replies draw a board: a turn's `show_answer` and `show_board` calls
+  (`BOARD_CALL_TOOLS`, `lib/board-place.ts`), the artifact each made (`sourceToolCallId`), kept when its stored place is `conversation` (`boardPlaceOf`, which reads
+  the summary's `place`) and it is the newest version of its lineage, drawn by the reply of that
+  turn whose words link one of them (the reply the server wrote, which ends the turn). That reply
+  draws the boards (`board-reply.tsx`) and not its words: the verdict in the conversation's own
+  prose (no title, question or byline), each block as an exhibit drawn by the board's own block
+  parts inside a container query, two half blocks side by side and stacked under 34rem, prose
+  and notes as the board draws them, actions as `BoardActions`, a list cut to six rows with "n
+  more on the board" (`cutRows`), and "Open the board", which opens the same artifact in the
+  pane through the artifact opener. A record that opens in place on the board opens the board
+  there: the pane cannot yet be opened at one record. Hovering or focusing a cited phrase or its
+  numeral lights the exhibit it cites (`dk-bd-lit`), and nothing changes size. Every other
+  surface (the page assistant, the assistant panel, the inbox hand-off, the margin) supplies no
+  renderer and draws the reply's words, which already say the answer and link the board.
+- **Read only on screen, once.** A reply's board is not read until the reply comes within 600px
+  of the viewport (`useInView`), and it reads `board.deskCard(threadId, artifactId)`, the pane's
+  own entry, so opening the board beside the conversation reads nothing again. While it is read,
+  the reply draws the words as the call wrote them with a blank for each reading and every
+  block's skeleton in its place, a caption written with blanks (`ExhibitSketch`, `WordsSketch`).
+  The layout comes from the call's arguments in its tool's shape (`callLayoutFrom`): a
+  show_board call's are a board (`boardLayoutFrom`); a show_answer call's are translated as the
+  server builds its board (`answerLayoutFrom`: the answer as the verdict, a records block per
+  group with its title, side by side when there are two, its note as the caption, an actions
+  block when there are actions, and a reading for each `ANSWER_FIGURES` name the words place).
+  The running turn draws the same from its call
+  (`pendingReplyBoard`) until the saved reply takes over, with only the words written before the
+  call: the reply the server streams after it never shows as words. A finished call's place is
+  read from the board the thread lists, or guessed as `board.PlaceFor` decides while only the turn
+  has announced it (a show_answer board is always in the conversation; a show_board board only
+  when its call asked for the conversation and holds at most four blocks), never from its result, which the runtime fences as untrusted data. Once the
+  call's reply is saved, the running turn draws nothing of it, so the skeleton and the saved
+  reply's board are never on screen together. The saved reply lands before the artifact list
+  catches up; until it does, a turn's one unlisted board call whose board the conversation takes
+  is drawn by the artifact its reply links, so the reply never shows as words in
+  between. A board that cannot be read draws the reply's words, a notice where the exhibits
+  stand and Try again.
+- **Arriving.** A reply that lands while the person watches (the newest reply, mounted after the
+  thread's history settled; `DeskReply` settles it when it mounts, so the lazy board code loading
+  later never decides it) arrives on the mockup's beat (`boardArrival`, 240ms apart): the words
+  phrase by phrase (`wordPieces`), then each block rising (`dk-bd-arrive`), its rows following, and
+  the readings landing (`dk-bd-land`). A reply read from history is drawn at once, and reduced
+  motion shows the end state.
 
 The mock API's `athr_desk_board` conversation (`handlers/deskboard.mjs`, the `deskBoard`
-scenario: live, moved, reading) serves three boards, and
-`e2e/mock-api/desk-board-screenshots.mjs` shoots them.
+scenario: live, moved, reading) serves three boards beside the conversation, and
+`athr_desk_board_inline` five in it, one made by `show_answer` with captions (live, moved,
+reading, locked, unreadable, and a revision whose earlier reply goes back to its words); `e2e/mock-api/desk-board-screenshots.mjs` shoots
+them.
 
 ## How a row opens in place
 

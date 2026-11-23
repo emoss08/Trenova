@@ -2,7 +2,7 @@ import { Link } from "@trenova/shared/components/link";
 import { useT } from "@trenova/shared/i18n/use-t";
 import type { OshaLogCase } from "@/lib/graphql/worker-injury";
 import { caseLabel, illnessTypeNumber, logColumn } from "@/lib/osha-log";
-import { workerRecordHref } from "@/lib/route-utils";
+import { workerPath } from "@/routes/worker/use-worker-state";
 import { Avatar, AvatarFallback, AvatarImage } from "@trenova/shared/components/ui/avatar";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -107,7 +107,7 @@ function CaseDetail({
 
       <div className="flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto px-4 pb-2">
         <Link
-          to={workerRecordHref(entry.workerId, "safety")}
+          to={workerPath(entry.workerId, { tab: "safety" })}
           className="hover:bg-accent -mx-2 flex items-center gap-2.5 rounded-md px-2 py-1.5 transition-colors"
         >
           <Avatar size="sm">

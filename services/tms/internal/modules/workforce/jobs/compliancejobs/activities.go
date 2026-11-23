@@ -17,6 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workersafetyservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workertrainingservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerpage"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workercredentialports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerdotports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workersafetyports"
@@ -43,7 +44,6 @@ const (
 	eventDriverExpiring     = "dash.credential_expiring"
 	eventComplianceExpiring = "credential_expiring"
 	eventComplianceExpired  = "credential_expired"
-	complianceLink          = "/hr/workers?tab=credentials"
 )
 
 // reminderSteps are the days-until-expiry marks at which a driver and the
@@ -417,7 +417,14 @@ func (a *Activities) alertCompliance(
 		BusinessUnitID: &buID,
 		EventType:      eventType,
 		Channel:        notification.ChannelGlobal,
-		Data:           map[string]any{"link": complianceLink, "workerId": cred.WorkerID.String()},
+		Data: map[string]any{
+			"link": workerpage.Path(
+				cred.WorkerID,
+				workerpage.AtView(workerpage.TabQualification, workerpage.ViewCredentials).
+					WithRecord(workerpage.RecordCredential, cred.ID),
+			),
+			"workerId": cred.WorkerID.String(),
+		},
 		RelatedEntities: map[string]any{
 			"workerId":     cred.WorkerID.String(),
 			"credentialId": cred.ID.String(),

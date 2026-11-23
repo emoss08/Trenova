@@ -111,13 +111,6 @@ func TestParseRefusesWhatABoardCannotDraw(t *testing.T) {
 			},
 			want: "blocks[1].type must be one of",
 		},
-		"a field another block takes": {
-			mutate: func(args map[string]any) {
-				blocks := args["blocks"].([]any)
-				blocks[1].(map[string]any)["chart"] = 1.0
-			},
-			want: `blocks[2] is a records block, which takes no "chart"`,
-		},
 		"a measure of another record": {
 			mutate: func(args map[string]any) {
 				blocks := args["blocks"].([]any)
@@ -170,30 +163,6 @@ func TestParseRefusesWhatABoardCannotDraw(t *testing.T) {
 				args["blocks"] = append(args["blocks"].([]any), note, note)
 			},
 			want: "at most 2 notes",
-		},
-		"an unknown metric": {
-			mutate: func(args map[string]any) {
-				blocks := args["blocks"].([]any)
-				figures := blocks[0].(map[string]any)["figures"].([]any)
-				figures[2].(map[string]any)["metric"] = "profitToday"
-			},
-			want: `metric "profitToday" is not one of`,
-		},
-		"a figure with two sources": {
-			mutate: func(args map[string]any) {
-				blocks := args["blocks"].([]any)
-				figures := blocks[0].(map[string]any)["figures"].([]any)
-				figures[2].(map[string]any)["records"] = ids("shp_", 1)
-			},
-			want: "needs exactly one source",
-		},
-		"a sum without a measure": {
-			mutate: func(args map[string]any) {
-				blocks := args["blocks"].([]any)
-				figures := blocks[0].(map[string]any)["figures"].([]any)
-				delete(figures[1].(map[string]any), "measure")
-			},
-			want: "aggregate max needs a measure",
 		},
 		"a meter of a block that is not checks": {
 			mutate: func(args map[string]any) {
@@ -351,4 +320,120 @@ func TestParseTakesUpToEightFiguresInABlock(t *testing.T) {
 
 	_, problems = boardparse.Parse(figuresBoard(board.MaxFigures + 1))
 	assert.Contains(t, strings.Join(problems, "\n"), "blocks[1].figures needs 1 to 8 figures")
+}
+
+func TestParseRepairsWhatABoardCanDoWithout(t *testing.T) {
+	t.Parallel()
+
+	cases := map[string]func(map[string]any){
+		"a field another block takes": func(args map[string]any) {
+			args["blocks"].([]any)[1].(map[string]any)["chart"] = 1.0
+		},
+		"an unknown metric": func(args map[string]any) {
+			figures := args["blocks"].([]any)[0].(map[string]any)["figures"].([]any)
+			figures[2].(map[string]any)["metric"] = "profitToday"
+		},
+		"a figure with two sources": func(args map[string]any) {
+			figures := args["blocks"].([]any)[0].(map[string]any)["figures"].([]any)
+			figures[2].(map[string]any)["records"] = ids("shp_", 1)
+		},
+		"a figure with no source": func(args map[string]any) {
+			figures := args["blocks"].([]any)[0].(map[string]any)["figures"].([]any)
+			delete(figures[2].(map[string]any), "metric")
+		},
+	}
+	for name, mutate := range cases {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			args := lateBoard()
+			mutate(args)
+			parsed, problems := boardparse.Parse(args)
+
+			require.Empty(t, problems)
+			if name != "a field another block takes" {
+				assert.Len(t, parsed.Blocks[0].Figures, 2, "the figure it cannot read is left off")
+			}
+		})
+	}
+}
+
+func TestParseRefusesAFiguresBlockWithNoFigureItCanRead(t *testing.T) {
+	t.Parallel()
+
+	args := lateBoard()
+	args["blocks"].([]any)[0].(map[string]any)["figures"] = []any{
+		map[string]any{"label": "Profit", "metric": "profitToday"},
+	}
+	_, problems := boardparse.Parse(args)
+
+	assert.Contains(t, strings.Join(problems, "\n"), `metric "profitToday" is not one of`)
+}
+
+func TestParseReadsACaptionWithAReadingInIt(t *testing.T) {
+	t.Parallel()
+
+	args := lateBoard()
+	shipments := args["blocks"].([]any)[1].(map[string]any)["records"]
+	args["readings"] = []any{map[string]any{
+		"key": "furthest", "label": "Furthest behind", "records": shipments,
+		"measure": "lateness", "aggregate": "max",
+	}}
+	args["blocks"].([]any)[1].(map[string]any)["caption"] = "The **furthest** is {furthest} behind."
+	args["blocks"].([]any)[3].(map[string]any)["caption"] = "A note takes no caption."
+	parsed, problems := boardparse.Parse(args)
+
+	require.Empty(t, problems)
+	assert.Equal(t, "The furthest is {furthest} behind.", parsed.Blocks[1].Caption)
+	assert.Empty(t, parsed.Blocks[3].Caption)
+	require.Len(t, parsed.Readings, 1, "a reading placed only in a caption is kept")
+}
+
+func TestParseRefusesACaptionThatTypesAFigureOrRunsLong(t *testing.T) {
+	t.Parallel()
+
+	typed := lateBoard()
+	typed["blocks"].([]any)[1].(map[string]any)["caption"] = "Six are 3h behind."
+	_, problems := boardparse.Parse(typed)
+	assert.Contains(t, strings.Join(problems, "\n"), "blocks[2].caption states")
+
+	long := lateBoard()
+	long["blocks"].([]any)[1].(map[string]any)["caption"] = strings.Repeat("late ", 61)
+	_, problems = boardparse.Parse(long)
+	assert.Contains(t, strings.Join(problems, "\n"),
+		"blocks[2].caption is longer than 300 characters")
+}
+
+func TestParseTakesAVerdictOfSixHundredCharacters(t *testing.T) {
+	t.Parallel()
+
+	args := lateBoard()
+	args["verdict"] = strings.Repeat("Held. ", 100)
+	_, problems := boardparse.Parse(args)
+	assert.Empty(t, problems)
+
+	args["verdict"] = strings.Repeat("Held. ", 101)
+	_, problems = boardparse.Parse(args)
+	assert.Contains(t, strings.Join(problems, "\n"), "verdict is longer than 600 characters")
+}
+
+func TestParseReadsAMeasureByTheFieldNameAToolResultGave(t *testing.T) {
+	t.Parallel()
+
+	args := lateBoard()
+	blocks := args["blocks"].([]any)
+	blocks[1].(map[string]any)["measure"] = "totalCharge"
+	figures := blocks[0].(map[string]any)["figures"].([]any)
+	figures[1].(map[string]any)["measure"] = "lateMinutes"
+	parsed, problems := boardparse.Parse(args)
+
+	require.Empty(t, problems)
+	assert.Equal(t, board.MeasureRevenue, parsed.Blocks[1].Measure)
+	assert.Equal(t, board.MeasureLateness, parsed.Blocks[0].Figures[1].Measure)
+
+	unknown := lateBoard()
+	unknown["blocks"].([]any)[1].(map[string]any)["measure"] = "daysPastDue"
+	_, problems = boardparse.Parse(unknown)
+	assert.Contains(t, strings.Join(problems, "\n"),
+		"blocks[2].measure for a shipment is one of lateness, revenue")
 }

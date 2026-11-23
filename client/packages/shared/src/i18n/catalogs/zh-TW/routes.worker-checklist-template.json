@@ -20,6 +20,7 @@
   "Required items must settle before the checklist closes.": "必要項目須先結清，檢查清單才會關閉。",
   "Select a kind": "選擇種類",
   "Select a team": "選擇團隊",
+  "Select an event": "選擇事件",
   "Short unique identifier; saved in uppercase.": "簡短的唯一識別碼；會以大寫儲存。",
   "Shown as the line the owner ticks off on the worker's checklist.": "在駕駛員的檢查清單上，顯示為負責人勾選的項目。",
   "Shown on the worker's Checklist tab once a checklist is started from this template.": "自此範本啟動檢查清單後，會顯示在駕駛員的「檢查清單」分頁上。",

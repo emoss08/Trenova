@@ -6,6 +6,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/replycheck"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimetest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimetools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/toolaccess"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/toolresult"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -175,4 +177,52 @@ func TestFoldReplaced_PointsAnUnreadResultAtTheTableItsCardWentInto(t *testing.T
 	assert.NotContains(t, turn.messages[2].Content, unread.ID.String())
 	require.Len(t, turn.artifacts, 1)
 	assert.Equal(t, table.ID, turn.artifacts[0].ID)
+}
+
+func TestFoldReplaced_FoldsAResultWhoseBoardNoteComesLast(t *testing.T) {
+	t.Parallel()
+
+	card := &agentruntimeports.ShownArtifact{
+		ID: pulid.MustNew("art_"), Kind: "entity_card", Title: "Driver settlement",
+	}
+	table := &agentruntimeports.ShownArtifact{
+		ID:       pulid.MustNew("art_"),
+		Kind:     "table_view",
+		Title:    "Driver settlements (2)",
+		Rows:     2,
+		Replaces: []pulid.ID{card.ID},
+	}
+	tools := &toolaccess.ToolSet{Loaded: map[string]struct{}{"show_answer": {}}}
+	list := toolresult.Fence("driver_settlement_list", `{"items":[`+
+		`{"id":"wrk_01JWORK000000000000000001","firstName":"Jane","lastName":"Doe"},`+
+		`{"id":"wrk_01JWORK000000000000000002","firstName":"Sarah","lastName":"Williams"}]}`)
+	shown := list + runtimetools.ShownNote(card)
+	content := replycheck.WithBoardNote(
+		&Turn{
+			req:       &agentruntimeports.RunRequest{},
+			tools:     tools,
+			artifacts: []agentruntimeports.ShownArtifact{*card},
+		},
+		"driver_settlement_list", shown, false, nil,
+	)
+	require.NotEqual(t, shown, content, "the result carries a board note after the shown note")
+	board := content[len(shown):]
+
+	turn := &Turn{
+		tools: tools,
+		messages: []llmports.Message{
+			{Role: llmports.RoleAssistant},
+			{Role: llmports.RoleTool, ToolCallID: "call_list", Content: content},
+		},
+		artifacts: []agentruntimeports.ShownArtifact{*card, *table},
+		result: &agentruntimeports.RunResult{Messages: []conversation.Message{
+			{Role: conversation.RoleTool, ToolCallID: "call_list", Content: content},
+		}},
+	}
+
+	turn.foldReplaced(table)
+
+	folded := list + runtimetools.FoldedNote(table) + board
+	assert.Equal(t, folded, turn.messages[1].Content)
+	assert.Equal(t, folded, turn.result.Messages[0].Content)
 }

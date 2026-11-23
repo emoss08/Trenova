@@ -13,8 +13,18 @@ type DeskBoardCard {
   question: String!
   answeredAt: Timestamp!
   readAt: Timestamp!
-  "The answer in a sentence or two, split where it cites a block."
+  """
+  Where the board is drawn: conversation (in the conversation, as the reply of
+  the turn that showed it) or beside (a page beside the conversation).
+  """
+  place: String!
+  """
+  The answer in a sentence or two, split where it cites a block and where it
+  places a reading.
+  """
   verdict: [DeskBoardSegment!]!
+  "The figures the board's words place, each read now and kept as answered."
+  readings: [DeskBoardReading!]!
   blocks: [DeskBoardBlock!]!
   "The board as it reads now, in markdown: what Copy as text copies."
   markdown: String!
@@ -23,13 +33,35 @@ type DeskBoardCard {
 """
 A run of words, and the block it cites when it cites one: the block's numeral,
 whether the block holds something to act on (warn) or not (info), and whether
-it could not be read.
+it could not be read. A segment that places a reading names its key, and its
+text is the reading's value as answered, empty when it could not be read.
 """
 type DeskBoardSegment {
   text: String!
   numeral: Int!
   tone: String!
   struck: Boolean!
+  "The key of the reading the segment places; empty when it places none."
+  reading: String!
+}
+
+"""
+A figure the board's words place as {key}: what it reads, its value now, the
+value it had when the board was shown when it has moved since, and where it was
+read from.
+"""
+type DeskBoardReading {
+  key: String!
+  label: String!
+  "Absent when the reader may not read it or it could not be read."
+  value: DeskBoardValue
+  "What it was when the board was shown, when it has moved since."
+  was: DeskBoardValue
+  source: DeskBoardSource!
+  "The records' measure it adds up; empty for a metric or an analysis figure."
+  measure: String!
+  "count, sum or max over the records; empty for a metric or an analysis figure."
+  aggregate: String!
 }
 
 """
@@ -201,6 +233,8 @@ type DeskBoardBlock {
   checks: [DeskBoardCheck!]!
   meter: DeskBoardMeter
   text: [DeskBoardSegment!]!
+  "One plain line under the exhibit's tab, with readings placed in it; empty when the block has none."
+  caption: [DeskBoardSegment!]!
   noteTone: String!
   chips: [DeskBoardRow!]!
   work: [DeskBoardWorkRow!]!

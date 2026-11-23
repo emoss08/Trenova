@@ -2056,6 +2056,11 @@ var enumKind = [...]schema.EnumValue{
 	{Value: `notification.shipment_comment_mention`, Label: `Notification Comment Mention`, Doc: `KindNotificationCommentMention tells someone they were named in a comment.`},
 	{Value: `notification.shipment_comment_reply`, Label: `Notification Comment Reply`, Doc: `KindNotificationCommentReply tells someone their comment got a reply.`},
 	{Value: `notification.record_shared`, Label: `Notification Record Shared`, Doc: `KindNotificationRecordShared tells someone a teammate shared a record with them.`},
+	{Value: `notification.email`, Label: `Notification Email`},
+	{Value: `notification.digest.email`, Label: `Notification Digest Email`},
+	{Value: `triage.reply.email`, Label: `Triage Reply Email`},
+	{Value: `mailbox.test.email`, Label: `Mailbox Test Email`},
+	{Value: `emailprofile.test.email`, Label: `Email Profile Test Email`},
 }
 
 var enumOrientation = [...]schema.EnumValue{

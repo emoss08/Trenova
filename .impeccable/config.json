@@ -125,6 +125,15 @@
         ],
         "createdAt": "2026-11-20T11:29:00.694Z",
         "reason": "Approved mockup (user approved the edi-sim viewer artifact 2026-11-20): the 2px rule ties an X12 finding note to the flagged segment above it, a code-review margin note, not a card accent"
+      },
+      {
+        "rule": "cramped-padding",
+        "value": "*",
+        "files": [
+          ".claude/tmp/worker-page-mockup.html"
+        ],
+        "createdAt": "2026-11-22T22:36:22.568Z",
+        "reason": "user confirmed: keycap and segmented-control padding match the product's own components (2026-11-22)"
       }
     ]
   }

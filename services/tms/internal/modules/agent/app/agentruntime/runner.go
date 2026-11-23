@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/delegation"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/loopguard"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/modelstream"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/recordnumbers"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/replycheck"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimetools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/scriptbroker"
@@ -74,6 +75,8 @@ type Params struct {
 	Previews agentruntimeports.ProposalPreviewService
 	// Labels names the records a read was narrowed by, for the step a person reads.
 	Labels agentruntimeports.RecordLabeler
+	// A record's own number sent where its id belonged is read as that record.
+	Numbers *recordnumbers.Resolver
 	// A tool an organization holds lower than its declared rule is decided and tainted by the
 	// organization's rule.
 	Rules agenttoolports.ToolRuleOverrides
@@ -139,6 +142,7 @@ func dispatcherParams(p *Params) tooldispatch.DispatcherParams {
 		Trust:       p.Trust,
 		Previews:    p.Previews,
 		Labels:      p.Labels,
+		Numbers:     p.Numbers,
 		Rules:       p.Rules,
 		CodeMode:    tooldispatch.CodeModeGate(p.AppConfig),
 		Shadow:      tooldispatch.ShadowFrom(p.Shadow),
@@ -194,6 +198,8 @@ type driveLoop struct {
 	grounding   replycheck.GroundingState
 	commandHeld bool
 	placement   replycheck.PlacementState
+	boardAsk    replycheck.BoardAskState
+	board       *agentruntimeports.ShownArtifact
 }
 
 // driveStep is how a round ended: done ends the turn with result and err,
@@ -247,7 +253,11 @@ func (s *Service) driveRound(t *Turn, effects TurnEffects, loop *driveLoop) driv
 	}
 
 	s.recordAssistantTurn(t, effects, completion)
-	if s.runToolCalls(t, effects, loop, completion) {
+	asked := s.runToolCalls(t, effects, loop, completion)
+	if loop.board != nil {
+		return finished(s.boardEnding(t, effects, completion, loop.board))
+	}
+	if asked {
 		return finished(s.finish(result, askedEnding(completion), effects))
 	}
 
@@ -329,6 +339,11 @@ func (s *Service) driveReply(
 	}
 	if !loop.asked && s.holdToCommand(t, effects, completion, &loop.commandHeld) {
 		s.reask(t, effects, ReaskCommand, completion)
+		return driveStep{}
+	}
+	if back, ask := replycheck.AskForBoard(t, completion, &loop.boardAsk); ask {
+		t.sendBack(effects, back)
+		s.reask(t, effects, ReaskBoard, completion)
 		return driveStep{}
 	}
 	if s.reground(t, effects, completion, &loop.grounding) {
@@ -484,7 +499,10 @@ func (s *Service) runToolCall(t *Turn, effects TurnEffects, loop *driveLoop, rc 
 
 	if outcome, handled := runtimetools.Answer(t, t.tools.Offers, call); handled {
 		t.result.ToolCallsUsed++
-		s.recordToolResult(t, effects, call, &outcome)
+		observed := s.recordToolResult(t, effects, call, &outcome)
+		if shown := runtimetools.ConversationBoard(&observed); shown != nil {
+			loop.board = shown
+		}
 		return false
 	}
 
@@ -828,7 +846,7 @@ func (s *Service) recordToolResult(
 	effects TurnEffects,
 	call *llmports.ToolCall,
 	reported *toolcall.Result,
-) {
+) toolcall.Result {
 	result := t.result
 	if reported.Failed && !reported.Dispatched && reported.Verdict != "" {
 		result.LoopRefusals = append(result.LoopRefusals, agentruntimeports.LoopRefusal{
@@ -849,6 +867,9 @@ func (s *Service) recordToolResult(
 	s.countToolOutcome(t, effects, call.Name, &outcome)
 	t.keepShown(&outcome)
 	t.foldReplaced(outcome.Shown)
+	outcome.Content = replycheck.WithBoardNote(
+		t, call.Name, outcome.Content, outcome.Failed, outcome.Shown,
+	)
 	effect := s.access.ToolEffect(call.Name)
 	summary := toolsummary.Outcome(call, &outcome)
 	var records []agentpagecontext.EntityRef
@@ -898,6 +919,8 @@ func (s *Service) recordToolResult(
 		IsError:        outcome.Failed,
 		ToolReferences: t.tools.TakeLoaded(),
 	})
+
+	return outcome
 }
 
 // NewCallID mints a tool call id no provider will have used.
@@ -969,6 +992,19 @@ func askedEnding(asking *llmports.ChatCompletionResult) *llmports.ChatCompletion
 		ProviderKind:    asking.ProviderKind,
 		ContextWindow:   asking.ContextWindow,
 	}
+}
+
+func (s *Service) boardEnding(
+	t *Turn,
+	effects TurnEffects,
+	showing *llmports.ChatCompletionResult,
+	shown *agentruntimeports.ShownArtifact,
+) *agentruntimeports.RunResult {
+	ending := askedEnding(showing)
+	ending.Text = runtimetools.BoardReply(shown)
+	effects.Emit(modelstream.DeltaEvent(ending.Text))
+
+	return s.finish(t.result, ending, effects)
 }
 
 // truncationNotice marks a reply the provider stopped partway through.

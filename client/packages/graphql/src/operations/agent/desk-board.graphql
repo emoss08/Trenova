@@ -8,17 +8,51 @@ query DeskBoardCard($threadId: ID!, $artifactId: ID!) {
     answeredAt
     readAt
     markdown
+    place
     verdict {
       text
       numeral
       tone
       struck
+      reading
+    }
+    readings {
+      key
+      label
+      value {
+        kind
+        number
+        currency
+        text
+      }
+      was {
+        kind
+        number
+        currency
+        text
+      }
+      source {
+        kind
+        resource
+        count
+        readable
+        title
+      }
+      measure
+      aggregate
     }
     blocks {
       type
       title
       half
       numeral
+      caption {
+        text
+        numeral
+        tone
+        struck
+        reading
+      }
       state
       tone
       source {
@@ -170,6 +204,7 @@ query DeskBoardCard($threadId: ID!, $artifactId: ID!) {
         numeral
         tone
         struck
+        reading
       }
       noteTone
       chips {

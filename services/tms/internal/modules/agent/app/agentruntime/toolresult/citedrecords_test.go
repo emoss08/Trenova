@@ -102,3 +102,53 @@ func TestCitedRecordsStopsAtTheCap(t *testing.T) {
 
 	require.Len(t, CitedRecords(b.String()), maxCitedRecords)
 }
+
+const fencedShipments = `{"items":[` +
+	`{"id":"shp_01","proNumber":"S-240193","customer":{"id":"cus_01","name":"Acme Foods"}},` +
+	`{"id":"shp_02","proNumber":"S-240201","moves":[{"id":"sm_01","assignment":` +
+	`{"primaryWorker":{"id":"wrk_01","firstName":"Leon","lastName":"Park"}}}]},` +
+	`{"id":"shp_03","status":"Delayed"}` +
+	`],"total":3}`
+
+func storedResult() string {
+	return Fence("shipment_list", fencedShipments) +
+		"\n\n[This view is kept beside the conversation as \"Late shipments\".]"
+}
+
+func TestCitedRecordsReadsAStoredResultInsideItsFence(t *testing.T) {
+	t.Parallel()
+
+	require.ElementsMatch(t, []agentpagecontext.EntityRef{
+		{Type: "shipment", ID: "shp_01", Label: "S-240193"},
+		{Type: "customer", ID: "cus_01", Label: "Acme Foods"},
+		{Type: "shipment", ID: "shp_02", Label: "S-240201"},
+		{Type: "worker", ID: "wrk_01", Label: "Leon Park"},
+	}, CitedRecords(storedResult()))
+	require.Nil(t, CitedRecords(FenceFailure("shipment_list", fencedShipments)))
+}
+
+func TestReturnedRecordsAreTheResultsOwnRecordsAndNotTheirRelations(t *testing.T) {
+	t.Parallel()
+
+	require.Equal(t, []agentpagecontext.EntityRef{
+		{Type: "shipment", ID: "shp_01", Label: "S-240193"},
+		{Type: "shipment", ID: "shp_02", Label: "S-240201"},
+		{Type: "shipment", ID: "shp_03", Label: ""},
+	}, ReturnedRecords(storedResult()), "a record the result gives no label is still returned")
+	require.Equal(t, []agentpagecontext.EntityRef{
+		{Type: "shipment", ID: "shp_01", Label: "S-240193"},
+	}, ReturnedRecords(Fence("shipment_get",
+		`{"id":"shp_01","proNumber":"S-240193","customer":{"id":"cus_01","name":"Acme Foods"}}`,
+	)), "one record with its customer is one record")
+}
+
+func TestReturnedRecordsReadsAListShortenedInsideItsFence(t *testing.T) {
+	t.Parallel()
+
+	shortened := `{"items":[{"id":"shp_01","proNumber":"S-240193"},` +
+		`{"id":"shp_02","proNumber":"S-240201"}]}` +
+		"\n\n[This result was too long to return in full, so its lists were shortened.]"
+
+	require.Len(t, ReturnedRecords(Fence("shipment_list", shortened)), 2)
+	require.Nil(t, ReturnedRecords(Fence("shipment_list", `{"items":[{"id":"shp_01"`)))
+}

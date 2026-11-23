@@ -2,6 +2,7 @@ import type { FieldRequired } from "@trenova/shared/lib/field-rules";
 import { translate } from "@trenova/shared/i18n/runtime";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { usePermission } from "@/hooks/use-permission";
+import { NEW_WORKER_PATH } from "@/routes/worker/use-worker-state";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { benefitPlanTypeLabel } from "@trenova/shared/lib/benefits";
 import { describeShiftPattern } from "@trenova/shared/lib/scheduling";
@@ -754,7 +755,7 @@ export function WorkerAutocompleteField<T extends FieldValues>({
           ? { ...workerSelectOptionsGraphQL, filters: { ownerOperatorsOnly: true } }
           : workerSelectOptionsGraphQL
       }
-      popoutLink="/workers"
+      popoutLink={NEW_WORKER_PATH}
       getOptionValue={(option) => option.id || ""}
       getDisplayValue={(option) => option.label}
       renderOption={(option) => (

@@ -57,7 +57,11 @@ type reportDefinitionWriter interface {
 	NewDefinition(req *reporting.SaveDefinitionRequest) *report.ReportDefinition
 	ApplyDefinitionSave(existing *report.ReportDefinition, req *reporting.SaveDefinitionRequest)
 	NewCannedFork(entry *canned.Entry, req *reporting.ForkCannedRequest) *report.ReportDefinition
-	RequireCannedOnPlan(ctx context.Context, tenant pagination.TenantInfo, entry *canned.Entry) error
+	RequireCannedAvailable(
+		ctx context.Context,
+		tenant pagination.TenantInfo,
+		entry *canned.Entry,
+	) error
 }
 
 func reportingRequestFrom(params *agenttoolports.ToolExecuteParams) reporting.Request {

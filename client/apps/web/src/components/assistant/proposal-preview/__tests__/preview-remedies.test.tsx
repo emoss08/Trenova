@@ -102,7 +102,7 @@ describe("PreviewRemedies", () => {
     renderRemedies([remedy(), remedy({ kind: "set_up_email_profile", recordId: "" })]);
 
     expect(screen.getByRole("link", { name: "Open Jane Doe" }).getAttribute("href")).toBe(
-      `/hr/workers?panelType=edit&panelEntityId=${worker}`,
+      `/hr/workers/${worker}?tab=files&view=driver-portal`,
     );
     expect(screen.getByRole("link", { name: "Set up an email profile" }).getAttribute("href")).toBe(
       "/organization/email-profiles",

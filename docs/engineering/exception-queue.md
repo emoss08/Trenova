@@ -97,6 +97,33 @@ A source never overwrites the owner, the status or the resolution, and never low
 that escalation raised. Retention deletes resolved items after 30 days except one a person
 resolved whose source is still open, so the resolution is not lost while the problem persists.
 
+## The resolution ledger
+
+Because resolved items (and their `watchtower_item_events`, which cascade with them) are gone
+after 30 days, every resolution is also recorded in `watchtower_resolutions`
+(`watchtower.Resolution`), the reportable history the Desk reports read: the item's kind,
+severity at resolution, the case (`about_id`, or the item itself when it is about nothing else),
+assignee, who resolved it, how (`ResolvedVia`: `Person`, `Agent` for a person, or
+`SourceCleared`), the code, the occurred, acknowledged, due and resolved times, seconds to
+acknowledge and to resolve, whether it was past due, the escalation level and whether an agent
+had been handed it. Nothing an item reads is kept.
+
+- **One writer.** The repository writes it in the transaction that resolves the item:
+  `UpdateWorkflow` when `UpdateWatchtowerWorkflowRequest.ResolvedVia` is set (the exception
+  service sets it when a change moves an open item to resolved, `Agent` for an agent's tool),
+  `Resolve` and `ResolveMissing` when a source clears. `watchtower.ResolutionOf` builds the row.
+- **Idempotent.** A row is keyed by the item and its version after the resolving write
+  (`uq_watchtower_resolutions_item_version`, `CreateOrSkip`), so a retried write records once and
+  a reopened item resolved again records a second row. A trigger refuses `UPDATE`.
+- **Retention.** 25 months (`watchtower.ResolutionRetentionDays`), so a year can be compared
+  with the one before it once the month closes. `watchtower-retention` deletes past it in
+  batches of 1,000, at most 100 a run, across every organization
+  (`DeleteResolutionsBefore`, `idx_watchtower_resolutions_resolved`).
+- **Reads.** Reports read a window of `resolved_at` through
+  `idx_watchtower_resolutions_tenant_resolved`. Migration `20261231023930_desk_reports`
+  backfilled it from the resolved items that still existed (a person resolution is recorded as
+  `Person`, since whether an agent did it was not kept).
+
 ## Due times and deadlines
 
 An item's due time comes from one of three places, recorded in `due_source`:

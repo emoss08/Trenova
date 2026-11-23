@@ -160,7 +160,7 @@ func TestDeskSeed_QueueCarriesAnOverdueDetentionClock(t *testing.T) {
 	refs, queue := seededQueue(t)
 
 	for _, item := range queue.items {
-		if item.SourceKind != watchtower.SourceDetentionOccurrence {
+		if item.SourceKind != watchtower.SourceKindDetentionOccurrence {
 			continue
 		}
 		require.NotNil(t, item.DueAt)
@@ -236,7 +236,7 @@ func TestDeskSeed_TheStandingItemIsAlreadyResolved(t *testing.T) {
 	require.Len(t, items, 1)
 	assert.True(t, items[0].IsResolved())
 	assert.Equal(t, watchtower.StatusResolved, items[0].Status)
-	assert.Equal(t, watchtower.ResolutionCleared, items[0].ResolutionCode)
+	assert.Equal(t, watchtower.ResolutionCodeCleared, items[0].ResolutionCode)
 }
 
 func TestDeskSeed_TheBriefingIsValid(t *testing.T) {

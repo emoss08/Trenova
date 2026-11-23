@@ -1,6 +1,6 @@
 # The held-out scenarios, by desk and by chat or unattended. Generated from the rule in
 # docs/engineering/desk-bench.md (Labels and splits) by running, in services/tms:
-#   go test -count=1 -run TestScenarioSplits ./internal/deskbench/ -update
+#   go test -count=1 -run TestScenarioSplits ./internal/deskbench/benchscenario/ -update
 # Do not edit by hand. A scenario that joins this list after living in the development
 # split may have been tuned against; replace it with a new scenario rather than keep it.
 strata:
@@ -47,21 +47,23 @@ strata:
       desk: Dispatch desk
       mode: chat
     heldOut:
+      - a-list-to-look-through-is-the-table
       - briefing-in-plain-words
       - duplicate-a-load-for-next-week
       - ids-never-shown
       - in-transit-count
       - kept-fact-changes-the-answer
       - load-by-description
-      - mention-is-offered-on-look-back
       - messy-hos-with-no-eld-data
       - messy-self-correction-in-one-message
       - off-topic-code-request
+      - one-fact-is-a-sentence
       - pair:covered-load-note-not-hold
       - pair:delayed-loads-holds-and-comments
       - pair:denver-tomorrow-who-needs-a-driver
       - portal-read-only-site-refuses-booking
-      - portal-site-not-set-up
+      - two-loads-by-their-numbers
+      - two-loads-side-by-side-in-the-conversation
   - stratum:
       desk: DispatchAssignment
       mode: unattended

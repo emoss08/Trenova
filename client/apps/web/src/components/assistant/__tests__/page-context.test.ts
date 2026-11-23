@@ -34,8 +34,12 @@ describe("derivePageContext", () => {
 
   it("reads the legacy entityId parameter too", () => {
     expect(
-      derivePageContext({ pathname: "/hr/workers", search: "?entityId=wrk_1", title: "Workers" }),
-    ).toMatchObject({ entityType: "worker", entityId: "wrk_1" });
+      derivePageContext({
+        pathname: "/billing/configuration-files/customers",
+        search: "?entityId=cus_1",
+        title: "Customers",
+      }),
+    ).toMatchObject({ entityType: "customer", entityId: "cus_1" });
   });
 
   it("reads the invoice the invoices page has open", () => {

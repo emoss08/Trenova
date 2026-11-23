@@ -12,6 +12,7 @@ type kind struct {
 	withinRecord bool
 	ownership    string
 	visibility   string
+	requires     permission.Operation
 }
 
 var entityKinds = map[string]kind{
@@ -40,7 +41,8 @@ var entityKinds = map[string]kind{
 		resource:     permission.ResourceCarrierSettlement,
 		withinRecord: true,
 	},
-	"customer": {resource: permission.ResourceCustomer},
+	"customer":    {resource: permission.ResourceCustomer},
+	"daily_usage": {resource: permission.ResourceAIUsage},
 	"customer_ledger_entry": {
 		resource:     permission.ResourceAccountsReceivable,
 		withinRecord: true,
@@ -60,8 +62,12 @@ var entityKinds = map[string]kind{
 		resource:     permission.ResourceAccountingReport,
 		withinRecord: true,
 	},
-	"hazardous_material":      {resource: permission.ResourceHazardousMaterial},
-	"invoice":                 {resource: permission.ResourceInvoice},
+	"hazardous_material": {resource: permission.ResourceHazardousMaterial},
+	"invoice":            {resource: permission.ResourceInvoice},
+	"item": {
+		resource: permission.ResourceWatchtower,
+		requires: permission.OpManage,
+	},
 	"invoice_adjustment":      {resource: permission.ResourceInvoice, withinRecord: true},
 	"invoice_adjustment_line": {resource: permission.ResourceInvoice, withinRecord: true},
 	"invoice_line":            {resource: permission.ResourceInvoice, withinRecord: true},
@@ -78,13 +84,18 @@ var entityKinds = map[string]kind{
 	"location_category":          {resource: permission.ResourceLocationCategory},
 	"noa":                        {resource: permission.ResourceFactoringNoa},
 	"order":                      {resource: permission.ResourceOrder, ownership: ownerColumn},
-	"pay_advance":                {resource: permission.ResourcePayAdvance},
-	"pay_code":                   {resource: permission.ResourcePayCode},
+	"owner": {
+		resource: permission.ResourceWatchtower,
+		requires: permission.OpManage,
+	},
+	"pay_advance": {resource: permission.ResourcePayAdvance},
+	"pay_code":    {resource: permission.ResourcePayCode},
 	"pay_event": {
 		resource:     permission.ResourceDriverSettlement,
 		withinRecord: true,
 	},
 	"payment":                    {resource: permission.ResourceCustomerPayment},
+	"person":                     {resource: permission.ResourceUser},
 	"rate_agreement":             {resource: permission.ResourceRateAgreement},
 	"rate_agreement_accessorial": {resource: permission.ResourceRateAgreement, withinRecord: true},
 	"rate_agreement_rule":        {resource: permission.ResourceRateAgreement, withinRecord: true},
@@ -104,10 +115,14 @@ var entityKinds = map[string]kind{
 	},
 	"report_run":    {resource: permission.ResourceReport, withinRecord: true},
 	"reserve_entry": {resource: permission.ResourceFactoringReserve},
-	"return":        {resource: permission.ResourceIFTAReturn},
-	"return_line":   {resource: permission.ResourceIFTAReturn, withinRecord: true},
-	"service_type":  {resource: permission.ResourceServiceType},
-	"settlement":    {resource: permission.ResourceDriverSettlement},
+	"resolution": {
+		resource: permission.ResourceWatchtower,
+		requires: permission.OpManage,
+	},
+	"return":       {resource: permission.ResourceIFTAReturn},
+	"return_line":  {resource: permission.ResourceIFTAReturn, withinRecord: true},
+	"service_type": {resource: permission.ResourceServiceType},
+	"settlement":   {resource: permission.ResourceDriverSettlement},
 	"settlement_batch": {
 		resource:     permission.ResourceDriverSettlement,
 		withinRecord: true,

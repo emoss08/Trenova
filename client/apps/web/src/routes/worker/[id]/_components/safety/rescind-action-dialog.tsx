@@ -1,0 +1,149 @@
+import { type TranslateFn, useT } from "@trenova/shared/i18n/use-t";
+import { TextareaField } from "@/components/fields/textarea-field";
+import { useApiMutation } from "@/hooks/use-api-mutation";
+import {
+  rescindDisciplinaryAction,
+  type WorkerDisciplinaryActionRow,
+} from "@/lib/graphql/worker-safety";
+import { Button } from "@trenova/shared/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@trenova/shared/components/ui/dialog";
+import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form";
+import {
+  rescindActionFormSchema,
+  type DisciplinaryLevel,
+  type RescindActionFormValues,
+} from "@trenova/shared/types/worker-safety";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useEffect } from "react";
+import { FormProvider, useForm, type Resolver } from "react-hook-form";
+import { useSafetyInvalidation } from "./use-safety-invalidation";
+
+export type RescindActionDialogProps = {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  workerId: string;
+  action?: WorkerDisciplinaryActionRow | null;
+};
+
+export function RescindActionDialog({
+  open,
+  onOpenChange,
+  workerId,
+  action,
+}: RescindActionDialogProps) {
+  const t = useT();
+
+  const invalidate = useSafetyInvalidation(workerId);
+  const form = useForm<RescindActionFormValues>({
+    resolver: zodResolver(rescindActionFormSchema) as Resolver<RescindActionFormValues>,
+    defaultValues: { reason: "" },
+  });
+  const { control, handleSubmit, reset } = form;
+
+  useEffect(() => {
+    if (open) reset({ reason: "" });
+  }, [open, reset]);
+
+  const { mutateAsync, isPending } = useApiMutation<
+    WorkerDisciplinaryActionRow,
+    RescindActionFormValues,
+    unknown,
+    RescindActionFormValues
+  >({
+    form,
+    resourceName: "Disciplinary action",
+    mutationFn: (values) => {
+      if (!action) throw new Error("Nothing to rescind");
+      return rescindDisciplinaryAction({
+        id: action.id,
+        reason: values.reason,
+        version: action.version,
+      });
+    },
+    onSuccess: () => {
+      void invalidate();
+      onOpenChange(false);
+    },
+  });
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>
+            {rescindTitle(action?.level as DisciplinaryLevel | undefined, t)}
+          </DialogTitle>
+          <DialogDescription>
+            {t("It stays on the record as rescinded and stops counting toward the next step.")}
+          </DialogDescription>
+        </DialogHeader>
+        <FormProvider {...form}>
+          <Form
+            className="flex flex-col gap-4"
+            onSubmit={(submitEvent) => {
+              submitEvent.preventDefault();
+              submitEvent.stopPropagation();
+              void handleSubmit((values) => mutateAsync(values))(submitEvent);
+            }}
+          >
+            <FormGroup cols={1}>
+              <FormControl cols="full">
+                <TextareaField<RescindActionFormValues>
+                  control={control}
+                  name="reason"
+                  label={t("Reason")}
+                  placeholder={t("e.g. Issued against the wrong event")}
+                  description={t(
+                    "Saved on the rescinded row so an auditor can see why the action was withdrawn.",
+                  )}
+                  required
+                  maxLength={255}
+                />
+              </FormControl>
+            </FormGroup>
+            <DialogFooter>
+              <Button type="button" size="sm" variant="outline" onClick={() => onOpenChange(false)}>
+                {t("Cancel")}
+              </Button>
+              <Button
+                type="submit"
+                size="sm"
+                variant="destructive"
+                isLoading={isPending}
+                loadingText={t("Rescinding...")}
+              >
+                {t("Rescind")}
+              </Button>
+            </DialogFooter>
+          </Form>
+        </FormProvider>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function rescindTitle(level: DisciplinaryLevel | undefined, t: TranslateFn): string {
+  switch (level) {
+    case "Coaching":
+      return t("Rescind the coaching?");
+    case "VerbalWarning":
+      return t("Rescind the verbal warning?");
+    case "WrittenWarning":
+      return t("Rescind the written warning?");
+    case "FinalWarning":
+      return t("Rescind the final warning?");
+    case "Suspension":
+      return t("Rescind the suspension?");
+    case "Termination":
+      return t("Rescind the termination?");
+    default:
+      return t("Rescind this action?");
+  }
+}

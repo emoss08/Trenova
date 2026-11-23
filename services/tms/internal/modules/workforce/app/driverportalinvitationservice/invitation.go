@@ -152,6 +152,7 @@ func (s *Service) InviteWorker(
 
 	s.logPortalAudit(ctx,
 		created.ID,
+		created.WorkerID,
 		req.TenantInfo,
 		actor.UserID,
 		permission.OpCreate,
@@ -259,6 +260,7 @@ func (s *Service) RevokeAccess(
 	}
 	s.logPortalAudit(ctx,
 		workerID,
+		workerID,
 		tenantInfo,
 		actor.UserID,
 		permission.OpCancel,
@@ -278,29 +280,6 @@ func (s *Service) RevokeAccess(
 		return fmt.Errorf("end portal sessions: %w", err)
 	}
 	return nil
-}
-
-// RevokeOnTermination shuts off portal access because employment ended. It
-// reports whether the worker had anything to shut off — a linked sign-in or an
-// invitation still open — so a termination summary does not claim it revoked
-// access for a driver who was never invited.
-func (s *Service) RevokeOnTermination(
-	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
-	workerID pulid.ID,
-	actor *permissionports.RequestActor,
-) (bool, error) {
-	status, err := s.GetPortalStatus(ctx, tenantInfo, workerID)
-	if err != nil {
-		return false, err
-	}
-	if !status.Linked && status.PendingInvitation == nil {
-		return false, nil
-	}
-	if err = s.RevokeAccess(ctx, tenantInfo, workerID, actor); err != nil {
-		return false, err
-	}
-	return true, nil
 }
 
 func (s *Service) GetPortalStatus(
@@ -572,6 +551,7 @@ func usernameFromEmail(address string) string {
 func (s *Service) logPortalAudit(
 	ctx context.Context,
 	resourceID pulid.ID,
+	workerID pulid.ID,
 	tenantInfo pagination.TenantInfo,
 	userID pulid.ID,
 	operation permission.Operation,
@@ -589,7 +569,12 @@ func (s *Service) logPortalAudit(
 	if state != nil {
 		params.CurrentState = jsonutils.MustToJSON(state)
 	}
-	if err := s.auditService.LogAction(ctx, params, auditservice.WithComment(comment)); err != nil {
+	if err := s.auditService.LogAction(
+		ctx,
+		params,
+		auditservice.WithComment(comment),
+		auditservice.WithSubject(permission.ResourceWorker, workerID),
+	); err != nil {
 		s.l.Error("failed to log driver portal audit action", zap.Error(err))
 	}
 }

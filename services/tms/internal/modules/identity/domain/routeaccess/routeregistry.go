@@ -562,7 +562,7 @@ func (rr *RouteRegistry) registerWorkerRoutes() {
 	})
 
 	_ = rr.Register(&RouteDefinition{
-		Path:      "/workers",
+		Path:      "/hr/workers",
 		MatchType: RouteMatchExact,
 		Requirements: []RouteRequirement{
 			{Resource: permission.ResourceWorker, Operation: permission.OpRead},
@@ -572,36 +572,25 @@ func (rr *RouteRegistry) registerWorkerRoutes() {
 	})
 
 	_ = rr.Register(&RouteDefinition{
-		Path:      "/workers/new",
+		Path:      "/hr/workers/new",
 		MatchType: RouteMatchExact,
 		Requirements: []RouteRequirement{
 			{Resource: permission.ResourceWorker, Operation: permission.OpCreate},
 		},
 		DisplayName: "Add Worker",
 		Category:    "Workers",
-		ParentRoute: "/workers",
+		ParentRoute: "/hr/workers",
 	})
 
 	_ = rr.Register(&RouteDefinition{
-		Path:      "/workers/:id",
+		Path:      "/hr/workers/:id",
 		MatchType: RouteMatchPattern,
 		Requirements: []RouteRequirement{
 			{Resource: permission.ResourceWorker, Operation: permission.OpRead},
 		},
 		DisplayName: "Worker Details",
 		Category:    "Workers",
-		ParentRoute: "/workers",
-	})
-
-	_ = rr.Register(&RouteDefinition{
-		Path:      "/workers/:id/edit",
-		MatchType: RouteMatchPattern,
-		Requirements: []RouteRequirement{
-			{Resource: permission.ResourceWorker, Operation: permission.OpUpdate},
-		},
-		DisplayName: "Edit Worker",
-		Category:    "Workers",
-		ParentRoute: "/workers",
+		ParentRoute: "/hr/workers",
 	})
 }
 

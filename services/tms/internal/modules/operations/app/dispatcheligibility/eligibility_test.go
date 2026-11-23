@@ -88,6 +88,7 @@ func TestEvaluateWorkerCompliance_CleanWorkerProducesNoFindings(t *testing.T) {
 	t.Parallel()
 
 	eval := dispatcheligibility.EvaluateWorkerCompliance(dispatcheligibility.WorkerComplianceInput{
+		Now:     timeutils.NowUnix(),
 		Worker:  compliantWorker(),
 		Control: blockingControl(),
 	})
@@ -103,6 +104,7 @@ func TestEvaluateWorkerCompliance_ExpiredLicenseBlocksUnderBlockLevel(t *testing
 	w.Profile.LicenseExpiry = timeutils.NowUnix() - day
 
 	eval := dispatcheligibility.EvaluateWorkerCompliance(dispatcheligibility.WorkerComplianceInput{
+		Now:     timeutils.NowUnix(),
 		Worker:  w,
 		Control: blockingControl(),
 	})
@@ -121,6 +123,7 @@ func TestEvaluateWorkerCompliance_WarningLevelDowngradesToWarn(t *testing.T) {
 	w.Profile.LicenseExpiry = timeutils.NowUnix() - day
 
 	eval := dispatcheligibility.EvaluateWorkerCompliance(dispatcheligibility.WorkerComplianceInput{
+		Now:     timeutils.NowUnix(),
 		Worker:  w,
 		Control: warningControl(),
 	})
@@ -137,6 +140,7 @@ func TestEvaluateWorkerCompliance_HazmatOnlyWhenShipmentCarriesHazmat(t *testing
 
 	without := dispatcheligibility.EvaluateWorkerCompliance(
 		dispatcheligibility.WorkerComplianceInput{
+			Now:                  timeutils.NowUnix(),
 			Worker:               w,
 			Control:              blockingControl(),
 			HasHazmatCommodities: false,
@@ -146,6 +150,7 @@ func TestEvaluateWorkerCompliance_HazmatOnlyWhenShipmentCarriesHazmat(t *testing
 
 	with := dispatcheligibility.EvaluateWorkerCompliance(
 		dispatcheligibility.WorkerComplianceInput{
+			Now:                  timeutils.NowUnix(),
 			Worker:               w,
 			Control:              blockingControl(),
 			HasHazmatCommodities: true,
@@ -164,6 +169,7 @@ func TestEvaluateWorkerCompliance_DisabledEnforcementSuppressesFindings(t *testi
 	dc.EnforceDriverQualificationCompliance = false
 
 	eval := dispatcheligibility.EvaluateWorkerCompliance(dispatcheligibility.WorkerComplianceInput{
+		Now:     timeutils.NowUnix(),
 		Worker:  w,
 		Control: dc,
 	})
@@ -551,7 +557,11 @@ func TestComplianceErrorCode(t *testing.T) {
 
 func drugAlcoholFindings(w *worker.Worker) []dispatchfinding.Finding {
 	return dispatcheligibility.EvaluateWorkerCompliance(
-		dispatcheligibility.WorkerComplianceInput{Worker: w, Control: blockingControl()},
+		dispatcheligibility.WorkerComplianceInput{
+			Now:     timeutils.NowUnix(),
+			Worker:  w,
+			Control: blockingControl(),
+		},
 	).Findings
 }
 
@@ -566,7 +576,11 @@ func TestEvaluateWorkerCompliance_ProhibitionAlwaysBlocks(t *testing.T) {
 	w.Profile.ReturnToDutyStatus = worker.ReturnToDutyRTDTestRequired
 
 	eval := dispatcheligibility.EvaluateWorkerCompliance(
-		dispatcheligibility.WorkerComplianceInput{Worker: w, Control: warningControl()},
+		dispatcheligibility.WorkerComplianceInput{
+			Now:     timeutils.NowUnix(),
+			Worker:  w,
+			Control: warningControl(),
+		},
 	)
 
 	require.Len(t, eval.Findings, 1)

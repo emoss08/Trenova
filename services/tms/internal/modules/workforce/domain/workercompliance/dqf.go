@@ -1,6 +1,7 @@
 package workercompliance
 
 import (
+	"fmt"
 	"sort"
 	"strconv"
 
@@ -441,4 +442,11 @@ func statusRank(status DQFItemStatus) int {
 	default:
 		return 5
 	}
+}
+
+func plural(count int, one string, many string) string {
+	if count == 1 {
+		return "1 " + one
+	}
+	return fmt.Sprintf("%d %s", count, many)
 }

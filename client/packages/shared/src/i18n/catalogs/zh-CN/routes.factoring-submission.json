@@ -7,7 +7,6 @@
   "Book the factor's chargeback of invoice {0}. The organization repays the factor, the factor gives up the reserve, and the invoice is the organization's to collect again.": "记录保理公司对发票 {0} 的退款追索。组织向保理公司偿还款项，保理公司放弃保留金，该发票重新由组织自行收款。",
   "Book the factor's release of invoice {0}'s reserve. Whatever the factor kept beyond what it paid is booked as its fee, and the invoice's factoring is then settled.": "记录保理公司释放发票 {0} 的保留金。保理公司扣留的超出其支付金额的部分记为其费用，随后该发票的保理即告结清。",
   "Cancel schedule": "取消清单",
-  "Cancelled {0}: {1}": "已于 {0} 取消：{1}",
   "Cancelled: {0}": "已取消：{0}",
   "Charge back": "追索退款",
   "Charged back {0}": "已于 {0} 追索退款",

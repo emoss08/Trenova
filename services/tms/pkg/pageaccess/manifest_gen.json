@@ -1,5 +1,5 @@
 {
-  "version": "sha256:8630ac247b51d3bb6341d7c24ee54567c29c835096258dbc5dbaa19aaa8db1f1",
+  "version": "sha256:55c6116bc5a51e2031d2f736f277ead1ffdb760d8a3823ce2e27d86ea0ba7683",
   "screens": [
     {
       "path": "/",
@@ -48,6 +48,7 @@
         "VehicleInspections",
         "VehiclePositions",
         "WorkerFormSubmissions",
+        "WorkerHosClocks",
         "WorkerHosDailyLogs",
         "WorkerHosLogs",
         "WorkerHosState",
@@ -4069,6 +4070,7 @@
         "VehicleInspections",
         "VehiclePositions",
         "WorkerFormSubmissions",
+        "WorkerHosClocks",
         "WorkerHosDailyLogs",
         "WorkerHosLogs",
         "WorkerHosState",
@@ -4322,6 +4324,7 @@
         "VehicleInspections",
         "VehiclePositions",
         "WorkerFormSubmissions",
+        "WorkerHosClocks",
         "WorkerHosDailyLogs",
         "WorkerHosLogs",
         "WorkerHosState",
@@ -4599,6 +4602,7 @@
         "VehicleInspections",
         "VehiclePositions",
         "WorkerFormSubmissions",
+        "WorkerHosClocks",
         "WorkerHosDailyLogs",
         "WorkerHosLogs",
         "WorkerHosState",
@@ -14100,8 +14104,10 @@
         "VoidDriverSettlement",
         "VoidInvoice",
         "WorkerCredentialTypeChoices",
+        "WorkerOverview",
         "WorkerPtoChartData",
-        "WorkerPtoTable"
+        "WorkerPtoTable",
+        "WorkerRecord"
       ],
       "endpoints": [
         {
@@ -15632,8 +15638,10 @@
         "invoice_dispute",
         "location_category",
         "pay_advance",
+        "performance_review",
         "service_failure_reason_code",
-        "shipment"
+        "shipment",
+        "worker_checklist"
       ]
     },
     {
@@ -15984,8 +15992,10 @@
         "VoidDriverSettlement",
         "VoidInvoice",
         "WorkerCredentialTypeChoices",
+        "WorkerOverview",
         "WorkerPtoChartData",
-        "WorkerPtoTable"
+        "WorkerPtoTable",
+        "WorkerRecord"
       ],
       "endpoints": [
         {
@@ -17584,8 +17594,10 @@
         "invoice_dispute",
         "location_category",
         "pay_advance",
+        "performance_review",
         "service_failure_reason_code",
-        "shipment"
+        "shipment",
+        "worker_checklist"
       ]
     },
     {
@@ -17791,8 +17803,10 @@
         "VoidDriverSettlement",
         "VoidInvoice",
         "WorkerCredentialTypeChoices",
+        "WorkerOverview",
         "WorkerPtoChartData",
-        "WorkerPtoTable"
+        "WorkerPtoTable",
+        "WorkerRecord"
       ],
       "endpoints": [
         {
@@ -19323,8 +19337,10 @@
         "invoice_dispute",
         "location_category",
         "pay_advance",
+        "performance_review",
         "service_failure_reason_code",
-        "shipment"
+        "shipment",
+        "worker_checklist"
       ]
     },
     {
@@ -20461,8 +20477,10 @@
         "VoidDriverSettlement",
         "VoidInvoice",
         "WorkerCredentialTypeChoices",
+        "WorkerOverview",
         "WorkerPtoChartData",
-        "WorkerPtoTable"
+        "WorkerPtoTable",
+        "WorkerRecord"
       ],
       "endpoints": [
         {
@@ -21993,8 +22011,10 @@
         "invoice_dispute",
         "location_category",
         "pay_advance",
+        "performance_review",
         "service_failure_reason_code",
-        "shipment"
+        "shipment",
+        "worker_checklist"
       ]
     },
     {
@@ -28073,6 +28093,7 @@
         "VehicleInspections",
         "VehiclePositions",
         "WorkerFormSubmissions",
+        "WorkerHosClocks",
         "WorkerHosDailyLogs",
         "WorkerHosLogs",
         "WorkerHosState",
@@ -28886,6 +28907,7 @@
         "VehicleInspections",
         "VehiclePositions",
         "WorkerFormSubmissions",
+        "WorkerHosClocks",
         "WorkerHosDailyLogs",
         "WorkerHosLogs",
         "WorkerHosState",
@@ -29965,6 +29987,7 @@
         "VehicleInspections",
         "VehiclePositions",
         "WorkerFormSubmissions",
+        "WorkerHosClocks",
         "WorkerHosDailyLogs",
         "WorkerHosLogs",
         "WorkerHosState",
@@ -31279,6 +31302,82 @@
         }
       ],
       "operations": [
+        "ActiveTrainingCourses",
+        "ApproveWorkerPto",
+        "BulkAssignTraining",
+        "BulkEditFields",
+        "BulkWorkerPtoAction",
+        "CancelWorkerPto",
+        "CreateWorkerPto",
+        "DataTableAggregates",
+        "DataTableFacets",
+        "DataTableInsightFields",
+        "DeskWorkerCard",
+        "DeskWorkerCredentials",
+        "DeskWorkerHos",
+        "DeskWorkerStanding",
+        "ExportTableView",
+        "MyBulkEdit",
+        "MyTableLayout",
+        "PatchWorker",
+        "PreviewBulkEdit",
+        "PtoBalanceSummary",
+        "PtoLiabilityReport",
+        "RejectWorkerPto",
+        "ResetMyTableLayout",
+        "SaveMyTableLayout",
+        "ScheduleTableView",
+        "StartBulkEdit",
+        "UndoMyBulkEdit",
+        "UpcomingWorkerPto",
+        "UpdateWorkerPto",
+        "WorkerCredentialTypeChoices",
+        "WorkerOverview",
+        "WorkerPtoAvailability",
+        "WorkerPtoChartData",
+        "WorkerPtoTable",
+        "WorkerRecord",
+        "WorkerTable"
+      ],
+      "endpoints": [
+        {
+          "method": "GET",
+          "path": "/tables/",
+          "requires": []
+        },
+        {
+          "method": "POST",
+          "path": "/tables/:param/compose/",
+          "requires": []
+        }
+      ],
+      "reads": [
+        "training_course",
+        "worker",
+        "worker_credential",
+        "worker_credential_type",
+        "worker_pto"
+      ],
+      "references": [
+        "fleet_code",
+        "report",
+        "user"
+      ],
+      "declared": [
+        "performance_review",
+        "worker_checklist"
+      ]
+    },
+    {
+      "path": "/hr/workers/$id",
+      "name": "Worker",
+      "requires": [
+        {
+          "resource": "worker",
+          "operation": "read"
+        }
+      ],
+      "operations": [
         "AccountingBackfills",
         "AccountingBriefing",
         "AccountingDriftFinding",
@@ -31294,8 +31393,6 @@
         "AccountingSyncRecord",
         "AccountingSyncStatus",
         "AccountingSyncSummary",
-        "ActivePerformanceReviewTemplates",
-        "ActiveTrainingCourses",
         "ActiveWorkerChecklistTemplates",
         "AdjustWorkerPtoBalance",
         "AmendWorkerEmploymentEvent",
@@ -31319,6 +31416,7 @@
         "AssignWorkerPtoPolicy",
         "AssignWorkerShift",
         "AssignWorkerTraining",
+        "AttachWorkerTrainingDocument",
         "AvailableCaptureProfiles",
         "BillingQueueFormulaTemplate",
         "BillingQueueItems",
@@ -31327,8 +31425,6 @@
         "BillingTransferCandidates",
         "BillingTransferRun",
         "BillingTransferRunItems",
-        "BulkAssignTraining",
-        "BulkEditFields",
         "BulkWorkerPtoAction",
         "CancelCaptureRequest",
         "CancelDotTest",
@@ -31358,14 +31454,12 @@
         "CreateWorkerCredential",
         "CreateWorkerPto",
         "CreateWorkerSafetyEvent",
+        "CurrentSettlementPeriod",
         "CustomFieldFormFields",
         "CustomFieldResourceTypes",
         "CustomerStatusNotifications",
         "CustomerTrackingLinks",
         "CustomerTrackingProfile",
-        "DataTableAggregates",
-        "DataTableFacets",
-        "DataTableInsightFields",
         "DecideLeaveCase",
         "DecideProfileChange",
         "DefaultSafetyPoints",
@@ -31392,7 +31486,6 @@
         "EndWorkerPayAssignment",
         "EndWorkerShiftAssignment",
         "EnrollBenefit",
-        "ExportTableView",
         "GiveWorkerRecognition",
         "GrantCarrierIntelOverride",
         "HosCertificationSummary",
@@ -31404,17 +31497,13 @@
         "MarkEmploymentVerificationRequested",
         "MarkWorkerChecklistItemNotApplicable",
         "MyActiveBillingTransferRun",
-        "MyBulkEdit",
         "MyCaptureAccess",
         "MyCaptureDevices",
-        "MyTableLayout",
         "OpenLeaveCase",
         "PatchWorker",
         "PayProfileDetail",
-        "PreviewBulkEdit",
+        "PreviewWorkerEmploymentEvent",
         "ProfileChangeRequests",
-        "PtoBalanceSummary",
-        "PtoLiabilityReport",
         "RecordClearinghouseQuery",
         "RecordDotTest",
         "RecordDotTestResult",
@@ -31431,14 +31520,11 @@
         "ReopenWorkerSafetyEvent",
         "RequestLeaveCertification",
         "RescindDisciplinaryAction",
-        "ResetMyTableLayout",
         "ReviewWorkerSafetyEvent",
         "ReviseDeskMemory",
         "RevokeCarrierTrackingLink",
         "RevokeWorkerPortalAccess",
         "RunPtoAccrual",
-        "SaveMyTableLayout",
-        "ScheduleTableView",
         "SetDeskMemoryStatus",
         "SetWorkerAvailabilityPreference",
         "ShiftSwapRequests",
@@ -31450,12 +31536,10 @@
         "ShipmentInvoices",
         "ShipmentProfitability",
         "SkipWorkerChecklistItem",
-        "StartBulkEdit",
         "StartWorkerChecklist",
         "SubmitPerformanceReview",
         "TelematicsFormMappings",
         "TelematicsStatus",
-        "UndoMyBulkEdit",
         "UpcomingWorkerPto",
         "UpdateDotViolation",
         "UpdateEmploymentVerification",
@@ -31470,6 +31554,7 @@
         "VehiclePositions",
         "VerifyWorkerCredential",
         "WaiveWorkerTraining",
+        "WorkerActivity",
         "WorkerAvailabilityPreferences",
         "WorkerBenefitEnrollments",
         "WorkerChecklists",
@@ -31480,8 +31565,10 @@
         "WorkerDisciplinaryLadder",
         "WorkerDrugAlcoholFile",
         "WorkerEarningsSummary",
+        "WorkerEmploymentEventOptions",
         "WorkerEmploymentEvents",
         "WorkerFormSubmissions",
+        "WorkerHosClocks",
         "WorkerHosDailyLogs",
         "WorkerHosLogs",
         "WorkerHosState",
@@ -31501,11 +31588,10 @@
         "WorkerPtoPolicyAssignments",
         "WorkerPtoTable",
         "WorkerRecognitions",
+        "WorkerRecord",
         "WorkerSafetyEvents",
         "WorkerSafetyScorecard",
-        "WorkerSafetyViolations",
         "WorkerShiftAssignments",
-        "WorkerTable",
         "WorkerTotalCompensation",
         "WorkerTrainingRecords",
         "WorkerTrainingSummary"
@@ -32226,32 +32312,12 @@
           ]
         },
         {
-          "method": "GET",
-          "path": "/tables/",
-          "requires": []
-        },
-        {
-          "method": "POST",
-          "path": "/tables/:param/compose/",
-          "requires": []
-        },
-        {
           "method": "POST",
           "path": "/trailers/:param/locate/",
           "requires": [
             {
               "resource": "trailer",
               "operation": "update"
-            }
-          ]
-        },
-        {
-          "method": "POST",
-          "path": "/workers/",
-          "requires": [
-            {
-              "resource": "worker",
-              "operation": "create"
             }
           ]
         },
@@ -32283,13 +32349,11 @@
         "formula_template",
         "invoice",
         "performance_review",
-        "performance_review_template",
         "pto_policy",
         "qualification",
         "rate_agreement",
         "shift_swap",
         "shipment",
-        "training_course",
         "worker",
         "worker_checklist",
         "worker_checklist_template",
@@ -32311,9 +32375,10 @@
         "document_type",
         "fleet_code",
         "location",
-        "report",
+        "performance_review_template",
         "tractor",
         "trailer",
+        "training_course",
         "worker_policy"
       ],
       "declared": [
@@ -32328,6 +32393,110 @@
         "worker_checklist",
         "worker_credential_type"
       ]
+    },
+    {
+      "path": "/hr/workers/new",
+      "name": "New worker",
+      "requires": [
+        {
+          "resource": "worker",
+          "operation": "create"
+        }
+      ],
+      "operations": [
+        "CustomFieldFormFields",
+        "CustomFieldResourceTypes"
+      ],
+      "endpoints": [
+        {
+          "method": "GET",
+          "path": "/api-keys/",
+          "requires": [
+            {
+              "resource": "api_key",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/api-keys/:param/",
+          "requires": [
+            {
+              "resource": "api_key",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "POST",
+          "path": "/google-maps/autocomplete/",
+          "requires": []
+        },
+        {
+          "method": "GET",
+          "path": "/integrations/:param/config/",
+          "requires": [
+            {
+              "resource": "integration",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/integrations/:param/runtime-config/",
+          "requires": []
+        },
+        {
+          "method": "GET",
+          "path": "/integrations/catalog/",
+          "requires": [
+            {
+              "resource": "integration",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/integrations/GoogleMaps/runtime-config/",
+          "requires": []
+        },
+        {
+          "method": "GET",
+          "path": "/integrations/samsara/workers/sync/drift/",
+          "requires": [
+            {
+              "resource": "integration",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/integrations/samsara/workers/sync/readiness/",
+          "requires": [
+            {
+              "resource": "integration",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "POST",
+          "path": "/workers/",
+          "requires": [
+            {
+              "resource": "worker",
+              "operation": "create"
+            }
+          ]
+        }
+      ],
+      "reads": [],
+      "references": [],
+      "declared": []
     },
     {
       "path": "/insights",
@@ -34326,6 +34495,7 @@
         "VehicleInspections",
         "VehiclePositions",
         "WorkerFormSubmissions",
+        "WorkerHosClocks",
         "WorkerHosDailyLogs",
         "WorkerHosLogs",
         "WorkerHosState",
@@ -36539,15 +36709,6 @@
       "declared": []
     },
     {
-      "name": "ActivePerformanceReviewTemplates",
-      "type": "query",
-      "reads": [
-        "performance_review_template"
-      ],
-      "linked": [],
-      "declared": []
-    },
-    {
       "name": "ActiveTrainingCourses",
       "type": "query",
       "reads": [
@@ -37613,6 +37774,46 @@
       "type": "mutation",
       "reads": [],
       "linked": [],
+      "declared": []
+    },
+    {
+      "name": "AttachWorkerTrainingDocument",
+      "type": "mutation",
+      "reads": [],
+      "linked": [
+        {
+          "kind": "training_course",
+          "fields": [
+            "businessUnitId",
+            "category",
+            "code",
+            "contentUrl",
+            "createdAt",
+            "delivery",
+            "description",
+            "dueDaysAfterAssignment",
+            "durationMinutes",
+            "isRequired",
+            "name",
+            "organizationId",
+            "passingScore",
+            "renewalWindowDays",
+            "requiredForDriverTypes",
+            "requiresAcknowledgement",
+            "sortOrder",
+            "status",
+            "updatedAt",
+            "validityMonths",
+            "version"
+          ]
+        },
+        {
+          "kind": "user",
+          "fields": [
+            "name"
+          ]
+        }
+      ],
       "declared": []
     },
     {
@@ -43639,6 +43840,13 @@
       "declared": []
     },
     {
+      "name": "PreviewWorkerEmploymentEvent",
+      "type": "query",
+      "reads": [],
+      "linked": [],
+      "declared": []
+    },
+    {
       "name": "ProfileChangeRequests",
       "type": "query",
       "reads": [],
@@ -47041,6 +47249,20 @@
       "declared": []
     },
     {
+      "name": "WorkerActivity",
+      "type": "query",
+      "reads": [],
+      "linked": [
+        {
+          "kind": "user",
+          "fields": [
+            "name"
+          ]
+        }
+      ],
+      "declared": []
+    },
+    {
       "name": "WorkerAvailabilityPreferences",
       "type": "query",
       "reads": [
@@ -47251,6 +47473,13 @@
       "declared": []
     },
     {
+      "name": "WorkerEmploymentEventOptions",
+      "type": "query",
+      "reads": [],
+      "linked": [],
+      "declared": []
+    },
+    {
       "name": "WorkerEmploymentEvents",
       "type": "query",
       "reads": [
@@ -47268,6 +47497,13 @@
     },
     {
       "name": "WorkerFormSubmissions",
+      "type": "query",
+      "reads": [],
+      "linked": [],
+      "declared": []
+    },
+    {
+      "name": "WorkerHosClocks",
       "type": "query",
       "reads": [],
       "linked": [],
@@ -47357,6 +47593,16 @@
             "name",
             "progress",
             "status"
+          ]
+        },
+        {
+          "kind": "worker_pto",
+          "fields": [
+            "days",
+            "endDate",
+            "startDate",
+            "status",
+            "type"
           ]
         }
       ],
@@ -47535,6 +47781,29 @@
       "declared": []
     },
     {
+      "name": "WorkerRecord",
+      "type": "query",
+      "reads": [
+        "worker"
+      ],
+      "linked": [
+        {
+          "kind": "fleet_code",
+          "fields": [
+            "code",
+            "color"
+          ]
+        },
+        {
+          "kind": "user",
+          "fields": [
+            "name"
+          ]
+        }
+      ],
+      "declared": []
+    },
+    {
       "name": "WorkerRosterAttention",
       "type": "query",
       "reads": [],
@@ -47561,15 +47830,6 @@
       "name": "WorkerSafetyScorecard",
       "type": "query",
       "reads": [],
-      "linked": [],
-      "declared": []
-    },
-    {
-      "name": "WorkerSafetyViolations",
-      "type": "query",
-      "reads": [
-        "worker_safety_event"
-      ],
       "linked": [],
       "declared": []
     },

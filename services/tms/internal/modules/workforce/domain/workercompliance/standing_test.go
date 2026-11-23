@@ -3,385 +3,575 @@ package workercompliance_test
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/employment"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/safetyscorecard"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerchecklist"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercompliance"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerdiscipline"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerdot"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerpage"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workertraining"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-const standingNow = int64(1_800_000_000)
+const (
+	standingNow = int64(1_800_000_000)
+	standingDay = int64(timeutils.SecondsPerDay)
+)
 
 func activeWorker() *worker.Worker {
 	return &worker.Worker{
-		ID:            pulid.MustNew("wrk_"),
-		Status:        domaintypes.StatusActive,
-		CanBeAssigned: true,
+		ID:                   pulid.MustNew("wrk_"),
+		Status:               domaintypes.StatusActive,
+		CanBeAssigned:        true,
+		AvailableForDispatch: true,
+		Profile:              &worker.WorkerProfile{},
 	}
 }
 
-func concernCodes(concerns []workercompliance.Concern) []string {
-	out := make([]string, 0, len(concerns))
+type credentialSlot struct {
+	name     string
+	category workercredential.CredentialCategory
+	field    workercredential.CredentialProfileField
+	required bool
+	health   workercredential.CredentialHealth
+	expires  *int64
+}
+
+func slot(s credentialSlot) *workercredential.CredentialSummaryItem {
+	item := &workercredential.CredentialSummaryItem{
+		CredentialType: &workercredential.WorkerCredentialType{
+			ID:           pulid.MustNew("wct_"),
+			Name:         s.name,
+			Category:     s.category,
+			ProfileField: s.field,
+		},
+		Health:   s.health,
+		Required: s.required,
+	}
+	if s.health != workercredential.CredentialHealthMissing {
+		item.Credential = &workercredential.WorkerCredential{
+			ID:        pulid.MustNew("wcr_"),
+			ExpiresAt: s.expires,
+		}
+	}
+	return item
+}
+
+func summaryOf(
+	items ...*workercredential.CredentialSummaryItem,
+) *workercredential.WorkerCredentialSummary {
+	summary := &workercredential.WorkerCredentialSummary{
+		ComplianceStatus: worker.ComplianceStatusCompliant,
+		Items:            items,
+	}
+	for _, item := range items {
+		if item.BlocksWhenLapsed() && item.Health.Blocks() {
+			summary.ComplianceStatus = worker.ComplianceStatusNonCompliant
+		}
+	}
+	return summary
+}
+
+func at(offsetDays int64) *int64 {
+	value := standingNow + offsetDays*standingDay
+	return &value
+}
+
+func concernsWith(
+	concerns []workercompliance.Concern,
+	code workercompliance.ConcernCode,
+) []workercompliance.Concern {
+	out := make([]workercompliance.Concern, 0, len(concerns))
 	for _, concern := range concerns {
-		out = append(out, concern.Code)
+		if concern.Code == code {
+			out = append(out, concern)
+		}
 	}
 	return out
 }
 
-func findConcern(
+func onlyConcern(
 	t *testing.T,
 	concerns []workercompliance.Concern,
-	code string,
+	code workercompliance.ConcernCode,
 ) workercompliance.Concern {
 	t.Helper()
-	for _, concern := range concerns {
-		if concern.Code == code {
-			return concern
-		}
-	}
-	t.Fatalf("no concern with code %q in %v", code, concernCodes(concerns))
-	return workercompliance.Concern{}
+	found := concernsWith(concerns, code)
+	require.Len(t, found, 1, "concerns: %+v", concerns)
+	return found[0]
 }
 
 func TestBuildStanding_CleanRecordIsGood(t *testing.T) {
+	t.Parallel()
+
 	standing, concerns := workercompliance.BuildStanding(workercompliance.StandingInput{
-		Worker: activeWorker(),
-		Credentials: &workercredential.WorkerCredentialSummary{
-			ComplianceStatus: worker.ComplianceStatusCompliant,
-		},
-		Training: &workertraining.WorkerTrainingSummary{Compliant: true},
-		Safety: &safetyscorecard.SafetyScorecard{
-			Score:  100,
-			Rating: worker.SafetyRatingExcellent,
-		},
-		Now: standingNow,
+		Worker:      activeWorker(),
+		Credentials: summaryOf(),
+		Training:    &workertraining.WorkerTrainingSummary{Compliant: true},
+		Safety:      &safetyscorecard.SafetyScorecard{Rating: worker.SafetyRatingGood},
+		Now:         standingNow,
 	})
 
 	assert.Equal(t, workercompliance.StandingGood, standing)
 	assert.Empty(t, concerns)
 }
 
-// A section the caller could not read must not be counted as clean. Absent is
-// not the same as fine, and treating it as fine would hide a real problem from
-// somebody who simply lacks one permission.
-func TestBuildStanding_NilSectionsContributeNothing(t *testing.T) {
-	standing, concerns := workercompliance.BuildStanding(workercompliance.StandingInput{
-		Worker: activeWorker(),
-		Now:    standingNow,
-	})
-
-	assert.Equal(t, workercompliance.StandingGood, standing)
-	assert.Empty(t, concerns)
-}
-
-func TestBuildStanding_NonCompliantCredentialsBlock(t *testing.T) {
-	standing, concerns := workercompliance.BuildStanding(workercompliance.StandingInput{
-		Worker: activeWorker(),
-		Credentials: &workercredential.WorkerCredentialSummary{
-			ComplianceStatus: worker.ComplianceStatusNonCompliant,
-			ExpiredCount:     2,
-		},
-		Now: standingNow,
-	})
-
-	assert.Equal(t, workercompliance.StandingBlocked, standing)
-	expired := findConcern(t, concerns, workercompliance.ConcernCredentialsExpired)
-	assert.Equal(t, workercompliance.ConcernCritical, expired.Severity)
-	assert.Equal(t, "2 credentials have expired", expired.Headline)
-	assert.Equal(t, "credentials", expired.Tab)
-}
-
-// A single expiring credential is a nudge, not an emergency, and the count
-// must read as one rather than "1 credentials".
-func TestBuildStanding_ExpiringCredentialIsWatch(t *testing.T) {
-	standing, concerns := workercompliance.BuildStanding(workercompliance.StandingInput{
-		Worker: activeWorker(),
-		Credentials: &workercredential.WorkerCredentialSummary{
-			ComplianceStatus: worker.ComplianceStatusCompliant,
-			ExpiringCount:    1,
-		},
-		Now: standingNow,
-	})
-
-	assert.Equal(t, workercompliance.StandingWatch, standing)
-	soon := findConcern(t, concerns, workercompliance.ConcernCredentialsSoon)
-	assert.Equal(t, workercompliance.ConcernWarning, soon.Severity)
-	assert.Equal(t, "1 credential expires soon", soon.Headline)
-}
-
-func TestBuildStanding_TrainingGapsAreCritical(t *testing.T) {
-	standing, concerns := workercompliance.BuildStanding(workercompliance.StandingInput{
-		Worker: activeWorker(),
-		Training: &workertraining.WorkerTrainingSummary{
-			ExpiredCount: 1,
-			MissingCount: 2,
-			OverdueCount: 1,
-		},
-		Now: standingNow,
-	})
-
-	assert.Equal(t, workercompliance.StandingAtRisk, standing)
-	assert.Subset(t, concernCodes(concerns), []string{
-		workercompliance.ConcernTrainingExpired,
-		workercompliance.ConcernTrainingMissing,
-		workercompliance.ConcernTrainingOverdue,
-	})
-	assert.Equal(
-		t,
-		"training",
-		findConcern(t, concerns, workercompliance.ConcernTrainingMissing).Tab,
-	)
-}
-
-// Due and expiring courses are the same kind of nudge, so they are counted
-// together rather than nagging twice about the same window.
-func TestBuildStanding_DueAndExpiringTrainingCombineIntoOneWarning(t *testing.T) {
-	_, concerns := workercompliance.BuildStanding(workercompliance.StandingInput{
-		Worker:   activeWorker(),
-		Training: &workertraining.WorkerTrainingSummary{DueCount: 2, ExpiringCount: 1},
-		Now:      standingNow,
-	})
-
-	due := findConcern(t, concerns, workercompliance.ConcernTrainingDue)
-	assert.Equal(t, "3 courses need attention soon", due.Headline)
-	assert.Len(t, concerns, 1)
-}
-
-func TestBuildStanding_SafetyRatings(t *testing.T) {
-	tests := []struct {
-		name     string
-		rating   worker.SafetyRating
-		expected workercompliance.Standing
-		severity workercompliance.ConcernSeverity
-	}{
-		{
-			"at risk",
-			worker.SafetyRatingAtRisk,
-			workercompliance.StandingAtRisk,
-			workercompliance.ConcernCritical,
-		},
-		{
-			"watch",
-			worker.SafetyRatingWatch,
-			workercompliance.StandingWatch,
-			workercompliance.ConcernWarning,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			standing, concerns := workercompliance.BuildStanding(workercompliance.StandingInput{
-				Worker: activeWorker(),
-				Safety: &safetyscorecard.SafetyScorecard{
-					Score:                 42,
-					Rating:                tt.rating,
-					ActivePoints:          11,
-					PointsWatchThreshold:  6,
-					PointsAtRiskThreshold: 10,
-				},
-				Now: standingNow,
-			})
-			assert.Equal(t, tt.expected, standing)
-			concern := findConcern(t, concerns, workercompliance.ConcernSafetyRating)
-			assert.Equal(t, tt.severity, concern.Severity)
-			assert.Contains(t, concern.Headline, "42")
-			assert.Equal(t, "safety", concern.Tab)
-		})
-	}
-}
-
-// A good safety rating alongside an out-of-service order still has to surface
-// the order: the score is a trailing average, the order is a fact about today.
-func TestBuildStanding_OutOfServiceOrderSurfacesUnderAGoodRating(t *testing.T) {
-	standing, concerns := workercompliance.BuildStanding(workercompliance.StandingInput{
-		Worker: activeWorker(),
-		Safety: &safetyscorecard.SafetyScorecard{
-			Score:              91,
-			Rating:             worker.SafetyRatingGood,
-			OutOfServiceOrders: 1,
-		},
-		Now: standingNow,
-	})
-
-	assert.Equal(t, workercompliance.StandingAtRisk, standing)
-	oos := findConcern(t, concerns, workercompliance.ConcernOutOfService)
-	assert.Equal(t, workercompliance.ConcernCritical, oos.Severity)
-	assert.Equal(t, "1 out-of-service order in the last year", oos.Headline)
-	assert.NotContains(t, concernCodes(concerns), workercompliance.ConcernSafetyRating)
-}
-
-func TestBuildStanding_ActiveDisciplineNamesTheHighestRung(t *testing.T) {
-	_, concerns := workercompliance.BuildStanding(workercompliance.StandingInput{
-		Worker: activeWorker(),
-		Safety: &safetyscorecard.SafetyScorecard{
-			Rating:            worker.SafetyRatingGood,
-			ActiveDiscipline:  2,
-			HighestDiscipline: workerdiscipline.DisciplinaryLevelFinalWarning,
-		},
-		Now: standingNow,
-	})
-
-	concern := findConcern(t, concerns, workercompliance.ConcernDiscipline)
-	assert.Equal(t, "2 disciplinary actions are active", concern.Headline)
-	assert.Contains(t, concern.Detail, "final warning")
-}
-
-// Open events are bookkeeping, not a judgement on the worker, so they inform
-// without moving the standing off Good.
-func TestBuildStanding_OpenSafetyEventsAreInformationOnly(t *testing.T) {
-	standing, concerns := workercompliance.BuildStanding(workercompliance.StandingInput{
-		Worker: activeWorker(),
-		Safety: &safetyscorecard.SafetyScorecard{Rating: worker.SafetyRatingGood, OpenEvents: 3},
-		Now:    standingNow,
-	})
-
-	assert.Equal(t, workercompliance.StandingGood, standing)
-	assert.Equal(
-		t,
-		workercompliance.ConcernInfo,
-		findConcern(t, concerns, workercompliance.ConcernOpenSafetyEvents).Severity,
-	)
-}
-
-func TestBuildStanding_OpenChecklist(t *testing.T) {
-	overdue := int64(standingNow - 86_400)
-	checklist := &workerchecklist.WorkerChecklist{
-		Name:   "Driver onboarding",
-		Status: workerchecklist.ChecklistStatusOpen,
-		Items: []*workerchecklist.WorkerChecklistItem{
-			{Required: true, Status: workerchecklist.ChecklistItemDone},
-			{Required: true, Status: workerchecklist.ChecklistItemPending, DueAt: &overdue},
-		},
-	}
-
-	standing, concerns := workercompliance.BuildStanding(workercompliance.StandingInput{
-		Worker:    activeWorker(),
-		Checklist: checklist,
-		Now:       standingNow,
-	})
-
-	assert.Equal(t, workercompliance.StandingWatch, standing)
-	concern := findConcern(t, concerns, workercompliance.ConcernChecklistOverdue)
-	assert.Equal(t, "1 checklist item is overdue", concern.Headline)
-	assert.Equal(t, "checklist", concern.Tab)
-	assert.NotContains(t, concernCodes(concerns), workercompliance.ConcernChecklistOpen)
-}
-
-// A checklist that is merely unfinished reports progress rather than nagging.
-func TestBuildStanding_UnfinishedChecklistIsInformationOnly(t *testing.T) {
-	standing, concerns := workercompliance.BuildStanding(workercompliance.StandingInput{
-		Worker: activeWorker(),
-		Checklist: &workerchecklist.WorkerChecklist{
-			Name:   "Driver onboarding",
-			Status: workerchecklist.ChecklistStatusOpen,
-			Items: []*workerchecklist.WorkerChecklistItem{
-				{Required: true, Status: workerchecklist.ChecklistItemDone},
-				{Required: true, Status: workerchecklist.ChecklistItemPending},
-			},
-		},
-		Now: standingNow,
-	})
-
-	assert.Equal(t, workercompliance.StandingGood, standing)
-	concern := findConcern(t, concerns, workercompliance.ConcernChecklistOpen)
-	assert.Equal(t, "Driver onboarding is 50% done", concern.Headline)
-	assert.Equal(t, "1 of 2 required items are settled.", concern.Detail)
-}
-
-// A closed checklist is history and must not keep reporting itself.
-func TestBuildStanding_ClosedChecklistIsSilent(t *testing.T) {
-	_, concerns := workercompliance.BuildStanding(workercompliance.StandingInput{
-		Worker: activeWorker(),
-		Checklist: &workerchecklist.WorkerChecklist{
-			Name:   "Driver onboarding",
-			Status: workerchecklist.ChecklistStatusCompleted,
-			Items: []*workerchecklist.WorkerChecklistItem{
-				{Required: true, Status: workerchecklist.ChecklistItemDone},
-			},
-		},
-		Now: standingNow,
-	})
-
-	assert.Empty(t, concerns)
-}
-
-func TestBuildStanding_ReviewDueDate(t *testing.T) {
-	past := standingNow - 86_400
-	future := standingNow + 86_400
-
-	_, overdue := workercompliance.BuildStanding(workercompliance.StandingInput{
-		Worker: activeWorker(), ReviewDueAt: &past, Now: standingNow,
-	})
-	assert.Contains(t, concernCodes(overdue), workercompliance.ConcernReviewOverdue)
-
-	_, upcoming := workercompliance.BuildStanding(workercompliance.StandingInput{
-		Worker: activeWorker(), ReviewDueAt: &future, Now: standingNow,
-	})
-	assert.Empty(t, upcoming)
-}
-
-// A worker taken off the board is blocked whatever else the record says.
-func TestBuildStanding_NotAssignableBlocks(t *testing.T) {
-	wrk := activeWorker()
-	wrk.CanBeAssigned = false
-
-	standing, concerns := workercompliance.BuildStanding(workercompliance.StandingInput{
-		Worker: wrk,
-		Credentials: &workercredential.WorkerCredentialSummary{
-			ComplianceStatus: worker.ComplianceStatusCompliant,
-		},
-		Now: standingNow,
-	})
-
-	assert.Equal(t, workercompliance.StandingBlocked, standing)
-	assert.Equal(t, "timeline", findConcern(t, concerns, workercompliance.ConcernNotAssignable).Tab)
-}
-
-// An expired licence on somebody who left last year is not a finding. The
-// record still exists for retention, so the overview says so and stops.
-func TestBuildStanding_TerminatedWorkerShortCircuits(t *testing.T) {
+func TestBuildStanding_NotEmployedShortCircuits(t *testing.T) {
+	t.Parallel()
 	wrk := activeWorker()
 	wrk.Status = domaintypes.StatusInactive
 
 	standing, concerns := workercompliance.BuildStanding(workercompliance.StandingInput{
 		Worker: wrk,
-		Credentials: &workercredential.WorkerCredentialSummary{
-			ComplianceStatus: worker.ComplianceStatusNonCompliant,
-			ExpiredCount:     4,
-		},
-		Safety: &safetyscorecard.SafetyScorecard{Rating: worker.SafetyRatingAtRisk},
-		Now:    standingNow,
+		Credentials: summaryOf(slot(credentialSlot{
+			name:     "CDL",
+			required: true,
+			health:   workercredential.CredentialHealthMissing,
+		})),
+		Now: standingNow,
 	})
 
 	assert.Equal(t, workercompliance.StandingBlocked, standing)
 	require.Len(t, concerns, 1)
 	assert.Equal(t, workercompliance.ConcernNotEmployed, concerns[0].Code)
+	assert.Equal(t, workerpage.TabEmployment, concerns[0].Destination.Tab)
 }
 
-// The office reads the worst thing first, so severity ordering is part of the
-// contract rather than an accident of which section was appended first.
-func TestBuildStanding_ConcernsAreRankedBySeverity(t *testing.T) {
+func TestBuildStanding_OneConcernPerCredentialNamingIt(t *testing.T) {
+	t.Parallel()
+	cdl := slot(credentialSlot{
+		name:     "CDL",
+		category: workercredential.CredentialCategoryLicense,
+		required: true,
+		health:   workercredential.CredentialHealthExpired,
+		expires:  at(-3),
+	})
+	medical := slot(credentialSlot{
+		name:     "Medical card",
+		category: workercredential.CredentialCategoryMedical,
+		required: true,
+		health:   workercredential.CredentialHealthExpiringSoon,
+		expires:  at(20),
+	})
+	mvr := slot(credentialSlot{
+		name:     "MVR review",
+		required: true,
+		health:   workercredential.CredentialHealthMissing,
+	})
+
+	standing, concerns := workercompliance.BuildStanding(workercompliance.StandingInput{
+		Worker:      activeWorker(),
+		Credentials: summaryOf(cdl, medical, mvr),
+		Now:         standingNow,
+	})
+
+	assert.Equal(t, workercompliance.StandingBlocked, standing)
+
+	expired := onlyConcern(t, concerns, workercompliance.ConcernCredentialExpired)
+	assert.Equal(t, workercompliance.ConcernCritical, expired.Severity)
+	require.NotNil(t, expired.Subject)
+	assert.Equal(t, "CDL", *expired.Subject)
+	assert.Equal(t, 1, expired.Count)
+	assert.True(t, expired.StopsAssignment)
+	require.NotNil(t, expired.DaysUntil)
+	assert.Equal(t, int64(-3), *expired.DaysUntil)
+	require.NotNil(t, expired.Destination.RecordID)
+	assert.Equal(t, cdl.Credential.ID, *expired.Destination.RecordID)
+	assert.Equal(t, workerpage.RecordCredential, *expired.Destination.Record)
+
+	expiring := onlyConcern(t, concerns, workercompliance.ConcernCredentialExpiring)
+	assert.Equal(t, workercompliance.ConcernWarning, expiring.Severity)
+	assert.True(t, expiring.StopsAssignment, "a required credential stops assignment at its date")
+	require.NotNil(t, expiring.DaysUntil)
+	assert.Equal(t, int64(20), *expiring.DaysUntil)
+
+	missing := onlyConcern(t, concerns, workercompliance.ConcernCredentialMissing)
+	assert.Nil(t, missing.Destination.RecordID)
+	assert.Nil(t, missing.DueAt)
+	assert.True(t, missing.StopsAssignment)
+}
+
+func TestBuildStanding_OptionalCredentialStopsOnlyWhenDispatchRefuses(t *testing.T) {
+	t.Parallel()
+	twic := slot(credentialSlot{
+		name:    "TWIC",
+		field:   workercredential.CredentialProfileFieldTWICExpiry,
+		health:  workercredential.CredentialHealthExpiringSoon,
+		expires: at(10),
+	})
+	hazmat := slot(credentialSlot{
+		name:    "Hazmat",
+		field:   workercredential.CredentialProfileFieldHazmatExpiry,
+		health:  workercredential.CredentialHealthExpiringSoon,
+		expires: at(12),
+	})
+	physical := slot(credentialSlot{
+		name:    "Physical",
+		field:   workercredential.CredentialProfileFieldPhysicalDueDate,
+		health:  workercredential.CredentialHealthExpiringSoon,
+		expires: at(14),
+	})
+	dispatch := &workercompliance.DispatchVerdicts{Stops: []workercompliance.DispatchStop{
+		{Requirement: workercompliance.DispatchRequirementHazmat, At: *at(12), HazmatOnly: true},
+		{Requirement: workercompliance.DispatchRequirementPhysical, At: *at(14)},
+	}}
+
 	_, concerns := workercompliance.BuildStanding(workercompliance.StandingInput{
-		Worker: activeWorker(),
-		Safety: &safetyscorecard.SafetyScorecard{
-			Rating:     worker.SafetyRatingGood,
-			OpenEvents: 1,
+		Worker:      activeWorker(),
+		Credentials: summaryOf(twic, hazmat, physical),
+		Dispatch:    dispatch,
+		Now:         standingNow,
+	})
+
+	byName := map[string]bool{}
+	for _, concern := range concernsWith(concerns, workercompliance.ConcernCredentialExpiring) {
+		byName[*concern.Subject] = concern.StopsAssignment
+	}
+	assert.Equal(t, map[string]bool{"TWIC": false, "Hazmat": false, "Physical": true}, byName)
+}
+
+func TestBuildStanding_TrainingConcernsArePerCourseAndNeverStop(t *testing.T) {
+	t.Parallel()
+	overdueRecord := &workertraining.WorkerTrainingRecord{
+		ID:         pulid.MustNew("wtr_"),
+		Status:     workertraining.TrainingStatusAssigned,
+		AssignedAt: *at(-40),
+		DueAt:      at(-5),
+	}
+	training := &workertraining.WorkerTrainingSummary{Items: []*workertraining.TrainingSummaryItem{
+		{
+			Course: &workertraining.TrainingCourse{
+				ID:   pulid.MustNew("trc_"),
+				Name: "Defensive driving",
+			},
+			Record:   overdueRecord,
+			Health:   worker.TrainingHealthOverdue,
+			Required: true,
 		},
-		Credentials: &workercredential.WorkerCredentialSummary{
-			ComplianceStatus: worker.ComplianceStatusCompliant,
-			ExpiringCount:    1,
+		{
+			Course:   &workertraining.TrainingCourse{ID: pulid.MustNew("trc_"), Name: "Hazmat"},
+			Health:   worker.TrainingHealthMissing,
+			Required: true,
 		},
-		Training: &workertraining.WorkerTrainingSummary{ExpiredCount: 1},
+		{
+			Course: &workertraining.TrainingCourse{ID: pulid.MustNew("trc_"), Name: "Winter ops"},
+			Record: &workertraining.WorkerTrainingRecord{
+				ID:     pulid.MustNew("wtr_"),
+				Status: workertraining.TrainingStatusAssigned,
+				DueAt:  at(5),
+			},
+			Health: worker.TrainingHealthDueSoon,
+		},
+	}}
+
+	standing, concerns := workercompliance.BuildStanding(workercompliance.StandingInput{
+		Worker:   activeWorker(),
+		Training: training,
 		Now:      standingNow,
 	})
 
-	require.Len(t, concerns, 3)
-	assert.Equal(t, workercompliance.ConcernCritical, concerns[0].Severity)
-	assert.Equal(t, workercompliance.ConcernWarning, concerns[1].Severity)
-	assert.Equal(t, workercompliance.ConcernInfo, concerns[2].Severity)
+	assert.Equal(t, workercompliance.StandingAtRisk, standing)
+	overdue := onlyConcern(t, concerns, workercompliance.ConcernTrainingOverdue)
+	assert.Equal(t, "Defensive driving", *overdue.Subject)
+	assert.Equal(t, overdueRecord.ID, *overdue.Destination.RecordID)
+	require.NotNil(t, overdue.OccurredAt)
+	assert.Equal(t, *at(-40), *overdue.OccurredAt)
+	assert.Equal(t, int64(-5), *overdue.DaysUntil)
+	assert.Equal(
+		t,
+		"Hazmat",
+		*onlyConcern(t, concerns, workercompliance.ConcernTrainingMissing).Subject,
+	)
+	assert.Equal(
+		t,
+		"Winter ops",
+		*onlyConcern(t, concerns, workercompliance.ConcernTrainingDue).Subject,
+	)
+	for _, concern := range concerns {
+		assert.False(
+			t,
+			concern.StopsAssignment,
+			"training never stops assignment: %s",
+			concern.Code,
+		)
+	}
+}
+
+func TestBuildStanding_SafetyEventsAreOnePerRecord(t *testing.T) {
+	t.Parallel()
+	oos := &workersafety.WorkerSafetyEvent{
+		ID:               pulid.MustNew("wse_"),
+		Kind:             workersafety.SafetyEventInspection,
+		InspectionResult: workersafety.InspectionResultOutOfService,
+		Status:           workersafety.SafetyEventStatusClosed,
+		OccurredAt:       *at(-30),
+	}
+	open := &workersafety.WorkerSafetyEvent{
+		ID:         pulid.MustNew("wse_"),
+		Kind:       workersafety.SafetyEventIncident,
+		Status:     workersafety.SafetyEventStatusOpen,
+		OccurredAt: *at(-2),
+	}
+	oldOOS := &workersafety.WorkerSafetyEvent{
+		ID:               pulid.MustNew("wse_"),
+		Kind:             workersafety.SafetyEventInspection,
+		InspectionResult: workersafety.InspectionResultOutOfService,
+		Status:           workersafety.SafetyEventStatusClosed,
+		OccurredAt:       *at(-500),
+	}
+
+	_, concerns := workercompliance.BuildStanding(workercompliance.StandingInput{
+		Worker: activeWorker(),
+		Safety: &safetyscorecard.SafetyScorecard{
+			Rating:           worker.SafetyRatingWatch,
+			ActivePoints:     6,
+			ActiveDiscipline: 2,
+		},
+		SafetyEvents: []*workersafety.WorkerSafetyEvent{oos, open, oldOOS},
+		Now:          standingNow,
+	})
+
+	outOfService := onlyConcern(t, concerns, workercompliance.ConcernOutOfService)
+	assert.Equal(t, oos.ID, *outOfService.Destination.RecordID)
+	assert.Equal(t, workerpage.TabSafety, outOfService.Destination.Tab)
+	assert.Equal(t, workerpage.RecordEvent, *outOfService.Destination.Record)
+	assert.Equal(
+		t,
+		open.ID,
+		*onlyConcern(t, concerns, workercompliance.ConcernOpenSafetyEvent).Destination.RecordID,
+	)
+	assert.Equal(t, 6, onlyConcern(t, concerns, workercompliance.ConcernSafetyRating).Count)
+	assert.Equal(t, 2, onlyConcern(t, concerns, workercompliance.ConcernActiveDiscipline).Count)
+}
+
+func TestBuildStanding_ChecklistNamesItselfAndLinksToIt(t *testing.T) {
+	t.Parallel()
+	checklist := &workerchecklist.WorkerChecklist{
+		ID:        pulid.MustNew("wcl_"),
+		Name:      "Onboarding",
+		Status:    workerchecklist.ChecklistStatusOpen,
+		StartedAt: *at(-3),
+	}
+
+	_, concerns := workercompliance.BuildStanding(workercompliance.StandingInput{
+		Worker:    activeWorker(),
+		Checklist: checklist,
+		Now:       standingNow,
+	})
+
+	concern := onlyConcern(t, concerns, workercompliance.ConcernChecklistOpen)
+	assert.Equal(t, "Onboarding", *concern.Subject)
+	assert.Equal(t, checklist.ID, *concern.Destination.RecordID)
+	assert.Equal(t, workerpage.ViewChecklists, *concern.Destination.View)
+}
+
+func TestBuildStanding_ReviewOverdueAndDue(t *testing.T) {
+	t.Parallel()
+
+	_, overdue := workercompliance.BuildStanding(workercompliance.StandingInput{
+		Worker:      activeWorker(),
+		ReviewDueAt: at(-1),
+		Now:         standingNow,
+	})
+	standing, due := workercompliance.BuildStanding(workercompliance.StandingInput{
+		Worker:      activeWorker(),
+		ReviewDueAt: at(12),
+		Now:         standingNow,
+	})
+	_, far := workercompliance.BuildStanding(workercompliance.StandingInput{
+		Worker:      activeWorker(),
+		ReviewDueAt: at(90),
+		Now:         standingNow,
+	})
+
+	assert.Equal(
+		t,
+		workercompliance.ConcernWarning,
+		onlyConcern(t, overdue, workercompliance.ConcernReviewOverdue).Severity,
+	)
+	reviewDue := onlyConcern(t, due, workercompliance.ConcernReviewDue)
+	assert.Equal(t, workercompliance.ConcernInfo, reviewDue.Severity)
+	assert.Equal(t, int64(12), *reviewDue.DaysUntil)
+	assert.Equal(
+		t,
+		workercompliance.StandingGood,
+		standing,
+		"a review coming due does not move the standing",
+	)
+	assert.Empty(t, far)
+}
+
+func TestBuildStanding_ProhibitionIsCriticalAndStopsWhenDispatchRefuses(t *testing.T) {
+	t.Parallel()
+
+	standing, concerns := workercompliance.BuildStanding(workercompliance.StandingInput{
+		Worker:      activeWorker(),
+		DrugAlcohol: &workerdot.DrugAlcoholStanding{Status: worker.DrugAlcoholProhibited},
+		Dispatch: &workercompliance.DispatchVerdicts{
+			RefusedToday: []workercompliance.DispatchRequirement{
+				workercompliance.DispatchRequirementDrugAlcohol,
+			},
+		},
+		Now: standingNow,
+	})
+
+	assert.Equal(t, workercompliance.StandingAtRisk, standing)
+	concern := onlyConcern(t, concerns, workercompliance.ConcernDrugAlcoholProhibited)
+	assert.Equal(t, workercompliance.ConcernCritical, concern.Severity)
+	assert.True(t, concern.StopsAssignment)
+	assert.Equal(t, workerpage.ViewDrugAndAlcohol, *concern.Destination.View)
+}
+
+func TestBuildStanding_ClearinghouseQuery(t *testing.T) {
+	t.Parallel()
+	lastQuery := at(-370)
+
+	_, overdue := workercompliance.BuildStanding(workercompliance.StandingInput{
+		Worker: activeWorker(),
+		DrugAlcohol: &workerdot.DrugAlcoholStanding{
+			Status:                    worker.DrugAlcoholClear,
+			LastClearinghouseQueryAt:  lastQuery,
+			NextClearinghouseQueryDue: at(-5),
+		},
+		Now: standingNow,
+	})
+	_, blocking := workercompliance.BuildStanding(workercompliance.StandingInput{
+		Worker: activeWorker(),
+		DrugAlcohol: &workerdot.DrugAlcoholStanding{
+			Status:                    worker.DrugAlcoholClear,
+			NextClearinghouseQueryDue: at(-5),
+		},
+		Dispatch: &workercompliance.DispatchVerdicts{Stops: []workercompliance.DispatchStop{{
+			Requirement: workercompliance.DispatchRequirementClearinghouseQuery,
+			At:          *at(-5),
+		}}},
+		Now: standingNow,
+	})
+	_, due := workercompliance.BuildStanding(workercompliance.StandingInput{
+		Worker: activeWorker(),
+		DrugAlcohol: &workerdot.DrugAlcoholStanding{
+			Status:                    worker.DrugAlcoholClear,
+			NextClearinghouseQueryDue: at(17),
+		},
+		Now: standingNow,
+	})
+
+	late := onlyConcern(t, overdue, workercompliance.ConcernClearinghouseQueryOverdue)
+	assert.Equal(t, workercompliance.ConcernWarning, late.Severity)
+	assert.False(t, late.StopsAssignment)
+	assert.Equal(t, lastQuery, late.OccurredAt)
+	stopped := onlyConcern(t, blocking, workercompliance.ConcernClearinghouseQueryOverdue)
+	assert.Equal(t, workercompliance.ConcernCritical, stopped.Severity)
+	assert.True(t, stopped.StopsAssignment)
+	soon := onlyConcern(t, due, workercompliance.ConcernClearinghouseQueryDue)
+	assert.Equal(t, int64(17), *soon.DaysUntil)
+	assert.Equal(t, workercompliance.ConcernInfo, soon.Severity)
+}
+
+func TestBuildStanding_OutstandingEmployerVerificationsArePerEmployer(t *testing.T) {
+	t.Parallel()
+	requested := at(-20)
+	outstanding := &employment.WorkerEmploymentVerification{
+		ID:           pulid.MustNew("wemv_"),
+		EmployerName: "Ridgeline Freight",
+		Status:       employment.VerificationRequested,
+		RequestedAt:  requested,
+	}
+	settled := &employment.WorkerEmploymentVerification{
+		ID:           pulid.MustNew("wemv_"),
+		EmployerName: "Done Haulers",
+		Status:       employment.VerificationReceived,
+	}
+
+	_, concerns := workercompliance.BuildStanding(workercompliance.StandingInput{
+		Worker:             activeWorker(),
+		Verifications:      []*employment.WorkerEmploymentVerification{outstanding, settled},
+		SafetyHistoryDueAt: *at(-2),
+		Now:                standingNow,
+	})
+
+	concern := onlyConcern(t, concerns, workercompliance.ConcernEmploymentVerificationOutstanding)
+	assert.Equal(t, "Ridgeline Freight", *concern.Subject)
+	assert.Equal(t, requested, concern.OccurredAt)
+	assert.Equal(t, workercompliance.ConcernWarning, concern.Severity, "past the 30-day deadline")
+	assert.Equal(t, outstanding.ID, *concern.Destination.RecordID)
+	assert.Equal(t, workerpage.RecordEmployer, *concern.Destination.Record)
+}
+
+func TestBuildStanding_RanksWorstFirstThenStopsThenSoonest(t *testing.T) {
+	t.Parallel()
+
+	_, concerns := workercompliance.BuildStanding(workercompliance.StandingInput{
+		Worker: activeWorker(),
+		Credentials: summaryOf(
+			slot(
+				credentialSlot{
+					name:    "Late",
+					health:  workercredential.CredentialHealthExpiringSoon,
+					expires: at(25),
+				},
+			),
+			slot(
+				credentialSlot{
+					name:    "Soon",
+					health:  workercredential.CredentialHealthExpiringSoon,
+					expires: at(5),
+				},
+			),
+			slot(credentialSlot{
+				name:     "Required",
+				required: true,
+				health:   workercredential.CredentialHealthExpiringSoon,
+				expires:  at(28),
+			}),
+			slot(credentialSlot{
+				name:     "Gone",
+				required: true,
+				health:   workercredential.CredentialHealthExpired,
+				expires:  at(-1),
+			}),
+		),
+		Now: standingNow,
+	})
+
+	subjects := make([]string, 0, len(concerns))
+	for _, concern := range concerns {
+		subjects = append(subjects, *concern.Subject)
+	}
+	assert.Equal(t, []string{"Gone", "Required", "Soon", "Late"}, subjects)
+}
+
+func TestBuildStanding_NilSectionsContributeNothing(t *testing.T) {
+	t.Parallel()
+
+	standing, concerns := workercompliance.BuildStanding(workercompliance.StandingInput{
+		Worker: activeWorker(),
+		Now:    standingNow,
+	})
+
+	assert.Equal(t, workercompliance.StandingGood, standing)
+	assert.Empty(t, concerns)
+}
+
+func TestBuildStanding_NotAssignableBlocks(t *testing.T) {
+	t.Parallel()
+	wrk := activeWorker()
+	wrk.CanBeAssigned = false
+
+	standing, concerns := workercompliance.BuildStanding(workercompliance.StandingInput{
+		Worker: wrk,
+		Now:    standingNow,
+	})
+
+	assert.Equal(t, workercompliance.StandingBlocked, standing)
+	concern := onlyConcern(t, concerns, workercompliance.ConcernNotAssignable)
+	assert.True(t, concern.StopsAssignment)
+	assert.Equal(t, workerpage.TabProfile, concern.Destination.Tab)
 }

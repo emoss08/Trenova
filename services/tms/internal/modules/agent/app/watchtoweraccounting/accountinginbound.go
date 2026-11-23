@@ -76,7 +76,7 @@ func DescribeAccountingInboundAttention(
 	severity, title, summary := inboundAttentionText(provider, group.Reason, group.Count)
 	return watchtowerports.WatchtowerItemInput{
 		TenantInfo:  tenantOf(conn),
-		SourceKind:  watchtower.SourceAccountingReconciliation,
+		SourceKind:  watchtower.SourceKindAccountingReconciliation,
 		SourceID:    AccountingInboundAttentionSourceID(conn, group.Reason),
 		Severity:    severity,
 		Title:       stringutils.TruncateRunes(title, 200),

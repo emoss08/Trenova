@@ -565,7 +565,8 @@ func reportFieldAccessToModel(decision reportaccess.Decision) gqlmodel.ReportFie
 	case reportaccess.NeedsKindRead,
 		reportaccess.NeedsExport,
 		reportaccess.OwnScopeUnsupported,
-		reportaccess.NotOnPlan:
+		reportaccess.NotOnPlan,
+		reportaccess.NeedsOperation:
 		return gqlmodel.ReportFieldAccessNeedsKindRead
 	default:
 		return gqlmodel.ReportFieldAccessNeedsKindRead

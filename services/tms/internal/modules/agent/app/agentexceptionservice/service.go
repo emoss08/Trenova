@@ -119,7 +119,7 @@ func (s *Service) Resolve(
 		s.watchtower.Resolve(
 			ctx,
 			req.TenantInfo,
-			watchtower.SourceAgentException,
+			watchtower.SourceKindAgentException,
 			updated.ID.String(),
 		)
 	}

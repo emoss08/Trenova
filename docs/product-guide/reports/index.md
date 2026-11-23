@@ -51,8 +51,24 @@ Keywords: new dashboard, report tiles, KPI board
 3. Use **Filters** to add dashboard-wide filters, then select **Save**.
 4. Later, open the dashboard from **Dashboards** and select **Edit** to change it or **Export** to export it.
 
+### Review the Desk's workload and AI spend
+Keywords: cases handled, watchtower items by person, exceptions by person, watchtower report, token usage, AI cost, workload report
+1. Open the [Report library](/reports), select **Gallery** and filter by the **Desk** category.
+2. Choose a report and select **Explore** or **Run**:
+   - Cases Handled by Person: cases each person closed out, Watchtower items resolved, average time to resolve and how many were resolved after they were due.
+   - Open Watchtower Items by Person: open Watchtower items by assignee, unassigned included, split into not yet picked up, acknowledged, in progress and snoozed, with overdue, escalated and the oldest.
+   - Open Case Load by Owner: cases with something still open, by case owner, unowned included.
+   - Watchtower Backlog by Kind: what is open on the Watchtower now by kind and severity.
+   - Watchtower Resolution Reasons: why Watchtower items closed, by a person, an agent or the source clearing.
+   - Watchtower Response Times by Week: how quickly Watchtower items were acknowledged and resolved, week by week.
+   - Desk Token Usage by Person: who used the most tokens through the Desk, with the estimated cost; choose Features to widen it.
+   - AI Usage and Cost by Feature and Model and AI Usage and Cost by Week: where the organization's model calls went and what they cost.
+3. Set **Window (days)** where the report asks for it.
+
 ## Notes
 Needs read access to reports. **New report**, **New dashboard**, **Duplicate** and customizing a gallery report need create permission; **Schedules** needs export permission on reports. Each card shows whether the report is **Shared** or **Private**, set by its **Visibility** when saved.
+
+The Watchtower and case reports in the Desk category need the See every case permission on Watchtower, and the AI usage reports need **View** on AI usage and spend (and **Export** on it to run or schedule them, as the Watchtower reports need **Export** on Watchtower); people without them do not see those reports in the gallery. Watchtower items resolved more than 25 months ago are no longer counted, and the usage reports count a call whose provider has no price under Calls Without a Price rather than in **Estimated cost**.
 
 A gallery report that reads data from an add-on your organization's plan does not include is shown as a locked card with **Not on your plan** and the add-on it is part of. It cannot be explored, run or customized, and the dashboard tile picker does not offer it, until the add-on is added.
 

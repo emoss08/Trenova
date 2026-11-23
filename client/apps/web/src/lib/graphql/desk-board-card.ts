@@ -21,6 +21,8 @@ export type DeskBoardEvent = RawBlock["events"][number];
 export type DeskBoardCheck = RawBlock["checks"][number];
 export type DeskBoardMeter = NonNullable<RawBlock["meter"]>;
 export type DeskBoardSource = RawBlock["source"];
+/** A figure the board's words place: its value now, what it was when answered, and its source. */
+export type DeskBoardReading = RawCard["readings"][number];
 
 /** A board's table block: the first rows of the table, and how many it holds. */
 export type DeskBoardTable = {

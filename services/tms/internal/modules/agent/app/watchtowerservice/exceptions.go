@@ -122,7 +122,7 @@ func (s *Exceptions) SettleRecord(
 				ItemID:          item.ID,
 				ExpectedVersion: item.Version,
 			},
-			Code: watchtower.ResolutionFixed,
+			Code: watchtower.ResolutionCodeFixed,
 			Note: req.Note,
 		}, actor); err != nil {
 			s.l.Warn("a finished plan left a condition open",
@@ -190,6 +190,7 @@ func (s *Exceptions) applyException(
 		Item:            &working,
 		ExpectedVersion: expected,
 		Events:          events,
+		ResolvedVia:     resolvedVia(before, &working, change.actor),
 	})
 	if err != nil {
 		return nil, err
@@ -205,6 +206,20 @@ func (s *Exceptions) applyException(
 	}
 
 	return saved, nil
+}
+
+func resolvedVia(
+	before, after *watchtower.Item,
+	actor *permissionports.RequestActor,
+) watchtower.ResolvedVia {
+	switch {
+	case before.IsResolved() || !after.IsResolved():
+		return ""
+	case actor.IsAgent():
+		return watchtower.ResolvedViaAgent
+	default:
+		return watchtower.ResolvedViaPerson
+	}
 }
 
 func (s *Exceptions) GetException(

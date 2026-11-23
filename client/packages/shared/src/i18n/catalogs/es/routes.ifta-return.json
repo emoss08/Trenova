@@ -18,7 +18,6 @@
   "Completed moves with routed distance but no jurisdiction breakdown. They are on no line, so the return is understated by these miles.": "Tramos completados con distancia calculada pero sin desglose por jurisdicción. No figuran en ninguna línea, por lo que la declaración queda infravalorada en esas millas.",
   "Computed {0}": "Calculado {0}",
   "Counting the moves this would re-route…": "Contando los tramos que esto volvería a enrutar…",
-  "Delete draft": "Eliminar borrador",
   "Delete draft…": "Eliminar el borrador…",
   "Delete the {0} draft?": "¿Eliminar el borrador de {0}?",
   "Draft figures move with the data. Finalized locks them. Filed is immutable; corrections open an amendment.": "Las cifras del borrador cambian con los datos. Al finalizar se bloquean. Lo presentado es inmutable; las correcciones abren una modificación.",

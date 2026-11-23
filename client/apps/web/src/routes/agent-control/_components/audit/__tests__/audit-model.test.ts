@@ -317,9 +317,7 @@ describe("auditEventRecordPath", () => {
     expect(auditEventRecordPath("Shipment", "shp_1")).toBe(
       "/shipment-management/shipments?expanded=shp_1&panelType=edit&panelEntityId=shp_1",
     );
-    expect(auditEventRecordPath("worker", "wrk_1")).toBe(
-      "/hr/workers?panelType=edit&panelEntityId=wrk_1",
-    );
+    expect(auditEventRecordPath("worker", "wrk_1")).toBe("/hr/workers/wrk_1");
   });
 
   it("has no link for a record without a page or without an id", () => {

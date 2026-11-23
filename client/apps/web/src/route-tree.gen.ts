@@ -199,6 +199,8 @@ import { Route as AppEquipmentConfigurationFilesEquipmentTypesRouteImport } from
 import { Route as AppFuelConfigurationFilesFuelCardsRouteImport } from "./pages/_app/fuel.configuration-files.fuel-cards";
 import { Route as AppFuelConfigurationFilesIftaTaxRatesRouteImport } from "./pages/_app/fuel.configuration-files.ifta-tax-rates";
 import { Route as AppFuelConfigurationFilesSurchargeRouteImport } from "./pages/_app/fuel.configuration-files.surcharge";
+import { Route as AppHrWorkersIdRouteImport } from "./pages/_app/hr.workers_.$id";
+import { Route as AppHrWorkersNewRouteImport } from "./pages/_app/hr.workers_.new";
 import { Route as AppReportsBuilderDefinitionIdRouteImport } from "./pages/_app/reports_.builder_.$definitionId";
 import { Route as AppReportsDashboardsDashboardIdRouteImport } from "./pages/_app/reports_.dashboards.$dashboardId";
 import { Route as AppReportsExploreDefinitionIdRouteImport } from "./pages/_app/reports_.explore_.$definitionId";
@@ -1263,6 +1265,16 @@ const AppFuelConfigurationFilesSurchargeRoute =
     path: "/fuel/configuration-files/surcharge",
     getParentRoute: () => AppRoute,
   } as any);
+const AppHrWorkersIdRoute = AppHrWorkersIdRouteImport.update({
+  id: "/hr/workers_/$id",
+  path: "/hr/workers/$id",
+  getParentRoute: () => AppRoute,
+} as any);
+const AppHrWorkersNewRoute = AppHrWorkersNewRouteImport.update({
+  id: "/hr/workers_/new",
+  path: "/hr/workers/new",
+  getParentRoute: () => AppRoute,
+} as any);
 const AppReportsBuilderDefinitionIdRoute =
   AppReportsBuilderDefinitionIdRouteImport.update({
     id: "/reports_/builder_/$definitionId",
@@ -1637,6 +1649,8 @@ export interface FileRoutesByFullPath {
   "/fuel/configuration-files/fuel-cards": typeof AppFuelConfigurationFilesFuelCardsRoute;
   "/fuel/configuration-files/ifta-tax-rates": typeof AppFuelConfigurationFilesIftaTaxRatesRoute;
   "/fuel/configuration-files/surcharge": typeof AppFuelConfigurationFilesSurchargeRoute;
+  "/hr/workers/$id": typeof AppHrWorkersIdRoute;
+  "/hr/workers/new": typeof AppHrWorkersNewRoute;
   "/reports/builder/$definitionId": typeof AppReportsBuilderDefinitionIdRoute;
   "/reports/dashboards/$dashboardId": typeof AppReportsDashboardsDashboardIdRoute;
   "/reports/explore/$definitionId": typeof AppReportsExploreDefinitionIdRoute;
@@ -1855,6 +1869,8 @@ export interface FileRoutesByTo {
   "/fuel/configuration-files/fuel-cards": typeof AppFuelConfigurationFilesFuelCardsRoute;
   "/fuel/configuration-files/ifta-tax-rates": typeof AppFuelConfigurationFilesIftaTaxRatesRoute;
   "/fuel/configuration-files/surcharge": typeof AppFuelConfigurationFilesSurchargeRoute;
+  "/hr/workers/$id": typeof AppHrWorkersIdRoute;
+  "/hr/workers/new": typeof AppHrWorkersNewRoute;
   "/reports/builder/$definitionId": typeof AppReportsBuilderDefinitionIdRoute;
   "/reports/dashboards/$dashboardId": typeof AppReportsDashboardsDashboardIdRoute;
   "/reports/explore/$definitionId": typeof AppReportsExploreDefinitionIdRoute;
@@ -2080,6 +2096,8 @@ export interface FileRoutesById {
   "/_app/fuel/configuration-files/fuel-cards": typeof AppFuelConfigurationFilesFuelCardsRoute;
   "/_app/fuel/configuration-files/ifta-tax-rates": typeof AppFuelConfigurationFilesIftaTaxRatesRoute;
   "/_app/fuel/configuration-files/surcharge": typeof AppFuelConfigurationFilesSurchargeRoute;
+  "/_app/hr/workers_/$id": typeof AppHrWorkersIdRoute;
+  "/_app/hr/workers_/new": typeof AppHrWorkersNewRoute;
   "/_app/reports_/builder_/$definitionId": typeof AppReportsBuilderDefinitionIdRoute;
   "/_app/reports_/dashboards/$dashboardId": typeof AppReportsDashboardsDashboardIdRoute;
   "/_app/reports_/explore_/$definitionId": typeof AppReportsExploreDefinitionIdRoute;
@@ -2302,6 +2320,8 @@ export interface FileRouteTypes {
     | "/fuel/configuration-files/fuel-cards"
     | "/fuel/configuration-files/ifta-tax-rates"
     | "/fuel/configuration-files/surcharge"
+    | "/hr/workers/$id"
+    | "/hr/workers/new"
     | "/reports/builder/$definitionId"
     | "/reports/dashboards/$dashboardId"
     | "/reports/explore/$definitionId"
@@ -2520,6 +2540,8 @@ export interface FileRouteTypes {
     | "/fuel/configuration-files/fuel-cards"
     | "/fuel/configuration-files/ifta-tax-rates"
     | "/fuel/configuration-files/surcharge"
+    | "/hr/workers/$id"
+    | "/hr/workers/new"
     | "/reports/builder/$definitionId"
     | "/reports/dashboards/$dashboardId"
     | "/reports/explore/$definitionId"
@@ -2744,6 +2766,8 @@ export interface FileRouteTypes {
     | "/_app/fuel/configuration-files/fuel-cards"
     | "/_app/fuel/configuration-files/ifta-tax-rates"
     | "/_app/fuel/configuration-files/surcharge"
+    | "/_app/hr/workers_/$id"
+    | "/_app/hr/workers_/new"
     | "/_app/reports_/builder_/$definitionId"
     | "/_app/reports_/dashboards/$dashboardId"
     | "/_app/reports_/explore_/$definitionId"
@@ -4123,6 +4147,20 @@ declare module "@tanstack/react-router" {
       preLoaderRoute: typeof AppFuelConfigurationFilesSurchargeRouteImport;
       parentRoute: typeof AppRoute;
     };
+    "/_app/hr/workers_/$id": {
+      id: "/_app/hr/workers_/$id";
+      path: "/hr/workers/$id";
+      fullPath: "/hr/workers/$id";
+      preLoaderRoute: typeof AppHrWorkersIdRouteImport;
+      parentRoute: typeof AppRoute;
+    };
+    "/_app/hr/workers_/new": {
+      id: "/_app/hr/workers_/new";
+      path: "/hr/workers/new";
+      fullPath: "/hr/workers/new";
+      preLoaderRoute: typeof AppHrWorkersNewRouteImport;
+      parentRoute: typeof AppRoute;
+    };
     "/_app/reports_/builder_/$definitionId": {
       id: "/_app/reports_/builder_/$definitionId";
       path: "/reports/builder/$definitionId";
@@ -4587,6 +4625,8 @@ interface AppRouteChildren {
   AppFuelConfigurationFilesFuelCardsRoute: typeof AppFuelConfigurationFilesFuelCardsRoute;
   AppFuelConfigurationFilesIftaTaxRatesRoute: typeof AppFuelConfigurationFilesIftaTaxRatesRoute;
   AppFuelConfigurationFilesSurchargeRoute: typeof AppFuelConfigurationFilesSurchargeRoute;
+  AppHrWorkersIdRoute: typeof AppHrWorkersIdRoute;
+  AppHrWorkersNewRoute: typeof AppHrWorkersNewRoute;
   AppReportsBuilderDefinitionIdRoute: typeof AppReportsBuilderDefinitionIdRoute;
   AppReportsDashboardsDashboardIdRoute: typeof AppReportsDashboardsDashboardIdRoute;
   AppReportsExploreDefinitionIdRoute: typeof AppReportsExploreDefinitionIdRoute;
@@ -4770,6 +4810,8 @@ const AppRouteChildren: AppRouteChildren = {
     AppFuelConfigurationFilesIftaTaxRatesRoute,
   AppFuelConfigurationFilesSurchargeRoute:
     AppFuelConfigurationFilesSurchargeRoute,
+  AppHrWorkersIdRoute: AppHrWorkersIdRoute,
+  AppHrWorkersNewRoute: AppHrWorkersNewRoute,
   AppReportsBuilderDefinitionIdRoute: AppReportsBuilderDefinitionIdRoute,
   AppReportsDashboardsDashboardIdRoute: AppReportsDashboardsDashboardIdRoute,
   AppReportsExploreDefinitionIdRoute: AppReportsExploreDefinitionIdRoute,

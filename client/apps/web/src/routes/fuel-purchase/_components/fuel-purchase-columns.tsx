@@ -92,7 +92,7 @@ export function getColumns(
           <EntityRefCell<NonNullable<FuelPurchaseRow["worker"]>, FuelPurchaseRow>
             entity={worker}
             config={{
-              basePath: "/workers",
+              kind: "worker",
               getId: (worker) => worker.id,
               getDisplayText: (worker) =>
                 [worker.firstName, worker.lastName].filter(Boolean).join(" "),

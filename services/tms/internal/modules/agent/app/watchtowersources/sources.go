@@ -74,7 +74,7 @@ func NewInsightSource(
 	return &InsightSource{repo: repo, detectors: detectors}
 }
 
-func (s *InsightSource) Kind() watchtower.SourceKind { return watchtower.SourceInsight }
+func (s *InsightSource) Kind() watchtower.SourceKind { return watchtower.SourceKindInsight }
 
 func (s *InsightSource) Snapshot(
 	ctx context.Context,
@@ -122,7 +122,7 @@ func NewProposalSource(
 		queue:       queue,
 		runs:        runs,
 		definitions: definitions,
-		kind:        watchtower.SourceAgentProposal,
+		kind:        watchtower.SourceKindAgentProposal,
 	}
 }
 
@@ -135,7 +135,7 @@ func NewPlanSource(
 		queue:       queue,
 		runs:        runs,
 		definitions: definitions,
-		kind:        watchtower.SourceAgentPlan,
+		kind:        watchtower.SourceKindAgentPlan,
 	}
 }
 
@@ -177,12 +177,12 @@ func (s *DecisionSource) Snapshot(
 	items := make([]watchtowerports.WatchtowerItemInput, 0, len(pending))
 	for _, decision := range pending {
 		switch {
-		case decision.Proposal != nil && s.kind == watchtower.SourceAgentProposal:
+		case decision.Proposal != nil && s.kind == watchtower.SourceKindAgentProposal:
 			items = append(
 				items,
 				DescribeProposal(decision.Proposal, names[decision.Proposal.RunID]),
 			)
-		case decision.Plan != nil && s.kind == watchtower.SourceAgentPlan:
+		case decision.Plan != nil && s.kind == watchtower.SourceKindAgentPlan:
 			items = append(items, DescribePlan(decision.Plan, names[decision.Plan.RunID]))
 		}
 	}
@@ -293,7 +293,7 @@ func NewFailedRunSource(
 	}
 }
 
-func (s *FailedRunSource) Kind() watchtower.SourceKind { return watchtower.SourceAgentRunFailed }
+func (s *FailedRunSource) Kind() watchtower.SourceKind { return watchtower.SourceKindAgentRunFailed }
 
 func (s *FailedRunSource) Snapshot(
 	ctx context.Context,
@@ -466,7 +466,7 @@ func NewExceptionSource(
 	return &ExceptionSource{repo: repo}
 }
 
-func (s *ExceptionSource) Kind() watchtower.SourceKind { return watchtower.SourceAgentException }
+func (s *ExceptionSource) Kind() watchtower.SourceKind { return watchtower.SourceKindAgentException }
 
 func (s *ExceptionSource) Snapshot(
 	ctx context.Context,
@@ -505,7 +505,7 @@ func NewServiceFailureSource(
 }
 
 func (s *ServiceFailureSource) Kind() watchtower.SourceKind {
-	return watchtower.SourceServiceFailure
+	return watchtower.SourceKindServiceFailure
 }
 
 func (s *ServiceFailureSource) Snapshot(
@@ -544,7 +544,7 @@ func NewCarrierIntelSource(
 }
 
 func (s *CarrierIntelSource) Kind() watchtower.SourceKind {
-	return watchtower.SourceCarrierIntelEvent
+	return watchtower.SourceKindCarrierIntelEvent
 }
 
 func (s *CarrierIntelSource) Snapshot(
@@ -583,7 +583,7 @@ func NewEDIQuarantineSource(
 }
 
 func (s *EDIQuarantineSource) Kind() watchtower.SourceKind {
-	return watchtower.SourceEDIInboundQuarantined
+	return watchtower.SourceKindEDIInboundQuarantined
 }
 
 func (s *EDIQuarantineSource) Snapshot(
@@ -623,7 +623,7 @@ func NewBillingExceptionSource(
 }
 
 func (s *BillingExceptionSource) Kind() watchtower.SourceKind {
-	return watchtower.SourceBillingException
+	return watchtower.SourceKindBillingException
 }
 
 func (s *BillingExceptionSource) Snapshot(
@@ -662,7 +662,7 @@ func NewDetentionSource(
 }
 
 func (s *DetentionSource) Kind() watchtower.SourceKind {
-	return watchtower.SourceDetentionOccurrence
+	return watchtower.SourceKindDetentionOccurrence
 }
 
 func (s *DetentionSource) Snapshot(
@@ -696,7 +696,7 @@ func NewInboundMessageSource(
 }
 
 func (s *InboundMessageSource) Kind() watchtower.SourceKind {
-	return watchtower.SourceInboundMessage
+	return watchtower.SourceKindInboundMessage
 }
 
 func (s *InboundMessageSource) Snapshot(

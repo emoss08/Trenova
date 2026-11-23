@@ -3,6 +3,7 @@ package boardparse
 import (
 	"fmt"
 	"math"
+	"regexp"
 	"slices"
 	"strconv"
 	"strings"
@@ -17,24 +18,11 @@ import (
 const (
 	fieldRecords  = "records"
 	fieldAnalysis = "analysis"
+	fieldReadings = "readings"
+	fieldKey      = "key"
 )
 
-var blockFields = map[board.BlockType][]string{
-	board.BlockFigures:  {"figures"},
-	board.BlockRecords:  {fieldRecords, "measure", "order"},
-	board.BlockCompare:  {fieldRecords, fieldAnalysis, "table", "key", "rows"},
-	board.BlockTable:    {fieldAnalysis, "table", "artifact", "limit"},
-	board.BlockChart:    {fieldAnalysis, "chart"},
-	board.BlockTimeline: {"record", "limit"},
-	board.BlockChecks:   {"checks"},
-	board.BlockMeter:    {fieldChecksBlock, "metric"},
-	board.BlockProse:    {"text"},
-	board.BlockNote:     {"tone", "text", fieldRecords},
-	board.BlockWork:     {fieldRecords},
-	board.BlockActions:  {"actions"},
-}
-
-var commonFields = []string{"type", "title", "half"}
+var readingMark = regexp.MustCompile(`\{([^{}\s]{1,40})\}`)
 
 // fieldChecksBlock is the checks block a meter fills from. It was "of", which
 // a model read as "of how many" and sent beside a metric, so every meter it
@@ -43,6 +31,7 @@ const fieldChecksBlock = "checksBlock"
 
 type parser struct {
 	problems []string
+	unread   map[string][]string
 }
 
 func (p *parser) addf(format string, args ...any) {
@@ -53,7 +42,10 @@ func Parse(arguments map[string]any) (layout *board.Board, problems []string) {
 	p := &parser{}
 	layout = &board.Board{
 		Title:   p.words(arguments, "title", "title", board.MaxTitleRunes, true),
-		Verdict: p.words(arguments, "verdict", "verdict", board.MaxVerdictRunes, true),
+		Verdict: p.sentence(arguments, "verdict", "verdict", board.MaxVerdictRunes, true),
+	}
+	if raw, named := arguments[fieldReadings]; named {
+		layout.Readings = p.readings(raw)
 	}
 
 	raw, isList := arguments["blocks"].([]any)
@@ -73,6 +65,11 @@ func Parse(arguments map[string]any) (layout *board.Board, problems []string) {
 			layout.Blocks = append(layout.Blocks, p.block(fields, idx+1))
 		}
 	}
+	p.placements(layout)
+	layout.Place = board.PlaceFor(
+		board.Place(strings.TrimSpace(stringOf(arguments["place"]))),
+		len(layout.Blocks),
+	)
 	if len(p.problems) == 0 {
 		p.whole(layout)
 	}
@@ -146,12 +143,6 @@ func (p *parser) block(fields map[string]any, at int) board.Block {
 		p.addf("%s.type must be one of %s", path, joinTypes())
 		return board.Block{Type: blockType}
 	}
-	allowed := slices.Concat(commonFields, blockFields[blockType])
-	for key := range fields {
-		if !slices.Contains(allowed, key) {
-			p.addf("%s is a %s block, which takes no %q", path, blockType, key)
-		}
-	}
 
 	titleMost := board.MaxBlockTitleRunes
 	if blockType == board.BlockNote {
@@ -161,6 +152,9 @@ func (p *parser) block(fields map[string]any, at int) board.Block {
 		Type:  blockType,
 		Title: p.words(fields, "title", path+".title", titleMost, false),
 		Half:  fields["half"] == true,
+	}
+	if !blockType.Words() {
+		block.Caption = p.sentence(fields, "caption", path+".caption", board.MaxCaptionRunes, false)
 	}
 	switch blockType {
 	case board.BlockFigures:
@@ -194,7 +188,7 @@ func (p *parser) block(fields map[string]any, at int) board.Block {
 	case board.BlockMeter:
 		p.meter(fields, path, &block)
 	case board.BlockProse:
-		block.Text = p.words(fields, "text", path+".text", board.MaxProseRunes, true)
+		block.Text = p.sentence(fields, "text", path+".text", board.MaxProseRunes, true)
 	case board.BlockNote:
 		p.note(fields, path, &block)
 	case board.BlockWork:
@@ -220,17 +214,17 @@ func (p *parser) actions(raw any, path string) []board.Action {
 			p.addf("%s is not an object", at)
 			continue
 		}
-		for key := range fields {
-			if key != "label" && key != "ask" && key != fieldRecords {
-				p.addf("%s takes a label, the words it asks and its records, not %q", at, key)
-			}
-		}
 		action := board.Action{
 			Label: p.words(fields, "label", at+".label", board.MaxActionLabelRunes, true),
 			Ask:   p.words(fields, "ask", at+".ask", board.MaxActionAskRunes, true),
 		}
 		if _, named := fields[fieldRecords]; named {
-			action.Records = p.records(fields[fieldRecords], at+".records", 1, board.MaxActionRecords)
+			action.Records = p.records(
+				fields[fieldRecords],
+				at+".records",
+				1,
+				board.MaxActionRecords,
+			)
 		}
 		actions = append(actions, action)
 	}
@@ -249,7 +243,7 @@ func (p *parser) timeline(fields map[string]any, path string, block *board.Block
 
 func (p *parser) note(fields map[string]any, path string, block *board.Block) {
 	block.Tone = p.tone(fields, path)
-	block.Text = p.words(fields, "text", path+".text", board.MaxNoteTextRunes, true)
+	block.Text = p.sentence(fields, "text", path+".text", board.MaxNoteTextRunes, true)
 	if block.Title == "" {
 		p.addf("%s.title is required: what the note says in a line", path)
 	}
@@ -265,42 +259,142 @@ func (p *parser) figures(raw any, path string) []board.FigureSource {
 		return nil
 	}
 	figures := make([]board.FigureSource, 0, len(entries))
+	dropped := make([]string, 0, 2)
 	for idx, entry := range entries {
 		fields, isObject := entry.(map[string]any)
 		at := fmt.Sprintf("%s.figures[%d]", path, idx+1)
 		if !isObject {
-			p.addf("%s is not an object", at)
+			dropped = append(dropped, at+" is not an object")
 			continue
 		}
-		figure := board.FigureSource{
-			Label: p.words(fields, "label", at+".label", board.MaxLabelRunes, true),
-		}
-		sources := 0
-		if metric := strings.TrimSpace(stringOf(fields["metric"])); metric != "" {
-			sources++
-			figure.Metric = p.metric(metric, at)
-		}
-		if _, named := fields[fieldRecords]; named {
-			sources++
-			figure.Records = p.records(fields[fieldRecords], at+".records", 1, board.MaxListRecords)
-			figure.Measure = p.measure(fields, at, figure.Records)
-			figure.Aggregate = p.aggregate(fields, at, figure.Measure)
-		}
-		if _, named := fields[fieldAnalysis]; named {
-			sources++
-			figure.Analysis = p.id(fields, fieldAnalysis, at, true)
-			figure.Index = p.index(fields, "figure", at)
-		}
-		if sources != 1 {
-			p.addf(
-				"%s needs exactly one source: a metric, records, or an analysis with its figure",
-				at,
-			)
+		scratch := &parser{}
+		figure := scratch.figureSource(fields, at)
+		if len(scratch.problems) > 0 {
+			dropped = append(dropped, scratch.problems...)
+			continue
 		}
 		figures = append(figures, figure)
 	}
+	if len(figures) == 0 {
+		p.problems = append(p.problems, dropped...)
+	}
 
 	return figures
+}
+
+func (p *parser) figureSource(fields map[string]any, at string) board.FigureSource {
+	figure := board.FigureSource{
+		Label: p.words(fields, "label", at+".label", board.MaxLabelRunes, true),
+	}
+	sources := 0
+	if metric := strings.TrimSpace(stringOf(fields["metric"])); metric != "" {
+		sources++
+		figure.Metric = p.metric(metric, at)
+	}
+	if _, named := fields[fieldRecords]; named {
+		sources++
+		figure.Records = p.records(fields[fieldRecords], at+".records", 1, board.MaxListRecords)
+		figure.Measure = p.measure(fields, at, figure.Records)
+		figure.Aggregate = p.aggregate(fields, at, figure.Measure)
+		if figure.Aggregate == board.AggregateSum && figure.Measure != "" &&
+			!figure.Measure.Summable() && figure.Records != nil && len(figure.Records.IDs) > 1 {
+			p.addf("%s.aggregate sum would add up %s across %d records, which is not a figure "+
+				"anyone reads; use max for the most, or one figure per record", at,
+				figure.Measure, len(figure.Records.IDs))
+		}
+	}
+	if _, named := fields[fieldAnalysis]; named {
+		sources++
+		figure.Analysis = p.id(fields, fieldAnalysis, at, true)
+		figure.Index = p.index(fields, "figure", at)
+	}
+	if sources != 1 {
+		p.addf(
+			"%s needs exactly one source: a metric, records, or an analysis with its figure",
+			at,
+		)
+	}
+
+	return figure
+}
+
+func (p *parser) readings(raw any) []board.Reading {
+	if raw == nil {
+		return nil
+	}
+	entries, isList := raw.([]any)
+	if !isList || len(entries) > board.MaxReadings {
+		p.addf("readings is a list of at most %d readings", board.MaxReadings)
+		return nil
+	}
+	readings := make([]board.Reading, 0, len(entries))
+	for idx, entry := range entries {
+		fields, isObject := entry.(map[string]any)
+		at := fmt.Sprintf("readings[%d]", idx+1)
+		if !isObject {
+			p.addf("%s is not an object", at)
+			continue
+		}
+		key := strings.TrimSpace(stringOf(fields[fieldKey]))
+		switch {
+		case key == "":
+			p.addf("%s.key is required: the name the words place it by, as {key}", at)
+		case !board.IsReadingKey(key):
+			p.addf("%s.key %q is letters, digits and underscores, starting with a "+
+				"letter, at most %d characters", at, key, board.MaxReadingKeyRunes)
+		case slices.ContainsFunc(readings, func(r board.Reading) bool { return r.Key == key }):
+			p.addf("%s.key %q is declared twice", at, key)
+		}
+		scratch := &parser{}
+		source := scratch.figureSource(fields, at)
+		if len(scratch.problems) > 0 {
+			if p.unread == nil {
+				p.unread = make(map[string][]string, 2)
+			}
+			p.unread[key] = scratch.problems
+		}
+		readings = append(readings, board.Reading{Key: key, FigureSource: source})
+	}
+
+	return readings
+}
+
+func (p *parser) placements(layout *board.Board) {
+	placed := make(map[string]bool, len(layout.Readings))
+	check := func(field, text string) {
+		for _, match := range readingMark.FindAllStringSubmatch(text, -1) {
+			if layout.Reading(match[1]) == nil {
+				p.addf("%s places {%s}, which no reading declares; declare it under readings "+
+					"or take it out", field, match[1])
+				continue
+			}
+			placed[match[1]] = true
+		}
+		for _, segment := range board.Segments(text) {
+			if segment.Cite == 0 {
+				continue
+			}
+			for _, match := range readingMark.FindAllStringSubmatch(segment.Text, -1) {
+				p.addf("%s: place {%s} outside the cited words", field, match[1])
+			}
+		}
+	}
+	check("verdict", layout.Verdict)
+	for idx := range layout.Blocks {
+		block := &layout.Blocks[idx]
+		if block.Type == board.BlockProse || block.Type == board.BlockNote {
+			check(fmt.Sprintf("blocks[%d].text", idx+1), block.Text)
+		}
+		if block.Caption != "" {
+			check(fmt.Sprintf("blocks[%d].caption", idx+1), block.Caption)
+		}
+	}
+	layout.Readings = slices.DeleteFunc(layout.Readings, func(reading board.Reading) bool {
+		return !placed[reading.Key]
+	})
+	for idx := range layout.Readings {
+		p.problems = append(p.problems, p.unread[layout.Readings[idx].Key]...)
+	}
 }
 
 func (p *parser) checks(raw any, path string) []board.Check {
@@ -440,6 +534,9 @@ func (p *parser) measure(fields map[string]any, path string, set *board.RecordSe
 	if measure == "" || set == nil {
 		return measure
 	}
+	if named := board.MeasureNamed(set.Resource, string(measure)); named != "" {
+		return named
+	}
 	if !measure.Of(set.Resource) {
 		measures := board.MeasuresOf(set.Resource)
 		if len(measures) == 0 {
@@ -561,14 +658,38 @@ var emphasis = strings.NewReplacer("**", "", "__", "", "`", "")
 
 func (p *parser) words(fields map[string]any, key, path string, most int, required bool) string {
 	text := p.limited(fields, key, path, most, required, emphasis.Replace)
-	if figures := board.Figures(board.PlainText(text)); len(figures) > 0 {
-		p.addf("%s states %s; the board reads every figure live from its blocks, so take it "+
-			"out of the words. Where the board should show it, add a block that reads it "+
-			"(records or checks for the loads it counts, figures for a metric) and cite that "+
-			"block; never point at a block the board does not have", path, figureList(figures))
+	p.noFigures(path, text, "")
+	for _, match := range readingMark.FindAllStringSubmatch(text, -1) {
+		p.addf("%s holds {%s}; a reading is placed only in the verdict, a prose block or a note",
+			path, match[1])
 	}
 
 	return text
+}
+
+func (p *parser) sentence(
+	fields map[string]any,
+	key, path string,
+	most int,
+	required bool,
+) string {
+	text := p.limited(fields, key, path, most, required, emphasis.Replace)
+	p.noFigures(path, text, " Where the words must say it, declare a reading and write its "+
+		"{key} where the value goes.")
+
+	return text
+}
+
+func (p *parser) noFigures(path, text, readingHint string) {
+	figures := board.Figures(board.PlainText(text))
+	if len(figures) == 0 {
+		return
+	}
+	p.addf("%s states %s; the board reads every figure live from its blocks, so take it "+
+		"out of the words.%s Where the board should show it, add a block that reads it "+
+		"(records or checks for the loads it counts, figures for a metric) and cite that "+
+		"block; never point at a block the board does not have", path, figureList(figures),
+		readingHint)
 }
 
 func figureList(figures []string) string {

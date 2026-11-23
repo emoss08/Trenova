@@ -76,12 +76,12 @@ func TestReadsCountsAndClearedFollowTheReader(t *testing.T) {
 
 	require.NoError(t, snoozed.Snooze(baseTime+3600, baseTime))
 	h.update(t, snoozed, watchtower.NewEvent(snoozed, watchtower.EventSnoozed, h.userID))
-	require.NoError(t, resolved.Resolve(watchtower.ResolutionFixed, "", h.userID, baseTime+20))
+	require.NoError(t, resolved.Resolve(watchtower.ResolutionCodeFixed, "", h.userID, baseTime+20))
 	h.update(t, resolved)
 
 	counts, err := h.repo.Counts(h.ctx, watchtowerports.CountWatchtowerItemsRequest{
 		TenantInfo: h.tenant,
-		Kinds:      []watchtower.SourceKind{watchtower.SourceServiceFailure},
+		Kinds:      []watchtower.SourceKind{watchtower.SourceKindServiceFailure},
 		SeenAt:     0,
 		ReaderID:   h.userID,
 		Now:        baseTime,
@@ -94,7 +94,7 @@ func TestReadsCountsAndClearedFollowTheReader(t *testing.T) {
 
 	cleared, err := h.repo.CountCleared(h.ctx, watchtowerports.CountClearedWatchtowerItemsRequest{
 		TenantInfo: h.tenant,
-		Kinds:      []watchtower.SourceKind{watchtower.SourceServiceFailure},
+		Kinds:      []watchtower.SourceKind{watchtower.SourceKindServiceFailure},
 		UserID:     h.userID,
 		Since:      baseTime - 60,
 	})
@@ -117,7 +117,7 @@ func TestTheQueueReadsSoonestDeadlineFirstAndUndatedLast(t *testing.T) {
 
 	items, err := h.repo.List(h.ctx, watchtowerports.ListWatchtowerItemsQuery{
 		TenantInfo:     h.tenant,
-		Kinds:          []watchtower.SourceKind{watchtower.SourceServiceFailure},
+		Kinds:          []watchtower.SourceKind{watchtower.SourceKindServiceFailure},
 		UnresolvedOnly: true,
 		Statuses:       []watchtower.Status{watchtower.StatusOpen},
 		OrderByDue:     true,

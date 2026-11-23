@@ -1,0 +1,152 @@
+{
+  "key": "cases-handled-by-user",
+  "version": "1.0.0",
+  "name": "Cases Handled by Person",
+  "description": "How many cases each person closed out in the window, with the Watchtower items they resolved, how long those took from when the problem occurred and how many were resolved after they were due; work an agent resolved for a person counts as theirs",
+  "category": "Desk",
+  "tags": [
+    "desk",
+    "watchtower",
+    "cases",
+    "workload",
+    "people"
+  ],
+  "defaultFormat": "xlsx",
+  "definition": {
+    "version": 2,
+    "entity": "resolution",
+    "columns": [
+      {
+        "id": "person",
+        "label": "Person",
+        "dimension": {
+          "field": "resolvedBy.name"
+        },
+        "display": {
+          "nullText": "No longer a member"
+        }
+      },
+      {
+        "id": "person_key",
+        "hidden": true,
+        "dimension": {
+          "field": "resolvedBy.id"
+        }
+      },
+      {
+        "id": "cases",
+        "label": "Cases Handled",
+        "measure": {
+          "field": "caseID",
+          "agg": "count_distinct"
+        },
+        "display": {
+          "style": "number",
+          "decimals": 0,
+          "grouping": true
+        }
+      },
+      {
+        "id": "resolved",
+        "measure": {
+          "field": "id",
+          "agg": "count"
+        },
+        "display": {
+          "style": "number",
+          "decimals": 0,
+          "grouping": true
+        },
+        "label": "Items Resolved"
+      },
+      {
+        "id": "avg_time_to_resolve",
+        "label": "Average Time to Resolve",
+        "measure": {
+          "field": "secondsToResolve",
+          "agg": "avg"
+        },
+        "display": {
+          "style": "duration",
+          "durationUnit": "seconds",
+          "durationStyle": "compact"
+        }
+      },
+      {
+        "id": "resolved_late",
+        "measure": {
+          "field": "id",
+          "agg": "count",
+          "filter": {
+            "field": "pastDue",
+            "op": "eq",
+            "value": true
+          }
+        },
+        "display": {
+          "style": "number",
+          "decimals": 0,
+          "grouping": true
+        },
+        "label": "Resolved After Due"
+      },
+      {
+        "id": "by_agent",
+        "measure": {
+          "field": "id",
+          "agg": "count",
+          "filter": {
+            "field": "resolvedVia",
+            "op": "eq",
+            "value": "Agent"
+          }
+        },
+        "display": {
+          "style": "number",
+          "decimals": 0,
+          "grouping": true
+        },
+        "label": "Resolved by an Agent"
+      }
+    ],
+    "filters": {
+      "and": [
+        {
+          "field": "resolvedAt",
+          "op": "last_n_days",
+          "param": "windowDays"
+        },
+        {
+          "field": "resolvedVia",
+          "op": "in",
+          "value": [
+            "Person",
+            "Agent"
+          ]
+        }
+      ]
+    },
+    "groupings": {
+      "total": true
+    },
+    "sort": [
+      {
+        "column": "cases",
+        "desc": true
+      },
+      {
+        "column": "resolved",
+        "desc": true
+      }
+    ],
+    "parameters": [
+      {
+        "name": "windowDays",
+        "label": "Window (days)",
+        "type": "int",
+        "required": true,
+        "default": 30
+      }
+    ]
+  }
+}

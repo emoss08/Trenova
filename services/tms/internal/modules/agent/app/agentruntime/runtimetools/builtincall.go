@@ -8,7 +8,7 @@ import (
 
 // Answer answers a call of one of the runtime's own tools that needs
 // nothing but the turn: request_decision, withdraw_proposal, name_plan,
-// publish_artifact and show_board. offers says whether the turn was offered a
+// publish_artifact, show_board and show_answer. offers says whether the turn was offered a
 // tool. handled is false for any other tool.
 func Answer(
 	t Turn,
@@ -56,11 +56,19 @@ func Answer(
 		}
 
 		return outcome, true
-	case "show_board":
+	case ShowBoardTool:
 		outcome = toolcall.Refused(aitrace.OutcomeDenied,
 			"the turn is not offered boards", "%s", UnboardableRefusal)
-		if offers("show_board") {
+		if offers(ShowBoardTool) {
 			outcome = showBoard(t, call.Arguments)
+		}
+
+		return outcome, true
+	case ShowAnswerTool:
+		outcome = toolcall.Refused(aitrace.OutcomeDenied,
+			"the turn is not offered boards", "%s", UnboardableRefusal)
+		if offers(ShowAnswerTool) {
+			outcome = showAnswer(t, call.Arguments)
 		}
 
 		return outcome, true

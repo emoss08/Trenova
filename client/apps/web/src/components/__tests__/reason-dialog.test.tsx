@@ -4,7 +4,13 @@ import { ReasonDialog } from "../reason-dialog";
 
 afterEach(cleanup);
 
-function renderDialog(props: { optional?: boolean; label?: string; maxLength?: number }) {
+function renderDialog(props: {
+  optional?: boolean;
+  label?: string;
+  maxLength?: number;
+  cancelLabel?: string;
+  onOpenChange?: (open: boolean) => void;
+}) {
   const onConfirm = vi.fn<(reason: string) => void>();
   render(
     <ReasonDialog
@@ -50,5 +56,21 @@ describe("ReasonDialog", () => {
 
     expect(await screen.findByText("Keep the reason under 5 characters")).toBeInTheDocument();
     expect(onConfirm).not.toHaveBeenCalled();
+  });
+
+  it("backs out under its own words when given them, and reads Back otherwise", () => {
+    const onOpenChange = vi.fn();
+    renderDialog({ cancelLabel: "Keep checklist", onOpenChange });
+
+    expect(screen.queryByRole("button", { name: "Back" })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Keep checklist" }));
+
+    expect(onOpenChange).toHaveBeenCalledWith(false);
+  });
+
+  it("reads Back on the button that backs out by default", () => {
+    renderDialog({});
+
+    expect(screen.getByRole("button", { name: "Back" })).toBeInTheDocument();
   });
 });

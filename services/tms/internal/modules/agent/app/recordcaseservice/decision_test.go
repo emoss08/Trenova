@@ -142,8 +142,8 @@ func TestOtherPending_CountsDistinctWaitingDecisionsOnce(t *testing.T) {
 
 func TestItemFor_FindsTheNeedsYouItemBehindADecision(t *testing.T) {
 	items := []*watchtower.Item{
-		{ID: "wt_1", SourceKind: watchtower.SourceEtaAtRisk, SourceID: "apl_1"},
-		{ID: "wt_2", SourceKind: watchtower.SourceAgentPlan, SourceID: "apl_1"},
+		{ID: "wt_1", SourceKind: watchtower.SourceKindEtaAtRisk, SourceID: "apl_1"},
+		{ID: "wt_2", SourceKind: watchtower.SourceKindAgentPlan, SourceID: "apl_1"},
 	}
 
 	assert.Equal(t, pulid.ID("wt_2"), itemFor(items, "apl_1"))

@@ -95,3 +95,32 @@ func TestAggregateLiability(t *testing.T) {
 	assert.Equal(t, worker.PTOTypeSick, report.Rows[4].PTOType)
 	assert.Equal(t, bob, report.Rows[4].WorkerID, "negative balance sorts last")
 }
+
+func TestWithReleased_SettlesTheDaysACancelledRequestHandsBack(t *testing.T) {
+	t.Parallel()
+
+	workerID := pulid.MustNew("wrk_")
+	stored := []*pto.WorkerPTOBalance{
+		{WorkerID: workerID, PTOType: worker.PTOTypeVacation, BalanceDays: decimal.NewFromInt(4)},
+	}
+	projected := ptoledgerservice.WithReleased(stored, []ptoledgerservice.ReleasedUsage{
+		{PTOType: worker.PTOTypeVacation, Days: decimal.NewFromInt(3)},
+		{PTOType: worker.PTOTypeSick, Days: decimal.NewFromFloat(1.5)},
+		{PTOType: worker.PTOTypePersonal, Days: decimal.Zero},
+	})
+
+	plan := ptoledgerservice.PlanTerminationSettlement(projected, settlementPolicy())
+
+	require.Len(t, plan, 2)
+	assert.Equal(t, worker.PTOTypeSick, plan[0].PTOType)
+	assert.True(t, plan[0].Days.Equal(decimal.NewFromFloat(1.5)))
+	assert.Equal(t, pto.PTOLedgerEntryForfeiture, plan[0].EntryType)
+	assert.Equal(t, worker.PTOTypeVacation, plan[1].PTOType)
+	assert.True(t, plan[1].Days.Equal(decimal.NewFromInt(7)))
+	assert.Equal(t, pto.PTOLedgerEntryPayout, plan[1].EntryType)
+	assert.True(
+		t,
+		stored[0].BalanceDays.Equal(decimal.NewFromInt(4)),
+		"the stored balance is not changed by projecting it",
+	)
+}

@@ -114,3 +114,54 @@ func TestBoardCardToModelCarriesEveryBlockAsTheServerFilledIt(t *testing.T) {
 	assert.Nil(t, block.Chart)
 	assert.Empty(t, block.Figures)
 }
+
+func TestBoardCardToModelCarriesThePlaceAndEachReading(t *testing.T) {
+	t.Parallel()
+
+	moved := &board.Value{Kind: board.ValueCount, Number: decimal.NewFromInt(6)}
+	card := &assistantports.BoardCard{
+		ArtifactID: pulid.MustNew("art_"),
+		ThreadID:   pulid.MustNew("thr_"),
+		Title:      "Late loads",
+		Filled: &board.Filled{
+			Place: board.PlaceConversation,
+			Verdict: []board.FilledSegment{
+				{Text: "There are "}, {Text: "6", Reading: "late"}, {Text: " late."},
+			},
+			Readings: []board.FilledReading{
+				{
+					Key:   "late",
+					Label: "Late now",
+					Value: &board.Value{Kind: board.ValueCount, Number: decimal.NewFromInt(2)},
+					Was:   moved,
+					Source: board.Source{
+						Kind: board.SourceRecords, Resource: permission.ResourceShipment,
+						Count: 6, Readable: 5,
+					},
+					Measure:   board.MeasureLateness,
+					Aggregate: board.AggregateCount,
+				},
+				{Key: "owed", Label: "Owed", Source: board.Source{Kind: board.SourceMetrics}},
+			},
+		},
+	}
+
+	model := boardCardToModel(card)
+
+	assert.Equal(t, "conversation", model.Place)
+	assert.Equal(t, "late", model.Verdict[1].Reading)
+	assert.Equal(t, "6", model.Verdict[1].Text)
+	assert.Empty(t, model.Verdict[0].Reading)
+	require.Len(t, model.Readings, 2)
+	late := model.Readings[0]
+	assert.Equal(t, "late", late.Key)
+	assert.Equal(t, "Late now", late.Label)
+	assert.Equal(t, "2", late.Value.Number)
+	assert.Equal(t, "6", late.Was.Number)
+	assert.Equal(t, "shipment", late.Source.Resource)
+	assert.Equal(t, 5, late.Source.Readable)
+	assert.Equal(t, "lateness", late.Measure)
+	assert.Equal(t, "count", late.Aggregate)
+	assert.Nil(t, model.Readings[1].Value)
+	assert.Empty(t, model.Readings[1].Measure)
+}

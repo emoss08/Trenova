@@ -25,6 +25,7 @@ import { useDeskSettingsStore } from "@/stores/desk-settings-store";
 import { useDeskStore } from "@/stores/desk-store";
 import { useRecentPagesStore } from "@/stores/recent-pages-store";
 import { useRecentRecordsStore } from "@/stores/recent-records-store";
+import { useRosterContextStore } from "@/routes/worker/roster-context-store";
 
 // What draws the app's frame and its first screen, written to the browser's disk so a
 // returning session paints them before the network answers. Nothing else is ever written:
@@ -170,6 +171,7 @@ export function forgetSessionStores(): void {
   useDeskStore.getState().clearSession();
   useRecentPagesStore.getState().clear();
   useRecentRecordsStore.getState().clear();
+  useRosterContextStore.getState().clear();
 }
 
 /**

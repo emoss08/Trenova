@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/stringutils"
 )
 
 const (
@@ -139,7 +140,25 @@ func (p *shipmentParties) readingsOf(term string) []wordReading {
 		}
 	}
 
-	return readings
+	return wholeWordReadings(term, readings)
+}
+
+func wholeWordReadings(term string, readings []wordReading) []wordReading {
+	word := strings.ToLower(strings.TrimSpace(term))
+	whole := make([]wordReading, 0, len(readings))
+	for _, reading := range readings {
+		matches := slices.DeleteFunc(slices.Clone(reading.matches), func(match partyMatch) bool {
+			return !stringutils.ContainsWords(strings.ToLower(match.name), word)
+		})
+		if len(matches) > 0 {
+			whole = append(whole, wordReading{kind: reading.kind, matches: matches})
+		}
+	}
+	if len(whole) == 0 {
+		return readings
+	}
+
+	return whole
 }
 
 func partyGroups(

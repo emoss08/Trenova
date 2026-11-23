@@ -31,11 +31,7 @@ import { graphQLErrorMessage } from "@trenova/shared/lib/graphql";
 import type { ReportDefinition } from "@/lib/graphql/reports";
 import { cn } from "@trenova/shared/lib/utils";
 import { Resource } from "@trenova/shared/types/permission";
-import {
-  parseReportIR,
-  REPORT_DEFINITION_STATUS_LABELS,
-  type ReportParameterDef,
-} from "@/types/report";
+import { parseReportIR, REPORT_DEFINITION_STATUS_LABELS, type ReportIR } from "@/types/report";
 import { formatDistanceToNowStrict } from "date-fns";
 import {
   CalendarClockIcon,
@@ -63,12 +59,13 @@ import {
 import { CategoryGroupHeader, ReportCard, ReportGridEmpty } from "./report-card-chrome";
 import { ReportSchedulesDialog } from "./report-schedules-dialog";
 import { RunReportDialog, type RunReportTarget } from "./run-report-dialog";
+import { useReportParameterOptions } from "@/hooks/use-report-parameter-options";
 
 type RunDialogState = {
   target: RunReportTarget;
   name: string;
   defaultFormat: string;
-  parameters: ReportParameterDef[];
+  report: ReportIR | null;
 };
 
 const STATUS_DOT: Record<string, string> = {
@@ -260,6 +257,7 @@ export function ReportDefinitionGrid({
   const { canCreate } = usePermissions(Resource.Report);
 
   const [runDialog, setRunDialog] = useState<RunDialogState | null>(null);
+  const runParameterOptions = useReportParameterOptions(runDialog?.report, runDialog !== null);
   const [scheduleTarget, setScheduleTarget] = useState<ReportDefinition | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<ReportDefinition | null>(null);
 
@@ -359,7 +357,7 @@ export function ReportDefinitionGrid({
                         target: { definitionId: definition.id },
                         name: definition.name,
                         defaultFormat: definition.defaultFormat,
-                        parameters: parseReportIR(definition.definition)?.parameters ?? [],
+                        report: parseReportIR(definition.definition),
                       })
                     }
                     onSchedules={() => setScheduleTarget(definition)}
@@ -385,7 +383,8 @@ export function ReportDefinitionGrid({
         target={runDialog?.target ?? null}
         reportName={runDialog?.name ?? ""}
         defaultFormat={runDialog?.defaultFormat ?? "csv"}
-        parameters={runDialog?.parameters ?? []}
+        parameters={runDialog?.report?.parameters ?? []}
+        parameterOptions={runParameterOptions}
       />
       <ReportSchedulesDialog
         open={scheduleTarget !== null}

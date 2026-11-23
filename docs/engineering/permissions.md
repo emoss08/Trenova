@@ -167,6 +167,22 @@ reads and decides only their team's cases (`TestJobTemplates_OnlyHumanResourcesR
 lists every template's leave operations). Configuring leave (`worker_leave:manage`) and
 exporting it stay with administrators.
 
+Management reports follow the Desk. The Watchtower and case reports need
+`watchtower:manage` ("See every case") beside report read, and their runs, schedules and
+downloads need `watchtower:export`; `desk.case-lead` grants all three. AI usage and spend is its
+own resource, `ai_usage` (View, Export; administration feature, Restricted): AI control's usage
+summary, daily usage and usage by feature, and the AI usage reports, read it, and nothing about a
+provider's configuration does, so `ai_provider` read no longer shows spend and `ai_usage` never
+opens a provider. `reporting.ai-usage` grants `ai_usage` read and export. Migration
+`20261231023940_ai_usage_permission` gave every role that held anything on `ai_provider` the
+`ai_usage` read (and export where the role exports reports), so nobody lost what they saw.
+Administrators hold everything (the `administrator_permissions` seed adds a new resource or
+operation on the next migrate); of the templates, Dispatch supervisor and Billing manager carry
+both bundles and run, export and schedule all nine Desk reports, and no other template opens
+them (`TestJobTemplates_ManagementReportsReachOnlyManagers`,
+`TestManagerTemplatesRunEveryDeskReportInExportMode`). Each provider's month spend beside its
+cap (`AIProvider.monthSpendUsd`) stays with the provider's settings.
+
 Bundles are a way of choosing grants, not a second kind of grant: choosing one writes its
 grants into the role's ordinary `resource_permissions`, so evaluation, delegation and the
 audit trail are unchanged, and a later change to a bundle does not reach roles built from

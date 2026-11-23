@@ -87,7 +87,7 @@ func (s *service) projectToWatchtower(
 		return
 	}
 
-	s.watchtower.Resolve(ctx, tenant, watchtower.SourceServiceFailure, entity.ID.String())
+	s.watchtower.Resolve(ctx, tenant, watchtower.SourceKindServiceFailure, entity.ID.String())
 }
 
 func (s *service) logServiceFailureAction(ctx context.Context, params *serviceFailureActionParams) {

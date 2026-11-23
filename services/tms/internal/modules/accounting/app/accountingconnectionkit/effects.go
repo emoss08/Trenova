@@ -43,7 +43,7 @@ func (k *Kit) AfterHealthChange(
 		k.watchtower.Resolve(
 			ctx,
 			tenant,
-			watchtower.SourceAccountingSync,
+			watchtower.SourceKindAccountingSync,
 			watchtoweraccounting.AccountingConnectionHealthSourceID(conn),
 		)
 	}
@@ -54,7 +54,7 @@ func (k *Kit) AfterHealthChange(
 		k.watchtower.Resolve(
 			ctx,
 			tenant,
-			watchtower.SourceAccountingSync,
+			watchtower.SourceKindAccountingSync,
 			watchtoweraccounting.AccountingReconnectSourceID(conn),
 		)
 	}
@@ -73,13 +73,13 @@ func (k *Kit) ResolveWatchtower(
 	k.watchtower.Resolve(
 		ctx,
 		tenant,
-		watchtower.SourceAccountingSync,
+		watchtower.SourceKindAccountingSync,
 		watchtoweraccounting.AccountingConnectionHealthSourceID(conn),
 	)
 	k.watchtower.Resolve(
 		ctx,
 		tenant,
-		watchtower.SourceAccountingSync,
+		watchtower.SourceKindAccountingSync,
 		watchtoweraccounting.AccountingReconnectSourceID(conn),
 	)
 }

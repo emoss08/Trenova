@@ -32,13 +32,36 @@ const (
 type resourceMeasure struct {
 	resource permission.Resource
 	measures []Measure
+	named    map[string]Measure
 }
 
 var resourceMeasures = []resourceMeasure{
-	{resource: permission.ResourceShipment, measures: []Measure{MeasureLateness, MeasureRevenue}},
+	{
+		resource: permission.ResourceShipment,
+		measures: []Measure{MeasureLateness, MeasureRevenue},
+		named: map[string]Measure{
+			"totalCharge":       MeasureRevenue,
+			"totalChargeAmount": MeasureRevenue,
+			"totalCharges":      MeasureRevenue,
+			"charge":            MeasureRevenue,
+			"lateBy":            MeasureLateness,
+			"lateByMinutes":     MeasureLateness,
+			"lateMinutes":       MeasureLateness,
+			"late":              MeasureLateness,
+		},
+	},
 	{
 		resource: permission.ResourceInvoice,
 		measures: []Measure{MeasureAmountDue, MeasureTotal, MeasureAge},
+		named: map[string]Measure{
+			"openAmount":       MeasureAmountDue,
+			"amountOpen":       MeasureAmountDue,
+			"balanceDue":       MeasureAmountDue,
+			"balanceDueMinor":  MeasureAmountDue,
+			"totalAmount":      MeasureTotal,
+			"totalAmountMinor": MeasureTotal,
+			"invoiceTotal":     MeasureTotal,
+		},
 	},
 	{
 		resource: permission.ResourceJournalEntry,
@@ -77,6 +100,19 @@ func MeasuresOf(resource permission.Resource) []Measure {
 	return nil
 }
 
+func MeasureNamed(resource permission.Resource, name string) Measure {
+	if measure := Measure(name); measure.Of(resource) {
+		return measure
+	}
+	for idx := range resourceMeasures {
+		if resourceMeasures[idx].resource == resource {
+			return resourceMeasures[idx].named[name]
+		}
+	}
+
+	return ""
+}
+
 func (m Measure) Of(resource permission.Resource) bool {
 	return slices.Contains(MeasuresOf(resource), m)
 }
@@ -90,6 +126,10 @@ func (m Measure) Kind() ValueKind {
 	default:
 		return ValueNumber
 	}
+}
+
+func (m Measure) Summable() bool {
+	return m.Kind() != ValueDuration
 }
 
 func (m Measure) Adverse() bool {

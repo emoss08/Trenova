@@ -1586,7 +1586,7 @@ rather than only once it is saved.
 A reply that starts over and a reply that is corrected are told apart.
 `retrying` (kind `restart`) means a model is being asked again: a provider died
 partway, a cut-off call is asked again with more room, or a guard re-asks for a
-looping or ungrounded reply. The reader withdraws the attempt's streamed text
+looping or ungrounded reply, or for a board in place of a prose reply across records. The reader withdraws the attempt's streamed text
 and thinking, shows that it is retrying, and what follows is the whole reply.
 `reply_replaced` (`AssistantReplyReplacedEvent`: `text`, `reason`) means the
 runtime corrected the final reply after it streamed, without asking the model
@@ -2047,6 +2047,137 @@ for again, and the same question may be asked again properly; a refused ask also
 does not count towards the repeated-question check of later turns
 (`askedQuestions`).
 
+### A board in the conversation ends the turn
+
+A `show_answer` call, or a `show_board` call the server places in the conversation (see "A board" in
+[desk-artifacts.md](desk-artifacts.md)) is the turn's reply. Once its result is in, and every
+other call of the same model step has its result, the loop ends the turn itself and does not
+ask the model again, by the same path a shown question takes: `runToolCall` keeps the shown
+board (`runtimetools.ConversationBoard`: a board artifact the observer showed with place
+`conversation`, never a failed or refused call), and `driveRound` finishes with
+`boardEnding`. The reply is made by the server, not the model: the recorder puts the plain
+answer on the shown artifact (`ShownArtifact.Answer`, from `boardmarkdown.Answer`), and
+`runtimetools.BoardReply` attaches the artifact link inside the sentence, in parentheses before
+its closing punctuation, as the placement mend does (`replycheck.AttachRef`, over
+`attachRefs`): `There are 6 late loads on the Dallas lanes, the furthest 3h 10m behind ([Six
+late shipments on the Dallas lanes](artifact:art_…)).` So the reply passes the ordinary
+stray-link check with no exception. With no answer to write, the reply is the link alone: the
+server writes no words of its own, since it does not know the reply's language. It is streamed to a live reader as one delta and recorded as the
+reply. No reply pass, grounding guard or placement check runs on it: it is valid by
+construction (the output guard still runs in `finish`, and finds nothing to take out). Its
+completion carries the step's model and provider but no tokens or cost, which the step's own
+message already holds, so usage is not counted twice; the call counts against the tool budget
+like any other.
+
+- **What ends nothing.** A `show_answer` or `show_board` that failed, was refused or could not
+  be kept, and a
+  board placed beside, which leaves the model to reply as before.
+- **Several boards in one step.** The last conversation board of the step is the reply; an
+  earlier one is still kept, but no reply links it.
+- **A board and a question in one step.** Both reach the person; the turn ends with the
+  board's reply, and the question stays pinned above the message box.
+- **A revised board** (`boardId`) is placed by its own call and, in the conversation, ends its
+  turn with a reply that links the new version.
+- **What the next turn reads.** The tool result of a conversation board says it was drawn as
+  the reply and the turn ended on it; a beside board's says to point to it in a sentence or two,
+  and one asked for in the conversation that was put beside says why.
+- **Durable turns** carry the shown board in the activity's outcome (`ShownArtifact.Place` and
+  `Answer` are serialized), so the workflow loop ends the turn the same way.
+
+The tool description tells the model a conversation board ends its turn, so anything else the
+turn must do (a proposal, another read) comes first, and what to do next belongs on the board,
+as a prose block or an actions block (`TestRun_EndsTheTurnOnceABoardIsInTheConversation`).
+
+### Steering an answer onto a board
+
+Told only by the prompt and the tool description, the model answered every question across
+records in prose, figures and record numbers included, and called `show_board` only when the
+person asked for a board by name. Two steers sit beneath the prompt, both in
+`replycheck/boardask.go`, and both apply only to a turn that is offered `show_answer`, that a
+person asked (`RunRequest.AskedByPerson`: not a background run, not another agent's task, not a
+note Trenova wrote such as a decision follow-up or a wait picked up) and that has shown no board
+(`Turn.Artifacts`, any place). A durable turn carries `TrenovaWritten` and `Asked` across the
+workflow in `agentflow.RunContext`; it once dropped both, so a decision follow-up read as a
+person's question, was sent back for a board in every bench trial of the change scenario, and a
+proposal it made was said to answer the decision note (`RunRequest.Ask`).
+Which records a result returned is `toolresult.ReturnedRecords`: every object whose id carries a
+routable record kind, without the records nested inside one (a shipment's customer, driver and
+stops are its relations, so a one-load lookup is one record), read from the fenced payload;
+`board.Supports` keeps the kinds a board takes. A result kept as a table whose rows are records
+(`ShownArtifact.RowKind`, from the table's `recordEntity`) also counts its rows, with the table's
+first-column labels as their names: the note counts the larger of the two, and the re-ask matches
+the labels of every such table the turn kept. A receivables row carries its invoice as
+`invoiceId`, never `id`, so only the table knows it is an invoice; reading `<kind>Id` keys in the
+walker instead would count a shipment row's `customerId` as a customer the result returned.
+
+- **A note on the tool result** (no extra model call). `recordToolResult` passes every result
+  through `replycheck.WithBoardNote` before it is streamed, kept in the transcript and added to
+  what the model reads. A result that returned two or more records of kinds a board takes ends
+  with one note, `[These are N records. If your answer weighs them together, or gives a count, a
+  total or a comparison across them, do not point to a table and do not answer in prose: answer
+  with show_answer, …]`. It is the last thing on the result, after the shown note: put straight
+  after the fence, before the table note ("Point to it in the sentence that mentions it, however
+  few rows it has"), Haiku 5.5 obeyed the later, more specific note and pointed to the table in
+  every case the bench asked for a board. Folding a card's result into a table
+  (`foldReplaced`, `replycheck.Refold`) replaces the shown note through
+  `replycheck.ReplaceShownNote`, which sets a trailing board note aside (recognised by its exact
+  lead, count and tail), replaces the shown note at the end of what is left, and puts the board
+  note back after it. The fence parsers (`toolresult.Unfence`, the client's `parseToolResult`)
+  read only inside the fence and the history replay keeps everything after it, so none of them is
+  affected. Never on a failed result, on `show_answer`, `show_board` or `publish_artifact`, or
+  on a turn the
+  conditions above leave out. It runs in workflow code too, from the turn's own state, so a replay
+  writes the same note. A later turn's replay keeps it, as it keeps the shown note.
+- **One re-ask** (one extra model call, at most once a turn: `BoardAskState`). `driveReply` sends
+  a final reply back with a correction when the turn proposed or made no change
+  (`RunResult.Actions` is empty), the turn is one a person asked (above), the reply reprints no kept table (a reply the
+  reprint pass would point to a table), it links no artifact or it writes the records out
+  anyway (it names every row of a kept table of 2 to 25 records that is not one page of a longer list
+  (`ShownArtifact.Paged`), or two or more records whose ids
+  or numbers the turn's own calls sent, `writesOutTable` and `namesLookedUp`), and the reply names two or more records of kinds a board takes that a tool result in this conversation
+  returned. A record is named when its label, as the result gave it, stands in the reply as whole
+  words (`stringutils.ContainsWords`); a label shorter than four characters is not matched, and two records
+  under one label count once. The correction names those records by their labels, says the answer
+  belongs on a board in the conversation, not in prose and not as a pointer to a table, by
+  calling `show_answer` with `{count}`, `{total}` or `{largest}` where a figure goes, and that if a board cannot show it, or the person only
+  asked to see a list or for one fact, the model replies again as it did; it ends with
+  `UnseenCorrection`. The second reply is taken as it is, whatever it is. It is a re-ask like the
+  others: the reason `board`, a `retrying` event and a `reply_regrounded` `answer_with_board`, the
+  draft and the correction appended to what the model reads (`replycheck.SendBackDraft`, which the
+  grounding and placement re-asks use too), so the person sees one restart. The discarded draft's
+  links are not counted as links the conversation holds (`isCorrection`).
+- **What the bench measured, and why a linked reply is left alone.** Two runs of
+  `deskbench/scenarios/boards.yaml` on Haiku 5.5. In the first (`boards-steer-1`) the note stood
+  before the table note and the model obeyed the table note: it pointed to the table in every case
+  that wanted a board, and the re-ask, which then skipped a reply that links an artifact, never
+  fired. In the second (`boards-steer-2`, two trials each) the note came last, and the re-ask no
+  longer skipped linked replies. The note alone made a board in 4 of the 8 trials that want one,
+  with no unwanted board. Every unwanted board came after the re-ask (the list to look through in
+  both trials, the single fact in one), because "names two records" cannot tell weighing records
+  from listing them once the reply points to a table; the exclusion was put back. The re-ask also
+  fired on both trials of the change scenario, never in the turn that proposed (its
+  `Actions` held the proposals), but in the bench's cleanup turn, a decision follow-up reporting
+  the rejected plan, which proposed nothing and named both loads in prose; a turn Trenova wrote is
+  now left alone. 13 of the second run's 21 `show_board` calls were refused, one class of them a
+  camel-case reading key, which `board.IsReadingKey` now takes.
+- **A board in the conversation only states true figures.** `show_answer` and `show_board`
+  refuse, before anything is kept, a figure that would print something untrue: time added up
+  across records, and a count of the shown records when they are part of a longer list the
+  turn read. One record's own figure names its measure and the record's number
+  (`{revenue:SEED-SHP-010}`), and a group figure of a one-record group is read as the figure of
+  the record its clause names. The rules and their messages are under
+  "A board" in [desk-artifacts.md](desk-artifacts.md).
+- **Its order.** Empty reply, then the extension command, then the board, then grounding, the reply
+  pass and placement. A board's figures are readings the server reads, so a prose reply sent back
+  for a board needs no figure checked and no link placed; checking grounding first would spend
+  the turn's one grounding rewrite telling the model to leave out a total the board would read
+  for it. A reply that comes back in prose is then held to grounding and placement as any other,
+  so a turn can still restart twice when the second reply also states a figure nothing read: the
+  grounding guard is never skipped for a steer. The bench scenarios in
+  `deskbench/scenarios/boards.yaml` measure both steers on Haiku 5.5: four questions that must end
+  on a conversation board and four (one record, one fact, a list to look through, a change) that
+  must show none (`noBoard`).
+
 ### A typed approval opens the approval box
 
 Typing "approved" decides nothing: a proposal is decided in the approval box
@@ -2221,6 +2352,58 @@ each problem at its path with what the schema declares there (the type, the
 allowed values, the parameter's first sentence), and a key the tool does not
 take is answered with the parameters it does. The model's own call is never
 changed; the thread records what it sent.
+
+**A record's own number sent for its id is read as that record.** People speak in numbers
+("put S26110493143683 and SEED-SHP-008 side by side"), and a model passed them on where a tool
+takes an id; every one was refused and cost a lookup and a second call. A value on a parameter
+marked with the kinds it takes (`x-recordOf`, `x-recordKinds`) that is no id at all but one word
+of at most 100 characters is set aside by `idShapeProblems` as an `argcheck.NumberRef` instead
+of refused. A mis-copied id, an id of another kind, a value with a space in it and anything on
+an unmarked parameter are refused as before, and so is a number in a call refused for something
+else. The dispatch activity, which already reads the database as the person, resolves them
+before the tool, a preview or a proposal sees the call (`tooldispatch/contract.go`,
+`recordnumbers.Resolver`): of the parameter's kinds, those that have a number
+(`recordnumberports.RecordNumberReader`, the table `numberSources` in
+`recordlabelrepository/numbers.go`), that the actor may read (`fieldsensitivity.AgentCeilings.Reads`,
+the agent's own grants when it runs unattended) and whose number field is visible under the
+agent's data access ceiling are read, every number of the call in one query per kind, exact
+match on the kind's unique number behind its unique index, in `dbtx.Read` through `Keel(ctx)`
+under the turn's tenant and read scope, as the tool's own read would be. Exactly one record
+across those kinds: its id replaces the number in the arguments the tool runs with, which are
+the arguments a proposal files and the person approves, the step keeps as `RanWith` and a table
+pages on; the model's call and the step key keep what it sent, as with every other repair. None:
+refused as before. More than one: refused naming each by its kind and number, so the model asks
+which. A read that fails refuses the call as one whose arguments could not be checked. The
+result says what was read, on a read, a proposal and a write that ran: "Record numbers were read
+as the records they name: shipmentIds[0] "S26110493143683" is the shipment with that PRO
+number, id shp_…. A number is not a record id: send the id from now on." The kinds with a
+number: shipment (PRO number), order (order number), tractor and trailer (unit number, the
+`code`), each folded to lower case as its unique index is, and invoice, billing queue item,
+factoring submission, service failure, journal entry and driver and carrier settlement (their
+number, matched exactly). A kind with no indexed unique number is never read and stays refused;
+adding one is an entry in `numberSources` over a column with a unique index.
+
+**A list's words that are only record numbers list exactly those records.** Asked to compare
+SEED-SHP-008 and SEED-SHP-010, a model searched `shipment_list` for "SEED-SHP-008 SEED-SHP-010";
+the words narrowed each other to nothing, the party search filled the page with ten loads of a
+customer whose name was close to "SEED", and the model went on to read and compare a load the
+person never named. The dispatch activity now reads a query tool's `query` the same way
+(`recordnumbers.Resolver.ListQuery`, called from `dispatchQuery`): when every word of it (split
+on spaces, commas and semicolons, with "and", "or", "&" and "+" passed over) holds a digit, is no
+id and names exactly one record of the tool's own resource by its number, under the same reads,
+ceilings and single query per kind as above, the query is dropped and an `in` filter on the
+kind's number field is added to the call's `filters`, so the list returns exactly those records
+and its result says so ("The words were PRO numbers, so this lists exactly the shipments they
+name: …"). It applies only to a tool whose schema takes `query` and whose `filters` take that
+field, `in` and `values`; any other word, a number no record carries, or one that two records
+carry leaves the search as it was.
+
+`shipment_list`'s party search reads each word as the customers, stops, drivers, commodities,
+types and orders it matches, and a word that matches several narrows to any of them. When some
+of those names hold the word whole and others only begin with it, only the whole-word names are
+kept (`wholeWordReadings`): "freshhaul" matched the customer FreshHaul Foods and the commodities
+Fresh Meat, Fresh Seafood, Fresh Flowers and Fresh Produce, and the newest loads carrying fresh
+goods filled the page ahead of every FreshHaul load.
 
 **Money runs on its own only within bounds.** The money class runs at most Ask first. A
 money tool may run a call automatically only when its `TierCondition.Bounds` proves the call
@@ -3482,8 +3665,9 @@ model) and by the protocol of the provider that answered (`AnthropicMessages`,
 `assistant_guard_reasks_total{guard,model,provider}` counts the model calls the loop makes
 again because a guard sent the answer back: `loop` (a reply that fell into a repetition),
 `cut_off` (a call cut off at the output limit, retried with a larger one), `empty_reply`,
-`command` (a turn held to the extension command it opened with), `grounding` (the grounding
-guard's correction), `placement` (artifact placement), and the two forced final answers,
+`command` (a turn held to the extension command it opened with), `board` (a prose reply across
+records sent back for a board), `grounding` (the grounding guard's correction), `placement`
+(artifact placement), and the two forced final answers,
 `budget_spent` and `stuck`. The same name rides on the re-asked request as
 `ChatCompletionRequest.Reask`, which is how the desk bench counts each guard's cost per
 task; like the tool counter it is not counted while workflow code replays.

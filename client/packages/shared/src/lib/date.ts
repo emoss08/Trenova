@@ -595,41 +595,76 @@ export const ptoDays = (
   return days;
 };
 
-export const formatRange = (startUnix: number, endUnix: number, timezone?: string) => {
+/** Whether a day range says its year: when it is not this year, always, or never. */
+export type RangeYear = "auto" | "always" | "never";
+
+/**
+ * How the two ends that differ are joined: a bare en dash for a label, a cell or an export
+ * ("Jul 12–14"), or the reader's words for a sentence ("Jul 12 to 14").
+ */
+export type RangeJoin = "dash" | "words";
+
+export type FormatRangeOptions = { timezone?: string; year?: RangeYear; join?: RangeJoin };
+
+/**
+ * A run of whole days in the reader's timezone, in the reader's language. The locale's range
+ * pattern decides what both ends share and where it goes; `join` decides how the ends that
+ * differ meet: "Jul 12–14, 2026", "Jul 28–Aug 2", "Dec 30, 2026–Jan 2, 2027", or with words
+ * "Aug 3 to 7, 2026", "de 3 a 7 de ago de 2026". One day, or an end before the start, reads as
+ * the start alone. By default the year is said only when an end falls outside this year;
+ * `year: "never"` leaves it out even across a year boundary ("Dec 30 to Jan 2").
+ */
+export const formatRange = (
+  startUnix: number,
+  endUnix: number,
+  { timezone, year = "auto", join = "dash" }: FormatRangeOptions = {},
+): string => {
   const resolved = resolveUserTimezone(timezone);
-  const s = toDateFromUnixSeconds(startUnix);
-  const e = toDateFromUnixSeconds(endUnix);
+  const start = toDateFromUnixSeconds(startUnix);
+  const end = toDateFromUnixSeconds(Math.max(startUnix, endUnix));
+  const meet = (from: string, to: string) =>
+    join === "words" ? translate("{0} to {1}", from, to) : `${from}–${to}`;
 
-  const zonedStart = toZonedTime(s, resolved);
-  const zonedEnd = toZonedTime(e, resolved);
-  const zonedNow = toZonedTime(new Date(), resolved);
-
-  const sameYear = zonedStart.getFullYear() === zonedEnd.getFullYear();
-  const sameMonth = sameYear && zonedStart.getMonth() === zonedEnd.getMonth();
-  const sameDay = sameMonth && zonedStart.getDate() === zonedEnd.getDate();
-
+  const thisYear = toZonedTime(new Date(), resolved).getFullYear();
+  const startYear = toZonedTime(start, resolved).getFullYear();
+  const endYear = toZonedTime(end, resolved).getFullYear();
   const showYear =
-    !sameYear ||
-    zonedStart.getFullYear() !== zonedNow.getFullYear() ||
-    zonedEnd.getFullYear() !== zonedNow.getFullYear();
+    year === "always" || (year === "auto" && (startYear !== thisYear || endYear !== thisYear));
 
-  const sFmt = formatDateInUserTimezone(s, {
-    timezone: resolved,
+  const formatter = zonedFormatter({
     month: "short",
     day: "numeric",
-    ...(showYear ? { year: "numeric" } : {}),
-  });
-
-  if (sameDay) return sFmt;
-
-  const eFmt = formatDateInUserTimezone(e, {
+    ...(showYear ? { year: "numeric" as const } : {}),
     timezone: resolved,
-    ...(sameMonth ? {} : { month: "short" }),
-    day: "numeric",
-    ...(showYear ? { year: "numeric" } : {}),
   });
+  // The locale's range pattern adds both years across a year boundary even when none was
+  // asked for, so a range told to leave the year out joins the two month-days itself.
+  if (!showYear && startYear !== endYear) {
+    return meet(formatter.format(start), formatter.format(end));
+  }
 
-  return `${sFmt}–${eFmt}`;
+  const parts = formatter.formatRangeToParts(start, end);
+  let first = -1;
+  let last = -1;
+  parts.forEach((part, index) => {
+    if (part.source === "shared") return;
+    if (first === -1) first = index;
+    last = index;
+  });
+  if (first === -1) return formatter.format(start);
+
+  const text = (from: number, to: number, source?: Intl.DateTimeRangeFormatPart["source"]) =>
+    parts
+      .slice(from, to)
+      .filter((part) => source === undefined || part.source === source)
+      .map((part) => part.value)
+      .join("");
+
+  return (
+    text(0, first) +
+    meet(text(first, last + 1, "startRange"), text(first, last + 1, "endRange")) +
+    text(last + 1, parts.length)
+  );
 };
 
 export type DateRangePreset = {

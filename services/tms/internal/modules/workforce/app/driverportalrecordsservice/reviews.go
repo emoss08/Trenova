@@ -3,6 +3,7 @@ package driverportalrecordsservice
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerpage"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerreview"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -47,7 +48,11 @@ func (s *Service) AcknowledgeMyReview(
 		"review_acknowledged",
 		"Review signed off",
 		wrk.FirstName+" "+wrk.LastName+" signed off on \""+saved.Title+"\". Close it when you are ready.",
-		"/hr/workers?tab=reviews",
+		workerpage.Path(
+			wrk.ID,
+			workerpage.AtView(workerpage.TabDevelopment, workerpage.ViewReviews).
+				WithRecord(workerpage.RecordReview, saved.ID),
+		),
 		map[string]any{relatedWorkerIDKey: wrk.ID.String(), "reviewId": saved.ID.String()},
 	)
 	return saved, nil

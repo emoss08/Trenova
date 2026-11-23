@@ -44,6 +44,8 @@ type ReasonDialogProps = {
   optional?: boolean;
   /** The field's label; "Reason" unless the words are a note rather than a reason. */
   label?: string;
+  /** The words on the button that backs out; "Back" unless the step needs its own words. */
+  cancelLabel?: string;
   pending: boolean;
   onConfirm: (reason: string) => void;
   onOpenChange: (open: boolean) => void;
@@ -65,6 +67,7 @@ export function ReasonDialog({
   maxLength = MAX_REASON_LENGTH,
   optional = false,
   label,
+  cancelLabel,
   pending,
   onConfirm,
   onOpenChange,
@@ -112,7 +115,7 @@ export function ReasonDialog({
         </FormProvider>
         <DialogFooter>
           <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-            {t("Back")}
+            {cancelLabel ?? t("Back")}
           </Button>
           <Button
             type="submit"

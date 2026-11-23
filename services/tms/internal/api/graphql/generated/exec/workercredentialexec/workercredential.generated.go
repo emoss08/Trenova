@@ -638,6 +638,16 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
 			},
 			{
+				Name:     "previewStatus",
+				NonNull:  true,
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*document.Document)
+					return obj.PreviewStatus, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNDocumentPreviewStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋdocumentᚐPreviewStatus),
+			},
+			{
 				Name:     "createdAt",
 				NonNull:  true,
 				ChildErr: errNoChild5,
@@ -662,7 +672,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "complianceStatus",
 				NonNull:  true,
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*workercredential.WorkerCredentialSummary)
 					return obj.ComplianceStatus, nil
@@ -774,7 +784,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "required",
 				NonNull:  true,
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*workercredential.CredentialSummaryItem)
 					return obj.Required, nil
@@ -845,7 +855,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "category",
 				NonNull:  true,
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*workercredential.WorkerCredentialType)
 					return obj.Category, nil
@@ -854,7 +864,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "status",
-				ChildErr: errNoChild9,
+				ChildErr: errNoChild10,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*workercredential.WorkerCredentialType)
 					return obj.Status, nil
@@ -864,7 +874,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "isRequired",
 				NonNull:  true,
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*workercredential.WorkerCredentialType)
 					return obj.IsRequired, nil
@@ -873,7 +883,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "requiredForDriverTypes",
-				ChildErr: errNoChild10,
+				ChildErr: errNoChild11,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*workercredential.WorkerCredentialType)
 					return obj.RequiredForDriverTypes, nil
@@ -902,7 +912,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "requiresNumber",
 				NonNull:  true,
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*workercredential.WorkerCredentialType)
 					return obj.RequiresNumber, nil
@@ -912,7 +922,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "requiresDocument",
 				NonNull:  true,
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*workercredential.WorkerCredentialType)
 					return obj.RequiresDocument, nil
@@ -933,7 +943,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "isSystem",
 				NonNull:  true,
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*workercredential.WorkerCredentialType)
 					return obj.IsSystem, nil
@@ -1027,7 +1037,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "totalCountExact",
 				NonNull:  true,
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.WorkerCredentialTypeConnection)
 					return obj.TotalCountExact, nil
@@ -1117,11 +1127,12 @@ var (
 	errNoChild3  = errors.New("field of type WorkerCredentialStatus does not have child fields")
 	errNoChild4  = errors.New("field of type String does not have child fields")
 	errNoChild5  = errors.New("field of type Timestamp does not have child fields")
-	errNoChild6  = errors.New("field of type ComplianceStatus does not have child fields")
-	errNoChild7  = errors.New("field of type Boolean does not have child fields")
-	errNoChild8  = errors.New("field of type WorkerCredentialCategory does not have child fields")
-	errNoChild9  = errors.New("field of type EntityStatus does not have child fields")
-	errNoChild10 = errors.New("field of type DriverType does not have child fields")
+	errNoChild6  = errors.New("field of type DocumentPreviewStatus does not have child fields")
+	errNoChild7  = errors.New("field of type ComplianceStatus does not have child fields")
+	errNoChild8  = errors.New("field of type Boolean does not have child fields")
+	errNoChild9  = errors.New("field of type WorkerCredentialCategory does not have child fields")
+	errNoChild10 = errors.New("field of type EntityStatus does not have child fields")
+	errNoChild11 = errors.New("field of type DriverType does not have child fields")
 )
 
 func field_Mutation_createWorkerCredentialType_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
@@ -2083,6 +2094,14 @@ func marshalNCredentialExpiryForecastItem2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋ
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "CredentialExpiryForecastItem", v)
+}
+
+func marshalNDocumentPreviewStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋdocumentᚐPreviewStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v document.PreviewStatus) graphql.Marshaler {
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		gqlexec.NullViolation(ctx)
+	}
+	return res
 }
 
 func marshalNDriverType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐDriverType(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v worker.DriverType) graphql.Marshaler {

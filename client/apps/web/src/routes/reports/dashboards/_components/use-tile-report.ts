@@ -40,16 +40,18 @@ function collectLeafRefs(group: ReportFilterGroup | null | undefined, into: Repo
   for (const nested of group.groups ?? []) collectLeafRefs(nested, into);
 }
 
+/** A tile of a dashboard, with the report it shows when that report can be read. */
+export type DashboardTileReport = {
+  tile: ReportDashboardTile;
+  ir: ReportIR | null;
+  name: string;
+};
+
 /**
- * The fields worth offering as dashboard filters, taken from the reports the
- * dashboard already shows: what each report filters on, plus what it groups by
- * — a report broken down by Service Type is exactly one you would want to
- * narrow by Service Type.
+ * The reports a dashboard's tiles show, read once for every consumer: gallery reports from the
+ * canned list, saved reports by id.
  */
-export function useDashboardFilterCandidates(tiles: ReportDashboardTile[]): {
-  entities: string[];
-  candidates: FilterCandidate[];
-} {
+export function useDashboardTileReports(tiles: ReportDashboardTile[]): DashboardTileReport[] {
   // Only the reports this dashboard actually points at, resolved by id. Reading
   // them out of a page of the library instead meant a tile whose report sat
   // past that page contributed no filter candidates at all, silently.
@@ -72,16 +74,34 @@ export function useDashboardFilterCandidates(tiles: ReportDashboardTile[]): {
       (canned.data ?? []).map((entry) => [entry.key, { raw: entry.definition, name: entry.name }]),
     );
 
-    const entities = new Set<string>();
-    const candidates = new Map<string, FilterCandidate>();
-
-    for (const tile of tiles) {
+    return tiles.map((tile) => {
       const source = tile.cannedKey
         ? byKey.get(tile.cannedKey)
         : tile.definitionId
           ? byId.get(tile.definitionId)
           : undefined;
-      const ir = source ? parseReportIR(source.raw) : null;
+      return { tile, ir: source ? parseReportIR(source.raw) : null, name: source?.name ?? "" };
+    });
+  }, [tiles, definitions.data, canned.data]);
+}
+
+/**
+ * The fields worth offering as dashboard filters, taken from the reports the
+ * dashboard already shows: what each report filters on, plus what it groups by
+ * — a report broken down by Service Type is exactly one you would want to
+ * narrow by Service Type.
+ */
+export function useDashboardFilterCandidates(tiles: ReportDashboardTile[]): {
+  entities: string[];
+  candidates: FilterCandidate[];
+} {
+  const reports = useDashboardTileReports(tiles);
+
+  return useMemo(() => {
+    const entities = new Set<string>();
+    const candidates = new Map<string, FilterCandidate>();
+
+    for (const { ir, name } of reports) {
       if (!ir) continue;
 
       entities.add(ir.entity);
@@ -90,8 +110,8 @@ export function useDashboardFilterCandidates(tiles: ReportDashboardTile[]): {
         const key = `${ir.entity}::${refKey(ref)}`;
         const existing = candidates.get(key);
         if (existing) {
-          if (source && !existing.reports.includes(source.name)) {
-            existing.reports.push(source.name);
+          if (name && !existing.reports.includes(name)) {
+            existing.reports.push(name);
           }
           return;
         }
@@ -99,7 +119,7 @@ export function useDashboardFilterCandidates(tiles: ReportDashboardTile[]): {
           key,
           entity: ir.entity,
           ref,
-          reports: source ? [source.name] : [],
+          reports: name ? [name] : [],
           source: kind,
         });
       };
@@ -114,7 +134,7 @@ export function useDashboardFilterCandidates(tiles: ReportDashboardTile[]): {
     }
 
     return { entities: [...entities], candidates: [...candidates.values()] };
-  }, [tiles, definitions.data, canned.data]);
+  }, [reports]);
 }
 
 /**

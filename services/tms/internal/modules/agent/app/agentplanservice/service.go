@@ -13,8 +13,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/caseownerports"
 	"strings"
+
+	"github.com/emoss08/trenova/internal/modules/agent/ports/caseownerports"
 
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aimetrics"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
@@ -700,7 +701,7 @@ func (s *Service) clearFromWatchtower(
 		return
 	}
 
-	s.watchtower.Resolve(ctx, tenant, watchtower.SourceAgentPlan, plan.ID.String())
+	s.watchtower.Resolve(ctx, tenant, watchtower.SourceKindAgentPlan, plan.ID.String())
 }
 
 // announce tells connected clients the plan moved, so the queue drops it

@@ -152,7 +152,7 @@ func TestRaiseCoverageRisk_OnlyMovesInsideTheWindow(t *testing.T) {
 				require.Equal(t, agenttrigger.EventShipmentMoveCoverageAtRisk, event.Kind)
 			}
 			for _, item := range projector.items {
-				require.Equal(t, watchtower.SourceMoveCoverage, item.SourceKind)
+				require.Equal(t, watchtower.SourceKindMoveCoverage, item.SourceKind)
 				require.Equal(t, agent.SubjectShipmentMove, item.SubjectType)
 			}
 		})

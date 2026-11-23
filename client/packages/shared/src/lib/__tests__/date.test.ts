@@ -1,3 +1,4 @@
+import { registerCatalogSource, setLocale } from "@trenova/shared/i18n/runtime";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   formatCountdownClock,
@@ -37,6 +38,8 @@ import {
   formatCompactAge,
   inclusiveDays,
   formatRange,
+  type FormatRangeOptions,
+  type RangeJoin,
   getStartOfDay,
   getEndOfDay,
   getStartOfMonth,
@@ -523,22 +526,111 @@ describe("inclusiveDays", () => {
 });
 
 describe("formatRange", () => {
-  it("returns single date without dash for same day", () => {
-    const ts = 1705276800;
-    const result = formatRange(ts, ts);
-    expect(result).not.toContain("–");
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
-  it("returns range with dash for different dates", () => {
-    const start = 1705276800;
-    const end = start + 86400 * 5;
-    const result = formatRange(start, end);
-    expect(result).toContain("–");
+  const at = (iso: string) => Math.floor(Date.parse(iso) / 1000);
+  const range = (start: string, end: string, options: FormatRangeOptions = {}) =>
+    formatRange(at(start), at(end), { timezone: "UTC", year: "always", ...options });
+
+  const IN_MONTH = ["2026-08-03T00:00:00Z", "2026-08-07T23:59:59Z"] as const;
+  const ACROSS_MONTHS = ["2026-08-03T00:00:00Z", "2026-09-02T23:59:59Z"] as const;
+  const ACROSS_YEARS = ["2026-12-30T00:00:00Z", "2027-01-02T23:59:59Z"] as const;
+  const ONE_DAY = ["2026-08-03T00:00:00Z", "2026-08-03T23:59:59Z"] as const;
+
+  it("joins the ends that differ with a bare dash by default, as a label reads", () => {
+    expect(range(...IN_MONTH)).toBe("Aug 3–7, 2026");
+    expect(range(...ACROSS_MONTHS)).toBe("Aug 3–Sep 2, 2026");
+    expect(range(...ACROSS_YEARS)).toBe("Dec 30, 2026–Jan 2, 2027");
+    expect(range(...ONE_DAY)).toBe("Aug 3, 2026");
   });
 
-  it("returns a non-empty string", () => {
-    const result = formatRange(1705276800, 1705276800 + 86400);
-    expect(result.length).toBeGreaterThan(0);
+  it("joins them in words for a sentence", () => {
+    const words = (span: readonly [string, string]) => range(...span, { join: "words" });
+    expect(words(IN_MONTH)).toBe("Aug 3 to 7, 2026");
+    expect(words(ACROSS_MONTHS)).toBe("Aug 3 to Sep 2, 2026");
+    expect(words(ACROSS_YEARS)).toBe("Dec 30, 2026 to Jan 2, 2027");
+    expect(words(ONE_DAY)).toBe("Aug 3, 2026");
+  });
+
+  it("reads the same month in another year as a run across years, not one month", () => {
+    expect(range("2026-07-12T00:00:00Z", "2027-07-14T23:59:59Z")).toBe("Jul 12, 2026–Jul 14, 2027");
+  });
+
+  it("reads days in the given timezone, and an end before the start as the start alone", () => {
+    expect(
+      formatRange(at("2026-08-04T03:00:00Z"), at("2026-08-04T23:00:00Z"), {
+        timezone: "America/Chicago",
+        year: "always",
+        join: "words",
+      }),
+    ).toBe("Aug 3 to 4, 2026");
+    expect(range("2026-08-07T00:00:00Z", "2026-08-03T00:00:00Z")).toBe("Aug 7, 2026");
+  });
+
+  it("says the year only when an end falls outside this year, by default", () => {
+    vi.useFakeTimers({ now: new Date("2026-06-15T18:00:00Z") });
+    const auto = (start: string, end: string) =>
+      formatRange(at(start), at(end), { timezone: "UTC" });
+
+    expect(auto("2026-07-12T12:00:00Z", "2026-07-14T12:00:00Z")).toBe("Jul 12–14");
+    expect(auto("2026-07-28T12:00:00Z", "2026-08-02T12:00:00Z")).toBe("Jul 28–Aug 2");
+    expect(auto("2026-08-03T12:00:00Z", "2026-08-03T12:00:00Z")).toBe("Aug 3");
+    expect(auto("2021-07-12T12:00:00Z", "2021-07-14T12:00:00Z")).toBe("Jul 12–14, 2021");
+    expect(auto("2026-12-30T12:00:00Z", "2027-01-02T12:00:00Z")).toBe("Dec 30, 2026–Jan 2, 2027");
+  });
+
+  // A line about the days just ahead leaves the year out even across New Year, where the
+  // locale's range pattern would name both years.
+  it("leaves the year out when told to, across a year boundary too", () => {
+    const never = (start: string, end: string, join?: RangeJoin) =>
+      formatRange(at(start), at(end), { timezone: "UTC", year: "never", join });
+
+    expect(never("2026-12-23T12:00:00Z", "2026-12-23T12:00:00Z")).toBe("Dec 23");
+    expect(never("2026-12-23T12:00:00Z", "2026-12-24T12:00:00Z", "words")).toBe("Dec 23 to 24");
+    expect(never("2026-12-30T12:00:00Z", "2027-01-02T12:00:00Z", "words")).toBe("Dec 30 to Jan 2");
+    expect(never("2026-12-30T12:00:00Z", "2027-01-02T12:00:00Z")).toBe("Dec 30–Jan 2");
+  });
+
+  // The locale's range pattern places what both ends share, and the join meets the ends that
+  // differ, so Spanish puts the month after the days rather than after the first.
+  it("follows the reader's language for what is shared, with either join", async () => {
+    await registerCatalogSource({
+      es: async () => ({ "{0} to {1}": "de {0} a {1}" }),
+      "zh-CN": async () => ({ "{0} to {1}": "{0} 至 {1}" }),
+    });
+    const both = (span: readonly [string, string]) => [
+      range(...span),
+      range(...span, { join: "words" }),
+    ];
+    const never = (span: readonly [string, string]) => [
+      range(...span, { year: "never" }),
+      range(...span, { year: "never", join: "words" }),
+    ];
+    try {
+      await setLocale("es");
+      expect(both(IN_MONTH)).toEqual(["3–7 de ago de 2026", "de 3 a 7 de ago de 2026"]);
+      expect(both(ACROSS_MONTHS)).toEqual([
+        "3 de ago–2 de sept de 2026",
+        "de 3 de ago a 2 de sept de 2026",
+      ]);
+      expect(both(ACROSS_YEARS)).toEqual([
+        "30 de dic de 2026–2 de ene de 2027",
+        "de 30 de dic de 2026 a 2 de ene de 2027",
+      ]);
+      expect(both(ONE_DAY)).toEqual(["3 ago 2026", "3 ago 2026"]);
+      expect(never(ACROSS_YEARS)).toEqual(["30 dic–2 ene", "de 30 dic a 2 ene"]);
+
+      await setLocale("zh-CN");
+      expect(both(IN_MONTH)).toEqual(["2026/8/3–2026/8/7", "2026/8/3 至 2026/8/7"]);
+      expect(both(ACROSS_MONTHS)).toEqual(["2026/8/3–2026/9/2", "2026/8/3 至 2026/9/2"]);
+      expect(both(ACROSS_YEARS)).toEqual(["2026/12/30–2027/1/2", "2026/12/30 至 2027/1/2"]);
+      expect(both(ONE_DAY)).toEqual(["2026年8月3日", "2026年8月3日"]);
+      expect(never(ACROSS_YEARS)).toEqual(["12月30日–1月2日", "12月30日 至 1月2日"]);
+    } finally {
+      await setLocale("en");
+    }
   });
 });
 

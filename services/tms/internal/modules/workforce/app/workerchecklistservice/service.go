@@ -76,6 +76,7 @@ type auditParams struct {
 	tenant     pagination.TenantInfo
 	current    any
 	previous   any
+	owner      any
 	comment    string
 	log        *zap.Logger
 }
@@ -94,6 +95,7 @@ func (s *Service) audit(ctx context.Context, p *auditParams) {
 		BusinessUnitID: p.tenant.BuID,
 	}
 	opts := []auditports.LogOption{auditservice.WithComment(p.comment)}
+	opts = append(opts, auditservice.WithSubjectOf(p.current, p.previous, p.owner))
 	if p.previous != nil {
 		params.PreviousState = jsonutils.MustToJSON(p.previous)
 		opts = append(opts, auditservice.WithDiff(p.previous, p.current))

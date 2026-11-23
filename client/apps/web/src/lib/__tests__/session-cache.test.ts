@@ -1,3 +1,5 @@
+import { useRosterContextStore } from "@/routes/worker/roster-context-store";
+import { workerTableGraphQLConfig } from "@/lib/graphql/worker-table";
 import { composerDrafts, draftKey, DRAFT_STORAGE_KEY } from "@/stores/composer-draft-store";
 import type { KeyValueStore } from "@/lib/indexed-db-store";
 import { attention } from "@/lib/queries/attention";
@@ -247,8 +249,19 @@ describe("forgetSessionStores", () => {
     useRecentPagesStore.setState({
       pagesByOrganization: { org_1: [{ path: "/shipments/shp_1", title: "PRO 4512" }] },
     });
+    useRosterContextStore.setState({
+      context: {
+        scope: { graphql: workerTableGraphQLConfig(null), pageSize: 25, options: {} },
+        cursors: { 0: null },
+        pageIndex: 0,
+        label: "All workers",
+        search: "",
+      },
+    });
 
     forgetSessionStores();
+
+    expect(useRosterContextStore.getState().context).toBeNull();
 
     expect(composerDrafts.text(draftKey.thread("thread_1"))).toBe("");
     expect(localStorage.getItem(DRAFT_STORAGE_KEY)).toBeNull();

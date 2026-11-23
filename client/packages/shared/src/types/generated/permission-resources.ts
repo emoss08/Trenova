@@ -139,6 +139,7 @@ export const Resource = {
   AgentException: "agent_exception",
   AgentControl: "agent_control",
   AIProvider: "ai_provider",
+  AIUsage: "ai_usage",
   AgentExtension: "agent_extension",
   WebResearch: "web_research",
   PortalAutomation: "portal_automation",

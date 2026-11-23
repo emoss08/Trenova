@@ -14,4 +14,6 @@ type Deps struct {
 
 type QueryResolver struct{ *Deps }
 
+type WorkerOverviewPayRateResolver struct{ *Deps }
+
 type WorkerRosterAttentionResolver struct{ *Deps }

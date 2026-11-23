@@ -90,7 +90,7 @@ func pendingQueue(req *agentdecisionqueueports.ListPendingDecisionsQuery) *keel.
 			audience(pDef, req.Audience),
 			p.PlanID.IsNull(),
 			keel.When(req.ToolName != "", p.ToolName.Eq(req.ToolName)),
-			said(watchtower.SourceAgentProposal, p.ID, "psaid", req.Search),
+			said(watchtower.SourceKindAgentProposal, p.ID, "psaid", req.Search),
 		)
 
 	pl := agentplandb.AgentPlans
@@ -118,7 +118,7 @@ func pendingQueue(req *agentdecisionqueueports.ListPendingDecisionsQuery) *keel.
 				step.PlanID.EqCol(pl.ID),
 				step.ToolName.Eq(req.ToolName),
 			))),
-			said(watchtower.SourceAgentPlan, pl.ID, "plsaid", req.Search),
+			said(watchtower.SourceKindAgentPlan, pl.ID, "plsaid", req.Search),
 		)
 
 	return keel.CTE("q", pendingColumns, keel.UnionAll(proposals, plans))

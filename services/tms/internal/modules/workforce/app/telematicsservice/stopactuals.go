@@ -200,7 +200,7 @@ func (s *Service) projectStopVisit(
 		s.watchtower.Resolve(
 			ctx,
 			tenantInfo,
-			watchtower.SourceTelematicsStopVisit,
+			watchtower.SourceKindTelematicsStopVisit,
 			watchtowershipment.TelematicsStopVisitSourceID(record),
 		)
 	}

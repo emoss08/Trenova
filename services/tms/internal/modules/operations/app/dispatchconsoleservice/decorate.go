@@ -155,6 +155,7 @@ func availabilityFindings(
 		dispatcheligibility.WorkerComplianceInput{
 			Worker:  w,
 			Control: control,
+			Now:     now,
 		},
 	))
 	if snapshot.TelematicsActive {

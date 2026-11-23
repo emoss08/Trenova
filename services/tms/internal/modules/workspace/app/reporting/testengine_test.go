@@ -26,6 +26,7 @@ type engineOptions struct {
 	failure  error
 	plan     platformcatalogports.FeatureGate
 	registry *permissioncatalog.Registry
+	withheld map[permission.Resource]permission.Operation
 }
 
 func engineService(t *testing.T, opts engineOptions) (*Service, *reportingtest.Engine) {
@@ -41,6 +42,9 @@ func engineService(t *testing.T, opts engineOptions) (*Service, *reportingtest.E
 	}
 	lookup := onplan.New(registry, gate)
 	reader := reportingtest.NewPermissionReader(opts.denied).WithPlan(lookup)
+	for resource, operation := range opts.withheld {
+		reader.Withholding(resource, operation)
+	}
 	access, err := reportaccess.New(reportaccess.Params{
 		Catalog:  catalog,
 		Engine:   reader,

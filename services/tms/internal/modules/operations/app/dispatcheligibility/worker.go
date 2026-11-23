@@ -29,6 +29,7 @@ type WorkerComplianceInput struct {
 	Worker               *worker.Worker
 	Control              *dispatchcontrol.DispatchControl
 	HasHazmatCommodities bool
+	Now                  int64
 }
 
 // EvaluateWorkerCompliance runs the FMCSA driver-qualification rule set against a
@@ -63,7 +64,7 @@ func evaluateDriverQualification(
 
 	profile := in.Worker.Profile
 
-	if !timeutils.IsAtLeastAge(profile.DOB, minDriverAgeInterstate) {
+	if !timeutils.IsAtLeastAgeAt(profile.DOB, minDriverAgeInterstate, in.Now) {
 		eval.Add(&dispatchfinding.Finding{
 			Code:       dispatchfinding.CodeDriverUnderage,
 			Severity:   severity,
@@ -73,7 +74,7 @@ func evaluateDriverQualification(
 		})
 	}
 
-	if timeutils.IsExpired(profile.LicenseExpiry) {
+	if timeutils.IsExpiredAt(profile.LicenseExpiry, in.Now) {
 		eval.Add(&dispatchfinding.Finding{
 			Code:       dispatchfinding.CodeLicenseExpired,
 			Severity:   severity,
@@ -95,7 +96,8 @@ func evaluateMedicalCert(
 
 	profile := in.Worker.Profile
 
-	if profile.MedicalCardExpiry != nil && timeutils.IsExpired(*profile.MedicalCardExpiry) {
+	if profile.MedicalCardExpiry != nil &&
+		timeutils.IsExpiredAt(*profile.MedicalCardExpiry, in.Now) {
 		eval.Add(&dispatchfinding.Finding{
 			Code:       dispatchfinding.CodeMedicalCardExpired,
 			Severity:   severity,
@@ -105,7 +107,7 @@ func evaluateMedicalCert(
 		})
 	}
 
-	if profile.PhysicalDueDate != nil && timeutils.IsOverdue(*profile.PhysicalDueDate) {
+	if profile.PhysicalDueDate != nil && timeutils.IsOverdueAt(*profile.PhysicalDueDate, in.Now) {
 		eval.Add(&dispatchfinding.Finding{
 			Code:       dispatchfinding.CodePhysicalOverdue,
 			Severity:   severity,
@@ -166,7 +168,7 @@ func evaluateDrugAndAlcohol(
 	}
 
 	if profile.NextClearinghouseQueryDue != nil &&
-		timeutils.IsOverdue(*profile.NextClearinghouseQueryDue) {
+		timeutils.IsOverdueAt(*profile.NextClearinghouseQueryDue, in.Now) {
 		eval.Add(&dispatchfinding.Finding{
 			Code:       dispatchfinding.CodeClearinghouseOverdue,
 			Severity:   severity,
@@ -201,7 +203,7 @@ func evaluateMVR(in WorkerComplianceInput, severity dispatchfinding.Severity, ev
 	profile := in.Worker.Profile
 
 	if profile.LastMVRCheck > 0 &&
-		!timeutils.IsWithinMonths(profile.LastMVRCheck, mvrCheckValidityMonths) {
+		!timeutils.IsWithinMonthsOf(profile.LastMVRCheck, mvrCheckValidityMonths, in.Now) {
 		eval.Add(&dispatchfinding.Finding{
 			Code:       dispatchfinding.CodeMVROverdue,
 			Severity:   severity,
@@ -211,7 +213,7 @@ func evaluateMVR(in WorkerComplianceInput, severity dispatchfinding.Severity, ev
 		})
 	}
 
-	if profile.MVRDueDate != nil && timeutils.IsOverdue(*profile.MVRDueDate) {
+	if profile.MVRDueDate != nil && timeutils.IsOverdueAt(*profile.MVRDueDate, in.Now) {
 		eval.Add(&dispatchfinding.Finding{
 			Code:       dispatchfinding.CodeMVRDueDatePassed,
 			Severity:   severity,
@@ -256,7 +258,7 @@ func evaluateHazmatEndorsement(
 		return
 	}
 
-	if timeutils.IsExpired(*profile.HazmatExpiry) {
+	if timeutils.IsExpiredAt(*profile.HazmatExpiry, in.Now) {
 		eval.Add(&dispatchfinding.Finding{
 			Code:       dispatchfinding.CodeHazmatExpired,
 			Severity:   severity,
@@ -266,7 +268,7 @@ func evaluateHazmatEndorsement(
 		})
 	}
 
-	maxAllowed := timeutils.MaxAllowedUnix(timeutils.NowUnix(), hazmatCertValidityYears)
+	maxAllowed := timeutils.MaxAllowedUnix(in.Now, hazmatCertValidityYears)
 	if *profile.HazmatExpiry > maxAllowed {
 		eval.Add(&dispatchfinding.Finding{
 			Code:       dispatchfinding.CodeHazmatExceedsValidity,

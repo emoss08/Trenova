@@ -1434,7 +1434,7 @@ func unmarshalInputCancelWorkerChecklistInput(ctx context.Context, ec *gqlexec.E
 			it.ID = data
 		case "reason":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("reason"))
-			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			data, err := unmarshalNString2string(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}

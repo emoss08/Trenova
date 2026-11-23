@@ -1,0 +1,137 @@
+{
+  "key": "ai-usage-by-feature-and-model",
+  "version": "1.0.0",
+  "name": "AI Usage and Cost by Feature and Model",
+  "description": "Which features and models the organization's model calls went to in the window: calls, failures, tokens and estimated cost, with the calls whose provider carries no price counted apart",
+  "category": "Desk",
+  "tags": [
+    "ai",
+    "tokens",
+    "cost",
+    "usage",
+    "models"
+  ],
+  "defaultFormat": "xlsx",
+  "definition": {
+    "version": 2,
+    "entity": "daily_usage",
+    "columns": [
+      {
+        "id": "feature",
+        "label": "Feature",
+        "dimension": {
+          "field": "feature"
+        },
+        "display": {
+          "nullText": "Not named"
+        }
+      },
+      {
+        "id": "model",
+        "label": "Model",
+        "dimension": {
+          "field": "model"
+        }
+      },
+      {
+        "id": "calls",
+        "label": "Calls",
+        "measure": {
+          "field": "calls",
+          "agg": "sum"
+        },
+        "display": {
+          "style": "number",
+          "decimals": 0,
+          "grouping": true
+        }
+      },
+      {
+        "id": "failed",
+        "label": "Failed Calls",
+        "measure": {
+          "field": "failedCalls",
+          "agg": "sum"
+        },
+        "display": {
+          "style": "number",
+          "decimals": 0,
+          "grouping": true
+        }
+      },
+      {
+        "id": "total_tokens",
+        "label": "Total Tokens",
+        "measure": {
+          "field": "totalTokens",
+          "agg": "sum"
+        },
+        "display": {
+          "style": "number",
+          "decimals": 0,
+          "grouping": true
+        }
+      },
+      {
+        "id": "cost",
+        "label": "Estimated Cost",
+        "measure": {
+          "field": "costUSD",
+          "agg": "sum"
+        },
+        "display": {
+          "style": "currency",
+          "decimals": 2,
+          "negative": "parentheses"
+        }
+      },
+      {
+        "id": "unpriced",
+        "label": "Calls Without a Price",
+        "measure": {
+          "field": "unpricedCalls",
+          "agg": "sum"
+        },
+        "display": {
+          "style": "number",
+          "decimals": 0,
+          "grouping": true
+        }
+      }
+    ],
+    "filters": {
+      "and": [
+        {
+          "field": "usageDate",
+          "op": "last_n_days",
+          "param": "windowDays"
+        }
+      ]
+    },
+    "groupings": {
+      "subtotals": [
+        "feature"
+      ],
+      "total": true
+    },
+    "sort": [
+      {
+        "column": "cost",
+        "desc": true
+      },
+      {
+        "column": "total_tokens",
+        "desc": true
+      }
+    ],
+    "parameters": [
+      {
+        "name": "windowDays",
+        "label": "Window (days)",
+        "type": "int",
+        "required": true,
+        "default": 30
+      }
+    ]
+  }
+}

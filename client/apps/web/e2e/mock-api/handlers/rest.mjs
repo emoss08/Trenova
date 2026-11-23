@@ -23,10 +23,12 @@ import { LADING_ROUTES } from "./lading.mjs";
 import { INTEGRATION_ROUTES } from "./accounting.mjs";
 import { currentOrganization, ORGANIZATION_ROUTES } from "./organization.mjs";
 import { isManaged } from "./managedplan.mjs";
+import { WORKER_ROUTES } from "./worker.mjs";
 
 const EMPTY_PAGE = { results: [], count: 0, next: null, prev: null };
 
 const ROUTES = [
+  ...WORKER_ROUTES,
   ...ORGANIZATION_ROUTES,
   ...INTEGRATION_ROUTES,
   ...CUSTOMER_TRACKING_ROUTES,

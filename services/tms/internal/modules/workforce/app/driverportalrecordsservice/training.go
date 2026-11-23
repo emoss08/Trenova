@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerpage"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workertraining"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -149,7 +150,11 @@ func (s *Service) AcknowledgeMyTraining(
 			"Training awaiting a result",
 			wrk.FirstName+" "+wrk.LastName+" finished "+record.Course.Name+
 				". Enter the score to close the assignment.",
-			"/hr/workers?tab=training",
+			workerpage.Path(
+				wrk.ID,
+				workerpage.AtView(workerpage.TabDevelopment, workerpage.ViewTraining).
+					WithRecord(workerpage.RecordTraining, record.ID),
+			),
 			map[string]any{
 				relatedWorkerIDKey: wrk.ID.String(),
 				"trainingRecordId": record.ID.String(),

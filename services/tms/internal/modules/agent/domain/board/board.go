@@ -24,8 +24,9 @@ const (
 	MaxTableRows        = 10
 	DefaultTableRows    = 6
 	MaxTitleRunes       = 80
-	MaxVerdictRunes     = 320
+	MaxVerdictRunes     = 600
 	MaxBlockTitleRunes  = 60
+	MaxCaptionRunes     = 300
 	MaxProseRunes       = 600
 	MaxNoteTitleRunes   = 80
 	MaxNoteTextRunes    = 400
@@ -188,12 +189,15 @@ type Block struct {
 	Text     string         `json:"text,omitempty"`
 	Tone     Tone           `json:"tone,omitempty"`
 	Actions  []Action       `json:"actions,omitempty"`
+	Caption  string         `json:"caption,omitempty"`
 }
 
 type Board struct {
-	Title   string  `json:"title"`
-	Verdict string  `json:"verdict"`
-	Blocks  []Block `json:"blocks"`
+	Title    string    `json:"title"`
+	Verdict  string    `json:"verdict"`
+	Place    Place     `json:"place,omitempty"`
+	Readings []Reading `json:"readings,omitempty"`
+	Blocks   []Block   `json:"blocks"`
 }
 
 func (b *Board) Numerals() []int {
@@ -235,6 +239,9 @@ func (b *Board) Records() map[permission.Resource][]pulid.ID {
 			add(block.Actions[action].Records)
 		}
 	}
+	for idx := range b.Readings {
+		add(b.Readings[idx].Records)
+	}
 
 	return refs
 }
@@ -271,6 +278,9 @@ func (b *Board) Artifacts() []pulid.ID {
 			add(block.Figures[figure].Analysis)
 		}
 	}
+	for idx := range b.Readings {
+		add(b.Readings[idx].Analysis)
+	}
 
 	return ids
 }
@@ -291,6 +301,9 @@ func (b *Board) Metrics() []string {
 		for check := range block.Checks {
 			add(block.Checks[check].Metric)
 		}
+	}
+	for idx := range b.Readings {
+		add(b.Readings[idx].Metric)
 	}
 
 	return keys

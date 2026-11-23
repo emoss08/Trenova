@@ -305,6 +305,7 @@ type ToolFailureDetail struct {
 type RefreshResult struct {
 	Units            int
 	Hours            int
+	UsageDays        int
 	RefreshedThrough int64
 	CaughtUp         bool
 }

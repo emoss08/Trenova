@@ -97,9 +97,6 @@ func (s *Service) planUpdate(
 	entity.ArchivedAt = original.ArchivedAt
 	entity.ArchiveReason = original.ArchiveReason
 	entity.CreatedAt = original.CreatedAt
-	if entity.DocumentID.IsNil() {
-		entity.DocumentID = original.DocumentID
-	}
 	entity.KeepFields(original, permissionports.VisibleFieldGroups(ctx, s.fields, actor))
 
 	credentialType, err := s.prepare(ctx, entity)

@@ -10,10 +10,10 @@ import (
 )
 
 func TestLens_FilesDecisionsMessagesAndTheRest(t *testing.T) {
-	assert.Equal(t, desklens.Decisions, desklens.Of(watchtower.SourceAgentProposal))
-	assert.Equal(t, desklens.Decisions, desklens.Of(watchtower.SourceAgentPlan))
-	assert.Equal(t, desklens.Triage, desklens.Of(watchtower.SourceInboundMessage))
-	assert.Equal(t, desklens.Watchtower, desklens.Of(watchtower.SourceEtaAtRisk))
+	assert.Equal(t, desklens.Decisions, desklens.Of(watchtower.SourceKindAgentProposal))
+	assert.Equal(t, desklens.Decisions, desklens.Of(watchtower.SourceKindAgentPlan))
+	assert.Equal(t, desklens.Triage, desklens.Of(watchtower.SourceKindInboundMessage))
+	assert.Equal(t, desklens.Watchtower, desklens.Of(watchtower.SourceKindEtaAtRisk))
 }
 
 func TestLens_KindsCoverEveryKindExactlyOnce(t *testing.T) {

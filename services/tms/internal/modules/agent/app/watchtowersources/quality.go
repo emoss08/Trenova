@@ -75,7 +75,7 @@ func DescribeQualityRegression(
 			OrgID: run.OrganizationID,
 			BuID:  run.BusinessUnitID,
 		},
-		SourceKind: watchtower.SourceAgentQualityRegression,
+		SourceKind: watchtower.SourceKindAgentQualityRegression,
 		SourceID:   run.ID.String(),
 		Severity:   QualityRegressionSeverity(run),
 		Title:      who + " answers its evaluation cases worse than before",
@@ -108,7 +108,7 @@ func NewQualityRegressionSource(
 }
 
 func (s *QualityRegressionSource) Kind() watchtower.SourceKind {
-	return watchtower.SourceAgentQualityRegression
+	return watchtower.SourceKindAgentQualityRegression
 }
 
 func (s *QualityRegressionSource) Snapshot(

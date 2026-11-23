@@ -46,7 +46,7 @@ describe("isAppPath", () => {
   it.each([
     "/",
     "/billing/invoices",
-    "/hr/workers?panelType=edit&panelEntityId=wrk_1",
+    "/hr/workers/wrk_1?tab=qualification&view=credentials",
     "/billing/invoices?next=//example.com",
     "/search#//example.com",
     "/search?q=100%",

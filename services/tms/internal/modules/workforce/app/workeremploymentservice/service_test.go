@@ -8,22 +8,28 @@ import (
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/fleetcode"
 	"github.com/emoss08/trenova/internal/modules/identity/app/ptoledgerservice"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/payassignment"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
+	"github.com/emoss08/trenova/internal/modules/workforce/app/driverportalinvitationservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/ptopolicyservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workeremploymentservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/employment"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/portalinvitation"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/pto"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerchecklist"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workertraining"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/ptopolicyports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerchecklistports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workeremploymentports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerptoports"
+	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/documentportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/fleetcodeportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/workerportsmock"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -91,7 +97,9 @@ func (f *fakeEventRepo) Update(
 }
 
 type fakeWorkers struct {
+	stored  *worker.Worker
 	updated []*worker.Worker
+	err     error
 }
 
 func (f *fakeWorkers) UpdateFromEmployment(
@@ -99,24 +107,29 @@ func (f *fakeWorkers) UpdateFromEmployment(
 	entity *worker.Worker,
 	_ *permissionports.RequestActor,
 ) (*worker.Worker, error) {
-	f.updated = append(f.updated, entity)
-	return entity, nil
+	if f.err != nil {
+		return nil, f.err
+	}
+	saved := *entity
+	f.updated = append(f.updated, &saved)
+	*f.stored = saved
+	return &saved, nil
 }
 
 type fakePolicies struct {
-	open           *pto.WorkerPTOPolicyAssignment
-	ended          []*ptopolicyservice.EndAssignmentRequest
-	defaultApplied []pulid.ID
+	open          *pto.WorkerPTOPolicyAssignment
+	defaultPolicy *pto.PTOPolicy
+	ended         []*ptopolicyservice.EndAssignmentRequest
+	hired         []*ptopolicyservice.HireAssignment
+	hireErr       error
 }
 
-func (f *fakePolicies) ListAssignments(
+func (f *fakePolicies) ActiveAssignment(
 	context.Context,
-	*ptopolicyports.ListPTOAssignmentsRequest,
-) ([]*pto.WorkerPTOPolicyAssignment, error) {
-	if f.open == nil {
-		return nil, nil
-	}
-	return []*pto.WorkerPTOPolicyAssignment{f.open}, nil
+	pagination.TenantInfo,
+	pulid.ID,
+) (*pto.WorkerPTOPolicyAssignment, error) {
+	return f.open, nil
 }
 
 func (f *fakePolicies) EndAssignment(
@@ -127,21 +140,26 @@ func (f *fakePolicies) EndAssignment(
 	return f.open, nil
 }
 
-func (f *fakePolicies) AssignDefaultPolicy(
+func (f *fakePolicies) DefaultPolicy(
+	context.Context,
+	pagination.TenantInfo,
+) (*pto.PTOPolicy, error) {
+	return f.defaultPolicy, nil
+}
+
+func (f *fakePolicies) AssignAtHire(
 	_ context.Context,
-	_ pagination.TenantInfo,
-	workerID pulid.ID,
-	_ int64,
-	_ pulid.ID,
+	req *ptopolicyservice.HireAssignment,
 ) error {
-	f.defaultApplied = append(f.defaultApplied, workerID)
-	return nil
+	f.hired = append(f.hired, req)
+	return f.hireErr
 }
 
 type fakePTO struct {
 	workerptoports.WorkerPTOService
 	upcoming  []*worker.WorkerPTO
 	cancelled []*workerptoports.UpdatePTOStatusRequest
+	cancelErr map[pulid.ID]error
 }
 
 func (f *fakePTO) List(
@@ -161,6 +179,9 @@ func (f *fakePTO) Cancel(
 	_ context.Context,
 	req *workerptoports.UpdatePTOStatusRequest,
 ) (*worker.WorkerPTO, error) {
+	if err := f.cancelErr[req.ID]; err != nil {
+		return nil, err
+	}
 	f.cancelled = append(f.cancelled, req)
 	return &worker.WorkerPTO{ID: req.ID}, nil
 }
@@ -183,6 +204,7 @@ func (f *fakePayRepo) GetEffectiveForWorker(
 
 type fakePay struct {
 	ended []pulid.ID
+	err   error
 }
 
 func (f *fakePay) EndAssignment(
@@ -192,57 +214,200 @@ func (f *fakePay) EndAssignment(
 	_ int64,
 	_ *permissionports.RequestActor,
 ) (*payassignment.WorkerPayAssignment, error) {
+	if f.err != nil {
+		return nil, f.err
+	}
 	f.ended = append(f.ended, assignmentID)
 	return &payassignment.WorkerPayAssignment{ID: assignmentID}, nil
 }
 
 type fakeLedger struct {
-	settled    []int64
-	settlement *ptoledgerservice.TerminationSettlement
+	assignment *pto.WorkerPTOPolicyAssignment
+	policy     *pto.PTOPolicy
+	balances   []*pto.WorkerPTOBalance
+	released   [][]ptoledgerservice.ReleasedUsage
+	settled    []*ptoledgerservice.TerminationPlan
+}
+
+func (f *fakeLedger) PreviewTerminationSettlement(
+	_ context.Context,
+	_ pagination.TenantInfo,
+	_ pulid.ID,
+	_ int64,
+	released []ptoledgerservice.ReleasedUsage,
+) (*ptoledgerservice.TerminationPlan, error) {
+	f.released = append(f.released, released)
+	if f.policy == nil {
+		return &ptoledgerservice.TerminationPlan{}, nil
+	}
+	byType := map[worker.PTOType]*pto.WorkerPTOBalance{}
+	balances := make([]*pto.WorkerPTOBalance, 0, len(f.balances)+len(released))
+	for _, bal := range f.balances {
+		projected := *bal
+		byType[projected.PTOType] = &projected
+		balances = append(balances, &projected)
+	}
+	for _, usage := range released {
+		bal, ok := byType[usage.PTOType]
+		if !ok {
+			bal = &pto.WorkerPTOBalance{PTOType: usage.PTOType}
+			byType[usage.PTOType] = bal
+			balances = append(balances, bal)
+		}
+		bal.BalanceDays = bal.BalanceDays.Add(usage.Days)
+	}
+	return &ptoledgerservice.TerminationPlan{
+		Resolved: &ptoledgerservice.ResolvedPolicy{
+			Assignment: f.assignment,
+			Policy:     f.policy,
+		},
+		Settlements: ptoledgerservice.PlanTerminationSettlement(balances, f.policy),
+	}, nil
 }
 
 func (f *fakeLedger) SettleOnTermination(
 	_ context.Context,
 	_ pagination.TenantInfo,
 	_ pulid.ID,
-	effectiveAt int64,
+	_ int64,
+	plan *ptoledgerservice.TerminationPlan,
 	_ ptoledgerservice.Actor,
 ) (*ptoledgerservice.TerminationSettlement, error) {
-	f.settled = append(f.settled, effectiveAt)
-	if f.settlement == nil {
-		return &ptoledgerservice.TerminationSettlement{}, nil
+	f.settled = append(f.settled, plan)
+	result := &ptoledgerservice.TerminationSettlement{}
+	for _, planned := range plan.Settlements {
+		result.Entries = append(result.Entries, &pto.WorkerPTOLedgerEntry{
+			PTOType:    planned.PTOType,
+			EntryType:  planned.EntryType,
+			AmountDays: planned.Days.Neg(),
+		})
 	}
-	return f.settlement, nil
+	return result, nil
 }
 
 type fakePortal struct {
-	hadAccess bool
-	err       error
-	revoked   []pulid.ID
+	status  driverportalinvitationservice.PortalStatus
+	err     error
+	revoked []pulid.ID
 }
 
-func (f *fakePortal) RevokeOnTermination(
+func (f *fakePortal) GetPortalStatus(
+	context.Context,
+	pagination.TenantInfo,
+	pulid.ID,
+) (*driverportalinvitationservice.PortalStatus, error) {
+	status := f.status
+	return &status, nil
+}
+
+func (f *fakePortal) RevokeAccess(
 	_ context.Context,
 	_ pagination.TenantInfo,
 	workerID pulid.ID,
 	_ *permissionports.RequestActor,
-) (bool, error) {
+) error {
 	f.revoked = append(f.revoked, workerID)
-	if f.err != nil {
-		return false, f.err
-	}
-	return f.hadAccess, nil
+	return f.err
 }
 
-type noTraining struct{}
+type fakeChecklists struct {
+	template *workerchecklist.WorkerChecklistTemplate
+	open     []*workerchecklist.WorkerChecklist
+	planned  []employment.EmploymentEventKind
+	closed   []employment.EmploymentEventKind
+	spawned  []employment.EmploymentEventKind
+}
 
-func (noTraining) AssignRequired(
-	context.Context,
-	pagination.TenantInfo,
-	pulid.ID,
-	pulid.ID,
-) ([]*workertraining.WorkerTrainingRecord, error) {
-	return nil, nil
+func (f *fakeChecklists) PlanForEvent(
+	_ context.Context,
+	kind employment.EmploymentEventKind,
+	wrk *worker.Worker,
+) (*workerchecklistports.EventPlan, error) {
+	f.planned = append(f.planned, kind)
+	plan := &workerchecklistports.EventPlan{Worker: wrk}
+	if closes, ok := workerchecklist.ChecklistKindClosedByEvent(kind); ok {
+		for _, checklist := range f.open {
+			if checklist.Kind == closes && checklist.IsOpen() {
+				plan.Close = append(plan.Close, checklist)
+			}
+		}
+	}
+	if _, ok := workerchecklist.ChecklistTriggerForEvent(kind); ok {
+		plan.Template = f.template
+	}
+	return plan, nil
+}
+
+func (f *fakeChecklists) SpawnForEvent(
+	_ context.Context,
+	event *employment.WorkerEmploymentEvent,
+	plan *workerchecklistports.EventPlan,
+	_ pulid.ID,
+) (*workerchecklist.WorkerChecklist, error) {
+	if plan.Template == nil {
+		return nil, nil //nolint:nilnil // nothing to spawn
+	}
+	f.spawned = append(f.spawned, event.Kind)
+	return &workerchecklist.WorkerChecklist{ID: pulid.MustNew("wcl_"), SourceEventID: event.ID}, nil
+}
+
+func (f *fakeChecklists) CloseForEvent(
+	_ context.Context,
+	event *employment.WorkerEmploymentEvent,
+	plan *workerchecklistports.EventPlan,
+	_ pulid.ID,
+) (int, error) {
+	f.closed = append(f.closed, event.Kind)
+	for _, checklist := range plan.Close {
+		checklist.Status = workerchecklist.ChecklistStatusCancelled
+	}
+	return len(plan.Close), nil
+}
+
+type fakeTraining struct {
+	courses   map[worker.DriverType][]*workertraining.TrainingCourse
+	plannedOn []worker.DriverType
+	assigned  [][]*workertraining.TrainingCourse
+	failAll   bool
+}
+
+func (f *fakeTraining) PlanAssignRequiredFor(
+	_ context.Context,
+	_ pagination.TenantInfo,
+	wrk *worker.Worker,
+) ([]*workertraining.TrainingCourse, error) {
+	f.plannedOn = append(f.plannedOn, wrk.DriverType)
+	return f.courses[wrk.DriverType], nil
+}
+
+func (f *fakeTraining) AssignPlanned(
+	_ context.Context,
+	_ pagination.TenantInfo,
+	workerID pulid.ID,
+	courses []*workertraining.TrainingCourse,
+	_ pulid.ID,
+) []*workertraining.WorkerTrainingRecord {
+	f.assigned = append(f.assigned, courses)
+	if f.failAll {
+		return nil
+	}
+	out := make([]*workertraining.WorkerTrainingRecord, 0, len(courses))
+	for _, course := range courses {
+		out = append(out, &workertraining.WorkerTrainingRecord{
+			ID:       pulid.MustNew("wtr_"),
+			WorkerID: workerID,
+			CourseID: course.ID,
+		})
+	}
+	return out
+}
+
+type fakeSecurity struct {
+	changes []*permissionports.SecurityChange
+}
+
+func (f *fakeSecurity) RecordChange(_ context.Context, change *permissionports.SecurityChange) {
+	f.changes = append(f.changes, change)
 }
 
 type harness struct {
@@ -256,7 +421,10 @@ type harness struct {
 	payRepo  *fakePayRepo
 	portal   *fakePortal
 	fleet    *fleetcodeportsmock.MockFleetCodeRepository
+	users    *tenantportsmock.MockUserRepository
 	lists    *fakeChecklists
+	training *fakeTraining
+	security *fakeSecurity
 	tenant   pagination.TenantInfo
 	wrk      *worker.Worker
 	userID   pulid.ID
@@ -280,84 +448,66 @@ func newHarness(t *testing.T) *harness {
 	}
 
 	workerRepo := workerportsmock.NewMockWorkerRepository(t)
-	workerRepo.EXPECT().GetByID(mock.Anything, mock.Anything).Return(wrk, nil).Maybe()
+	workerRepo.EXPECT().
+		GetByID(mock.Anything, mock.Anything).
+		RunAndReturn(func(context.Context, workerports.GetWorkerByIDRequest) (*worker.Worker, error) {
+			copied := *wrk
+			profile := *wrk.Profile
+			copied.Profile = &profile
+			return &copied, nil
+		}).
+		Maybe()
 	docRepo := documentportsmock.NewMockDocumentRepository(t)
 	payRepo := &fakePayRepo{err: errortypes.NewNotFoundError("none")}
 	fleet := fleetcodeportsmock.NewMockFleetCodeRepository(t)
+	users := tenantportsmock.NewMockUserRepository(t)
 	audit := auditportsmock.NewMockAuditService(t)
 	audit.EXPECT().LogAction(mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
 
 	h := &harness{
 		events:   newFakeEventRepo(),
-		workers:  &fakeWorkers{},
+		workers:  &fakeWorkers{stored: wrk},
 		policies: &fakePolicies{},
 		pto:      &fakePTO{},
 		ledger:   &fakeLedger{},
 		pay:      &fakePay{},
 		payRepo:  payRepo,
-		portal:   &fakePortal{hadAccess: true},
+		portal:   &fakePortal{status: driverportalinvitationservice.PortalStatus{Linked: true}},
 		lists:    &fakeChecklists{},
+		training: &fakeTraining{},
+		security: &fakeSecurity{},
 		fleet:    fleet,
+		users:    users,
 		tenant:   tenant,
 		wrk:      wrk,
 		userID:   pulid.MustNew("usr_"),
 	}
 	h.svc = workeremploymentservice.New(workeremploymentservice.Params{
 		Logger:        zap.NewNop(),
+		DB:            dbtest.NopConnection{},
 		Repo:          h.events,
 		WorkerRepo:    workerRepo,
 		FleetCodeRepo: fleet,
 		DocumentRepo:  docRepo,
 		PayAssignRepo: payRepo,
+		Users:         users,
 		PTO:           h.pto,
 		AuditService:  audit,
+		Security:      h.security,
 		Realtime:      &mocks.NoopRealtimeService{},
 		Checklists:    h.lists,
-		Training:      noTraining{},
+		Training:      h.training,
 	})
 	h.svc.SetCollaborators(h.workers, h.policies, h.ledger, h.pay)
 	h.svc.SetPortalRevoker(h.portal)
 	return h
 }
 
-// fakeChecklists records what the employment service asked of the checklist
-// port, so a test can see the order and the event each call carried.
-type fakeChecklists struct {
-	closed  []employment.EmploymentEventKind
-	spawned []employment.EmploymentEventKind
-}
-
-func (f *fakeChecklists) SpawnForEvent(
-	_ context.Context,
-	event *employment.WorkerEmploymentEvent,
-	_ *worker.Worker,
-	_ pulid.ID,
-) (*workerchecklist.WorkerChecklist, error) {
-	f.spawned = append(f.spawned, event.Kind)
-	if _, ok := workerchecklist.ChecklistTriggerForEvent(event.Kind); !ok {
-		return nil, nil //nolint:nilnil // nothing to spawn
-	}
-	return &workerchecklist.WorkerChecklist{ID: pulid.MustNew("wcl_"), SourceEventID: event.ID}, nil
-}
-
-func (f *fakeChecklists) CloseForEvent(
-	_ context.Context,
-	event *employment.WorkerEmploymentEvent,
-	_ *worker.Worker,
-	_ pulid.ID,
-) (int, error) {
-	f.closed = append(f.closed, event.Kind)
-	if _, ok := workerchecklist.ChecklistKindClosedByEvent(event.Kind); ok {
-		return 1, nil
-	}
-	return 0, nil
-}
-
-func (h *harness) record(
+func (h *harness) request(
 	kind employment.EmploymentEventKind,
 	effective int64,
 	mutate func(*workeremploymentservice.RecordRequest),
-) (*workeremploymentservice.RecordResult, error) {
+) *workeremploymentservice.RecordRequest {
 	req := &workeremploymentservice.RecordRequest{
 		TenantInfo:  h.tenant,
 		WorkerID:    h.wrk.ID,
@@ -369,41 +519,82 @@ func (h *harness) record(
 	if mutate != nil {
 		mutate(req)
 	}
-	return h.svc.Record(context.Background(), req)
+	return req
+}
+
+func (h *harness) record(
+	kind employment.EmploymentEventKind,
+	effective int64,
+	mutate func(*workeremploymentservice.RecordRequest),
+) (*workeremploymentservice.RecordResult, error) {
+	return h.svc.Record(context.Background(), h.request(kind, effective, mutate))
+}
+
+func effectsOf(
+	effects []*employment.Effect,
+	kind employment.EffectKind,
+) []*employment.Effect {
+	out := make([]*employment.Effect, 0)
+	for _, effect := range effects {
+		if effect.Kind == kind {
+			out = append(out, effect)
+		}
+	}
+	return out
+}
+
+func kindsOf(effects []*employment.Effect) []employment.EffectKind {
+	out := make([]employment.EffectKind, 0, len(effects))
+	for _, effect := range effects {
+		out = append(out, effect.Kind)
+	}
+	return out
 }
 
 // A terminated worker must lose their Dash sign-in as part of the termination
-// itself. Leaving it to the offboarding checklist means a departed driver keeps
-// a working portal until somebody remembers to close the item.
+// itself, and the office is told it happened.
 func TestRecord_TerminationRevokesPortalAccess(t *testing.T) {
 	h := newHarness(t)
-	h.portal.hadAccess = true
 
 	result, err := h.record(employment.EmploymentEventTerminated, 1_800_000_000, nil)
 	require.NoError(t, err)
 
 	require.Equal(t, []pulid.ID{h.wrk.ID}, h.portal.revoked)
-	assert.True(t, result.Cascade.PortalAccessRevoked)
-	assert.Empty(t, result.Cascade.PortalRevocationError)
+	revoked := effectsOf(result.Effects, employment.EffectPortalAccessRevoked)
+	require.Len(t, revoked, 1)
+	assert.False(t, revoked[0].Failed)
 }
 
-// A worker who was never invited to Dash has nothing to revoke, and the
-// summary must not claim otherwise.
-func TestRecord_TerminationWithoutPortalAccessClaimsNothing(t *testing.T) {
+// An open invitation is access too: it is revoked so a departed driver cannot
+// accept it later.
+func TestRecord_TerminationRevokesAPendingInvitation(t *testing.T) {
 	h := newHarness(t)
-	h.portal.hadAccess = false
+	h.portal.status = driverportalinvitationservice.PortalStatus{
+		PendingInvitation: &portalinvitation.PortalInvitation{ID: pulid.MustNew("pinv_")},
+	}
 
 	result, err := h.record(employment.EmploymentEventTerminated, 1_800_000_000, nil)
 	require.NoError(t, err)
 
-	require.Len(t, h.portal.revoked, 1)
-	assert.False(t, result.Cascade.PortalAccessRevoked)
-	assert.Empty(t, result.Cascade.PortalRevocationError)
+	assert.Equal(t, []pulid.ID{h.wrk.ID}, h.portal.revoked)
+	assert.Len(t, effectsOf(result.Effects, employment.EffectPortalAccessRevoked), 1)
 }
 
-// The worker row is already Inactive by the time the cascade runs, so a portal
-// failure must not abort the record and lose the timeline event. It is
-// reported instead, so the office knows to shut the account off by hand.
+// A worker who was never invited to Dash has nothing to revoke, and neither the
+// plan nor the write claims otherwise.
+func TestRecord_TerminationWithoutPortalAccessClaimsNothing(t *testing.T) {
+	h := newHarness(t)
+	h.portal.status = driverportalinvitationservice.PortalStatus{}
+
+	result, err := h.record(employment.EmploymentEventTerminated, 1_800_000_000, nil)
+	require.NoError(t, err)
+
+	assert.Empty(t, h.portal.revoked)
+	assert.Empty(t, effectsOf(result.Effects, employment.EffectPortalAccessRevoked))
+}
+
+// The termination has committed by the time the portal is shut off, so a
+// portal failure is reported on the effect rather than undoing the event.
 func TestRecord_PortalRevocationFailureIsReportedNotFatal(t *testing.T) {
 	h := newHarness(t)
 	h.portal.err = errors.New("portal is unreachable")
@@ -411,13 +602,13 @@ func TestRecord_PortalRevocationFailureIsReportedNotFatal(t *testing.T) {
 	result, err := h.record(employment.EmploymentEventTerminated, 1_800_000_000, nil)
 	require.NoError(t, err)
 	require.NotNil(t, result.Event)
+	assert.False(t, result.Event.ID.IsNil())
 
-	assert.False(t, result.Cascade.PortalAccessRevoked)
-	assert.Contains(t, result.Cascade.PortalRevocationError, "portal is unreachable")
+	revoked := effectsOf(result.Effects, employment.EffectPortalAccessRevoked)
+	require.Len(t, revoked, 1)
+	assert.True(t, revoked[0].Failed)
 }
 
-// Suspension and leave take a worker off the board but do not end employment,
-// so they keep their sign-in. Only termination revokes.
 func TestRecord_NonTerminationLeavesPortalAlone(t *testing.T) {
 	for _, kind := range []employment.EmploymentEventKind{
 		employment.EmploymentEventSuspended,
@@ -439,80 +630,117 @@ func TestRecord_NonTerminationLeavesPortalAlone(t *testing.T) {
 	}
 }
 
-func TestRecord_TerminationCascades(t *testing.T) {
+func TestRecord_TerminationCarriesOutEveryPlannedEffect(t *testing.T) {
 	h := newHarness(t)
 	effective := int64(1_800_000_000)
-	h.policies.open = &pto.WorkerPTOPolicyAssignment{
+	assignment := &pto.WorkerPTOPolicyAssignment{
 		ID:            pulid.MustNew("wppa_"),
 		EffectiveFrom: 1_700_000_000,
 		Version:       3,
 	}
+	h.ledger.assignment = assignment
+	h.ledger.policy = &pto.PTOPolicy{
+		ID:   pulid.MustNew("ptop_"),
+		Name: "Drivers",
+		Rules: []*pto.PTOPolicyRule{
+			{PTOType: worker.PTOTypeVacation, OnTermination: pto.PTOTerminationPayOut},
+			{PTOType: worker.PTOTypeSick},
+		},
+	}
+	h.ledger.balances = []*pto.WorkerPTOBalance{
+		{PTOType: worker.PTOTypeVacation, BalanceDays: decimal.NewFromFloat(3.5)},
+		{PTOType: worker.PTOTypeSick, BalanceDays: decimal.NewFromInt(2)},
+	}
 	payAssignment := &payassignment.WorkerPayAssignment{
 		ID:            pulid.MustNew("wpa_"),
 		EffectiveFrom: 1_700_000_000,
+		PayProfile:    &driverpay.PayProfile{Name: "Linehaul mileage"},
 	}
 	h.payRepo.assignment = payAssignment
 	h.payRepo.err = nil
-	h.pto.upcoming = []*worker.WorkerPTO{
-		{
-			ID:        pulid.MustNew("wrkpto_"),
-			Status:    worker.PTOStatusApproved,
-			StartDate: effective + 86400,
-			Version:   1,
-		},
-		{
-			ID:        pulid.MustNew("wrkpto_"),
-			Status:    worker.PTOStatusRequested,
-			StartDate: effective + 5*86400,
-			Version:   2,
-		},
-		{
-			ID:        pulid.MustNew("wrkpto_"),
-			Status:    worker.PTOStatusApproved,
-			StartDate: effective - 86400,
-			Version:   1,
-		},
+	booked := &worker.WorkerPTO{
+		ID:               pulid.MustNew("wrkpto_"),
+		Status:           worker.PTOStatusApproved,
+		Type:             worker.PTOTypeVacation,
+		StartDate:        effective + 86400,
+		EndDate:          effective + 3*86400,
+		Days:             decimal.NewFromInt(3),
+		BalanceAfterDays: decimal.NewNullDecimal(decimal.NewFromFloat(0.5)),
+		Version:          1,
 	}
-	h.ledger.settlement = &ptoledgerservice.TerminationSettlement{
-		PaidOutDays:   decimal.NewFromFloat(6.5),
-		ForfeitedDays: decimal.NewFromInt(2),
+	requested := &worker.WorkerPTO{
+		ID:        pulid.MustNew("wrkpto_"),
+		Status:    worker.PTOStatusRequested,
+		Type:      worker.PTOTypeSick,
+		StartDate: effective + 5*86400,
+		EndDate:   effective + 5*86400,
+		Days:      decimal.NewFromInt(1),
+		Version:   2,
 	}
+	past := &worker.WorkerPTO{
+		ID:        pulid.MustNew("wrkpto_"),
+		Status:    worker.PTOStatusApproved,
+		StartDate: effective - 86400,
+		Version:   1,
+	}
+	h.pto.upcoming = []*worker.WorkerPTO{booked, requested, past}
 
 	result, err := h.record(employment.EmploymentEventTerminated, effective, nil)
 	require.NoError(t, err)
 
-	assert.Equal(t, domaintypes.StatusInactive, h.wrk.Status)
-	assert.False(t, h.wrk.CanBeAssigned)
-	require.NotNil(t, h.wrk.Profile.TerminationDate)
-	assert.Equal(t, effective, *h.wrk.Profile.TerminationDate)
 	require.Len(t, h.workers.updated, 1)
+	saved := h.workers.updated[0]
+	assert.Equal(t, domaintypes.StatusInactive, saved.Status)
+	assert.False(t, saved.CanBeAssigned)
+	require.NotNil(t, saved.Profile.TerminationDate)
+	assert.Equal(t, effective, *saved.Profile.TerminationDate)
 
-	assert.True(t, result.Cascade.PTOAssignmentEnded)
-	require.Len(t, h.policies.ended, 1)
-	assert.Equal(t, effective, h.policies.ended[0].EffectiveTo)
-	assert.Equal(t, int64(3), h.policies.ended[0].Version)
+	assert.Equal(t, []employment.EffectKind{
+		employment.EffectTimeOffCancelled,
+		employment.EffectTimeOffCancelled,
+		employment.EffectPTOForfeited,
+		employment.EffectPTOPaidOut,
+		employment.EffectPTOPolicyEnded,
+		employment.EffectPayAssignmentEnded,
+		employment.EffectPortalAccessRevoked,
+	}, kindsOf(result.Effects))
 
-	assert.True(t, result.Cascade.PayAssignmentEnded)
-	assert.Equal(t, []pulid.ID{payAssignment.ID}, h.pay.ended)
-
-	assert.Equal(
-		t,
-		2,
-		result.Cascade.UpcomingPTOCancelled,
-		"only time off starting on or after the termination is cancelled",
-	)
-	require.Len(t, h.pto.cancelled, 2)
+	require.Len(t, h.pto.cancelled, 2, "only time off starting on or after the termination")
+	assert.Equal(t, booked.ID, h.pto.cancelled[0].ID)
 	assert.Equal(t, "Employment ended", h.pto.cancelled[0].Reason)
 	assert.Equal(t, worker.PTOStatusCancelled, h.pto.cancelled[0].Status)
+	cancelled := effectsOf(result.Effects, employment.EffectTimeOffCancelled)
+	assert.Equal(t, worker.PTOTypeVacation, *cancelled[0].PTOType)
+	assert.Equal(t, booked.StartDate, *cancelled[0].StartDate)
+	assert.True(t, cancelled[0].Days.Equal(decimal.NewFromInt(3)))
 
+	require.Len(t, h.ledger.released, 1)
+	assert.Equal(t, []ptoledgerservice.ReleasedUsage{
+		{PTOType: worker.PTOTypeVacation, Days: decimal.NewFromInt(3)},
+	}, h.ledger.released[0], "only approved, booked time off hands days back")
+	paid := effectsOf(result.Effects, employment.EffectPTOPaidOut)
+	require.Len(t, paid, 1)
+	assert.True(
+		t,
+		paid[0].Days.Equal(decimal.NewFromFloat(6.5)),
+		"the released days are paid out with the balance",
+	)
+	forfeited := effectsOf(result.Effects, employment.EffectPTOForfeited)
+	require.Len(t, forfeited, 1)
+	assert.True(t, forfeited[0].Days.Equal(decimal.NewFromInt(2)))
+
+	require.Len(t, h.policies.ended, 1)
+	assert.Equal(t, assignment.ID, h.policies.ended[0].AssignmentID)
+	assert.Equal(t, effective, h.policies.ended[0].EffectiveTo)
+	assert.Equal(t, int64(3), h.policies.ended[0].Version)
+	assert.Equal(t, "Drivers", *effectsOf(result.Effects, employment.EffectPTOPolicyEnded)[0].Name)
+
+	assert.Equal(t, []pulid.ID{payAssignment.ID}, h.pay.ended)
 	assert.Equal(
 		t,
-		[]int64{effective},
-		h.ledger.settled,
-		"balances are closed as of the termination",
+		"Linehaul mileage",
+		*effectsOf(result.Effects, employment.EffectPayAssignmentEnded)[0].Name,
 	)
-	assert.True(t, result.Cascade.PTOPaidOutDays.Equal(decimal.NewFromFloat(6.5)))
-	assert.True(t, result.Cascade.PTOForfeitedDays.Equal(decimal.NewFromInt(2)))
 
 	event := result.Event
 	assert.Equal(t, "Active", event.FromValues[employment.EmploymentValueStatus])
@@ -523,6 +751,43 @@ func TestRecord_TerminationCascades(t *testing.T) {
 	var verr *errortypes.Error
 	require.ErrorAs(t, err, &verr, "a second termination is refused")
 	assert.Equal(t, "kind", verr.Field())
+}
+
+// A failed write inside the transaction fails the record, and nothing that
+// runs after commit is started for an event that never committed.
+func TestRecord_AnAtomicFailureFailsTheRecordAndRunsNothingAfterIt(t *testing.T) {
+	h := newHarness(t)
+	h.payRepo.assignment = &payassignment.WorkerPayAssignment{
+		ID:            pulid.MustNew("wpa_"),
+		EffectiveFrom: 1_700_000_000,
+	}
+	h.payRepo.err = nil
+	h.pay.err = errors.New("pay assignment is locked")
+
+	_, err := h.record(employment.EmploymentEventTerminated, 1_800_000_000, nil)
+	require.Error(t, err)
+	assert.Empty(t, h.portal.revoked, "nothing after commit runs when the commit failed")
+	assert.Empty(t, h.lists.spawned)
+}
+
+func TestRecord_TimeOffThatCannotBeCancelledIsReportedAsFailed(t *testing.T) {
+	h := newHarness(t)
+	stuck := &worker.WorkerPTO{
+		ID:        pulid.MustNew("wrkpto_"),
+		Status:    worker.PTOStatusRequested,
+		Type:      worker.PTOTypePersonal,
+		StartDate: 1_800_086_400,
+		Days:      decimal.NewFromInt(1),
+	}
+	h.pto.upcoming = []*worker.WorkerPTO{stuck}
+	h.pto.cancelErr = map[pulid.ID]error{stuck.ID: errors.New("version moved")}
+
+	result, err := h.record(employment.EmploymentEventTerminated, 1_800_000_000, nil)
+	require.NoError(t, err)
+
+	cancelled := effectsOf(result.Effects, employment.EffectTimeOffCancelled)
+	require.Len(t, cancelled, 1)
+	assert.True(t, cancelled[0].Failed)
 }
 
 func TestRecord_TerminationNeedsReason(t *testing.T) {
@@ -546,15 +811,22 @@ func TestRecord_RehireReopensAndReenrols(t *testing.T) {
 	h.wrk.CanBeAssigned = false
 	term := int64(1_750_000_000)
 	h.wrk.Profile.TerminationDate = &term
+	h.policies.defaultPolicy = &pto.PTOPolicy{ID: pulid.MustNew("ptop_"), Name: "Standard"}
 
 	result, err := h.record(employment.EmploymentEventRehired, 1_790_000_000, nil)
 	require.NoError(t, err)
-	assert.Equal(t, domaintypes.StatusActive, h.wrk.Status)
-	assert.True(t, h.wrk.CanBeAssigned)
-	assert.Nil(t, h.wrk.Profile.TerminationDate)
-	assert.Equal(t, int64(1_790_000_000), h.wrk.Profile.HireDate)
-	assert.True(t, result.Cascade.DefaultPolicyApplied)
-	assert.Equal(t, []pulid.ID{h.wrk.ID}, h.policies.defaultApplied)
+	saved := h.workers.updated[0]
+	assert.Equal(t, domaintypes.StatusActive, saved.Status)
+	assert.True(t, saved.CanBeAssigned)
+	assert.Nil(t, saved.Profile.TerminationDate)
+	assert.Equal(t, int64(1_790_000_000), saved.Profile.HireDate)
+
+	applied := effectsOf(result.Effects, employment.EffectDefaultPTOPolicyApplied)
+	require.Len(t, applied, 1)
+	assert.Equal(t, "Standard", *applied[0].Name)
+	require.Len(t, h.policies.hired, 1)
+	assert.Equal(t, h.policies.defaultPolicy.ID, h.policies.hired[0].PolicyID)
+	assert.Equal(t, int64(1_790_000_000), h.policies.hired[0].EffectiveFrom)
 	assert.Equal(t, "1600000000", result.Event.FromValues[employment.EmploymentValueHireDate])
 }
 
@@ -574,10 +846,10 @@ func TestRecord_TransferValidatesFleetAndRecordsBothSides(t *testing.T) {
 		},
 	)
 	require.NoError(t, err)
-	assert.Equal(t, target, h.wrk.FleetCodeID)
+	require.Len(t, h.workers.updated, 1)
+	assert.Equal(t, target, h.workers.updated[0].FleetCodeID)
 	assert.Equal(t, "SOUTH", result.Event.FromValues[employment.EmploymentValueFleetCode])
 	assert.Equal(t, "NORTH", result.Event.ToValues[employment.EmploymentValueFleetCode])
-	require.Len(t, h.workers.updated, 1)
 
 	same := h.wrk.FleetCodeID
 	_, err = h.record(
@@ -616,6 +888,11 @@ func TestRecord_LeaveAndSuspensionPairing(t *testing.T) {
 	assert.Equal(t, domaintypes.StatusActive, h.wrk.Status, "leave keeps the worker employed")
 	assert.Equal(t, worker.LeaveTypeFMLA, h.wrk.LeaveType)
 	assert.Equal(t, "FMLA", started.Event.ToValues[employment.EmploymentValueLeaveType])
+	assert.Equal(
+		t,
+		[]employment.EffectKind{employment.EffectDispatchRemoved},
+		kindsOf(started.Effects),
+	)
 
 	_, err = h.record(
 		employment.EmploymentEventLeaveStarted,
@@ -631,6 +908,11 @@ func TestRecord_LeaveAndSuspensionPairing(t *testing.T) {
 	assert.True(t, h.wrk.CanBeAssigned)
 	assert.Empty(t, h.wrk.LeaveType, "returning clears the leave")
 	assert.Equal(t, "FMLA", ended.Event.FromValues[employment.EmploymentValueLeaveType])
+	assert.Equal(
+		t,
+		[]employment.EffectKind{employment.EffectDispatchRestored},
+		kindsOf(ended.Effects),
+	)
 }
 
 func TestRecord_PromotionRequiresAChange(t *testing.T) {
@@ -674,6 +956,7 @@ func TestRecord_RateChangeIsInformational(t *testing.T) {
 	require.NoError(t, err)
 	assert.Empty(t, h.workers.updated, "no worker change for a rate note")
 	assert.Equal(t, "0.65", result.Event.ToValues[employment.EmploymentValueRate])
+	assert.Empty(t, result.Effects)
 }
 
 func TestAmend_CorrectsNarrativeWithoutReplayingEffects(t *testing.T) {
@@ -727,9 +1010,19 @@ func TestAmend_CorrectsNarrativeWithoutReplayingEffects(t *testing.T) {
 }
 
 // A termination closes the onboarding it interrupts before it opens the
-// offboarding, and the office is told both happened.
+// offboarding, and the office is told both happened, with their names.
 func TestRecord_TerminatedClosesStaleChecklistsThenSpawns(t *testing.T) {
 	h := newHarness(t)
+	h.lists.open = []*workerchecklist.WorkerChecklist{{
+		ID:     pulid.MustNew("wcl_"),
+		Name:   "Driver onboarding",
+		Kind:   workerchecklist.ChecklistKindOnboarding,
+		Status: workerchecklist.ChecklistStatusOpen,
+	}}
+	h.lists.template = &workerchecklist.WorkerChecklistTemplate{
+		ID:   pulid.MustNew("wclt_"),
+		Name: "Driver offboarding",
+	}
 
 	result, err := h.record(
 		employment.EmploymentEventTerminated,
@@ -739,8 +1032,14 @@ func TestRecord_TerminatedClosesStaleChecklistsThenSpawns(t *testing.T) {
 		},
 	)
 	require.NoError(t, err)
-	assert.Equal(t, 1, result.Cascade.ChecklistsClosed)
-	assert.True(t, result.Cascade.ChecklistStarted)
+
+	closed := effectsOf(result.Effects, employment.EffectChecklistClosed)
+	require.Len(t, closed, 1)
+	assert.Equal(t, 1, *closed[0].Count)
+	assert.Equal(t, "Driver onboarding", *closed[0].Name)
+	started := effectsOf(result.Effects, employment.EffectChecklistStarted)
+	require.Len(t, started, 1)
+	assert.Equal(t, "Driver offboarding", *started[0].Name)
 	assert.Equal(
 		t,
 		[]employment.EmploymentEventKind{employment.EmploymentEventTerminated},

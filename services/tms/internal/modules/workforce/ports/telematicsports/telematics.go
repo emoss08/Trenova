@@ -280,6 +280,16 @@ type TelematicsRepository interface {
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 	) ([]WorkerTelematicsMapping, error)
+	GetWorkerExternalID(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+		workerID pulid.ID,
+	) (string, error)
+	ListOpenWorkerHOSLogs(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+		workerIDs []pulid.ID,
+	) ([]*telematics.WorkerHOSLog, error)
 	ListTractorMappings(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,

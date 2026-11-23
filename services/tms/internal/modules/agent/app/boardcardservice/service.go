@@ -286,8 +286,8 @@ func (s *Service) Check(ctx context.Context, req *assistantports.BoardFillReques
 			return err
 		}
 		if !allowed {
-			return mistake("the person may not read %s, so leave the blocks that name them out",
-				inflect.PluralNoun(resource.Noun()))
+			return mistake("the person may not read %s, so leave out the blocks and readings "+
+				"that name them", inflect.PluralNoun(resource.Noun()))
 		}
 	}
 	for _, key := range req.Board.Metrics() {

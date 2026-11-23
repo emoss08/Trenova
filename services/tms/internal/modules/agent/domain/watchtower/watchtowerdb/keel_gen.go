@@ -10,7 +10,11 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/keel/schema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent/agentdb"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/caseowner"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/caseowner/caseownerdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
 	"github.com/emoss08/trenova/pkg/keelkinds"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -1040,56 +1044,62 @@ var itemsTable = schema.Table{
 	Quoted: `"watchtower_items"`,
 	Alias:  "wi",
 	Model:  "watchtower.Item",
-	Label:  `Item`,
-	Plural: `Items`,
-	Doc:    `Item is one thing worth a person's attention, projected from the record that raised it. It paginates by time, carries a severity, and resolves when its source does; the source stays authoritative by kind and id.`,
+	Label:  `Watchtower Item`,
+	Plural: `Watchtower Items`,
+	Doc:    `Watchtower items: what the operation is working or has recently closed, with each item's kind, severity, status, owner, due time and escalations. Resolved items are removed after 30 days; Watchtower Resolutions keep the history. Says nothing about what an item reads.`,
+	Report: &schema.TableReport{Category: `Desk`},
 	Columns: []schema.Column{
-		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
-		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
-		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`, JSON: `organizationId`},
-		{Name: "source_kind", Quoted: `"source_kind"`, Field: "SourceKind", Kind: schema.KindString, Flags: 0, Label: `Source Kind`, JSON: `sourceKind`, Enum: enumSourceKind[:]},
-		{Name: "source_id", Quoted: `"source_id"`, Field: "SourceID", Kind: schema.KindString, Flags: 0, Label: `Source ID`, JSON: `sourceId`},
-		{Name: "severity", Quoted: `"severity"`, Field: "Severity", Kind: schema.KindString, Flags: 0, Label: `Severity`, JSON: `severity`, Enum: enumSeverity[:]},
-		{Name: "title", Quoted: `"title"`, Field: "Title", Kind: schema.KindString, Flags: 0, Label: `Title`, JSON: `title`},
-		{Name: "summary", Quoted: `"summary"`, Field: "Summary", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Summary`, JSON: `summary`},
-		{Name: "subject_type", Quoted: `"subject_type"`, Field: "SubjectType", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Subject Type`, Doc: `SubjectType and SubjectID name the record an agent would work on if the item is handed to one; EventKind is the event that hand-off publishes. Empty when the source has no agent subject.`, JSON: `subjectType`, Enum: enumAgentSubjectType[:]},
-		{Name: "subject_id", Quoted: `"subject_id"`, Field: "SubjectID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Subject ID`, JSON: `subjectId`},
-		{Name: "event_kind", Quoted: `"event_kind"`, Field: "EventKind", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Event Kind`, JSON: `eventKind`, Enum: enumAgenttriggerEventKind[:]},
-		{Name: "path", Quoted: `"path"`, Field: "Path", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Path`, Doc: `Path opens the source record. It is built by the server and validated like an insight's link, so a stored path can only be an application path.`, JSON: `path`},
-		{Name: "occurred_at", Quoted: `"occurred_at"`, Field: "OccurredAt", Kind: schema.KindInt64, Flags: 0, Label: `Occurred At`, JSON: `occurredAt`},
-		{Name: "resolved_at", Quoted: `"resolved_at"`, Field: "ResolvedAt", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Resolved At`, JSON: `resolvedAt`},
-		{Name: "status", Quoted: `"status"`, Field: "Status", Kind: schema.KindString, Flags: 0, Label: `Status`, JSON: `status`, Enum: enumStatus[:]},
-		{Name: "assignee_id", Quoted: `"assignee_id"`, Field: "AssigneeID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Assignee ID`, JSON: `assigneeId`},
-		{Name: "due_at", Quoted: `"due_at"`, Field: "DueAt", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Due At`, JSON: `dueAt`},
-		{Name: "snoozed_until", Quoted: `"snoozed_until"`, Field: "SnoozedUntil", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Snoozed Until`, JSON: `snoozedUntil`},
-		{Name: "acknowledged_at", Quoted: `"acknowledged_at"`, Field: "AcknowledgedAt", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Acknowledged At`, JSON: `acknowledgedAt`},
-		{Name: "resolution_code", Quoted: `"resolution_code"`, Field: "ResolutionCode", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Resolution Code`, JSON: `resolutionCode`, Enum: enumResolutionCode[:]},
-		{Name: "resolution_note", Quoted: `"resolution_note"`, Field: "ResolutionNote", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Resolution Note`, JSON: `resolutionNote`},
-		{Name: "resolved_by_id", Quoted: `"resolved_by_id"`, Field: "ResolvedByID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Resolved By ID`, JSON: `resolvedById`},
-		{Name: "source_cleared_at", Quoted: `"source_cleared_at"`, Field: "SourceClearedAt", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Source Cleared At`, JSON: `sourceClearedAt`},
-		{Name: "escalation_level", Quoted: `"escalation_level"`, Field: "EscalationLevel", Kind: schema.KindInt16, Flags: 0, Label: `Escalation Level`, JSON: `escalationLevel`},
-		{Name: "last_escalated_at", Quoted: `"last_escalated_at"`, Field: "LastEscalatedAt", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Last Escalated At`, JSON: `lastEscalatedAt`},
-		{Name: "due_label", Quoted: `"due_label"`, Field: "DueLabel", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Due Label`, JSON: `dueLabel`},
-		{Name: "due_source", Quoted: `"due_source"`, Field: "DueSource", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Due Source`, JSON: `dueSource`, Enum: enumDueSource[:]},
-		{Name: "record_kind", Quoted: `"record_kind"`, Field: "RecordKind", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Record Kind`, JSON: `recordKind`, Enum: enumRecordkindKind[:]},
-		{Name: "record_label", Quoted: `"record_label"`, Field: "RecordLabel", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Record Label`, JSON: `recordLabel`},
-		{Name: "about_kind", Quoted: `"about_kind"`, Field: "AboutKind", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `About Kind`, Doc: `AboutKind and AboutID name the business record the item is about, which the Desk groups by. Empty when the item is about nothing beyond itself.`, JSON: `aboutKind`, Enum: enumRecordkindKind[:]},
-		{Name: "about_id", Quoted: `"about_id"`, Field: "AboutID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `About ID`, JSON: `aboutId`},
-		{Name: "facts", Quoted: `"facts"`, Field: "Facts", Kind: schema.KindJSON, Flags: schema.FlagJSONB, Label: `Facts`, JSON: `facts`},
-		{Name: "impact", Quoted: `"impact"`, Field: "Impact", Kind: schema.KindJSON, Flags: schema.FlagJSONB, Label: `Impact`, JSON: `impact`},
-		{Name: "trail", Quoted: `"trail"`, Field: "Trail", Kind: schema.KindJSON, Flags: schema.FlagJSONB, Label: `Trail`, JSON: `trail`},
-		{Name: "panel", Quoted: `"panel"`, Field: "Panel", Kind: schema.KindJSON, Flags: schema.FlagNullable | schema.FlagJSONB, Label: `Panel`, JSON: `panel`},
-		{Name: "agent_definition_id", Quoted: `"agent_definition_id"`, Field: "AgentDefinitionID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Agent Definition ID`, JSON: `agentDefinitionId`},
-		{Name: "agent_run_id", Quoted: `"agent_run_id"`, Field: "AgentRunID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Agent Run ID`, JSON: `agentRunId`},
-		{Name: "agent_handed_at", Quoted: `"agent_handed_at"`, Field: "AgentHandedAt", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Agent Handed At`, JSON: `agentHandedAt`},
-		{Name: "agent_handed_by_id", Quoted: `"agent_handed_by_id"`, Field: "AgentHandedByID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Agent Handed By ID`, JSON: `agentHandedById`},
-		{Name: "last_request", Quoted: `"last_request"`, Field: "LastRequest", Kind: schema.KindJSON, Flags: schema.FlagNullable | schema.FlagJSONB, Label: `Last Request`, Doc: `LastRequest is the last play a person sent for the item; nil when none has been.`, JSON: `lastRequest`},
-		{Name: "described_at", Quoted: `"described_at"`, Field: "DescribedAt", Kind: schema.KindInt64, Flags: 0, Label: `Described At`, Doc: `DescribedAt is when what the item says last changed. An agent handed the item reads that description, so it is what "the record changed since the agent looked" is measured against.`, JSON: `describedAt`},
-		{Name: "version", Quoted: `"version"`, Field: "Version", Kind: schema.KindInt64, Flags: schema.FlagVersion, Label: `Version`, JSON: `version`},
-		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, JSON: `createdAt`},
-		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, JSON: `updatedAt`},
-		{Name: "inserted", Quoted: `"inserted"`, Field: "Inserted", Kind: schema.KindBool, Flags: schema.FlagComputed, Label: `Inserted`, Doc: `Inserted is set by an upsert that reports whether the row was created rather than replaced; it is never selected on its own.`},
-		{Name: "reopened", Quoted: `"reopened"`, Field: "Reopened", Kind: schema.KindBool, Flags: schema.FlagComputed, Label: `Reopened`, Doc: `Reopened is set by an upsert that brought a resolved item back.`},
+		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`, Report: &reportDimString},
+		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`, Report: &reportDimStringHidden},
+		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`, JSON: `organizationId`, Report: &reportDimStringHidden},
+		{Name: "source_kind", Quoted: `"source_kind"`, Field: "SourceKind", Kind: schema.KindString, Flags: 0, Label: `Kind`, Doc: `The kind of item`, JSON: `sourceKind`, Enum: enumSourceKind[:], Report: &reportDimEnum},
+		{Name: "source_id", Quoted: `"source_id"`, Field: "SourceID", Kind: schema.KindString, Flags: 0, Label: `Source ID`, JSON: `sourceId`, Report: &reportDimStringHidden},
+		{Name: "severity", Quoted: `"severity"`, Field: "Severity", Kind: schema.KindString, Flags: 0, Label: `Severity`, Doc: `How severe the item is now, escalations included`, JSON: `severity`, Enum: enumSeverity[:], Report: &reportDimEnum},
+		{Name: "title", Quoted: `"title"`, Field: "Title", Kind: schema.KindString, Flags: 0, Label: `Title`, JSON: `title`, Report: &reportDimStringHidden},
+		{Name: "summary", Quoted: `"summary"`, Field: "Summary", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Summary`, JSON: `summary`, Report: &reportDimStringHidden},
+		{Name: "subject_type", Quoted: `"subject_type"`, Field: "SubjectType", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Subject Type`, JSON: `subjectType`, Enum: enumAgentSubjectType[:], Report: &reportDimEnumHidden},
+		{Name: "subject_id", Quoted: `"subject_id"`, Field: "SubjectID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Subject ID`, JSON: `subjectId`, Report: &reportDimStringHidden},
+		{Name: "event_kind", Quoted: `"event_kind"`, Field: "EventKind", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Event Kind`, JSON: `eventKind`, Enum: enumAgenttriggerEventKind[:], Report: &reportDimEnumHidden},
+		{Name: "path", Quoted: `"path"`, Field: "Path", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Path`, JSON: `path`, Report: &reportDimStringHidden},
+		{Name: "occurred_at", Quoted: `"occurred_at"`, Field: "OccurredAt", Kind: schema.KindInt64, Flags: 0, Label: `Occurred At`, Doc: `When the problem occurred`, JSON: `occurredAt`, Report: &reportDimEpoch},
+		{Name: "resolved_at", Quoted: `"resolved_at"`, Field: "ResolvedAt", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Resolved`, Doc: `When the item was resolved; empty while it is open`, JSON: `resolvedAt`, Report: &reportDimEpoch},
+		{Name: "status", Quoted: `"status"`, Field: "Status", Kind: schema.KindString, Flags: 0, Label: `Status`, Doc: `Where the item stands: open (nobody has said they are on it), acknowledged, in progress, snoozed or resolved`, JSON: `status`, Enum: enumStatus[:], Report: &reportDimEnum},
+		{Name: "assignee_id", Quoted: `"assignee_id"`, Field: "AssigneeID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Assignee ID`, JSON: `assigneeId`, Report: &reportDimStringHidden},
+		{Name: "due_at", Quoted: `"due_at"`, Field: "DueAt", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Due`, Doc: `When the item is due to be dealt with`, JSON: `dueAt`, Report: &reportDimEpoch},
+		{Name: "snoozed_until", Quoted: `"snoozed_until"`, Field: "SnoozedUntil", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Snoozed Until`, Doc: `When a snoozed item comes back`, JSON: `snoozedUntil`, Report: &reportMeasureInteger},
+		{Name: "acknowledged_at", Quoted: `"acknowledged_at"`, Field: "AcknowledgedAt", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Acknowledged At`, Doc: `When someone first said they had seen it`, JSON: `acknowledgedAt`, Report: &reportDimEpoch},
+		{Name: "resolution_code", Quoted: `"resolution_code"`, Field: "ResolutionCode", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Reason`, Doc: `Why a resolved item was closed`, JSON: `resolutionCode`, Enum: enumResolutionCode[:], Report: &reportDimEnum},
+		{Name: "resolution_note", Quoted: `"resolution_note"`, Field: "ResolutionNote", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Resolution Note`, JSON: `resolutionNote`, Report: &reportDimStringHidden},
+		{Name: "resolved_by_id", Quoted: `"resolved_by_id"`, Field: "ResolvedByID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Resolved By ID`, JSON: `resolvedById`, Report: &reportDimStringHidden},
+		{Name: "source_cleared_at", Quoted: `"source_cleared_at"`, Field: "SourceClearedAt", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Source Cleared At`, Doc: `When the source stopped reporting the problem after a person had resolved it`, JSON: `sourceClearedAt`, Report: &reportDimEpoch},
+		{Name: "escalation_level", Quoted: `"escalation_level"`, Field: "EscalationLevel", Kind: schema.KindInt16, Flags: 0, Label: `Escalations`, Doc: `How many times the item has escalated`, JSON: `escalationLevel`, Report: &reportMeasureInteger},
+		{Name: "last_escalated_at", Quoted: `"last_escalated_at"`, Field: "LastEscalatedAt", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Last Escalated At`, Doc: `When it last escalated`, JSON: `lastEscalatedAt`, Report: &reportDimEpoch},
+		{Name: "due_label", Quoted: `"due_label"`, Field: "DueLabel", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Due Label`, JSON: `dueLabel`, Report: &reportDimStringHidden},
+		{Name: "due_source", Quoted: `"due_source"`, Field: "DueSource", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Due Source`, Doc: `Where the due time came from: the record's own deadline, the organization's policy or a person`, JSON: `dueSource`, Enum: enumDueSource[:], Report: &reportDimEnum},
+		{Name: "record_kind", Quoted: `"record_kind"`, Field: "RecordKind", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Record Kind`, JSON: `recordKind`, Enum: enumRecordkindKind[:], Report: &reportDimEnumHidden},
+		{Name: "record_label", Quoted: `"record_label"`, Field: "RecordLabel", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Record Label`, JSON: `recordLabel`, Report: &reportDimStringHidden},
+		{Name: "about_kind", Quoted: `"about_kind"`, Field: "AboutKind", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `About Kind`, JSON: `aboutKind`, Enum: enumRecordkindKind[:], Report: &reportDimEnumHidden},
+		{Name: "about_id", Quoted: `"about_id"`, Field: "AboutID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Case`, Doc: `The record the item is about, which is its case; empty when it is about nothing beyond itself. Count it to count cases.`, JSON: `aboutId`, Report: &reportDimString},
+		{Name: "facts", Quoted: `"facts"`, Field: "Facts", Kind: schema.KindJSON, Flags: schema.FlagJSONB, Label: `Facts`, JSON: `facts`, Report: &reportDimJsonbHidden},
+		{Name: "impact", Quoted: `"impact"`, Field: "Impact", Kind: schema.KindJSON, Flags: schema.FlagJSONB, Label: `Impact`, JSON: `impact`, Report: &reportDimJsonbHidden},
+		{Name: "trail", Quoted: `"trail"`, Field: "Trail", Kind: schema.KindJSON, Flags: schema.FlagJSONB, Label: `Trail`, JSON: `trail`, Report: &reportDimJsonbHidden},
+		{Name: "panel", Quoted: `"panel"`, Field: "Panel", Kind: schema.KindJSON, Flags: schema.FlagNullable | schema.FlagJSONB, Label: `Panel`, JSON: `panel`, Report: &reportDimJsonbHidden},
+		{Name: "agent_definition_id", Quoted: `"agent_definition_id"`, Field: "AgentDefinitionID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Agent Definition ID`, JSON: `agentDefinitionId`, Report: &reportDimStringHidden},
+		{Name: "agent_run_id", Quoted: `"agent_run_id"`, Field: "AgentRunID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Agent Run ID`, JSON: `agentRunId`, Report: &reportDimStringHidden},
+		{Name: "agent_handed_at", Quoted: `"agent_handed_at"`, Field: "AgentHandedAt", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Handed to an Agent`, Doc: `When the item was handed to an agent; empty when it never was`, JSON: `agentHandedAt`, Report: &reportDimEpoch},
+		{Name: "agent_handed_by_id", Quoted: `"agent_handed_by_id"`, Field: "AgentHandedByID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Agent Handed By ID`, JSON: `agentHandedById`, Report: &reportDimStringHidden},
+		{Name: "last_request", Quoted: `"last_request"`, Field: "LastRequest", Kind: schema.KindJSON, Flags: schema.FlagNullable | schema.FlagJSONB, Label: `Last Request`, JSON: `lastRequest`, Report: &reportDimJsonbHidden},
+		{Name: "described_at", Quoted: `"described_at"`, Field: "DescribedAt", Kind: schema.KindInt64, Flags: 0, Label: `Described At`, JSON: `describedAt`, Report: &reportDimEpochHidden},
+		{Name: "version", Quoted: `"version"`, Field: "Version", Kind: schema.KindInt64, Flags: schema.FlagVersion, Label: `Version`, JSON: `version`, Report: &reportMeasureIntegerHidden},
+		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Raised`, Doc: `When the item was raised`, JSON: `createdAt`, Report: &reportDimEpoch},
+		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, JSON: `updatedAt`, Report: &reportDimEpochHidden},
+		{Name: "inserted", Quoted: `"inserted"`, Field: "Inserted", Kind: schema.KindBool, Flags: schema.FlagComputed, Label: `Inserted`, Report: &reportDimBoolHidden},
+		{Name: "reopened", Quoted: `"reopened"`, Field: "Reopened", Kind: schema.KindBool, Flags: schema.FlagComputed, Label: `Reopened`, Report: &reportDimBoolHidden},
+	},
+	Relations: []schema.Relation{
+		{Name: "Assignee", Alias: "a", Kind: schema.BelongsTo, Local: []int32{15}, Remote: []int32{0}, Label: `Assignee`, Doc: `The person the item is assigned to`},
+		{Name: "ResolvedBy", Alias: "rb", Kind: schema.BelongsTo, Local: []int32{21}, Remote: []int32{0}, Label: `Resolved By`, Doc: `The person who resolved it, or for whom an agent resolved it`},
+		{Name: "CaseOwner", Alias: "co", Kind: schema.BelongsTo, Local: []int32{30}, Remote: []int32{4}, Label: `Case Owner`, Doc: `Who owns the case the item belongs to`},
 	},
 	PK:           []int32{0, 1, 2},
 	Tenant:       []int32{1, 2},
@@ -1107,6 +1117,7 @@ var itemsTable = schema.Table{
 	Size:         unsafe.Sizeof(watchtower.Item{}),
 	Ptr:          ptrItem,
 	Value:        valueItem,
+	Attach:       attachItem,
 	BeforeCreate: beforeCreateItem,
 }
 
@@ -1272,6 +1283,21 @@ func ItemsSchema() *schema.Table { return &itemsTable }
 
 // As returns a handle that references watchtower_items under its own alias.
 func (t *ItemsTable) As(alias string) *ItemsTable { return keel.Alias(t.Ref, alias, BuildItems) }
+
+// Assignee is the belongs relation.
+func (t *ItemsTable) Assignee() *tenantdb.PersonsTable {
+	return keel.Path(t.Ref, 0, tenantdb.BuildPersons)
+}
+
+// ResolvedBy is the belongs relation.
+func (t *ItemsTable) ResolvedBy() *tenantdb.PersonsTable {
+	return keel.Path(t.Ref, 1, tenantdb.BuildPersons)
+}
+
+// CaseOwner is the belongs relation.
+func (t *ItemsTable) CaseOwner() *caseownerdb.OwnersTable {
+	return keel.Path(t.Ref, 2, caseownerdb.BuildOwners)
+}
 
 // Get returns the watchtower_items row with the given key, or keel.ErrNotFound.
 func (t *ItemsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*watchtower.Item, error) {
@@ -1937,6 +1963,18 @@ func valueItem(p unsafe.Pointer, c int32) any {
 	return nil
 }
 
+func attachItem(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
+	r := (*watchtower.Item)(p)
+	switch rel {
+	case 0:
+		r.Assignee = (*tenant.Person)(child)
+	case 1:
+		r.ResolvedBy = (*tenant.Person)(child)
+	case 2:
+		r.CaseOwner = (*caseowner.Owner)(child)
+	}
+}
+
 func beforeCreateItem(ctx context.Context, p unsafe.Pointer) error {
 	return (*watchtower.Item)(p).BeforeCreate(ctx)
 }
@@ -2419,6 +2457,677 @@ func valueRead(p unsafe.Pointer, c int32) any {
 	return nil
 }
 
+// resolutionsTable is the schema of watchtower.Resolution.
+var resolutionsTable = schema.Table{
+	Name:   "watchtower_resolutions",
+	Quoted: `"watchtower_resolutions"`,
+	Alias:  "wr",
+	Model:  "watchtower.Resolution",
+	Label:  `Watchtower Resolution`,
+	Plural: `Watchtower Resolutions`,
+	Doc:    `Watchtower resolutions: one row each time a Watchtower item is resolved, by whom, why and how long it took. Kept for 25 months, long after the item itself is removed, so handled work and resolution reasons can be compared across periods. Says nothing about what the item read.`,
+	Report: &schema.TableReport{Category: `Desk`},
+	Columns: []schema.Column{
+		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`, Report: &reportDimString},
+		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`, Report: &reportDimStringHidden},
+		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`, JSON: `organizationId`, Report: &reportDimStringHidden},
+		{Name: "item_id", Quoted: `"item_id"`, Field: "ItemID", Kind: schema.KindString, Flags: 0, Label: `Item ID`, JSON: `itemId`, Report: &reportDimStringHidden},
+		{Name: "item_version", Quoted: `"item_version"`, Field: "ItemVersion", Kind: schema.KindInt64, Flags: 0, Label: `Item Version`, JSON: `itemVersion`, Report: &reportMeasureIntegerHidden},
+		{Name: "case_id", Quoted: `"case_id"`, Field: "CaseID", Kind: schema.KindString, Flags: 0, Label: `Case`, Doc: `The case the item belonged to: the record it was about, or the item itself when it was about nothing else. Count it to count cases.`, JSON: `caseId`, Report: &reportDimString},
+		{Name: "kind", Quoted: `"kind"`, Field: "Kind", Kind: schema.KindString, Flags: 0, Label: `Kind`, Doc: `The kind of item`, JSON: `kind`, Enum: enumSourceKind[:], Report: &reportDimEnum},
+		{Name: "severity", Quoted: `"severity"`, Field: "Severity", Kind: schema.KindString, Flags: 0, Label: `Severity`, Doc: `How severe the item was when it was resolved, escalations included`, JSON: `severity`, Enum: enumSeverity[:], Report: &reportDimEnum},
+		{Name: "resolved_via", Quoted: `"resolved_via"`, Field: "ResolvedVia", Kind: schema.KindString, Flags: 0, Label: `Resolved Via`, Doc: `How the item was resolved: by a person, by an agent for a person, or by its source clearing`, JSON: `resolvedVia`, Enum: enumResolvedVia[:], Report: &reportDimEnum},
+		{Name: "resolution_code", Quoted: `"resolution_code"`, Field: "ResolutionCode", Kind: schema.KindString, Flags: 0, Label: `Reason`, Doc: `Why the item was closed`, JSON: `resolutionCode`, Enum: enumResolutionCode[:], Report: &reportDimEnum},
+		{Name: "assignee_id", Quoted: `"assignee_id"`, Field: "AssigneeID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Assignee ID`, JSON: `assigneeId`, Report: &reportDimStringHidden},
+		{Name: "resolved_by_id", Quoted: `"resolved_by_id"`, Field: "ResolvedByID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Resolved By ID`, JSON: `resolvedById`, Report: &reportDimStringHidden},
+		{Name: "occurred_at", Quoted: `"occurred_at"`, Field: "OccurredAt", Kind: schema.KindInt64, Flags: 0, Label: `Occurred At`, Doc: `When the problem occurred`, JSON: `occurredAt`, Report: &reportDimEpoch},
+		{Name: "acknowledged_at", Quoted: `"acknowledged_at"`, Field: "AcknowledgedAt", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Acknowledged At`, Doc: `When someone first said they had seen it`, JSON: `acknowledgedAt`, Report: &reportDimEpoch},
+		{Name: "due_at", Quoted: `"due_at"`, Field: "DueAt", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Due`, Doc: `When it was due to be dealt with`, JSON: `dueAt`, Report: &reportDimEpoch},
+		{Name: "resolved_at", Quoted: `"resolved_at"`, Field: "ResolvedAt", Kind: schema.KindInt64, Flags: 0, Label: `Resolved`, Doc: `When it was resolved`, JSON: `resolvedAt`, Report: &reportDimEpoch},
+		{Name: "seconds_to_acknowledge", Quoted: `"seconds_to_acknowledge"`, Field: "SecondsToAcknowledge", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Time to Acknowledge`, Doc: `Seconds from when the problem occurred to when someone acknowledged it; empty when nobody did`, JSON: `secondsToAcknowledge`, Report: &reportMeasureInteger},
+		{Name: "seconds_to_resolve", Quoted: `"seconds_to_resolve"`, Field: "SecondsToResolve", Kind: schema.KindInt64, Flags: 0, Label: `Time to Resolve`, Doc: `Seconds from when the problem occurred to when it was resolved`, JSON: `secondsToResolve`, Report: &reportMeasureInteger},
+		{Name: "past_due", Quoted: `"past_due"`, Field: "PastDue", Kind: schema.KindBool, Flags: 0, Label: `Resolved After Due`, Doc: `Whether it was resolved after it was due`, JSON: `pastDue`, Report: &reportDimBool},
+		{Name: "escalation_level", Quoted: `"escalation_level"`, Field: "EscalationLevel", Kind: schema.KindInt16, Flags: 0, Label: `Escalations`, Doc: `How many times it escalated before it was resolved`, JSON: `escalationLevel`, Report: &reportMeasureInteger},
+		{Name: "agent_handed", Quoted: `"agent_handed"`, Field: "AgentHanded", Kind: schema.KindBool, Flags: 0, Label: `Handed to an Agent`, Doc: `Whether it had been handed to an agent`, JSON: `agentHanded`, Report: &reportDimBool},
+		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, JSON: `createdAt`, Report: &reportDimEpoch},
+	},
+	Relations: []schema.Relation{
+		{Name: "Assignee", Alias: "a", Kind: schema.BelongsTo, Local: []int32{10}, Remote: []int32{0}, Label: `Assignee`, Doc: `The person the item was assigned to when it was resolved`},
+		{Name: "ResolvedBy", Alias: "rb", Kind: schema.BelongsTo, Local: []int32{11}, Remote: []int32{0}, Label: `Resolved By`, Doc: `The person who resolved it, or for whom an agent resolved it`},
+	},
+	PK:         []int32{0, 1, 2},
+	Tenant:     []int32{1, 2},
+	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21},
+	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21},
+	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20},
+	Returning:  nil,
+	Version:    -1,
+	AutoID:     0,
+	AutoCreate: 21,
+	AutoUpdate: -1,
+	IDPrefix:   "wtr_",
+	New:        newResolution,
+	NewN:       newNResolution,
+	Size:       unsafe.Sizeof(watchtower.Resolution{}),
+	Ptr:        ptrResolution,
+	Value:      valueResolution,
+	Attach:     attachResolution,
+}
+
+var resolutionsRef = keel.Ref{Table: &resolutionsTable}
+
+// ResolutionsTable is the table of watchtower.Resolution.
+type ResolutionsTable struct {
+	keel.TableBase
+	ID                   keelkinds.PulidIDCol
+	BusinessUnitID       keelkinds.PulidIDCol
+	OrganizationID       keelkinds.PulidIDCol
+	ItemID               keelkinds.PulidIDCol
+	ItemVersion          keel.Int64Col
+	CaseID               keelkinds.PulidIDCol
+	Kind                 SourceKindCol
+	Severity             SeverityCol
+	ResolvedVia          ResolvedViaCol
+	ResolutionCode       ResolutionCodeCol
+	AssigneeID           keelkinds.PulidIDCol
+	ResolvedByID         keelkinds.PulidIDCol
+	OccurredAt           keel.Int64Col
+	AcknowledgedAt       keel.Int64Col
+	DueAt                keel.Int64Col
+	ResolvedAt           keel.Int64Col
+	SecondsToAcknowledge keel.Int64Col
+	SecondsToResolve     keel.Int64Col
+	PastDue              keel.BoolCol
+	EscalationLevel      keel.Int16Col
+	AgentHanded          keel.BoolCol
+	CreatedAt            keel.Int64Col
+}
+
+// Resolutions references the watchtower_resolutions table.
+var Resolutions = &ResolutionsTable{
+	TableBase:            keel.TableBase{Ref: &resolutionsRef},
+	ID:                   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &resolutionsRef, Index: 0}}},
+	BusinessUnitID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &resolutionsRef, Index: 1}}},
+	OrganizationID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &resolutionsRef, Index: 2}}},
+	ItemID:               keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &resolutionsRef, Index: 3}}},
+	ItemVersion:          keel.Int64Col{Col: keel.Col{Ref: &resolutionsRef, Index: 4}},
+	CaseID:               keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &resolutionsRef, Index: 5}}},
+	Kind:                 SourceKindCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &resolutionsRef, Index: 6}}},
+	Severity:             SeverityCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &resolutionsRef, Index: 7}}},
+	ResolvedVia:          ResolvedViaCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &resolutionsRef, Index: 8}}},
+	ResolutionCode:       ResolutionCodeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &resolutionsRef, Index: 9}}},
+	AssigneeID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &resolutionsRef, Index: 10}}},
+	ResolvedByID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &resolutionsRef, Index: 11}}},
+	OccurredAt:           keel.Int64Col{Col: keel.Col{Ref: &resolutionsRef, Index: 12}},
+	AcknowledgedAt:       keel.Int64Col{Col: keel.Col{Ref: &resolutionsRef, Index: 13}},
+	DueAt:                keel.Int64Col{Col: keel.Col{Ref: &resolutionsRef, Index: 14}},
+	ResolvedAt:           keel.Int64Col{Col: keel.Col{Ref: &resolutionsRef, Index: 15}},
+	SecondsToAcknowledge: keel.Int64Col{Col: keel.Col{Ref: &resolutionsRef, Index: 16}},
+	SecondsToResolve:     keel.Int64Col{Col: keel.Col{Ref: &resolutionsRef, Index: 17}},
+	PastDue:              keel.BoolCol{Col: keel.Col{Ref: &resolutionsRef, Index: 18}},
+	EscalationLevel:      keel.Int16Col{Col: keel.Col{Ref: &resolutionsRef, Index: 19}},
+	AgentHanded:          keel.BoolCol{Col: keel.Col{Ref: &resolutionsRef, Index: 20}},
+	CreatedAt:            keel.Int64Col{Col: keel.Col{Ref: &resolutionsRef, Index: 21}},
+}
+
+// BuildResolutions builds the table of watchtower_resolutions for ref. Generated relation and alias methods call it.
+func BuildResolutions(r *keel.Ref) *ResolutionsTable {
+	return &ResolutionsTable{
+		TableBase:            keel.TableBase{Ref: r},
+		ID:                   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		ItemID:               keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		ItemVersion:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 4}},
+		CaseID:               keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		Kind:                 SourceKindCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		Severity:             SeverityCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 7}}},
+		ResolvedVia:          ResolvedViaCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 8}}},
+		ResolutionCode:       ResolutionCodeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 9}}},
+		AssigneeID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 10}}},
+		ResolvedByID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 11}}},
+		OccurredAt:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 12}},
+		AcknowledgedAt:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 13}},
+		DueAt:                keel.Int64Col{Col: keel.Col{Ref: r, Index: 14}},
+		ResolvedAt:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 15}},
+		SecondsToAcknowledge: keel.Int64Col{Col: keel.Col{Ref: r, Index: 16}},
+		SecondsToResolve:     keel.Int64Col{Col: keel.Col{Ref: r, Index: 17}},
+		PastDue:              keel.BoolCol{Col: keel.Col{Ref: r, Index: 18}},
+		EscalationLevel:      keel.Int16Col{Col: keel.Col{Ref: r, Index: 19}},
+		AgentHanded:          keel.BoolCol{Col: keel.Col{Ref: r, Index: 20}},
+		CreatedAt:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 21}},
+	}
+}
+
+// ResolutionsSchema returns the schema of watchtower_resolutions.
+func ResolutionsSchema() *schema.Table { return &resolutionsTable }
+
+// As returns a handle that references watchtower_resolutions under its own alias.
+func (t *ResolutionsTable) As(alias string) *ResolutionsTable {
+	return keel.Alias(t.Ref, alias, BuildResolutions)
+}
+
+// Assignee is the belongs relation.
+func (t *ResolutionsTable) Assignee() *tenantdb.PersonsTable {
+	return keel.Path(t.Ref, 0, tenantdb.BuildPersons)
+}
+
+// ResolvedBy is the belongs relation.
+func (t *ResolutionsTable) ResolvedBy() *tenantdb.PersonsTable {
+	return keel.Path(t.Ref, 1, tenantdb.BuildPersons)
+}
+
+// Get returns the watchtower_resolutions row with the given key, or keel.ErrNotFound.
+func (t *ResolutionsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*watchtower.Resolution, error) {
+	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// ResolutionsQuery is a query over watchtower.Resolution.
+type ResolutionsQuery struct{ keel.QueryCore }
+
+var _ keel.Query[*watchtower.Resolution] = (*ResolutionsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *ResolutionsTable) Query() keel.Query[*watchtower.Resolution] {
+	return &ResolutionsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see ResolutionsQuery.Where.
+func (t *ResolutionsTable) Where(ps ...keel.Pred) keel.Query[*watchtower.Resolution] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see ResolutionsQuery.Pick.
+func (t *ResolutionsTable) Pick(es ...keel.Expr) keel.Query[*watchtower.Resolution] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see ResolutionsQuery.Load.
+func (t *ResolutionsTable) Load(ls ...keel.Loader) keel.Query[*watchtower.Resolution] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see ResolutionsQuery.Omit.
+func (t *ResolutionsTable) Omit(cols ...keel.Column) keel.Query[*watchtower.Resolution] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see ResolutionsQuery.Order.
+func (t *ResolutionsTable) Order(os ...keel.Order) keel.Query[*watchtower.Resolution] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see ResolutionsQuery.Limit.
+func (t *ResolutionsTable) Limit(n int) keel.Query[*watchtower.Resolution] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see ResolutionsQuery.Group.
+func (t *ResolutionsTable) Group(es ...keel.Expr) keel.Query[*watchtower.Resolution] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see ResolutionsQuery.GroupingSets.
+func (t *ResolutionsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*watchtower.Resolution] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see ResolutionsQuery.Rollup.
+func (t *ResolutionsTable) Rollup(es ...keel.Expr) keel.Query[*watchtower.Resolution] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see ResolutionsQuery.Cube.
+func (t *ResolutionsTable) Cube(es ...keel.Expr) keel.Query[*watchtower.Resolution] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see ResolutionsQuery.AllTenants.
+func (t *ResolutionsTable) AllTenants() keel.Query[*watchtower.Resolution] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see ResolutionsQuery.Join.
+func (t *ResolutionsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*watchtower.Resolution] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see ResolutionsQuery.LeftJoin.
+func (t *ResolutionsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*watchtower.Resolution] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see ResolutionsQuery.LeftJoinLateral.
+func (t *ResolutionsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*watchtower.Resolution] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see ResolutionsQuery.JoinLateral.
+func (t *ResolutionsTable) JoinLateral(sub keel.LateralSource) keel.Query[*watchtower.Resolution] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see ResolutionsQuery.Lock.
+func (t *ResolutionsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*watchtower.Resolution] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see ResolutionsQuery.DistinctOn.
+func (t *ResolutionsTable) DistinctOn(es ...keel.Expr) keel.Query[*watchtower.Resolution] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see ResolutionsQuery.Cache.
+func (t *ResolutionsTable) Cache(opts ...keel.CacheOption) keel.Query[*watchtower.Resolution] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see ResolutionsQuery.LoadStrategy.
+func (t *ResolutionsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*watchtower.Resolution] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see ResolutionsQuery.With.
+func (t *ResolutionsTable) With(ctes ...*keel.CTETable) keel.Query[*watchtower.Resolution] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see ResolutionsQuery.Compute.
+func (t *ResolutionsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*watchtower.Resolution] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *ResolutionsTable) Create(ctx context.Context, db *keel.DB, row *watchtower.Resolution) error {
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *ResolutionsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*watchtower.Resolution) error {
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
+}
+
+// Save updates row by its primary key.
+func (t *ResolutionsTable) Save(ctx context.Context, db *keel.DB, row *watchtower.Resolution, cols ...keel.Column) error {
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *ResolutionsTable) SaveExcept(ctx context.Context, db *keel.DB, row *watchtower.Resolution, cols ...keel.Column) error {
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *ResolutionsTable) DeleteRow(ctx context.Context, db *keel.DB, row *watchtower.Resolution) error {
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *ResolutionsTable) Upsert(ctx context.Context, db *keel.DB, rows []*watchtower.Resolution, c keel.Conflict) ([]bool, error) {
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *ResolutionsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*watchtower.Resolution, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *ResolutionsTable) Copy(ctx context.Context, db *keel.DB, rows []*watchtower.Resolution) (int64, error) {
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *ResolutionsQuery) Where(ps ...keel.Pred) keel.Query[*watchtower.Resolution] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *ResolutionsQuery) Pick(es ...keel.Expr) keel.Query[*watchtower.Resolution] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *ResolutionsQuery) Omit(cols ...keel.Column) keel.Query[*watchtower.Resolution] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *ResolutionsQuery) Load(ls ...keel.Loader) keel.Query[*watchtower.Resolution] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *ResolutionsQuery) Order(os ...keel.Order) keel.Query[*watchtower.Resolution] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *ResolutionsQuery) Distinct() keel.Query[*watchtower.Resolution] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *ResolutionsQuery) Group(es ...keel.Expr) keel.Query[*watchtower.Resolution] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *ResolutionsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*watchtower.Resolution] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *ResolutionsQuery) Rollup(es ...keel.Expr) keel.Query[*watchtower.Resolution] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *ResolutionsQuery) Cube(es ...keel.Expr) keel.Query[*watchtower.Resolution] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *ResolutionsQuery) Window(name string, w keel.Window) keel.Query[*watchtower.Resolution] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *ResolutionsQuery) Having(ps ...keel.Pred) keel.Query[*watchtower.Resolution] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *ResolutionsQuery) Limit(n int) keel.Query[*watchtower.Resolution] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *ResolutionsQuery) Offset(n int) keel.Query[*watchtower.Resolution] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *ResolutionsQuery) DistinctOn(es ...keel.Expr) keel.Query[*watchtower.Resolution] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *ResolutionsQuery) AllTenants() keel.Query[*watchtower.Resolution] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *ResolutionsQuery) CustomPlan() keel.Query[*watchtower.Resolution] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *ResolutionsQuery) Timeout(d time.Duration) keel.Query[*watchtower.Resolution] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *ResolutionsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*watchtower.Resolution] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *ResolutionsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*watchtower.Resolution] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *ResolutionsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*watchtower.Resolution] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *ResolutionsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*watchtower.Resolution] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *ResolutionsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*watchtower.Resolution] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *ResolutionsQuery) Cache(opts ...keel.CacheOption) keel.Query[*watchtower.Resolution] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *ResolutionsQuery) With(ctes ...*keel.CTETable) keel.Query[*watchtower.Resolution] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *ResolutionsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*watchtower.Resolution] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *ResolutionsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*watchtower.Resolution] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *ResolutionsQuery) Clone() keel.Query[*watchtower.Resolution] {
+	return &ResolutionsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *ResolutionsQuery) One(ctx context.Context, db *keel.DB) (*watchtower.Resolution, error) {
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*watchtower.Resolution)(row), err
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *ResolutionsQuery) First(ctx context.Context, db *keel.DB) (*watchtower.Resolution, error) {
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*watchtower.Resolution)(row), err
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *ResolutionsQuery) List(ctx context.Context, db *keel.DB) ([]*watchtower.Resolution, error) {
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*watchtower.Resolution)(unsafe.Pointer(&rows)), err
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *ResolutionsQuery) All(ctx context.Context, db *keel.DB) ([]*watchtower.Resolution, error) {
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*watchtower.Resolution)(unsafe.Pointer(&rows)), err
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *ResolutionsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*watchtower.Resolution, error) {
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*watchtower.Resolution)(unsafe.Pointer(&rows)), err
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *ResolutionsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*watchtower.Resolution], error) {
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*watchtower.Resolution])(unsafe.Pointer(&page)), err
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *ResolutionsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*watchtower.Resolution) error) error {
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*watchtower.Resolution)(unsafe.Pointer(&rows)))
+	})
+}
+
+func newResolution() unsafe.Pointer { return unsafe.Pointer(new(watchtower.Resolution)) }
+
+func newNResolution(n int) unsafe.Pointer {
+	return unsafe.Pointer(unsafe.SliceData(make([]watchtower.Resolution, n)))
+}
+
+func ptrResolution(p unsafe.Pointer, c int32) any {
+	r := (*watchtower.Resolution)(p)
+	switch c {
+	case 0:
+		return (*string)(unsafe.Pointer(&r.ID))
+	case 1:
+		return (*string)(unsafe.Pointer(&r.BusinessUnitID))
+	case 2:
+		return (*string)(unsafe.Pointer(&r.OrganizationID))
+	case 3:
+		return (*string)(unsafe.Pointer(&r.ItemID))
+	case 4:
+		return &r.ItemVersion
+	case 5:
+		return (*string)(unsafe.Pointer(&r.CaseID))
+	case 6:
+		return (*string)(unsafe.Pointer(&r.Kind))
+	case 7:
+		return (*string)(unsafe.Pointer(&r.Severity))
+	case 8:
+		return (*string)(unsafe.Pointer(&r.ResolvedVia))
+	case 9:
+		return (*string)(unsafe.Pointer(&r.ResolutionCode))
+	case 10:
+		return (*string)(unsafe.Pointer(&r.AssigneeID))
+	case 11:
+		return (*string)(unsafe.Pointer(&r.ResolvedByID))
+	case 12:
+		return &r.OccurredAt
+	case 13:
+		return &r.AcknowledgedAt
+	case 14:
+		return &r.DueAt
+	case 15:
+		return &r.ResolvedAt
+	case 16:
+		return &r.SecondsToAcknowledge
+	case 17:
+		return &r.SecondsToResolve
+	case 18:
+		return &r.PastDue
+	case 19:
+		return &r.EscalationLevel
+	case 20:
+		return &r.AgentHanded
+	case 21:
+		return &r.CreatedAt
+	}
+	return nil
+}
+
+func valueResolution(p unsafe.Pointer, c int32) any {
+	r := (*watchtower.Resolution)(p)
+	switch c {
+	case 0:
+		return string(r.ID)
+	case 1:
+		return string(r.BusinessUnitID)
+	case 2:
+		return string(r.OrganizationID)
+	case 3:
+		return string(r.ItemID)
+	case 4:
+		return r.ItemVersion
+	case 5:
+		return string(r.CaseID)
+	case 6:
+		return string(r.Kind)
+	case 7:
+		return string(r.Severity)
+	case 8:
+		return string(r.ResolvedVia)
+	case 9:
+		return string(r.ResolutionCode)
+	case 10:
+		if r.AssigneeID == "" {
+			return nil
+		}
+		return string(r.AssigneeID)
+	case 11:
+		if r.ResolvedByID == "" {
+			return nil
+		}
+		return string(r.ResolvedByID)
+	case 12:
+		return r.OccurredAt
+	case 13:
+		if r.AcknowledgedAt == nil {
+			return nil
+		}
+		return *r.AcknowledgedAt
+	case 14:
+		if r.DueAt == nil {
+			return nil
+		}
+		return *r.DueAt
+	case 15:
+		return r.ResolvedAt
+	case 16:
+		if r.SecondsToAcknowledge == nil {
+			return nil
+		}
+		return *r.SecondsToAcknowledge
+	case 17:
+		return r.SecondsToResolve
+	case 18:
+		return r.PastDue
+	case 19:
+		return r.EscalationLevel
+	case 20:
+		return r.AgentHanded
+	case 21:
+		return r.CreatedAt
+	}
+	return nil
+}
+
+func attachResolution(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
+	r := (*watchtower.Resolution)(p)
+	switch rel {
+	case 0:
+		r.Assignee = (*tenant.Person)(child)
+	case 1:
+		r.ResolvedBy = (*tenant.Person)(child)
+	}
+}
+
+func init() {
+	itemsTable.Relations[0].Target = tenantdb.PersonsSchema()
+	itemsTable.Relations[1].Target = tenantdb.PersonsSchema()
+	itemsTable.Relations[2].Target = caseownerdb.OwnersSchema()
+	resolutionsTable.Relations[0].Target = tenantdb.PersonsSchema()
+	resolutionsTable.Relations[1].Target = tenantdb.PersonsSchema()
+}
+
 var enumAgentSubjectType = [...]schema.EnumValue{
 	{Value: `BillingQueueItem`, Label: `Subject Billing Queue Item`},
 	{Value: `ShipmentMove`, Label: `Subject Shipment Move`},
@@ -2572,21 +3281,27 @@ var enumRecordkindKind = [...]schema.EnumValue{
 }
 
 var enumResolutionCode = [...]schema.EnumValue{
-	{Value: `Fixed`, Label: `Resolution Fixed`},
-	{Value: `CarrierDelay`, Label: `Resolution Carrier Delay`},
-	{Value: `ShipperDelay`, Label: `Resolution Shipper Delay`},
-	{Value: `ReceiverDelay`, Label: `Resolution Receiver Delay`},
-	{Value: `CustomerChange`, Label: `Resolution Customer Change`},
-	{Value: `Rescheduled`, Label: `Resolution Rescheduled`},
-	{Value: `Weather`, Label: `Resolution Weather`},
-	{Value: `Equipment`, Label: `Resolution Equipment`},
-	{Value: `DriverIssue`, Label: `Resolution Driver Issue`},
-	{Value: `DocumentReceived`, Label: `Resolution Document Received`},
-	{Value: `DataCorrected`, Label: `Resolution Data Corrected`},
-	{Value: `Duplicate`, Label: `Resolution Duplicate`},
-	{Value: `NoActionNeeded`, Label: `Resolution No Action Needed`},
-	{Value: `Other`, Label: `Resolution Other`},
-	{Value: `Cleared`, Label: `Resolution Cleared`},
+	{Value: `Fixed`, Label: `Fixed`},
+	{Value: `CarrierDelay`, Label: `Carrier Delay`},
+	{Value: `ShipperDelay`, Label: `Shipper Delay`},
+	{Value: `ReceiverDelay`, Label: `Receiver Delay`},
+	{Value: `CustomerChange`, Label: `Customer Change`},
+	{Value: `Rescheduled`, Label: `Rescheduled`},
+	{Value: `Weather`, Label: `Weather`},
+	{Value: `Equipment`, Label: `Equipment`},
+	{Value: `DriverIssue`, Label: `Driver Issue`},
+	{Value: `DocumentReceived`, Label: `Document Received`},
+	{Value: `DataCorrected`, Label: `Data Corrected`},
+	{Value: `Duplicate`, Label: `Duplicate`},
+	{Value: `NoActionNeeded`, Label: `No Action Needed`},
+	{Value: `Other`, Label: `Other`},
+	{Value: `Cleared`, Label: `Cleared`},
+}
+
+var enumResolvedVia = [...]schema.EnumValue{
+	{Value: `Person`, Label: `Person`, Doc: `A person resolved it`},
+	{Value: `Agent`, Label: `Agent`, Doc: `An agent resolved it for the person it was acting for`},
+	{Value: `SourceCleared`, Label: `Source Cleared`, Doc: `The source stopped reporting the problem, so it resolved on its own`},
 }
 
 var enumSeverity = [...]schema.EnumValue{
@@ -2596,31 +3311,31 @@ var enumSeverity = [...]schema.EnumValue{
 }
 
 var enumSourceKind = [...]schema.EnumValue{
-	{Value: `Insight`, Label: `Source Insight`},
-	{Value: `AgentProposal`, Label: `Source Agent Proposal`},
-	{Value: `AgentPlan`, Label: `Source Agent Plan`},
-	{Value: `AgentRunFailed`, Label: `Source Agent Run Failed`},
-	{Value: `AgentException`, Label: `Source Agent Exception`},
-	{Value: `ServiceFailure`, Label: `Source Service Failure`},
-	{Value: `CarrierIntelEvent`, Label: `Source Carrier Intel Event`},
-	{Value: `HOSViolation`, Label: `Source HOS Violation`},
-	{Value: `EDIInboundQuarantined`, Label: `Source EDI Inbound Quarantined`},
-	{Value: `BillingException`, Label: `Source Billing Exception`},
-	{Value: `DetentionOccurrence`, Label: `Source Detention Occurrence`},
-	{Value: `InboundMessage`, Label: `Source Inbound Message`},
-	{Value: `WorkerCredential`, Label: `Source Worker Credential`},
-	{Value: `MoveCoverage`, Label: `Source Move Coverage`},
-	{Value: `TelematicsStopVisit`, Label: `Source Telematics Stop Visit`},
-	{Value: `AgentQualityRegression`, Label: `Source Agent Quality Regression`},
-	{Value: `AccountingSync`, Label: `Source Accounting Sync`},
-	{Value: `AccountingReconciliation`, Label: `Source Accounting Reconciliation`},
-	{Value: `NoCheckCall`, Label: `Source No Check Call`},
-	{Value: `EtaAtRisk`, Label: `Source ETA At Risk`},
-	{Value: `MissedPickup`, Label: `Source Missed Pickup`},
-	{Value: `MissedDelivery`, Label: `Source Missed Delivery`},
-	{Value: `PodMissing`, Label: `Source Pod Missing`},
-	{Value: `TenderExhausted`, Label: `Source Tender Exhausted`},
-	{Value: `Factoring`, Label: `Source Factoring`},
+	{Value: `Insight`, Label: `Insight`},
+	{Value: `AgentProposal`, Label: `Agent Proposal`},
+	{Value: `AgentPlan`, Label: `Agent Plan`},
+	{Value: `AgentRunFailed`, Label: `Agent Run Failed`},
+	{Value: `AgentException`, Label: `Agent Exception`},
+	{Value: `ServiceFailure`, Label: `Service Failure`},
+	{Value: `CarrierIntelEvent`, Label: `Carrier Intel Event`},
+	{Value: `HOSViolation`, Label: `HOS Violation`},
+	{Value: `EDIInboundQuarantined`, Label: `EDI Inbound Quarantined`},
+	{Value: `BillingException`, Label: `Billing Exception`},
+	{Value: `DetentionOccurrence`, Label: `Detention Occurrence`},
+	{Value: `InboundMessage`, Label: `Inbound Message`},
+	{Value: `WorkerCredential`, Label: `Worker Credential`},
+	{Value: `MoveCoverage`, Label: `Move Coverage`},
+	{Value: `TelematicsStopVisit`, Label: `Telematics Stop Visit`},
+	{Value: `AgentQualityRegression`, Label: `Agent Quality Regression`},
+	{Value: `AccountingSync`, Label: `Accounting Sync`},
+	{Value: `AccountingReconciliation`, Label: `Accounting Reconciliation`},
+	{Value: `NoCheckCall`, Label: `No Check Call`},
+	{Value: `EtaAtRisk`, Label: `ETA At Risk`},
+	{Value: `MissedPickup`, Label: `Missed Pickup`},
+	{Value: `MissedDelivery`, Label: `Missed Delivery`},
+	{Value: `PodMissing`, Label: `POD Missing`},
+	{Value: `TenderExhausted`, Label: `Tender Exhausted`},
+	{Value: `Factoring`, Label: `Factoring`},
 }
 
 var enumStatus = [...]schema.EnumValue{
@@ -2630,6 +3345,28 @@ var enumStatus = [...]schema.EnumValue{
 	{Value: `Snoozed`, Label: `Snoozed`},
 	{Value: `Resolved`, Label: `Resolved`},
 }
+
+var reportDimBool = schema.ReportInfo{Included: true, Kind: schema.Dimension, Type: schema.ValueBool, Aggs: schema.AggsCount}
+
+var reportDimBoolHidden = schema.ReportInfo{Kind: schema.Dimension, Type: schema.ValueBool, Aggs: schema.AggsCount}
+
+var reportDimEnum = schema.ReportInfo{Included: true, Kind: schema.Dimension, Type: schema.ValueEnum, Aggs: schema.AggsCount}
+
+var reportDimEnumHidden = schema.ReportInfo{Kind: schema.Dimension, Type: schema.ValueEnum, Aggs: schema.AggsCount}
+
+var reportDimEpoch = schema.ReportInfo{Included: true, Kind: schema.Dimension, Type: schema.ValueEpoch, Aggs: schema.AggsOrdered}
+
+var reportDimEpochHidden = schema.ReportInfo{Kind: schema.Dimension, Type: schema.ValueEpoch, Aggs: schema.AggsOrdered}
+
+var reportDimJsonbHidden = schema.ReportInfo{Kind: schema.Dimension, Type: schema.ValueJSON, Aggs: schema.AggsCount}
+
+var reportDimString = schema.ReportInfo{Included: true, Kind: schema.Dimension, Type: schema.ValueString, Aggs: schema.AggsOrdered}
+
+var reportDimStringHidden = schema.ReportInfo{Kind: schema.Dimension, Type: schema.ValueString, Aggs: schema.AggsOrdered}
+
+var reportMeasureInteger = schema.ReportInfo{Included: true, Kind: schema.Measure, Type: schema.ValueInt, Aggs: schema.AggsNumeric}
+
+var reportMeasureIntegerHidden = schema.ReportInfo{Kind: schema.Measure, Type: schema.ValueInt, Aggs: schema.AggsNumeric}
 
 // DueSourceCol is a column of watchtower.DueSource values.
 type DueSourceCol struct{ keel.TypedStringCol }
@@ -2699,6 +3436,29 @@ func (c ResolutionCodeCol) In(vs ...watchtower.ResolutionCode) keel.Pred {
 	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c ResolutionCodeCol) NotIn(vs ...watchtower.ResolutionCode) keel.Pred {
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
+}
+
+// ResolvedViaCol is a column of watchtower.ResolvedVia values.
+type ResolvedViaCol struct{ keel.TypedStringCol }
+
+func (c ResolvedViaCol) Eq(v watchtower.ResolvedVia) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c ResolvedViaCol) Ne(v watchtower.ResolvedVia) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c ResolvedViaCol) Gt(v watchtower.ResolvedVia) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c ResolvedViaCol) Gte(v watchtower.ResolvedVia) keel.Pred { return c.Text().Gte(string(v)) }
+func (c ResolvedViaCol) Lt(v watchtower.ResolvedVia) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c ResolvedViaCol) Lte(v watchtower.ResolvedVia) keel.Pred { return c.Text().Lte(string(v)) }
+func (c ResolvedViaCol) IsDistinctFrom(v watchtower.ResolvedVia) keel.Pred {
+	return c.Text().IsDistinctFrom(string(v))
+}
+func (c ResolvedViaCol) Between(lo, hi watchtower.ResolvedVia) keel.Pred {
+	return c.Text().Between(string(lo), string(hi))
+}
+func (c ResolvedViaCol) To(v watchtower.ResolvedVia) keel.Assignment { return c.Text().To(string(v)) }
+func (c ResolvedViaCol) In(vs ...watchtower.ResolvedVia) keel.Pred {
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
+}
+func (c ResolvedViaCol) NotIn(vs ...watchtower.ResolvedVia) keel.Pred {
 	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 

@@ -319,6 +319,7 @@ func (t *ToolSet) addConversational(req *ToolSetRequest) {
 	}
 	if req.Publishes {
 		t.add(runtimetools.PublishArtifactSpec())
+		t.add(runtimetools.ShowAnswerSpec())
 		t.add(runtimetools.ShowBoardSpec())
 	}
 	if len(req.Delegates) > 0 && !req.Delegated {
@@ -468,6 +469,7 @@ func (s *Access) carryOver(set *ToolSet, history []conversation.Message) {
 			case "ask_user",
 				"publish_artifact",
 				"show_board",
+				runtimetools.ShowAnswerTool,
 				"delegate_task",
 				"request_decision",
 				"withdraw_proposal",

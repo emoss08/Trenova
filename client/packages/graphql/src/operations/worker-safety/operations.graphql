@@ -27,6 +27,7 @@ fragment WorkerSafetyEventFields on WorkerSafetyEvent {
     originalName
     fileType
     fileSize
+    previewStatus
     createdAt
   }
   recordedById
@@ -44,6 +45,17 @@ fragment WorkerSafetyEventFields on WorkerSafetyEvent {
   version
   createdAt
   updatedAt
+  violations {
+    id
+    safetyEventId
+    workerId
+    basic
+    code
+    description
+    severityWeight
+    outOfService
+    version
+  }
 }
 
 fragment WorkerDisciplinaryActionFields on WorkerDisciplinaryAction {

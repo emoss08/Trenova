@@ -860,7 +860,7 @@ func (s *Service) runSynchronousFinalization(
 		CurrentState:   jsonutils.MustToJSON(createdDoc),
 		OrganizationID: createdDoc.OrganizationID,
 		BusinessUnitID: createdDoc.BusinessUnitID,
-	}, auditservice.WithComment("Document uploaded")); err != nil {
+	}, auditservice.WithComment("Document uploaded"), auditservice.WithSubjectOf(createdDoc)); err != nil {
 		s.l.Error("failed to log document upload completion", zap.Error(err))
 	}
 

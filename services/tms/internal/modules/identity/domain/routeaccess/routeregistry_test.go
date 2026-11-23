@@ -603,7 +603,7 @@ func TestRouteRegistry_RegisterAll_RoutesExist(t *testing.T) {
 		"/admin/roles",
 		"/equipment/tractors",
 		"/equipment/trailers",
-		"/workers",
+		"/hr/workers",
 		"/shipments",
 		"/billing/invoices",
 		"/customers",
@@ -621,6 +621,27 @@ func TestRouteRegistry_RegisterAll_RoutesExist(t *testing.T) {
 			assert.NotEmpty(t, def.DisplayName, "route %s should have a display name", path)
 			assert.NotEmpty(t, def.Category, "route %s should have a category", path)
 		}
+	}
+}
+
+func TestRouteRegistry_WorkerRoutesFollowTheRecordPage(t *testing.T) {
+	t.Parallel()
+
+	rr := NewRouteRegistry()
+
+	newWorker, ok := rr.Match("/hr/workers/new")
+	require.True(t, ok)
+	assert.Equal(t, "/hr/workers/new", newWorker.Path)
+	assert.Equal(t, permission.OpCreate, newWorker.Requirements[0].Operation)
+
+	record, ok := rr.Match("/hr/workers/wrk_01J0000000000000000000000")
+	require.True(t, ok)
+	assert.Equal(t, "/hr/workers/:id", record.Path)
+	assert.Equal(t, permission.OpRead, record.Requirements[0].Operation)
+
+	for _, stale := range []string{"/workers", "/workers/new", "/workers/abc/edit"} {
+		_, found := rr.Match(stale)
+		assert.False(t, found, "route %s should not be registered", stale)
 	}
 }
 

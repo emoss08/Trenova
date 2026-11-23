@@ -37,7 +37,7 @@ func NewAccountingSyncSource(
 }
 
 func (s *AccountingSyncSource) Kind() watchtower.SourceKind {
-	return watchtower.SourceAccountingSync
+	return watchtower.SourceKindAccountingSync
 }
 
 func (s *AccountingSyncSource) Snapshot(
@@ -97,7 +97,7 @@ func NewAccountingReconciliationSource(
 }
 
 func (s *AccountingReconciliationSource) Kind() watchtower.SourceKind {
-	return watchtower.SourceAccountingReconciliation
+	return watchtower.SourceKindAccountingReconciliation
 }
 
 func (s *AccountingReconciliationSource) Snapshot(
@@ -182,7 +182,7 @@ func DescribeAccountingConnectionHealth(
 
 	return watchtowerports.WatchtowerItemInput{
 		TenantInfo:  pagination.TenantInfo{OrgID: conn.OrganizationID, BuID: conn.BusinessUnitID},
-		SourceKind:  watchtower.SourceAccountingSync,
+		SourceKind:  watchtower.SourceKindAccountingSync,
 		SourceID:    AccountingConnectionHealthSourceID(conn),
 		Severity:    severity,
 		Title:       title,
@@ -220,7 +220,7 @@ func DescribeAccountingReconnect(
 	}
 	return watchtowerports.WatchtowerItemInput{
 		TenantInfo:  pagination.TenantInfo{OrgID: conn.OrganizationID, BuID: conn.BusinessUnitID},
-		SourceKind:  watchtower.SourceAccountingSync,
+		SourceKind:  watchtower.SourceKindAccountingSync,
 		SourceID:    AccountingReconnectSourceID(conn),
 		Severity:    watchtower.SeverityWarning,
 		Title:       title,

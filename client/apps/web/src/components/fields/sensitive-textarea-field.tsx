@@ -44,6 +44,7 @@ export function SensitiveTextareaField<T extends FieldValues>({
             <Textarea
               {...field}
               {...props}
+              value={field.value ?? ""}
               id={inputId}
               className={cn(!show && "[-webkit-text-security:disc]", className)}
               disabled={disabled}

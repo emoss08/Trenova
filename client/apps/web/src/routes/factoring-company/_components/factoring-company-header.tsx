@@ -1,4 +1,13 @@
 import { Link } from "@trenova/shared/components/link";
+import {
+  MetaItem,
+  RecordHeader,
+  RecordMark,
+  RecordTabs,
+  TabCount,
+  TabDot,
+  UpdatedAgo,
+} from "@/components/record-header";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 import { formatMinutesOfDay } from "@/lib/factoring";
 import type { FactoringCompanyRecord } from "@/lib/graphql/factoring";
@@ -12,7 +21,6 @@ import {
   Mail01Icon,
   MarkerPin01Icon,
   Phone01Icon,
-  RefreshCw01Icon,
   Send01Icon,
   Upload01Icon,
 } from "@trenova/shared/components/icons";
@@ -25,50 +33,10 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@trenova/shared/components/ui/dropdown-menu";
-import { Tabs, TabsList, TabsTab } from "@trenova/shared/components/ui/tabs";
-import { useNow } from "@trenova/shared/hooks/use-now";
-import { formatRelativeTime } from "@trenova/shared/i18n/format";
+import { TabsTab } from "@trenova/shared/components/ui/tabs";
 import { useT } from "@trenova/shared/i18n/use-t";
-import type { ReactNode } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { factoringCompanyPath, type FactoringCompanyTab } from "../use-factoring-company-state";
-
-/** Up to two letters for the factor's mark: the first of its first two words. */
-function initialsOf(name: string): string {
-  const letters = name
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((word) => word[0]?.toUpperCase() ?? "");
-  return letters.join("") || "?";
-}
-
-function MetaItem({ icon, children }: { icon: ReactNode; children: ReactNode }) {
-  return (
-    <span className="inline-flex min-w-0 items-center gap-1.5 [&>svg]:size-3 [&>svg]:shrink-0">
-      {icon}
-      <span className="truncate">{children}</span>
-    </span>
-  );
-}
-
-/** When the overview was read, moving on the minute without redrawing the rest of the page. */
-function UpdatedAgo({ at, onRefresh, busy }: { at: number; onRefresh: () => void; busy: boolean }) {
-  const t = useT();
-  const now = useNow("minute");
-  return (
-    <button
-      type="button"
-      onClick={onRefresh}
-      disabled={busy}
-      title={t("Read the figures again")}
-      className="inline-flex items-center gap-1.5 rounded-sm ui-focus-ring text-xs text-foreground-subtle transition-colors hover:text-foreground disabled:opacity-60"
-    >
-      <RefreshCw01Icon className={busy ? "size-3 animate-spin" : "size-3"} />
-      {t("Updated {0}", formatRelativeTime(Math.min(Math.round(at / 1000) - now, 0)))}
-    </button>
-  );
-}
 
 export type FactoringCompanyHeaderProps = {
   company: FactoringCompanyRecord;
@@ -129,37 +97,34 @@ export function FactoringCompanyHeader({
   const ready = overview?.ready.count ?? 0;
 
   return (
-    <header className="flex flex-col gap-2.5 border-b bg-card px-6 pt-3.5">
-      <div className="flex flex-wrap items-start gap-x-3.5 gap-y-3">
-        <span
-          aria-hidden
-          className="grid size-10 shrink-0 place-items-center rounded-md border bg-sunken font-mono text-sm font-semibold tracking-wide"
-        >
-          {initialsOf(company.name)}
-        </span>
-        <div className="flex min-w-0 flex-1 flex-col gap-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <h2 className="text-lg leading-6 font-semibold">{company.name}</h2>
-            <Badge variant="neutral" className="font-mono">
-              {company.code}
-            </Badge>
-            <StatusBadge status={company.status} />
-            <Badge variant="neutral">{nonRecourse ? t("Non-recourse") : t("Recourse")}</Badge>
-          </div>
-          <p className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
-            <MetaItem icon={<MarkerPin01Icon />}>{address}</MetaItem>
-            {company.email ? <MetaItem icon={<Mail01Icon />}>{company.email}</MetaItem> : null}
-            {company.phoneNumber ? (
-              <MetaItem icon={<Phone01Icon />}>{company.phoneNumber}</MetaItem>
-            ) : null}
-            {agreement ? (
-              <MetaItem icon={<ClockIcon />}>
-                {t("Today's schedule closes at {0}", formatMinutesOfDay(agreement.submissionTime))}
-              </MetaItem>
-            ) : null}
-          </p>
-        </div>
-        <div className="flex shrink-0 items-center gap-2">
+    <RecordHeader
+      mark={<RecordMark name={company.name} />}
+      title={company.name}
+      badges={
+        <>
+          <Badge variant="neutral" className="font-mono">
+            {company.code}
+          </Badge>
+          <StatusBadge status={company.status} />
+          <Badge variant="neutral">{nonRecourse ? t("Non-recourse") : t("Recourse")}</Badge>
+        </>
+      }
+      meta={
+        <>
+          <MetaItem icon={<MarkerPin01Icon />}>{address}</MetaItem>
+          {company.email ? <MetaItem icon={<Mail01Icon />}>{company.email}</MetaItem> : null}
+          {company.phoneNumber ? (
+            <MetaItem icon={<Phone01Icon />}>{company.phoneNumber}</MetaItem>
+          ) : null}
+          {agreement ? (
+            <MetaItem icon={<ClockIcon />}>
+              {t("Today's schedule closes at {0}", formatMinutesOfDay(agreement.submissionTime))}
+            </MetaItem>
+          ) : null}
+        </>
+      }
+      actions={
+        <>
           {canImport ? (
             <Button type="button" size="sm" variant="outline" onClick={onImport}>
               <Upload01Icon className="size-3.5" />
@@ -205,63 +170,44 @@ export function FactoringCompanyHeader({
               />
             </DropdownMenuContent>
           </DropdownMenu>
-        </div>
-      </div>
-
-      <Tabs value={tab} onValueChange={(value) => onTab(value as FactoringCompanyTab)}>
-        <div className="-mb-px flex items-center gap-3">
-          <TabsList variant="underline" className="-ml-2.5 max-w-full min-w-0 overflow-x-auto">
-            <TabsTab value="overview">{t("Overview")}</TabsTab>
-            <TabsTab value="details">
-              {t("Details")}
-              {detailsUnsaved ? (
-                <span
-                  role="img"
-                  aria-label={t("Unsaved changes")}
-                  className="size-1.5 rounded-full bg-warning"
-                />
-              ) : null}
-            </TabsTab>
-            {visible.agreement ? (
-              <TabsTab value="agreement">
-                {t("Agreement")}
-                {agreementNumber !== null ? (
-                  <span className="font-normal text-foreground-subtle tabular-nums">
-                    {t("v{0}", agreementNumber)}
-                  </span>
-                ) : null}
-              </TabsTab>
+        </>
+      }
+    >
+      <RecordTabs<FactoringCompanyTab>
+        value={tab}
+        onValueChange={onTab}
+        trailing={
+          overviewUpdatedAt > 0 ? (
+            <UpdatedAgo at={overviewUpdatedAt} onRefresh={onRefresh} busy={overviewFetching} />
+          ) : null
+        }
+      >
+        <TabsTab value="overview">{t("Overview")}</TabsTab>
+        <TabsTab value="details">
+          {t("Details")}
+          {detailsUnsaved ? <TabDot tone="warning" label={t("Unsaved changes")} /> : null}
+        </TabsTab>
+        {visible.agreement ? (
+          <TabsTab value="agreement">
+            {t("Agreement")}
+            {agreementNumber !== null ? <TabCount>{t("v{0}", agreementNumber)}</TabCount> : null}
+          </TabsTab>
+        ) : null}
+        {visible.customers ? (
+          <TabsTab value="customers">
+            {t("Customers")}
+            {overview && overview.notices.assigned > 0 ? (
+              <TabCount>{overview.notices.assigned}</TabCount>
             ) : null}
-            {visible.customers ? (
-              <TabsTab value="customers">
-                {t("Customers")}
-                {overview && overview.notices.assigned > 0 ? (
-                  <span className="font-normal text-foreground-subtle tabular-nums">
-                    {overview.notices.assigned}
-                  </span>
-                ) : null}
-              </TabsTab>
-            ) : null}
-            <TabsTab value="delivery">
-              {t("Delivery")}
-              {deliveryAlert ? (
-                <span
-                  role="img"
-                  aria-label={t("Delivery needs attention")}
-                  className="size-1.5 rounded-full bg-danger"
-                />
-              ) : null}
-            </TabsTab>
-            {visible.ledger ? <TabsTab value="ledger">{t("Ledger")}</TabsTab> : null}
-            {visible.activity ? <TabsTab value="activity">{t("Activity")}</TabsTab> : null}
-          </TabsList>
-          {overviewUpdatedAt > 0 ? (
-            <span className="ml-auto hidden shrink-0 sm:inline-flex">
-              <UpdatedAgo at={overviewUpdatedAt} onRefresh={onRefresh} busy={overviewFetching} />
-            </span>
-          ) : null}
-        </div>
-      </Tabs>
-    </header>
+          </TabsTab>
+        ) : null}
+        <TabsTab value="delivery">
+          {t("Delivery")}
+          {deliveryAlert ? <TabDot tone="danger" label={t("Delivery needs attention")} /> : null}
+        </TabsTab>
+        {visible.ledger ? <TabsTab value="ledger">{t("Ledger")}</TabsTab> : null}
+        {visible.activity ? <TabsTab value="activity">{t("Activity")}</TabsTab> : null}
+      </RecordTabs>
+    </RecordHeader>
   );
 }

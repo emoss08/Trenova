@@ -1,6 +1,7 @@
 import { appPath } from "@/lib/app-path";
 import { recordPath } from "@/config/record-links";
 import { newShipmentForCustomerPath, SHIPMENTS_PATH } from "@/lib/shipment-links";
+import { workerPath } from "@/routes/worker/use-worker-state";
 import { NovaBadge } from "@trenova/shared/components/ui/nova-badge";
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import {
@@ -220,19 +221,24 @@ function customerActions(
 }
 
 function workerActions(record: PaletteRecord, t: TranslateFn): PaletteAction[] {
-  const tab = (name: string) => recordPath("worker", record.id, { tab: name });
   const actions: PaletteAction[] = [
     {
-      id: "worker-compliance",
-      label: t("Open compliance"),
+      id: "worker-credentials",
+      label: t("Open credentials"),
       icon: ShieldTickIcon,
-      intent: { type: "navigate", href: tab("compliance") },
+      intent: {
+        type: "navigate",
+        href: workerPath(record.id, { tab: "qualification", view: "credentials" }),
+      },
     },
     {
-      id: "worker-pto",
+      id: "worker-time-off",
       label: t("Open time off"),
       icon: CalendarDateIcon,
-      intent: { type: "navigate", href: tab("pto") },
+      intent: {
+        type: "navigate",
+        href: workerPath(record.id, { tab: "time", view: "time-off" }),
+      },
     },
   ];
   const loadId = record.metadata.currentLoadId;

@@ -14,48 +14,47 @@ consolidation, order and work order numbers, invoice and invoice run numbers, jo
 journal entry numbers, manual journal requests, driver and carrier settlement numbers and location
 codes.
 
-A list on the left groups the sequences under Operations, Billing, Accounting, Settlements and
-Locations. Selecting one shows its settings and a **Live preview** of a sample value. Administrators
-use it when setting up the organization or changing a numbering scheme.
+Five tabs group the sequences: **Shipments**, **Billing**, **Accounting**, **Settlements** and
+**Locations**. Each sequence is a section with a readout of the next number it would issue; press
+a part of the readout to jump to the setting behind it. Administrators use it when setting up the
+organization or changing a numbering scheme.
 
 ## Tasks
 
 ### Change a number format
 Keywords: prefix, PRO format, invoice numbering, add year to number
-1. Open [Sequence configuration](/admin/sequence-configs).
-2. Select the sequence in the list on the left, for example the invoice number.
-3. Under **Core structure**, set the **Prefix** and **Sequence digits**, and turn on **Use
-   separators** to pick a **Separator character**.
-4. Under **Date components**, turn on **Include Year** (choose the **Year digits**), **Include
-   Month**, **Include ISO Week Number** or **Include Day**.
-5. Under **Context components**, turn on **Include Location Code** or **Include Business Unit Code**
-   if wanted.
-6. Check the **Live preview**, then select **Save changes**.
+1. Open [Sequence configuration](/admin/sequence-configs) and select the tab that holds the
+   sequence, for example **Billing** for invoice numbers.
+2. In the sequence's section, set the **Prefix** and the **Counter digits**.
+3. Turn on the pieces to add to the number: **Year** (choose the **Year digits**), **Month**,
+   **Week**, **Day**, and for numbers drawn for records **Business unit code** and **Location
+   code**.
+4. Turn on **Separators** to pick a **Separator** between the pieces.
+5. Check the readout, then select **Save changes**.
 
 ### Use a custom format or add check digits
 Keywords: custom template, check digit, random digits, token template
-1. Open [Sequence configuration](/admin/sequence-configs) and select the sequence.
-2. Expand **Advanced**.
-3. Turn on **Include Random Digits** and set the **Random digits count**, or turn on **Include Check
-   Digit**.
-4. To write the layout yourself, turn on **Allow custom format** and enter a **Custom format
-   template** using tokens such as {P} for prefix, {Y} for year and {S} for the sequence.
-5. Select **Save changes**.
+1. Open [Sequence configuration](/admin/sequence-configs) and select the tab that holds the
+   sequence.
+2. Turn on **Random digits** and set **How many**, or turn on **Check digit**.
+3. To write the layout yourself, turn on **Write your own pattern** and enter the **Pattern**
+   using placeholders such as {P} for prefix, {Y} for year and {S} for the sequence; pressing a
+   placeholder under the pattern adds it to the end.
+4. Select **Save changes**.
 
 ### Set how location codes are generated
 Keywords: location code, site code
-1. Open [Sequence configuration](/admin/sequence-configs) and select the location code in the list.
-2. Under **Code strategy**, choose the **Components** to build the code from (name, city, state or
-   postal code), in order.
-3. Set the **Component width**, **Sequence digits**, **Separator**, **Casing** and **Fallback
-   prefix**.
+1. Open [Sequence configuration](/admin/sequence-configs) and select the **Locations** tab.
+2. Under **Parts**, choose what the code is built from (name, city, state or ZIP code), in order.
+3. Set the **Characters per part**, **Counter digits**, **Separator**, **Letter case** and
+   **Fallback**.
 4. Select **Save changes**.
 
 ### Go back to the default format
 Keywords: reset numbering
-1. Open [Sequence configuration](/admin/sequence-configs) and select the sequence.
-2. Select **Reset to default**, then **Save changes**.
+1. Open [Sequence configuration](/admin/sequence-configs) and select the tab that holds the
+   sequence.
+2. Select **Use the default**, then **Save changes**.
 
 ## Notes
-Opening the page needs read access to sequence configuration; saving needs update access. A dot next
-to a sequence in the list marks unsaved changes. Changes affect numbers generated from then on.
+Opening the page needs read access to sequence configuration; saving needs update access. A save that is refused opens the tab holding the setting to fix. Changes affect numbers generated from then on.

@@ -64,7 +64,7 @@ func NewFactoringSource(
 	}
 }
 
-func (s *FactoringSource) Kind() watchtower.SourceKind { return watchtower.SourceFactoring }
+func (s *FactoringSource) Kind() watchtower.SourceKind { return watchtower.SourceKindFactoring }
 
 type factoringSnapshot struct {
 	ready       []*factoringreadiness.InvoiceState
@@ -258,7 +258,7 @@ func DescribeFactoringUnfunded(
 
 	return watchtowerports.WatchtowerItemInput{
 		TenantInfo:  tenant,
-		SourceKind:  watchtower.SourceFactoring,
+		SourceKind:  watchtower.SourceKindFactoring,
 		SourceID:    FactoringUnfundedSourceID(row.SubmissionID),
 		Severity:    watchtower.SeverityWarning,
 		Title:       stringutils.TruncateRunes(title, maxFactoringTitleLength),
@@ -310,7 +310,7 @@ func DescribeFactoringChargebackDue(
 
 	return watchtowerports.WatchtowerItemInput{
 		TenantInfo:  tenant,
-		SourceKind:  watchtower.SourceFactoring,
+		SourceKind:  watchtower.SourceKindFactoring,
 		SourceID:    FactoringChargebackDueSourceID(row.ItemID),
 		Severity:    watchtower.SeverityCritical,
 		Title:       stringutils.TruncateRunes(title, maxFactoringTitleLength),
@@ -373,7 +373,7 @@ func DescribeFactoringSendFailed(
 
 	return watchtowerports.WatchtowerItemInput{
 		TenantInfo:  tenant,
-		SourceKind:  watchtower.SourceFactoring,
+		SourceKind:  watchtower.SourceKindFactoring,
 		SourceID:    FactoringSendFailedSourceID(row.SubmissionID),
 		Severity:    watchtower.SeverityCritical,
 		Title:       stringutils.TruncateRunes(title, maxFactoringTitleLength),
@@ -430,7 +430,7 @@ func DescribeFactoringReadyUnsubmitted(
 
 	return watchtowerports.WatchtowerItemInput{
 		TenantInfo:  tenant,
-		SourceKind:  watchtower.SourceFactoring,
+		SourceKind:  watchtower.SourceKindFactoring,
 		SourceID:    FactoringReadySourceID(state.InvoiceID),
 		Severity:    severity,
 		Title:       stringutils.TruncateRunes(title, maxFactoringTitleLength),
@@ -507,7 +507,7 @@ func DescribeFactoringMissingNoa(
 
 	return watchtowerports.WatchtowerItemInput{
 		TenantInfo:  tenant,
-		SourceKind:  watchtower.SourceFactoring,
+		SourceKind:  watchtower.SourceKindFactoring,
 		SourceID:    FactoringMissingNoaSourceID(row.CustomerID, row.FactoringCompanyID),
 		Severity:    watchtower.SeverityWarning,
 		Title:       stringutils.TruncateRunes(title, maxFactoringTitleLength),
@@ -545,7 +545,7 @@ func DescribeFactoringNoaExpiring(
 
 	return watchtowerports.WatchtowerItemInput{
 		TenantInfo:  tenant,
-		SourceKind:  watchtower.SourceFactoring,
+		SourceKind:  watchtower.SourceKindFactoring,
 		SourceID:    FactoringExpiringNoaSourceID(row.NoaID),
 		Severity:    severity,
 		Title:       stringutils.TruncateRunes(title, maxFactoringTitleLength),
@@ -623,7 +623,7 @@ func DescribeFactoringRemittanceExceptions(
 
 	return watchtowerports.WatchtowerItemInput{
 		TenantInfo:  tenant,
-		SourceKind:  watchtower.SourceFactoring,
+		SourceKind:  watchtower.SourceKindFactoring,
 		SourceID:    FactoringRemittanceSourceID(row.RemittanceID),
 		Severity:    watchtower.SeverityWarning,
 		Title:       stringutils.TruncateRunes(title, maxFactoringTitleLength),

@@ -1,11 +1,3 @@
-import { useT } from "@trenova/shared/i18n/use-t";
-import {
-  PayProfileAutocompleteField,
-  WorkerAutocompleteField,
-} from "@/components/autocomplete-fields";
-import { AutoCompleteDateField } from "@/components/fields/date-field/date-field";
-import { NumberField } from "@/components/fields/number-field";
-import { TextareaField } from "@/components/fields/textarea-field";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
   Dialog,
@@ -15,20 +7,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@trenova/shared/components/ui/dialog";
-import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form";
-import { Input } from "@trenova/shared/components/ui/input";
-import { useApiMutation } from "@/hooks/use-api-mutation";
-import { getTodayDate } from "@trenova/shared/lib/date";
-import { assignPayProfileToWorker, fetchPayProfileDetail } from "@/lib/graphql/driver-settlement";
+import { Form } from "@trenova/shared/components/ui/form";
+import { useT } from "@trenova/shared/i18n/use-t";
+import { FormProvider } from "react-hook-form";
 import {
-  assignPayProfileFormSchema,
-  type AssignPayProfileFormValues,
-} from "@trenova/shared/types/driver-pay";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
-import { FormProvider, useForm, useWatch, type Resolver } from "react-hook-form";
+  AssignPayProfileFields,
+  PayOverrideFields,
+  useAssignPayProfileForm,
+} from "./assign-pay-profile-form";
 
+/** The pay assignment form as a dialog, for the pay profile page. */
 export function AssignPayProfileDialog({
   open,
   onOpenChange,
@@ -43,80 +31,14 @@ export function AssignPayProfileDialog({
   onAssigned?: () => void;
 }) {
   const t = useT();
-
-  const queryClient = useQueryClient();
-  const [overrides, setOverrides] = useState<Record<string, string>>({});
-
-  const form = useForm<AssignPayProfileFormValues>({
-    resolver: zodResolver(assignPayProfileFormSchema) as Resolver<AssignPayProfileFormValues>,
-    defaultValues: {
-      workerId: workerId ?? "",
-      payProfileId: payProfileId ?? "",
-      effectiveFrom: getTodayDate(),
-      effectiveTo: null,
-      splitPercent: 100,
-      notes: "",
-    },
-  });
-  const {
-    control,
-    handleSubmit,
-    reset,
-    formState: { isSubmitting },
-  } = form;
-
-  useEffect(() => {
-    if (open) {
-      reset({
-        workerId: workerId ?? "",
-        payProfileId: payProfileId ?? "",
-        effectiveFrom: getTodayDate(),
-        effectiveTo: null,
-        splitPercent: 100,
-        notes: "",
-      });
-      setOverrides({});
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, reset, workerId, payProfileId]);
-
-  const selectedProfileId = useWatch({ control, name: "payProfileId" });
-
-  const { data: selectedProfile } = useQuery({
-    queryKey: ["pay-profile-detail", selectedProfileId],
-    queryFn: ({ signal }) => fetchPayProfileDetail(selectedProfileId, { signal }),
-    enabled: open && !!selectedProfileId,
-  });
-
-  const mutation = useApiMutation({
-    mutationFn: (values: AssignPayProfileFormValues) =>
-      assignPayProfileToWorker({
-        workerId: values.workerId,
-        payProfileId: values.payProfileId,
-        effectiveFrom: values.effectiveFrom,
-        effectiveTo: values.effectiveTo ?? undefined,
-        splitPercent: String(values.splitPercent),
-        rateOverrides: Object.entries(overrides)
-          .filter(([, rate]) => rate !== "" && !Number.isNaN(Number(rate)))
-          .map(([componentId, rate]) => ({ componentId, rate })),
-        notes: values.notes || undefined,
-      }),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ["worker-pay"] });
-      void queryClient.invalidateQueries({ queryKey: ["pay-profile-list"] });
-      void queryClient.invalidateQueries({ queryKey: ["pay-profile-assignments"] });
+  const { form, isPending, submit } = useAssignPayProfileForm({
+    open,
+    start: { workerId, payProfileId },
+    onAssigned: () => {
       onOpenChange(false);
       onAssigned?.();
     },
-    form,
-    resourceName: "Pay Assignment",
   });
-
-  const onSubmit = handleSubmit((values) => mutation.mutate(values));
-
-  const activeComponents = (selectedProfile?.components ?? []).filter(
-    (component) => component.isActive,
-  );
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -130,116 +52,35 @@ export function AssignPayProfileDialog({
           </DialogDescription>
         </DialogHeader>
         <FormProvider {...form}>
-          <Form id="assign-pay-profile-form" onSubmit={onSubmit}>
-            <FormGroup cols={2}>
-              {!workerId && (
-                <FormControl className="col-span-2">
-                  <WorkerAutocompleteField
-                    control={control}
-                    name="workerId"
-                    label={t("Driver")}
-                    placeholder={t("Select driver")}
-                    required
-                    description={t(
-                      "The driver who will be paid under this profile from the effective date forward.",
-                    )}
-                  />
-                </FormControl>
-              )}
-              {!payProfileId && (
-                <FormControl className="col-span-2">
-                  <PayProfileAutocompleteField
-                    control={control}
-                    name="payProfileId"
-                    label={t("Pay profile")}
-                    placeholder={t("Select pay profile")}
-                    required
-                    description={t(
-                      "Profiles are shared templates — set driver-specific rates below instead of cloning profiles.",
-                    )}
-                  />
-                </FormControl>
-              )}
-              <FormControl>
-                <AutoCompleteDateField
-                  control={control}
-                  name="effectiveFrom"
-                  label={t("Effective From")}
-                  required
-                  description={t(
-                    "Pay for shipments delivered on or after this date uses this assignment.",
-                  )}
-                />
-              </FormControl>
-              <FormControl>
-                <NumberField
-                  control={control}
-                  name="splitPercent"
-                  label={t("Split percent")}
-                  sideText="%"
-                  description={t("100 for solo drivers; 50 each for an even team split.")}
-                  required
-                />
-              </FormControl>
-              <FormControl className="col-span-2">
-                <TextareaField
-                  control={control}
-                  name="notes"
-                  label={t("Notes")}
-                  placeholder={t("e.g. Negotiated rate bump at 1-year anniversary")}
-                  description={t(
-                    "Why this assignment or rate was set — kept in the assignment history for audits.",
-                  )}
-                />
-              </FormControl>
-            </FormGroup>
+          <Form id="assign-pay-profile-form" onSubmit={(event) => void submit(event)}>
+            <AssignPayProfileFields
+              form={form}
+              showWorker={!workerId}
+              showProfile={!payProfileId}
+            />
           </Form>
         </FormProvider>
-
-        {activeComponents.length > 0 && (
-          <div className="rounded-lg border p-3">
-            <p className="text-xs font-medium">{t("Driver-specific rate overrides")}</p>
-            <p className="text-muted-foreground mb-2 text-xs">
-              {t(
-                "Leave blank to use the profile rate. An override replaces the component's base rate and any mileage bands for this driver only.",
-              )}
-            </p>
-            <div className="flex flex-col gap-2">
-              {activeComponents.map((component) => (
-                <div
-                  key={component.id}
-                  className="grid grid-cols-[1fr_auto_120px] items-center gap-2 text-xs"
-                >
-                  <span className="font-medium">
-                    {component.description || `${component.kind} (${component.method})`}
-                  </span>
-                  <span className="text-muted-foreground tabular-nums">
-                    {t(
-                      "profile: {0}{1}",
-                      Number(component.rate),
-                      component.method === "PercentOfRevenue" ? "%" : "",
-                    )}
-                  </span>
-                  <Input
-                    value={overrides[component.id] ?? ""}
-                    onChange={(e) =>
-                      setOverrides((prev) => ({ ...prev, [component.id]: e.target.value }))
-                    }
-                    placeholder={t("Override")}
-                    inputMode="decimal"
-                    className="h-7 text-xs"
-                  />
-                </div>
-              ))}
+        <PayOverrideFields
+          form={form}
+          open={open}
+          initialProfileId={payProfileId}
+          className="rounded-lg border p-3"
+          heading={
+            <div>
+              <p className="text-xs font-medium">{t("Driver-specific rate overrides")}</p>
+              <p className="text-xs text-muted-foreground">
+                {t(
+                  "Leave blank to use the profile rate. An override replaces the component's base rate and any mileage bands for this driver only.",
+                )}
+              </p>
             </div>
-          </div>
-        )}
-
+          }
+        />
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             {t("Cancel")}
           </Button>
-          <Button form="assign-pay-profile-form" type="submit" disabled={isSubmitting}>
+          <Button form="assign-pay-profile-form" type="submit" isLoading={isPending}>
             {t("Assign profile")}
           </Button>
         </DialogFooter>

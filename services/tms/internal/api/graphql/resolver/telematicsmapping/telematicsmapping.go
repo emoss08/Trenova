@@ -48,6 +48,9 @@ func MapWorkerHOSState(state *telematics.WorkerHOSState) *gqlmodel.WorkerHosStat
 		dutyStatus := string(state.DutyStatus)
 		out.DutyStatus = &dutyStatus
 	}
+	if state.DutyStatusSince != nil {
+		out.DutyStatusSince = new(int(*state.DutyStatusSince))
+	}
 	if state.CycleStartedAt != nil {
 		startedAt := int(*state.CycleStartedAt)
 		out.CycleStartedAt = &startedAt

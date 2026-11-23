@@ -22,6 +22,7 @@ import {
   analysisTablesSchema,
 } from "@/types/analysis";
 import { isAppPath } from "@/lib/app-path";
+import { boardPlaceOf, type BoardCallTool, type BoardPlace } from "@/lib/board-place";
 import { withoutRecordIds } from "@/lib/record-ids";
 import type { AssistantArtifact } from "@/types/assistant";
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
@@ -1087,9 +1088,19 @@ export const BOARD_BLOCK_TYPES = [
   "meter",
   "prose",
   "note",
+  "work",
+  "actions",
 ] as const;
 
 export type BoardBlockType = (typeof BOARD_BLOCK_TYPES)[number];
+
+/**
+ * Whether a block is an exhibit Trenova prints and numbers. The agent's own
+ * words (prose, a note) and the buttons it offers (actions) are not.
+ */
+export function isBoardExhibit(type: string): boolean {
+  return type !== "prose" && type !== "note" && type !== "actions";
+}
 
 /** One block of a board as it was laid out, before anything it names is read. */
 export type BoardLayoutBlock = {
@@ -1098,13 +1109,21 @@ export type BoardLayoutBlock = {
   half: boolean;
   /** How many records, figures or checks the block names, for its skeleton. */
   size: number;
+  /** The line under the exhibit's tab as written, readings `{key}` in place; empty for none. */
+  caption: string;
 };
+
+/** A figure the board's words place as `{key}`, as the agent declared it. */
+export type BoardLayoutReading = { key: string; label: string };
 
 /** A board as the agent laid it out: its words and the shape of its blocks. */
 export type BoardArtifact = {
   title: string;
+  /** The verdict as written, with its cites `[phrase][n]` and readings `{key}` in place. */
   verdict: string;
   author: string;
+  place: BoardPlace;
+  readings: BoardLayoutReading[];
   blocks: BoardLayoutBlock[];
 };
 
@@ -1113,7 +1132,7 @@ function isBoardBlockType(value: unknown): value is BoardBlockType {
 }
 
 function blockSize(block: Record<string, unknown>): number {
-  for (const key of ["figures", "checks", "rows"] as const) {
+  for (const key of ["figures", "checks", "rows", "actions"] as const) {
     const items = listOf(block[key]);
     if (items.length > 0) return items.length;
   }
@@ -1121,9 +1140,15 @@ function blockSize(block: Record<string, unknown>): number {
   return records.length;
 }
 
-export function boardFrom(artifact: AssistantArtifact): BoardArtifact {
-  const payload = artifact.payload;
-  const board = isRecord(payload.board) ? payload.board : {};
+/**
+ * A board's layout read from the board itself: the `board` of a stored
+ * payload, or the arguments a show_board call was made with, which have the
+ * same shape. Anything unreadable is left out rather than guessed.
+ */
+export function boardLayoutFrom(
+  board: Record<string, unknown>,
+  fallback: { title: string; author: string; place?: BoardPlace },
+): BoardArtifact {
   const blocks: BoardLayoutBlock[] = [];
   for (const raw of listOf(board.blocks)) {
     if (!isRecord(raw) || !isBoardBlockType(raw.type)) continue;
@@ -1132,13 +1157,210 @@ export function boardFrom(artifact: AssistantArtifact): BoardArtifact {
       title: stringOf(raw.title),
       half: raw.half === true,
       size: blockSize(raw),
+      caption: stringOf(raw.caption),
     });
+  }
+  const readings: BoardLayoutReading[] = [];
+  for (const raw of listOf(board.readings)) {
+    if (!isRecord(raw)) continue;
+    const key = stringOf(raw.key);
+    if (key !== "") readings.push({ key, label: stringOf(raw.label) });
   }
 
   return {
-    title: stringOf(board.title) || artifact.title,
+    title: stringOf(board.title) || fallback.title,
     verdict: stringOf(board.verdict),
-    author: stringOf(payload.author),
+    author: fallback.author,
+    place: fallback.place ?? boardPlaceOf({ board }),
+    readings,
     blocks,
   };
+}
+
+const ANSWER_BASES = ["count", "total", "largest"] as const;
+const ANSWER_MAX_GROUPS = 3;
+
+/** `nameMark` in `boardanswer/answer.go`: every `{…}` a show_answer call's words may hold. */
+const ANSWER_TOKEN = /\{([^{}\s]{1,60})\}/gu;
+
+/** The measures a record kind reads, by the names `board.MeasureNamed` takes (`board/measure.go`). */
+const ANSWER_MEASURES: Readonly<Record<string, string>> = {
+  lateness: "lateness",
+  revenue: "revenue",
+  amountDue: "amountDue",
+  total: "total",
+  age: "age",
+  amount: "amount",
+  pendingFor: "pendingFor",
+  totalCharge: "revenue",
+  totalChargeAmount: "revenue",
+  totalCharges: "revenue",
+  charge: "revenue",
+  lateBy: "lateness",
+  lateByMinutes: "lateness",
+  lateMinutes: "lateness",
+  late: "lateness",
+  openAmount: "amountDue",
+  amountOpen: "amountDue",
+  balanceDue: "amountDue",
+  balanceDueMinor: "amountDue",
+  totalAmount: "total",
+  totalAmountMinor: "total",
+  invoiceTotal: "total",
+};
+
+function answerMeasure(name: string): string {
+  return Object.hasOwn(ANSWER_MEASURES, name) ? ANSWER_MEASURES[name] : "";
+}
+
+/** `Names` and `Known` in `boardanswer/answer.go`: a group's figure needs that group. */
+function isAnswerName(name: string, groups: number): boolean {
+  const [base, suffix, ...rest] = name.split("_");
+  if (!(ANSWER_BASES as readonly string[]).includes(base) || rest.length > 0) return false;
+  if (suffix === undefined) return true;
+  const number = Number(suffix);
+  return String(number) === suffix && number >= 1 && number <= Math.min(groups, ANSWER_MAX_GROUPS);
+}
+
+/** `Names(MaxGroups)` in `boardanswer/answer.go`: the order a call's readings are listed in. */
+const ANSWER_ORDER: readonly string[] = [
+  ...ANSWER_BASES,
+  ...ANSWER_BASES.flatMap((base) =>
+    Array.from({ length: ANSWER_MAX_GROUPS }, (_, at) => `${base}_${at + 1}`),
+  ),
+];
+
+type AnswerFigure = { raw: string; key: string; order: number; measure: string };
+
+/**
+ * One `{…}` as `figures` and `ownFigure` in `boardanswer/figures.go` read it,
+ * with the key the server gives the reading it makes (`figure.key`), or null
+ * when the server would not read it as a figure. A figure is a vocabulary
+ * name (`count`, `total`, `largest`, a group's `_1` to `_3`) that may name its
+ * measure after a colon, or one record's own: a measure and the number of a
+ * record, in either order. The number is matched to the record a tool result
+ * gave it on the server; the call alone cannot, so a number the groups' records
+ * do not spell still draws a blank, keyed `<measure>_for_<n>` by the order its
+ * record first appears (no server key holds `_for_`).
+ */
+function answerFigure(
+  raw: string,
+  records: readonly string[],
+  groups: number,
+  callMeasure: string,
+  unlisted: Map<string, number>,
+): AnswerFigure | null {
+  const mark = raw.indexOf(":");
+  const left = mark < 0 ? raw : raw.slice(0, mark);
+  const right = mark < 0 ? "" : raw.slice(mark + 1);
+  const leftMeasure = answerMeasure(left);
+  const own = right !== "" && !isAnswerName(left, groups);
+  if (own) {
+    const measure = leftMeasure || answerMeasure(right);
+    const record = leftMeasure ? right : left;
+    if (measure !== "") {
+      const at = records.indexOf(record);
+      if (at >= 0) return { raw, key: `${measure}_of_${at + 1}`, order: -1, measure };
+      if (!unlisted.has(record)) unlisted.set(record, unlisted.size + 1);
+      return { raw, key: `${measure}_for_${unlisted.get(record)}`, order: -1, measure };
+    }
+  }
+  if (!isAnswerName(left, groups)) return null;
+  const base = left.split("_")[0];
+  const named = mark >= 0 && base !== "count" ? answerMeasure(right) : "";
+  if (mark >= 0 && base !== "count" && named === "") return null;
+  const read = named || callMeasure;
+  const order = ANSWER_ORDER.indexOf(left);
+  const key = base === "count" || read === callMeasure ? left : `${left}_${read}`;
+  return { raw, key, order, measure: read };
+}
+
+/**
+ * A show_answer call's arguments as the layout of the board the server builds
+ * from them (`board.Board` in the conversation): the answer as the verdict, a
+ * records block per group (at most three; an empty group is dropped as the
+ * server drops it, two are drawn side by side and three are stacked) titled
+ * with the group's
+ * title and captioned with its note, and an actions block when there are
+ * actions. Each vocabulary figure the words place becomes a reading; anything
+ * unreadable is left out rather than guessed.
+ */
+export function answerLayoutFrom(
+  answer: Record<string, unknown>,
+  fallback: { title: string; author: string },
+): BoardArtifact {
+  const groups = listOf(answer.groups)
+    .filter(isRecord)
+    .filter((group) => listOf(group.records).length > 0)
+    .slice(0, 3);
+  const blocks: BoardLayoutBlock[] = groups.map((group) => ({
+    type: "records",
+    title: stringOf(group.title),
+    half: groups.length === 2,
+    size: listOf(group.records).length,
+    caption: stringOf(group.note),
+  }));
+  const actions = listOf(answer.actions).filter(isRecord);
+  if (actions.length > 0) {
+    blocks.push({ type: "actions", title: "", half: false, size: actions.length, caption: "" });
+  }
+  const records = [
+    ...new Set(
+      groups.flatMap((group) =>
+        listOf(group.records).flatMap((record) =>
+          typeof record === "string" ? [record.trim()] : [],
+        ),
+      ),
+    ),
+  ];
+  const callMeasure = answerMeasure(stringOf(answer.measure).trim());
+  const unlisted = new Map<string, number>();
+  const found = new Map<string, AnswerFigure>();
+  const keyed = (text: string): string =>
+    text.replace(ANSWER_TOKEN, (token: string, raw: string) => {
+      const figure = answerFigure(raw, records, groups.length, callMeasure, unlisted);
+      if (figure === null) return token;
+      found.set(raw, figure);
+      return `{${figure.key}}`;
+    });
+  const verdict = keyed(stringOf(answer.answer));
+  for (const block of blocks) block.caption = keyed(block.caption);
+  const readings = [...found.values()]
+    .sort(
+      (a, b) =>
+        a.order - b.order ||
+        (a.measure < b.measure ? -1 : a.measure > b.measure ? 1 : 0) ||
+        (a.raw < b.raw ? -1 : a.raw > b.raw ? 1 : 0),
+    )
+    .filter((figure, at, all) => all.findIndex((other) => other.key === figure.key) === at)
+    .map((figure) => ({ key: figure.key, label: "" }));
+
+  return {
+    title: stringOf(answer.title) || fallback.title,
+    verdict,
+    author: fallback.author,
+    place: "conversation",
+    readings,
+    blocks,
+  };
+}
+
+/** The layout of the board a call made, read from the call's arguments in the shape its tool takes. */
+export function callLayoutFrom(
+  tool: BoardCallTool,
+  args: Record<string, unknown>,
+  fallback: { title: string; author: string; place?: BoardPlace },
+): BoardArtifact {
+  return tool === "show_answer"
+    ? answerLayoutFrom(args, fallback)
+    : boardLayoutFrom(args, fallback);
+}
+
+export function boardFrom(artifact: AssistantArtifact): BoardArtifact {
+  const payload = artifact.payload;
+  return boardLayoutFrom(isRecord(payload.board) ? payload.board : {}, {
+    title: artifact.title,
+    author: stringOf(payload.author),
+    place: boardPlaceOf(payload),
+  });
 }

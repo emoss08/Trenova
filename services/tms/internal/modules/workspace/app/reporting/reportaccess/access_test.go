@@ -225,7 +225,13 @@ func TestField_NoCeilingLeavesThePersonsGrant(t *testing.T) {
 	for _, field := range entity.Fields {
 		use := access.FieldUse(t.Context(), field)
 		if permission.SensitivityRestricted.CanAccess(use.Sensitivity) {
-			assert.NotEqualf(t, reportaccess.WithheldByCeiling, use.Decision, "shipment.%s", field.Key)
+			assert.NotEqualf(
+				t,
+				reportaccess.WithheldByCeiling,
+				use.Decision,
+				"shipment.%s",
+				field.Key,
+			)
 		}
 	}
 }
@@ -373,6 +379,7 @@ func TestDecisionsRoundTripThroughTheirReasonCodes(t *testing.T) {
 		reportaccess.NeedsExport,
 		reportaccess.OwnScopeUnsupported,
 		reportaccess.NotOnPlan,
+		reportaccess.NeedsOperation,
 	} {
 		assert.Equal(t, decision, reportaccess.DecisionOf(decision.String()))
 	}

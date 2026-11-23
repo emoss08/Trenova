@@ -1,17 +1,62 @@
-# Fields are inlined rather than spread from the per-area fragments: a nested
-# fragment spread returns a masked $fragmentRefs type, and the overview needs
-# to read these values directly. It also keeps the payload to the headline
-# numbers the summary draws, not every item behind them.
+# Everything the worker record page draws outside its tabs: the header's
+# standing, the tab marks, each section strip's state line, the attention list,
+# the clearance runway and the file grid. Fields are inlined rather than spread
+# from the per-area fragments: a nested fragment spread returns a masked
+# $fragmentRefs type, and the page reads these values directly. It carries the
+# headline figures only, never the lists behind them.
 query WorkerOverview($workerId: ID!) @requiresRead(kind: "performance_review") @requiresRead(kind: "worker_checklist") {
   workerOverview(workerId: $workerId) {
     asOf
     standing
+    concernCount
     concerns {
       severity
       code
-      headline
-      detail
-      tab
+      subject
+      count
+      occurredAt
+      dueAt
+      daysUntil
+      stopsAssignment
+      destination {
+        tab
+        view
+        record
+        recordId
+      }
+    }
+    clearance {
+      cleared
+      clearedThrough
+      notClearedSince
+      blocks
+      itemsTruncated
+      firstStop {
+        key
+        name
+        source
+        dueAt
+        daysUntil
+      }
+      items {
+        key
+        lane
+        source
+        name
+        dueAt
+        daysUntil
+        effect
+        rule
+        hazmatOnly
+        regulation
+        required
+        destination {
+          tab
+          view
+          record
+          recordId
+        }
+      }
     }
     worker {
       id
@@ -19,8 +64,10 @@ query WorkerOverview($workerId: ID!) @requiresRead(kind: "performance_review") @
       lastName
       status
       canBeAssigned
+      availableForDispatch
       type
       driverType
+      lastHomeAt
       fleetCode {
         id
         code
@@ -31,6 +78,7 @@ query WorkerOverview($workerId: ID!) @requiresRead(kind: "performance_review") @
         terminationDate
         complianceStatus
         isQualified
+        eldExempt
       }
     }
     credentials {
@@ -40,6 +88,24 @@ query WorkerOverview($workerId: ID!) @requiresRead(kind: "performance_review") @
       expiringCount
       expiredCount
       missingCount
+    }
+    qualificationFile {
+      complete
+      missingRequired
+      expiringSoon
+      expired
+      outstanding
+      safetyHistoryLate
+    }
+    drugAlcohol {
+      nextQueryDaysUntil
+      standing {
+        status
+        returnToDuty
+        lastClearinghouseQueryAt
+        nextClearinghouseQueryDue
+        openTestCount
+      }
     }
     training {
       compliant
@@ -67,6 +133,11 @@ query WorkerOverview($workerId: ID!) @requiresRead(kind: "performance_review") @
       recognitions
       daysSinceLastEvent
     }
+    employment {
+      eventCount
+      hiredAt
+      openChecklistCount
+    }
     checklist {
       id
       name
@@ -87,6 +158,12 @@ query WorkerOverview($workerId: ID!) @requiresRead(kind: "performance_review") @
       pendingDays
       availableDays
     }
+    leave {
+      openCaseCount
+      remainingHours
+      totalHours
+      exhausted
+    }
     openReview {
       id
       title
@@ -102,6 +179,55 @@ query WorkerOverview($workerId: ID!) @requiresRead(kind: "performance_review") @
       overallScore
     }
     nextReviewAt
+    schedule {
+      currentShiftName
+    }
+    hos {
+      link
+      dutyStatus
+      dutyStatusSince
+      driveRemainingMs
+      driveLimitMs
+      shiftRemainingMs
+      shiftLimitMs
+      cycleRemainingMs
+      cycleLimitMs
+      breakRemainingMs
+      breakLimitMs
+      tractorCode
+      recordedAt
+    }
+    pay {
+      profileName
+      classification
+      effectiveFrom
+      headline {
+        kind
+        method
+        rate
+        overridden
+      }
+    }
+    benefits {
+      coveredCount
+      notStartedCount
+      employeeCostPerPeriodMinor
+    }
+    portal {
+      access
+      pendingProfileChangeCount
+      lastSignInAt
+    }
+    nextTimeOff {
+      id
+      status
+      type
+      startDate
+      endDate
+      days
+    }
+    documentCount
+    agentMemoryCount
   }
 }
 

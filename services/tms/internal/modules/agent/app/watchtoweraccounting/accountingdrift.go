@@ -90,7 +90,7 @@ func DescribeAccountingDriftAttention(
 	severity, title, summary := driftAttentionText(provider, group.Kind, group.Count)
 	return watchtowerports.WatchtowerItemInput{
 		TenantInfo:  tenantOf(conn),
-		SourceKind:  watchtower.SourceAccountingReconciliation,
+		SourceKind:  watchtower.SourceKindAccountingReconciliation,
 		SourceID:    AccountingDriftAttentionSourceID(conn, group.Kind),
 		Severity:    severity,
 		Title:       stringutils.TruncateRunes(title, 200),

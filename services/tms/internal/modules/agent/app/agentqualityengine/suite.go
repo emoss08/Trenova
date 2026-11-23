@@ -734,7 +734,7 @@ func (s *Engine) announce(ctx context.Context, run *agentqualitysuite.SuiteRun) 
 		s.watchtower.Resolve(
 			ctx,
 			tenant,
-			watchtower.SourceAgentQualityRegression,
+			watchtower.SourceKindAgentQualityRegression,
 			run.BaselineRunID.String(),
 		)
 	}

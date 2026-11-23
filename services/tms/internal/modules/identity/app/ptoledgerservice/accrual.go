@@ -188,7 +188,7 @@ func (s *Service) RunAccrualForWorker(
 		}, auditservice.WithComment(fmt.Sprintf(
 			"Accrual run: %d posted, %d capped, %d skipped",
 			result.EntriesPosted, result.EntriesCapped, result.EntriesSkipped,
-		))); err != nil {
+		)), auditservice.WithSubject(permission.ResourceWorker, workerID)); err != nil {
 			log.Error("failed to log audit action", zap.Error(err))
 		}
 	}

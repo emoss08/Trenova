@@ -42,7 +42,8 @@ func exhibitsOf(built *composed) []recordcase.Exhibit {
 func messageExhibits(built *composed) []recordcase.Exhibit {
 	out := make([]recordcase.Exhibit, 0, maxMessageExhibits)
 	for _, item := range built.items {
-		if item.SourceKind != watchtower.SourceInboundMessage || len(out) == maxMessageExhibits {
+		if item.SourceKind != watchtower.SourceKindInboundMessage ||
+			len(out) == maxMessageExhibits {
 			continue
 		}
 		from := factValue(item, "From")

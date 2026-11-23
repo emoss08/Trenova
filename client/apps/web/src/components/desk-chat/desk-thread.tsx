@@ -2,7 +2,11 @@ import { AssistantAgentProvider } from "@/components/agent-identity/agent-contex
 import { stepsFromExchanges, type ToolStep } from "@/components/assistant/activity";
 import { decisionArtifactFor, type ApprovalEntry } from "@/components/assistant/approval-queue";
 import { isTypingTarget } from "@/lib/dom";
-import { ArtifactOpenerProvider } from "@/components/assistant/artifact-opener";
+import {
+  ArtifactOpenerProvider,
+  useReplyBoards,
+  type ReplyBoard,
+} from "@/components/assistant/artifact-opener";
 import { askAnswerIds, liveAskRequest } from "@/components/assistant/ask-requests";
 import { fillCommand, SLASH_COMMANDS } from "@/components/assistant/composer-commands";
 import { readyAttachments } from "@/components/assistant/composer-types";
@@ -98,6 +102,8 @@ import { DeskUndoBar, useUndoWindow } from "./conversation/desk-undo-bar";
 import { DeskWebLive } from "./conversation/desk-web";
 import { composerStatus, streamingText } from "./conversation/turn-status";
 import { useStickToBottom } from "./conversation/use-stick-to-bottom";
+import { DeskLeavingNotes } from "./conversation/desk-leaving-notes";
+import { pendingReplyBoard, replyBoardsByEntry, workingSteps } from "./conversation/reply-boards";
 import { useSharedMap } from "@/hooks/use-keyed-sharing";
 import { liveWebSearch, turnWebSources } from "./conversation/web-cites";
 import { DeskErrorButton, DeskErrorCard } from "./desk-error-card";
@@ -974,6 +980,56 @@ export function DeskThread({
     return byEntry;
   }, [entries]);
   const replySteps = useSharedMap(replyStepsByEntry);
+  // The boards each reply's turn placed in the conversation, drawn in place of
+  // its words where the surface draws boards; the newest reply, once history
+  // has settled, is one that landed while the person watched.
+  const boardRenderer = useReplyBoards();
+  const replyBoardsByMessage = useMemo(
+    () =>
+      boardRenderer === null
+        ? new Map<string, ReplyBoard[]>()
+        : replyBoardsByEntry(entries, artifacts),
+    [artifacts, boardRenderer, entries],
+  );
+  const replyBoards = useSharedMap(replyBoardsByMessage);
+  // The agent's working before a board it answered with: not part of the answer.
+  const working = useMemo(
+    () => workingSteps(entries, replyBoardsByMessage),
+    [entries, replyBoardsByMessage],
+  );
+  const newestReplyId = useMemo(() => {
+    for (let index = entries.length - 1; index >= 0; index -= 1) {
+      const entry = entries[index];
+      if (entry.kind === "assistant") return entry.message.id;
+    }
+    return null;
+  }, [entries]);
+  // The board the running turn is placing in the conversation, drawn as its
+  // skeleton until the saved reply draws it; never both at once.
+  const savedCalls = useMemo(() => {
+    const ids = new Set<string>();
+    for (const entry of entries) {
+      if (entry.kind === "assistant") for (const tool of entry.tools) ids.add(tool.call.id);
+    }
+    return ids;
+  }, [entries]);
+  const liveBoard = useMemo(
+    () =>
+      turn !== null && boardRenderer !== null
+        ? pendingReplyBoard(turn.segments, {
+            artifacts,
+            announced: turn.artifacts,
+            savedCalls,
+          })
+        : null,
+    [artifacts, boardRenderer, savedCalls, turn],
+  );
+  // Once the board is known, the notes before it fold away (DeskLeavingNotes)
+  // and only what the saved turn keeps stays: the same rule, so nothing moves
+  // when the turn is saved. Before that, every word streams as it comes.
+  const liveKept = liveBoard ? liveBoard.kept : "";
+  const liveNotes = liveBoard ? liveBoard.working : live;
+  const livePending = liveBoard !== null && !liveBoard.saved;
 
   const showsArtifacts = artifactHost !== undefined;
 
@@ -982,30 +1038,41 @@ export function DeskThread({
   const layout = useMemo(() => {
     const first = new Set<string>();
     const headed = new Set<string>();
+    // The last step of each answer: the one that carries the answer's actions.
+    const tail = new Set<string>();
     let seenFirst = false;
     let replyHeaded = false;
+    let lastStep: string | null = null;
+    const closeAnswer = () => {
+      if (lastStep !== null) tail.add(lastStep);
+      lastStep = null;
+    };
     for (const entry of entries) {
       if (entry.kind === "decision") {
         continue;
       }
       if (entry.kind === "assistant") {
-        if (!replyShows(entry)) {
+        if (!replyShows(entry) || working.has(entry.message.id)) {
           continue;
         }
         if (!replyHeaded || !(placements.get(entry.message.id)?.continued ?? false)) {
           headed.add(entry.message.id);
+          closeAnswer();
         }
         replyHeaded = true;
+        lastStep = entry.message.id;
       } else if (entry.kind === "user" || entry.kind === "schedule") {
         replyHeaded = false;
+        closeAnswer();
       }
       if (!seenFirst) {
         first.add(entry.message.id);
         seenFirst = true;
       }
     }
-    return { first, headed, any: seenFirst };
-  }, [entries, placements]);
+    closeAnswer();
+    return { first, headed, tail, any: seenFirst };
+  }, [entries, placements, working]);
   const isFirst = (id: string) => layout.first.has(id);
 
   // A reply names an artifact in its sentence by id; the badge is drawn from
@@ -1306,7 +1373,7 @@ export function DeskThread({
                             </DeskRow>
                           );
                         }
-                        if (!replyShows(entry)) {
+                        if (!replyShows(entry) || working.has(entry.message.id)) {
                           return null;
                         }
                         const continued = !layout.headed.has(entry.message.id);
@@ -1323,6 +1390,9 @@ export function DeskThread({
                               entry={entry}
                               steps={replySteps.get(entry.message.id) ?? NO_STEPS}
                               threadArtifacts={artifacts}
+                              boards={replyBoards.get(entry.message.id)}
+                              tail={layout.tail.has(entry.message.id)}
+                              arrives={historySettled && entry.message.id === newestReplyId}
                               asks={replyAsks.get(entry.message.id)}
                               dockedAskId={dockedAsk?.callId ?? null}
                               sentAnswer={
@@ -1433,26 +1503,38 @@ export function DeskThread({
                           </DeskRow>
                         ),
                       )}
-                      {turn && (live !== "" || webSearch !== null) && (
-                        <DeskRow
-                          kind="reply"
-                          first={!layout.any}
-                          time={turnTime(Math.floor(turn.startedAt / 1000), timezone, t)}
-                        >
-                          <DeskStreamingReply
-                            text={live}
-                            usedMemoryIds={turn.usedMemoryIds}
-                            webSources={liveSources}
-                          />
-                          {webSearch && (
-                            <DeskWebLive
-                              label={t("Searching the web")}
-                              query={webSearch.query}
-                              sources={webSearch.sources}
+                      {turn &&
+                        (liveKept !== "" ||
+                          liveNotes !== "" ||
+                          webSearch !== null ||
+                          livePending) && (
+                          <DeskRow
+                            kind="reply"
+                            first={!layout.any}
+                            time={turnTime(Math.floor(turn.startedAt / 1000), timezone, t)}
+                          >
+                            <DeskStreamingReply
+                              text={liveKept}
+                              usedMemoryIds={turn.usedMemoryIds}
+                              webSources={liveSources}
                             />
-                          )}
-                        </DeskRow>
-                      )}
+                            {liveNotes !== "" && (
+                              <DeskLeavingNotes leaving={livePending}>
+                                <DeskStreamingReply text={liveNotes} webSources={liveSources} />
+                              </DeskLeavingNotes>
+                            )}
+                            {liveBoard && !liveBoard.saved && boardRenderer && (
+                              <boardRenderer.Pending tool={liveBoard.tool} spec={liveBoard.spec} />
+                            )}
+                            {webSearch && (
+                              <DeskWebLive
+                                label={t("Searching the web")}
+                                query={webSearch.query}
+                                sources={webSearch.sources}
+                              />
+                            )}
+                          </DeskRow>
+                        )}
                       {turn?.status === "error" &&
                         turn.limit === null &&
                         turn.rateLimited === null && (

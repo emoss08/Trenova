@@ -47,6 +47,7 @@ in [backend/](backend/README.md). Frontend rules are in the `trenova-frontend` s
 
 | Doc | Read before changing | The rule that bites |
 |---|---|---|
+| [worker-file](worker-file.md) | `workeroverviewservice`, `workercompliance` (standing, concerns, clearance), `workerpage` destinations, `dispatcheligibility/clearance.go`, any server link to a worker | one read (`workerOverview`) drives the page and a withheld section is null; a hard stop is decided only by `BlocksWhenLapsed` or the dispatch check at the item's date; links go through `workerpage.Path` |
 | [tracking-events](tracking-events.md) | `trackingevent`, `ReconcileStopActuals`, telematics stop visits, the EDI 214 parser, anything recording a stop actual | people through `RecordReported`, machines through `RecordObserved`; never `RecordStopActual` for a new source |
 | [check-calls](check-calls.md) | `checkcall`, the carrier tracking link and page, the no-check-call sweep | arrivals and departures also go through tracking events |
 | [dispatch-optimizer](dispatch-optimizer.md) | `dispatchcost`, `dispatchcandidateservice`, `dispatchplanservice`, `assignmentsolver`, `dispatchplanner`, dispatch economics settings, plan prices, the freight forecast and outlook (`demandforecast`, `freightmove`, `freightoutlookservice`), driver positionings | one money objective: a new consideration is a cost component, never a score or weight; unknown data never prices as free; the graph stays top-K per move |

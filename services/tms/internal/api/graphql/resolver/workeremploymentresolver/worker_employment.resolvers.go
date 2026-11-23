@@ -26,40 +26,11 @@ func (r *MutationResolver) RecordWorkerEmploymentEvent(ctx context.Context, inpu
 		return nil, err
 	}
 
-	workerID, err := pulid.MustParse(input.WorkerID)
+	req, err := recordRequest(authCtx, input)
 	if err != nil {
-		return nil, errortypes.NewValidationError("workerId", errortypes.ErrInvalid, "Worker is invalid")
+		return nil, err
 	}
-	documentID, err := gqlid.OptionalID(input.DocumentID)
-	if err != nil {
-		return nil, errortypes.NewValidationError("documentId", errortypes.ErrInvalid, "Document is invalid")
-	}
-	fleetCodeID, err := optionalIDPtr(input.FleetCodeID)
-	if err != nil {
-		return nil, errortypes.NewValidationError("fleetCodeId", errortypes.ErrInvalid, "Fleet code is invalid")
-	}
-	managerID, err := optionalIDPtr(input.ManagerID)
-	if err != nil {
-		return nil, errortypes.NewValidationError("managerId", errortypes.ErrInvalid, "Manager is invalid")
-	}
-
-	return r.WorkerEmploymentService.Record(ctx, &workeremploymentservice.RecordRequest{
-		TenantInfo:  resolvercore.TenantInfo(authCtx),
-		WorkerID:    workerID,
-		Kind:        input.Kind,
-		EffectiveAt: int64(input.EffectiveAt),
-		Reason:      gqlscalar.StringValue(input.Reason),
-		Notes:       gqlscalar.StringValue(input.Notes),
-		DocumentID:  documentID,
-		FleetCodeID: fleetCodeID,
-		ManagerID:   managerID,
-		DriverType:  input.DriverType,
-		WorkerType:  input.WorkerType,
-		Rate:        gqlscalar.StringValue(input.Rate),
-		RateUnit:    gqlscalar.StringValue(input.RateUnit),
-		LeaveType:   input.LeaveType,
-		UserID:      authCtx.UserID,
-	})
+	return r.WorkerEmploymentService.Record(ctx, req)
 }
 
 func (r *MutationResolver) AmendWorkerEmploymentEvent(ctx context.Context, input gqlmodel.AmendWorkerEmploymentEventInput) (*employment.WorkerEmploymentEvent, error) {
@@ -118,14 +89,6 @@ func (r *QueryResolver) WorkerEmploymentEvent(ctx context.Context, id string) (*
 	return r.WorkerEmploymentService.Get(ctx, resolvercore.TenantInfo(authCtx), eventID)
 }
 
-func (r *WorkerEmploymentCascadeResolver) PTOPaidOutDays(ctx context.Context, obj *workeremploymentservice.CascadeSummary) (string, error) {
-	return gqldecimal.DecimalString(obj.PTOPaidOutDays), nil
-}
-
-func (r *WorkerEmploymentCascadeResolver) PTOForfeitedDays(ctx context.Context, obj *workeremploymentservice.CascadeSummary) (string, error) {
-	return gqldecimal.DecimalString(obj.PTOForfeitedDays), nil
-}
-
 func (r *WorkerEmploymentEventResolver) FromValues(ctx context.Context, obj *employment.WorkerEmploymentEvent) ([]*gqlmodel.WorkerEmploymentValue, error) {
 	return employmentValues(obj.FromValues), nil
 }
@@ -144,4 +107,43 @@ func (r *WorkerEmploymentEventResolver) RecordedByID(ctx context.Context, obj *e
 
 func (r *WorkerEmploymentEventResolver) AmendedByID(ctx context.Context, obj *employment.WorkerEmploymentEvent) (*string, error) {
 	return gqlid.IDPtr(obj.AmendedByID), nil
+}
+
+func (r *QueryResolver) WorkerEmploymentEventOptions(ctx context.Context, workerID string) (*workeremploymentservice.Options, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceWorkerEmploymentEvent, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+
+	wid, err := pulid.MustParse(workerID)
+	if err != nil {
+		return nil, errortypes.NewValidationError("workerId", errortypes.ErrInvalid, "Worker is invalid")
+	}
+
+	return r.WorkerEmploymentService.Options(ctx, resolvercore.TenantInfo(authCtx), wid)
+}
+
+func (r *QueryResolver) PreviewWorkerEmploymentEvent(ctx context.Context, input gqlmodel.RecordWorkerEmploymentEventInput) (*workeremploymentservice.Preview, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceWorkerEmploymentEvent, permission.OpCreate)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := recordRequest(authCtx, input)
+	if err != nil {
+		return nil, err
+	}
+	return r.WorkerEmploymentService.Preview(ctx, req)
+}
+
+func (r *WorkerEmploymentEffectResolver) Days(ctx context.Context, obj *employment.Effect) (*string, error) {
+	return gqldecimal.DecimalPtrString(obj.Days), nil
+}
+
+func (r *WorkerEmploymentEventPreviewResolver) FromValues(ctx context.Context, obj *workeremploymentservice.Preview) ([]*gqlmodel.WorkerEmploymentValue, error) {
+	return employmentValues(obj.FromValues), nil
+}
+
+func (r *WorkerEmploymentEventPreviewResolver) ToValues(ctx context.Context, obj *workeremploymentservice.Preview) ([]*gqlmodel.WorkerEmploymentValue, error) {
+	return employmentValues(obj.ToValues), nil
 }

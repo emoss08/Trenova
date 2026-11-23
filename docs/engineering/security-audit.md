@@ -503,6 +503,29 @@ one `LIMIT 1` probe per ranked principal in one batch.
 Sign-ins stay in `auth_events` and have their own page (Sign-in activity), and agent runs in the
 AI audit trail; the audit log links to both rather than merging them.
 
+### A record's file
+
+An entry names the record whose file it belongs to: `subjectResource` and `subjectId`. A change to
+a worker's credential, training record, test, leave case, pay assignment, benefit enrolment,
+document or agent memory names the worker; a change to the worker row names the worker itself,
+so a worker's whole file is one range of `idx_audit_entries_tenant_subject`. The writer sets it
+with `auditservice.WithSubject(resource, id)`, or `WithSubjectOf(records...)`, which asks each
+record's `AuditSubject()` (`audit.SubjectOwner`, implemented by the record types in their domain
+packages' `auditsubject.go`); `auditservice.Record` and `BuildBulkLogEntries` apply
+`WithSubjectOf` to the states they are given, so a service that records a worker's sub-record
+names the worker without saying so. Only kinds in `audit.KeepsFile` are recorded (the worker
+today): a kind joins only once its root and every record of its file name it, so a read by
+subject is the whole file, never part of it. Entries written before subjects existed have none
+and stay off the file.
+
+`auditEntriesBySubject(input, subjectId)` reads the file newest first. It needs organization-wide
+read on the subject's kind (as `auditEntriesByResourceId` does for its record; own or team scope
+is refused), then shows only entries about kinds the reader may read across the organization
+(`readableResources`), so a reader without `worker_dot_test` read sees none of a worker's tests.
+It takes the trail's search, field filters (any column by its JSON name: `operation`, `channel`,
+`principalId`, `resource`) and keyset pagination, at most 100 a page, and estimates a total only
+on the first page.
+
 ## Storage
 
 `audit_entries` is range-partitioned by month on `timestamp`, with partitions in the
@@ -513,9 +536,16 @@ Ensure step runs `ensure_partitions` 24 months ahead and `drop_expired_partition
 years. A daily check (`AuditPartitionCheckWorkflow`, 01:17) reads how far the partitions reach,
 records `trenova_audit_partition_months_ahead`, and logs an error when fewer than three months
 remain, long before an insert could find no partition.
-The tenant indexes cover time, record, principal, resource, correlation ID and security
-entries; trigram indexes back search over the record reference and comment; a BRIN index covers
+The tenant indexes cover time, record, principal, resource, correlation ID, subject (partial,
+`WHERE subject_id IS NOT NULL`) and security entries; trigram indexes back search over the record reference and comment; a BRIN index covers
 time. States and metadata use lz4 compression.
+
+The subject lives in `metadata.subjectResource` and `metadata.subjectId`, which the integrity
+digest covers, and `subject_resource` and `subject_id` are their projection
+(`audit.Entry.projectSubject`, run on every normalize and again before insert, so the columns
+always equal what is sealed). The digest lists its columns, so the two columns change neither
+seals nor verification; `ck_audit_entries_subject` keeps them set together. New monthly
+partitions are created `LIKE` the parent and so carry them.
 
 ## Retention
 

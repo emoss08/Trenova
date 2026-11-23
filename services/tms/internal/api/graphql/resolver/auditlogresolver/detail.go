@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/99designs/gqlgen/graphql"
+	"github.com/emoss08/trenova/pkg/pagination"
 )
 
 var detailFields = []string{
@@ -27,4 +28,11 @@ func changesRequested(ctx context.Context) bool {
 
 func requestCountRequested(ctx context.Context) bool {
 	return graphql.FieldRequested(ctx, "edges.node.requestEntryCount")
+}
+
+func countFirstPageOnly(cursor pagination.CursorInfo) pagination.CursorInfo {
+	if cursor.After != "" {
+		cursor.IncludeTotalCount = false
+	}
+	return cursor
 }

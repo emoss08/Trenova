@@ -98,7 +98,7 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 		{
 			ID:          "watchtower-retention",
 			Feature:     platformcatalog.FeatureAIWatchtower,
-			Description: "Remove watchtower items resolved more than a month ago",
+			Description: "Remove watchtower items resolved more than a month ago and resolutions past their 25 months",
 			// Weekly is often enough for a month-long window, and it keeps
 			// the delete off the nightly hour the reconcile already uses.
 			Spec:          schedule.Cron("10 4 * * 0"),

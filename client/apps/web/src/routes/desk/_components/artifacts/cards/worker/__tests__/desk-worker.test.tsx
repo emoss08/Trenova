@@ -319,15 +319,23 @@ describe("DeskWorker", () => {
       concerns: [
         {
           severity: "Critical",
-          code: "not_assignable",
-          headline: "Cannot be assigned",
-          detail: "",
+          code: "NotAssignable",
+          subject: null,
+          count: 1,
+          occurredAt: null,
+          dueAt: null,
+          daysUntil: null,
+          stopsAssignment: true,
         },
         {
           severity: "Warning",
-          code: "training_due",
-          headline: "Hazmat training due",
-          detail: "Due within 30 days.",
+          code: "TrainingDue",
+          subject: "Hazmat awareness",
+          count: 1,
+          occurredAt: null,
+          dueAt: NOW + 26 * DAY,
+          daysUntil: 26,
+          stopsAssignment: false,
         },
       ],
     });
@@ -363,8 +371,10 @@ describe("DeskWorker", () => {
 
     const standingSection = section("Standing");
     expect(await within(standingSection).findByText("Blocked")).toBeInTheDocument();
-    expect(within(standingSection).getByText("Hazmat training due")).toBeInTheDocument();
-    expect(within(standingSection).queryByText("Cannot be assigned")).toBeNull();
+    expect(
+      within(standingSection).getByText("Hazmat awareness is due in 26 days"),
+    ).toBeInTheDocument();
+    expect(within(standingSection).queryByText("Held from dispatch")).toBeNull();
 
     expect(await within(section("Other credentials")).findByText("Port pass")).toBeInTheDocument();
     expect(screen.getByText("Required, not on file")).toBeInTheDocument();

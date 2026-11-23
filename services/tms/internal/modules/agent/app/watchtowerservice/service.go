@@ -452,7 +452,7 @@ func (s *Service) HandOff(
 		)
 	}
 
-	if item.SourceKind == watchtower.SourceAgentException {
+	if item.SourceKind == watchtower.SourceKindAgentException {
 		return nil, errortypes.NewBusinessError(
 			"An agent raised this because it needs a person. Decide it here, or ask about it below.",
 		)

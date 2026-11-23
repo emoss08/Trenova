@@ -75,6 +75,27 @@ query WorkerHosState($workerId: ID!) {
   }
 }
 
+query WorkerHosClocks($workerId: ID!) {
+  workerHosState(workerId: $workerId) {
+    workerId
+    dutyStatus
+    dutyStatusSince
+    driveRemainingMs
+    shiftRemainingMs
+    cycleRemainingMs
+    cycleTomorrowMs
+    breakRemainingMs
+    cycleStartedAt
+    shiftDrivingViolationMs
+    cycleViolationMs
+    driveLimitMs
+    shiftLimitMs
+    cycleLimitMs
+    breakLimitMs
+    recordedAt
+  }
+}
+
 query WorkerHosViolations($workerId: ID, $since: Timestamp, $limit: Int) {
   workerHosViolations(workerId: $workerId, since: $since, limit: $limit) {
     workerId

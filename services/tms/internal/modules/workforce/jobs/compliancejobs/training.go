@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/notificationtemplate"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/drivernotificationservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerpage"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workertraining"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workertrainingports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
@@ -22,7 +23,6 @@ const (
 	eventDriverTrainingDue = "dash.training_due"
 	eventTrainingOverdue   = "training_overdue"
 	eventTrainingExpired   = "training_expired"
-	trainingLink           = "/hr/workers?tab=training"
 )
 
 // trainingDueSteps are the days-before-due marks a driver is nudged at; the
@@ -326,7 +326,14 @@ func (a *Activities) alertTraining(
 		EventType:      eventType,
 		Channel:        notification.ChannelGlobal,
 		Priority:       notification.PriorityHigh,
-		Data:           map[string]any{"link": trainingLink, "workerId": record.WorkerID.String()},
+		Data: map[string]any{
+			"link": workerpage.Path(
+				record.WorkerID,
+				workerpage.AtView(workerpage.TabDevelopment, workerpage.ViewTraining).
+					WithRecord(workerpage.RecordTraining, record.ID),
+			),
+			"workerId": record.WorkerID.String(),
+		},
 		RelatedEntities: map[string]any{
 			"workerId":         record.WorkerID.String(),
 			"trainingRecordId": record.ID.String(),

@@ -17,7 +17,9 @@ func boardCardToModel(card *assistantports.BoardCard) *gqlmodel.DeskBoardCard {
 		Question:   card.Question,
 		AnsweredAt: int(card.AnsweredAt),
 		ReadAt:     int(card.Filled.ReadAt),
+		Place:      string(card.Filled.Place),
 		Verdict:    segmentsToModel(card.Filled.Verdict),
+		Readings:   readingsToModel(card.Filled.Readings),
 		Blocks:     make([]*gqlmodel.DeskBoardBlock, 0, len(card.Filled.Blocks)),
 		Markdown:   card.Markdown,
 	}
@@ -30,25 +32,20 @@ func boardCardToModel(card *assistantports.BoardCard) *gqlmodel.DeskBoardCard {
 
 func blockToModel(block *board.FilledBlock) *gqlmodel.DeskBoardBlock {
 	model := &gqlmodel.DeskBoardBlock{
-		Type:    string(block.Type),
-		Title:   block.Title,
-		Half:    block.Half,
-		Numeral: block.Numeral,
-		State:   string(block.State),
-		Tone:    string(block.Tone),
-		Source: &gqlmodel.DeskBoardSource{
-			Kind:     string(block.Source.Kind),
-			Resource: string(block.Source.Resource),
-			Count:    block.Source.Count,
-			Readable: block.Source.Readable,
-			Title:    block.Source.Title,
-		},
+		Type:     string(block.Type),
+		Title:    block.Title,
+		Half:     block.Half,
+		Numeral:  block.Numeral,
+		State:    string(block.State),
+		Tone:     string(block.Tone),
+		Source:   sourceToModel(&block.Source),
 		Figures:  make([]*gqlmodel.DeskBoardFigure, 0, len(block.Figures)),
 		Measure:  string(block.Measure),
 		Rows:     rowsToModel(block.Rows),
 		Events:   make([]*gqlmodel.DeskBoardEvent, 0, len(block.Events)),
 		Checks:   make([]*gqlmodel.DeskBoardCheck, 0, len(block.Checks)),
 		Text:     segmentsToModel(block.Text),
+		Caption:  segmentsToModel(block.Caption),
 		NoteTone: string(block.NoteTone),
 		Chips:    rowsToModel(block.Chips),
 		Work:     workToModel(block.Work),
@@ -116,6 +113,34 @@ func blockToModel(block *board.FilledBlock) *gqlmodel.DeskBoardBlock {
 	}
 
 	return model
+}
+
+func sourceToModel(source *board.Source) *gqlmodel.DeskBoardSource {
+	return &gqlmodel.DeskBoardSource{
+		Kind:     string(source.Kind),
+		Resource: string(source.Resource),
+		Count:    source.Count,
+		Readable: source.Readable,
+		Title:    source.Title,
+	}
+}
+
+func readingsToModel(readings []board.FilledReading) []*gqlmodel.DeskBoardReading {
+	out := make([]*gqlmodel.DeskBoardReading, 0, len(readings))
+	for idx := range readings {
+		reading := &readings[idx]
+		out = append(out, &gqlmodel.DeskBoardReading{
+			Key:       reading.Key,
+			Label:     reading.Label,
+			Value:     valueToModel(reading.Value),
+			Was:       valueToModel(reading.Was),
+			Source:    sourceToModel(&reading.Source),
+			Measure:   string(reading.Measure),
+			Aggregate: string(reading.Aggregate),
+		})
+	}
+
+	return out
 }
 
 func compareToModel(compare *board.FilledCompare) *gqlmodel.DeskBoardCompare {
@@ -227,6 +252,7 @@ func segmentsToModel(segments []board.FilledSegment) []*gqlmodel.DeskBoardSegmen
 			Numeral: segment.Numeral,
 			Tone:    string(segment.Tone),
 			Struck:  segment.Struck,
+			Reading: segment.Reading,
 		})
 	}
 

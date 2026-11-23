@@ -22,7 +22,7 @@ func resolvedItem() *watchtower.Item {
 		Severity:        watchtower.SeverityCritical,
 		Status:          watchtower.StatusResolved,
 		ResolvedAt:      &at,
-		ResolutionCode:  watchtower.ResolutionCleared,
+		ResolutionCode:  watchtower.ResolutionCodeCleared,
 		ResolutionNote:  "cleared",
 		SourceClearedAt: &at,
 		AcknowledgedAt:  &at,

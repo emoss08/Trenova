@@ -97,6 +97,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruneventservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentrunservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/recordnumbers"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/toolaccess"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentsafetyservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentscorecardservice"
@@ -242,6 +243,7 @@ func SharedOptions() fx.Option {
 			novaharness.New,
 			toolaccess.NewIgnoredDisclosures,
 			toolaccess.New,
+			recordnumbers.New,
 			func(h *novaharness.Harness) llmports.TaskRunner { return h },
 			func(h *novaharness.Harness) llmports.TaskDeferrer { return h },
 			func(h *novaharness.Harness) llmports.TaskBatcher { return h },
@@ -296,6 +298,7 @@ func SharedOptions() fx.Option {
 			agentproposalbaselinerepository.New,
 			recordlabelrepository.New,
 			recordlabelrepository.NewRecordFinder,
+			recordlabelrepository.NewRecordNumbers,
 			recordsummaryrepository.New,
 			fx.Annotate(
 				boardcardservice.New,

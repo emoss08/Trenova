@@ -25,7 +25,7 @@ Keywords: carrier pay cycle, pay date, cost accrual trigger
 2. Under **Schedule**, choose the **Pay period** and the **Last day of the period**, and enter the
    **Pay delay** in days (0 to 30).
 3. Turn on **Generate settlements when a period ends** to have a batch drafted for each period.
-4. Under **Carrier cost**, choose when **Cost counts**: when the carrier's own leg is completed, when
+4. Under **Carrier cost**, choose when **Cost counts when**: when the carrier's own leg is completed, when
    the shipment is delivered, when it is ready to invoice or when the customer has been invoiced.
 5. Select **Save changes**.
 

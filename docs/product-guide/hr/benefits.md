@@ -44,12 +44,13 @@ Keywords: plan roster, enrolled employees, who has coverage
 
 ### Enroll a worker or record that they declined
 Keywords: enroll employee, add to plan, waive coverage, end coverage
-1. Open [Workers](/hr/workers), select the worker and go to the **Pay** tab.
-2. Under **Benefits**, select **Enroll or decline**.
+1. Open [Workers](/hr/workers), select the worker, go to the **Pay** tab and open the
+   **Benefits** view.
+2. Select **Enroll or decline**.
 3. Pick the **Plan**, the **Coverage** tier and **Effective from** date. Turn on
    **They declined the cover** to record a waiver instead, with the reason in **Why**.
 4. Select **Enroll** (or **Record** for a waiver).
-5. To stop someone's cover later, select **End cover** beside the plan on the same tab.
+5. To stop someone's cover later, select **End cover** in the plan's options on the same view.
 
 ## Notes
 - The page appears only for organizations that run their own assets (asset operations) and needs

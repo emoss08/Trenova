@@ -1084,7 +1084,7 @@ func (s *Service) projectToWatchtower(
 		return
 	}
 
-	s.watchtower.Resolve(ctx, tenantInfo, watchtower.SourceBillingException, item.ID.String())
+	s.watchtower.Resolve(ctx, tenantInfo, watchtower.SourceKindBillingException, item.ID.String())
 }
 
 func (s *Service) completeReplacementReview(

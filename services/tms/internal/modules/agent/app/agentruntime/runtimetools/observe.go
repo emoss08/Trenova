@@ -46,7 +46,7 @@ func Observe(
 	}
 
 	if _, boards := outcome.Data.(agentruntimeports.BoardRequest); boards {
-		return boardShown(&outcome, shown, err)
+		return boardShown(call.Name, &outcome, shown, err)
 	}
 	if outcome.Publishes {
 		return documentKept(&outcome, shown, err)
@@ -62,6 +62,7 @@ func Observe(
 }
 
 func boardShown(
+	tool string,
 	outcome *toolcall.Result,
 	shown *agentruntimeports.ShownArtifact,
 	err error,
@@ -70,15 +71,16 @@ func boardShown(
 		return toolcall.Failed(
 			"Tool %q did not show the board: %s. Fix the call and send it "+
 				"again.",
-			"show_board",
+			tool,
 			mistake.Reason,
 		)
 	}
 	if err != nil || shown == nil {
 		return toolcall.Failed("Tool %q could not show the board just now. Answer in your "+
-			"reply instead.", "show_board")
+			"reply instead.", tool)
 	}
-	outcome.Content = BoardContent(shown)
+	request, _ := outcome.Data.(agentruntimeports.BoardRequest)
+	outcome.Content = BoardContent(tool, shown, request.Asked)
 	outcome.Summary = toolsummary.Line(shown.Title)
 
 	return *outcome

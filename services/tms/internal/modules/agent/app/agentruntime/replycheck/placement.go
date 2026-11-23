@@ -122,7 +122,7 @@ func discardedDraft(t Turn, idx int) bool {
 func isCorrection(message *llmports.Message) bool {
 	return message.Role == llmports.RoleSystem &&
 		(strings.HasPrefix(message.Content, PlacementCorrectionLead) ||
-			isGroundingCorrection(message.Content))
+			isGroundingCorrection(message.Content) || isBoardCorrection(message.Content))
 }
 
 func shownArtifact(t Turn, id string) (*agentruntimeports.ShownArtifact, bool) {

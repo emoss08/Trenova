@@ -22,8 +22,9 @@ certify and post the 300A.
 
 ### Record a new injury or illness
 Keywords: add OSHA case, report injury, workplace accident
-1. Open [Workers](/hr/workers), select the worker and go to the **Safety** tab.
-2. Under **Injuries & illnesses**, select **Record a case**.
+1. Open [Workers](/hr/workers), select the worker, go to the **Safety** tab and find
+   **Injuries and illnesses**. You can also choose **Add to record** on the worker's page.
+2. Select **Record a case**.
 3. Fill in the dates, **What happened**, **Where**, **Body part**, the **Injury or illness** type,
    **Treatment given**, days away or restricted, and the **OSHA classification**, then save. A
    recordable case appears on this log for the year it happened.
@@ -33,7 +34,7 @@ Keywords: look up injury case, case details
 1. Open [OSHA 300 log](/hr/osha-log) and pick the year.
 2. Filter the cases or search by name, injury or place.
 3. Open the row's actions menu and choose **Open case** to see the full case, including any
-   workers' compensation claim, or **Open worker** to go to the worker's safety tab.
+   workers' compensation claim, or **Open worker** to go to the worker's page.
 
 ### Correct or delete a case
 Keywords: edit OSHA case, fix injury record, remove case

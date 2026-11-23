@@ -12,9 +12,11 @@ import (
 
 	"github.com/emoss08/trenova/internal/deskbench/benchagent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpagecontext"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/board"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/codemode"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationqueue"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/evalsplit"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"gopkg.in/yaml.v3"
 )
@@ -262,12 +264,32 @@ type Expect struct {
 	Proposals       []ExpectedWrite `yaml:"proposals"       json:"proposals,omitempty"`
 	NoProposals     bool            `yaml:"noProposals"     json:"noProposals,omitempty"`
 	Executed        *bool           `yaml:"executed"        json:"executed,omitempty"`
+	Board           *ExpectedBoard  `yaml:"board"           json:"board,omitempty"`
+	NoBoard         bool            `yaml:"noBoard"         json:"noBoard,omitempty"`
 	Facts           []Fact          `yaml:"facts"           json:"facts,omitempty"`
 	DB              []DBCheck       `yaml:"db"              json:"db,omitempty"`
 	MaxSeconds      *float64        `yaml:"maxSeconds"      json:"maxSeconds,omitempty"`
 	Run             string          `yaml:"run"             json:"run,omitempty"`
 	Flagged         *bool           `yaml:"flagged"         json:"flagged,omitempty"`
 	Rubric          string          `yaml:"rubric"          json:"rubric,omitempty"`
+}
+
+type ExpectedBoard struct {
+	Place       string   `yaml:"place"       json:"place,omitempty"`
+	MinReadings int      `yaml:"minReadings" json:"minReadings,omitempty"`
+	Reads       []string `yaml:"reads"       json:"reads,omitempty"`
+}
+
+func (b *ExpectedBoard) validate() error {
+	for _, measure := range b.Reads {
+		if !slices.ContainsFunc(board.Resources(), func(resource permission.Resource) bool {
+			return board.Measure(measure).Of(resource)
+		}) {
+			return fmt.Errorf("board.reads: %q is not a measure a board reads", measure)
+		}
+	}
+
+	return nil
 }
 
 type ExpectedWrite struct {
@@ -697,6 +719,14 @@ func validateChecks(where string, expect *Expect) error {
 	}
 	if expect.NoProposals && len(expect.Proposals) > 0 {
 		return fmt.Errorf("%s: noProposals and proposals cannot both be expected", where)
+	}
+	if expect.NoBoard && expect.Board != nil {
+		return fmt.Errorf("%s: noBoard and board cannot both be expected", where)
+	}
+	if expect.Board != nil {
+		if err := expect.Board.validate(); err != nil {
+			return fmt.Errorf("%s: %w", where, err)
+		}
 	}
 
 	return nil

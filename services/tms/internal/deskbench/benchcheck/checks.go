@@ -198,6 +198,12 @@ func replyChecks(
 	if expect.Refused != nil {
 		checks = append(checks, refusedCheck(*expect.Refused, evidence.Turns))
 	}
+	if expect.Board != nil {
+		checks = append(checks, boardCheck(expect.Board, evidence.Turns))
+	}
+	if expect.NoBoard {
+		checks = append(checks, noBoardCheck(evidence.Turns))
+	}
 
 	return checks
 }

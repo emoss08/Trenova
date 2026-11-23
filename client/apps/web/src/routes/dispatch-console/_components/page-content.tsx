@@ -1,4 +1,5 @@
 import type { DispatchBoardDriver, DispatchBoardMove } from "@/lib/graphql/dispatch-console";
+import { SidePane } from "@/components/side-pane";
 import { PlanFeature } from "@/lib/plan-feature";
 import { dispatchConsoleQueries } from "@/lib/queries/dispatch-console";
 import { watchtower } from "@/lib/queries/watchtower";
@@ -10,7 +11,6 @@ import { useOrgCapabilities } from "@trenova/shared/hooks/use-org-capabilities";
 import { useNow } from "@trenova/shared/hooks/use-now";
 import { usePlanFeature } from "@trenova/shared/hooks/use-plan-feature";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { cn } from "@trenova/shared/lib/utils";
 import {
   hasOrganizationCapability,
   OrganizationCapability,
@@ -386,7 +386,8 @@ export function DispatchConsoleContent({ actions }: { actions: DispatchActions }
 
           {/* Opens and closes by width, so the queue gives up and takes back the room
               rather than being covered. */}
-          <aside
+          <SidePane
+            open={inspectorOpen}
             aria-label={
               selectedMove
                 ? t("Move {0}", selectedMove.proNumber)
@@ -394,48 +395,39 @@ export function DispatchConsoleContent({ actions }: { actions: DispatchActions }
                   ? t("Driver {0} {1}", selectedDriver.firstName, selectedDriver.lastName)
                   : t("Inspector")
             }
-            aria-hidden={!inspectorOpen}
-            inert={!inspectorOpen}
-            className={cn(
-              "bg-background min-h-0 shrink-0 overflow-hidden border-l transition-[width,opacity,border-color] duration-320 ease-settle motion-reduce:transition-none",
-              inspectorOpen
-                ? "border-border w-100 opacity-100"
-                : "w-0 border-transparent opacity-0",
-            )}
+            className="bg-background"
           >
-            <div className="flex h-full w-100 flex-col">
-              {inspectorOpen ? (
-                <Suspense fallback={<InspectorSkeleton />}>
-                  <Inspector
-                    move={selectedMove}
-                    moveRead={
-                      offBoard
-                        ? {
-                            isPending: moveQuery.isPending,
-                            isError: moveQuery.isError,
-                            error: moveQuery.error,
-                            refetch: () => void moveQuery.refetch(),
-                          }
-                        : boardQuery.isPending
-                          ? { isPending: true, isError: false, error: null, refetch: () => {} }
-                          : null
-                    }
-                    outsideWindow={outsideWindow}
-                    driver={selectedMove ? null : selectedDriver}
-                    range={range}
-                    hotkeysEnabled={!hasDialogOpen}
-                    queueScope={queueScope}
-                    onClose={clearSelection}
-                    onSelectMove={selectMove}
-                    onNextMove={nextMove}
-                    onCovered={onCovered}
-                    onJumpTo={(move) => setAnchor(new Date(move.originWindowStart * 1000))}
-                    actions={actions}
-                  />
-                </Suspense>
-              ) : null}
-            </div>
-          </aside>
+            {inspectorOpen ? (
+              <Suspense fallback={<InspectorSkeleton />}>
+                <Inspector
+                  move={selectedMove}
+                  moveRead={
+                    offBoard
+                      ? {
+                          isPending: moveQuery.isPending,
+                          isError: moveQuery.isError,
+                          error: moveQuery.error,
+                          refetch: () => void moveQuery.refetch(),
+                        }
+                      : boardQuery.isPending
+                        ? { isPending: true, isError: false, error: null, refetch: () => {} }
+                        : null
+                  }
+                  outsideWindow={outsideWindow}
+                  driver={selectedMove ? null : selectedDriver}
+                  range={range}
+                  hotkeysEnabled={!hasDialogOpen}
+                  queueScope={queueScope}
+                  onClose={clearSelection}
+                  onSelectMove={selectMove}
+                  onNextMove={nextMove}
+                  onCovered={onCovered}
+                  onJumpTo={(move) => setAnchor(new Date(move.originWindowStart * 1000))}
+                  actions={actions}
+                />
+              </Suspense>
+            ) : null}
+          </SidePane>
         </div>
       </div>
       <ConsoleOverlays actions={actions} />

@@ -19,6 +19,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/employment"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercompliance"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerdot"
@@ -134,12 +135,9 @@ func (s *Service) File(
 	}
 
 	var (
-		credentials   *workercredential.WorkerCredentialSummary
-		documents     *documentpacketrule.PacketSummary
-		verifications []*employment.WorkerEmploymentVerification
-		standing      workerdot.DrugAlcoholStanding
+		credentials *workercredential.WorkerCredentialSummary
+		standing    workerdot.DrugAlcoholStanding
 	)
-
 	group, groupCtx := errgroup.WithContext(ctx)
 	group.Go(func() error {
 		var gErr error
@@ -148,11 +146,55 @@ func (s *Service) File(
 	})
 	group.Go(func() error {
 		var gErr error
+		standing, gErr = s.drugAlcohol.Standing(groupCtx, tenantInfo, workerID)
+		return gErr
+	})
+	if err = group.Wait(); err != nil {
+		return nil, err
+	}
+
+	parts, err := s.FileFor(ctx, &FileForRequest{
+		TenantInfo:  tenantInfo,
+		Worker:      wrk,
+		Credentials: credentials,
+		DrugAlcohol: &standing,
+		Now:         timeutils.NowUnix(),
+	})
+	if err != nil {
+		return nil, err
+	}
+	return parts.File, nil
+}
+
+type FileForRequest struct {
+	TenantInfo  pagination.TenantInfo
+	Worker      *worker.Worker
+	Credentials *workercredential.WorkerCredentialSummary
+	DrugAlcohol *workerdot.DrugAlcoholStanding
+	Now         int64
+}
+
+type FileParts struct {
+	File          *workercompliance.DQFFile
+	Verifications []*employment.WorkerEmploymentVerification
+}
+
+func (s *Service) FileFor(ctx context.Context, req *FileForRequest) (*FileParts, error) {
+	workerID := req.Worker.ID
+	var (
+		documents     *documentpacketrule.PacketSummary
+		verifications []*employment.WorkerEmploymentVerification
+		retention     int
+	)
+
+	group, groupCtx := errgroup.WithContext(ctx)
+	group.Go(func() error {
+		var gErr error
 		documents, gErr = s.documents.GetPacketSummary(
 			groupCtx,
 			workerResourceType,
 			workerID.String(),
-			tenantInfo,
+			req.TenantInfo,
 		)
 		return gErr
 	})
@@ -161,37 +203,35 @@ func (s *Service) File(
 		verifications, gErr = s.repo.ListVerifications(
 			groupCtx,
 			&workerdqfports.ListEmploymentVerificationsRequest{
-				TenantInfo: tenantInfo,
+				TenantInfo: req.TenantInfo,
 				WorkerID:   workerID,
 			},
 		)
 		return gErr
 	})
 	group.Go(func() error {
-		var gErr error
-		standing, gErr = s.drugAlcohol.Standing(groupCtx, tenantInfo, workerID)
-		return gErr
+		retention = s.retentionDays(groupCtx, req.TenantInfo)
+		return nil
 	})
-
-	if err = group.Wait(); err != nil {
+	if err := group.Wait(); err != nil {
 		return nil, err
 	}
 
 	in := workercompliance.DQFInput{
 		WorkerID:      workerID,
-		Credentials:   credentials,
+		Credentials:   req.Credentials,
 		Documents:     documents,
 		Verifications: verifications,
-		RetentionDays: s.retentionDays(ctx, tenantInfo),
-		Now:           timeutils.NowUnix(),
+		DrugAlcohol:   req.DrugAlcohol,
+		RetentionDays: retention,
+		Now:           req.Now,
 	}
-	in.DrugAlcohol = &standing
-	if wrk.Profile != nil {
-		in.HireDate = wrk.Profile.HireDate
-		in.TerminationDate = wrk.Profile.TerminationDate
+	if req.Worker.Profile != nil {
+		in.HireDate = req.Worker.Profile.HireDate
+		in.TerminationDate = req.Worker.Profile.TerminationDate
 	}
 
-	return workercompliance.BuildDQF(in), nil
+	return &FileParts{File: workercompliance.BuildDQF(in), Verifications: verifications}, nil
 }
 
 // retentionDays reads the organisation's hold period. A tenant with no
@@ -255,6 +295,7 @@ func (s *Service) audit(ctx context.Context, p *auditParams) {
 		BusinessUnitID: p.tenant.BuID,
 	}
 	opts := []auditports.LogOption{auditservice.WithComment(p.comment)}
+	opts = append(opts, auditservice.WithSubjectOf(p.current, p.previous))
 	if p.previous != nil {
 		params.PreviousState = jsonutils.MustToJSON(p.previous)
 		opts = append(opts, auditservice.WithDiff(p.previous, p.current))

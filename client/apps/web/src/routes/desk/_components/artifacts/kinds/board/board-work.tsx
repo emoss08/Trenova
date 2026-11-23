@@ -5,6 +5,7 @@ import { useDeskStore } from "@/stores/desk-store";
 import { Button } from "@trenova/shared/components/ui/button";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
+import type { CSSProperties } from "react";
 import { casePath } from "../../../attention/attention-record";
 import { lensLabel } from "../../../attention/lens";
 import { formatCountdown, isHot, showsCountdown } from "../../../watchtower/lanes";
@@ -81,30 +82,36 @@ export function BoardWork({ rows, now }: { rows: readonly WorkRow[]; now: number
 }
 
 /**
- * An actions block: up to three buttons the agent offers. Each sends its
- * request as the person's own message into the board's conversation and
- * changes nothing itself; whatever the agent proposes in reply waits for
- * approval like any other change.
+ * An actions block: up to three buttons the agent offers, the first solid as
+ * the one it would press, the rest quiet. Each sends its request as the
+ * person's own message into the board's conversation and changes nothing
+ * itself; whatever the agent proposes in reply waits for approval like any
+ * other change. The pane and the conversation draw the same block.
  */
 export function BoardActions({
   actions,
   threadId,
   half,
+  className,
+  style,
 }: {
   actions: readonly BoardAction[];
   threadId: string;
   half: boolean;
+  className?: string;
+  style?: CSSProperties;
 }) {
   const t = useT();
   const askAgent = useDeskStore((state) => state.askAgent);
 
   return (
     <div
-      className={cn("dk-bd-actions", half && "dk-bd-half")}
+      className={cn("dk-bd-actions", half && "dk-bd-half", className)}
+      style={style}
       role="group"
       aria-label={t("Ask the agent")}
     >
-      {actions.map((action) => {
+      {actions.map((action, index) => {
         const named = action.records
           .filter((record) => record.readable && record.label !== "")
           .map((record) => record.label)
@@ -113,7 +120,7 @@ export function BoardActions({
         return (
           <Button
             key={action.label}
-            variant="outline"
+            variant={index === 0 ? "default" : "secondary"}
             size="sm"
             title={ask}
             onClick={() => askAgent(threadId, ask)}

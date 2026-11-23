@@ -64,6 +64,9 @@ anchor. A scenario is set from the environment when the server starts, or at any
 | `accountingAuth`     | `signIn` \| `certificate`                        | `signIn`        | NetSuite only: connected with a sign-in or a certificate |
 | `managedPlan`        | `selfHosted` \| `managed` \| `bare` \| `ending` \| `endingBare` | `selfHosted`    | "Your plan" (`/admin/plan`, `handlers/managedplan.mjs`): a self-hosted install (the page is not routed), a managed instance with this period's usage, an add-on set to end and the link to the Trenova account, a managed instance before the control plane has sent usage or the link, the managed plan set to end at the close of its period (the notice with Keep plan, and a final backup kept 7 days rather than the default 30, so a screenshot shows the number is not fixed text), or that end without the account link (the notice alone). Any value but `selfHosted` makes the public config say `managed` |
 | `supportLogs`        | `history` \| `empty` \| `inFlight` \| `limit`    | `history`       | "Send logs to Trenova support" on `/admin/support-access` (`handlers/supportlogs.mjs`), shown when `managedPlan` is not `selfHosted`: one request sent and one failed, none yet, one being collected (the button held), or five sent in the last 24 hours (the daily limit). A request the page makes moves to Collecting after 4s and Sent after 12s, each announced on the realtime stream |
+| `workerAccess` | `full` \| `dispatcher` | `full` | The worker page's reader (`handlers/worker.mjs`): every permission, or a role without the Personal field group (`protected_personal`) and without credential read (`worker_credential`), so date of birth, license number and TWIC number come back withheld, the overview's `clearance` and `credentials` are null and Credentials is not drawn |
+| `workerPlan` | `full` \| `core` | `full` | The worker page's plan: everything, or off `workforce.compliance` and `workforce.time_off` (the manifest's `unavailableFeatures`), so Credentials, DQ file, Drug and alcohol, Time off and Leave and their strip cells go, and the overview's sections for them are null |
+| `workerHos` | `reporting` \| `notConnected` | `reporting` | Hours of service on the worker page: stored state for every linked driver, or no telematics connected (`WorkerOverview.hos.link` is `NotConnected`, `TelematicsStatus` not configured). Kenji Tanaka is never linked, so his Hours view shows the not-linked state in either |
 
 ```bash
 curl -X POST localhost:8080/__mock/scenario \
@@ -77,7 +80,7 @@ so an open page refetches. Environment equivalents: `MOCK_BOARD`, `MOCK_AI=0`,
 `MOCK_OPERATION_TYPE`, `MOCK_HOS=0`, `MOCK_MAPS=1`, `MOCK_LIST_ROWS`, `MOCK_AI_PROVIDERS`,
 `MOCK_AI_PAUSED=1`, `MOCK_DESK`, `MOCK_DESK_SLUG`, `MOCK_TRIAGE`, `MOCK_TRIAGE_TIME`,
 `MOCK_TRIAGE_REPLY_MS`, `MOCK_PALETTE=1`, `MOCK_LADING`, `MOCK_ACCOUNTING`, `MOCK_ACCOUNTING_SYSTEM`,
-`MOCK_ACCOUNTING_APP`, `MOCK_ACCOUNTING_AUTH`, `MOCK_MANAGED_PLAN`, `MOCK_SUPPORT_LOGS`, `MOCK_WEB_ORIGIN` (the web app origin an accounting
+`MOCK_ACCOUNTING_APP`, `MOCK_ACCOUNTING_AUTH`, `MOCK_MANAGED_PLAN`, `MOCK_SUPPORT_LOGS`, `MOCK_WORKER_ACCESS`, `MOCK_WORKER_PLAN`, `MOCK_WORKER_HOS`, `MOCK_WEB_ORIGIN` (the web app origin an accounting
 sign-in returns to, default `http://localhost:5173`), plus `MOCK_TRIAGE_LIVE_MS` (the live arrival interval, default 26000),
 `MOCK_API_PORT` (default 8080) and `MOCK_API_PUBLIC_URL` (the origin avatar URLs are built on).
 
@@ -165,6 +168,63 @@ An operation the mock does not know is logged as `unhandled GraphQL operation <n
 `unhandled GET <path>`) and answered with an empty result; add a handler in
 `handlers/graphql.mjs` or `handlers/rest.mjs` when a new one appears.
 
+## Worker record page
+
+The worker record page (`/hr/workers/<id>`, every tab, view and work pane), the new worker form
+(`/hr/workers/new`) and the roster (`/hr/workers`, fourteen workers, with the record page's roster
+stepper) are served by `handlers/worker.mjs` from the files in `fixtures/worker/`. The default
+worker is Maria Alvarez, built from `design-plans/worker-page/DESIGN.md` §4 and §6: 8 required
+credentials on file (the medical card expiring Feb 14, 2027, the tanker endorsement unverified),
+the DQ file incomplete with Ridgeline Freight outstanding, 5 of 6 required courses current, safety
+score 74 with 7 active points, today's duty log and clocks, 9.5 vacation days available with 2
+requested, the OTR mileage profile with her $0.62 loaded-mile override, two benefit plans and a
+401(k) not started, Dash linked with one profile change waiting, 14 documents, 4 agent memories and
+her activity trail. The page is drawn for **Sunday 22 November 2026, 4:08 PM UTC**
+(`WORKER_NOW` in `fixtures/worker/base.mjs`); freeze the browser clock there (the walkthrough
+does) so "in 17 days" and the duty log line up.
+
+`handlers/worker-derive.mjs` ports the server's rules, so the overview agrees with the lists behind
+it and moves when the page writes: credential and training health and their summaries, the DQ
+file counts, the drug and alcohol standing, the safety scorecard, checklist progress, time off
+balances from the ledger, and the standing, concerns (one per record) and clearance runway of
+`workercompliance` (no dispatch compliance verdicts are modelled, so only a required credential
+stops assignment). Writes are kept for the scenario: verify, add, renew or archive a credential,
+chase an employer, log a query, record a training result, record an employment event (the preview
+lists the effects the write then carries out; Terminated ends the policy, pays out vacation,
+cancels requested time off, ends the pay assignment, revokes Dash and starts offboarding), work a
+checklist, decide time off or a profile change (approving one changes her phone), save the
+Profile (`PUT /workers/:id/` keeps the ten fields the server derives), create a worker (`POST
+/workers/`: a Hired event, onboarding, required training and the default policy), and upload a
+document (the single-part upload session `useDocumentUpload` speaks). Refusals carry the server's
+problem details.
+
+| Worker           | Open                                         | What it shows                                                                                                 |
+| ---------------- | -------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| Maria Alvarez    | `/hr/workers/wrk_01JF8Q2M3V0000000000000001` | The default: cleared through Feb 14, 2027, standing Watch                                                     |
+| Darnell Brooks   | `/hr/workers/wrk_01JF8Q2M3V0000000000000002` | Not cleared: his medical card lapsed Nov 2, 2026, standing Blocked                                            |
+| Kenji Tanaka     | `/hr/workers/wrk_01JF8Q2M3V0000000000000003` | Hired Nov 18, 2026, mid-onboarding: nothing on file, every list empty, Dash invited, HOS not linked           |
+| The other eleven | from the roster                              | Good, Watch, At risk (training overdue), on leave, a contractor, a terminated driver, local drivers on shifts |
+
+The reader, plan and telematics variants are the scenario fields `workerAccess`, `workerPlan` and
+`workerHos` above:
+
+```bash
+curl -X POST localhost:8080/__mock/scenario -H 'content-type: application/json' \
+  -d '{"workerAccess":"dispatcher"}'   # or {"workerPlan":"core"} or {"workerHos":"notConnected"}
+```
+
+```bash
+node e2e/mock-api/worker-screenshots.mjs [outDir] [name,name,...]
+```
+
+shoots every tab and view of Maria at 1600 by 900 in light and dark, the work panes (adding a
+credential, a credential read, Record event with Terminated's "What this will do", a training
+result, a safety event, an action, a time off request, the profile change review), the Profile save
+dock, the Add to record menu, the roster and the stepper, the new worker form, each variant's
+Overview and empty views, and the page at 1280 and 400 wide. Each shot starts from a fresh
+scenario. It writes to `e2e/mock-api/screenshots/worker` by default; `SCALE` sets the device
+scale.
+
 ## Customer tracking
 
 `handlers/customertracking.mjs` serves the customer's tracking page and the shipment panel's
@@ -199,20 +259,20 @@ library that is not archived (a library is left out of its own), the accessorial
 Three saved copies of "Regional per mile + fuel", each importing `org.accessorials`, and an LTL
 tariff for the language's newer features:
 
-| Id                  | Status        | What it shows |
-| ------------------- | ------------- | ------------- |
-| `fmt_studio_draft`  | Draft, v4     | v3 is the approved version (fuel 14%); v4 raises fuel to 18%, but its first test still expects the 14% total, so it fails, the outline shows a red dot and Submit is refused until the test is fixed. Usage: 6 rate agreements, 2 rules, 214 shipments |
-| `fmt_studio_review` | In review, v3 | Submitted by Dana Whitfield two days ago with the signed-in person as the requested reviewer and a note; v2 (fuel 16%) is production, so the impact and the review diff have something to show. Every test passes, so it can be approved |
-| `fmt_studio_active` | Active, v2    | Approved by Priya Shah |
+| Id                  | Status        | What it shows                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| ------------------- | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `fmt_studio_draft`  | Draft, v4     | v3 is the approved version (fuel 14%); v4 raises fuel to 18%, but its first test still expects the 14% total, so it fails, the outline shows a red dot and Submit is refused until the test is fixed. Usage: 6 rate agreements, 2 rules, 214 shipments                                                                                                                                                                                                                          |
+| `fmt_studio_review` | In review, v3 | Submitted by Dana Whitfield two days ago with the signed-in person as the requested reviewer and a note; v2 (fuel 16%) is production, so the impact and the review diff have something to show. Every test passes, so it can be approved                                                                                                                                                                                                                                        |
+| `fmt_studio_active` | Active, v2    | Approved by Priya Shah                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
 | `fmt_studio_ltl`    | Draft, v1     | "LTL weight breaks": bounded inputs (two rate ranges, a minimum range, a service list), a weight break that inverts at 1,000 lb so `heavier never bills less` fails with a monotone counterexample (999 lb at $309.69, 1,000 lb at $250.00), a passing property over distance and the rate's bounds, a `best "Linehaul"` of three methods (the volume method refuses below 45,000 lb), and a hazmat fee and volume charge no test reaches, so coverage reaches 10 of 13 regions |
 
 Three libraries:
 
-| Id                       | Path               | Status        | What it shows |
-| ------------------------ | ------------------ | ------------- | ------------- |
+| Id                       | Path               | Status        | What it shows                                                                               |
+| ------------------------ | ------------------ | ------------- | ------------------------------------------------------------------------------------------- |
 | `fl_studio_accessorials` | `org.accessorials` | Active, v3    | `extraStops`, `hazmat` and `HAZMAT_FEE`, imported by every template, with two review rounds |
-| `fl_studio_fuel`         | `org.fuel`         | In review, v3 | the peg moved to $1.25, submitted to the signed-in person; v2 is approved |
-| `fl_studio_zones`        | `org.zones`        | Draft, v1     | a test that fails (`786` is zone 3, not 2), so Submit is refused |
+| `fl_studio_fuel`         | `org.fuel`         | In review, v3 | the peg moved to $1.25, submitted to the signed-in person; v2 is approved                   |
+| `fl_studio_zones`        | `org.zones`        | Draft, v1     | a test that fails (`786` is zone 3, not 2), so Submit is refused                            |
 
 A created template is `fmt_studio_new_<n>` and a created library `fl_studio_new_<n>`. The
 reviewers are Priya Shah, Marcus Lee and Dana Whitfield (Triage's team). The real-shipment picker
@@ -626,6 +686,16 @@ shipment and the chart's analysis no longer readable) or `reading` (held, so eac
 skeleton). It shoots each on the artifact's page, beside the conversation and in a narrow window,
 and writes to `e2e/mock-api/screenshots/desk-board` by default.
 
+The same script shoots boards placed in the conversation as the reply itself, at
+`/desk/t/athr_desk_board_inline`: eight late loads (a list cut to six rows), the same loads as
+`show_answer` made them (two groups side by side, each captioned, one caption placing a reading,
+with its call in that tool's shape and its result fenced as the runtime saves it), Acme Foods' credit (a
+figure beside a meter, a list and an action) and a carrier comparison asked and then revised, so
+the first reply draws its words and the revision's reply draws the board. There `deskBoard` also
+takes `locked` (a reader who may not read two of the loads: a reading said in words, two rows
+counted and not named) and `unreadable` (each reply draws its words, a notice and Try again). The
+`inline-*` shots hover a reading for its popover, and a cited phrase to light its exhibit.
+
 The Desk's extraction artifact, what document intelligence read off a file, has its own
 walkthrough:
 
@@ -721,6 +791,9 @@ fixtures/accounting.mjs  Accounting providers' profiles, companies, mappings and
 fixtures/integration-catalog.mjs  The integration catalog, ported from integrationports.CatalogDefinitions
 handlers/accounting.mjs  Accounting setup's GraphQL operations and the integrations catalog routes
 handlers/supportlogs.mjs  Sending logs to Trenova support: the requests, the daily limit and a request moving on
+fixtures/worker/      The worker page: the organization's catalogs, record builders, Maria Alvarez and the roster
+handlers/worker.mjs   The worker page, new worker form and roster: every operation, the writes, variants and REST routes
+handlers/worker-derive.mjs  The server's rules for health, summaries, standing, concerns and clearance
 fixtures/ai/          Catalogs dumped from the Go service
 handlers/rest.mjs     REST routes the shell and board call
 handlers/graphql.mjs  GraphQL operations, keyed by operation name
@@ -746,6 +819,7 @@ desk-case-screenshots.mjs   Playwright walkthrough of a Desk case and a reply un
 desk-edi-draft-screenshots.mjs  Playwright walkthrough of an EDI connection drafted from a guide
 lading-studio-screenshots.mjs  Playwright walkthrough of the Lading studio
 settings-screenshots.mjs    Playwright walkthrough of Settings
+worker-screenshots.mjs      Playwright walkthrough of the worker record page
 palette-screenshots.mjs     Playwright walkthrough of the command palette
 triage-screenshots.mjs  Playwright walkthrough of Triage
 check-triage.mjs      Sends every Triage operation and checks each response against its selection

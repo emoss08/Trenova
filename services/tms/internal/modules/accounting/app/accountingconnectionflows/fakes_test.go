@@ -689,7 +689,11 @@ type fakeAudit struct {
 	entries []*auditports.LogActionParams
 }
 
-func (f *fakeAudit) LogAction(_ context.Context, params *auditports.LogActionParams, _ ...auditports.LogOption) error {
+func (f *fakeAudit) LogAction(
+	_ context.Context,
+	params *auditports.LogActionParams,
+	_ ...auditports.LogOption,
+) error {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.entries = append(f.entries, params)
@@ -724,7 +728,7 @@ func (f *fakeWatchtower) Resolve(
 ) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
-	if kind != watchtower.SourceAccountingSync {
+	if kind != watchtower.SourceKindAccountingSync {
 		panic("resolved with the wrong kind: " + string(kind))
 	}
 	f.items[sourceID] = projection{resolved: true}

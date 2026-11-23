@@ -325,22 +325,33 @@ describe("hosClocks", () => {
 });
 
 describe("standing", () => {
-  const concerns = [
-    {
-      severity: "Critical",
-      code: "credentials_expired",
-      headline: "1 credential has expired",
-      detail: "",
-    },
-    { severity: "Critical", code: "not_assignable", headline: "Cannot be assigned", detail: "" },
-    { severity: "Warning", code: "training_due", headline: "Hazmat training due", detail: "" },
-    { severity: "Info", code: "checklist_open", headline: "Onboarding open", detail: "" },
-  ] as DeskWorkerStanding["concerns"];
+  const concern = (
+    severity: DeskWorkerStanding["concerns"][number]["severity"],
+    code: DeskWorkerStanding["concerns"][number]["code"],
+  ): DeskWorkerStanding["concerns"][number] => ({
+    severity,
+    code,
+    subject: null,
+    count: 1,
+    occurredAt: null,
+    dueAt: null,
+    daysUntil: null,
+    stopsAssignment: false,
+  });
+  const concerns: DeskWorkerStanding["concerns"] = [
+    concern("Critical", "CredentialExpired"),
+    concern("Critical", "NotAssignable"),
+    concern("Warning", "TrainingDue"),
+    concern("Warning", "CredentialExpiring"),
+    concern("Info", "ChecklistOpen"),
+    concern("Info", "NotEmployed"),
+    concern("Critical", "CredentialMissing"),
+  ];
 
   it("keeps the concerns the card shows nowhere else, in the server's order", () => {
     expect(standingConcerns(concerns).map((concern) => concern.code)).toEqual([
-      "training_due",
-      "checklist_open",
+      "TrainingDue",
+      "ChecklistOpen",
     ]);
   });
 

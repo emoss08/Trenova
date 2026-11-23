@@ -22,6 +22,14 @@ func (r *Resolver) Reason(ctx context.Context, d *Denial) string {
 		return ""
 	case d.Use.Decision == NotOnPlan:
 		return planReason(locale, d, entity, plural)
+	case d.Use.Decision == NeedsOperation:
+		return i18n.Translate(
+			locale,
+			"{0} need the \"{1}\" permission on {2}",
+			plural,
+			r.OperationLabel(locale, d.Use.Kind, d.Use.Operation),
+			r.ResourceLabel(locale, d.Use.Kind),
+		)
 	case d.Label == "" && d.Use.Decision == NeedsKindRead:
 		return i18n.Translate(locale, "you do not have read access to {0}", plural)
 	case d.Label == "" && d.Use.Decision == NeedsExport:
@@ -85,6 +93,8 @@ func (r *Resolver) Need(use Use) string {
 		return use.Kind.String() + " export"
 	case OwnScopeUnsupported:
 		return use.Kind.String() + " access beyond your own records"
+	case NeedsOperation:
+		return use.Kind.String() + " " + string(use.Operation)
 	case NotOnPlan:
 		if use.Plan == nil || use.Plan.AddOnName == "" {
 			return "a plan that includes it"
@@ -93,6 +103,28 @@ func (r *Resolver) Need(use Use) string {
 	default:
 		return "access"
 	}
+}
+
+func (r *Resolver) ResourceLabel(locale i18n.Locale, resource permission.Resource) string {
+	if def, ok := r.registry.Get(resource.String()); ok && def.DisplayName != "" {
+		return i18n.Translate(locale, def.DisplayName)
+	}
+	return resource.String()
+}
+
+func (r *Resolver) OperationLabel(
+	locale i18n.Locale,
+	resource permission.Resource,
+	operation permission.Operation,
+) string {
+	if def, ok := r.registry.Get(resource.String()); ok {
+		for _, op := range def.Operations {
+			if op.Operation == operation && op.DisplayName != "" {
+				return i18n.Translate(locale, op.DisplayName)
+			}
+		}
+	}
+	return string(operation)
 }
 
 func (r *Resolver) KindLabel(ctx context.Context, resource permission.Resource) string {
@@ -154,7 +186,12 @@ func planReason(locale i18n.Locale, d *Denial, entity, plural string) string {
 	case addOn == "" && d.Label == "":
 		return i18n.Translate(locale, "{0} are not included in your plan", plural)
 	case addOn == "":
-		return i18n.Translate(locale, "\"{0}\" on {1} is not included in your plan", d.Label, entity)
+		return i18n.Translate(
+			locale,
+			"\"{0}\" on {1} is not included in your plan",
+			d.Label,
+			entity,
+		)
 	case d.Label == "":
 		return i18n.Translate(
 			locale,

@@ -108,7 +108,7 @@ func (f *fakeReportWriter) NewCannedFork(
 	return reporting.NewCannedFork(entry, req, testCatalogVersion)
 }
 
-func (f *fakeReportWriter) RequireCannedOnPlan(
+func (f *fakeReportWriter) RequireCannedAvailable(
 	context.Context,
 	pagination.TenantInfo,
 	*canned.Entry,

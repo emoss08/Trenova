@@ -173,7 +173,7 @@ func (s *Service) ResolveEvent(
 	s.watchtower.Resolve(
 		ctx,
 		req.TenantInfo,
-		watchtower.SourceCarrierIntelEvent,
+		watchtower.SourceKindCarrierIntelEvent,
 		updated.ID.String(),
 	)
 

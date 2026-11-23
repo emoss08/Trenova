@@ -411,6 +411,12 @@ leaving quicker than it came; `ActionDock` does both, and a fade when reduced
 motion is asked for. Render a dock inside `AnimatePresence` (as `FormSaveDock`
 does) so its leave plays; a dock that unmounts outside one simply vanishes.
 
+An arrival that wraps a page or a pane and ends at the element's own style (`animate-reveal`,
+`animate-panel-in`, `animate-slide-in`, `animate-slide-in-back`) fills `backwards`, never
+`both`: a finished animation that still fills keeps its `transform` or `filter` in effect, so
+the wrapper stays the containing block of every `position: fixed` dock inside it and the dock
+lands at the bottom of the content instead of the viewport.
+
 Motion answers an action. Nothing on a working screen moves on its own: no
 looping shimmer on a badge, no pulsing glow, no floating sparkle. A global
 `prefers-reduced-motion` rule collapses every animation and transition to a cut.
@@ -456,10 +462,11 @@ and land on a stack per outcome. A scene like that takes four things from it:
   and under it the counts change in place.
 
 Things that open on a selection open from where they belong:
-- **A side pane** (the dispatch inspector) opens and closes by width over 320ms on
-  `ease-settle`, so the list beside it gives up and takes back the room rather than being
-  covered. Its content sits in a fixed-width inner box and enters with `animate-panel-in`,
-  keyed by what is selected, so each selection arrives rather than repainting.
+- **A side pane** (`SidePane`, `components/side-pane.tsx`: the dispatch inspector, the work
+  pane) opens and closes by width over 320ms on `ease-settle`, so the list beside it gives up
+  and takes back the room rather than being covered. Closed, it is `inert` and `aria-hidden`.
+  Its content sits in a fixed-width inner box and enters with `animate-panel-in`, keyed by
+  what is selected, so each selection arrives rather than repainting.
 - **A floating panel** (`FloatingPanel`, `components/floating-panel.tsx`: the shipment
   board's brief and activity, the freight outlook's brief and its areas) sits over the right
   side of a workspace instead of beside it and enters with `animate-panel-in`. Use it, not a
@@ -519,7 +526,8 @@ and the user at the bottom. The tile you are in is filled `--nav-active`; hover 
 `--surface-hover` background per group of tiles that slides from tile to tile
 (`HoverGlideGroup`, `components/hover-glide.tsx`) rather than a hover fill on each. A list
 that should feel the same marks its rows `data-glide-target` and drops their own hover fill;
-a virtual list passes `hoverGlide` to `VirtualRows` (the billing queue's sidebar). In a
+a virtual list passes `hoverGlide` to `VirtualRows` (the billing queue's sidebar). The group
+positions its own children so they paint above the opaque glide; targets need no `relative`. In a
 work list the open row wears the glide's own `--surface-hover` fill, so where the pointer is
 and what is open read as one thing (the dispatch queue, `move-queue.tsx`). A count on a tile's
 corner is how much work waits behind that module, in the attention tone. `G` then a module's letter
@@ -649,6 +657,16 @@ is `flex-1 min-h-0` (with a `min-h-*` floor if it needs one). Do not size a
 workspace with `h-[calc(100vh-9.5rem)]`: that number encodes the height of the
 chrome above it, and it was wrong the day the title bar changed.
 
+**A tab with views opens with a section strip.** When one tab of a record holds several views
+(the worker page's Qualification: Credentials, DQ file, Drug and alcohol), the views are a
+`SectionStrip` (`components/section-strip.tsx`) under the underline tabs: the product's
+default tab list grown to two lines, each cell a view's icon and name over one line on how
+that part of the record stands, in a tone. Its selection plate is the tab indicator, gliding
+250ms on `ease-settle`. The strip is navigation and status at once, so its state lines come
+from the page's one overview read, never from each view's own; the view it selects is the
+only one drawn (`Kept`). A tab with one view has no strip. Never a second row of underline
+tabs, and never a `SegmentedControl` for this.
+
 **Create is "New …".** The button, the menu item, the empty state and the panel
 title all say `New {thing}` in sentence case, and the button is the ink default.
 `toSentenceFragment` from `@trenova/shared/lib/utils` lowers a name without
@@ -757,6 +775,26 @@ hyphen.
   lines) it is a `ledger` cell: digits against the right edge under a right-aligned heading
   and total, with no mark, stepper, clear control or placeholder, and blank on the side a
   line does not use. A 104px cell with all three controls showed "250.5" for 1,250.50.
+- **A record's forms open in the work pane, decisions in dialogs.** A form that adds to or
+  edits something on a record page (a credential, a safety event, a review) is a `WorkPane`
+  (`components/work-pane/`) beside the list it adds to, so the list stays in view; selecting a
+  row opens the same pane read-only, its actions in the footer. A decision with one or two
+  fields (a reason, a waive, a reject) and every confirmation stay a dialog. One
+  `WorkPaneProvider` per page above everything that opens a pane, one `WorkPaneHost` around
+  the content: 26rem, sticky under what has scrolled away and ending at the viewport's bottom,
+  and a sheet over the content with a scrim when the row, measured, is under 1100px wide. The pane's parts
+  mirror `Dialog`'s (`title`/`description`, `WorkPaneBody`, `WorkPaneFooter` with
+  `WorkPaneCancel`), so a dialog's form moves by swapping the host and keeping its form, schema
+  and mutation. A form adds `WorkPaneDirtyTracker`: Escape, the close button, Cancel and
+  `useWorkPane().closeThen` (wrap every tab, view or pane change in it) ask "Keep editing /
+  Discard and close" in the footer, and the page ORs `isDirty` into its
+  `UnsavedChangesGuard`. Keep a pane mounted and drive `open` from the address, so links open
+  it and its close plays. The host never traps fixed-position children: neither its row
+  nor the box around the content carries a container query, `contain`, a transform, a filter or
+  a perspective, so a save dock, `ActionDock` or the documents upload panel inside a tab stays
+  on the viewport. That is why the sheet is decided from the row's measured width
+  (`useElementWidth`), not a container query. A dock that must follow across tabs is still
+  mounted beside the host, fed the tab's form (`profile/profile-dock.tsx` on the worker page).
 - A dialog, a sheet and a table panel all close the same way: footer right-aligned,
   Cancel (`outline`) then the primary (ink, or `destructive`). `DialogContent` takes
   `size` (`xs`…`2xl`) instead of an arbitrary `sm:max-w-[520px]`.

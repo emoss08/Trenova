@@ -2,8 +2,10 @@ import type {
   DeskBoardBlock,
   DeskBoardCard,
   DeskBoardCheck,
+  DeskBoardReading,
   DeskBoardRow,
   DeskBoardRowMeasure,
+  DeskBoardSegment,
   DeskBoardSource,
   DeskBoardValue,
 } from "@/lib/graphql/desk-board-card";
@@ -155,6 +157,190 @@ export function sourceLine(source: DeskBoardSource, t: TranslateFn): string {
     return t("Read from {0} · {1} you may read", from, source.readable);
   }
   return t("Read from {0}", from);
+}
+
+/** Where a reading was read from, with the aggregate in words: counted, summed, the largest. */
+export function readingSource(reading: DeskBoardReading, t: TranslateFn): string {
+  const source = reading.source;
+  if (source.kind === "records" && source.resource) {
+    const records = recordsPhrase(source.resource, source.count, t);
+    const from =
+      reading.aggregate === "count"
+        ? t("Counted from {0}", records)
+        : reading.aggregate === "sum"
+          ? t("Summed from {0}", records)
+          : reading.aggregate === "max"
+            ? t("The largest of {0}", records)
+            : t("Read from {0}", records);
+    const hidden = source.count - source.readable;
+    return hidden > 0 ? t("{0} · {1} you may read", from, source.readable) : from;
+  }
+  return sourceLine(source, t);
+}
+
+type ReadingKind = "amount" | "count" | "time" | "figure";
+
+function readingKind(reading: DeskBoardReading): ReadingKind {
+  if (reading.aggregate === "count") return "count";
+  if (reading.measure === "amountDue") return "amount";
+  if (measureIsTrack(reading.measure)) return "time";
+  return "figure";
+}
+
+/**
+ * A reading with no value, said in words where the value would stand: one the
+ * reader may not read because some of its records are not theirs, or one that
+ * could not be read. Never a blank, never a zero.
+ */
+export function lockedReading(reading: DeskBoardReading, t: TranslateFn): string {
+  const source = reading.source;
+  const withheld = source.kind === "records" && source.readable < source.count;
+  switch (readingKind(reading)) {
+    case "amount":
+      return withheld ? t("an amount you may not read") : t("an amount that could not be read");
+    case "count":
+      return withheld ? t("a count you may not read") : t("a count that could not be read");
+    case "time":
+      return withheld ? t("a time you may not read") : t("a time that could not be read");
+    default:
+      return withheld ? t("a figure you may not read") : t("a figure that could not be read");
+  }
+}
+
+const CITATION = /\[([^[\]\n]+)\]\[(\d{1,2})\]/gu;
+const READING_TOKEN = /\{([A-Za-z][A-Za-z0-9_]{0,31})\}/gu;
+
+function wordSegments(text: string): DeskBoardSegment[] {
+  const segments: DeskBoardSegment[] = [];
+  let last = 0;
+  for (const match of text.matchAll(READING_TOKEN)) {
+    const at = match.index ?? 0;
+    if (at > last) {
+      segments.push({
+        text: text.slice(last, at),
+        numeral: 0,
+        tone: "",
+        struck: false,
+        reading: "",
+      });
+    }
+    segments.push({ text: "", numeral: 0, tone: "", struck: false, reading: match[1] });
+    last = at + match[0].length;
+  }
+  if (last < text.length) {
+    segments.push({ text: text.slice(last), numeral: 0, tone: "", struck: false, reading: "" });
+  }
+  return segments;
+}
+
+/**
+ * A board's words as the agent wrote them, split as the server splits them
+ * (`board.Segments`): a cited phrase `[phrase][n]` cites exhibit n, and a
+ * `{key}` places a reading, with no value yet. What a reply draws while the
+ * board it showed is still being read.
+ */
+export function writtenSegments(text: string): DeskBoardSegment[] {
+  const segments: DeskBoardSegment[] = [];
+  let last = 0;
+  for (const match of text.matchAll(CITATION)) {
+    const at = match.index ?? 0;
+    if (at > last) segments.push(...wordSegments(text.slice(last, at)));
+    const numeral = Number(match[2]);
+    segments.push({
+      text: match[1],
+      numeral: numeral >= 1 ? numeral : 0,
+      tone: "",
+      struck: false,
+      reading: "",
+    });
+    last = at + match[0].length;
+  }
+  if (last < text.length) segments.push(...wordSegments(text.slice(last)));
+  return segments;
+}
+
+/** A run of the words as it arrives: plain words, a cited phrase or a reading, and its phrase. */
+export type WordPiece =
+  | { kind: "text"; text: string; phrase: number }
+  | { kind: "cite"; segment: DeskBoardSegment; phrase: number }
+  | { kind: "reading"; segment: DeskBoardSegment; phrase: number };
+
+const CLAUSE = /[^,.;:!?]+[,.;:!?]*\s*|[,.;:!?]+\s*/gu;
+const CLAUSE_END = /[,.;:!?]\s*$/u;
+
+/**
+ * The words cut into the phrases they arrive by: each clause of plain words is
+ * a phrase, ending at its punctuation, and a cited phrase or a reading arrives
+ * with the clause it stands in.
+ */
+export function wordPieces(segments: readonly DeskBoardSegment[]): {
+  pieces: WordPiece[];
+  phrases: number;
+} {
+  const pieces: WordPiece[] = [];
+  let phrase = 0;
+  let open = false;
+  for (const segment of segments) {
+    if (segment.reading !== "") {
+      pieces.push({ kind: "reading", segment, phrase });
+      open = true;
+      continue;
+    }
+    if (segment.numeral > 0) {
+      pieces.push({ kind: "cite", segment, phrase });
+      open = true;
+      continue;
+    }
+    for (const clause of segment.text.match(CLAUSE) ?? []) {
+      pieces.push({ kind: "text", text: clause, phrase });
+      open = true;
+      if (CLAUSE_END.test(clause)) {
+        phrase += 1;
+        open = false;
+      }
+    }
+  }
+  return { pieces, phrases: open ? phrase + 1 : phrase };
+}
+
+/** How far apart the parts of a board arriving in the conversation land, as the mockup times it. */
+export const ARRIVAL_BEAT_MS = 240;
+
+/** The moments, from when the board's values land, each part of an arriving board takes its place. */
+export type BoardArrival = {
+  /** When the readings in the words land, after the words and the exhibits. */
+  landAt: number;
+  /** When the exhibit with this place among the exhibits rises. */
+  exhibitAt: (index: number) => number;
+  /** When the first of its rows follows. */
+  rowsAt: (index: number) => number;
+};
+
+export function boardArrival(phrases: number, exhibits: number): BoardArrival {
+  const rowsFrom = phrases + exhibits + 1;
+  return {
+    landAt: rowsFrom * ARRIVAL_BEAT_MS,
+    exhibitAt: (index) => (phrases + index) * ARRIVAL_BEAT_MS,
+    rowsAt: (index) => (rowsFrom + index) * ARRIVAL_BEAT_MS,
+  };
+}
+
+/** The ids of the records in a list a person may read, in the order the list draws them: the order a record opened from it steps through. */
+export function readableIds(records: readonly { id: string; readable: boolean }[]): string[] {
+  return records.filter((record) => record.readable).map((record) => record.id);
+}
+
+/** How many of a list's rows the conversation draws; the rest are on the board. */
+export const CONVERSATION_ROWS = 6;
+
+/** A list cut to the rows the conversation draws, and how many are left for the board. */
+export function cutRows<T>(
+  rows: readonly T[],
+  limit = CONVERSATION_ROWS,
+): { shown: T[]; more: number } {
+  return rows.length > limit
+    ? { shown: rows.slice(0, limit), more: rows.length - limit }
+    : { shown: [...rows], more: 0 };
 }
 
 /** What a note's tone means, said above it. */

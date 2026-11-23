@@ -398,11 +398,13 @@ func newExceptions(
 	projector *Projector,
 ) *Exceptions {
 	exceptions := NewExceptions(ExceptionsParams{
-		Owners:        &agenttest.OpenCases{},
-		Logger:        zap.NewNop(),
-		Repo:          repo,
-		Projector:     projector,
-		Router:        NewRouter(RouterParams{Logger: zap.NewNop(), Controls: &scopedControlRepo{}}),
+		Owners:    &agenttest.OpenCases{},
+		Logger:    zap.NewNop(),
+		Repo:      repo,
+		Projector: projector,
+		Router: NewRouter(
+			RouterParams{Logger: zap.NewNop(), Controls: &scopedControlRepo{}},
+		),
 		Permissions:   perms,
 		Audit:         &mocks.NoopAuditService{},
 		Notifications: notificationtest.Discarding(),
@@ -445,11 +447,17 @@ func TestList_ShowsOnlyKindsTheReaderMayOpen(t *testing.T) {
 	)
 	svc.projector.Upsert(
 		t.Context(),
-		input(tenant, watchtower.SourceServiceFailure, "sf_1", watchtower.SeverityWarning, 100),
+		input(tenant, watchtower.SourceKindServiceFailure, "sf_1", watchtower.SeverityWarning, 100),
 	)
 	svc.projector.Upsert(
 		t.Context(),
-		input(tenant, watchtower.SourceBillingException, "bqi_1", watchtower.SeverityWarning, 200),
+		input(
+			tenant,
+			watchtower.SourceKindBillingException,
+			"bqi_1",
+			watchtower.SeverityWarning,
+			200,
+		),
 	)
 
 	page, err := svc.List(
@@ -459,12 +467,12 @@ func TestList_ShowsOnlyKindsTheReaderMayOpen(t *testing.T) {
 	)
 	require.NoError(t, err)
 	require.Len(t, page.Items, 1)
-	assert.Equal(t, watchtower.SourceServiceFailure, page.Items[0].SourceKind)
-	assert.NotContains(t, repo.lastList.Kinds, watchtower.SourceBillingException)
+	assert.Equal(t, watchtower.SourceKindServiceFailure, page.Items[0].SourceKind)
+	assert.NotContains(t, repo.lastList.Kinds, watchtower.SourceKindBillingException)
 
 	narrowed, err := svc.List(t.Context(), watchtowerports.ListWatchtowerItemsRequest{
 		TenantInfo: tenant,
-		Kinds:      []watchtower.SourceKind{watchtower.SourceBillingException},
+		Kinds:      []watchtower.SourceKind{watchtower.SourceKindBillingException},
 	}, actor)
 	require.NoError(t, err)
 	assert.Empty(
@@ -483,11 +491,11 @@ func TestList_MarksWhatTheReaderHasSeen(t *testing.T) {
 	svc := newService(repo, &agenttest.StubPermissions{})
 	svc.projector.Upsert(
 		t.Context(),
-		input(tenant, watchtower.SourceInsight, "ins_old", watchtower.SeverityInfo, 100),
+		input(tenant, watchtower.SourceKindInsight, "ins_old", watchtower.SeverityInfo, 100),
 	)
 	svc.projector.Upsert(
 		t.Context(),
-		input(tenant, watchtower.SourceInsight, "ins_new", watchtower.SeverityCritical, 300),
+		input(tenant, watchtower.SourceKindInsight, "ins_new", watchtower.SeverityCritical, 300),
 	)
 
 	counts, err := svc.MarkSeen(t.Context(), tenant, actor, 200)
@@ -519,17 +527,23 @@ func TestUpsert_KeepsTheRowAndReopensIt(t *testing.T) {
 
 	svc.projector.Upsert(
 		t.Context(),
-		input(tenant, watchtower.SourceServiceFailure, "sf_1", watchtower.SeverityWarning, 100),
+		input(tenant, watchtower.SourceKindServiceFailure, "sf_1", watchtower.SeverityWarning, 100),
 	)
-	first := repo.items[repo.key(watchtower.SourceServiceFailure, "sf_1")]
-	svc.projector.Resolve(t.Context(), tenant, watchtower.SourceServiceFailure, "sf_1")
+	first := repo.items[repo.key(watchtower.SourceKindServiceFailure, "sf_1")]
+	svc.projector.Resolve(t.Context(), tenant, watchtower.SourceKindServiceFailure, "sf_1")
 	require.NotNil(t, first.ResolvedAt)
 
 	svc.projector.Upsert(
 		t.Context(),
-		input(tenant, watchtower.SourceServiceFailure, "sf_1", watchtower.SeverityCritical, 150),
+		input(
+			tenant,
+			watchtower.SourceKindServiceFailure,
+			"sf_1",
+			watchtower.SeverityCritical,
+			150,
+		),
 	)
-	again := repo.items[repo.key(watchtower.SourceServiceFailure, "sf_1")]
+	again := repo.items[repo.key(watchtower.SourceKindServiceFailure, "sf_1")]
 	assert.Equal(t, first.ID, again.ID, "the same source keeps its item")
 	assert.Nil(t, again.ResolvedAt, "a source reported open again is open again")
 	assert.Equal(t, watchtower.SeverityCritical, again.Severity)
@@ -543,7 +557,7 @@ func TestUpsert_RefusesAPathThatLeavesTheApplication(t *testing.T) {
 	tenant := actor.TenantInfo()
 	svc := newService(repo, &agenttest.StubPermissions{})
 
-	bad := input(tenant, watchtower.SourceInsight, "ins_1", watchtower.SeverityInfo, 100)
+	bad := input(tenant, watchtower.SourceKindInsight, "ins_1", watchtower.SeverityInfo, 100)
 	bad.Path = "//evil.example/x"
 	err := svc.projector.upsert(t.Context(), bad)
 	require.Error(t, err)
@@ -563,7 +577,13 @@ func TestHandOff_StartsTheLiveSubscriberOrNamesWhoCouldTakeIt(t *testing.T) {
 	svc.events = events
 
 	subject := pulid.MustNew("shp_")
-	in := input(tenant, watchtower.SourceServiceFailure, "sf_1", watchtower.SeverityWarning, 100)
+	in := input(
+		tenant,
+		watchtower.SourceKindServiceFailure,
+		"sf_1",
+		watchtower.SeverityWarning,
+		100,
+	)
 	in.SubjectType = agent.SubjectShipment
 	in.SubjectID = subject
 	in.EventKind = agenttrigger.EventServiceFailureDetected
@@ -629,7 +649,13 @@ func TestHandOff_RunsTheAgentThePersonNamed(t *testing.T) {
 	svc.runs = runs
 
 	subject := pulid.MustNew("shp_")
-	in := input(tenant, watchtower.SourceServiceFailure, "sf_1", watchtower.SeverityWarning, 100)
+	in := input(
+		tenant,
+		watchtower.SourceKindServiceFailure,
+		"sf_1",
+		watchtower.SeverityWarning,
+		100,
+	)
 	in.SubjectType = agent.SubjectShipment
 	in.SubjectID = subject
 	require.NoError(t, svc.projector.upsert(t.Context(), in))
@@ -659,7 +685,13 @@ func TestHandOff_RefusesAnItemAnAgentRaisedForAPerson(t *testing.T) {
 	svc.definitions = &stubDefinitions{}
 	svc.runs = runs
 
-	in := input(tenant, watchtower.SourceAgentException, "aex_1", watchtower.SeverityWarning, 100)
+	in := input(
+		tenant,
+		watchtower.SourceKindAgentException,
+		"aex_1",
+		watchtower.SeverityWarning,
+		100,
+	)
 	in.SubjectType = agent.SubjectShipment
 	in.SubjectID = pulid.MustNew("shp_")
 	require.NoError(t, svc.projector.upsert(t.Context(), in))
@@ -687,7 +719,9 @@ func TestHandOff_NeverStartsAnAgentUnnamedOnAKindWithAPlay(t *testing.T) {
 	runs := &stubRuns{}
 	named := pulid.MustNew("agdef_")
 	definitions := &stubDefinitions{
-		subscribers: []*agentdefinition.Definition{{ID: pulid.MustNew("agdef_"), Name: "Custom POD agent"}},
+		subscribers: []*agentdefinition.Definition{
+			{ID: pulid.MustNew("agdef_"), Name: "Custom POD agent"},
+		},
 		enabled: []*agentdefinition.Definition{{
 			ID:          named,
 			Name:        "Load monitor",
@@ -698,7 +732,7 @@ func TestHandOff_NeverStartsAnAgentUnnamedOnAKindWithAPlay(t *testing.T) {
 	svc.definitions = definitions
 	svc.runs = runs
 
-	in := input(tenant, watchtower.SourcePodMissing, "shp_1", watchtower.SeverityWarning, 100)
+	in := input(tenant, watchtower.SourceKindPODMissing, "shp_1", watchtower.SeverityWarning, 100)
 	in.SubjectType = agent.SubjectShipment
 	in.SubjectID = pulid.MustNew("shp_")
 	in.EventKind = agenttrigger.EventShipmentPODMissing
@@ -732,17 +766,17 @@ func TestHandOff_SuggestsTheStarterThatListensForTheEvent(t *testing.T) {
 		source   watchtower.SourceKind
 		template agenttemplate.Template
 	}{
-		{agenttrigger.EventShipmentCreated, watchtower.SourceServiceFailure,
+		{agenttrigger.EventShipmentCreated, watchtower.SourceKindServiceFailure,
 			agenttemplate.TemplateLoadEntryCheck},
-		{agenttrigger.EventShipmentMoveUnassigned, watchtower.SourceMoveCoverage,
+		{agenttrigger.EventShipmentMoveUnassigned, watchtower.SourceKindMoveCoverage,
 			agenttemplate.TemplateDispatchAssignment},
-		{agenttrigger.EventServiceFailureDetected, watchtower.SourceServiceFailure,
+		{agenttrigger.EventServiceFailureDetected, watchtower.SourceKindServiceFailure,
 			agenttemplate.TemplateServiceFailureDesk},
-		{agenttrigger.EventInsightDetected, watchtower.SourceInsight,
+		{agenttrigger.EventInsightDetected, watchtower.SourceKindInsight,
 			agenttemplate.TemplateInsightAnalyst},
-		{agenttrigger.EventEDIFileQuarantined, watchtower.SourceEDIInboundQuarantined,
+		{agenttrigger.EventEDIFileQuarantined, watchtower.SourceKindEDIInboundQuarantined,
 			agenttemplate.TemplateEDIDesk},
-		{agenttrigger.EventBillingQueueItemOnHold, watchtower.SourceBillingException,
+		{agenttrigger.EventBillingQueueItemOnHold, watchtower.SourceKindBillingException,
 			agenttemplate.TemplateBillingException},
 	}
 
@@ -785,7 +819,13 @@ func TestHandOff_RefusesAnItemTheReaderMayNotSee(t *testing.T) {
 		repo,
 		&agenttest.StubPermissions{Denied: map[string]bool{"billing_queue:read": true}},
 	)
-	in := input(tenant, watchtower.SourceBillingException, "bqi_1", watchtower.SeverityWarning, 100)
+	in := input(
+		tenant,
+		watchtower.SourceKindBillingException,
+		"bqi_1",
+		watchtower.SeverityWarning,
+		100,
+	)
 	in.SubjectType = agent.SubjectBillingQueueItem
 	in.SubjectID = pulid.MustNew("bqi_")
 	require.NoError(t, svc.projector.upsert(t.Context(), in))
@@ -811,41 +851,47 @@ func TestReconcile_FollowsTheSourcesAndSurvivesOneFailing(t *testing.T) {
 	actor := testActor()
 	tenant := actor.TenantInfo()
 	failures := &stubSource{
-		kind: watchtower.SourceServiceFailure,
+		kind: watchtower.SourceKindServiceFailure,
 		items: []watchtowerports.WatchtowerItemInput{
-			input(tenant, watchtower.SourceServiceFailure, "sf_2", watchtower.SeverityWarning, 200),
+			input(
+				tenant,
+				watchtower.SourceKindServiceFailure,
+				"sf_2",
+				watchtower.SeverityWarning,
+				200,
+			),
 		},
 	}
-	broken := &stubSource{kind: watchtower.SourceInsight, err: assert.AnError}
+	broken := &stubSource{kind: watchtower.SourceKindInsight, err: assert.AnError}
 	svc := newService(repo, &agenttest.StubPermissions{}, failures, broken)
 	svc.projector.Upsert(
 		t.Context(),
-		input(tenant, watchtower.SourceServiceFailure, "sf_1", watchtower.SeverityWarning, 100),
+		input(tenant, watchtower.SourceKindServiceFailure, "sf_1", watchtower.SeverityWarning, 100),
 	)
 	svc.projector.Upsert(
 		t.Context(),
-		input(tenant, watchtower.SourceInsight, "ins_1", watchtower.SeverityInfo, 100),
+		input(tenant, watchtower.SourceKindInsight, "ins_1", watchtower.SeverityInfo, 100),
 	)
 
 	result, err := svc.Reconcile(t.Context(), tenant)
 	require.NoError(t, err)
 	assert.Equal(t, 1, result.Upserted)
 	assert.Equal(t, 1, result.Resolved)
-	assert.Equal(t, []string{watchtower.SourceInsight.String()}, result.Failed)
+	assert.Equal(t, []string{watchtower.SourceKindInsight.String()}, result.Failed)
 	assert.NotNil(
 		t,
-		repo.items[repo.key(watchtower.SourceServiceFailure, "sf_1")].ResolvedAt,
+		repo.items[repo.key(watchtower.SourceKindServiceFailure, "sf_1")].ResolvedAt,
 		"no longer reported, so resolved",
 	)
-	assert.Nil(t, repo.items[repo.key(watchtower.SourceServiceFailure, "sf_2")].ResolvedAt)
+	assert.Nil(t, repo.items[repo.key(watchtower.SourceKindServiceFailure, "sf_2")].ResolvedAt)
 	assert.Nil(
 		t,
-		repo.items[repo.key(watchtower.SourceInsight, "ins_1")].ResolvedAt,
+		repo.items[repo.key(watchtower.SourceKindInsight, "ins_1")].ResolvedAt,
 		"a source that failed to read resolves nothing",
 	)
 	assert.Equal(
 		t,
-		[]watchtower.SourceKind{watchtower.SourceInsight, watchtower.SourceServiceFailure},
+		[]watchtower.SourceKind{watchtower.SourceKindInsight, watchtower.SourceKindServiceFailure},
 		svc.RegisteredKinds(),
 	)
 }
@@ -855,30 +901,30 @@ func TestReconcileKind_TouchesOnlyTheNamedKind(t *testing.T) {
 
 	repo := newStubRepo()
 	tenant := testActor().TenantInfo()
-	quiet := &stubSource{kind: watchtower.SourceNoCheckCall}
-	failures := &stubSource{kind: watchtower.SourceServiceFailure}
+	quiet := &stubSource{kind: watchtower.SourceKindNoCheckCall}
+	failures := &stubSource{kind: watchtower.SourceKindServiceFailure}
 	svc := newService(repo, &agenttest.StubPermissions{}, quiet, failures)
 	svc.projector.Upsert(
 		t.Context(),
-		input(tenant, watchtower.SourceNoCheckCall, "sm_1", watchtower.SeverityWarning, 100),
+		input(tenant, watchtower.SourceKindNoCheckCall, "sm_1", watchtower.SeverityWarning, 100),
 	)
 	svc.projector.Upsert(
 		t.Context(),
-		input(tenant, watchtower.SourceServiceFailure, "sf_1", watchtower.SeverityWarning, 100),
+		input(tenant, watchtower.SourceKindServiceFailure, "sf_1", watchtower.SeverityWarning, 100),
 	)
 
-	result, err := svc.ReconcileKind(t.Context(), tenant, watchtower.SourceNoCheckCall)
+	result, err := svc.ReconcileKind(t.Context(), tenant, watchtower.SourceKindNoCheckCall)
 
 	require.NoError(t, err)
 	assert.Equal(t, 1, result.Resolved)
-	assert.NotNil(t, repo.items[repo.key(watchtower.SourceNoCheckCall, "sm_1")].ResolvedAt)
+	assert.NotNil(t, repo.items[repo.key(watchtower.SourceKindNoCheckCall, "sm_1")].ResolvedAt)
 	assert.Nil(
 		t,
-		repo.items[repo.key(watchtower.SourceServiceFailure, "sf_1")].ResolvedAt,
+		repo.items[repo.key(watchtower.SourceKindServiceFailure, "sf_1")].ResolvedAt,
 		"another kind is left for the nightly reconcile",
 	)
 	require.Len(t, repo.resolved, 1)
-	assert.Equal(t, watchtower.SourceNoCheckCall, repo.resolved[0].SourceKind)
+	assert.Equal(t, watchtower.SourceKindNoCheckCall, repo.resolved[0].SourceKind)
 }
 
 func TestReconcileKind_RefusesAnUnknownKind(t *testing.T) {

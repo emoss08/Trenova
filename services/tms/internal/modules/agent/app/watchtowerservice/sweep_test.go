@@ -48,11 +48,29 @@ func TestReconcile_PublishesOneNoticeForEverythingItChanged(t *testing.T) {
 	repo := newStubRepo()
 	tenant := testActor().TenantInfo()
 	failures := &stubSource{
-		kind: watchtower.SourceServiceFailure,
+		kind: watchtower.SourceKindServiceFailure,
 		items: []watchtowerports.WatchtowerItemInput{
-			input(tenant, watchtower.SourceServiceFailure, "sf_1", watchtower.SeverityWarning, 100),
-			input(tenant, watchtower.SourceServiceFailure, "sf_2", watchtower.SeverityWarning, 200),
-			input(tenant, watchtower.SourceServiceFailure, "sf_3", watchtower.SeverityWarning, 300),
+			input(
+				tenant,
+				watchtower.SourceKindServiceFailure,
+				"sf_1",
+				watchtower.SeverityWarning,
+				100,
+			),
+			input(
+				tenant,
+				watchtower.SourceKindServiceFailure,
+				"sf_2",
+				watchtower.SeverityWarning,
+				200,
+			),
+			input(
+				tenant,
+				watchtower.SourceKindServiceFailure,
+				"sf_3",
+				watchtower.SeverityWarning,
+				300,
+			),
 		},
 	}
 	svc := newService(repo, &agenttest.StubPermissions{}, failures)
@@ -79,7 +97,7 @@ func TestReconcile_PublishesNothingWhenNothingMoved(t *testing.T) {
 	svc := newService(
 		newStubRepo(),
 		&agenttest.StubPermissions{},
-		&stubSource{kind: watchtower.SourceServiceFailure},
+		&stubSource{kind: watchtower.SourceKindServiceFailure},
 	)
 	realtime := &recordingRealtime{}
 	svc.projector.realtime = realtime
@@ -101,14 +119,14 @@ func TestUpsert_PublishesTheItemItWrote(t *testing.T) {
 
 	svc.projector.Upsert(
 		t.Context(),
-		input(tenant, watchtower.SourceServiceFailure, "sf_1", watchtower.SeverityWarning, 100),
+		input(tenant, watchtower.SourceKindServiceFailure, "sf_1", watchtower.SeverityWarning, 100),
 	)
 
 	require.Len(t, realtime.published, 1)
 	assert.Equal(t, "created", realtime.published[0].Action)
 	assert.Equal(
 		t,
-		repo.items[repo.key(watchtower.SourceServiceFailure, "sf_1")].ID,
+		repo.items[repo.key(watchtower.SourceKindServiceFailure, "sf_1")].ID,
 		realtime.published[0].RecordID,
 	)
 }
@@ -121,7 +139,13 @@ func TestSweepAttention_PublishesOneNoticeForEveryItemItMoved(t *testing.T) {
 	f.exceptions.projector.realtime = realtime
 	tenant := f.actor.TenantInfo()
 	for _, id := range []string{"sf_2", "sf_3"} {
-		in := input(tenant, watchtower.SourceServiceFailure, id, watchtower.SeverityWarning, 100)
+		in := input(
+			tenant,
+			watchtower.SourceKindServiceFailure,
+			id,
+			watchtower.SeverityWarning,
+			100,
+		)
 		require.NoError(t, f.exceptions.projector.upsert(t.Context(), in))
 		item := f.repo.items[f.repo.key(in.SourceKind, in.SourceID)]
 		item.Status = watchtower.StatusOpen

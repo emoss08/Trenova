@@ -1,5 +1,4 @@
 import { useT } from "@trenova/shared/i18n/use-t";
-import { Checkbox } from "@trenova/shared/components/ui/checkbox";
 import { Input } from "@trenova/shared/components/ui/input";
 import { Label } from "@trenova/shared/components/ui/label";
 import {
@@ -10,6 +9,9 @@ import {
   SelectValue,
 } from "@trenova/shared/components/ui/select";
 import { Switch } from "@trenova/shared/components/ui/switch";
+import { codeWords } from "@trenova/shared/lib/code-words";
+import { cn } from "@trenova/shared/lib/utils";
+import { parameterChoices, type ReportParameterOption } from "@/lib/report-parameter-options";
 import type { ReportParameterDef } from "@/types/report";
 import { ReportRefAutocomplete, ReportRefMultiAutocomplete } from "./report-ref-autocomplete";
 import { fromUserWallClock, toISODateString, toUserWallClock } from "@trenova/shared/lib/date";
@@ -78,17 +80,21 @@ export function ParameterField({
   value,
   onChange,
   compact,
+  options,
 }: {
   param: ReportParameterDef;
   value: unknown;
   onChange: (value: unknown) => void;
   compact?: boolean;
+  /** The parameter's allowed values with their names; without them each code reads in words. */
+  options?: readonly ReportParameterOption[];
 }) {
   const t = useT();
 
   const label = param.label || param.name;
   const inputId = `report-param-${param.name}`;
   const allowedValues = param.allowedValues ?? [];
+  const choices = options ?? parameterChoices(param);
   const controlHeight = compact ? "h-7" : undefined;
 
   const fieldLabel = (
@@ -134,27 +140,43 @@ export function ParameterField({
 
   if (allowedValues.length > 0 && param.multi) {
     const selected = multiListValue(value).map(String);
+    const labelOf = new Map(choices.map((choice) => [choice.value, choice.label]));
+    const order = new Map(choices.map((choice, index) => [choice.value, index]));
     return (
       <div className="flex flex-col gap-1.5">
         {fieldLabel}
-        <div className="flex flex-wrap gap-x-4 gap-y-1.5">
-          {allowedValues.map((allowed) => (
-            <label key={allowed} className="flex items-center gap-1.5 text-sm">
-              <Checkbox
-                checked={selected.includes(allowed)}
-                onCheckedChange={(checked) => {
-                  const next = checked
-                    ? [...selected, allowed]
-                    : selected.filter((v) => v !== allowed);
-                  onChange(
-                    next.length > 0 ? next.map((v) => coerceParamValue(param, v) ?? v) : undefined,
-                  );
-                }}
-              />
-              {allowed}
-            </label>
-          ))}
-        </div>
+        <Select
+          multiple
+          value={selected}
+          onValueChange={(next: string[]) => {
+            const sorted = [...next].sort(
+              (a, b) => (order.get(a) ?? order.size) - (order.get(b) ?? order.size),
+            );
+            onChange(
+              sorted.length > 0 ? sorted.map((v) => coerceParamValue(param, v) ?? v) : undefined,
+            );
+          }}
+          items={choices}
+        >
+          <SelectTrigger className={cn("w-full", controlHeight)} id={inputId}>
+            <SelectValue>
+              {selected.length === 0 ? (
+                <span className="text-muted-foreground">{t("Select values")}</span>
+              ) : selected.length === 1 ? (
+                (labelOf.get(selected[0]) ?? codeWords(selected[0]))
+              ) : (
+                t("{0} Selected", selected.length)
+              )}
+            </SelectValue>
+          </SelectTrigger>
+          <SelectContent className="max-h-64 w-auto min-w-(--anchor-width)">
+            {choices.map((choice) => (
+              <SelectItem key={choice.value} value={choice.value}>
+                {choice.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
     );
   }
@@ -168,15 +190,15 @@ export function ParameterField({
           onValueChange={(next) => {
             if (next) onChange(coerceParamValue(param, next));
           }}
-          items={allowedValues.map((allowed) => ({ value: allowed, label: allowed }))}
+          items={choices}
         >
-          <SelectTrigger className={`w-full ${controlHeight ?? ""}`} id={inputId}>
+          <SelectTrigger className={cn("w-full", controlHeight)} id={inputId}>
             <SelectValue placeholder={t("Select value")} />
           </SelectTrigger>
-          <SelectContent>
-            {allowedValues.map((allowed) => (
-              <SelectItem key={allowed} value={allowed}>
-                {allowed}
+          <SelectContent className="max-h-64 w-auto min-w-(--anchor-width)">
+            {choices.map((choice) => (
+              <SelectItem key={choice.value} value={choice.value}>
+                {choice.label}
               </SelectItem>
             ))}
           </SelectContent>

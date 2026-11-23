@@ -29,7 +29,7 @@ Keywords: weekly pay, biweekly, pay date, pay on delivery, pay trigger
    A period ends at midnight in your organization's time zone on its last day.
 4. Turn on **Generate settlements when a period ends** to have each period's settlement batch
    drafted without anyone starting it.
-5. Under **Earning pay**, choose when **Pay is earned**: **Move completed**, **Shipment
+5. Under **Earning pay**, choose when **Pay is earned when**: **Move completed**, **Shipment
    delivered**, **POD received (ready to invoice)** or **Shipment invoiced**.
 6. Turn on **Add new pay to open drafts** so pay a driver earns after their draft settlement was
    made joins it.

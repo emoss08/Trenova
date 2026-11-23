@@ -265,8 +265,10 @@ export class DocumentService {
     return safeParse(documentPacketSummarySchema, response, "Document Packet Summary");
   }
 
-  public async getById(documentId: string): Promise<Document> {
-    const response = await api.get<Document>(`/documents/${documentId}/`);
+  public async getById(documentId: string, options?: { signal?: AbortSignal }): Promise<Document> {
+    const response = await api.get<Document>(`/documents/${documentId}/`, {
+      signal: options?.signal,
+    });
     return safeParse(documentSchema, response, "Document");
   }
 

@@ -7530,6 +7530,12 @@ type AuditEntry {
   resourceId: String!
   retentionClass: AuditRetentionClass!
   sensitiveData: Boolean!
+  """The id of that record. Null exactly when subjectResource is null."""
+  subjectId: String
+  """
+  The kind of the record whose file this entry belongs to: the worker for a change to one of the worker's credentials, or the record itself for a root record. Null on entries written before subjects were recorded.
+  """
+  subjectResource: String
   timestamp: Timestamp!
   traceId: String
   user: User
@@ -8675,7 +8681,8 @@ input CancelFuelCardInput {
 
 input CancelWorkerChecklistInput {
   id: ID!
-  reason: String
+  """Why the checklist is cancelled. Required; a blank reason is refused."""
+  reason: String!
   version: Int
 }
 
@@ -13186,6 +13193,10 @@ noteTone and chips).
 """
 type DeskBoardBlock {
   actions: [DeskBoardAction!]!
+  """
+  One plain line under the exhibit's tab, with readings placed in it; empty when the block has none.
+  """
+  caption: [DeskBoardSegment!]!
   chart: JSON
   checks: [DeskBoardCheck!]!
   chips: [DeskBoardRow!]!
@@ -13223,12 +13234,24 @@ type DeskBoardCard {
   blocks: [DeskBoardBlock!]!
   """The board as it reads now, in markdown: what Copy as text copies."""
   markdown: String!
+  """
+  Where the board is drawn: conversation (in the conversation, as the reply of
+  the turn that showed it) or beside (a page beside the conversation).
+  """
+  place: String!
   """The question of the turn that showed the board."""
   question: String!
   readAt: Timestamp!
+  """
+  The figures the board's words place, each read now and kept as answered.
+  """
+  readings: [DeskBoardReading!]!
   threadId: ID!
   title: String!
-  """The answer in a sentence or two, split where it cites a block."""
+  """
+  The answer in a sentence or two, split where it cites a block and where it
+  places a reading.
+  """
   verdict: [DeskBoardSegment!]!
 }
 
@@ -13287,6 +13310,29 @@ type DeskBoardMeter {
 }
 
 """
+A figure the board's words place as {key}: what it reads, its value now, the
+value it had when the board was shown when it has moved since, and where it was
+read from.
+"""
+type DeskBoardReading {
+  """
+  count, sum or max over the records; empty for a metric or an analysis figure.
+  """
+  aggregate: String!
+  key: String!
+  label: String!
+  """
+  The records' measure it adds up; empty for a metric or an analysis figure.
+  """
+  measure: String!
+  source: DeskBoardSource!
+  """Absent when the reader may not read it or it could not be read."""
+  value: DeskBoardValue
+  """What it was when the board was shown, when it has moved since."""
+  was: DeskBoardValue
+}
+
+"""
 A record a block names. A record the reader may not read, or that no longer
 exists, has readable false and nothing else.
 """
@@ -13319,10 +13365,13 @@ type DeskBoardRowMeasure {
 """
 A run of words, and the block it cites when it cites one: the block's numeral,
 whether the block holds something to act on (warn) or not (info), and whether
-it could not be read.
+it could not be read. A segment that places a reading names its key, and its
+text is the reading's value as answered, empty when it could not be read.
 """
 type DeskBoardSegment {
   numeral: Int!
+  """The key of the reading the segment places; empty when it places none."""
+  reading: String!
   struck: Boolean!
   text: String!
   tone: String!
@@ -16018,6 +16067,18 @@ type DocumentPacketRuleConnection {
 type DocumentPacketRuleEdge {
   cursor: String!
   node: DocumentPacketRule!
+}
+
+"""Where the server's preview image of a stored document stands."""
+enum DocumentPreviewStatus {
+  """Drawing the preview failed; show the file's icon."""
+  Failed
+  """The preview is being drawn; read the document again shortly."""
+  Pending
+  """The preview image can be fetched."""
+  Ready
+  """The file's type has no preview."""
+  Unsupported
 }
 
 type DocumentTemplate {
@@ -28305,6 +28366,10 @@ type Query {
   One record's history, for anyone who can read that kind of record organization-wide. field narrows it to the entries that changed that field.
   """
   auditEntriesByResourceId(field: String, input: DataTableConnectionInput!, resourceId: ID!): AuditEntryConnection!
+  """
+  A record's whole file: every entry whose subject is the record, its sub-records' included, newest first. Needs organization-wide read on the subject's kind; an entry about a sub-record shows only to a reader of that sub-record's kind.
+  """
+  auditEntriesBySubject(input: DataTableConnectionInput!, subjectId: ID!): AuditEntryConnection!
   auditEntry(id: ID!): AuditEntry
   """The review an entry set off, if it set one off."""
   auditEntryReview(entryId: ID!): AuditReview
@@ -29051,6 +29116,8 @@ type Query {
     params: JSON
     supersede: Boolean
   ): ReportPreview!
+  """Needs worker_employment_event create, the write's own permission."""
+  previewWorkerEmploymentEvent(input: RecordWorkerEmploymentEventInput!): WorkerEmploymentEventPreview!
   previewWorkerPtoAccrual(asOf: Timestamp, workerId: ID!): [PlannedPTOAccrual!]!
   profileChangeRequests(filter: ProfileChangeFilterInput): [WorkerProfileChangeRequest!]!
   ptoBalanceSummary: PTOBalanceSummary!
@@ -29421,6 +29488,8 @@ type Query {
   workerDrugAlcoholStanding(workerId: ID!): DrugAlcoholStanding!
   workerEarningsSummary(workerId: ID!): WorkerEarningsSummary!
   workerEmploymentEvent(id: ID!): WorkerEmploymentEvent!
+  """Needs worker_employment_event read."""
+  workerEmploymentEventOptions(workerId: ID!): WorkerEmploymentEventOptions!
   workerEmploymentEvents(kinds: [WorkerEmploymentEventKind!], workerId: ID!): [WorkerEmploymentEvent!]!
   """
   Previous employers on drivers' qualification files: one driver's, or every
@@ -30256,6 +30325,10 @@ input RecordWorkerEmploymentEventInput {
   kind: WorkerEmploymentEventKind!
   """LeaveStarted: what kind of leave this is."""
   leaveType: WorkerLeaveType
+  """
+  Transferred: the new manager. Left out, the manager is unchanged. A transfer
+  needs fleetCodeId or managerId.
+  """
   managerId: ID
   notes: String
   """RateChanged: the new rate as entered, with an optional unit label."""
@@ -30267,7 +30340,7 @@ input RecordWorkerEmploymentEventInput {
 }
 
 type RecordWorkerEmploymentEventPayload {
-  cascade: WorkerEmploymentCascade!
+  effects: [WorkerEmploymentEffect!]!
   event: WorkerEmploymentEvent!
 }
 
@@ -37381,7 +37454,18 @@ input UpdateSettlementControlInput {
   version: Int!
 }
 
+"""
+The credential as it should stand after the edit: a field sent empty or left
+out is cleared, so send every value the credential keeps. The number is kept
+as stored when the editor may not see personal details.
+"""
 input UpdateWorkerCredentialInput {
+  """
+  The supporting document, filed on the worker or on this credential. Send the
+  current one to keep it; null or left out removes it from the credential (the
+  file stays in the worker's files). A different document, or none, clears the
+  credential's verification.
+  """
   documentId: ID
   expiresAt: Timestamp
   id: ID!
@@ -38334,6 +38418,8 @@ type Worker {
   organization: Organization
   organizationId: ID!
   phoneNumber: String!
+  """The job position the worker holds; null when positionId is null."""
+  position: JobPosition
   """
   The driving title the worker holds; front-office titles are held by users.
   """
@@ -38586,6 +38672,105 @@ enum WorkerChecklistTrigger {
   Terminated
 }
 
+"""
+Whether the worker may be put on a load today, until when, and every dated
+requirement that comes due, by the server's existing rules.
+"""
+type WorkerClearance {
+  """Every reason the worker is not cleared today. Empty when cleared."""
+  blocks: [WorkerClearanceBlock!]!
+  cleared: Boolean!
+  """
+  The date of the first item that stops assignment (hazmat-only items excluded). Null when not cleared, or cleared with nothing dated ahead.
+  """
+  clearedThrough: Timestamp
+  """
+  The first item, by date, that stops assignment (hazmat-only items excluded). Null when none does.
+  """
+  firstStop: WorkerClearanceItem
+  """Ascending by dueAt, capped at 60."""
+  items: [WorkerClearanceItem!]!
+  """True when more than 60 items exist and the latest were dropped."""
+  itemsTruncated: Boolean!
+  """
+  When the earliest lapsed blocking item lapsed. Null when cleared, or when the block has no date (not employed, a dispatch hold, a missing credential).
+  """
+  notClearedSince: Timestamp
+}
+
+"""Why a worker is not cleared today."""
+enum WorkerClearanceBlock {
+  DispatchCompliance
+  DispatchHold
+  NotEmployed
+  RequiredCredentialLapsed
+  RequiredCredentialMissing
+}
+
+"""
+What happens at an item's date: StopsAssignment keeps the worker off loads
+(drawn solid), Due is only due (drawn hollow).
+"""
+enum WorkerClearanceEffect {
+  Due
+  StopsAssignment
+}
+
+"""One dated requirement on the clearance runway."""
+type WorkerClearanceItem {
+  """Whole UTC days from asOf to dueAt; negative once lapsed."""
+  daysUntil: Int!
+  destination: WorkerDestination!
+  dueAt: Timestamp!
+  effect: WorkerClearanceEffect!
+  """
+  True when the item stops only hazmat loads. Such an item has effect StopsAssignment but does not end the cleared band.
+  """
+  hazmatOnly: Boolean!
+  """
+  Stable and unique within the response, for keys and animation. Not for display.
+  """
+  key: String!
+  lane: WorkerClearanceLane!
+  """The credential type's, course's or query's name."""
+  name: String!
+  """
+  The regulation the requirement comes from, such as 49 CFR 391.45. Null when none is recorded.
+  """
+  regulation: String
+  required: Boolean!
+  """Null when effect is Due."""
+  rule: WorkerClearanceRule
+  source: WorkerClearanceSource!
+}
+
+"""The lane of the clearance runway an item is drawn in."""
+enum WorkerClearanceLane {
+  License
+  Medical
+  ReviewsAndQueries
+  Training
+}
+
+"""
+The existing server rule that makes an item stop assignment.
+RequiredCredential: a required credential lapsing makes the standing Blocked.
+DispatchCompliance: the dispatch compliance check refuses the driver at the
+tenant's enforcement level.
+"""
+enum WorkerClearanceRule {
+  DispatchCompliance
+  RequiredCredential
+}
+
+"""Which part of the record a clearance item comes from."""
+enum WorkerClearanceSource {
+  ClearinghouseQuery
+  Credential
+  PerformanceReview
+  Training
+}
+
 type WorkerClearinghouseQuery {
   businessUnitId: ID!
   completedAt: Timestamp
@@ -38608,16 +38793,64 @@ type WorkerClearinghouseQuery {
 }
 
 """
-One thing wrong with a worker's record, in the words the office would use.
-`code` is a stable key the client draws an icon from and must not be parsed for
-meaning; `tab` names the worker-panel tab that fixes it.
+One thing on a worker's record that needs attention, one per record where the
+concern is about a record (a credential, a course, an employer, a safety
+event), so the row can name it and open it.
 """
 type WorkerConcern {
-  code: String!
-  detail: String!
-  headline: String!
+  code: WorkerConcernCode!
+  """
+  How many records the concern covers: 1 for a per-record concern; for SafetyRating the active points; for ActiveDiscipline the actions still standing.
+  """
+  count: Int!
+  """
+  Whole UTC days from asOf to dueAt; negative once it has passed. Null when dueAt is null.
+  """
+  daysUntil: Int
+  destination: WorkerDestination!
+  """When it falls due or fell due. Null when the concern has no date."""
+  dueAt: Timestamp
+  """
+  The date the detail line names: when the request was sent, the course assigned, the last query run, the event happened or the checklist started. Null when there is none.
+  """
+  occurredAt: Timestamp
   severity: WorkerConcernSeverity!
-  tab: String!
+  """
+  Whether this concern on its own keeps the worker off assignments today or at its date, by the same rules as clearance.
+  """
+  stopsAssignment: Boolean!
+  """
+  The name of the one record the concern is about (the credential type, the course, the employer, the checklist). Null when the concern covers several records or none.
+  """
+  subject: String
+}
+
+"""
+A stable key for one kind of concern. The client owns the words: it builds the
+title and detail from the code, subject, count and dates.
+"""
+enum WorkerConcernCode {
+  ActiveDiscipline
+  ChecklistOpen
+  ChecklistOverdue
+  ClearinghouseQueryDue
+  ClearinghouseQueryOverdue
+  CredentialExpired
+  CredentialExpiring
+  CredentialMissing
+  DrugAlcoholProhibited
+  EmploymentVerificationOutstanding
+  NotAssignable
+  NotEmployed
+  OpenSafetyEvent
+  OutOfService
+  ReviewDue
+  ReviewOverdue
+  SafetyRating
+  TrainingDue
+  TrainingExpired
+  TrainingMissing
+  TrainingOverdue
 }
 
 enum WorkerConcernSeverity {
@@ -38682,6 +38915,7 @@ type WorkerCredentialDocument {
   fileType: String!
   id: ID!
   originalName: String!
+  previewStatus: DocumentPreviewStatus!
 }
 
 """
@@ -38884,6 +39118,22 @@ type WorkerDOTViolation {
   workerId: ID!
 }
 
+"""
+Where on the worker record page something is fixed: a tab, optionally a view in
+it, and optionally one record to open. The client builds the URL from it.
+"""
+type WorkerDestination {
+  """Null when the destination is the list itself rather than one record."""
+  record: WorkerPageRecord
+  """
+  The record to open. Null exactly when record is null, or when the thing is missing (a required credential never recorded).
+  """
+  recordId: ID
+  tab: WorkerPageTab!
+  """Null for a tab without views, or to open the tab's first visible view."""
+  view: WorkerPageView
+}
+
 type WorkerDisciplinaryAction {
   acknowledgedAt: Timestamp
   """Whether the action still counts on the ladder today."""
@@ -38931,30 +39181,71 @@ type WorkerEdge {
   node: Worker!
 }
 
-"""What a status-changing event did beyond the worker row."""
-type WorkerEmploymentCascade {
-  checklistStarted: Boolean!
+type WorkerEmploymentEffect {
+  """How many records it touches. Null when the kind is about one record."""
+  count: Int
   """
-  Open checklists the event made moot and closed: an unfinished onboarding on
-  a termination, an unfinished offboarding on a hire or rehire.
+  Days of time off moved: paid out, forfeited or cancelled. Null for other kinds.
   """
-  checklistsClosed: Int!
-  defaultPolicyApplied: Boolean!
-  payAssignmentEnded: Boolean!
+  days: Decimal
+  endDate: Timestamp
   """
-  Whether a termination shut off the worker's Dash sign-in, and why it could
-  not be shut off when it failed. The termination itself still stands, so an
-  empty string means there was nothing wrong, not that nothing was tried.
+  Only on a recorded event: true when the effect was attempted and failed after the event stood (portal revocation). Always false on a preview.
   """
-  portalAccessRevoked: Boolean!
-  portalRevocationError: String!
-  ptoAssignmentEnded: Boolean!
-  ptoForfeitedDays: Decimal!
-  """Days paid out / forfeited when a termination closed the PTO balances."""
-  ptoPaidOutDays: Decimal!
-  """Required courses opened for the worker by a hire, rehire or promotion."""
-  trainingAssigned: Int!
-  upcomingPtoCancelled: Int!
+  failed: Boolean!
+  kind: WorkerEmploymentEffectKind!
+  """
+  The name of the record the effect touches (policy, profile, template, checklist). Null when it has none.
+  """
+  name: String
+  ptoType: PTOType
+  startDate: Timestamp
+}
+
+"""
+One consequence of an employment event beyond the event itself. The preview
+lists exactly the effects the write then carries out, and the write returns
+the effects it carried out.
+"""
+enum WorkerEmploymentEffectKind {
+  """
+  Open checklists the event makes moot are closed; count says how many, name the checklist's when there is one.
+  """
+  ChecklistClosed
+  """A checklist is started from a template; name is the template's."""
+  ChecklistStarted
+  """
+  The organization's default time off policy is applied; name is the policy's.
+  """
+  DefaultPtoPolicyApplied
+  """
+  CanBeAssigned and AvailableForDispatch are turned off (Suspended, LeaveStarted).
+  """
+  DispatchRemoved
+  """
+  CanBeAssigned and AvailableForDispatch are turned on (Reinstated, LeaveEnded).
+  """
+  DispatchRestored
+  """The pay profile assignment in force ends; name is the profile's."""
+  PayAssignmentEnded
+  """Dash sign-in is shut off. failed is true when it could not be."""
+  PortalAccessRevoked
+  """
+  A time off balance is forfeited on termination; ptoType and days say which and how much.
+  """
+  PtoForfeited
+  """
+  A time off balance is paid out on termination; ptoType and days say which and how much.
+  """
+  PtoPaidOut
+  """The time off policy assignment ends; name is the policy's."""
+  PtoPolicyEnded
+  """
+  One upcoming time off request is cancelled; ptoType, startDate, endDate and days describe it.
+  """
+  TimeOffCancelled
+  """Required courses are assigned; count says how many."""
+  TrainingAssigned
 }
 
 type WorkerEmploymentEvent {
@@ -38993,6 +39284,28 @@ enum WorkerEmploymentEventKind {
   Suspended
   Terminated
   Transferred
+}
+
+"""
+Which events may be recorded for a worker now, from the server's own rule
+(EmploymentEventKind.CanRecord over the worker's state and history).
+"""
+type WorkerEmploymentEventOptions {
+  """Kinds whose reason is required."""
+  reasonRequiredKinds: [WorkerEmploymentEventKind!]!
+  recordableKinds: [WorkerEmploymentEventKind!]!
+}
+
+"""
+What recording an event would do, read before saving. It runs the same plan
+the write runs and writes nothing.
+"""
+type WorkerEmploymentEventPreview {
+  effectiveAt: Timestamp!
+  effects: [WorkerEmploymentEffect!]!
+  fromValues: [WorkerEmploymentValue!]!
+  kind: WorkerEmploymentEventKind!
+  toValues: [WorkerEmploymentValue!]!
 }
 
 """
@@ -39078,6 +39391,19 @@ type WorkerHosDailyLog {
   yardMoveDurationMs: Int!
 }
 
+"""
+Whether hours of service can be shown for the worker. NotConnected: no
+telematics provider is connected for the organization. NotLinked: one is, but
+the worker is not mapped to a provider driver. NoData: linked, but no state has
+been stored yet. Reporting: a stored state exists.
+"""
+enum WorkerHosLink {
+  NoData
+  NotConnected
+  NotLinked
+  Reporting
+}
+
 type WorkerHosLogEntry {
   codrivers: [String!]
   hosStatusType: String!
@@ -39103,6 +39429,10 @@ type WorkerHosState {
   driveLimitMs: Int!
   driveRemainingMs: Int!
   dutyStatus: String
+  """
+  When the current duty status began, from the open log segment. Null when no open segment is stored.
+  """
+  dutyStatusSince: Timestamp
   provider: String!
   providerDriverId: String!
   recordedAt: Timestamp!
@@ -39254,34 +39584,203 @@ enum WorkerLeaveType {
 }
 
 """
-Everything needed to answer "is this worker in good standing" without opening
-six tabs. A section is null when the signed-in user cannot read that part of
-the record, which is the same shape as having nothing to report — the standing
-counts neither as a problem, so a viewer never sees a verdict built on evidence
-they are not allowed to see.
+Everything the worker record page needs for its header, tab marks, section
+strips, attention list and file grid, in one read. A section is null when the
+plan or the signed-in user's permissions leave it out, which is the same shape
+as having nothing to report: the standing and clearance count neither as a
+problem, so a viewer never sees a verdict built on evidence they may not see.
 """
 type WorkerOverview {
+  """
+  Agent memories whose subject is the worker. Null when record memories are unavailable to the reader.
+  """
+  agentMemoryCount: Int
   asOf: Timestamp!
+  """Null without benefit_plan read or off plan."""
+  benefits: WorkerOverviewBenefits
   """
   The open checklist the office should be working on, newest first when a
-  worker has more than one running.
+  worker has more than one running. Null without worker_checklist read or when
+  none is open.
   """
   checklist: WorkerChecklist
-  """Ranked worst-first. Empty means nothing needs attention."""
+  """
+  Null for a reader without worker_credential read: no verdict can be given
+  without that evidence. Training items need worker_training read, the review
+  item performance_review read and the clearinghouse item worker_dot_test read.
+  """
+  clearance: WorkerClearance
+  """
+  Every concern before the cap; greater than the length of concerns when it was truncated.
+  """
+  concernCount: Int!
+  """Ranked worst first, capped at 30. Empty means nothing needs attention."""
   concerns: [WorkerConcern!]!
+  """Null without worker_credential read or off plan (WorkforceCompliance)."""
   credentials: WorkerCredentialSummary
+  """Documents attached to the worker. Null without document read."""
+  documentCount: Int
+  """Null without worker_dot_test read or off plan (WorkforceCompliance)."""
+  drugAlcohol: WorkerOverviewDrugAlcohol
+  """Null without worker_employment_event read."""
+  employment: WorkerOverviewEmployment
+  """Null when the plan leaves out telematics."""
+  hos: WorkerOverviewHos
   lastReview: PerformanceReview
+  """Null without worker_leave read or off plan (WorkforceTimeOff)."""
+  leave: LeaveEntitlement
   """
   When the next review falls due, from the last review that closed. Null while
   a review is already under way, because one in flight is not also overdue.
   """
   nextReviewAt: Timestamp
+  """
+  The next time off that is requested or approved and has not ended at asOf, earliest first. Null when there is none, without worker_pto read, or off plan (WorkforceTimeOff).
+  """
+  nextTimeOff: WorkerPTO
   openReview: PerformanceReview
+  """
+  Null without driver_pay_profile read, off plan (DriverPay), or when no assignment is in force.
+  """
+  pay: WorkerOverviewPay
+  """Null without driver_portal read or off plan (DriverPortal)."""
+  portal: WorkerOverviewPortal
+  """Null without worker_pto read or off plan (WorkforceTimeOff)."""
   pto: [WorkerPTOBalance!]
+  """
+  The driver qualification file. Null without qualification read or off plan (WorkforceCompliance).
+  """
+  qualificationFile: DQFFile
+  """Null without worker_safety_event read or off plan (WorkforceSafety)."""
   safety: SafetyScorecard
+  """Null without worker_schedule read or off plan (WorkforceTimeTracking)."""
+  schedule: WorkerOverviewSchedule
   standing: WorkerStanding!
+  """Null without worker_training read or off plan (WorkforceTalent)."""
   training: WorkerTrainingSummary
   worker: Worker!
+}
+
+"""Benefit enrolments at asOf."""
+type WorkerOverviewBenefits {
+  """Enrolments in force."""
+  coveredCount: Int!
+  """
+  What the worker pays a pay period across enrolments in force, in minor units.
+  """
+  employeeCostPerPeriodMinor: Int!
+  """
+  Plans the worker is eligible for and has neither enrolled in nor declined.
+  """
+  notStartedCount: Int!
+}
+
+"""
+The drug and alcohol standing with the one figure the page draws beside it.
+"""
+type WorkerOverviewDrugAlcohol {
+  """
+  Whole UTC days from asOf to standing.nextClearinghouseQueryDue; negative when overdue. Null when no query is due.
+  """
+  nextQueryDaysUntil: Int
+  standing: DrugAlcoholStanding!
+}
+
+"""The employment history at a glance."""
+type WorkerOverviewEmployment {
+  """Employment events on the timeline."""
+  eventCount: Int!
+  """
+  Effective date of the latest Hired or Rehired event; null when there is none.
+  """
+  hiredAt: Timestamp
+  """Open checklists. Null for a reader without worker_checklist read."""
+  openChecklistCount: Int
+}
+
+"""
+Hours of service from stored state only; this read never calls the provider.
+"""
+type WorkerOverviewHos {
+  """
+  The driving time the ruleset allows before a break. Null unless link is Reporting.
+  """
+  breakLimitMs: Int
+  """
+  Driving time left before a break is due. Null unless link is Reporting.
+  """
+  breakRemainingMs: Int
+  """The cycle the ruleset gives. Null unless link is Reporting."""
+  cycleLimitMs: Int
+  """Time left in the cycle. Null unless link is Reporting."""
+  cycleRemainingMs: Int
+  """
+  The driving limit the ruleset gives a shift. Null unless link is Reporting.
+  """
+  driveLimitMs: Int
+  """Driving time left in the shift. Null unless link is Reporting."""
+  driveRemainingMs: Int
+  """
+  The provider's duty status code (as WorkerHosState.dutyStatus). Null unless link is Reporting.
+  """
+  dutyStatus: String
+  """
+  When the current duty status began, from the open log segment. Null when unknown.
+  """
+  dutyStatusSince: Timestamp
+  link: WorkerHosLink!
+  """When the stored state was recorded. Null unless link is Reporting."""
+  recordedAt: Timestamp
+  """The on-duty window the ruleset gives. Null unless link is Reporting."""
+  shiftLimitMs: Int
+  """Time left in the on-duty window. Null unless link is Reporting."""
+  shiftRemainingMs: Int
+  """
+  The unit number of the tractor the driver is in. Null when none is matched or the reader may not read tractors.
+  """
+  tractorCode: String
+}
+
+"""The pay profile assignment in force at asOf."""
+type WorkerOverviewPay {
+  classification: PayeeClassification!
+  effectiveFrom: Timestamp!
+  """Null when the profile has no active component."""
+  headline: WorkerOverviewPayRate
+  profileName: String!
+}
+
+"""
+The component the pay strip quotes: the first active component with a
+driver-specific override, or failing that the profile's first active component.
+The client builds the rate text from it.
+"""
+type WorkerOverviewPayRate {
+  kind: PayComponentKind!
+  method: PayCalcMethod!
+  overridden: Boolean!
+  """
+  The rate in force for this worker: the override when overridden, else the profile's.
+  """
+  rate: Decimal!
+}
+
+type WorkerOverviewPortal {
+  access: WorkerPortalAccess!
+  """
+  The linked portal user's last sign-in. Null when not linked or never signed in.
+  """
+  lastSignInAt: Timestamp
+  """
+  Profile change requests waiting for a decision. Null for a reader without profile_change_request read.
+  """
+  pendingProfileChangeCount: Int
+}
+
+"""The worker's shift at asOf."""
+type WorkerOverviewSchedule {
+  """The shift template's name. Null when the worker is not on a shift."""
+  currentShiftName: String
 }
 
 type WorkerPTO {
@@ -39439,6 +39938,67 @@ type WorkerPTOPolicyAssignment {
   workerId: ID!
 }
 
+"""
+The kind of sub-record a destination opens in the work pane. Each is one record
+search parameter on the worker page: Event is an employment event on the
+Employment tab and a safety event on the Safety tab, Test a drug or alcohol
+test, Employer a previous-employer verification, Request a time off request.
+"""
+enum WorkerPageRecord {
+  Checklist
+  Credential
+  Employer
+  Event
+  Injury
+  Leave
+  Request
+  Review
+  Test
+  Training
+}
+
+"""
+A tab of the worker record page. The client turns it into the URL slug.
+"""
+enum WorkerPageTab {
+  Activity
+  Development
+  Employment
+  Files
+  Overview
+  Pay
+  Profile
+  Qualification
+  Safety
+  Time
+}
+
+"""
+A view inside a worker record page tab. Every view belongs to exactly one tab:
+History and Checklists to Employment; Credentials, DqFile and DrugAndAlcohol to
+Qualification; Training and Reviews to Development; HoursOfService, Schedule,
+TimeOff and Leave to Time; PayProfile and Benefits to Pay; Documents,
+DriverPortal and AgentMemory to Files.
+"""
+enum WorkerPageView {
+  AgentMemory
+  Benefits
+  Checklists
+  Credentials
+  Documents
+  DqFile
+  DriverPortal
+  DrugAndAlcohol
+  History
+  HoursOfService
+  Leave
+  PayProfile
+  Reviews
+  Schedule
+  TimeOff
+  Training
+}
+
 input WorkerPatchInput {
   """Omit to leave unchanged; null is rejected."""
   driverType: DriverType @goField(omittable: true)
@@ -39542,6 +40102,16 @@ input WorkerPolicyInput {
   summary: String
   title: String!
   versionLabel: String!
+}
+
+"""
+Where the worker stands with Dash. Linked: a portal user is linked.
+Invited: an invitation is pending. NotSetUp: neither.
+"""
+enum WorkerPortalAccess {
+  Invited
+  Linked
+  NotSetUp
 }
 
 """

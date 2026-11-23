@@ -7,6 +7,7 @@
   "Add range": "新增範圍",
   "An exact key, like a zone code or a freight class": "精確鍵值，例如區域代碼或貨運等級",
   "Applied to both the stored key and the value a formula looks up, so a ZIP+4 finds its ZIP3 zone and case does not matter.": "同時套用於儲存的索引鍵與公式查找的值，因此 ZIP+4 可找到其 ZIP3 區域，且大小寫不影響結果。",
+  "Archive {0}": "封存 {0}",
   "Archived. No new template version can read it; those that pin a version keep reading it.": "已封存。新的範本版本無法讀取它；已鎖定某個版本的範本版本會繼續讀取該版本。",
   "Axes": "軸",
   "Axis {0}": "軸 {0}",

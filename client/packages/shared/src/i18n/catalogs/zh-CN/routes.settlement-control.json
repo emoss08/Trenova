@@ -8,6 +8,7 @@
   "An advance larger than a settlement's net pay is taken in full and the shortfall carries to the next settlement. Off, recovery stops at zero net pay.": "超过结算净薪酬的预支款会全额扣回，不足部分结转到下一次结算。关闭时，扣回至净薪酬为零即停止。",
   "Approve clean settlements automatically": "自动批准无异常的结算",
   "Average over": "平均值计算范围",
+  "Configure pay periods, accrual triggers, exception policies, and escrow interest": "配置薪资期间、计提触发条件、例外政策与履约保证利息",
   "Earning pay": "薪酬计入",
   "Escrow interest": "履约保证利息",
   "Flag a change in net pay over": "净薪酬变动超过此值时标记",

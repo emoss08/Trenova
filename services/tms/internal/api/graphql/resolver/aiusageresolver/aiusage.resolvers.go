@@ -18,9 +18,7 @@ import (
 )
 
 func (r *QueryResolver) AiUsageSummary(ctx context.Context, since *int) (*aiusageports.AIUsageSummary, error) {
-	// Spend and latency are the provider's business, so reading providers is
-	// the permission that reads their usage.
-	authCtx, err := r.RequirePermission(ctx, permission.ResourceAIProvider, permission.OpRead)
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceAIUsage, permission.OpRead)
 	if err != nil {
 		return nil, err
 	}
@@ -29,7 +27,7 @@ func (r *QueryResolver) AiUsageSummary(ctx context.Context, since *int) (*aiusag
 }
 
 func (r *QueryResolver) AiUsageDaily(ctx context.Context, days *int, timezone *string, providerID *string) ([]*aiusageports.AIUsageDay, error) {
-	authCtx, err := r.RequirePermission(ctx, permission.ResourceAIProvider, permission.OpRead)
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceAIUsage, permission.OpRead)
 	if err != nil {
 		return nil, err
 	}
@@ -58,7 +56,7 @@ func (r *QueryResolver) AiUsageDaily(ctx context.Context, days *int, timezone *s
 }
 
 func (r *QueryResolver) AiUsageFeatures(ctx context.Context, input gqlmodel.DataTableConnectionInput, days *int) (*gqlmodel.AIUsageFeatureConnection, error) {
-	authCtx, err := r.RequirePermission(ctx, permission.ResourceAIProvider, permission.OpRead)
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceAIUsage, permission.OpRead)
 	if err != nil {
 		return nil, err
 	}

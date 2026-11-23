@@ -1,6 +1,7 @@
 {
   "Charges the empty miles to reach a pickup to the shipment's cost.": "Carga al costo del envío las millas en vacío recorridas para llegar a una recolección.",
   "Choose which categories use GL actuals, and their accounts, on Cost rates.": "Elija en Tarifas de costo qué categorías usan los reales del libro mayor y sus cuentas.",
+  "Configure the cost-per-mile model that powers shipment profitability estimates": "Configure el modelo de costo por milla que alimenta las estimaciones de rentabilidad del envío",
   "Cost basis": "Base de costo",
   "Cost rates": "Tarifas de costo",
   "Costs that grow with every mile driven.": "Costos que aumentan con cada milla recorrida.",

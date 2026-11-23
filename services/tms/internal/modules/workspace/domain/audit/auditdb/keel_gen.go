@@ -1156,6 +1156,8 @@ var entriesTable = schema.Table{
 		{Name: "metadata", Quoted: `"metadata"`, Field: "Metadata", Kind: schema.KindJSON, Flags: schema.FlagJSONB, Label: `Metadata`, JSON: `metadata`},
 		{Name: "sensitive_data", Quoted: `"sensitive_data"`, Field: "SensitiveData", Kind: schema.KindBool, Flags: 0, Label: `Sensitive Data`, JSON: `sensitiveData`},
 		{Name: "critical", Quoted: `"critical"`, Field: "Critical", Kind: schema.KindBool, Flags: 0, Label: `Critical`, JSON: `critical`},
+		{Name: "subject_resource", Quoted: `"subject_resource"`, Field: "SubjectResource", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Subject Resource`, JSON: `subjectResource`, Enum: enumPermissionResource[:]},
+		{Name: "subject_id", Quoted: `"subject_id"`, Field: "SubjectID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Subject ID`, JSON: `subjectId`},
 	},
 	Relations: []schema.Relation{
 		{Name: "User", Alias: "u", Kind: schema.BelongsTo, Local: []int32{13}, Remote: []int32{0}, Label: `User`, JSON: `user`},
@@ -1163,9 +1165,9 @@ var entriesTable = schema.Table{
 	},
 	PK:           []int32{0, 1, 2, 3},
 	Tenant:       []int32{1, 2},
-	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28},
-	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28},
-	Update:       []int32{4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30},
+	Update:       []int32{4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30},
 	Returning:    nil,
 	Version:      -1,
 	AutoID:       0,
@@ -1186,104 +1188,110 @@ var entriesRef = keel.Ref{Table: &entriesTable}
 // EntriesTable is the table of audit.Entry.
 type EntriesTable struct {
 	keel.TableBase
-	ID             keelkinds.PulidIDCol
-	BusinessUnitID keelkinds.PulidIDCol
-	OrganizationID keelkinds.PulidIDCol
-	Timestamp      keel.Int64Col
-	Resource       keelkinds.PermissionResourceCol
-	ResourceID     keel.StringCol
-	Operation      keelkinds.PermissionOperationCol
-	Action         keel.StringCol
-	Category       CategoryCol
-	RetentionClass RetentionClassCol
-	Channel        ChannelCol
-	PrincipalType  keel.StringCol
-	PrincipalID    keelkinds.PulidIDCol
-	UserID         keelkinds.PulidIDCol
-	APIKeyID       keelkinds.PulidIDCol
-	ActorName      keel.StringCol
-	AIRunID        keel.StringCol
-	EntityRef      keel.StringCol
-	CorrelationID  keel.StringCol
-	TraceID        keel.StringCol
-	IPAddress      keel.StringCol
-	UserAgent      keel.StringCol
-	Comment        keel.StringCol
-	Changes        keel.JSONBCol
-	PreviousState  keel.JSONBCol
-	CurrentState   keel.JSONBCol
-	Metadata       keel.JSONBCol
-	SensitiveData  keel.BoolCol
-	Critical       keel.BoolCol
+	ID              keelkinds.PulidIDCol
+	BusinessUnitID  keelkinds.PulidIDCol
+	OrganizationID  keelkinds.PulidIDCol
+	Timestamp       keel.Int64Col
+	Resource        keelkinds.PermissionResourceCol
+	ResourceID      keel.StringCol
+	Operation       keelkinds.PermissionOperationCol
+	Action          keel.StringCol
+	Category        CategoryCol
+	RetentionClass  RetentionClassCol
+	Channel         ChannelCol
+	PrincipalType   keel.StringCol
+	PrincipalID     keelkinds.PulidIDCol
+	UserID          keelkinds.PulidIDCol
+	APIKeyID        keelkinds.PulidIDCol
+	ActorName       keel.StringCol
+	AIRunID         keel.StringCol
+	EntityRef       keel.StringCol
+	CorrelationID   keel.StringCol
+	TraceID         keel.StringCol
+	IPAddress       keel.StringCol
+	UserAgent       keel.StringCol
+	Comment         keel.StringCol
+	Changes         keel.JSONBCol
+	PreviousState   keel.JSONBCol
+	CurrentState    keel.JSONBCol
+	Metadata        keel.JSONBCol
+	SensitiveData   keel.BoolCol
+	Critical        keel.BoolCol
+	SubjectResource keelkinds.PermissionResourceCol
+	SubjectID       keelkinds.PulidIDCol
 }
 
 // Entries references the audit_entries table.
 var Entries = &EntriesTable{
-	TableBase:      keel.TableBase{Ref: &entriesRef},
-	ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &entriesRef, Index: 0}}},
-	BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &entriesRef, Index: 1}}},
-	OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &entriesRef, Index: 2}}},
-	Timestamp:      keel.Int64Col{Col: keel.Col{Ref: &entriesRef, Index: 3}},
-	Resource:       keelkinds.PermissionResourceCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &entriesRef, Index: 4}}},
-	ResourceID:     keel.StringCol{Col: keel.Col{Ref: &entriesRef, Index: 5}},
-	Operation:      keelkinds.PermissionOperationCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &entriesRef, Index: 6}}},
-	Action:         keel.StringCol{Col: keel.Col{Ref: &entriesRef, Index: 7}},
-	Category:       CategoryCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &entriesRef, Index: 8}}},
-	RetentionClass: RetentionClassCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &entriesRef, Index: 9}}},
-	Channel:        ChannelCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &entriesRef, Index: 10}}},
-	PrincipalType:  keel.StringCol{Col: keel.Col{Ref: &entriesRef, Index: 11}},
-	PrincipalID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &entriesRef, Index: 12}}},
-	UserID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &entriesRef, Index: 13}}},
-	APIKeyID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &entriesRef, Index: 14}}},
-	ActorName:      keel.StringCol{Col: keel.Col{Ref: &entriesRef, Index: 15}},
-	AIRunID:        keel.StringCol{Col: keel.Col{Ref: &entriesRef, Index: 16}},
-	EntityRef:      keel.StringCol{Col: keel.Col{Ref: &entriesRef, Index: 17}},
-	CorrelationID:  keel.StringCol{Col: keel.Col{Ref: &entriesRef, Index: 18}},
-	TraceID:        keel.StringCol{Col: keel.Col{Ref: &entriesRef, Index: 19}},
-	IPAddress:      keel.StringCol{Col: keel.Col{Ref: &entriesRef, Index: 20}},
-	UserAgent:      keel.StringCol{Col: keel.Col{Ref: &entriesRef, Index: 21}},
-	Comment:        keel.StringCol{Col: keel.Col{Ref: &entriesRef, Index: 22}},
-	Changes:        keel.JSONBCol{Col: keel.Col{Ref: &entriesRef, Index: 23}},
-	PreviousState:  keel.JSONBCol{Col: keel.Col{Ref: &entriesRef, Index: 24}},
-	CurrentState:   keel.JSONBCol{Col: keel.Col{Ref: &entriesRef, Index: 25}},
-	Metadata:       keel.JSONBCol{Col: keel.Col{Ref: &entriesRef, Index: 26}},
-	SensitiveData:  keel.BoolCol{Col: keel.Col{Ref: &entriesRef, Index: 27}},
-	Critical:       keel.BoolCol{Col: keel.Col{Ref: &entriesRef, Index: 28}},
+	TableBase:       keel.TableBase{Ref: &entriesRef},
+	ID:              keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &entriesRef, Index: 0}}},
+	BusinessUnitID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &entriesRef, Index: 1}}},
+	OrganizationID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &entriesRef, Index: 2}}},
+	Timestamp:       keel.Int64Col{Col: keel.Col{Ref: &entriesRef, Index: 3}},
+	Resource:        keelkinds.PermissionResourceCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &entriesRef, Index: 4}}},
+	ResourceID:      keel.StringCol{Col: keel.Col{Ref: &entriesRef, Index: 5}},
+	Operation:       keelkinds.PermissionOperationCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &entriesRef, Index: 6}}},
+	Action:          keel.StringCol{Col: keel.Col{Ref: &entriesRef, Index: 7}},
+	Category:        CategoryCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &entriesRef, Index: 8}}},
+	RetentionClass:  RetentionClassCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &entriesRef, Index: 9}}},
+	Channel:         ChannelCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &entriesRef, Index: 10}}},
+	PrincipalType:   keel.StringCol{Col: keel.Col{Ref: &entriesRef, Index: 11}},
+	PrincipalID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &entriesRef, Index: 12}}},
+	UserID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &entriesRef, Index: 13}}},
+	APIKeyID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &entriesRef, Index: 14}}},
+	ActorName:       keel.StringCol{Col: keel.Col{Ref: &entriesRef, Index: 15}},
+	AIRunID:         keel.StringCol{Col: keel.Col{Ref: &entriesRef, Index: 16}},
+	EntityRef:       keel.StringCol{Col: keel.Col{Ref: &entriesRef, Index: 17}},
+	CorrelationID:   keel.StringCol{Col: keel.Col{Ref: &entriesRef, Index: 18}},
+	TraceID:         keel.StringCol{Col: keel.Col{Ref: &entriesRef, Index: 19}},
+	IPAddress:       keel.StringCol{Col: keel.Col{Ref: &entriesRef, Index: 20}},
+	UserAgent:       keel.StringCol{Col: keel.Col{Ref: &entriesRef, Index: 21}},
+	Comment:         keel.StringCol{Col: keel.Col{Ref: &entriesRef, Index: 22}},
+	Changes:         keel.JSONBCol{Col: keel.Col{Ref: &entriesRef, Index: 23}},
+	PreviousState:   keel.JSONBCol{Col: keel.Col{Ref: &entriesRef, Index: 24}},
+	CurrentState:    keel.JSONBCol{Col: keel.Col{Ref: &entriesRef, Index: 25}},
+	Metadata:        keel.JSONBCol{Col: keel.Col{Ref: &entriesRef, Index: 26}},
+	SensitiveData:   keel.BoolCol{Col: keel.Col{Ref: &entriesRef, Index: 27}},
+	Critical:        keel.BoolCol{Col: keel.Col{Ref: &entriesRef, Index: 28}},
+	SubjectResource: keelkinds.PermissionResourceCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &entriesRef, Index: 29}}},
+	SubjectID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &entriesRef, Index: 30}}},
 }
 
 // BuildEntries builds the table of audit_entries for ref. Generated relation and alias methods call it.
 func BuildEntries(r *keel.Ref) *EntriesTable {
 	return &EntriesTable{
-		TableBase:      keel.TableBase{Ref: r},
-		ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		Timestamp:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 3}},
-		Resource:       keelkinds.PermissionResourceCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
-		ResourceID:     keel.StringCol{Col: keel.Col{Ref: r, Index: 5}},
-		Operation:      keelkinds.PermissionOperationCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 6}}},
-		Action:         keel.StringCol{Col: keel.Col{Ref: r, Index: 7}},
-		Category:       CategoryCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 8}}},
-		RetentionClass: RetentionClassCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 9}}},
-		Channel:        ChannelCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 10}}},
-		PrincipalType:  keel.StringCol{Col: keel.Col{Ref: r, Index: 11}},
-		PrincipalID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 12}}},
-		UserID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 13}}},
-		APIKeyID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 14}}},
-		ActorName:      keel.StringCol{Col: keel.Col{Ref: r, Index: 15}},
-		AIRunID:        keel.StringCol{Col: keel.Col{Ref: r, Index: 16}},
-		EntityRef:      keel.StringCol{Col: keel.Col{Ref: r, Index: 17}},
-		CorrelationID:  keel.StringCol{Col: keel.Col{Ref: r, Index: 18}},
-		TraceID:        keel.StringCol{Col: keel.Col{Ref: r, Index: 19}},
-		IPAddress:      keel.StringCol{Col: keel.Col{Ref: r, Index: 20}},
-		UserAgent:      keel.StringCol{Col: keel.Col{Ref: r, Index: 21}},
-		Comment:        keel.StringCol{Col: keel.Col{Ref: r, Index: 22}},
-		Changes:        keel.JSONBCol{Col: keel.Col{Ref: r, Index: 23}},
-		PreviousState:  keel.JSONBCol{Col: keel.Col{Ref: r, Index: 24}},
-		CurrentState:   keel.JSONBCol{Col: keel.Col{Ref: r, Index: 25}},
-		Metadata:       keel.JSONBCol{Col: keel.Col{Ref: r, Index: 26}},
-		SensitiveData:  keel.BoolCol{Col: keel.Col{Ref: r, Index: 27}},
-		Critical:       keel.BoolCol{Col: keel.Col{Ref: r, Index: 28}},
+		TableBase:       keel.TableBase{Ref: r},
+		ID:              keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		Timestamp:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 3}},
+		Resource:        keelkinds.PermissionResourceCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		ResourceID:      keel.StringCol{Col: keel.Col{Ref: r, Index: 5}},
+		Operation:       keelkinds.PermissionOperationCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		Action:          keel.StringCol{Col: keel.Col{Ref: r, Index: 7}},
+		Category:        CategoryCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 8}}},
+		RetentionClass:  RetentionClassCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 9}}},
+		Channel:         ChannelCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 10}}},
+		PrincipalType:   keel.StringCol{Col: keel.Col{Ref: r, Index: 11}},
+		PrincipalID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 12}}},
+		UserID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 13}}},
+		APIKeyID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 14}}},
+		ActorName:       keel.StringCol{Col: keel.Col{Ref: r, Index: 15}},
+		AIRunID:         keel.StringCol{Col: keel.Col{Ref: r, Index: 16}},
+		EntityRef:       keel.StringCol{Col: keel.Col{Ref: r, Index: 17}},
+		CorrelationID:   keel.StringCol{Col: keel.Col{Ref: r, Index: 18}},
+		TraceID:         keel.StringCol{Col: keel.Col{Ref: r, Index: 19}},
+		IPAddress:       keel.StringCol{Col: keel.Col{Ref: r, Index: 20}},
+		UserAgent:       keel.StringCol{Col: keel.Col{Ref: r, Index: 21}},
+		Comment:         keel.StringCol{Col: keel.Col{Ref: r, Index: 22}},
+		Changes:         keel.JSONBCol{Col: keel.Col{Ref: r, Index: 23}},
+		PreviousState:   keel.JSONBCol{Col: keel.Col{Ref: r, Index: 24}},
+		CurrentState:    keel.JSONBCol{Col: keel.Col{Ref: r, Index: 25}},
+		Metadata:        keel.JSONBCol{Col: keel.Col{Ref: r, Index: 26}},
+		SensitiveData:   keel.BoolCol{Col: keel.Col{Ref: r, Index: 27}},
+		Critical:        keel.BoolCol{Col: keel.Col{Ref: r, Index: 28}},
+		SubjectResource: keelkinds.PermissionResourceCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 29}}},
+		SubjectID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 30}}},
 	}
 }
 
@@ -1734,6 +1742,10 @@ func ptrEntry(p unsafe.Pointer, c int32) any {
 		return &r.SensitiveData
 	case 28:
 		return &r.Critical
+	case 29:
+		return (*string)(unsafe.Pointer(&r.SubjectResource))
+	case 30:
+		return (*string)(unsafe.Pointer(&r.SubjectID))
 	}
 	return nil
 }
@@ -1841,6 +1853,16 @@ func valueEntry(p unsafe.Pointer, c int32) any {
 		return r.SensitiveData
 	case 28:
 		return r.Critical
+	case 29:
+		if r.SubjectResource == "" {
+			return nil
+		}
+		return string(r.SubjectResource)
+	case 30:
+		if r.SubjectID == "" {
+			return nil
+		}
+		return string(r.SubjectID)
 	}
 	return nil
 }
@@ -4462,6 +4484,7 @@ var enumPermissionResource = [...]schema.EnumValue{
 	{Value: `agent_exception`, Label: `Agent Exception`},
 	{Value: `agent_control`, Label: `Agent Control`},
 	{Value: `ai_provider`, Label: `AI Provider`},
+	{Value: `ai_usage`, Label: `AI Usage`},
 	{Value: `agent_extension`, Label: `Agent Extension`},
 	{Value: `web_research`, Label: `Web Research`},
 	{Value: `portal_automation`, Label: `Portal Automation`},
@@ -4556,6 +4579,7 @@ var enumVerificationStatus = [...]schema.EnumValue{
 	{Value: `Broken`, Label: `Verification Broken`},
 	{Value: `KeyMissing`, Label: `Verification Key Missing`},
 	{Value: `ImportedUnverified`, Label: `Verification Imported`},
+	{Value: `ImportedSourceVerified`, Label: `Verification Source Verified`},
 }
 
 // AlertKindCol is a column of audit.AlertKind values.

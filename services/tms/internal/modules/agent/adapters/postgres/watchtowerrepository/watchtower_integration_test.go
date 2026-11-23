@@ -59,7 +59,7 @@ func (h *harness) item(sourceID string, severity watchtower.Severity) *watchtowe
 	return &watchtower.Item{
 		OrganizationID: h.tenant.OrgID,
 		BusinessUnitID: h.tenant.BuID,
-		SourceKind:     watchtower.SourceServiceFailure,
+		SourceKind:     watchtower.SourceKindServiceFailure,
 		SourceID:       sourceID,
 		Severity:       severity,
 		Title:          "Late at " + sourceID,
@@ -111,7 +111,7 @@ func (h *harness) resolveSource(t *testing.T, sourceID string) *watchtower.Item 
 	t.Helper()
 	item, err := h.repo.Resolve(h.ctx, watchtowerports.ResolveWatchtowerItemRequest{
 		TenantInfo: h.tenant,
-		SourceKind: watchtower.SourceServiceFailure,
+		SourceKind: watchtower.SourceKindServiceFailure,
 		SourceID:   sourceID,
 		ResolvedAt: baseTime + 100,
 	})
@@ -148,7 +148,7 @@ func TestPersonsResolutionHoldsUntilTheSourceClears(t *testing.T) {
 	require.NoError(
 		t,
 		resolved.Resolve(
-			watchtower.ResolutionCarrierDelay,
+			watchtower.ResolutionCodeCarrierDelay,
 			"Carrier called",
 			h.userID,
 			baseTime+50,
@@ -165,12 +165,12 @@ func TestPersonsResolutionHoldsUntilTheSourceClears(t *testing.T) {
 	assert.False(t, again.Reopened)
 	stored := h.get(t, created.ID)
 	assert.Equal(t, watchtower.StatusResolved, stored.Status)
-	assert.Equal(t, watchtower.ResolutionCarrierDelay, stored.ResolutionCode)
+	assert.Equal(t, watchtower.ResolutionCodeCarrierDelay, stored.ResolutionCode)
 
 	assert.Nil(t, h.resolveSource(t, "sf_1"))
 	stored = h.get(t, created.ID)
 	require.NotNil(t, stored.SourceClearedAt)
-	assert.Equal(t, watchtower.ResolutionCarrierDelay, stored.ResolutionCode)
+	assert.Equal(t, watchtower.ResolutionCodeCarrierDelay, stored.ResolutionCode)
 
 	reopened := h.upsert(t, "sf_1", watchtower.SeverityWarning)
 	assert.True(t, reopened.Reopened)
@@ -195,7 +195,7 @@ func TestSourceClearsAnOpenItemAndReopensIt(t *testing.T) {
 	cleared := h.resolveSource(t, "sf_2")
 	require.NotNil(t, cleared)
 	assert.Equal(t, watchtower.StatusResolved, cleared.Status)
-	assert.Equal(t, watchtower.ResolutionCleared, cleared.ResolutionCode)
+	assert.Equal(t, watchtower.ResolutionCodeCleared, cleared.ResolutionCode)
 	assert.True(t, cleared.ResolvedByID.IsNil())
 
 	reopened := h.upsert(t, "sf_2", watchtower.SeverityInfo)
@@ -342,7 +342,7 @@ func TestListFiltersByOwnerStatusAndOverdueAndOrdersByDue(t *testing.T) {
 
 	mine, err := h.repo.List(h.ctx, watchtowerports.ListWatchtowerItemsQuery{
 		TenantInfo:     h.tenant,
-		Kinds:          []watchtower.SourceKind{watchtower.SourceServiceFailure},
+		Kinds:          []watchtower.SourceKind{watchtower.SourceKindServiceFailure},
 		UnresolvedOnly: true,
 		AssigneeIDs:    []pulid.ID{h.userID},
 		OrderByDue:     true,
@@ -355,7 +355,7 @@ func TestListFiltersByOwnerStatusAndOverdueAndOrdersByDue(t *testing.T) {
 
 	overdueOnly, err := h.repo.List(h.ctx, watchtowerports.ListWatchtowerItemsQuery{
 		TenantInfo: h.tenant,
-		Kinds:      []watchtower.SourceKind{watchtower.SourceServiceFailure},
+		Kinds:      []watchtower.SourceKind{watchtower.SourceKindServiceFailure},
 		OverdueAt:  baseTime,
 		Limit:      10,
 	})
@@ -365,7 +365,7 @@ func TestListFiltersByOwnerStatusAndOverdueAndOrdersByDue(t *testing.T) {
 
 	nobody, err := h.repo.List(h.ctx, watchtowerports.ListWatchtowerItemsQuery{
 		TenantInfo: h.tenant,
-		Kinds:      []watchtower.SourceKind{watchtower.SourceServiceFailure},
+		Kinds:      []watchtower.SourceKind{watchtower.SourceKindServiceFailure},
 		Unassigned: true,
 		Statuses:   []watchtower.Status{watchtower.StatusOpen},
 		Limit:      10,
@@ -376,7 +376,7 @@ func TestListFiltersByOwnerStatusAndOverdueAndOrdersByDue(t *testing.T) {
 
 	counts, err := h.repo.Counts(h.ctx, watchtowerports.CountWatchtowerItemsRequest{
 		TenantInfo: h.tenant,
-		Kinds:      []watchtower.SourceKind{watchtower.SourceServiceFailure},
+		Kinds:      []watchtower.SourceKind{watchtower.SourceKindServiceFailure},
 		AssigneeID: h.userID,
 		Now:        baseTime,
 	})
@@ -393,7 +393,7 @@ func TestRetentionKeepsAPersonsResolutionWhileTheSourceIsOpen(t *testing.T) {
 
 	held := h.upsert(t, "sf_12", watchtower.SeverityWarning)
 	resolved := *held
-	require.NoError(t, resolved.Resolve(watchtower.ResolutionFixed, "", h.userID, baseTime))
+	require.NoError(t, resolved.Resolve(watchtower.ResolutionCodeFixed, "", h.userID, baseTime))
 	h.update(t, &resolved)
 
 	cleared := h.upsert(t, "sf_13", watchtower.SeverityWarning)

@@ -60,7 +60,7 @@ func (f *FakePermissions) GetResourcePermissions(
 	if f.Readable == nil {
 		return &permissionports.ResourcePermissionDetail{
 			Resource:       resource,
-			Operations:     []permission.Operation{permission.OpRead},
+			Operations:     []permission.Operation{permission.OpRead, permission.OpManage},
 			MaxSensitivity: permission.SensitivityConfidential,
 		}, nil
 	}

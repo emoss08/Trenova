@@ -2,8 +2,9 @@
 //!
 //! A report column carries a display contract (style, decimals, grouping, currency, negative
 //! style, notation, prefix and suffix, boolean, duration and date styles, empty-value text, tone
-//! rules and a band), and every place a report is shown (the builder preview, the result grid,
-//! CSV, PDF and the XLSX text fallback) renders its values through that contract. This module is
+//! rules, a band and an enum column's labels), and every place a report is shown (the builder
+//! preview, the result grid, CSV, PDF and the XLSX text fallback) renders its values through
+//! that contract. This module is
 //! the one renderer, so a column reads the same everywhere and a value is rounded the same way
 //! on the server and in the browser.
 //!

@@ -27,6 +27,8 @@ import {
   fetchWorkerStanding,
 } from "@/lib/graphql/worker-card";
 import { fetchWorkerCredentialTypeChoices } from "@/lib/graphql/worker-credential";
+import { fetchWorkerOverview } from "@/lib/graphql/worker-overview";
+import { fetchWorkerRecord } from "@/lib/graphql/worker-record";
 
 type WorkerPTOConnection = {
   edges?: Array<{ node: unknown }>;
@@ -102,6 +104,14 @@ export async function fetchWorkerPTOHistory(
 }
 
 export const worker = createQueryKeys("worker", {
+  record: (workerId: string) => ({
+    queryKey: ["record", workerId],
+    queryFn: ({ signal }) => fetchWorkerRecord(workerId, { signal }),
+  }),
+  overview: (workerId: string) => ({
+    queryKey: ["overview", workerId],
+    queryFn: ({ signal }) => fetchWorkerOverview(workerId, { signal }),
+  }),
   card: (workerId: string) => ({
     queryKey: ["card", workerId],
     queryFn: ({ signal }) => fetchDeskWorker(workerId, { signal }),

@@ -757,9 +757,12 @@ export function parseDashboardLayout(layout: unknown): ReportDashboardLayout {
 export const REPORT_CATEGORY_CHOICES: { value: string; label: string }[] = [
   { value: "operations", label: "Operations" },
   { value: "billing", label: "Billing" },
+  { value: "accounting", label: "Accounting" },
+  { value: "payroll", label: "Payroll" },
   { value: "fleet", label: "Fleet" },
   { value: "compliance", label: "Compliance" },
   { value: "customers", label: "Customers" },
+  { value: "desk", label: "Desk" },
   { value: "custom", label: "Custom" },
 ];
 

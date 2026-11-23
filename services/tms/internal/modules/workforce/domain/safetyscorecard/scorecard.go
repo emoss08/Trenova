@@ -67,7 +67,7 @@ func BuildSafetyScorecard(
 		PointsWatchThreshold:  safetyPointsWatchThreshold,
 		PointsAtRiskThreshold: safetyPointsAtRiskThreshold,
 	}
-	windowStart := timeutils.AddMonthsUTC(now, -scorecardWindowMonths)
+	windowStart := WindowStart(now)
 
 	card.tallyEvents(events, now, windowStart)
 	card.tallyDiscipline(actions, now)
@@ -88,6 +88,16 @@ func BuildSafetyScorecard(
 	card.Score = score
 	card.Rating = ratingFor(score, card.ActivePoints)
 	return card
+}
+
+func WindowStart(now int64) int64 {
+	return timeutils.AddMonthsUTC(now, -scorecardWindowMonths)
+}
+
+func IsOutOfServiceOrder(event *workersafety.WorkerSafetyEvent) bool {
+	return event.Kind == workersafety.SafetyEventInspection &&
+		(event.InspectionResult == workersafety.InspectionResultOutOfService ||
+			event.OutOfService)
 }
 
 func (card *SafetyScorecard) tallyEvents(

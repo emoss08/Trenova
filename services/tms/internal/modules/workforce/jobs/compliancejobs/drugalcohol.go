@@ -3,6 +3,7 @@ package compliancejobs
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercompliance"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerdotports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -10,11 +11,6 @@ import (
 	"go.temporal.io/sdk/activity"
 	"go.uber.org/zap"
 )
-
-// clearinghouseHorizonDays is how far ahead the sweep looks. The annual query
-// is a hard obligation, so the office wants it on the list before the day it
-// lapses rather than after.
-const clearinghouseHorizonDays = 30
 
 // DrugAlcoholSweepResult reports what the sweep repaired.
 type DrugAlcoholSweepResult struct {
@@ -35,7 +31,7 @@ func (a *Activities) DrugAlcoholSweepActivity(
 	ctx context.Context,
 ) (*DrugAlcoholSweepResult, error) {
 	result := new(DrugAlcoholSweepResult)
-	until := timeutils.NowUnix() + clearinghouseHorizonDays*secondsPerDay
+	until := timeutils.NowUnix() + workercompliance.ClearinghouseDueSoonDays*secondsPerDay
 
 	refs, err := a.drugAlcoholRepo.ListWorkersWithClearinghouseDue(
 		ctx,

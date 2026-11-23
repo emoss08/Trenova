@@ -27,6 +27,7 @@ func Resources() []*permissionspec.ResourceDefinition {
 		portalAutomationResource(),
 		codeModeResource(),
 		aiProviderResource(),
+		aiUsageResource(),
 	}
 }
 
@@ -386,6 +387,11 @@ func watchtowerResource() *permissionspec.ResourceDefinition {
 				DisplayName: "See every case",
 				Description: "See and open the cases other people own, read-only unless it is assigned to you",
 			},
+			{
+				Operation:   permission.OpExport,
+				DisplayName: "Export",
+				Description: "Run, schedule and download reports over Watchtower items, resolutions and case owners",
+			},
 		},
 		DefaultSensitivity: permission.SensitivityInternal,
 	}
@@ -534,6 +540,32 @@ func aiProviderResource() *permissionspec.ResourceDefinition {
 				Operation:   permission.OpManage,
 				DisplayName: "Manage",
 				Description: "Test an AI provider connection",
+			},
+		},
+		DefaultSensitivity: permission.SensitivityRestricted,
+	}
+}
+
+// What the organization's model calls used and cost is a manager's question,
+// apart from how the providers are configured: reading spend never opens a
+// provider's endpoint, model or routing.
+func aiUsageResource() *permissionspec.ResourceDefinition {
+	return &permissionspec.ResourceDefinition{
+		Resource:    permission.ResourceAIUsage.String(),
+		Feature:     platformcatalog.FeatureAdministration,
+		DisplayName: "AI usage and spend",
+		Description: "What the organization's model calls used and cost, by person, feature and model",
+		Category:    "AI & agents",
+		Operations: []permissionspec.OperationDefinition{
+			{
+				Operation:   permission.OpRead,
+				DisplayName: "View",
+				Description: "See model calls, tokens and estimated cost in AI control and in reports",
+			},
+			{
+				Operation:   permission.OpExport,
+				DisplayName: "Export",
+				Description: "Run, schedule and download reports over AI usage",
 			},
 		},
 		DefaultSensitivity: permission.SensitivityRestricted,

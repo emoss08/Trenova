@@ -7,7 +7,6 @@
   "Book the factor's chargeback of invoice {0}. The organization repays the factor, the factor gives up the reserve, and the invoice is the organization's to collect again.": "Registre la devolución de la factura {0} por parte de la empresa de factoraje. La organización reembolsa a la empresa de factoraje, esta renuncia a la reserva y la factura vuelve a ser de la organización para cobrarla.",
   "Book the factor's release of invoice {0}'s reserve. Whatever the factor kept beyond what it paid is booked as its fee, and the invoice's factoring is then settled.": "Registre la liberación de la reserva de la factura {0} por parte de la empresa de factoraje. Lo que la empresa de factoraje retuvo además de lo que pagó se registra como su comisión, y el factoraje de la factura queda liquidado.",
   "Cancel schedule": "Cancelar relación",
-  "Cancelled {0}: {1}": "Cancelada el {0}: {1}",
   "Cancelled: {0}": "Cancelada: {0}",
   "Charge back": "Devolver",
   "Charged back {0}": "Devuelta el {0}",

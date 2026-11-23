@@ -1,26 +1,43 @@
-// Package workeroverviewservice answers one question — is this worker in good
-// standing right now — by composing the roll-ups each HR area already builds.
-// It owns no data and writes nothing. Sections the signed-in user cannot read
-// are left out rather than faked, and the standing is computed from whatever
-// arrived, so a dispatcher and an HR manager see the same verdict drawn from
-// different evidence.
 package workeroverviewservice
 
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
+	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor"
+	"github.com/emoss08/trenova/internal/modules/equipment/ports/tractorports"
 	"github.com/emoss08/trenova/internal/modules/identity/app/ptoledgerservice"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payassignment"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/paybenefit"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
+	"github.com/emoss08/trenova/internal/modules/workforce/app/workerdqfservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/app/workersafetyservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/employment"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/portalinvitation"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/profilechange"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/safetyscorecard"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/telematics"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerchecklist"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercompliance"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerdot"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerleave"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerreview"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerschedule"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workertraining"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/portalaccessports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/ptoledgerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/selfserviceports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerclearanceports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workeremploymentports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerleaveports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerptoports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerreviewports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerscheduleports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -30,39 +47,29 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
-// CredentialSummarizer is the slice of the credential service this needs.
 type CredentialSummarizer interface {
-	Summary(
+	SummaryFor(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
-		workerID pulid.ID,
+		wrk *worker.Worker,
 	) (*workercredential.WorkerCredentialSummary, error)
 }
 
-// TrainingSummarizer is the slice of the training service this needs.
 type TrainingSummarizer interface {
-	Summary(
+	SummaryFor(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
-		workerID pulid.ID,
+		wrk *worker.Worker,
 	) (*workertraining.WorkerTrainingSummary, error)
 }
 
-// SafetyScorer is the slice of the safety service this needs.
-type SafetyScorer interface {
-	Scorecard(
+type SafetyReader interface {
+	Evidence(
 		ctx context.Context,
-		tenantInfo pagination.TenantInfo,
-		workerID pulid.ID,
-	) (*safetyscorecard.SafetyScorecard, error)
-	ScorecardWithoutDiscipline(
-		ctx context.Context,
-		tenantInfo pagination.TenantInfo,
-		workerID pulid.ID,
-	) (*safetyscorecard.SafetyScorecard, error)
+		req *workersafetyservice.EvidenceRequest,
+	) (*workersafetyservice.Evidence, error)
 }
 
-// ChecklistLister is the slice of the checklist service this needs.
 type ChecklistLister interface {
 	ListForWorker(
 		ctx context.Context,
@@ -72,8 +79,6 @@ type ChecklistLister interface {
 	) ([]*workerchecklist.WorkerChecklist, error)
 }
 
-// BalanceReader is the slice of the PTO ledger this needs: one worker's
-// balances for the overview, and the organisation's totals for the home tile.
 type BalanceReader interface {
 	GetBalances(
 		ctx context.Context,
@@ -86,8 +91,6 @@ type BalanceReader interface {
 	) (*ptoledgerports.PTOBalanceSummary, error)
 }
 
-// ReviewCounter is the slice of the review repository the home tile needs: a
-// count across the organisation, which the per-worker list cannot answer.
 type ReviewCounter interface {
 	CountReviews(
 		ctx context.Context,
@@ -95,9 +98,6 @@ type ReviewCounter interface {
 	) (int, error)
 }
 
-// LeaveCounter is the slice of the leave service the home tile needs: how many
-// cases across the organisation are still waiting on paperwork the employee
-// owes. Counted rather than listed — the tile shows only the number.
 type LeaveCounter interface {
 	CountCases(
 		ctx context.Context,
@@ -105,7 +105,15 @@ type LeaveCounter interface {
 	) (int, error)
 }
 
-// ReviewLister is the slice of the performance review service this needs.
+type LeaveEntitler interface {
+	EntitlementFor(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+		wrk *worker.Worker,
+		asOf int64,
+	) (workerleave.LeaveEntitlement, error)
+}
+
 type ReviewLister interface {
 	ListReviews(
 		ctx context.Context,
@@ -115,208 +123,269 @@ type ReviewLister interface {
 	) ([]*workerreview.PerformanceReview, error)
 }
 
-// Sections says which parts of the record the caller may read. The resolver
-// fills it from the signed-in user's permissions, so the service never has to
-// know about authorization itself.
-type Sections struct {
-	Credentials bool
-	Training    bool
-	Safety      bool
-	Discipline  bool
-	Checklists  bool
-	PTO         bool
-	Reviews     bool
+type DrugAlcoholStander interface {
+	Standing(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+		workerID pulid.ID,
+	) (workerdot.DrugAlcoholStanding, error)
 }
 
-// All is every section, for callers that have already been authorized in full.
+type QualificationFiler interface {
+	FileFor(
+		ctx context.Context,
+		req *workerdqfservice.FileForRequest,
+	) (*workerdqfservice.FileParts, error)
+}
+
+type EmploymentEventLister interface {
+	List(
+		ctx context.Context,
+		req *workeremploymentports.ListWorkerEmploymentEventsRequest,
+	) ([]*employment.WorkerEmploymentEvent, error)
+}
+
+type ShiftLister interface {
+	ListAssignments(
+		ctx context.Context,
+		req *workerscheduleports.ListShiftAssignmentsRequest,
+	) ([]*workerschedule.WorkerShiftAssignment, error)
+}
+
+type HOSLinker interface {
+	WorkerHOSLink(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+		workerID pulid.ID,
+	) (*telematics.HOSLinkState, error)
+}
+
+type TimeOffLister interface {
+	List(
+		ctx context.Context,
+		req *workerptoports.ListPTORequest,
+	) (*pagination.CursorListResult[*worker.WorkerPTO], error)
+}
+
+type TractorReader interface {
+	GetByID(ctx context.Context, req tractorports.GetTractorByIDRequest) (*tractor.Tractor, error)
+}
+
+type PayAssignmentReader interface {
+	GetEffectiveForWorker(
+		ctx context.Context,
+		req driverpayports.GetWorkerPayAssignmentRequest,
+	) (*payassignment.WorkerPayAssignment, error)
+}
+
+type BenefitReader interface {
+	ListPlans(
+		ctx context.Context,
+		req *driverpayports.ListBenefitPlansRequest,
+	) ([]*paybenefit.BenefitPlan, error)
+	ListEnrollments(
+		ctx context.Context,
+		req *driverpayports.ListBenefitEnrollmentsRequest,
+	) ([]*paybenefit.WorkerBenefitEnrollment, error)
+}
+
+type PortalInvitationReader interface {
+	GetPendingInvitationForWorker(
+		ctx context.Context,
+		req portalaccessports.GetPendingPortalInvitationRequest,
+	) (*portalinvitation.PortalInvitation, error)
+}
+
+type ProfileChangeLister interface {
+	ListChangeRequests(
+		ctx context.Context,
+		req *selfserviceports.ListProfileChangeRequestsRequest,
+	) ([]*profilechange.WorkerProfileChangeRequest, error)
+}
+
+type MemoryLister interface {
+	ListDesk(
+		ctx context.Context,
+		req *agentmemoryports.ListDeskMemoriesRequest,
+	) (*agentmemoryports.DeskMemoryPage, error)
+}
+
+type Sections struct {
+	Credentials    bool
+	Qualification  bool
+	DrugAlcohol    bool
+	Training       bool
+	Safety         bool
+	Discipline     bool
+	Employment     bool
+	Checklists     bool
+	PTO            bool
+	Leave          bool
+	Reviews        bool
+	Schedule       bool
+	HOS            bool
+	Tractor        bool
+	Pay            bool
+	Benefits       bool
+	Portal         bool
+	ProfileChanges bool
+	Documents      bool
+	AgentMemory    bool
+}
+
 func All() Sections {
 	return Sections{
-		Credentials: true,
-		Training:    true,
-		Safety:      true,
-		Discipline:  true,
-		Checklists:  true,
-		PTO:         true,
-		Reviews:     true,
+		Credentials:    true,
+		Qualification:  true,
+		DrugAlcohol:    true,
+		Training:       true,
+		Safety:         true,
+		Discipline:     true,
+		Employment:     true,
+		Checklists:     true,
+		PTO:            true,
+		Leave:          true,
+		Reviews:        true,
+		Schedule:       true,
+		HOS:            true,
+		Tractor:        true,
+		Pay:            true,
+		Benefits:       true,
+		Portal:         true,
+		ProfileChanges: true,
+		Documents:      true,
+		AgentMemory:    true,
 	}
 }
 
-// Overview is the composed answer. Every section pointer is nil when the
-// caller could not read it, which is deliberately the same shape as "there is
-// nothing there" — the standing treats both as contributing no concerns.
 type Overview struct {
-	Worker       *worker.Worker
-	AsOf         int64
-	Standing     workercompliance.Standing
-	Concerns     []workercompliance.Concern
-	Credentials  *workercredential.WorkerCredentialSummary
-	Training     *workertraining.WorkerTrainingSummary
-	Safety       *safetyscorecard.SafetyScorecard
-	Checklist    *workerchecklist.WorkerChecklist
-	PTO          []*ptoledgerservice.BalanceView
-	OpenReview   *workerreview.PerformanceReview
-	LastReview   *workerreview.PerformanceReview
-	NextReviewAt *int64
+	Worker            *worker.Worker
+	AsOf              int64
+	Standing          workercompliance.Standing
+	Concerns          []workercompliance.Concern
+	ConcernCount      int
+	Clearance         *workercompliance.Clearance
+	Credentials       *workercredential.WorkerCredentialSummary
+	QualificationFile *workercompliance.DQFFile
+	DrugAlcohol       *DrugAlcoholSection
+	Training          *workertraining.WorkerTrainingSummary
+	Safety            *safetyscorecard.SafetyScorecard
+	Employment        *EmploymentSection
+	Checklist         *workerchecklist.WorkerChecklist
+	PTO               []*ptoledgerservice.BalanceView
+	Leave             *workerleave.LeaveEntitlement
+	OpenReview        *workerreview.PerformanceReview
+	LastReview        *workerreview.PerformanceReview
+	NextReviewAt      *int64
+	Schedule          *ScheduleSection
+	HOS               *HOSSection
+	Pay               *PaySection
+	Benefits          *BenefitsSection
+	Portal            *PortalSection
+	NextTimeOff       *worker.WorkerPTO
+	DocumentCount     *int
+	AgentMemoryCount  *int
+}
+
+type GetRequest struct {
+	TenantInfo  pagination.TenantInfo
+	WorkerID    pulid.ID
+	Sections    Sections
+	MemoryActor *agentmemoryports.DeskMemoryActor
 }
 
 type Params struct {
 	fx.In
 
-	Logger       *zap.Logger
-	WorkerRepo   workerports.WorkerRepository
-	ReviewCounts ReviewCounter
-	Credentials  CredentialSummarizer
-	Training     TrainingSummarizer
-	Safety       SafetyScorer
-	Checklists   ChecklistLister
-	PTO          BalanceReader
-	Reviews      ReviewLister
-	Leave        LeaveCounter
+	Logger         *zap.Logger
+	Clock          timeutils.Clock
+	Features       platformcatalogports.FeatureGate
+	WorkerRepo     workerports.WorkerRepository
+	ReviewCounts   ReviewCounter
+	Credentials    CredentialSummarizer
+	Training       TrainingSummarizer
+	Safety         SafetyReader
+	Checklists     ChecklistLister
+	PTO            BalanceReader
+	Reviews        ReviewLister
+	Leave          LeaveCounter
+	LeaveStanding  LeaveEntitler
+	DrugAlcohol    DrugAlcoholStander
+	Qualification  QualificationFiler
+	Employment     EmploymentEventLister
+	Shifts         ShiftLister
+	HOS            HOSLinker
+	Tractors       TractorReader
+	TimeOff        TimeOffLister
+	Pay            PayAssignmentReader
+	Benefits       BenefitReader
+	Invitations    PortalInvitationReader
+	ProfileChanges ProfileChangeLister
+	Documents      documentports.ResourceDocumentCounter
+	Memories       MemoryLister
+	Dispatch       workerclearanceports.DispatchCheck
 }
 
 type Service struct {
-	l            *zap.Logger
-	workerRepo   workerports.WorkerRepository
-	reviewCounts ReviewCounter
-	credentials  CredentialSummarizer
-	training     TrainingSummarizer
-	safety       SafetyScorer
-	checklists   ChecklistLister
-	pto          BalanceReader
-	reviews      ReviewLister
-	leave        LeaveCounter
+	l              *zap.Logger
+	now            timeutils.Clock
+	features       platformcatalogports.FeatureGate
+	workerRepo     workerports.WorkerRepository
+	reviewCounts   ReviewCounter
+	credentials    CredentialSummarizer
+	training       TrainingSummarizer
+	safety         SafetyReader
+	checklists     ChecklistLister
+	pto            BalanceReader
+	reviews        ReviewLister
+	leave          LeaveCounter
+	leaveStanding  LeaveEntitler
+	drugAlcohol    DrugAlcoholStander
+	qualification  QualificationFiler
+	employment     EmploymentEventLister
+	shifts         ShiftLister
+	hos            HOSLinker
+	tractors       TractorReader
+	timeOff        TimeOffLister
+	pay            PayAssignmentReader
+	benefits       BenefitReader
+	invitations    PortalInvitationReader
+	profileChanges ProfileChangeLister
+	documents      documentports.ResourceDocumentCounter
+	memories       MemoryLister
+	dispatch       workerclearanceports.DispatchCheck
 }
 
 func New(p Params) *Service {
 	return &Service{
-		l:            p.Logger.Named("service.worker-overview"),
-		workerRepo:   p.WorkerRepo,
-		reviewCounts: p.ReviewCounts,
-		credentials:  p.Credentials,
-		training:     p.Training,
-		safety:       p.Safety,
-		checklists:   p.Checklists,
-		pto:          p.PTO,
-		reviews:      p.Reviews,
-		leave:        p.Leave,
+		l:              p.Logger.Named("service.worker-overview"),
+		now:            p.Clock,
+		features:       p.Features,
+		workerRepo:     p.WorkerRepo,
+		reviewCounts:   p.ReviewCounts,
+		credentials:    p.Credentials,
+		training:       p.Training,
+		safety:         p.Safety,
+		checklists:     p.Checklists,
+		pto:            p.PTO,
+		reviews:        p.Reviews,
+		leave:          p.Leave,
+		leaveStanding:  p.LeaveStanding,
+		drugAlcohol:    p.DrugAlcohol,
+		qualification:  p.Qualification,
+		employment:     p.Employment,
+		shifts:         p.Shifts,
+		hos:            p.HOS,
+		tractors:       p.Tractors,
+		timeOff:        p.TimeOff,
+		pay:            p.Pay,
+		benefits:       p.Benefits,
+		invitations:    p.Invitations,
+		profileChanges: p.ProfileChanges,
+		documents:      p.Documents,
+		memories:       p.Memories,
+		dispatch:       p.Dispatch,
 	}
-}
-
-// Get composes the overview. The sections are read concurrently because this
-// backs a single panel view and running six roll-ups in series would make the
-// panel feel slower than the tabs it replaces. Any section failing fails the
-// whole call: a silently missing section would read as "nothing wrong here".
-func (s *Service) Get(
-	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
-	workerID pulid.ID,
-	sections Sections,
-) (*Overview, error) {
-	wrk, err := s.workerRepo.GetByID(ctx, workerports.GetWorkerByIDRequest{
-		ID:             workerID,
-		TenantInfo:     tenantInfo,
-		IncludeProfile: true,
-		IncludeState:   true,
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	// Each goroutine writes its own local and nothing is read until Wait
-	// returns, so there is no shared state to reason about.
-	var (
-		credentials  *workercredential.WorkerCredentialSummary
-		training     *workertraining.WorkerTrainingSummary
-		safety       *safetyscorecard.SafetyScorecard
-		checklist    *workerchecklist.WorkerChecklist
-		balances     []*ptoledgerservice.BalanceView
-		openReview   *workerreview.PerformanceReview
-		lastReview   *workerreview.PerformanceReview
-		nextReviewAt *int64
-	)
-	group, groupCtx := errgroup.WithContext(ctx)
-
-	if sections.Credentials {
-		group.Go(func() error {
-			var sErr error
-			credentials, sErr = s.credentials.Summary(groupCtx, tenantInfo, workerID)
-			return sErr
-		})
-	}
-	if sections.Training {
-		group.Go(func() error {
-			var sErr error
-			training, sErr = s.training.Summary(groupCtx, tenantInfo, workerID)
-			return sErr
-		})
-	}
-	if sections.Safety {
-		group.Go(func() error {
-			var sErr error
-			read := s.safety.ScorecardWithoutDiscipline
-			if sections.Discipline {
-				read = s.safety.Scorecard
-			}
-			safety, sErr = read(groupCtx, tenantInfo, workerID)
-			return sErr
-		})
-	}
-	if sections.Checklists {
-		group.Go(func() error {
-			checklists, sErr := s.checklists.ListForWorker(groupCtx, tenantInfo, workerID, false)
-			if sErr != nil {
-				return sErr
-			}
-			checklist = newestOpenChecklist(checklists)
-			return nil
-		})
-	}
-	if sections.PTO {
-		group.Go(func() error {
-			var sErr error
-			balances, sErr = s.pto.GetBalances(groupCtx, tenantInfo, workerID)
-			return sErr
-		})
-	}
-	if sections.Reviews {
-		group.Go(func() error {
-			reviews, sErr := s.reviews.ListReviews(groupCtx, tenantInfo, workerID, nil)
-			if sErr != nil {
-				return sErr
-			}
-			openReview, lastReview, nextReviewAt = summariseReviews(reviews)
-			return nil
-		})
-	}
-
-	if err = group.Wait(); err != nil {
-		return nil, err
-	}
-
-	overview := &Overview{
-		Worker:       wrk,
-		AsOf:         timeutils.NowUnix(),
-		Credentials:  credentials,
-		Training:     training,
-		Safety:       safety,
-		Checklist:    checklist,
-		PTO:          balances,
-		OpenReview:   openReview,
-		LastReview:   lastReview,
-		NextReviewAt: nextReviewAt,
-	}
-	overview.Standing, overview.Concerns = workercompliance.BuildStanding(
-		workercompliance.StandingInput{
-			Worker:      wrk,
-			Credentials: credentials,
-			Training:    training,
-			Safety:      safety,
-			Checklist:   checklist,
-			ReviewDueAt: nextReviewAt,
-			Now:         overview.AsOf,
-		},
-	)
-	return overview, nil
 }
 
 // attentionHorizonDays matches the roster's expiring-soon view, so the home
@@ -382,7 +451,7 @@ func (s *Service) RosterAttention(
 			groupCtx,
 			&workerports.CountRosterAttentionRequest{
 				TenantInfo:    tenantInfo,
-				ExpiryHorizon: timeutils.NowUnix() + attentionHorizonDays*24*60*60,
+				ExpiryHorizon: s.now() + attentionHorizonDays*timeutils.SecondsPerDay,
 			},
 		)
 		return err

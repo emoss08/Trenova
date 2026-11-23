@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/notificationtemplate"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/drivernotificationservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/telematics"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerpage"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/telematicsports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/notificationports"
@@ -165,7 +166,10 @@ func (s *Service) sendHOSAlert(
 		Title:          alert.Title,
 		Message:        alert.Message,
 		Data: map[string]any{
-			"link": "/hr/workers?panelType=edit&panelEntityId=" + workerID.String() + "&tab=hos",
+			"link": workerpage.Path(
+				workerID,
+				workerpage.AtView(workerpage.TabTime, workerpage.ViewHoursOfService),
+			),
 		},
 		RelatedEntities: map[string]any{
 			"workerId": workerID.String(),

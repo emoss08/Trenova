@@ -1,5 +1,5 @@
 import { documentService } from "@/services/document";
-import type { Document } from "@trenova/shared/types/document";
+import type { Document, DocumentPreviewStatus } from "@trenova/shared/types/document";
 import { queryOptions } from "@tanstack/react-query";
 
 /** How often a record's documents are read again while one of them is still being processed. */
@@ -35,4 +35,20 @@ export function hasPendingDocumentWork(document: Document): boolean {
     document.contentStatus === "Extracting" ||
     document.shipmentDraftStatus === "Pending"
   );
+}
+
+/** A document a record's read carries, as far as waiting on its preview needs it. */
+export type PreviewedDocument = { previewStatus?: DocumentPreviewStatus | null } | null | undefined;
+
+/**
+ * The refetch interval of a read whose rows carry documents (a credential's scan, a training
+ * certificate, a safety event's report): on while any of their previews is still being drawn and
+ * off once none is, so a preview appears without a reload. TanStack stops it while the browser
+ * tab is hidden.
+ */
+export function previewPendingRefetchMs(documents: Iterable<PreviewedDocument>): number | false {
+  for (const file of documents) {
+    if (file?.previewStatus === "Pending") return PENDING_DOCUMENTS_REFETCH_MS;
+  }
+  return false;
 }

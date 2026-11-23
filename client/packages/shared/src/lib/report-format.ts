@@ -81,14 +81,22 @@ export type ReportColumnDisplay = {
   nullText: string;
   rules?: readonly ReportDisplayRule[] | null;
   band?: ReportBand | null;
+  /**
+   * An enum column's stored values mapped to the translated labels the module shows in their
+   * place. Null from GraphQL and absent from `report.resolve` when the column has none.
+   */
+  labels?: Readonly<Record<string, string>> | null;
 };
 
-/** The same contract as GraphQL types it, with every enum-ish field a plain string. */
+/**
+ * The same contract as GraphQL types it, with every enum-ish field a plain string and `labels`
+ * as the untyped JSON scalar it crosses GraphQL as (the module reads it as a map of strings).
+ */
 export type ReportColumnDisplayLike = {
-  [K in keyof ReportColumnDisplay]: ReportColumnDisplay[K] extends string
+  [K in Exclude<keyof ReportColumnDisplay, "labels">]: ReportColumnDisplay[K] extends string
     ? string
     : ReportColumnDisplay[K];
-};
+} & { labels?: unknown };
 
 /**
  * Report values cross the wire as strings when they are decimals, so anything plotting or

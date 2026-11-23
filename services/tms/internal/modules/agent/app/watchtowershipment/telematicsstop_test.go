@@ -52,7 +52,7 @@ func TestDescribeTelematicsStopVisits_OneItemPerStopVisit(t *testing.T) {
 	require.Len(t, items, 2)
 	assert.Equal(t, "latest refusal", items[0].Summary)
 	assert.Equal(t, moveID.String()+":"+stopID.String()+":Departure", items[0].SourceID)
-	assert.Equal(t, watchtower.SourceTelematicsStopVisit, items[0].SourceKind)
+	assert.Equal(t, watchtower.SourceKindTelematicsStopVisit, items[0].SourceKind)
 	assert.Equal(t, watchtower.SeverityWarning, items[0].Severity)
 	assert.Equal(t, "Departure at Acme DC not recorded", items[0].Title)
 	assert.True(t, stringutils.IsSafeAppPath(items[0].Path))

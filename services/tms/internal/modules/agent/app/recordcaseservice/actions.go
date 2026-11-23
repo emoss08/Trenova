@@ -193,7 +193,7 @@ func (s *Service) AcceptRisk(
 				ItemID:          item.ID,
 				ExpectedVersion: item.Version,
 			},
-			Code: watchtower.ResolutionNoActionNeeded,
+			Code: watchtower.ResolutionCodeNoActionNeeded,
 			Note: req.Reason,
 		}, actor); err != nil {
 			if accepted == 0 {

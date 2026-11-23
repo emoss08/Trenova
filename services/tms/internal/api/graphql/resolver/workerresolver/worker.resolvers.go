@@ -233,6 +233,8 @@ func (r *QueryResolver) Workers(ctx context.Context, input gqlmodel.DataTableCon
 		Filter:            connection.Filter,
 		Cursor:            connection.Cursor,
 		WithoutCredential: missing,
+		IncludeManager:    graphql.FieldRequested(ctx, "edges.node.manager"),
+		IncludePosition:   graphql.FieldRequested(ctx, "edges.node.position"),
 	})
 	if err != nil {
 		return nil, err

@@ -62,9 +62,9 @@ func ShipmentExceptionKindsFor(eventType shipmentevent.Type) []watchtower.Source
 		shipmentevent.TypeStopArrivalCorrected,
 		shipmentevent.TypeStopDepartureCorrected:
 		return []watchtower.SourceKind{
-			watchtower.SourceMissedPickup,
-			watchtower.SourceMissedDelivery,
-			watchtower.SourcePodMissing,
+			watchtower.SourceKindMissedPickup,
+			watchtower.SourceKindMissedDelivery,
+			watchtower.SourceKindPODMissing,
 		}
 	case shipmentevent.TypeRoutingGuideExhausted,
 		shipmentevent.TypeTenderBounced,
@@ -77,7 +77,7 @@ func ShipmentExceptionKindsFor(eventType shipmentevent.Type) []watchtower.Source
 		shipmentevent.TypeDriverAssigned,
 		shipmentevent.TypeDriverReassigned,
 		shipmentevent.TypeDriverUnassigned:
-		return []watchtower.SourceKind{watchtower.SourceTenderExhausted}
+		return []watchtower.SourceKind{watchtower.SourceKindTenderExhausted}
 	case shipmentevent.TypeShipmentCreated,
 		shipmentevent.TypeTenderDeclined,
 		shipmentevent.TypeTenderExpired,

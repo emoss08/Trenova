@@ -134,6 +134,34 @@ describe("notification registry — invoice notifications", () => {
   });
 });
 
+describe("notification registry — worker credential notifications", () => {
+  it("opens the credential on the worker's qualification tab", () => {
+    expect(
+      getNotificationLink(
+        notification({
+          eventType: "credential_expiring",
+          data: { workerId: "wrk_7" },
+          relatedEntities: { credentialId: "wcr_3" },
+        }),
+      ),
+    ).toBe("/hr/workers/wrk_7?tab=qualification&view=credentials&credential=wcr_3");
+  });
+
+  it("opens the worker's credentials when no credential is named", () => {
+    expect(
+      getNotificationLink(
+        notification({ eventType: "credential_expired", data: { workerId: "wrk_7" } }),
+      ),
+    ).toBe("/hr/workers/wrk_7?tab=qualification&view=credentials");
+  });
+
+  it("falls back to the roster when no worker is named", () => {
+    expect(getNotificationLink(notification({ eventType: "credential_expired" }))).toBe(
+      "/hr/workers",
+    );
+  });
+});
+
 describe("notification registry — carrier intelligence notifications", () => {
   const CARRIER_INTEL_EVENT_TYPES = [
     "carrier_intel_block",

@@ -441,7 +441,7 @@ func (s *Service) storeUpload(
 		CurrentState:   jsonutils.MustToJSON(createdDoc),
 		OrganizationID: createdDoc.OrganizationID,
 		BusinessUnitID: createdDoc.BusinessUnitID,
-	}, auditservice.WithComment("Document uploaded")); err != nil {
+	}, auditservice.WithComment("Document uploaded"), auditservice.WithSubjectOf(createdDoc)); err != nil {
 		log.Error("failed to log audit action", zap.Error(err))
 	}
 	if lineageInfo != nil {
@@ -966,7 +966,7 @@ func (s *Service) Delete(
 			PreviousState:  jsonutils.MustToJSON(doc),
 			OrganizationID: doc.OrganizationID,
 			BusinessUnitID: doc.BusinessUnitID,
-		}, auditservice.WithComment("Document deleted")); err != nil {
+		}, auditservice.WithComment("Document deleted"), auditservice.WithSubjectOf(doc)); err != nil {
 			log.Error("failed to log audit action", zap.Error(err))
 		}
 		return nil
@@ -1013,7 +1013,7 @@ func (s *Service) Delete(
 		PreviousState:  jsonutils.MustToJSON(doc),
 		OrganizationID: doc.OrganizationID,
 		BusinessUnitID: doc.BusinessUnitID,
-	}, auditservice.WithComment("Document deleted")); err != nil {
+	}, auditservice.WithComment("Document deleted"), auditservice.WithSubjectOf(doc)); err != nil {
 		log.Error("failed to log audit action", zap.Error(err))
 	}
 
@@ -1098,7 +1098,7 @@ func (s *Service) BulkDelete( //nolint:gocognit // legacy workflow
 				PreviousState:  jsonutils.MustToJSON(doc),
 				OrganizationID: doc.OrganizationID,
 				BusinessUnitID: doc.BusinessUnitID,
-			}, auditservice.WithComment("Document deleted (bulk)")); err != nil {
+			}, auditservice.WithComment("Document deleted (bulk)"), auditservice.WithSubjectOf(doc)); err != nil {
 				log.Warn("failed to log audit action for bulk delete",
 					zap.String("documentId", doc.ID.String()),
 					zap.Error(err),
@@ -1165,7 +1165,7 @@ func (s *Service) BulkDelete( //nolint:gocognit // legacy workflow
 			PreviousState:  jsonutils.MustToJSON(doc),
 			OrganizationID: doc.OrganizationID,
 			BusinessUnitID: doc.BusinessUnitID,
-		}, auditservice.WithComment("Document deleted (bulk)")); err != nil {
+		}, auditservice.WithComment("Document deleted (bulk)"), auditservice.WithSubjectOf(doc)); err != nil {
 			log.Warn("failed to log audit action for bulk delete",
 				zap.String("documentId", doc.ID.String()),
 				zap.Error(err),

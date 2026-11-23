@@ -63,7 +63,7 @@ function recentRecords(now) {
       entityType: "worker",
       id: "wrk_cp_1042",
       title: "Marcus Bell",
-      href: "/hr/workers?panelEntityId=wrk_cp_1042&panelType=edit",
+      href: "/hr/workers/wrk_cp_1042",
       metadata: {
         status: "Active",
         externalId: "W-1042",

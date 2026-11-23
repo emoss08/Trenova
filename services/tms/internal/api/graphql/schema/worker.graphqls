@@ -170,6 +170,8 @@ type Worker {
   state: UsState
   fleetCode: FleetCode
   manager: User
+  "The job position the worker holds; null when positionId is null."
+  position: JobPosition
   profile: WorkerProfile
   pto: [WorkerPTO!]
 }

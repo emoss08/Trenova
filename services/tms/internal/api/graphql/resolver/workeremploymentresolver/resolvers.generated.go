@@ -16,6 +16,8 @@ type MutationResolver struct{ *Deps }
 
 type QueryResolver struct{ *Deps }
 
-type WorkerEmploymentCascadeResolver struct{ *Deps }
+type WorkerEmploymentEffectResolver struct{ *Deps }
+
+type WorkerEmploymentEventPreviewResolver struct{ *Deps }
 
 type WorkerEmploymentEventResolver struct{ *Deps }

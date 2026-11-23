@@ -14,16 +14,20 @@ import (
 func TestOfIsTheFirstMoveForTheKind(t *testing.T) {
 	t.Parallel()
 
-	assert.Equal(t, watchtowerplay.AskForPOD, watchtowerplay.Of(watchtower.SourcePodMissing))
+	assert.Equal(t, watchtowerplay.AskForPOD, watchtowerplay.Of(watchtower.SourceKindPODMissing))
 	for _, kind := range []watchtower.SourceKind{
-		watchtower.SourceMissedPickup, watchtower.SourceMissedDelivery, watchtower.SourceEtaAtRisk, watchtower.SourceNoCheckCall,
+		watchtower.SourceKindMissedPickup, watchtower.SourceKindMissedDelivery, watchtower.SourceKindEtaAtRisk, watchtower.SourceKindNoCheckCall,
 	} {
 		assert.Equal(t, watchtowerplay.AskForStatus, watchtowerplay.Of(kind), string(kind))
 	}
-	assert.Equal(t, watchtowerplay.TenderAgain, watchtowerplay.Of(watchtower.SourceTenderExhausted))
+	assert.Equal(
+		t,
+		watchtowerplay.TenderAgain,
+		watchtowerplay.Of(watchtower.SourceKindTenderExhausted),
+	)
 
 	for _, kind := range []watchtower.SourceKind{
-		watchtower.SourceAgentException, watchtower.SourceBillingException, watchtower.SourceServiceFailure, watchtower.SourceInsight,
+		watchtower.SourceKindAgentException, watchtower.SourceKindBillingException, watchtower.SourceKindServiceFailure, watchtower.SourceKindInsight,
 	} {
 		assert.Equal(t, watchtowerplay.None, watchtowerplay.Of(kind), string(kind))
 	}

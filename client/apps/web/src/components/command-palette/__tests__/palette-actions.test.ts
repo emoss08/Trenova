@@ -130,16 +130,16 @@ describe("buildItemActions", () => {
     ).not.toContain("new-shipment-for-customer");
   });
 
-  it("opens a worker's tabs through the record link registry", () => {
+  it("opens a worker's credentials and time off on the worker's record page", () => {
     const worker = recordItem({ entityType: "worker", id: "wrk_1", title: "Dana Ruiz" });
 
-    expect(find(worker, "worker-pto")?.intent).toEqual({
+    expect(find(worker, "worker-time-off")?.intent).toEqual({
       type: "navigate",
-      href: recordPath("worker", "wrk_1", { tab: "pto" }),
+      href: "/hr/workers/wrk_1?tab=time&view=time-off",
     });
-    expect(find(worker, "worker-compliance")?.intent).toEqual({
+    expect(find(worker, "worker-credentials")?.intent).toEqual({
       type: "navigate",
-      href: recordPath("worker", "wrk_1", { tab: "compliance" }),
+      href: "/hr/workers/wrk_1?tab=qualification&view=credentials",
     });
   });
 

@@ -46,7 +46,13 @@ func TestUpsert_RaisesAnItemsEventOnceWhenASweepFirstFindsIt(t *testing.T) {
 	tenant := testActor().TenantInfo()
 	shipment := pulid.MustNew("shp_")
 
-	in := input(tenant, watchtower.SourcePodMissing, shipment.String(), watchtower.SeverityWarning, 100)
+	in := input(
+		tenant,
+		watchtower.SourceKindPODMissing,
+		shipment.String(),
+		watchtower.SeverityWarning,
+		100,
+	)
 	in.SubjectType = agent.SubjectShipment
 	in.SubjectID = shipment
 	in.EventKind = agenttrigger.EventShipmentPODMissing
@@ -77,7 +83,7 @@ func TestUpsert_LeavesTheEventToASourceThatPublishesItsOwn(t *testing.T) {
 
 	in := input(
 		testActor().TenantInfo(),
-		watchtower.SourceWorkerCredential,
+		watchtower.SourceKindWorkerCredential,
 		worker.String(),
 		watchtower.SeverityWarning,
 		100,

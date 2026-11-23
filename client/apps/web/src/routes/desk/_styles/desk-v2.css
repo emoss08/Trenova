@@ -17156,27 +17156,6 @@ button.dk-fcd-buy:hover {
     opacity: 0.3;
   }
 }
-/* the question, as the person asked it in the conversation */
-.dk-bd-asked {
-  display: flex;
-  align-items: flex-end;
-  gap: 8px;
-  margin-top: 18px;
-}
-.dk-bd-asked > span:first-child {
-  font-size: 11px;
-  color: var(--dsk-subtle);
-  padding-bottom: 6px;
-}
-.dk-bd-bubble {
-  max-width: 46ch;
-  padding: 6px 12px;
-  border-radius: 14px 14px 14px 4px;
-  font-size: 13px;
-  line-height: 1.45;
-  color: var(--dsk-fg);
-  background: var(--dsk-sunken);
-}
 .dk-bd-title {
   margin: 14px 0 0;
   font: 500 30px/1.14 var(--font-newsreader);
@@ -17245,6 +17224,37 @@ button.dk-fcd-buy:hover {
   box-shadow: inset 0 0 0 1px var(--dsk-b);
   text-decoration: line-through;
 }
+/* In the conversation a cited phrase lights the exhibit it cites while it is pointed at or
+   focused: the phrase inks darker, its numeral inverts and the exhibit takes a ring. Nothing
+   changes size. */
+button.dk-bd-n {
+  padding: 0;
+  border: 0;
+  cursor: pointer;
+  transition:
+    background-color 140ms,
+    color 140ms;
+}
+button.dk-bd-n:hover,
+.dk-bd-n.dk-bd-lit {
+  color: var(--dsk-canvas);
+  background: var(--dsk-fg);
+  box-shadow: none;
+}
+.dk-bd-hl.dk-bd-lit {
+  --dk-bd-ink: color-mix(in oklab, var(--dsk-blue) 52%, transparent);
+  color: var(--dsk-fg);
+}
+.dk-bd-hl.dk-warn.dk-bd-lit {
+  --dk-bd-ink: color-mix(in oklab, var(--dsk-warn) 68%, transparent);
+}
+.dk-bd-ex.dk-bd-lit,
+.dk-bd-ex.dk-bd-lit .dk-bd-tab {
+  border-color: var(--dsk-b-strong);
+}
+.dk-bd-ex.dk-bd-lit {
+  box-shadow: 0 0 0 4px color-mix(in oklab, var(--dsk-fg) 7%, transparent);
+}
 
 /* -------------------------------------------------------------- the desk */
 .dk-bd-desk {
@@ -17276,6 +17286,9 @@ button.dk-fcd-buy:hover {
   border: 1px solid var(--dsk-b);
   border-radius: 0 12px 12px 12px;
   background: var(--dsk-card);
+  transition:
+    border-color 200ms,
+    box-shadow 200ms;
 }
 .dk-bd-tab {
   position: absolute;
@@ -17296,6 +17309,7 @@ button.dk-fcd-buy:hover {
   font-weight: 600;
   color: var(--dsk-fg);
   white-space: nowrap;
+  transition: border-color 200ms;
 }
 .dk-bd-tab .dk-bd-n {
   margin: 0;
@@ -18186,11 +18200,14 @@ a.dk-bd-face:hover {
   height: 180px;
   border-radius: 8px;
 }
-.dk-bd-wait-src {
-  display: block;
-  width: 40%;
-  height: 10px;
-  border-radius: 5px;
+/* A blank in a line of words while it is read: a bar sitting on the line, which keeps the height
+   of its font, so the line is as tall as the words that replace it. */
+.dk-bd-wait-line {
+  display: inline-block;
+  height: 0.7em;
+  max-width: 100%;
+  border-radius: 4px;
+  vertical-align: middle;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -18271,6 +18288,88 @@ a.dk-bd-face:hover {
   }
   .dk-bd-wait.dk-read {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* A list in an exhibit too narrow for its columns (half of a reply's width): each record on one
+   line with how far behind it runs, and its track under it. */
+@container dkbdex (max-width: 360px) {
+  .dk-bd-row:has(.dk-bd-behind) {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: baseline;
+    gap: 5px 10px;
+    padding: 9px 16px 10px;
+  }
+  .dk-bd-row:has(.dk-bd-behind) .dk-bd-who {
+    flex-direction: row;
+    align-items: baseline;
+    gap: 7px;
+  }
+  /* The track keeps its box: its fill is positioned against it, and without one the fill
+     takes the whole exhibit. */
+  .dk-bd-row .dk-bd-behind,
+  .dk-bd-row .dk-bd-behind > span:not(.dk-bd-track) {
+    display: contents;
+  }
+  .dk-bd-row .dk-bd-behind > span:not(.dk-bd-track) > span {
+    display: none;
+  }
+  .dk-bd-row .dk-bd-behind > span:not(.dk-bd-track) > b {
+    grid-row: 1;
+    grid-column: 2;
+    font: 500 11.5px var(--dk-plex);
+  }
+  .dk-bd-row .dk-bd-track {
+    grid-row: 2;
+    grid-column: 1 / -1;
+    height: 6px;
+  }
+  .dk-bd-row:has(.dk-bd-behind) > :last-child:not(.dk-bd-behind) {
+    display: none;
+  }
+}
+
+/* A board arriving as the reply while the person watches: each block rises on its beat
+   (--dk-bd-at), its rows follow one beat apart from --dk-bd-rows-at, and a reading in the
+   words lands as a blank filling with its value. Reduced motion shows the end state. */
+.dk-bd-arrive {
+  animation: dk-nl 460ms var(--dk-ease) var(--dk-bd-at, 0ms) both;
+}
+.dk-bd-arrive .dk-bd-rows > * {
+  animation: dk-nl 460ms var(--dk-ease) both;
+  animation-delay: calc(var(--dk-bd-rows-at, 0ms) + var(--dk-bd-i, 0) * 240ms);
+}
+.dk-bd-arrive .dk-bd-rows > :nth-child(2) {
+  --dk-bd-i: 1;
+}
+.dk-bd-arrive .dk-bd-rows > :nth-child(3) {
+  --dk-bd-i: 2;
+}
+.dk-bd-arrive .dk-bd-rows > :nth-child(4) {
+  --dk-bd-i: 3;
+}
+.dk-bd-arrive .dk-bd-rows > :nth-child(5) {
+  --dk-bd-i: 4;
+}
+.dk-bd-arrive .dk-bd-rows > :nth-child(6) {
+  --dk-bd-i: 5;
+}
+.dk-bd-arrive .dk-bd-rows > :nth-child(n + 7) {
+  --dk-bd-i: 6;
+}
+/* A reading not yet read: the Desk's skeleton bar set in the line of words. */
+.dk-sk.dk-bd-blank {
+  display: inline-block;
+  width: 3em;
+  height: 1.05em;
+  border-radius: 3px;
+  vertical-align: -0.16em;
+}
+@keyframes dk-bd-land {
+  from {
+    color: transparent;
+    background-color: var(--dsk-hover);
+    border-bottom-color: transparent;
   }
 }
 

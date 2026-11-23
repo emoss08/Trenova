@@ -57,6 +57,7 @@ func (s *Service) recordAccess(
 		BusinessUnitID: doc.BusinessUnitID,
 	},
 		auditservice.WithComment(documentAccessComments[access]),
+		auditservice.WithSubjectOf(doc),
 		auditservice.WithCategory(audit.CategoryUser),
 		auditservice.WithMetadata(map[string]any{
 			"access":             string(access),

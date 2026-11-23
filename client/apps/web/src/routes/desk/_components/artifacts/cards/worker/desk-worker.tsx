@@ -9,6 +9,7 @@ import type {
 import { choiceLabel, driverTypeChoices, workerTypeChoices } from "@/lib/choices";
 import { dutyStatusLabel } from "@/lib/hos";
 import { worker as workerQueries } from "@/lib/queries/worker";
+import { workerConcernWords } from "@/lib/worker-concerns";
 import { useQuery } from "@tanstack/react-query";
 import {
   formatClockDurationMs,
@@ -435,14 +436,17 @@ function StandingSection({
         <CardChecksSkeleton rows={STANDING_WAIT} />
       ) : concerns.length > 0 ? (
         <CardChecks>
-          {concerns.map((concern) => (
-            <CardCheck
-              key={concern.code}
-              state={concernState(concern.severity)}
-              title={concern.headline}
-              detail={concern.detail}
-            />
-          ))}
+          {concerns.map((concern, index) => {
+            const words = workerConcernWords(concern, t);
+            return (
+              <CardCheck
+                key={`${concern.code}-${index}`}
+                state={concernState(concern.severity)}
+                title={words.title}
+                detail={words.detail}
+              />
+            );
+          })}
         </CardChecks>
       ) : (
         <p className="dk-wk-clear">

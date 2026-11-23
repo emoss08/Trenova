@@ -5,6 +5,7 @@ import {
   analysisFrom,
   portalTaskFrom,
   boardFrom,
+  isBoardExhibit,
   emailDraftFrom,
   entityCardFrom,
   planFrom,
@@ -94,8 +95,8 @@ export function artifactPreview(artifact: AssistantArtifact, t: TranslateFn): st
         : "";
     }
     case "board": {
-      const exhibits = boardFrom(artifact).blocks.filter(
-        (block) => block.type !== "prose" && block.type !== "note",
+      const exhibits = boardFrom(artifact).blocks.filter((block) =>
+        isBoardExhibit(block.type),
       ).length;
       return exhibits > 0 ? t("{0, plural, one {# exhibit} other {# exhibits}}", exhibits) : "";
     }

@@ -52,6 +52,12 @@ describe("formatReportColumns", () => {
     formatCase("TS: banded columns");
   });
 
+  it("shows an enum value's label in place of its code, before the empty check", () => {
+    formatCase(
+      "enum labels: the label is looked up before the empty check and takes the prefix and suffix; a null is never looked up",
+    );
+  });
+
   it("renders an undefined cell of a column without a display as empty", () => {
     const [[cell]] = formatReportColumns(rulesSync(), [{ display: null, values: [undefined] }]);
     expect(cell).toEqual({ text: "", tone: "" });

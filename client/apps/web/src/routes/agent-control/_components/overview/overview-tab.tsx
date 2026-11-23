@@ -46,6 +46,7 @@ export default function OverviewTab({ onOpenProviders, onOpenAgents }: OverviewT
     policyEditorParser,
   );
   const { allowed: canUpdateControl } = usePermission(Resource.AgentControl, Operation.Update);
+  const { allowed: canReadUsage } = usePermission(Resource.AIUsage, Operation.Read);
 
   const summaryQuery = useQuery({
     ...aiControl.summary("Overview"),
@@ -55,7 +56,7 @@ export default function OverviewTab({ onOpenProviders, onOpenAgents }: OverviewT
   const controlQuery = useQuery(agentControlQueryOptions());
   const providersQuery = useQuery(aiProvider.list());
   const catalogQuery = useQuery(aiProvider.catalog());
-  const usageQuery = useQuery(aiProvider.usage(OVERVIEW_WINDOW_DAYS));
+  const usageQuery = useQuery({ ...aiProvider.usage(OVERVIEW_WINDOW_DAYS), enabled: canReadUsage });
 
   const summary = summaryQuery.data;
   const facts = summary?.facts;
@@ -96,9 +97,11 @@ export default function OverviewTab({ onOpenProviders, onOpenAgents }: OverviewT
           }
         />
       ) : (
-        <OverviewFigures
-          onSetPrices={firstEnabled ? () => editProvider(firstEnabled.id) : undefined}
-        />
+        canReadUsage && (
+          <OverviewFigures
+            onSetPrices={firstEnabled ? () => editProvider(firstEnabled.id) : undefined}
+          />
+        )
       )}
 
       {!noProvider && summary && (
@@ -108,7 +111,9 @@ export default function OverviewTab({ onOpenProviders, onOpenAgents }: OverviewT
       <div className="ov">
         <div className="ov-m">
           {!noProvider && <TuneUps />}
-          {!noProvider && <UsageByFeature days={OVERVIEW_WINDOW_DAYS} busiest={busiest} />}
+          {!noProvider && canReadUsage && (
+            <UsageByFeature days={OVERVIEW_WINDOW_DAYS} busiest={busiest} />
+          )}
         </div>
         <aside className="ov-a">
           <AgentsAtWork

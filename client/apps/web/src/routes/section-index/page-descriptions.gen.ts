@@ -33,28 +33,14 @@ export const PAGE_DESCRIPTIONS = defineLabels({
     "Every document Trenova sends to {0}, what happened to it, and what to do when it did not go through.",
   "/accounting/sync/inbound":
     "Payments recorded in {0} against invoices and settlements Trenova sent, and whether each was brought into Trenova.",
-  "/admin/accounting-control": "Configure and manage your accounting control settings",
   "/admin/api-keys":
     "Provision bearer credentials for third-party systems with direct, tenant-scoped permissions.",
   "/admin/audit-logs":
     "Every change, access and administrative action in your organization, sealed against tampering",
-  "/admin/billing-controls": "Configure and manage your billing control settings",
-  "/admin/capture":
-    "Turn on Trenova Capture, set the scan profiles people pick from, and see every computer paired to scan",
-  "/admin/carrier-settlement-control":
-    "Configure carrier pay periods, cost accrual triggers, batch automation, invoice-match tolerance, and AP posting accounts",
-  "/admin/cost-control":
-    "Configure the cost-per-mile model that powers shipment profitability estimates",
   "/admin/custom-fields": "Define custom fields for trailers, workers, and other resources",
-  "/admin/dash-control": "Choose what drivers can see and do in the Dash driver portal",
-  "/admin/data-entry-controls": "Configure case formatting rules for data entry across the system",
-  "/admin/dispatch-controls": "Configure and manage your dispatch control settings",
-  "/admin/distance-controls": "Configure mileage storage behavior and distance profile assignments",
   "/admin/distance-overrides":
     "Override calculated distances between location pairs for routing and billing adjustments",
   "/admin/distance-profiles": "Manage business-unit routing policy used by distance calculations",
-  "/admin/document-intelligence":
-    "Configure how documents are read, classified, extracted, and drafted into shipments",
   "/admin/hazmat-segregation-rules":
     "Manage and configure hazmat segregation rules for your organization",
   "/admin/hold-reasons": "Manage and configure hold reasons for your organization",
@@ -62,22 +48,15 @@ export const PAGE_DESCRIPTIONS = defineLabels({
     "Addresses the system listens on, where each provider posts, and how much each is trusted to do without a person",
   "/admin/integrations":
     "Connect the outside services Trenova works with: mileage, telematics, email, fuel prices and carrier data.",
-  "/admin/invoice-adjustment-controls":
-    "Configure organization policy for credits, rebills, write-offs, and invoice adjustment review.",
   "/admin/jurisdiction-rule-overrides":
     "Hold your fleet to stricter limits than a state requires. An override can only tighten a limit, never loosen one, and applies to your organization alone.",
   "/admin/jurisdiction-rules":
     "Oversize and overweight limits per state. These limits are shared across every organization; record a carrier override to hold your own fleet to something stricter.",
-  "/admin/organization-settings":
-    "Manage your organization profile, compliance, and security settings",
   "/admin/plan": "What your plan includes, how much of it you have used and what you can add",
-  "/admin/sequence-configs":
-    "Configure sequence generation formats for shipments and billing workflows",
+  "/admin/security-access":
+    "How your people sign in and are provisioned, the policies they meet, and what happened",
   "/admin/service-failure-reason-codes":
     "Manage operational exception reasons and EDI 214 defaults",
-  "/admin/settlement-control":
-    "Configure pay periods, accrual triggers, exception policies, and escrow interest",
-  "/admin/shipment-controls": "Configure and manage your shipment control settings",
   "/admin/stored-mileages": "Review reusable mileage records captured from PC*Miler calculations",
   "/admin/support-access":
     "Let a named Trenova staff member into this organization for a set time, and see everything they did",
@@ -180,8 +159,6 @@ export const PAGE_DESCRIPTIONS = defineLabels({
     "The fleet read the way a safety director thinks: the seven CSA BASICs, the trend behind them, and which terminals and drivers are carrying the weight.",
   "/hr/holidays":
     "Company holidays PTO policies skip when counting days, and blackout dates no one can request off.",
-  "/hr/leave-settings":
-    "How family and medical leave is measured, and what an employee must do to qualify",
   "/hr/my-team":
     "Everyone you answer for: your own reports, the terminals you run, and anybody whose approvals have been handed to you.",
   "/hr/org-structure":
@@ -205,8 +182,6 @@ export const PAGE_DESCRIPTIONS = defineLabels({
   "/hr/workers": "Manage and track workers along with their compliance and paid time off",
   "/insights":
     "Findings computed from your own records. The figures come from your data; where an explanation was written by AI, the card says so.",
-  "/organization/data-retention":
-    "How long each kind of record is kept before the nightly purge jobs remove it.",
   "/organization/email-logs": "Transactional email send and delivery history.",
   "/organization/email-profiles":
     "Manage verified sender identities and route email purposes to the right provider profile.",

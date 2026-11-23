@@ -263,6 +263,7 @@ func (s *Service) Create(
 	)
 
 	entity.UserID = pulid.Nil
+	entity.Profile.ResetServerFields()
 
 	if err := s.planFields.Keep(
 		ctx,
@@ -317,7 +318,7 @@ func (s *Service) Create(
 		CurrentState:   jsonutils.MustToJSON(createdEntity),
 		OrganizationID: createdEntity.GetOrganizationID(),
 		BusinessUnitID: createdEntity.GetBusinessUnitID(),
-	}, auditservice.WithComment("Worker created")); err != nil {
+	}, auditservice.WithComment("Worker created"), auditservice.WithSubjectOf(createdEntity)); err != nil {
 		log.Error("failed to log audit action", zap.Error(err))
 		return nil, err
 	}
@@ -391,6 +392,7 @@ func (s *Service) update(
 	}
 
 	entity.KeepFields(original, permissionports.VisibleFieldGroups(ctx, s.fields, actor))
+	entity.Profile.KeepServerFields(original.Profile)
 	entity.KeepHomeWithAddress(original)
 	if guardEmployment {
 		if err = s.planFields.Keep(ctx, permission.ResourceWorker, entity, original); err != nil {
@@ -454,14 +456,13 @@ func (s *Service) update(
 	},
 		auditservice.WithComment("Worker updated"),
 		auditservice.WithDiff(original, updatedEntity),
+		auditservice.WithSubjectOf(updatedEntity),
 	); err != nil {
 		log.Error("failed to log audit action", zap.Error(err))
 		return nil, err
 	}
 
-	s.syncCredentials(ctx, updatedEntity, auditActor.UserID, log)
-
-	if err = realtimeinvalidation.Publish(ctx, s.realtime, &realtimeinvalidation.PublishParams{
+	invalidation := &realtimeinvalidation.PublishParams{
 		OrganizationID: updatedEntity.GetOrganizationID(),
 		BusinessUnitID: updatedEntity.GetBusinessUnitID(),
 		ActorUserID:    auditActor.UserID,
@@ -471,9 +472,17 @@ func (s *Service) update(
 		Resource:       permission.ResourceWorker.String(),
 		Action:         "updated",
 		RecordID:       updatedEntity.GetID(),
-	}); err != nil {
-		log.Warn("failed to publish worker invalidation", zap.Error(err))
 	}
+	kernelports.AfterCommit(ctx, func(committed context.Context) {
+		s.syncCredentials(committed, updatedEntity, auditActor.UserID, log)
+		if publishErr := realtimeinvalidation.Publish(
+			committed,
+			s.realtime,
+			invalidation,
+		); publishErr != nil {
+			log.Warn("failed to publish worker invalidation", zap.Error(publishErr))
+		}
+	})
 
 	return updatedEntity, nil
 }
@@ -490,7 +499,7 @@ func employmentGuard(original, next *worker.Worker) error {
 		multiErr.Add(
 			"status",
 			errortypes.ErrInvalidOperation,
-			"Change employment status by recording a Terminated, Rehired or similar event on the Timeline tab",
+			"Change employment status by recording a Terminated, Rehired or similar event under Employment, History",
 		)
 	}
 	if original.Profile != nil && next.Profile != nil &&
@@ -498,7 +507,7 @@ func employmentGuard(original, next *worker.Worker) error {
 		multiErr.Add(
 			"profile.terminationDate",
 			errortypes.ErrInvalidOperation,
-			"The termination date is set by a Terminated event on the Timeline tab",
+			"The termination date is set by a Terminated event under Employment, History",
 		)
 	}
 	return multiErr.Err()

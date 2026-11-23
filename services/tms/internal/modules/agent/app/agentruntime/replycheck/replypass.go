@@ -60,8 +60,11 @@ func Refold(t Turn, callID, stale, folded string) {
 	}
 	for idx := range t.Result().Messages {
 		kept := &t.Result().Messages[idx]
-		if kept.ToolCallID == callID && strings.HasSuffix(kept.Content, stale) {
-			kept.Content = strings.TrimSuffix(kept.Content, stale) + folded
+		if kept.ToolCallID != callID {
+			continue
+		}
+		if refolded, ok := ReplaceShownNote(kept.Content, stale, folded); ok {
+			kept.Content = refolded
 		}
 	}
 }

@@ -462,7 +462,7 @@ function ArtifactBodySkeleton({ artifact }: { artifact: AssistantArtifact }) {
     return <PortalTaskSkeleton />;
   }
   if (artifact.kind === "board") {
-    return <BoardSkeleton layout={boardFrom(artifact)} question={artifact.turn} />;
+    return <BoardSkeleton layout={boardFrom(artifact)} />;
   }
   if (artifact.kind === "plan") {
     return <PlanSkeleton />;

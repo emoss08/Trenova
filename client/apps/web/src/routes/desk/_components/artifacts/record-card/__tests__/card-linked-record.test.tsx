@@ -16,7 +16,7 @@ describe("a linked record on a card", () => {
     const onOpen = vi.fn();
     render(
       <TestRouter>
-        <CardRecordRow kind="worker" to="/hr/workers?panelEntityId=wrk_1" onOpen={onOpen}>
+        <CardRecordRow kind="worker" to="/hr/workers/wrk_1" onOpen={onOpen}>
           <b>Rosa Diaz</b>
         </CardRecordRow>
       </TestRouter>,
@@ -31,7 +31,7 @@ describe("a linked record on a card", () => {
     const onOpen = vi.fn();
     const { container } = render(
       <TestRouter>
-        <CardRecordRow kind="worker" to="/hr/workers?panelEntityId=wrk_1" onOpen={onOpen}>
+        <CardRecordRow kind="worker" to="/hr/workers/wrk_1" onOpen={onOpen}>
           <b>Rosa Diaz</b>
         </CardRecordRow>
       </TestRouter>,

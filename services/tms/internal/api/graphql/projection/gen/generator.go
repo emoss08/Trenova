@@ -46,6 +46,7 @@ const (
 )
 
 var nonProjectionObjects = map[string]string{
+	"AIAnalyticsAdvisor":              "GraphQL DTO built by the AI analytics service",
 	"CarrierIntelRuleSetting":         "GraphQL DTO built by its resolver",
 	"SupportAccessGrant":              supportAccessDTO,
 	"SupportAccessSettings":           supportAccessDTO,
@@ -121,6 +122,7 @@ var nonProjectionObjects = map[string]string{
 	"DeskBoardEvent":                  deskBoardDTO,
 	"DeskBoardFigure":                 deskBoardDTO,
 	"DeskBoardMeter":                  deskBoardDTO,
+	"DeskBoardReading":                deskBoardDTO,
 	"DeskBoardRow":                    deskBoardDTO,
 	"DeskBoardRowMeasure":             deskBoardDTO,
 	"DeskBoardSegment":                deskBoardDTO,

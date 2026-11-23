@@ -144,7 +144,13 @@ func newPlayRig(t *testing.T, perms *agenttest.StubPermissions) *playRig {
 		Users:       namedUsers{},
 	})
 
-	in := input(actor.TenantInfo(), watchtower.SourcePodMissing, "shp_1", watchtower.SeverityWarning, 100)
+	in := input(
+		actor.TenantInfo(),
+		watchtower.SourceKindPODMissing,
+		"shp_1",
+		watchtower.SeverityWarning,
+		100,
+	)
 	in.SubjectType = agent.SubjectShipment
 	in.SubjectID = pulid.MustNew("shp_")
 	in.About = in.SubjectID
@@ -240,10 +246,18 @@ func TestPlays_SendWithNoWordsSendsThePlaysOwn(t *testing.T) {
 
 	r := newPlayRig(t, &agenttest.StubPermissions{})
 
-	_, err := r.plays.Send(t.Context(), &watchtowerports.SendPlayRequest{PlayTarget: r.target()}, r.actor)
+	_, err := r.plays.Send(
+		t.Context(),
+		&watchtowerports.SendPlayRequest{PlayTarget: r.target()},
+		r.actor,
+	)
 	require.NoError(t, err)
 	require.Len(t, r.playbook.sent, 1)
-	assert.Equal(t, "Hi Laura, please send the signed proof of delivery.", r.playbook.sent[0].Message)
+	assert.Equal(
+		t,
+		"Hi Laura, please send the signed proof of delivery.",
+		r.playbook.sent[0].Message,
+	)
 }
 
 // A message past the channel's bound is refused before anything is sent.
@@ -276,7 +290,11 @@ func TestPlays_RefuseAPersonWithoutThePermissionTheActNeeds(t *testing.T) {
 	assert.True(t, errortypes.IsAuthorizationError(err))
 	assert.Contains(t, err.Error(), "does not let you message drivers")
 
-	_, err = r.plays.Send(t.Context(), &watchtowerports.SendPlayRequest{PlayTarget: target}, r.actor)
+	_, err = r.plays.Send(
+		t.Context(),
+		&watchtowerports.SendPlayRequest{PlayTarget: target},
+		r.actor,
+	)
 	require.Error(t, err)
 	assert.Empty(t, r.playbook.sent)
 }
@@ -290,7 +308,11 @@ func TestPlays_RefuseAnItemAboutSomeoneElsesCase(t *testing.T) {
 	r.owners.Owned = map[pulid.ID]pulid.ID{r.item.AboutID: pulid.MustNew("usr_")}
 	target := r.target()
 
-	_, err := r.plays.Send(t.Context(), &watchtowerports.SendPlayRequest{PlayTarget: target}, r.actor)
+	_, err := r.plays.Send(
+		t.Context(),
+		&watchtowerports.SendPlayRequest{PlayTarget: target},
+		r.actor,
+	)
 	require.Error(t, err)
 	assert.True(t, errortypes.IsAuthorizationError(err))
 	assert.Zero(t, r.playbook.planned)
@@ -311,7 +333,7 @@ func TestPlays_RefuseAKindWithNoPlayAndAResolvedItem(t *testing.T) {
 	assert.Contains(t, err.Error(), "already resolved")
 	r.item.ResolvedAt = nil
 
-	r.item.SourceKind = watchtower.SourceServiceFailure
+	r.item.SourceKind = watchtower.SourceKindServiceFailure
 	_, err = r.plays.Preview(t.Context(), &target, r.actor)
 	require.Error(t, err)
 	assert.True(t, errortypes.IsBusinessError(err))
@@ -334,7 +356,11 @@ func TestPlays_AFailedPlanOrSendNotesNothingOnTheItem(t *testing.T) {
 	r.playbook.planErr = nil
 
 	r.playbook.sendErr = errors.New("the mail server refused it")
-	_, err = r.plays.Send(t.Context(), &watchtowerports.SendPlayRequest{PlayTarget: target}, r.actor)
+	_, err = r.plays.Send(
+		t.Context(),
+		&watchtowerports.SendPlayRequest{PlayTarget: target},
+		r.actor,
+	)
 	require.Error(t, err)
 	assert.Nil(t, r.item.LastRequest)
 	for _, event := range r.repo.events {

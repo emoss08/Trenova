@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/inboundmail"
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/workflowstarter"
 	"github.com/emoss08/trenova/internal/modules/accounting/app/ledgersync"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
 	"github.com/emoss08/trenova/internal/modules/edi/app/editenderchangeservice"
 	"github.com/emoss08/trenova/internal/modules/edi/app/editenderservice"
@@ -29,8 +30,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/rating/app/carrierassignmentservice"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/carriersettlementcostservice"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementaccrualservice"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/driverportalinvitationservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workeremploymentservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/app/workeroverviewservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workeremploymentports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/tablechangealertservice"
@@ -100,6 +103,10 @@ var ServiceModule = fx.Module("api-services", ledgersync.Module, fx.Provide(
 	fx.Annotate(
 		func(g seqgen.Generator) invoiceadjustmentports.InvoiceAdjustGenerator { return g },
 	),
+	func(r driverpayports.WorkerPayAssignmentRepository) workeroverviewservice.PayAssignmentReader {
+		return r
+	},
+	func(s agentmemoryports.AgentMemoryService) workeroverviewservice.MemoryLister { return s },
 ), fx.Invoke(
 	// The table-change-alert consumer reads the tca:events stream GTC fills
 	// and runs for the API's lifetime. Its loops outlive OnStart, so they get

@@ -134,3 +134,21 @@ func (a *Access) OffPlan(ctx context.Context, reach *Reach) *permissionports.Pla
 	}
 	return nil
 }
+
+func (a *Access) MissingOperation(reach *Reach) (Use, bool) {
+	r := a.resolver
+	entities := make([]*analytics.Entity, 0, 1+len(reach.edges)+len(reach.fields))
+	entities = append(entities, reach.root)
+	for _, edge := range reach.edges {
+		entities = append(entities, edge.Target)
+	}
+	for _, field := range reach.fields {
+		entities = append(entities, field.Entity)
+	}
+	for _, e := range entities {
+		if k := r.kinds[e]; a.lacksRequired(k) {
+			return k.operationUse(), true
+		}
+	}
+	return Use{}, false
+}

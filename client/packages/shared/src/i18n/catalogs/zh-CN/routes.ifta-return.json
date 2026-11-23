@@ -18,7 +18,6 @@
   "Completed moves with routed distance but no jurisdiction breakdown. They are on no line, so the return is understated by these miles.": "已完成且有线路距离、但无辖区明细的运程。这些运程不在任何一行上，因此申报表会少报这些英里数。",
   "Computed {0}": "已计算 {0}",
   "Counting the moves this would re-route…": "正在统计此操作将重新路由的运程…",
-  "Delete draft": "删除草稿",
   "Delete draft…": "删除草稿…",
   "Delete the {0} draft?": "要删除 {0} 的草稿吗？",
   "Draft figures move with the data. Finalized locks them. Filed is immutable; corrections open an amendment.": "草稿数字会随数据变动。定案后即锁定。已申报的内容不可变更；若要更正须开立修正案。",

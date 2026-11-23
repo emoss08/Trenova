@@ -1,0 +1,119 @@
+import { useT } from "@trenova/shared/i18n/use-t";
+import { TextareaField } from "@/components/fields/textarea-field";
+import { useApiMutation } from "@/hooks/use-api-mutation";
+import { closeWorkerSafetyEvent, type WorkerSafetyEventRow } from "@/lib/graphql/worker-safety";
+import { Button } from "@trenova/shared/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@trenova/shared/components/ui/dialog";
+import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form";
+import {
+  closeSafetyEventFormSchema,
+  type CloseSafetyEventFormValues,
+} from "@trenova/shared/types/worker-safety";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { formatUnixDateMedium } from "@trenova/shared/lib/date";
+import { useEffect } from "react";
+import { FormProvider, useForm, type Resolver } from "react-hook-form";
+import { useSafetyInvalidation } from "./use-safety-invalidation";
+
+export type CloseEventDialogProps = {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  workerId: string;
+  event?: WorkerSafetyEventRow | null;
+};
+
+export function CloseEventDialog({ open, onOpenChange, workerId, event }: CloseEventDialogProps) {
+  const t = useT();
+
+  const invalidate = useSafetyInvalidation(workerId);
+  const form = useForm<CloseSafetyEventFormValues>({
+    resolver: zodResolver(closeSafetyEventFormSchema) as Resolver<CloseSafetyEventFormValues>,
+    defaultValues: { resolution: "" },
+  });
+  const { control, handleSubmit, reset } = form;
+
+  useEffect(() => {
+    if (open) reset({ resolution: event?.resolution ?? "" });
+  }, [open, event, reset]);
+
+  const { mutateAsync, isPending } = useApiMutation<
+    WorkerSafetyEventRow,
+    CloseSafetyEventFormValues,
+    unknown,
+    CloseSafetyEventFormValues
+  >({
+    form,
+    resourceName: "Safety event",
+    mutationFn: (values) => {
+      if (!event) throw new Error("Nothing to close");
+      return closeWorkerSafetyEvent({
+        id: event.id,
+        resolution: values.resolution,
+        version: event.version,
+      });
+    },
+    onSuccess: () => {
+      void invalidate();
+      onOpenChange(false);
+    },
+  });
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{t("Close this event?")}</DialogTitle>
+          <DialogDescription>
+            {event?.pointsExpireAt && event.activePoints > 0
+              ? t(
+                  "It stays on the record. Its points keep counting until {0}.",
+                  formatUnixDateMedium(event.pointsExpireAt),
+                )
+              : t("It stays on the record. Say what was done about it.")}
+          </DialogDescription>
+        </DialogHeader>
+        <FormProvider {...form}>
+          <Form
+            className="flex flex-col gap-4"
+            onSubmit={(submitEvent) => {
+              submitEvent.preventDefault();
+              submitEvent.stopPropagation();
+              void handleSubmit((values) => mutateAsync(values))(submitEvent);
+            }}
+          >
+            <FormGroup cols={1}>
+              <FormControl cols="full">
+                <TextareaField<CloseSafetyEventFormValues>
+                  control={control}
+                  name="resolution"
+                  label={t("Resolution")}
+                  placeholder={t("e.g. Coaching on speed management, no further action")}
+                  description={t(
+                    "Kept on the event and in the audit log; a closed event cannot be deleted without reopening it first.",
+                  )}
+                  required
+                  maxLength={4000}
+                />
+              </FormControl>
+            </FormGroup>
+            <DialogFooter>
+              <Button type="button" size="sm" variant="outline" onClick={() => onOpenChange(false)}>
+                {t("Cancel")}
+              </Button>
+              <Button type="submit" size="sm" isLoading={isPending} loadingText={t("Closing...")}>
+                {t("Close event")}
+              </Button>
+            </DialogFooter>
+          </Form>
+        </FormProvider>
+      </DialogContent>
+    </Dialog>
+  );
+}

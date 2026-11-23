@@ -271,7 +271,7 @@ func (s *Service) publish(ctx context.Context, key *ptoledgerports.PTOBalanceKey
 		actorType = permissionports.PrincipalTypeSystem
 		actorID = permissionports.SystemPrincipalID
 	}
-	if err := realtimeinvalidation.Publish(ctx, s.realtime, &realtimeinvalidation.PublishParams{
+	params := &realtimeinvalidation.PublishParams{
 		OrganizationID: key.TenantInfo.OrgID,
 		BusinessUnitID: key.TenantInfo.BuID,
 		ActorUserID:    actor.UserID,
@@ -280,9 +280,12 @@ func (s *Service) publish(ctx context.Context, key *ptoledgerports.PTOBalanceKey
 		Resource:       realtimeResource,
 		Action:         "updated",
 		RecordID:       key.WorkerID,
-	}); err != nil {
-		s.l.Warn("failed to publish PTO balance invalidation", zap.Error(err))
 	}
+	kernelports.AfterCommit(ctx, func(committed context.Context) {
+		if err := realtimeinvalidation.Publish(committed, s.realtime, params); err != nil {
+			s.l.Warn("failed to publish PTO balance invalidation", zap.Error(err))
+		}
+	})
 }
 
 func (s *Service) PostUsage(
@@ -406,7 +409,8 @@ func (s *Service) Adjust(
 		CurrentState:   jsonutils.MustToJSON(entry),
 		OrganizationID: req.TenantInfo.OrgID,
 		BusinessUnitID: req.TenantInfo.BuID,
-	}, auditservice.WithComment(fmt.Sprintf("PTO balance adjusted: %s", req.Note))); err != nil {
+	}, auditservice.WithComment(fmt.Sprintf("PTO balance adjusted: %s", req.Note)),
+		auditservice.WithSubject(permission.ResourceWorker, req.WorkerID)); err != nil {
 		s.l.Error("failed to log audit action", zap.Error(err))
 	}
 

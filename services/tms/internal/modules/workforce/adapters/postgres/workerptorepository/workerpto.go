@@ -57,7 +57,7 @@ func New(p Params) workerptoports.WorkerPTORepository {
 
 func (r *repository) listFilter(req *workerptoports.ListPTORequest) []keel.Pred {
 	p := workerdb.WorkerPTOs
-	preds := make([]keel.Pred, 0, 5)
+	preds := make([]keel.Pred, 0, 6)
 
 	if req.Status != "" {
 		status, err := worker.PTOStatusFromString(req.Status)
@@ -66,6 +66,9 @@ func (r *repository) listFilter(req *workerptoports.ListPTORequest) []keel.Pred 
 		} else {
 			preds = append(preds, p.Status.Eq(status))
 		}
+	}
+	if len(req.Statuses) > 0 {
+		preds = append(preds, p.Status.In(req.Statuses...))
 	}
 	if req.Type != "" {
 		ptoType, err := worker.PTOTypeFromString(req.Type)

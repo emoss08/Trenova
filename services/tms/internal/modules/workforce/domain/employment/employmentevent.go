@@ -2,6 +2,7 @@ package employment
 
 import (
 	"context"
+	"slices"
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
@@ -30,6 +31,44 @@ const (
 	EmploymentEventRehired        = EmploymentEventKind("Rehired")
 	EmploymentEventRateChanged    = EmploymentEventKind("RateChanged")
 )
+
+var employmentEventKinds = []EmploymentEventKind{
+	EmploymentEventHired,
+	EmploymentEventProbationEnded,
+	EmploymentEventPromoted,
+	EmploymentEventTransferred,
+	EmploymentEventLeaveStarted,
+	EmploymentEventLeaveEnded,
+	EmploymentEventSuspended,
+	EmploymentEventReinstated,
+	EmploymentEventTerminated,
+	EmploymentEventRehired,
+	EmploymentEventRateChanged,
+}
+
+func EmploymentEventKinds() []EmploymentEventKind {
+	return slices.Clone(employmentEventKinds)
+}
+
+func RecordableKinds(state EmploymentState) []EmploymentEventKind {
+	out := make([]EmploymentEventKind, 0, len(employmentEventKinds))
+	for _, kind := range employmentEventKinds {
+		if kind.CanRecord(state) == nil {
+			out = append(out, kind)
+		}
+	}
+	return out
+}
+
+func ReasonRequiredKinds() []EmploymentEventKind {
+	out := make([]EmploymentEventKind, 0, len(employmentEventKinds))
+	for _, kind := range employmentEventKinds {
+		if kind.RequiresReason() {
+			out = append(out, kind)
+		}
+	}
+	return out
+}
 
 func (k EmploymentEventKind) String() string { return string(k) }
 
@@ -98,6 +137,7 @@ const (
 	EmploymentValueFleetCodeID     = "fleetCodeId"
 	EmploymentValueFleetCode       = "fleetCode"
 	EmploymentValueManagerID       = "managerId"
+	EmploymentValueManager         = "manager"
 	EmploymentValueDriverType      = "driverType"
 	EmploymentValueWorkerType      = "workerType"
 	EmploymentValueRate            = "rate"

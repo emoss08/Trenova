@@ -2,6 +2,7 @@ package argcheck
 
 import (
 	"fmt"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -102,16 +103,25 @@ func argumentNote(aliases []argumentAlias, coercions []argumentCoercion) string 
 // the shape of an id, and only when its description names where the id comes
 // from, so a key that is not a PULID (a report's chart id, an external
 // reference) is left alone.
-func idShapeProblems(schema, args map[string]any) []argumentProblem {
+//
+// A value on a marked parameter that could be a record's own number (one
+// word, no id at all) is set aside as a NumberRef instead: the dispatcher
+// reads it as the record that carries it, or refuses it as before.
+func idShapeProblems(schema, args map[string]any) ([]argumentProblem, []NumberRef) {
 	properties, _ := schema["properties"].(map[string]any)
 	if len(properties) == 0 {
-		return nil
+		return nil, nil
 	}
-	var problems []argumentProblem
-	walkIDs(properties, args, "", &problems)
-	sort.Slice(problems, func(i, j int) bool { return problems[i].Path < problems[j].Path })
+	walk := &idWalk{}
+	walk.object(properties, args, "", nil)
+	sort.Slice(walk.problems, func(i, j int) bool {
+		return walk.problems[i].Path < walk.problems[j].Path
+	})
+	sort.Slice(walk.numbers, func(i, j int) bool {
+		return walk.numbers[i].Path < walk.numbers[j].Path
+	})
 
-	return problems
+	return walk.problems, walk.numbers
 }
 
 type argumentProblem struct {
@@ -145,16 +155,26 @@ func markedKinds(property map[string]any) []recordkind.Kind {
 	return kinds
 }
 
-func walkIDs(properties, args map[string]any, path string, problems *[]argumentProblem) {
+// idWalk gathers what the id checks found across a call: the values refused
+// and the values that may be record numbers. The trail beside each path is the
+// keys and indices that reach the value, so a number read as a record is
+// replaced where it was sent.
+type idWalk struct {
+	problems []argumentProblem
+	numbers  []NumberRef
+}
+
+func (w *idWalk) object(properties, args map[string]any, path string, trail []any) {
 	for key, value := range args {
 		property, ok := properties[key].(map[string]any)
 		if !ok || value == nil {
 			continue
 		}
 		at := toolschema.JoinPath(path, key)
+		reach := slices.Concat(trail, []any{key})
 		switch toolschema.DeclaredType(property) {
 		case "object":
-			walkObjectIDs(property, value, at, problems)
+			w.nested(property, value, at, reach)
 		case "array":
 			items, _ := property["items"].(map[string]any)
 			list, isList := value.([]any)
@@ -162,30 +182,26 @@ func walkIDs(properties, args map[string]any, path string, problems *[]argumentP
 				continue
 			}
 			check, checked := listIDCheck(key, property, items)
-			walkListIDs(
-				&idList{items: items, check: check, checked: checked, path: at},
-				list,
-				problems,
-			)
+			w.list(&idList{items: items, check: check, checked: checked, path: at, trail: reach}, list)
 		case "string":
 			text, isText := value.(string)
 			if !isText {
 				continue
 			}
 			if check, checked := singleIDCheck(key, property); checked {
-				appendIDProblem(problems, at, text, check)
+				w.value(at, reach, text, check)
 			}
 		}
 	}
 }
 
-func walkObjectIDs(schema map[string]any, value any, path string, problems *[]argumentProblem) {
+func (w *idWalk) nested(schema map[string]any, value any, path string, trail []any) {
 	object, isObject := value.(map[string]any)
 	if !isObject {
 		return
 	}
 	if nested, has := schema["properties"].(map[string]any); has {
-		walkIDs(nested, object, path, problems)
+		w.object(nested, object, path, trail)
 	}
 }
 
@@ -196,26 +212,41 @@ type idList struct {
 	check   idCheck
 	checked bool
 	path    string
+	trail   []any
 }
 
-func walkListIDs(list *idList, elements []any, problems *[]argumentProblem) {
+func (w *idWalk) list(list *idList, elements []any) {
 	for idx, element := range elements {
 		elementPath := list.path + "[" + strconv.Itoa(idx) + "]"
+		reach := slices.Concat(list.trail, []any{idx})
 		switch toolschema.DeclaredType(list.items) {
 		case "object":
-			walkObjectIDs(list.items, element, elementPath, problems)
+			w.nested(list.items, element, elementPath, reach)
 		case "string":
 			if text, isText := element.(string); isText && list.checked {
-				appendIDProblem(problems, elementPath, text, list.check)
+				w.value(elementPath, reach, text, list.check)
 			}
 		}
 	}
 }
 
-func appendIDProblem(problems *[]argumentProblem, path, text string, check idCheck) {
-	if problem, bad := idProblem(path, text, check); bad {
-		*problems = append(*problems, problem)
+func (w *idWalk) value(path string, trail []any, text string, check idCheck) {
+	problem, bad := idProblem(path, text, check)
+	if !bad {
+		return
 	}
+	if number, could := recordNumber(text, check); could {
+		w.numbers = append(w.numbers, NumberRef{
+			Path:    path,
+			Number:  number,
+			Kinds:   check.kinds,
+			trail:   trail,
+			refusal: problem.Message,
+		})
+
+		return
+	}
+	w.problems = append(w.problems, problem)
 }
 
 func singleIDCheck(name string, property map[string]any) (idCheck, bool) {

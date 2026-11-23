@@ -473,3 +473,55 @@ func (r *QueryResolver) AuditEntryReview(ctx context.Context, entryID string) (*
 
 	return &view, nil
 }
+
+func (r *AuditEntryResolver) SubjectResource(ctx context.Context, obj *audit.Entry) (*string, error) {
+	if obj.SubjectResource == "" || obj.SubjectID.IsNil() {
+		return nil, nil
+	}
+	value := obj.SubjectResource.String()
+	return &value, nil
+}
+
+func (r *AuditEntryResolver) SubjectID(ctx context.Context, obj *audit.Entry) (*string, error) {
+	if obj.SubjectResource == "" || obj.SubjectID.IsNil() {
+		return nil, nil
+	}
+	value := obj.SubjectID.String()
+	return &value, nil
+}
+
+func (r *QueryResolver) AuditEntriesBySubject(ctx context.Context, input gqlmodel.DataTableConnectionInput, subjectID string) (*gqlmodel.AuditEntryConnection, error) {
+	authCtx, err := r.authContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	subject, err := pulid.MustParse(subjectID)
+	if err != nil {
+		return nil, err
+	}
+
+	access, err := r.subjectAccess(ctx, authCtx, subject)
+	if err != nil {
+		return nil, err
+	}
+
+	tableInput, err := gqlconnection.DataTableConnectionFromGraphQL(ctx, &input, resolvercore.TenantInfo(authCtx))
+	if err != nil {
+		return nil, err
+	}
+
+	result, err := r.AuditService.ListConnection(ctx, &auditports.ListAuditEntriesRequest{
+		Filter:         tableInput.Filter,
+		Cursor:         countFirstPageOnly(tableInput.Cursor),
+		Access:         access,
+		SubjectID:      subject,
+		IncludeDetail:  detailRequested(ctx),
+		IncludeChanges: changesRequested(ctx),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return auditEntryConnectionToModel(result)
+}

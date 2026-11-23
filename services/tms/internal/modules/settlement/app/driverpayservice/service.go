@@ -364,6 +364,7 @@ func (s *Service) logAssignmentAudit(
 	if err := s.auditService.LogAction(ctx,
 		params,
 		auditservice.WithComment(comment),
+		auditservice.WithSubjectOf(current),
 	); err != nil {
 		s.l.Error("failed to log pay assignment audit action", zap.Error(err))
 	}

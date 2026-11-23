@@ -1,0 +1,155 @@
+{
+  "key": "watchtower-backlog-by-kind",
+  "version": "1.0.0",
+  "name": "Watchtower Backlog by Kind",
+  "description": "What is open on the Watchtower right now by kind of item and severity: how many, how many nobody has picked up or owns, how many are overdue or have escalated, and the oldest",
+  "category": "Desk",
+  "tags": [
+    "desk",
+    "watchtower",
+    "exceptions",
+    "backlog"
+  ],
+  "defaultFormat": "xlsx",
+  "definition": {
+    "version": 2,
+    "entity": "item",
+    "columns": [
+      {
+        "id": "kind",
+        "label": "Kind",
+        "dimension": {
+          "field": "sourceKind"
+        }
+      },
+      {
+        "id": "severity",
+        "label": "Severity",
+        "dimension": {
+          "field": "severity"
+        }
+      },
+      {
+        "id": "open",
+        "measure": {
+          "field": "id",
+          "agg": "count"
+        },
+        "display": {
+          "style": "number",
+          "decimals": 0,
+          "grouping": true
+        },
+        "label": "Open"
+      },
+      {
+        "id": "unhandled",
+        "measure": {
+          "field": "id",
+          "agg": "count",
+          "filter": {
+            "field": "status",
+            "op": "eq",
+            "value": "Open"
+          }
+        },
+        "display": {
+          "style": "number",
+          "decimals": 0,
+          "grouping": true
+        },
+        "label": "Not Yet Picked Up"
+      },
+      {
+        "id": "unassigned",
+        "measure": {
+          "field": "id",
+          "agg": "count",
+          "filter": {
+            "field": "assignee.id",
+            "op": "is_null"
+          }
+        },
+        "display": {
+          "style": "number",
+          "decimals": 0,
+          "grouping": true
+        },
+        "label": "Unassigned"
+      },
+      {
+        "id": "overdue",
+        "measure": {
+          "field": "id",
+          "agg": "count",
+          "filter": {
+            "calc": "{dueAt} < now()"
+          }
+        },
+        "display": {
+          "style": "number",
+          "decimals": 0,
+          "grouping": true
+        },
+        "label": "Overdue"
+      },
+      {
+        "id": "escalated",
+        "measure": {
+          "field": "id",
+          "agg": "count",
+          "filter": {
+            "field": "escalationLevel",
+            "op": "gt",
+            "value": 0
+          }
+        },
+        "display": {
+          "style": "number",
+          "decimals": 0,
+          "grouping": true
+        },
+        "label": "Escalated"
+      },
+      {
+        "id": "oldest_occurred",
+        "hidden": true,
+        "measure": {
+          "field": "occurredAt",
+          "agg": "min"
+        }
+      },
+      {
+        "id": "oldest_age",
+        "label": "Oldest",
+        "calc": "date_diff('second', [oldest_occurred], now())",
+        "display": {
+          "style": "duration",
+          "durationUnit": "seconds",
+          "durationStyle": "compact"
+        }
+      }
+    ],
+    "filters": {
+      "and": [
+        {
+          "field": "resolvedAt",
+          "op": "is_null"
+        }
+      ]
+    },
+    "groupings": {
+      "subtotals": [
+        "kind"
+      ],
+      "total": true
+    },
+    "sort": [
+      {
+        "column": "open",
+        "desc": true
+      }
+    ],
+    "parameters": []
+  }
+}

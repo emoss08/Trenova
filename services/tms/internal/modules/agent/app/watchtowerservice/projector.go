@@ -356,8 +356,8 @@ func (p *Projector) caseRecord(
 	input *watchtowerports.WatchtowerItemInput,
 	about pulid.ID,
 ) pulid.ID {
-	if about.IsNil() || (input.SourceKind != watchtower.SourceAgentProposal &&
-		input.SourceKind != watchtower.SourceAgentPlan) {
+	if about.IsNil() || (input.SourceKind != watchtower.SourceKindAgentProposal &&
+		input.SourceKind != watchtower.SourceKindAgentPlan) {
 		return about
 	}
 

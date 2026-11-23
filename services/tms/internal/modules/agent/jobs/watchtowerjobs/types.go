@@ -63,7 +63,8 @@ type WatchtowerSweepResult struct {
 
 // WatchtowerRetentionResult reports what the retention sweep removed.
 type WatchtowerRetentionResult struct {
-	Deleted int `json:"deleted"`
+	Deleted            int `json:"deleted"`
+	ResolutionsDeleted int `json:"resolutionsDeleted"`
 }
 
 // ExceptionAttentionResult reports one pass over the exceptions needing

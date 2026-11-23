@@ -72,7 +72,7 @@ func TestDescribeNoCheckCall_WarnsThenEscalatesAtTwiceTheWindow(t *testing.T) {
 
 	item := DescribeNoCheckCall(tenant, move)
 
-	assert.Equal(t, watchtower.SourceNoCheckCall, item.SourceKind)
+	assert.Equal(t, watchtower.SourceKindNoCheckCall, item.SourceKind)
 	assert.Equal(t, move.MoveID.String(), item.SourceID)
 	assert.Equal(t, watchtower.SeverityWarning, item.Severity)
 	assert.Equal(t, "No check call on PRO-42", item.Title)
@@ -115,7 +115,7 @@ func TestNoCheckCallSource_SnapshotsTheOverdueLoads(t *testing.T) {
 	require.NoError(t, err)
 	assert.Len(t, items, 2)
 	assert.Equal(t, int64(42), checkCalls.now)
-	assert.Equal(t, watchtower.SourceNoCheckCall, source.Kind())
+	assert.Equal(t, watchtower.SourceKindNoCheckCall, source.Kind())
 }
 
 func TestNoCheckCallSource_PassesAReadFailureUp(t *testing.T) {
@@ -145,7 +145,7 @@ func TestNoCheckCallObserver_ResolvesTheMoveItem(t *testing.T) {
 	require.Len(t, projector.resolved, 1)
 	assert.Equal(t, resolveCall{
 		tenant:   tenant,
-		kind:     watchtower.SourceNoCheckCall,
+		kind:     watchtower.SourceKindNoCheckCall,
 		sourceID: moveID.String(),
 	}, projector.resolved[0])
 }

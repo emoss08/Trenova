@@ -317,7 +317,7 @@ func TestFinalizeSuite_RaisesARegressionOnceAndSaysWhatChanged(t *testing.T) {
 
 	require.Len(t, world.tower.upserts, 1)
 	item := world.tower.upserts[0]
-	assert.Equal(t, watchtower.SourceAgentQualityRegression, item.SourceKind)
+	assert.Equal(t, watchtower.SourceKindAgentQualityRegression, item.SourceKind)
 	assert.Equal(t, world.run.ID.String(), item.SourceID, "the item is keyed on the suite run")
 	assert.Equal(t, watchtower.SeverityCritical, item.Severity, "a hard failure is high")
 	assert.Contains(t, item.Summary, "model changed from model-a to model-b")

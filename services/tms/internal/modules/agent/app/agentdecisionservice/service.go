@@ -4,8 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/caseownerports"
 	"strings"
+
+	"github.com/emoss08/trenova/internal/modules/agent/ports/caseownerports"
 
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aimetrics"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
@@ -806,5 +807,5 @@ func (s *Service) clearFromWatchtower(
 		return
 	}
 
-	s.watchtower.Resolve(ctx, tenant, watchtower.SourceAgentProposal, proposal.ID.String())
+	s.watchtower.Resolve(ctx, tenant, watchtower.SourceKindAgentProposal, proposal.ID.String())
 }

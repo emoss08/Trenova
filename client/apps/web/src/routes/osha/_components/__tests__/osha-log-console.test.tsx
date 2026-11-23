@@ -3,7 +3,6 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { recordPath } from "@/config/record-links";
 import OshaLogConsole from "../osha-log-console";
 
 const mocks = vi.hoisted(() => ({
@@ -26,7 +25,7 @@ vi.mock("@/hooks/use-permission", () => ({
 }));
 
 vi.mock("../osha-summary-dialog", () => ({ OshaSummaryDialog: () => null }));
-vi.mock("@/routes/worker/_components/safety/injury-dialog", () => ({
+vi.mock("@/components/injury/injury-dialog", () => ({
   InjuryDialog: () => null,
 }));
 
@@ -406,7 +405,7 @@ describe("OshaLogConsole", () => {
     expect(within(sheet).getByText("Cara Diaz")).toBeInTheDocument();
     expect(within(sheet).getByRole("link", { name: /Cara Diaz/ })).toHaveAttribute(
       "href",
-      recordPath("worker", "wrk_cara", { tab: "safety" }),
+      "/hr/workers/wrk_cara?tab=safety",
     );
     expect(within(sheet).getByText(/Privacy case\. The posted log reads/)).toBeInTheDocument();
     expect(within(sheet).getByText("No claim has been filed.")).toBeInTheDocument();

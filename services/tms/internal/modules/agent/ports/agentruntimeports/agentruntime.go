@@ -239,6 +239,13 @@ type RunRequest struct {
 	UsageFeature aiusage.Feature
 }
 
+// AskedByPerson reports whether a person asked this turn's question in the
+// conversation: not a background run, another agent's task, or a note Trenova
+// wrote, such as a decision follow-up or a wait picked up.
+func (r *RunRequest) AskedByPerson() bool {
+	return !r.Unattended && r.Delegation == nil && !r.TrenovaWritten
+}
+
 // Ask is what the person asked for in their own words. A turn Trenova opened
 // in the conversation answers the last thing they typed: quoting its note
 // put "Decision on proposal … Tell the person in one or two sentences" on a
@@ -421,6 +428,10 @@ type ShownArtifact struct {
 	// record itself, read whole and tried there, so it is pointed to however
 	// short it is.
 	OpensRecords bool `json:"opensRecords,omitempty"`
+	// RowKind is the kind of record each row of a table is, when its rows are
+	// records: the table's rows are then the records the result returned, and
+	// Labels are their numbers.
+	RowKind string `json:"rowKind,omitempty"`
 	// Ranked is a table whose order is the answer, such as drivers ranked
 	// for a move: the person picks from it, so it is pointed to however
 	// short it is.
@@ -429,6 +440,8 @@ type ShownArtifact struct {
 	Written  string     `json:"written,omitempty"`
 	Lineage  pulid.ID   `json:"lineage,omitempty"`
 	Replaces []pulid.ID `json:"replaces,omitempty"`
+	Place    string     `json:"place,omitempty"`
+	Answer   string     `json:"answer,omitempty"`
 	Brief    string     `json:"-"`
 }
 
@@ -480,6 +493,7 @@ type PublishedDocument struct {
 type BoardRequest struct {
 	Board      board.Board
 	ArtifactID pulid.ID
+	Asked      board.Place
 }
 
 // PublishMistake is a publish the model can fix and send again, such as an

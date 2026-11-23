@@ -12,12 +12,12 @@ import {
 } from "@trenova/shared/components/icons";
 import { useMemo } from "react";
 import { enrollmentWorkerName } from "./plan-enrollments-sheet";
-import { workerRecordHref } from "@/lib/route-utils";
+import { workerPath } from "@/routes/worker/use-worker-state";
 
 const SHOWN_LIMIT = 6;
 
 function workerHref(workerId: string): string {
-  return workerRecordHref(workerId);
+  return workerPath(workerId, { tab: "pay", view: "benefits" });
 }
 
 function Loading() {

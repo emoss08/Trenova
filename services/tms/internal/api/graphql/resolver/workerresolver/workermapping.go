@@ -102,6 +102,7 @@ func workerByIDRequest(
 		IncludeState:        fieldRequested("state"),
 		IncludeFleetCode:    fieldRequested("fleetCode"),
 		IncludeManager:      fieldRequested("manager"),
+		IncludePosition:     fieldRequested("position"),
 		IncludeLicenseState: includeProfile && fieldRequested("profile.licenseState"),
 	}
 }

@@ -8,6 +8,7 @@ import {
   listWorkerFormSubmissionsGraphQL,
   listWorkerHosDailyLogsGraphQL,
   listWorkerHosLogsGraphQL,
+  getWorkerHosClocksGraphQL,
   getWorkerHosStateGraphQL,
   listVehiclePositionsGraphQL,
   listWorkerHosStatesGraphQL,
@@ -31,6 +32,10 @@ export const telematics = createQueryKeys("telematics", {
   workerHosState: (workerId: string) => ({
     queryKey: ["worker-hos-state", workerId],
     queryFn: ({ signal }) => getWorkerHosStateGraphQL(workerId, { signal }),
+  }),
+  workerHosClocks: (workerId: string) => ({
+    queryKey: ["worker-hos-clocks", workerId],
+    queryFn: ({ signal }) => getWorkerHosClocksGraphQL(workerId, { signal }),
   }),
   workerHosViolations: (workerId: string, since?: number) => ({
     queryKey: ["worker-hos-violations", workerId, since ?? 0],

@@ -2,10 +2,12 @@ package agentfixtures
 
 import (
 	"context"
+	"crypto/md5" //nolint:gosec // G501: a deterministic row key, not a security hash
 	"fmt"
 	"math"
 	"math/rand/v2"
 	"slices"
+	"strings"
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/keel/seed"
@@ -23,6 +25,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider/aiproviderdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aireasoning"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage/aiusagedb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/novamodel"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/settingversion"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/settingversion/settingversiondb"
@@ -803,6 +807,9 @@ func (s *AIAnalyticsSeed) write(
 	if err := s.writeProviderHistory(ctx, db, sr, refs); err != nil {
 		return err
 	}
+	if err := writeDailyUsage(ctx, db, refs, data.units); err != nil {
+		return err
+	}
 
 	state := &aianalytics.RefreshState{
 		OrganizationID:   refs.org,
@@ -872,4 +879,84 @@ func (s *AIAnalyticsSeed) writeProviderHistory(
 
 func analyticsSeedEnd(now int64) int64 {
 	return now - now%analyticsSeedHour - analyticsSeedHour
+}
+
+func writeDailyUsage(
+	ctx context.Context,
+	db *keel.DB,
+	refs *analyticsSeedRefs,
+	units []*aianalytics.WorkUnit,
+) error {
+	byKey := make(map[string]*aiusage.DailyUsage, len(units)/4)
+	keys := make([]string, 0, len(units)/4)
+	for _, unit := range units {
+		day := unit.FinishedAt - unit.FinishedAt%analyticsSeedDay
+		row := dailyUsageRow(refs, unit, day)
+		key := fmt.Sprintf("%d|%s|%s|%s|%s|%s", day, row.UserID, row.Feature, row.Surface,
+			row.Model, row.ProviderKind)
+		existing, ok := byKey[key]
+		if !ok {
+			row.ID = pulid.ID("aiud_" + fmt.Sprintf("%x", md5.Sum([]byte(key))))
+			byKey[key] = row
+			keys = append(keys, key)
+			existing = row
+		}
+		existing.Calls += int64(unit.ModelCalls)
+		existing.FailedCalls += int64(unit.FailedCalls)
+		existing.InputTokens += unit.InputTokens
+		existing.CacheReadTokens += unit.CacheReadTokens
+		existing.CacheWriteTokens += unit.CacheWriteTokens
+		existing.OutputTokens += unit.OutputTokens
+		existing.AdvisorTokens += unit.AdvisorPromptTokens + unit.AdvisorOutputTokens
+		existing.TotalTokens += unit.InputTokens + unit.CacheReadTokens + unit.CacheWriteTokens +
+			unit.OutputTokens + unit.AdvisorPromptTokens + unit.AdvisorOutputTokens
+		if unit.CostUSD == nil {
+			existing.UnpricedCalls += int64(unit.ModelCalls)
+			continue
+		}
+		existing.CostUSD = existing.CostUSD.Add(*unit.CostUSD)
+	}
+
+	rows := make([]*aiusage.DailyUsage, 0, len(keys))
+	for _, key := range keys {
+		rows = append(rows, byKey[key])
+	}
+	if _, err := aiusagedb.DailyUsages.CreateOrSkip(ctx, db, rows); err != nil {
+		return fmt.Errorf("insert daily ai usage: %w", err)
+	}
+
+	return nil
+}
+
+func dailyUsageRow(
+	refs *analyticsSeedRefs,
+	unit *aianalytics.WorkUnit,
+	day int64,
+) *aiusage.DailyUsage {
+	row := &aiusage.DailyUsage{
+		OrganizationID: refs.org,
+		BusinessUnitID: refs.bu,
+		UsageDate:      day,
+		Feature:        aiusage.FeatureAgentTurn,
+		Surface:        aiusage.SurfaceBackground,
+		Model:          unit.Model,
+		ProviderKind:   aiprovider.KindOpenAIChat,
+		CostUSD:        decimal.Zero,
+		UpdatedAt:      refs.now,
+	}
+	if strings.Contains(strings.ToLower(unit.Model), "claude") {
+		row.ProviderKind = aiprovider.KindAnthropicMessages
+	}
+	switch unit.Source {
+	case aianalytics.SourceAssistantTurn:
+		row.UserID = refs.admin
+		row.Surface = aiusage.SurfaceChat
+	case aianalytics.SourceCall:
+		row.UserID = refs.admin
+		row.Feature = aiusage.FeatureConversationChapters
+		row.Surface = aiusage.SurfaceStructured
+	case aianalytics.SourceAgentRun:
+	}
+
+	return row
 }

@@ -91,7 +91,7 @@ export function getColumns(t: TranslateFn): ColumnDef<FuelCardRow>[] {
             entity={assignedWorker}
             parent={assignedWorker as WorkerRow}
             config={{
-              basePath: "/workers",
+              kind: "worker",
               getId: (w) => w.id,
               getDisplayText: (w) => `${w.firstName} ${w.lastName}`,
             }}

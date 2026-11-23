@@ -9,22 +9,39 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlexec"
 	"github.com/emoss08/trenova/internal/modules/identity/app/ptoledgerservice"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workeroverviewservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/safetyscorecard"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/telematics"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerchecklist"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercompliance"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerdot"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerleave"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerpage"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerreview"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workertraining"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vektah/gqlparser/v2/ast"
 )
 
 var Shard = &gqlexec.Shard{
 	Name: "workeroverview",
 	Objects: []*gqlexec.Object{
+		{Name: "WorkerClearance", Implementors: []string{"WorkerClearance"}},
+		{Name: "WorkerClearanceItem", Implementors: []string{"WorkerClearanceItem"}},
 		{Name: "WorkerConcern", Implementors: []string{"WorkerConcern"}},
+		{Name: "WorkerDestination", Implementors: []string{"WorkerDestination"}},
 		{Name: "WorkerOverview", Implementors: []string{"WorkerOverview"}},
+		{Name: "WorkerOverviewBenefits", Implementors: []string{"WorkerOverviewBenefits"}},
+		{Name: "WorkerOverviewDrugAlcohol", Implementors: []string{"WorkerOverviewDrugAlcohol"}},
+		{Name: "WorkerOverviewEmployment", Implementors: []string{"WorkerOverviewEmployment"}},
+		{Name: "WorkerOverviewHos", Implementors: []string{"WorkerOverviewHos"}},
+		{Name: "WorkerOverviewPay", Implementors: []string{"WorkerOverviewPay"}},
+		{Name: "WorkerOverviewPayRate", Implementors: []string{"WorkerOverviewPayRate"}},
+		{Name: "WorkerOverviewPortal", Implementors: []string{"WorkerOverviewPortal"}},
+		{Name: "WorkerOverviewSchedule", Implementors: []string{"WorkerOverviewSchedule"}},
 		{Name: "WorkerRosterAttention", Implementors: []string{"WorkerRosterAttention"}},
 	},
 	Fields: []gqlexec.Fields{
@@ -56,11 +73,203 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNWorkerRosterAttention2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋworkeroverviewserviceᚐRosterAttention),
 			},
 		}},
+		{Object: "WorkerClearance", Fields: []*gqlexec.Field{
+			{
+				Name:     "cleared",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*workercompliance.Clearance)
+					return obj.Cleared, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+			{
+				Name:     "clearedThrough",
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*workercompliance.Clearance)
+					return obj.ClearedThrough, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
+			},
+			{
+				Name:     "notClearedSince",
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*workercompliance.Clearance)
+					return obj.NotClearedSince, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
+			},
+			{
+				Name:     "blocks",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*workercompliance.Clearance)
+					return obj.Blocks, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNWorkerClearanceBlock2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkercomplianceᚐClearanceBlockᚄ),
+			},
+			{
+				Name:      "firstStop",
+				HasChild:  true,
+				ChildType: "WorkerClearanceItem",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*workercompliance.Clearance)
+					return obj.FirstStop, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOWorkerClearanceItem2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkercomplianceᚐClearanceItem),
+			},
+			{
+				Name:      "items",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "WorkerClearanceItem",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*workercompliance.Clearance)
+					return obj.Items, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNWorkerClearanceItem2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkercomplianceᚐClearanceItemᚄ),
+			},
+			{
+				Name:     "itemsTruncated",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*workercompliance.Clearance)
+					return obj.ItemsTruncated, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+		}},
+		{Object: "WorkerClearanceItem", Fields: []*gqlexec.Field{
+			{
+				Name:     "key",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*workercompliance.ClearanceItem)
+					return obj.Key, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "lane",
+				NonNull:  true,
+				ChildErr: errNoChild4,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*workercompliance.ClearanceItem)
+					return obj.Lane, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNWorkerClearanceLane2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkercomplianceᚐClearanceLane),
+			},
+			{
+				Name:     "source",
+				NonNull:  true,
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*workercompliance.ClearanceItem)
+					return obj.Source, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNWorkerClearanceSource2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkercomplianceᚐClearanceSource),
+			},
+			{
+				Name:     "name",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*workercompliance.ClearanceItem)
+					return obj.Name, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "dueAt",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*workercompliance.ClearanceItem)
+					return obj.DueAt, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
+			},
+			{
+				Name:     "daysUntil",
+				NonNull:  true,
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*workercompliance.ClearanceItem)
+					return obj.DaysUntil, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int64),
+			},
+			{
+				Name:     "effect",
+				NonNull:  true,
+				ChildErr: errNoChild7,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*workercompliance.ClearanceItem)
+					return obj.Effect, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNWorkerClearanceEffect2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkercomplianceᚐClearanceEffect),
+			},
+			{
+				Name:     "rule",
+				ChildErr: errNoChild8,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*workercompliance.ClearanceItem)
+					return obj.Rule, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOWorkerClearanceRule2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkercomplianceᚐClearanceRule),
+			},
+			{
+				Name:     "hazmatOnly",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*workercompliance.ClearanceItem)
+					return obj.HazmatOnly, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+			{
+				Name:     "regulation",
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*workercompliance.ClearanceItem)
+					return obj.Regulation, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOString2ᚖstring),
+			},
+			{
+				Name:     "required",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*workercompliance.ClearanceItem)
+					return obj.Required, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+			{
+				Name:      "destination",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "WorkerDestination",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*workercompliance.ClearanceItem)
+					return obj.Destination, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNWorkerDestination2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerpageᚐDestination),
+			},
+		}},
 		{Object: "WorkerConcern", Fields: []*gqlexec.Field{
 			{
 				Name:     "severity",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*workercompliance.Concern)
 					return obj.Severity, nil
@@ -70,42 +279,118 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "code",
 				NonNull:  true,
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild10,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*workercompliance.Concern)
 					return obj.Code, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNString2string),
+				Marshal: gqlexec.Marshal(marshalNWorkerConcernCode2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkercomplianceᚐConcernCode),
 			},
 			{
-				Name:     "headline",
+				Name:     "subject",
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*workercompliance.Concern)
+					return obj.Subject, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOString2ᚖstring),
+			},
+			{
+				Name:     "count",
 				NonNull:  true,
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*workercompliance.Concern)
+					return obj.Count, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "occurredAt",
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*workercompliance.Concern)
-					return obj.Headline, nil
+					return obj.OccurredAt, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNString2string),
+				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
 			},
 			{
-				Name:     "detail",
-				NonNull:  true,
+				Name:     "dueAt",
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*workercompliance.Concern)
-					return obj.Detail, nil
+					return obj.DueAt, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNString2string),
+				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
 			},
+			{
+				Name:     "daysUntil",
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*workercompliance.Concern)
+					return obj.DaysUntil, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOInt2ᚖint64),
+			},
+			{
+				Name:     "stopsAssignment",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*workercompliance.Concern)
+					return obj.StopsAssignment, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+			{
+				Name:      "destination",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "WorkerDestination",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*workercompliance.Concern)
+					return obj.Destination, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNWorkerDestination2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerpageᚐDestination),
+			},
+		}},
+		{Object: "WorkerDestination", Fields: []*gqlexec.Field{
 			{
 				Name:     "tab",
 				NonNull:  true,
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild11,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*workercompliance.Concern)
+					obj := o.(*workerpage.Destination)
 					return obj.Tab, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNString2string),
+				Marshal: gqlexec.Marshal(marshalNWorkerPageTab2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerpageᚐTab),
+			},
+			{
+				Name:     "view",
+				ChildErr: errNoChild12,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*workerpage.Destination)
+					return obj.View, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOWorkerPageView2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerpageᚐView),
+			},
+			{
+				Name:     "record",
+				ChildErr: errNoChild13,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*workerpage.Destination)
+					return obj.Record, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOWorkerPageRecord2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerpageᚐRecord),
+			},
+			{
+				Name:     "recordId",
+				ChildErr: errNoChild14,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*workerpage.Destination)
+					return obj.RecordID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOID2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
 			},
 		}},
 		{Object: "WorkerOverview", Fields: []*gqlexec.Field{
@@ -123,7 +408,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "asOf",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*workeroverviewservice.Overview)
 					return obj.AsOf, nil
@@ -133,7 +418,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "standing",
 				NonNull:  true,
-				ChildErr: errNoChild3,
+				ChildErr: errNoChild15,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*workeroverviewservice.Overview)
 					return obj.Standing, nil
@@ -152,6 +437,26 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNWorkerConcern2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkercomplianceᚐConcernᚄ),
 			},
 			{
+				Name:     "concernCount",
+				NonNull:  true,
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*workeroverviewservice.Overview)
+					return obj.ConcernCount, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:      "clearance",
+				HasChild:  true,
+				ChildType: "WorkerClearance",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*workeroverviewservice.Overview)
+					return obj.Clearance, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOWorkerClearance2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkercomplianceᚐClearance),
+			},
+			{
 				Name:      "credentials",
 				HasChild:  true,
 				ChildType: "WorkerCredentialSummary",
@@ -160,6 +465,26 @@ var Shard = &gqlexec.Shard{
 					return obj.Credentials, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOWorkerCredentialSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkercredentialᚐWorkerCredentialSummary),
+			},
+			{
+				Name:      "qualificationFile",
+				HasChild:  true,
+				ChildType: "DQFFile",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*workeroverviewservice.Overview)
+					return obj.QualificationFile, nil
+				},
+				Marshal: gqlexec.Marshal(marshalODQFFile2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkercomplianceᚐDQFFile),
+			},
+			{
+				Name:      "drugAlcohol",
+				HasChild:  true,
+				ChildType: "WorkerOverviewDrugAlcohol",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*workeroverviewservice.Overview)
+					return obj.DrugAlcohol, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOWorkerOverviewDrugAlcohol2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋworkeroverviewserviceᚐDrugAlcoholSection),
 			},
 			{
 				Name:      "training",
@@ -182,6 +507,16 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalOSafetyScorecard2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋsafetyscorecardᚐSafetyScorecard),
 			},
 			{
+				Name:      "employment",
+				HasChild:  true,
+				ChildType: "WorkerOverviewEmployment",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*workeroverviewservice.Overview)
+					return obj.Employment, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOWorkerOverviewEmployment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋworkeroverviewserviceᚐEmploymentSection),
+			},
+			{
 				Name:      "checklist",
 				HasChild:  true,
 				ChildType: "WorkerChecklist",
@@ -200,6 +535,16 @@ var Shard = &gqlexec.Shard{
 					return obj.PTO, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOWorkerPTOBalance2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋappᚋptoledgerserviceᚐBalanceViewᚄ),
+			},
+			{
+				Name:      "leave",
+				HasChild:  true,
+				ChildType: "LeaveEntitlement",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*workeroverviewservice.Overview)
+					return obj.Leave, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOLeaveEntitlement2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerleaveᚐLeaveEntitlement),
 			},
 			{
 				Name:      "openReview",
@@ -223,19 +568,428 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "nextReviewAt",
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*workeroverviewservice.Overview)
 					return obj.NextReviewAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
 			},
+			{
+				Name:      "schedule",
+				HasChild:  true,
+				ChildType: "WorkerOverviewSchedule",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*workeroverviewservice.Overview)
+					return obj.Schedule, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOWorkerOverviewSchedule2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋworkeroverviewserviceᚐScheduleSection),
+			},
+			{
+				Name:      "hos",
+				HasChild:  true,
+				ChildType: "WorkerOverviewHos",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*workeroverviewservice.Overview)
+					return obj.HOS, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOWorkerOverviewHos2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋworkeroverviewserviceᚐHOSSection),
+			},
+			{
+				Name:      "pay",
+				HasChild:  true,
+				ChildType: "WorkerOverviewPay",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*workeroverviewservice.Overview)
+					return obj.Pay, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOWorkerOverviewPay2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋworkeroverviewserviceᚐPaySection),
+			},
+			{
+				Name:      "benefits",
+				HasChild:  true,
+				ChildType: "WorkerOverviewBenefits",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*workeroverviewservice.Overview)
+					return obj.Benefits, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOWorkerOverviewBenefits2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋworkeroverviewserviceᚐBenefitsSection),
+			},
+			{
+				Name:      "portal",
+				HasChild:  true,
+				ChildType: "WorkerOverviewPortal",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*workeroverviewservice.Overview)
+					return obj.Portal, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOWorkerOverviewPortal2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋworkeroverviewserviceᚐPortalSection),
+			},
+			{
+				Name:      "nextTimeOff",
+				HasChild:  true,
+				ChildType: "WorkerPTO",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*workeroverviewservice.Overview)
+					return obj.NextTimeOff, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOWorkerPTO2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerPTO),
+			},
+			{
+				Name:     "documentCount",
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*workeroverviewservice.Overview)
+					return obj.DocumentCount, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOInt2ᚖint),
+			},
+			{
+				Name:     "agentMemoryCount",
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*workeroverviewservice.Overview)
+					return obj.AgentMemoryCount, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOInt2ᚖint),
+			},
+		}},
+		{Object: "WorkerOverviewBenefits", Fields: []*gqlexec.Field{
+			{
+				Name:     "coveredCount",
+				NonNull:  true,
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*workeroverviewservice.BenefitsSection)
+					return obj.CoveredCount, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "notStartedCount",
+				NonNull:  true,
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*workeroverviewservice.BenefitsSection)
+					return obj.NotStartedCount, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "employeeCostPerPeriodMinor",
+				NonNull:  true,
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*workeroverviewservice.BenefitsSection)
+					return obj.EmployeeCostPerPeriodMinor, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int64),
+			},
+		}},
+		{Object: "WorkerOverviewDrugAlcohol", Fields: []*gqlexec.Field{
+			{
+				Name:      "standing",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "DrugAlcoholStanding",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*workeroverviewservice.DrugAlcoholSection)
+					return obj.Standing, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNDrugAlcoholStanding2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerdotᚐDrugAlcoholStanding),
+			},
+			{
+				Name:     "nextQueryDaysUntil",
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*workeroverviewservice.DrugAlcoholSection)
+					return obj.NextQueryDaysUntil, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOInt2ᚖint64),
+			},
+		}},
+		{Object: "WorkerOverviewEmployment", Fields: []*gqlexec.Field{
+			{
+				Name:     "eventCount",
+				NonNull:  true,
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*workeroverviewservice.EmploymentSection)
+					return obj.EventCount, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "hiredAt",
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*workeroverviewservice.EmploymentSection)
+					return obj.HiredAt, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
+			},
+			{
+				Name:     "openChecklistCount",
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*workeroverviewservice.EmploymentSection)
+					return obj.OpenChecklistCount, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOInt2ᚖint),
+			},
+		}},
+		{Object: "WorkerOverviewHos", Fields: []*gqlexec.Field{
+			{
+				Name:     "link",
+				NonNull:  true,
+				ChildErr: errNoChild16,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*workeroverviewservice.HOSSection)
+					return obj.Link, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNWorkerHosLink2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋtelematicsᚐHOSLink),
+			},
+			{
+				Name:     "dutyStatus",
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*workeroverviewservice.HOSSection)
+					return obj.DutyStatus, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOString2ᚖstring),
+			},
+			{
+				Name:     "dutyStatusSince",
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*workeroverviewservice.HOSSection)
+					return obj.DutyStatusSince, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
+			},
+			{
+				Name:     "driveRemainingMs",
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*workeroverviewservice.HOSSection)
+					return obj.DriveRemainingMs, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOInt2ᚖint64),
+			},
+			{
+				Name:     "driveLimitMs",
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*workeroverviewservice.HOSSection)
+					return obj.DriveLimitMs, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOInt2ᚖint64),
+			},
+			{
+				Name:     "shiftRemainingMs",
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*workeroverviewservice.HOSSection)
+					return obj.ShiftRemainingMs, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOInt2ᚖint64),
+			},
+			{
+				Name:     "shiftLimitMs",
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*workeroverviewservice.HOSSection)
+					return obj.ShiftLimitMs, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOInt2ᚖint64),
+			},
+			{
+				Name:     "cycleRemainingMs",
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*workeroverviewservice.HOSSection)
+					return obj.CycleRemainingMs, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOInt2ᚖint64),
+			},
+			{
+				Name:     "cycleLimitMs",
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*workeroverviewservice.HOSSection)
+					return obj.CycleLimitMs, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOInt2ᚖint64),
+			},
+			{
+				Name:     "breakRemainingMs",
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*workeroverviewservice.HOSSection)
+					return obj.BreakRemainingMs, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOInt2ᚖint64),
+			},
+			{
+				Name:     "breakLimitMs",
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*workeroverviewservice.HOSSection)
+					return obj.BreakLimitMs, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOInt2ᚖint64),
+			},
+			{
+				Name:     "tractorCode",
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*workeroverviewservice.HOSSection)
+					return obj.TractorCode, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOString2ᚖstring),
+			},
+			{
+				Name:     "recordedAt",
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*workeroverviewservice.HOSSection)
+					return obj.RecordedAt, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
+			},
+		}},
+		{Object: "WorkerOverviewPay", Fields: []*gqlexec.Field{
+			{
+				Name:     "profileName",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*workeroverviewservice.PaySection)
+					return obj.ProfileName, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "classification",
+				NonNull:  true,
+				ChildErr: errNoChild17,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*workeroverviewservice.PaySection)
+					return obj.Classification, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNPayeeClassification2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriverpayᚐPayeeClassification),
+			},
+			{
+				Name:     "effectiveFrom",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*workeroverviewservice.PaySection)
+					return obj.EffectiveFrom, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
+			},
+			{
+				Name:      "headline",
+				HasChild:  true,
+				ChildType: "WorkerOverviewPayRate",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*workeroverviewservice.PaySection)
+					return obj.Headline, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOWorkerOverviewPayRate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋworkeroverviewserviceᚐPayRate),
+			},
+		}},
+		{Object: "WorkerOverviewPayRate", Fields: []*gqlexec.Field{
+			{
+				Name:     "kind",
+				NonNull:  true,
+				ChildErr: errNoChild18,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*workeroverviewservice.PayRate)
+					return obj.Kind, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNPayComponentKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriverpayᚐComponentKind),
+			},
+			{
+				Name:     "method",
+				NonNull:  true,
+				ChildErr: errNoChild19,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*workeroverviewservice.PayRate)
+					return obj.Method, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNPayCalcMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriverpayᚐCalcMethod),
+			},
+			{
+				Name:       "rate",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				ChildErr:   errNoChild20,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*workeroverviewservice.PayRate)
+					return gqlexec.Resolver[WorkerOverviewPayRateResolver](ec, "WorkerOverviewPayRate@workeroverview").Rate(ctx, obj)
+				},
+				Marshal: gqlexec.Marshal(marshalNDecimal2string),
+			},
+			{
+				Name:     "overridden",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*workeroverviewservice.PayRate)
+					return obj.Overridden, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+		}},
+		{Object: "WorkerOverviewPortal", Fields: []*gqlexec.Field{
+			{
+				Name:     "access",
+				NonNull:  true,
+				ChildErr: errNoChild21,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*workeroverviewservice.PortalSection)
+					return obj.Access, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNWorkerPortalAccess2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋworkeroverviewserviceᚐPortalAccess),
+			},
+			{
+				Name:     "pendingProfileChangeCount",
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*workeroverviewservice.PortalSection)
+					return obj.PendingProfileChangeCount, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOInt2ᚖint),
+			},
+			{
+				Name:     "lastSignInAt",
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*workeroverviewservice.PortalSection)
+					return obj.LastSignInAt, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
+			},
+		}},
+		{Object: "WorkerOverviewSchedule", Fields: []*gqlexec.Field{
+			{
+				Name:     "currentShiftName",
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*workeroverviewservice.ScheduleSection)
+					return obj.CurrentShiftName, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOString2ᚖstring),
+			},
 		}},
 		{Object: "WorkerRosterAttention", Fields: []*gqlexec.Field{
 			{
 				Name:     "activeWorkers",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*workeroverviewservice.RosterAttention)
 					return obj.ActiveWorkers, nil
@@ -245,7 +999,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "nonCompliant",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*workeroverviewservice.RosterAttention)
 					return obj.NonCompliant, nil
@@ -254,7 +1008,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "trainingOverdue",
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*workeroverviewservice.RosterAttention)
 					return obj.TrainingOverdue, nil
@@ -264,7 +1018,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "atRisk",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*workeroverviewservice.RosterAttention)
 					return obj.AtRisk, nil
@@ -274,7 +1028,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "expiringSoon",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*workeroverviewservice.RosterAttention)
 					return obj.ExpiringSoon, nil
@@ -283,7 +1037,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "reviewsAwaitingSignOff",
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*workeroverviewservice.RosterAttention)
 					return obj.ReviewsAwaitingSignOff, nil
@@ -294,7 +1048,7 @@ var Shard = &gqlexec.Shard{
 				Name:       "ptoLiabilityDays",
 				IsResolver: true,
 				Concurrent: true,
-				ChildErr:   errNoChild5,
+				ChildErr:   errNoChild20,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*workeroverviewservice.RosterAttention)
 					return gqlexec.Resolver[WorkerRosterAttentionResolver](ec, "WorkerRosterAttention@workeroverview").PTOLiabilityDays(ctx, obj)
@@ -303,7 +1057,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "leaveCertificationsOutstanding",
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*workeroverviewservice.RosterAttention)
 					return obj.LeaveCertificationsOutstanding, nil
@@ -314,6 +1068,7 @@ var Shard = &gqlexec.Shard{
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
 		{Root: "Query@workeroverview", Check: func(r any) bool { _, ok := r.(QueryResolver); return ok }},
+		{Root: "WorkerOverviewPayRate@workeroverview", Check: func(r any) bool { _, ok := r.(WorkerOverviewPayRateResolver); return ok }},
 		{Root: "WorkerRosterAttention@workeroverview", Check: func(r any) bool { _, ok := r.(WorkerRosterAttentionResolver); return ok }},
 	},
 }
@@ -323,17 +1078,37 @@ type QueryResolver interface {
 	WorkerRosterAttention(ctx context.Context) (*workeroverviewservice.RosterAttention, error)
 }
 
+type WorkerOverviewPayRateResolver interface {
+	Rate(ctx context.Context, obj *workeroverviewservice.PayRate) (string, error)
+}
+
 type WorkerRosterAttentionResolver interface {
 	PTOLiabilityDays(ctx context.Context, obj *workeroverviewservice.RosterAttention) (*string, error)
 }
 
 var (
-	errNoChild0 = errors.New("field of type WorkerConcernSeverity does not have child fields")
-	errNoChild1 = errors.New("field of type String does not have child fields")
-	errNoChild2 = errors.New("field of type Timestamp does not have child fields")
-	errNoChild3 = errors.New("field of type WorkerStanding does not have child fields")
-	errNoChild4 = errors.New("field of type Int does not have child fields")
-	errNoChild5 = errors.New("field of type Decimal does not have child fields")
+	errNoChild0  = errors.New("field of type Boolean does not have child fields")
+	errNoChild1  = errors.New("field of type Timestamp does not have child fields")
+	errNoChild2  = errors.New("field of type WorkerClearanceBlock does not have child fields")
+	errNoChild3  = errors.New("field of type String does not have child fields")
+	errNoChild4  = errors.New("field of type WorkerClearanceLane does not have child fields")
+	errNoChild5  = errors.New("field of type WorkerClearanceSource does not have child fields")
+	errNoChild6  = errors.New("field of type Int does not have child fields")
+	errNoChild7  = errors.New("field of type WorkerClearanceEffect does not have child fields")
+	errNoChild8  = errors.New("field of type WorkerClearanceRule does not have child fields")
+	errNoChild9  = errors.New("field of type WorkerConcernSeverity does not have child fields")
+	errNoChild10 = errors.New("field of type WorkerConcernCode does not have child fields")
+	errNoChild11 = errors.New("field of type WorkerPageTab does not have child fields")
+	errNoChild12 = errors.New("field of type WorkerPageView does not have child fields")
+	errNoChild13 = errors.New("field of type WorkerPageRecord does not have child fields")
+	errNoChild14 = errors.New("field of type ID does not have child fields")
+	errNoChild15 = errors.New("field of type WorkerStanding does not have child fields")
+	errNoChild16 = errors.New("field of type WorkerHosLink does not have child fields")
+	errNoChild17 = errors.New("field of type PayeeClassification does not have child fields")
+	errNoChild18 = errors.New("field of type PayComponentKind does not have child fields")
+	errNoChild19 = errors.New("field of type PayCalcMethod does not have child fields")
+	errNoChild20 = errors.New("field of type Decimal does not have child fields")
+	errNoChild21 = errors.New("field of type WorkerPortalAccess does not have child fields")
 )
 
 func field_Query_workerOverview_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
@@ -354,8 +1129,64 @@ func unmarshalNID2string(ctx context.Context, ec *gqlexec.Exec, v any) (string, 
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
+func marshalNBoolean2bool(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v bool) graphql.Marshaler {
+	res := graphql.MarshalBoolean(v)
+	if res == graphql.Null {
+		gqlexec.NullViolation(ctx)
+	}
+	return res
+}
+
+func marshalNDecimal2string(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v string) graphql.Marshaler {
+	res := graphql.MarshalString(v)
+	if res == graphql.Null {
+		gqlexec.NullViolation(ctx)
+	}
+	return res
+}
+
+func marshalNDrugAlcoholStanding2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerdotᚐDrugAlcoholStanding(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *workerdot.DrugAlcoholStanding) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "DrugAlcoholStanding", v)
+}
+
 func marshalNInt2int(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v int) graphql.Marshaler {
 	res := graphql.MarshalInt(v)
+	if res == graphql.Null {
+		gqlexec.NullViolation(ctx)
+	}
+	return res
+}
+
+func marshalNInt2int64(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v int64) graphql.Marshaler {
+	res := graphql.MarshalInt64(v)
+	if res == graphql.Null {
+		gqlexec.NullViolation(ctx)
+	}
+	return res
+}
+
+func marshalNPayCalcMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriverpayᚐCalcMethod(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v driverpay.CalcMethod) graphql.Marshaler {
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		gqlexec.NullViolation(ctx)
+	}
+	return res
+}
+
+func marshalNPayComponentKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriverpayᚐComponentKind(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v driverpay.ComponentKind) graphql.Marshaler {
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		gqlexec.NullViolation(ctx)
+	}
+	return res
+}
+
+func marshalNPayeeClassification2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriverpayᚐPayeeClassification(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v driverpay.PayeeClassification) graphql.Marshaler {
+	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
 	}
@@ -386,6 +1217,62 @@ func marshalNWorker2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋw
 	return ec.MarshalType(ctx, sel, "Worker", v)
 }
 
+func marshalNWorkerClearanceBlock2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkercomplianceᚐClearanceBlock(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v workercompliance.ClearanceBlock) graphql.Marshaler {
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		gqlexec.NullViolation(ctx)
+	}
+	return res
+}
+
+func marshalNWorkerClearanceBlock2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkercomplianceᚐClearanceBlockᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []workercompliance.ClearanceBlock) graphql.Marshaler {
+	return gqlexec.List[workercompliance.ClearanceBlock]{
+		Elem:        marshalNWorkerClearanceBlock2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkercomplianceᚐClearanceBlock,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalNWorkerClearanceEffect2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkercomplianceᚐClearanceEffect(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v workercompliance.ClearanceEffect) graphql.Marshaler {
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		gqlexec.NullViolation(ctx)
+	}
+	return res
+}
+
+func marshalNWorkerClearanceItem2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkercomplianceᚐClearanceItemᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*workercompliance.ClearanceItem) graphql.Marshaler {
+	return gqlexec.List[*workercompliance.ClearanceItem]{
+		Elem:        marshalNWorkerClearanceItem2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkercomplianceᚐClearanceItem,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalNWorkerClearanceItem2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkercomplianceᚐClearanceItem(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *workercompliance.ClearanceItem) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "WorkerClearanceItem", v)
+}
+
+func marshalNWorkerClearanceLane2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkercomplianceᚐClearanceLane(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v workercompliance.ClearanceLane) graphql.Marshaler {
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		gqlexec.NullViolation(ctx)
+	}
+	return res
+}
+
+func marshalNWorkerClearanceSource2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkercomplianceᚐClearanceSource(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v workercompliance.ClearanceSource) graphql.Marshaler {
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		gqlexec.NullViolation(ctx)
+	}
+	return res
+}
+
 func marshalNWorkerConcern2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkercomplianceᚐConcern(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v workercompliance.Concern) graphql.Marshaler {
 	return ec.MarshalType(ctx, sel, "WorkerConcern", &v)
 }
@@ -398,7 +1285,27 @@ func marshalNWorkerConcern2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodu
 	}.Marshal(ctx, ec, sel, v)
 }
 
+func marshalNWorkerConcernCode2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkercomplianceᚐConcernCode(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v workercompliance.ConcernCode) graphql.Marshaler {
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		gqlexec.NullViolation(ctx)
+	}
+	return res
+}
+
 func marshalNWorkerConcernSeverity2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkercomplianceᚐConcernSeverity(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v workercompliance.ConcernSeverity) graphql.Marshaler {
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		gqlexec.NullViolation(ctx)
+	}
+	return res
+}
+
+func marshalNWorkerDestination2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerpageᚐDestination(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v workerpage.Destination) graphql.Marshaler {
+	return ec.MarshalType(ctx, sel, "WorkerDestination", &v)
+}
+
+func marshalNWorkerHosLink2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋtelematicsᚐHOSLink(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v telematics.HOSLink) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -422,6 +1329,22 @@ func marshalNWorkerPTOBalance2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋm
 	return ec.MarshalType(ctx, sel, "WorkerPTOBalance", v)
 }
 
+func marshalNWorkerPageTab2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerpageᚐTab(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v workerpage.Tab) graphql.Marshaler {
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		gqlexec.NullViolation(ctx)
+	}
+	return res
+}
+
+func marshalNWorkerPortalAccess2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋworkeroverviewserviceᚐPortalAccess(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v workeroverviewservice.PortalAccess) graphql.Marshaler {
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		gqlexec.NullViolation(ctx)
+	}
+	return res
+}
+
 func marshalNWorkerRosterAttention2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋworkeroverviewserviceᚐRosterAttention(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *workeroverviewservice.RosterAttention) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
@@ -438,11 +1361,26 @@ func marshalNWorkerStanding2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodule
 	return res
 }
 
+func marshalODQFFile2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkercomplianceᚐDQFFile(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *workercompliance.DQFFile) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "DQFFile", v)
+}
+
 func marshalODecimal2ᚖstring(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *string) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	res := graphql.MarshalString(*v)
+	return res
+}
+
+func marshalOID2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *pulid.ID) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	res := graphql.MarshalString(string(*v))
 	return res
 }
 
@@ -452,6 +1390,21 @@ func marshalOInt2ᚖint(ctx context.Context, ec *gqlexec.Exec, sel ast.Selection
 	}
 	res := graphql.MarshalInt(*v)
 	return res
+}
+
+func marshalOInt2ᚖint64(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *int64) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	res := graphql.MarshalInt64(*v)
+	return res
+}
+
+func marshalOLeaveEntitlement2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerleaveᚐLeaveEntitlement(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *workerleave.LeaveEntitlement) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "LeaveEntitlement", v)
 }
 
 func marshalOPerformanceReview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerreviewᚐPerformanceReview(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *workerreview.PerformanceReview) graphql.Marshaler {
@@ -466,6 +1419,14 @@ func marshalOSafetyScorecard2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmo
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "SafetyScorecard", v)
+}
+
+func marshalOString2ᚖstring(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *string) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	res := graphql.MarshalString(*v)
+	return res
 }
 
 func marshalOTimestamp2ᚖint64(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *int64) graphql.Marshaler {
@@ -483,6 +1444,28 @@ func marshalOWorkerChecklist2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmo
 	return ec.MarshalType(ctx, sel, "WorkerChecklist", v)
 }
 
+func marshalOWorkerClearance2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkercomplianceᚐClearance(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *workercompliance.Clearance) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "WorkerClearance", v)
+}
+
+func marshalOWorkerClearanceItem2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkercomplianceᚐClearanceItem(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *workercompliance.ClearanceItem) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "WorkerClearanceItem", v)
+}
+
+func marshalOWorkerClearanceRule2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkercomplianceᚐClearanceRule(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *workercompliance.ClearanceRule) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	res := graphql.MarshalString(string(*v))
+	return res
+}
+
 func marshalOWorkerCredentialSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkercredentialᚐWorkerCredentialSummary(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *workercredential.WorkerCredentialSummary) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
@@ -490,11 +1473,90 @@ func marshalOWorkerCredentialSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinter
 	return ec.MarshalType(ctx, sel, "WorkerCredentialSummary", v)
 }
 
+func marshalOWorkerOverviewBenefits2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋworkeroverviewserviceᚐBenefitsSection(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *workeroverviewservice.BenefitsSection) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "WorkerOverviewBenefits", v)
+}
+
+func marshalOWorkerOverviewDrugAlcohol2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋworkeroverviewserviceᚐDrugAlcoholSection(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *workeroverviewservice.DrugAlcoholSection) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "WorkerOverviewDrugAlcohol", v)
+}
+
+func marshalOWorkerOverviewEmployment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋworkeroverviewserviceᚐEmploymentSection(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *workeroverviewservice.EmploymentSection) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "WorkerOverviewEmployment", v)
+}
+
+func marshalOWorkerOverviewHos2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋworkeroverviewserviceᚐHOSSection(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *workeroverviewservice.HOSSection) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "WorkerOverviewHos", v)
+}
+
+func marshalOWorkerOverviewPay2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋworkeroverviewserviceᚐPaySection(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *workeroverviewservice.PaySection) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "WorkerOverviewPay", v)
+}
+
+func marshalOWorkerOverviewPayRate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋworkeroverviewserviceᚐPayRate(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *workeroverviewservice.PayRate) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "WorkerOverviewPayRate", v)
+}
+
+func marshalOWorkerOverviewPortal2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋworkeroverviewserviceᚐPortalSection(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *workeroverviewservice.PortalSection) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "WorkerOverviewPortal", v)
+}
+
+func marshalOWorkerOverviewSchedule2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋworkeroverviewserviceᚐScheduleSection(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *workeroverviewservice.ScheduleSection) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "WorkerOverviewSchedule", v)
+}
+
+func marshalOWorkerPTO2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerPTO(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *worker.WorkerPTO) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "WorkerPTO", v)
+}
+
 func marshalOWorkerPTOBalance2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋappᚋptoledgerserviceᚐBalanceViewᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*ptoledgerservice.BalanceView) graphql.Marshaler {
 	return gqlexec.List[*ptoledgerservice.BalanceView]{
 		Elem:        marshalNWorkerPTOBalance2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋappᚋptoledgerserviceᚐBalanceView,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalOWorkerPageRecord2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerpageᚐRecord(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *workerpage.Record) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	res := graphql.MarshalString(string(*v))
+	return res
+}
+
+func marshalOWorkerPageView2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerpageᚐView(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *workerpage.View) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	res := graphql.MarshalString(string(*v))
+	return res
 }
 
 func marshalOWorkerTrainingSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkertrainingᚐWorkerTrainingSummary(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *workertraining.WorkerTrainingSummary) graphql.Marshaler {

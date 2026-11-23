@@ -219,7 +219,7 @@ func BuildSystemPromptParts(
 	} else if delegator != "" {
 		section(&stable, buildDelegatedOutputSection(delegator))
 	} else {
-		section(&stable, buildOutputSection(d))
+		section(&stable, buildOutputSection(d, rc.Artifacts))
 		if d.OutputMode != agentdefinition.OutputReport &&
 			d.HasContextProvider(agentdefinition.ContextMemory) {
 			section(&stable, rememberingSection)
@@ -361,8 +361,17 @@ func buildLookupOutputSection(delegator string) string {
 // who asked for drivers ranked for a load got the ranking rewritten as a
 // markdown table and nothing beside it to pick from, so a ranking or a
 // comparison is pointed to however short it is.
+//
+// The board paragraph is what makes an agent answer with show_answer at all.
+// Before it, the tool was offered on every conversation turn and never
+// called: this section and the output section told the model to put a short
+// answer in its reply with bold figures and a markdown table, and nothing
+// outside the tool's own description said when a board was the answer. Four
+// questions about late loads, two loads side by side and past-due customers
+// were all answered in prose, and no board had ever been kept.
 const artifactSection = `## Artifacts
 This conversation keeps what your tools return beside it, where the person can open it: a list or search as a table, a record you fetch as a card, a report preview or run with its rows. A tool result kept this way says so and says how to answer from it. Show a result one way, never both: a short answer, a fact or a few rows from a list of about a dozen rows or fewer goes in your reply and is not pointed to; a longer list, and a list of any length that you rank or compare for the person to choose or act from, is pointed to, and your reply gives the count, your pick and what needs attention instead of the rows. Put a pointer inside the sentence that mentions it, never on a line of its own, and never copy a pointed-to result's rows into a markdown table. When the person asks to see a record or its details, fetch it with its get tool and point to its card rather than listing its fields or opening its page.
+When you hold show_answer and your answer weighs two or more records together, or rests on a count, a total or a comparison across records (which loads are late and why, how two shipments or two carriers compare, which of a customer's invoices are unpaid and what they add up to, what stands between a record and its next step), answer with show_answer instead of your reply: not a markdown table, and not figures typed into sentences. It is drawn in the conversation as your reply: the answer in a sentence or two, with {count}, {total} or {largest} where a figure goes, over the records it rests on, in one group or two side by side. It ends your turn, so make every other call first. show_board is the larger page beside the conversation, for records compared in columns, a chart, checks or more than two groups. Your reply stays for a single fact, one record, a yes or no, a list the person only asked to see, anything that is not about records, and an answer a board cannot read (a kind of record or a figure it does not take).
 When the person asks for a write-up, a summary, a brief, a handover or an artifact, or when your answer would run past a screen, publish it with publish_artifact without being asked and reply in two or three sentences. To change a document you published, publish it again with its artifactId.`
 
 // rememberingSection is when an agent saves a memory without being told to
@@ -930,19 +939,28 @@ func buildToolNotes(tools []agentturn.ToolSummary) string {
 	return builder.String()
 }
 
-func buildOutputSection(d *agentdefinition.Definition) string {
+func buildOutputSection(d *agentdefinition.Definition, boards bool) string {
 	if d.OutputMode == agentdefinition.OutputReport {
 		return "## Output\nNobody is reading this as a conversation. Work through the task using your " +
 			"tools, then finish with a short summary of what you found, what you proposed or did, and " +
 			"anything a person should look at. That summary is stored as the run's record."
 	}
 
-	return "## Output\nAnswer in concise markdown. The people you talk to are busy: give them " +
-		"the answer first and the detail under it. Use **bold** for the record or number that " +
-		"matters. When the answer is several records with two or more facts each, use a " +
+	severalRecords := "When the answer is several records with two or more facts each, use a " +
 		"markdown table with a header row rather than a bulleted list, up to about a dozen " +
 		"rows; past that, or when you rank or compare the rows a tool returned, point to " +
-		"the table the tool result names." +
+		"the table the tool result names."
+	if boards {
+		severalRecords = "When the answer is several records with two or more facts each, " +
+			"answer with show_answer as the Artifacts section says. Where it cannot show " +
+			"it, use a markdown table with a header row rather than a bulleted list, up to " +
+			"about a dozen rows; past that, or when you rank or compare the rows a tool " +
+			"returned, point to the table the tool result names."
+	}
+
+	return "## Output\nAnswer in concise markdown. The people you talk to are busy: give them " +
+		"the answer first and the detail under it. Use **bold** for the record or number that " +
+		"matters. " + severalRecords +
 		" A fenced block is only for data to copy, labelled csv or text. Cite the record " +
 		"you used — a shipment number, a load number, a worker name — so the person can " +
 		"verify you, and name it by its number or name, never by an internal id or a " +

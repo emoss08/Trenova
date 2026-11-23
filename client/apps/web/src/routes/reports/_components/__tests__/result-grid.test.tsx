@@ -78,6 +78,30 @@ describe("ResultGrid", () => {
     expect(screen.getByTitle("TX-GA")).toBeInTheDocument();
   });
 
+  // GraphQL sends an enum column's translated labels on its display; an enum's code is never
+  // shown, so the grid writes the label as the CSV and XLSX exports do.
+  it("shows an enum column's label, never its code", async () => {
+    const columns = [
+      {
+        id: "status",
+        label: "Status",
+        type: "enum",
+        format: null,
+        display: {
+          ...DISPLAY,
+          style: "text",
+          rules: [],
+          labels: { InProgress: "In Progress", MissedPickup: "Missed Pickup" },
+        },
+      },
+    ] as unknown as ReportPreviewColumn[];
+    render(<ResultGrid columns={columns} rows={[["InProgress"], ["MissedPickup"]]} />);
+
+    expect(await screen.findByTitle("In Progress")).toHaveTextContent("In Progress");
+    expect(screen.getByTitle("Missed Pickup")).toBeInTheDocument();
+    expect(screen.queryByTitle("InProgress")).not.toBeInTheDocument();
+  });
+
   it("formats a page of rows per call, and every page once when filtering", async () => {
     const spy = vi.spyOn(rulesSync(), "call");
     const rows = Array.from({ length: REPORT_PAGE_ROWS * 2 + 5 }, (_, index) => [

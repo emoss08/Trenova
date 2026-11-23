@@ -1462,7 +1462,7 @@ func (s *Service) logChange(
 		PreviousState:  previous,
 		OrganizationID: entity.OrganizationID,
 		BusinessUnitID: entity.BusinessUnitID,
-	}, auditservice.WithComment(comment)); err != nil {
+	}, auditservice.WithComment(comment), auditservice.WithSubjectOf(entity)); err != nil {
 		s.l.Error("failed to log agent memory audit", zap.Error(err))
 	}
 }

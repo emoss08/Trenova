@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/selfserviceservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/profilechange"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerpage"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -122,28 +123,37 @@ func (s *Service) UpdateMyContactInfo(
 	// write. The profile comes back unchanged, and the pending request is what
 	// the app shows beside it.
 	if control.RequireContactChangeApproval {
-		if _, err = s.selfService.SubmitChange(ctx, &selfserviceservice.SubmitChangeRequest{
-			Worker: wrk,
-			Wanted: profilechange.ContactSnapshot{
-				PhoneNumber:           strings.TrimSpace(req.PhoneNumber),
-				AddressLine1:          strings.TrimSpace(req.AddressLine1),
-				AddressLine2:          strings.TrimSpace(req.AddressLine2),
-				City:                  strings.TrimSpace(req.City),
-				PostalCode:            strings.TrimSpace(req.PostalCode),
-				EmergencyContactName:  strings.TrimSpace(req.EmergencyContactName),
-				EmergencyContactPhone: strings.TrimSpace(req.EmergencyContactPhone),
+		submitted, submitErr := s.selfService.SubmitChange(
+			ctx,
+			&selfserviceservice.SubmitChangeRequest{
+				Worker: wrk,
+				Wanted: profilechange.ContactSnapshot{
+					PhoneNumber:           strings.TrimSpace(req.PhoneNumber),
+					AddressLine1:          strings.TrimSpace(req.AddressLine1),
+					AddressLine2:          strings.TrimSpace(req.AddressLine2),
+					City:                  strings.TrimSpace(req.City),
+					PostalCode:            strings.TrimSpace(req.PostalCode),
+					EmergencyContactName:  strings.TrimSpace(req.EmergencyContactName),
+					EmergencyContactPhone: strings.TrimSpace(req.EmergencyContactPhone),
+				},
+				TenantInfo: tenantInfo,
 			},
-			TenantInfo: tenantInfo,
-		}); err != nil {
-			return nil, err
+		)
+		if submitErr != nil {
+			return nil, submitErr
 		}
 		s.NotifyDispatch(
 			ctx,
 			tenantInfo,
 			"profile_change_requested",
 			"Profile change requested",
-			wrk.FirstName+" "+wrk.LastName+" asked to change their contact details. Review it on their Portal tab.",
-			"/hr/workers?tab=portal",
+			wrk.FirstName+" "+wrk.LastName+
+				" asked to change their contact details. Review it in their file under Files, Driver portal.",
+			workerpage.Path(
+				wrk.ID,
+				workerpage.AtView(workerpage.TabFiles, workerpage.ViewDriverPortal).
+					WithRecord(workerpage.RecordRequest, submitted.ID),
+			),
 			map[string]any{"workerId": wrk.ID.String()},
 		)
 		return s.MyComplianceProfile(ctx, tenantInfo)

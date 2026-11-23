@@ -1492,6 +1492,15 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalOString2ᚖstring),
 			},
 			{
+				Name:     "dutyStatusSince",
+				ChildErr: errNoChild4,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.WorkerHosState)
+					return obj.DutyStatusSince, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint),
+			},
+			{
 				Name:     "driveRemainingMs",
 				NonNull:  true,
 				ChildErr: errNoChild2,

@@ -1,0 +1,103 @@
+query WorkerRecord($id: ID!) {
+  worker(id: $id) {
+    id
+    businessUnitId
+    organizationId
+    stateId
+    fleetCodeId
+    managerId
+    positionId
+    status
+    type
+    driverType
+    leaveType
+    profilePicUrl
+    firstName
+    lastName
+    wholeName
+    addressLine1
+    addressLine2
+    city
+    postalCode
+    email
+    phoneNumber
+    emergencyContactName
+    emergencyContactPhone
+    externalId
+    assignmentBlocked
+    gender
+    canBeAssigned
+    availableForDispatch
+    homeLatitude
+    homeLongitude
+    homePlaceId
+    lastHomeAt
+    version
+    createdAt
+    updatedAt
+    customFields
+    fleetCode {
+      id
+      code
+      color
+    }
+    position {
+      id
+      title
+    }
+    manager {
+      id
+      name
+    }
+    state {
+      id
+      name
+      abbreviation
+    }
+    profile {
+      id
+      workerId
+      businessUnitId
+      organizationId
+      licenseStateId
+      dob
+      licenseNumber
+      cdlClass
+      cdlRestrictions
+      endorsement
+      hazmatExpiry
+      licenseExpiry
+      medicalCardExpiry
+      medicalExaminerName
+      medicalExaminerNpi
+      twicCardNumber
+      twicExpiry
+      hireDate
+      terminationDate
+      physicalDueDate
+      mvrDueDate
+      complianceStatus
+      trainingHealth
+      safetyRating
+      safetyScore
+      nextCredentialExpiry
+      nextTrainingDue
+      drugAlcoholStatus
+      isQualified
+      disqualificationReason
+      lastComplianceCheck
+      lastMvrCheck
+      lastDrugTest
+      eldExempt
+      shortHaulExempt
+      version
+      createdAt
+      updatedAt
+      licenseState {
+        id
+        name
+        abbreviation
+      }
+    }
+  }
+}

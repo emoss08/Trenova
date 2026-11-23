@@ -81,7 +81,10 @@ func Record(
 		logParams.PreviousState = jsonutils.MustToJSON(params.Previous)
 	}
 
-	opts := make([]auditports.LogOption, 0, 4)
+	opts := make([]auditports.LogOption, 0, 5)
+	if ownsSubject(params.Current, params.Previous) {
+		opts = append(opts, WithSubjectOf(params.Current, params.Previous))
+	}
 	if params.Action != "" {
 		opts = append(opts, WithAction(params.Action))
 	}

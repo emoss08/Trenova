@@ -1767,6 +1767,510 @@ func beforeCreateOrganizationMembership(ctx context.Context, p unsafe.Pointer) e
 	return (*tenant.OrganizationMembership)(p).BeforeCreate(ctx)
 }
 
+// personsTable is the schema of tenant.Person.
+var personsTable = schema.Table{
+	Name:   "organization_people",
+	Quoted: `"organization_people"`,
+	Alias:  "op",
+	Model:  "tenant.Person",
+	Label:  `Person`,
+	Plural: `People`,
+	Doc:    `People in the organization: everyone who is a member of it, by name, job title and account status. A person who has left the organization is not listed, and work they did shows without a name.`,
+	Report: &schema.TableReport{Category: `Desk`},
+	Columns: []schema.Column{
+		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK, Label: `ID`, JSON: `id`, Report: &reportDimString},
+		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`, Report: &reportDimStringHidden},
+		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`, JSON: `organizationId`, Report: &reportDimStringHidden},
+		{Name: "name", Quoted: `"name"`, Field: "Name", Kind: schema.KindString, Flags: 0, Label: `Name`, Doc: `The person's full name`, JSON: `name`, Report: &reportDimString},
+		{Name: "job_title", Quoted: `"job_title"`, Field: "JobTitle", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Job Title`, Doc: `The job title on the person's profile`, JSON: `jobTitle`, Report: &reportDimString},
+		{Name: "status", Quoted: `"status"`, Field: "Status", Kind: schema.KindString, Flags: 0, Label: `Status`, Doc: `Whether the person's account is active`, JSON: `status`, Enum: enumDomaintypesStatus[:], Report: &reportDimEnum},
+		{Name: "joined_at", Quoted: `"joined_at"`, Field: "JoinedAt", Kind: schema.KindInt64, Flags: 0, Label: `Joined`, Doc: `When the person joined the organization`, JSON: `joinedAt`, Report: &reportDimEpoch},
+	},
+	PK:         []int32{0, 1, 2},
+	Tenant:     []int32{1, 2},
+	Select:     []int32{0, 1, 2, 3, 4, 5, 6},
+	Insert:     []int32{0, 1, 2, 3, 4, 5, 6},
+	Update:     []int32{3, 4, 5, 6},
+	Returning:  nil,
+	Version:    -1,
+	AutoID:     -1,
+	AutoCreate: -1,
+	AutoUpdate: -1,
+	IDPrefix:   "",
+	New:        newPerson,
+	NewN:       newNPerson,
+	Size:       unsafe.Sizeof(tenant.Person{}),
+	Ptr:        ptrPerson,
+	Value:      valuePerson,
+}
+
+var personsRef = keel.Ref{Table: &personsTable}
+
+// PersonsTable is the table of tenant.Person.
+type PersonsTable struct {
+	keel.TableBase
+	ID             keelkinds.PulidIDCol
+	BusinessUnitID keelkinds.PulidIDCol
+	OrganizationID keelkinds.PulidIDCol
+	Name           keel.StringCol
+	JobTitle       keel.StringCol
+	Status         keelkinds.DomaintypesStatusCol
+	JoinedAt       keel.Int64Col
+}
+
+// Persons references the organization_people table.
+var Persons = &PersonsTable{
+	TableBase:      keel.TableBase{Ref: &personsRef},
+	ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &personsRef, Index: 0}}},
+	BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &personsRef, Index: 1}}},
+	OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &personsRef, Index: 2}}},
+	Name:           keel.StringCol{Col: keel.Col{Ref: &personsRef, Index: 3}},
+	JobTitle:       keel.StringCol{Col: keel.Col{Ref: &personsRef, Index: 4}},
+	Status:         keelkinds.DomaintypesStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &personsRef, Index: 5}}},
+	JoinedAt:       keel.Int64Col{Col: keel.Col{Ref: &personsRef, Index: 6}},
+}
+
+// BuildPersons builds the table of organization_people for ref. Generated relation and alias methods call it.
+func BuildPersons(r *keel.Ref) *PersonsTable {
+	return &PersonsTable{
+		TableBase:      keel.TableBase{Ref: r},
+		ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		Name:           keel.StringCol{Col: keel.Col{Ref: r, Index: 3}},
+		JobTitle:       keel.StringCol{Col: keel.Col{Ref: r, Index: 4}},
+		Status:         keelkinds.DomaintypesStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		JoinedAt:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 6}},
+	}
+}
+
+// PersonsSchema returns the schema of organization_people.
+func PersonsSchema() *schema.Table { return &personsTable }
+
+// As returns a handle that references organization_people under its own alias.
+func (t *PersonsTable) As(alias string) *PersonsTable { return keel.Alias(t.Ref, alias, BuildPersons) }
+
+// Get returns the organization_people row with the given key, or keel.ErrNotFound.
+func (t *PersonsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*tenant.Person, error) {
+	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// PersonsQuery is a query over tenant.Person.
+type PersonsQuery struct{ keel.QueryCore }
+
+var _ keel.Query[*tenant.Person] = (*PersonsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *PersonsTable) Query() keel.Query[*tenant.Person] {
+	return &PersonsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see PersonsQuery.Where.
+func (t *PersonsTable) Where(ps ...keel.Pred) keel.Query[*tenant.Person] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see PersonsQuery.Pick.
+func (t *PersonsTable) Pick(es ...keel.Expr) keel.Query[*tenant.Person] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see PersonsQuery.Load.
+func (t *PersonsTable) Load(ls ...keel.Loader) keel.Query[*tenant.Person] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see PersonsQuery.Omit.
+func (t *PersonsTable) Omit(cols ...keel.Column) keel.Query[*tenant.Person] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see PersonsQuery.Order.
+func (t *PersonsTable) Order(os ...keel.Order) keel.Query[*tenant.Person] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see PersonsQuery.Limit.
+func (t *PersonsTable) Limit(n int) keel.Query[*tenant.Person] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see PersonsQuery.Group.
+func (t *PersonsTable) Group(es ...keel.Expr) keel.Query[*tenant.Person] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see PersonsQuery.GroupingSets.
+func (t *PersonsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*tenant.Person] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see PersonsQuery.Rollup.
+func (t *PersonsTable) Rollup(es ...keel.Expr) keel.Query[*tenant.Person] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see PersonsQuery.Cube.
+func (t *PersonsTable) Cube(es ...keel.Expr) keel.Query[*tenant.Person] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see PersonsQuery.AllTenants.
+func (t *PersonsTable) AllTenants() keel.Query[*tenant.Person] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see PersonsQuery.Join.
+func (t *PersonsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*tenant.Person] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see PersonsQuery.LeftJoin.
+func (t *PersonsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*tenant.Person] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see PersonsQuery.LeftJoinLateral.
+func (t *PersonsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*tenant.Person] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see PersonsQuery.JoinLateral.
+func (t *PersonsTable) JoinLateral(sub keel.LateralSource) keel.Query[*tenant.Person] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see PersonsQuery.Lock.
+func (t *PersonsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*tenant.Person] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see PersonsQuery.DistinctOn.
+func (t *PersonsTable) DistinctOn(es ...keel.Expr) keel.Query[*tenant.Person] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see PersonsQuery.Cache.
+func (t *PersonsTable) Cache(opts ...keel.CacheOption) keel.Query[*tenant.Person] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see PersonsQuery.LoadStrategy.
+func (t *PersonsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*tenant.Person] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see PersonsQuery.With.
+func (t *PersonsTable) With(ctes ...*keel.CTETable) keel.Query[*tenant.Person] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see PersonsQuery.Compute.
+func (t *PersonsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*tenant.Person] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *PersonsTable) Create(ctx context.Context, db *keel.DB, row *tenant.Person) error {
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *PersonsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*tenant.Person) error {
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
+}
+
+// Save updates row by its primary key.
+func (t *PersonsTable) Save(ctx context.Context, db *keel.DB, row *tenant.Person, cols ...keel.Column) error {
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *PersonsTable) SaveExcept(ctx context.Context, db *keel.DB, row *tenant.Person, cols ...keel.Column) error {
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *PersonsTable) DeleteRow(ctx context.Context, db *keel.DB, row *tenant.Person) error {
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *PersonsTable) Upsert(ctx context.Context, db *keel.DB, rows []*tenant.Person, c keel.Conflict) ([]bool, error) {
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *PersonsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*tenant.Person, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *PersonsTable) Copy(ctx context.Context, db *keel.DB, rows []*tenant.Person) (int64, error) {
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *PersonsQuery) Where(ps ...keel.Pred) keel.Query[*tenant.Person] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *PersonsQuery) Pick(es ...keel.Expr) keel.Query[*tenant.Person] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *PersonsQuery) Omit(cols ...keel.Column) keel.Query[*tenant.Person] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *PersonsQuery) Load(ls ...keel.Loader) keel.Query[*tenant.Person] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *PersonsQuery) Order(os ...keel.Order) keel.Query[*tenant.Person] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *PersonsQuery) Distinct() keel.Query[*tenant.Person] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *PersonsQuery) Group(es ...keel.Expr) keel.Query[*tenant.Person] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *PersonsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*tenant.Person] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *PersonsQuery) Rollup(es ...keel.Expr) keel.Query[*tenant.Person] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *PersonsQuery) Cube(es ...keel.Expr) keel.Query[*tenant.Person] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *PersonsQuery) Window(name string, w keel.Window) keel.Query[*tenant.Person] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *PersonsQuery) Having(ps ...keel.Pred) keel.Query[*tenant.Person] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *PersonsQuery) Limit(n int) keel.Query[*tenant.Person] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *PersonsQuery) Offset(n int) keel.Query[*tenant.Person] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *PersonsQuery) DistinctOn(es ...keel.Expr) keel.Query[*tenant.Person] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *PersonsQuery) AllTenants() keel.Query[*tenant.Person] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *PersonsQuery) CustomPlan() keel.Query[*tenant.Person] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *PersonsQuery) Timeout(d time.Duration) keel.Query[*tenant.Person] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *PersonsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*tenant.Person] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *PersonsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*tenant.Person] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *PersonsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*tenant.Person] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *PersonsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*tenant.Person] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *PersonsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*tenant.Person] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *PersonsQuery) Cache(opts ...keel.CacheOption) keel.Query[*tenant.Person] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *PersonsQuery) With(ctes ...*keel.CTETable) keel.Query[*tenant.Person] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *PersonsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*tenant.Person] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *PersonsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*tenant.Person] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *PersonsQuery) Clone() keel.Query[*tenant.Person] {
+	return &PersonsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *PersonsQuery) One(ctx context.Context, db *keel.DB) (*tenant.Person, error) {
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*tenant.Person)(row), err
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *PersonsQuery) First(ctx context.Context, db *keel.DB) (*tenant.Person, error) {
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*tenant.Person)(row), err
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *PersonsQuery) List(ctx context.Context, db *keel.DB) ([]*tenant.Person, error) {
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*tenant.Person)(unsafe.Pointer(&rows)), err
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *PersonsQuery) All(ctx context.Context, db *keel.DB) ([]*tenant.Person, error) {
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*tenant.Person)(unsafe.Pointer(&rows)), err
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *PersonsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*tenant.Person, error) {
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*tenant.Person)(unsafe.Pointer(&rows)), err
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *PersonsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*tenant.Person], error) {
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*tenant.Person])(unsafe.Pointer(&page)), err
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *PersonsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*tenant.Person) error) error {
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*tenant.Person)(unsafe.Pointer(&rows)))
+	})
+}
+
+func newPerson() unsafe.Pointer { return unsafe.Pointer(new(tenant.Person)) }
+
+func newNPerson(n int) unsafe.Pointer {
+	return unsafe.Pointer(unsafe.SliceData(make([]tenant.Person, n)))
+}
+
+func ptrPerson(p unsafe.Pointer, c int32) any {
+	r := (*tenant.Person)(p)
+	switch c {
+	case 0:
+		return (*string)(unsafe.Pointer(&r.ID))
+	case 1:
+		return (*string)(unsafe.Pointer(&r.BusinessUnitID))
+	case 2:
+		return (*string)(unsafe.Pointer(&r.OrganizationID))
+	case 3:
+		return &r.Name
+	case 4:
+		return &r.JobTitle
+	case 5:
+		return (*string)(unsafe.Pointer(&r.Status))
+	case 6:
+		return &r.JoinedAt
+	}
+	return nil
+}
+
+func valuePerson(p unsafe.Pointer, c int32) any {
+	r := (*tenant.Person)(p)
+	switch c {
+	case 0:
+		return string(r.ID)
+	case 1:
+		return string(r.BusinessUnitID)
+	case 2:
+		return string(r.OrganizationID)
+	case 3:
+		return r.Name
+	case 4:
+		if r.JobTitle == "" {
+			return nil
+		}
+		return r.JobTitle
+	case 5:
+		return string(r.Status)
+	case 6:
+		return r.JoinedAt
+	}
+	return nil
+}
+
 // systemActorsTable is the schema of tenant.SystemActor.
 var systemActorsTable = schema.Table{
 	Name:   "system_actors",
@@ -3009,6 +3513,14 @@ var enumDomaintypesTimeFormat = [...]schema.EnumValue{
 	{Value: `12-hour`, Label: `12 Hour`},
 	{Value: `24-hour`, Label: `24 Hour`},
 }
+
+var reportDimEnum = schema.ReportInfo{Included: true, Kind: schema.Dimension, Type: schema.ValueEnum, Aggs: schema.AggsCount}
+
+var reportDimEpoch = schema.ReportInfo{Included: true, Kind: schema.Dimension, Type: schema.ValueEpoch, Aggs: schema.AggsOrdered}
+
+var reportDimString = schema.ReportInfo{Included: true, Kind: schema.Dimension, Type: schema.ValueString, Aggs: schema.AggsOrdered}
+
+var reportDimStringHidden = schema.ReportInfo{Kind: schema.Dimension, Type: schema.ValueString, Aggs: schema.AggsOrdered}
 
 // AvailabilityStatusCol is a column of tenant.AvailabilityStatus values.
 type AvailabilityStatusCol struct{ keel.TypedStringCol }

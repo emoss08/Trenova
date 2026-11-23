@@ -91,7 +91,7 @@ func (e shipmentExceptions) missedStops(
 		return nil, err
 	}
 	types := pickupTypes()
-	if kind == watchtower.SourceMissedDelivery {
+	if kind == watchtower.SourceKindMissedDelivery {
 		types = deliveryTypes()
 	}
 	now := e.now()
@@ -173,13 +173,13 @@ func (e shipmentExceptions) forKind(
 	kind watchtower.SourceKind,
 	shipmentIDs []pulid.ID,
 ) ([]watchtowerports.WatchtowerItemInput, error) {
-	if kind == watchtower.SourceMissedPickup || kind == watchtower.SourceMissedDelivery {
+	if kind == watchtower.SourceKindMissedPickup || kind == watchtower.SourceKindMissedDelivery {
 		return e.missedStops(ctx, tenant, kind, shipmentIDs)
 	}
-	if kind == watchtower.SourcePodMissing {
+	if kind == watchtower.SourceKindPODMissing {
 		return e.missingPODs(ctx, tenant, shipmentIDs)
 	}
-	if kind == watchtower.SourceTenderExhausted {
+	if kind == watchtower.SourceKindTenderExhausted {
 		return e.exhaustedTenders(ctx, tenant, shipmentIDs)
 	}
 	return []watchtowerports.WatchtowerItemInput{}, nil
@@ -187,10 +187,10 @@ func (e shipmentExceptions) forKind(
 
 func ShipmentExceptionKinds() []watchtower.SourceKind {
 	return []watchtower.SourceKind{
-		watchtower.SourceMissedPickup,
-		watchtower.SourceMissedDelivery,
-		watchtower.SourcePodMissing,
-		watchtower.SourceTenderExhausted,
+		watchtower.SourceKindMissedPickup,
+		watchtower.SourceKindMissedDelivery,
+		watchtower.SourceKindPODMissing,
+		watchtower.SourceKindTenderExhausted,
 	}
 }
 
@@ -216,19 +216,19 @@ func newShipmentExceptionSource(
 }
 
 func NewMissedPickupSource(p ShipmentExceptionParams) watchtowerports.WatchtowerSource {
-	return newShipmentExceptionSource(watchtower.SourceMissedPickup, p)
+	return newShipmentExceptionSource(watchtower.SourceKindMissedPickup, p)
 }
 
 func NewMissedDeliverySource(p ShipmentExceptionParams) watchtowerports.WatchtowerSource {
-	return newShipmentExceptionSource(watchtower.SourceMissedDelivery, p)
+	return newShipmentExceptionSource(watchtower.SourceKindMissedDelivery, p)
 }
 
 func NewPodMissingSource(p ShipmentExceptionParams) watchtowerports.WatchtowerSource {
-	return newShipmentExceptionSource(watchtower.SourcePodMissing, p)
+	return newShipmentExceptionSource(watchtower.SourceKindPODMissing, p)
 }
 
 func NewTenderExhaustedSource(p ShipmentExceptionParams) watchtowerports.WatchtowerSource {
-	return newShipmentExceptionSource(watchtower.SourceTenderExhausted, p)
+	return newShipmentExceptionSource(watchtower.SourceKindTenderExhausted, p)
 }
 
 func shipmentPath(shipmentID pulid.ID) string {
@@ -281,7 +281,7 @@ func DescribeMissedStop(
 	what := "pickup"
 	title := "Missed pickup"
 	role := watchtowerpanel.StopRolePickup
-	if kind == watchtower.SourceMissedDelivery {
+	if kind == watchtower.SourceKindMissedDelivery {
 		what = "delivery"
 		title = "Missed delivery"
 		role = watchtowerpanel.StopRoleDelivery
@@ -332,7 +332,7 @@ func DescribeMissingPOD(
 
 	return watchtowerports.WatchtowerItemInput{
 		TenantInfo:  tenant,
-		SourceKind:  watchtower.SourcePodMissing,
+		SourceKind:  watchtower.SourceKindPODMissing,
 		SourceID:    row.ShipmentID.String(),
 		Severity:    pastDueSeverity(since-grace, grace),
 		Title:       onPro("POD missing", row.ProNumber),
@@ -366,7 +366,7 @@ func DescribeExhaustedTender(
 ) watchtowerports.WatchtowerItemInput {
 	return watchtowerports.WatchtowerItemInput{
 		TenantInfo: tenant,
-		SourceKind: watchtower.SourceTenderExhausted,
+		SourceKind: watchtower.SourceKindTenderExhausted,
 		SourceID:   row.TenderID.String(),
 		Severity:   watchtower.SeverityCritical,
 		Title:      onPro("Tender exhausted", row.ProNumber),

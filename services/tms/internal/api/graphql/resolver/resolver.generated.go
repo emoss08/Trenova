@@ -1643,12 +1643,14 @@ func FromServices(s *Services) *Resolver {
 	workerdrugalcoholWorkerDOTTest := &workerdrugalcoholresolver.WorkerDOTTestResolver{Deps: workerdrugalcoholDeps}
 	workerdrugalcoholWorkerDOTViolation := &workerdrugalcoholresolver.WorkerDOTViolationResolver{Deps: workerdrugalcoholDeps}
 	workersafetyWorkerDisciplinaryAction := &workersafetyresolver.WorkerDisciplinaryActionResolver{Deps: workersafetyDeps}
-	workeremploymentWorkerEmploymentCascade := &workeremploymentresolver.WorkerEmploymentCascadeResolver{Deps: workeremploymentDeps}
+	workeremploymentWorkerEmploymentEffect := &workeremploymentresolver.WorkerEmploymentEffectResolver{Deps: workeremploymentDeps}
 	workeremploymentWorkerEmploymentEvent := &workeremploymentresolver.WorkerEmploymentEventResolver{Deps: workeremploymentDeps}
+	workeremploymentWorkerEmploymentEventPreview := &workeremploymentresolver.WorkerEmploymentEventPreviewResolver{Deps: workeremploymentDeps}
 	workerdqfWorkerEmploymentVerification := &workerdqfresolver.WorkerEmploymentVerificationResolver{Deps: workerdqfDeps}
 	workerinjuryWorkerInjury := &workerinjuryresolver.WorkerInjuryResolver{Deps: workerinjuryDeps}
 	workerleaveWorkerLeaveCase := &workerleaveresolver.WorkerLeaveCaseResolver{Deps: workerleaveDeps}
 	workerleaveWorkerLeaveEntry := &workerleaveresolver.WorkerLeaveEntryResolver{Deps: workerleaveDeps}
+	workeroverviewWorkerOverviewPayRate := &workeroverviewresolver.WorkerOverviewPayRateResolver{Deps: workeroverviewDeps}
 	workerWorkerPTO := &workerresolver.WorkerPTOResolver{Deps: workerDeps}
 	ptopolicyWorkerPTOBalance := &ptopolicyresolver.WorkerPTOBalanceResolver{Deps: ptopolicyDeps}
 	ptopolicyWorkerPTOLedgerEntry := &ptopolicyresolver.WorkerPTOLedgerEntryResolver{Deps: ptopolicyDeps}
@@ -2205,12 +2207,14 @@ func FromServices(s *Services) *Resolver {
 			"WorkerDOTTest@workerdrugalcohol":                      workerdrugalcoholWorkerDOTTest,
 			"WorkerDOTViolation@workerdrugalcohol":                 workerdrugalcoholWorkerDOTViolation,
 			"WorkerDisciplinaryAction@workersafety":                workersafetyWorkerDisciplinaryAction,
-			"WorkerEmploymentCascade@workeremployment":             workeremploymentWorkerEmploymentCascade,
+			"WorkerEmploymentEffect@workeremployment":              workeremploymentWorkerEmploymentEffect,
 			"WorkerEmploymentEvent@workeremployment":               workeremploymentWorkerEmploymentEvent,
+			"WorkerEmploymentEventPreview@workeremployment":        workeremploymentWorkerEmploymentEventPreview,
 			"WorkerEmploymentVerification@workerdqf":               workerdqfWorkerEmploymentVerification,
 			"WorkerInjury@workerinjury":                            workerinjuryWorkerInjury,
 			"WorkerLeaveCase@workerleave":                          workerleaveWorkerLeaveCase,
 			"WorkerLeaveEntry@workerleave":                         workerleaveWorkerLeaveEntry,
+			"WorkerOverviewPayRate@workeroverview":                 workeroverviewWorkerOverviewPayRate,
 			"WorkerPTO@worker":                                     workerWorkerPTO,
 			"WorkerPTOBalance@ptopolicy":                           ptopolicyWorkerPTOBalance,
 			"WorkerPTOLedgerEntry@ptopolicy":                       ptopolicyWorkerPTOLedgerEntry,
@@ -2772,12 +2776,14 @@ var (
 	_ workerdrugalcoholexec.WorkerDOTTestResolver                      = (*workerdrugalcoholresolver.WorkerDOTTestResolver)(nil)
 	_ workerdrugalcoholexec.WorkerDOTViolationResolver                 = (*workerdrugalcoholresolver.WorkerDOTViolationResolver)(nil)
 	_ workersafetyexec.WorkerDisciplinaryActionResolver                = (*workersafetyresolver.WorkerDisciplinaryActionResolver)(nil)
-	_ workeremploymentexec.WorkerEmploymentCascadeResolver             = (*workeremploymentresolver.WorkerEmploymentCascadeResolver)(nil)
+	_ workeremploymentexec.WorkerEmploymentEffectResolver              = (*workeremploymentresolver.WorkerEmploymentEffectResolver)(nil)
 	_ workeremploymentexec.WorkerEmploymentEventResolver               = (*workeremploymentresolver.WorkerEmploymentEventResolver)(nil)
+	_ workeremploymentexec.WorkerEmploymentEventPreviewResolver        = (*workeremploymentresolver.WorkerEmploymentEventPreviewResolver)(nil)
 	_ workerdqfexec.WorkerEmploymentVerificationResolver               = (*workerdqfresolver.WorkerEmploymentVerificationResolver)(nil)
 	_ workerinjuryexec.WorkerInjuryResolver                            = (*workerinjuryresolver.WorkerInjuryResolver)(nil)
 	_ workerleaveexec.WorkerLeaveCaseResolver                          = (*workerleaveresolver.WorkerLeaveCaseResolver)(nil)
 	_ workerleaveexec.WorkerLeaveEntryResolver                         = (*workerleaveresolver.WorkerLeaveEntryResolver)(nil)
+	_ workeroverviewexec.WorkerOverviewPayRateResolver                 = (*workeroverviewresolver.WorkerOverviewPayRateResolver)(nil)
 	_ workerexec.WorkerPTOResolver                                     = (*workerresolver.WorkerPTOResolver)(nil)
 	_ ptopolicyexec.WorkerPTOBalanceResolver                           = (*ptopolicyresolver.WorkerPTOBalanceResolver)(nil)
 	_ ptopolicyexec.WorkerPTOLedgerEntryResolver                       = (*ptopolicyresolver.WorkerPTOLedgerEntryResolver)(nil)

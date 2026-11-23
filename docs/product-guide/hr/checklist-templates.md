@@ -11,7 +11,7 @@ Checklist templates define the onboarding, offboarding and custom checklists run
 Each template says which employment event starts it (when hired, rehired or terminated, or
 started by hand), and lists the items to get done, with the team that owns each one and how
 many days after the start it is due. HR administrators maintain the templates; the checklists
-themselves are worked on each worker's **Checklist** tab.
+themselves are worked on each worker's page, on the **Employment** tab under **Checklists**.
 
 ## Tasks
 
@@ -46,6 +46,6 @@ Keywords: archive checklist, retire template, reactivate
 - Items are copied when a checklist starts, so editing a template does not change checklists
   already running.
 - A template needs at least one item. A template started by hand cannot be the default; it is
-  started from the worker's **Checklist** tab.
+  started from the worker's page, on the **Employment** tab under **Checklists**.
 - Document and credential items complete themselves once the matching document or valid
   credential is on file.

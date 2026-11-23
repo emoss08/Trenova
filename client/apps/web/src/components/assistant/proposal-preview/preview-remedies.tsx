@@ -1,9 +1,9 @@
 import { Link } from "@trenova/shared/components/link";
-import { recordPath } from "@/config/record-links";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { usePermission } from "@/hooks/use-permission";
 import type { PreviewWarning } from "@/lib/graphql/agent-preview";
 import { agentPreview } from "@/lib/queries/agent-preview";
+import { workerPath } from "@/routes/worker/use-worker-state";
 import { useQueryClient } from "@tanstack/react-query";
 import { CheckIcon } from "@trenova/shared/components/icons";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -80,7 +80,7 @@ export const REMEDIES: Readonly<Record<string, RemedyDefinition>> = {
               result.invitation.email,
             )
           : t(
-              "Invitation created, but no email could be sent. Share the link from their portal tab; messages reach them once they accept it.",
+              "Invitation created, but no email could be sent. Share the link from Driver portal under Files on their record; messages reach them once they accept it.",
             );
       },
     },
@@ -88,7 +88,7 @@ export const REMEDIES: Readonly<Record<string, RemedyDefinition>> = {
       remedy.recordId === ""
         ? null
         : {
-            to: recordPath("worker", remedy.recordId),
+            to: workerPath(remedy.recordId, { tab: "files", view: "driver-portal" }),
             label: (t) =>
               remedy.recordLabel !== "" ? t("Open {0}", remedy.recordLabel) : t("Open the worker"),
           },

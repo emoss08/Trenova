@@ -54190,6 +54190,30 @@
       }
     },
     {
+      "name": "show_answer",
+      "policy": {
+        "kind": "runtime",
+        "resource": "assistant",
+        "operation": "read",
+        "scope": "run",
+        "defaultTier": "AutoExecute",
+        "maxTier": "AutoExecute",
+        "promotableTo": "AutoExecute",
+        "egress": [
+          "personal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "present",
+        "reversible": false,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Answers in the caller's own conversation with the records the answer rests on, drawn as a board. It writes no business record, and every value on it is read again with the viewer's access when the board is opened."
+      }
+    },
+    {
       "name": "show_board",
       "policy": {
         "kind": "runtime",

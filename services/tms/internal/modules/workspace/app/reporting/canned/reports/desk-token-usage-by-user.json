@@ -1,0 +1,218 @@
+{
+  "key": "desk-token-usage-by-user",
+  "version": "1.0.0",
+  "name": "Desk Token Usage by Person",
+  "description": "Who used the most model tokens through the Desk in the window: calls, uncached input, cached input, output and total tokens, and the estimated cost; calls whose provider carries no price are counted apart and are not in the estimate. Choose features to widen it beyond the Desk",
+  "category": "Desk",
+  "tags": [
+    "desk",
+    "ai",
+    "tokens",
+    "cost",
+    "usage",
+    "people"
+  ],
+  "defaultFormat": "xlsx",
+  "definition": {
+    "version": 2,
+    "entity": "daily_usage",
+    "columns": [
+      {
+        "id": "person",
+        "label": "Person",
+        "dimension": {
+          "field": "user.name"
+        },
+        "display": {
+          "nullText": "No person"
+        }
+      },
+      {
+        "id": "person_key",
+        "hidden": true,
+        "dimension": {
+          "field": "user.id"
+        }
+      },
+      {
+        "id": "calls",
+        "label": "Calls",
+        "measure": {
+          "field": "calls",
+          "agg": "sum"
+        },
+        "display": {
+          "style": "number",
+          "decimals": 0,
+          "grouping": true
+        }
+      },
+      {
+        "id": "input_tokens",
+        "label": "Uncached Input Tokens",
+        "measure": {
+          "field": "inputTokens",
+          "agg": "sum"
+        },
+        "display": {
+          "style": "number",
+          "decimals": 0,
+          "grouping": true
+        }
+      },
+      {
+        "id": "cache_read",
+        "hidden": true,
+        "measure": {
+          "field": "cacheReadTokens",
+          "agg": "sum"
+        }
+      },
+      {
+        "id": "cache_write",
+        "hidden": true,
+        "measure": {
+          "field": "cacheWriteTokens",
+          "agg": "sum"
+        }
+      },
+      {
+        "id": "cached_tokens",
+        "label": "Cached Input Tokens",
+        "calc": "[cache_read] + [cache_write]",
+        "display": {
+          "style": "number",
+          "decimals": 0,
+          "grouping": true
+        }
+      },
+      {
+        "id": "output_tokens",
+        "label": "Output Tokens",
+        "measure": {
+          "field": "outputTokens",
+          "agg": "sum"
+        },
+        "display": {
+          "style": "number",
+          "decimals": 0,
+          "grouping": true
+        }
+      },
+      {
+        "id": "total_tokens",
+        "label": "Total Tokens",
+        "measure": {
+          "field": "totalTokens",
+          "agg": "sum"
+        },
+        "display": {
+          "style": "number",
+          "decimals": 0,
+          "grouping": true
+        }
+      },
+      {
+        "id": "cost",
+        "label": "Estimated Cost",
+        "measure": {
+          "field": "costUSD",
+          "agg": "sum"
+        },
+        "display": {
+          "style": "currency",
+          "decimals": 2,
+          "negative": "parentheses"
+        }
+      },
+      {
+        "id": "unpriced",
+        "label": "Calls Without a Price",
+        "measure": {
+          "field": "unpricedCalls",
+          "agg": "sum"
+        },
+        "display": {
+          "style": "number",
+          "decimals": 0,
+          "grouping": true
+        }
+      }
+    ],
+    "filters": {
+      "and": [
+        {
+          "field": "usageDate",
+          "op": "last_n_days",
+          "param": "windowDays"
+        },
+        {
+          "field": "feature",
+          "op": "in",
+          "param": "features"
+        }
+      ]
+    },
+    "groupings": {
+      "total": true
+    },
+    "sort": [
+      {
+        "column": "total_tokens",
+        "desc": true
+      }
+    ],
+    "parameters": [
+      {
+        "name": "windowDays",
+        "label": "Window (days)",
+        "type": "int",
+        "required": true,
+        "default": 30
+      },
+      {
+        "name": "features",
+        "label": "Features",
+        "type": "enum",
+        "required": true,
+        "multi": true,
+        "default": [
+          "AgentTurn",
+          "AgentWakeUp",
+          "ConversationChapters",
+          "CaseReading",
+          "RequestWording",
+          "AgentRecommendation"
+        ],
+        "allowed": [
+          "AgentTurn",
+          "AgentWakeUp",
+          "AgentEvaluation",
+          "TableQuery",
+          "FormulaGenerate",
+          "FormulaExplain",
+          "ShipmentImportChat",
+          "DocumentIntelligenceRoute",
+          "DocumentIntelligenceExtract",
+          "AccountingMapping",
+          "FactoringRemittanceExtract",
+          "AgentReflection",
+          "AgentMemoryConsolidation",
+          "AgentDrafting",
+          "AgentProfile",
+          "AgentRecommendation",
+          "ConversationChapters",
+          "BillingQueueReview",
+          "BillingQueueBrief",
+          "BillingQueueSearch",
+          "PaperworkReading",
+          "InboundMail",
+          "PaletteAnswer",
+          "InsightNarration",
+          "CaseReading",
+          "RequestWording"
+        ]
+      }
+    ]
+  }
+}

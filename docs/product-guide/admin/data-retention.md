@@ -47,10 +47,9 @@ Keywords: DQ file retention, driver qualification file, 49 CFR 391.51, terminate
    at least 1,095, three years after employment ends, the federal minimum under 49 CFR 391.51; the
    default is 1,095.
 3. Check the date under the period: files of drivers who left before it are flagged for review.
+   Files are only flagged; nothing on this page ever deletes a driver qualification file, so a
+   longer period only delays the flag.
 4. Select **Save changes**.
-
-Old files are only flagged for review. Nothing on this page ever deletes a driver qualification
-file, so a longer period only delays the flag.
 
 ### Limit how long raw EDI payloads are kept
 Keywords: EDI purge, X12 retention, raw file retention, blank payloads
@@ -58,10 +57,8 @@ Keywords: EDI purge, X12 retention, raw file retention, blank payloads
 2. Under **EDI**, turn on **Blank old inbound files** or **Blank old message payloads**.
 3. Enter the number of days in **Blank files after** or **Blank payloads after**. A new limit
    starts at 90 days.
-4. Select **Save changes**.
-
-Turn the switch off again to keep the raw payloads with no limit. Turning it back on brings back
-the last number of days it had.
+4. Select **Save changes**. To keep the raw payloads with no limit, turn the switch off again;
+   turning it back on brings back the last number of days it had.
 
 ### Limit how long agent evaluation cases are kept
 Keywords: evaluation case retention, agent replays, eval purge

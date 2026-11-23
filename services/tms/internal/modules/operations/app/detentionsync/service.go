@@ -630,7 +630,7 @@ func (s *Service) projectToWatchtower(
 		s.watchtower.Resolve(
 			ctx,
 			p.tenantInfo,
-			watchtower.SourceDetentionOccurrence,
+			watchtower.SourceKindDetentionOccurrence,
 			saved.ID.String(),
 		)
 

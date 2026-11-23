@@ -9,6 +9,7 @@ import type { AgentChoice } from "@/lib/graphql/agent-definition";
 import { assistant } from "@/lib/queries/assistant";
 import { whenIdle } from "@/lib/when-idle";
 import { useAssistantEnabled } from "@/components/assistant/use-assistant-enabled";
+import { ReplyBoardsProvider } from "@/components/assistant/artifact-opener";
 import { useAssistantStore } from "@/stores/assistant-store";
 import { useDeskStore } from "@/stores/desk-store";
 import { conversationPath } from "@/lib/conversation-path";
@@ -20,6 +21,7 @@ import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { useCallback, useEffect, useMemo } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { LazyDeskWorkspace, preloadDeskWorkspace } from "./artifacts/desk-workspace-lazy";
+import { DESK_REPLY_BOARDS, preloadReplyBoards } from "./artifacts/kinds/board/board-reply-lazy";
 import { DeskCaseCard } from "./case/desk-case-card";
 import { useDeskCase } from "./case/use-desk-case";
 import { useSnoozeClock } from "./case/use-snooze-clock";
@@ -130,7 +132,10 @@ export function DeskConversation({
     if (!hasArtifacts) {
       return;
     }
-    return whenIdle(() => void preloadDeskWorkspace().catch(() => undefined));
+    return whenIdle(() => {
+      void preloadDeskWorkspace().catch(() => undefined);
+      void preloadReplyBoards().catch(() => undefined);
+    });
   }, [hasArtifacts]);
 
   const { openArtifact, setWorkspaceOpen, workspaceOpen, liveArtifacts, noteLiveArtifacts } = desk;
@@ -203,38 +208,42 @@ export function DeskConversation({
     [agentsById, t, timezone],
   );
 
+  // The Desk draws a board its agent placed in the conversation as the reply
+  // itself; every other surface draws that reply's words.
   return (
-    <DeskThread
-      thread={thread}
-      agent={agent}
-      agentsUnavailable={agentsUnavailable}
-      threads={desk.threads}
-      onSwitchAgent={thread.subjectId ? undefined : desk.start}
-      onHandOff={handOff}
-      onStartNew={onStartNew}
-      onWorkingChange={desk.setWorking}
-      onLiveHandoff={noteLiveHandoff}
-      onNavigate={carryConversation}
-      followNavigation={false}
-      artifacts={artifacts}
-      schedules={schedules}
-      chapters={chapters}
-      renderHandoff={renderHandoff}
-      dockTop={(dock) => (
-        <>
-          {thread.case && (
-            <DeskCaseCard
-              thread={thread}
-              deskCase={deskCase}
-              dock={dock}
-              now={now}
-              timezone={timezone}
-            />
-          )}
-          {thread.canContinue && <DeskFactsBar thread={thread} />}
-        </>
-      )}
-    />
+    <ReplyBoardsProvider renderer={DESK_REPLY_BOARDS}>
+      <DeskThread
+        thread={thread}
+        agent={agent}
+        agentsUnavailable={agentsUnavailable}
+        threads={desk.threads}
+        onSwitchAgent={thread.subjectId ? undefined : desk.start}
+        onHandOff={handOff}
+        onStartNew={onStartNew}
+        onWorkingChange={desk.setWorking}
+        onLiveHandoff={noteLiveHandoff}
+        onNavigate={carryConversation}
+        followNavigation={false}
+        artifacts={artifacts}
+        schedules={schedules}
+        chapters={chapters}
+        renderHandoff={renderHandoff}
+        dockTop={(dock) => (
+          <>
+            {thread.case && (
+              <DeskCaseCard
+                thread={thread}
+                deskCase={deskCase}
+                dock={dock}
+                now={now}
+                timezone={timezone}
+              />
+            )}
+            {thread.canContinue && <DeskFactsBar thread={thread} />}
+          </>
+        )}
+      />
+    </ReplyBoardsProvider>
   );
 }
 

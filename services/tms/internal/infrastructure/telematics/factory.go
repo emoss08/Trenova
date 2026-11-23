@@ -36,13 +36,13 @@ func NewFactory(p FactoryParams) telematicsports.TelematicsProviderFactory {
 	}
 }
 
-func (f *Factory) ProviderFor(
+func (f *Factory) ConnectedType(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-) (telematicsports.TelematicsProvider, error) {
+) (integration.Type, bool, error) {
 	integrations, err := f.integrationRepo.ListByTenant(ctx, tenantInfo)
 	if err != nil {
-		return nil, err
+		return "", false, err
 	}
 
 	for _, record := range integrations {
@@ -52,12 +52,26 @@ func (f *Factory) ProviderFor(
 		if !record.Type.SupportsTelematics() {
 			continue
 		}
-		return f.ProviderOfType(ctx, tenantInfo, record.Type)
+		return record.Type, true, nil
 	}
 
-	return nil, errortypes.NewBusinessError(
-		"no telematics provider is enabled for this organization",
-	)
+	return "", false, nil
+}
+
+func (f *Factory) ProviderFor(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+) (telematicsports.TelematicsProvider, error) {
+	typ, connected, err := f.ConnectedType(ctx, tenantInfo)
+	if err != nil {
+		return nil, err
+	}
+	if !connected {
+		return nil, errortypes.NewBusinessError(
+			"no telematics provider is enabled for this organization",
+		)
+	}
+	return f.ProviderOfType(ctx, tenantInfo, typ)
 }
 
 func (f *Factory) ProviderOfType(

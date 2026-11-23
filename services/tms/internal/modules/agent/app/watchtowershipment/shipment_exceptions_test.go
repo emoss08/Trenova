@@ -121,7 +121,7 @@ func TestMissedPickupSource_AsksForPickupsPastTheGrace(t *testing.T) {
 
 	require.Len(t, items, 1)
 	item := items[0]
-	assert.Equal(t, watchtower.SourceMissedPickup, item.SourceKind)
+	assert.Equal(t, watchtower.SourceKindMissedPickup, item.SourceKind)
 	assert.Equal(t, stop.StopID.String(), item.SourceID)
 	assert.Equal(t, watchtower.SeverityWarning, item.Severity)
 	assert.Equal(t, "Missed pickup on PRO-7", item.Title)
@@ -182,7 +182,7 @@ func TestPodMissingSource_WaitsForTheGraceAndLooksBackNinetyDays(t *testing.T) {
 	assert.Equal(t, exceptionNow-24*3600, reader.podRequests[0].DeliveredBefore)
 	assert.Equal(t, exceptionNow-90*24*3600, reader.podRequests[0].DeliveredAfter)
 	require.Len(t, items, 1)
-	assert.Equal(t, watchtower.SourcePodMissing, items[0].SourceKind)
+	assert.Equal(t, watchtower.SourceKindPODMissing, items[0].SourceKind)
 	assert.Equal(t, row.ShipmentID.String(), items[0].SourceID)
 	assert.Equal(t, watchtower.SeverityWarning, items[0].Severity)
 	assert.Contains(t, items[0].Summary, "Globex")
@@ -246,9 +246,9 @@ func TestShipmentExceptionObserver_SettlesTheShipmentForTheEvent(t *testing.T) {
 	require.NoError(t, observer.OnShipmentEvent(t.Context(), event))
 	assert.True(t, reader.scoped)
 	require.Len(t, reconciler.requests, 3)
-	assert.Equal(t, watchtower.SourceMissedPickup, reconciler.requests[0].SourceKind)
-	assert.Equal(t, watchtower.SourceMissedDelivery, reconciler.requests[1].SourceKind)
-	assert.Equal(t, watchtower.SourcePodMissing, reconciler.requests[2].SourceKind)
+	assert.Equal(t, watchtower.SourceKindMissedPickup, reconciler.requests[0].SourceKind)
+	assert.Equal(t, watchtower.SourceKindMissedDelivery, reconciler.requests[1].SourceKind)
+	assert.Equal(t, watchtower.SourceKindPODMissing, reconciler.requests[2].SourceKind)
 	for _, req := range reconciler.requests {
 		assert.Equal(t, stop.ShipmentID, req.SubjectID)
 	}
@@ -291,7 +291,7 @@ func TestShipmentExceptionKindsFor(t *testing.T) {
 	)
 	assert.Equal(
 		t,
-		[]watchtower.SourceKind{watchtower.SourceTenderExhausted},
+		[]watchtower.SourceKind{watchtower.SourceKindTenderExhausted},
 		ShipmentExceptionKindsFor(shipmentevent.TypeCarrierAssigned),
 	)
 	assert.Empty(t, ShipmentExceptionKindsFor(shipmentevent.TypeHoldPlaced))
@@ -304,9 +304,9 @@ func TestShipmentExceptionKindsFor(t *testing.T) {
 		assert.Equal(
 			t,
 			[]watchtower.SourceKind{
-				watchtower.SourceMissedPickup,
-				watchtower.SourceMissedDelivery,
-				watchtower.SourcePodMissing,
+				watchtower.SourceKindMissedPickup,
+				watchtower.SourceKindMissedDelivery,
+				watchtower.SourceKindPODMissing,
 			},
 			ShipmentExceptionKindsFor(eventType),
 			eventType,
@@ -321,10 +321,16 @@ func TestDescribeMissedStop_ReadsTheSameAcrossSweeps(t *testing.T) {
 	stop := missedStop(exceptionNow - 5*3600)
 	grace := int64(15 * 60)
 
-	first := DescribeMissedStop(tenant, watchtower.SourceMissedPickup, stop, grace, exceptionNow)
+	first := DescribeMissedStop(
+		tenant,
+		watchtower.SourceKindMissedPickup,
+		stop,
+		grace,
+		exceptionNow,
+	)
 	next := DescribeMissedStop(
 		tenant,
-		watchtower.SourceMissedPickup,
+		watchtower.SourceKindMissedPickup,
 		stop,
 		grace,
 		exceptionNow+10*60,

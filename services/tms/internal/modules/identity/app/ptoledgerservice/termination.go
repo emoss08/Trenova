@@ -65,28 +65,29 @@ func PlanTerminationSettlement(
 	return plan
 }
 
-// SettleOnTermination zeroes every tracked balance as of the termination
-// date, posting a Payout or Forfeiture per the policy rule. The period key
-// `T:<effective>` makes a repeated call for the same termination a no-op.
-func (s *Service) SettleOnTermination(
+type ReleasedUsage struct {
+	PTOType worker.PTOType
+	Days    decimal.Decimal
+}
+
+type TerminationPlan struct {
+	Resolved    *ResolvedPolicy
+	Settlements []PlannedSettlement
+}
+
+func (s *Service) PreviewTerminationSettlement(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	workerID pulid.ID,
 	effectiveAt int64,
-	actor Actor,
-) (*TerminationSettlement, error) {
-	log := s.l.With(
-		zap.String("operation", "SettleOnTermination"),
-		zap.String("workerId", workerID.String()),
-	)
-	result := &TerminationSettlement{}
-
+	released []ReleasedUsage,
+) (*TerminationPlan, error) {
 	resolved, err := s.ResolvePolicy(ctx, tenantInfo, workerID, effectiveAt)
 	if err != nil {
 		return nil, err
 	}
 	if resolved == nil {
-		return result, nil
+		return &TerminationPlan{}, nil
 	}
 	balances, err := s.ledgerRepo.ListBalances(ctx, &ptoledgerports.ListPTOBalancesRequest{
 		TenantInfo: tenantInfo,
@@ -95,15 +96,69 @@ func (s *Service) SettleOnTermination(
 	if err != nil {
 		return nil, err
 	}
+	return &TerminationPlan{
+		Resolved:    resolved,
+		Settlements: PlanTerminationSettlement(withReleased(balances, released), resolved.Policy),
+	}, nil
+}
+
+func withReleased(
+	balances []*pto.WorkerPTOBalance,
+	released []ReleasedUsage,
+) []*pto.WorkerPTOBalance {
+	if len(released) == 0 {
+		return balances
+	}
+	byType := make(map[worker.PTOType]*pto.WorkerPTOBalance, len(balances)+len(released))
+	out := make([]*pto.WorkerPTOBalance, 0, len(balances)+len(released))
+	for _, bal := range balances {
+		if bal == nil {
+			continue
+		}
+		projected := *bal
+		byType[projected.PTOType] = &projected
+		out = append(out, &projected)
+	}
+	for _, usage := range released {
+		if !usage.Days.IsPositive() {
+			continue
+		}
+		bal, ok := byType[usage.PTOType]
+		if !ok {
+			bal = &pto.WorkerPTOBalance{PTOType: usage.PTOType}
+			byType[usage.PTOType] = bal
+			out = append(out, bal)
+		}
+		bal.BalanceDays = bal.BalanceDays.Add(usage.Days)
+	}
+	return out
+}
+
+func (s *Service) SettleOnTermination(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	workerID pulid.ID,
+	effectiveAt int64,
+	plan *TerminationPlan,
+	actor Actor,
+) (*TerminationSettlement, error) {
+	log := s.l.With(
+		zap.String("operation", "SettleOnTermination"),
+		zap.String("workerId", workerID.String()),
+	)
+	result := &TerminationSettlement{}
+	if plan == nil || plan.Resolved == nil {
+		return result, nil
+	}
 
 	periodKey := fmt.Sprintf("%s%d", periodKeyTermination, effectiveAt)
-	for _, planned := range PlanTerminationSettlement(balances, resolved.Policy) {
+	for _, planned := range plan.Settlements {
 		entry := &pto.WorkerPTOLedgerEntry{
 			EntryType:    planned.EntryType,
 			EffectiveAt:  effectiveAt,
 			PeriodKey:    periodKey,
-			AssignmentID: resolved.Assignment.ID,
-			PTOPolicyID:  resolved.Policy.ID,
+			AssignmentID: plan.Resolved.Assignment.ID,
+			PTOPolicyID:  plan.Resolved.Policy.ID,
 			Note:         "Employment ended",
 		}
 		posted, postErr := s.post(ctx, postParams{
@@ -129,6 +184,11 @@ func (s *Service) SettleOnTermination(
 			} else {
 				result.ForfeitedDays = result.ForfeitedDays.Add(posted.AmountDays.Neg())
 			}
+		case errors.Is(postErr, ErrCapped):
+			log.Info(
+				"termination settlement found nothing left to post",
+				zap.String("ptoType", string(planned.PTOType)),
+			)
 		case errors.Is(postErr, ptoledgerports.ErrDuplicatePTOLedgerEntry):
 			log.Info(
 				"termination settlement already posted",

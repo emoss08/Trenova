@@ -724,7 +724,9 @@ and satisfaction need read access to agent feedback, **Run suite now**, **Try an
 need create access to the evaluation suite, and changing **Sweep settings** needs update access to
 both the evaluation suite and AI control, because the budgets are spend. The organization-wide switches need
 update access to AI control, deciding proposals needs update access to agent proposals, and
-**Test** on a provider needs manage access to AI providers. Viewing **Extensions** needs read
+**Test** on a provider needs manage access to AI providers. The week's calls, tokens and
+estimated cost on **Overview**, and each provider's calls and latency on **Providers**, need view
+access to AI usage and spend. Viewing **Extensions** needs read
 access to agent extensions, and turning one on, changing its settings or testing it needs update
 access. An agent searches the web for someone only when their role has the web research
 permission, and looks something up on a portal only when their role may view portal automation;

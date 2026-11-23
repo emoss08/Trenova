@@ -163,6 +163,17 @@ type FilledSegment struct {
 	Numeral int    `json:"numeral,omitempty"`
 	Tone    Tone   `json:"tone,omitempty"`
 	Struck  bool   `json:"struck,omitempty"`
+	Reading string `json:"reading,omitempty"`
+}
+
+type FilledReading struct {
+	Key       string    `json:"key"`
+	Label     string    `json:"label"`
+	Value     *Value    `json:"value,omitempty"`
+	Was       *Value    `json:"was,omitempty"`
+	Source    Source    `json:"source"`
+	Measure   Measure   `json:"measure,omitempty"`
+	Aggregate Aggregate `json:"aggregate,omitempty"`
 }
 
 type FilledBlock struct {
@@ -187,13 +198,16 @@ type FilledBlock struct {
 	Chips    []Row           `json:"chips,omitempty"`
 	Work     []WorkRow       `json:"work,omitempty"`
 	Actions  []FilledAction  `json:"actions,omitempty"`
+	Caption  []FilledSegment `json:"caption,omitempty"`
 }
 
 type Filled struct {
-	Title   string          `json:"title"`
-	Verdict []FilledSegment `json:"verdict"`
-	Blocks  []FilledBlock   `json:"blocks"`
-	ReadAt  int64           `json:"readAt"`
+	Title    string          `json:"title"`
+	Place    Place           `json:"place"`
+	Verdict  []FilledSegment `json:"verdict"`
+	Readings []FilledReading `json:"readings"`
+	Blocks   []FilledBlock   `json:"blocks"`
+	ReadAt   int64           `json:"readAt"`
 }
 
 type Snapshot struct {
@@ -224,6 +238,11 @@ func (f *Filled) Snapshot() Snapshot {
 			}
 		}
 	}
+	for idx := range f.Readings {
+		if value := f.Readings[idx].Value; value != nil {
+			snapshot.Values[ReadingKey(f.Readings[idx].Key)] = *value
+		}
+	}
 
 	return snapshot
 }
@@ -249,4 +268,12 @@ func (f *Filled) Compare(snapshot *Snapshot) {
 			}
 		}
 	}
+	for idx := range f.Readings {
+		reading := &f.Readings[idx]
+		if was, kept := snapshot.Values[ReadingKey(reading.Key)]; kept && reading.Value != nil &&
+			!reading.Value.Same(&was) {
+			reading.Was = &was
+		}
+	}
+	f.WriteReadings()
 }

@@ -79,7 +79,7 @@ func (r *rig) plan(t *testing.T, shipmentID pulid.ID) (*watchtowerports.PlannedP
 	return r.playbook.Plan(t.Context(), &watchtowerports.PlanRequest{
 		TenantInfo: r.tenant,
 		Item: &watchtower.Item{
-			SourceKind:  watchtower.SourcePodMissing,
+			SourceKind:  watchtower.SourceKindPODMissing,
 			SubjectType: agent.SubjectShipment,
 			SubjectID:   shipmentID,
 		},

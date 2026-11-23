@@ -74,6 +74,7 @@ export function TextareaField<T extends FieldValues>({
           <Textarea
             {...field}
             {...props}
+            value={field.value ?? ""}
             id={inputId}
             className={cn(hasPresets && "pb-5", size === "lg" && LARGE_TEXT, className)}
             bare={footer !== undefined}

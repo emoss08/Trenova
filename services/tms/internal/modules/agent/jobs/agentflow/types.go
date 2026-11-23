@@ -109,6 +109,10 @@ type RunContext struct {
 	Definition *agentdefinition.Definition   `json:"definition"`
 	Actor      *permissionports.RequestActor `json:"actor"`
 	Input      string                        `json:"input"`
+	// TrenovaWritten and Asked say Input is Trenova's own note, a decision
+	// follow-up or a wait picked up, and what the person last typed.
+	TrenovaWritten bool   `json:"trenovaWritten,omitempty"`
+	Asked          string `json:"asked,omitempty"`
 	// Timezone is the organization's, which is what a tool reads a bare date
 	// in.
 	Timezone            string                              `json:"timezone,omitempty"`
@@ -161,6 +165,8 @@ func NewRunContext(req *agentruntimeports.RunRequest, priorityKey int) RunContex
 		Definition:          req.Definition,
 		Actor:               req.Actor,
 		Input:               req.Input,
+		TrenovaWritten:      req.TrenovaWritten,
+		Asked:               req.Asked,
 		Timezone:            req.Context.Timezone,
 		RunID:               req.RunID,
 		ThreadID:            req.ThreadID,
@@ -192,6 +198,8 @@ func (rc *RunContext) request() *agentruntimeports.RunRequest {
 		Actor:               rc.Actor,
 		Context:             runtimeContext,
 		Input:               rc.Input,
+		TrenovaWritten:      rc.TrenovaWritten,
+		Asked:               rc.Asked,
 		RunID:               rc.RunID,
 		ThreadID:            rc.ThreadID,
 		Unattended:          rc.Unattended,

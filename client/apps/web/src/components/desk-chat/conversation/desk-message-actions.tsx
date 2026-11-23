@@ -8,6 +8,13 @@ const actClass =
   "dk-act relative min-w-7 gap-1.5 px-1.75 text-dsk-subtle has-[>svg]:px-1.75 hover:bg-dsk-hover hover:text-dsk-fg";
 const actOnClass = "text-dsk-blue hover:text-dsk-blue [&_svg_path]:fill-current";
 
+/**
+ * The box of the row of actions under a reply: its gap above and the height of
+ * its buttons. A board read as the reply holds the same box from its first
+ * frame, so the actions take a place already kept and nothing moves.
+ */
+export const DESK_ACTION_ROW = "mt-2.5 h-7";
+
 /** How long Copy holds its tick. */
 const COPIED_MS = 1400;
 
@@ -72,7 +79,7 @@ export function DeskMessageActions({
   };
 
   return (
-    <div className={cn("dk-acts", (reading || copied) && "dk-stay")}>
+    <div className={cn("dk-acts", DESK_ACTION_ROW, (reading || copied) && "dk-stay")}>
       {onStartChapter && (
         <Button
           variant="quiet"

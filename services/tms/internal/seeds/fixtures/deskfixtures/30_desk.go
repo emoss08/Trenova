@@ -107,6 +107,9 @@ func (s *DeskSeed) Run(ctx context.Context, sr *seed.Run) error {
 		}
 	}
 
+	if err = s.ensureResolutions(ctx, db, refs); err != nil {
+		return err
+	}
 	if err = s.credentialsAsTheQueueSaysThem(ctx, db, refs); err != nil {
 		return err
 	}
@@ -313,6 +316,92 @@ func (s *DeskSeed) insertItems(
 	return nil
 }
 
+func (s *DeskSeed) ensureResolutions(ctx context.Context, db *keel.DB, refs *deskSeedRefs) error {
+	wr := watchtowerdb.Resolutions
+	seeded, err := wr.AllTenants().Where(
+		wr.OrganizationID.Eq(refs.org.ID),
+		wr.BusinessUnitID.Eq(refs.org.BusinessUnitID),
+		wr.ResolvedVia.Ne(watchtower.ResolvedViaSourceCleared),
+	).Exists(ctx, db)
+	if err != nil {
+		return fmt.Errorf("check seeded watchtower resolutions: %w", err)
+	}
+	if seeded {
+		return nil
+	}
+	if err = wr.CreateMany(ctx, db, s.resolutionHistory(refs)); err != nil {
+		return fmt.Errorf("insert watchtower resolutions: %w", err)
+	}
+
+	return nil
+}
+
+func (s *DeskSeed) resolutionHistory(refs *deskSeedRefs) []*watchtower.Resolution {
+	kinds := []watchtower.SourceKind{
+		watchtower.SourceKindMissedPickup,
+		watchtower.SourceKindMissedDelivery,
+		watchtower.SourceKindPODMissing,
+		watchtower.SourceKindNoCheckCall,
+		watchtower.SourceKindEtaAtRisk,
+		watchtower.SourceKindBillingException,
+		watchtower.SourceKindInboundMessage,
+	}
+	codes := []watchtower.ResolutionCode{
+		watchtower.ResolutionCodeFixed,
+		watchtower.ResolutionCodeCarrierDelay,
+		watchtower.ResolutionCodeReceiverDelay,
+		watchtower.ResolutionCodeDocumentReceived,
+		watchtower.ResolutionCodeRescheduled,
+	}
+	severities := []watchtower.Severity{
+		watchtower.SeverityWarning,
+		watchtower.SeverityCritical,
+		watchtower.SeverityInfo,
+	}
+
+	const resolved = 60
+	out := make([]*watchtower.Resolution, 0, resolved)
+	caseID := pulid.Nil
+	for i := range resolved {
+		if i%2 == 0 {
+			caseID = pulid.MustNew("shp_")
+		}
+		occurred := refs.now - int64(i+1)*deskSeedDay - int64(i%7)*deskSeedHour
+		item := &watchtower.Item{
+			ID:              pulid.MustNew("wt_"),
+			OrganizationID:  refs.org.ID,
+			BusinessUnitID:  refs.org.BusinessUnitID,
+			Version:         1,
+			SourceKind:      kinds[i%len(kinds)],
+			Severity:        severities[i%len(severities)],
+			OccurredAt:      occurred,
+			EscalationLevel: int16(i % 3),
+			AboutID:         caseID,
+		}
+		due := occurred + 4*deskSeedHour
+		item.DueAt = &due
+		resolvedAt := occurred + int64(1+i%9)*deskSeedHour
+		item.ResolvedAt = &resolvedAt
+		via := watchtower.ResolvedViaSourceCleared
+		item.ResolutionCode = watchtower.ResolutionCodeCleared
+		if i%4 != 0 && refs.readerID.IsNotNil() {
+			via = watchtower.ResolvedViaPerson
+			item.AssigneeID = refs.readerID
+			item.ResolvedByID = refs.readerID
+			item.ResolutionCode = codes[i%len(codes)]
+			acknowledged := occurred + deskSeedHour/2
+			item.AcknowledgedAt = &acknowledged
+		}
+		if i%5 == 0 {
+			handed := occurred + deskSeedHour
+			item.AgentHandedAt = &handed
+		}
+		out = append(out, watchtower.ResolutionOf(item, via))
+	}
+
+	return out
+}
+
 func (s *DeskSeed) standingItems(refs *deskSeedRefs) []*watchtower.Item {
 	resolved := refs.now - 2*deskSeedHour
 
@@ -321,7 +410,7 @@ func (s *DeskSeed) standingItems(refs *deskSeedRefs) []*watchtower.Item {
 			ID:             pulid.MustNew("wt_"),
 			OrganizationID: refs.org.ID,
 			BusinessUnitID: refs.org.BusinessUnitID,
-			SourceKind:     watchtower.SourceServiceFailure,
+			SourceKind:     watchtower.SourceKindServiceFailure,
 			SourceID:       "seed-watchtower-service-failure",
 			Severity:       watchtower.SeverityWarning,
 			Title:          "Service failure closed: late delivery on the Columbus lane",
@@ -329,7 +418,7 @@ func (s *DeskSeed) standingItems(refs *deskSeedRefs) []*watchtower.Item {
 			OccurredAt:     refs.now - deskSeedDay,
 			ResolvedAt:     &resolved,
 			Status:         watchtower.StatusResolved,
-			ResolutionCode: watchtower.ResolutionCleared,
+			ResolutionCode: watchtower.ResolutionCodeCleared,
 		},
 	}
 }

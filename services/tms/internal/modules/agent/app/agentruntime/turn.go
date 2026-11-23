@@ -177,6 +177,8 @@ func (t *Turn) beyondTier(name string) agent.AutonomyTier {
 
 func (t *Turn) Mode() toolaccess.ProfileMode { return t.mode }
 
+func (t *Turn) Offers(name string) bool { return t.tools.Offers(name) }
+
 // Messages is what the model is shown, as the turn holds it now.
 func (t *Turn) Messages() []llmports.Message { return t.messages }
 
@@ -770,6 +772,8 @@ func (s *Service) PublishStep(
 		step = runtimetools.DecisionStepOutcome(call.Arguments)
 	case "show_board":
 		step = runtimetools.BoardStepOutcome(call.Arguments)
+	case runtimetools.ShowAnswerTool:
+		step = runtimetools.AnswerStepOutcome(call.Arguments)
 	default:
 		step = runtimetools.PublishOutcome(call.Arguments)
 	}

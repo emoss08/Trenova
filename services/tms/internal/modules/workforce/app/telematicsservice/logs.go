@@ -2,6 +2,7 @@ package telematicsservice
 
 import (
 	"context"
+	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/telematicsports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -26,16 +27,11 @@ func (s *Service) workerExternalID(
 	tenantInfo pagination.TenantInfo,
 	workerID pulid.ID,
 ) (string, error) {
-	mappings, err := s.repo.ListWorkerMappings(ctx, tenantInfo)
+	externalID, err := s.repo.GetWorkerExternalID(ctx, tenantInfo, workerID)
 	if err != nil {
 		return "", err
 	}
-	for _, mapping := range mappings {
-		if mapping.WorkerID == workerID {
-			return mapping.ExternalID, nil
-		}
-	}
-	return "", nil
+	return strings.TrimSpace(externalID), nil
 }
 
 func (s *Service) GetWorkerHOSLogs(

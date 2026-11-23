@@ -27,6 +27,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelevent"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerpage"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/intutils"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -51,7 +52,6 @@ const (
 	pathAgentControl    = "/admin/agent-control"
 	pathServiceFailures = "/shipment-management/service-failures"
 	pathCarrierMonitor  = "/dispatch/carrier-monitoring"
-	pathWorkers         = "/hr/workers"
 	pathEDIInbound      = "/edi/inbound-files"
 	pathBillingQueue    = "/billing/queue"
 	pathDetentionDesk   = "/detention/desk"
@@ -90,7 +90,7 @@ func DescribeInsight(entity *insight.Insight) watchtowerports.WatchtowerItemInpu
 			OrgID: entity.OrganizationID,
 			BuID:  entity.BusinessUnitID,
 		},
-		SourceKind:  watchtower.SourceInsight,
+		SourceKind:  watchtower.SourceKindInsight,
 		SourceID:    entity.ID.String(),
 		Severity:    severity,
 		Title:       entity.Headline,
@@ -100,8 +100,11 @@ func DescribeInsight(entity *insight.Insight) watchtowerports.WatchtowerItemInpu
 		EventKind:   agenttrigger.EventInsightDetected,
 		Path:        path,
 		Panel: &watchtowerpanel.Panel{
-			Kind:    watchtowerpanel.KindFinding,
-			Finding: &watchtowerpanel.FindingPanel{Advice: entity.Recommendation, Detail: entity.Narrative},
+			Kind: watchtowerpanel.KindFinding,
+			Finding: &watchtowerpanel.FindingPanel{
+				Advice: entity.Recommendation,
+				Detail: entity.Narrative,
+			},
 		},
 		OccurredAt: entity.DetectedAt,
 	}
@@ -123,7 +126,7 @@ func DescribeProposal(
 			OrgID: entity.OrganizationID,
 			BuID:  entity.BusinessUnitID,
 		},
-		SourceKind: watchtower.SourceAgentProposal,
+		SourceKind: watchtower.SourceKindAgentProposal,
 		SourceID:   entity.ID.String(),
 		About:      entity.TargetID,
 		Severity:   watchtower.SeverityInfo,
@@ -162,7 +165,7 @@ func DescribePlan(
 			OrgID: entity.OrganizationID,
 			BuID:  entity.BusinessUnitID,
 		},
-		SourceKind: watchtower.SourceAgentPlan,
+		SourceKind: watchtower.SourceKindAgentPlan,
 		SourceID:   entity.ID.String(),
 		About:      entity.TargetID,
 		Severity:   watchtower.SeverityInfo,
@@ -210,7 +213,7 @@ func DescribeFailedRun(
 			OrgID: entity.OrganizationID,
 			BuID:  entity.BusinessUnitID,
 		},
-		SourceKind:  watchtower.SourceAgentRunFailed,
+		SourceKind:  watchtower.SourceKindAgentRunFailed,
 		SourceID:    entity.ID.String(),
 		Severity:    watchtower.SeverityWarning,
 		Title:       who + " could not finish a run",
@@ -244,7 +247,7 @@ func DescribeException(entity *agentexception.AgentException) watchtowerports.Wa
 			OrgID: entity.OrganizationID,
 			BuID:  entity.BusinessUnitID,
 		},
-		SourceKind:  watchtower.SourceAgentException,
+		SourceKind:  watchtower.SourceKindAgentException,
 		SourceID:    entity.ID.String(),
 		Severity:    severity,
 		Title:       exceptionTitle(entity.Category),
@@ -253,7 +256,10 @@ func DescribeException(entity *agentexception.AgentException) watchtowerports.Wa
 		SubjectID:   entity.SubjectID,
 		Path:        pathAgentControl + "?tab=activity&view=exceptions&exception=" + entity.ID.String(),
 		Facts: []watchtower.Fact{
-			watchtoweritem.Fact("Category", textcase.HumanizeCamelCaseSentence(string(entity.Category))),
+			watchtoweritem.Fact(
+				"Category",
+				textcase.HumanizeCamelCaseSentence(string(entity.Category)),
+			),
 		},
 		Panel: &watchtowerpanel.Panel{
 			Kind: watchtowerpanel.KindAsk,
@@ -308,7 +314,7 @@ func DescribeServiceFailure(
 			OrgID: entity.OrganizationID,
 			BuID:  entity.BusinessUnitID,
 		},
-		SourceKind:  watchtower.SourceServiceFailure,
+		SourceKind:  watchtower.SourceKindServiceFailure,
 		SourceID:    entity.ID.String(),
 		Severity:    severity,
 		Title:       "Service failure " + entity.Number,
@@ -383,7 +389,7 @@ func DescribeCarrierIntelEvent(
 			OrgID: entity.OrganizationID,
 			BuID:  entity.BusinessUnitID,
 		},
-		SourceKind:  watchtower.SourceCarrierIntelEvent,
+		SourceKind:  watchtower.SourceKindCarrierIntelEvent,
 		SourceID:    entity.ID.String(),
 		Severity:    severity,
 		Title:       name + ": " + textcase.HumanizeSnakeCase(string(entity.Category)),
@@ -429,7 +435,7 @@ func DescribeQuarantinedFile(
 			OrgID: entity.OrganizationID,
 			BuID:  entity.BusinessUnitID,
 		},
-		SourceKind: watchtower.SourceEDIInboundQuarantined,
+		SourceKind: watchtower.SourceKindEDIInboundQuarantined,
 		SourceID:   entity.ID.String(),
 		Severity:   watchtower.SeverityWarning,
 		Title: "EDI file quarantined: " + stringutils.FirstNonEmpty(
@@ -476,7 +482,7 @@ func DescribeBillingException(
 			OrgID: entity.OrganizationID,
 			BuID:  entity.BusinessUnitID,
 		},
-		SourceKind:  watchtower.SourceBillingException,
+		SourceKind:  watchtower.SourceKindBillingException,
 		SourceID:    entity.ID.String(),
 		Severity:    watchtower.SeverityWarning,
 		Title:       "Billing exception: " + reason,
@@ -567,7 +573,7 @@ func DescribeDetentionOccurrence(
 			OrgID: entity.OrganizationID,
 			BuID:  entity.BusinessUnitID,
 		},
-		SourceKind:  watchtower.SourceDetentionOccurrence,
+		SourceKind:  watchtower.SourceKindDetentionOccurrence,
 		SourceID:    entity.ID.String(),
 		Severity:    severity,
 		Title:       title,
@@ -672,7 +678,7 @@ func DescribeExpiringCredentials(entity ExpiringCredentials) watchtowerports.Wat
 
 	return watchtowerports.WatchtowerItemInput{
 		TenantInfo:  entity.TenantInfo,
-		SourceKind:  watchtower.SourceWorkerCredential,
+		SourceKind:  watchtower.SourceKindWorkerCredential,
 		SourceID:    entity.WorkerID.String(),
 		Severity:    severity,
 		Title:       who + ": " + expiryTitle(soonest, len(entity.Papers)),
@@ -680,12 +686,15 @@ func DescribeExpiringCredentials(entity ExpiringCredentials) watchtowerports.Wat
 		SubjectType: agent.SubjectWorker,
 		SubjectID:   entity.WorkerID,
 		EventKind:   agenttrigger.EventWorkerCredentialExpiring,
-		Path:        panelPath(pathWorkers, entity.WorkerID.String()),
-		Record:      watchtoweritem.ResourceRecord(permission.ResourceWorker, who),
-		Facts:       facts,
-		Panel:       expiryPanel(who, entity.Papers),
-		Deadline:    deadline,
-		OccurredAt:  entity.OccurredAt,
+		Path: workerpage.Path(
+			entity.WorkerID,
+			workerpage.AtView(workerpage.TabQualification, workerpage.ViewCredentials),
+		),
+		Record:     watchtoweritem.ResourceRecord(permission.ResourceWorker, who),
+		Facts:      facts,
+		Panel:      expiryPanel(who, entity.Papers),
+		Deadline:   deadline,
+		OccurredAt: entity.OccurredAt,
 	}
 }
 
@@ -763,7 +772,7 @@ func DescribeMoveCoverageRisk(entity UncoveredMove) watchtowerports.WatchtowerIt
 
 	return watchtowerports.WatchtowerItemInput{
 		TenantInfo:  entity.TenantInfo,
-		SourceKind:  watchtower.SourceMoveCoverage,
+		SourceKind:  watchtower.SourceKindMoveCoverage,
 		SourceID:    entity.MoveID.String(),
 		Severity:    severity,
 		Title:       title,
@@ -782,8 +791,11 @@ func DescribeMoveCoverageRisk(entity UncoveredMove) watchtowerports.WatchtowerIt
 			watchtoweritem.Fact("Reason", entity.Reason),
 		},
 		Panel: &watchtowerpanel.Panel{
-			Kind:     watchtowerpanel.KindCoverage,
-			Coverage: &watchtowerpanel.CoveragePanel{StartsAt: entity.StartsAt, Reason: entity.Reason},
+			Kind: watchtowerpanel.KindCoverage,
+			Coverage: &watchtowerpanel.CoveragePanel{
+				StartsAt: entity.StartsAt,
+				Reason:   entity.Reason,
+			},
 		},
 		Deadline:   watchtoweritem.DeadlineAt(entity.StartsAt, "Move starts"),
 		OccurredAt: entity.StartsAt,
@@ -808,16 +820,21 @@ func DescribeInboundMessage(
 			OrgID: entity.OrganizationID,
 			BuID:  entity.BusinessUnitID,
 		},
-		SourceKind:  watchtower.SourceInboundMessage,
+		SourceKind:  watchtower.SourceKindInboundMessage,
 		SourceID:    entity.ID.String(),
 		Severity:    severity,
 		Title:       inboundMessageTitle(entity),
 		Summary:     inboundMessageSummary(entity),
 		SubjectType: agent.SubjectInboundMessage,
 		SubjectID:   entity.ID,
-		About:       pulid.FirstNotNil(entity.MatchedShipmentID, entity.MatchedCustomerID, entity.MatchedCarrierID, entity.ID),
-		EventKind:   agenttrigger.EventInboundMessageClassified,
-		Path:        pathInbox + "?message=" + entity.ID.String(),
+		About: pulid.FirstNotNil(
+			entity.MatchedShipmentID,
+			entity.MatchedCustomerID,
+			entity.MatchedCarrierID,
+			entity.ID,
+		),
+		EventKind: agenttrigger.EventInboundMessageClassified,
+		Path:      pathInbox + "?message=" + entity.ID.String(),
 		Record: watchtoweritem.ResourceRecord(
 			permission.ResourceInboundMessage,
 			stringutils.FirstNonEmpty(entity.Subject, "(no subject)"),

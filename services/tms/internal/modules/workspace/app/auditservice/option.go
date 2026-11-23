@@ -55,6 +55,38 @@ func WithMetadata(metadata map[string]any) auditports.LogOption {
 	}
 }
 
+func WithSubject(resource permission.Resource, id pulid.ID) auditports.LogOption {
+	return func(entry *audit.Entry) error {
+		return entry.SetSubject(resource, id)
+	}
+}
+
+func WithSubjectOf(records ...any) auditports.LogOption {
+	return func(entry *audit.Entry) error {
+		for _, record := range records {
+			owner, ok := record.(audit.SubjectOwner)
+			if !ok {
+				continue
+			}
+			resource, id := owner.AuditSubject()
+			if id.IsNil() || !audit.KeepsFile(resource) {
+				continue
+			}
+			return entry.SetSubject(resource, id)
+		}
+		return nil
+	}
+}
+
+func ownsSubject(records ...any) bool {
+	for _, record := range records {
+		if _, ok := record.(audit.SubjectOwner); ok {
+			return true
+		}
+	}
+	return false
+}
+
 func WithCategory(category audit.Category) auditports.LogOption {
 	return func(entry *audit.Entry) error {
 		entry.Category = category
@@ -134,6 +166,9 @@ func BuildBulkLogEntries[T BulkLogEntity](
 			entryOpts = append(entryOpts, WithDiff(orig, entity))
 		}
 
+		if ownsSubject(entity) {
+			entryOpts = append(entryOpts, WithSubjectOf(entity))
+		}
 		entryOpts = append(entryOpts, opts...)
 
 		entry := auditports.BulkLogEntry{

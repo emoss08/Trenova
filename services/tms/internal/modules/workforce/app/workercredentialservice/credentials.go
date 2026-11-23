@@ -614,6 +614,14 @@ func (s *Service) Summary(
 	return s.summarize(ctx, tenantInfo, wrk)
 }
 
+func (s *Service) SummaryFor(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	wrk *worker.Worker,
+) (*workercredential.WorkerCredentialSummary, error) {
+	return s.summarize(ctx, tenantInfo, wrk)
+}
+
 func (s *Service) summarize(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,

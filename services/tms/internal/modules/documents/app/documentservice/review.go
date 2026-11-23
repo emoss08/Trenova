@@ -105,6 +105,7 @@ func (s *Service) Review(ctx context.Context, req *ReviewRequest) (*document.Doc
 		BusinessUnitID: reviewed.BusinessUnitID,
 	},
 		auditservice.WithComment(comment),
+		auditservice.WithSubjectOf(reviewed),
 		auditservice.WithDiff(plan.Before, reviewed),
 		auditservice.WithMetadata(map[string]any{
 			metadataResourceID:   reviewed.ResourceID,

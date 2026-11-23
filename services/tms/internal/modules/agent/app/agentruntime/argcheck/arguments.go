@@ -18,12 +18,24 @@ type Contract struct {
 	Args      map[string]any
 	aliases   []argumentAlias
 	coercions []argumentCoercion
+	// numbers are the values sent where an id belonged that may be records'
+	// own numbers, still to be read; read are the ones read as records.
+	numbers []NumberRef
+	read    []NumberReading
 }
 
 // Note is what the result tells the model about the call it sent, so the
 // next one is sent as the tool declares it.
 func (c Contract) Note() string {
-	return argumentNote(c.aliases, c.coercions)
+	parts := make([]string, 0, 2)
+	if note := argumentNote(c.aliases, c.coercions); note != "" {
+		parts = append(parts, note)
+	}
+	if note := numbersNote(c.read); note != "" {
+		parts = append(parts, note)
+	}
+
+	return strings.Join(parts, " ")
 }
 
 func ContractCall(
@@ -47,16 +59,25 @@ func ContractCall(
 	if err := validator.ValidateFor(name, schema, coerced); err != nil {
 		return Contract{}, err
 	}
-	if problems := idShapeProblems(schema, coerced); len(problems) > 0 {
-		multiErr := errortypes.NewMultiError()
-		for _, problem := range problems {
-			multiErr.Add(problem.Path, errortypes.ErrInvalid, problem.Message)
+	problems, numbers := idShapeProblems(schema, coerced)
+	if len(problems) > 0 {
+		for _, number := range numbers {
+			problems = append(problems, argumentProblem{Path: number.Path, Message: number.refusal})
 		}
 
-		return Contract{}, multiErr
+		return Contract{}, refusalOf(problems)
 	}
 
-	return Contract{Args: coerced, aliases: aliases, coercions: coercions}, nil
+	return Contract{Args: coerced, aliases: aliases, coercions: coercions, numbers: numbers}, nil
+}
+
+func refusalOf(problems []argumentProblem) error {
+	multiErr := errortypes.NewMultiError()
+	for _, problem := range problems {
+		multiErr.Add(problem.Path, errortypes.ErrInvalid, problem.Message)
+	}
+
+	return multiErr
 }
 
 type argumentAlias struct {

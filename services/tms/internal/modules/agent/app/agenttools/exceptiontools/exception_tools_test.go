@@ -105,7 +105,7 @@ func newFakeExceptions(kind watchtower.SourceKind) *fakeExceptions {
 func TestResolveException_PreviewsThenResolves(t *testing.T) {
 	t.Parallel()
 
-	exceptions := newFakeExceptions(watchtower.SourceMissedPickup)
+	exceptions := newFakeExceptions(watchtower.SourceKindMissedPickup)
 	tool := NewResolveExceptionTool(exceptions)
 	params := agenttoolstest.ExecuteParams(map[string]any{
 		paramWatchtowerItemID: exceptions.item.ID.String(),
@@ -125,13 +125,13 @@ func TestResolveException_PreviewsThenResolves(t *testing.T) {
 
 	require.NoError(t, tool.Execute(t.Context(), params))
 	require.NotNil(t, exceptions.saved)
-	assert.Equal(t, watchtower.ResolutionCarrierDelay, exceptions.saved.ResolutionCode)
+	assert.Equal(t, watchtower.ResolutionCodeCarrierDelay, exceptions.saved.ResolutionCode)
 }
 
 func TestResolveException_RefusesTheSystemCodeAndAnAgentsOwnWork(t *testing.T) {
 	t.Parallel()
 
-	exceptions := newFakeExceptions(watchtower.SourceMissedPickup)
+	exceptions := newFakeExceptions(watchtower.SourceKindMissedPickup)
 	tool := NewResolveExceptionTool(exceptions)
 	cleared := agenttoolstest.ExecuteParams(map[string]any{
 		paramWatchtowerItemID: exceptions.item.ID.String(),
@@ -139,7 +139,7 @@ func TestResolveException_RefusesTheSystemCodeAndAnAgentsOwnWork(t *testing.T) {
 	})
 	require.Error(t, tool.Execute(t.Context(), cleared))
 
-	oversight := newFakeExceptions(watchtower.SourceAgentRunFailed)
+	oversight := newFakeExceptions(watchtower.SourceKindAgentRunFailed)
 	params := agenttoolstest.ExecuteParams(map[string]any{
 		paramWatchtowerItemID: oversight.item.ID.String(),
 		paramResolutionCode:   "Fixed",
@@ -151,7 +151,7 @@ func TestResolveException_RefusesTheSystemCodeAndAnAgentsOwnWork(t *testing.T) {
 func TestAssignException_GivesTheItemToTheNamedPerson(t *testing.T) {
 	t.Parallel()
 
-	exceptions := newFakeExceptions(watchtower.SourcePodMissing)
+	exceptions := newFakeExceptions(watchtower.SourceKindPODMissing)
 	assignee := pulid.MustNew("usr_")
 	tool := NewAssignExceptionTool(exceptions)
 	params := agenttoolstest.ExecuteParams(map[string]any{
@@ -180,7 +180,7 @@ func TestAssignException_GivesTheItemToTheNamedPerson(t *testing.T) {
 func TestCommentOnException_PreviewsWithoutWriting(t *testing.T) {
 	t.Parallel()
 
-	exceptions := newFakeExceptions(watchtower.SourceTenderExhausted)
+	exceptions := newFakeExceptions(watchtower.SourceKindTenderExhausted)
 	tool := NewCommentOnExceptionTool(exceptions)
 	params := agenttoolstest.ExecuteParams(map[string]any{
 		paramWatchtowerItemID: exceptions.item.ID.String(),

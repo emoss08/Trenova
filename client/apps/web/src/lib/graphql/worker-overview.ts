@@ -19,8 +19,6 @@ export type OverviewChecklist = NonNullable<WorkerOverview["checklist"]>;
 export type OverviewPTOBalance = NonNullable<WorkerOverview["pto"]>[number];
 export type OverviewReview = NonNullable<WorkerOverview["lastReview"]>;
 
-export const WORKER_OVERVIEW_KEY = "worker-overview";
-
 export async function fetchWorkerOverview(
   workerId: string,
   options?: { signal?: AbortSignal },
