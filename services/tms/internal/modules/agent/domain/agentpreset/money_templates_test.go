@@ -95,8 +95,8 @@ func TestTemplates_TheSettlementsClerkRunsThePayPeriod(t *testing.T) {
 	for _, tool := range []string{
 		"worker_list",
 		"carrier_list",
-		"shipment_list",
 		"settlement_list_driver",
+		"settlement_list_batch_blockers",
 		"settlement_get_driver",
 		"settlement_list_pay_events",
 		"settlement_get_driver_earnings",
@@ -145,7 +145,7 @@ func TestTemplates_TheSettlementsClerkRunsThePayPeriod(t *testing.T) {
 		"settlement_list_pay_profiles",
 		"settlement_list_pay_assignments",
 		"settlement_list_recurring_deductions",
-		"settlement_list_recurring_earnings",
+		"settlement_hold_driver",
 	} {
 		require.Containsf(t, tools, tool, "the settlements clerk needs %s", tool)
 	}

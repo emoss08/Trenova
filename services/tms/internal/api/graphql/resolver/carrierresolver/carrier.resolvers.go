@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/timeutils"
 )
 
 func (r *CarrierInsurancePolicyResolver) CoverageAmount(ctx context.Context, obj *carrier.CarrierInsurancePolicy) (string, error) {
@@ -70,4 +71,24 @@ func (r *QueryResolver) Carrier(ctx context.Context, id string) (*carrier.Carrie
 		carrierID,
 		resolvercore.TenantInfo(authCtx),
 	))
+}
+
+func (r *QueryResolver) CarrierCoverEnding(ctx context.Context, withinDays *int, limit *int) ([]*gqlmodel.CarrierCoverEnding, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceCarrier, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+
+	readsShipments := r.HasPermission(ctx, authCtx, permission.ResourceShipment, permission.OpRead)
+	req, err := coverEndingRequest(timeutils.NowUnix(), withinDays, limit, readsShipments)
+	if err != nil {
+		return nil, err
+	}
+
+	covers, err := r.CarrierCover.Ending(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	return coverEndingsToModel(covers, readsShipments), nil
 }

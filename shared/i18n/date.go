@@ -24,3 +24,25 @@ func LongDate(locale Locale, day time.Time) string {
 		return shortMonths[EN][day.Month()-1] + " " + date + ", " + year
 	}
 }
+
+func ShortDate(locale Locale, day time.Time) string {
+	date := strconv.Itoa(day.Day())
+	switch locale {
+	case ZhTW, ZhCN:
+		return strconv.Itoa(int(day.Month())) + "月" + date + "日"
+	case ES:
+		return date + " " + shortMonths[ES][day.Month()-1]
+	case EN:
+		return shortMonths[EN][day.Month()-1] + " " + date
+	default:
+		return shortMonths[EN][day.Month()-1] + " " + date
+	}
+}
+
+func Day(locale Locale, day, today time.Time) string {
+	if day.Year() == today.Year() {
+		return ShortDate(locale, day)
+	}
+
+	return LongDate(locale, day)
+}

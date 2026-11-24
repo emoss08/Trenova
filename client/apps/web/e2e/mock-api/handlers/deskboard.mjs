@@ -5,6 +5,11 @@
 // record and the chart's analysis no longer readable) and "reading" (held, so the
 // board draws its skeleton).
 //
+// Boards beyond dispatch (deskboard-beyond.mjs) add one conversation per approved mockup
+// frame, "athr_desk_board_<frame>" (ontime, aging, fuelcost, facilities, coverage,
+// settlements, carriers, overtime, ifta, edi, close) and the Measures frame,
+// "athr_desk_board_beyond", each a board in the conversation drawn in its metric forms.
+//
 // A second conversation, "athr_desk_board_inline", holds boards placed in the
 // conversation as the reply itself: eight late loads (a list cut to six), Acme
 // Foods' credit (a figure beside a meter, then a list and an action) and a
@@ -13,6 +18,7 @@
 // takes "locked" (a reader who may not read two of the loads, so a reading has
 // no value and two rows are counted, not named) and "unreadable" (the boards
 // cannot be read, so each reply draws its words with Try again).
+import { BEYOND_FRAMES } from "./deskboard-beyond.mjs";
 import { deskBudget } from "./desktable.mjs";
 
 const THREAD = "athr_desk_board";
@@ -68,12 +74,12 @@ function block(fields) {
     tone: "",
     measure: "",
     noteTone: "",
-    source: { kind: "", resource: "", count: 0, readable: 0, title: "" },
+    source: { kind: "", recordKind: "", count: 0, readable: 0, title: "" },
     figures: [],
     rows: [],
     compare: null,
     table: null,
-    chart: null,
+    metric: null,
     events: [],
     checks: [],
     meter: null,
@@ -85,17 +91,142 @@ function block(fields) {
   };
 }
 
-function record(resource, id, label, subtitle = "", status = "", measure = null) {
-  return { resource, id, readable: true, label, subtitle, status, measure };
+const words = (text, fields = {}) => ({
+  text,
+  value: null,
+  at: null,
+  day: false,
+  place: "",
+  ...fields,
+});
+
+/** The furthest a mock list runs, so its rows' bars share one scale as boardbar.Layout lays them out. */
+const TRACK_SCALE = 200 * MIN;
+
+/**
+ * A row's measure as the server writes it (`board.RowMeasure`): the standing words and the
+ * second fact in the reader's language with `{0}` for the value or the moment, and the bar.
+ * The mock states its rows in the old terms (late, held, projected, due, delivered, open,
+ * settled) and this writes them as the readers do.
+ */
+function rowMeasure({ measure, value, state, at, place, tone }) {
+  const seconds = value.kind === "duration" ? Math.max(0, Number(value.number)) : 0;
+  const width = Math.min(1, seconds / TRACK_SCALE);
+  const bar = (kind, segmentTone = "") => ({
+    centred: false,
+    bound: null,
+    segments:
+      width > 0 ? [{ kind, start: 0, width: Math.max(width, 0.015), tone: segmentTone }] : [],
+  });
+  const at_ = place ? `at ${place}` : "";
+  switch (measure) {
+    case "lateness": {
+      const due = words("Due {0}", { at, place: at_ });
+      switch (state) {
+        case "late":
+          return {
+            measure,
+            value,
+            standing: words("{0} behind", { value }),
+            fact: due,
+            tone,
+            bar: bar("used", "warn"),
+          };
+        case "held":
+          return {
+            measure,
+            value,
+            standing: words("{0} at the stop", { value }),
+            fact: due,
+            tone,
+            bar: bar("held"),
+          };
+        case "projected":
+          return {
+            measure,
+            value,
+            standing: words("Estimated {0} late", { value }),
+            fact: due,
+            tone,
+            bar: bar("projected", "warn"),
+          };
+        case "due":
+          return {
+            measure,
+            value,
+            standing: words("Not estimated"),
+            fact: due,
+            tone,
+            bar: bar("used"),
+          };
+        case "delivered":
+          return {
+            measure,
+            value,
+            standing: seconds > 0 ? words("{0} late", { value }) : words("On time"),
+            fact: words("Delivered {0}", { at, place: at_ }),
+            tone,
+            bar: { centred: false, bound: null, segments: [] },
+          };
+        default:
+          return { measure, value, standing: words("On time"), fact: due, tone, bar: bar("used") };
+      }
+    }
+    case "amountDue":
+      return {
+        measure,
+        value,
+        standing: state === "settled" ? words("Paid") : words("{0} due", { value }),
+        fact: at ? words("Due {0}", { at, day: true }) : null,
+        tone,
+        bar: null,
+      };
+    case "pendingFor":
+      return {
+        measure,
+        value,
+        standing: state === "settled" ? words("Settled") : words("Waiting {0}", { value }),
+        fact: at ? words("Since {0}", { at }) : null,
+        tone,
+        bar: bar("used", tone),
+      };
+    case "age":
+      return {
+        measure,
+        value,
+        standing: words("{0} old", { value }),
+        fact: at ? words("Dated {0}", { at, day: true }) : null,
+        tone,
+        bar: bar("used", tone),
+      };
+    default:
+      return { measure, value, standing: words("{0}", { value }), fact: null, tone, bar: null };
+  }
 }
 
-const gone = (resource) => ({
-  resource,
+function record(kind, id, label, subtitle = "", status = "", measure = null) {
+  return {
+    kind,
+    id,
+    readable: true,
+    label,
+    subtitle,
+    status,
+    statusTone: "",
+    opens: null,
+    measure: measure ? rowMeasure(measure) : null,
+  };
+}
+
+const gone = (kind) => ({
+  kind,
   id: "",
   readable: false,
   label: "",
   subtitle: "",
   status: "",
+  statusTone: "",
+  opens: null,
   measure: null,
 });
 
@@ -175,7 +306,7 @@ function lateCard(state) {
         type: "figures",
         title: "Where they stand",
         numeral: 1,
-        source: { kind: "records", resource: "shipment", count: 6, readable: 6, title: "" },
+        source: { kind: "records", recordKind: "shipment", count: 6, readable: 6, title: "" },
         figures: [
           {
             label: "Late now",
@@ -205,7 +336,7 @@ function lateCard(state) {
         measure: "lateness",
         source: {
           kind: "records",
-          resource: "shipment",
+          recordKind: "shipment",
           count: 6,
           readable: moved(state) ? 5 : 6,
           title: "",
@@ -217,7 +348,7 @@ function lateCard(state) {
         title: "S2610-0412, hour by hour",
         numeral: 3,
         half: true,
-        source: { kind: "activity", resource: "shipment", count: 1, readable: 1, title: "" },
+        source: { kind: "activity", recordKind: "shipment", count: 1, readable: 1, title: "" },
         events: [
           event(state, 6 * HOUR + 50 * MIN, "create", "Picked up at Dallas, TX", "Marcus Bell"),
           event(state, 3 * HOUR, "update", "Stopped at the Shreveport fuel stop", "", "api_key"),
@@ -316,7 +447,7 @@ function carriersCard(state) {
         type: "compare",
         title: "Head to head, last 90 days",
         numeral: 1,
-        source: { kind: "mixed", resource: "", count: 3, readable: 3, title: "" },
+        source: { kind: "mixed", recordKind: "", count: 3, readable: 3, title: "" },
         compare: {
           columns: CARRIERS.map(([id, label, mc, status]) =>
             record("carrier", id, label, mc, status),
@@ -332,35 +463,46 @@ function carriersCard(state) {
         state: moved(state) ? "unreadable" : "ready",
         source: {
           kind: "analysis",
-          resource: "",
+          recordKind: "",
           count: 0,
           readable: 0,
           title: "Carrier scorecard",
         },
-        chart: moved(state)
+        metric: moved(state)
           ? null
           : {
-              kind: "line",
+              name: "",
+              form: "trend",
               title: "On-time delivery",
-              x: { label: "Week", kind: "text", values: weeks },
-              series: [
-                {
-                  name: "Blue Line",
-                  values: [0.96, 0.97, 0.97, 0.98, 0.96, 0.98, 0.97, 0.98, 0.97, 0.98, 0.97, 0.98],
-                },
-                {
-                  name: "Corridor",
-                  values: [0.9, 0.92, 0.93, 0.92, 0.94, 0.93, 0.95, 0.93, 0.94, 0.92, 0.95, 0.94],
-                },
-                {
-                  name: "Acme",
-                  values: [0.94, 0.95, 0.93, 0.92, 0.94, 0.91, 0.9, 0.92, 0.89, 0.9, 0.88, 0.89],
-                },
-              ],
-              valueKind: "percent",
-              currency: "",
-              stacked: false,
-              horizontal: false,
+              source: "",
+              figures: [],
+              chart: {
+                unit: "percent",
+                currency: "",
+                ticks: weeks.map((label) => ({ at: null, label, marked: false })),
+                series: [
+                  [
+                    "Blue Line",
+                    [0.96, 0.97, 0.97, 0.98, 0.96, 0.98, 0.97, 0.98, 0.97, 0.98, 0.97, 0.98],
+                  ],
+                  [
+                    "Corridor",
+                    [0.9, 0.92, 0.93, 0.92, 0.94, 0.93, 0.95, 0.93, 0.94, 0.92, 0.95, 0.94],
+                  ],
+                  ["Acme", [0.94, 0.95, 0.93, 0.92, 0.94, 0.91, 0.9, 0.92, 0.89, 0.9, 0.88, 0.89]],
+                ].map(([name, points]) => ({ name, role: "now", points: points.map(String) })),
+                marked: [],
+                band: null,
+                target: null,
+                ref: null,
+                ghost: false,
+                rows: [],
+              },
+              split: null,
+              grid: null,
+              log: [],
+              checks: [],
+              table: null,
             },
       }),
       block({
@@ -447,14 +589,14 @@ function closeCard(state) {
         type: "meter",
         title: "How far the close is",
         numeral: 1,
-        source: { kind: "checks", resource: "", count: 26, readable: 26, title: "" },
+        source: { kind: "checks", recordKind: "", count: 26, readable: 26, title: "" },
         meter: { clear: 19, total: 26, tones, percent: null },
       }),
       block({
         type: "checks",
         title: "What is still open",
         numeral: 2,
-        source: { kind: "checks", resource: "", count: 5, readable: 5, title: "" },
+        source: { kind: "checks", recordKind: "", count: 5, readable: 5, title: "" },
         checks: [
           check(
             "Journal entries waiting for approval",
@@ -497,7 +639,7 @@ function closeCard(state) {
         numeral: 3,
         half: true,
         measure: "pendingFor",
-        source: { kind: "records", resource: "journal_entry", count: 3, readable: 3, title: "" },
+        source: { kind: "records", recordKind: "journal_entry", count: 3, readable: 3, title: "" },
         rows: entries,
       }),
       block({
@@ -506,7 +648,7 @@ function closeCard(state) {
         numeral: 4,
         half: true,
         measure: "amountDue",
-        source: { kind: "records", resource: "invoice", count: 4, readable: 4, title: "" },
+        source: { kind: "records", recordKind: "invoice", count: 4, readable: 4, title: "" },
         rows: invoices,
       }),
       block({
@@ -537,13 +679,38 @@ function layout(card) {
       ...(filled.half ? { half: true } : {}),
       ...(filled.figures.length ? { figures: filled.figures.map(({ label }) => ({ label })) } : {}),
       ...(filled.rows.length
-        ? { records: { resource: filled.rows[0].resource, ids: filled.rows.map((row) => row.id) } }
+        ? { records: { kind: filled.rows[0].kind, ids: filled.rows.map((row) => row.id) } }
         : {}),
       ...(filled.checks.length
         ? { checks: filled.checks.map(({ title, tone }) => ({ title, tone })) }
         : {}),
+      ...(filled.type === "metric" && filled.metric ? { metric: filled.metric.name } : {}),
     })),
   };
+}
+
+/**
+ * The rows each block drew when the board was shown (`board.SizesOf`): records, checks,
+ * events and work, and a metric's log, checks, table, grid and chart rows.
+ */
+function sizesOf(card) {
+  return card.blocks.map((filled) => {
+    const read = filled.metric;
+    const metricRows = read
+      ? read.log.length +
+        read.checks.length +
+        (read.table?.rows.length ?? 0) +
+        (read.grid?.rows.length ?? 0) +
+        (read.chart?.rows.length ?? 0)
+      : 0;
+    return (
+      filled.rows.length +
+      filled.checks.length +
+      filled.events.length +
+      filled.work.length +
+      metricRows
+    );
+  });
 }
 
 function artifact(state, key, index) {
@@ -664,7 +831,7 @@ function inlineLateRows(state) {
 function inlineLateCard(state) {
   const loads = {
     kind: "records",
-    resource: "shipment",
+    recordKind: "shipment",
     count: 8,
     readable: locked(state) ? 6 : 8,
     title: "",
@@ -764,7 +931,7 @@ function inlineAnswerCard(state) {
   const pick = (ids) => rows.filter((row, index) => ids.includes(INLINE_LATE[index][0]));
   const loads = (count) => ({
     kind: "records",
-    resource: "shipment",
+    recordKind: "shipment",
     count,
     readable: locked(state) ? count - 1 : count,
     title: "",
@@ -878,12 +1045,12 @@ function inlineCreditCard(state) {
   const day = 86400;
   const invoices = {
     kind: "records",
-    resource: "invoice",
+    recordKind: "invoice",
     count: 3,
     readable: 3,
     title: "",
   };
-  const metrics = { kind: "metrics", resource: "", count: 0, readable: 0, title: "" };
+  const metrics = { kind: "metrics", recordKind: "", count: 0, readable: 0, title: "" };
   return {
     artifactId: "aart_inline_credit",
     threadId: INLINE,
@@ -983,7 +1150,7 @@ function inlineCarriersCard(state, revised) {
     line("On time", pick([pct(0.91), pct(0.96), pct(0.88)]), [1]),
     line("Loads covered", pick([count(42), count(11), count(27)]), [0]),
   ];
-  const metrics = { kind: "metrics", resource: "", count: 0, readable: 0, title: "" };
+  const metrics = { kind: "metrics", recordKind: "", count: 0, readable: 0, title: "" };
   return {
     artifactId: revised ? "aart_inline_carriers_v2" : "aart_inline_carriers",
     threadId: INLINE,
@@ -1023,7 +1190,7 @@ function inlineCarriersCard(state, revised) {
         numeral: 1,
         source: {
           kind: "mixed",
-          resource: "",
+          recordKind: "",
           count: columns.length,
           readable: columns.length,
           title: "",
@@ -1100,7 +1267,7 @@ function inlineSpec(card, lineage) {
       label: entry.label,
       ...(entry.source.kind === "records"
         ? {
-            records: { resource: entry.source.resource, ids: [] },
+            records: { kind: entry.source.recordKind, ids: [] },
             measure: entry.measure,
             aggregate: entry.aggregate,
           }
@@ -1246,9 +1413,110 @@ function inlineCard(state, artifactId) {
   return turn ? turn.card(state) : null;
 }
 
+// ------------------------------------------- boards beyond dispatch, one per frame
+
+const BEYOND_KEYS = Object.keys(BEYOND_FRAMES);
+const beyondThreadId = (key) => `athr_desk_board_${key}`;
+
+/** A frame's single turn: the question, the show_board call, its result and the reply. */
+function beyondMessages(state, key) {
+  const card = BEYOND_FRAMES[key].card(state);
+  const threadId = beyondThreadId(key);
+  const base = { threadId, kind: "Message", toolFailed: false, refused: false };
+  const call = `call_beyond_${key}`;
+  const at = card.answeredAt;
+  return [
+    {
+      ...base,
+      id: `amsg_beyond_${key}_u`,
+      sequence: 1,
+      role: "User",
+      content: card.question,
+      createdAt: at - MIN,
+    },
+    {
+      ...base,
+      id: `amsg_beyond_${key}_c`,
+      sequence: 2,
+      role: "Assistant",
+      content: "",
+      createdAt: at - 20,
+      toolCalls: [
+        { id: call, name: "show_board", arguments: inlineSpec(card, ""), effect: "present" },
+      ],
+    },
+    {
+      ...base,
+      id: `amsg_beyond_${key}_r`,
+      sequence: 3,
+      role: "Tool",
+      content: fencedResult("show_board", card),
+      createdAt: at - 5,
+      toolCallId: call,
+      toolName: "show_board",
+      effect: "present",
+      toolVerdict: "ran",
+      summary: "Showed a board",
+    },
+    {
+      ...base,
+      id: `amsg_beyond_${key}_a`,
+      sequence: 4,
+      role: "Assistant",
+      content: inlineReply(card),
+      createdAt: at,
+    },
+  ];
+}
+
+function beyondArtifacts(state, key) {
+  const card = BEYOND_FRAMES[key].card(state);
+  return [
+    {
+      id: card.artifactId,
+      threadId: beyondThreadId(key),
+      messageId: `amsg_beyond_${key}_a`,
+      runId: `arun_beyond_${key}`,
+      proposalId: "",
+      planId: "",
+      kind: "board",
+      status: "Ready",
+      title: card.title,
+      payload: {
+        board: inlineSpec(card, ""),
+        place: "conversation",
+        author: card.author,
+        sizes: sizesOf(card),
+      },
+      sourceToolCallId: `call_beyond_${key}`,
+      pinned: false,
+      lineageId: "",
+      lineageSeq: 1,
+      slug: `beyond-${key}`,
+      turn: card.question,
+      createdAt: card.answeredAt,
+      updatedAt: card.answeredAt,
+    },
+  ];
+}
+
+function beyondThread(state, key) {
+  const card = BEYOND_FRAMES[key].card(state);
+  return thread(state, beyondThreadId(key), beyondMessages(state, key), card.question);
+}
+
+function beyondCard(state, artifactId) {
+  const key = BEYOND_KEYS.find((name) => `aart_beyond_${name}` === artifactId);
+  return key ? BEYOND_FRAMES[key].card(state) : null;
+}
+
 /** The conversations this file serves, for the rail's list and shelf counts. */
 export function deskBoardThreads(state) {
-  return [thread(state), inlineThread(state)];
+  return [
+    thread(state),
+    inlineThread(state),
+    ...BEYOND_KEYS.map((key) => beyondThread(state, key)),
+  ];
 }
 
 function inlineThread(state) {
@@ -1258,7 +1526,7 @@ function inlineThread(state) {
 export const DESK_BOARD_HANDLERS = {
   DeskBoardCard: (state, { artifactId }) => {
     if (stageOf(state) === "reading") return { __hold: true };
-    const inline = inlineCard(state, artifactId);
+    const inline = inlineCard(state, artifactId) ?? beyondCard(state, artifactId);
     if (inline) {
       if (stageOf(state) === "unreadable") throw new Error("The board could not be read");
       return { deskBoardCard: inline };
@@ -1342,4 +1610,11 @@ export const DESK_BOARD_ROUTES = [
     list: inlineMessages,
     artifactList: inlineArtifacts,
   }),
+  ...BEYOND_KEYS.flatMap((key) =>
+    threadRoutes(beyondThreadId(key), {
+      read: (state) => beyondThread(state, key),
+      list: (state) => beyondMessages(state, key),
+      artifactList: (state) => beyondArtifacts(state, key),
+    }),
+  ),
 ];

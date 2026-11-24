@@ -9,7 +9,6 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/billing/domain/bankreceipt"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/bankreceiptports"
-	"github.com/emoss08/trenova/pkg/pagination"
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -313,27 +312,27 @@ func (_c *MockBankReceiptRepository_ListByImportBatchID_Call) RunAndReturn(run f
 }
 
 // ListExceptions provides a mock function for the type MockBankReceiptRepository
-func (_mock *MockBankReceiptRepository) ListExceptions(ctx context.Context, tenantInfo pagination.TenantInfo) ([]*bankreceipt.BankReceipt, error) {
-	ret := _mock.Called(ctx, tenantInfo)
+func (_mock *MockBankReceiptRepository) ListExceptions(ctx context.Context, req *bankreceiptports.ListBankReceiptExceptionsRequest) (*bankreceiptports.BankReceiptExceptionPage, error) {
+	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListExceptions")
 	}
 
-	var r0 []*bankreceipt.BankReceipt
+	var r0 *bankreceiptports.BankReceiptExceptionPage
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.TenantInfo) ([]*bankreceipt.BankReceipt, error)); ok {
-		return returnFunc(ctx, tenantInfo)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *bankreceiptports.ListBankReceiptExceptionsRequest) (*bankreceiptports.BankReceiptExceptionPage, error)); ok {
+		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.TenantInfo) []*bankreceipt.BankReceipt); ok {
-		r0 = returnFunc(ctx, tenantInfo)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *bankreceiptports.ListBankReceiptExceptionsRequest) *bankreceiptports.BankReceiptExceptionPage); ok {
+		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*bankreceipt.BankReceipt)
+			r0 = ret.Get(0).(*bankreceiptports.BankReceiptExceptionPage)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, pagination.TenantInfo) error); ok {
-		r1 = returnFunc(ctx, tenantInfo)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *bankreceiptports.ListBankReceiptExceptionsRequest) error); ok {
+		r1 = returnFunc(ctx, req)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -347,20 +346,20 @@ type MockBankReceiptRepository_ListExceptions_Call struct {
 
 // ListExceptions is a helper method to define mock.On call
 //   - ctx context.Context
-//   - tenantInfo pagination.TenantInfo
-func (_e *MockBankReceiptRepository_Expecter) ListExceptions(ctx any, tenantInfo any) *MockBankReceiptRepository_ListExceptions_Call {
-	return &MockBankReceiptRepository_ListExceptions_Call{Call: _e.mock.On("ListExceptions", ctx, tenantInfo)}
+//   - req *bankreceiptports.ListBankReceiptExceptionsRequest
+func (_e *MockBankReceiptRepository_Expecter) ListExceptions(ctx any, req any) *MockBankReceiptRepository_ListExceptions_Call {
+	return &MockBankReceiptRepository_ListExceptions_Call{Call: _e.mock.On("ListExceptions", ctx, req)}
 }
 
-func (_c *MockBankReceiptRepository_ListExceptions_Call) Run(run func(ctx context.Context, tenantInfo pagination.TenantInfo)) *MockBankReceiptRepository_ListExceptions_Call {
+func (_c *MockBankReceiptRepository_ListExceptions_Call) Run(run func(ctx context.Context, req *bankreceiptports.ListBankReceiptExceptionsRequest)) *MockBankReceiptRepository_ListExceptions_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 pagination.TenantInfo
+		var arg1 *bankreceiptports.ListBankReceiptExceptionsRequest
 		if args[1] != nil {
-			arg1 = args[1].(pagination.TenantInfo)
+			arg1 = args[1].(*bankreceiptports.ListBankReceiptExceptionsRequest)
 		}
 		run(
 			arg0,
@@ -370,12 +369,12 @@ func (_c *MockBankReceiptRepository_ListExceptions_Call) Run(run func(ctx contex
 	return _c
 }
 
-func (_c *MockBankReceiptRepository_ListExceptions_Call) Return(bankReceipts []*bankreceipt.BankReceipt, err error) *MockBankReceiptRepository_ListExceptions_Call {
-	_c.Call.Return(bankReceipts, err)
+func (_c *MockBankReceiptRepository_ListExceptions_Call) Return(bankReceiptExceptionPage *bankreceiptports.BankReceiptExceptionPage, err error) *MockBankReceiptRepository_ListExceptions_Call {
+	_c.Call.Return(bankReceiptExceptionPage, err)
 	return _c
 }
 
-func (_c *MockBankReceiptRepository_ListExceptions_Call) RunAndReturn(run func(ctx context.Context, tenantInfo pagination.TenantInfo) ([]*bankreceipt.BankReceipt, error)) *MockBankReceiptRepository_ListExceptions_Call {
+func (_c *MockBankReceiptRepository_ListExceptions_Call) RunAndReturn(run func(ctx context.Context, req *bankreceiptports.ListBankReceiptExceptionsRequest) (*bankreceiptports.BankReceiptExceptionPage, error)) *MockBankReceiptRepository_ListExceptions_Call {
 	_c.Call.Return(run)
 	return _c
 }

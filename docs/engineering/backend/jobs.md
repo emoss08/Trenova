@@ -62,6 +62,15 @@ in [module-architecture.md](../module-architecture.md). Agent work has its own r
   (`etajobs.ShipmentEtaDrainWorkflow`). A queue that is a property of the row itself keeps it
   on the row instead (`billing_queue_items.recheck_due_at`, `BillingQueueTenantWorkflow`).
   The fairness interceptor keys each start by its tenant; never set a `FairnessKey` by hand.
+- **A projection fed by many writers queues from the database.** When the inputs of a stored
+  projection change through many services (an invoice's open amount moves on posting, payment,
+  credit memo, adjustment and void), an `AFTER` row trigger `WHEN` the read columns changed
+  inserts the drain's `work_queue_items` row in the writer's transaction, guarded by one index
+  probe so a tenant that does not use the feature pays nothing more. No writer can forget it.
+  The services a person waits on wake the drain after commit; everything else is woken by a
+  one-minute `WakeDue` schedule (`bankreceiptcandidatejobs`, migration
+  `20261231024220_bank_receipt_candidates`). The backfill is the same queue: the migration
+  inserts a row per subject, the nightly sweep inserts them again to repair drift.
 - **Work for a tenant reaches only an entitled, active tenant.** A fan-out lists through a helper
   that takes an `entitlement.Need` or passes its page through `temporaljobs.KeepEntitled`; a
   cross-tenant statement composes `entitlementports.Filter.ForWork`; work that belongs to no tenant

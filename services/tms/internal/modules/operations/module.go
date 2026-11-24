@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/ports/triageworkports"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/assignmentrepository"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/carrierassignmentrepository"
+	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/carriercoverrepository"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/checkcallrepository"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/customertrackingrepository"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/demandforecastrepository"
@@ -141,6 +142,7 @@ import (
 //nolint:funlen // the module's providers are its part of the application graph
 func SharedOptions() fx.Option {
 	return fx.Options(
+		boardReaders,
 		fx.Provide(
 			dispatchconsolerepository.New,
 			detentionpolicyservice.NewValidator,
@@ -200,6 +202,7 @@ func SharedOptions() fx.Option {
 			shipmenttrackingrepository.New,
 			recurringshipmentrepository.New,
 			carrierassignmentrepository.New,
+			carriercoverrepository.New,
 			routingguiderepository.New,
 			tenderrepository.New,
 			trackingeventrepository.New,
@@ -254,6 +257,7 @@ func SharedOptions() fx.Option {
 			detentionrepository.NewNoticeRepository,
 			detentionrepository.NewAnalyticsRepository,
 			detentionrepository.NewIntelligenceRepository,
+			detentionrepository.NewStayRepository,
 			orderservice.NewValidator,
 			shipmentvalidator.New,
 			recurringshipmentservice.NewValidator,

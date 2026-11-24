@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/board"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -15,6 +16,11 @@ type BoardFillRequest struct {
 	Actor    *permissionports.RequestActor
 	ThreadID pulid.ID
 	Board    *board.Board
+	Agent    *BoardAgentRead
+}
+
+type BoardAgentRead struct {
+	DataAccess permission.FieldSensitivity
 }
 
 type BoardCardRequest struct {
@@ -39,4 +45,21 @@ type BoardFiller interface {
 	Fill(ctx context.Context, req *BoardFillRequest) (*board.Filled, error)
 	Card(ctx context.Context, req *BoardCardRequest) (*BoardCard, error)
 	Location(ctx context.Context, tenant pagination.TenantInfo) *time.Location
+}
+
+type ListSizeRequest struct {
+	Actor      *permissionports.RequestActor
+	ThreadID   pulid.ID
+	ArtifactID pulid.ID
+	Agent      *BoardAgentRead
+}
+
+type ListSize struct {
+	Title string
+	Kind  string
+	Total int
+}
+
+type ListSizer interface {
+	ListSize(ctx context.Context, req *ListSizeRequest) (*ListSize, error)
 }

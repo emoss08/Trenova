@@ -3351,12 +3351,12 @@ var shipmentsTable = schema.Table{
 		{Name: "AdditionalCharges", Alias: "ac", Kind: schema.HasMany, Local: []int32{0}, Remote: []int32{3}, Label: `Additional Charges`, JSON: `additionalCharges`, NoReport: true},
 		{Name: "ChargeAllocations", Alias: "ca", Kind: schema.HasMany, Local: []int32{0}, Remote: []int32{3}, Label: `Charge Allocations`, JSON: `chargeAllocations`, NoReport: true},
 		{Name: "Comments", Alias: "c", Kind: schema.HasMany, Local: []int32{0}, Remote: []int32{3}, Label: `Comments`, JSON: `comments`, NoReport: true},
-		{Name: "OriginStop", Alias: "os", Kind: schema.Pick, Local: []int32{0}, Remote: nil, Label: `Origin Stop`, JSON: `originStop`, Path: []int32{10, 0}, Order: []schema.PickKey{{Hop: 0, Column: 7}, {Hop: 1, Column: 9}, {Hop: 1, Column: 0}}},
-		{Name: "DestinationStop", Alias: "ds", Kind: schema.Pick, Local: []int32{0}, Remote: nil, Label: `Destination Stop`, JSON: `destinationStop`, Path: []int32{10, 0}, Order: []schema.PickKey{{Hop: 0, Column: 7}, {Hop: 1, Column: 9}, {Hop: 1, Column: 0}}, Last: true},
-		{Name: "FirstPickup", Alias: "fp", Kind: schema.Pick, Local: []int32{0}, Remote: nil, Label: `First Pickup`, JSON: `shipperStop`, NoReport: true, Path: []int32{10, 0}, Order: []schema.PickKey{{Hop: 0, Column: 7}, {Hop: 1, Column: 9}, {Hop: 1, Column: 0}}, Filter: []schema.PickFilter{{Hop: 1, Column: 6, Values: []string{`Pickup`, `SplitPickup`}}}},
-		{Name: "LastDelivery", Alias: "ld", Kind: schema.Pick, Local: []int32{0}, Remote: nil, Label: `Last Delivery`, JSON: `consigneeStop`, NoReport: true, Path: []int32{10, 0}, Order: []schema.PickKey{{Hop: 0, Column: 7}, {Hop: 1, Column: 9}, {Hop: 1, Column: 0}}, Last: true, Filter: []schema.PickFilter{{Hop: 1, Column: 6, Values: []string{`Delivery`, `SplitDelivery`}}}},
-		{Name: "PickupAppointment", Alias: "pa", Kind: schema.Pick, Local: []int32{0}, Remote: nil, Label: `Pickup Appointment`, JSON: `pickupAppointment`, NoReport: true, Path: []int32{10, 0}, Order: []schema.PickKey{{Hop: 0, Column: 7}, {Hop: 1, Column: 9}, {Hop: 1, Column: 0}}, Filter: []schema.PickFilter{{Hop: 1, Column: 6, Values: []string{`Pickup`, `SplitPickup`}}, {Hop: 1, Column: 7, Values: []string{`Appointment`}}}},
-		{Name: "DeliveryAppointment", Alias: "da", Kind: schema.Pick, Local: []int32{0}, Remote: nil, Label: `Delivery Appointment`, JSON: `deliveryAppointment`, NoReport: true, Path: []int32{10, 0}, Order: []schema.PickKey{{Hop: 0, Column: 7}, {Hop: 1, Column: 9}, {Hop: 1, Column: 0}}, Last: true, Filter: []schema.PickFilter{{Hop: 1, Column: 6, Values: []string{`Delivery`, `SplitDelivery`}}, {Hop: 1, Column: 7, Values: []string{`Appointment`}}}},
+		{Name: "OriginStop", Alias: "os", Kind: schema.Pick, Local: []int32{0}, Remote: nil, Label: `Origin Stop`, JSON: `originStop`, Path: []int32{10, 0}, Order: []schema.PickKey{{Hop: 0, Column: 7}, {Hop: 1, Column: 10}, {Hop: 1, Column: 0}}},
+		{Name: "DestinationStop", Alias: "ds", Kind: schema.Pick, Local: []int32{0}, Remote: nil, Label: `Destination Stop`, JSON: `destinationStop`, Path: []int32{10, 0}, Order: []schema.PickKey{{Hop: 0, Column: 7}, {Hop: 1, Column: 10}, {Hop: 1, Column: 0}}, Last: true},
+		{Name: "FirstPickup", Alias: "fp", Kind: schema.Pick, Local: []int32{0}, Remote: nil, Label: `First Pickup`, JSON: `shipperStop`, NoReport: true, Path: []int32{10, 0}, Order: []schema.PickKey{{Hop: 0, Column: 7}, {Hop: 1, Column: 10}, {Hop: 1, Column: 0}}, Filter: []schema.PickFilter{{Hop: 1, Column: 7, Values: []string{`Pickup`, `SplitPickup`}}}},
+		{Name: "LastDelivery", Alias: "ld", Kind: schema.Pick, Local: []int32{0}, Remote: nil, Label: `Last Delivery`, JSON: `consigneeStop`, NoReport: true, Path: []int32{10, 0}, Order: []schema.PickKey{{Hop: 0, Column: 7}, {Hop: 1, Column: 10}, {Hop: 1, Column: 0}}, Last: true, Filter: []schema.PickFilter{{Hop: 1, Column: 7, Values: []string{`Delivery`, `SplitDelivery`}}}},
+		{Name: "PickupAppointment", Alias: "pa", Kind: schema.Pick, Local: []int32{0}, Remote: nil, Label: `Pickup Appointment`, JSON: `pickupAppointment`, NoReport: true, Path: []int32{10, 0}, Order: []schema.PickKey{{Hop: 0, Column: 7}, {Hop: 1, Column: 10}, {Hop: 1, Column: 0}}, Filter: []schema.PickFilter{{Hop: 1, Column: 7, Values: []string{`Pickup`, `SplitPickup`}}, {Hop: 1, Column: 8, Values: []string{`Appointment`}}}},
+		{Name: "DeliveryAppointment", Alias: "da", Kind: schema.Pick, Local: []int32{0}, Remote: nil, Label: `Delivery Appointment`, JSON: `deliveryAppointment`, NoReport: true, Path: []int32{10, 0}, Order: []schema.PickKey{{Hop: 0, Column: 7}, {Hop: 1, Column: 10}, {Hop: 1, Column: 0}}, Last: true, Filter: []schema.PickFilter{{Hop: 1, Column: 7, Values: []string{`Delivery`, `SplitDelivery`}}, {Hop: 1, Column: 8, Values: []string{`Appointment`}}}},
 	},
 	PK:           []int32{0, 1, 2},
 	Tenant:       []int32{1, 2},
@@ -8305,6 +8305,7 @@ var stopsTable = schema.Table{
 		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`, JSON: `organizationId`, Report: &reportDimStringHidden},
 		{Name: "shipment_move_id", Quoted: `"shipment_move_id"`, Field: "ShipmentMoveID", Kind: schema.KindString, Flags: 0, Label: `Shipment Move ID`, JSON: `shipmentMoveId`, Report: &reportDimString},
 		{Name: "location_id", Quoted: `"location_id"`, Field: "LocationID", Kind: schema.KindString, Flags: 0, Label: `Location ID`, JSON: `locationId`, Report: &reportDimStringHidden},
+		{Name: "customer_id", Quoted: `"customer_id"`, Field: "CustomerID", Kind: schema.KindString, Flags: schema.FlagReadOnly | schema.FlagNoSelect | schema.FlagNullable, Label: `Customer ID`, Report: &reportDimStringHidden},
 		{Name: "status", Quoted: `"status"`, Field: "Status", Kind: schema.KindString, Flags: 0, Label: `Status`, JSON: `status`, Enum: enumShipmentvocabStopStatus[:], Report: &reportDimEnum},
 		{Name: "type", Quoted: `"type"`, Field: "Type", Kind: schema.KindString, Flags: 0, Label: `Type`, JSON: `type`, Enum: enumShipmentvocabStopType[:], Report: &reportDimEnum},
 		{Name: "schedule_type", Quoted: `"schedule_type"`, Field: "ScheduleType", Kind: schema.KindString, Flags: 0, Label: `Schedule Type`, JSON: `scheduleType`, Enum: enumShipmentvocabStopScheduleType[:], Report: &reportDimEnum},
@@ -8330,14 +8331,14 @@ var stopsTable = schema.Table{
 	},
 	PK:           []int32{0, 1, 2},
 	Tenant:       []int32{1, 2},
-	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23},
-	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23},
-	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 23},
+	Select:       []int32{0, 1, 2, 3, 4, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24},
+	Insert:       []int32{0, 1, 2, 3, 4, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24},
+	Update:       []int32{3, 4, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 24},
 	Returning:    nil,
-	Version:      21,
+	Version:      22,
 	AutoID:       0,
-	AutoCreate:   22,
-	AutoUpdate:   23,
+	AutoCreate:   23,
+	AutoUpdate:   24,
 	IDPrefix:     "stp_",
 	New:          newStop,
 	NewN:         newNStop,
@@ -8359,6 +8360,7 @@ type StopsTable struct {
 	OrganizationID         keelkinds.PulidIDCol
 	ShipmentMoveID         keelkinds.PulidIDCol
 	LocationID             keelkinds.PulidIDCol
+	CustomerID             keelkinds.PulidIDCol
 	Status                 keelkinds.ShipmentvocabStopStatusCol
 	Type                   keelkinds.ShipmentvocabStopTypeCol
 	ScheduleType           keelkinds.ShipmentvocabStopScheduleTypeCol
@@ -8388,25 +8390,26 @@ var Stops = &StopsTable{
 	OrganizationID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &stopsRef, Index: 2}}},
 	ShipmentMoveID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &stopsRef, Index: 3}}},
 	LocationID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &stopsRef, Index: 4}}},
-	Status:                 keelkinds.ShipmentvocabStopStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &stopsRef, Index: 5}}},
-	Type:                   keelkinds.ShipmentvocabStopTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &stopsRef, Index: 6}}},
-	ScheduleType:           keelkinds.ShipmentvocabStopScheduleTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &stopsRef, Index: 7}}},
-	Handling:               keelkinds.ShipmentvocabStopHandlingCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &stopsRef, Index: 8}}},
-	Sequence:               keel.Int64Col{Col: keel.Col{Ref: &stopsRef, Index: 9}},
-	Pieces:                 keel.Int64Col{Col: keel.Col{Ref: &stopsRef, Index: 10}},
-	Weight:                 keel.Int64Col{Col: keel.Col{Ref: &stopsRef, Index: 11}},
-	TemperatureMin:         keel.Int16Col{Col: keel.Col{Ref: &stopsRef, Index: 12}},
-	TemperatureMax:         keel.Int16Col{Col: keel.Col{Ref: &stopsRef, Index: 13}},
-	ScheduledWindowStart:   keel.Int64Col{Col: keel.Col{Ref: &stopsRef, Index: 14}},
-	ScheduledWindowEnd:     keel.Int64Col{Col: keel.Col{Ref: &stopsRef, Index: 15}},
-	ActualArrival:          keel.Int64Col{Col: keel.Col{Ref: &stopsRef, Index: 16}},
-	ActualDeparture:        keel.Int64Col{Col: keel.Col{Ref: &stopsRef, Index: 17}},
-	CountLateOverride:      keel.BoolCol{Col: keel.Col{Ref: &stopsRef, Index: 18}},
-	CountDetentionOverride: keel.BoolCol{Col: keel.Col{Ref: &stopsRef, Index: 19}},
-	AddressLine:            keel.StringCol{Col: keel.Col{Ref: &stopsRef, Index: 20}},
-	Version:                keel.Int64Col{Col: keel.Col{Ref: &stopsRef, Index: 21}},
-	CreatedAt:              keel.Int64Col{Col: keel.Col{Ref: &stopsRef, Index: 22}},
-	UpdatedAt:              keel.Int64Col{Col: keel.Col{Ref: &stopsRef, Index: 23}},
+	CustomerID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &stopsRef, Index: 5}}},
+	Status:                 keelkinds.ShipmentvocabStopStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &stopsRef, Index: 6}}},
+	Type:                   keelkinds.ShipmentvocabStopTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &stopsRef, Index: 7}}},
+	ScheduleType:           keelkinds.ShipmentvocabStopScheduleTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &stopsRef, Index: 8}}},
+	Handling:               keelkinds.ShipmentvocabStopHandlingCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &stopsRef, Index: 9}}},
+	Sequence:               keel.Int64Col{Col: keel.Col{Ref: &stopsRef, Index: 10}},
+	Pieces:                 keel.Int64Col{Col: keel.Col{Ref: &stopsRef, Index: 11}},
+	Weight:                 keel.Int64Col{Col: keel.Col{Ref: &stopsRef, Index: 12}},
+	TemperatureMin:         keel.Int16Col{Col: keel.Col{Ref: &stopsRef, Index: 13}},
+	TemperatureMax:         keel.Int16Col{Col: keel.Col{Ref: &stopsRef, Index: 14}},
+	ScheduledWindowStart:   keel.Int64Col{Col: keel.Col{Ref: &stopsRef, Index: 15}},
+	ScheduledWindowEnd:     keel.Int64Col{Col: keel.Col{Ref: &stopsRef, Index: 16}},
+	ActualArrival:          keel.Int64Col{Col: keel.Col{Ref: &stopsRef, Index: 17}},
+	ActualDeparture:        keel.Int64Col{Col: keel.Col{Ref: &stopsRef, Index: 18}},
+	CountLateOverride:      keel.BoolCol{Col: keel.Col{Ref: &stopsRef, Index: 19}},
+	CountDetentionOverride: keel.BoolCol{Col: keel.Col{Ref: &stopsRef, Index: 20}},
+	AddressLine:            keel.StringCol{Col: keel.Col{Ref: &stopsRef, Index: 21}},
+	Version:                keel.Int64Col{Col: keel.Col{Ref: &stopsRef, Index: 22}},
+	CreatedAt:              keel.Int64Col{Col: keel.Col{Ref: &stopsRef, Index: 23}},
+	UpdatedAt:              keel.Int64Col{Col: keel.Col{Ref: &stopsRef, Index: 24}},
 }
 
 // BuildStops builds the table of stops for ref. Generated relation and alias methods call it.
@@ -8418,25 +8421,26 @@ func BuildStops(r *keel.Ref) *StopsTable {
 		OrganizationID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
 		ShipmentMoveID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
 		LocationID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
-		Status:                 keelkinds.ShipmentvocabStopStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
-		Type:                   keelkinds.ShipmentvocabStopTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 6}}},
-		ScheduleType:           keelkinds.ShipmentvocabStopScheduleTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 7}}},
-		Handling:               keelkinds.ShipmentvocabStopHandlingCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 8}}},
-		Sequence:               keel.Int64Col{Col: keel.Col{Ref: r, Index: 9}},
-		Pieces:                 keel.Int64Col{Col: keel.Col{Ref: r, Index: 10}},
-		Weight:                 keel.Int64Col{Col: keel.Col{Ref: r, Index: 11}},
-		TemperatureMin:         keel.Int16Col{Col: keel.Col{Ref: r, Index: 12}},
-		TemperatureMax:         keel.Int16Col{Col: keel.Col{Ref: r, Index: 13}},
-		ScheduledWindowStart:   keel.Int64Col{Col: keel.Col{Ref: r, Index: 14}},
-		ScheduledWindowEnd:     keel.Int64Col{Col: keel.Col{Ref: r, Index: 15}},
-		ActualArrival:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 16}},
-		ActualDeparture:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 17}},
-		CountLateOverride:      keel.BoolCol{Col: keel.Col{Ref: r, Index: 18}},
-		CountDetentionOverride: keel.BoolCol{Col: keel.Col{Ref: r, Index: 19}},
-		AddressLine:            keel.StringCol{Col: keel.Col{Ref: r, Index: 20}},
-		Version:                keel.Int64Col{Col: keel.Col{Ref: r, Index: 21}},
-		CreatedAt:              keel.Int64Col{Col: keel.Col{Ref: r, Index: 22}},
-		UpdatedAt:              keel.Int64Col{Col: keel.Col{Ref: r, Index: 23}},
+		CustomerID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		Status:                 keelkinds.ShipmentvocabStopStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		Type:                   keelkinds.ShipmentvocabStopTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 7}}},
+		ScheduleType:           keelkinds.ShipmentvocabStopScheduleTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 8}}},
+		Handling:               keelkinds.ShipmentvocabStopHandlingCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 9}}},
+		Sequence:               keel.Int64Col{Col: keel.Col{Ref: r, Index: 10}},
+		Pieces:                 keel.Int64Col{Col: keel.Col{Ref: r, Index: 11}},
+		Weight:                 keel.Int64Col{Col: keel.Col{Ref: r, Index: 12}},
+		TemperatureMin:         keel.Int16Col{Col: keel.Col{Ref: r, Index: 13}},
+		TemperatureMax:         keel.Int16Col{Col: keel.Col{Ref: r, Index: 14}},
+		ScheduledWindowStart:   keel.Int64Col{Col: keel.Col{Ref: r, Index: 15}},
+		ScheduledWindowEnd:     keel.Int64Col{Col: keel.Col{Ref: r, Index: 16}},
+		ActualArrival:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 17}},
+		ActualDeparture:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 18}},
+		CountLateOverride:      keel.BoolCol{Col: keel.Col{Ref: r, Index: 19}},
+		CountDetentionOverride: keel.BoolCol{Col: keel.Col{Ref: r, Index: 20}},
+		AddressLine:            keel.StringCol{Col: keel.Col{Ref: r, Index: 21}},
+		Version:                keel.Int64Col{Col: keel.Col{Ref: r, Index: 22}},
+		CreatedAt:              keel.Int64Col{Col: keel.Col{Ref: r, Index: 23}},
+		UpdatedAt:              keel.Int64Col{Col: keel.Col{Ref: r, Index: 24}},
 	}
 }
 
@@ -8841,42 +8845,44 @@ func ptrStop(p unsafe.Pointer, c int32) any {
 	case 4:
 		return (*string)(unsafe.Pointer(&r.LocationID))
 	case 5:
-		return (*string)(unsafe.Pointer(&r.Status))
+		return (**string)(unsafe.Pointer(&r.CustomerID))
 	case 6:
-		return (*string)(unsafe.Pointer(&r.Type))
+		return (*string)(unsafe.Pointer(&r.Status))
 	case 7:
-		return (*string)(unsafe.Pointer(&r.ScheduleType))
+		return (*string)(unsafe.Pointer(&r.Type))
 	case 8:
-		return (*string)(unsafe.Pointer(&r.Handling))
+		return (*string)(unsafe.Pointer(&r.ScheduleType))
 	case 9:
-		return &r.Sequence
+		return (*string)(unsafe.Pointer(&r.Handling))
 	case 10:
-		return &r.Pieces
+		return &r.Sequence
 	case 11:
-		return &r.Weight
+		return &r.Pieces
 	case 12:
-		return &r.TemperatureMin
+		return &r.Weight
 	case 13:
-		return &r.TemperatureMax
+		return &r.TemperatureMin
 	case 14:
-		return &r.ScheduledWindowStart
+		return &r.TemperatureMax
 	case 15:
-		return &r.ScheduledWindowEnd
+		return &r.ScheduledWindowStart
 	case 16:
-		return &r.ActualArrival
+		return &r.ScheduledWindowEnd
 	case 17:
-		return &r.ActualDeparture
+		return &r.ActualArrival
 	case 18:
-		return &r.CountLateOverride
+		return &r.ActualDeparture
 	case 19:
-		return &r.CountDetentionOverride
+		return &r.CountLateOverride
 	case 20:
-		return &r.AddressLine
+		return &r.CountDetentionOverride
 	case 21:
-		return &r.Version
+		return &r.AddressLine
 	case 22:
-		return &r.CreatedAt
+		return &r.Version
 	case 23:
+		return &r.CreatedAt
+	case 24:
 		return &r.UpdatedAt
 	}
 	return nil
@@ -8896,72 +8902,77 @@ func valueStop(p unsafe.Pointer, c int32) any {
 	case 4:
 		return string(r.LocationID)
 	case 5:
-		return string(r.Status)
+		if r.CustomerID == nil {
+			return nil
+		}
+		return string(*r.CustomerID)
 	case 6:
-		return string(r.Type)
+		return string(r.Status)
 	case 7:
-		return string(r.ScheduleType)
+		return string(r.Type)
 	case 8:
-		return string(r.Handling)
+		return string(r.ScheduleType)
 	case 9:
-		return r.Sequence
+		return string(r.Handling)
 	case 10:
+		return r.Sequence
+	case 11:
 		if r.Pieces == nil {
 			return nil
 		}
 		return *r.Pieces
-	case 11:
+	case 12:
 		if r.Weight == nil {
 			return nil
 		}
 		return *r.Weight
-	case 12:
+	case 13:
 		if r.TemperatureMin == nil {
 			return nil
 		}
 		return *r.TemperatureMin
-	case 13:
+	case 14:
 		if r.TemperatureMax == nil {
 			return nil
 		}
 		return *r.TemperatureMax
-	case 14:
-		return r.ScheduledWindowStart
 	case 15:
+		return r.ScheduledWindowStart
+	case 16:
 		if r.ScheduledWindowEnd == nil {
 			return nil
 		}
 		return *r.ScheduledWindowEnd
-	case 16:
+	case 17:
 		if r.ActualArrival == nil {
 			return nil
 		}
 		return *r.ActualArrival
-	case 17:
+	case 18:
 		if r.ActualDeparture == nil {
 			return nil
 		}
 		return *r.ActualDeparture
-	case 18:
+	case 19:
 		if r.CountLateOverride == nil {
 			return nil
 		}
 		return *r.CountLateOverride
-	case 19:
+	case 20:
 		if r.CountDetentionOverride == nil {
 			return nil
 		}
 		return *r.CountDetentionOverride
-	case 20:
+	case 21:
 		if r.AddressLine == "" {
 			return nil
 		}
 		return r.AddressLine
-	case 21:
-		return r.Version
 	case 22:
-		return r.CreatedAt
+		return r.Version
 	case 23:
+		return r.CreatedAt
+	case 24:
 		return r.UpdatedAt
 	}
 	return nil

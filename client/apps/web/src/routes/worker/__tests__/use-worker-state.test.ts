@@ -224,10 +224,9 @@ describe("workerFormBlockedByAddress", () => {
       const home = WORKER_FORM_HOMES[form as keyof typeof WORKER_FORM_HOMES];
       const base = `tab=${home.tab}${home.view ? `&view=${home.view}` : ""}&form=${form}`;
       expect(workerFormBlockedByAddress(state(base), everything), form).toBe(true);
-      expect(
-        workerFormBlockedByAddress(state(`${base}&${param}=rec_1`), everything),
-        form,
-      ).toBe(false);
+      expect(workerFormBlockedByAddress(state(`${base}&${param}=rec_1`), everything), form).toBe(
+        false,
+      );
     }
   });
 
@@ -254,9 +253,9 @@ describe("workerFormBlockedByAddress", () => {
         noReviews,
       ),
     ).toBe(true);
-    expect(
-      workerFormBlockedByAddress(state("tab=safety&form=start-review"), everything),
-    ).toBe(true);
+    expect(workerFormBlockedByAddress(state("tab=safety&form=start-review"), everything)).toBe(
+      true,
+    );
     expect(workerFormBlockedByAddress(state("tab=safety"), everything)).toBe(false);
   });
 });

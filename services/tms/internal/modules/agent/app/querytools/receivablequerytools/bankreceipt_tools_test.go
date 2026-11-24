@@ -22,6 +22,8 @@ type fakeReceipts struct {
 	exceptions  []*bankreceipt.BankReceipt
 	suggestions []*bankreceiptports.BankReceiptMatchSuggestion
 	suggested   bool
+	total       int
+	asked       *bankreceiptports.ListBankReceiptExceptionsRequest
 }
 
 func (f *fakeReceipts) Get(
@@ -33,9 +35,11 @@ func (f *fakeReceipts) Get(
 
 func (f *fakeReceipts) ListExceptions(
 	_ context.Context,
-	_ pagination.TenantInfo,
-) ([]*bankreceipt.BankReceipt, error) {
-	return f.exceptions, nil
+	req *bankreceiptports.ListBankReceiptExceptionsRequest,
+) (*bankreceiptports.BankReceiptExceptionPage, error) {
+	f.asked = req
+
+	return &bankreceiptports.BankReceiptExceptionPage{Items: f.exceptions, Total: f.total}, nil
 }
 
 func (f *fakeReceipts) SuggestMatches(
@@ -49,12 +53,16 @@ func (f *fakeReceipts) SuggestMatches(
 
 type fakeWorkItems struct {
 	active []*bankreceiptworkitem.WorkItem
+	asked  []pulid.ID
 }
 
-func (f *fakeWorkItems) ListActive(
+func (f *fakeWorkItems) ListActiveByReceiptIDs(
 	_ context.Context,
 	_ pagination.TenantInfo,
+	receiptIDs []pulid.ID,
 ) ([]*bankreceiptworkitem.WorkItem, error) {
+	f.asked = receiptIDs
+
 	return f.active, nil
 }
 
@@ -84,13 +92,13 @@ func exceptionReceipt(reference string) *bankreceipt.BankReceipt {
 	}
 }
 
-// The queue entry rides with each receipt, so the model sees who already
-// holds it, and an amount reads as money rather than as cents.
-func TestListBankReceiptExceptions_JoinsTheQueueEntryAndFiltersByText(t *testing.T) {
+// The search and the page run in the database, so the tool sends the words and
+// the limit, reads the queue entries of only the receipts it shows, and reports
+// the count of every receipt the search matched.
+func TestListBankReceiptExceptions_SearchesInTheReadAndJoinsTheQueueEntry(t *testing.T) {
 	t.Parallel()
 
 	first := exceptionReceipt("ACH 4471")
-	second := exceptionReceipt("WIRE 9001")
 	assignee := pulid.MustNew("usr_")
 	items := &fakeWorkItems{active: []*bankreceiptworkitem.WorkItem{{
 		ID:               pulid.MustNew("brwi_"),
@@ -98,16 +106,19 @@ func TestListBankReceiptExceptions_JoinsTheQueueEntryAndFiltersByText(t *testing
 		Status:           bankreceiptworkitem.StatusAssigned,
 		AssignedToUserID: assignee,
 	}}}
-	tool := NewListBankReceiptExceptionsTool(
-		&fakeReceipts{exceptions: []*bankreceipt.BankReceipt{first, second}},
-		items,
-	)
+	receipts := &fakeReceipts{exceptions: []*bankreceipt.BankReceipt{first}, total: 7}
+	tool := NewListBankReceiptExceptionsTool(receipts, items)
 
 	result, err := tool.Query(
 		t.Context(),
-		querytooltest.TestParams(map[string]any{"query": "4471"}),
+		querytooltest.TestParams(map[string]any{"query": " 4471 ", "limit": 5}),
 	)
 	require.NoError(t, err)
+
+	require.NotNil(t, receipts.asked)
+	assert.Equal(t, "4471", receipts.asked.Query)
+	assert.Equal(t, 5, receipts.asked.Limit)
+	assert.Equal(t, []pulid.ID{first.ID}, items.asked)
 
 	search, ok := result.(*bankReceiptSearch)
 	require.True(t, ok)
@@ -119,6 +130,9 @@ func TestListBankReceiptExceptions_JoinsTheQueueEntryAndFiltersByText(t *testing
 		"the run's taint names each receipt it was shown",
 	)
 	assert.Equal(t, 1, outcome.Count)
+	require.NotNil(t, outcome.Total)
+	assert.Equal(t, 7, *outcome.Total)
+	assert.True(t, outcome.HasMore)
 	rows, ok := outcome.Items.([]bankReceiptRow)
 	require.True(t, ok)
 	require.Len(t, rows, 1)
@@ -127,6 +141,25 @@ func TestListBankReceiptExceptions_JoinsTheQueueEntryAndFiltersByText(t *testing
 	require.NotNil(t, rows[0].WorkItem)
 	assert.Equal(t, "Assigned", rows[0].WorkItem.Status)
 	assert.Equal(t, assignee.String(), rows[0].WorkItem.AssignedToUserID)
+}
+
+func TestListBankReceiptExceptions_SaysHowToShowTheReceiptsAndTheirTotals(t *testing.T) {
+	t.Parallel()
+
+	tool := NewListBankReceiptExceptionsTool(
+		&fakeReceipts{exceptions: []*bankreceipt.BankReceipt{exceptionReceipt("ACH 1")}, total: 1},
+		&fakeWorkItems{},
+	)
+
+	result, err := tool.Query(t.Context(), querytooltest.TestParams(map[string]any{}))
+	require.NoError(t, err)
+
+	hint := result.(*bankReceiptSearch).HowToShow
+	assert.Contains(t, hint, `"metric": "unappliedReceipts"`)
+	assert.Contains(t, hint, `"measure": "received"`)
+	assert.Contains(t, hint, "{amountToApply:unappliedReceipts}")
+	assert.Contains(t, hint, "read with receivable_list_bank_receipt_exceptions")
+	assert.NotContains(t, hint, "to the cent")
 }
 
 func TestListBankReceiptExceptions_SaysNothingMatchedRatherThanNothingExists(t *testing.T) {

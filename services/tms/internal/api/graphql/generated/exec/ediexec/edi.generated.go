@@ -4195,6 +4195,17 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalOID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
 			},
 			{
+				Name:       "shipmentNumber",
+				IsResolver: true,
+				Concurrent: true,
+				ChildErr:   errNoChild7,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*editransfer.EDITransfer)
+					return gqlexec.Resolver[EdiTransferResolver](ec, "EdiTransfer@edi").ShipmentNumber(ctx, obj)
+				},
+				Marshal: gqlexec.Marshal(marshalOString2ᚖstring),
+			},
+			{
 				Name:     "inboundMessageId",
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
@@ -5043,6 +5054,7 @@ type EdiMessageResolver interface {
 }
 
 type EdiTransferResolver interface {
+	ShipmentNumber(ctx context.Context, obj *editransfer.EDITransfer) (*string, error)
 	TenderPayload(ctx context.Context, obj *editransfer.EDITransfer) (any, error)
 	MappingSnapshot(ctx context.Context, obj *editransfer.EDITransfer) (any, error)
 	Direction(ctx context.Context, obj *editransfer.EDITransfer) (gqlmodel.EDITransferDirection, error)

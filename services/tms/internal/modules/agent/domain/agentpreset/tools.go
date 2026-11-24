@@ -136,6 +136,7 @@ var starterTools = map[agenttemplate.Template][]string{
 		"insight_get",
 		"worker_get_schedule",
 		"worker_list_shift_templates",
+		"worker_list_week_hours",
 		"worker_assign_shift",
 		"worker_end_shift_assignment",
 		"worker_set_availability_preference",
@@ -270,6 +271,9 @@ var starterTools = map[agenttemplate.Template][]string{
 	agenttemplate.TemplateDetentionDesk: {
 		"detention_get_occurrence",
 		"detention_list_occurrences",
+		"detention_list_stays",
+		"detention_list_facilities",
+		"metric_read",
 		"shipment_get",
 		"shipment_get_tracking",
 		"customer_get",
@@ -304,6 +308,8 @@ var starterTools = map[agenttemplate.Template][]string{
 	},
 	agenttemplate.TemplateCarrierRiskDesk: {
 		"carrier_list_intelligence_events",
+		"carrier_list_cover_ending",
+		"metric_read",
 		"carrier_get_intelligence_event",
 		"carrier_get",
 		"carrier_list",
@@ -364,6 +370,7 @@ var starterTools = map[agenttemplate.Template][]string{
 	agenttemplate.TemplateCashApplication: {
 		"receivable_get_bank_receipt",
 		"receivable_list_bank_receipt_exceptions",
+		"metric_read",
 		"receivable_list_customer_payments",
 		"customer_list",
 		"customer_get",
@@ -406,6 +413,7 @@ var starterTools = map[agenttemplate.Template][]string{
 		"dispatch_rank_candidates",
 		"dispatch_plan",
 		"dispatch_forecast_demand",
+		"metric_read",
 		"carrier_list",
 		"carrier_shop",
 		"dispatch_assign_move",
@@ -507,6 +515,7 @@ var starterTools = map[agenttemplate.Template][]string{
 		"edi_reprocess_inbound_file",
 		"edi_draft_connection",
 		"edi_apply_connection_draft",
+		"metric_read",
 	},
 	agenttemplate.TemplateFactoringClerk: {
 		"factoring_list_readiness",
@@ -558,6 +567,8 @@ var starterTools = map[agenttemplate.Template][]string{
 		"accounting_release_sync_record",
 		"ledger_list_fiscal_periods",
 		"ledger_get_fiscal_close_blockers",
+		"ledger_list_journal_entries",
+		"metric_read",
 		"ledger_lock_fiscal_period",
 		"ledger_close_fiscal_period",
 	},
@@ -625,9 +636,9 @@ func settlementsClerkTools() []string {
 	return []string{
 		"worker_list",
 		"carrier_list",
-		"shipment_list",
 		"shipment_get",
 		"settlement_list_driver",
+		"settlement_list_batch_blockers",
 		"settlement_get_driver",
 		"settlement_list_pay_events",
 		"settlement_get_driver_earnings",
@@ -640,6 +651,7 @@ func settlementsClerkTools() []string {
 		"settlement_detach_pay_event",
 		"settlement_hold_pay_event",
 		"settlement_release_pay_event",
+		"settlement_hold_driver",
 		"settlement_add_driver_adjustment",
 		"settlement_remove_driver_adjustment",
 		"settlement_recalculate_driver",
@@ -678,7 +690,6 @@ func settlementsClerkTools() []string {
 		"settlement_list_pay_profiles",
 		"settlement_list_pay_assignments",
 		"settlement_list_recurring_deductions",
-		"settlement_list_recurring_earnings",
 	}
 }
 
@@ -692,6 +703,7 @@ func receivablesTools() []string {
 		"document_list",
 		"document_get",
 		"receivable_get_aging",
+		"metric_read",
 		"receivable_list_open_items",
 		"receivable_list_collection_worklist",
 		"receivable_get_statement",

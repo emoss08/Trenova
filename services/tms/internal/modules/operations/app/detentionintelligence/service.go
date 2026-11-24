@@ -9,6 +9,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/i18n"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -56,25 +57,21 @@ type window struct {
 	previous detentionports.IntelligenceWindow
 }
 
-// daysWindow is the days [first, last], local midnights, with the whole months inside them.
-func daysWindow(first, last time.Time) detentionports.IntelligenceWindow {
-	loc := first.Location()
-	after := last.AddDate(0, 0, 1)
-	months := first
-	if first.Day() != 1 {
-		months = time.Date(first.Year(), first.Month()+1, 1, 0, 0, 0, 0, loc)
+func (s *Service) zone(
+	ctx context.Context,
+	tenant pagination.TenantInfo,
+) (string, *time.Location, error) {
+	zone, err := s.repo.OrganizationTimezone(ctx, tenant)
+	if err != nil {
+		return "", nil, err
 	}
-	end := time.Date(after.Year(), after.Month(), 1, 0, 0, 0, 0, loc)
-	if !end.After(months) {
-		months, end = after, after
+	// Go reads "Local" as the server's own zone, which is no organization's.
+	loc, err := time.LoadLocation(zone)
+	if zone == "" || zone == "Local" || err != nil {
+		return defaultZone, time.UTC, nil
 	}
 
-	return detentionports.IntelligenceWindow{
-		From:       first.Unix(),
-		To:         after.Unix() - 1,
-		MonthsFrom: months.Unix(),
-		MonthsEnd:  end.Unix(),
-	}
+	return zone, loc, nil
 }
 
 func (s *Service) window(ctx context.Context, req *Request) (*window, error) {
@@ -86,14 +83,9 @@ func (s *Service) window(ctx context.Context, req *Request) (*window, error) {
 		)
 	}
 
-	zone, err := s.repo.OrganizationTimezone(ctx, req.TenantInfo)
+	zone, loc, err := s.zone(ctx, req.TenantInfo)
 	if err != nil {
 		return nil, err
-	}
-	// Go reads "Local" as the server's own zone, which is no organization's.
-	loc, err := time.LoadLocation(zone)
-	if zone == "" || zone == "Local" || err != nil {
-		zone, loc = defaultZone, time.UTC
 	}
 
 	now := time.Unix(s.now(), 0).In(loc)
@@ -114,12 +106,15 @@ func (s *Service) window(ctx context.Context, req *Request) (*window, error) {
 	previousLast := first.AddDate(0, 0, -1)
 
 	return &window{
-		loc:      loc,
-		zone:     zone,
-		days:     req.Days,
-		through:  last.Format(dayLayout),
-		current:  daysWindow(first, last),
-		previous: daysWindow(previousLast.AddDate(0, 0, -(req.Days-1)), previousLast),
+		loc:     loc,
+		zone:    zone,
+		days:    req.Days,
+		through: last.Format(dayLayout),
+		current: detentionports.NewIntelligenceWindow(first, last),
+		previous: detentionports.NewIntelligenceWindow(
+			previousLast.AddDate(0, 0, -(req.Days-1)),
+			previousLast,
+		),
 	}, nil
 }
 
@@ -131,13 +126,17 @@ func (s *Service) Build(ctx context.Context, req *Request) (*Intelligence, error
 		return nil, err
 	}
 
+	locations := make([]pulid.ID, 0, 1)
+	if req.LocationID.IsNotNil() {
+		locations = append(locations, req.LocationID)
+	}
 	rollup, err := s.repo.Intelligence(ctx, &detentionports.IntelligenceRequest{
-		TenantInfo: req.TenantInfo,
-		Current:    w.current,
-		Previous:   w.previous,
-		Timezone:   w.zone,
-		LocationID: req.LocationID,
-		Limit:      FacilityLimit,
+		TenantInfo:  req.TenantInfo,
+		Current:     w.current,
+		Previous:    w.previous,
+		Timezone:    w.zone,
+		LocationIDs: locations,
+		Limit:       FacilityLimit,
 	})
 	if err != nil {
 		return nil, err

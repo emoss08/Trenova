@@ -22,6 +22,7 @@ var Shard = &gqlexec.Shard{
 		{Name: "Carrier", Implementors: []string{"Carrier"}},
 		{Name: "CarrierConnection", Implementors: []string{"CarrierConnection"}},
 		{Name: "CarrierContact", Implementors: []string{"CarrierContact"}},
+		{Name: "CarrierCoverEnding", Implementors: []string{"CarrierCoverEnding"}},
 		{Name: "CarrierEdge", Implementors: []string{"CarrierEdge"}},
 		{Name: "CarrierInsurancePolicy", Implementors: []string{"CarrierInsurancePolicy"}},
 	},
@@ -625,6 +626,97 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
 			},
 		}},
+		{Object: "CarrierCoverEnding", Fields: []*gqlexec.Field{
+			{
+				Name:     "id",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.CarrierCoverEnding)
+					return obj.ID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2string),
+			},
+			{
+				Name:     "name",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.CarrierCoverEnding)
+					return obj.Name, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "code",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.CarrierCoverEnding)
+					return obj.Code, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "complianceStatus",
+				NonNull:  true,
+				ChildErr: errNoChild4,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.CarrierCoverEnding)
+					return obj.ComplianceStatus, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNCarrierComplianceStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierᚐComplianceStatus),
+			},
+			{
+				Name:     "policyType",
+				NonNull:  true,
+				ChildErr: errNoChild11,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.CarrierCoverEnding)
+					return obj.PolicyType, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNCarrierInsurancePolicyType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierᚐInsurancePolicyType),
+			},
+			{
+				Name:     "policyNumber",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.CarrierCoverEnding)
+					return obj.PolicyNumber, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "endsAt",
+				NonNull:  true,
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.CarrierCoverEnding)
+					return obj.EndsAt, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNTimestamp2int),
+			},
+			{
+				Name:     "missingPolicyTypes",
+				NonNull:  true,
+				ChildErr: errNoChild11,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.CarrierCoverEnding)
+					return obj.MissingPolicyTypes, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNCarrierInsurancePolicyType2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierᚐInsurancePolicyTypeᚄ),
+			},
+			{
+				Name:     "openLoads",
+				ChildErr: errNoChild10,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.CarrierCoverEnding)
+					return obj.OpenLoads, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOInt2ᚖint),
+			},
+		}},
 		{Object: "CarrierEdge", Fields: []*gqlexec.Field{
 			{
 				Name:      "node",
@@ -820,6 +912,20 @@ var Shard = &gqlexec.Shard{
 				},
 				Marshal: gqlexec.Marshal(marshalOCarrier2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierᚐCarrier),
 			},
+			{
+				Name:       "carrierCoverEnding",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "CarrierCoverEnding",
+				Args:       field_Query_carrierCoverEnding_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[QueryResolver](ec, "Query@carrier").CarrierCoverEnding(ctx, fc.Args["withinDays"].(*int), fc.Args["limit"].(*int))
+				},
+				Marshal: gqlexec.Marshal(marshalNCarrierCoverEnding2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCarrierCoverEndingᚄ),
+			},
 		}},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
@@ -835,6 +941,7 @@ type CarrierInsurancePolicyResolver interface {
 type QueryResolver interface {
 	Carriers(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.CarrierConnection, error)
 	Carrier(ctx context.Context, id string) (*carrier.Carrier, error)
+	CarrierCoverEnding(ctx context.Context, withinDays *int, limit *int) ([]*gqlmodel.CarrierCoverEnding, error)
 }
 
 var (
@@ -879,6 +986,27 @@ func field_Query_carrier_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map
 	return args, nil
 }
 
+func field_Query_carrierCoverEnding_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 2)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "withinDays",
+		func(ctx context.Context, v any) (*int, error) {
+			return unmarshalOInt2ᚖint(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["withinDays"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "limit",
+		func(ctx context.Context, v any) (*int, error) {
+			return unmarshalOInt2ᚖint(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["limit"] = arg1
+	return args, nil
+}
+
 func unmarshalInputDataTableConnectionInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.DataTableConnectionInput, error) {
 	return gqlexec.UnmarshalInput[gqlmodel.DataTableConnectionInput](ctx, ec, "DataTableConnectionInput", obj)
 }
@@ -891,6 +1019,14 @@ func unmarshalNDataTableConnectionInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinter
 func unmarshalNID2string(ctx context.Context, ec *gqlexec.Exec, v any) (string, error) {
 	res, err := graphql.UnmarshalID(v)
 	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalOInt2ᚖint(ctx context.Context, ec *gqlexec.Exec, v any) (*int, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalInt(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func marshalNBoolean2bool(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v bool) graphql.Marshaler {
@@ -933,6 +1069,22 @@ func marshalNCarrierContact2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmod
 	return ec.MarshalType(ctx, sel, "CarrierContact", v)
 }
 
+func marshalNCarrierCoverEnding2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCarrierCoverEndingᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*gqlmodel.CarrierCoverEnding) graphql.Marshaler {
+	return gqlexec.List[*gqlmodel.CarrierCoverEnding]{
+		Elem:        marshalNCarrierCoverEnding2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCarrierCoverEnding,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalNCarrierCoverEnding2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCarrierCoverEnding(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.CarrierCoverEnding) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "CarrierCoverEnding", v)
+}
+
 func marshalNCarrierEdge2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCarrierEdgeᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*gqlmodel.CarrierEdge) graphql.Marshaler {
 	return gqlexec.List[*gqlmodel.CarrierEdge]{
 		Elem:        marshalNCarrierEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCarrierEdge,
@@ -963,6 +1115,14 @@ func marshalNCarrierInsurancePolicyType2githubᚗcomᚋemoss08ᚋtrenovaᚋinter
 		gqlexec.NullViolation(ctx)
 	}
 	return res
+}
+
+func marshalNCarrierInsurancePolicyType2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierᚐInsurancePolicyTypeᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []carrier.InsurancePolicyType) graphql.Marshaler {
+	return gqlexec.List[carrier.InsurancePolicyType]{
+		Elem:        marshalNCarrierInsurancePolicyType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierᚐInsurancePolicyType,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
 }
 
 func marshalNCarrierSafetyRating2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierᚐSafetyRating(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v carrier.SafetyRating) graphql.Marshaler {
@@ -1005,6 +1165,14 @@ func marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx conte
 	return res
 }
 
+func marshalNID2string(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v string) graphql.Marshaler {
+	res := graphql.MarshalID(v)
+	if res == graphql.Null {
+		gqlexec.NullViolation(ctx)
+	}
+	return res
+}
+
 func marshalNInt2int64(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v int64) graphql.Marshaler {
 	res := graphql.MarshalInt64(v)
 	if res == graphql.Null {
@@ -1023,6 +1191,14 @@ func marshalNPageInfo2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgra
 
 func marshalNString2string(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v string) graphql.Marshaler {
 	res := graphql.MarshalString(v)
+	if res == graphql.Null {
+		gqlexec.NullViolation(ctx)
+	}
+	return res
+}
+
+func marshalNTimestamp2int(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v int) graphql.Marshaler {
+	res := graphql.MarshalInt(v)
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
 	}

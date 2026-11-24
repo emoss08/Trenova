@@ -14,10 +14,12 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/fiscalperiodrepository"
 	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/journalpostingrepository"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/bankreceiptbatchrepository"
+	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/bankreceiptcandidaterepository"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/bankreceiptrepository"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/bankreceiptworkitemrepository"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/customerpaymentrepository"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/invoicerepository"
+	"github.com/emoss08/trenova/internal/modules/billing/app/bankreceiptcandidateservice"
 	"github.com/emoss08/trenova/internal/modules/billing/app/bankreceiptservice"
 	"github.com/emoss08/trenova/internal/modules/billing/app/customerpaymentservice"
 	"github.com/emoss08/trenova/internal/modules/billing/billingtest"
@@ -231,6 +233,15 @@ func setupBatchIntegrationEnv(t *testing.T) *batchIntegrationEnv {
 	_, err = accountingRepo.Update(ctx, control)
 	require.NoError(t, err)
 
+	candidateRepo := bankreceiptcandidaterepository.New(bankreceiptcandidaterepository.Params{
+		DB:           conn,
+		Entitlements: entitlementtest.Instance(),
+		Logger:       logger,
+	})
+	candidates := bankreceiptcandidateservice.New(bankreceiptcandidateservice.Params{
+		Repo:   candidateRepo,
+		Logger: logger,
+	})
 	receiptSvc := bankreceiptservice.New(
 		bankreceiptservice.Params{
 			Logger:         logger,
@@ -240,6 +251,9 @@ func setupBatchIntegrationEnv(t *testing.T) *batchIntegrationEnv {
 			PaymentRepo:    paymentRepo,
 			AccountingRepo: accountingRepo,
 			AuditService:   &mocks.NoopAuditService{},
+			Candidates:     candidates,
+			Stored:         candidateRepo,
+			Waker:          &countingWaker{},
 		},
 	)
 	batchSvc := New(
@@ -250,6 +264,7 @@ func setupBatchIntegrationEnv(t *testing.T) *batchIntegrationEnv {
 			ReceiptRepo:        receiptRepo,
 			BankReceiptService: receiptSvc,
 			AuditService:       &mocks.NoopAuditService{},
+			Waker:              &countingWaker{},
 		},
 	)
 
@@ -372,7 +387,8 @@ func createPostedCustomerPayment(
 					FiscalPeriodRepo: fiscalPeriodRepo,
 				},
 			),
-			AuditService: &mocks.NoopAuditService{},
+			AuditService:      &mocks.NoopAuditService{},
+			ReceiptCandidates: &countingWaker{},
 		},
 	)
 	_, err = paymentSvc.PostAndApply(

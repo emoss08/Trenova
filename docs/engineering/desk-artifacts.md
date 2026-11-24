@@ -335,6 +335,7 @@ ask what the record looks like to the person who reads it, and draw that:
 | Manual journal | an MJ stub beside what it books and who asked for it; the figure is what each side comes to, or how far it is off while the lines do not balance, struck through once rejected or cancelled; the requester's reason in their own words; why it was rejected or cancelled; its way to the ledger (draft, submitted, approved, posted) with who signed each step; the lines and the equation as the entry draws them; where it will post as a calendar leaf, or the shut period it asked for beside the first open day it moves to under the organization's policy, or why it cannot post at all (`posting.refusal`, the server's own words); and the journal entries it became, each opened in place |
 | Fuel purchase | a stub with the fuel as a pump abbreviates it (DSL, DEF, RFR) beside the vendor, the place and when; the figure is the total with the quantity and price under it, amber when it differs from quantity × price; the receipt as it was rung up (each line the purchase records, a litre purchase's gallons under its quantity, quantity × price underlined where it disagrees with the total, a missing odometer marked) beside what it does to the quarter's IFTA return in its jurisdiction: the gallons, how many were taxed at the pump, the credit those earn at the quarter's rate (`ifta.taxPaidCredit`, tax-paid gallons × the jurisdiction's `RatePerGallon`, left out when no rate is on file) and what the tractor has bought there this quarter; checks on the total, the odometer against the tractor's previous fill with an odometer (with miles per gallon) and the card against the unit; how it was filed (the feed's or the statement's row and each match the import made, read only under fuel purchase import read, or who entered it by hand); and the card it was bought on, opened in place |
 | Fuel card | the network's card in small beside its label; the figure is this month's spend and gallons, or what is waiting on a card nobody holds yet; the card as it is printed (the network's colour and mark from `FuelCardMark`'s faces, the number hidden but for the last four, its label, its expiry, the driver it is issued to), dashed round while nobody holds it and greyed and stamped once cancelled; who holds it, the driver and the tractor each opened in place; the month's figures; the statement rows waiting on the card, dashed because they are not purchases yet, with why each waits; its latest purchases, each opened in place, with what each is to IFTA; the quarter's IFTA fuel by jurisdiction as bars against the largest; whether the provider's feed is reading; why a cancelled card was cancelled and its replacements, opened in place. Purchases and imports are left out for someone who may not read them |
+| IFTA return | the quarter, and which amendment; the figure is the net tax owed or the credit; the status in the IFTA page's colours with the day it is due (or was filed) and, while the quarter runs, its last day; what stands before filing, one check per kind of problem in the product's own names (a missing rate blocks, the rest ask for a look, a draft past its filing date says so); the quarter's miles and gallons; the jurisdiction lines that owe most or earn the largest credit, every unpriced line first, and how many more the return holds. Read through `iftaReturn(id)` (`DeskIftaReturnCard`, the same operation `fuel_get_ifta_return` reads); a board's IFTA return lines open it through `opens`; finalizing and filing stay on the IFTA returns page, which opens a linked return from `?return=` |
 
 Tone is carried by the part's own fill, icon or text, never by an accent bar down or across
 its edge. `CardStatus` takes `danger` with an `x` mark only for a state that is final and failed
@@ -673,8 +674,29 @@ preview's payload.
 
 A `board` is an answer the agent laid out with `show_answer` or `show_board`: a title, a verdict,
 and up to eight blocks (figures, records, compare, table, chart, timeline, checks, meter, prose,
-note, work, actions; two notes at most). The agent writes only words; every value is read by the
-server.
+note, work, actions, metric; two notes at most). The agent writes only words; every value is read
+by the server.
+
+- **What a board may read is a catalog; what reads it belongs to the data's owner.**
+  `workspace/domain/boardcatalog` lists the kinds of record a board shows (keyed by
+  `recordkind.Kind`), each kind's measures (shape, value kind, summable, the aliases a tool result
+  writes, the permission and field group they need, the labels the words use) and the metrics
+  (form, `for`, periods, the figures the words may place, plan feature, sketch). The tool
+  schemas, `boardparse`, `boardanswer` and the bench read it with no database. What reads the
+  data is a reader in the owning module (`<module>/adapters/postgres/<module>boardreader`, wired
+  in `<module>/board.go` into the fx groups of `workspace/ports/boardreaderports`): a
+  `RecordReader` per kind (label, subtitle, status, and `Opens`, the record a row opens when its
+  kind has no card), a `MeasureReader` per measure (a `boardcatalog.Reading`: the value, the
+  standing words and second fact as translated templates with a `{0}` slot, a tone and the
+  facts of its shape) and a `MetricReader` per metric (a `boardcatalog.MetricRead`).
+  `boardreaderports.NewIndex` fails startup when the catalog and the readers do not match.
+  `boardcardservice.Fill` reads each kind, each measure and each metric once per board, checks
+  `kind.Resource()`, a measure's `Requires` and `Fields` and a metric's `Requires`, `For` and
+  plan feature before calling a reader, and passes the readings to `boardassemble`, where
+  `agent/domain/boardbar.Layout` lays every row of a block out on one scale as bar segments.
+  The client draws the segments (`SegmentBar`) and fills the words (`fillWords`); it knows
+  nothing about a measure. Adding a kind, a measure or a metric is the worked examples in
+  `design-plans/desk-inline-boards/BEYOND.md`, "F: what was built".
 
 - **`show_answer` is the small form.** Measured on Haiku 5.5, about two thirds of `show_board`
   calls were refused by the board's own validation, so the answer in the conversation has a
@@ -700,8 +722,8 @@ server.
   figures they state, two steps, and the total of a list); a count, a duration ("4 days", "22
   hours", "2d") or a time passes as it does in a reply. An amount nothing supports is refused,
   naming it. A `measure` written as the field a tool result gave it is read as the measure it
-  means (`board.MeasureNamed`, the `named` column of the measure table: a shipment's
-  `totalCharge` is revenue, its `lateMinutes` lateness), for `show_board` too. An id whose body
+  means (`boardcatalog.MeasureOf`, the measure's `Aliases`: a shipment's `totalCharge` is
+  revenue, its `lateMinutes` lateness), for `show_board` too. An id whose body
   the conversation read under another kind's prefix is refused saying what it is, and, when the
   object that held it carries one id of the wanted kind, which id to send and by which field.
   Repaired rather than refused: a `measure` the records' kind does not have is dropped, an unknown field is ignored, an empty second group is
@@ -770,10 +792,24 @@ server.
   with what to write ({largest}, a record's own figure, or an amount's measure), and
   `show_board` refuses an `aggregate: sum` of a duration over several records. A sum over one
   record is that record's value, labelled "Time behind". `{count}` counts only the records
-  shown, so it is refused when they come from a result that holds more (`hasMore`, or `total`
-  above `count`; `boardrecords.Read.Longer`), naming the list's own number when the result gave
-  one and offering a group's count for "of them"; `show_board` holds count readings and figures
-  to the same rule. A refusal's example number (`A-1001`) is replaced by the number of a record
+  shown. When they are a page of a longer list (`hasMore`, or `total` above `count`;
+  `boardrecords.Read.Longer`), `{all}` is the whole list's number: a reading whose source is
+  `FigureSource.List`, the table the list was kept as, counted again whenever the board is read
+  (`boardcardservice.readLists` asks `assistantports.ListSizer`, which `assistantartifacts`
+  implements by running the table's own list tool with its `readWith` arguments, `limit` 1 and
+  the total, as the reader and under the agent's data access: the list's own indexed count, no new
+  scan; linked to the card service by `fx.Invoke(boardcardservice.ReadListsWith)` because the
+  query tools already depend on the card service through `metric_read`). A list that reported no
+  total, or was kept as no table, has nothing to read again, and `{all}` over it is refused. A
+  `{count}` or a group's `{count_2}` over a page counts the records shown and stands only when its
+  words point at them ("these {count}", "the {count} shown here", "listed", "below":
+  `boardrecords.PointsAtShown`); any other wording ("{count} loads are late", "of those, {count}
+  have no hold", "{count} of them") is refused, naming `{all}`. It is never repaired to `{all}`:
+  words cannot show that the list's filter is what they describe (one bench list was "lapsed or
+  expiring within a day" while its words said "credentials have lapsed"). A `{total}` or `{largest}` of
+  a page whose clause names the whole list's number or `{all}` is refused
+  (`Read.SumTiedToWhole`). `show_board` takes `"list": "<artifactId>"` as a figure or reading
+  source and its refusal names the table. A refusal's example number (`A-1001`) is replaced by the number of a record
   the call shows (`Read.WithExample`), so the model is shown its own record.
 - **A board shows the records its words name.** Records in `show_answer` and `show_board` are
   ids, but a record number written where an id goes (`records`, a timeline's `record`) is read
@@ -801,7 +837,8 @@ server.
   for an answer across records (`replycheck.WithBoardNote`), and a reply that names two or more such records
   in prose, with no kept table reprinted and either no artifact linked or the records written out
   beside the link (every row of a kept table of records, or records the turn itself looked up), is
-  sent back once for a board (`replycheck.AskForBoard`).
+  sent back once for a board (`replycheck.AskForBoard`), and a reply that writes out a message
+  for the person to send is sent back once to publish it as a draft (`replycheck.AskForDraft`).
   Both are described under "Steering an answer onto a board" in
   [agent-runtime.md](agent-runtime.md); a model that still answers in prose is taken at its word.
 

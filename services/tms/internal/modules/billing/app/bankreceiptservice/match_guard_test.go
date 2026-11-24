@@ -69,6 +69,7 @@ func TestReleasePaymentMatchSendsTheDepositBackToReconciliation(t *testing.T) {
 			return entity, nil
 		}).
 		Once()
+	waker := &countingWaker{}
 	svc := &Service{
 		l:              zap.NewNop(),
 		db:             passthroughDB{},
@@ -76,6 +77,7 @@ func TestReleasePaymentMatchSendsTheDepositBackToReconciliation(t *testing.T) {
 		workItemRepo:   noWorkItems(t),
 		accountingRepo: reconciliationDisabled(t),
 		auditService:   &mocks.NoopAuditService{},
+		waker:          waker,
 	}
 
 	released, err := svc.ReleasePaymentMatch(t.Context(), &bankreceiptports.ReleasePaymentMatchRequest{
@@ -84,4 +86,6 @@ func TestReleasePaymentMatchSendsTheDepositBackToReconciliation(t *testing.T) {
 
 	require.NoError(t, err)
 	require.Len(t, released, 1)
+	assert.Equal(t, []pagination.TenantInfo{tenantInfo}, waker.woken,
+		"the released deposit's candidates are recomputed once, after the release commits")
 }

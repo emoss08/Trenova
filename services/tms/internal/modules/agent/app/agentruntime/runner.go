@@ -341,9 +341,9 @@ func (s *Service) driveReply(
 		s.reask(t, effects, ReaskCommand, completion)
 		return driveStep{}
 	}
-	if back, ask := replycheck.AskForBoard(t, completion, &loop.boardAsk); ask {
+	if back, ask := replycheck.AskAgain(t, completion, &loop.boardAsk); ask {
 		t.sendBack(effects, back)
-		s.reask(t, effects, ReaskBoard, completion)
+		s.reask(t, effects, back.Guard, completion)
 		return driveStep{}
 	}
 	if s.reground(t, effects, completion, &loop.grounding) {

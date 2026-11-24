@@ -23,6 +23,12 @@ import {
 } from "@/types/analysis";
 import { isAppPath } from "@/lib/app-path";
 import { boardPlaceOf, type BoardCallTool, type BoardPlace } from "@/lib/board-place";
+import { recordKindOf } from "@/lib/record-kind-of";
+import {
+  BOARD_DEFAULT_MEASURES,
+  BOARD_MEASURES,
+  BOARD_METRIC_NAMES,
+} from "@trenova/shared/types/generated/board-catalog";
 import { withoutRecordIds } from "@/lib/record-ids";
 import type { AssistantArtifact } from "@/types/assistant";
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
@@ -1090,6 +1096,7 @@ export const BOARD_BLOCK_TYPES = [
   "note",
   "work",
   "actions",
+  "metric",
 ] as const;
 
 export type BoardBlockType = (typeof BOARD_BLOCK_TYPES)[number];
@@ -1113,6 +1120,10 @@ export type BoardLayoutBlock = {
   caption: string;
   /** The measure a records block reads its rows by (`board.Measure`), so its skeleton rows take the drawn rows' shape; empty for none. */
   measure: string;
+  /** The kind of record a records block shows (`shipment`, `worker_credential`); empty for none. */
+  kind: string;
+  /** The metric a metric block reads, by its own name; empty for any other block. */
+  metric: string;
 };
 
 /** A figure the board's words place as `{key}`, as the agent declared it. */
@@ -1127,10 +1138,40 @@ export type BoardArtifact = {
   place: BoardPlace;
   readings: BoardLayoutReading[];
   blocks: BoardLayoutBlock[];
+  /** How many rows each block drew when the board was shown, so a saved reply reserves them; empty for a board not yet kept. */
+  sizes: number[];
 };
 
 function isBoardBlockType(value: unknown): value is BoardBlockType {
   return typeof value === "string" && (BOARD_BLOCK_TYPES as readonly string[]).includes(value);
+}
+
+/** The kind of record a block's records are: the kind a kept board stores, or the first id's. */
+function blockKind(block: Record<string, unknown>): string {
+  if (isRecord(block.records)) return stringOf(block.records.kind);
+  const first = listOf(block.records).find((entry) => typeof entry === "string");
+  return typeof first === "string" ? (recordKindOf(first.trim()) ?? "") : "";
+}
+
+/**
+ * A measure by any name the tools take, as the catalog names it for the block's kind of record.
+ * Records a call names by their numbers have no kind to read from their ids; the name then
+ * stands for the one measure every kind that takes it means by it, or none.
+ */
+function layoutMeasure(kind: string, name: string): string {
+  const key = name.toLowerCase();
+  if (kind !== "") return BOARD_MEASURES[`${kind}:${key}`]?.measure ?? "";
+  const meant = new Set(
+    Object.entries(BOARD_MEASURES)
+      .filter(([entry]) => entry.slice(entry.indexOf(":") + 1) === key)
+      .map(([, measure]) => measure.measure),
+  );
+  return meant.size === 1 ? [...meant][0] : "";
+}
+
+/** A metric by any name the tools take, as the catalog names it. */
+function layoutMetric(name: string): string {
+  return BOARD_METRIC_NAMES[name.trim().toLowerCase()] ?? "";
 }
 
 function blockSize(block: Record<string, unknown>): number {
@@ -1149,18 +1190,21 @@ function blockSize(block: Record<string, unknown>): number {
  */
 export function boardLayoutFrom(
   board: Record<string, unknown>,
-  fallback: { title: string; author: string; place?: BoardPlace },
+  fallback: { title: string; author: string; place?: BoardPlace; sizes?: number[] },
 ): BoardArtifact {
   const blocks: BoardLayoutBlock[] = [];
   for (const raw of listOf(board.blocks)) {
     if (!isRecord(raw) || !isBoardBlockType(raw.type)) continue;
+    const kind = raw.type === "records" ? blockKind(raw) : "";
     blocks.push({
       type: raw.type,
       title: stringOf(raw.title),
       half: raw.half === true,
       size: blockSize(raw),
       caption: stringOf(raw.caption),
-      measure: raw.type === "records" ? answerMeasure(stringOf(raw.measure).trim()) : "",
+      measure: kind ? layoutMeasure(kind, stringOf(raw.measure).trim()) : "",
+      kind,
+      metric: raw.type === "metric" ? layoutMetric(stringOf(raw.metric)) : "",
     });
   }
   const readings: BoardLayoutReading[] = [];
@@ -1177,6 +1221,7 @@ export function boardLayoutFrom(
     place: fallback.place ?? boardPlaceOf({ board }),
     readings,
     blocks,
+    sizes: fallback.sizes ?? [],
   };
 }
 
@@ -1185,36 +1230,6 @@ const ANSWER_MAX_GROUPS = 3;
 
 /** `nameMark` in `boardanswer/answer.go`: every `{…}` a show_answer call's words may hold. */
 const ANSWER_TOKEN = /\{([^{}\s]{1,60})\}/gu;
-
-/** The measures a record kind reads, by the names `board.MeasureNamed` takes (`board/measure.go`). */
-const ANSWER_MEASURES: Readonly<Record<string, string>> = {
-  lateness: "lateness",
-  revenue: "revenue",
-  amountDue: "amountDue",
-  total: "total",
-  age: "age",
-  amount: "amount",
-  pendingFor: "pendingFor",
-  totalCharge: "revenue",
-  totalChargeAmount: "revenue",
-  totalCharges: "revenue",
-  charge: "revenue",
-  lateBy: "lateness",
-  lateByMinutes: "lateness",
-  lateMinutes: "lateness",
-  late: "lateness",
-  openAmount: "amountDue",
-  amountOpen: "amountDue",
-  balanceDue: "amountDue",
-  balanceDueMinor: "amountDue",
-  totalAmount: "total",
-  totalAmountMinor: "total",
-  invoiceTotal: "total",
-};
-
-function answerMeasure(name: string): string {
-  return Object.hasOwn(ANSWER_MEASURES, name) ? ANSWER_MEASURES[name] : "";
-}
 
 /** `Names` and `Known` in `boardanswer/answer.go`: a group's figure needs that group. */
 function isAnswerName(name: string, groups: number): boolean {
@@ -1252,10 +1267,15 @@ function answerFigure(
   groups: number,
   callMeasure: string,
   unlisted: Map<string, number>,
+  kind: string,
+  metrics: readonly string[] = [],
 ): AnswerFigure | null {
+  const answerMeasure = (name: string): string => layoutMeasure(kind, name);
   const mark = raw.indexOf(":");
   const left = mark < 0 ? raw : raw.slice(0, mark);
   const right = mark < 0 ? "" : raw.slice(mark + 1);
+  const metric = metricFigureKey(left, right, groups, metrics);
+  if (metric !== null) return { raw, key: metric, order: -1, measure: "" };
   const leftMeasure = answerMeasure(left);
   const own = right !== "" && !isAnswerName(left, groups);
   if (own) {
@@ -1279,6 +1299,33 @@ function answerFigure(
 }
 
 /**
+ * The key the server gives a metric's figure (`figure.key` in `boardanswer/figures.go`): the
+ * figure and the place of the group that shows its metric, `{lowest:onTimeByWeek}` in the
+ * second group being `lowest_2`. A bare figure is a metric's only when one metric group is
+ * shown; null when neither side names a metric a group shows.
+ */
+function metricFigureKey(
+  left: string,
+  right: string,
+  groups: number,
+  metrics: readonly string[],
+): string | null {
+  const keyOf = (figure: string, at: number) => `${figure.slice(0, 28)}_${at + 1}`;
+  if (right === "") {
+    const shown = metrics.flatMap((metric, at) => (metric ? [at] : []));
+    return shown.length === 1 && !isAnswerName(left, groups) ? keyOf(left, shown[0]) : null;
+  }
+  for (const [figure, name] of [
+    [left, right],
+    [right, left],
+  ]) {
+    const at = metrics.indexOf(layoutMetric(name));
+    if (layoutMetric(name) !== "" && at >= 0) return keyOf(figure, at);
+  }
+  return null;
+}
+
+/**
  * A show_answer call's arguments as the layout of the board the server builds
  * from them (`board.Board` in the conversation): the answer as the verdict, a
  * records block per group (at most three; an empty group is dropped as the
@@ -1294,17 +1341,25 @@ export function answerLayoutFrom(
 ): BoardArtifact {
   const groups = listOf(answer.groups)
     .filter(isRecord)
-    .filter((group) => listOf(group.records).length > 0)
+    .filter((group) => listOf(group.records).length > 0 || layoutMetric(stringOf(group.metric)))
     .slice(0, 3);
-  const callMeasure = answerMeasure(stringOf(answer.measure).trim());
-  const blocks: BoardLayoutBlock[] = groups.map((group) => ({
-    type: "records",
-    title: stringOf(group.title),
-    half: groups.length === 2,
-    size: listOf(group.records).length,
-    caption: stringOf(group.note),
-    measure: callMeasure,
-  }));
+  const recordGroups = groups.filter((group) => listOf(group.records).length > 0);
+  const kind = recordGroups.length > 0 ? blockKind(recordGroups[0]) : "";
+  const callMeasure =
+    layoutMeasure(kind, stringOf(answer.measure).trim()) || (BOARD_DEFAULT_MEASURES[kind] ?? "");
+  const blocks: BoardLayoutBlock[] = groups.map((group) => {
+    const metric = listOf(group.records).length > 0 ? "" : layoutMetric(stringOf(group.metric));
+    return {
+      type: metric ? "metric" : "records",
+      title: stringOf(group.title),
+      half: groups.length === 2,
+      size: listOf(group.records).length,
+      caption: stringOf(group.note),
+      measure: metric ? "" : callMeasure,
+      kind: metric ? "" : kind,
+      metric,
+    };
+  });
   const actions = listOf(answer.actions).filter(isRecord);
   if (actions.length > 0) {
     blocks.push({
@@ -1314,11 +1369,13 @@ export function answerLayoutFrom(
       size: actions.length,
       caption: "",
       measure: "",
+      kind: "",
+      metric: "",
     });
   }
   const records = [
     ...new Set(
-      groups.flatMap((group) =>
+      recordGroups.flatMap((group) =>
         listOf(group.records).flatMap((record) =>
           typeof record === "string" ? [record.trim()] : [],
         ),
@@ -1329,7 +1386,15 @@ export function answerLayoutFrom(
   const found = new Map<string, AnswerFigure>();
   const keyed = (text: string): string =>
     text.replace(ANSWER_TOKEN, (token: string, raw: string) => {
-      const figure = answerFigure(raw, records, groups.length, callMeasure, unlisted);
+      const figure = answerFigure(
+        raw,
+        records,
+        groups.length,
+        callMeasure,
+        unlisted,
+        kind,
+        blocks.map((block) => block.metric),
+      );
       if (figure === null) return token;
       found.set(raw, figure);
       return `{${figure.key}}`;
@@ -1353,6 +1418,7 @@ export function answerLayoutFrom(
     place: "conversation",
     readings,
     blocks,
+    sizes: [],
   };
 }
 
@@ -1373,5 +1439,6 @@ export function boardFrom(artifact: AssistantArtifact): BoardArtifact {
     title: artifact.title,
     author: stringOf(payload.author),
     place: boardPlaceOf(payload),
+    sizes: listOf(payload.sizes).filter((size): size is number => typeof size === "number"),
   });
 }

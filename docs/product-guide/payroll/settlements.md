@@ -11,7 +11,7 @@ related:
 ## What it's for
 Settlement history is the read-only record of every driver and owner-operator settlement across all pay periods. Payroll and accounting staff use it to look up a past settlement, see its earnings, deductions, net pay and history, and find settlements from earlier periods that are no longer in the workspace queue.
 
-The table shows **Status**, **Settlement #**, **Driver**, **Type**, **Period end**, **Pay date**, **Loads**, **Gross**, **Deductions** and **Net pay**. Settlements are created in the workspace, not here.
+The table shows **Status** (with **On hold** beside it for a settlement a person holds out of the pay run), **Settlement #**, **Driver**, **Type**, **Period end**, **Pay date**, **Loads**, **Gross**, **Deductions** and **Net pay**. Settlements are created in the workspace, not here.
 
 ## Tasks
 
@@ -30,7 +30,7 @@ Keywords: edit settlement, process settlement
 Keywords: bulk approve, bulk post, bulk mark paid
 1. Open [Settlement history](/payroll/settlements).
 2. Tick the settlements to act on.
-3. In the bar that appears, choose **Lifecycle action** and pick **Submit for approval**, **Approve** or **Post to GL**; settlements not in an eligible status are skipped.
+3. In the bar that appears, choose **Lifecycle action** and pick **Submit for approval**, **Approve** or **Post to GL**; settlements not in an eligible status are skipped, and settlements on hold are left out of approving and posting.
 4. To record payment, select **Mark paid**, choose the **Payment method**, optionally enter a **Batch reference**, and confirm with **Mark paid**. Only posted settlements can be marked paid.
 
 ## Notes

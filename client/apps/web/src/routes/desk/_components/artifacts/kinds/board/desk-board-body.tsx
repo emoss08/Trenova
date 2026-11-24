@@ -17,9 +17,17 @@ import { InPlaceRecord, recordCardFor, usePreloadRecordCard } from "../../cards/
 import { ArtIcon } from "../../desk-art-kinds";
 import { cardTime } from "../../record-card/record-card-values";
 import { Notice } from "../artifact-body-parts";
-import { boardReads, cutRows, halfBlocks, initialsOf, readableIds, readStamp } from "./board-card";
 import {
-  BoardChart,
+  boardReads,
+  cutRows,
+  halfBlocks,
+  initialsOf,
+  opened as openedRecord,
+  readableIds,
+  readStamp,
+} from "./board-card";
+import { BoardMetric, NothingToDraw } from "./blocks/board-metric";
+import {
   BoardTable,
   Checks,
   Empty,
@@ -61,12 +69,14 @@ function useBoardRecords(
   usePreloadRecordCard(entry);
 
   return {
-    opensInPlace: (resource) => {
-      const card = recordCardFor(resource);
+    opensInPlace: (kind) => {
+      const card = recordCardFor(kind);
       return card !== null && hasPermission(card.resource, Operation.Read);
     },
-    open: (row: DeskBoardRow, order) =>
-      setOpened({ artifactId, entity: row.resource, recordId: row.id, order }),
+    open: (row: DeskBoardRow, order) => {
+      const target = openedRecord(row);
+      setOpened({ artifactId, entity: target.kind, recordId: target.id, order });
+    },
     opened:
       opened && entry ? (
         <InPlaceRecord
@@ -132,7 +142,9 @@ export function BlockBody({
   cut?: RowCut;
 }) {
   if (block.state === "unreadable") return <Unreadable block={block} />;
-  if (block.state === "empty") return <Empty block={block} />;
+  if (block.state === "empty") {
+    return block.metric ? <NothingToDraw form={block.metric.form} /> : <Empty block={block} />;
+  }
   switch (block.type) {
     case "figures":
       return <Readout figures={block.figures} answeredAt={card.answeredAt} now={now} />;
@@ -156,7 +168,16 @@ export function BlockBody({
     case "table":
       return block.table ? <BoardTable table={block.table.table} /> : null;
     case "chart":
-      return block.chart ? <BoardChart chart={block.chart} /> : null;
+    case "metric":
+      return block.metric ? (
+        <BoardMetric
+          metric={block.metric}
+          answeredAt={card.answeredAt}
+          now={now}
+          open={open}
+          opensInPlace={opensInPlace}
+        />
+      ) : null;
     case "timeline":
       return <LogBook events={block.events} now={now} />;
     case "checks":

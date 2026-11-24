@@ -1,3 +1,4 @@
+import { SelectField } from "@/components/fields/select-field";
 import { TextareaField } from "@/components/fields/textarea-field";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -10,24 +11,46 @@ import {
   DialogTitle,
 } from "@trenova/shared/components/ui/dialog";
 import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form";
+import type { SelectOption } from "@trenova/shared/types/fields";
 import { translate } from "@trenova/shared/i18n/runtime";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { useId, type ReactNode } from "react";
-import { FormProvider, useForm, type Resolver } from "react-hook-form";
+import { FormProvider, useForm, useWatch, type Resolver } from "react-hook-form";
 import { z } from "zod";
 
 export const MAX_REASON_LENGTH = 500;
 
-function reasonSchema(maxLength: number, optional: boolean) {
-  return z.object({
-    reason: z
-      .string()
-      .trim()
-      .min(optional ? 0 : 1, { error: () => translate("Say why") })
-      .max(maxLength, {
-        error: () => translate("Keep the reason under {0} characters", maxLength),
-      }),
-  });
+/** A fixed set the person picks why from, before the words that go with it. */
+export type ReasonChoice = {
+  label: string;
+  placeholder: string;
+  options: SelectOption[];
+  /** The picks that leave the words required even when the dialog is optional. */
+  needsWords?: string[];
+};
+
+function reasonSchema(maxLength: number, optional: boolean, choice?: ReasonChoice) {
+  return z
+    .object({
+      choice: z.string(),
+      reason: z
+        .string()
+        .trim()
+        .min(optional ? 0 : 1, { error: () => translate("Say why") })
+        .max(maxLength, {
+          error: () => translate("Keep the reason under {0} characters", maxLength),
+        }),
+    })
+    .superRefine((values, ctx) => {
+      if (!choice) return;
+      if (values.choice === "") {
+        ctx.addIssue({ code: "custom", path: ["choice"], message: translate("Pick one") });
+        return;
+      }
+      if (choice.needsWords?.includes(values.choice) && values.reason.trim() === "") {
+        ctx.addIssue({ code: "custom", path: ["reason"], message: translate("Say why") });
+      }
+    });
 }
 type ReasonValues = z.infer<ReturnType<typeof reasonSchema>>;
 
@@ -50,8 +73,11 @@ type ReasonDialogProps = {
   defaultReason?: string;
   /** The words on the button that backs out; "Back" unless the step needs its own words. */
   cancelLabel?: string;
+  /** A fixed set to pick why from, above the words; the pick is passed to onConfirm. */
+  choice?: ReasonChoice;
   pending: boolean;
-  onConfirm: (reason: string) => void;
+  /** Called with the words, and with the pick when the dialog offers a choice. */
+  onConfirm: (reason: string, choice?: string) => void;
   onOpenChange: (open: boolean) => void;
 };
 
@@ -87,6 +113,7 @@ function ReasonForm({
   fieldDescription,
   defaultReason = "",
   cancelLabel,
+  choice,
   pending,
   onConfirm,
   onCancel,
@@ -94,9 +121,11 @@ function ReasonForm({
   const t = useT();
   const formId = useId();
   const form = useForm<ReasonValues>({
-    resolver: zodResolver(reasonSchema(maxLength, optional)) as Resolver<ReasonValues>,
-    defaultValues: { reason: defaultReason },
+    resolver: zodResolver(reasonSchema(maxLength, optional, choice)) as Resolver<ReasonValues>,
+    defaultValues: { choice: "", reason: defaultReason },
   });
+  const picked = useWatch({ control: form.control, name: "choice" });
+  const wordsRequired = !optional || Boolean(choice?.needsWords?.includes(picked));
 
   return (
     <>
@@ -109,10 +138,26 @@ function ReasonForm({
           id={formId}
           onSubmit={(event) => {
             event.stopPropagation();
-            void form.handleSubmit((values) => onConfirm(values.reason.trim()))(event);
+            void form.handleSubmit((values) =>
+              choice
+                ? onConfirm(values.reason.trim(), values.choice)
+                : onConfirm(values.reason.trim()),
+            )(event);
           }}
         >
           <FormGroup cols={1}>
+            {choice && (
+              <FormControl>
+                <SelectField<ReasonValues>
+                  control={form.control}
+                  name="choice"
+                  label={choice.label}
+                  placeholder={choice.placeholder}
+                  options={choice.options}
+                  required
+                />
+              </FormControl>
+            )}
             <FormControl>
               <TextareaField
                 control={form.control}
@@ -121,7 +166,7 @@ function ReasonForm({
                 description={fieldDescription}
                 placeholder={placeholder}
                 rows={3}
-                required={!optional}
+                required={wordsRequired}
               />
             </FormControl>
           </FormGroup>

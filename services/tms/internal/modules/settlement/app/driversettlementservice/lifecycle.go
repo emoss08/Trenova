@@ -127,6 +127,9 @@ func (s *Service) approveInternal(
 		if txErr != nil {
 			return txErr
 		}
+		if txErr = entity.RefuseIfHeld(); txErr != nil {
+			return txErr
+		}
 		if route.fromDraft && entity.Status == driversettlement.StatusDraft {
 			if txErr = PlanSubmit(entity, actor.UserID, timeutils.NowUnix()); txErr != nil {
 				return txErr
@@ -353,6 +356,9 @@ func (s *Service) Void(
 			return txErr
 		}
 		if updated, txErr = s.settlementRepo.Update(txCtx, entity); txErr != nil {
+			return txErr
+		}
+		if txErr = s.refreshBatch(txCtx, tenantInfo, updated.BatchID); txErr != nil {
 			return txErr
 		}
 		if !wasPosted {

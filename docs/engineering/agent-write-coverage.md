@@ -85,37 +85,37 @@ matches anything fails too, so the file cannot drift behind the tools.
 
 | Category | Means | Writes |
 | --- | --- | --- |
-| `security` | Sign-in, sessions, passwords, API keys, SSO, identity providers, roles, permissions and every other grant of access. Never agent-operated: an agent that could widen access could widen its own. | 102 |
+| `security` | Sign-in, sessions, passwords, API keys, SSO, identity providers, roles, permissions and every other grant of access. Never agent-operated: an agent that could widen access could widen its own. | 103 |
 | `configuration` | Organization-wide settings, controls, lookup tables, templates and integration connections an administrator sets once and every later write depends on. | 245 |
 | `user-preference` | A person's own interface state: saved table views, the sidebar, favorites, notification read state, a profile picture. | 43 |
 | `infrastructure` | Plumbing a client, a provider or the platform drives rather than a decision a person makes: upload sessions, inbound webhooks, presence signals, the GraphQL transport, repair operations. | 49 |
 | `agent-administration` | Defining, configuring, evaluating and overseeing agents, including deciding what they propose. An agent that did this would be grading its own work. | 109 |
 | `counterparty` | Done by someone other than the organization's staff acting for themselves: a driver in their own portal, a customer or carrier through a public link. An agent acts for the organization and must not act as them. | 35 |
-| `read-only` | Sent as a POST or a mutation but only computes, previews, validates or tests, and changes nothing. | 49 |
+| `read-only` | Sent as a POST or a mutation but only computes, previews, validates or tests, and changes nothing. | 51 |
 | `attestation` | A sign-off a named, accountable person must make: certifying a regulatory summary, filing a return, overriding a failed vetting. | 55 |
 | `duplicate` | Another surface for a write listed elsewhere that the analysis could not merge on its own. The reason names the write it duplicates. | 11 |
 
 ## Totals
 
-1149 writes: 692 GraphQL mutations and 457 REST writes, after merging 27 REST routes into the mutation they duplicate.
+1154 writes: 697 GraphQL mutations and 457 REST writes, after merging 27 REST routes into the mutation they duplicate.
 
 | Decision | Writes |
 | --- | --- |
-| Covered by a tool | 447 |
-| Exempt | 698 |
-| — Security | 102 |
+| Covered by a tool | 449 |
+| Exempt | 701 |
+| — Security | 103 |
 | — Configuration | 245 |
 | — User preference | 43 |
 | — Infrastructure | 49 |
 | — Agent administration | 109 |
 | — Counterparty | 35 |
-| — Read-only | 49 |
+| — Read-only | 51 |
 | — Attestation | 55 |
 | — Duplicate | 11 |
 | **Pending** | **4** |
-| Total | 1149 |
+| Total | 1154 |
 
-Of the 451 writes an agent should be able to make, 447 have a tool (99%).
+Of the 453 writes an agent should be able to make, 449 have a tool (99%).
 
 ## Pending
 
@@ -185,6 +185,7 @@ The writes no tool performs yet, and what the tool would do.
 | decisions | 1 | 0 | 1 | 0 |
 | deskcase | 6 | 2 | 4 | 0 |
 | deskmemory | 6 | 3 | 3 | 0 |
+| desktranscript | 3 | 0 | 3 | 0 |
 | detention | 8 | 4 | 4 | 0 |
 | dispatchconsole | 7 | 4 | 1 | 2 |
 | dispatchcontrol | 1 | 0 | 1 | 0 |
@@ -198,7 +199,7 @@ The writes no tool performs yet, and what the tool would do.
 | documenttemplate | 12 | 0 | 12 | 0 |
 | documenttype | 2 | 0 | 2 | 0 |
 | driverportal | 31 | 3 | 28 | 0 |
-| driversettlement | 34 | 29 | 5 | 0 |
+| driversettlement | 36 | 31 | 5 | 0 |
 | edi | 9 | 6 | 3 | 0 |
 | edilading | 13 | 1 | 11 | 1 |
 | edisetup | 18 | 5 | 13 | 0 |
@@ -921,6 +922,14 @@ Tools that change something no person-facing write does, such as sending a messa
 | `mutation setDeskMemoryStatus` | Tool: `agent_retire_memory` |
 | `mutation setMemorySavingMode` | Exempt, agent-administration: Whether agents keep what they learn in the person's conversations straight away or ask first; an agent that could change it could stop asking. |
 
+### desktranscript
+
+| Write | Decision |
+| --- | --- |
+| `mutation deskTranscriptExportDownload` | Exempt, read-only: Returns a download link for an export of Desk conversations already produced, to the person who asked for it. |
+| `mutation openDeskConversation` | Exempt, read-only: Reads another person's conversation for an administrator; it changes nothing but the audit log, which records every look. |
+| `mutation requestDeskTranscriptExport` | Exempt, security: Taking other people's Desk conversations out of Trenova is a person's decision on their own authority; no agent, delegated run or palette may reach other people's conversations. |
+
 ### detention
 
 | Write | Decision |
@@ -1099,6 +1108,7 @@ Tools that change something no person-facing write does, such as sending a messa
 | `mutation generateDriverSettlement` | Tool: `settlement_generate_driver` |
 | `mutation generateSettlementBatch` | Tool: `settlement_generate_driver_batch` |
 | `mutation holdDriverPayEvent` | Tool: `settlement_hold_pay_event` |
+| `mutation holdDriverSettlement` | Tool: `settlement_hold_driver` |
 | `mutation issuePayAdvance` | Tool: `settlement_issue_advance` |
 | `mutation markDriverSettlementPaid` | Tool: `settlement_record_driver_payment` |
 | `mutation openEscrowAccount` | Tool: `settlement_open_escrow_account` |
@@ -1107,6 +1117,7 @@ Tools that change something no person-facing write does, such as sending a messa
 | `mutation recalculateDriverSettlement` | Tool: `settlement_recalculate_driver` |
 | `mutation rejectDriverSettlement` | Tool: `settlement_reject_driver` |
 | `mutation releaseDriverPayEvent` | Tool: `settlement_release_pay_event` |
+| `mutation releaseDriverSettlementHold` | Tool: `settlement_hold_driver` |
 | `mutation removeDriverSettlementAdjustment` | Tool: `settlement_remove_driver_adjustment` |
 | `mutation submitDriverSettlement` | Tool: `settlement_submit_driver` |
 | `mutation updateEscrowAccount` | Tool: `settlement_update_escrow_account` |

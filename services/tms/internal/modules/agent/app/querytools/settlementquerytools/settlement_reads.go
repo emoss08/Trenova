@@ -7,7 +7,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/readspec"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/boardhint"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/settlementboard"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/emoss08/trenova/shared/typeutils"
 )
@@ -18,6 +20,7 @@ const (
 	fieldInForce         = "inForce"
 	fieldDescription     = "description"
 	paramHasExceptions   = "hasExceptions"
+	paramBatchID         = "batchId"
 
 	whatDriver = "The driver"
 
@@ -68,6 +71,7 @@ func settlementStatementSpecs() []readspec.List {
 			Resource:   permission.ResourceDriverSettlement,
 			Amounts:    true,
 		},
+		batchBlockerSpec(),
 		{
 			Name:         "settlement_list_pay_events",
 			EntityPlural: "driver pay events",
@@ -133,6 +137,32 @@ func settlementStatementSpecs() []readspec.List {
 			},
 			Outside: []string{fieldDescription},
 		},
+	}
+}
+
+func batchBlockerSpec() readspec.List {
+	return readspec.List{
+		Name:         settlementboard.BlockerTool,
+		EntityPlural: "settlements that cannot be released",
+		Summary: "List the driver settlements in a pay batch that cannot be released as " +
+			"they stand, by what keeps each one. The reason is Has a critical exception " +
+			"(the message says which) or Dispute open (the driver disputes it), the largest " +
+			"net first. Each row has the settlement number, the driver, its status, the " +
+			"batch and pay date, and net pay when your data access reaches it. The batch's " +
+			"own totals, what is ready and what is deducted, are figures of the " +
+			"settlementBatch metric, never a sum of these rows.",
+		SearchTerms: []string{
+			"settlement batch", "what is holding the batch", "settlements that cannot be paid",
+			"blocked settlements", "this week's pay run",
+		},
+		References: map[string]readspec.Reference{paramBatchID: {
+			Resource: permission.ResourceDriverSettlement,
+			What:     "The pay batch; leave it out for the newest pay period's",
+			Source:   "the batchId settlement_list_driver gives",
+		}},
+		Shows:    &boardhint.Show{Metric: settlementboard.MetricSettlementBatch},
+		Resource: permission.ResourceDriverSettlement,
+		Amounts:  true,
 	}
 }
 

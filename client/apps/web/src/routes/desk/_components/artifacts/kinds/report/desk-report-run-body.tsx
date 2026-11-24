@@ -333,6 +333,17 @@ function RunNotes({ card, expired }: { card: ReportRunDeskCard; expired: boolean
       </div>
     );
   }
+  if (card.withheld === "deleted") {
+    return (
+      <div className="dk-rr-note dk-warn">
+        <ArtIcon name="lock" size={14} />
+        <div>
+          <b>{t("This report was deleted.")}</b>
+          {t("Its result is not shown here and its file cannot be downloaded.")}
+        </div>
+      </div>
+    );
+  }
   if (card.withheld) {
     return (
       <div className="dk-rr-note dk-warn">
@@ -523,11 +534,16 @@ function RunActions({
   });
   const path = reportsPath(card.report);
   const finished = run.status === "succeeded" && !expired;
+  const reportDeleted = card.withheld === "deleted";
   const downloadable =
-    finished && run.rowCount > 0 && card.withheld !== "access" && card.withheld !== "plan";
+    finished &&
+    run.rowCount > 0 &&
+    card.withheld !== "access" &&
+    card.withheld !== "plan" &&
+    !reportDeleted;
   const runAgainFirst = !finished && !isRunActive(run.status);
 
-  const runAgain = mayRun && !isRunActive(run.status) && (
+  const runAgain = mayRun && !reportDeleted && !isRunActive(run.status) && (
     <Button
       variant={runAgainFirst ? "default" : "quiet"}
       disabled={rerun.isPending}

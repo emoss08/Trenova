@@ -15,11 +15,13 @@ export function WorkspaceSummaryStrip({
   summary,
   actions,
   onFilterAttention,
+  onFilterHeld,
   onShowUnsettled,
 }: {
   summary: SettlementWorkspaceSummary;
   actions: ReactNode;
   onFilterAttention: () => void;
+  onFilterHeld: () => void;
   onShowUnsettled: () => void;
 }) {
   const t = useT();
@@ -72,6 +74,25 @@ export function WorkspaceSummaryStrip({
           sub={<span>exception-flagged settlements</span>}
         />
         <StatTile
+          label={t("Settlements on hold")}
+          clickable={summary.heldSettlementCount > 0}
+          onClick={summary.heldSettlementCount > 0 ? onFilterHeld : undefined}
+          tone={summary.heldSettlementCount > 0 ? "warn" : undefined}
+          hint={t(
+            "Settlements a person keeps out of the pay run; approving, posting and paying them wait until the hold is released. Click to filter the queue to them.",
+          )}
+          value={<span className="tabular-nums">{summary.heldSettlementCount}</span>}
+          sub={
+            <span>
+              {rt("netting <amount/>", {
+                amount: () => (
+                  <AmountDisplay value={summary.heldSettlementNetMinor} currency="USD" />
+                ),
+              })}
+            </span>
+          }
+        />
+        <StatTile
           label={t("Posted / paid")}
           hint={t("Settlements posted to the GL and settlements already paid out.")}
           value={
@@ -114,7 +135,7 @@ export function WorkspaceSummaryStrip({
           }
         />
         <StatTile
-          label={t("On hold")}
+          label={t("Pay events on hold")}
           tone={summary.heldEventCount > 0 ? "info" : undefined}
           hint={t("Pay events deliberately deferred — they skip generation until released.")}
           value={<AmountDisplay value={summary.heldGrossMinor} currency="USD" />}

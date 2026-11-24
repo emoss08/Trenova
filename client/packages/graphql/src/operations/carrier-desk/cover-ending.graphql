@@ -1,0 +1,16 @@
+# Active carriers whose required insurance ends within a number of days, or
+# lapsed in the last 90, as the Desk reads them: the required policy that ends
+# first, when it ends, what is missing and the loads each holds for us now.
+query DeskCarrierCoverEnding($withinDays: Int, $limit: Int) {
+  carrierCoverEnding(withinDays: $withinDays, limit: $limit) {
+    id
+    name
+    code
+    complianceStatus
+    policyType
+    policyNumber
+    endsAt
+    missingPolicyTypes
+    openLoads
+  }
+}

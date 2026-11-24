@@ -1,8 +1,6 @@
 package agent
 
 import (
-	"go.uber.org/fx"
-
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/accountingbriefrepository"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/agentactivityrepository"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/agentdecisionqueuerepository"
@@ -59,7 +57,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/recordcaserepository"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/recordlabelrepository"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/recordsharerepository"
-	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/recordsummaryrepository"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/roleagentgrantrepository"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/shipmentbriefrepository"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/shipmentimportchatrepository"
@@ -185,6 +182,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/tablequeryservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/watchtowerservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/watchtowersources"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/boardregistry"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agenteventjobs/agenteventcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentjobs/agentcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentprofilejobs/agentprofilecontract"
@@ -220,6 +218,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentimportassistantports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/boardreaderports"
+	"go.uber.org/fx"
 )
 
 //nolint:funlen // the module's providers are its part of the application graph
@@ -301,7 +301,8 @@ func SharedOptions() fx.Option {
 			recordlabelrepository.New,
 			recordlabelrepository.NewRecordFinder,
 			recordlabelrepository.NewRecordNumbers,
-			recordsummaryrepository.New,
+			boardregistry.Catalog,
+			boardreaderports.NewIndex,
 			fx.Annotate(
 				boardcardservice.New,
 				fx.As(fx.Self()),
@@ -575,6 +576,7 @@ func SharedOptions() fx.Option {
 		agenttoolruleservice.LoaderModule,
 		fx.Invoke(agentevents.RegisterAttachmentObservers),
 		fx.Invoke(agentevents.RegisterEventObservers),
+		fx.Invoke(boardcardservice.ReadListsWith),
 	)
 }
 

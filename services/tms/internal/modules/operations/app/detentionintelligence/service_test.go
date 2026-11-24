@@ -29,6 +29,31 @@ func (f *fakeRepo) Intelligence(
 	return f.rollup, nil
 }
 
+func (f *fakeRepo) FacilityFigures(
+	_ context.Context,
+	req *detentionports.IntelligenceRequest,
+) ([]detentionports.FacilityIntelligence, error) {
+	f.got = req
+	return f.rollup.Facilities, nil
+}
+
+func (f *fakeRepo) TotalFigures(
+	context.Context,
+	*detentionports.IntelligenceRequest,
+) (*detentionports.IntelligenceSummary, error) {
+	return &detentionports.IntelligenceSummary{
+		Totals:   f.rollup.Totals,
+		Recovery: f.rollup.Recovery,
+	}, nil
+}
+
+func (f *fakeRepo) ArrivalFigures(
+	context.Context,
+	*detentionports.IntelligenceRequest,
+) ([]detentionports.ArrivalCell, error) {
+	return f.rollup.Arrivals, nil
+}
+
 func (f *fakeRepo) OrganizationTimezone(context.Context, pagination.TenantInfo) (string, error) {
 	return f.zone, nil
 }

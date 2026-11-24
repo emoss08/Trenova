@@ -1,0 +1,249 @@
+defaults:
+  agent: Bench · Credential desk
+  tags: [beyond, board, workforce]
+
+scenarios:
+  - name: beyond-credentials-running-out
+    description: >
+      Credentials weighed together: the ones that run out in the next 30 days and the ones that
+      already lapsed, each a worker's credential drawn with its countdown and opening the
+      worker. The answer is a board in the conversation whose rows are worker credentials and
+      whose words read the expiry measure, not a prose list of names and dates. The fixture seed
+      leaves Jane Doe's medical card and physical lapsed, and Robert Brown's and Sarah Williams'
+      running out in December.
+    steps:
+      - say: "whose credentials run out in the next 30 days, and has anything already lapsed?"
+        expect:
+          calls: ["worker_list_credentials|worker_get_credential|worker_get", "show_answer|show_board"]
+          maxCalls: 6
+          maxFailedCalls: 1
+          noProposals: true
+          noRecordIds: true
+          replyExcludes:
+            - "/(?i)\\b(two|three|four|[2-9])\\s+(drivers|people|workers|persons)\\s+(have\\s+|has\\s+)?(already\\s+)?lapsed(\\s*[.,;:!)—-]|\\s+(and|but|so|as|on|in|since|their|credentials?)\\b|\\s*$)/"
+          board:
+            place: conversation
+            minReadings: 1
+            kinds: [worker_credential]
+            measures: [expiry]
+          facts:
+            - sql: >
+                select distinct w.first_name from worker_credentials c
+                join workers w on w.id = c.worker_id
+                where c.status = 'Active' and c.expires_at < extract(epoch from now())
+                order by w.first_name
+              note: whose credentials already lapsed
+            - sql: >
+                select distinct w.first_name from worker_credentials c
+                join workers w on w.id = c.worker_id
+                where c.status = 'Active'
+                  and c.expires_at between extract(epoch from now())
+                  and extract(epoch from now() + interval '30 days')
+                order by w.first_name
+              note: whose credentials run out in the next 30 days
+          rubric: >
+            Reads the active credentials, then answers in the conversation with the worker
+            credentials themselves: what has already lapsed (Jane Doe's DOT medical card and DOT
+            physical) apart from what runs out in the next 30 days (Robert Brown's and Sarah
+            Williams' medical card and physical), each person named, any count true and placed
+            as a reading, the nearest to run out named, and each row drawn with its expiry: the time
+            left or lapsed and the day. Nothing is said about a credential the board does not
+            show.
+
+  - name: beyond-one-credential-is-a-sentence
+    description: >
+      One credential's expiry is one fact: a sentence, not a board.
+    steps:
+      - say: "when does robert brown's medical card expire?"
+        expect:
+          calls: ["worker_list_credentials|worker_get_credential|worker_get|worker_list"]
+          maxCalls: 5
+          maxFailedCalls: 1
+          noProposals: true
+          noRecordIds: true
+          noBoard: true
+          replyIncludes: ["Dec|December|12/|-12-"]
+          rubric: >
+            Answers in a sentence that Robert Brown's DOT medical card expires at the start of
+            December 2026, on the day the credential record gives, without a board.
+
+  - name: beyond-overtime-this-week
+    agent: Bench · Workforce coordinator
+    description: >
+      The week's hours weighed against the overtime line: who will pass it on the shifts they
+      hold, by how much, on which shift, and who has room to take one. The answer is a board in
+      the conversation whose rows are workers drawn with their hours this week against the line,
+      beside the week day by day, not a prose list. The fixture seed puts six yard, dock and
+      shop workers on patterns: three pass the line on a Friday or Saturday shift, one lands
+      exactly on it and two have room. The setup clocks this week's shifts that have already
+      ended, so the worked hours are this week's.
+    setup:
+      - >
+        DELETE FROM time_clock_entries AS e USING workers AS w
+        WHERE e.worker_id = w.id AND w.email IN ('hector.alvarez@example.com',
+          'janet.cole@example.com', 'dmitri.volkov@example.com', 'sam.whitaker@example.com',
+          'rosa.lind@example.com', 'kwame.boateng@example.com')
+      - >
+        DELETE FROM timesheets AS s USING workers AS w, organizations AS o
+        WHERE s.worker_id = w.id AND o.id = w.organization_id
+          AND s.period_start <> extract(epoch from ((date_trunc('week', (now() AT TIME ZONE o.timezone)
+            + interval '1 day') - interval '1 day')::date)::timestamp AT TIME ZONE 'UTC')::bigint
+          AND w.email IN ('hector.alvarez@example.com', 'janet.cole@example.com',
+          'dmitri.volkov@example.com', 'sam.whitaker@example.com', 'rosa.lind@example.com',
+          'kwame.boateng@example.com')
+      - >
+        INSERT INTO timesheets
+          (id, business_unit_id, organization_id, worker_id, status, period_start, period_end,
+           regular_minutes, overtime_minutes, paid_leave_minutes, entry_count,
+           overtime_threshold_minutes, version, created_at, updated_at)
+        SELECT 'tsh_' || upper(substr(md5(w.id || 'rota-week'), 1, 26)), w.business_unit_id,
+          w.organization_id, w.id, 'Open', p.start, p.start + 7 * 86400, 0, 0, 0, 0, 2400, 0,
+          extract(epoch from now())::bigint, extract(epoch from now())::bigint
+        FROM workers AS w
+        JOIN organizations AS o ON o.id = w.organization_id
+        CROSS JOIN LATERAL (
+          SELECT extract(epoch from ((date_trunc('week', (now() AT TIME ZONE o.timezone)
+            + interval '1 day') - interval '1 day')::date)::timestamp AT TIME ZONE 'UTC')::bigint
+            AS start) AS p
+        WHERE w.email IN ('hector.alvarez@example.com', 'janet.cole@example.com',
+          'dmitri.volkov@example.com', 'sam.whitaker@example.com', 'rosa.lind@example.com',
+          'kwame.boateng@example.com')
+        ON CONFLICT DO NOTHING
+      - >
+        INSERT INTO time_clock_entries
+          (id, business_unit_id, organization_id, worker_id, timesheet_id, source,
+           clocked_in_at, clocked_out_at, break_minutes, version, created_at, updated_at)
+        SELECT 'tce_' || upper(substr(md5(w.id || d::text || 'rota-week'), 1, 26)),
+          w.business_unit_id, w.organization_id, w.id, s.id, 'Clock', x.clock_in,
+          x.clock_in + t.duration_minutes * 60, 0, 0, extract(epoch from now())::bigint,
+          extract(epoch from now())::bigint
+        FROM workers AS w
+        JOIN organizations AS o ON o.id = w.organization_id
+        JOIN worker_shift_assignments AS a ON a.worker_id = w.id AND a.effective_to IS NULL
+        JOIN shift_templates AS t ON t.id = a.shift_template_id
+        JOIN timesheets AS s ON s.worker_id = w.id
+          AND s.period_start = extract(epoch from ((date_trunc('week', (now() AT TIME ZONE o.timezone)
+            + interval '1 day') - interval '1 day')::date)::timestamp AT TIME ZONE 'UTC')::bigint
+        CROSS JOIN generate_series(0, 6) AS d
+        CROSS JOIN LATERAL (
+          SELECT extract(epoch from ((date_trunc('week', (now() AT TIME ZONE o.timezone)
+            + interval '1 day') - interval '1 day' + make_interval(days => d,
+            mins => t.start_minute)) AT TIME ZONE o.timezone))::bigint AS clock_in) AS x
+        WHERE w.email IN ('hector.alvarez@example.com', 'janet.cole@example.com',
+          'dmitri.volkov@example.com', 'sam.whitaker@example.com', 'rosa.lind@example.com',
+          'kwame.boateng@example.com')
+          AND substr(t.days_of_week, d + 1, 1) = '1'
+          AND x.clock_in + t.duration_minutes * 60 <= extract(epoch from now())::bigint
+        ON CONFLICT DO NOTHING
+      - >
+        UPDATE timesheets AS s
+        SET regular_minutes = least(m.worked, 2400), overtime_minutes = greatest(m.worked - 2400, 0),
+          entry_count = m.entries
+        FROM (
+          SELECT e.timesheet_id, sum((e.clocked_out_at - e.clocked_in_at) / 60)::int AS worked,
+            count(*)::int AS entries
+          FROM time_clock_entries AS e JOIN workers AS w ON w.id = e.worker_id
+          WHERE w.email IN ('hector.alvarez@example.com', 'janet.cole@example.com',
+            'dmitri.volkov@example.com', 'sam.whitaker@example.com', 'rosa.lind@example.com',
+            'kwame.boateng@example.com')
+          GROUP BY e.timesheet_id) AS m
+        WHERE s.id = m.timesheet_id
+    steps:
+      - say: "who is going to run into overtime this week?"
+        expect:
+          calls: ["worker_list_week_hours", "show_answer|show_board"]
+          maxCalls: 6
+          maxFailedCalls: 1
+          noProposals: true
+          noRecordIds: true
+          board:
+            place: conversation
+            minReadings: 1
+            kinds: [worker]
+            measures: [hoursThisWeek]
+            metrics: [rotaWeek]
+          rubric: >
+            Reads the week's hours, then answers in the conversation with the workers
+            themselves, each drawn with their hours this week against the overtime line, and
+            the week day by day beside them. It says that three will pass the line on the
+            shifts they hold: Hector Alvarez the furthest (10h over, crossing on his Saturday
+            shift), Janet Cole (5h over, on Friday) and Dmitri Volkov (2h 30m over, on
+            Saturday); that Sam Whitaker lands exactly on the line; and that Rosa Lind and
+            Kwame Boateng have room. Any count or overtime figure is placed as a reading, not
+            typed. Nothing is said about a worker the board does not show, and nothing is
+            changed.
+
+  - name: beyond-one-worker-hours-is-a-sentence
+    agent: Bench · Workforce coordinator
+    description: >
+      One worker's hours this week is one fact: a sentence, not a board.
+    steps:
+      - say: "how many hours has Hector Alvarez worked this week?"
+        expect:
+          calls: ["worker_list_week_hours|worker_get_schedule|worker_list|worker_get"]
+          maxCalls: 5
+          maxFailedCalls: 1
+          noProposals: true
+          noRecordIds: true
+          noBoard: true
+          rubric: >
+            Answers in a sentence with the hours Hector Alvarez has worked so far this week, as
+            the week's hours give them, and may add what is still scheduled; no board.
+
+  - name: beyond-lapsed-credentials-offer-the-reminder
+    description: >
+      The lapsed credentials are weighed on a board in the conversation, and the reminder the
+      person will send is offered as the board's action (the expiry measure declares the
+      follow-up), not written into the reply. Picking the action asks the agent, in the next
+      turn, to draft the reminder as its own write-up; nothing is sent.
+    steps:
+      - say: >
+          whose credentials have already lapsed? write a short reminder I can send them to
+          renew, and show me what lapsed
+        expect:
+          calls: ["worker_list_credentials|worker_get_credential|worker_get", "show_answer|show_board"]
+          maxCalls: 6
+          maxFailedCalls: 1
+          noProposals: true
+          noRecordIds: true
+          board:
+            place: conversation
+            kinds: [worker_credential]
+            measures: [expiry]
+            actions: true
+          rubric: >
+            Reads the credentials, then answers in the conversation with the lapsed worker
+            credentials (Jane Doe's DOT medical card and DOT physical), each drawn with how
+            long ago it lapsed and the day, and either offers drafting the renewal reminder as
+            the board's action or drafts it as a document the board's words link. No reminder
+            message is written out in the reply. Nothing is said
+            about a credential the board does not show, and nothing is sent or changed.
+      - say: >
+          Draft a short renewal reminder to each person whose credential on this board has
+          lapsed or runs out soon, as a document I can read and send myself.
+        expect:
+          calls: ["publish_artifact"]
+          maxCalls: 4
+          maxFailedCalls: 1
+          noProposals: true
+          noBoard: true
+          rubric: >
+            Drafts the renewal reminder to Jane Doe as a write-up beside the conversation and
+            points to it in a sentence; the message is not written out in the reply, and
+            nothing is sent.
+
+  - name: beyond-a-reminder-alone-is-not-a-board
+    description: >
+      Writing one reminder for one person is a write-up, not a board.
+    steps:
+      - say: "write a short reminder asking Jane Doe to renew her DOT medical card"
+        expect:
+          calls: ["publish_artifact"]
+          maxCalls: 5
+          maxFailedCalls: 1
+          noProposals: true
+          noRecordIds: true
+          noBoard: true
+          rubric: >
+            Writes a short reminder to Jane Doe to renew her DOT medical card as a write-up the
+            person can send, and points to it in a sentence; no board, nothing sent.

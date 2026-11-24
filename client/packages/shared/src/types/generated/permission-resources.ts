@@ -273,6 +273,7 @@ export const PERMISSION_OPERATIONS = [
   "resolve",
   "manage",
   "post",
+  "hold",
   "approve_own",
 ] as const;
 

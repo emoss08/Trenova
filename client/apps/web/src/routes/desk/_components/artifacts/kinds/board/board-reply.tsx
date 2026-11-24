@@ -30,6 +30,7 @@ import { cardTime } from "../../record-card/record-card-values";
 import {
   boardArrival,
   CONVERSATION_ROWS,
+  opened,
   halfBlocks,
   readStamp,
   replyFootPlace,
@@ -138,6 +139,7 @@ function ReplyBoardWaiting({
                 numeral={numerals[index]}
                 half={halves[index]}
                 className={span}
+                drawn={layout.sizes[index] ?? 0}
                 cut={{
                   limit: CONVERSATION_ROWS,
                   after: (hidden) =>
@@ -302,13 +304,14 @@ export function ReplyBoardView({ card, arrives }: { card: DeskBoardCard; arrives
         openArtifact(card.artifactId);
       }
     : null;
-  const opensInPlace: OpensInPlace = (resource) => {
-    const entry = recordCardFor(resource);
+  const opensInPlace: OpensInPlace = (kind) => {
+    const entry = recordCardFor(kind);
     return openBoard !== null && entry !== null && hasPermission(entry.resource, Operation.Read);
   };
   const open: OpenRecord = (row, order) => {
     if (!openArtifact) return;
-    openRecord({ artifactId: card.artifactId, entity: row.resource, recordId: row.id, order });
+    const target = opened(row);
+    openRecord({ artifactId: card.artifactId, entity: target.kind, recordId: target.id, order });
     openArtifact(card.artifactId);
   };
   const cite: CiteLight = { lit, onLight: setLit };

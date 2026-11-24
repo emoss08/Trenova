@@ -329,6 +329,7 @@ func TestEveryRegisteredToolIsInTheClassItWasGiven(t *testing.T) {
 		"settlement_recalculate_driver":      {agent.EgressInternal},
 		"settlement_recalculate_carrier":     {agent.EgressInternal},
 		"settlement_release_pay_event":       {agent.EgressInternal},
+		"settlement_hold_driver":             {agent.EgressInternal},
 		"settlement_attach_pay_events":       {agent.EgressInternal},
 		"settlement_detach_pay_event":        {agent.EgressInternal},
 		"settlement_generate_driver":         {agent.EgressInternal},

@@ -50,6 +50,9 @@ func PlanSubmit(entity *driversettlement.Settlement, userID pulid.ID, now int64)
 }
 
 func PlanApprove(entity *driversettlement.Settlement, userID pulid.ID, now int64) error {
+	if err := entity.RefuseIfHeld(); err != nil {
+		return err
+	}
 	if entity.Status != driversettlement.StatusPendingApproval {
 		return transitionError(entity.Status, driversettlement.StatusApproved)
 	}
@@ -93,6 +96,9 @@ func PlanReject(entity *driversettlement.Settlement, reason string) error {
 }
 
 func PlanPost(entity *driversettlement.Settlement, userID pulid.ID, now int64) error {
+	if err := entity.RefuseIfHeld(); err != nil {
+		return err
+	}
 	if entity.Status != driversettlement.StatusApproved {
 		return transitionError(entity.Status, driversettlement.StatusPosted)
 	}
@@ -116,6 +122,9 @@ func PlanMarkPaid(entity *driversettlement.Settlement, input *MarkPaidInput) err
 			errortypes.ErrRequired,
 			"Payment method is required",
 		)
+	}
+	if err := entity.RefuseIfHeld(); err != nil {
+		return err
 	}
 	if entity.Status != driversettlement.StatusPosted {
 		return transitionError(entity.Status, driversettlement.StatusPaid)
@@ -155,6 +164,7 @@ func PlanVoid(
 	if err := CheckVoid(entity, reason); err != nil {
 		return err
 	}
+	entity.DropHold()
 	entity.Status = driversettlement.StatusVoided
 	entity.VoidedByID = userID
 	entity.VoidedAt = &now

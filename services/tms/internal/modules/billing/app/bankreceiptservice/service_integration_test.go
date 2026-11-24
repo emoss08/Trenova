@@ -159,7 +159,8 @@ func TestImportAndMatchBankReceiptToCustomerPayment(t *testing.T) {
 					FiscalPeriodRepo: fiscalPeriodRepo,
 				},
 			),
-			AuditService: &mocks.NoopAuditService{},
+			AuditService:      &mocks.NoopAuditService{},
+			ReceiptCandidates: &countingWaker{},
 		},
 	)
 	payment, err := paymentSvc.PostAndApply(
@@ -192,6 +193,8 @@ func TestImportAndMatchBankReceiptToCustomerPayment(t *testing.T) {
 			Repo:         receiptRepo,
 			PaymentRepo:  paymentRepo,
 			AuditService: &mocks.NoopAuditService{},
+			Candidates:   &scoring{},
+			Waker:        &countingWaker{},
 		},
 	)
 	receipt, err := svc.Import(

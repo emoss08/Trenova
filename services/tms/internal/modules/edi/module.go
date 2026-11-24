@@ -53,6 +53,7 @@ import (
 
 func SharedOptions() fx.Option {
 	return fx.Options(
+		boardReaders,
 		fx.Provide(
 			ediinboundservice.New,
 			ediinboundas2.New,

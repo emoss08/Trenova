@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/deskattentionports"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/boardcatalog"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -47,13 +48,14 @@ func (s *Service) readWork(
 	return nil
 }
 
-func toneOf(severity watchtower.Severity) board.Tone {
+func toneOf(severity watchtower.Severity) boardcatalog.Tone {
 	switch severity {
 	case watchtower.SeverityCritical:
-		return board.ToneBad
+		return boardcatalog.ToneBad
 	case watchtower.SeverityWarning:
-		return board.ToneWarn
-	default:
-		return board.ToneInfo
+		return boardcatalog.ToneWarn
+	case watchtower.SeverityInfo:
 	}
+
+	return boardcatalog.ToneInfo
 }

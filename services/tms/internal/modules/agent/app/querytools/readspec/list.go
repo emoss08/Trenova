@@ -4,6 +4,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/querytool"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/boardhint"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -20,6 +21,7 @@ type List struct {
 	Summary      string
 	SearchTerms  []string
 	QueryNote    string
+	Shows        *boardhint.Show
 	// notes add what the schema does not say to a derived parameter's
 	// description, keyed by the parameter's name.
 	Notes map[string]string

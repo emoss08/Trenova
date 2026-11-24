@@ -1,138 +1,30 @@
 package board
 
 import (
-	"slices"
-
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/boardregistry"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/boardcatalog"
 )
 
 type Measure string
 
-const (
-	MeasureLateness   = Measure("lateness")
-	MeasureRevenue    = Measure("revenue")
-	MeasureAmountDue  = Measure("amountDue")
-	MeasureTotal      = Measure("total")
-	MeasureAge        = Measure("age")
-	MeasureAmount     = Measure("amount")
-	MeasurePendingFor = Measure("pendingFor")
-)
-
-type ValueKind string
-
-const (
-	ValueCount    = ValueKind("count")
-	ValueMoney    = ValueKind("money")
-	ValuePercent  = ValueKind("percent")
-	ValueDuration = ValueKind("duration")
-	ValueNumber   = ValueKind("number")
-	ValueText     = ValueKind("text")
-)
-
-type resourceMeasure struct {
-	resource permission.Resource
-	measures []Measure
-	named    map[string]Measure
+type MeasureKey struct {
+	Kind    recordkind.Kind
+	Measure Measure
 }
 
-var resourceMeasures = []resourceMeasure{
-	{
-		resource: permission.ResourceShipment,
-		measures: []Measure{MeasureLateness, MeasureRevenue},
-		named: map[string]Measure{
-			"totalCharge":       MeasureRevenue,
-			"totalChargeAmount": MeasureRevenue,
-			"totalCharges":      MeasureRevenue,
-			"charge":            MeasureRevenue,
-			"lateBy":            MeasureLateness,
-			"lateByMinutes":     MeasureLateness,
-			"lateMinutes":       MeasureLateness,
-			"late":              MeasureLateness,
-		},
-	},
-	{
-		resource: permission.ResourceInvoice,
-		measures: []Measure{MeasureAmountDue, MeasureTotal, MeasureAge},
-		named: map[string]Measure{
-			"openAmount":       MeasureAmountDue,
-			"amountOpen":       MeasureAmountDue,
-			"balanceDue":       MeasureAmountDue,
-			"balanceDueMinor":  MeasureAmountDue,
-			"totalAmount":      MeasureTotal,
-			"totalAmountMinor": MeasureTotal,
-			"invoiceTotal":     MeasureTotal,
-		},
-	},
-	{
-		resource: permission.ResourceJournalEntry,
-		measures: []Measure{MeasureAmount, MeasurePendingFor},
-	},
-	{resource: permission.ResourceCarrier},
-	{resource: permission.ResourceCustomer},
-	{resource: permission.ResourceWorker},
-	{resource: permission.ResourceTractor},
-	{resource: permission.ResourceTrailer},
-	{resource: permission.ResourceLocation},
-}
-
-func Resources() []permission.Resource {
-	resources := make([]permission.Resource, 0, len(resourceMeasures))
-	for idx := range resourceMeasures {
-		resources = append(resources, resourceMeasures[idx].resource)
+func (m Measure) Spec(kind recordkind.Kind) (boardcatalog.Measure, bool) {
+	if m == "" {
+		return boardcatalog.Measure{}, false
 	}
 
-	return resources
+	return boardregistry.Catalog().MeasureOf(kind, string(m))
 }
 
-func Supports(resource permission.Resource) bool {
-	return slices.ContainsFunc(resourceMeasures, func(entry resourceMeasure) bool {
-		return entry.resource == resource
-	})
-}
-
-func MeasuresOf(resource permission.Resource) []Measure {
-	for idx := range resourceMeasures {
-		if resourceMeasures[idx].resource == resource {
-			return resourceMeasures[idx].measures
-		}
+func (m Measure) ValueKind(kind recordkind.Kind) boardcatalog.ValueKind {
+	if measure, ok := m.Spec(kind); ok {
+		return measure.Value
 	}
 
-	return nil
-}
-
-func MeasureNamed(resource permission.Resource, name string) Measure {
-	if measure := Measure(name); measure.Of(resource) {
-		return measure
-	}
-	for idx := range resourceMeasures {
-		if resourceMeasures[idx].resource == resource {
-			return resourceMeasures[idx].named[name]
-		}
-	}
-
-	return ""
-}
-
-func (m Measure) Of(resource permission.Resource) bool {
-	return slices.Contains(MeasuresOf(resource), m)
-}
-
-func (m Measure) Kind() ValueKind {
-	switch m {
-	case MeasureLateness, MeasureAge, MeasurePendingFor:
-		return ValueDuration
-	case MeasureRevenue, MeasureAmountDue, MeasureTotal, MeasureAmount:
-		return ValueMoney
-	default:
-		return ValueNumber
-	}
-}
-
-func (m Measure) Summable() bool {
-	return m.Kind() != ValueDuration
-}
-
-func (m Measure) Adverse() bool {
-	return m == MeasureLateness || m == MeasurePendingFor || m == MeasureAge ||
-		m == MeasureAmountDue
+	return boardcatalog.ValueNumber
 }

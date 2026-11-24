@@ -3,8 +3,11 @@ package deskboardresolver
 import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/board"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/boardbar"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/desklens"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/boardcatalog"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/boardreading"
 	"github.com/emoss08/trenova/shared/jsonutils"
 )
 
@@ -73,8 +76,8 @@ func blockToModel(block *board.FilledBlock) *gqlmodel.DeskBoardBlock {
 			model.Table.ArtifactID = &id
 		}
 	}
-	if block.Chart != nil {
-		model.Chart = asJSON(block.Chart)
+	if block.Metric != nil {
+		model.Metric = metricToModel(block.Metric)
 	}
 	for idx := range block.Events {
 		event := &block.Events[idx]
@@ -117,11 +120,11 @@ func blockToModel(block *board.FilledBlock) *gqlmodel.DeskBoardBlock {
 
 func sourceToModel(source *board.Source) *gqlmodel.DeskBoardSource {
 	return &gqlmodel.DeskBoardSource{
-		Kind:     string(source.Kind),
-		Resource: string(source.Resource),
-		Count:    source.Count,
-		Readable: source.Readable,
-		Title:    source.Title,
+		Kind:       string(source.Kind),
+		RecordKind: string(source.RecordKind),
+		Count:      source.Count,
+		Readable:   source.Readable,
+		Title:      source.Title,
 	}
 }
 
@@ -216,50 +219,106 @@ func int64PtrToInt(value *int64) *int {
 func rowsToModel(rows []board.Row) []*gqlmodel.DeskBoardRow {
 	out := make([]*gqlmodel.DeskBoardRow, 0, len(rows))
 	for idx := range rows {
-		row := &rows[idx]
-		model := &gqlmodel.DeskBoardRow{
-			Resource: string(row.Resource),
-			ID:       row.ID.String(),
-			Readable: row.Readable,
-			Label:    row.Label,
-			Subtitle: row.Subtitle,
-			Status:   row.Status,
-		}
-		if measure := row.Measure; measure != nil {
-			model.Measure = &gqlmodel.DeskBoardRowMeasure{
-				Measure: string(measure.Measure),
-				Value:   valueToModel(&measure.Value),
-				State:   string(measure.State),
-				Place:   measure.Place,
-				Tone:    string(measure.Tone),
-			}
-			if measure.At > 0 {
-				at := int(measure.At)
-				model.Measure.At = &at
-			}
-		}
-		out = append(out, model)
+		out = append(out, rowToModel(&rows[idx]))
 	}
 
 	return out
+}
+
+func rowToModel(row *board.Row) *gqlmodel.DeskBoardRow {
+	model := &gqlmodel.DeskBoardRow{
+		Kind:       string(row.Kind),
+		ID:         row.ID.String(),
+		Readable:   row.Readable,
+		Label:      row.Label,
+		Subtitle:   row.Subtitle,
+		Status:     row.Status,
+		StatusTone: string(row.StatusTone),
+	}
+	if row.Opens != nil {
+		model.Opens = &gqlmodel.DeskBoardRef{
+			Kind: string(row.Opens.Kind),
+			ID:   row.Opens.ID.String(),
+		}
+	}
+	if measure := row.Measure; measure != nil {
+		model.Measure = &gqlmodel.DeskBoardRowMeasure{
+			Measure:  string(measure.Measure),
+			Value:    valueToModel(measure.Value),
+			Standing: wordsToModel(&measure.Standing),
+			Fact:     wordsToModel(measure.Fact),
+			Tone:     string(measure.Tone),
+			Bar:      barToModel(measure.Bar),
+		}
+		if model.Measure.Standing == nil {
+			model.Measure.Standing = &gqlmodel.DeskBoardWords{}
+		}
+	}
+
+	return model
+}
+
+func wordsToModel(words *boardreading.Words) *gqlmodel.DeskBoardWords {
+	if words == nil {
+		return nil
+	}
+
+	return &gqlmodel.DeskBoardWords{
+		Text:  words.Text,
+		Value: valueToModel(words.Value),
+		At:    timestampOf(words.At),
+		Day:   words.Day,
+		Place: words.Place,
+	}
+}
+
+func barToModel(bar *boardbar.Bar) *gqlmodel.DeskBoardBar {
+	if bar == nil {
+		return nil
+	}
+	model := &gqlmodel.DeskBoardBar{
+		Centred:  bar.Centred,
+		Segments: make([]*gqlmodel.DeskBoardBarSegment, 0, len(bar.Segments)),
+		Bound:    bar.Bound,
+	}
+	for _, segment := range bar.Segments {
+		model.Segments = append(model.Segments, &gqlmodel.DeskBoardBarSegment{
+			Kind:  string(segment.Kind),
+			Start: segment.Start,
+			Width: segment.Width,
+			Tone:  string(segment.Tone),
+		})
+	}
+
+	return model
+}
+
+func timestampOf(at int64) *int {
+	if at == 0 {
+		return nil
+	}
+	value := int(at)
+
+	return &value
 }
 
 func segmentsToModel(segments []board.FilledSegment) []*gqlmodel.DeskBoardSegment {
 	out := make([]*gqlmodel.DeskBoardSegment, 0, len(segments))
 	for _, segment := range segments {
 		out = append(out, &gqlmodel.DeskBoardSegment{
-			Text:    segment.Text,
-			Numeral: segment.Numeral,
-			Tone:    string(segment.Tone),
-			Struck:  segment.Struck,
-			Reading: segment.Reading,
+			Text:     segment.Text,
+			Numeral:  segment.Numeral,
+			Tone:     string(segment.Tone),
+			Struck:   segment.Struck,
+			Reading:  segment.Reading,
+			Artifact: segment.Artifact,
 		})
 	}
 
 	return out
 }
 
-func valueToModel(value *board.Value) *gqlmodel.DeskBoardValue {
+func valueToModel(value *boardcatalog.Value) *gqlmodel.DeskBoardValue {
 	if value == nil {
 		return nil
 	}

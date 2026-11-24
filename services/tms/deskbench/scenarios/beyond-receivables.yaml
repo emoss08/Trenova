@@ -1,0 +1,134 @@
+defaults:
+  tags: [beyond, board, receivables]
+
+scenarios:
+  - name: beyond-receipts-to-apply
+    agent: Bench · Cash application agent
+    description: >
+      What came into the bank and is not applied, weighed together: the bank receipts in
+      Exception (no posted customer payment matches them), each drawn against the open item it
+      most plausibly pays (againstCandidate, from the stored bank_receipt_candidates
+      projection): "Matches SEED-INV-0006 to the cent" only where the amounts are equal and the
+      receipt's own reference names the invoice, "$120.00 short of SEED-INV-0003" or "$45.10
+      over SEED-INV-0008" where they differ, and the product's own exception reason where
+      nothing the receipt carries names an open item. How many there are and what they come to
+      are figures read from the unappliedReceipts metric, never a count or sum of the rows shown.
+    steps:
+      - say: "what came into the bank that i haven't applied yet?"
+        expect:
+          calls: ["receivable_list_bank_receipt_exceptions", "show_answer|show_board"]
+          maxCalls: 7
+          maxFailedCalls: 1
+          noProposals: true
+          noRecordIds: true
+          board:
+            place: conversation
+            minReadings: 1
+            kinds: [bank_receipt]
+            measures: [againstCandidate]
+            metrics: [unappliedReceipts]
+            figures: ["amountToApply:unappliedReceipts"]
+          facts:
+            - sql: >
+                select count(*) from bank_receipts br
+                join organizations g on g.id = br.organization_id
+                where br.status = 'Exception' and g.name = 'Trenova Logistics'
+              note: the receipts in the bank no posted customer payment matches
+            - sql: >
+                select to_char(coalesce(sum(br.amount_minor), 0) / 100.0, 'FM999,999,990.00')
+                from bank_receipts br
+                join organizations g on g.id = br.organization_id
+                where br.status = 'Exception' and g.name = 'Trenova Logistics'
+              note: what those receipts come to
+            - sql: >
+                select i.number from bank_receipt_candidates c
+                join bank_receipts br on br.id = c.bank_receipt_id
+                  and br.organization_id = c.organization_id
+                join invoices i on i.id = c.invoice_id and i.organization_id = c.organization_id
+                join organizations g on g.id = br.organization_id
+                where c.rank = 1 and c.standing = 'Exact' and br.status = 'Exception'
+                  and g.name = 'Trenova Logistics'
+              any: true
+              note: an invoice a receipt matches to the cent, named on the board or in the words
+          rubric: >
+            Reads the bank receipts not yet applied, then answers in the conversation with how
+            many there are and what they come to, both read from the metric (not typed, not a
+            count or sum of the rows shown), and the receipts themselves drawn against the open
+            item each most plausibly pays. It may say a receipt matches an invoice to the cent
+            only for one whose best candidate stands exact (the SEED-INV-0006 receipt); it says
+            "short" or "over" only of a receipt the board reads that way, with the amount the
+            board reads (the SEED-INV-0003 receipt is $120.00 short, the SEED-INV-0008 one $45.10
+            over), and never calls a receipt whose candidate is only the same amount, or one
+            with no candidate, matched. A candidate is what the receipt could pay, never a
+            statement that it is applied: it does not say a receipt is applied, matched or
+            reconciled to an invoice, and names no customer as the payer unless a record read
+            in the turn says so. Where a receipt has no candidate it gives the product's reason
+            (no unique match found, no reference number to match on).
+
+  - name: beyond-receipt-exceptions-are-the-table
+    agent: Bench · Cash application agent
+    description: >
+      A list the person only asked to look through: the answer points to the table the read
+      kept beside the conversation, with the count; it is not a board.
+    steps:
+      - say: "show me the bank receipt exceptions, i'll go through them"
+        expect:
+          calls: ["receivable_list_bank_receipt_exceptions"]
+          maxCalls: 4
+          maxFailedCalls: 1
+          noProposals: true
+          noRecordIds: true
+          noBoard: true
+          rubric: >
+            Lists or points to the bank receipts in Exception the read returned, beside the
+            conversation, without a board, and says nothing untrue about what any of them
+            matches: no receipt is called matched to the cent, short or over unless a read in the
+            turn said so of that receipt, and none is called applied.
+
+  - name: beyond-aging-against-last-month
+    agent: Bench · Receivables
+    description: >
+      Receivable aging now against the same day last month, bucket by bucket: the agingCompare
+      metric draws last month light and this month dark with the past-due bucket that grew
+      most marked, read from the AR report's own as-of computation. The words place the open
+      totals now and then and the bucket that grew as the metric's figures, and the invoices
+      behind that bucket are a records group drawn with their amounts due.
+    steps:
+      - say: "how does our receivable aging compare with last month?"
+        expect:
+          calls: ["metric_read|receivable_get_aging|receivable_list_open_items", "show_answer|show_board"]
+          maxCalls: 8
+          maxFailedCalls: 1
+          noProposals: true
+          noRecordIds: true
+          board:
+            place: conversation
+            minReadings: 1
+            metrics: [agingCompare]
+            kinds: [invoice]
+            figures: ["openNow:agingCompare"]
+          rubric: >
+            Reads the aging at two dates, then answers in the conversation with the aging
+            against a month ago drawn as a metric: open receivables now and a month ago, each a
+            figure the metric read (never typed), the past-due bucket that grew most named as
+            the metric read it (its name may be typed, as a record's name is), and the open
+            invoices in that bucket as records with what each still owes. Nothing
+            is said about a bucket's change the metric does not report, and no invoice is
+            named that the turn did not read.
+
+  - name: beyond-total-ar-is-a-sentence
+    agent: Bench · Receivables
+    description: >
+      One figure is a sentence, not a board: the total open receivables right now.
+    steps:
+      - say: "what's our total AR right now?"
+        expect:
+          calls: ["metric_read|receivable_get_aging"]
+          maxCalls: 4
+          maxFailedCalls: 1
+          noProposals: true
+          noRecordIds: true
+          noBoard: true
+          rubric: >
+            Answers in a sentence with the organization's open receivables as Trenova reads
+            them now, without a board and without a figure it did not read.

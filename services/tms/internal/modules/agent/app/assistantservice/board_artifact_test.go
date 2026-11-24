@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -190,4 +191,26 @@ func TestArtifactRecorder_CreditsTheAssistantWhenTheConversationCannotBeRead(t *
 	payload, err := board.PayloadOf(repo.Upserts[0].Payload)
 	require.NoError(t, err)
 	assert.Equal(t, "Assistant", payload.Author)
+}
+
+func TestObservingAToolHoldsItsBoardToTheAgentsDataAccess(t *testing.T) {
+	t.Parallel()
+
+	repo := &assistanttest.StubArtifactRepo{}
+	boards := &assistanttest.StubBoards{}
+	svc := &Service{logger: zap.NewNop(), artifacts: repo, boards: boards}
+
+	_, _, err := svc.ObserveTool(t.Context(), &ObservedRun{
+		ThreadID:   pulid.MustNew("athr_"),
+		Actor:      assistanttest.Actor(),
+		DataAccess: permission.SensitivityInternal,
+	}, assistanttest.ShownBoard(t, pulid.Nil), nil)
+
+	require.NoError(t, err)
+	require.Len(t, boards.Checked, 1)
+	require.Len(t, boards.Filled, 1)
+	for _, req := range []*assistantports.BoardFillRequest{boards.Checked[0], boards.Filled[0]} {
+		require.NotNil(t, req.Agent, "what a tool call shows is read for the agent")
+		assert.Equal(t, permission.SensitivityInternal, req.Agent.DataAccess)
+	}
 }

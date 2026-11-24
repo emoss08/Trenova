@@ -1,0 +1,71 @@
+defaults:
+  agent: Bench · Books keeper
+  tags: [beyond, board, close]
+
+scenarios:
+  - name: beyond-close-november
+    description: >
+      What still stops the open month closing, as the period's own close checks: each check
+      that blocks it with the product's words and its count, the checks that are clear, and
+      the journal entries waiting to be approved or posted drawn with what each comes to and
+      how long it has waited. The dev data holds November 2026 open with its last days'
+      entries still pending, a manual journal request waiting, an earlier period still open and
+      close approval required by the accounting controls, so the four blocks are real. The words read the waiting count and
+      amount from the metric (408 entries do not fit a board), never from the rows shown.
+    steps:
+      - say: "what is still blocking the November close?"
+        expect:
+          calls: ["ledger_list_fiscal_periods", "show_answer|show_board"]
+          maxCalls: 9
+          maxFailedCalls: 1
+          noProposals: true
+          noRecordIds: true
+          board:
+            place: conversation
+            minReadings: 1
+            metrics: [periodClose]
+            kinds: [journal_entry]
+          facts:
+            - sql: >
+                select count(*) from journal_entries je
+                join fiscal_periods fp on fp.id = je.fiscal_period_id
+                join organizations g on g.id = je.organization_id
+                where g.name = 'Trenova Logistics'
+                  and fp.name = 'Period 11 - November 2026'
+                  and je.status in ('Pending', 'Approved') and not je.is_posted
+              note: November's journal entries waiting to be approved or posted
+            - sql: >
+                select to_char(coalesce(sum(je.total_debit), 0) / 100.0, 'FM999,999,990.00')
+                from journal_entries je
+                join fiscal_periods fp on fp.id = je.fiscal_period_id
+                join organizations g on g.id = je.organization_id
+                where g.name = 'Trenova Logistics'
+                  and fp.name = 'Period 11 - November 2026'
+                  and je.status in ('Pending', 'Approved') and not je.is_posted
+              note: what November's waiting entries come to
+          rubric: >
+            Reads November 2026's close checks, then answers in the conversation with the
+            period's close checks drawn as a metric and some of its waiting journal entries as
+            records. The words name what blocks the close as the checks say it: an earlier
+            period of 2026 is still open, the accounting controls require close approval, a
+            manual journal request is still pending, and accounting sources remain unposted
+            (each count as the check gives it). How many entries
+            wait and what they come to are figures read from the metric, not a count or sum of
+            the rows shown. Nothing is said about a blocker the checks do not report, and the
+            period is never called ready to close.
+
+  - name: beyond-close-open-is-a-sentence
+    description: >
+      Whether one period is open is one fact: a sentence, not a board.
+    steps:
+      - say: "is November open?"
+        expect:
+          calls: ["ledger_list_fiscal_periods"]
+          maxCalls: 4
+          maxFailedCalls: 1
+          noProposals: true
+          noRecordIds: true
+          noBoard: true
+          replyIncludes: ["open"]
+          rubric: >
+            Answers in a sentence that November 2026's fiscal period is open, without a board.

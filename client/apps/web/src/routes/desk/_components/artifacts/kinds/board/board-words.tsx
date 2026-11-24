@@ -1,4 +1,5 @@
 import { deskPopoverClass } from "@/components/desk-chat/desk-popover";
+import { ArtifactLinkContext } from "@/components/elements/artifact-link-context";
 import type {
   DeskBoardCard,
   DeskBoardReading,
@@ -7,7 +8,7 @@ import type {
 import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/components/ui/popover";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
-import type { CSSProperties } from "react";
+import { use, type CSSProperties } from "react";
 import { ArtIcon } from "../../desk-art-kinds";
 import { cardTime } from "../../record-card/record-card-values";
 import {
@@ -198,6 +199,17 @@ function Cite({ segment, cite }: { segment: DeskBoardSegment; cite: CiteLight | 
   );
 }
 
+/**
+ * An artifact the turn made that the words link to, drawn as a reply draws an
+ * artifact it names: by the artifact's own title, where the surface knows it,
+ * and as its words where it does not.
+ */
+function ArtifactLink({ segment }: { segment: DeskBoardSegment }) {
+  const renderArtifact = use(ArtifactLinkContext);
+  const drawn = renderArtifact ? renderArtifact(segment.artifact) : null;
+  return drawn ?? <span className="font-medium">{segment.text}</span>;
+}
+
 function piece(
   part: WordPiece,
   index: number,
@@ -228,6 +240,10 @@ function piece(
   if (part.kind === "cite") {
     // oxlint-disable-next-line react/no-array-index-key -- the words are a fixed run of the text
     return <Cite key={index} segment={part.segment} cite={props.cite} />;
+  }
+  if (part.kind === "artifact") {
+    // oxlint-disable-next-line react/no-array-index-key -- the words are a fixed run of the text
+    return <ArtifactLink key={index} segment={part.segment} />;
   }
   if (!props.board) {
     // oxlint-disable-next-line react/no-array-index-key -- the words are a fixed run of the text

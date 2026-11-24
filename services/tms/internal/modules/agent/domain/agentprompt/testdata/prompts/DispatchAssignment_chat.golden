@@ -42,7 +42,7 @@ What find_tools can load, by area of Trenova:
 - AI & agents (3 tools): agent run
 - Billing (1 tool): rate quote
 - Carriers (10 tools): carrier, carrier capacity posting, carrier tender, rate confirmation
-- Desk (8 tools): desk
+- Desk (9 tools): desk
 - Dispatch (7 tools): driver message, shipment move
 - Equipment (2 tools): tractor, trailer
 - Human resources (2 tools): worker

@@ -177,6 +177,21 @@ describe("DeskReportRunBody", () => {
     expect(screen.queryByRole("button", { name: /Download/u })).not.toBeInTheDocument();
   });
 
+  it("keeps a run whose report was deleted and offers neither its file nor a rerun", async () => {
+    draw({
+      ...finishedCard(),
+      report: { ...finishedCard().report, definitionId: null, cannedKey: null },
+      sample: null,
+      previous: null,
+      withheld: "deleted",
+    });
+
+    expect(await screen.findByText("This report was deleted.")).toBeInTheDocument();
+    expect(screen.queryByRole("table")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Download/u })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Run again" })).not.toBeInTheDocument();
+  });
+
   it("names the add-on when the plan no longer includes what the report reads", async () => {
     draw({
       ...finishedCard(),

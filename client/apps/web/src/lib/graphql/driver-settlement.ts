@@ -7,6 +7,7 @@ import type {
   AttachPayEventsInput,
   BulkSettlementActionInput,
   DetachPayEventInput,
+  HoldDriverSettlementInput,
   HoldPayEventInput,
   SettlementWorkspaceSummaryQuery,
   UnsettledWorkerSummariesQuery,
@@ -55,7 +56,9 @@ import {
   CloseEscrowAccountDocument,
   DetachPayEventFromSettlementDocument,
   HoldDriverPayEventDocument,
+  HoldDriverSettlementDocument,
   ReleaseDriverPayEventDocument,
+  ReleaseDriverSettlementHoldDocument,
   SettlementWorkspaceSummaryDocument,
   UnsettledWorkerSummariesDocument,
   CreatePayProfileDocument,
@@ -785,6 +788,24 @@ export async function releaseDriverPayEvent(payEventId: string) {
     variables: { payEventId },
   });
   return data.releaseDriverPayEvent;
+}
+
+export async function holdDriverSettlement(input: HoldDriverSettlementInput) {
+  const data = await requestGraphQL({
+    document: HoldDriverSettlementDocument,
+    operationName: "HoldDriverSettlement",
+    variables: { input },
+  });
+  return data.holdDriverSettlement;
+}
+
+export async function releaseDriverSettlementHold(settlementId: string) {
+  const data = await requestGraphQL({
+    document: ReleaseDriverSettlementHoldDocument,
+    operationName: "ReleaseDriverSettlementHold",
+    variables: { settlementId },
+  });
+  return data.releaseDriverSettlementHold;
 }
 
 export async function attachPayEventsToSettlement(input: AttachPayEventsInput) {

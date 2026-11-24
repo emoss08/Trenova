@@ -450,7 +450,7 @@ scenarios:
 | `proposals` | a proposal of `tool` was filed whose arguments contain `args` (strings compared case-insensitively, numbers by value) |
 | `noProposals` | nothing was proposed |
 | `executed` | on a decide step: every approved change ran without an error |
-| `facts` | the first column of each row the query returns is stated in the reply (numbers within the grounding guard's rounding, a whole count up to twelve also as its word, text by containment, zero also as "none" or "no …"); `any: true` needs one row; a query that returns no rows fails |
+| `facts` | the first column of each row the query returns is stated in the reply or on the board the turn drew (its text as the `show_answer`/`show_board` result gave it, notes and rows included: what is on screen) (numbers within the grounding guard's rounding, a whole count up to twelve also as its word, text by containment, zero also as "none" or "no …"); `any: true` needs one row; a query that returns no rows fails |
 | `maxSeconds` | the step's turns took at most this long |
 | `rubric` | not checked; printed beside the step for whoever reads the transcript |
 

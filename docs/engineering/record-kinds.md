@@ -20,6 +20,7 @@ to it by the typecheck, a generator, or a test.
 | Which kinds the Desk draws as a card | `client/apps/web/src/routes/desk/_components/artifacts/cards/registry.tsx` | product guide (`deskCard` on the record link) |
 | The kind of record each agent subject is | `agent/subjectrecord.go` (`subjectRecordKinds`) | `AgentSubjectRecordKind` |
 | The kinds the @ search offers and their tabs | `assistantservice/assistantthreads/mentions.go` (`mentionKinds`) | `MentionKindTab`, `MentionKindsAskedFor` |
+| The kinds a board shows, their measures and the metrics it reads | each owning module's `<module>/domain/<area>board` package (types in `workspace/domain/boardcatalog`), assembled in `agent/domain/boardregistry` | `boardcataloggen` → `@trenova/shared/types/generated/board-catalog`; readers per kind in the owning module, held to it at startup by `boardreaderports.NewIndex` |
 
 Read from those, never copied:
 

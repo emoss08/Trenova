@@ -7,6 +7,8 @@ import (
 	"math"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/agent/domain/boardhint"
+
 	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/querytool"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -15,6 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/demandforecast"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatcheconomics"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/freightmove"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/operationsboard"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/freightoutlookports"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -64,7 +67,9 @@ func (t *forecastDemandTool) Description() string {
 		"loads with no truck nearby, then ranked moves (send an empty driver, book a load " +
 		"that ends there, keep a driver, call a customer behind its usual pace) with what " +
 		"each is worth in dollars. Plans use it only once quality.status is Ready; until then " +
-		"say it is not proven yet and why, from quality.meaning, rather than guessing."
+		"say it is not proven yet and why, from quality.meaning, rather than guessing. It looks " +
+		"48 hours ahead at most: Trenova does not forecast a week, so asked about next week, " +
+		"say it forecasts the next 48 hours and answer for those."
 }
 
 func (t *forecastDemandTool) SearchTerms() []string {
@@ -143,6 +148,7 @@ type freightOutlookView struct {
 	Spare       []forecastAreaView  `json:"trucksToSpare"`
 	Moves       []forecastMoveView  `json:"moves"`
 	Note        string              `json:"note"`
+	HowToShow   string              `json:"howToShow,omitempty"`
 }
 
 func (t *forecastDemandTool) Query(
@@ -214,6 +220,12 @@ func freightOutlookViewOf(
 		}
 	}
 	view.Note = outlookNote(ready, view.Quality.Status, len(view.Short), hours)
+	if ready {
+		view.HowToShow = boardhint.Line(
+			&boardhint.Show{Metric: operationsboard.MetricDriverCover},
+		) +
+			" Trenova forecasts 48 hours, never a week."
+	}
 
 	return view
 }

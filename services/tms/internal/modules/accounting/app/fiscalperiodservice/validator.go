@@ -2,12 +2,13 @@ package fiscalperiodservice
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/accounting/app/fiscalcloseblockers"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalclose"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalreversal"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalreversal/journalreversaldb"
@@ -75,34 +76,111 @@ func (v *Validator) ValidateUpdate(
 	return v.validator.ValidateUpdate(ctx, entity)
 }
 
-//nolint:govet // existing scoped variable reuse is local and behavior-preserving
 func (v *Validator) ValidateClose(
 	ctx context.Context,
 	entity *fiscalperiod.FiscalPeriod,
 ) error {
 	multiErr := errortypes.NewMultiError()
-	v.validateAccountingCloseBlockers(ctx, entity, multiErr)
-	if multiErr.HasErrors() {
+	counts, err := v.closeCounts(ctx, entity)
+	if err != nil {
+		multiErr.AddInternal(err)
 		return multiErr.Err()
 	}
+	for _, count := range counts {
+		if count.count > 0 {
+			multiErr.Add(count.field, errortypes.ErrInvalidOperation, count.message, count.count)
+		}
+	}
 
+	return multiErr.Err()
+}
+
+func (v *Validator) CloseChecks(
+	ctx context.Context,
+	entity *fiscalperiod.FiscalPeriod,
+) (blockers []*fiscalclose.Blocker, cleared []fiscalclose.Check, err error) {
+	counts, err := v.closeCounts(ctx, entity)
+	if err != nil {
+		return nil, nil, err
+	}
+	for _, count := range counts {
+		if count.count == 0 {
+			cleared = append(cleared, count.check)
+			continue
+		}
+		blockers = append(blockers, fiscalcloseblockers.Counted(
+			ctx,
+			fiscalcloseblockers.Refusal{
+				Field:    count.field,
+				Category: closeCategory,
+				Check:    count.check,
+			},
+			count.count,
+			count.message,
+		))
+	}
+
+	return blockers, cleared, nil
+}
+
+type closeCount struct {
+	check   fiscalclose.Check
+	field   string
+	message string
+	count   int
+}
+
+const (
+	closeCategory          = "period"
+	fieldAccounting        = "accounting"
+	fieldReconciliation    = "reconciliation"
+	messageManualJournals  = "Cannot close fiscal period while {0} manual journal requests are pending posting or approval"
+	messageReversals       = "Cannot close fiscal period while {0} journal reversals are pending posting or approval"
+	messageUnposted        = "Cannot close fiscal period while {0} accounting sources remain unposted"
+	messageReconciliations = "Cannot close fiscal period while {0} posted invoice reconciliation discrepancies remain unresolved"
+)
+
+func (v *Validator) closeCounts(
+	ctx context.Context,
+	entity *fiscalperiod.FiscalPeriod,
+) ([]closeCount, error) {
+	counts, err := v.countAccountingBlockers(ctx, entity)
+	if err != nil {
+		return nil, err
+	}
+	discrepancies, required, err := v.countReconciliationDiscrepancies(ctx, entity)
+	if err != nil {
+		return nil, err
+	}
+	if required {
+		counts = append(counts, closeCount{
+			check:   fiscalclose.CheckReconciliation,
+			field:   fieldReconciliation,
+			message: messageReconciliations,
+			count:   discrepancies,
+		})
+	}
+
+	return counts, nil
+}
+
+func (v *Validator) countReconciliationDiscrepancies(
+	ctx context.Context,
+	entity *fiscalperiod.FiscalPeriod,
+) (count int, required bool, err error) {
 	control, err := v.accountingRepo.GetByOrgID(ctx, entity.OrganizationID)
 	if err != nil {
 		if errortypes.IsNotFoundError(err) {
-			return nil
+			return 0, false, nil
 		}
-
-		multiErr := errortypes.NewMultiError()
-		multiErr.AddInternal(fmt.Errorf("failed to load accounting control: %w", err))
-		return multiErr.Err()
+		return 0, false, fmt.Errorf("failed to load accounting control: %w", err)
 	}
-
 	if !control.RequireReconciliationToClose ||
 		control.ReconciliationMode == accountingcontrol.ReconciliationModeDisabled {
-		return nil
+		return 0, false, nil
 	}
 
-	count, err := v.invoiceRepo.CountPostedReconciliationDiscrepancies(
+	discrepancies, err := v.invoiceRepo.CountPostedReconciliationDiscrepancies(
 		ctx,
 		invoiceports.CountPostedInvoiceReconciliationDiscrepanciesRequest{
 			OrgID:           entity.OrganizationID,
@@ -113,38 +191,17 @@ func (v *Validator) ValidateClose(
 		},
 	)
 	if err != nil {
-		multiErr := errortypes.NewMultiError()
-		multiErr.AddInternal(fmt.Errorf("failed to validate reconciliation discrepancies: %w", err))
-		return multiErr.Err()
+		return 0, false, fmt.Errorf("failed to validate reconciliation discrepancies: %w", err)
 	}
 
-	if count == 0 {
-		return nil
-	}
-
-	multiErr = errortypes.NewMultiError()
-	multiErr.Add(
-		"reconciliation",
-		errortypes.ErrInvalidOperation,
-		"Cannot close fiscal period while {0} posted invoice reconciliation discrepancies remain unresolved",
-		count,
-	)
-	return multiErr.Err()
+	return discrepancies, true, nil
 }
 
-var (
-	errManualJournalBlockers = errors.New("read manual journal close blockers")
-	errReversalBlockers      = errors.New("read journal reversal close blockers")
-	errJournalSourceBlockers = errors.New("read journal source close blockers")
-)
-
-func (v *Validator) validateAccountingCloseBlockers(
+func (v *Validator) countAccountingBlockers(
 	ctx context.Context,
 	entity *fiscalperiod.FiscalPeriod,
-	multiErr *errortypes.MultiError,
-) {
-	var pendingManualCount, pendingReversalCount, pendingSourceCount int
-	err := dbtx.ReadErr(ctx, v.db, func(ctx context.Context) error {
+) ([]closeCount, error) {
+	return dbtx.Read(ctx, v.db, func(ctx context.Context) ([]closeCount, error) {
 		db := v.db.Keel(ctx)
 		mjr := manualjournaldb.Requests
 		manual, err := mjr.Where(
@@ -152,9 +209,8 @@ func (v *Validator) validateAccountingCloseBlockers(
 			mjr.Status.In(manualjournal.StatusPendingApproval, manualjournal.StatusApproved),
 		).Count(ctx, db)
 		if err != nil {
-			return errManualJournalBlockers
+			return nil, fmt.Errorf("failed to validate manual journal close blockers: %w", err)
 		}
-		pendingManualCount = int(manual)
 
 		jr := journalreversaldb.Reversals
 		reversals, err := jr.Where(
@@ -166,56 +222,41 @@ func (v *Validator) validateAccountingCloseBlockers(
 			),
 		).Count(ctx, db)
 		if err != nil {
-			return errReversalBlockers
+			return nil, fmt.Errorf("failed to validate journal reversal close blockers: %w", err)
 		}
-		pendingReversalCount = int(reversals)
 
 		js := journalsourcedb.Sources
+		posted := keel.ConstText(postedStatus)
 		sources, err := js.Where(
 			js.JournalBatch().FiscalPeriodID.Eq(entity.ID),
-			js.Status.NeCol(keel.ConstText("Posted")),
+			js.JournalBatch().Status.NeCol(posted),
+			js.Status.NeCol(posted),
 		).Count(ctx, db)
 		if err != nil {
-			return errJournalSourceBlockers
+			return nil, fmt.Errorf("failed to validate journal source close blockers: %w", err)
 		}
-		pendingSourceCount = int(sources)
 
-		return nil
+		return []closeCount{
+			{
+				check:   fiscalclose.CheckManualJournals,
+				field:   fieldAccounting,
+				message: messageManualJournals,
+				count:   int(manual),
+			},
+			{
+				check:   fiscalclose.CheckJournalReversals,
+				field:   fieldAccounting,
+				message: messageReversals,
+				count:   int(reversals),
+			},
+			{
+				check:   fiscalclose.CheckUnpostedSources,
+				field:   fieldAccounting,
+				message: messageUnposted,
+				count:   int(sources),
+			},
+		}, nil
 	})
-	switch {
-	case errors.Is(err, errReversalBlockers):
-		multiErr.AddInternal(fmt.Errorf("failed to validate journal reversal close blockers: %w", err))
-		return
-	case errors.Is(err, errJournalSourceBlockers):
-		multiErr.AddInternal(fmt.Errorf("failed to validate journal source close blockers: %w", err))
-		return
-	case err != nil:
-		multiErr.AddInternal(fmt.Errorf("failed to validate manual journal close blockers: %w", err))
-		return
-	}
-
-	if pendingManualCount > 0 {
-		multiErr.Add(
-			"accounting",
-			errortypes.ErrInvalidOperation,
-			"Cannot close fiscal period while {0} manual journal requests are pending posting or approval",
-			pendingManualCount,
-		)
-	}
-	if pendingReversalCount > 0 {
-		multiErr.Add(
-			"accounting",
-			errortypes.ErrInvalidOperation,
-			"Cannot close fiscal period while {0} journal reversals are pending posting or approval",
-			pendingReversalCount,
-		)
-	}
-	if pendingSourceCount > 0 {
-		multiErr.Add(
-			"accounting",
-			errortypes.ErrInvalidOperation,
-			"Cannot close fiscal period while {0} accounting sources remain unposted",
-			pendingSourceCount,
-		)
-	}
 }
+
+const postedStatus = "Posted"

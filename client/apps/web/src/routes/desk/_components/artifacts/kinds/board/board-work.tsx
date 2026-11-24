@@ -67,7 +67,7 @@ export function BoardWork({ rows, now }: { rows: readonly WorkRow[]; now: number
             {entry.row.readable ? (
               <Link
                 className="dk-bd-work-row ui-focus-ring"
-                to={casePath(entry.row.resource, entry.row.id)}
+                to={casePath(entry.row.kind, entry.row.id)}
               >
                 {body}
               </Link>

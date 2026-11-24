@@ -1,0 +1,184 @@
+defaults:
+  agent: Bench · Fuel and IFTA clerk
+  tags: [beyond, board, fuel]
+
+scenarios:
+  - name: beyond-ifta-ready-to-file
+    description: >
+      Whether the open quarter's IFTA return can be filed, as the return's own checks: what
+      blocks it in the product's words (a missing tax rate), what needs a look, and the
+      jurisdiction lines drawn with the net tax each owes or the credit it earns. The dev data
+      holds Q4 2026 as a Draft with 86 lines (Q3 is already filed); the setup clears the
+      Oklahoma diesel line's rate as a recompute would leave it with no rate on file, and puts
+      the missing-rate problem on the return with its totals re-added from the lines, so a
+      check blocks. The quarter is still running, so the return is not late; nothing says late.
+    setup:
+      - >
+        UPDATE ifta_returns AS r
+        SET status = 'Draft', finalized_at = NULL, finalized_by_id = NULL, filed_at = NULL
+        FROM organizations AS g
+        WHERE r.organization_id = g.id AND g.name = 'Trenova Logistics'
+          AND r.year = 2026 AND r.quarter = 4 AND r.amendment_number = 0
+          AND r.status <> 'Draft'
+      - >
+        UPDATE ifta_return_lines AS l
+        SET rate_missing = true, rate_per_gallon = NULL, surcharge_rate_per_gallon = NULL,
+          tax_due_minor = 0, surcharge_due_minor = 0, line_total_minor = 0
+        FROM ifta_returns AS r, ifta_jurisdictions AS j, organizations AS g
+        WHERE l.return_id = r.id AND l.organization_id = r.organization_id
+          AND l.business_unit_id = r.business_unit_id AND l.jurisdiction_id = j.id
+          AND r.organization_id = g.id AND g.name = 'Trenova Logistics'
+          AND r.status = 'Draft' AND r.year = 2026 AND r.quarter = 4
+          AND j.country_code = 'US' AND j.code = 'OK' AND l.fuel_type = 'Diesel'
+      - >
+        UPDATE ifta_returns AS r
+        SET problems = jsonb_build_array(jsonb_build_object(
+              'code', 'MissingRate',
+              'message', 'No Diesel tax rate is on file for OK – Oklahoma in Q4 2026',
+              'jurisdictionCode', 'US_OK', 'fuelType', 'Diesel'))
+            || coalesce((SELECT jsonb_agg(p) FROM jsonb_array_elements(r.problems) AS p
+              WHERE p ->> 'code' <> 'MissingRate'), '[]'::jsonb),
+          tax_due_minor = t.tax, surcharge_due_minor = t.surcharge,
+          net_due_minor = t.tax + t.surcharge
+        FROM organizations AS g, (
+          SELECT l.return_id, sum(l.tax_due_minor) AS tax, sum(l.surcharge_due_minor) AS surcharge
+          FROM ifta_return_lines AS l WHERE l.is_ifta_member GROUP BY l.return_id
+        ) AS t
+        WHERE t.return_id = r.id AND r.organization_id = g.id AND g.name = 'Trenova Logistics'
+          AND r.status = 'Draft' AND r.year = 2026 AND r.quarter = 4
+    steps:
+      - say: "are we ready to file the fourth quarter's IFTA?"
+        expect:
+          calls: ["fuel_list_ifta_returns", "show_answer|show_board"]
+          maxCalls: 8
+          maxFailedCalls: 1
+          noProposals: true
+          noRecordIds: true
+          board:
+            place: conversation
+            minReadings: 1
+            metrics: [iftaReturnChecks]
+            kinds: [ifta_return_line]
+            measures: [netTax]
+          facts:
+            - sql: >
+                select j.name from ifta_return_lines l
+                join ifta_returns r on r.id = l.return_id
+                join ifta_jurisdictions j on j.id = l.jurisdiction_id
+                join organizations g on g.id = r.organization_id
+                where g.name = 'Trenova Logistics' and r.status = 'Draft'
+                  and r.year = 2026 and r.quarter = 4 and l.rate_missing
+                order by l.sort_order limit 1
+              note: the jurisdiction whose line has no tax rate
+          rubric: >
+            Reads the Q4 2026 return, then answers in the conversation with the return's checks
+            drawn as a metric and some of its jurisdiction lines measured by net tax. Says it is
+            not ready: Oklahoma's diesel line has no tax rate, which blocks finalizing it, and
+            the quarter has not ended yet. Any jurisdiction named as the largest credit is the
+            line with the most negative net tax among those read, and any amount said is a
+            figure the board read. Never calls the return late or past its filing date, and
+            never calls it ready to file.
+
+  - name: beyond-ifta-last-quarter-is-a-sentence
+    description: >
+      What one filed return owed is one figure: a sentence, not a board.
+    steps:
+      - say: "what did we owe on last quarter's IFTA return?"
+        expect:
+          calls: ["fuel_list_ifta_returns|fuel_get_ifta_return"]
+          maxCalls: 4
+          maxFailedCalls: 1
+          noProposals: true
+          noRecordIds: true
+          noBoard: true
+          facts:
+            - sql: >
+                select to_char(r.net_due_minor / 100.0, 'FM999,999,990.00')
+                from ifta_returns r join organizations g on g.id = r.organization_id
+                where g.name = 'Trenova Logistics' and r.year = 2026 and r.quarter = 3
+                  and r.status = 'Filed'
+                order by r.amendment_number desc limit 1
+              note: what the filed Q3 2026 return owed
+          rubric: >
+            Answers in a sentence that the Q3 2026 return, which is filed, owed the net tax the
+            return records, without a board.
+
+  - name: beyond-fuel-cost-per-mile
+    description: >
+      How fuel cost per mile moved over the month and which tractors sit off the fleet's line,
+      read from the stored daily rollup of fuel bought and miles run by tractor
+      (fuel_tractor_daily): the fleet's seven-day run day by day against the month before, and
+      each tractor's month against the fleet's usual range (the middle four fifths of the
+      tractors that ran enough miles to place), the few furthest outside it named and the rest
+      outside it counted. Dev purchases and miles run through Nov 22.
+    steps:
+      - say: "how has fuel cost per mile moved this month, and which tractors are off the fleet's line?"
+        expect:
+          calls: ["show_answer|show_board"]
+          maxCalls: 7
+          maxFailedCalls: 1
+          noProposals: true
+          noRecordIds: true
+          board:
+            place: conversation
+            metrics: [fuelCostPerMile, fuelCostByTractor]
+          facts:
+            - sql: >
+                select '$' || to_char(sum(d.amount_minor) / 100.0 / sum(d.miles), 'FM0.000')
+                from fuel_tractor_daily d join organizations g on g.id = d.organization_id
+                where g.name = 'Trenova Logistics'
+                  and d.day_at >= extract(epoch from date_trunc('month',
+                    now() at time zone g.timezone) at time zone g.timezone)
+              note: the fleet's fuel cost per mile this month
+            - sql: >
+                with t as (
+                  select tr.code, sum(d.amount_minor) amt, sum(d.miles) mi, sum(d.purchases) p
+                  from fuel_tractor_daily d join tractors tr on tr.id = d.tractor_id
+                  join organizations g on g.id = d.organization_id
+                  where g.name = 'Trenova Logistics'
+                    and d.day_at >= extract(epoch from date_trunc('month',
+                      now() at time zone g.timezone) at time zone g.timezone)
+                  group by 1)
+                select code from t where mi >= 500 and p >= 2
+                order by amt / mi desc limit 1
+              note: the tractor furthest above the fleet's usual range this month
+          rubric: >
+            Answers in the conversation with the fleet's fuel cost per mile this month drawn as a
+            trend against last month and each tractor's cost per mile against the fleet's line.
+            Says what fuel cost a mile this month, using figures the board read, and compares
+            it with last month only with a figure the board read: the dev data's October holds
+            one purchase in Canadian dollars, so the metric withholds October's cost per mile
+            and a reply that states one typed it. Names tractors above or below the fleet's
+            usual range (the middle four fifths of the tractors that ran enough miles to
+            place) only as the metric names them, the furthest by its unit number, and says
+            "above the usual range", never "well above the line" for every tractor outside it.
+            Never says a tractor's cost per mile or a figure the metrics did not read, and never
+            calls a tractor drawn as too little data to place an outlier.
+
+  - name: beyond-fuel-one-tractor-is-a-sentence
+    description: >
+      What one tractor paid for fuel in one week is one figure: a sentence, not a board.
+    steps:
+      - say: "what did tractor 1131 pay for fuel last week?"
+        expect:
+          calls: ["fuel_list_purchases"]
+          maxCalls: 5
+          maxFailedCalls: 1
+          noProposals: true
+          noRecordIds: true
+          noBoard: true
+          facts:
+            - sql: >
+                select to_char(sum(p.total_amount_minor) / 100.0, 'FM999,990.00')
+                from fuel_purchases p
+                join tractors t on t.id = p.tractor_id
+                join organizations g on g.id = p.organization_id
+                where g.name = 'Trenova Logistics' and t.code = '1131'
+                  and p.purchased_at >= extract(epoch from (date_trunc('week',
+                    now() at time zone g.timezone) - interval '7 days') at time zone g.timezone)
+                  and p.purchased_at < extract(epoch from date_trunc('week',
+                    now() at time zone g.timezone) at time zone g.timezone)
+              note: what tractor 1131 paid for fuel from last Monday through Sunday
+          rubric: >
+            Answers in a sentence what tractor 1131's fuel purchases last week (Monday through
+            Sunday) came to, a figure read from its purchases, without a board.

@@ -1,10 +1,29 @@
 import { Link } from "@trenova/shared/components/link";
 import { AccountingSyncStateLine } from "@/components/accounting-sync/sync-state-line";
 import { ExchangeRateLine } from "@/components/accounting/exchange-rate-line";
-import { useT } from "@trenova/shared/i18n/use-t";
+import { type TranslateFn, useT } from "@trenova/shared/i18n/use-t";
 import { KpiStrip, KpiStripItem } from "@/components/kpi/kpi-strip";
 import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
-import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
+import {
+  Alert,
+  AlertAction,
+  AlertDescription,
+  AlertTitle,
+} from "@trenova/shared/components/ui/alert";
+import { ReasonDialog as ChoiceReasonDialog } from "@/components/reason-dialog";
+import { SettlementHoldBadge } from "@/components/settlements/settlement-hold-badge";
+import { usePermission } from "@/hooks/use-permission";
+import {
+  canBeHeld,
+  HOLD_REASON_LABELS,
+  HOLD_REASONS,
+  HOLD_REASONS_NEEDING_A_NOTE,
+  holdReasonLabel,
+  isHeld,
+  MAX_HOLD_NOTE_LENGTH,
+} from "@/lib/settlement-hold";
+import type { DriverSettlementHoldReason } from "@trenova/graphql/generated/graphql";
+import { Operation, Resource } from "@trenova/shared/types/permission";
 import {
   DriverSettlementStatusBadge,
   PayeeClassificationBadge,
@@ -28,10 +47,12 @@ import {
   approveDriverSettlement,
   detachPayEventFromSettlement,
   fetchDriverSettlementDetail,
+  holdDriverSettlement,
   markDriverSettlementPaid,
   postDriverSettlement,
   recalculateDriverSettlement,
   rejectDriverSettlement,
+  releaseDriverSettlementHold,
   removeDriverSettlementAdjustment,
   submitDriverSettlement,
   voidDriverSettlement,
@@ -48,6 +69,8 @@ import {
   CheckDoubleIcon,
   CurrencyDollarCircleIcon,
   FlipBackwardIcon,
+  PauseCircleIcon,
+  PlayCircleIcon,
   PlusIcon,
   RefreshCcw02Icon,
   Send01Icon,
@@ -127,6 +150,9 @@ export function SettlementDetail({
     >
       <div className="flex size-full flex-col gap-4 p-3">
         <SettlementSummary settlement={settlement} />
+        {isHeld(settlement) && (
+          <HoldNotice settlement={settlement} onChanged={invalidate} readOnly={readOnly} />
+        )}
         {settlement.hasExceptions && <ExceptionsBanner settlement={settlement} />}
         {readOnly ? (
           <ReadOnlyNotice settlement={settlement} />
@@ -175,6 +201,9 @@ function SettlementSummary({ settlement }: { settlement: SettlementDetailData })
     <div className="flex flex-col gap-3">
       <div className="flex flex-wrap items-center gap-2">
         <DriverSettlementStatusBadge status={settlement.status as DriverSettlementStatus} />
+        {isHeld(settlement) && (
+          <SettlementHoldBadge reason={settlement.holdReason} note={settlement.holdNote} />
+        )}
         <PayeeClassificationBadge
           classification={settlement.classification as PayeeClassification}
         />
@@ -258,6 +287,57 @@ function SettlementSummary({ settlement }: { settlement: SettlementDetailData })
   );
 }
 
+function HoldNotice({
+  settlement,
+  onChanged,
+  readOnly,
+}: {
+  settlement: SettlementDetailData;
+  onChanged: () => void;
+  readOnly: boolean;
+}) {
+  const t = useT();
+  const { allowed: canHold } = usePermission(Resource.DriverSettlement, Operation.Hold);
+  const release = useMutation({
+    mutationFn: () => releaseDriverSettlementHold(settlement.id),
+    onSuccess: () => onChanged(),
+    onError: (error: Error) =>
+      toast.error(error.message || translate("The hold could not be released")),
+  });
+  const label = holdReasonLabel(settlement.holdReason);
+  const heldBy = settlement.heldBy?.name;
+
+  return (
+    <Alert variant="warning" size="sm">
+      <PauseCircleIcon />
+      <AlertTitle>{label ? t("On hold: {0}", label) : t("On hold")}</AlertTitle>
+      <AlertDescription>
+        {settlement.holdNote && <p>{settlement.holdNote}</p>}
+        <p className="text-muted-foreground">
+          {heldBy
+            ? t(
+                "Held by {0} on {1}. Approving, posting and paying it wait until the hold is released.",
+                heldBy,
+                formatDate(settlement.heldAt),
+              )
+            : t(
+                "Held on {0}. Approving, posting and paying it wait until the hold is released.",
+                formatDate(settlement.heldAt),
+              )}
+        </p>
+      </AlertDescription>
+      {!readOnly && canHold && (
+        <AlertAction>
+          <Button size="sm" isLoading={release.isPending} onClick={() => release.mutateAsync()}>
+            <PlayCircleIcon className="size-3.5" />
+            {t("Release hold")}
+          </Button>
+        </AlertAction>
+      )}
+    </Alert>
+  );
+}
+
 function ExceptionsBanner({ settlement }: { settlement: SettlementDetailData }) {
   const t = useT();
 
@@ -325,8 +405,25 @@ function SettlementActions({
     onError: (error: Error) => toast.error(error.message || translate("Settlement action failed")),
   });
 
+  const { allowed: canHold } = usePermission(Resource.DriverSettlement, Operation.Hold);
+  const [holdDialogOpen, setHoldDialogOpen] = useState(false);
+  const hold = useMutation({
+    mutationFn: (input: { reason: DriverSettlementHoldReason; note: string }) =>
+      holdDriverSettlement({ settlementId: settlement.id, reason: input.reason, note: input.note }),
+    onSuccess: () => {
+      setHoldDialogOpen(false);
+      onChanged();
+    },
+    onError: (error: Error) =>
+      toast.error(error.message || translate("The settlement could not be held")),
+  });
+
   const status = settlement.status as DriverSettlementStatus;
-  const busy = runAction.isPending;
+  const held = isHeld(settlement);
+  const busy = runAction.isPending || hold.isPending;
+  const heldTitle = held
+    ? t("On hold: release the hold before approving, posting or paying it")
+    : undefined;
 
   return (
     <div className="flex flex-wrap items-center gap-2">
@@ -349,7 +446,12 @@ function SettlementActions({
       )}
       {status === "PendingApproval" && (
         <>
-          <Button size="sm" disabled={busy} onClick={() => runAction.mutate("approve")}>
+          <Button
+            size="sm"
+            disabled={busy || held}
+            title={heldTitle}
+            onClick={() => runAction.mutate("approve")}
+          >
             <CheckDoubleIcon className="size-3.5" />
             {t("Approve")}
           </Button>
@@ -365,7 +467,12 @@ function SettlementActions({
         </>
       )}
       {status === "Approved" && (
-        <Button size="sm" disabled={busy} onClick={() => runAction.mutate("post")}>
+        <Button
+          size="sm"
+          disabled={busy || held}
+          title={heldTitle}
+          onClick={() => runAction.mutate("post")}
+        >
           <CheckDoubleIcon className="size-3.5" />
           {t("Post to GL")}
         </Button>
@@ -387,6 +494,18 @@ function SettlementActions({
           {t("Add adjustment")}
         </Button>
       )}
+      {canHold && canBeHeld(settlement) && (
+        <Button
+          size="sm"
+          variant="outline"
+          disabled={busy}
+          onClick={() => setHoldDialogOpen(true)}
+          title={t("Keep this settlement out of the pay run until the hold is released")}
+        >
+          <PauseCircleIcon className="size-3.5" />
+          {t("Hold")}
+        </Button>
+      )}
       {status !== "Paid" && status !== "Voided" && (
         <Button
           size="sm"
@@ -405,6 +524,31 @@ function SettlementActions({
         settlementId={settlement.id}
         onOpenChange={(open) => !open && setReasonAction(null)}
         onChanged={onChanged}
+      />
+      <ChoiceReasonDialog
+        open={holdDialogOpen}
+        onOpenChange={setHoldDialogOpen}
+        title={t("Hold settlement {0}", settlement.settlementNumber)}
+        description={holdDialogDescription(t, status)}
+        choice={{
+          label: t("Why"),
+          placeholder: t("Pick a reason"),
+          options: HOLD_REASONS.map((reason) => ({
+            value: reason,
+            label: HOLD_REASON_LABELS[reason],
+          })),
+          needsWords: [...HOLD_REASONS_NEEDING_A_NOTE],
+        }}
+        label={t("Note")}
+        placeholder={t("What the hold waits on, such as the broker's corrected rate confirmation")}
+        fieldDescription={t("Whoever releases the hold reads this. The driver does not.")}
+        maxLength={MAX_HOLD_NOTE_LENGTH}
+        optional
+        confirmLabel={t("Hold settlement")}
+        pending={hold.isPending}
+        onConfirm={(note, reason) => {
+          if (reason) hold.mutate({ reason: reason as DriverSettlementHoldReason, note });
+        }}
       />
       <MarkPaidDialog
         open={payDialogOpen}
@@ -823,6 +967,8 @@ function SettlementTimeline({ settlement }: { settlement: SettlementDetailData }
       at: settlement.paidAt,
     },
     { label: t("Voided"), at: settlement.voidedAt },
+    { label: t("Held"), at: settlement.heldAt },
+    { label: t("Hold released"), at: settlement.holdReleasedAt },
   ].filter((event) => event.at);
 
   if (events.length <= 1) return null;
@@ -840,4 +986,21 @@ function SettlementTimeline({ settlement }: { settlement: SettlementDetailData }
       </ol>
     </div>
   );
+}
+
+function holdDialogDescription(t: TranslateFn, status: DriverSettlementStatus): string {
+  switch (status) {
+    case "Draft":
+      return t(
+        "It stays a draft and keeps its place in the batch, but approving, posting and paying it are refused until someone releases the hold.",
+      );
+    case "PendingApproval":
+      return t(
+        "It stays pending approval and keeps its place in the batch, but approving, posting and paying it are refused until someone releases the hold.",
+      );
+    default:
+      return t(
+        "It stays approved and keeps its place in the batch, but posting and paying it are refused until someone releases the hold.",
+      );
+  }
 }

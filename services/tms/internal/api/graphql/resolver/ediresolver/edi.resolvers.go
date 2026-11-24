@@ -554,3 +554,10 @@ func (r *EdiLadingVersionResolver) Exchanges(
 ) ([]*gqlmodel.EDILadingExchange, error) {
 	return ladingExchangesToModel(&obj.Manifest), nil
 }
+
+func (r *EdiTransferResolver) ShipmentNumber(
+	_ context.Context,
+	obj *editransfer.EDITransfer,
+) (*string, error) {
+	return optionalText(obj.ShipmentNumber), nil
+}

@@ -31,6 +31,7 @@ strata:
       - can we close the books for March
       - confirm the proposed quickbooks mappings
       - dismiss that small rounding difference with quickbooks
+      - find the journal entry for invoice 1042
       - lock the fiscal period while we review the books
       - when does the current fiscal period end
       - which invoices failed to sync to quickbooks
@@ -49,7 +50,6 @@ strata:
     heldOut:
       - assign the bank receipt work item to Maria
       - match this bank receipt to the posted payment
-      - the client wired us funds, apply them to their bills
   - stratum:
       desk: Compliance assistant
       mode: chat
@@ -135,7 +135,9 @@ strata:
       - copy last year's Acme contract into a new draft for the renewal
       - draft a rate agreement for Acme from their rate sheet
       - propose a rating formula with a hazmat surcharge
+      - record this week's price on our custom fuel index
       - run the tests in this formula
+      - which manual prices are on the custom fuel index
       - which rate sheet imports are waiting for review
       - write me a per mile rate with a floor of 350
   - stratum:
@@ -145,16 +147,14 @@ strata:
       - delete the draft IFTA return made for the wrong quarter
       - delete the fuel purchase that was entered twice
       - discard the fuel statement that was uploaded twice
-      - record this week's price on our custom fuel index
       - the card is assigned now, post the fuel rows the import was holding
       - which IFTA mileage entries were recorded for tractor 112
-      - which manual prices are on the custom fuel index
       - which power units are sidelined right now
   - stratum:
       desk: Insight analyst
       mode: unattended
     heldOut:
-      - run the on-time delivery report
+      - who still owes us money past thirty days
   - stratum:
       desk: Intake desk
       mode: unattended
@@ -185,7 +185,7 @@ strata:
     heldOut:
       - add a new reefer trailer to the fleet
       - alert me whenever a customer is put on credit hold
-      - dismiss the weather item on the watchtower feed
+      - dismiss the no check call item on the watchtower feed
       - show the scanned paperwork waiting in capture intake
       - the trailer was dropped at another yard, locate it there
       - which change alerts do I have set up
@@ -195,11 +195,10 @@ strata:
     heldOut:
       - approve the Acme rate agreement so it starts pricing
       - ask me this every weekday morning at 7
-      - find the journal entry for invoice 1042
+      - cancel the journal reversal, the entry was right
       - generate the payroll export for the last two weeks
       - how do I set up a rate matrix in Trenova
       - keep giving me this every morning before standup
-      - list the posted journal entries from last month
       - list the runs the billing agent made this week
       - open the next fiscal period so postings are accepted
       - post the approved manual journal to the general ledger

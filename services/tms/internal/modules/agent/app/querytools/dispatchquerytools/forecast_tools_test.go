@@ -186,6 +186,7 @@ func TestForecastFreight_SaysPlainlyWhenTheForecastIsNotReady(t *testing.T) {
 			assert.Equal(t, tc.status, view.Quality.Status)
 			assert.Contains(t, view.Quality.Meaning, tc.meaning)
 			assert.Contains(t, view.Note, "The forecast is not Ready (status "+tc.status+")")
+			assert.Empty(t, view.HowToShow, "no board is offered from a forecast that is not ready")
 			assert.Empty(t, view.Short, "an unproven forecast names no area")
 			assert.Empty(t, view.Spare)
 			assert.Empty(t, view.Moves, "an unproven forecast suggests no move")
@@ -316,6 +317,7 @@ func TestForecastFreight_ReadsAReadyOutlookAsShortAreasSpareAreasAndMoves(t *tes
 	assert.Equal(t, "Acme Foods", view.Moves[2].Customer)
 	assert.InDelta(t, 4, view.Moves[2].LoadsMissed, 1e-9)
 	assert.Contains(t, view.Note, "1 areas run short of trucks in the next 24 hours")
+	assert.Contains(t, view.HowToShow, `"metric": "driverCover"`, "the board metric is named")
 }
 
 func TestForecastFreight_SaysWhenNoAreaIsShort(t *testing.T) {
@@ -337,4 +339,5 @@ func TestForecastFreight_SaysWhenNoAreaIsShort(t *testing.T) {
 	assert.Empty(t, view.Short)
 	require.Len(t, view.Spare, 1)
 	assert.Contains(t, view.Note, "No area is short of trucks in the next 24 hours")
+	assert.Contains(t, view.HowToShow, "never a week")
 }

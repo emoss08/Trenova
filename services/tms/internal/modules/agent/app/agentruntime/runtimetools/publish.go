@@ -32,7 +32,8 @@ const (
 // would otherwise harvest it.
 const publishArtifactDescription = "Publish a written document beside the conversation, " +
 	"where the person can read, copy and keep it. Use it when they ask for a write-up, a " +
-	"summary, a brief, a handover or an artifact, and whenever your answer would run past " +
+	"summary, a brief, a handover, a draft of a message they will send, or an artifact, " +
+	"never writing it out in your reply, and whenever your answer would run past " +
 	"a screen: put the full text here in markdown and reply with two or three sentences " +
 	"pointing to it. Not for a list or a single record you looked up (those are shown to " +
 	"the person already, and the tool result says so), nor for what was read off a file " +

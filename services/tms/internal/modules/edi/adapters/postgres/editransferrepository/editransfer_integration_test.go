@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/edi/adapters/postgres/editransferrepository"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
@@ -22,6 +23,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/domain/editransfer/editransferdb"
 	"github.com/emoss08/trenova/internal/modules/edi/editest"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/editenderports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/internal/testutil/seededtest"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -31,16 +33,18 @@ import (
 )
 
 type transferFixture struct {
-	ctx      context.Context
-	tenant   pagination.TenantInfo
-	sender   *edi.EDIPartner
-	fileA    pulid.ID
-	fromA    pulid.ID
-	fromB    pulid.ID
-	repo     editenderports.EDILoadTenderTransferRepository
-	receiver *edi.EDIPartner
-	tender   func(fileID pulid.ID, bol string) pulid.ID
-	stampAll func(createdAt int64)
+	ctx        context.Context
+	db         *keel.DB
+	tenderWith func(fileID pulid.ID, payload editransfer.LoadTenderPayload, made pulid.ID) pulid.ID
+	tenant     pagination.TenantInfo
+	sender     *edi.EDIPartner
+	fileA      pulid.ID
+	fromA      pulid.ID
+	fromB      pulid.ID
+	repo       editenderports.EDILoadTenderTransferRepository
+	receiver   *edi.EDIPartner
+	tender     func(fileID pulid.ID, bol string) pulid.ID
+	stampAll   func(createdAt int64)
 }
 
 func seedTransfers(t *testing.T) *transferFixture {
@@ -59,6 +63,7 @@ func seedTransfers(t *testing.T) *transferFixture {
 
 	fixture := &transferFixture{
 		ctx:    ctx,
+		db:     db,
 		tenant: org,
 		repo: editransferrepository.New(editransferrepository.Params{
 			DB:     postgres.WrapDB(db),
@@ -103,7 +108,11 @@ func seedTransfers(t *testing.T) *transferFixture {
 	fixture.fileA = file("ACME_A.x12")
 	fileB := file("ACME_B.x12")
 
-	tender := func(fileID pulid.ID, bol string) pulid.ID {
+	tenderWith := func(
+		fileID pulid.ID,
+		payload editransfer.LoadTenderPayload,
+		made pulid.ID,
+	) pulid.ID {
 		message := &edimessage.EDIMessage{
 			EDIPartnerID:             fixture.sender.ID,
 			DocumentTypeID:           documentType.ID,
@@ -115,7 +124,7 @@ func seedTransfers(t *testing.T) *transferFixture {
 			Status:                   edimessage.MessageStatusGenerated,
 			InterchangeControlNumber: "000000001",
 			GroupControlNumber:       "1",
-			TransactionControlNumber: bol,
+			TransactionControlNumber: payload.BOL,
 			GeneratedAt:              now,
 		}
 		require.NoError(t, edimessagedb.EDIMessages.Create(ctx, db, message))
@@ -128,16 +137,21 @@ func seedTransfers(t *testing.T) *transferFixture {
 			SourcePartnerID:      fixture.sender.ID,
 			TargetPartnerID:      fixture.receiver.ID,
 			InboundMessageID:     message.ID,
+			TargetShipmentID:     made,
 			Status:               editransfer.TransferStatusMappingRequired,
-			TenderPayload:        editransfer.LoadTenderPayload{BOL: bol},
+			TenderPayload:        payload,
 			SubmittedAt:          now,
 		}
 		require.NoError(t, editransferdb.EDITransfers.Create(ctx, db, transfer))
 		return transfer.ID
 	}
+	tender := func(fileID pulid.ID, bol string) pulid.ID {
+		return tenderWith(fileID, editransfer.LoadTenderPayload{BOL: bol}, "")
+	}
 	fixture.fromA = tender(fixture.fileA, "BOL-A")
 	fixture.fromB = tender(fileB, "BOL-B")
 	fixture.tender = tender
+	fixture.tenderWith = tenderWith
 	fixture.stampAll = func(createdAt int64) {
 		editest.Exec(
 			t,
@@ -219,4 +233,55 @@ func TestListInboundTransfersPagesAFileWhoseTendersArrivedTogether(t *testing.T)
 	}
 
 	require.Equal(t, want, read, "every tender once, newest first and by id within a second")
+}
+
+func TestListInboundTransfersFindsATenderByWhatAPersonTypes(t *testing.T) {
+	fixture := seedTransfers(t)
+	s := shipmentdb.Shipments
+	made, err := s.Query().Order(s.ProNumber.Asc()).First(fixture.ctx, fixture.db)
+	require.NoError(t, err)
+	numbered := fixture.tenderWith(fixture.fileA, editransfer.LoadTenderPayload{
+		BOL:          "BOL-77120",
+		PONumber:     "PO-5521",
+		RatingDetail: map[string]any{"externalShipmentId": "88244"},
+	}, made.ID)
+
+	found := func(query string) []pulid.ID {
+		t.Helper()
+		result, listErr := fixture.repo.ListInbound(
+			fixture.ctx,
+			&editenderports.ListEDITransfersRequest{Filter: &pagination.QueryOptions{
+				TenantInfo: fixture.tenant,
+				Query:      query,
+				Pagination: pagination.Info{Limit: 20},
+			}},
+		)
+		require.NoError(t, listErr)
+		ids := make([]pulid.ID, 0, len(result.Items))
+		for _, transfer := range result.Items {
+			ids = append(ids, transfer.ID)
+		}
+		return ids
+	}
+
+	for _, query := range []string{
+		"88244", "BOL-77120", "PO-5521", made.ProNumber, strings.ToLower(made.ProNumber),
+	} {
+		require.Equal(t, []pulid.ID{numbered}, found(query), query)
+	}
+	require.Empty(t, found("99999"))
+	require.ElementsMatch(t, []pulid.ID{fixture.fromA, fixture.fromB}, found("MappingRequired"),
+		"a status still finds the tenders standing in it")
+
+	page, err := fixture.repo.ListInboundCursor(
+		fixture.ctx,
+		&editenderports.ListEDITransfersRequest{Filter: &pagination.QueryOptions{
+			TenantInfo: fixture.tenant,
+			Query:      "88244",
+			Pagination: pagination.Info{Limit: 20},
+		}},
+	)
+	require.NoError(t, err)
+	require.Len(t, page.Items, 1, "the Desk's cursor list matches the same way")
+	require.Equal(t, numbered, page.Items[0].ID)
 }

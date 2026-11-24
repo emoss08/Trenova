@@ -1,0 +1,109 @@
+defaults:
+  agent: Bench · Carrier risk desk
+  tags: [beyond, board, carriers]
+
+scenarios:
+  - name: beyond-carrier-insurance-lapsing
+    description: >
+      Carriers weighed by the insurance they must hold: which carriers hauling for us have
+      required cover ending in the next 30 days, the soonest named, and their loads against the
+      day cover ends. The answer is a board in the conversation whose rows are carriers drawn
+      with the time left on their required cover, beside their loads against the end of cover,
+      not a prose list. The fixture seed gives Ridgeline Freight auto liability ending in 6 days
+      with four loads, one delivering after it ends; Copperhead Transport cargo liability in 10
+      days with one load; Blue Line Freight cargo liability in 18 days with two loads; and
+      Sandoval Trucking auto liability in 27 days with none. The setup writes those days and the
+      loads' delivery windows from now, as absolute times.
+    setup:
+      - >
+        UPDATE carrier_insurance_policies AS p
+        SET expiration_date = extract(epoch from now() + make_interval(days => d.days))::bigint,
+          effective_date = extract(epoch from now() + make_interval(days => d.days - 365))::bigint
+        FROM (VALUES ('SEED-INS-RDGL-AL', 6), ('SEED-INS-RDGL-CL', 185),
+          ('SEED-INS-CPHD-CL', 10), ('SEED-INS-CPHD-AL', 185),
+          ('SEED-INS-BLUL-CL', 18), ('SEED-INS-BLUL-AL', 185),
+          ('SEED-INS-SNDV-AL', 27), ('SEED-INS-SNDV-CL', 185),
+          ('NLI-CL-231890', 12)) AS d(number, days)
+        WHERE p.policy_number = d.number
+      - >
+        UPDATE stops AS st
+        SET scheduled_window_start = extract(epoch from now() + make_interval(days => d.days))::bigint
+            - CASE WHEN st.sequence = 0 THEN 30 * 3600 ELSE 0 END,
+          scheduled_window_end = extract(epoch from now() + make_interval(days => d.days))::bigint
+            - CASE WHEN st.sequence = 0 THEN 30 * 3600 ELSE 0 END + 7200
+        FROM shipment_moves AS m, shipments AS s,
+          (VALUES ('SEED-CAR-001', 1), ('SEED-CAR-002', 2), ('SEED-CAR-003', 4),
+            ('SEED-CAR-004', 8), ('SEED-CAR-005', 7), ('SEED-CAR-006', 1),
+            ('SEED-CAR-007', 3)) AS d(pro, days)
+        WHERE st.shipment_move_id = m.id AND m.shipment_id = s.id AND s.pro_number = d.pro
+    steps:
+      - say: "which carriers hauling for us have insurance about to lapse?"
+        expect:
+          calls: ["carrier_list_cover_ending|metric_read", "show_answer|show_board"]
+          maxCalls: 6
+          maxFailedCalls: 1
+          noProposals: true
+          noRecordIds: true
+          board:
+            place: conversation
+            minReadings: 1
+            kinds: [carrier]
+            measures: [coverLeft]
+            metrics: [coverAgainstLoads]
+          facts:
+            - sql: >
+                with latest as (
+                  select distinct on (p.carrier_id, p.policy_type) p.carrier_id, p.expiration_date
+                  from carrier_insurance_policies p
+                  where p.policy_type in ('AutoLiability', 'CargoLiability')
+                  order by p.carrier_id, p.policy_type, p.expiration_date desc),
+                cover as (
+                  select carrier_id, min(expiration_date) as ends from latest group by carrier_id)
+                select c.name from cover
+                join carriers c on c.id = cover.carrier_id
+                where c.status = 'Active'
+                  and cover.ends between extract(epoch from now())
+                    and extract(epoch from now() + interval '30 days')
+                  and exists (
+                    select 1 from carrier_assignments a
+                    join shipment_moves m on m.id = a.shipment_move_id
+                    where a.carrier_id = c.id and a.status <> 'Canceled'
+                      and m.status not in ('Completed', 'Canceled'))
+                order by cover.ends
+                limit 1
+              note: the carrier hauling for us whose required cover ends soonest
+          rubric: >
+            Reads the carriers whose required insurance ends soon, then answers in the
+            conversation with the carriers themselves: those hauling for us whose required cover
+            ends in the next 30 days (Ridgeline Freight, Copperhead Transport, Blue Line Freight),
+            the soonest named (Ridgeline Freight's auto liability, in about six days), any count
+            true and placed as a reading, each row drawn with its time left and the day cover
+            ends, beside their loads against the end of cover, and the Ridgeline load that
+            delivers after its cover ends named or pointed to. A carrier with no loads, or one
+            whose cover already lapsed, may be named for what it is. Nothing is said about a
+            carrier or a load the board does not show, and nothing untrue about a date.
+
+  - name: beyond-one-carrier-cover-is-a-sentence
+    description: >
+      One carrier's one policy is one fact: a sentence, not a board. The setup puts Summit Peak
+      Logistics' cargo liability 12 days from now.
+    setup:
+      - >
+        UPDATE carrier_insurance_policies
+        SET expiration_date = extract(epoch from now() + interval '12 days')::bigint,
+          effective_date = extract(epoch from now() - interval '353 days')::bigint
+        WHERE policy_number = 'NLI-CL-231890'
+    steps:
+      - say: "is Summit Peak's cargo insurance still good?"
+        expect:
+          calls: ["carrier_list|carrier_get|carrier_list_cover_ending"]
+          maxCalls: 5
+          maxFailedCalls: 1
+          noProposals: true
+          noRecordIds: true
+          noBoard: true
+          replyIncludes: ["Summit Peak"]
+          rubric: >
+            Answers in a sentence that Summit Peak Logistics' cargo liability is in force now and
+            ends in about 12 days, on the day its policy gives, without a board. It may add that
+            the renewal is due soon.

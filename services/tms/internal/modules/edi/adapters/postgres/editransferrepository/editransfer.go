@@ -3,6 +3,8 @@ package editransferrepository
 
 import (
 	"context"
+	"slices"
+	"strings"
 
 	"github.com/emoss08/trenova/pkg/keelexpr"
 
@@ -14,9 +16,11 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/domain/editransfer"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/editransfer/editransferdb"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/editenderports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/searchtext"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -25,6 +29,8 @@ import (
 const (
 	directionInbound  = "inbound"
 	directionOutbound = "outbound"
+
+	maxMadeShipments = 4
 )
 
 var transferErrors = dberror.Mapping{Entity: "EDITenderTransfer"}
@@ -100,8 +106,17 @@ func (r *repository) ListInbound(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*editransfer.EDITransfer], error) {
-			q := listedTransfers(req, directionInbound).Order(newestFirst()...)
-			return listquery.Offset(ctx, r.db.Keel(ctx), q, req.Filter.Pagination)
+			made, err := r.madeShipments(ctx, searchTerm(req.Filter))
+			if err != nil {
+				return nil, err
+			}
+			q := listedTransfers(req, directionInbound, made).Order(newestFirst()...)
+			result, err := listquery.Offset(ctx, r.db.Keel(ctx), q, req.Filter.Pagination)
+			if err != nil {
+				return nil, err
+			}
+
+			return result, r.numberShipments(ctx, req.Filter.TenantInfo.OrgID, result.Items)
 		},
 	)
 }
@@ -119,8 +134,12 @@ func (r *repository) ListOutbound(
 				tenantFilter(req.Filter.TenantInfo, directionOutbound),
 				t.InboundMessageID.IsNull(),
 			).Order(newestFirst()...)
+			result, err := listquery.Offset(ctx, r.db.Keel(ctx), q, req.Filter.Pagination)
+			if err != nil {
+				return nil, err
+			}
 
-			return listquery.Offset(ctx, r.db.Keel(ctx), q, req.Filter.Pagination)
+			return result, r.numberShipments(ctx, req.Filter.TenantInfo.OrgID, result.Items)
 		},
 	)
 }
@@ -148,16 +167,25 @@ func (r *repository) listCursor(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.CursorListResult[*editransfer.EDITransfer], error) {
-			return listquery.Connection(
+			made, err := r.madeShipments(ctx, searchTerm(req.Filter))
+			if err != nil {
+				return nil, err
+			}
+			result, err := listquery.Connection(
 				ctx,
 				r.db.Keel(ctx),
-				listedTransfers(req, direction),
+				listedTransfers(req, direction, made),
 				&listquery.Request[editransfer.EDITransfer]{
-					Filter: req.Filter,
+					Filter: withoutQuery(req.Filter),
 					Cursor: req.Cursor,
 					Shape:  withPartners,
 				},
 			)
+			if err != nil {
+				return nil, err
+			}
+
+			return result, r.numberShipments(ctx, req.Filter.TenantInfo.OrgID, result.Items)
 		},
 	)
 }
@@ -176,7 +204,11 @@ func (r *repository) GetTransferByID(
 			return nil, transferErrors.Map(err, req.ID.String())
 		}
 
-		return entity, nil
+		return entity, r.numberShipments(
+			ctx,
+			req.TenantInfo.OrgID,
+			[]*editransfer.EDITransfer{entity},
+		)
 	})
 }
 
@@ -190,9 +222,16 @@ func (r *repository) GetTransfersByIDs(
 		}
 
 		t := editransferdb.EDITransfers
-		return withPartners(t.Where(t.ID.In(req.TransferIDs...), tenantFilter(req.TenantInfo, ""))).
+		transfers, err := withPartners(
+			t.Where(t.ID.In(req.TransferIDs...), tenantFilter(req.TenantInfo, "")),
+		).
 			Limit(len(req.TransferIDs)).
 			List(ctx, r.db.Keel(ctx))
+		if err != nil {
+			return nil, err
+		}
+
+		return transfers, r.numberShipments(ctx, req.TenantInfo.OrgID, transfers)
 	})
 }
 
@@ -313,6 +352,7 @@ func (r *repository) SetApprovalWorkflowRunID(
 func listedTransfers(
 	req *editenderports.ListEDITransfersRequest,
 	direction string,
+	made []pulid.ID,
 ) keel.Query[*editransfer.EDITransfer] {
 	t := editransferdb.EDITransfers
 	return t.Where(
@@ -322,7 +362,99 @@ func listedTransfers(
 			req.InboundFileID.IsNotNil(),
 			t.InboundMessageID.InQuery(inboundFileMessages(req.InboundFileID)),
 		),
+		transferSearch(searchTerm(req.Filter), made),
 	)
+}
+
+func searchTerm(filter *pagination.QueryOptions) string {
+	if filter == nil {
+		return ""
+	}
+
+	return strings.TrimSpace(filter.Query)
+}
+
+func withoutQuery(filter *pagination.QueryOptions) *pagination.QueryOptions {
+	if filter == nil || filter.Query == "" {
+		return filter
+	}
+	stripped := *filter
+	stripped.Query = ""
+
+	return &stripped
+}
+
+func (r *repository) madeShipments(ctx context.Context, term string) ([]pulid.ID, error) {
+	if term == "" {
+		return nil, nil
+	}
+	s := shipmentdb.Shipments
+	rows, err := keel.Into[shipmentRef](ctx, r.db.Keel(ctx), s.Pick(s.ID).
+		Where(s.ProNumber.In(term, strings.ToUpper(term))).
+		Limit(maxMadeShipments))
+	if err != nil {
+		return nil, err
+	}
+	ids := make([]pulid.ID, 0, len(rows))
+	for _, row := range rows {
+		ids = append(ids, row.ID)
+	}
+
+	return ids, nil
+}
+
+type shipmentRef struct {
+	ID pulid.ID
+}
+
+type shipmentNumber struct {
+	ID        pulid.ID
+	ProNumber string
+}
+
+func (r *repository) numberShipments(
+	ctx context.Context,
+	orgID pulid.ID,
+	transfers []*editransfer.EDITransfer,
+) error {
+	ids := make([]pulid.ID, 0, len(transfers))
+	for _, transfer := range transfers {
+		if id := transfer.OwnShipmentID(orgID); id.IsNotNil() && !slices.Contains(ids, id) {
+			ids = append(ids, id)
+		}
+	}
+	if len(ids) == 0 {
+		return nil
+	}
+	s := shipmentdb.Shipments
+	rows, err := keel.Into[shipmentNumber](ctx, r.db.Keel(ctx), s.Pick(s.ID, s.ProNumber).
+		Where(s.ID.In(ids...)).
+		Limit(len(ids)))
+	if err != nil {
+		return err
+	}
+	numbers := make(map[pulid.ID]string, len(rows))
+	for _, row := range rows {
+		numbers[row.ID] = row.ProNumber
+	}
+	for _, transfer := range transfers {
+		transfer.ShipmentNumber = numbers[transfer.OwnShipmentID(orgID)]
+	}
+
+	return nil
+}
+
+func transferSearch(term string, made []pulid.ID) keel.Pred {
+	if term == "" {
+		return nil
+	}
+	t := editransferdb.EDITransfers
+	matches := []keel.Pred{t.SearchVector.Match(term, searchtext.Options(term)...)}
+	if len(made) > 0 {
+		matches = append(matches, t.TargetShipmentID.In(made...), t.SourceShipmentID.In(made...))
+	}
+
+	return keel.Or(matches...)
 }
 
 func inboundFileMessages(fileID pulid.ID) keel.Query[*edimessage.EDIMessage] {

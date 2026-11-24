@@ -171,6 +171,11 @@ type EdiTransfer @kind(resource: "edi") {
   targetPartnerId: ID!
   sourceShipmentId: ID
   targetShipmentId: ID
+  """
+  The PRO number of this organization's shipment the tender made (inbound) or was sent
+  from (outbound), when the reader may see it.
+  """
+  shipmentNumber: String
   inboundMessageId: ID
   status: EdiTransferStatus!
   tenderPayload: Any!

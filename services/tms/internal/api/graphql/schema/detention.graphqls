@@ -861,3 +861,103 @@ extend type Mutation {
   disputeDetentionOccurrence(input: DetentionDisputeInput!): DetentionOccurrence!
   sendDetentionNotice(occurrenceId: ID!): DetentionOccurrence!
 }
+
+"Whole days of the organization's time zone that a detention list covers."
+enum DetentionPeriod {
+  Today
+  Yesterday
+  ThisWeek
+  LastWeek
+  ThisMonth
+  LastMonth
+  ThisQuarter
+  LastQuarter
+}
+
+"""
+Which detention stays a list reads: ToBill is stopped and not yet billed (Pending or Approved),
+Running is still on site, the rest are stopped stays in that status.
+"""
+enum DetentionStayStage {
+  ToBill
+  Running
+  Billed
+  Disputed
+  Waived
+  NotBillable
+}
+
+"Why a stopped charge should be held back before it is billed."
+enum DetentionHoldBack {
+  "No notice reached the customer inside its window."
+  NoticeMissed
+  "The notice bounced and never reached the customer."
+  NoticeFailed
+  "The notice went out after its deadline."
+  NoticeLate
+  "The departure was entered by hand, not captured."
+  DepartureByHand
+  "The arrival was entered by hand, not captured."
+  ArrivalByHand
+  "A person must approve it before it is billed."
+  AwaitingApproval
+}
+
+"A detention stay: its clock, the time on site against the free time, what it bills and what holds its bill back."
+type DetentionStay @kind(resource: "detention") {
+  occurrence: DetentionOccurrence!
+  "Minutes the truck was on site, counted to now while it is still there."
+  minutesOnSite: Int!
+  "Minutes on site past the free time the policy granted."
+  minutesPastFree: Int!
+  "What it bills: priced as of now while the clock runs, as recorded once it stopped."
+  billableAmount: Decimal!
+  "Why to hold it back before billing; null when nothing does."
+  holdBack: DetentionHoldBack
+}
+
+type DetentionStayList {
+  items: [DetentionStay!]!
+  "Every stay the period and stage hold, however many the page lists."
+  totalCount: Int!
+}
+
+"A facility ranked by the time trucks waited past free time there."
+type DetentionFacilityWait @kind(resource: "detention") {
+  "The location's id."
+  id: ID!
+  name: String!
+  city: String!
+  state: String!
+  stopCount: Int!
+  detainedCount: Int!
+  pastFreeMinutes: Int!
+  "The median free time its policies granted, in minutes."
+  medianFreeMinutes: Float!
+  "The median stop's time on site, in minutes."
+  medianDwellMinutes: Float!
+  "Nine stops in ten took less than this, in minutes."
+  p90DwellMinutes: Float!
+  billedAmount: Decimal!
+}
+
+extend type Query {
+  "Detention stays whose clock started in a period, the largest billable first."
+  detentionStays(
+    "The whole days the clock started in, in the organization's time zone."
+    period: DetentionPeriod!
+    "Only stays at this stage; every stage when left out."
+    stage: DetentionStayStage
+    "Only the stays at this location."
+    locationId: ID
+    limit: Int
+    offset: Int
+  ): DetentionStayList!
+  "Facilities ranked by the time trucks waited there past free time in a period, the most first."
+  detentionFacilityWaits(
+    "The whole days the stops started in, in the organization's time zone."
+    period: DetentionPeriod!
+    "At most this many facilities, from 1 to 50; 10 when left out."
+    limit: Int
+  ): [DetentionFacilityWait!]!
+}

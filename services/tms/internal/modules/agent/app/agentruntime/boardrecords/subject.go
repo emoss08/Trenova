@@ -8,12 +8,15 @@ import (
 	"unicode/utf8"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpagecontext"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/boardregistry"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
 )
 
 var (
 	groupFigure  = regexp.MustCompile(`^(total|largest)_([123])(?::(.+))?$`)
+	bareFigure   = regexp.MustCompile(`^(total)(?::(.+))?$`)
 	clauseBreaks = []string{
 		",",
 		";",
@@ -54,17 +57,25 @@ func (r Read) GroupFigures(arguments map[string]any) (map[string]any, bool) {
 			single[idx+1] = ids[0]
 		}
 	}
-	if len(groups) < 2 || len(single) == 0 {
+	if len(board) < 2 {
 		return arguments, false
 	}
 	measure, _ := arguments[figureMeasureOf].(string)
 	refs := r.labelled(board)
 
 	return rewriteFigures(arguments, func(text string, at int, mark string) string {
-		return figureOfRecord(&figureSite{
+		site := &figureSite{
 			text: text, at: at, mark: mark, single: single,
 			measure: strings.TrimSpace(measure), refs: refs,
-		})
+		}
+		if own := bareOfRecord(site); own != "" {
+			return own
+		}
+		if len(groups) < 2 {
+			return mark
+		}
+
+		return figureOfRecord(site)
 	})
 }
 
@@ -112,9 +123,61 @@ func figureOfRecord(site *figureSite) string {
 	return "{" + named + ":" + record + "}"
 }
 
+func bareOfRecord(site *figureSite) string {
+	found := bareFigure.FindStringSubmatch(site.mark[1 : len(site.mark)-1])
+	if found == nil {
+		return ""
+	}
+	record := nearest(labelsIn(site.text, site.refs), site.at,
+		span(site.text, site.at, slices.Concat(clauseBreaks, sentenceBreaks)))
+	if record == "" {
+		return ""
+	}
+	named := strings.TrimSpace(found[2])
+	if named == "" {
+		named = site.measure
+	}
+	if named == "" {
+		named = summableOf(record)
+	}
+	if named == "" {
+		return ""
+	}
+
+	return "{" + named + ":" + record + "}"
+}
+
+func summableOf(record string) string {
+	id, err := pulid.Parse(record)
+	if err != nil {
+		return ""
+	}
+	kind, known := recordkind.OfIDPrefix(id.Prefix())
+	if !known {
+		return ""
+	}
+	summable := ""
+	measures := boardregistry.Catalog().MeasuresOf(kind)
+	for idx := range measures {
+		if !measures[idx].Summable {
+			continue
+		}
+		if summable != "" {
+			return ""
+		}
+		summable = measures[idx].Name
+	}
+
+	return summable
+}
+
 func subjectOf(text string, at int, refs []agentpagecontext.EntityRef) string {
 	labels := labelsIn(text, refs)
-	if id := nearest(labels, at, span(text, at, slices.Concat(clauseBreaks, sentenceBreaks))); id != "" {
+	if id := nearest(
+		labels,
+		at,
+		span(text, at, slices.Concat(clauseBreaks, sentenceBreaks)),
+	); id != "" {
 		return id
 	}
 	sentence := span(text, at, sentenceBreaks)

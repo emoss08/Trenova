@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/replycheck"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/board"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantartifactports"
 )
 
 type shownBoard struct {
@@ -74,6 +75,24 @@ func boardCheck(
 		name += fmt.Sprintf(", reading %s each from a reading of its own measure",
 			strings.Join(want.Reads, " and "))
 	}
+	if len(want.Kinds) > 0 {
+		name += ", showing records of " + strings.Join(want.Kinds, " and ")
+	}
+	if len(want.Measures) > 0 {
+		name += ", its rows measured by " + strings.Join(want.Measures, " and ")
+	}
+	if len(want.Metrics) > 0 {
+		name += ", reading the metrics " + strings.Join(want.Metrics, " and ")
+	}
+	if len(want.Figures) > 0 {
+		name += ", placing " + strings.Join(want.Figures, " and ")
+	}
+	if want.Links {
+		name += ", its words linking an artifact the turn made"
+	}
+	if want.Actions {
+		name += ", offering an action or linking the draft the turn made"
+	}
 	check := benchresult.CheckResult{Name: name}
 
 	seen := make([]string, 0, 2)
@@ -85,7 +104,12 @@ func boardCheck(
 			if place.IsValid() && shown.payload.Place != place {
 				continue
 			}
-			if readings < want.MinReadings || !readsEach(&shown.payload.Board, want.Reads) {
+			layout := &shown.payload.Board
+			if readings < want.MinReadings || !readsEach(layout, want.Reads) ||
+				!showsKinds(layout, want.Kinds) || !measuresRows(layout, want.Measures) ||
+				!readsMetrics(layout, want.Metrics) ||
+				!placesFigures(layout, want.Figures) || !linksMade(layout, turn, want.Links) ||
+				(want.Actions && !offersAction(layout) && !linksDraft(layout, turn)) {
 				continue
 			}
 			if shown.payload.Place == board.PlaceConversation &&
@@ -131,4 +155,73 @@ func readMeasures(layout *board.Board) string {
 	}
 
 	return " of " + strings.Join(read, " and ")
+}
+
+func showsKinds(layout *board.Board, kinds []string) bool {
+	return !slices.ContainsFunc(kinds, func(kind string) bool {
+		return !slices.ContainsFunc(layout.Blocks, func(block board.Block) bool {
+			return block.Type == board.BlockRecords && !block.Records.Empty() &&
+				string(block.Records.Kind) == kind
+		})
+	})
+}
+
+func measuresRows(layout *board.Board, measures []string) bool {
+	return !slices.ContainsFunc(measures, func(measure string) bool {
+		return !slices.ContainsFunc(layout.Blocks, func(block board.Block) bool {
+			return block.Type == board.BlockRecords && string(block.Measure) == measure
+		})
+	})
+}
+
+func readsMetrics(layout *board.Board, metrics []string) bool {
+	asked := layout.Metrics()
+
+	return !slices.ContainsFunc(metrics, func(metric string) bool {
+		return !slices.ContainsFunc(asked, func(ask board.MetricAsk) bool {
+			return ask.Metric == metric
+		})
+	})
+}
+
+func placesFigures(layout *board.Board, figures []string) bool {
+	return !slices.ContainsFunc(figures, func(figure string) bool {
+		name, metric, _ := strings.Cut(figure, ":")
+		return !slices.ContainsFunc(layout.Readings, func(reading board.Reading) bool {
+			return reading.Metric == metric && strings.EqualFold(reading.Figure, name)
+		})
+	})
+}
+
+func linksMade(layout *board.Board, turn *benchrecord.TurnRecord, wanted bool) bool {
+	links := layout.ArtifactLinks()
+	if wanted && len(links) == 0 {
+		return false
+	}
+
+	return !slices.ContainsFunc(links, func(id string) bool {
+		return !slices.ContainsFunc(
+			turn.Artifacts,
+			func(made assistantartifactports.AssistantArtifact) bool {
+				return made.ID.String() == id && made.Kind != assistantartifact.KindBoard
+			},
+		)
+	})
+}
+
+func linksDraft(layout *board.Board, turn *benchrecord.TurnRecord) bool {
+	return slices.ContainsFunc(layout.ArtifactLinks(), func(id string) bool {
+		return slices.ContainsFunc(
+			turn.Artifacts,
+			func(made assistantartifactports.AssistantArtifact) bool {
+				return made.ID.String() == id && made.Kind == assistantartifact.KindDocument
+			},
+		)
+	})
+}
+
+func offersAction(layout *board.Board) bool {
+	return slices.ContainsFunc(layout.Blocks, func(block board.Block) bool {
+		return block.Type == board.BlockActions && len(block.Actions) > 0
+	})
 }

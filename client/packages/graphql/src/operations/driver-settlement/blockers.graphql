@@ -1,0 +1,23 @@
+# The settlements of a pay batch that cannot be released as they stand, as the Desk reads
+# them: each one's driver, net pay, and what keeps it from release.
+query DeskDriverSettlementBlockers($batchId: ID, $limit: Int) {
+  driverSettlementBlockers(batchId: $batchId, limit: $limit) {
+    id
+    settlementNumber
+    status
+    workerId
+    driverName
+    batchId
+    batchName
+    payDate
+    netPayMinor
+    grossEarningsMinor
+    deductionsMinor
+    carryForwardOutMinor
+    currencyCode
+    reason
+    message
+    holdReason
+    holdNote
+  }
+}

@@ -1436,6 +1436,12 @@ var settlementsTable = schema.Table{
 		{Name: "voided_at", Quoted: `"voided_at"`, Field: "VoidedAt", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Voided At`, JSON: `voidedAt`, Report: &reportDimEpoch},
 		{Name: "void_reason", Quoted: `"void_reason"`, Field: "VoidReason", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Void Reason`, JSON: `voidReason`, Report: &reportDimString},
 		{Name: "void_journal_batch_id", Quoted: `"void_journal_batch_id"`, Field: "VoidJournalBatchID", Kind: schema.KindString, Flags: schema.FlagNullable, Label: `Void Journal Batch ID`, JSON: `voidJournalBatchId`, Report: &reportDimString},
+		{Name: "hold_reason", Quoted: `"hold_reason"`, Field: "HoldReason", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Hold Reason`, JSON: `holdReason`, Enum: enumHoldReason[:], Report: &reportDimEnum},
+		{Name: "hold_note", Quoted: `"hold_note"`, Field: "HoldNote", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Hold Note`, JSON: `holdNote`, Report: &reportDimString},
+		{Name: "held_by_id", Quoted: `"held_by_id"`, Field: "HeldByID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Held By ID`, JSON: `heldById`, Report: &reportDimString},
+		{Name: "held_at", Quoted: `"held_at"`, Field: "HeldAt", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Held At`, JSON: `heldAt`, Report: &reportDimEpoch},
+		{Name: "hold_released_by_id", Quoted: `"hold_released_by_id"`, Field: "HoldReleasedByID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Hold Released By ID`, JSON: `holdReleasedById`, Report: &reportDimString},
+		{Name: "hold_released_at", Quoted: `"hold_released_at"`, Field: "HoldReleasedAt", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Hold Released At`, JSON: `holdReleasedAt`, Report: &reportDimEpoch},
 		{Name: "version", Quoted: `"version"`, Field: "Version", Kind: schema.KindInt64, Flags: schema.FlagVersion, Label: `Version`, JSON: `version`, Report: &reportMeasureIntegerHidden},
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, JSON: `createdAt`, Report: &reportDimEpoch},
 		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, JSON: `updatedAt`, Report: &reportDimEpoch},
@@ -1448,14 +1454,14 @@ var settlementsTable = schema.Table{
 	},
 	PK:           []int32{0, 1, 2},
 	Tenant:       []int32{1, 2},
-	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48},
-	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48},
-	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 48},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 54},
 	Returning:    nil,
-	Version:      46,
+	Version:      52,
 	AutoID:       0,
-	AutoCreate:   47,
-	AutoUpdate:   48,
+	AutoCreate:   53,
+	AutoUpdate:   54,
 	IDPrefix:     "dstl_",
 	New:          newSettlement,
 	NewN:         newNSettlement,
@@ -1517,6 +1523,12 @@ type SettlementsTable struct {
 	VoidedAt               keel.Int64Col
 	VoidReason             keel.StringCol
 	VoidJournalBatchID     keelkinds.PulidIDCol
+	HoldReason             HoldReasonCol
+	HoldNote               keel.StringCol
+	HeldByID               keelkinds.PulidIDCol
+	HeldAt                 keel.Int64Col
+	HoldReleasedByID       keelkinds.PulidIDCol
+	HoldReleasedAt         keel.Int64Col
 	Version                keel.Int64Col
 	CreatedAt              keel.Int64Col
 	UpdatedAt              keel.Int64Col
@@ -1571,9 +1583,15 @@ var Settlements = &SettlementsTable{
 	VoidedAt:               keel.Int64Col{Col: keel.Col{Ref: &settlementsRef, Index: 43}},
 	VoidReason:             keel.StringCol{Col: keel.Col{Ref: &settlementsRef, Index: 44}},
 	VoidJournalBatchID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &settlementsRef, Index: 45}}},
-	Version:                keel.Int64Col{Col: keel.Col{Ref: &settlementsRef, Index: 46}},
-	CreatedAt:              keel.Int64Col{Col: keel.Col{Ref: &settlementsRef, Index: 47}},
-	UpdatedAt:              keel.Int64Col{Col: keel.Col{Ref: &settlementsRef, Index: 48}},
+	HoldReason:             HoldReasonCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &settlementsRef, Index: 46}}},
+	HoldNote:               keel.StringCol{Col: keel.Col{Ref: &settlementsRef, Index: 47}},
+	HeldByID:               keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &settlementsRef, Index: 48}}},
+	HeldAt:                 keel.Int64Col{Col: keel.Col{Ref: &settlementsRef, Index: 49}},
+	HoldReleasedByID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &settlementsRef, Index: 50}}},
+	HoldReleasedAt:         keel.Int64Col{Col: keel.Col{Ref: &settlementsRef, Index: 51}},
+	Version:                keel.Int64Col{Col: keel.Col{Ref: &settlementsRef, Index: 52}},
+	CreatedAt:              keel.Int64Col{Col: keel.Col{Ref: &settlementsRef, Index: 53}},
+	UpdatedAt:              keel.Int64Col{Col: keel.Col{Ref: &settlementsRef, Index: 54}},
 }
 
 // BuildSettlements builds the table of driver_settlements for ref. Generated relation and alias methods call it.
@@ -1626,9 +1644,15 @@ func BuildSettlements(r *keel.Ref) *SettlementsTable {
 		VoidedAt:               keel.Int64Col{Col: keel.Col{Ref: r, Index: 43}},
 		VoidReason:             keel.StringCol{Col: keel.Col{Ref: r, Index: 44}},
 		VoidJournalBatchID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 45}}},
-		Version:                keel.Int64Col{Col: keel.Col{Ref: r, Index: 46}},
-		CreatedAt:              keel.Int64Col{Col: keel.Col{Ref: r, Index: 47}},
-		UpdatedAt:              keel.Int64Col{Col: keel.Col{Ref: r, Index: 48}},
+		HoldReason:             HoldReasonCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 46}}},
+		HoldNote:               keel.StringCol{Col: keel.Col{Ref: r, Index: 47}},
+		HeldByID:               keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 48}}},
+		HeldAt:                 keel.Int64Col{Col: keel.Col{Ref: r, Index: 49}},
+		HoldReleasedByID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 50}}},
+		HoldReleasedAt:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 51}},
+		Version:                keel.Int64Col{Col: keel.Col{Ref: r, Index: 52}},
+		CreatedAt:              keel.Int64Col{Col: keel.Col{Ref: r, Index: 53}},
+		UpdatedAt:              keel.Int64Col{Col: keel.Col{Ref: r, Index: 54}},
 	}
 }
 
@@ -2132,10 +2156,22 @@ func ptrSettlement(p unsafe.Pointer, c int32) any {
 	case 45:
 		return (**string)(unsafe.Pointer(&r.VoidJournalBatchID))
 	case 46:
-		return &r.Version
+		return (*string)(unsafe.Pointer(&r.HoldReason))
 	case 47:
-		return &r.CreatedAt
+		return &r.HoldNote
 	case 48:
+		return (*string)(unsafe.Pointer(&r.HeldByID))
+	case 49:
+		return &r.HeldAt
+	case 50:
+		return (*string)(unsafe.Pointer(&r.HoldReleasedByID))
+	case 51:
+		return &r.HoldReleasedAt
+	case 52:
+		return &r.Version
+	case 53:
+		return &r.CreatedAt
+	case 54:
 		return &r.UpdatedAt
 	}
 	return nil
@@ -2309,10 +2345,40 @@ func valueSettlement(p unsafe.Pointer, c int32) any {
 		}
 		return string(*r.VoidJournalBatchID)
 	case 46:
-		return r.Version
+		if r.HoldReason == "" {
+			return nil
+		}
+		return string(r.HoldReason)
 	case 47:
-		return r.CreatedAt
+		if r.HoldNote == "" {
+			return nil
+		}
+		return r.HoldNote
 	case 48:
+		if r.HeldByID == "" {
+			return nil
+		}
+		return string(r.HeldByID)
+	case 49:
+		if r.HeldAt == nil {
+			return nil
+		}
+		return *r.HeldAt
+	case 50:
+		if r.HoldReleasedByID == "" {
+			return nil
+		}
+		return string(r.HoldReleasedByID)
+	case 51:
+		if r.HoldReleasedAt == nil {
+			return nil
+		}
+		return *r.HoldReleasedAt
+	case 52:
+		return r.Version
+	case 53:
+		return r.CreatedAt
+	case 54:
 		return r.UpdatedAt
 	}
 	return nil
@@ -2359,6 +2425,9 @@ var settlementBatchesTable = schema.Table{
 		{Name: "exception_count", Quoted: `"exception_count"`, Field: "ExceptionCount", Kind: schema.KindInt64, Flags: 0, Label: `Exceptions`, JSON: `exceptionCount`, Report: &reportMeasureIntegerCount},
 		{Name: "total_gross_minor", Quoted: `"total_gross_minor"`, Field: "TotalGrossMinor", Kind: schema.KindInt64, Flags: 0, Label: `Total Gross (Minor)`, JSON: `totalGrossMinor`, Report: &reportMeasureInteger},
 		{Name: "total_net_minor", Quoted: `"total_net_minor"`, Field: "TotalNetMinor", Kind: schema.KindInt64, Flags: 0, Label: `Total Net (Minor)`, JSON: `totalNetMinor`, Report: &reportMeasureInteger},
+		{Name: "total_reimbursements_minor", Quoted: `"total_reimbursements_minor"`, Field: "TotalReimbursementsMinor", Kind: schema.KindInt64, Flags: 0, Label: `Total Reimbursements (Minor)`, JSON: `totalReimbursementsMinor`, Report: &reportMeasureInteger},
+		{Name: "held_count", Quoted: `"held_count"`, Field: "HeldCount", Kind: schema.KindInt64, Flags: 0, Label: `Held`, JSON: `heldCount`, Report: &reportMeasureIntegerCount},
+		{Name: "held_net_minor", Quoted: `"held_net_minor"`, Field: "HeldNetMinor", Kind: schema.KindInt64, Flags: 0, Label: `Held Net (Minor)`, JSON: `heldNetMinor`, Report: &reportMeasureInteger},
 		{Name: "currency_code", Quoted: `"currency_code"`, Field: "CurrencyCode", Kind: schema.KindString, Flags: 0, Label: `Currency`, JSON: `currencyCode`, Report: &reportDimString},
 		{Name: "notes", Quoted: `"notes"`, Field: "Notes", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Notes`, JSON: `notes`, Report: &reportDimString},
 		{Name: "generated_by_id", Quoted: `"generated_by_id"`, Field: "GeneratedByID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Generated By ID`, JSON: `generatedById`, Report: &reportDimString},
@@ -2375,14 +2444,14 @@ var settlementBatchesTable = schema.Table{
 	},
 	PK:           []int32{0, 1, 2},
 	Tenant:       []int32{1, 2},
-	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21},
-	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21},
-	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 21},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 24},
 	Returning:    nil,
-	Version:      19,
+	Version:      22,
 	AutoID:       0,
-	AutoCreate:   20,
-	AutoUpdate:   21,
+	AutoCreate:   23,
+	AutoUpdate:   24,
 	IDPrefix:     "dstlb_",
 	New:          newSettlementBatch,
 	NewN:         newNSettlementBatch,
@@ -2398,83 +2467,92 @@ var settlementBatchesRef = keel.Ref{Table: &settlementBatchesTable}
 // SettlementBatchesTable is the table of driversettlement.SettlementBatch.
 type SettlementBatchesTable struct {
 	keel.TableBase
-	ID              keelkinds.PulidIDCol
-	BusinessUnitID  keelkinds.PulidIDCol
-	OrganizationID  keelkinds.PulidIDCol
-	Status          BatchStatusCol
-	Name            keel.StringCol
-	PeriodStart     keel.Int64Col
-	PeriodEnd       keel.Int64Col
-	PayDate         keel.Int64Col
-	SettlementCount keel.Int64Col
-	ExceptionCount  keel.Int64Col
-	TotalGrossMinor keel.Int64Col
-	TotalNetMinor   keel.Int64Col
-	CurrencyCode    keel.StringCol
-	Notes           keel.StringCol
-	GeneratedByID   keelkinds.PulidIDCol
-	GeneratedAt     keel.Int64Col
-	CompletedAt     keel.Int64Col
-	CanceledByID    keelkinds.PulidIDCol
-	CanceledAt      keel.Int64Col
-	Version         keel.Int64Col
-	CreatedAt       keel.Int64Col
-	UpdatedAt       keel.Int64Col
+	ID                       keelkinds.PulidIDCol
+	BusinessUnitID           keelkinds.PulidIDCol
+	OrganizationID           keelkinds.PulidIDCol
+	Status                   BatchStatusCol
+	Name                     keel.StringCol
+	PeriodStart              keel.Int64Col
+	PeriodEnd                keel.Int64Col
+	PayDate                  keel.Int64Col
+	SettlementCount          keel.Int64Col
+	ExceptionCount           keel.Int64Col
+	TotalGrossMinor          keel.Int64Col
+	TotalNetMinor            keel.Int64Col
+	TotalReimbursementsMinor keel.Int64Col
+	HeldCount                keel.Int64Col
+	HeldNetMinor             keel.Int64Col
+	CurrencyCode             keel.StringCol
+	Notes                    keel.StringCol
+	GeneratedByID            keelkinds.PulidIDCol
+	GeneratedAt              keel.Int64Col
+	CompletedAt              keel.Int64Col
+	CanceledByID             keelkinds.PulidIDCol
+	CanceledAt               keel.Int64Col
+	Version                  keel.Int64Col
+	CreatedAt                keel.Int64Col
+	UpdatedAt                keel.Int64Col
 }
 
 // SettlementBatches references the driver_settlement_batches table.
 var SettlementBatches = &SettlementBatchesTable{
-	TableBase:       keel.TableBase{Ref: &settlementBatchesRef},
-	ID:              keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &settlementBatchesRef, Index: 0}}},
-	BusinessUnitID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &settlementBatchesRef, Index: 1}}},
-	OrganizationID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &settlementBatchesRef, Index: 2}}},
-	Status:          BatchStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &settlementBatchesRef, Index: 3}}},
-	Name:            keel.StringCol{Col: keel.Col{Ref: &settlementBatchesRef, Index: 4}},
-	PeriodStart:     keel.Int64Col{Col: keel.Col{Ref: &settlementBatchesRef, Index: 5}},
-	PeriodEnd:       keel.Int64Col{Col: keel.Col{Ref: &settlementBatchesRef, Index: 6}},
-	PayDate:         keel.Int64Col{Col: keel.Col{Ref: &settlementBatchesRef, Index: 7}},
-	SettlementCount: keel.Int64Col{Col: keel.Col{Ref: &settlementBatchesRef, Index: 8}},
-	ExceptionCount:  keel.Int64Col{Col: keel.Col{Ref: &settlementBatchesRef, Index: 9}},
-	TotalGrossMinor: keel.Int64Col{Col: keel.Col{Ref: &settlementBatchesRef, Index: 10}},
-	TotalNetMinor:   keel.Int64Col{Col: keel.Col{Ref: &settlementBatchesRef, Index: 11}},
-	CurrencyCode:    keel.StringCol{Col: keel.Col{Ref: &settlementBatchesRef, Index: 12}},
-	Notes:           keel.StringCol{Col: keel.Col{Ref: &settlementBatchesRef, Index: 13}},
-	GeneratedByID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &settlementBatchesRef, Index: 14}}},
-	GeneratedAt:     keel.Int64Col{Col: keel.Col{Ref: &settlementBatchesRef, Index: 15}},
-	CompletedAt:     keel.Int64Col{Col: keel.Col{Ref: &settlementBatchesRef, Index: 16}},
-	CanceledByID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &settlementBatchesRef, Index: 17}}},
-	CanceledAt:      keel.Int64Col{Col: keel.Col{Ref: &settlementBatchesRef, Index: 18}},
-	Version:         keel.Int64Col{Col: keel.Col{Ref: &settlementBatchesRef, Index: 19}},
-	CreatedAt:       keel.Int64Col{Col: keel.Col{Ref: &settlementBatchesRef, Index: 20}},
-	UpdatedAt:       keel.Int64Col{Col: keel.Col{Ref: &settlementBatchesRef, Index: 21}},
+	TableBase:                keel.TableBase{Ref: &settlementBatchesRef},
+	ID:                       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &settlementBatchesRef, Index: 0}}},
+	BusinessUnitID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &settlementBatchesRef, Index: 1}}},
+	OrganizationID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &settlementBatchesRef, Index: 2}}},
+	Status:                   BatchStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &settlementBatchesRef, Index: 3}}},
+	Name:                     keel.StringCol{Col: keel.Col{Ref: &settlementBatchesRef, Index: 4}},
+	PeriodStart:              keel.Int64Col{Col: keel.Col{Ref: &settlementBatchesRef, Index: 5}},
+	PeriodEnd:                keel.Int64Col{Col: keel.Col{Ref: &settlementBatchesRef, Index: 6}},
+	PayDate:                  keel.Int64Col{Col: keel.Col{Ref: &settlementBatchesRef, Index: 7}},
+	SettlementCount:          keel.Int64Col{Col: keel.Col{Ref: &settlementBatchesRef, Index: 8}},
+	ExceptionCount:           keel.Int64Col{Col: keel.Col{Ref: &settlementBatchesRef, Index: 9}},
+	TotalGrossMinor:          keel.Int64Col{Col: keel.Col{Ref: &settlementBatchesRef, Index: 10}},
+	TotalNetMinor:            keel.Int64Col{Col: keel.Col{Ref: &settlementBatchesRef, Index: 11}},
+	TotalReimbursementsMinor: keel.Int64Col{Col: keel.Col{Ref: &settlementBatchesRef, Index: 12}},
+	HeldCount:                keel.Int64Col{Col: keel.Col{Ref: &settlementBatchesRef, Index: 13}},
+	HeldNetMinor:             keel.Int64Col{Col: keel.Col{Ref: &settlementBatchesRef, Index: 14}},
+	CurrencyCode:             keel.StringCol{Col: keel.Col{Ref: &settlementBatchesRef, Index: 15}},
+	Notes:                    keel.StringCol{Col: keel.Col{Ref: &settlementBatchesRef, Index: 16}},
+	GeneratedByID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &settlementBatchesRef, Index: 17}}},
+	GeneratedAt:              keel.Int64Col{Col: keel.Col{Ref: &settlementBatchesRef, Index: 18}},
+	CompletedAt:              keel.Int64Col{Col: keel.Col{Ref: &settlementBatchesRef, Index: 19}},
+	CanceledByID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &settlementBatchesRef, Index: 20}}},
+	CanceledAt:               keel.Int64Col{Col: keel.Col{Ref: &settlementBatchesRef, Index: 21}},
+	Version:                  keel.Int64Col{Col: keel.Col{Ref: &settlementBatchesRef, Index: 22}},
+	CreatedAt:                keel.Int64Col{Col: keel.Col{Ref: &settlementBatchesRef, Index: 23}},
+	UpdatedAt:                keel.Int64Col{Col: keel.Col{Ref: &settlementBatchesRef, Index: 24}},
 }
 
 // BuildSettlementBatches builds the table of driver_settlement_batches for ref. Generated relation and alias methods call it.
 func BuildSettlementBatches(r *keel.Ref) *SettlementBatchesTable {
 	return &SettlementBatchesTable{
-		TableBase:       keel.TableBase{Ref: r},
-		ID:              keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		Status:          BatchStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		Name:            keel.StringCol{Col: keel.Col{Ref: r, Index: 4}},
-		PeriodStart:     keel.Int64Col{Col: keel.Col{Ref: r, Index: 5}},
-		PeriodEnd:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 6}},
-		PayDate:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 7}},
-		SettlementCount: keel.Int64Col{Col: keel.Col{Ref: r, Index: 8}},
-		ExceptionCount:  keel.Int64Col{Col: keel.Col{Ref: r, Index: 9}},
-		TotalGrossMinor: keel.Int64Col{Col: keel.Col{Ref: r, Index: 10}},
-		TotalNetMinor:   keel.Int64Col{Col: keel.Col{Ref: r, Index: 11}},
-		CurrencyCode:    keel.StringCol{Col: keel.Col{Ref: r, Index: 12}},
-		Notes:           keel.StringCol{Col: keel.Col{Ref: r, Index: 13}},
-		GeneratedByID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 14}}},
-		GeneratedAt:     keel.Int64Col{Col: keel.Col{Ref: r, Index: 15}},
-		CompletedAt:     keel.Int64Col{Col: keel.Col{Ref: r, Index: 16}},
-		CanceledByID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 17}}},
-		CanceledAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 18}},
-		Version:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 19}},
-		CreatedAt:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 20}},
-		UpdatedAt:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 21}},
+		TableBase:                keel.TableBase{Ref: r},
+		ID:                       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		Status:                   BatchStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		Name:                     keel.StringCol{Col: keel.Col{Ref: r, Index: 4}},
+		PeriodStart:              keel.Int64Col{Col: keel.Col{Ref: r, Index: 5}},
+		PeriodEnd:                keel.Int64Col{Col: keel.Col{Ref: r, Index: 6}},
+		PayDate:                  keel.Int64Col{Col: keel.Col{Ref: r, Index: 7}},
+		SettlementCount:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 8}},
+		ExceptionCount:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 9}},
+		TotalGrossMinor:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 10}},
+		TotalNetMinor:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 11}},
+		TotalReimbursementsMinor: keel.Int64Col{Col: keel.Col{Ref: r, Index: 12}},
+		HeldCount:                keel.Int64Col{Col: keel.Col{Ref: r, Index: 13}},
+		HeldNetMinor:             keel.Int64Col{Col: keel.Col{Ref: r, Index: 14}},
+		CurrencyCode:             keel.StringCol{Col: keel.Col{Ref: r, Index: 15}},
+		Notes:                    keel.StringCol{Col: keel.Col{Ref: r, Index: 16}},
+		GeneratedByID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 17}}},
+		GeneratedAt:              keel.Int64Col{Col: keel.Col{Ref: r, Index: 18}},
+		CompletedAt:              keel.Int64Col{Col: keel.Col{Ref: r, Index: 19}},
+		CanceledByID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 20}}},
+		CanceledAt:               keel.Int64Col{Col: keel.Col{Ref: r, Index: 21}},
+		Version:                  keel.Int64Col{Col: keel.Col{Ref: r, Index: 22}},
+		CreatedAt:                keel.Int64Col{Col: keel.Col{Ref: r, Index: 23}},
+		UpdatedAt:                keel.Int64Col{Col: keel.Col{Ref: r, Index: 24}},
 	}
 }
 
@@ -2897,24 +2975,30 @@ func ptrSettlementBatch(p unsafe.Pointer, c int32) any {
 	case 11:
 		return &r.TotalNetMinor
 	case 12:
-		return &r.CurrencyCode
+		return &r.TotalReimbursementsMinor
 	case 13:
-		return &r.Notes
+		return (*int64)(unsafe.Pointer(&r.HeldCount))
 	case 14:
-		return (*string)(unsafe.Pointer(&r.GeneratedByID))
+		return &r.HeldNetMinor
 	case 15:
-		return &r.GeneratedAt
+		return &r.CurrencyCode
 	case 16:
-		return &r.CompletedAt
+		return &r.Notes
 	case 17:
-		return (*string)(unsafe.Pointer(&r.CanceledByID))
+		return (*string)(unsafe.Pointer(&r.GeneratedByID))
 	case 18:
-		return &r.CanceledAt
+		return &r.GeneratedAt
 	case 19:
-		return &r.Version
+		return &r.CompletedAt
 	case 20:
-		return &r.CreatedAt
+		return (*string)(unsafe.Pointer(&r.CanceledByID))
 	case 21:
+		return &r.CanceledAt
+	case 22:
+		return &r.Version
+	case 23:
+		return &r.CreatedAt
+	case 24:
 		return &r.UpdatedAt
 	}
 	return nil
@@ -2948,42 +3032,48 @@ func valueSettlementBatch(p unsafe.Pointer, c int32) any {
 	case 11:
 		return r.TotalNetMinor
 	case 12:
-		return r.CurrencyCode
+		return r.TotalReimbursementsMinor
 	case 13:
+		return int64(r.HeldCount)
+	case 14:
+		return r.HeldNetMinor
+	case 15:
+		return r.CurrencyCode
+	case 16:
 		if r.Notes == "" {
 			return nil
 		}
 		return r.Notes
-	case 14:
+	case 17:
 		if r.GeneratedByID == "" {
 			return nil
 		}
 		return string(r.GeneratedByID)
-	case 15:
+	case 18:
 		if r.GeneratedAt == nil {
 			return nil
 		}
 		return *r.GeneratedAt
-	case 16:
+	case 19:
 		if r.CompletedAt == nil {
 			return nil
 		}
 		return *r.CompletedAt
-	case 17:
+	case 20:
 		if r.CanceledByID == "" {
 			return nil
 		}
 		return string(r.CanceledByID)
-	case 18:
+	case 21:
 		if r.CanceledAt == nil {
 			return nil
 		}
 		return *r.CanceledAt
-	case 19:
+	case 22:
 		return r.Version
-	case 20:
+	case 23:
 		return r.CreatedAt
-	case 21:
+	case 24:
 		return r.UpdatedAt
 	}
 	return nil
@@ -3780,6 +3870,14 @@ var enumDriverpayPayeeClassification = [...]schema.EnumValue{
 	{Value: `OwnerOperator`, Label: `Owner Operator`},
 }
 
+var enumHoldReason = [...]schema.EnumValue{
+	{Value: `RateDispute`, Label: `Rate Dispute`},
+	{Value: `MissingPaperwork`, Label: `Missing Paperwork`},
+	{Value: `NegativeNet`, Label: `Negative Net`},
+	{Value: `DeductionReview`, Label: `Deduction Review`},
+	{Value: `Other`, Label: `Other`},
+}
+
 var enumLineCategory = [...]schema.EnumValue{
 	{Value: `Earning`, Label: `Earning`},
 	{Value: `Reimbursement`, Label: `Reimbursement`},
@@ -3926,6 +4024,31 @@ func (c DisputeStatusCol) In(vs ...driversettlement.DisputeStatus) keel.Pred {
 	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c DisputeStatusCol) NotIn(vs ...driversettlement.DisputeStatus) keel.Pred {
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
+}
+
+// HoldReasonCol is a column of driversettlement.HoldReason values.
+type HoldReasonCol struct{ keel.TypedStringCol }
+
+func (c HoldReasonCol) Eq(v driversettlement.HoldReason) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c HoldReasonCol) Ne(v driversettlement.HoldReason) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c HoldReasonCol) Gt(v driversettlement.HoldReason) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c HoldReasonCol) Gte(v driversettlement.HoldReason) keel.Pred { return c.Text().Gte(string(v)) }
+func (c HoldReasonCol) Lt(v driversettlement.HoldReason) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c HoldReasonCol) Lte(v driversettlement.HoldReason) keel.Pred { return c.Text().Lte(string(v)) }
+func (c HoldReasonCol) IsDistinctFrom(v driversettlement.HoldReason) keel.Pred {
+	return c.Text().IsDistinctFrom(string(v))
+}
+func (c HoldReasonCol) Between(lo, hi driversettlement.HoldReason) keel.Pred {
+	return c.Text().Between(string(lo), string(hi))
+}
+func (c HoldReasonCol) To(v driversettlement.HoldReason) keel.Assignment {
+	return c.Text().To(string(v))
+}
+func (c HoldReasonCol) In(vs ...driversettlement.HoldReason) keel.Pred {
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
+}
+func (c HoldReasonCol) NotIn(vs ...driversettlement.HoldReason) keel.Pred {
 	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 

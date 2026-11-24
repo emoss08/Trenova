@@ -19,9 +19,7 @@ import {
   type SettlementBatchRow,
 } from "@/lib/graphql/driver-settlement";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
-import {
-  SettlementBatchDetailDocument,
-} from "@trenova/graphql/generated/documents/driver-settlement/operations";
+import { SettlementBatchDetailDocument } from "@trenova/graphql/generated/documents/driver-settlement/operations";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
 import type {
   DriverSettlementStatus,
@@ -34,10 +32,18 @@ import {
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useForm, type Resolver } from "react-hook-form";
-import { AlertTriangleIcon, Download01Icon } from "@trenova/shared/components/icons";
+import {
+  AlertTriangleIcon,
+  Download01Icon,
+  PauseCircleIcon,
+} from "@trenova/shared/components/icons";
+import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
+import { SettlementHoldBadge } from "@/components/settlements/settlement-hold-badge";
+import { isHeld } from "@/lib/settlement-hold";
 import { toast } from "@trenova/shared/components/ui/toast";
 import { formatUnixDateMedium } from "@trenova/shared/lib/date";
 import { translate } from "@trenova/shared/i18n/runtime";
+import { formatMinor } from "@trenova/shared/lib/money";
 
 function formatDate(unix?: number | null): string {
   return formatUnixDateMedium(unix, { fallback: "—" });
@@ -221,7 +227,7 @@ function BatchDetail({ batchId }: { batchId: string }) {
         </Button>
       </div>
 
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
         <div className="bg-muted/30 rounded-lg border p-3">
           <p className="text-muted-foreground text-xs font-medium">{t("Settlements")}</p>
           <p className="mt-1 text-sm font-semibold tabular-nums">{data.settlementCount}</p>
@@ -233,6 +239,13 @@ function BatchDetail({ batchId }: { batchId: string }) {
               <AlertTriangleIcon className="size-3.5 text-warning-foreground" />
             )}
             {data.exceptionCount}
+          </p>
+        </div>
+        <div className="bg-muted/30 rounded-lg border p-3">
+          <p className="text-muted-foreground text-xs font-medium">{t("On hold")}</p>
+          <p className="mt-1 flex items-center gap-1 text-sm font-semibold tabular-nums">
+            {data.heldCount > 0 && <PauseCircleIcon className="size-3.5 text-warning-foreground" />}
+            {data.heldCount}
           </p>
         </div>
         <div className="bg-muted/30 rounded-lg border p-3">
@@ -252,6 +265,19 @@ function BatchDetail({ batchId }: { batchId: string }) {
           </p>
         </div>
       </div>
+
+      {data.heldCount > 0 && (
+        <Alert variant="warning" size="sm">
+          <PauseCircleIcon />
+          <AlertDescription>
+            {t(
+              "{0, plural, one {# settlement in this batch is on hold, netting {1}. It stays in the batch and its totals, and waits out of the pay run until someone releases the hold.} other {# settlements in this batch are on hold, netting {1}. They stay in the batch and its totals, and wait out of the pay run until someone releases their holds.}}",
+              data.heldCount,
+              formatMinor(data.heldNetMinor, data.currencyCode),
+            )}
+          </AlertDescription>
+        </Alert>
+      )}
 
       <div className="overflow-hidden rounded-lg border">
         <table className="w-full text-xs">
@@ -278,6 +304,12 @@ function BatchDetail({ batchId }: { batchId: string }) {
                     <DriverSettlementStatusBadge
                       status={settlement.status as DriverSettlementStatus}
                     />
+                    {isHeld(settlement) && (
+                      <SettlementHoldBadge
+                        reason={settlement.holdReason}
+                        note={settlement.holdNote}
+                      />
+                    )}
                     {settlement.hasExceptions && (
                       <AlertTriangleIcon className="size-3 text-warning-foreground" />
                     )}

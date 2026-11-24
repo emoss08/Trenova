@@ -290,6 +290,16 @@ selects a linked record's field outside its view without `@requiresRead`) or
 over the client's `.graphql` files, so they surface under `task test`. refgen also writes the page
 access manifest and the role editor's words (below). See [reference-views.md](reference-views.md).
 
+## Board catalog
+
+`go run ./scripts/boardcataloggen` (from `services/tms`) writes the client's copy of the board
+catalog (`client/packages/shared/src/types/generated/board-catalog.ts`: each kind's measures by
+name and alias with their value kind and whether they draw a bar, the metrics' names and
+aliases, and each metric's sketch) from `workspace/domain/boardcatalog`. Run it after changing the
+catalog; `TestTheClientsBoardCatalogIsCurrent` (in `scripts/boardcataloggen`, which holds the
+writer too, so the catalog package stays data) fails until it is current. Its output is already
+in the client formatter's shape, so `oxfmt` leaves it alone.
+
 ## Page access manifest
 
 `services/tms/pkg/pageaccess/manifest_gen.json` is what every screen needs and shows, and

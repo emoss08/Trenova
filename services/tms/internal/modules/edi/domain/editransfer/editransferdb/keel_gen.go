@@ -52,6 +52,7 @@ var eDITransfersTable = schema.Table{
 		{Name: "rejected_at", Quoted: `"rejected_at"`, Field: "RejectedAt", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Rejected At`, JSON: `rejectedAt`},
 		{Name: "canceled_by_id", Quoted: `"canceled_by_id"`, Field: "CanceledByID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Canceled By ID`, JSON: `canceledById`},
 		{Name: "canceled_at", Quoted: `"canceled_at"`, Field: "CanceledAt", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Canceled At`, JSON: `canceledAt`},
+		{Name: "search_vector", Quoted: `"search_vector"`, Field: "SearchVector", Kind: schema.KindTSVector, Flags: schema.FlagReadOnly | schema.FlagNoSelect, Label: `Search Vector`},
 		{Name: "version", Quoted: `"version"`, Field: "Version", Kind: schema.KindInt64, Flags: schema.FlagVersion, Label: `Version`, JSON: `version`},
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, JSON: `createdAt`},
 		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, JSON: `updatedAt`},
@@ -62,14 +63,14 @@ var eDITransfersTable = schema.Table{
 	},
 	PK:           []int32{0},
 	Tenant:       nil,
-	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29},
-	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29},
-	Update:       []int32{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 29},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 28, 29, 30},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 28, 29, 30},
+	Update:       []int32{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 30},
 	Returning:    nil,
-	Version:      27,
+	Version:      28,
 	AutoID:       0,
-	AutoCreate:   28,
-	AutoUpdate:   29,
+	AutoCreate:   29,
+	AutoUpdate:   30,
 	IDPrefix:     "edilt_",
 	New:          newEDITransfer,
 	NewN:         newNEDITransfer,
@@ -114,6 +115,7 @@ type EDITransfersTable struct {
 	RejectedAt            keel.Int64Col
 	CanceledByID          keelkinds.PulidIDCol
 	CanceledAt            keel.Int64Col
+	SearchVector          keel.TSVectorCol
 	Version               keel.Int64Col
 	CreatedAt             keel.Int64Col
 	UpdatedAt             keel.Int64Col
@@ -149,9 +151,10 @@ var EDITransfers = &EDITransfersTable{
 	RejectedAt:            keel.Int64Col{Col: keel.Col{Ref: &eDITransfersRef, Index: 24}},
 	CanceledByID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &eDITransfersRef, Index: 25}}},
 	CanceledAt:            keel.Int64Col{Col: keel.Col{Ref: &eDITransfersRef, Index: 26}},
-	Version:               keel.Int64Col{Col: keel.Col{Ref: &eDITransfersRef, Index: 27}},
-	CreatedAt:             keel.Int64Col{Col: keel.Col{Ref: &eDITransfersRef, Index: 28}},
-	UpdatedAt:             keel.Int64Col{Col: keel.Col{Ref: &eDITransfersRef, Index: 29}},
+	SearchVector:          keel.TSVectorCol{Col: keel.Col{Ref: &eDITransfersRef, Index: 27}},
+	Version:               keel.Int64Col{Col: keel.Col{Ref: &eDITransfersRef, Index: 28}},
+	CreatedAt:             keel.Int64Col{Col: keel.Col{Ref: &eDITransfersRef, Index: 29}},
+	UpdatedAt:             keel.Int64Col{Col: keel.Col{Ref: &eDITransfersRef, Index: 30}},
 }
 
 // BuildEDITransfers builds the table of edi_load_tender_transfers for ref. Generated relation and alias methods call it.
@@ -185,9 +188,10 @@ func BuildEDITransfers(r *keel.Ref) *EDITransfersTable {
 		RejectedAt:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 24}},
 		CanceledByID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 25}}},
 		CanceledAt:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 26}},
-		Version:               keel.Int64Col{Col: keel.Col{Ref: r, Index: 27}},
-		CreatedAt:             keel.Int64Col{Col: keel.Col{Ref: r, Index: 28}},
-		UpdatedAt:             keel.Int64Col{Col: keel.Col{Ref: r, Index: 29}},
+		SearchVector:          keel.TSVectorCol{Col: keel.Col{Ref: r, Index: 27}},
+		Version:               keel.Int64Col{Col: keel.Col{Ref: r, Index: 28}},
+		CreatedAt:             keel.Int64Col{Col: keel.Col{Ref: r, Index: 29}},
+		UpdatedAt:             keel.Int64Col{Col: keel.Col{Ref: r, Index: 30}},
 	}
 }
 
@@ -643,10 +647,12 @@ func ptrEDITransfer(p unsafe.Pointer, c int32) any {
 	case 26:
 		return &r.CanceledAt
 	case 27:
-		return &r.Version
+		return &r.SearchVector
 	case 28:
-		return &r.CreatedAt
+		return &r.Version
 	case 29:
+		return &r.CreatedAt
+	case 30:
 		return &r.UpdatedAt
 	}
 	return nil
@@ -761,10 +767,12 @@ func valueEDITransfer(p unsafe.Pointer, c int32) any {
 		}
 		return *r.CanceledAt
 	case 27:
-		return r.Version
+		return r.SearchVector
 	case 28:
-		return r.CreatedAt
+		return r.Version
 	case 29:
+		return r.CreatedAt
+	case 30:
 		return r.UpdatedAt
 	}
 	return nil

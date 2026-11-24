@@ -11,6 +11,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/board"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantartifactports"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingboard"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -28,7 +31,7 @@ func boardTurn(
 	for range readings {
 		layout.Readings = append(layout.Readings, board.Reading{Key: "late"})
 	}
-	payload, err := board.NewPayload(layout, board.Snapshot{}, "Dispatch desk").Map()
+	payload, err := (&board.Payload{Board: *layout, Place: layout.Placed(), Author: "Dispatch desk"}).Map()
 	require.NoError(t, err)
 	id := pulid.MustNew("art_")
 
@@ -144,23 +147,23 @@ func TestBoardCheck_ReadsEachMeasureTheQuestionAskedFor(t *testing.T) {
 		{
 			name: "lateness and revenue each read",
 			readings: []board.Reading{
-				read("largest", board.MeasureLateness, board.AggregateMax),
-				read("total_1_revenue", board.MeasureRevenue, board.AggregateSum),
+				read("largest", board.Measure("lateness"), board.AggregateMax),
+				read("total_1_revenue", board.Measure("revenue"), board.AggregateSum),
 			},
 			passed: true,
 		},
 		{
 			name: "only lateness, even where the words speak of money",
 			readings: []board.Reading{
-				read("largest", board.MeasureLateness, board.AggregateMax),
-				read("total", board.MeasureLateness, board.AggregateSum),
+				read("largest", board.Measure("lateness"), board.AggregateMax),
+				read("total", board.Measure("lateness"), board.AggregateSum),
 			},
 		},
 		{
 			name: "revenue only counted, never read",
 			readings: []board.Reading{
-				read("largest", board.MeasureLateness, board.AggregateMax),
-				read("count", board.MeasureRevenue, board.AggregateCount),
+				read("largest", board.Measure("lateness"), board.AggregateMax),
+				read("count", board.Measure("revenue"), board.AggregateCount),
 			},
 		},
 	}
@@ -173,7 +176,7 @@ func TestBoardCheck_ReadsEachMeasureTheQuestionAskedFor(t *testing.T) {
 				Title: "Two loads side by side", Verdict: "Words.",
 				Place: board.PlaceConversation, Readings: tt.readings,
 			}
-			payload, err := board.NewPayload(layout, board.Snapshot{}, "Dispatch desk").Map()
+			payload, err := (&board.Payload{Board: *layout, Place: layout.Placed(), Author: "Dispatch desk"}).Map()
 			require.NoError(t, err)
 			turn.Artifacts[0].Payload = payload
 			turn.Reply = boardReply(id)
@@ -183,4 +186,102 @@ func TestBoardCheck_ReadsEachMeasureTheQuestionAskedFor(t *testing.T) {
 			assert.Equal(t, tt.passed, check.Passed, check.Detail)
 		})
 	}
+}
+
+func TestBoardCheck_ReadsTheKindsMetricsAndFiguresTheQuestionAskedFor(t *testing.T) {
+	t.Parallel()
+
+	credential := recordkind.Kind(permission.ResourceWorkerCredential)
+	want := &benchscenario.ExpectedBoard{
+		Place:    string(board.PlaceConversation),
+		Kinds:    []string{string(credential)},
+		Measures: []string{"expiry"},
+		Metrics:  []string{billingboard.MetricReceivables},
+		Figures:  []string{"arOverdue:" + billingboard.MetricReceivables},
+	}
+	shown := func(layout *board.Board) []*benchrecord.TurnRecord {
+		turn, id := boardTurn(t, board.PlaceConversation, 0, "")
+		layout.Title, layout.Verdict, layout.Place = "Credentials", "Words.", board.PlaceConversation
+		payload, err := (&board.Payload{
+			Board: *layout, Place: board.PlaceConversation, Author: "Credential desk",
+		}).Map()
+		require.NoError(t, err)
+		turn.Artifacts[0].Payload = payload
+		turn.Reply = boardReply(id)
+
+		return []*benchrecord.TurnRecord{turn}
+	}
+	records := board.Block{
+		Type:    board.BlockRecords,
+		Records: &board.RecordSet{Kind: credential, IDs: []pulid.ID{pulid.MustNew("wcred_")}},
+		Measure: "expiry",
+	}
+	metric := board.Block{Type: board.BlockMetric, Metric: billingboard.MetricReceivables}
+	figure := board.Reading{Key: "overdue", FigureSource: board.FigureSource{
+		Metric: billingboard.MetricReceivables, Figure: "arOverdue",
+	}}
+
+	whole := boardCheck(want, shown(&board.Board{
+		Blocks: []board.Block{records, metric}, Readings: []board.Reading{figure},
+	}))
+	assert.True(t, whole.Passed, whole.Detail)
+	assert.Contains(t, whole.Name, "showing records of worker_credential")
+
+	noFigure := boardCheck(want, shown(&board.Board{Blocks: []board.Block{records, metric}}))
+	assert.False(t, noFigure.Passed)
+
+	unmeasured := records
+	unmeasured.Measure = ""
+	noMeasure := boardCheck(want, shown(&board.Board{
+		Blocks: []board.Block{unmeasured, metric}, Readings: []board.Reading{figure},
+	}))
+	assert.False(t, noMeasure.Passed)
+
+	noKind := boardCheck(want, shown(&board.Board{
+		Blocks: []board.Block{metric}, Readings: []board.Reading{figure},
+	}))
+	assert.False(t, noKind.Passed)
+}
+
+func linkedTurn(t *testing.T, made bool) *benchrecord.TurnRecord {
+	t.Helper()
+
+	draft := pulid.MustNew("art_")
+	layout := &board.Board{
+		Title:    "Lapsed credentials",
+		Verdict:  "Jane Doe's card lapsed; I wrote [a reminder](artifact:" + draft.String() + ").",
+		Place:    board.PlaceConversation,
+		Readings: []board.Reading{{Key: "late"}},
+	}
+	payload, err := (&board.Payload{Board: *layout, Place: layout.Placed()}).Map()
+	require.NoError(t, err)
+	id := pulid.MustNew("art_")
+	turn := &benchrecord.TurnRecord{
+		Artifacts: []assistantartifactports.AssistantArtifact{{
+			ID: id, Kind: assistantartifact.KindBoard, Title: layout.Title, Payload: payload,
+		}},
+	}
+	turn.Reply = boardReply(id)
+	if made {
+		turn.Artifacts = append(turn.Artifacts, assistantartifactports.AssistantArtifact{
+			ID: draft, Kind: assistantartifact.KindDocument, Title: "Renewal reminder",
+		})
+	}
+
+	return turn
+}
+
+func TestBoardCheck_PassesWordsThatLinkAnArtifactTheTurnMadeAndNoOther(t *testing.T) {
+	t.Parallel()
+
+	want := &benchscenario.ExpectedBoard{Place: "conversation", Links: true}
+
+	check := boardCheck(want, []*benchrecord.TurnRecord{linkedTurn(t, true)})
+	assert.True(t, check.Passed, check.Detail)
+	assert.Contains(t, check.Name, "its words linking an artifact the turn made")
+
+	assert.False(t, boardCheck(want, []*benchrecord.TurnRecord{linkedTurn(t, false)}).Passed)
+	assert.False(t, boardCheck(&benchscenario.ExpectedBoard{Place: "conversation"},
+		[]*benchrecord.TurnRecord{linkedTurn(t, false)}).Passed,
+		"a link to an artifact the turn did not make fails every board check")
 }

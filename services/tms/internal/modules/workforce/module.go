@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/adapters/postgres/selfservicerepository"
 	"github.com/emoss08/trenova/internal/modules/workforce/adapters/postgres/telematicsrepository"
 	"github.com/emoss08/trenova/internal/modules/workforce/adapters/postgres/timesheetrepository"
+	"github.com/emoss08/trenova/internal/modules/workforce/adapters/postgres/weekhoursrepository"
 	"github.com/emoss08/trenova/internal/modules/workforce/adapters/postgres/workerchecklistrepository"
 	"github.com/emoss08/trenova/internal/modules/workforce/adapters/postgres/workercredentialrepository"
 	"github.com/emoss08/trenova/internal/modules/workforce/adapters/postgres/workerdqfrepository"
@@ -36,6 +37,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/app/samsarasyncservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/schedulingservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/selfserviceservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/app/teamscope"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/telematicsservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/timesheetservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerchecklistservice"
@@ -62,6 +64,7 @@ import (
 
 func SharedOptions() fx.Option {
 	return fx.Options(
+		boardReaders,
 		fx.Provide(
 			schedulingrepository.New,
 			drivernotificationservice.New,
@@ -142,6 +145,8 @@ func SharedOptions() fx.Option {
 			workerleaverepository.New,
 			selfservicerepository.New,
 			timesheetrepository.New,
+			weekhoursrepository.New,
+			teamscope.NewScheduleNarrower,
 			workersafetyrepository.New,
 			performancereviewrepository.New,
 			workerchecklistrepository.New,

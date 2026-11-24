@@ -1,12 +1,7 @@
 import type { DeskBoardCardQuery } from "@trenova/graphql/generated/graphql";
 import { DeskBoardCardDocument } from "@trenova/graphql/generated/documents/agent/desk-board";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
-import {
-  analysisChartSchema,
-  analysisTableSchema,
-  type AnalysisChart,
-  type AnalysisTable,
-} from "@/types/analysis";
+import { analysisTableSchema, type AnalysisTable } from "@/types/analysis";
 
 type RawCard = DeskBoardCardQuery["deskBoardCard"];
 type RawBlock = RawCard["blocks"][number];
@@ -15,6 +10,12 @@ export type DeskBoardValue = NonNullable<RawBlock["figures"][number]["value"]>;
 export type DeskBoardSegment = RawCard["verdict"][number];
 export type DeskBoardRow = RawBlock["rows"][number];
 export type DeskBoardRowMeasure = NonNullable<DeskBoardRow["measure"]>;
+/** Words the server wrote in the reader's language, with `{0}` where a value or a moment goes. */
+export type DeskBoardWords = DeskBoardRowMeasure["standing"];
+/** A row's bar, laid out by the server on one scale for its whole block. */
+export type DeskBoardBar = NonNullable<DeskBoardRowMeasure["bar"]>;
+/** A chart or metric block's read, drawn in its form. */
+export type DeskBoardMetric = NonNullable<RawBlock["metric"]>;
 export type DeskBoardFigure = RawBlock["figures"][number];
 export type DeskBoardCompare = NonNullable<RawBlock["compare"]>;
 export type DeskBoardEvent = RawBlock["events"][number];
@@ -31,10 +32,9 @@ export type DeskBoardTable = {
   artifactId: string | null;
 };
 
-/** One block of a board, its table and chart read into the analysis shapes they are kept in. */
-export type DeskBoardBlock = Omit<RawBlock, "table" | "chart"> & {
+/** One block of a board, its table read into the analysis shape it is kept in. */
+export type DeskBoardBlock = Omit<RawBlock, "table"> & {
   table: DeskBoardTable | null;
-  chart: AnalysisChart | null;
 };
 
 /** A board as the Desk draws it, read now with the reader's access. */
@@ -45,12 +45,6 @@ function tableOf(raw: RawBlock["table"]): DeskBoardTable | null {
   const parsed = analysisTableSchema.safeParse(raw.table);
   if (!parsed.success) return null;
   return { table: parsed.data, total: raw.total, artifactId: raw.artifactId ?? null };
-}
-
-function chartOf(raw: RawBlock["chart"]): AnalysisChart | null {
-  if (!raw) return null;
-  const parsed = analysisChartSchema.safeParse(raw);
-  return parsed.success ? parsed.data : null;
 }
 
 /** A board in one of the person's conversations, read now: one query fills every block. */
@@ -71,7 +65,6 @@ export async function fetchDeskBoardCard(
     blocks: card.blocks.map((block) => ({
       ...block,
       table: tableOf(block.table),
-      chart: chartOf(block.chart),
     })),
   };
 }

@@ -14,9 +14,10 @@ import (
 )
 
 type answerTurn struct {
-	req      agentruntimeports.RunRequest
-	messages []llmports.Message
-	result   agentruntimeports.RunResult
+	req       agentruntimeports.RunRequest
+	messages  []llmports.Message
+	result    agentruntimeports.RunResult
+	artifacts []agentruntimeports.ShownArtifact
 }
 
 func (a *answerTurn) Request() *agentruntimeports.RunRequest { return &a.req }
@@ -28,7 +29,7 @@ func (a *answerTurn) Evidence() []string                     { return nil }
 func (a *answerTurn) Holds(string) bool                      { return false }
 func (a *answerTurn) Offers(string) bool                     { return true }
 
-func (a *answerTurn) Artifacts() []agentruntimeports.ShownArtifact { return nil }
+func (a *answerTurn) Artifacts() []agentruntimeports.ShownArtifact { return a.artifacts }
 
 const (
 	peakFirst  = "inv_01JPEAK00000000000000001"
@@ -148,7 +149,7 @@ func TestShowAnswer_TakesWhatAReplyMaySay(t *testing.T) {
 	}
 }
 
-func TestShowAnswer_SaysWhatAnIDWithTheWrongPrefixReallyIs(t *testing.T) {
+func TestShowAnswer_SendsTheShipmentAMovesIDWrittenAsOneStandsFor(t *testing.T) {
 	t.Parallel()
 
 	body := "01M7WG94MSAZY6J8J65G8H8KMN"
@@ -167,9 +168,37 @@ func TestShowAnswer_SaysWhatAnIDWithTheWrongPrefixReallyIs(t *testing.T) {
 
 	outcome := showAnswer(turn, args)
 
+	require.False(t, outcome.Failed, outcome.Content)
+	request, _ := outcome.Data.(agentruntimeports.BoardRequest)
+	assert.Equal(t, []pulid.ID{pulid.ID(shipment)},
+		request.Board.Records()["shipment"])
+	assert.Equal(t, []any{shipment},
+		outcome.RanWith["groups"].([]any)[0].(map[string]any)["records"])
+}
+
+func TestShowAnswer_SaysWhatAnIDWithTheWrongPrefixReallyIsWhenNothingCarriesItsRecord(
+	t *testing.T,
+) {
+	t.Parallel()
+
+	body := "01M7WG94MSAZY6J8J65G8H8KMN"
+	turn := &answerTurn{messages: []llmports.Message{{
+		Role:     llmports.RoleTool,
+		ToolName: "dispatch_get_board",
+		Content: toolresult.Fence("dispatch_get_board", `{"moves":[{"moveId":"sm_`+body+
+			`","lateBy":"2d 2h"}],"shipments":[{"id":"shp_01M7WG94KWR38VFS2VQNHB2QWS"}]}`),
+	}}}
+	args := map[string]any{
+		"title":  "Late loads",
+		"answer": "There are {count} late loads.",
+		"groups": []any{map[string]any{"records": []any{"shp_" + body}}},
+	}
+
+	outcome := showAnswer(turn, args)
+
 	require.True(t, outcome.Failed)
 	assert.Contains(t, outcome.Content, "shp_"+body+" is a shipment move's id written as a "+
-		"shipment's: that shipment move's shipment is "+shipment+". Send the shipmentId.")
+		"shipment's.")
 }
 
 func TestMisprefixed_NamesTheKindWhenNoSiblingSaysWhatToSend(t *testing.T) {
@@ -197,13 +226,17 @@ func comparedTurn() *answerTurn {
 		messages: []llmports.Message{
 			{
 				Role: llmports.RoleTool, ToolName: "shipment_get",
-				Content: toolresult.Fence("shipment_get", `{"items":[`+
-					`{"id":"`+loadEight+`","proNumber":"SEED-SHP-008","totalCharge":"2400"}]}`),
+				Content: toolresult.Fence("shipment_get",
+					`{"id":"`+loadOne+`","proNumber":"SEED-SHP-001","totalCharge":"3200"}`),
+			},
+			{
+				Role:    llmports.RoleUser,
+				Content: "Compare SEED-SHP-008 and SEED-SHP-010: which is further behind?",
 			},
 			{
 				Role: llmports.RoleTool, ToolName: "shipment_get",
-				Content: toolresult.Fence("shipment_get",
-					`{"id":"`+loadOne+`","proNumber":"SEED-SHP-001","totalCharge":"3200"}`),
+				Content: toolresult.Fence("shipment_get", `{"items":[`+
+					`{"id":"`+loadEight+`","proNumber":"SEED-SHP-008","totalCharge":"2400"}]}`),
 			},
 			{
 				Role: llmports.RoleTool, ToolName: "shipment_get",
@@ -295,16 +328,29 @@ func TestShowAnswer_LeavesACallThatNeedsNoRepairAsItWasSent(t *testing.T) {
 	assert.Nil(t, outcome.RanWith)
 }
 
+const lateList = "art_01M861HFM3CMMC4RFVB9KTAFMT"
+
 func pagedTurn(page string) *answerTurn {
+	return pagedTurnKept(page, "")
+}
+
+func pagedTurnKept(page, kept string) *answerTurn {
 	return &answerTurn{
-		req: agentruntimeports.RunRequest{Input: "which loads are running late right now?"},
+		req: agentruntimeports.RunRequest{
+			Input: "which loads are running late right now, and why is each one late?",
+		},
 		messages: []llmports.Message{{
 			Role: llmports.RoleTool, ToolName: "shipment_list",
 			Content: toolresult.Fence("shipment_list", `{"count":2,`+page+`"items":[`+
 				`{"id":"`+loadEight+`","proNumber":"SEED-SHP-008"},`+
-				`{"id":"`+loadTen+`","proNumber":"SEED-SHP-010"}]}`),
+				`{"id":"`+loadTen+`","proNumber":"SEED-SHP-010"}]}`) + kept,
 		}},
 	}
+}
+
+func keptNote() string {
+	return "\n\n[This result is kept as a table titled \"Shipments\" beside the conversation. " +
+		"To point to it, write [Shipments](artifact:" + lateList + ") as part of the sentence.]"
 }
 
 func lateAnswer(answer string) map[string]any {
@@ -316,25 +362,131 @@ func lateAnswer(answer string) map[string]any {
 	}
 }
 
-func TestShowAnswer_RefusesACountThatIsNotTheWholeList(t *testing.T) {
+func TestShowAnswer_RefusesACountWhoseWordsDoNotSayWhichList(t *testing.T) {
 	t.Parallel()
 
-	outcome := showAnswer(pagedTurn(`"hasMore":true,`),
-		lateAnswer("There are {count} late loads."))
+	outcome := showAnswer(pagedTurnKept(`"total":125,`, keptNote()),
+		lateAnswer("{count} live loads are running late."))
 	require.True(t, outcome.Failed)
 	assert.Equal(t, `Tool "show_answer" was not run: {count} would read 2, the records shown, `+
-		`but they are part of a longer list (it has more pages than were read), so it would `+
-		`state a number that is not true. If the words mean all of them, write the list's own `+
-		`number as the result gave it, or read the whole list first; if they mean only the `+
-		`records shown, count a group, as in "{count_1} of them".`, outcome.Content)
+		`but they are part of a longer list (it holds 125 in all), so it would state a number `+
+		`that is not true. Where the words mean the whole list, write {all}: it reads the `+
+		`list's own number, and again whenever the board is read ("{all} shipments"). Where `+
+		`they mean only the records shown, say so: "these {count}", "the {count} shown here"; `+
+		`a count of part of the whole list is a figure Trenova keeps (a metric's) or none.`,
+		outcome.Content)
 
-	outcome = showAnswer(pagedTurn(`"total":40,`), lateAnswer("There are {count} late loads."))
+	outcome = showAnswer(pagedTurnKept(`"total":125,`, keptNote()),
+		lateAnswer("The board shows {count} late moves in the first 17 rows."))
 	require.True(t, outcome.Failed)
-	assert.Contains(t, outcome.Content, "(it holds 40 in all)")
+	assert.Contains(t, outcome.Content, "(it holds 125 in all)")
+}
+
+func TestShowAnswer_ReadsTheWholeListFromTheTableItWasKeptAs(t *testing.T) {
+	t.Parallel()
+
+	outcome := showAnswer(pagedTurnKept(`"total":125,`, keptNote()),
+		lateAnswer("{count} loads are running late right now."))
+	require.True(t, outcome.Failed, "a count of a page is never read as the whole list's")
+	assert.Contains(t, outcome.Content, "write {all}")
+
+	outcome = showAnswer(pagedTurnKept(`"total":125,`, keptNote()),
+		lateAnswer("{all} loads are late, and these two are the furthest behind."))
+
+	require.False(t, outcome.Failed, outcome.Content)
+	request, ok := outcome.Data.(agentruntimeports.BoardRequest)
+	require.True(t, ok)
+	all := request.Board.Reading("all")
+	require.NotNil(t, all)
+	assert.Equal(t, pulid.ID(lateList), all.List)
+	assert.Nil(t, all.Records)
+	assert.Equal(t, board.AggregateCount, all.Aggregate)
+	assert.Contains(t, request.Board.Verdict, "{all}")
+
+	ranWith := outcome.RanWith
+	require.NotNil(t, ranWith, "the repaired call travels to the durable publish")
+	assert.Contains(t, ranWith["answer"], "{all:"+lateList+"}")
+	durable := AnswerStepOutcome(ranWith)
+	require.False(t, durable.Failed, durable.Content)
+	replayed, ok := durable.Data.(agentruntimeports.BoardRequest)
+	require.True(t, ok)
+	assert.Equal(t, request.Board.Readings, replayed.Board.Readings,
+		"the durable publish reads the same list, not the records shown")
+}
+
+func TestShowAnswer_CountsTheRecordsShownWhenTheWordsSaySo(t *testing.T) {
+	t.Parallel()
+
+	for _, words := range []string{
+		"Of the late loads, these {count} are the furthest behind.",
+		"{all} loads are late; the {count} shown here are the furthest behind.",
+	} {
+		outcome := showAnswer(pagedTurnKept(`"total":125,`, keptNote()), lateAnswer(words))
+
+		require.False(t, outcome.Failed, outcome.Content)
+		request, ok := outcome.Data.(agentruntimeports.BoardRequest)
+		require.True(t, ok)
+		counted := request.Board.Reading("count")
+		require.NotNil(t, counted, words)
+		assert.Len(t, counted.Records.IDs, 2)
+	}
+}
+
+func TestShowAnswer_RefusesASumOfThePageTiedToTheWholeList(t *testing.T) {
+	t.Parallel()
+
+	args := lateAnswer("There are {count} late loads on the board, with {total} of late " +
+		"moves in the list of 125 late shipments.")
+	args["measure"] = "revenue"
+
+	outcome := showAnswer(pagedTurnKept(`"total":125,`, keptNote()), args)
+
+	require.True(t, outcome.Failed)
+	assert.Contains(t, outcome.Content, "{total} reads only the 2 records shown, but its words "+
+		"tie it to the whole list (125 in all)")
+
+	args["answer"] = "{all} loads are late; these {count} bring in {total}."
+	outcome = showAnswer(pagedTurnKept(`"total":125,`, keptNote()), args)
+	assert.False(t, outcome.Failed, outcome.Content)
+}
+
+func TestShowAnswer_RefusesAGroupCountOfAPageSaidOfTheWholeList(t *testing.T) {
+	t.Parallel()
+
+	args := lateAnswer("{all} loads are late. Of those, {count_1} have no driver.")
+	args["groups"] = []any{
+		map[string]any{"title": "No driver", "records": []any{loadEight}},
+		map[string]any{"title": "Off duty", "records": []any{loadTen}},
+	}
+
+	outcome := showAnswer(pagedTurnKept(`"total":125,`, keptNote()), args)
+
+	require.True(t, outcome.Failed)
+	assert.Contains(t, outcome.Content, "{count_1} would read 1, the records shown")
+
+	args["answer"] = "{all} loads are late; these {count_1} have no driver."
+	outcome = showAnswer(pagedTurnKept(`"total":125,`, keptNote()), args)
+	assert.False(t, outcome.Failed, outcome.Content)
+}
+
+func TestShowAnswer_RefusesTheWholeListWhenItKeptNoTotal(t *testing.T) {
+	t.Parallel()
+
+	outcome := showAnswer(pagedTurn(`"hasMore":true,`), lateAnswer("{all} loads are late."))
+	require.True(t, outcome.Failed)
+	assert.Contains(t, outcome.Content, "reported no total it can be read again by")
 
 	outcome = showAnswer(pagedTurn(`"hasMore":false,"total":2,`),
 		lateAnswer("There are {count} late loads."))
 	assert.False(t, outcome.Failed, outcome.Content)
+
+	outcome = showAnswer(pagedTurn(`"hasMore":false,"total":2,`),
+		lateAnswer("{all} loads are late."))
+	require.False(t, outcome.Failed, outcome.Content)
+	request, ok := outcome.Data.(agentruntimeports.BoardRequest)
+	require.True(t, ok)
+	assert.Len(t, request.Board.Reading("all").Records.IDs, 2,
+		"a list read whole is counted from its records")
 
 	outcome = showAnswer(pagedTurn(`"hasMore":true,`),
 		lateAnswer("The furthest is {largest} behind; these are 2 of them."))
@@ -371,4 +523,102 @@ func TestShowAnswer_ReadsEachLoadsFiguresFromTheLoadTheSentenceNames(t *testing.
 		assert.Equal(t, []pulid.ID{want}, reading.Records.IDs, reading.Key)
 	}
 	assert.Equal(t, request, AnswerStepOutcome(outcome.RanWith).Data)
+}
+
+func TestShowAnswer_TakesACountOfTheShownWhenTheWordsTypeTheListsOwnTotal(t *testing.T) {
+	t.Parallel()
+
+	outcome := showAnswer(pagedTurn(`"total":40,`),
+		lateAnswer("There are 40 late loads; {count} of them are on the road."))
+
+	assert.False(t, outcome.Failed, outcome.Content)
+}
+
+const drafted = "art_01JDRAFT0000000000000001"
+
+func TestShowAnswer_LinksAnArtifactThisTurnMade(t *testing.T) {
+	t.Parallel()
+
+	answer := peakAnswer("Peak owes {total}; I drafted [a reminder](artifact:" + drafted + ").")
+	turn := peakTurn()
+
+	refused := showAnswer(turn, answer)
+	require.True(t, refused.Failed)
+	assert.Equal(t, `Tool "show_answer" was not run: its words link `+drafted+`, which no `+
+		`call in this turn made. Words may link only an artifact this turn made, as `+
+		`[words](artifact:<id>) with the id its result gave; take the link out, or make the `+
+		`artifact first.`, refused.Content)
+
+	turn.artifacts = []agentruntimeports.ShownArtifact{{
+		ID: pulid.ID(drafted), Kind: "email_draft", Title: "Reminder to Peak Distributing",
+	}}
+	outcome := showAnswer(turn, answer)
+	require.False(t, outcome.Failed, outcome.Content)
+	request, _ := outcome.Data.(agentruntimeports.BoardRequest)
+	assert.Equal(t, []string{drafted}, request.Board.ArtifactLinks())
+}
+
+func TestShowAnswer_SendsABoardOfWorkersAboutTheirCredentialsToTheCredentials(t *testing.T) {
+	t.Parallel()
+
+	worker := "wrk_01M7V48DVVQGDF0KG409BJH1FJ"
+	card := "wcred_01M7V48E7D6K4KRNHMBA7X53YW"
+	turn := &answerTurn{messages: []llmports.Message{{
+		Role:     llmports.RoleTool,
+		ToolName: "worker_list_credentials",
+		Content: toolresult.Fence("worker_list_credentials", `{"count":1,"items":[`+
+			`{"id":"`+card+`","worker":{"id":"`+worker+`","wholeName":"Jane Doe"}}]}`),
+	}}}
+
+	outcome := showAnswer(turn, map[string]any{
+		"title":  "Credentials lapsed",
+		"answer": "{count} worker holds credentials that have lapsed.",
+		"groups": []any{map[string]any{"title": "Lapsed", "records": []any{worker}}},
+	})
+
+	require.True(t, outcome.Failed)
+	assert.Contains(t, outcome.Content, "its words are about worker credentials, but its "+
+		"records are workers")
+	assert.Contains(t, outcome.Content, card)
+}
+
+func TestShowAnswer_LeavesAGroupOfARecordThisTurnRead(t *testing.T) {
+	t.Parallel()
+
+	turn := comparedTurn()
+	turn.messages = append(turn.messages, llmports.Message{
+		Role: llmports.RoleTool, ToolName: "shipment_get",
+		Content: toolresult.Fence("shipment_get",
+			`{"id":"`+loadOne+`","proNumber":"SEED-SHP-001","totalCharge":"3200"}`),
+	})
+	outcome := showAnswer(turn, comparedAnswer("SEED-SHP-010 and SEED-SHP-008 compared", loadOne))
+
+	require.True(t, outcome.Failed, "SEED-SHP-001 was read in this turn and has its own group")
+	assert.Contains(t, outcome.Content, "its words name SEED-SHP-008")
+	assert.Contains(t, outcome.Content, "SEED-SHP-001 ("+loadOne+"), which this turn read")
+}
+
+func TestShowAnswer_SendsAMetricBoardBackOnceForTheRecordsItListsBesideIt(t *testing.T) {
+	t.Parallel()
+
+	turn := &answerTurn{req: agentruntimeports.RunRequest{
+		Input: "how does our receivable aging compare with last month?",
+	}}
+	args := map[string]any{
+		"title":  "Receivable aging against last month",
+		"answer": "Open receivables are {openNow:agingCompare} today.",
+		"groups": []any{map[string]any{"title": "Aging", "metric": "agingCompare"}},
+	}
+
+	outcome := showAnswer(turn, args)
+	require.True(t, outcome.Failed)
+	assert.Contains(t, outcome.Content, "the agingCompare board lists beside it the open "+
+		"invoices of the bucket that grew")
+	assert.Contains(t, outcome.Content, "receivable_list_open_items")
+
+	turn.messages = append(turn.messages, llmports.Message{
+		Role: llmports.RoleTool, ToolName: ShowAnswerTool, IsError: true, Content: outcome.Content,
+	})
+	again := showAnswer(turn, args)
+	assert.False(t, again.Failed, "it is asked for once: %s", again.Content)
 }

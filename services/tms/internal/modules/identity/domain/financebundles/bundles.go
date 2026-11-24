@@ -469,7 +469,7 @@ func settlementApproveBundle() permissionspec.Bundle {
 		ID:          "settlement.approve",
 		Module:      "Settlements",
 		Label:       "Approve settlements",
-		Description: "Approve, reject and cancel driver and carrier settlements.",
+		Description: "Approve, reject, hold and cancel driver and carrier settlements.",
 		Grants: []permissionspec.BundleGrant{
 			{
 				Resource: permission.ResourceDriverSettlement,
@@ -478,6 +478,7 @@ func settlementApproveBundle() permissionspec.Bundle {
 					permission.OpApprove,
 					permission.OpReject,
 					permission.OpCancel,
+					permission.OpHold,
 				},
 			},
 			{

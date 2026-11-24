@@ -1,0 +1,136 @@
+defaults:
+  agent: Bench · Detention desk
+  tags: [beyond, board, detention]
+
+scenarios:
+  - name: beyond-detention-to-bill
+    description: >
+      Last week's stopped detention weighed together: the stays that can go on invoices now
+      apart from the ones to hold back, each drawn with its time on site against the free time
+      its policy granted (solid free, hatched billable) and its billable amount, the held ones
+      saying why (a notice that missed its window, a time entered by hand). The words read the
+      billable total and the time waited past free time; a reader without the margins group is
+      never told what the drivers were paid.
+    steps:
+      - say: "what detention from last week can we bill?"
+        expect:
+          calls: ["detention_list_stays", "show_answer|show_board"]
+          maxCalls: 8
+          maxFailedCalls: 1
+          noProposals: true
+          noRecordIds: true
+          board:
+            place: conversation
+            minReadings: 1
+            kinds: [detention_occurrence]
+            measures: [detention]
+            figures: ["readyToBill:detentionTotals"]
+          facts:
+            - sql: >
+                select count(*) from detention_occurrences o
+                join organizations g on g.id = o.organization_id
+                where not o.is_open and o.status in ('Pending', 'Approved')
+                  and not o.suppressed_by_gate
+                  and to_timestamp(o.clock_start_at) at time zone g.timezone
+                      >= date_trunc('week', now() at time zone g.timezone) - interval '7 days'
+                  and to_timestamp(o.clock_start_at) at time zone g.timezone
+                      < date_trunc('week', now() at time zone g.timezone)
+                  and g.name = 'Trenova Logistics'
+              note: last week's stopped stays ready to bill (the organization's own week)
+            - sql: >
+                select to_char(coalesce(sum(o.billable_amount), 0), 'FM999,999,990.00')
+                from detention_occurrences o
+                join organizations g on g.id = o.organization_id
+                where not o.is_open and o.status in ('Pending', 'Approved')
+                  and not o.suppressed_by_gate
+                  and to_timestamp(o.clock_start_at) at time zone g.timezone
+                      >= date_trunc('week', now() at time zone g.timezone) - interval '7 days'
+                  and to_timestamp(o.clock_start_at) at time zone g.timezone
+                      < date_trunc('week', now() at time zone g.timezone)
+                  and g.name = 'Trenova Logistics'
+              note: what last week's stopped, unbilled stays can bill
+          rubric: >
+            Reads last week's stopped detention, then answers in the conversation: how much is
+            ready to bill and across how many stays, both read from the detention totals for
+            last week (a figure, not a typed number and not a sum of the rows shown), and the
+            stays themselves in groups, such as the largest ready to bill and the ones to hold
+            back with the reason each row gives (notice missed, notice sent late, a time
+            entered by hand). A count of the shown rows is never given as the week's count.
+            Nothing is said about a stay the board does not show, and nothing about what
+            drivers were paid.
+
+  - name: beyond-one-detention-is-a-sentence
+    description: >
+      One stay's standing is one fact: a sentence, not a board.
+    steps:
+      - say: "what's the status of the detention on SEED-DET-001?"
+        expect:
+          calls: ["detention_list_occurrences|detention_get_occurrence"]
+          maxCalls: 5
+          maxFailedCalls: 1
+          noProposals: true
+          noRecordIds: true
+          noBoard: true
+          replyIncludes: ["Chicago"]
+          rubric: >
+            Answers in a sentence or two that the truck on SEED-DET-001 is still at the
+            Chicago Distribution Center with the detention clock running, without a board.
+
+  - name: beyond-facilities-waiting
+    description: >
+      Facilities weighed by the time trucks waited there past free time this quarter: each a
+      location drawn with its free time, its median stop and its slowest one in ten, ranked by
+      the time past free. The organization's arrival-window figures, if shown, are said to be
+      every facility's together, never one facility's.
+    steps:
+      - say: "which facilities cost us the most waiting time this quarter?"
+        expect:
+          calls: ["detention_list_facilities", "show_answer|show_board"]
+          maxCalls: 8
+          maxFailedCalls: 1
+          noProposals: true
+          noRecordIds: true
+          board:
+            place: conversation
+            minReadings: 1
+            kinds: [location]
+            measures: [dwell]
+            reads: [dwell]
+          facts:
+            - sql: >
+                select l.name from detention_occurrences o
+                join locations l on l.id = o.location_id
+                join organizations g on g.id = o.organization_id
+                where not o.is_open and g.name = 'Trenova Logistics'
+                  and to_timestamp(o.clock_start_at) at time zone g.timezone
+                      >= date_trunc('quarter', now() at time zone g.timezone)
+                group by l.name
+                order by sum(greatest(o.raw_dwell_minutes - o.free_minutes_granted, 0)) desc
+                limit 1
+              note: the facility with the most time past free this quarter
+          rubric: >
+            Answers in the conversation with the facilities themselves, ranked by the time
+            trucks waited past free time this quarter; the facility named first holds the most
+            past-free time, and its figures in the words are readings. Each row shows its stops,
+            median and one in ten. No claim is made about one facility's arrival hours: an
+            arrival-window figure is the organization's, every facility together. A waiting
+            time is never called an amount (billed, charged, earned, owed), and no waiting time
+            is stated that the board does not read; a time summed over the facilities shown is
+            said to be theirs, never every facility's.
+
+  - name: beyond-one-facility-is-a-sentence
+    description: >
+      How long one truck has waited at one facility is one fact: a sentence.
+    steps:
+      - say: "how long has the truck on SEED-DET-002 been waiting at Phoenix Cold Storage?"
+        expect:
+          calls: ["detention_list_occurrences|detention_get_occurrence|detention_list_stays"]
+          maxCalls: 5
+          maxFailedCalls: 1
+          noProposals: true
+          noRecordIds: true
+          noBoard: true
+          replyIncludes: ["Phoenix"]
+          rubric: >
+            Answers in a sentence or two how long the truck on SEED-DET-002 has been at
+            Phoenix Cold Storage, with its detention clock still running, without a board.

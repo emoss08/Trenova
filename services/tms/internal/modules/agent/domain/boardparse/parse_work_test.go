@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/board"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/boardparse"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -32,7 +33,7 @@ func TestParse_WorkBlockNamesItsRecords(t *testing.T) {
 	require.Empty(t, problems)
 	require.Len(t, layout.Blocks, 1)
 	assert.Equal(t, board.BlockWork, layout.Blocks[0].Type)
-	assert.Equal(t, permission.ResourceShipment, layout.Blocks[0].Records.Resource)
+	assert.Equal(t, recordkind.Kind(permission.ResourceShipment), layout.Blocks[0].Records.Kind)
 	assert.Len(t, layout.WorkRecords(), 3)
 }
 
@@ -68,7 +69,7 @@ func TestParse_ActionsAskAndNeverCountAsData(t *testing.T) {
 	require.Len(t, actions.Actions, 1)
 	assert.Equal(t, "Draft recoveries", actions.Actions[0].Label)
 	assert.Equal(t, []int{1, 0}, layout.Numerals(), "an actions block is not an exhibit")
-	assert.Len(t, layout.Records()[permission.ResourceShipment], 5)
+	assert.Len(t, layout.Records()[recordkind.Kind(permission.ResourceShipment)], 5)
 }
 
 func TestParse_ActionsRefuseFiguresAndIgnoreUnknownFields(t *testing.T) {

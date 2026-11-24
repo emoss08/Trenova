@@ -70,6 +70,7 @@ func TestPreviewMatch_IsWhatMatchSaves(t *testing.T) {
 		workItemRepo: workItems,
 		paymentRepo:  paymentRepo,
 		auditService: &mocks.NoopAuditService{},
+		waker:        &countingWaker{},
 	}
 	request := &bankreceiptports.MatchBankReceiptRequest{
 		ReceiptID:  stored.ID,

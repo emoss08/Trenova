@@ -27,6 +27,11 @@ type BankReceiptWorkItemRepository interface {
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 	) ([]*bankreceiptworkitem.WorkItem, error)
+	ListActiveByReceiptIDs(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+		receiptIDs []pulid.ID,
+	) ([]*bankreceiptworkitem.WorkItem, error)
 	Create(
 		ctx context.Context,
 		entity *bankreceiptworkitem.WorkItem,

@@ -32,6 +32,7 @@ const (
 	Manage     uint32 = 1 << 25
 	Post       uint32 = 1 << 26
 	ApproveOwn uint32 = 1 << 27
+	Hold       uint32 = 1 << 28
 )
 
 var ByOperation = map[permission.Operation]uint32{
@@ -61,6 +62,7 @@ var ByOperation = map[permission.Operation]uint32{
 	permission.OpManage:     Manage,
 	permission.OpPost:       Post,
 	permission.OpApproveOwn: ApproveOwn,
+	permission.OpHold:       Hold,
 }
 
 func Mask(ops []permission.Operation) uint32 {

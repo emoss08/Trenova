@@ -1,0 +1,242 @@
+defaults:
+  tags: [beyond, board, settlements]
+
+scenarios:
+  - name: beyond-settlement-batch
+    agent: Bench · Settlements clerk
+    description: >
+      The newest driver pay batch weighed whole: the settlementBatch metric splits what was
+      earned and reimbursed into what is ready to release, what cannot be released as it stands
+      (a critical exception, or a dispute the driver has open) and what was deducted, read from
+      the batch's settlements in one aggregate; settlementWeeks puts it beside the four batches
+      before it, from their stored totals. The settlements that stand in the way are a records
+      group read with settlement_list_batch_blockers and drawn with their net pay and the
+      reason in the product's words. The setup first releases any hold a bench scenario placed
+      (beyond-settlement-held-batch leaves one) and refreshes the batches' held totals, so
+      nothing may be called held or on hold. It then opens a rate dispute on the Approved settlement with the
+      largest net in the newest batch (a driver may dispute an Approved settlement), written
+      with absolute times, so both reasons are on the board.
+    setup:
+      - >
+        UPDATE driver_settlements SET hold_reason = NULL, hold_note = NULL, held_by_id = NULL,
+          held_at = NULL
+        WHERE hold_note = 'Bench: waiting on the broker''s corrected rate confirmation for load 4471.'
+      - >
+        UPDATE driver_settlement_batches b
+        SET held_count = totals.held, held_net_minor = totals.held_net
+        FROM (
+          SELECT s.batch_id, s.organization_id, s.business_unit_id,
+            count(*) FILTER (WHERE s.hold_reason IS NOT NULL AND s.status <> 'Voided') AS held,
+            coalesce(sum(s.net_pay_minor) FILTER (
+              WHERE s.hold_reason IS NOT NULL AND s.status <> 'Voided'), 0) AS held_net
+          FROM driver_settlements s WHERE s.batch_id IS NOT NULL
+          GROUP BY s.batch_id, s.organization_id, s.business_unit_id
+        ) totals
+        WHERE totals.batch_id = b.id AND totals.organization_id = b.organization_id
+          AND totals.business_unit_id = b.business_unit_id
+          AND (b.held_count, b.held_net_minor) IS DISTINCT FROM (totals.held, totals.held_net)
+      - >
+        WITH newest AS (
+          SELECT b.id FROM driver_settlement_batches b
+          JOIN organizations g ON g.id = b.organization_id
+          WHERE g.name = 'Trenova Logistics' AND b.status <> 'Canceled'
+          ORDER BY b.period_start DESC LIMIT 1
+        ), target AS (
+          SELECT s.id, s.worker_id, s.organization_id, s.business_unit_id
+          FROM driver_settlements s JOIN newest n ON n.id = s.batch_id
+          WHERE s.status = 'Approved'
+          ORDER BY s.net_pay_minor DESC, s.settlement_number LIMIT 1
+        )
+        INSERT INTO settlement_disputes (id, business_unit_id, organization_id, settlement_id,
+          worker_id, status, category, description, submitted_by_user_id, version, created_at,
+          updated_at)
+        SELECT 'dsd_01M8BENCHSETTEMENTRATE0000', t.business_unit_id, t.organization_id, t.id,
+          t.worker_id, 'Open', 'IncorrectRate',
+          'The rate on one of my loads this week is lower than the rate I was quoted.',
+          u.id, 0, extract(epoch from now() - interval '1 day')::bigint,
+          extract(epoch from now() - interval '1 day')::bigint
+        FROM target t
+        JOIN users u ON u.business_unit_id = t.business_unit_id AND u.username = 'admin'
+        ON CONFLICT (id, organization_id, business_unit_id) DO UPDATE
+        SET settlement_id = EXCLUDED.settlement_id, worker_id = EXCLUDED.worker_id,
+          status = 'Open', resolved_at = NULL, resolved_by_id = NULL,
+          created_at = EXCLUDED.created_at, updated_at = EXCLUDED.updated_at
+    steps:
+      - say: >-
+          what does this week's settlement batch come to, and what stands in the way of
+          releasing any of it?
+        expect:
+          calls: ["settlement_list_batch_blockers", "show_answer|show_board"]
+          maxCalls: 7
+          maxFailedCalls: 1
+          noProposals: true
+          noRecordIds: true
+          board:
+            place: conversation
+            minReadings: 1
+            kinds: [driver_settlement]
+            measures: [netPay]
+            metrics: [settlementBatch]
+            figures: ["batchNet:settlementBatch"]
+          facts:
+            - sql: >
+                with newest as (
+                  select b.id from driver_settlement_batches b
+                  join organizations g on g.id = b.organization_id
+                  where g.name = 'Trenova Logistics' and b.status <> 'Canceled'
+                  order by b.period_start desc limit 1)
+                select to_char(sum(s.net_pay_minor) / 100.0, 'FM999,999,990.00')
+                from driver_settlements s join newest n on n.id = s.batch_id
+                where s.status <> 'Voided'
+              note: the newest batch's net pay
+            - sql: >
+                with newest as (
+                  select b.id from driver_settlement_batches b
+                  join organizations g on g.id = b.organization_id
+                  where g.name = 'Trenova Logistics' and b.status <> 'Canceled'
+                  order by b.period_start desc limit 1)
+                select count(*) from driver_settlements s join newest n on n.id = s.batch_id
+                where s.status in ('Draft', 'PendingApproval', 'Approved')
+                  and s.exceptions @> '[{"severity":"Critical"}]'::jsonb
+              note: the settlements in it with a critical exception
+          rubric: >
+            Reads the settlements that cannot be released, then answers in the conversation with
+            a board: the batch's net pay (and, if it says them, gross and what was deducted)
+            placed as settlementBatch figures, never typed or summed from rows; the settlements
+            that stand in the way drawn as records with their net pay. It says what stands in
+            the way in the product's words: some have a critical exception (deductions ran past
+            earnings) and one has a dispute open about the rate. It never says a settlement is
+            held or on hold, never calls a settlement with a critical exception disputed or the
+            disputed one an exception, and states no count or amount the board does not read.
+
+  - name: beyond-one-settlement-net-is-a-sentence
+    agent: Bench · Settlements clerk
+    description: >
+      One driver's net on the newest batch is one fact: a sentence, not a board.
+    steps:
+      - say: "what's Gerald Campbell's net on this week's settlement?"
+        expect:
+          calls: ["worker_list|settlement_list_driver"]
+          maxCalls: 5
+          maxFailedCalls: 1
+          noProposals: true
+          noRecordIds: true
+          noBoard: true
+          facts:
+            - sql: >
+                select to_char(s.net_pay_minor / 100.0, 'FM999,999,990.00')
+                from driver_settlements s
+                join workers w on w.id = s.worker_id
+                join driver_settlement_batches b on b.id = s.batch_id
+                join organizations g on g.id = s.organization_id
+                where g.name = 'Trenova Logistics' and w.first_name = 'Gerald'
+                  and w.last_name = 'Campbell' and b.status <> 'Canceled'
+                order by b.period_start desc limit 1
+              note: Gerald Campbell's net on the newest batch
+          rubric: >
+            Answers in a sentence with Gerald Campbell's net pay on his settlement in the
+            newest batch, the amount the record gives, and names the settlement or its pay
+            period; no board.
+
+  - name: beyond-settlement-held-batch
+    agent: Bench · Settlements clerk
+    description: >
+      A person has held one settlement of the newest pay batch out of the pay run for a rate
+      dispute, with a note. Asked what is holding this week's batch, the clerk reads the
+      settlements that cannot be released (settlement_list_batch_blockers puts the hold first,
+      reason On hold, with the reason and note) and says truthfully that one is on hold for a
+      rate dispute, apart from those with a critical exception or a dispute the driver opened.
+      The setup releases any hold this scenario placed before, then holds the ready settlement
+      with the second-largest net in the newest batch (no critical exception, no open dispute),
+      written with absolute times, and refreshes the batch's held totals.
+    setup:
+      - >
+        UPDATE driver_settlements SET hold_reason = NULL, hold_note = NULL, held_by_id = NULL,
+          held_at = NULL
+        WHERE hold_note = 'Bench: waiting on the broker''s corrected rate confirmation for load 4471.'
+      - >
+        WITH newest AS (
+          SELECT b.id FROM driver_settlement_batches b
+          JOIN organizations g ON g.id = b.organization_id
+          WHERE g.name = 'Trenova Logistics' AND b.status <> 'Canceled'
+          ORDER BY b.period_start DESC LIMIT 1
+        ), target AS (
+          SELECT s.id FROM driver_settlements s JOIN newest n ON n.id = s.batch_id
+          WHERE s.status IN ('PendingApproval', 'Approved')
+            AND NOT coalesce(s.exceptions @> '[{"severity":"Critical"}]'::jsonb, false)
+            AND NOT EXISTS (
+              SELECT 1 FROM settlement_disputes d
+              WHERE d.settlement_id = s.id AND d.status IN ('Open', 'InReview'))
+          ORDER BY s.net_pay_minor DESC, s.settlement_number OFFSET 1 LIMIT 1
+        )
+        UPDATE driver_settlements s
+        SET hold_reason = 'RateDispute',
+          hold_note = 'Bench: waiting on the broker''s corrected rate confirmation for load 4471.',
+          held_by_id = u.id, held_at = extract(epoch from now() - interval '2 hours')::bigint,
+          hold_released_by_id = NULL, hold_released_at = NULL
+        FROM target t, users u
+        WHERE s.id = t.id AND u.business_unit_id = s.business_unit_id AND u.username = 'admin'
+      - >
+        UPDATE driver_settlement_batches b
+        SET held_count = totals.held, held_net_minor = totals.held_net
+        FROM (
+          SELECT s.batch_id, s.organization_id, s.business_unit_id,
+            count(*) FILTER (WHERE s.hold_reason IS NOT NULL AND s.status <> 'Voided') AS held,
+            coalesce(sum(s.net_pay_minor) FILTER (
+              WHERE s.hold_reason IS NOT NULL AND s.status <> 'Voided'), 0) AS held_net
+          FROM driver_settlements s WHERE s.batch_id IS NOT NULL
+          GROUP BY s.batch_id, s.organization_id, s.business_unit_id
+        ) totals
+        WHERE totals.batch_id = b.id AND totals.organization_id = b.organization_id
+          AND totals.business_unit_id = b.business_unit_id
+          AND (b.held_count, b.held_net_minor) IS DISTINCT FROM (totals.held, totals.held_net)
+    steps:
+      - say: "what's holding this week's settlement batch?"
+        expect:
+          calls: ["settlement_list_batch_blockers"]
+          maxCalls: 7
+          maxFailedCalls: 1
+          noProposals: true
+          noRecordIds: true
+          replyExcludes:
+            - "/(?i)\\b(nine|9)\\b[^.]{0,40}critical/"
+          board:
+            place: conversation
+            minReadings: 2
+            metrics: [settlementBatch]
+            figures: ["heldSettlements:settlementBatch",
+              "criticalExceptionSettlements:settlementBatch"]
+          facts:
+            - sql: >
+                with newest as (
+                  select b.id from driver_settlement_batches b
+                  join organizations g on g.id = b.organization_id
+                  where g.name = 'Trenova Logistics' and b.status <> 'Canceled'
+                  order by b.period_start desc limit 1)
+                select w.first_name || ' ' || w.last_name
+                from driver_settlements s join newest n on n.id = s.batch_id
+                join workers w on w.id = s.worker_id
+                where s.hold_reason = 'RateDispute'
+                  and s.status in ('Draft', 'PendingApproval', 'Approved')
+              note: the driver whose settlement is on hold
+            - sql: >
+                with newest as (
+                  select b.id from driver_settlement_batches b
+                  join organizations g on g.id = b.organization_id
+                  where g.name = 'Trenova Logistics' and b.status <> 'Canceled'
+                  order by b.period_start desc limit 1)
+                select count(*) from driver_settlements s join newest n on n.id = s.batch_id
+                where s.status in ('Draft', 'PendingApproval', 'Approved')
+                  and s.hold_reason is null
+                  and s.exceptions @> '[{"severity":"Critical"}]'::jsonb
+              note: the settlements with a critical exception that are not held
+          rubric: >
+            Reads the settlements that cannot be released and says what is holding the batch in
+            the product's words: one settlement, the driver the facts name, is on hold for a rate
+            dispute (it may say what the note says it waits on: the broker's corrected rate
+            confirmation); the others have a critical exception, and one may have a dispute the
+            driver opened. How many are held and how many have a critical exception are the
+            settlementBatch metric's figures, placed in the words as readings, never typed. It
+            calls only the held settlement on hold, never calls a settlement with a critical
+            exception held or disputed, and states no count or amount a tool or the board did
+            not read.

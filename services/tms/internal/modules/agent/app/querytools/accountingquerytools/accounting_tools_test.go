@@ -167,7 +167,7 @@ func TestListAROpenItems_FiltersAndPages(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Equal(t, customer, fake.openCustomer, "the customer narrows the query itself")
-	outcome := result.(*fieldgate.Outcome)
+	outcome := result.(*arOpenItemsOutcome)
 	rows := outcome.Items.([]arOpenItemRow)
 	require.Len(t, rows, 1)
 	assert.Equal(t, "C", rows[0].InvoiceNumber, "most overdue first")
@@ -182,9 +182,47 @@ func TestListAROpenItems_FiltersAndPages(t *testing.T) {
 		),
 	)
 	require.NoError(t, err)
-	rows = result.(*fieldgate.Outcome).Items.([]arOpenItemRow)
+	rows = result.(*arOpenItemsOutcome).Items.([]arOpenItemRow)
 	require.Len(t, rows, 1)
 	assert.Equal(t, "12.34", rows[0].Open)
+}
+
+func TestListAROpenItems_ListsOneAgingBucketLargestFirstAndSaysHowToShowIt(t *testing.T) {
+	t.Parallel()
+
+	fake := &fakeReceivables{openItems: []*customerledgerports.AROpenItem{
+		{InvoiceID: pulid.MustNew("inv_"), InvoiceNumber: "A", DaysPastDue: 25, OpenAmountMinor: 900_00},
+		{InvoiceID: pulid.MustNew("inv_"), InvoiceNumber: "B", DaysPastDue: 33, OpenAmountMinor: 100_00},
+		{InvoiceID: pulid.MustNew("inv_"), InvoiceNumber: "C", DaysPastDue: 58, OpenAmountMinor: 50_00},
+		{InvoiceID: pulid.MustNew("inv_"), InvoiceNumber: "D", DaysPastDue: 41, OpenAmountMinor: 400_00},
+		{InvoiceID: pulid.MustNew("inv_"), InvoiceNumber: "E", DaysPastDue: 75, OpenAmountMinor: 800_00},
+	}}
+	tool := newListAROpenItemsTool(fake, &querytooltest.FakePermissions{})
+
+	result, err := tool.Query(t.Context(), querytooltest.AgentParams(map[string]any{
+		"minDaysPastDue": float64(31),
+		"maxDaysPastDue": float64(60),
+		"largestFirst":   true,
+	}, permission.SensitivityRestricted))
+	require.NoError(t, err)
+
+	outcome := result.(*arOpenItemsOutcome)
+	rows := outcome.Items.([]arOpenItemRow)
+	numbers := make([]string, 0, len(rows))
+	for _, row := range rows {
+		numbers = append(numbers, row.InvoiceNumber)
+	}
+	assert.Equal(t, []string{"D", "B", "C"}, numbers)
+	assert.Contains(t, outcome.HowToShow, `"metric": "agingCompare"`)
+	assert.Contains(t, outcome.HowToShow, `"measure": "amountDue"`)
+	assert.Contains(t, outcome.HowToShow, "read with receivable_list_open_items")
+
+	result, err = tool.Query(t.Context(),
+		querytooltest.AgentParams(map[string]any{}, permission.SensitivityRestricted))
+	require.NoError(t, err)
+	plain := result.(*arOpenItemsOutcome).HowToShow
+	assert.NotContains(t, plain, "agingCompare", "a list that is not one bucket is not the aging")
+	assert.Contains(t, plain, "{total:amountDue}")
 }
 
 func TestGetCustomerStatement_KeepsTheLatestTransactions(t *testing.T) {
@@ -289,4 +327,32 @@ func TestGetFiscalCloseBlockers_SaysWhatStopsTheClose(t *testing.T) {
 	assert.Equal(t, "March 2026", view.Name)
 	require.Len(t, view.Blockers, 1)
 	assert.Equal(t, "February is still open", view.Blockers[0].Message)
+	assert.Nil(t, view.Blockers[0].Count)
+	assert.Contains(t, view.HowToShow, `"metric": "periodClose"`)
+	assert.Contains(t, view.HowToShow, period.ID.String())
+}
+
+func TestGetFiscalCloseBlockers_CarriesTheCountACheckStates(t *testing.T) {
+	t.Parallel()
+
+	period := &fiscalperiod.FiscalPeriod{ID: pulid.MustNew("fp_"), Name: "November 2026"}
+	unposted := 408
+	tool := newGetFiscalCloseBlockersTool(&fakeCloseBlockers{
+		period: period,
+		result: &fiscalclose.Result{Blockers: []*fiscalclose.Blocker{{
+			Category: "period",
+			Check:    fiscalclose.CheckUnpostedSources,
+			Message:  "Cannot close fiscal period while 408 accounting sources remain unposted",
+			Count:    &unposted,
+		}}},
+	})
+
+	result, err := tool.Query(t.Context(),
+		querytooltest.AgentParams(map[string]any{"fiscalPeriodId": period.ID.String()}, ""))
+	require.NoError(t, err)
+
+	view := result.(closeBlockersView)
+	require.Len(t, view.Blockers, 1)
+	require.NotNil(t, view.Blockers[0].Count)
+	assert.Equal(t, 408, *view.Blockers[0].Count)
 }

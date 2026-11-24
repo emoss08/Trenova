@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/board"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/boardanswer"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -80,17 +81,17 @@ func TestTranslate_MakesOneGroupABoardInTheConversation(t *testing.T) {
 	block := layout.Blocks[0]
 	assert.Equal(t, board.BlockRecords, block.Type)
 	assert.False(t, block.Half)
-	assert.Equal(t, board.MeasureLateness, block.Measure)
+	assert.Equal(t, board.Measure("lateness"), block.Measure)
 	assert.Equal(t, board.OrderMeasure, block.Order)
 	assert.Equal(t, "Marcus Bell is out of hours until 9:15 AM.", block.Caption)
-	assert.Equal(t, permission.ResourceShipment, block.Records.Resource)
+	assert.Equal(t, recordkind.Kind(permission.ResourceShipment), block.Records.Kind)
 	assert.Len(t, block.Records.IDs, 2)
 	assert.Equal(t, []string{"count", "largest"}, keys(layout.Readings))
 	assert.Equal(t, board.AggregateCount, layout.Readings[0].Aggregate)
 	assert.Empty(t, layout.Readings[0].Measure, "count counts every record")
 	assert.Equal(t, "Shipments", layout.Readings[0].Label)
 	assert.Equal(t, board.AggregateMax, layout.Readings[1].Aggregate)
-	assert.Equal(t, board.MeasureLateness, layout.Readings[1].Measure)
+	assert.Equal(t, board.Measure("lateness"), layout.Readings[1].Measure)
 	assert.Equal(t, "Furthest behind", layout.Readings[1].Label)
 }
 
@@ -124,7 +125,8 @@ func TestTranslate_DeclaresEachNameOfTheVocabulary(t *testing.T) {
 		aggregate board.Aggregate
 		records   int
 	}{
-		"count": {board.AggregateCount, 4}, "total": {board.AggregateSum, 4},
+		"count": {board.AggregateCount, 4}, "all": {board.AggregateCount, 4},
+		"total":   {board.AggregateSum, 4},
 		"largest": {board.AggregateMax, 4}, "count_1": {board.AggregateCount, 2},
 		"count_2": {board.AggregateCount, 2}, "total_1": {board.AggregateSum, 2},
 		"total_2": {board.AggregateSum, 2}, "largest_1": {board.AggregateMax, 2},
@@ -219,9 +221,12 @@ func TestTranslate_RefusesWhatItCannotRepair(t *testing.T) {
 		change func(map[string]any)
 		want   string
 	}{
-		"no title": {
-			change: func(args map[string]any) { delete(args, "title") },
-			want:   "title is required",
+		"no title, and no group's title to take": {
+			change: func(args map[string]any) {
+				delete(args, "title")
+				delete(args["groups"].([]any)[0].(map[string]any), "title")
+			},
+			want: "title is required",
 		},
 		"no answer": {
 			change: func(args map[string]any) { args["answer"] = "  " },
@@ -229,7 +234,7 @@ func TestTranslate_RefusesWhatItCannotRepair(t *testing.T) {
 		},
 		"no groups": {
 			change: func(args map[string]any) { delete(args, "groups") },
-			want:   "groups needs 1 or 2 groups",
+			want:   "groups needs 1 to 3 groups",
 		},
 		"no records": {
 			change: func(args map[string]any) {
@@ -289,7 +294,7 @@ func TestTranslate_RefusesWhatItCannotRepair(t *testing.T) {
 		},
 		"an unknown name": {
 			change: func(args map[string]any) { args["answer"] = "There are {late} late loads." },
-			want:   "answer places {late}, which is not one of {count}, {total}, {largest}",
+			want:   "answer places {late}, which is not one of {count}, {all}, {total}, {largest}",
 		},
 		"a second group's name with one group": {
 			change: func(args map[string]any) { args["answer"] = "There are {count_2}." },
@@ -346,12 +351,12 @@ func TestTranslate_ReadsAMeasureByTheFieldNameAToolResultGave(t *testing.T) {
 		name    string
 		want    board.Measure
 	}{
-		"a shipment's totalCharge":  {held, "totalCharge", board.MeasureRevenue},
-		"a shipment's lateMinutes":  {held, "lateMinutes", board.MeasureLateness},
-		"a shipment's lateBy":       {held, "lateBy", board.MeasureLateness},
-		"an invoice's openAmount":   {invoices, "openAmount", board.MeasureAmountDue},
-		"an invoice's totalAmount":  {invoices, "totalAmount", board.MeasureTotal},
-		"a measure by its own name": {invoices, "age", board.MeasureAge},
+		"a shipment's totalCharge":  {held, "totalCharge", board.Measure("revenue")},
+		"a shipment's lateMinutes":  {held, "lateMinutes", board.Measure("lateness")},
+		"a shipment's lateBy":       {held, "lateBy", board.Measure("lateness")},
+		"an invoice's openAmount":   {invoices, "openAmount", board.Measure("amountDue")},
+		"an invoice's totalAmount":  {invoices, "totalAmount", board.Measure("total")},
+		"a measure by its own name": {invoices, "age", board.Measure("age")},
 	}
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
@@ -429,14 +434,14 @@ func TestTranslate_ReadsEachRecordsOwnFigureByMeasure(t *testing.T) {
 	assert.Equal(t, board.FigureSource{
 		Label: "Revenue",
 		Records: &board.RecordSet{
-			Resource: permission.ResourceShipment,
-			IDs:      []pulid.ID{pulid.ID(ten)},
+			Kind: recordkind.Kind(permission.ResourceShipment),
+			IDs:  []pulid.ID{pulid.ID(ten)},
 		},
-		Measure:   board.MeasureRevenue,
+		Measure:   board.Measure("revenue"),
 		Aggregate: board.AggregateMax,
 	}, byKey["revenue_of_1"].FigureSource)
 	assert.Equal(t, "Time behind", byKey["lateness_of_2"].Label)
-	assert.Equal(t, board.MeasureLateness, answer.Board.Blocks[0].Measure,
+	assert.Equal(t, board.Measure("lateness"), answer.Board.Blocks[0].Measure,
 		"the rows keep showing the answer's own measure")
 }
 
@@ -474,7 +479,7 @@ func TestTranslate_TakesTheRowsMeasureFromANamedFigureWhenNoneIsSet(t *testing.T
 	answer := translated(t, args)
 
 	assert.Equal(t, "They bring in {total} together.", answer.Board.Verdict)
-	assert.Equal(t, board.MeasureRevenue, answer.Board.Blocks[0].Measure)
+	assert.Equal(t, board.Measure("revenue"), answer.Board.Blocks[0].Measure)
 }
 
 func TestTranslate_NeverAddsTimeAcrossRecords(t *testing.T) {
@@ -496,4 +501,44 @@ func TestTranslate_NeverAddsTimeAcrossRecords(t *testing.T) {
 	answer := translated(t, comparison("The furthest is {largest} behind, and together they "+
 		"bring in {total:revenue}."))
 	assert.Equal(t, []string{"total_revenue", "largest"}, keys(answer.Board.Readings))
+}
+
+func TestTranslate_RefusesATimeCalledAnAmountOrGivenATypedUnit(t *testing.T) {
+	t.Parallel()
+
+	billed := map[string]any{
+		"title":  "Facilities with the most waiting",
+		"answer": "Total detention billed across these facilities is {total:dwell}.",
+		"groups": []any{map[string]any{
+			"title":   "Most time past free",
+			"records": []any{"loc_01HNW5TY00JXKJA33PTTNHR22D", "loc_01JM8ZK9Z8DMAEWD0ECY7YEMW7"},
+			"measure": "dwell",
+		}},
+	}
+	_, problems := boardanswer.Translate(billed)
+	require.NotEmpty(t, problems)
+	assert.Contains(t, strings.Join(problems, "; "), `call it "billed"`)
+
+	minutes := map[string]any{
+		"title":  "Facilities with the most waiting",
+		"answer": "Riverside leads with {largest:dwell} minutes past free time.",
+		"groups": billed["groups"],
+	}
+	answer, problems := boardanswer.Translate(minutes)
+	require.Empty(t, problems, "a unit typed after a time figure is dropped, not refused")
+	assert.Equal(t, "Riverside leads with {largest} past free time.", answer.Board.Verdict)
+
+	lapsed := running("Jane Doe's two credentials lapsed {largest} days ago.", credentials)
+	answer, problems = boardanswer.Translate(lapsed)
+	require.Empty(t, problems)
+	assert.NotContains(t, answer.Board.Verdict, "days")
+
+	fine := map[string]any{
+		"title": "Facilities with the most waiting",
+		"answer": "Trucks waited {total:dwell} past free time across these facilities, and " +
+			"none of it was billed yet.",
+		"groups": billed["groups"],
+	}
+	_, problems = boardanswer.Translate(fine)
+	assert.Empty(t, problems)
 }

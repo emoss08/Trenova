@@ -10,9 +10,11 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/boardhint"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/bankreceipt"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/bankreceiptworkitem"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingboard"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/bankreceiptports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -37,8 +39,8 @@ type bankReceiptReader interface {
 	) (*bankreceipt.BankReceipt, error)
 	ListExceptions(
 		ctx context.Context,
-		tenant pagination.TenantInfo,
-	) ([]*bankreceipt.BankReceipt, error)
+		req *bankreceiptports.ListBankReceiptExceptionsRequest,
+	) (*bankreceiptports.BankReceiptExceptionPage, error)
 	SuggestMatches(
 		ctx context.Context,
 		req *bankreceiptports.GetBankReceiptRequest,
@@ -47,9 +49,10 @@ type bankReceiptReader interface {
 
 // workItemReader reads the reconciliation queue entry behind a receipt.
 type workItemReader interface {
-	ListActive(
+	ListActiveByReceiptIDs(
 		ctx context.Context,
 		tenant pagination.TenantInfo,
+		receiptIDs []pulid.ID,
 	) ([]*bankreceiptworkitem.WorkItem, error)
 	GetActiveByReceiptID(
 		ctx context.Context,
@@ -164,11 +167,12 @@ func (t *listBankReceiptExceptionsTool) Name() string {
 }
 
 func (t *listBankReceiptExceptionsTool) Description() string {
-	return "List the bank receipts that could not be matched to a customer payment on " +
-		"their own and are waiting in the reconciliation queue. Each has its amount, the " +
-		"bank's reference and memo, why it was not matched, and the queue entry with who " +
-		"it is assigned to. Narrow with query to match the reference, memo or reason. " +
-		"Use receivable_get_bank_receipt for one receipt's candidate payments."
+	return "List the bank receipts not yet applied: money in the bank that no posted customer " +
+		"payment matches (status Exception), newest first, with total the count of all of " +
+		"them. Each has its amount, the bank's reference and memo, why it was not matched, " +
+		"and the queue entry with who it is assigned to. Narrow with query to match the " +
+		"reference, memo or reason. Use receivable_get_bank_receipt for one receipt's " +
+		"candidate payments."
 }
 
 func (t *listBankReceiptExceptionsTool) ParamSchema() map[string]any {
@@ -207,20 +211,30 @@ func (t *listBankReceiptExceptionsTool) Query(
 	if limit <= 0 || limit > maxBankReceiptRows {
 		limit = maxBankReceiptRows
 	}
-	query := strings.ToLower(strings.TrimSpace(querytool.OptionalString(params.Params, "query")))
+	query := strings.TrimSpace(querytool.OptionalString(params.Params, "query"))
 
 	criteria := filtercatalog.NewCriteria("unmatched bank receipts").At(querytool.ClockFor(params))
 	criteria.Text(query)
 
 	tenant := querytool.TenantOf(params)
-	receipts, err := t.receipts.ListExceptions(ctx, tenant)
+	page, err := t.receipts.ListExceptions(ctx, &bankreceiptports.ListBankReceiptExceptionsRequest{
+		TenantInfo: tenant,
+		Query:      query,
+		Limit:      limit,
+	})
 	if err != nil {
 		return nil, err
 	}
 
-	itemsByReceipt := make(map[pulid.ID]*bankreceiptworkitem.WorkItem)
+	ids := make([]pulid.ID, 0, len(page.Items))
+	for _, receipt := range page.Items {
+		if receipt != nil {
+			ids = append(ids, receipt.ID)
+		}
+	}
+	itemsByReceipt := make(map[pulid.ID]*bankreceiptworkitem.WorkItem, len(ids))
 	if t.items != nil {
-		active, listErr := t.items.ListActive(ctx, tenant)
+		active, listErr := t.items.ListActiveByReceiptIDs(ctx, tenant, ids)
 		if listErr != nil {
 			return nil, listErr
 		}
@@ -231,30 +245,38 @@ func (t *listBankReceiptExceptionsTool) Query(
 		}
 	}
 
-	rows := make([]bankReceiptRow, 0, len(receipts))
-	shown := make([]agentrecord.RecordRef, 0, limit)
-	matched := 0
-	for _, receipt := range receipts {
-		if receipt == nil || !receiptMatchesQuery(receipt, query) {
+	rows := make([]bankReceiptRow, 0, len(page.Items))
+	shown := make([]agentrecord.RecordRef, 0, len(page.Items))
+	for _, receipt := range page.Items {
+		if receipt == nil {
 			continue
 		}
-		matched++
-		if len(rows) < limit {
-			rows = append(rows, bankReceiptRowFrom(receipt, itemsByReceipt[receipt.ID]))
-			shown = append(shown, bankReceiptRef(receipt.ID))
-		}
+		rows = append(rows, bankReceiptRowFrom(receipt, itemsByReceipt[receipt.ID]))
+		shown = append(shown, bankReceiptRef(receipt.ID))
 	}
 
+	outcome := querytool.SearchResult(criteria, rows, len(rows))
+	total := max(page.Total, len(rows))
+	outcome.Total = &total
+	outcome.HasMore = total > len(rows)
+
 	return &bankReceiptSearch{
-		SearchOutcome: querytool.SearchResult(criteria, rows, matched),
+		SearchOutcome: outcome,
+		HowToShow:     receiptsShown(),
 		outside:       shown,
 	}, nil
+}
+
+func receiptsShown() string {
+	return boardhint.Line(&boardhint.Show{Metric: billingboard.MetricUnappliedReceipts})
 }
 
 // bankReceiptSearch names each receipt it shows, so the run's taint says which
 // receipts' payer-written memos it read.
 type bankReceiptSearch struct {
 	querytool.SearchOutcome
+
+	HowToShow string `json:"howToShow"`
 
 	outside []agentrecord.RecordRef
 }
@@ -263,20 +285,6 @@ func (s *bankReceiptSearch) TaintedRecords() []agentrecord.RecordRef { return s.
 
 func bankReceiptRef(id pulid.ID) agentrecord.RecordRef {
 	return agentrecord.RecordRef{EntityType: agent.TaintEntityBankReceipt, ID: id.String()}
-}
-
-func receiptMatchesQuery(receipt *bankreceipt.BankReceipt, query string) bool {
-	if query == "" {
-		return true
-	}
-
-	for _, field := range []string{receipt.ReferenceNumber, receipt.Memo, receipt.ExceptionReason} {
-		if strings.Contains(strings.ToLower(field), query) {
-			return true
-		}
-	}
-
-	return false
 }
 
 // bankReceiptDetailRow is one receipt with the payments that might be it.

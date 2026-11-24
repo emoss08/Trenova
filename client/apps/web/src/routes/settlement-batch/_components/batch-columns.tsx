@@ -4,7 +4,7 @@ import { SettlementBatchStatusBadge } from "@trenova/shared/components/status-ba
 import type { SettlementBatchRow } from "@/lib/graphql/driver-settlement";
 import type { SettlementBatchStatus } from "@trenova/shared/types/driver-pay";
 import type { ColumnDef } from "@trenova/shared/types/data-table";
-import { AlertTriangleIcon } from "@trenova/shared/components/icons";
+import { AlertTriangleIcon, PauseCircleIcon } from "@trenova/shared/components/icons";
 import { formatUnixDateMedium } from "@trenova/shared/lib/date";
 
 function formatDate(unix: number): string {
@@ -69,6 +69,20 @@ export function getColumns(t: TranslateFn): ColumnDef<SettlementBatchRow>[] {
       ),
       size: 100,
       meta: { apiField: "exceptionCount" },
+    },
+    {
+      accessorKey: "heldCount",
+      header: () => <div className="text-right">{t("On hold")}</div>,
+      cell: ({ row }) => (
+        <div className="flex items-center justify-end gap-1 tabular-nums">
+          {row.original.heldCount > 0 && (
+            <PauseCircleIcon className="size-3.5 text-warning-foreground" />
+          )}
+          {row.original.heldCount}
+        </div>
+      ),
+      size: 90,
+      meta: { apiField: "heldCount", label: t("On hold") },
     },
     {
       accessorKey: "totalGrossMinor",

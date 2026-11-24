@@ -10,7 +10,7 @@ policies, so this page cannot drift from what runs: CI regenerates it and fails
 when it differs. Each tool is listed once, under the furthest class its work
 can reach.
 
-Tools listed: 644.
+Tools listed: 653.
 
 ## The model
 
@@ -88,9 +88,9 @@ and Confidential fields never reach a model at all.
 
 | Class | Means | Runs at most | Held once tainted | Tools that reach it |
 | --- | --- | --- | --- | --- |
-| Reads only | Looks something up. Nothing changes and nothing is sent. | Automatic | No | 217 |
-| The caller's own records | Changes only the records of the person using the agent. | Automatic | No | 12 |
-| Inside the organization | Changes records only people inside the organization see. | Automatic | No | 268 |
+| Reads only | Looks something up. Nothing changes and nothing is sent. | Automatic | No | 224 |
+| The caller's own records | Changes only the records of the person using the agent. | Automatic | No | 13 |
+| Inside the organization | Changes records only people inside the organization see. | Automatic | No | 269 |
 | Seen by a customer | Changes something a customer can see. | Ask first | Yes | 5 |
 | Seen by a driver | Changes something a driver can see. | Ask first | Yes | 23 |
 | Sent outside the organization | Sends to someone outside the organization. | Ask first | Yes | 43 |
@@ -124,6 +124,7 @@ Looks something up. Nothing changes and nothing is sent.
 | Get carrier intelligence event (`carrier_get_intelligence_event`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List carriers (`carrier_list`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List carrier capacity postings (`carrier_list_capacity_postings`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
+| List carrier cover ending (`carrier_list_cover_ending`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List carrier intelligence events (`carrier_list_intelligence_events`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List carrier invoice matches (`carrier_list_invoice_matches`) | Reads only | Automatic | — | When the record is marked, from EDI | Lists carrier invoices, some of which a carrier sent over EDI with its own invoice text; nothing changes and nothing is sent. |
 | Shop carrier (`carrier_shop`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
@@ -132,7 +133,9 @@ Looks something up. Nothing changes and nothing is sent.
 | List customers (`customer_list`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | Delegate task (`delegate_task`) | Reads only | Automatic | — | — | Hands a task to another agent of the organization, which runs as the same person under its own tiers. |
 | Get detention occurrence (`detention_get_occurrence`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
+| List detention facilities (`detention_list_facilities`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List detention occurrences (`detention_list_occurrences`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
+| List detention stays (`detention_list_stays`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | Forecast dispatch demand (`dispatch_forecast_demand`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | Get dispatch board (`dispatch_get_board`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List tenders (`dispatch_list_tenders`) | Reads only | Automatic | — | — | Reads a shipment's tenders and their offers; a carrier's own words, such as a decline reason, are left out, so nothing written outside the organization is read. |
@@ -187,6 +190,7 @@ Looks something up. Nothing changes and nothing is sent.
 | Preview formula (`formula_preview`) | Reads only | Automatic | — | — | Rates source with the engine, for the sample record or a shipment the caller may read; nothing is saved and nothing is sent. |
 | Propose formula (`formula_propose`) | Reads only | Automatic | — | — | Changes the person's own editor, which they can undo; nothing is saved and nothing is sent. |
 | Run formula tests (`formula_run_tests`) | Reads only | Automatic | — | — | Runs the tests in source the model holds; nothing is saved and nothing is sent. |
+| Get IFTA return (`fuel_get_ifta_return`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List fuel cards (`fuel_list_cards`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List IFTA jurisdictions (`fuel_list_ifta_jurisdictions`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List IFTA mileage entries (`fuel_list_ifta_mileage_entries`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
@@ -238,6 +242,7 @@ Looks something up. Nothing changes and nothing is sent.
 | List hold reasons (`masterdata_list_hold_reasons`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List service types (`masterdata_list_service_types`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List shipment types (`masterdata_list_shipment_types`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
+| Metric read (`metric_read`) | Reads only | Automatic | — | — | Reads one metric Trenova keeps, through the board's own reader and with the board's checks of the caller's access to that metric, its records and its plan; it changes nothing and sends nothing. |
 | Name plan (`name_plan`) | Reads only | Automatic | — | — | Names the plan the person approves the turn's proposals as. It writes no business record: the name is kept only as the plan's own title, beside the previewed changes the approval rests on. |
 | Get order (`order_get`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List orders (`order_list`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
@@ -276,6 +281,7 @@ Looks something up. Nothing changes and nothing is sent.
 | Get driver settlement (`settlement_get_driver`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | Get driver settlement earnings (`settlement_get_driver_earnings`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List settlement advances (`settlement_list_advances`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
+| List settlement batch blockers (`settlement_list_batch_blockers`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List carrier settlements (`settlement_list_carrier`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List driver settlements (`settlement_list_driver`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List driver expenses (`settlement_list_driver_expenses`) | Reads only | Automatic | — | When the record is marked, from record note | Reads expenses whose descriptions drivers wrote in the driver portal; nothing changes and nothing is sent. |
@@ -319,6 +325,7 @@ Looks something up. Nothing changes and nothing is sent.
 | List worker time off (`worker_list_time_off`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List worker training (`worker_list_training`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List training courses (`worker_list_training_courses`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
+| List worker week hours (`worker_list_week_hours`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 
 ## The caller's own records
 
@@ -332,6 +339,7 @@ Changes only the records of the person using the agent.
 | Remove home widget (`home_remove_widget`) | The caller's own records | Automatic | — | — | Changes only the caller's own home page. |
 | Publish artifact (`publish_artifact`) | The caller's own records | Automatic | — | — | Publishes a document into the caller's own conversation, where only they read it. |
 | Request decision (`request_decision`) | The caller's own records | Automatic | — | — | Opens, in the person's own conversation, the approval box on a proposal already waiting on them; it decides nothing and changes no record. |
+| Show answer (`show_answer`) | The caller's own records | Automatic | — | — | Answers in the caller's own conversation with the records the answer rests on, drawn as a board. It writes no business record, and every value on it is read again with the viewer's access when the board is opened. |
 | Show board (`show_board`) | The caller's own records | Automatic | — | — | Lays out an answer as a board in the caller's own conversation. It writes no business record, and every value on it is read again with the viewer's access when the board is opened. |
 
 ## Inside the organization
@@ -526,6 +534,7 @@ Changes records only people inside the organization see.
 | Generate carrier settlement batch (`settlement_generate_carrier_batch`) | Inside the organization | Automatic | — | — | Drafts the period's carrier settlements from cost already accrued inside Trenova; nothing is paid until a person approves and posts them. |
 | Generate driver settlement (`settlement_generate_driver`) | Inside the organization | Automatic | — | — | Drafts a settlement from pay already accrued inside Trenova; nothing is paid until a person approves it, and hands-off approval is only the settlement control's clean-settlement rule. |
 | Generate driver settlement batch (`settlement_generate_driver_batch`) | Inside the organization | Automatic | — | — | Drafts the period's settlements from pay already accrued inside Trenova; nothing is paid until a person approves them, and hands-off approval is only the settlement control's clean-settlement rule. |
+| Hold driver settlement (`settlement_hold_driver`) | Inside the organization | Propose | — | — | Keeps a driver's settlement out of the pay run, or lets it back in, inside Trenova; whether a driver's pay waits is a person's decision. |
 | Recalculate carrier settlement (`settlement_recalculate_carrier`) | Inside the organization | Automatic | — | — | Rebuilds a draft from the records it is computed from inside Trenova; nothing is paid until a person approves it. |
 | Recalculate driver settlement (`settlement_recalculate_driver`) | Inside the organization | Automatic | — | — | Rebuilds a draft from the records it is computed from inside Trenova; nothing is paid until a person approves it. |
 | Reject carrier settlement (`settlement_reject_carrier`) | Inside the organization | Automatic | Its text is what payroll or the payee reads next, so a run that has read outside text proposes it rather than writing it. | — | Returns a settlement to draft with a note inside Trenova; nothing is paid and it is submitted again once fixed. |

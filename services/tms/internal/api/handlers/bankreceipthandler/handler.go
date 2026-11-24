@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
+	"github.com/emoss08/trenova/internal/modules/billing/app/bankreceiptcardservice"
 	"github.com/emoss08/trenova/internal/modules/billing/app/bankreceiptservice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/bankreceiptports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -20,17 +21,24 @@ import (
 type Params struct {
 	fx.In
 	Service              *bankreceiptservice.Service
+	Cards                *bankreceiptcardservice.Service
 	ErrorHandler         *helpers.ErrorHandler
 	PermissionMiddleware *middleware.PermissionMiddleware
 }
 type Handler struct {
 	service *bankreceiptservice.Service
+	cards   *bankreceiptcardservice.Service
 	eh      *helpers.ErrorHandler
 	pm      *middleware.PermissionMiddleware
 }
 
 func New(p Params) *Handler {
-	return &Handler{service: p.Service, eh: p.ErrorHandler, pm: p.PermissionMiddleware}
+	return &Handler{
+		service: p.Service,
+		cards:   p.Cards,
+		eh:      p.ErrorHandler,
+		pm:      p.PermissionMiddleware,
+	}
 }
 
 func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
@@ -49,6 +57,11 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		"/:receiptID/",
 		h.pm.RequirePermission(permission.ResourceBankReceipt.String(), permission.OpRead),
 		h.get,
+	)
+	api.GET(
+		"/:receiptID/card/",
+		h.pm.RequirePermission(permission.ResourceBankReceipt.String(), permission.OpRead),
+		h.card,
 	)
 	api.GET(
 		"/:receiptID/suggestions/",
@@ -96,19 +109,26 @@ func (h *Handler) summary(c *gin.Context) {
 
 func (h *Handler) listExceptions(c *gin.Context) {
 	auth := authctx.GetAuthContext(c)
-	items, err := h.service.ListExceptions(
+	limit, _ := strconv.Atoi(c.Query("limit"))
+	offset, _ := strconv.Atoi(c.Query("offset"))
+	page, err := h.service.ListExceptions(
 		c.Request.Context(),
-		pagination.TenantInfo{
-			OrgID:  auth.OrganizationID,
-			BuID:   auth.BusinessUnitID,
-			UserID: auth.UserID,
+		&bankreceiptports.ListBankReceiptExceptionsRequest{
+			TenantInfo: pagination.TenantInfo{
+				OrgID:  auth.OrganizationID,
+				BuID:   auth.BusinessUnitID,
+				UserID: auth.UserID,
+			},
+			Query:  c.Query("query"),
+			Limit:  limit,
+			Offset: offset,
 		},
 	)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
 	}
-	helpers.JSON(c, http.StatusOK, items)
+	helpers.JSON(c, http.StatusOK, page.Items)
 }
 
 func (h *Handler) get(c *gin.Context) {
@@ -134,6 +154,50 @@ func (h *Handler) get(c *gin.Context) {
 		return
 	}
 	helpers.JSON(c, http.StatusOK, entity)
+}
+
+func (h *Handler) card(c *gin.Context) {
+	auth := authctx.GetAuthContext(c)
+	id, err := pulid.MustParse(c.Param("receiptID"))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	payments, err := h.pm.Allowed(c, permission.ResourceCustomerPayment.String(), permission.OpRead)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	invoices, err := h.pm.Allowed(c, permission.ResourceInvoice.String(), permission.OpRead)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	workItems, err := h.pm.Allowed(
+		c,
+		permission.ResourceBankReceiptWorkItem.String(),
+		permission.OpRead,
+	)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	card, err := h.cards.Get(c.Request.Context(), &bankreceiptports.GetDeskCardRequest{
+		TenantInfo: pagination.TenantInfo{
+			OrgID:  auth.OrganizationID,
+			BuID:   auth.BusinessUnitID,
+			UserID: auth.UserID,
+		},
+		ReceiptID:       id,
+		IncludePayment:  payments,
+		IncludeInvoices: invoices,
+		IncludeWorkItem: workItems,
+	})
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	helpers.JSON(c, http.StatusOK, card)
 }
 
 func (h *Handler) suggestions(c *gin.Context) {

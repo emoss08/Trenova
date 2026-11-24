@@ -226,6 +226,13 @@ linters:
       - path: internal/modules/identity/domain/([a-z]+perms|[a-z]+bundles|permissioncatalog)/
         linters:
           - goconst
+      # Each module's board entries (<module>/domain/<area>board) declare its
+      # measures' and metrics' names, aliases and words as data: a word two
+      # measures share ("age", "Waiting") is two measures' own words, not one
+      # constant.
+      - path: internal/modules/[a-z]+/domain/[a-z]+board/
+        linters:
+          - goconst
     paths:
       - internal/infrastructure/database/*
       # Development fixtures and volume data: generators of sample rows that

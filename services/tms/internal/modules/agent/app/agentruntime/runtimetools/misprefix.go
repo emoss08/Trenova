@@ -90,3 +90,25 @@ func siblingID(read []string, actualID, wanted string) (field, id string, found 
 
 	return "", "", false
 }
+
+func misprefixRepairs(read, unread []string) (map[string]string, bool) {
+	repairs := make(map[string]string, len(unread))
+	for _, id := range unread {
+		cut := strings.IndexByte(id, '_')
+		if cut < 0 || len(id)-cut-1 < minIDBodyRunes {
+			return nil, false
+		}
+		wanted, body := id[:cut+1], id[cut+1:]
+		actual, found := actualPrefix(read, wanted, body)
+		if !found {
+			return nil, false
+		}
+		_, sibling, carried := siblingID(read, actual+body, wanted)
+		if !carried {
+			return nil, false
+		}
+		repairs[id] = sibling
+	}
+
+	return repairs, len(repairs) > 0
+}

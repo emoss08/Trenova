@@ -147,6 +147,11 @@ export const RECORD_LINKS = {
     path: "/fuel/configuration-files/fuel-cards",
     params: { panelType: "edit", panelEntityId: "{id}" },
   },
+  ifta_return: {
+    label: "IFTA return",
+    path: "/fuel/ifta-returns",
+    params: { return: "{id}" },
+  },
   billing_queue_item: {
     label: "Billing queue item",
     path: "/billing/queue",
@@ -232,6 +237,11 @@ export const RECORD_LINKS = {
   journal_entry: {
     label: "Journal entry",
     path: "/accounting/journal-entries/{id}",
+  },
+  bank_receipt: {
+    label: "Bank receipt",
+    path: "/accounting/reconciliation/bank-receipts",
+    params: { item: "{id}" },
   },
   manual_journal: {
     label: "Manual journal",

@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/loaders/placesloaders"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/loaderfields"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -482,4 +483,61 @@ func (r *DetentionOccurrenceResolver) CalculationTrace(ctx context.Context, obj 
 
 func (r *DetentionPreviewResultResolver) CalculationTrace(ctx context.Context, obj *gqlmodel.DetentionPreviewResult) (map[string]any, error) {
 	return r.visibleTrace(ctx, obj.CalculationTrace), nil
+}
+
+func (r *QueryResolver) DetentionStays(ctx context.Context, period gqlmodel.DetentionPeriod, stage *gqlmodel.DetentionStayStage, locationID *string, limit *int, offset *int) (*gqlmodel.DetentionStayList, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceDetention, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+
+	days, err := detentionPeriod(period)
+	if err != nil {
+		return nil, err
+	}
+	location, err := gqlid.OptionalID(locationID)
+	if err != nil {
+		return nil, err
+	}
+
+	result, err := r.DetentionReview.ListStays(ctx, &detentionreview.StaysRequest{
+		TenantInfo: resolvercore.TenantInfo(authCtx),
+		Period:     days,
+		Stage:      detentionStayStage(stage),
+		LocationID: location,
+		Limit:      gqlscalar.IntValue(limit),
+		Offset:     gqlscalar.IntValue(offset),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return detentionStaysToModel(result), nil
+}
+
+func (r *QueryResolver) DetentionFacilityWaits(ctx context.Context, period gqlmodel.DetentionPeriod, limit *int) ([]*gqlmodel.DetentionFacilityWait, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceDetention, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+
+	days, err := detentionPeriod(period)
+	if err != nil {
+		return nil, err
+	}
+
+	facilities, err := r.DetentionIntelligenceService.Facilities(
+		ctx,
+		&detentionintelligence.FacilitiesRequest{
+			TenantInfo: resolvercore.TenantInfo(authCtx),
+			Period:     days,
+			Limit:      gqlscalar.IntValue(limit),
+			Visible:    r.VisibleFieldGroups(ctx, authCtx),
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return detentionFacilityWaitsToModel(facilities), nil
 }

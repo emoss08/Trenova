@@ -154,10 +154,14 @@ modules:
     level: 2
     domain:
       - audit
+      - boardcatalog
+      - boardreading
+      - boardwording
       - bulkedit
       - customfield
       - dataentrycontrol
       - email
+      - homeboard
       - homelayout
       - integration
       - notification
@@ -276,6 +280,7 @@ modules:
       - jurisdictionrule
       - location
       - locationcategory
+      - placesboard
       - rategeo
       - storedmileage
     service:
@@ -298,10 +303,12 @@ modules:
       - distanceprofilerepository
       - locationcategoryrepository
       - locationrepository
+      - placesboardreader
       - storedmileagerepository
   equipment:
     level: 4
     domain:
+      - equipmentboard
       - equipmentcontinuity
       - equipmentmanufacturer
       - equipmenttype
@@ -315,6 +322,7 @@ modules:
       - tractorservice
       - trailerservice
     repository:
+      - equipmentboardreader
       - equipmentcontinuityrepository
       - equipmentmanufacturerrepository
       - equipmenttyperepository
@@ -340,6 +348,7 @@ modules:
       - carrierintelverification
       - customer
       - factoringcompany
+      - partiesboard
     service:
       - carriercapacityservice
       - carrierintelenrollmentservice
@@ -360,6 +369,7 @@ modules:
       - carrierrepository
       - customerrepository
       - factoringcompanyrepository
+      - partiesboardreader
   workforce:
     level: 5
     domain:
@@ -375,6 +385,7 @@ modules:
       - safetyscorecard
       - telematics
       - timesheet
+      - weekhours
       - worker
       - workerchecklist
       - workercompliance
@@ -390,6 +401,7 @@ modules:
       - workerschedule
       - workersyncdrift
       - workertraining
+      - workforceboard
     service:
       - benefitsservice
       - drivernotificationservice
@@ -434,6 +446,7 @@ modules:
       - selfservicerepository
       - telematicsrepository
       - timesheetrepository
+      - weekhoursrepository
       - workerchecklistrepository
       - workercredentialrepository
       - workerdqfrepository
@@ -445,6 +458,7 @@ modules:
       - workerrepository
       - workersafetyrepository
       - workertrainingrepository
+      - workforceboardreader
   documents:
     level: 5
     domain:
@@ -602,6 +616,7 @@ modules:
       - commentbody
       - customertracking
       - detention
+      - detentionboard
       - detentioncollectability
       - detentionevidence
       - detentionnotice
@@ -612,6 +627,7 @@ modules:
       - dispatchplanprice
       - documentshipmentdraft
       - movesplit
+      - operationsboard
       - order
       - pickupwindow
       - quickfilter
@@ -725,16 +741,19 @@ modules:
     repository:
       - assignmentrepository
       - carrierassignmentrepository
+      - carriercoverrepository
       - detentionrepository
       - dispatchconsolerepository
       - dispatchcontrolrepository
       - dispatchplanpricerepository
       - documentshipmentdraftrepository
+      - operationsboardreader
       - orderrepository
       - recurringshipmentrepository
       - routingguiderepository
       - servicefailurereasoncoderepository
       - servicefailurerepository
+      - servicerollup
       - shipmentadditionalchargerepository
       - shipmentboardrepository
       - shipmentcommentrepository
@@ -764,6 +783,7 @@ modules:
     level: 8
     domain:
       - edi
+      - ediboard
       - edicarrierinvoice
       - edidocument
       - ediinboundfile
@@ -808,6 +828,7 @@ modules:
     job:
       - edijobs
     repository:
+      - ediboardreader
       - edicarrierinvoicerepository
       - edicommunicationprofilerepository
       - ediconnectionrepository
@@ -832,6 +853,7 @@ modules:
     level: 8
     domain:
       - accountingbackfill
+      - accountingboard
       - accountingconnection
       - accountingdrift
       - accountinginbound
@@ -900,6 +922,7 @@ modules:
       - accountingsyncjobs
       - fiscaljobs
     repository:
+      - accountingboardreader
       - accountingconnectionrepository
       - accountingdriftrepository
       - accountinginboundrepository
@@ -924,6 +947,7 @@ modules:
       - bankreceiptbatch
       - bankreceiptworkitem
       - billingapprovalrun
+      - billingboard
       - billingpayershare
       - billingqueue
       - billingqueueevent
@@ -1012,6 +1036,7 @@ modules:
       - bankreceiptbatchrepository
       - bankreceiptrepository
       - bankreceiptworkitemrepository
+      - billingboardreader
       - billingqueuefilterpresetrepository
       - billingqueuerepository
       - billingqueuereviewrepository
@@ -1036,6 +1061,7 @@ modules:
       - carriersettlement
       - driverpay
       - driversettlement
+      - fuelboard
       - fuelpurchase
       - ifta
       - payadvance
@@ -1045,6 +1071,7 @@ modules:
       - payescrow
       - payexpense
       - recurringpay
+      - settlementboard
     service:
       - carriersettlementcostservice
       - carriersettlementjournal
@@ -1064,6 +1091,7 @@ modules:
       - settlementshared
     job:
       - carriersettlementjobs
+      - fuelrollupjobs
       - iftajobs
       - settlementjobs
     repository:
@@ -1072,9 +1100,13 @@ modules:
       - carrierledgerrepository
       - carriersettlementrepository
       - driverpayrepository
+      - driversettlementboardreader
       - driversettlementrepository
+      - fuelboardreader
       - fuelpurchaserepository
+      - fuelrollup
       - iftarepository
+      - settlementreleaserepository
   agent:
     level: 10
     domain:
@@ -1140,9 +1172,13 @@ modules:
       - aiusage
       - assistantartifact
       - board
+      - boardanswer
       - boardassemble
+      - boardbar
+      - boardhint
       - boardmarkdown
       - boardparse
+      - boardregistry
       - briefing
       - conversation
       - conversationchapter
@@ -1240,6 +1276,7 @@ modules:
       - assistantqueueservice
       - assistantservice
       - assistantturnservice
+      - boardcardservice
       - briefingservice
       - casechecklistservice
       - conversationscheduleservice

@@ -13,7 +13,9 @@ import {
   type DriverSettlementRow,
 } from "@/lib/graphql/driver-settlement";
 import { BulkMarkPaidDialog } from "@/components/settlements/bulk-mark-paid-dialog";
-import { bulkActionEligibility } from "@/lib/settlement-lifecycle";
+import { eligibleSettlements, heldOutSettlements } from "@/lib/settlement-lifecycle";
+import { SettlementHoldBadge } from "@/components/settlements/settlement-hold-badge";
+import { heldLeftOut, isHeld } from "@/lib/settlement-hold";
 import { cn } from "@trenova/shared/lib/utils";
 import type { DriverSettlementStatus } from "@trenova/shared/types/driver-pay";
 import type { BulkSettlementActionType } from "@trenova/graphql/generated/graphql";
@@ -31,6 +33,7 @@ import { toast } from "@trenova/shared/components/ui/toast";
 export type QueueFilter =
   | "all"
   | "attention"
+  | "held"
   | "Draft"
   | "PendingApproval"
   | "Approved"
@@ -40,6 +43,7 @@ export type QueueFilter =
 const filterChips: Array<{ value: QueueFilter; label: string }> = [
   { value: "all", label: "All" },
   { value: "attention", label: "Needs review" },
+  { value: "held", label: "On hold" },
   { value: "Draft", label: "Draft" },
   { value: "PendingApproval", label: "Pending" },
   { value: "Approved", label: "Approved" },
@@ -104,6 +108,9 @@ export function SettlementQueue({
       byFilter.set("all", (byFilter.get("all") ?? 0) + 1);
       if (settlement.hasExceptions && settlement.status !== "Paid") {
         byFilter.set("attention", (byFilter.get("attention") ?? 0) + 1);
+      }
+      if (isHeld(settlement)) {
+        byFilter.set("held", (byFilter.get("held") ?? 0) + 1);
       }
       const status = settlement.status as QueueFilter;
       if (byFilter.has(status)) {
@@ -245,6 +252,12 @@ export function SettlementQueue({
                       <DriverSettlementStatusBadge
                         status={settlement.status as DriverSettlementStatus}
                       />
+                      {isHeld(settlement) && (
+                        <SettlementHoldBadge
+                          reason={settlement.holdReason}
+                          note={settlement.holdNote}
+                        />
+                      )}
                     </div>
                   </button>
                 </div>
@@ -323,9 +336,10 @@ function BulkActionBar({
   const [payDialogOpen, setPayDialogOpen] = useState(false);
 
   const eligibleCount = (action: BulkSettlementActionType) =>
-    checked.filter((settlement) =>
-      bulkActionEligibility[action].includes(settlement.status as DriverSettlementStatus),
-    ).length;
+    eligibleSettlements(checked, action).length;
+  const heldCount = (action: BulkSettlementActionType) =>
+    heldOutSettlements(checked, action).length;
+  const heldInSelection = checked.filter(isHeld).length;
 
   const mutation = useMutation({
     mutationFn: (input: {
@@ -334,20 +348,25 @@ function BulkActionBar({
       paymentReference?: string;
     }) =>
       bulkDriverSettlementAction({
-        settlementIds: checked
-          .filter((settlement) =>
-            bulkActionEligibility[input.action].includes(
-              settlement.status as DriverSettlementStatus,
-            ),
-          )
-          .map((settlement) => settlement.id),
+        settlementIds: eligibleSettlements(checked, input.action).map(
+          (settlement) => settlement.id,
+        ),
         action: input.action,
         paymentMethod: input.paymentMethod,
         paymentReference: input.paymentReference,
       }),
     onSuccess: (result, input) => {
-      if (result.failureCount === 0) {
+      const leftOut = heldCount(input.action);
+      if (result.failureCount === 0 && leftOut === 0) {
         toast.success(bulkSuccessMessage(input.action, result.successCount));
+      } else if (result.failureCount === 0) {
+        toast.warning(
+          translate(
+            "{0} — {1}",
+            bulkSuccessMessage(input.action, result.successCount),
+            heldLeftOut(leftOut),
+          ),
+        );
       } else {
         const firstError = result.results.find((entry) => !entry.success)?.error;
         const partial = bulkPartialMessage(input.action, result.successCount, result.failureCount);
@@ -365,7 +384,12 @@ function BulkActionBar({
     onClick?: () => void,
   ) => {
     const count = eligibleCount(action);
+    const held = heldCount(action);
     if (count === 0) return null;
+    const applies = t(
+      "{0, plural, one {Applies to the # selected settlement in an eligible status; others are skipped} other {Applies to the # selected settlements in an eligible status; others are skipped}}",
+      count,
+    );
     return (
       <Button
         size="sm"
@@ -373,10 +397,7 @@ function BulkActionBar({
         className="h-7 text-xs"
         disabled={mutation.isPending}
         onClick={onClick ?? (() => mutation.mutate({ action }))}
-        title={t(
-          "{0, plural, one {Applies to the # selected settlement in an eligible status; others are skipped} other {Applies to the # selected settlements in an eligible status; others are skipped}}",
-          count,
-        )}
+        title={held > 0 ? t("{0} {1}", applies, heldLeftOut(held)) : applies}
       >
         {icon}
         {label} ({count})
@@ -391,6 +412,14 @@ function BulkActionBar({
       {actionButton("Post", "Post", <CheckDoubleIcon className="size-3" />)}
       {actionButton("MarkPaid", "Mark Paid", <CurrencyDollarCircleIcon className="size-3" />, () =>
         setPayDialogOpen(true),
+      )}
+      {heldInSelection > 0 && (
+        <span className="text-xs text-muted-foreground">
+          {t(
+            "{0, plural, one {# on hold, left out of approving, posting and paying} other {# on hold, left out of approving, posting and paying}}",
+            heldInSelection,
+          )}
+        </span>
       )}
       <Button
         size="sm"

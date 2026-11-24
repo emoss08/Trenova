@@ -4,6 +4,9 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/modules/agent/domain/boardhint"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/ediboard"
+
 	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/graphqlread"
 	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/querytool"
 	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/readspec"
@@ -29,6 +32,9 @@ const (
 	fieldAckStatusCounts = "ackStatusCounts"
 	fieldCount           = "count"
 	transferInbound      = "Inbound"
+	transferApproved     = "Approved"
+	transferRejected     = "Rejected"
+	fieldOurAnswer       = "ourAnswer"
 	ediPartnerSource     = "edi_list_partners or edi_get_partner"
 
 	fieldISASenderID          = "isaSenderId"
@@ -46,6 +52,10 @@ const (
 		"sends a dead-lettered or failed one again."
 	rawIncludeNote = "Leave it off unless the parsed transactions do not explain the failure."
 )
+
+var partnerDaySteer = "A partner's day of tenders is the partnerDay metric; list its " +
+	"quarantined files and failed messages first to name them. " +
+	boardhint.Brief(&boardhint.Show{Metric: ediboard.MetricPartnerDay})
 
 // ediPartnerReference is a trading partner's id, from the partner lists.
 var ediPartnerReference = readspec.Reference{
@@ -97,11 +107,13 @@ func ediPartnersListSpec() readspec.List {
 func ediInboundFilesListSpec() readspec.List {
 	return readspec.List{
 		Name:         "edi_list_inbound_files",
+		Shows:        &boardhint.Show{Metric: ediboard.MetricPartnerDay},
 		EntityPlural: "inbound EDI files",
 		Summary: "List the inbound EDI files trading partners sent, newest first. Each has " +
 			"the partner, how it arrived, whether it was processed, quarantined or rejected " +
 			"as a duplicate, and why it failed. Narrow to a status or a partner; " +
-			"edi_get_inbound_file opens one. The files are the partner's text.",
+			"edi_get_inbound_file opens one. The files are the partner's text. " +
+			partnerDaySteer,
 		QueryNote: "Words to look for in the file name.",
 		Names: map[string]string{
 			fieldEDIPartnerID:  querytool.ParamPartnerID,
@@ -118,18 +130,23 @@ func ediInboundFilesListSpec() readspec.List {
 func ediTransfersListSpec() readspec.List {
 	return readspec.List{
 		Name:         "edi_list_transfers",
+		Shows:        &boardhint.Show{Metric: ediboard.MetricPartnerDay},
 		EntityPlural: "EDI load tender transfers",
 		Summary: "List EDI load tender transfers, the tenders partners sent in or this " +
 			"organization sent out. Each has the other partner (counterparty), status, BOL, " +
 			"customer, stop count and why it was rejected or failed. Narrow by direction and " +
 			"status, such as tenders pending approval; edi_get_transfer opens one. The tender " +
-			"text is the partner's.",
-		QueryNote: "Free text matched against the tender's status; narrow by status " +
-			"instead where you can.",
+			"text is the partner's. A tender went through only once our 990 answer reached " +
+			"the partner: read it with edi_list_messages by transferId. " +
+			boardhint.Brief(&boardhint.Show{Metric: ediboard.MetricPartnerDay}),
+		QueryNote: "A tender's number as the partner sent it, its BOL, PRO or PO number, " +
+			"or the number of the shipment it made, such as 88244; or a status.",
 		Notes: map[string]string{
 			querytool.ParamDirection: "Inbound unless you name Outbound.",
 		},
 		Defaults: map[string]any{querytool.ParamDirection: transferInbound},
+		Shape:    answerNotInRow,
+		Derived:  []string{fieldOurAnswer},
 		References: map[string]readspec.Reference{querytool.ParamInboundFileID: {
 			Kinds:  []recordkind.Kind{recordkind.EDIInboundFile},
 			What:   "Only the tenders one inbound file carried, by the file's id",
@@ -139,6 +156,18 @@ func ediTransfersListSpec() readspec.List {
 		Reads: ediReadsExternal("Lists load tenders trading partners sent, whose contents " +
 			"the partner wrote; nothing changes and nothing is sent."),
 	}
+}
+
+func answerNotInRow(row map[string]any, _ map[string]struct{}, _ filtercatalog.Clock) {
+	id, _ := row["id"].(string)
+	status, _ := row["status"].(string)
+	if direction, _ := row[querytool.ParamDirection].(string); direction != transferInbound ||
+		id == "" || (status != transferApproved && status != transferRejected) {
+		return
+	}
+	row[fieldOurAnswer] = fmt.Sprintf("Not in this row: the tender went through only once "+
+		"our 990 reached the partner, which edi_list_messages reads, by transferId %q for "+
+		"this tender or by partnerId for a day's", id)
 }
 
 func ediMessagesListSpec() readspec.List {

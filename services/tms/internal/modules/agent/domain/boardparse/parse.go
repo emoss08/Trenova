@@ -10,14 +10,16 @@ import (
 	"unicode/utf8"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/board"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/boardregistry"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/boardcatalog"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
 const (
 	fieldRecords  = "records"
 	fieldAnalysis = "analysis"
+	fieldList     = "list"
 	fieldReadings = "readings"
 	fieldKey      = "key"
 )
@@ -195,9 +197,93 @@ func (p *parser) block(fields map[string]any, at int) board.Block {
 		block.Records = p.records(fields[fieldRecords], path+".records", 1, board.MaxWorkRecords)
 	case board.BlockActions:
 		block.Actions = p.actions(fields["actions"], path)
+	case board.BlockMetric:
+		p.metricBlock(fields, path, &block)
 	}
 
 	return block
+}
+
+func (p *parser) metricBlock(fields map[string]any, path string, block *board.Block) {
+	name := strings.TrimSpace(stringOf(fields["metric"]))
+	if name == "" {
+		p.addf("%s.metric is required: one of %s", path, joinMetrics())
+		return
+	}
+	metric, known := boardregistry.Catalog().MetricNamed(name)
+	if !known {
+		if owner, _, isFigure := boardregistry.Catalog().FigureNamed(name); isFigure {
+			metric, known = owner, true
+		}
+	}
+	if !known {
+		p.addf("%s.metric %q is not one of %s", path, name, joinMetrics())
+		return
+	}
+	block.Metric = metric.Name
+	block.For = p.subject(fields, path, &metric)
+	block.Period = periodOf(fields, &metric)
+}
+
+func (p *parser) subject(fields map[string]any, path string, metric *boardcatalog.Metric) pulid.ID {
+	text := strings.TrimSpace(stringOf(fields["for"]))
+	if metric.For == "" {
+		return pulid.Nil
+	}
+	if text == "" {
+		if metric.ForNeeded {
+			p.addf("%s.for is required: the id of the %s the %s metric reads", path,
+				metric.For.Noun(), metric.Name)
+		}
+		return pulid.Nil
+	}
+	id, err := pulid.Parse(text)
+	kind, known := recordkind.OfIDPrefix(id.Prefix())
+	if err != nil || id.IsNil() || !known || kind != metric.For {
+		p.addf("%s.for holds %q, which is not the id of a %s", path, text, metric.For.Noun())
+		return pulid.Nil
+	}
+
+	return id
+}
+
+func periodOf(fields map[string]any, metric *boardcatalog.Metric) string {
+	period := boardcatalog.Period(strings.TrimSpace(stringOf(fields["period"])))
+	for _, taken := range metric.Periods {
+		if strings.EqualFold(string(taken), string(period)) {
+			return string(taken)
+		}
+	}
+
+	return string(metric.DefaultPeriod())
+}
+
+func (p *parser) metricFigure(fields map[string]any, path string, source *board.FigureSource) {
+	name := strings.TrimSpace(stringOf(fields["metric"]))
+	figureName, _ := fields["figure"].(string)
+	figureName = strings.TrimSpace(figureName)
+	metric, known := boardregistry.Catalog().MetricNamed(name)
+	if !known {
+		owner, figure, isFigure := boardregistry.Catalog().FigureNamed(name)
+		if !isFigure {
+			p.addf("%s.metric %q is not one of %s", path, name, joinFigures())
+			return
+		}
+		metric, figureName, known = owner, figure.Name, true
+	}
+	if figureName == "" && len(metric.Figures) == 1 {
+		figureName = metric.Figures[0].Name
+	}
+	figure, declared := metric.Figure(figureName)
+	if !declared {
+		p.addf("%s.figure names one of the %s metric's figures: %s", path, metric.Name,
+			joinMetricFigures(&metric))
+		return
+	}
+	source.Metric = metric.Name
+	source.Figure = figure.Name
+	source.For = p.subject(fields, path, &metric)
+	source.Period = periodOf(fields, &metric)
 }
 
 func (p *parser) actions(raw any, path string) []board.Action {
@@ -289,15 +375,15 @@ func (p *parser) figureSource(fields map[string]any, at string) board.FigureSour
 	sources := 0
 	if metric := strings.TrimSpace(stringOf(fields["metric"])); metric != "" {
 		sources++
-		figure.Metric = p.metric(metric, at)
+		p.metricFigure(fields, at, &figure)
 	}
 	if _, named := fields[fieldRecords]; named {
 		sources++
 		figure.Records = p.records(fields[fieldRecords], at+".records", 1, board.MaxListRecords)
 		figure.Measure = p.measure(fields, at, figure.Records)
 		figure.Aggregate = p.aggregate(fields, at, figure.Measure)
-		if figure.Aggregate == board.AggregateSum && figure.Measure != "" &&
-			!figure.Measure.Summable() && figure.Records != nil && len(figure.Records.IDs) > 1 {
+		if figure.Aggregate == board.AggregateSum && figure.Records != nil &&
+			len(figure.Records.IDs) > 1 && !summable(figure.Measure, figure.Records.Kind) {
 			p.addf("%s.aggregate sum would add up %s across %d records, which is not a figure "+
 				"anyone reads; use max for the most, or one figure per record", at,
 				figure.Measure, len(figure.Records.IDs))
@@ -308,9 +394,15 @@ func (p *parser) figureSource(fields map[string]any, at string) board.FigureSour
 		figure.Analysis = p.id(fields, fieldAnalysis, at, true)
 		figure.Index = p.index(fields, "figure", at)
 	}
+	if _, named := fields[fieldList]; named {
+		sources++
+		figure.List = p.id(fields, fieldList, at, true)
+		figure.Aggregate = board.AggregateCount
+	}
 	if sources != 1 {
 		p.addf(
-			"%s needs exactly one source: a metric, records, or an analysis with its figure",
+			"%s needs exactly one source: a metric, records, an analysis with its figure, or "+
+				"the list a table was kept from",
 			at,
 		)
 	}
@@ -424,7 +516,9 @@ func (p *parser) checks(raw any, path string) []board.Check {
 		case named:
 			check.Records = p.records(fields[fieldRecords], at+".records", 1, board.MaxCheckRecords)
 		case metric != "":
-			check.Metric = p.metric(metric, at)
+			source := board.FigureSource{}
+			p.metricFigure(fields, at, &source)
+			check.Metric, check.Figure = source.Metric, source.Figure
 		default:
 			p.addf("%s needs the records it counts or a metric", at)
 		}
@@ -481,10 +575,14 @@ func (p *parser) meter(fields map[string]any, path string, block *board.Block) {
 		}
 		block.Of = position
 	case metric != "":
-		block.Metric = p.metric(metric, path)
-		if kind, _ := board.MetricKind(block.Metric); block.Metric != "" &&
-			kind != board.ValuePercent {
-			p.addf("%s.metric must be a percentage to draw as a meter", path)
+		source := board.FigureSource{}
+		p.metricFigure(fields, path, &source)
+		block.Metric, block.Figure, block.Period = source.Metric, source.Figure, source.Period
+		if spec, known := boardregistry.Catalog().MetricNamed(source.Metric); known {
+			if figure, ok := spec.Figure(source.Figure); ok &&
+				figure.Value != boardcatalog.ValuePercent {
+				p.addf("%s.metric must be a percentage to draw as a meter", path)
+			}
 		}
 	default:
 		p.addf("%s needs checksBlock (the position of a checks block) or a percentage metric",
@@ -509,16 +607,16 @@ func (p *parser) records(raw any, path string, least, most int) *board.RecordSet
 			p.addf("%s holds %q, which is not a record id", path, stringOf(entry))
 			return nil
 		}
-		resource, known := resourceOf(id)
+		kind, known := kindOf(id)
 		if !known {
-			p.addf("%s holds %s, which is not a %s", path, id, joinResources())
+			p.addf("%s holds %s, which is not a %s", path, id, joinKinds())
 			return nil
 		}
-		if set.Resource == "" {
-			set.Resource = resource
-		} else if set.Resource != resource {
+		if set.Kind == "" {
+			set.Kind = kind
+		} else if set.Kind != kind {
 			p.addf("%s mixes %s and %s ids; one block shows one kind of record",
-				path, set.Resource, resource)
+				path, set.Kind, kind)
 			return nil
 		}
 		if !slices.Contains(set.IDs, id) {
@@ -534,20 +632,17 @@ func (p *parser) measure(fields map[string]any, path string, set *board.RecordSe
 	if measure == "" || set == nil {
 		return measure
 	}
-	if named := board.MeasureNamed(set.Resource, string(measure)); named != "" {
-		return named
+	if spec, named := boardregistry.Catalog().MeasureOf(set.Kind, string(measure)); named {
+		return board.Measure(spec.Name)
 	}
-	if !measure.Of(set.Resource) {
-		measures := board.MeasuresOf(set.Resource)
-		if len(measures) == 0 {
-			p.addf("%s.measure: a %s has no measure", path, set.Resource)
-		} else {
-			p.addf("%s.measure for a %s is one of %s", path, set.Resource, joinMeasures(measures))
-		}
-		return ""
+	measures := boardregistry.Catalog().MeasuresOf(set.Kind)
+	if len(measures) == 0 {
+		p.addf("%s.measure: a %s has no measure", path, set.Kind.Noun())
+	} else {
+		p.addf("%s.measure for a %s is one of %s", path, set.Kind.Noun(), joinMeasures(measures))
 	}
 
-	return measure
+	return ""
 }
 
 func (p *parser) order(fields map[string]any, path string, measure board.Measure) board.Order {
@@ -589,20 +684,11 @@ func (p *parser) aggregate(
 	return aggregate
 }
 
-func (p *parser) metric(key, path string) string {
-	if _, ok := board.MetricKind(key); !ok {
-		p.addf("%s.metric %q is not one of %s", path, key, strings.Join(board.MetricKeys(), ", "))
-		return ""
-	}
-
-	return key
-}
-
-func (p *parser) tone(fields map[string]any, path string) board.Tone {
-	tone := board.Tone(strings.TrimSpace(stringOf(fields["tone"])))
+func (p *parser) tone(fields map[string]any, path string) boardcatalog.Tone {
+	tone := boardcatalog.Tone(strings.TrimSpace(stringOf(fields["tone"])))
 	if !tone.IsValid() {
 		p.addf("%s.tone is bad, warn, info or ok", path)
-		return board.ToneInfo
+		return boardcatalog.ToneInfo
 	}
 
 	return tone
@@ -733,18 +819,19 @@ func (p *parser) limited(
 	return text
 }
 
-func resourceOf(id pulid.ID) (permission.Resource, bool) {
-	text := id.String()
-	cut := strings.IndexByte(text, '_')
-	if cut < 0 {
-		return "", false
-	}
-	resource, known := recordkind.ResourceOfIDPrefix(text[:cut+1])
-	if !known || !board.Supports(resource) {
+func kindOf(id pulid.ID) (recordkind.Kind, bool) {
+	kind, known := recordkind.OfIDPrefix(id.Prefix())
+	if !known || !boardregistry.Catalog().Supports(kind) {
 		return "", false
 	}
 
-	return resource, true
+	return kind, true
+}
+
+func summable(measure board.Measure, kind recordkind.Kind) bool {
+	spec, ok := measure.Spec(kind)
+
+	return !ok || spec.Summable
 }
 
 func wholeOf(value any) (int, bool) {
@@ -778,19 +865,37 @@ func joinTypes() string {
 	return strings.Join(names, ", ")
 }
 
-func joinResources() string {
-	names := make([]string, 0, len(board.Resources()))
-	for _, resource := range board.Resources() {
-		names = append(names, resource.Noun())
+func joinKinds() string {
+	kinds := boardregistry.Catalog().Kinds()
+	names := make([]string, 0, len(kinds))
+	for idx := range kinds {
+		names = append(names, kinds[idx].Kind.Noun())
 	}
 
 	return strings.Join(names[:len(names)-1], ", ") + " or " + names[len(names)-1]
 }
 
-func joinMeasures(measures []board.Measure) string {
+func joinMeasures(measures []boardcatalog.Measure) string {
 	names := make([]string, 0, len(measures))
-	for _, measure := range measures {
-		names = append(names, string(measure))
+	for idx := range measures {
+		names = append(names, measures[idx].Name)
+	}
+
+	return strings.Join(names, ", ")
+}
+
+func joinMetrics() string {
+	return strings.Join(boardregistry.Catalog().MetricNames(), ", ")
+}
+
+func joinFigures() string {
+	return strings.Join(boardregistry.Catalog().FigureNames(boardcatalog.FormFigures), ", ")
+}
+
+func joinMetricFigures(metric *boardcatalog.Metric) string {
+	names := make([]string, 0, len(metric.Figures))
+	for _, figure := range metric.Figures {
+		names = append(names, figure.Name)
 	}
 
 	return strings.Join(names, ", ")

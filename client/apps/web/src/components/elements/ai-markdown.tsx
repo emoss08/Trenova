@@ -1,6 +1,7 @@
 import { Link } from "@trenova/shared/components/link";
 import { isAppPath } from "@/lib/app-path";
 import { artifactRefId } from "@/lib/artifact-ref";
+import { ArtifactLinkContext } from "./artifact-link-context";
 import { splitMarkdownBlocks } from "@/lib/markdown-blocks";
 import { HighlightedCode } from "@trenova/shared/components/ui/highlighted-code";
 import { cn } from "@trenova/shared/lib/utils";
@@ -123,15 +124,6 @@ const LINK_CLASS = "text-foreground underline underline-offset-2";
 export type MarkdownLinkRenderer = (href: string, children: ReactNode) => ReactNode | null;
 
 export const MarkdownLinkContext = createContext<MarkdownLinkRenderer | null>(null);
-
-/**
- * Draws an artifact a reply names in its sentence, by the artifact's own
- * title, or returns null when the surface does not know that artifact, which
- * leaves the link its words.
- */
-export type ArtifactLinkRenderer = (id: string) => ReactNode | null;
-
-export const ArtifactLinkContext = createContext<ArtifactLinkRenderer | null>(null);
 
 export function MarkdownLink({ href, children }: ComponentProps<"a">) {
   // A reply is also drawn outside the app's router (a story, a printed export); a link there is

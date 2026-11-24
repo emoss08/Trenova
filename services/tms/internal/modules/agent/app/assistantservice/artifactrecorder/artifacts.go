@@ -27,6 +27,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -53,6 +54,7 @@ type Recorder struct {
 	Recorded  []*assistantartifact.Artifact
 	readBy    *attribution.AgentIdentity
 	agentRead bool
+	agent     *assistantports.BoardAgentRead
 	// reads is what an artifact needs beyond the tool's result: the agent
 	// a document is credited to, the pages an extraction was read from.
 	reads *Reads
@@ -307,6 +309,14 @@ func Open(
 		emit:      emit,
 		reads:     deps.Reads,
 	}
+}
+
+func (r *Recorder) ReadForAgent(dataAccess permission.FieldSensitivity) *Recorder {
+	if r != nil {
+		r.agent = &assistantports.BoardAgentRead{DataAccess: dataAccess}
+	}
+
+	return r
 }
 
 // Observer is the hook the runtime calls per tool result; nil when there is
@@ -840,6 +850,7 @@ func (r *Recorder) showBoard(
 		Actor:    r.reader,
 		ThreadID: r.thread.ID,
 		Board:    &request.Board,
+		Agent:    r.agent,
 	}
 	if err := boards.Check(r.ctx, fill); err != nil {
 		return nil, err
@@ -864,7 +875,7 @@ func (r *Recorder) showBoard(
 		return nil, errBoardStore
 	}
 	author := r.author()
-	payload := board.NewPayload(&request.Board, filled.Snapshot(), author)
+	payload := board.NewPayload(&request.Board, filled, author)
 	fields, err := payload.Map()
 	if err != nil {
 		return nil, errBoardStore

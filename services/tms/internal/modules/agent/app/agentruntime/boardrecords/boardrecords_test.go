@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/boardrecords"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/toolresult"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -30,13 +31,13 @@ func incidentRead() boardrecords.Read {
 	})
 }
 
-func shown(ids ...string) map[permission.Resource][]pulid.ID {
+func shown(ids ...string) map[recordkind.Kind][]pulid.ID {
 	out := make([]pulid.ID, 0, len(ids))
 	for _, id := range ids {
 		out = append(out, pulid.ID(id))
 	}
 
-	return map[permission.Resource][]pulid.ID{permission.ResourceShipment: out}
+	return map[recordkind.Kind][]pulid.ID{recordkind.Kind(permission.ResourceShipment): out}
 }
 
 func TestSwapFor_PutsTheNamedRecordInPlaceOfTheOneNoWordNames(t *testing.T) {
@@ -83,7 +84,7 @@ func TestSwapFor_RefusesWhatIsNotOneForOne(t *testing.T) {
 	tests := []struct {
 		name  string
 		words string
-		board map[permission.Resource][]pulid.ID
+		board map[recordkind.Kind][]pulid.ID
 	}{
 		{
 			name:  "every shown record is named",
@@ -122,8 +123,8 @@ func TestUnshown_NamesOnlyRecordsOfAKindTheBoardShows(t *testing.T) {
 	assert.Empty(t, read.Unshown(shown(shp010), "SEED-SHP-0100 is not SEED-SHP-01"),
 		"a number inside a longer one is not that number")
 	assert.Empty(t, read.Unshown(
-		map[permission.Resource][]pulid.ID{
-			permission.ResourceInvoice: {pulid.ID("inv_01M7V48JZXABMWM4E71Z778WBW")},
+		map[recordkind.Kind][]pulid.ID{
+			recordkind.Kind(permission.ResourceInvoice): {pulid.ID("inv_01M7V48JZXABMWM4E71Z778WBW")},
 		},
 		"The invoice for SEED-SHP-008",
 	), "a shipment named beside invoices is not a shipment the board leaves out")
@@ -234,4 +235,55 @@ func TestFigureNumbers_ReadsARecordsNumberInAFigure(t *testing.T) {
 			"}; {total} and {revenue:SEED-SHP-099} stay.",
 		"groups": []any{map[string]any{"note": "Late by {lateness:" + shp001 + "}."}},
 	}, got)
+}
+
+const (
+	ridgeline = "car_01M85YVFVGEY410Y0CX9VRN0PP"
+	ironhorse = "car_01M7V48E3X488N2DMBC3YHWXXA"
+)
+
+func carriersRead() boardrecords.Read {
+	results := []string{toolresult.Fence("carrier_list_cover_ending", `{"count":2,"items":[`+
+		`{"id":"`+ridgeline+`","name":"Ridgeline Freight","coverEnds":"2026-11-29"},`+
+		`{"id":"`+ironhorse+`","name":"Ironhorse Freight Lines","coverEnds":"2026-10-20"}]}`)}
+
+	return boardrecords.Of(results).ThisTurn(results)
+}
+
+func carriersShown(ids ...string) map[recordkind.Kind][]pulid.ID {
+	out := make([]pulid.ID, 0, len(ids))
+	for _, id := range ids {
+		out = append(out, pulid.ID(id))
+	}
+
+	return map[recordkind.Kind][]pulid.ID{recordkind.Kind(permission.ResourceCarrier): out}
+}
+
+func TestSwapFor_LeavesAGroupOfARecordThisTurnRead(t *testing.T) {
+	t.Parallel()
+
+	read := carriersRead()
+	words := "Carriers with insurance ending soon\n\n{lapsingCarriers:coverAgainstLoads} " +
+		"carriers hauling for us have required insurance ending within 30 days. Ridgeline " +
+		"Freight is the most urgent.\n\nCover already lapsed"
+	board := carriersShown(ironhorse)
+
+	unshown := read.Unshown(board, words)
+	require.Len(t, unshown, 1)
+	assert.Equal(t, ridgeline, unshown[0].ID)
+
+	swap, ok := read.SwapFor(board, words, unshown)
+	assert.False(t, ok, "the group 'Cover already lapsed' is about Ironhorse, which this turn read")
+	assert.Equal(t, ironhorse, swap.From.ID)
+	refusal := boardrecords.SwapRefusal("show_answer", "group", &swap)
+	assert.Contains(t, refusal, "Ridgeline Freight (the carrier "+ridgeline+")")
+	assert.Contains(t, refusal, "Ironhorse Freight Lines ("+ironhorse+")")
+}
+
+func TestMetricsListRecords_KnowsAMetricThatDrawsRecords(t *testing.T) {
+	t.Parallel()
+
+	assert.True(t, boardrecords.MetricsListRecords([]string{"coverAgainstLoads"}))
+	assert.False(t, boardrecords.MetricsListRecords([]string{"onTimeByWeek"}))
+	assert.False(t, boardrecords.MetricsListRecords(nil))
 }

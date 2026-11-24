@@ -1,0 +1,147 @@
+defaults:
+  agent: Bench · EDI desk
+  tags: [beyond, board, edi]
+
+# The edi_todays_tenders fixture gives Acme Manufacturing's partner (ACMEMFG) six 204s over SFTP:
+# 88214, 88215, 88240, 88243 and 88244 became shipments and were answered with a 990; 88231 was
+# quarantined (ship-to 0412 is not a known location); the 990 for 88244 never reached Acme (SFTP
+# login refused); the 990 for 88240 is still waiting for Acme's 997. The setup places that morning
+# in the day the scenario runs: each file the fixture's time before now, never before the
+# organization's midnight, and every time hanging from it (the 204, the tender, the 990 two to
+# four minutes later, Acme's 997 six minutes after that) written whole from the file's time, never
+# shifted, so trials that set it up at once, or again, leave the same morning.
+shared: &todays-tenders
+  - >
+    WITH target AS (
+      SELECT f.id AS file_id, v.answer_in, greatest(extract(epoch from now())::bigint - v.age,
+        extract(epoch from (date_trunc('day', now() AT TIME ZONE o.timezone)
+          AT TIME ZONE o.timezone))::bigint + v.rank * 60) AS r
+      FROM edi_inbound_files AS f
+      JOIN edi_partners AS p ON p.id = f.edi_partner_id AND p.code = 'ACMEMFG'
+      JOIN organizations AS o ON o.id = f.organization_id
+      JOIN (VALUES ('ACMEMFG_TENDER_88214.edi', 13140, 1, 180),
+        ('ACMEMFG_TENDER_88215.edi', 13120, 2, 120), ('ACMEMFG_TENDER_88231.edi', 7260, 3, 0),
+        ('ACMEMFG_TENDER_88240.edi', 5160, 4, 240), ('ACMEMFG_TENDER_88243.edi', 2940, 5, 180),
+        ('ACMEMFG_TENDER_88244.edi', 2160, 6, 120))
+        AS v(name, age, rank, answer_in) ON v.name = f.file_name)
+    UPDATE edi_messages AS a
+    SET generated_at = t.r + t.answer_in - 30, created_at = t.r + t.answer_in - 30,
+      updated_at = t.r + t.answer_in,
+      delivery_sent_at = CASE WHEN a.delivery_status = 'Sent' THEN t.r + t.answer_in END,
+      delivery_last_attempt_at = CASE WHEN a.delivery_status = 'Sent' THEN t.r + t.answer_in
+        ELSE greatest(t.r + t.answer_in, extract(epoch from now())::bigint - 360) END,
+      ack_received_at = CASE WHEN a.ack_status = 'Accepted' THEN t.r + t.answer_in + 360 END
+    FROM target AS t, edi_messages AS m, edi_load_tender_transfers AS x
+    WHERE m.inbound_file_id = t.file_id AND x.inbound_message_id = m.id AND a.transfer_id = x.id
+  - >
+    WITH target AS (
+      SELECT f.id AS file_id, v.answer_in, greatest(extract(epoch from now())::bigint - v.age,
+        extract(epoch from (date_trunc('day', now() AT TIME ZONE o.timezone)
+          AT TIME ZONE o.timezone))::bigint + v.rank * 60) AS r
+      FROM edi_inbound_files AS f
+      JOIN edi_partners AS p ON p.id = f.edi_partner_id AND p.code = 'ACMEMFG'
+      JOIN organizations AS o ON o.id = f.organization_id
+      JOIN (VALUES ('ACMEMFG_TENDER_88214.edi', 13140, 1, 180),
+        ('ACMEMFG_TENDER_88215.edi', 13120, 2, 120), ('ACMEMFG_TENDER_88231.edi', 7260, 3, 0),
+        ('ACMEMFG_TENDER_88240.edi', 5160, 4, 240), ('ACMEMFG_TENDER_88243.edi', 2940, 5, 180),
+        ('ACMEMFG_TENDER_88244.edi', 2160, 6, 120))
+        AS v(name, age, rank, answer_in) ON v.name = f.file_name)
+    UPDATE edi_load_tender_transfers AS x
+    SET submitted_at = t.r + 20, approved_at = t.r + 60, processed_at = t.r + 60,
+      created_at = t.r + 20, updated_at = t.r + 60
+    FROM target AS t, edi_messages AS m
+    WHERE m.inbound_file_id = t.file_id AND x.inbound_message_id = m.id
+  - >
+    WITH target AS (
+      SELECT f.id AS file_id, v.answer_in, greatest(extract(epoch from now())::bigint - v.age,
+        extract(epoch from (date_trunc('day', now() AT TIME ZONE o.timezone)
+          AT TIME ZONE o.timezone))::bigint + v.rank * 60) AS r
+      FROM edi_inbound_files AS f
+      JOIN edi_partners AS p ON p.id = f.edi_partner_id AND p.code = 'ACMEMFG'
+      JOIN organizations AS o ON o.id = f.organization_id
+      JOIN (VALUES ('ACMEMFG_TENDER_88214.edi', 13140, 1, 180),
+        ('ACMEMFG_TENDER_88215.edi', 13120, 2, 120), ('ACMEMFG_TENDER_88231.edi', 7260, 3, 0),
+        ('ACMEMFG_TENDER_88240.edi', 5160, 4, 240), ('ACMEMFG_TENDER_88243.edi', 2940, 5, 180),
+        ('ACMEMFG_TENDER_88244.edi', 2160, 6, 120))
+        AS v(name, age, rank, answer_in) ON v.name = f.file_name)
+    UPDATE edi_messages AS m
+    SET generated_at = t.r, created_at = t.r, updated_at = t.r
+    FROM target AS t
+    WHERE m.inbound_file_id = t.file_id
+  - >
+    WITH target AS (
+      SELECT f.id AS file_id, v.answer_in, greatest(extract(epoch from now())::bigint - v.age,
+        extract(epoch from (date_trunc('day', now() AT TIME ZONE o.timezone)
+          AT TIME ZONE o.timezone))::bigint + v.rank * 60) AS r
+      FROM edi_inbound_files AS f
+      JOIN edi_partners AS p ON p.id = f.edi_partner_id AND p.code = 'ACMEMFG'
+      JOIN organizations AS o ON o.id = f.organization_id
+      JOIN (VALUES ('ACMEMFG_TENDER_88214.edi', 13140, 1, 180),
+        ('ACMEMFG_TENDER_88215.edi', 13120, 2, 120), ('ACMEMFG_TENDER_88231.edi', 7260, 3, 0),
+        ('ACMEMFG_TENDER_88240.edi', 5160, 4, 240), ('ACMEMFG_TENDER_88243.edi', 2940, 5, 180),
+        ('ACMEMFG_TENDER_88244.edi', 2160, 6, 120))
+        AS v(name, age, rank, answer_in) ON v.name = f.file_name)
+    UPDATE edi_inbound_files AS f
+    SET received_at = t.r, processed_at = t.r + 20, created_at = t.r, updated_at = t.r + 20
+    FROM target AS t
+    WHERE f.id = t.file_id
+
+scenarios:
+  - name: beyond-edi-todays-tenders
+    description: >
+      One trading partner's day weighed together: every tender Acme Manufacturing sent today
+      and what became of it (the shipment it made, our 990, Acme's 997), as the partnerDay
+      metric's log, and the ones that need a hand (the quarantined file and the 990 that never
+      reached Acme), each with its reason. The answer is a board in the conversation, not a
+      prose list; its counts are readings of the metric, never typed. The agent reaches the
+      partner's id through edi_list_partners and the files and messages through their lists.
+    setup: *todays-tenders
+    steps:
+      - say: "did all of today's tenders from Acme Manufacturing go through?"
+        expect:
+          calls: ["edi_list_partners|edi_get_partner|edi_list_transfers|edi_list_inbound_files|edi_list_messages", "show_answer|show_board"]
+          maxCalls: 8
+          maxFailedCalls: 1
+          noProposals: true
+          noRecordIds: true
+          board:
+            place: conversation
+            minReadings: 1
+            metrics: [partnerDay]
+          facts:
+            - sql: >
+                select x.tender_payload->>'bol' from edi_messages a
+                join edi_load_tender_transfers x on x.id = a.transfer_id
+                join edi_partners p on p.id = a.edi_partner_id and p.code = 'ACMEMFG'
+                where a.transaction_set = '990' and a.delivery_status = 'Failed'
+              note: the tender whose 990 did not reach Acme
+          rubric: >
+            Says not all of today's tenders went through: of the six Acme Manufacturing sent
+            today, five became shipments and four answers reached Acme (counts placed as
+            readings of partnerDay, not typed). It names the two that need a hand with their
+            reasons: the quarantined tender file, whose ship-to 0412 is not a known location,
+            and tender 88244, which became a shipment but whose 990 did not reach Acme because
+            the SFTP login was refused. The board draws today's log of Acme's tenders; a group
+            of the quarantined file or the failed 990 beside it is welcome. Nothing is said
+            about a tender the board does not show, no shipment or file is named by an id, and
+            nothing is reprocessed or resent.
+
+  - name: beyond-one-edi-tender-is-a-sentence
+    description: >
+      What became of one tender is one fact: a sentence, not a board.
+    setup: *todays-tenders
+    steps:
+      - say: "did Acme Manufacturing's tender 88244 go through?"
+        expect:
+          calls: ["edi_list_inbound_files|edi_list_messages|edi_list_transfers|edi_get_inbound_file|edi_get_message"]
+          maxCalls: 6
+          maxFailedCalls: 1
+          noProposals: true
+          noRecordIds: true
+          noBoard: true
+          replyIncludes:
+            - "/(?i)login[^.]{0,20}refused|refused[^.]{0,20}login/"
+          rubric: >
+            Answers in a sentence or two, without a board, that tender 88244 was accepted and
+            became a shipment but our 990 answer did not reach Acme Manufacturing because the
+            SFTP login was refused; it may offer to resend it, and resends nothing.

@@ -89,9 +89,9 @@ func (r *intelligenceRepository) Intelligence(
 		r.db,
 		func(ctx context.Context) (*detentionports.IntelligenceRollup, error) {
 			out := &detentionports.IntelligenceRollup{}
-			current := span{IntelligenceWindow: req.Current, location: req.LocationID}
-			previous := span{IntelligenceWindow: req.Previous, location: req.LocationID}
-			figures := figuresTable(req.LocationID)
+			current := span{IntelligenceWindow: req.Current, locations: req.LocationIDs}
+			previous := span{IntelligenceWindow: req.Previous, locations: req.LocationIDs}
+			figures := figuresTable(req.LocationIDs)
 
 			var facilities []facilityRow
 			var splits splitsRow
@@ -112,13 +112,16 @@ func (r *intelligenceRepository) Intelligence(
 				keel.IntoSlice(r.days(figures, current), &out.Days),
 				keel.IntoSlice(r.policyUses(current), &uses),
 			}
-			if req.LocationID.IsNotNil() {
+			if len(req.LocationIDs) > 0 {
 				items = append(
 					items,
 					keel.IntoSlice(r.liveCustomers(current, req.Limit), &out.Customers),
 				)
 			} else {
-				items = append(items, keel.IntoSlice(r.customers(current, req.Limit), &out.Customers))
+				items = append(
+					items,
+					keel.IntoSlice(r.customers(current, req.Limit), &out.Customers),
+				)
 			}
 
 			if err := keel.Batch(ctx, r.db.Keel(ctx), items...); err != nil {
@@ -129,7 +132,7 @@ func (r *intelligenceRepository) Intelligence(
 			out.Facilities = facilityIntelligence(facilities)
 			out.Recovery = recovery.buckets(&invoiced)
 			out.Splits = splits.splits()
-			if req.LocationID.IsNil() {
+			if len(req.LocationIDs) == 0 {
 				out.Arrivals = arrivalCells(arrivals)
 			}
 			out.PolicyUses = policyUses(uses)
@@ -139,11 +142,11 @@ func (r *intelligenceRepository) Intelligence(
 	)
 }
 
-// span is one window of whole organization-local days, narrowed to a facility when location is
-// set.
+// span is one window of whole organization-local days, narrowed to facilities when locations
+// names any.
 type span struct {
 	detentionports.IntelligenceWindow
-	location pulid.ID
+	locations []pulid.ID
 }
 
 // days keeps the daily rollup rows of the span's days: a row's bucket is its day's local midnight,
@@ -155,13 +158,17 @@ func (s span) days(t *rollupread.Table) []keel.Pred {
 	}, s.at(t)...)
 }
 
-// at narrows a rollup that keeps facilities to the span's one, when it names one.
+// at narrows a rollup that keeps facilities to the span's, when it names any.
 func (s span) at(t *rollupread.Table) []keel.Pred {
-	if s.location.IsNil() || !t.Has(detentionrollup.Location) {
+	if len(s.locations) == 0 || !t.Has(detentionrollup.Location) {
 		return nil
 	}
+	ids := make([]string, len(s.locations))
+	for i, id := range s.locations {
+		ids[i] = id.String()
+	}
 
-	return []keel.Pred{keel.StringOf(t.Col(detentionrollup.Location)).Eq(s.location.String())}
+	return []keel.Pred{keel.StringOf(t.Col(detentionrollup.Location)).In(ids...)}
 }
 
 // view reads the span's whole months from monthly and the days around them from daily, as one
@@ -182,13 +189,13 @@ func (s span) settled(o *detentiondb.DetentionOccurrencesTable) []keel.Pred {
 		o.IsOpen.IsFalse(),
 		o.ClockStartAt.Gte(s.From),
 		o.ClockStartAt.Lte(s.To),
-		keel.When(s.location.IsNotNil(), o.LocationID.Eq(s.location)),
+		keel.When(len(s.locations) > 0, o.LocationID.In(s.locations...)),
 	}
 }
 
-// figuresTable is where a read's figures come from: the organization's days, or one facility's.
-func figuresTable(location pulid.ID) *rollupread.Table {
-	if location.IsNotNil() {
+// figuresTable is where a read's figures come from: the organization's days, or its facilities'.
+func figuresTable(locations []pulid.ID) *rollupread.Table {
+	if len(locations) > 0 {
 		return detentionrollup.FacilityDailyTable
 	}
 
@@ -602,7 +609,7 @@ func (r *intelligenceRepository) arrivals(
 	days *[]arrivalRow,
 	cells *[]detentionports.ArrivalCell,
 ) keel.BatchItem {
-	if s.location.IsNotNil() {
+	if len(s.locations) > 0 {
 		return keel.IntoSlice(r.liveArrivals(s, zone), cells)
 	}
 
@@ -628,7 +635,7 @@ func (r *intelligenceRepository) liveArrivals(s span, zone string) keel.Projecti
 		Pick(weekday, hour, keel.Count(), keel.Count().Filter(detentionrollup.Detained())).
 		Where(
 			o.IsOpen.IsFalse(),
-			o.LocationID.Eq(s.location),
+			o.LocationID.In(s.locations...),
 			o.ArrivedAt.Gte(s.From),
 			o.ArrivedAt.Lte(s.To),
 		).

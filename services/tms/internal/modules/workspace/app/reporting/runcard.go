@@ -38,6 +38,7 @@ const (
 	RunCardWithheldAccess  = RunCardWithheld("access")
 	RunCardWithheldChanged = RunCardWithheld("changed")
 	RunCardWithheldPlan    = RunCardWithheld("plan")
+	RunCardWithheldDeleted = RunCardWithheld("deleted")
 )
 
 type RunCardReport struct {
@@ -98,6 +99,10 @@ func (s *Service) GetRunCard(ctx context.Context, req *GetRunRequest) (*RunCard,
 		card.Schedule = s.runCardSchedule(ctx, req, run)
 	}
 
+	if run.ReportDeleted() {
+		card.Withheld = RunCardWithheldDeleted
+		return card, nil
+	}
 	if len(run.Sample) == 0 {
 		return card, nil
 	}

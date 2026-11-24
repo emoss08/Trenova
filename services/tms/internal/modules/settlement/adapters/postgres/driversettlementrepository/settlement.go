@@ -209,6 +209,8 @@ func (r *settlementRepository) GetWorkspaceCounts(
 					)),
 					coalesceZero(s.NetPayMinor.Sum().Filter(notVoided)),
 					coalesceZero(s.GrossEarningsMinor.Sum().Filter(notVoided)),
+					keel.Count().Filter(s.HoldReason.IsNotNull()),
+					coalesceZero(s.NetPayMinor.Sum().Filter(s.HoldReason.IsNotNull())),
 				).Where(
 					s.PeriodStart.Eq(req.PeriodStart),
 					s.PeriodEnd.Eq(req.PeriodEnd),
@@ -346,6 +348,12 @@ func (r *settlementRepository) Update(
 			s.VoidedAt,
 			s.VoidReason,
 			s.VoidJournalBatchID,
+			s.HoldReason,
+			s.HoldNote,
+			s.HeldByID,
+			s.HeldAt,
+			s.HoldReleasedByID,
+			s.HoldReleasedAt,
 		); err != nil {
 			return nil, settlementErrors.Map(err, entity.ID.String())
 		}

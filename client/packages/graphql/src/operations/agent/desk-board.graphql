@@ -15,6 +15,7 @@ query DeskBoardCard($threadId: ID!, $artifactId: ID!) {
       tone
       struck
       reading
+      artifact
     }
     readings {
       key
@@ -33,7 +34,7 @@ query DeskBoardCard($threadId: ID!, $artifactId: ID!) {
       }
       source {
         kind
-        resource
+        recordKind
         count
         readable
         title
@@ -52,12 +53,13 @@ query DeskBoardCard($threadId: ID!, $artifactId: ID!) {
         tone
         struck
         reading
+        artifact
       }
       state
       tone
       source {
         kind
-        resource
+        recordKind
         count
         readable
         title
@@ -80,12 +82,17 @@ query DeskBoardCard($threadId: ID!, $artifactId: ID!) {
       }
       measure
       rows {
-        resource
+        kind
         id
         readable
         label
         subtitle
         status
+        statusTone
+        opens {
+          kind
+          id
+        }
         measure {
           measure
           value {
@@ -94,20 +101,56 @@ query DeskBoardCard($threadId: ID!, $artifactId: ID!) {
             currency
             text
           }
-          state
-          place
-          at
+          standing {
+            text
+            value {
+              kind
+              number
+              currency
+              text
+            }
+            at
+            day
+            place
+          }
+          fact {
+            text
+            value {
+              kind
+              number
+              currency
+              text
+            }
+            at
+            day
+            place
+          }
           tone
+          bar {
+            centred
+            bound
+            segments {
+              kind
+              start
+              width
+              tone
+            }
+          }
         }
       }
       compare {
         columns {
-          resource
+          kind
           id
           readable
           label
           subtitle
           status
+          statusTone
+          opens {
+            kind
+            id
+          }
           measure {
             measure
             value {
@@ -116,10 +159,41 @@ query DeskBoardCard($threadId: ID!, $artifactId: ID!) {
               currency
               text
             }
-            state
-            place
-            at
+            standing {
+              text
+              value {
+                kind
+                number
+                currency
+                text
+              }
+              at
+              day
+              place
+            }
+            fact {
+              text
+              value {
+                kind
+                number
+                currency
+                text
+              }
+              at
+              day
+              place
+            }
             tone
+            bar {
+              centred
+              bound
+              segments {
+                kind
+                start
+                width
+                tone
+              }
+            }
           }
         }
         lines {
@@ -140,7 +214,327 @@ query DeskBoardCard($threadId: ID!, $artifactId: ID!) {
         total
         artifactId
       }
-      chart
+      metric {
+        name
+        form
+        title
+        source
+        figures {
+          name
+          label
+          value {
+            kind
+            number
+            currency
+            text
+          }
+          was {
+            kind
+            number
+            currency
+            text
+          }
+          wasAt
+          tone
+        }
+        chart {
+          unit
+          currency
+          ticks {
+            at
+            label
+            marked
+          }
+          series {
+            name
+            role
+            points
+          }
+          marked
+          band {
+            from
+            to
+            low
+            high
+          }
+          target {
+            value
+            label
+          }
+          ref {
+            value
+            label
+          }
+          ghost
+          rows {
+            label
+            record {
+              kind
+              id
+              readable
+              label
+              subtitle
+              status
+              statusTone
+              opens {
+                kind
+                id
+              }
+              measure {
+                measure
+                value {
+                  kind
+                  number
+                  currency
+                  text
+                }
+                standing {
+                  text
+                  value {
+                    kind
+                    number
+                    currency
+                    text
+                  }
+                  at
+                  day
+                  place
+                }
+                fact {
+                  text
+                  value {
+                    kind
+                    number
+                    currency
+                    text
+                  }
+                  at
+                  day
+                  place
+                }
+                tone
+                bar {
+                  centred
+                  bound
+                  segments {
+                    kind
+                    start
+                    width
+                    tone
+                  }
+                }
+              }
+            }
+            value {
+              kind
+              number
+              currency
+              text
+            }
+            marked
+            rest
+            spans {
+              from
+              to
+              kind
+            }
+            dots {
+              at
+              value
+              marked
+              ghost
+              label
+            }
+          }
+        }
+        split {
+          total {
+            kind
+            number
+            currency
+            text
+          }
+          parts {
+            label
+            value {
+              kind
+              number
+              currency
+              text
+            }
+            kind
+          }
+        }
+        grid {
+          columns {
+            label
+            sublabel
+          }
+          rows {
+            label
+            cells {
+              have
+              need
+              needHigh
+              state
+            }
+          }
+        }
+        log {
+          at
+          tone
+          text
+          detail
+          records {
+            kind
+            id
+            readable
+            label
+            subtitle
+            status
+            statusTone
+            opens {
+              kind
+              id
+            }
+            measure {
+              measure
+              value {
+                kind
+                number
+                currency
+                text
+              }
+              standing {
+                text
+                value {
+                  kind
+                  number
+                  currency
+                  text
+                }
+                at
+                day
+                place
+              }
+              fact {
+                text
+                value {
+                  kind
+                  number
+                  currency
+                  text
+                }
+                at
+                day
+                place
+              }
+              tone
+              bar {
+                centred
+                bound
+                segments {
+                  kind
+                  start
+                  width
+                  tone
+                }
+              }
+            }
+          }
+        }
+        checks {
+          title
+          tone
+          detail
+          count {
+            kind
+            number
+            currency
+            text
+          }
+          was {
+            kind
+            number
+            currency
+            text
+          }
+          records {
+            kind
+            id
+            readable
+            label
+            subtitle
+            status
+            statusTone
+            opens {
+              kind
+              id
+            }
+            measure {
+              measure
+              value {
+                kind
+                number
+                currency
+                text
+              }
+              standing {
+                text
+                value {
+                  kind
+                  number
+                  currency
+                  text
+                }
+                at
+                day
+                place
+              }
+              fact {
+                text
+                value {
+                  kind
+                  number
+                  currency
+                  text
+                }
+                at
+                day
+                place
+              }
+              tone
+              bar {
+                centred
+                bound
+                segments {
+                  kind
+                  start
+                  width
+                  tone
+                }
+              }
+            }
+          }
+          hidden
+        }
+        table {
+          columns {
+            label
+            kind
+          }
+          rows {
+            value {
+              kind
+              number
+              currency
+              text
+            }
+            text
+            mark
+          }
+        }
+      }
       events {
         at
         operation
@@ -166,12 +560,17 @@ query DeskBoardCard($threadId: ID!, $artifactId: ID!) {
           text
         }
         records {
-          resource
+          kind
           id
           readable
           label
           subtitle
           status
+          statusTone
+          opens {
+            kind
+            id
+          }
           measure {
             measure
             value {
@@ -180,10 +579,41 @@ query DeskBoardCard($threadId: ID!, $artifactId: ID!) {
               currency
               text
             }
-            state
-            place
-            at
+            standing {
+              text
+              value {
+                kind
+                number
+                currency
+                text
+              }
+              at
+              day
+              place
+            }
+            fact {
+              text
+              value {
+                kind
+                number
+                currency
+                text
+              }
+              at
+              day
+              place
+            }
             tone
+            bar {
+              centred
+              bound
+              segments {
+                kind
+                start
+                width
+                tone
+              }
+            }
           }
         }
         hidden
@@ -205,15 +635,21 @@ query DeskBoardCard($threadId: ID!, $artifactId: ID!) {
         tone
         struck
         reading
+        artifact
       }
       noteTone
       chips {
-        resource
+        kind
         id
         readable
         label
         subtitle
         status
+        statusTone
+        opens {
+          kind
+          id
+        }
         measure {
           measure
           value {
@@ -222,20 +658,100 @@ query DeskBoardCard($threadId: ID!, $artifactId: ID!) {
             currency
             text
           }
-          state
-          place
-          at
+          standing {
+            text
+            value {
+              kind
+              number
+              currency
+              text
+            }
+            at
+            day
+            place
+          }
+          fact {
+            text
+            value {
+              kind
+              number
+              currency
+              text
+            }
+            at
+            day
+            place
+          }
           tone
+          bar {
+            centred
+            bound
+            segments {
+              kind
+              start
+              width
+              tone
+            }
+          }
         }
       }
       work {
         row {
-          resource
+          kind
           id
           readable
           label
           subtitle
           status
+          statusTone
+          opens {
+            kind
+            id
+          }
+          measure {
+            measure
+            value {
+              kind
+              number
+              currency
+              text
+            }
+            standing {
+              text
+              value {
+                kind
+                number
+                currency
+                text
+              }
+              at
+              day
+              place
+            }
+            fact {
+              text
+              value {
+                kind
+                number
+                currency
+                text
+              }
+              at
+              day
+              place
+            }
+            tone
+            bar {
+              centred
+              bound
+              segments {
+                kind
+                start
+                width
+                tone
+              }
+            }
+          }
         }
         signals {
           lens
@@ -250,10 +766,61 @@ query DeskBoardCard($threadId: ID!, $artifactId: ID!) {
         label
         ask
         records {
-          resource
+          kind
           id
           readable
           label
+          subtitle
+          status
+          statusTone
+          opens {
+            kind
+            id
+          }
+          measure {
+            measure
+            value {
+              kind
+              number
+              currency
+              text
+            }
+            standing {
+              text
+              value {
+                kind
+                number
+                currency
+                text
+              }
+              at
+              day
+              place
+            }
+            fact {
+              text
+              value {
+                kind
+                number
+                currency
+                text
+              }
+              at
+              day
+              place
+            }
+            tone
+            bar {
+              centred
+              bound
+              segments {
+                kind
+                start
+                width
+                tone
+              }
+            }
+          }
         }
       }
     }

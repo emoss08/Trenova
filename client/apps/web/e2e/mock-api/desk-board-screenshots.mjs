@@ -21,6 +21,22 @@ const LATE = `${THREAD}/six-late-shipments`;
 const CARRIERS = `${THREAD}/carriers-head-to-head`;
 const CLOSE = `${THREAD}/october-close`;
 const INLINE = "/desk/t/athr_desk_board_inline";
+const MEASURES = "/desk/t/athr_desk_board_beyond";
+const BEYOND_FRAMES = [
+  "beyond",
+  "ontime",
+  "aging",
+  "fuelcost",
+  "facilities",
+  "coverage",
+  "settlements",
+  "carriers",
+  "overtime",
+  "ifta",
+  "edi",
+  "close",
+  "halfwidth",
+];
 // What each conversation shot waits for before it is taken.
 const DRAWN = "text=From the board for this answer";
 const READING = '[aria-label="Reading the board…"]';
@@ -144,6 +160,59 @@ const shots = [
     colorScheme: "light",
     width: 600,
     wait: DRAWN,
+  },
+  // Boards beyond dispatch: one conversation per approved frame, drawn in its metric forms,
+  // and the Measures frame (every form once) at 1600px and the conversation's narrow width,
+  // light and dark, as a reader without access, with nothing to draw, and while it is read.
+  ...BEYOND_FRAMES.flatMap((frame) =>
+    ["light", "dark"].map((colorScheme) => ({
+      name: `beyond-${frame}-${colorScheme}`,
+      path: `/desk/t/athr_desk_board_${frame}`,
+      stage: "live",
+      colorScheme,
+      width: 1600,
+      wait: DRAWN,
+    })),
+  ),
+  {
+    name: "beyond-measures-narrow-light",
+    path: MEASURES,
+    stage: "live",
+    colorScheme: "light",
+    width: 600,
+    wait: DRAWN,
+  },
+  {
+    name: "beyond-measures-narrow-dark",
+    path: MEASURES,
+    stage: "live",
+    colorScheme: "dark",
+    width: 600,
+    wait: DRAWN,
+  },
+  {
+    name: "beyond-measures-locked-light",
+    path: MEASURES,
+    stage: "locked",
+    colorScheme: "light",
+    width: 1600,
+    wait: DRAWN,
+  },
+  {
+    name: "beyond-measures-empty-dark",
+    path: MEASURES,
+    stage: "empty",
+    colorScheme: "dark",
+    width: 1600,
+    wait: DRAWN,
+  },
+  {
+    name: "beyond-measures-reading-light",
+    path: MEASURES,
+    stage: "reading",
+    colorScheme: "light",
+    width: 1600,
+    wait: READING,
   },
 ];
 

@@ -218,6 +218,7 @@ import (
 	recurringshipmentservice "github.com/emoss08/trenova/internal/modules/operations/app/recurringshipmentservice"
 	routingguideservice "github.com/emoss08/trenova/internal/modules/operations/app/routingguideservice"
 	assignmentports "github.com/emoss08/trenova/internal/modules/operations/ports/assignmentports"
+	carriercoverports "github.com/emoss08/trenova/internal/modules/operations/ports/carriercoverports"
 	customertrackingports "github.com/emoss08/trenova/internal/modules/operations/ports/customertrackingports"
 	demandforecastports "github.com/emoss08/trenova/internal/modules/operations/ports/demandforecastports"
 	driverpositioningports "github.com/emoss08/trenova/internal/modules/operations/ports/driverpositioningports"
@@ -274,6 +275,7 @@ import (
 	carriersettlementports "github.com/emoss08/trenova/internal/modules/settlement/ports/carriersettlementports"
 	driverpayports "github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
 	driversettlementports "github.com/emoss08/trenova/internal/modules/settlement/ports/driversettlementports"
+	settlementreleaseports "github.com/emoss08/trenova/internal/modules/settlement/ports/settlementreleaseports"
 	driverportalinvitationservice "github.com/emoss08/trenova/internal/modules/workforce/app/driverportalinvitationservice"
 	driverportalrecordsservice "github.com/emoss08/trenova/internal/modules/workforce/app/driverportalrecordsservice"
 	driverportalservice "github.com/emoss08/trenova/internal/modules/workforce/app/driverportalservice"
@@ -337,6 +339,7 @@ type ResolverParams struct {
 	CarrierAssignmentService          *carrierassignmentservice.Service
 	CarrierCapacityService            *carriercapacityservice.Service
 	CarrierCostEventRepo              carriersettlementports.CarrierCostEventRepository
+	CarrierCover                      carriercoverports.Reader
 	CarrierIntelEnrollmentService     *carrierintelenrollmentservice.Service
 	CarrierIntelMonitorService        *carrierintelmonitorservice.Service
 	CarrierIntelReviewService         *carrierintelreviewservice.Service
@@ -461,6 +464,7 @@ type ResolverParams struct {
 	ServiceTypeService                *servicetypeservice.Service
 	SettlementBatchRepo               driversettlementports.SettlementBatchRepository
 	SettlementControlService          *settlementcontrolservice.Service
+	SettlementRelease                 settlementreleaseports.Reader
 	ShipmentAutoRater                 shipmentserviceports.ShipmentAutoRater
 	ShipmentBillingTransfer           shipmentserviceports.ShipmentBillingTransferService
 	ShipmentCommentService            shipmentcommentports.ShipmentCommentService
@@ -659,6 +663,11 @@ var operations = []Operation{
 		Document: "query DeskCarrierCapacityPostings($destinationStateCode: String, $includeTotalCount: Boolean = false, $input: DataTableConnectionInput!, $openOnly: Boolean = false, $originStateCode: String) { carrierCapacityPostings( input: $input openOnly: $openOnly originStateCode: $originStateCode destinationStateCode: $destinationStateCode ) { edges { cursor node { availableFrom availableTo carrier { id name } carrierId destinationState { abbreviation id } destinationStateId equipmentType { code id } equipmentTypeId id originLocation { city id name } originLocationId originRadiusMiles originState { abbreviation id } originStateId rate rateMethod source truckCount version } } pageInfo { endCursor hasNextPage } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
 	},
 	{
+		Name:     "DeskCarrierCoverEnding",
+		Hash:     "sha256:3d160989b0f235721d171709148262dd5340a2d8eabb75d664eafa3451616123",
+		Document: "query DeskCarrierCoverEnding($limit: Int, $withinDays: Int) { carrierCoverEnding(withinDays: $withinDays, limit: $limit) { code complianceStatus endsAt id missingPolicyTypes name openLoads policyNumber policyType } }",
+	},
+	{
 		Name:     "DeskCarrierIntelEvents",
 		Hash:     "sha256:bccf2c144cb4b046afb3bb9ecc41e22324261731bcc7557f123a5865d7203df8",
 		Document: "query DeskCarrierIntelEvents($filter: CarrierIntelEventFilterInput, $includeTotalCount: Boolean = false, $input: DataTableConnectionInput!) { carrierIntelEvents(input: $input, filter: $filter) { edges { cursor node { acknowledgedAt action carrierId category detectedAt dotNumber id resolution resolvedAt severity status subjectName subjectType summary } } pageInfo { endCursor hasNextPage } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
@@ -689,9 +698,19 @@ var operations = []Operation{
 		Document: "query DeskDetentionCard($id: ID!) { detentionOccurrence(id: $id) { collectability { band chainValid factors { detail earned key label possible remedy } score summary } currentlyBillable { asOf billableAmount billableMinutes } evidence { id kind observedAt source summary } notices { channel deliveryStatus failureReason id kind recipients satisfiesRequirement scheduledFor sentAt wasAutomatic } occurrence { appointmentEnd appointmentStart approvedAt approvedBy { id name } arrivedAt arrivedLate billableAmount billableMinutes calculationTrace capApplied clockStartAt clockStopAt convertedToLayover createdAt currency customerId customerName departedAt disputeNote disputedAt driverPayAmount driverPayMinutes freeMinutesGranted freeTimeExpiresAt id isOpen lateByMinutes location { city id state { abbreviation id } } locationId locationName netMargin noticeDeadlineAt noticeDueAt noticeSentAt notificationStatus policySnapshot rawDwellMinutes requiresApproval roundedMinutes scheduleType shipmentId shipmentProNumber status stopId stopType suppressedByGate updatedAt waivedAmount waivedAt waivedBy { id name } waiverNote waiverReason } } }",
 	},
 	{
+		Name:     "DeskDetentionFacilityWaits",
+		Hash:     "sha256:7f20ea1350607bf2ace66824391300250f65cc0c386bec359aadc85dd8abe422",
+		Document: "query DeskDetentionFacilityWaits($limit: Int, $period: DetentionPeriod!) { detentionFacilityWaits(period: $period, limit: $limit) { billedAmount city detainedCount id medianDwellMinutes medianFreeMinutes name p90DwellMinutes pastFreeMinutes state stopCount } }",
+	},
+	{
 		Name:     "DeskDetentionOccurrences",
 		Hash:     "sha256:e440a15abba4e51834c35a1270b786cd03f289789d5f58daf927ef21031a3dbc",
 		Document: "query DeskDetentionOccurrences($includeAwaitingApproval: Boolean, $proNumber: String, $shipmentId: ID, $urgency: DetentionDeskUrgency) { detentionDesk( includeAwaitingApproval: $includeAwaitingApproval urgency: $urgency shipmentId: $shipmentId proNumber: $proNumber ) { amountAtRisk billableMinutes minutesUntilFreeEnds minutesUntilNoticeDue noticeWindowOpen occurrence { arrivedAt currency customerName freeTimeExpiresAt id locationName noticeSentAt notificationStatus requiresApproval shipmentId shipmentProNumber status stopType } urgency } }",
+	},
+	{
+		Name:     "DeskDetentionStays",
+		Hash:     "sha256:6ad8e5c5e0f56b951fbedb96e57904b4e4a9a3c5bd2705793e580c63f3d973b9",
+		Document: "query DeskDetentionStays($limit: Int, $locationId: ID, $offset: Int, $period: DetentionPeriod!, $stage: DetentionStayStage) { detentionStays( period: $period stage: $stage locationId: $locationId limit: $limit offset: $offset ) { items { billableAmount holdBack minutesOnSite minutesPastFree occurrence { arrivedAt currency customerName departedAt freeMinutesGranted id location { city state { abbreviation } } locationId locationName notificationStatus shipmentId shipmentProNumber status stopType } } totalCount } }",
 	},
 	{
 		Name:     "DeskShipmentTenders",
@@ -725,8 +744,8 @@ var operations = []Operation{
 	},
 	{
 		Name:     "DeskEdiTransfer",
-		Hash:     "sha256:dbdace63813281053bec65c715b8acc24f605d60e274ff131d920bf32c751673",
-		Document: "fragment DeskEdiTransferRowFields on EdiTransfer { bol counterparty { code id name } customerLabel direction failureReason id inboundMessageId processedAt rejectionReason serviceTypeLabel sourceShipmentId status stopCount submittedAt targetShipmentId } query DeskEdiTransfer($id: ID!) { ediTransfer(id: $id) { canAccept transfer { canDecide charges { additional { amount charge method } freight other total } commodities { commodity pieces temperatureMax temperatureMin weight } pieces shipmentTypeLabel stops { address city location pieces postalCode sequence state temperatureMax temperatureMin type weight windowCloses windowOpens } temperatureMax temperatureMin weight ...DeskEdiTransferRowFields } unresolvedMappings { entityType source } } }",
+		Hash:     "sha256:429db647a91b21a8b043afb21989930e34def2d2375d1146b589942c8d555ab3",
+		Document: "fragment DeskEdiTransferRowFields on EdiTransfer { bol counterparty { code id name } customerLabel direction failureReason id inboundMessageId processedAt rejectionReason serviceTypeLabel shipmentNumber sourceShipmentId status stopCount submittedAt targetShipmentId } query DeskEdiTransfer($id: ID!) { ediTransfer(id: $id) { canAccept transfer { canDecide charges { additional { amount charge method } freight other total } commodities { commodity pieces temperatureMax temperatureMin weight } pieces shipmentTypeLabel stops { address city location pieces postalCode sequence state temperatureMax temperatureMin type weight windowCloses windowOpens } temperatureMax temperatureMin weight ...DeskEdiTransferRowFields } unresolvedMappings { entityType source } } }",
 	},
 	{
 		Name:     "DeskEdiCarrierInvoices",
@@ -750,8 +769,8 @@ var operations = []Operation{
 	},
 	{
 		Name:     "DeskEdiTransfers",
-		Hash:     "sha256:720379d4727d36339cf51cd99e96d2af6595aeb72d09e356490ac0ab0434b6ef",
-		Document: "fragment DeskEdiTransferRowFields on EdiTransfer { bol counterparty { code id name } customerLabel direction failureReason id inboundMessageId processedAt rejectionReason serviceTypeLabel sourceShipmentId status stopCount submittedAt targetShipmentId } query DeskEdiTransfers($direction: EdiTransferDirection!, $inboundFileId: ID, $includeTotalCount: Boolean = false, $input: DataTableConnectionInput!) { ediTransfers( input: $input direction: $direction inboundFileId: $inboundFileId ) { edges { cursor node { ...DeskEdiTransferRowFields } } pageInfo { endCursor hasNextPage } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
+		Hash:     "sha256:c2186e96d593f15619045f14a21efa8bc82ddf54bb094e69855f863bf2c9a12b",
+		Document: "fragment DeskEdiTransferRowFields on EdiTransfer { bol counterparty { code id name } customerLabel direction failureReason id inboundMessageId processedAt rejectionReason serviceTypeLabel shipmentNumber sourceShipmentId status stopCount submittedAt targetShipmentId } query DeskEdiTransfers($direction: EdiTransferDirection!, $inboundFileId: ID, $includeTotalCount: Boolean = false, $input: DataTableConnectionInput!) { ediTransfers( input: $input direction: $direction inboundFileId: $inboundFileId ) { edges { cursor node { ...DeskEdiTransferRowFields } } pageInfo { endCursor hasNextPage } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
 	},
 	{
 		Name:     "DeskTractorCard",
@@ -872,6 +891,11 @@ var operations = []Operation{
 		Name:     "DeskFormulaTemplates",
 		Hash:     "sha256:4649a69a3363bc41eb3cf4ce2c9b1e319e8c956b66e33ef2fac8c9fd002e32b8",
 		Document: "query DeskFormulaTemplates($includeTotalCount: Boolean = false, $input: DataTableConnectionInput!) { formulaTemplates(input: $input) { edges { cursor node { currentVersionNumber description id name status testCount } } pageInfo { endCursor hasNextPage } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
+	},
+	{
+		Name:     "DeskIftaReturnCard",
+		Hash:     "sha256:60cc593dac00eab12583ffb31b72a457d0f713eb522088ee192d51b662dcefd5",
+		Document: "query DeskIftaReturnCard($id: ID!) { iftaReturn(id: $id) { amendmentNumber computedAt currencyCode filedAt filingReference finalizedAt id lines { fuelType id isIftaMember jurisdiction { code id name } lineTotal netTaxableGallons rateMissing ratePerGallon sortOrder surchargeDue taxDue taxPaidGallons taxableMiles totalMiles } netDue netTaxableGallons noTractorMiles noTractorMoveCount period { dueDate end label } problems { amount code fuelType jurisdictionCode message } quarter status surchargeDue taxDue totalGallons totalMiles totalTaxPaidGallons totalTaxableMiles unattributedMiles unattributedMoveCount year } }",
 	},
 	{
 		Name:     "DeskFuelCards",
@@ -1115,8 +1139,8 @@ var operations = []Operation{
 	},
 	{
 		Name:     "DeskDriverSettlementStatement",
-		Hash:     "sha256:2e541d9cae70bf88d9478a3db98754fffea95296bdcf62969132c59e486f710a",
-		Document: "fragment FleetCodeReference on FleetCode { code color id } fragment WorkerReference on Worker { assignmentBlocked canBeAssigned firstName fleetCode { ...FleetCodeReference } fleetCodeId id lastName profilePicUrl status type wholeName } query DeskDriverSettlementStatement($id: ID!) { driverSettlement(id: $id) { approvedAt carryForwardInMinor carryForwardOutMinor classification currencyCode deductionsMinor disputes { category createdAt id resolvedAt settlementLineId status } exceptions { code message severity } grossEarningsMinor hasExceptions id lines { amountMinor category description id lineNumber payEventId proNumber quantity rate shipmentId } netPayMinor notes paidAt payDate payProfileName paymentMethod periodEnd periodStart postedAt reimbursementsMinor settlementNumber shipmentCount status submittedAt totalMiles voidReason voidedAt worker { ...WorkerReference } workerId } }",
+		Hash:     "sha256:318010f8b231ea39b7edca1efe9cab1f0d630ad0a81e39f87b3c85b3ba58dfa3",
+		Document: "fragment FleetCodeReference on FleetCode { code color id } fragment WorkerReference on Worker { assignmentBlocked canBeAssigned firstName fleetCode { ...FleetCodeReference } fleetCodeId id lastName profilePicUrl status type wholeName } query DeskDriverSettlementStatement($id: ID!) { driverSettlement(id: $id) { approvedAt carryForwardInMinor carryForwardOutMinor classification currencyCode deductionsMinor disputes { category createdAt id resolvedAt settlementLineId status } exceptions { code message severity } grossEarningsMinor hasExceptions heldAt heldBy { id name } holdNote holdReason id lines { amountMinor category description id lineNumber payEventId proNumber quantity rate shipmentId } netPayMinor notes paidAt payDate payProfileName paymentMethod periodEnd periodStart postedAt reimbursementsMinor settlementNumber shipmentCount status submittedAt totalMiles voidReason voidedAt worker { ...WorkerReference } workerId } }",
 	},
 	{
 		Name:     "WorkerEarningsSummary",
@@ -1129,14 +1153,19 @@ var operations = []Operation{
 		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } query PayAdvanceTable($includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { payAdvances(input: $input) { edges { cursor node { amountMinor createdAt currencyCode id issuedDate notes outstandingMinor recoveredMinor reference source status updatedAt version worker { firstName id lastName } workerId writeOffReason writtenOffMinor } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
 	},
 	{
+		Name:     "DeskDriverSettlementBlockers",
+		Hash:     "sha256:cc8a67dd076276e93f8a5c1849e4770aa1b41419ce5d4d3cf0d25dc6f32f0716",
+		Document: "query DeskDriverSettlementBlockers($batchId: ID, $limit: Int) { driverSettlementBlockers(batchId: $batchId, limit: $limit) { batchId batchName carryForwardOutMinor currencyCode deductionsMinor driverName grossEarningsMinor holdNote holdReason id message netPayMinor payDate reason settlementNumber status workerId } }",
+	},
+	{
 		Name:     "CarrierSettlementTable",
 		Hash:     "sha256:725e6012aaaeae3968c688b9c88af2e40144e49b086f91e39f9ec0dc16db1d4f",
 		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } query CarrierSettlementTable($includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { carrierSettlements(input: $input) { edges { cursor node { adjustmentsMinor batchId carrier { code id name scac } carrierId createdAt currencyCode grossCostMinor id netPayableMinor payDate paymentMethod paymentReference periodEnd periodStart settlementNumber shipmentCount status updatedAt version } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
 	},
 	{
 		Name:     "DriverSettlementTable",
-		Hash:     "sha256:b679500f369655d73749c79152e3ba500b1dc3212dcbf801669a1c8716407893",
-		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } query DriverSettlementTable($includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { driverSettlements(input: $input) { edges { cursor node { batchId carryForwardInMinor carryForwardOutMinor classification createdAt currencyCode deductionsMinor grossEarningsMinor hasExceptions id netPayMinor payDate payProfileName periodEnd periodStart reimbursementsMinor settlementNumber shipmentCount status totalMiles updatedAt version worker { firstName id lastName } workerId } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
+		Hash:     "sha256:21129a80644f70c4eb0e75c04d463686d897ca738dcc9f66248b6038fc93b81a",
+		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } query DriverSettlementTable($includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { driverSettlements(input: $input) { edges { cursor node { batchId carryForwardInMinor carryForwardOutMinor classification createdAt currencyCode deductionsMinor grossEarningsMinor hasExceptions heldAt holdNote holdReason id netPayMinor payDate payProfileName periodEnd periodStart reimbursementsMinor settlementNumber shipmentCount status totalMiles updatedAt version worker { firstName id lastName } workerId } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
 	},
 	{
 		Name:     "DriverExpenseTable",
@@ -1360,6 +1389,7 @@ func NewSchema(p ResolverParams) Schema {
 	carrierDeps := &carrierresolver.Deps{
 		Core:           core,
 		CarrierService: p.CarrierService,
+		CarrierCover:   p.CarrierCover,
 	}
 	carriercapacityDeps := &carriercapacityresolver.Deps{
 		Core:                   core,
@@ -1439,6 +1469,7 @@ func NewSchema(p ResolverParams) Schema {
 		Core:                             core,
 		DriverPayService:                 p.DriverPayService,
 		DriverSettlementService:          p.DriverSettlementService,
+		SettlementRelease:                p.SettlementRelease,
 		DriverSettlementTransferService:  p.DriverSettlementTransferService,
 		DriverSettlementWorkspaceService: p.DriverSettlementWorkspaceService,
 		SettlementControlService:         p.SettlementControlService,

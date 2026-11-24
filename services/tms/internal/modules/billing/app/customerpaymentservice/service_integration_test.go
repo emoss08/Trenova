@@ -161,7 +161,8 @@ func TestPostAndApplyCreatesPaymentApplicationJournalAndSettlementUpdate(t *test
 			Validator: NewValidator(
 				ValidatorParams{InvoiceRepo: invoiceRepo, FiscalPeriodRepo: fiscalPeriodRepo},
 			),
-			AuditService: &mocks.NoopAuditService{},
+			AuditService:      &mocks.NoopAuditService{},
+			ReceiptCandidates: &quietCandidates{},
 		},
 	)
 	payment, err := svc.PostAndApply(
@@ -338,7 +339,8 @@ func TestPostAndApplySupportsUnappliedCash(t *testing.T) {
 			Validator: NewValidator(
 				ValidatorParams{InvoiceRepo: invoiceRepo, FiscalPeriodRepo: fiscalPeriodRepo},
 			),
-			AuditService: &mocks.NoopAuditService{},
+			AuditService:      &mocks.NoopAuditService{},
+			ReceiptCandidates: &quietCandidates{},
 		},
 	)
 	payment, err := svc.PostAndApply(
@@ -560,7 +562,8 @@ func TestApplyUnappliedLaterCreatesReclassificationEntry(t *testing.T) {
 			Validator: NewValidator(
 				ValidatorParams{InvoiceRepo: invoiceRepo, FiscalPeriodRepo: fiscalPeriodRepo},
 			),
-			AuditService: &mocks.NoopAuditService{},
+			AuditService:      &mocks.NoopAuditService{},
+			ReceiptCandidates: &quietCandidates{},
 		},
 	)
 	payment, err := svc.PostAndApply(
@@ -750,7 +753,8 @@ func TestReversePaymentRestoresInvoiceAndBalances(t *testing.T) {
 			Validator: NewValidator(
 				ValidatorParams{InvoiceRepo: invoiceRepo, FiscalPeriodRepo: fiscalPeriodRepo},
 			),
-			AuditService: &mocks.NoopAuditService{},
+			AuditService:      &mocks.NoopAuditService{},
+			ReceiptCandidates: &quietCandidates{},
 		},
 	)
 	balanceOf := func(accountID pulid.ID) glbalance.GLAccountPeriodBalance {
@@ -953,7 +957,8 @@ func TestPostAndApplyRecognizesShortPayAndSettlesInvoice(t *testing.T) {
 			Validator: NewValidator(
 				ValidatorParams{InvoiceRepo: invoiceRepo, FiscalPeriodRepo: fiscalPeriodRepo},
 			),
-			AuditService: &mocks.NoopAuditService{},
+			AuditService:      &mocks.NoopAuditService{},
+			ReceiptCandidates: &quietCandidates{},
 		},
 	)
 	payment, err := svc.PostAndApply(
@@ -1118,7 +1123,8 @@ func TestListAndGetCustomerPayments(t *testing.T) {
 			Validator: NewValidator(
 				ValidatorParams{InvoiceRepo: invoiceRepo, FiscalPeriodRepo: fiscalPeriodRepo},
 			),
-			AuditService: &mocks.NoopAuditService{},
+			AuditService:      &mocks.NoopAuditService{},
+			ReceiptCandidates: &quietCandidates{},
 		},
 	)
 	payment, err := svc.PostAndApply(

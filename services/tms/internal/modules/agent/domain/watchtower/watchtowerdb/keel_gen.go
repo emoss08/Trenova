@@ -3266,6 +3266,7 @@ var enumRecordkindKind = [...]schema.EnumValue{
 	{Value: `scanned_document`, Label: `Scanned Document`},
 	{Value: `ifta_jurisdiction`, Label: `IFTA Jurisdiction`},
 	{Value: `ifta_return`, Label: `IFTA Return`},
+	{Value: `ifta_return_line`, Label: `IFTA Return Line`},
 	{Value: `ifta_mileage_entry`, Label: `IFTA Mileage Entry`},
 	{Value: `us_state`, Label: `US State`},
 	{Value: `pay_event`, Label: `Pay Event`},

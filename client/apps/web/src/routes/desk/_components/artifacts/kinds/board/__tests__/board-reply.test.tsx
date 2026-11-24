@@ -495,7 +495,7 @@ describe("DeskReplyBoards", () => {
       name: "The late loads, furthest behind first",
     });
     const row = list.querySelector(".dk-bd-rows > .dk-bd-row") as HTMLElement;
-    const due = conversationBoard().blocks[0].rows[0].measure?.at ?? 0;
+    const due = conversationBoard().blocks[0].rows[0].measure?.fact?.at ?? 0;
     const now = Math.floor(Date.now() / 1000);
     const whole = `Due ${cardMomentAfter(now, due)}`;
     const when = `Due ${measureMoment(now, due, "moment")}`;
@@ -533,8 +533,7 @@ describe("DeskReplyBoards", () => {
             ...first,
             measure: {
               ...(first.measure as NonNullable<typeof first.measure>),
-              at,
-              place: "Rockford, IL",
+              fact: { text: "Due {0}", value: null, at, day: false, place: "at Rockford, IL" },
             },
           },
         ],
@@ -580,6 +579,41 @@ describe("DeskReplyBoards", () => {
     const drawn = list.querySelector(".dk-bd-rows > .dk-bd-row") as HTMLElement;
     expect(drawn.className).toBe(sketched.className);
     expect(drawn.querySelector(":scope > .dk-bd-track")).not.toBeNull();
+  });
+
+  it("holds a bar's place in the skeleton of a list whose measure draws one, by its kind of record and the alias the call wrote", () => {
+    draw(new Promise<DeskBoardCard>(() => {}), {
+      tool: "show_answer",
+      spec: {
+        title: "Credentials running out",
+        answer: "The soonest runs out in {largest}.",
+        measure: "expiresAt",
+        groups: [
+          { title: "Running out", records: ["wcred_1", "wcred_2", "wcred_3"] },
+          { title: "Receivables", metric: "receivables" },
+        ],
+      },
+    });
+
+    const waiting = screen.getByLabelText("Reading the board…");
+    const [records, metric] = [...waiting.querySelectorAll("section.dk-bd-ex")];
+    const rows = [...records.querySelectorAll(".dk-bd-rows > .dk-bd-row")];
+    expect(rows).toHaveLength(3);
+    expect(rows.every((row) => row.querySelector(":scope > .dk-bd-track") !== null)).toBe(true);
+    // The receivables metric is drawn as one row of figures: its sketch is that row.
+    expect(metric.querySelectorAll(".dk-bd-reads > .dk-read")).toHaveLength(1);
+  });
+
+  it("draws no bar's place for a measure drawn as a figure only", () => {
+    draw(new Promise<DeskBoardCard>(() => {}), {
+      tool: "show_answer",
+      spec: { ...ANSWER_ARGS, measure: "totalCharge" },
+    });
+
+    const row = screen
+      .getByLabelText("Reading the board…")
+      .querySelector(".dk-bd-rows > .dk-bd-row") as HTMLElement;
+    expect(row.querySelector(":scope > .dk-bd-track")).toBeNull();
   });
 
   it("holds the foot under the desk, not in a half exhibit, while two halves are read, only where the surface opens boards", () => {

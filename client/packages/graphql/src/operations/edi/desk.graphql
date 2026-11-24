@@ -211,6 +211,7 @@ fragment DeskEdiTransferRowFields on EdiTransfer {
   stopCount
   sourceShipmentId
   targetShipmentId
+  shipmentNumber
   inboundMessageId
   rejectionReason
   failureReason

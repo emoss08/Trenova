@@ -86,6 +86,7 @@ func rowsService(t *testing.T, run *report.ReportRun, store *stubRowsStorage) *S
 func storedRun() *report.ReportRun {
 	return &report.ReportRun{
 		ID:                pulid.MustNew("rrun_"),
+		DefinitionID:      pulid.MustNew("rdef_"),
 		RevisionID:        pulid.MustNew("rrev_"),
 		Status:            report.RunStatusSucceeded,
 		Format:            report.FormatXLSX,

@@ -28,6 +28,8 @@ import { DeskCarrierSettlementSkeleton } from "./carrier-settlement/carrier-sett
 import { DeskDetentionOccurrenceSkeleton } from "./detention-occurrence/detention-occurrence-skeleton";
 import { DeskJournalEntrySkeleton } from "./journal-entry/journal-entry-skeleton";
 import { DeskManualJournalSkeleton } from "./manual-journal/manual-journal-skeleton";
+import { DeskBankReceiptSkeleton } from "./bank-receipt/bank-receipt-skeleton";
+import { DeskIftaReturnSkeleton } from "./ifta-return/ifta-return-skeleton";
 import { DeskFuelPurchaseSkeleton } from "./fuel-purchase/fuel-purchase-skeleton";
 import { DeskFuelCardSkeleton } from "./fuel-card/fuel-card-skeleton";
 
@@ -98,6 +100,8 @@ const loadDetentionOccurrence = preloadable(
 );
 const loadJournalEntry = preloadable(() => import("./journal-entry/desk-journal-entry"));
 const loadManualJournal = preloadable(() => import("./manual-journal/desk-manual-journal"));
+const loadBankReceipt = preloadable(() => import("./bank-receipt/desk-bank-receipt"));
+const loadIftaReturn = preloadable(() => import("./ifta-return/desk-ifta-return"));
 const loadFuelPurchase = preloadable(() => import("./fuel-purchase/desk-fuel-purchase"));
 const loadFuelCard = preloadable(() => import("./fuel-card/desk-fuel-card"));
 
@@ -240,6 +244,12 @@ const RECORD_CARDS: Partial<Record<RecordEntityType, RecordCardEntry>> = {
     inPlace: lazyComponent(loadManualJournal, (module) => module.DeskManualJournal),
     artifact: lazyComponent(loadManualJournal, (module) => module.DeskManualJournalArtifact),
   },
+  bank_receipt: {
+    resource: Resource.BankReceipt,
+    Skeleton: DeskBankReceiptSkeleton,
+    inPlace: lazyComponent(loadBankReceipt, (module) => module.DeskBankReceipt),
+    artifact: lazyComponent(loadBankReceipt, (module) => module.DeskBankReceiptArtifact),
+  },
   fuel_purchase: {
     resource: Resource.FuelPurchase,
     Skeleton: DeskFuelPurchaseSkeleton,
@@ -251,6 +261,12 @@ const RECORD_CARDS: Partial<Record<RecordEntityType, RecordCardEntry>> = {
     Skeleton: DeskFuelCardSkeleton,
     inPlace: lazyComponent(loadFuelCard, (module) => module.DeskFuelCard),
     artifact: lazyComponent(loadFuelCard, (module) => module.DeskFuelCardArtifact),
+  },
+  ifta_return: {
+    resource: Resource.IFTAReturn,
+    Skeleton: DeskIftaReturnSkeleton,
+    inPlace: lazyComponent(loadIftaReturn, (module) => module.DeskIftaReturn),
+    artifact: lazyComponent(loadIftaReturn, (module) => module.DeskIftaReturnArtifact),
   },
 };
 

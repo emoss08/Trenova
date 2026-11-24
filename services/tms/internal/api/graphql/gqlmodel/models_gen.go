@@ -2533,6 +2533,24 @@ type CarrierCostEventEdge struct {
 	Cursor string                       `json:"cursor"`
 }
 
+// An active carrier whose required insurance ends soon or has lapsed: the required policy that ends first and the loads it holds for us now.
+type CarrierCoverEnding struct {
+	// The carrier's id.
+	ID               string                   `json:"id"`
+	Name             string                   `json:"name"`
+	Code             string                   `json:"code"`
+	ComplianceStatus carrier.ComplianceStatus `json:"complianceStatus"`
+	// The required policy that ends first.
+	PolicyType   carrier.InsurancePolicyType `json:"policyType"`
+	PolicyNumber string                      `json:"policyNumber"`
+	// When that policy ends; before now once it has lapsed.
+	EndsAt int `json:"endsAt"`
+	// Required policy types the carrier has no policy on file for.
+	MissingPolicyTypes []carrier.InsurancePolicyType `json:"missingPolicyTypes"`
+	// Its loads not yet delivered or canceled; null when you may not read shipments or some of them are not yours to read.
+	OpenLoads *int `json:"openLoads,omitempty"`
+}
+
 type CarrierCoverageSuggestion struct {
 	CarrierID         string   `json:"carrierId"`
 	MoveID            string   `json:"moveId"`
@@ -3689,10 +3707,35 @@ type DeskBoardAction struct {
 	Records []*DeskBoardRow `json:"records"`
 }
 
+// A band across a chart: between two points along the axis, or between two values.
+type DeskBoardBand struct {
+	From *int    `json:"from,omitempty"`
+	To   *int    `json:"to,omitempty"`
+	Low  *string `json:"low,omitempty"`
+	High *string `json:"high,omitempty"`
+}
+
+// A row's bar, laid out on one scale for every row of its block. centred bars
+// hold their bound at the middle; bound is the mark through the track, a
+// fraction of it.
+type DeskBoardBar struct {
+	Centred  bool                   `json:"centred"`
+	Segments []*DeskBoardBarSegment `json:"segments"`
+	Bound    *float64               `json:"bound,omitempty"`
+}
+
+// kind: used, beyond, ghost, projected, tail, credit or held; start and width are fractions of the track.
+type DeskBoardBarSegment struct {
+	Kind  string  `json:"kind"`
+	Start float64 `json:"start"`
+	Width float64 `json:"width"`
+	Tone  string  `json:"tone"`
+}
+
 // One block of a board. type says which of the other fields it fills: figures,
-// records (rows), compare, table, chart (an analysis chart spec), timeline
-// (events, with the record in rows), checks, meter, prose (text) or note (text,
-// noteTone and chips).
+// records (rows), compare, table, chart and metric (metric), timeline (events,
+// with the record in rows), checks, meter, prose (text) or note (text, noteTone
+// and chips).
 type DeskBoardBlock struct {
 	Type  string `json:"type"`
 	Title string `json:"title"`
@@ -3700,19 +3743,20 @@ type DeskBoardBlock struct {
 	// The block's exhibit numeral; 0 for prose and notes.
 	Numeral int `json:"numeral"`
 	// ready, empty or unreadable.
-	State   string              `json:"state"`
-	Tone    string              `json:"tone"`
-	Source  *DeskBoardSource    `json:"source"`
-	Figures []*DeskBoardFigure  `json:"figures"`
-	Measure string              `json:"measure"`
-	Rows    []*DeskBoardRow     `json:"rows"`
-	Compare *DeskBoardCompare   `json:"compare,omitempty"`
-	Table   *DeskBoardTable     `json:"table,omitempty"`
-	Chart   map[string]any      `json:"chart,omitempty"`
-	Events  []*DeskBoardEvent   `json:"events"`
-	Checks  []*DeskBoardCheck   `json:"checks"`
-	Meter   *DeskBoardMeter     `json:"meter,omitempty"`
-	Text    []*DeskBoardSegment `json:"text"`
+	State   string             `json:"state"`
+	Tone    string             `json:"tone"`
+	Source  *DeskBoardSource   `json:"source"`
+	Figures []*DeskBoardFigure `json:"figures"`
+	Measure string             `json:"measure"`
+	Rows    []*DeskBoardRow    `json:"rows"`
+	Compare *DeskBoardCompare  `json:"compare,omitempty"`
+	Table   *DeskBoardTable    `json:"table,omitempty"`
+	// A chart or metric block, drawn in its form.
+	Metric *DeskBoardMetric    `json:"metric,omitempty"`
+	Events []*DeskBoardEvent   `json:"events"`
+	Checks []*DeskBoardCheck   `json:"checks"`
+	Meter  *DeskBoardMeter     `json:"meter,omitempty"`
+	Text   []*DeskBoardSegment `json:"text"`
 	// One plain line under the exhibit's tab, with readings placed in it; empty when the block has none.
 	Caption  []*DeskBoardSegment `json:"caption"`
 	NoteTone string              `json:"noteTone"`
@@ -3745,6 +3789,51 @@ type DeskBoardCard struct {
 	Blocks   []*DeskBoardBlock   `json:"blocks"`
 	// The board as it reads now, in markdown: what Copy as text copies.
 	Markdown string `json:"markdown"`
+}
+
+// A cell of a metric's table; mark is hot, off, w or empty.
+type DeskBoardCell struct {
+	Value *DeskBoardValue `json:"value,omitempty"`
+	Text  string          `json:"text"`
+	Mark  string          `json:"mark"`
+}
+
+// A chart the server shaped for a board: ticks along the axis, series of points
+// in unit, the points it marks, a band, a target and a reference, a ghost last
+// point still running, and rows for ranked bars, dots and spans.
+type DeskBoardChart struct {
+	Unit     string               `json:"unit"`
+	Currency string               `json:"currency"`
+	Ticks    []*DeskBoardTick     `json:"ticks"`
+	Series   []*DeskBoardSeries   `json:"series"`
+	Marked   []int                `json:"marked"`
+	Band     *DeskBoardBand       `json:"band,omitempty"`
+	Target   *DeskBoardLine       `json:"target,omitempty"`
+	Ref      *DeskBoardLine       `json:"ref,omitempty"`
+	Ghost    bool                 `json:"ghost"`
+	Rows     []*DeskBoardChartRow `json:"rows"`
+}
+
+// A dot on a row of a dots or spans chart: at a moment or a value.
+type DeskBoardChartMark struct {
+	At     *int    `json:"at,omitempty"`
+	Value  *string `json:"value,omitempty"`
+	Marked bool    `json:"marked"`
+	// A unit with too little data to place: drawn hollow, never warned.
+	Ghost bool   `json:"ghost"`
+	Label string `json:"label"`
+}
+
+// A row of a ranked bars, dots or spans chart, and the record it opens.
+type DeskBoardChartRow struct {
+	Label  string          `json:"label"`
+	Record *DeskBoardRow   `json:"record,omitempty"`
+	Value  *DeskBoardValue `json:"value,omitempty"`
+	Marked bool            `json:"marked"`
+	// The row that stands for the rest (3 other customers), drawn lighter than a named row.
+	Rest  bool                  `json:"rest"`
+	Spans []*DeskBoardSpan      `json:"spans"`
+	Dots  []*DeskBoardChartMark `json:"dots"`
 }
 
 type DeskBoardCheck struct {
@@ -3793,12 +3882,94 @@ type DeskBoardFigure struct {
 	Tone string          `json:"tone"`
 }
 
+type DeskBoardGrid struct {
+	Columns []*DeskBoardGridColumn `json:"columns"`
+	Rows    []*DeskBoardGridRow    `json:"rows"`
+}
+
+// have against need, with the high end of need; state covered, short, deep or maybe.
+type DeskBoardGridCell struct {
+	Have     int    `json:"have"`
+	Need     int    `json:"need"`
+	NeedHigh int    `json:"needHigh"`
+	State    string `json:"state"`
+}
+
+type DeskBoardGridColumn struct {
+	Label    string `json:"label"`
+	Sublabel string `json:"sublabel"`
+}
+
+type DeskBoardGridRow struct {
+	Label string               `json:"label"`
+	Cells []*DeskBoardGridCell `json:"cells"`
+}
+
+// A line across a chart: a target or a reference.
+type DeskBoardLine struct {
+	Value string `json:"value"`
+	Label string `json:"label"`
+}
+
+// One line of a log: when, what became of it, and the records it names.
+type DeskBoardLogEntry struct {
+	At      int             `json:"at"`
+	Tone    string          `json:"tone"`
+	Text    string          `json:"text"`
+	Detail  string          `json:"detail"`
+	Records []*DeskBoardRow `json:"records"`
+}
+
 type DeskBoardMeter struct {
 	Clear int `json:"clear"`
 	Total int `json:"total"`
 	// One tone per check, clear first.
 	Tones   []string        `json:"tones"`
 	Percent *DeskBoardValue `json:"percent,omitempty"`
+}
+
+// A metric a board reads, drawn in its form: trend, bars, columns, split, grid,
+// dots, spans, log, checks, table or figures. The fields its form names are
+// filled; figures holds every figure the catalog declares for it.
+type DeskBoardMetric struct {
+	// The metric's name; empty for an analysis chart.
+	Name  string `json:"name"`
+	Form  string `json:"form"`
+	Title string `json:"title"`
+	// Where it was read from, for the source line.
+	Source  string                   `json:"source"`
+	Figures []*DeskBoardMetricFigure `json:"figures"`
+	Chart   *DeskBoardChart          `json:"chart,omitempty"`
+	Split   *DeskBoardSplit          `json:"split,omitempty"`
+	Grid    *DeskBoardGrid           `json:"grid,omitempty"`
+	Log     []*DeskBoardLogEntry     `json:"log"`
+	Checks  []*DeskBoardCheck        `json:"checks"`
+	Table   *DeskBoardMetricTable    `json:"table,omitempty"`
+}
+
+// A column of a metric's table: text or value.
+type DeskBoardMetricColumn struct {
+	Label string `json:"label"`
+	Kind  string `json:"kind"`
+}
+
+// A named figure a metric read, with the label the catalog gives it.
+type DeskBoardMetricFigure struct {
+	Name  string `json:"name"`
+	Label string `json:"label"`
+	// Absent when it could not be read or the plan leaves it out.
+	Value *DeskBoardValue `json:"value,omitempty"`
+	// What it read earlier, when the metric compares it (was 34.9 on Oct 23); absent otherwise.
+	Was *DeskBoardValue `json:"was,omitempty"`
+	// When it read was.
+	WasAt *int `json:"wasAt,omitempty"`
+	// bad, warn, info, ok, or empty: how the metric's owner rates the figure.
+	Tone string `json:"tone"`
+}
+
+type DeskBoardMetricTable struct {
+	Columns []*DeskBoardMetricColumn `json:"columns"`
+	Rows    [][]*DeskBoardCell       `json:"rows"`
 }
 
 // A figure the board's words place as {key}: what it reads, its value now, the
@@ -3818,30 +3989,44 @@ type DeskBoardReading struct {
 	Aggregate string `json:"aggregate"`
 }
 
+// A record a row opens in place of itself.
+type DeskBoardRef struct {
+	Kind string `json:"kind"`
+	ID   string `json:"id"`
+}
+
 // A record a block names. A record the reader may not read, or that no longer
 // exists, has readable false and nothing else.
 type DeskBoardRow struct {
-	Resource string               `json:"resource"`
-	ID       string               `json:"id"`
-	Readable bool                 `json:"readable"`
-	Label    string               `json:"label"`
-	Subtitle string               `json:"subtitle"`
-	Status   string               `json:"status"`
-	Measure  *DeskBoardRowMeasure `json:"measure,omitempty"`
+	// The kind of record: shipment, worker_credential, detention_occurrence, …
+	Kind     string `json:"kind"`
+	ID       string `json:"id"`
+	Readable bool   `json:"readable"`
+	Label    string `json:"label"`
+	Subtitle string `json:"subtitle"`
+	// The status as the product words it.
+	Status string `json:"status"`
+	// The status's tone, chosen by its owner: bad, warn, info, ok, or empty for none.
+	StatusTone string `json:"statusTone"`
+	// The record the row opens when its own kind has no card (a credential opens its worker).
+	Opens   *DeskBoardRef        `json:"opens,omitempty"`
+	Measure *DeskBoardRowMeasure `json:"measure,omitempty"`
 }
 
-// A record's measure: how far behind a shipment is, what an invoice still owes,
-// how long a journal entry has waited. state says where the record is (late,
-// held at a stop, onTime, projected to miss a window still open, due with no
-// estimate, delivered, open, settled), at the moment it is measured against and
-// place the stop it is measured at, when it is measured at a stop.
+// A record's measure, read by the record's owner: its value, the words it stands
+// at, a second fact, and the bar the board laid out for it against the block's
+// other rows.
 type DeskBoardRowMeasure struct {
-	Measure string          `json:"measure"`
-	Value   *DeskBoardValue `json:"value"`
-	State   string          `json:"state"`
-	At      *int            `json:"at,omitempty"`
-	Place   string          `json:"place"`
-	Tone    string          `json:"tone"`
+	Measure string `json:"measure"`
+	// The value readings add up; absent when the reader may not read it.
+	Value *DeskBoardValue `json:"value,omitempty"`
+	// What the row says it stands at, right of the label.
+	Standing *DeskBoardWords `json:"standing"`
+	// The second fact, after the subtitle; absent when the measure has none.
+	Fact *DeskBoardWords `json:"fact,omitempty"`
+	Tone string          `json:"tone"`
+	// Absent for a measure drawn as a figure only.
+	Bar *DeskBoardBar `json:"bar,omitempty"`
 }
 
 // A run of words, and the block it cites when it cites one: the block's numeral,
@@ -3855,17 +4040,47 @@ type DeskBoardSegment struct {
 	Struck  bool   `json:"struck"`
 	// The key of the reading the segment places; empty when it places none.
 	Reading string `json:"reading"`
+	// The id of an artifact this turn made that the words link to, drawn as a link
+	// to it; empty when the segment links none.
+	Artifact string `json:"artifact"`
+}
+
+// One series of a chart: now, was (the period before, drawn light) or stack. A null point is a gap.
+type DeskBoardSeries struct {
+	Name   string    `json:"name"`
+	Role   string    `json:"role"`
+	Points []*string `json:"points"`
 }
 
 // Where a block was read from: records (with how many it names and how many the
 // reader may read), an analysis or a table by title, the organization's metrics,
 // a record's history, the checks above, or several.
 type DeskBoardSource struct {
-	Kind     string `json:"kind"`
-	Resource string `json:"resource"`
-	Count    int    `json:"count"`
-	Readable int    `json:"readable"`
-	Title    string `json:"title"`
+	Kind string `json:"kind"`
+	// The kind of record a records source names: shipment, worker_credential, …; empty otherwise.
+	RecordKind string `json:"recordKind"`
+	Count      int    `json:"count"`
+	Readable   int    `json:"readable"`
+	Title      string `json:"title"`
+}
+
+// A span along a row of a spans chart, between two moments: cover or gap.
+type DeskBoardSpan struct {
+	From int    `json:"from"`
+	To   int    `json:"to"`
+	Kind string `json:"kind"`
+}
+
+type DeskBoardSplit struct {
+	Total *DeskBoardValue       `json:"total"`
+	Parts []*DeskBoardSplitPart `json:"parts"`
+}
+
+// One part of a whole: used, over or credit.
+type DeskBoardSplitPart struct {
+	Label string          `json:"label"`
+	Value *DeskBoardValue `json:"value"`
+	Kind  string          `json:"kind"`
 }
 
 type DeskBoardTable struct {
@@ -3876,13 +4091,33 @@ type DeskBoardTable struct {
 	ArtifactID *string `json:"artifactId,omitempty"`
 }
 
-// A value the server read: count, money, percent (a fraction), duration (in
-// seconds), number or text.
+// A point along a chart's axis: a moment or a label; marked when the chart draws attention to it.
+type DeskBoardTick struct {
+	At     *int   `json:"at,omitempty"`
+	Label  string `json:"label"`
+	Marked bool   `json:"marked"`
+}
+
+// A value the server read: count, money, percent (a fraction), duration (an
+// elapsed time in seconds, written in days from three days), hours (a quantity of
+// work hours in seconds, never written in days), days (whole days, negative once
+// past), number or text.
 type DeskBoardValue struct {
 	Kind     string `json:"kind"`
 	Number   string `json:"number"`
 	Currency string `json:"currency"`
 	Text     string `json:"text"`
+}
+
+// Words the server wrote in the reader's language. {0} in text is where value
+// goes, or the moment at (written as a day when day is true); place is where it
+// was measured, drawn after the moment and the first to give way.
+type DeskBoardWords struct {
+	Text  string          `json:"text"`
+	Value *DeskBoardValue `json:"value,omitempty"`
+	At    *int            `json:"at,omitempty"`
+	Day   bool            `json:"day"`
+	Place string          `json:"place"`
 }
 
 // A record on a work block with everything open about it, soonest deadline first.
@@ -4224,6 +4459,25 @@ type DetentionFacilityIntelligence struct {
 	SuppressedCount   int     `json:"suppressedCount"`
 	NoticeDueCount    int     `json:"noticeDueCount"`
 	NoticeOnTimeCount int     `json:"noticeOnTimeCount"`
+}
+
+// A facility ranked by the time trucks waited past free time there.
+type DetentionFacilityWait struct {
+	// The location's id.
+	ID              string `json:"id"`
+	Name            string `json:"name"`
+	City            string `json:"city"`
+	State           string `json:"state"`
+	StopCount       int    `json:"stopCount"`
+	DetainedCount   int    `json:"detainedCount"`
+	PastFreeMinutes int    `json:"pastFreeMinutes"`
+	// The median free time its policies granted, in minutes.
+	MedianFreeMinutes float64 `json:"medianFreeMinutes"`
+	// The median stop's time on site, in minutes.
+	MedianDwellMinutes float64 `json:"medianDwellMinutes"`
+	// Nine stops in ten took less than this, in minutes.
+	P90DwellMinutes float64 `json:"p90DwellMinutes"`
+	BilledAmount    string  `json:"billedAmount"`
 }
 
 type DetentionIntelligence struct {
@@ -4637,6 +4891,25 @@ type DetentionStatsInput struct {
 	Limit *int `json:"limit,omitempty"`
 	// Only the stops made at this location.
 	LocationID *string `json:"locationId,omitempty"`
+}
+
+// A detention stay: its clock, the time on site against the free time, what it bills and what holds its bill back.
+type DetentionStay struct {
+	Occurrence *DetentionOccurrence `json:"occurrence"`
+	// Minutes the truck was on site, counted to now while it is still there.
+	MinutesOnSite int `json:"minutesOnSite"`
+	// Minutes on site past the free time the policy granted.
+	MinutesPastFree int `json:"minutesPastFree"`
+	// What it bills: priced as of now while the clock runs, as recorded once it stopped.
+	BillableAmount string `json:"billableAmount"`
+	// Why to hold it back before billing; null when nothing does.
+	HoldBack *DetentionHoldBack `json:"holdBack,omitempty"`
+}
+
+type DetentionStayList struct {
+	Items []*DetentionStay `json:"items"`
+	// Every stay the period and stage hold, however many the page lists.
+	TotalCount int `json:"totalCount"`
 }
 
 type DetentionStopSplits struct {
@@ -5742,6 +6015,35 @@ type DriverPayEventEdge struct {
 type DriverSettlementActionInput struct {
 	SettlementID string  `json:"settlementId"`
 	Reason       *string `json:"reason,omitempty"`
+}
+
+// A driver settlement in a pay batch that cannot be released as it stands: a person holds it out
+// of the pay run, it has a critical exception, or the driver has a dispute open on it.
+type DriverSettlementBlocker struct {
+	ID               string                  `json:"id"`
+	SettlementNumber string                  `json:"settlementNumber"`
+	Status           driversettlement.Status `json:"status"`
+	WorkerID         string                  `json:"workerId"`
+	// The driver's name.
+	DriverName string  `json:"driverName"`
+	BatchID    *string `json:"batchId,omitempty"`
+	// The pay batch's name.
+	BatchName          string `json:"batchName"`
+	PayDate            int    `json:"payDate"`
+	NetPayMinor        *int   `json:"netPayMinor,omitempty"`
+	GrossEarningsMinor *int   `json:"grossEarningsMinor,omitempty"`
+	DeductionsMinor    *int   `json:"deductionsMinor,omitempty"`
+	// Below zero when deductions ran past earnings and the rest carries to the next settlement.
+	CarryForwardOutMinor *int   `json:"carryForwardOutMinor,omitempty"`
+	CurrencyCode         string `json:"currencyCode"`
+	// What keeps it from release, in the reader's words: On hold, Has a critical exception, or Dispute open.
+	Reason string `json:"reason"`
+	// The critical exception's message, or what the dispute is about; empty for a hold.
+	Message string `json:"message"`
+	// Why a person holds it, in words; empty unless it is on hold.
+	HoldReason *string `json:"holdReason,omitempty"`
+	// What the person who held it wrote.
+	HoldNote *string `json:"holdNote,omitempty"`
 }
 
 type DriverSettlementConnection struct {
@@ -7536,6 +7838,13 @@ type HazmatSegregationRuleInput struct {
 	ReferenceCode    *string `json:"referenceCode,omitempty"`
 	RegulationSource *string `json:"regulationSource,omitempty"`
 	Version          *int    `json:"version,omitempty"`
+}
+
+type HoldDriverSettlementInput struct {
+	SettlementID string                      `json:"settlementId"`
+	Reason       driversettlement.HoldReason `json:"reason"`
+	// What the hold waits on, for whoever releases it; required when the reason is Other. At most 500 characters.
+	Note *string `json:"note,omitempty"`
 }
 
 type HoldPayEventInput struct {
@@ -9970,7 +10279,8 @@ type ReportRunDeskCard struct {
 	Sample *ReportPreview `json:"sample,omitempty"`
 	// Why a finished run's result is not shown: access (the person can no longer
 	// read everything it shows), plan (it reads data the organization's plan no
-	// longer includes) or changed (the report no longer runs as it did).
+	// longer includes), changed (the report no longer runs as it did) or deleted
+	// (the saved report it came from was deleted; the run is kept).
 	Withheld *string `json:"withheld,omitempty"`
 	// The add-on the run's report needs, when withheld is plan.
 	WithheldByPlan *ReportPlanDenial `json:"withheldByPlan,omitempty"`
@@ -15563,6 +15873,76 @@ func (e DetentionDeskUrgency) MarshalJSON() ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
+// Why a stopped charge should be held back before it is billed.
+type DetentionHoldBack string
+
+const (
+	// No notice reached the customer inside its window.
+	DetentionHoldBackNoticeMissed DetentionHoldBack = "NoticeMissed"
+	// The notice bounced and never reached the customer.
+	DetentionHoldBackNoticeFailed DetentionHoldBack = "NoticeFailed"
+	// The notice went out after its deadline.
+	DetentionHoldBackNoticeLate DetentionHoldBack = "NoticeLate"
+	// The departure was entered by hand, not captured.
+	DetentionHoldBackDepartureByHand DetentionHoldBack = "DepartureByHand"
+	// The arrival was entered by hand, not captured.
+	DetentionHoldBackArrivalByHand DetentionHoldBack = "ArrivalByHand"
+	// A person must approve it before it is billed.
+	DetentionHoldBackAwaitingApproval DetentionHoldBack = "AwaitingApproval"
+)
+
+var AllDetentionHoldBack = []DetentionHoldBack{
+	DetentionHoldBackNoticeMissed,
+	DetentionHoldBackNoticeFailed,
+	DetentionHoldBackNoticeLate,
+	DetentionHoldBackDepartureByHand,
+	DetentionHoldBackArrivalByHand,
+	DetentionHoldBackAwaitingApproval,
+}
+
+func (e DetentionHoldBack) IsValid() bool {
+	switch e {
+	case DetentionHoldBackNoticeMissed, DetentionHoldBackNoticeFailed, DetentionHoldBackNoticeLate, DetentionHoldBackDepartureByHand, DetentionHoldBackArrivalByHand, DetentionHoldBackAwaitingApproval:
+		return true
+	}
+	return false
+}
+
+func (e DetentionHoldBack) String() string {
+	return string(e)
+}
+
+func (e *DetentionHoldBack) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = DetentionHoldBack(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid DetentionHoldBack", str)
+	}
+	return nil
+}
+
+func (e DetentionHoldBack) MarshalGQL(w io.Writer) {
+	_, _ = fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *DetentionHoldBack) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e DetentionHoldBack) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
 type DetentionNextStepKind string
 
 const (
@@ -15621,6 +16001,74 @@ func (e *DetentionNextStepKind) UnmarshalJSON(b []byte) error {
 }
 
 func (e DetentionNextStepKind) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+// Whole days of the organization's time zone that a detention list covers.
+type DetentionPeriod string
+
+const (
+	DetentionPeriodToday       DetentionPeriod = "Today"
+	DetentionPeriodYesterday   DetentionPeriod = "Yesterday"
+	DetentionPeriodThisWeek    DetentionPeriod = "ThisWeek"
+	DetentionPeriodLastWeek    DetentionPeriod = "LastWeek"
+	DetentionPeriodThisMonth   DetentionPeriod = "ThisMonth"
+	DetentionPeriodLastMonth   DetentionPeriod = "LastMonth"
+	DetentionPeriodThisQuarter DetentionPeriod = "ThisQuarter"
+	DetentionPeriodLastQuarter DetentionPeriod = "LastQuarter"
+)
+
+var AllDetentionPeriod = []DetentionPeriod{
+	DetentionPeriodToday,
+	DetentionPeriodYesterday,
+	DetentionPeriodThisWeek,
+	DetentionPeriodLastWeek,
+	DetentionPeriodThisMonth,
+	DetentionPeriodLastMonth,
+	DetentionPeriodThisQuarter,
+	DetentionPeriodLastQuarter,
+}
+
+func (e DetentionPeriod) IsValid() bool {
+	switch e {
+	case DetentionPeriodToday, DetentionPeriodYesterday, DetentionPeriodThisWeek, DetentionPeriodLastWeek, DetentionPeriodThisMonth, DetentionPeriodLastMonth, DetentionPeriodThisQuarter, DetentionPeriodLastQuarter:
+		return true
+	}
+	return false
+}
+
+func (e DetentionPeriod) String() string {
+	return string(e)
+}
+
+func (e *DetentionPeriod) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = DetentionPeriod(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid DetentionPeriod", str)
+	}
+	return nil
+}
+
+func (e DetentionPeriod) MarshalGQL(w io.Writer) {
+	_, _ = fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *DetentionPeriod) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e DetentionPeriod) MarshalJSON() ([]byte, error) {
 	var buf bytes.Buffer
 	e.MarshalGQL(&buf)
 	return buf.Bytes(), nil
@@ -15751,6 +16199,71 @@ func (e *DetentionSegmentTarget) UnmarshalJSON(b []byte) error {
 }
 
 func (e DetentionSegmentTarget) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+// Which detention stays a list reads: ToBill is stopped and not yet billed (Pending or Approved),
+// Running is still on site, the rest are stopped stays in that status.
+type DetentionStayStage string
+
+const (
+	DetentionStayStageToBill      DetentionStayStage = "ToBill"
+	DetentionStayStageRunning     DetentionStayStage = "Running"
+	DetentionStayStageBilled      DetentionStayStage = "Billed"
+	DetentionStayStageDisputed    DetentionStayStage = "Disputed"
+	DetentionStayStageWaived      DetentionStayStage = "Waived"
+	DetentionStayStageNotBillable DetentionStayStage = "NotBillable"
+)
+
+var AllDetentionStayStage = []DetentionStayStage{
+	DetentionStayStageToBill,
+	DetentionStayStageRunning,
+	DetentionStayStageBilled,
+	DetentionStayStageDisputed,
+	DetentionStayStageWaived,
+	DetentionStayStageNotBillable,
+}
+
+func (e DetentionStayStage) IsValid() bool {
+	switch e {
+	case DetentionStayStageToBill, DetentionStayStageRunning, DetentionStayStageBilled, DetentionStayStageDisputed, DetentionStayStageWaived, DetentionStayStageNotBillable:
+		return true
+	}
+	return false
+}
+
+func (e DetentionStayStage) String() string {
+	return string(e)
+}
+
+func (e *DetentionStayStage) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = DetentionStayStage(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid DetentionStayStage", str)
+	}
+	return nil
+}
+
+func (e DetentionStayStage) MarshalGQL(w io.Writer) {
+	_, _ = fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *DetentionStayStage) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e DetentionStayStage) MarshalJSON() ([]byte, error) {
 	var buf bytes.Buffer
 	e.MarshalGQL(&buf)
 	return buf.Bytes(), nil

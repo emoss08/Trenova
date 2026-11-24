@@ -41,7 +41,7 @@ You hold more tools than are loaded on this turn. The loaded ones are on this re
 What find_tools can load, by area of Trenova:
 - Accounting (5 tools): accounts receivable, customer payment
 - Billing (9 tools): customer, invoice, invoice dispute
-- Desk (2 tools): desk
+- Desk (3 tools): desk
 - Documents (2 tools): document
 - Shipments (1 tool): shipment
 

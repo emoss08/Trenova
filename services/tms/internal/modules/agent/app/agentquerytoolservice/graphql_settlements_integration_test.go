@@ -528,7 +528,7 @@ func (s *settlementRows) payProfile(
 var settlementGetsWithheldAtInternal = map[string][]string{
 	"settlement_get_driver": {
 		"grossEarnings", "reimbursements", "deductions", "carryForwardIn", "carryForwardOut",
-		"netPay", "totalMiles", "notes", "voidReason",
+		"netPay", "totalMiles", "notes", "voidReason", "holdReason", "holdNote", "heldAt",
 	},
 	"settlement_get_carrier": {
 		"grossCost", "adjustments", "netPayable", "paymentMethod", "paymentReference",
@@ -544,7 +544,7 @@ var settlementGetsWithheldAtInternal = map[string][]string{
 var settlementListsWithheldAtInternal = map[string][]string{
 	"settlement_list_driver": {
 		"carryForwardIn", "carryForwardOut", "deductions", "grossEarnings", "netPay",
-		"reimbursements", "totalMiles",
+		"reimbursements", "totalMiles", "holdReason", "holdNote", "heldAt",
 	},
 	"settlement_list_pay_events": {"grossAmount", "holdReason", "totalMiles", "voidReason"},
 	"settlement_list_carrier": {

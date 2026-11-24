@@ -370,3 +370,55 @@ func TestRelevant_PutsAreasAMoveNamesFirstThenTheBiggestGapAndStopsAtForty(t *te
 		assert.NotEqual(t, int64(1), balance.Cell, "the least relevant fall past the cut")
 	}
 }
+
+func TestBalances_ReadsEveryAreaWithoutPlanningMoves(t *testing.T) {
+	t.Parallel()
+
+	forecasts, repo := readyWorld(t)
+	svc := newTestService(t, forecasts, repo, positioningtest.Fixed{})
+
+	balances, err := svc.Balances(t.Context(), &freightoutlookports.Request{TenantInfo: tenant})
+	require.NoError(t, err)
+
+	assert.Equal(t, testNow, balances.GeneratedAt)
+	assert.Same(t, forecasts.quality, balances.Quality)
+	assert.Len(t, balances.Starts, demandforecast.OutlookSlots)
+	require.Len(t, balances.Areas, 2, "every area the forecast holds, not the page's forty")
+	for _, area := range balances.Areas {
+		assert.Len(t, area.Slots, demandforecast.OutlookSlots)
+	}
+	assert.Equal(t, 1, repo.startsRead, "the drivers are the supply the balance needs")
+	assert.Nil(t, repo.window, "no lanes or departures are read: nothing is planned")
+}
+
+func TestBalances_IsEmptyUntilTheForecastIsReady(t *testing.T) {
+	t.Parallel()
+
+	repo := &fakeRepo{}
+	forecasts := &fakeForecasts{
+		quality:   &demandforecast.Quality{Status: demandforecast.StatusNoSkill},
+		refitting: true,
+	}
+	svc := newTestService(t, forecasts, repo, positioningtest.Fixed{})
+
+	balances, err := svc.Balances(t.Context(), &freightoutlookports.Request{TenantInfo: tenant})
+	require.NoError(t, err)
+
+	assert.True(t, balances.Refitting)
+	assert.Empty(t, balances.Areas)
+	assert.Empty(t, balances.Starts)
+	assert.Zero(t, repo.startsRead)
+}
+
+func TestBalances_IsRefusedWithoutDispatchIntelligence(t *testing.T) {
+	t.Parallel()
+
+	forecasts, repo := readyWorld(t)
+	svc := newTestService(t, forecasts, repo, positioningtest.Fixed{})
+	svc.features = plantest.Without(platformcatalog.FeatureDispatchIntelligence)
+
+	_, err := svc.Balances(t.Context(), &freightoutlookports.Request{TenantInfo: tenant})
+
+	require.True(t, errortypes.IsPlanRestrictionError(err), "got %v", err)
+	assert.Nil(t, forecasts.request)
+}

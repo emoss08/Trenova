@@ -98,6 +98,10 @@ func (rr *ReportRun) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig 
 	}
 }
 
+func (r *ReportRun) ReportDeleted() bool {
+	return r.DefinitionID.IsNil() && r.CannedKey == ""
+}
+
 func (r *ReportRun) Validate(multiErr *errortypes.MultiError) {
 	multiErr.AddOzzoError(validation.ValidateStruct(r,
 		validation.Field(&r.OrganizationID,
@@ -122,9 +126,10 @@ func (r *ReportRun) Validate(multiErr *errortypes.MultiError) {
 		// A run reports on either a saved definition or a canned report; naming
 		// neither leaves nothing to execute.
 		validation.Field(&r.CannedKey,
-			validation.When(r.DefinitionID.IsNil(), validation.Required.Error(
-				"A run must name a report definition or a canned report",
-			)),
+			validation.When(
+				r.DefinitionID.IsNil() && r.RevisionID.IsNil(),
+				validation.Required.Error("A run must name a report definition or a canned report"),
+			),
 			validation.Length(0, maxRunCannedKeyLength).
 				Error("Canned key cannot be longer than 100 characters"),
 		),

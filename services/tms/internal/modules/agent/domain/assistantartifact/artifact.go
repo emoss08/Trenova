@@ -24,9 +24,9 @@ const (
 // it was read from and where a board is drawn, which are what a list needs to
 // name and draw it without its contents, what lets a file the person attached
 // open what was read off it, and what tells the Desk which replies draw their
-// board in the conversation before any board is read.
+// board in the conversation, and how many rows each block drew, before any board is read.
 func SummaryPayloadKeys() []string {
-	return []string{"tool", "entity", "path", "documentId", "place"}
+	return []string{"tool", "entity", "path", "documentId", "place", "sizes"}
 }
 
 // Artifact is what a turn produced besides words: the rows a report preview

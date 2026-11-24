@@ -84,6 +84,8 @@ export default function Workspace() {
             settlement.status !== "Voided" &&
             settlement.status !== "Paid",
         );
+      case "held":
+        return list.filter((settlement) => settlement.heldAt != null);
       default:
         return list.filter((settlement) => settlement.status === filter);
     }
@@ -156,6 +158,7 @@ export default function Workspace() {
       <WorkspaceSummaryStrip
         summary={summary}
         onFilterAttention={() => setFilter("attention")}
+        onFilterHeld={() => setFilter("held")}
         onShowUnsettled={() => setShowUnsettled(true)}
         actions={
           <div className="flex items-center gap-2">

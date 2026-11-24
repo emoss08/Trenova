@@ -387,3 +387,40 @@ var HomeScreen = Seeds.Add(seed.Seed{
 	After: []*seed.Seed{AdminAccount},
 	Run:   (&workspacefixtures.HomeScreenSeed{}).Run,
 })
+
+var RotaWeek = Seeds.Add(seed.Seed{
+	Name: "rota_week",
+	Kind: seed.Fixture,
+	Description: "Puts six yard, dock and shop workers on shift patterns and clocks this week's " +
+		"ended shifts, so three pass the overtime line on a Friday or Saturday shift",
+	After: []*seed.Seed{AdminAccount},
+	Run:   (&workforcefixtures.RotaWeekSeed{}).Run,
+})
+
+var EDITodaysTenders = Seeds.Add(seed.Seed{
+	Name: "edi_todays_tenders",
+	Kind: seed.Fixture,
+	Description: "Gives Acme Manufacturing's EDI partner a morning of six 204 tenders over SFTP: " +
+		"one quarantined, five made shipments and answered with a 990, one 990 not delivered",
+	After: []*seed.Seed{EDITradingPartner},
+	Run:   (&edifixtures.EDITodaysTendersSeed{}).Run,
+})
+
+var CarrierCoverLapsing = Seeds.Add(seed.Seed{
+	Name: "carrier_cover_lapsing",
+	Kind: seed.Fixture,
+	Description: "Gives four carriers hauling for us required insurance ending in 6, 10, 18 and " +
+		"27 days and seven open loads on their trucks, one delivering after its carrier's cover ends",
+	After: []*seed.Seed{Carrier, Shipment, TestData, FormulaTemplates, Location},
+	Run:   (&carrierfixtures.CoverLapsingSeed{}).Run,
+})
+
+var ReceiptCandidates = Seeds.Add(seed.Seed{
+	Name: "receipt_candidates",
+	Kind: seed.Fixture,
+	Description: "Imports five unapplied bank receipts against the seeded invoices: one to the " +
+		"cent of SEED-INV-0006, $120.00 short of SEED-INV-0003, $45.10 over SEED-INV-0008, one " +
+		"naming SEED-INV-0010 only in its memo, and a wire that names nothing",
+	After: []*seed.Seed{Receivables},
+	Run:   (&accountingfixtures.ReceiptCandidatesSeed{}).Run,
+})

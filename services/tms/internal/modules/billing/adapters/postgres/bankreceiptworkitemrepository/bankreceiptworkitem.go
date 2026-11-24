@@ -93,6 +93,28 @@ func (r *repository) ListActive(
 	})
 }
 
+func (r *repository) ListActiveByReceiptIDs(
+	ctx context.Context,
+	_ pagination.TenantInfo,
+	receiptIDs []pulid.ID,
+) ([]*bankreceiptworkitem.WorkItem, error) {
+	if len(receiptIDs) == 0 {
+		return []*bankreceiptworkitem.WorkItem{}, nil
+	}
+
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*bankreceiptworkitem.WorkItem, error) {
+		wi := bankreceiptworkitemdb.WorkItems
+		items, err := wi.Where(
+			wi.BankReceiptID.In(receiptIDs...),
+			wi.Status.In(activeStatuses...),
+		).All(ctx, r.db.Keel(ctx))
+		if err != nil {
+			return nil, fmt.Errorf("list active bank receipt work items by receipt: %w", err)
+		}
+		return items, nil
+	})
+}
+
 func (r *repository) Create(
 	ctx context.Context,
 	entity *bankreceiptworkitem.WorkItem,

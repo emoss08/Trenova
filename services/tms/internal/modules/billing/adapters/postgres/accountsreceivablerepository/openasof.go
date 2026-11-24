@@ -35,10 +35,6 @@ func seriesWindow(req customerledgerports.ListARSeriesRequest) openAsOfWindow {
 	return openAsOfWindow{asOf: req.AsOfDate, step: secondsPerWeek, points: req.Weeks}
 }
 
-func instantWindow(asOf int64) openAsOfWindow {
-	return openAsOfWindow{asOf: asOf, step: secondsPerWeek, points: 1}
-}
-
 func (w openAsOfWindow) start() int64 {
 	return w.asOf - int64(w.points-1)*w.step
 }

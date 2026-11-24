@@ -22,6 +22,7 @@ import (
 
 type Service struct {
 	occurrenceRepo detentionports.DetentionOccurrenceRepository
+	stays          detentionports.DetentionStayRepository
 	now            func() int64
 	effects        *detentioneffects.Effects
 }
@@ -30,6 +31,7 @@ type Params struct {
 	fx.In
 
 	OccurrenceRepo detentionports.DetentionOccurrenceRepository
+	Stays          detentionports.DetentionStayRepository
 	Now            timeutils.Clock
 	Effects        *detentioneffects.Effects
 }
@@ -38,6 +40,7 @@ func New(p Params) *Service {
 	now := p.Now
 	return &Service{
 		occurrenceRepo: p.OccurrenceRepo,
+		stays:          p.Stays,
 		now:            now,
 		effects:        p.Effects,
 	}

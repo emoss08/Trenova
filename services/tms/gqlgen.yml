@@ -4915,6 +4915,9 @@ models:
   EdiTransfer:
     model:
       - github.com/emoss08/trenova/internal/modules/edi/domain/editransfer.EDITransfer
+    fields:
+      shipmentNumber:
+        resolver: true
   EdiMessage:
     model:
       - github.com/emoss08/trenova/internal/modules/edi/domain/edimessage.EDIMessage
@@ -5557,6 +5560,9 @@ models:
   DriverSettlementStatus:
     model:
       - github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement.Status
+  DriverSettlementHoldReason:
+    model:
+      - github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement.HoldReason
   PortalInvitationStatus:
     model:
       - github.com/emoss08/trenova/internal/modules/workforce/domain/portalinvitation.PortalInvitationStatus
@@ -5692,6 +5698,9 @@ models:
   DriverSettlement:
     model:
       - github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement.Settlement
+    fields:
+      holdReason:
+        resolver: true
   DriverSettlementLineGroup:
     model:
       - github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement.LineGroup

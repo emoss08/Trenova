@@ -164,7 +164,12 @@ func MinimalCall(tool agenttoolports.AgentQueryTool) map[string]any {
 	for _, name := range keyed.Required {
 		call[name] = pulid.MustNew("wrk_").String()
 		for _, param := range keyed.Params {
-			if param.Name == name && param.Kind == graphqlread.ParamReferences {
+			if param.Name != name {
+				continue
+			}
+			if values, enumerated := param.Schema[toolschema.KeyEnum].([]string); enumerated {
+				call[name] = values[0]
+			} else if param.Kind == graphqlread.ParamReferences {
 				call[name] = []any{pulid.MustNew("wrk_").String()}
 			}
 		}

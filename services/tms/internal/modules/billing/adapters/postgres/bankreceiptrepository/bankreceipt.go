@@ -3,6 +3,7 @@ package bankreceiptrepository
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
@@ -13,7 +14,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/bankreceiptworkitem/bankreceiptworkitemdb"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/bankreceiptports"
 	"github.com/emoss08/trenova/pkg/dberror"
-	"github.com/emoss08/trenova/pkg/pagination"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -118,18 +118,49 @@ func (r *repository) ListByImportBatchID(
 
 func (r *repository) ListExceptions(
 	ctx context.Context,
-	_ pagination.TenantInfo,
-) ([]*bankreceipt.BankReceipt, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*bankreceipt.BankReceipt, error) {
-		br := bankreceiptdb.BankReceipts
-		items, err := br.Where(br.Status.Eq(bankreceipt.StatusException)).
-			Order(br.ReceiptDate.Desc()).
-			All(ctx, r.db.Keel(ctx))
-		if err != nil {
-			return nil, fmt.Errorf("list bank receipt exceptions: %w", err)
-		}
-		return items, nil
-	})
+	req *bankreceiptports.ListBankReceiptExceptionsRequest,
+) (*bankreceiptports.BankReceiptExceptionPage, error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*bankreceiptports.BankReceiptExceptionPage, error) {
+			br := bankreceiptdb.BankReceipts
+			filtered := br.Where(exceptionsMatching(req.Query)...)
+			var (
+				total int64
+				items []*bankreceipt.BankReceipt
+			)
+			err := keel.Batch(ctx, r.db.Keel(ctx),
+				keel.CountInto(filtered, &total),
+				keel.ListInto(br.Where(exceptionsMatching(req.Query)...).
+					Order(br.ReceiptDate.Desc(), br.ID.Desc()).
+					Limit(req.PageLimit()).
+					Offset(max(req.Offset, 0)), &items),
+			)
+			if err != nil {
+				return nil, fmt.Errorf("list bank receipt exceptions: %w", err)
+			}
+			if items == nil {
+				items = []*bankreceipt.BankReceipt{}
+			}
+
+			return &bankreceiptports.BankReceiptExceptionPage{Items: items, Total: int(total)}, nil
+		},
+	)
+}
+
+func exceptionsMatching(query string) []keel.Pred {
+	br := bankreceiptdb.BankReceipts
+	preds := []keel.Pred{br.Status.Eq(bankreceipt.StatusException)}
+	if words := strings.TrimSpace(query); words != "" {
+		preds = append(preds, keel.Or(
+			br.ReferenceNumber.ContainsFold(words),
+			br.Memo.ContainsFold(words),
+			br.ExceptionReason.ContainsFold(words),
+		))
+	}
+
+	return preds
 }
 
 func summaryQuery(asOf int64) keel.Query[*bankreceipt.BankReceipt] {

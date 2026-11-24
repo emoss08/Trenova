@@ -1,6 +1,6 @@
 ---
 path: /payroll/workspace
-aliases: [settlement workspace, driver pay, run payroll, pay period, driver settlements, process settlements]
+aliases: [settlement workspace, driver pay, run payroll, pay period, driver settlements, process settlements, hold settlement, settlement on hold]
 related:
   - /payroll/settlements
   - /payroll/settlement-batches
@@ -11,7 +11,7 @@ related:
 ---
 
 ## What it's for
-The settlement workspace is where payroll staff run the current driver pay period from one screen. The top strip shows the pay period and pay date and counts what is **In pipeline**, what **Needs review**, what is **Posted / paid**, the **Period net pay**, **Unsettled pay** not yet on a settlement, and pay events **On hold**.
+The settlement workspace is where payroll staff run the current driver pay period from one screen. The top strip shows the pay period and pay date and counts what is **In pipeline**, what **Needs review**, **Settlements on hold**, what is **Posted / paid**, the **Period net pay**, **Unsettled pay** not yet on a settlement, and **Pay events on hold**.
 
 Below it, the queue on the left lists every settlement in the period, the middle pane shows the selected settlement's earnings, deductions and history with the actions for its current status, and the right rail shows the selected driver's unsettled pay, recurring earnings, recurring deductions, advances and escrow.
 
@@ -26,7 +26,7 @@ Keywords: build settlements, run payroll, create settlements
 ### Review and approve a settlement
 Keywords: approve driver pay, submit settlement, post settlement
 1. Open [Workspace](/payroll/workspace).
-2. Find the driver in the queue with **Search driver or number**, or narrow it with the chips (**All**, **Needs review**, **Draft**, **Pending**, **Approved**, **Posted**, **Paid**).
+2. Find the driver in the queue with **Search driver or number**, or narrow it with the chips (**All**, **Needs review**, **On hold**, **Draft**, **Pending**, **Approved**, **Posted**, **Paid**).
 3. Select the settlement. If it shows **Review required before approval**, read the listed exceptions first.
 4. On a draft, select **Add adjustment** to add or deduct pay, **Recalculate** to rebuild it from current pay events, or remove a pay event line to return it to the unsettled pool.
 5. Select **Submit for approval**, then **Approve** (or **Reject** with a reason to send it back to draft).
@@ -36,7 +36,14 @@ Keywords: approve driver pay, submit settlement, post settlement
 Keywords: bulk approve, bulk post, bulk mark paid
 1. Open [Workspace](/payroll/workspace).
 2. Tick the settlements in the queue, or tick the box above the list to select all visible ones.
-3. Use **Submit**, **Approve**, **Post** or Mark Paid in the bar at the bottom of the queue. Each button shows how many selected settlements are in a status it applies to; the rest are skipped.
+3. Use **Submit**, **Approve**, **Post** or Mark Paid in the bar at the bottom of the queue. Each button shows how many selected settlements are in a status it applies to; the rest are skipped. Settlements on hold are left out of approving, posting and paying, and the bar says how many.
+
+### Hold a settlement out of the pay run
+Keywords: hold settlement, keep out of pay run, stop a settlement, release settlement hold
+1. Open [Workspace](/payroll/workspace) and select a draft, pending or approved settlement.
+2. Select **Hold**, choose **Why** (Rate dispute, Missing paperwork, Negative net, Deduction under review or Other), write a **Note** saying what the hold waits on (required for Other), and select **Hold settlement**.
+3. The settlement keeps its status and its place in the batch and shows **On hold** with the reason. Approving, posting and paying it are refused until the hold is released.
+4. When what it waited on is settled, select **Release hold** on the settlement.
 
 ### Pay a driver off-cycle
 Keywords: instant pay, pay now, early pay, settle one driver
@@ -60,6 +67,8 @@ Keywords: hold pay event, defer pay, release hold
 Needs read access to driver settlements, and the page is only available when the organization has the Asset operations capability.
 
 Voiding releases the settlement's pay events back to the unsettled pool and reverses any GL postings. Paid and voided settlements cannot be voided.
+
+Holding or releasing a settlement needs the Hold permission on driver settlements, which every role that could approve settlements was given. A posted settlement cannot be held: it is paid through its journal, so void it instead. Holding a settlement is not the same as holding a pay event: a held pay event stays off every settlement, while a held settlement keeps its pay and waits out of the pay run. The driver is not told about a settlement hold.
 
 **Add adjustment** takes dollars, not cents: a positive amount adds pay and a negative amount deducts it.
 

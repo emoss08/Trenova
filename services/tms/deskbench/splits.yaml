@@ -18,16 +18,36 @@ strata:
       - unattended-billing-books-connection-revoked
       - unattended-billing-on-hold-paperwork-not-in
   - stratum:
+      desk: Books keeper
+      mode: chat
+    heldOut:
+      - beyond-close-november
+  - stratum:
+      desk: Carrier risk desk
+      mode: chat
+    heldOut:
+      - beyond-one-carrier-cover-is-a-sentence
+  - stratum:
       desk: CarrierRiskDesk
       mode: unattended
     heldOut:
       - unattended-carrier-risk-cedar-street-authority-revoked
+  - stratum:
+      desk: Cash application agent
+      mode: chat
+    heldOut:
+      - beyond-receipts-to-apply
   - stratum:
       desk: Compliance desk
       mode: chat
     heldOut:
       - expiring-soon
       - pair:whats-down-in-the-fleet
+  - stratum:
+      desk: Credential desk
+      mode: chat
+    heldOut:
+      - beyond-lapsed-credentials-offer-the-reminder
   - stratum:
       desk: CredentialDesk
       mode: unattended
@@ -39,10 +59,20 @@ strata:
     heldOut:
       - unattended-customer-update-departure-on-a-covered-move
   - stratum:
+      desk: Detention desk
+      mode: chat
+    heldOut:
+      - beyond-one-facility-is-a-sentence
+  - stratum:
       desk: DetentionDesk
       mode: unattended
     heldOut:
       - unattended-detention-notice-due-freshhaul
+  - stratum:
+      desk: Dispatch coverage agent
+      mode: chat
+    heldOut:
+      - beyond-coverage-one-area-is-a-sentence
   - stratum:
       desk: Dispatch desk
       mode: chat
@@ -73,6 +103,7 @@ strata:
       desk: EDI desk
       mode: chat
     heldOut:
+      - beyond-one-edi-tender-is-a-sentence
       - edi-accepted-with-errors
       - edi-preview-214
   - stratum:
@@ -97,7 +128,8 @@ strata:
       desk: Fuel and IFTA clerk
       mode: chat
     heldOut:
-      - where-do-i-set-fuel-surcharge
+      - beyond-fuel-one-tractor-is-a-sentence
+      - beyond-ifta-ready-to-file
   - stratum:
       desk: InsightAnalyst
       mode: unattended
@@ -141,6 +173,7 @@ strata:
       desk: Receivables
       mode: chat
     heldOut:
+      - beyond-aging-against-last-month
       - messy-what-does-acme-owe
   - stratum:
       desk: Report analyst
@@ -150,6 +183,7 @@ strata:
       - analysis-not-a-general-computer
       - analysis-shown-not-printed
       - analysis-trend-chart
+      - beyond-on-time-trend
       - revenue-by-customer
   - stratum:
       desk: ServiceFailureDesk
@@ -160,6 +194,7 @@ strata:
       desk: Settlements clerk
       mode: chat
     heldOut:
+      - approve-two-settlements-in-one-go
       - weekly-driver-settlement
   - stratum:
       desk: Shipment Assistant
@@ -182,4 +217,5 @@ strata:
       desk: Workforce coordinator
       mode: chat
     heldOut:
+      - pair:every-driver-cred-lapsing
       - whos-off-this-week

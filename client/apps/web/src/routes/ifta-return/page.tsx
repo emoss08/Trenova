@@ -3,7 +3,9 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { PageLayout } from "@/components/navigation/sidebar-layout";
 import { defaultIftaPeriod, periodFromSearch, type IftaPeriodKey } from "@/lib/ifta-return";
 import type { RoutePrefetch } from "@/lib/route-prefetch";
+import { iftaReturn } from "@/lib/queries/ifta-return";
 import { LazyComponent } from "@trenova/shared/components/error-boundary";
+import { useQuery } from "@tanstack/react-query";
 import { searchString } from "@trenova/shared/lib/router/search-codec";
 import { lazy, useCallback, useMemo } from "react";
 import { IftaReturnSkeleton } from "./_components/ifta-return-skeleton";
@@ -11,7 +13,7 @@ import { iftaPeriodQuery, iftaReturnForPeriodQuery } from "./_components/queries
 
 const IftaReturnWorkspace = lazy(() => import("./_components/ifta-return-workspace"));
 
-const periodParsers = { year: searchString, quarter: searchString };
+const periodParsers = { year: searchString, quarter: searchString, return: searchString };
 
 function nowUnix(): number {
   return Math.floor(Date.now() / 1000);
@@ -35,7 +37,17 @@ export function IftaReturnsPage() {
 
   const [search, setSearch] = useSearchState(periodParsers);
   const fallback = useMemo(() => defaultIftaPeriod(nowUnix()), []);
-  const period = periodFromSearch(search.year, search.quarter, fallback);
+  // A link to one return (a Desk card's "Open IFTA return") names it by id;
+  // its quarter is read from it until the person picks another.
+  const linkedId = search.year ? null : search.return;
+  const linked = useQuery({
+    ...iftaReturn.card(linkedId ?? ""),
+    enabled: Boolean(linkedId),
+  });
+  const period = linked.data
+    ? { year: linked.data.year, quarter: linked.data.quarter }
+    : periodFromSearch(search.year, search.quarter, fallback);
+  const waitingForLinked = Boolean(linkedId) && linked.isPending;
 
   const onPeriodChange = useCallback(
     (next: IftaPeriodKey) => {
@@ -53,9 +65,13 @@ export function IftaReturnsPage() {
         ),
       }}
     >
-      <LazyComponent fallback={<IftaReturnSkeleton />}>
-        <IftaReturnWorkspace period={period} onPeriodChange={onPeriodChange} />
-      </LazyComponent>
+      {waitingForLinked ? (
+        <IftaReturnSkeleton />
+      ) : (
+        <LazyComponent fallback={<IftaReturnSkeleton />}>
+          <IftaReturnWorkspace period={period} onPeriodChange={onPeriodChange} />
+        </LazyComponent>
+      )}
     </PageLayout>
   );
 }

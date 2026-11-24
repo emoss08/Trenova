@@ -72,8 +72,8 @@ type BankReceiptService interface {
 	) ([]*bankreceipt.BankReceipt, error)
 	ListExceptions(
 		ctx context.Context,
-		tenantInfo pagination.TenantInfo,
-	) ([]*bankreceipt.BankReceipt, error)
+		req *ListBankReceiptExceptionsRequest,
+	) (*BankReceiptExceptionPage, error)
 	SuggestMatches(
 		ctx context.Context,
 		req *GetBankReceiptRequest,

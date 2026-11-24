@@ -8,6 +8,11 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/modules/agent/domain/boardhint"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingboard"
+
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingboard"
+
 	"github.com/emoss08/trenova/internal/modules/accounting/app/fiscalperiodservice"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalclose"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
@@ -207,8 +212,9 @@ type arAgingRow struct {
 type arAgingOutcome struct {
 	*fieldgate.Outcome
 
-	AsOf   querytool.OptionalDate `json:"asOf"`
-	Totals *arBuckets             `json:"totals,omitempty"`
+	AsOf        querytool.OptionalDate `json:"asOf"`
+	Totals      *arBuckets             `json:"totals,omitempty"`
+	TotalsCover string                 `json:"totalsCover,omitempty"`
 }
 
 func (t *getARAgingTool) Query(
@@ -261,6 +267,8 @@ func (t *getARAgingTool) Query(
 	}
 	if showAmounts && customerID.IsNil() {
 		outcome.Totals = arBucketsFrom(summary.Totals)
+		outcome.TotalsCover = "totals are every customer's open receivables as of asOf, not " +
+			"this page's; say the organization's total from them, never a sum of rows"
 	}
 
 	return outcome, nil
@@ -354,7 +362,11 @@ func (t *listAROpenItemsTool) ParamSchema() map[string]any {
 	return querytool.ObjectSchema(querytool.WithPaging(map[string]any{
 		querytool.ParamCustomerID: agenttoolschema.RecordIDText(permission.ResourceCustomer,
 			"Only this customer's invoices, by id from customer_list or receivable_get_aging."),
-		"minDaysPastDue":    querytool.IntParam("Only invoices at least this many days past due."),
+		"minDaysPastDue": querytool.IntParam("Only invoices at least this many days past due."),
+		"maxDaysPastDue": querytool.IntParam("Only invoices at most this many days past due. " +
+			"With minDaysPastDue it is one aging bucket: 31 and 60 for 31 to 60 days past due."),
+		"largestFirst": querytool.BoolParam("Largest open balance first, instead of most " +
+			"overdue first: the invoices that make up most of a bucket."),
 		"disputedOnly":      querytool.BoolParam("Only invoices the customer disputes."),
 		querytool.ParamAsOf: agenttoolschema.Date("The day to age as of. Defaults to today."),
 	}, defaultAccountingRows, maxAccountingRows))
@@ -429,6 +441,8 @@ func (t *listAROpenItemsTool) Query(
 		return nil, err
 	}
 	minDays := max(querytool.OptionalInt(params.Params, "minDaysPastDue", 0), 0)
+	maxDays := querytool.OptionalInt(params.Params, "maxDaysPastDue", 0)
+	largestFirst := querytool.OptionalBool(params.Params, "largestFirst")
 	disputedOnly := querytool.OptionalBool(params.Params, "disputedOnly")
 	window := querytool.ReadPage(params.Params, defaultAccountingRows, maxAccountingRows)
 
@@ -438,6 +452,9 @@ func (t *listAROpenItemsTool) Query(
 	}
 	if minDays > 0 {
 		criteria.Field("at least days past due", strconv.Itoa(minDays))
+	}
+	if maxDays > 0 {
+		criteria.Field("at most days past due", strconv.Itoa(maxDays))
 	}
 	if disputedOnly {
 		criteria.Field("limited to", "disputed invoices")
@@ -451,22 +468,11 @@ func (t *listAROpenItemsTool) Query(
 	gate := t.access.Gate(ctx, params, permission.ResourceAccountsReceivable)
 	showAmounts := gate.Show(querytool.FieldAmountMinor, querytool.WithheldAmounts)
 
-	kept := make([]*customerledgerports.AROpenItem, 0, len(items))
-	for _, item := range items {
-		if item == nil || item.DaysPastDue < minDays {
-			continue
-		}
-		if disputedOnly && !strings.EqualFold(item.DisputeStatus, "Disputed") {
-			continue
-		}
-		kept = append(kept, item)
-	}
-	slices.SortStableFunc(kept, func(a, b *customerledgerports.AROpenItem) int {
-		if byDays := cmp.Compare(b.DaysPastDue, a.DaysPastDue); byDays != 0 {
-			return byDays
-		}
-
-		return cmp.Compare(a.DueDate, b.DueDate)
+	kept := keptOpenItems(items, &openItemFilter{
+		minDays:      minDays,
+		maxDays:      maxDays,
+		disputedOnly: disputedOnly,
+		largestFirst: largestFirst && showAmounts,
 	})
 
 	page, more := querytool.SlicePage(window, kept)
@@ -477,7 +483,74 @@ func (t *listAROpenItemsTool) Query(
 
 	found := querytool.SearchResult(criteria, rows, len(kept)).Paged(window, more)
 
-	return fieldgate.Result(&found, gate), nil
+	return &arOpenItemsOutcome{
+		Outcome:   fieldgate.Result(&found, gate),
+		HowToShow: openItemsShown(maxDays > 0),
+	}, nil
+}
+
+type openItemFilter struct {
+	minDays      int
+	maxDays      int
+	disputedOnly bool
+	largestFirst bool
+}
+
+func (f *openItemFilter) keeps(item *customerledgerports.AROpenItem) bool {
+	switch {
+	case item == nil, item.DaysPastDue < f.minDays:
+		return false
+	case f.maxDays > 0 && item.DaysPastDue > f.maxDays:
+		return false
+	case f.disputedOnly && !strings.EqualFold(item.DisputeStatus, "Disputed"):
+		return false
+	}
+
+	return true
+}
+
+func keptOpenItems(
+	items []*customerledgerports.AROpenItem,
+	filter *openItemFilter,
+) []*customerledgerports.AROpenItem {
+	kept := make([]*customerledgerports.AROpenItem, 0, len(items))
+	for _, item := range items {
+		if filter.keeps(item) {
+			kept = append(kept, item)
+		}
+	}
+	slices.SortStableFunc(kept, func(a, b *customerledgerports.AROpenItem) int {
+		if filter.largestFirst {
+			if byOpen := cmp.Compare(b.OpenAmountMinor, a.OpenAmountMinor); byOpen != 0 {
+				return byOpen
+			}
+		}
+		if byDays := cmp.Compare(b.DaysPastDue, a.DaysPastDue); byDays != 0 {
+			return byDays
+		}
+
+		return cmp.Compare(a.DueDate, b.DueDate)
+	})
+
+	return kept
+}
+
+type arOpenItemsOutcome struct {
+	*fieldgate.Outcome
+
+	HowToShow string `json:"howToShow,omitempty"`
+}
+
+func openItemsShown(oneBucket bool) string {
+	if oneBucket {
+		return boardhint.Line(&boardhint.Show{Metric: billingboard.MetricAgingCompare})
+	}
+
+	return boardhint.Line(&boardhint.Show{Records: &boardhint.Records{
+		Words:   "these invoices",
+		Measure: billingboard.MeasureAmountDue,
+		From:    "receivable_list_open_items",
+	}})
 }
 
 type getCustomerStatementTool struct {
@@ -1043,8 +1116,10 @@ func (t *getFiscalCloseBlockersTool) SearchTerms() []string {
 func (t *getFiscalCloseBlockersTool) Description() string {
 	return "Say whether a fiscal period can be closed and list every blocker in the way. " +
 		"Blockers include unposted entries, earlier periods still open, subledger " +
-		"differences and accounting controls; nothing changes. Take the period's id from " +
-		"ledger_list_fiscal_periods."
+		"differences and accounting controls, each with its count when it has one; nothing " +
+		"changes. Take the period's id from ledger_list_fiscal_periods. To show what holds " +
+		"the close, give show_answer a group with metric periodClose and for the period's " +
+		"id: it draws every check, blocking or clear, and the entries waiting to post."
 }
 
 func (t *getFiscalCloseBlockersTool) ParamSchema() map[string]any {
@@ -1067,6 +1142,7 @@ type closeBlockerRow struct {
 	Field    string `json:"field,omitempty"`
 	Code     string `json:"code,omitempty"`
 	Message  string `json:"message"`
+	Count    *int   `json:"count,omitempty"`
 }
 
 type closeBlockersView struct {
@@ -1077,6 +1153,11 @@ type closeBlockersView struct {
 	BlockerCount    int               `json:"blockerCount"`
 	Blockers        []closeBlockerRow `json:"blockers"`
 	BlockersOmitted int               `json:"blockersOmitted,omitempty"`
+	HowToShow       string            `json:"howToShow"`
+}
+
+func closeChecksShown(periodID pulid.ID) string {
+	return boardhint.Line(&boardhint.Show{Metric: accountingboard.MetricPeriodClose, For: periodID})
 }
 
 func (t *getFiscalCloseBlockersTool) Query(
@@ -1112,6 +1193,7 @@ func (t *getFiscalCloseBlockersTool) Query(
 		CanClose:       result.CanClose,
 		BlockerCount:   len(result.Blockers),
 		Blockers:       make([]closeBlockerRow, 0, min(len(result.Blockers), maxCloseBlockers)),
+		HowToShow:      closeChecksShown(id),
 	}
 	for _, blocker := range result.Blockers {
 		if blocker == nil {
@@ -1126,6 +1208,7 @@ func (t *getFiscalCloseBlockersTool) Query(
 			Field:    blocker.Field,
 			Code:     string(blocker.Code),
 			Message:  blocker.Message,
+			Count:    blocker.Count,
 		})
 	}
 

@@ -307,6 +307,7 @@ export const RESOURCE_QUERY_KEY_MAP: Record<string, QueryKeyRoot[]> = {
     "driver-settlement-detail",
     "settlement-workspace-summary",
     "settlement-workspace-settlements",
+    "settlement-batch-detail",
   ],
   driver_pay_event: ["driver-pay-event-list"],
   settlement_dispute: ["settlement-dispute-list", "settlement-dispute-detail"],

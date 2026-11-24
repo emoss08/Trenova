@@ -3,8 +3,10 @@ package operationsquerytools
 import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/querytool"
 	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/readspec"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/boardhint"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionboard"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -32,6 +34,10 @@ const (
 	pluralServiceFailures       = "service failures"
 	pluralServiceFailureReasons = "reason codes"
 	pluralDetentionOccurrences  = "detention occurrences"
+	pluralDetentionStays        = "detention stays"
+	pluralDetentionFacilities   = "facilities"
+	fieldLocationID             = "locationId"
+	fieldHoldBack               = "holdBack"
 	pluralTenders               = "tenders"
 
 	noteOrderStatus      = "Billed means invoiced; Closed means nothing more will be added."
@@ -82,6 +88,17 @@ const (
 	serviceFailureGetSummary = "Retrieve one service failure by id: the late or missed " +
 		"stop, how late, the reason code, the notes, and who reviewed, resolved or voided " +
 		"it. Use exception_list_service_failures first when you do not have an id."
+	detentionStaysSummary = "List detention stays whose clock started in a period, largest " +
+		"billable first: each stay's load, customer, facility, time on site against free " +
+		"time, what it bills, and holdBack, why to hold its bill. stage ToBill is what can " +
+		"go on invoices now. Never add up the rows for a period's total: show_answer's " +
+		"detentionTotals metric reads it, as {readyToBill:detentionTotals} and " +
+		"{readyToBillStays:detentionTotals}."
+	detentionFacilitiesSummary = "Rank facilities by the time trucks waited there past " +
+		"free time in a period, the most first, with stops, the median stop and the " +
+		"slowest one in ten. Each row's id is the location's. On a board the dwell measure " +
+		"reads a facility's time past free: write it as a figure such as {largest:dwell}, " +
+		"never typed in minutes."
 	detentionOccurrenceGetSummary = "Retrieve one detention occurrence by id: the stop, the " +
 		"clock, free time, billable minutes, amounts, notice status, and the evidence and " +
 		"notices on file. A clock still running also carries currentlyBillable, priced as " +
@@ -101,7 +118,7 @@ var (
 // detention and tender lists, each read through the operation the Desk or
 // the record's page sends.
 func ReadSpecs() []readspec.List {
-	return []readspec.List{
+	return append([]readspec.List{
 		{
 			Name:         "order_list",
 			EntityPlural: pluralOrders,
@@ -197,7 +214,7 @@ func ReadSpecs() []readspec.List {
 					"outside the organization is read.",
 			},
 		},
-	}
+	}, detentionReadSpecs()...)
 }
 
 // shapeTender adds what the tender rules say about a tender row: whether it
@@ -272,5 +289,59 @@ func DetentionOccurrenceGetSpec() readspec.Get {
 		Kinds:     []recordkind.Kind{recordkind.DetentionOccurrence},
 		ParamName: "occurrenceId",
 		IDSource:  "from detention_list_occurrences, the page you are on, or this run's subject",
+	}
+}
+
+var holdBackWords = map[string]string{
+	"NoticeMissed":     "no notice reached the customer inside its window",
+	"NoticeFailed":     "the notice never reached the customer",
+	"NoticeLate":       "the notice went out after its deadline",
+	"DepartureByHand":  "the departure was entered by hand",
+	"ArrivalByHand":    "the arrival was entered by hand",
+	"AwaitingApproval": "a person must approve it first",
+}
+
+func holdBackInWords(row map[string]any, _ map[string]struct{}, _ filtercatalog.Clock) {
+	code := querytool.StringOf(row[fieldHoldBack])
+	if words, ok := holdBackWords[code]; ok {
+		row[fieldHoldBack] = words
+	}
+}
+
+func detentionReadSpecs() []readspec.List {
+	return []readspec.List{
+		{
+			Name:         "detention_list_stays",
+			EntityPlural: pluralDetentionStays,
+			Summary:      detentionStaysSummary,
+			Shape:        holdBackInWords,
+			SearchTerms:  []string{"detention to bill", "last week's detention"},
+			Shows: &boardhint.Show{
+				Metric: detentionboard.MetricDetentionTotals,
+				Records: &boardhint.Records{
+					Words:   "the stays that need a decision (held back), at most 25",
+					Measure: detentionboard.MeasureDetention,
+				},
+			},
+			Resource: permission.ResourceDetention,
+			References: map[string]readspec.Reference{
+				fieldLocationID: {
+					Resource: permission.ResourceLocation,
+					What:     "Only the stays at this facility",
+					Source:   "detention_list_facilities or location_list",
+				},
+			},
+		},
+		{
+			Name:         "detention_list_facilities",
+			EntityPlural: pluralDetentionFacilities,
+			Summary:      detentionFacilitiesSummary,
+			SearchTerms:  []string{"waiting time by facility", "worst docks"},
+			Shows: &boardhint.Show{Records: &boardhint.Records{
+				Words:   "these facilities",
+				Measure: detentionboard.MeasureDwell,
+			}},
+			Resource: permission.ResourceDetention,
+		},
 	}
 }

@@ -219,16 +219,7 @@ func computeDSODays(balanceMinor, billedMinor int64) float64 {
 }
 
 func computeCEI(totals *customerledgerports.ARCollectionTotals) float64 {
-	if totals == nil {
-		return 0
-	}
-	denominator := totals.BeginningOpenMinor + totals.CreditSalesMinor - totals.EndingCurrentMinor
-	if denominator <= 0 {
-		return 0
-	}
-	numerator := totals.BeginningOpenMinor + totals.CreditSalesMinor - totals.EndingOpenMinor
-	cei := float64(numerator) / float64(denominator) * 100
-	return math.Max(0, math.Min(cei, 100))
+	return totals.CollectedShare() * 100
 }
 
 func collectionPerformance(

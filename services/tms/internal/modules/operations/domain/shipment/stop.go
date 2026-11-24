@@ -22,6 +22,7 @@ type Stop struct {
 	OrganizationID         pulid.ID                       `json:"organizationId"         keel:"organization_id,pk,tenant"`
 	ShipmentMoveID         pulid.ID                       `json:"shipmentMoveId"         keel:"shipment_move_id"`
 	LocationID             pulid.ID                       `json:"locationId"             keel:"location_id"`
+	CustomerID             *pulid.ID                      `json:"-"                      keel:"customer_id,readonly,noselect"`
 	Status                 shipmentvocab.StopStatus       `json:"status"                 keel:"status"`
 	Type                   shipmentvocab.StopType         `json:"type"                   keel:"type"`
 	ScheduleType           shipmentvocab.StopScheduleType `json:"scheduleType"           keel:"schedule_type"`

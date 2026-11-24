@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/querytool"
 	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/readspec"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/boardhint"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/graphqlreadports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -24,6 +25,7 @@ import (
 const (
 	OutcomeHasMore    = "hasMore"
 	OutcomeNextCursor = "nextCursor"
+	OutcomeHowToShow  = "howToShow"
 )
 
 var errUnpagedSpec = errors.New("an unpaged list reads by its root field's arguments alone")
@@ -266,6 +268,9 @@ func (t *UnpagedTool) Query(
 		outcome[key] = rows
 	}
 	annotateOutcome(outcome, append(notes, besideNotes...), append(withheld, besideWithheld...))
+	if t.spec.Shows != nil && len(items) > 0 {
+		outcome[OutcomeHowToShow] = boardhint.Line(t.spec.Shows)
+	}
 	if byPlan := graphqlread.PlanWithheld(result.WithheldByPlan, prefix); len(byPlan) > 0 {
 		outcome[graphqlread.OutcomeWithheldByPlan] = byPlan
 	}

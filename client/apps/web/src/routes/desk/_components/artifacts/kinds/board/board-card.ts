@@ -4,13 +4,13 @@ import type {
   DeskBoardCheck,
   DeskBoardReading,
   DeskBoardRow,
-  DeskBoardRowMeasure,
   DeskBoardSegment,
   DeskBoardSource,
   DeskBoardValue,
 } from "@/lib/graphql/desk-board-card";
+import { translate } from "@trenova/shared/i18n/runtime";
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
-import { formatDurationFromSeconds } from "@trenova/shared/lib/date";
+import { BOARD_MEASURES } from "@trenova/shared/types/generated/board-catalog";
 import {
   cardDayAfter,
   cardMomentAfter,
@@ -50,6 +50,33 @@ export function toneClass(tone: string): string {
   return known === "" ? "" : `dk-${known}`;
 }
 
+const HOURS_UP_TO = 3 * 24 * 60 * 60;
+
+/**
+ * An elapsed time (how late, how long waiting) in its two largest units, never
+ * skipping one between them, as the server writes it (`boardcatalog.FormatDuration`):
+ * under three days in hours and minutes (48h 30m), from three days in days and
+ * hours (3d 4h); a last unit of zero is left off. Work hours are `boardHours`.
+ */
+export function boardDuration(seconds: number): string {
+  const whole = Math.floor(Math.abs(seconds));
+  if (whole >= HOURS_UP_TO) {
+    const days = Math.floor(whole / 86_400);
+    const hours = Math.floor((whole % 86_400) / 3600);
+    return hours > 0 ? `${days}d ${hours}h` : `${days}d`;
+  }
+  return boardHours(whole);
+}
+
+/** A quantity of work hours: always hours and minutes, never rolled into days (48h 30m). */
+export function boardHours(seconds: number): string {
+  const whole = Math.floor(Math.abs(seconds));
+  const hours = Math.floor(whole / 3600);
+  const minutes = Math.floor((whole % 3600) / 60);
+  if (hours > 0) return minutes > 0 ? `${hours}h ${minutes}m` : `${hours}h`;
+  return `${minutes}m`;
+}
+
 /** A value the server read, as the board writes it. */
 export function formatBoardValue(value: DeskBoardValue | null | undefined): string {
   if (!value) return "";
@@ -58,7 +85,14 @@ export function formatBoardValue(value: DeskBoardValue | null | undefined): stri
     case "count":
       return Number.isFinite(number) ? new Intl.NumberFormat().format(number) : "";
     case "money":
-      return money(value.number, value.currency || "USD");
+      return Number.isFinite(number) && number !== 0 && Math.abs(number) < 1
+        ? new Intl.NumberFormat(undefined, {
+            style: "currency",
+            currency: value.currency || "USD",
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 3,
+          }).format(number)
+        : money(value.number, value.currency || "USD");
     case "percent":
       return Number.isFinite(number)
         ? new Intl.NumberFormat(undefined, {
@@ -67,7 +101,14 @@ export function formatBoardValue(value: DeskBoardValue | null | undefined): stri
           }).format(number)
         : "";
     case "duration":
-      return formatDurationFromSeconds(Number.isFinite(number) ? Math.abs(number) : 0);
+      return boardDuration(Number.isFinite(number) ? number : 0);
+    case "hours":
+      return boardHours(Number.isFinite(number) ? number : 0);
+    case "days":
+      return translate(
+        "{0, plural, one {# day} other {# days}}",
+        Number.isFinite(number) ? Math.abs(number) : 0,
+      );
     case "text":
       return value.text;
     default:
@@ -78,8 +119,8 @@ export function formatBoardValue(value: DeskBoardValue | null | undefined): stri
 }
 
 /** A number of records of one kind, as a source line names them. */
-export function recordsPhrase(resource: string, count: number, t: TranslateFn): string {
-  switch (resource) {
+export function recordsPhrase(kind: string, count: number, t: TranslateFn): string {
+  switch (kind) {
     case "shipment":
       return t("{0, plural, one {# shipment} other {# shipments}}", count);
     case "invoice":
@@ -98,14 +139,30 @@ export function recordsPhrase(resource: string, count: number, t: TranslateFn): 
       return t("{0, plural, one {# trailer} other {# trailers}}", count);
     case "location":
       return t("{0, plural, one {# location} other {# locations}}", count);
+    case "invoice_dispute":
+      return t("{0, plural, one {# invoice dispute} other {# invoice disputes}}", count);
+    case "worker_credential":
+      return t("{0, plural, one {# worker credential} other {# worker credentials}}", count);
+    case "detention_occurrence":
+      return t("{0, plural, one {# detention stay} other {# detention stays}}", count);
+    case "edi_inbound_file":
+      return t("{0, plural, one {# inbound EDI file} other {# inbound EDI files}}", count);
+    case "edi_message":
+      return t("{0, plural, one {# EDI message} other {# EDI messages}}", count);
+    case "bank_receipt":
+      return t("{0, plural, one {# bank receipt} other {# bank receipts}}", count);
+    case "ifta_return_line":
+      return t("{0, plural, one {# IFTA return line} other {# IFTA return lines}}", count);
+    case "driver_settlement":
+      return t("{0, plural, one {# driver settlement} other {# driver settlements}}", count);
     default:
       return t("{0, plural, one {# record} other {# records}}", count);
   }
 }
 
 /** One record a block could not read, named by its kind. */
-export function unreadableRecord(resource: string, t: TranslateFn): string {
-  switch (resource) {
+export function unreadableRecord(kind: string, t: TranslateFn): string {
+  switch (kind) {
     case "shipment":
       return t("This shipment could not be read");
     case "invoice":
@@ -124,6 +181,22 @@ export function unreadableRecord(resource: string, t: TranslateFn): string {
       return t("This trailer could not be read");
     case "location":
       return t("This location could not be read");
+    case "invoice_dispute":
+      return t("This invoice dispute could not be read");
+    case "worker_credential":
+      return t("This worker credential could not be read");
+    case "detention_occurrence":
+      return t("This detention stay could not be read");
+    case "edi_inbound_file":
+      return t("This inbound EDI file could not be read");
+    case "edi_message":
+      return t("This EDI message could not be read");
+    case "bank_receipt":
+      return t("This bank receipt could not be read");
+    case "ifta_return_line":
+      return t("This IFTA return line could not be read");
+    case "driver_settlement":
+      return t("This driver settlement could not be read");
     default:
       return t("This record could not be read");
   }
@@ -133,7 +206,7 @@ export function unreadableRecord(resource: string, t: TranslateFn): string {
 export function sourcePhrase(source: DeskBoardSource, t: TranslateFn): string {
   switch (source.kind) {
     case "records":
-      return recordsPhrase(source.resource, source.count, t);
+      return recordsPhrase(source.recordKind, source.count, t);
     case "activity":
       return t("its history");
     case "analysis":
@@ -143,8 +216,8 @@ export function sourcePhrase(source: DeskBoardSource, t: TranslateFn): string {
     case "metrics":
       return t("Trenova's figures");
     case "checks":
-      return source.resource
-        ? recordsPhrase(source.resource, source.count, t)
+      return source.recordKind
+        ? recordsPhrase(source.recordKind, source.count, t)
         : t("the checks above");
     case "mixed":
       return t("several sources");
@@ -158,17 +231,23 @@ export function sourceLine(source: DeskBoardSource, t: TranslateFn): string {
   const from = sourcePhrase(source, t);
   if (from === "") return "";
   const hidden = source.count - source.readable;
-  if ((source.kind === "records" || source.kind === "checks") && source.resource && hidden > 0) {
+  if ((source.kind === "records" || source.kind === "checks") && source.recordKind && hidden > 0) {
     return t("Read from {0} · {1} you may read", from, source.readable);
   }
   return t("Read from {0}", from);
 }
 
+/** An exhibit's source line: what a metric read, as its reader words it, else where the block read. */
+export function blockSource(block: DeskBoardBlock, t: TranslateFn): string {
+  const read = block.metric?.source ?? "";
+  return read !== "" ? t("Read from {0}", read) : sourceLine(block.source, t);
+}
+
 /** Where a reading was read from, with the aggregate in words: counted, summed, the largest. */
 export function readingSource(reading: DeskBoardReading, t: TranslateFn): string {
   const source = reading.source;
-  if (source.kind === "records" && source.resource) {
-    const records = recordsPhrase(source.resource, source.count, t);
+  if (source.kind === "records" && source.recordKind) {
+    const records = recordsPhrase(source.recordKind, source.count, t);
     const from =
       reading.aggregate === "count"
         ? t("Counted from {0}", records)
@@ -185,10 +264,14 @@ export function readingSource(reading: DeskBoardReading, t: TranslateFn): string
 
 type ReadingKind = "amount" | "count" | "time" | "figure";
 
+/** What a reading reads, from the catalog's value kind for its measure: an amount, a count, a time. */
 function readingKind(reading: DeskBoardReading): ReadingKind {
   if (reading.aggregate === "count") return "count";
-  if (reading.measure === "amountDue") return "amount";
-  if (measureIsTrack(reading.measure)) return "time";
+  const measure = BOARD_MEASURES[`${reading.source.recordKind}:${reading.measure.toLowerCase()}`];
+  if (measure?.value === "money") return "amount";
+  if (measure?.value === "duration" || measure?.value === "days" || measure?.value === "hours") {
+    return "time";
+  }
   return "figure";
 }
 
@@ -213,28 +296,36 @@ export function lockedReading(reading: DeskBoardReading, t: TranslateFn): string
 }
 
 const CITATION = /\[([^[\]\n]+)\]\[(\d{1,2})\]/gu;
+const ARTIFACT_LINK = /\[([^[\]\n]+)\]\(artifact:([A-Za-z0-9_]+)\)/gu;
 const READING_TOKEN = /\{([A-Za-z][A-Za-z0-9_]{0,31})\}/gu;
 
-function wordSegments(text: string): DeskBoardSegment[] {
+function plainSegment(text: string, fields: Partial<DeskBoardSegment> = {}): DeskBoardSegment {
+  return { text, numeral: 0, tone: "", struck: false, reading: "", artifact: "", ...fields };
+}
+
+function readingSegments(text: string): DeskBoardSegment[] {
   const segments: DeskBoardSegment[] = [];
   let last = 0;
   for (const match of text.matchAll(READING_TOKEN)) {
     const at = match.index ?? 0;
-    if (at > last) {
-      segments.push({
-        text: text.slice(last, at),
-        numeral: 0,
-        tone: "",
-        struck: false,
-        reading: "",
-      });
-    }
-    segments.push({ text: "", numeral: 0, tone: "", struck: false, reading: match[1] });
+    if (at > last) segments.push(plainSegment(text.slice(last, at)));
+    segments.push(plainSegment("", { reading: match[1] }));
     last = at + match[0].length;
   }
-  if (last < text.length) {
-    segments.push({ text: text.slice(last), numeral: 0, tone: "", struck: false, reading: "" });
+  if (last < text.length) segments.push(plainSegment(text.slice(last)));
+  return segments;
+}
+
+function wordSegments(text: string): DeskBoardSegment[] {
+  const segments: DeskBoardSegment[] = [];
+  let last = 0;
+  for (const match of text.matchAll(ARTIFACT_LINK)) {
+    const at = match.index ?? 0;
+    if (at > last) segments.push(...readingSegments(text.slice(last, at)));
+    segments.push(plainSegment(match[1], { artifact: match[2] }));
+    last = at + match[0].length;
   }
+  if (last < text.length) segments.push(...readingSegments(text.slice(last)));
   return segments;
 }
 
@@ -251,13 +342,7 @@ export function writtenSegments(text: string): DeskBoardSegment[] {
     const at = match.index ?? 0;
     if (at > last) segments.push(...wordSegments(text.slice(last, at)));
     const numeral = Number(match[2]);
-    segments.push({
-      text: match[1],
-      numeral: numeral >= 1 ? numeral : 0,
-      tone: "",
-      struck: false,
-      reading: "",
-    });
+    segments.push(plainSegment(match[1], { numeral: numeral >= 1 ? numeral : 0 }));
     last = at + match[0].length;
   }
   if (last < text.length) segments.push(...wordSegments(text.slice(last)));
@@ -268,7 +353,8 @@ export function writtenSegments(text: string): DeskBoardSegment[] {
 export type WordPiece =
   | { kind: "text"; text: string; phrase: number }
   | { kind: "cite"; segment: DeskBoardSegment; phrase: number }
-  | { kind: "reading"; segment: DeskBoardSegment; phrase: number };
+  | { kind: "reading"; segment: DeskBoardSegment; phrase: number }
+  | { kind: "artifact"; segment: DeskBoardSegment; phrase: number };
 
 const CLAUSE = /[^,.;:!?]+[,.;:!?]*\s*|[,.;:!?]+\s*/gu;
 const CLAUSE_END = /[,.;:!?]\s*$/u;
@@ -288,6 +374,11 @@ export function wordPieces(segments: readonly DeskBoardSegment[]): {
   for (const segment of segments) {
     if (segment.reading !== "") {
       pieces.push({ kind: "reading", segment, phrase });
+      open = true;
+      continue;
+    }
+    if (segment.artifact) {
+      pieces.push({ kind: "artifact", segment, phrase });
       open = true;
       continue;
     }
@@ -331,8 +422,21 @@ export function boardArrival(phrases: number, exhibits: number): BoardArrival {
 }
 
 /** The ids of the records in a list a person may read, in the order the list draws them: the order a record opened from it steps through. */
-export function readableIds(records: readonly { id: string; readable: boolean }[]): string[] {
-  return records.filter((record) => record.readable).map((record) => record.id);
+export function readableIds(
+  records: readonly Pick<DeskBoardRow, "id" | "kind" | "readable" | "opens">[],
+): string[] {
+  return records.filter((record) => record.readable).map((record) => opened(record).id);
+}
+
+/**
+ * The record a row opens: its own, or the one the server names when its kind has no card of
+ * its own (a worker's credential opens the worker).
+ */
+export function opened(row: Pick<DeskBoardRow, "id" | "kind" | "opens">): {
+  kind: string;
+  id: string;
+} {
+  return row.opens ?? { kind: row.kind, id: row.id };
 }
 
 /** How many of a list's rows the conversation draws; the rest are on the board. */
@@ -380,28 +484,6 @@ export function checkGroups(
     .filter((group) => group.checks.length > 0);
 }
 
-/** A record's measure, read beside its row: what it is measured against, and how it stands. */
-export type MeasureReading = {
-  /** What the measure is held against, whole: "Due Mar 19, 11:00 AM at Rockford, IL". */
-  against: string;
-  /** What the row draws of it, written as precisely as its age needs: "Due Mar 19". */
-  shown: string;
-  /**
-   * The stop it is measured at, when it names one and a moment: the row draws the moment and
-   * then the stop in a span of its own, the first thing to go when the row is narrow.
-   */
-  at: { verb: "due" | "delivered"; when: string; place: string } | null;
-  /** How the record stands: "1h 40m behind", "on time". */
-  standing: string;
-  tone: BoardTone;
-  /** How far along the track the bar reaches, from 0 to 1. */
-  fraction: number;
-  /** The record waits at a stop rather than on the road. */
-  held: boolean;
-  /** The lateness is the estimate's, for a window still open. */
-  projected: boolean;
-};
-
 const WEEK_SECONDS = 7 * 24 * 60 * 60;
 
 /**
@@ -415,120 +497,6 @@ export function measureMoment(now: number, at: number, kind: "date" | "moment"):
   if (!at) return "";
   if (kind === "moment" && Math.abs(at - now) <= WEEK_SECONDS) return cardMomentAfter(now, at);
   return cardDayAfter(now, at);
-}
-
-function seconds(value: DeskBoardValue): number {
-  const number = Number(value.number);
-  return Number.isFinite(number) ? Math.max(0, number) : 0;
-}
-
-export function measureReading(
-  measure: DeskBoardRowMeasure,
-  furthest: number,
-  now: number,
-  t: TranslateFn,
-): MeasureReading {
-  const amount = formatBoardValue(measure.value);
-  const tone = boardTone(measure.tone);
-  const at = measure.at ?? 0;
-  const value = measure.value.kind === "duration" ? seconds(measure.value) : 0;
-  const fraction = furthest > 0 ? Math.min(1, value / furthest) : 0;
-  const base = { tone, fraction, held: false, projected: false, at: null };
-
-  const whole = at ? cardMomentAfter(now, at) : "";
-  const when = measureMoment(now, at, "moment");
-  const day = measureMoment(now, at, "date");
-  const place = measure.place;
-  const due = (): Pick<MeasureReading, "against" | "shown" | "at"> => {
-    if (!at) {
-      const text = place ? t("At {0}", place) : "";
-      return { against: text, shown: text, at: null };
-    }
-    if (!place) return { against: t("Due {0}", whole), shown: t("Due {0}", when), at: null };
-    return {
-      against: t("Due {0} at {1}", whole, place),
-      shown: t("Due {0}", when),
-      at: { verb: "due", when, place },
-    };
-  };
-  const delivered = (): Pick<MeasureReading, "against" | "shown" | "at"> => {
-    if (!at) return { against: t("Delivered"), shown: t("Delivered"), at: null };
-    if (!place) {
-      return { against: t("Delivered {0}", whole), shown: t("Delivered {0}", when), at: null };
-    }
-    return {
-      against: t("Delivered {0} at {1}", whole, place),
-      shown: t("Delivered {0}", when),
-      at: { verb: "delivered", when, place },
-    };
-  };
-  const plain = (text: string): Pick<MeasureReading, "against" | "shown"> => ({
-    against: text,
-    shown: text,
-  });
-
-  switch (measure.measure) {
-    case "lateness":
-      switch (measure.state) {
-        case "late":
-          return { ...base, ...due(), standing: t("{0} behind", amount) };
-        case "held":
-          return { ...base, held: true, ...due(), standing: t("{0} at the stop", amount) };
-        case "projected":
-          return {
-            ...base,
-            projected: true,
-            ...due(),
-            standing: t("estimated {0} late", amount),
-          };
-        case "due":
-          return { ...base, fraction: 0, ...due(), standing: t("not estimated") };
-        case "delivered":
-          return {
-            ...base,
-            fraction: 0,
-            ...delivered(),
-            standing: value > 0 ? t("{0} late", amount) : t("on time"),
-          };
-        default:
-          return { ...base, fraction: 0, ...due(), standing: t("on time") };
-      }
-    case "amountDue":
-      return {
-        ...base,
-        fraction: 0,
-        ...plain(day ? t("Due {0}", day) : ""),
-        standing: measure.state === "settled" ? t("paid") : t("{0} due", amount),
-      };
-    case "pendingFor":
-      return {
-        ...base,
-        against: whole ? t("Since {0}", whole) : "",
-        shown: when ? t("Since {0}", when) : "",
-        standing: measure.state === "settled" ? t("settled") : t("waiting {0}", amount),
-      };
-    case "age":
-      return {
-        ...base,
-        ...plain(day ? t("Dated {0}", day) : ""),
-        standing: t("{0} old", amount),
-      };
-    default:
-      return { ...base, fraction: 0, against: "", shown: "", standing: amount };
-  }
-}
-
-/** The furthest a block's records run by their measure, so each row's track is drawn against it. */
-export function furthestOf(rows: readonly DeskBoardRow[]): number {
-  return rows.reduce((furthest, row) => {
-    const value = row.measure?.value;
-    return value && value.kind === "duration" ? Math.max(furthest, seconds(value)) : furthest;
-  }, 0);
-}
-
-/** A measure that reads as a track along the row; money reads as a figure at its end. */
-export function measureIsTrack(measure: string): boolean {
-  return measure === "lateness" || measure === "pendingFor" || measure === "age";
 }
 
 /** A record's initials, for the face a comparison heads its column with. */

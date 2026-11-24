@@ -43,6 +43,11 @@ type DeskBoardSegment {
   struck: Boolean!
   "The key of the reading the segment places; empty when it places none."
   reading: String!
+  """
+  The id of an artifact this turn made that the words link to, drawn as a link
+  to it; empty when the segment links none.
+  """
+  artifact: String!
 }
 
 """
@@ -65,8 +70,10 @@ type DeskBoardReading {
 }
 
 """
-A value the server read: count, money, percent (a fraction), duration (in
-seconds), number or text.
+A value the server read: count, money, percent (a fraction), duration (an
+elapsed time in seconds, written in days from three days), hours (a quantity of
+work hours in seconds, never written in days), days (whole days, negative once
+past), number or text.
 """
 type DeskBoardValue {
   kind: String!
@@ -82,26 +89,67 @@ a record's history, the checks above, or several.
 """
 type DeskBoardSource {
   kind: String!
-  resource: String!
+  "The kind of record a records source names: shipment, worker_credential, …; empty otherwise."
+  recordKind: String!
   count: Int!
   readable: Int!
   title: String!
 }
 
 """
-A record's measure: how far behind a shipment is, what an invoice still owes,
-how long a journal entry has waited. state says where the record is (late,
-held at a stop, onTime, projected to miss a window still open, due with no
-estimate, delivered, open, settled), at the moment it is measured against and
-place the stop it is measured at, when it is measured at a stop.
+A record's measure, read by the record's owner: its value, the words it stands
+at, a second fact, and the bar the board laid out for it against the block's
+other rows.
 """
 type DeskBoardRowMeasure {
   measure: String!
-  value: DeskBoardValue!
-  state: String!
-  at: Timestamp
-  place: String!
+  "The value readings add up; absent when the reader may not read it."
+  value: DeskBoardValue
+  "What the row says it stands at, right of the label."
+  standing: DeskBoardWords!
+  "The second fact, after the subtitle; absent when the measure has none."
+  fact: DeskBoardWords
   tone: String!
+  "Absent for a measure drawn as a figure only."
+  bar: DeskBoardBar
+}
+
+"""
+Words the server wrote in the reader's language. {0} in text is where value
+goes, or the moment at (written as a day when day is true); place is where it
+was measured, drawn after the moment and the first to give way.
+"""
+type DeskBoardWords {
+  text: String!
+  value: DeskBoardValue
+  at: Timestamp
+  day: Boolean!
+  place: String!
+}
+
+"""
+A row's bar, laid out on one scale for every row of its block. centred bars
+hold their bound at the middle; bound is the mark through the track, a
+fraction of it.
+"""
+type DeskBoardBar {
+  centred: Boolean!
+  segments: [DeskBoardBarSegment!]!
+  bound: Float
+}
+
+"kind: used, beyond, ghost, projected, tail, credit or held; start and width are fractions of the track."
+type DeskBoardBarSegment {
+  kind: String!
+  start: Float!
+  width: Float!
+  tone: String!
+}
+
+"A record a row opens in place of itself."
+type DeskBoardRef {
+  kind: String!
+  id: ID!
 }
 
 """
@@ -109,12 +157,18 @@ A record a block names. A record the reader may not read, or that no longer
 exists, has readable false and nothing else.
 """
 type DeskBoardRow {
-  resource: String!
+  "The kind of record: shipment, worker_credential, detention_occurrence, …"
+  kind: String!
   id: ID!
   readable: Boolean!
   label: String!
   subtitle: String!
+  "The status as the product words it."
   status: String!
+  "The status's tone, chosen by its owner: bad, warn, info, ok, or empty for none."
+  statusTone: String!
+  "The record the row opens when its own kind has no card (a credential opens its worker)."
+  opens: DeskBoardRef
   measure: DeskBoardRowMeasure
 }
 
@@ -207,11 +261,183 @@ type DeskBoardMeter {
   percent: DeskBoardValue
 }
 
+"A named figure a metric read, with the label the catalog gives it."
+type DeskBoardMetricFigure {
+  name: String!
+  label: String!
+  "Absent when it could not be read or the plan leaves it out."
+  value: DeskBoardValue
+  "What it read earlier, when the metric compares it (was 34.9 on Oct 23); absent otherwise."
+  was: DeskBoardValue
+  "When it read was."
+  wasAt: Timestamp
+  "bad, warn, info, ok, or empty: how the metric's owner rates the figure."
+  tone: String!
+}
+
+"A point along a chart's axis: a moment or a label; marked when the chart draws attention to it."
+type DeskBoardTick {
+  at: Timestamp
+  label: String!
+  marked: Boolean!
+}
+
+"One series of a chart: now, was (the period before, drawn light) or stack. A null point is a gap."
+type DeskBoardSeries {
+  name: String!
+  role: String!
+  points: [Decimal]!
+}
+
+"A band across a chart: between two points along the axis, or between two values."
+type DeskBoardBand {
+  from: Int
+  to: Int
+  low: Decimal
+  high: Decimal
+}
+
+"A line across a chart: a target or a reference."
+type DeskBoardLine {
+  value: Decimal!
+  label: String!
+}
+
+"A span along a row of a spans chart, between two moments: cover or gap."
+type DeskBoardSpan {
+  from: Timestamp!
+  to: Timestamp!
+  kind: String!
+}
+
+"A dot on a row of a dots or spans chart: at a moment or a value."
+type DeskBoardChartMark {
+  at: Timestamp
+  value: Decimal
+  marked: Boolean!
+  "A unit with too little data to place: drawn hollow, never warned."
+  ghost: Boolean!
+  label: String!
+}
+
+"A row of a ranked bars, dots or spans chart, and the record it opens."
+type DeskBoardChartRow {
+  label: String!
+  record: DeskBoardRow
+  value: DeskBoardValue
+  marked: Boolean!
+  "The row that stands for the rest (3 other customers), drawn lighter than a named row."
+  rest: Boolean!
+  spans: [DeskBoardSpan!]!
+  dots: [DeskBoardChartMark!]!
+}
+
+"""
+A chart the server shaped for a board: ticks along the axis, series of points
+in unit, the points it marks, a band, a target and a reference, a ghost last
+point still running, and rows for ranked bars, dots and spans.
+"""
+type DeskBoardChart {
+  unit: String!
+  currency: String!
+  ticks: [DeskBoardTick!]!
+  series: [DeskBoardSeries!]!
+  marked: [Int!]!
+  band: DeskBoardBand
+  target: DeskBoardLine
+  ref: DeskBoardLine
+  ghost: Boolean!
+  rows: [DeskBoardChartRow!]!
+}
+
+"One part of a whole: used, over or credit."
+type DeskBoardSplitPart {
+  label: String!
+  value: DeskBoardValue!
+  kind: String!
+}
+
+type DeskBoardSplit {
+  total: DeskBoardValue!
+  parts: [DeskBoardSplitPart!]!
+}
+
+type DeskBoardGridColumn {
+  label: String!
+  sublabel: String!
+}
+
+"have against need, with the high end of need; state covered, short, deep or maybe."
+type DeskBoardGridCell {
+  have: Int!
+  need: Int!
+  needHigh: Int!
+  state: String!
+}
+
+type DeskBoardGridRow {
+  label: String!
+  cells: [DeskBoardGridCell!]!
+}
+
+type DeskBoardGrid {
+  columns: [DeskBoardGridColumn!]!
+  rows: [DeskBoardGridRow!]!
+}
+
+"One line of a log: when, what became of it, and the records it names."
+type DeskBoardLogEntry {
+  at: Timestamp!
+  tone: String!
+  text: String!
+  detail: String!
+  records: [DeskBoardRow!]!
+}
+
+"A column of a metric's table: text or value."
+type DeskBoardMetricColumn {
+  label: String!
+  kind: String!
+}
+
+"A cell of a metric's table; mark is hot, off, w or empty."
+type DeskBoardCell {
+  value: DeskBoardValue
+  text: String!
+  mark: String!
+}
+
+type DeskBoardMetricTable {
+  columns: [DeskBoardMetricColumn!]!
+  rows: [[DeskBoardCell!]!]!
+}
+
+"""
+A metric a board reads, drawn in its form: trend, bars, columns, split, grid,
+dots, spans, log, checks, table or figures. The fields its form names are
+filled; figures holds every figure the catalog declares for it.
+"""
+type DeskBoardMetric {
+  "The metric's name; empty for an analysis chart."
+  name: String!
+  form: String!
+  title: String!
+  "Where it was read from, for the source line."
+  source: String!
+  figures: [DeskBoardMetricFigure!]!
+  chart: DeskBoardChart
+  split: DeskBoardSplit
+  grid: DeskBoardGrid
+  log: [DeskBoardLogEntry!]!
+  checks: [DeskBoardCheck!]!
+  table: DeskBoardMetricTable
+}
+
 """
 One block of a board. type says which of the other fields it fills: figures,
-records (rows), compare, table, chart (an analysis chart spec), timeline
-(events, with the record in rows), checks, meter, prose (text) or note (text,
-noteTone and chips).
+records (rows), compare, table, chart and metric (metric), timeline (events,
+with the record in rows), checks, meter, prose (text) or note (text, noteTone
+and chips).
 """
 type DeskBoardBlock {
   type: String!
@@ -228,7 +454,8 @@ type DeskBoardBlock {
   rows: [DeskBoardRow!]!
   compare: DeskBoardCompare
   table: DeskBoardTable
-  chart: JSON
+  "A chart or metric block, drawn in its form."
+  metric: DeskBoardMetric
   events: [DeskBoardEvent!]!
   checks: [DeskBoardCheck!]!
   meter: DeskBoardMeter

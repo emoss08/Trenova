@@ -25,6 +25,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/intakequerytools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/masterdataquerytools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/memoryquerytools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/metricquerytools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/operationsquerytools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/oversightquerytools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/ratequerytools"
@@ -140,6 +141,7 @@ func coreToolProviders() []any {
 		provideSearchDocumentsTool,
 		provideShipmentDocumentsTool,
 		homequerytools.NewListHomeWidgetsTool,
+		metricquerytools.NewReadMetricTool,
 		guidequerytools.NewFindInTrenovaTool,
 		guidequerytools.NewOpenPageTool,
 		webquerytools.NewWebSearchTool,

@@ -2145,7 +2145,23 @@ walker instead would count a shipment row's `customerId` as a customer the resul
   others: the reason `board`, a `retrying` event and a `reply_regrounded` `answer_with_board`, the
   draft and the correction appended to what the model reads (`replycheck.SendBackDraft`, which the
   grounding and placement re-asks use too), so the person sees one restart. The discarded draft's
-  links are not counted as links the conversation holds (`isCorrection`).
+  links are not counted as links the conversation holds (`isCorrection`). When this turn's
+  results carried a `howToShow` hint, the correction repeats it, and a later result that would
+  end with the records note ends with that hint again instead (`turnHint`): the last note is the
+  one Haiku obeys, and an EDI turn's last read used to bury the partner-day hint under a note
+  about five messages. A metric's correction names the records the metric declares
+  (`Metric.Records`) and the tool that reads them when the turn has not read them, and
+  `show_answer` sends back once a metric board whose declared records no group holds.
+- **One draft re-ask** (`AskForDraft`, run before the board re-ask by `AskAgain`, at most once a
+  turn, guard `draft`, `reply_regrounded` `publish_draft`). A reply that writes out a message
+  for the person to send (a quoted greeting, a greeting followed by a sign-off, or a `Subject:`
+  line) on a turn that offers `publish_artifact` and published no document is sent back to
+  publish it as a draft; nothing is ever sent. A message the turn read (in a tool result or the
+  person's own words) is a quotation and is left alone, and so is a greeting to the person.
+  When the person's message asked a question about records the turn read, the correction also
+  says to answer it after the draft with `show_answer`, linking the draft. Haiku 5.5 wrote the
+  reminder into its reply in 18 of 18 trials before this (with the prompt, the tool description
+  and the board's follow-up all saying not to); with it, 9 of 9.
 - **What the bench measured, and why a linked reply is left alone.** Two runs of
   `deskbench/scenarios/boards.yaml` on Haiku 5.5. In the first (`boards-steer-1`) the note stood
   before the table note and the model obeyed the table note: it pointed to the table in every case
@@ -3724,7 +3740,8 @@ model) and by the protocol of the provider that answered (`AnthropicMessages`,
 again because a guard sent the answer back: `loop` (a reply that fell into a repetition),
 `cut_off` (a call cut off at the output limit, retried with a larger one), `empty_reply`,
 `command` (a turn held to the extension command it opened with), `board` (a prose reply across
-records sent back for a board), `grounding` (the grounding guard's correction), `placement`
+records sent back for a board), `draft` (a message to send written into the reply, sent back to
+be published as a draft), `grounding` (the grounding guard's correction), `placement`
 (artifact placement), and the two forced final answers,
 `budget_spent` and `stuck`. The same name rides on the re-asked request as
 `ChatCompletionRequest.Reask`, which is how the desk bench counts each guard's cost per

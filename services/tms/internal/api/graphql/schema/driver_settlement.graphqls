@@ -98,6 +98,15 @@ enum DriverSettlementStatus {
   Voided
 }
 
+"Why a person keeps a driver settlement out of the pay run."
+enum DriverSettlementHoldReason {
+  RateDispute
+  MissingPaperwork
+  NegativeNet
+  DeductionReview
+  Other
+}
+
 enum SettlementLineCategory {
   Earning
   Reimbursement
@@ -599,6 +608,19 @@ type DriverSettlement {
   voidedById: ID
   voidedAt: Timestamp
   voidReason: String!
+  """
+  Why a person keeps it out of the pay run; null when it is not on hold. A held settlement
+  keeps its status, and approving, posting and paying it are refused until the hold is released.
+  """
+  holdReason: DriverSettlementHoldReason
+  "What the person who held it wrote; empty when there is no note or no hold."
+  holdNote: String!
+  heldById: ID
+  "When the hold was placed; null when it is not on hold."
+  heldAt: Timestamp
+  holdReleasedById: ID
+  "When the last hold was released."
+  holdReleasedAt: Timestamp
   version: Int!
   createdAt: Timestamp!
   updatedAt: Timestamp!
@@ -615,6 +637,8 @@ type DriverSettlement {
   postedBy: User
   paidBy: User
   voidedBy: User
+  heldBy: User
+  holdReleasedBy: User
 }
 
 """
@@ -686,6 +710,10 @@ type SettlementBatch {
   exceptionCount: Int!
   totalGrossMinor: Int!
   totalNetMinor: Int!
+  "How many of its settlements are on hold, out of the pay run until released."
+  heldCount: Int!
+  "What its held settlements net."
+  heldNetMinor: Int!
   currencyCode: String!
   notes: String!
   generatedById: ID
@@ -821,6 +849,9 @@ type SettlementWorkspaceSummary {
   unsettledGrossMinor: Int!
   heldEventCount: Int!
   heldGrossMinor: Int!
+  "Settlements in the period a person holds out of the pay run."
+  heldSettlementCount: Int!
+  heldSettlementNetMinor: Int!
   unsettledWorkerCount: Int!
   openBatchId: ID
 }
@@ -866,6 +897,37 @@ type WorkerEarningsSummary @kind(resource: "driver_settlement") {
   accruedGrossMinor: Int!
   outstandingAdvances: Int!
   escrowBalanceMinor: Int!
+}
+
+"""
+A driver settlement in a pay batch that cannot be released as it stands: a person holds it out
+of the pay run, it has a critical exception, or the driver has a dispute open on it.
+"""
+type DriverSettlementBlocker @kind(resource: "driver_settlement") {
+  id: ID!
+  settlementNumber: String!
+  status: DriverSettlementStatus!
+  workerId: ID!
+  "The driver's name."
+  driverName: String!
+  batchId: ID
+  "The pay batch's name."
+  batchName: String!
+  payDate: Timestamp!
+  netPayMinor: Int
+  grossEarningsMinor: Int
+  deductionsMinor: Int
+  "Below zero when deductions ran past earnings and the rest carries to the next settlement."
+  carryForwardOutMinor: Int
+  currencyCode: String!
+  "What keeps it from release, in the reader's words: On hold, Has a critical exception, or Dispute open."
+  reason: String!
+  "The critical exception's message, or what the dispute is about; empty for a hold."
+  message: String!
+  "Why a person holds it, in words; empty unless it is on hold."
+  holdReason: String
+  "What the person who held it wrote."
+  holdNote: String
 }
 
 """
@@ -1140,6 +1202,13 @@ input RemoveSettlementAdjustmentInput {
   lineId: ID!
 }
 
+input HoldDriverSettlementInput {
+  settlementId: ID!
+  reason: DriverSettlementHoldReason!
+  "What the hold waits on, for whoever releases it; required when the reason is Other. At most 500 characters."
+  note: String
+}
+
 input HoldPayEventInput {
   payEventId: ID!
   "Why pay is being deferred — shown to whoever reviews the held event."
@@ -1242,6 +1311,16 @@ extend type Query {
   workerYtdPaySummaries(year: Int!, classification: PayeeClassification): [WorkerYTDPaySummary!]!
   settlementControl: SettlementControl!
   currentSettlementPeriod: SettlementPeriodBounds!
+  """
+  The settlements of a pay batch that cannot be released as they stand: a critical exception
+  first, then a dispute open, the largest net first. The batch is the newest pay period's
+  when batchId is left out.
+  """
+  driverSettlementBlockers(
+    batchId: ID
+    "At most this many settlements, from 1 to 100; 25 when left out."
+    limit: Int
+  ): [DriverSettlementBlocker!]!
   "Workspace snapshot for a pay period; omit bounds to use the current period."
   settlementWorkspaceSummary(periodStart: Timestamp, periodEnd: Timestamp): SettlementWorkspaceSummary!
   """
@@ -1297,6 +1376,13 @@ extend type Mutation {
   attachPayEventsToSettlement(input: AttachPayEventsInput!): DriverSettlement!
   "Remove a pay event from a draft settlement, returning it to the unsettled pool."
   detachPayEventFromSettlement(input: DetachPayEventInput!): DriverSettlement!
+  """
+  Hold a driver settlement out of the pay run, with the reason. It keeps its status; approving,
+  posting and paying it are refused until the hold is released. A posted settlement cannot be held.
+  """
+  holdDriverSettlement(input: HoldDriverSettlementInput!): DriverSettlement!
+  "Release a held driver settlement back into the pay run."
+  releaseDriverSettlementHold(settlementId: ID!): DriverSettlement!
   "Run one lifecycle action across many settlements; per-settlement failures don't abort the rest."
   bulkDriverSettlementAction(input: BulkSettlementActionInput!): BulkSettlementActionPayload!
 }

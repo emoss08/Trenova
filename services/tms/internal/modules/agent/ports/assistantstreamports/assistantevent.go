@@ -208,6 +208,8 @@ const RegroundPlaceArtifacts RegroundAction = "place_artifacts"
 
 const RegroundAnswerWithBoard RegroundAction = "answer_with_board"
 
+const RegroundPublishDraft RegroundAction = "publish_draft"
+
 type AssistantReplyRegroundedEvent struct {
 	Action  RegroundAction `json:"action"`
 	Figures []string       `json:"figures,omitempty"`

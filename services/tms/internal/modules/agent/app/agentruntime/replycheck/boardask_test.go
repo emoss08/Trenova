@@ -223,7 +223,8 @@ func TestAskForBoard_SendsAProseReplyAcrossRecordsBackOnce(t *testing.T) {
 	assert.Contains(t, correction.Content,
 		"writing {count}, {total} or {largest} where a figure goes, never typed")
 	assert.Contains(t, correction.Content, "If a board cannot show this answer, or the person "+
-		"only asked to see a list or asked for one fact, reply again as you did.")
+		"only asked to see a list, or asked one fact about one record and the others are named "+
+		"only to set them aside, reply again as you did.")
 	assert.Contains(t, correction.Content, "reply again as you did")
 	assert.NotContains(t, correction.Content, "shp_", "records are named by their labels")
 	assert.True(t, isCorrection(&correction), "the draft before it reads as discarded")
@@ -452,4 +453,142 @@ func TestAskForBoard_LeavesALinkedReplyThatWritesOutAPageOfALongerList(t *testin
 	_, ask := AskForBoard(turn, draft, &BoardAskState{})
 
 	assert.False(t, ask)
+}
+
+const lapsingCredentials = `{"columns":["id","credentialType","health","worker"],"count":3,` +
+	`"items":[` +
+	`{"credentialType":{"id":"wct_01M7V48E5HERT6ZQN8GJBGY46C","name":"DOT Medical Card"},` +
+	`"health":"Expired","id":"wcred_01M7V48E7D6K4KRNHMBA7X53YW",` +
+	`"worker":{"id":"wrk_01M7V48DVVQGDF0KG409BJH1FJ","firstName":"Jane",` +
+	`"lastName":"Doe","wholeName":"Jane Doe"}},` +
+	`{"credentialType":{"id":"wct_01M7V48E5HERT6ZQN8GJBGY46C","name":"DOT Medical Card"},` +
+	`"health":"Expiring soon","id":"wcred_01M7V48E7D6K4KRNHMBA7X53YX",` +
+	`"worker":{"id":"wrk_01M7V48DVVQGDF0KG409BJH1FK","firstName":"Robert",` +
+	`"lastName":"Brown","wholeName":"Robert Brown"}},` +
+	`{"credentialType":{"id":"wct_01M7V48E5HERT6ZQN8GJBGY46C","name":"DOT Medical Card"},` +
+	`"health":"Expiring soon","id":"wcred_01M7V48E7D6K4KRNHMBA7X53YZ",` +
+	`"worker":{"id":"wrk_01M7V48DVVQGDF0KG409BJH1FM","firstName":"Sarah",` +
+	`"lastName":"Williams","wholeName":"Sarah Williams"}}` +
+	`]}`
+
+func TestAskForBoard_SendsBackAProseReplyAcrossPartRecordsNamedByTheirWhole(t *testing.T) {
+	t.Parallel()
+
+	turn := readTurn("worker_list_credentials",
+		fencedResult("worker_list_credentials", lapsingCredentials))
+	draft := draftOf("**Jane Doe**: DOT Medical Card lapsed. **Robert Brown**: expires " +
+		"2026-12-01. **Sarah Williams**: expires 2026-12-09.")
+
+	back, ask := AskForBoard(turn, draft, &BoardAskState{})
+
+	require.True(t, ask, "credentials are named by their workers, as the reply names them")
+	assert.Contains(t, back.Messages[1].Content, "Jane Doe")
+}
+
+func TestAskForBoard_LeavesALinkedReplyAboutOneOfTheRecordsItLookedUp(t *testing.T) {
+	t.Parallel()
+
+	turn := &boardTurn{messages: []llmports.Message{
+		{Role: llmports.RoleUser, Content: "whats the BOL on the freshhaul reefer going to LA?"},
+		{Role: llmports.RoleAssistant, ToolCalls: []llmports.ToolCall{{
+			ID:   "call_1",
+			Name: "shipment_get",
+			Arguments: map[string]any{"shipmentIds": []any{
+				"shp_01JLATE0000000000000000001", "shp_01JLATE0000000000000000002",
+			}},
+		}}},
+		{
+			Role: llmports.RoleTool, ToolName: "shipment_get", ToolCallID: "call_1",
+			Content: fencedResult("shipment_get", twoLateLoads),
+		},
+	}}
+	draft := draftOf("The reefer load into LA that is still open is **SEED-SHP-010**; its " +
+		"BOL is BOL-2026-0010.\n\nI also found an earlier load to the same terminal, " +
+		"SEED-SHP-008, already invoiced. The details are in " +
+		"[Shipments](artifact:art_01JTABLE00000000000000001).")
+
+	_, ask := AskForBoard(turn, draft, &BoardAskState{})
+
+	assert.False(t, ask, "one record answers; the other is an aside after it")
+}
+
+func TestAskForBoard_SendsBackAReplyThatLinksOnlyTheScriptItRan(t *testing.T) {
+	t.Parallel()
+
+	script := pulid.MustNew("art_")
+	turn := proseTurn()
+	turn.artifacts = []agentruntimeports.ShownArtifact{{
+		ID: script, Kind: "analysis", Title: "Open loads",
+	}}
+	draft := draftOf("Two loads are open and bring in $12,037.50: SEED-SHP-010 and " +
+		"SEED-SHP-008. The working is in [Open loads](artifact:" + script.String() + ").")
+
+	_, ask := AskForBoard(turn, draft, &BoardAskState{})
+
+	assert.True(t, ask, "a script's own result is not a list the person asked to see")
+}
+
+func TestWithBoardNote_EndsWithTheResultsOwnHowToShow(t *testing.T) {
+	t.Parallel()
+
+	hint := "When the person needs to see what stands in the way rather than one figure, " +
+		"do not answer in prose or a list: answer with show_answer."
+	content := toolresult.Fence("ledger_get_fiscal_close_blockers",
+		`{"blockerCount":4,"howToShow":"`+hint+`"}`)
+
+	noted := WithBoardNote(readTurn("ledger_get_fiscal_close_blockers", ""),
+		"ledger_get_fiscal_close_blockers", content, false, nil)
+
+	assert.Equal(t, content+"\n\n["+hint+"]", noted, "the hint is the last thing the model reads")
+	body, note := splitBoardNote(noted)
+	assert.Equal(t, content, body)
+	assert.Equal(t, "\n\n["+hint+"]", note)
+}
+
+const detentionTotalsRead = `{"metric":"detentionTotals","title":"Detention, last week",` +
+	`"figures":[{"name":"readyToBill","label":"Ready to bill","value":"$21,356.25",` +
+	`"writeAs":"{readyToBill:detentionTotals}"},{"name":"readyToBillStays",` +
+	`"label":"Stays ready to bill","value":"165","writeAs":"{readyToBillStays:detentionTotals}"},` +
+	`{"name":"noticeOnTime","label":"Notice on time","value":null}],"howToShow":"…"}`
+
+func metricTurn() *boardTurn {
+	return readTurn("metric_read", fencedResult("metric_read", detentionTotalsRead))
+}
+
+func TestAskForBoard_SendsBackALinkedReplyThatStatesAMetricsFigures(t *testing.T) {
+	t.Parallel()
+
+	draft := draftOf("$21,356.25 across 165 stays from last week can be billed. The stays are " +
+		"in [Detention stays](artifact:art_01JTABLE00000000000000001).")
+
+	back, ask := AskForBoard(metricTurn(), draft, &BoardAskState{})
+
+	require.True(t, ask, "totals over more stays than a board lists belong on a board")
+	correction := back.Messages[1].Content
+	assert.Contains(t, correction, "$21,356.25, 165 are figures of the detentionTotals metric")
+	assert.Contains(t, correction, `a group {"metric": "detentionTotals"}`)
+	assert.True(t, isBoardCorrection(correction))
+}
+
+func TestAskForBoard_LeavesOneFigureOfAMetric(t *testing.T) {
+	t.Parallel()
+
+	draft := draftOf("$21,356.25 of last week's detention can be billed now.")
+
+	_, ask := AskForBoard(metricTurn(), draft, &BoardAskState{})
+
+	assert.False(t, ask, "one figure is a sentence")
+}
+
+func TestAskForBoard_LeavesTheFiguresOfAMetricThatDrawsOnlyFigures(t *testing.T) {
+	t.Parallel()
+
+	read := `{"metric":"dispatchToday","figures":[{"name":"onTimePercent","value":"87.3%"},` +
+		`{"name":"movesLate","value":"12"},{"name":"movesDueToday","value":"40"}]}`
+	turn := readTurn("metric_read", fencedResult("metric_read", read))
+	draft := draftOf("On time today is 87.3%, with 12 late moves of 40 due.")
+
+	_, ask := AskForBoard(turn, draft, &BoardAskState{})
+
+	assert.False(t, ask, "a readout of today's figures is a sentence")
 }

@@ -57,3 +57,76 @@ export const reconciliationSummarySchema = z.object({
   exceptionAging: exceptionAgingSchema,
 });
 export type ReconciliationSummary = z.infer<typeof reconciliationSummarySchema>;
+
+/** One application of the matched payment to an invoice; the number is empty when the reader may not read that invoice. */
+export const bankReceiptCardApplicationSchema = z.object({
+  invoiceId: z.string(),
+  invoiceNumber: z.string(),
+  appliedAmountMinor: z.number().int(),
+  shortPayAmountMinor: z.number().int(),
+});
+export type BankReceiptCardApplication = z.infer<typeof bankReceiptCardApplicationSchema>;
+
+export const bankReceiptCardPaymentSchema = z.object({
+  id: z.string(),
+  customerId: z.string(),
+  customerName: z.string(),
+  paymentMethod: z.string(),
+  referenceNumber: z.string(),
+  paymentDate: z.number().int(),
+  status: z.string(),
+  currencyCode: z.string(),
+  amountMinor: z.number().int(),
+  appliedAmountMinor: z.number().int(),
+  unappliedAmountMinor: z.number().int(),
+  applications: z.array(bankReceiptCardApplicationSchema),
+});
+export type BankReceiptCardPayment = z.infer<typeof bankReceiptCardPaymentSchema>;
+
+export const bankReceiptCardWorkItemSchema = z.object({
+  id: z.string(),
+  status: z.string(),
+  assignedTo: z.string(),
+  assignedAt: z.number().int().nullish(),
+  resolutionType: z.string(),
+  resolutionNote: z.string(),
+});
+export type BankReceiptCardWorkItem = z.infer<typeof bankReceiptCardWorkItemSchema>;
+
+export const bankReceiptCandidateKindSchema = z.enum(["CustomerPayment", "Invoice"]);
+export type BankReceiptCandidateKind = z.infer<typeof bankReceiptCandidateKindSchema>;
+
+export const bankReceiptCandidateStandingSchema = z.enum(["Exact", "SameAmount", "Short", "Over"]);
+export type BankReceiptCandidateStanding = z.infer<typeof bankReceiptCandidateStandingSchema>;
+
+/**
+ * An open item the receipt most plausibly pays, from the stored projection: the invoice
+ * or posted payment, why (the evidence codes), and the receipt's amount against its open amount.
+ * Empty strings stand for what the reader may not read.
+ */
+export const bankReceiptCardCandidateSchema = z.object({
+  rank: z.number().int(),
+  kind: bankReceiptCandidateKindSchema,
+  invoiceId: z.string(),
+  invoiceNumber: z.string(),
+  paymentId: z.string(),
+  paymentReference: z.string(),
+  customerName: z.string(),
+  standing: bankReceiptCandidateStandingSchema,
+  evidence: z.array(z.string()),
+  openMinor: z.number().int(),
+  differenceMinor: z.number().int(),
+});
+export type BankReceiptCardCandidate = z.infer<typeof bankReceiptCardCandidateSchema>;
+
+/** A bank receipt as the Desk card reads it, in one request (GET /accounting/bank-receipts/:id/card/). */
+export const bankReceiptCardSchema = z.object({
+  receipt: bankReceiptSchema,
+  payment: bankReceiptCardPaymentSchema.nullable(),
+  paymentHidden: z.boolean(),
+  workItem: bankReceiptCardWorkItemSchema.nullable(),
+  workItemShown: z.boolean(),
+  candidates: z.array(bankReceiptCardCandidateSchema),
+  candidatesWithheld: z.array(bankReceiptCandidateKindSchema),
+});
+export type BankReceiptCard = z.infer<typeof bankReceiptCardSchema>;

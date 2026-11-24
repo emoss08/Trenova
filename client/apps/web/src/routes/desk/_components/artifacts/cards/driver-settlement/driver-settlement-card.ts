@@ -9,6 +9,7 @@ import type {
   DeskDriverSettlementGroup,
 } from "@/lib/graphql/settlement-card";
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
+import { holdReasonLabel } from "@/lib/settlement-hold";
 import type { ReferenceKind } from "@trenova/shared/types/generated/reference-views";
 import type { StatementGroup, StatementRow } from "../../record-card/card-settlement";
 import { cardDay, cardMoment, cardWeekday, money } from "../../record-card/record-card-values";
@@ -127,9 +128,29 @@ function flagTitle(code: string, t: TranslateFn): string {
   }
 }
 
-/** The flags to review, the critical ones first. */
+function holdFlag(record: DeskDriverSettlement, t: TranslateFn): SettlementFlag {
+  const reason = holdReasonLabel(record.holdReason);
+  const note = record.holdNote?.trim() ?? "";
+  const who = record.heldBy?.name;
+
+  return {
+    key: "hold",
+    severity: "critical",
+    title: reason ? t("On hold: {0}", reason) : t("On hold"),
+    body: [
+      note,
+      who
+        ? t("Held by {0}. Approving and posting wait until the hold is released.", who)
+        : t("Approving and posting wait until the hold is released."),
+    ]
+      .filter((part) => part !== "")
+      .join(" "),
+  };
+}
+
+/** The flags to review: a hold first, then the critical exceptions. */
 export function settlementFlags(record: DeskDriverSettlement, t: TranslateFn): SettlementFlag[] {
-  return (record.exceptions ?? [])
+  const flags = (record.exceptions ?? [])
     .map((exception) => ({
       key: exception.code,
       severity: exception.severity === "Critical" ? ("critical" as const) : ("warning" as const),
@@ -137,6 +158,8 @@ export function settlementFlags(record: DeskDriverSettlement, t: TranslateFn): S
       body: exception.message,
     }))
     .sort((a, b) => Number(b.severity === "critical") - Number(a.severity === "critical"));
+
+  return record.heldAt != null ? [holdFlag(record, t), ...flags] : flags;
 }
 
 /** One step of the waterfall: where the running total stood and where it lands. */

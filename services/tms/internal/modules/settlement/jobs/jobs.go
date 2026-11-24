@@ -2,6 +2,7 @@ package jobs
 
 import (
 	"github.com/emoss08/trenova/internal/modules/settlement/jobs/carriersettlementjobs"
+	"github.com/emoss08/trenova/internal/modules/settlement/jobs/fuelrollupjobs"
 	"github.com/emoss08/trenova/internal/modules/settlement/jobs/iftajobs"
 	"github.com/emoss08/trenova/internal/modules/settlement/jobs/settlementjobs"
 	"go.uber.org/fx"
@@ -12,5 +13,6 @@ func WorkerOptions() fx.Option {
 		settlementjobs.Module,
 		carriersettlementjobs.Module,
 		iftajobs.Module,
+		fuelrollupjobs.Module,
 	)
 }

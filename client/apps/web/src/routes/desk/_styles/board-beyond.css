@@ -1,0 +1,520 @@
+/* Boards beyond dispatch: what Tailwind cannot say about a board's bars and forms.
+
+   One grammar for every row's bar (SegmentBar, board-bar.tsx), laid out by the server
+   (boardbar.Layout) on one scale for the block:
+   dk-bd-used       solid, quiet: how much of the bound is used (dk-warn: the warn fill)
+   dk-bd-beyond     the warn hatch: what lies past the bound (the track's default mark)
+   dk-bd-ghost      outlined, quiet: planned inside the bound, not happened yet
+   dk-bd-projected  outlined, warn: projected past the bound, or the time still left
+   dk-bd-held       the quiet hatch: held at a stop rather than on the road
+   dk-bd-tail       the light hatch: a spread's far end, the slowest one in ten
+   dk-bd-credit     solid, lighter: the other side of a centred bound
+   <b>              the bound itself, a 2px mark through the track
+   A segment that follows another (dk-bd-next) is cut 2px from it, so no two fills touch. */
+
+.dk-bd-track > i.dk-bd-projected {
+  background: color-mix(in oklab, var(--dsk-warn) 14%, transparent);
+  box-shadow: inset 0 0 0 1px var(--dsk-warn);
+}
+.dk-bd-track > i.dk-bd-held {
+  background: repeating-linear-gradient(
+    -45deg,
+    var(--dsk-fg2) 0 3px,
+    color-mix(in oklab, var(--dsk-fg2) 35%, transparent) 3px 6px
+  );
+}
+.dk-bd-track > i.dk-bd-used {
+  background: color-mix(in oklab, var(--dsk-fg2) 62%, transparent);
+}
+.dk-bd-track > i.dk-bd-used.dk-warn {
+  background: var(--dsk-warn);
+}
+.dk-bd-track > i.dk-bd-ghost {
+  background: transparent;
+  box-shadow: inset 0 0 0 1px var(--dsk-b-strong);
+}
+.dk-bd-track > i.dk-bd-tail {
+  background: repeating-linear-gradient(
+    -45deg,
+    color-mix(in oklab, var(--dsk-warn) 50%, transparent) 0 2px,
+    transparent 2px 5px
+  );
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--dsk-warn) 55%, transparent);
+}
+.dk-bd-track > i.dk-bd-credit {
+  left: auto;
+  background: color-mix(in oklab, var(--dsk-fg2) 30%, transparent);
+}
+.dk-bd-track > i.dk-bd-next {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+  margin-left: 2px;
+}
+.dk-bd-track > i.dk-bd-cut {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+.dk-bd-track > b {
+  position: absolute;
+  top: -4px;
+  bottom: -4px;
+  width: 2px;
+  margin-left: -1px;
+  border-radius: 1px;
+  background: var(--dsk-fg);
+}
+.dk-bd-track.dk-bd-centred > i.dk-bd-used {
+  border-radius: 0 3px 3px 0;
+}
+.dk-bd-track.dk-bd-centred > i.dk-bd-credit {
+  border-radius: 3px 0 0 3px;
+}
+
+/* ------------------------------------------------- a metric's forms (Blocks)
+
+   Charts are the board's own SVG (blocks/chart-*.tsx), drawn at the measured width of their
+   exhibit and a fixed height per form, so text keeps its size and the sketch reserves exactly
+   what lands. Static marks in the Desk's ink: the figure the words read is the dark mark,
+   earlier periods lighter, what lies past a bound the warn hatch, what has not happened yet
+   the ghost. Ticks in the mono face, few, no lattice. */
+
+.dk-ch-box {
+  display: block;
+  width: 100%;
+}
+.dk-ch {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+.dk-ch .ax {
+  stroke: var(--dsk-b);
+  stroke-width: 1;
+  fill: none;
+}
+.dk-ch .tk {
+  font: 400 10.5px var(--dk-plex);
+  fill: var(--dsk-subtle);
+}
+.dk-ch .lb {
+  font: 500 11px var(--dk-plex);
+  fill: var(--dsk-fg);
+}
+.dk-ch .lb.w {
+  fill: var(--dsk-warn-fg);
+}
+.dk-ch .nm {
+  font: 400 12px var(--font-sans);
+  fill: var(--dsk-fg2);
+}
+.dk-ch .nm.q {
+  fill: var(--dsk-subtle);
+}
+.dk-ch .ln {
+  fill: none;
+  stroke: var(--dsk-fg);
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+.dk-ch .ln.was {
+  stroke: color-mix(in oklab, var(--dsk-fg2) 35%, transparent);
+  stroke-width: 1.5;
+}
+.dk-ch .ln.gh {
+  stroke: var(--dsk-b-strong);
+  stroke-dasharray: 3 4;
+}
+.dk-ch .ref {
+  stroke: var(--dsk-faint);
+  stroke-width: 1;
+  stroke-dasharray: 3 4;
+  fill: none;
+}
+.dk-ch .tgt {
+  stroke: var(--dsk-warn);
+  stroke-width: 1;
+  stroke-dasharray: 3 3;
+  fill: none;
+}
+.dk-ch .dot {
+  fill: var(--dsk-fg);
+  stroke: var(--dsk-card);
+  stroke-width: 2;
+}
+.dk-ch .dot.q {
+  fill: color-mix(in oklab, var(--dsk-fg2) 45%, var(--dsk-card));
+}
+.dk-ch .dot.w {
+  fill: var(--dsk-warn);
+}
+.dk-ch .dot.gh {
+  fill: var(--dsk-card);
+  stroke: var(--dsk-b-strong);
+  stroke-width: 1.5;
+}
+.dk-ch .bar {
+  fill: color-mix(in oklab, var(--dsk-fg2) 62%, transparent);
+}
+.dk-ch .bar.now {
+  fill: var(--dsk-fg);
+}
+.dk-ch .bar.was {
+  fill: color-mix(in oklab, var(--dsk-fg2) 26%, transparent);
+}
+.dk-ch .bar.w {
+  fill: var(--dsk-warn);
+}
+.dk-ch .bar.gh {
+  fill: transparent;
+  stroke: var(--dsk-b-strong);
+  stroke-width: 1;
+}
+.dk-ch .band {
+  fill: color-mix(in oklab, var(--dsk-warn) 10%, transparent);
+}
+.dk-ch .band.q {
+  fill: color-mix(in oklab, var(--dsk-fg2) 7%, transparent);
+}
+.dk-ch .cov {
+  stroke: color-mix(in oklab, var(--dsk-fg2) 62%, transparent);
+  stroke-width: 6;
+  stroke-linecap: round;
+}
+.dk-ch .unc {
+  stroke: var(--dsk-warn);
+  stroke-width: 1;
+  stroke-dasharray: 2 4;
+}
+.dk-ch .bnd {
+  stroke: var(--dsk-fg);
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+.dk-ch .hp-a {
+  fill: var(--dsk-warn);
+}
+.dk-ch .hp-b {
+  fill: color-mix(in oklab, var(--dsk-warn) 55%, transparent);
+}
+
+/* parts of a whole: the figure, one strip, keyed underneath. The keys stand in one line where
+   the exhibit is wide (two columns for four parts or more, `dk-bd-keys-many`) and one to a line
+   where it is narrow, never wrapping by their widths, so the sketch is the same height at
+   every width. */
+.dk-bd-whole {
+  display: block;
+}
+.dk-bd-big {
+  display: block;
+  margin-bottom: 12px;
+  font: 500 30px/1 var(--dk-plex);
+  letter-spacing: -0.03em;
+  font-feature-settings: "tnum";
+  white-space: nowrap;
+  color: var(--dsk-fg);
+}
+.dk-bd-big small {
+  margin-left: 6px;
+  font: 400 12px var(--font-sans);
+  letter-spacing: 0;
+  color: var(--dsk-subtle);
+}
+.dk-bd-split {
+  display: flex;
+  gap: 2px;
+  height: 12px;
+  border-radius: 4px;
+  overflow: hidden;
+  background: var(--dsk-sunken);
+}
+.dk-bd-split > i {
+  display: block;
+  flex: none;
+  height: 100%;
+}
+.dk-bd-split > i.dk-bd-used {
+  background: color-mix(in oklab, var(--dsk-fg2) 62%, transparent);
+}
+.dk-bd-split > i.dk-bd-credit {
+  background: color-mix(in oklab, var(--dsk-fg2) 24%, transparent);
+}
+.dk-bd-split > i.dk-bd-over {
+  min-width: 3px;
+  background: repeating-linear-gradient(
+    -45deg,
+    var(--dsk-warn) 0 3px,
+    color-mix(in oklab, var(--dsk-warn) 55%, transparent) 3px 6px
+  );
+}
+.dk-bd-wait-strip {
+  display: block;
+  height: 12px;
+  border-radius: 4px;
+}
+.dk-bd-keys {
+  display: grid;
+  grid-template-columns: repeat(var(--n, 3), max-content);
+  gap: 6px 18px;
+  margin-top: 12px;
+  font: 400 12px/16px var(--font-sans);
+  color: var(--dsk-subtle);
+}
+.dk-bd-keys.dk-bd-keys-many {
+  grid-template-columns: repeat(2, max-content);
+}
+@container dkbdex (max-width: 600px) {
+  .dk-bd-keys,
+  .dk-bd-keys.dk-bd-keys-many {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+.dk-bd-keys > span {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 7px;
+  height: 16px;
+  white-space: nowrap;
+}
+.dk-bd-keys i {
+  align-self: center;
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  background: color-mix(in oklab, var(--dsk-fg2) 62%, transparent);
+}
+.dk-bd-keys i.dk-bd-credit {
+  background: color-mix(in oklab, var(--dsk-fg2) 24%, transparent);
+}
+.dk-bd-keys i.dk-bd-over {
+  background: var(--dsk-warn);
+}
+.dk-bd-keys b {
+  font: 500 12.5px/16px var(--dk-plex);
+  font-feature-settings: "tnum";
+  color: var(--dsk-fg);
+}
+
+/* a form wider than its exhibit scrolls sideways inside it, the page never does */
+.dk-bd-scroll {
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+}
+.dk-bd-scroll::-webkit-scrollbar {
+  display: none;
+}
+.dk-bd-bleed {
+  margin: 0 -16px -16px;
+}
+
+/* a grid of cover: a place by slot, cover against need. Not `dk-grid`: that is the Desk
+   conversation's own three-column layout (desk-frame.css), whose rules took this grid over. */
+.dk-bd-grid {
+  display: grid;
+  grid-template-columns: 136px repeat(var(--n, 7), minmax(max-content, 1fr));
+  gap: 3px;
+}
+.dk-bd-grid > * {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 0;
+  height: 44px;
+  padding: 0 8px;
+  border-radius: 6px;
+  white-space: nowrap;
+}
+.dk-bd-grid > .gh-h {
+  height: 34px;
+  padding: 0 8px 4px;
+  justify-content: flex-end;
+  font: 400 10.5px/1.3 var(--dk-plex);
+  color: var(--dsk-subtle);
+}
+.dk-bd-grid > .gh-h b {
+  font-weight: 500;
+  color: var(--dsk-fg2);
+}
+.dk-bd-grid > .gh-a {
+  display: block;
+  padding-left: 0;
+  overflow: hidden;
+  font: 400 12.5px/44px var(--font-sans);
+  text-overflow: ellipsis;
+  color: var(--dsk-fg2);
+}
+.dk-bd-grid > .gc {
+  background: var(--dsk-sunken);
+}
+.dk-bd-grid .gc b {
+  font: 500 13px/1.2 var(--dk-plex);
+  font-feature-settings: "tnum";
+  color: var(--dsk-fg2);
+}
+.dk-bd-grid .gc small {
+  font: 400 10.5px/1.3 var(--dk-plex);
+  color: var(--dsk-subtle);
+}
+.dk-bd-grid > .gc.short {
+  background: repeating-linear-gradient(
+    -45deg,
+    color-mix(in oklab, var(--dsk-warn) 30%, transparent) 0 3px,
+    color-mix(in oklab, var(--dsk-warn) 12%, transparent) 3px 6px
+  );
+}
+.dk-bd-grid .gc.short b {
+  color: var(--dsk-warn-fg);
+}
+.dk-bd-grid > .gc.short.deep {
+  box-shadow: inset 0 0 0 1.5px var(--dsk-warn);
+}
+.dk-bd-grid > .gc.maybe {
+  background: transparent;
+  box-shadow: inset 0 0 0 1px var(--dsk-warn);
+}
+.dk-bd-grid .gc.maybe b {
+  color: var(--dsk-warn-fg);
+}
+
+/* a metric's small table, when its columns matter: the table look of the Desk, set for a week */
+.dk-tbl.dk-bd-mtbl {
+  width: 100%;
+  border-collapse: collapse;
+}
+.dk-tbl.dk-bd-mtbl tr {
+  animation: none;
+}
+.dk-tbl.dk-bd-mtbl th {
+  position: static;
+  height: 22px;
+  padding: 0 6px 8px;
+  background: none;
+  font: 500 11px/14px var(--font-sans);
+  text-align: right;
+  vertical-align: bottom;
+  white-space: nowrap;
+  color: var(--dsk-subtle);
+}
+.dk-tbl.dk-bd-mtbl td {
+  height: 36px;
+  padding: 0 6px;
+  border-top: 1px solid var(--dsk-b-sub);
+  font: 400 12.5px var(--dk-plex);
+  font-feature-settings: "tnum";
+  text-align: right;
+  white-space: nowrap;
+  color: var(--dsk-fg2);
+}
+.dk-tbl.dk-bd-mtbl tbody tr:hover td {
+  background: none;
+}
+.dk-tbl.dk-bd-mtbl th:first-child,
+.dk-tbl.dk-bd-mtbl td:first-child {
+  padding-left: 16px;
+}
+.dk-tbl.dk-bd-mtbl th:last-child,
+.dk-tbl.dk-bd-mtbl td:last-child {
+  padding-right: 16px;
+}
+.dk-tbl.dk-bd-mtbl .dk-txt {
+  text-align: left;
+}
+.dk-tbl.dk-bd-mtbl td.dk-txt {
+  font-family: var(--font-sans);
+  color: var(--dsk-fg);
+}
+.dk-tbl.dk-bd-mtbl td.w {
+  font-weight: 500;
+  color: var(--dsk-warn-fg);
+}
+.dk-tbl.dk-bd-mtbl td.hot {
+  font-weight: 500;
+  color: var(--dsk-fg);
+}
+.dk-tbl.dk-bd-mtbl td.off {
+  color: var(--dsk-faint);
+}
+
+/* a metric's log: each entry two fixed lines, so the log is the height its sketch reserves. The
+   entries share one time column as wide as the widest time (a subgrid of the list), so a time
+   with its day is never cut or run under the marker. */
+.dk-bd-log.dk-bd-mlog {
+  display: grid;
+  grid-template-columns: max-content 14px minmax(0, 1fr);
+  column-gap: 10px;
+}
+.dk-bd-log.dk-bd-mlog li {
+  grid-column: 1 / -1;
+  grid-template-columns: subgrid;
+  height: 50px;
+  padding-bottom: 0;
+}
+.dk-bd-log.dk-bd-mlog time {
+  white-space: nowrap;
+}
+.dk-bd-log.dk-bd-mlog li > div {
+  min-width: 0;
+}
+.dk-bd-log.dk-bd-mlog li > div > span,
+.dk-bd-log.dk-bd-mlog li > div > em {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dk-bd-log.dk-bd-mlog li > div > span {
+  line-height: 20px;
+}
+.dk-bd-log.dk-bd-mlog li > div > em {
+  line-height: 16px;
+}
+.dk-bd-log.dk-bd-mlog li > div > em .dk-bd-ref {
+  margin-left: 8px;
+}
+
+/* A row's second line keeps its status whole at the right edge. The second fact is words
+   around a {0} slot (board-parts.tsx SecondFact): the slot (a moment, an amount, a duration,
+   a number) never gives way; the words around it do, with an ellipsis and the whole fact in
+   `title`, sharing the line with the subtitle, which keeps enough to read a name. A fact with
+   no slot, or whose slot holds text (`dk-bd-said`: a reason, a message), is all words. The fact
+   may shrink to nothing and clips its own overflow: its words give way first (the slot is
+   `flex: none`, and the fact shrinks a hundred times faster than the subtitle), so a long
+   subtitle keeps its name while a short one takes only its own width, the dot right after it
+   (no minimum width on the subtitle, which would leave a hole). Beside a fact that is all words
+   (`dk-bd-said`) the subtitle does not shrink at all up to half the line, and the words take
+   what is left; beside a date or an amount the subtitle is the part that gives way. The line
+   never lets its children run past its edge. Nothing wraps; the row's
+   height is unchanged. */
+.dk-bd-line:has(> .dk-bd-at) {
+  overflow: hidden;
+}
+.dk-bd-line > .dk-bd-at {
+  display: flex;
+  flex: 0 100 auto;
+  min-width: 0;
+  overflow: hidden;
+}
+.dk-bd-line > .dk-bd-at > .dk-bd-slot {
+  flex: none;
+}
+.dk-bd-line > .dk-bd-at > .dk-bd-words {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: pre;
+}
+.dk-bd-line:has(> .dk-bd-at) > .dk-bd-sub {
+  flex: 0 1 auto;
+  min-width: 0;
+}
+.dk-bd-line:has(> .dk-bd-at.dk-bd-said) > .dk-bd-sub {
+  flex: none;
+  max-width: 50%;
+}
+.dk-bd-line > .dk-bd-st {
+  flex: none;
+}

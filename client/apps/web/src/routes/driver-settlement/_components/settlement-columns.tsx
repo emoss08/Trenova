@@ -9,6 +9,8 @@ import type { DriverSettlementStatus, PayeeClassification } from "@trenova/share
 import type { ColumnDef } from "@trenova/shared/types/data-table";
 import { AlertTriangleIcon } from "@trenova/shared/components/icons";
 import { formatUnixDateMedium } from "@trenova/shared/lib/date";
+import { SettlementHoldBadge } from "@/components/settlements/settlement-hold-badge";
+import { isHeld } from "@/lib/settlement-hold";
 
 function formatDate(unix: number): string {
   return formatUnixDateMedium(unix, { fallback: "—" });
@@ -27,6 +29,9 @@ export function getColumns(t: TranslateFn): ColumnDef<DriverSettlementRow>[] {
       cell: ({ row }) => (
         <div className="flex items-center gap-1.5">
           <DriverSettlementStatusBadge status={row.original.status as DriverSettlementStatus} />
+          {isHeld(row.original) && (
+            <SettlementHoldBadge reason={row.original.holdReason} note={row.original.holdNote} />
+          )}
           {row.original.hasExceptions && (
             <AlertTriangleIcon
               className="size-3.5 text-warning-foreground"
@@ -35,7 +40,7 @@ export function getColumns(t: TranslateFn): ColumnDef<DriverSettlementRow>[] {
           )}
         </div>
       ),
-      size: 150,
+      size: 200,
       meta: { apiField: "status", label: t("Status") },
     },
     {

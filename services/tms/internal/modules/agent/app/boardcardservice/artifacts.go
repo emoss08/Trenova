@@ -228,7 +228,8 @@ func checkAnalysisBlock(block *board.Block, display *analysis.Display, at int) e
 			return checkCompare(block, &display.Tables[block.Index], at)
 		}
 	case board.BlockFigures, board.BlockRecords, board.BlockTimeline, board.BlockChecks,
-		board.BlockMeter, board.BlockProse, board.BlockNote:
+		board.BlockMeter, board.BlockProse, board.BlockNote, board.BlockWork, board.BlockActions,
+		board.BlockMetric:
 	}
 
 	return nil

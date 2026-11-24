@@ -49,6 +49,8 @@ type SettlementWorkspaceCounts struct {
 	ExceptionCount       int   `json:"exceptionCount"`
 	TotalNetMinor        int64 `json:"totalNetMinor"`
 	TotalGrossMinor      int64 `json:"totalGrossMinor"`
+	HeldCount            int   `json:"heldCount"`
+	HeldNetMinor         int64 `json:"heldNetMinor"`
 }
 
 type GetWorkspaceCountsRequest struct {

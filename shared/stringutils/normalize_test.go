@@ -79,3 +79,13 @@ func TestIsCompactToken(t *testing.T) {
 	}
 	assert.False(t, IsCompactToken("abc", 0))
 }
+
+func TestWholeSentences(t *testing.T) {
+	t.Parallel()
+
+	text := "The truck left at 6.30 this morning. It is late. Call the dock!"
+	assert.Equal(t, text, WholeSentences(text, 200))
+	assert.Equal(t, "The truck left at 6.30 this morning. It is late.", WholeSentences(text, 50))
+	assert.Equal(t, "The truck left at 6.30 this morning.", WholeSentences(text, 40))
+	assert.Empty(t, WholeSentences(text, 10))
+}

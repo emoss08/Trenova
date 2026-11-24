@@ -30,7 +30,7 @@ func Figures(text string) []string {
 		return strings.Repeat(" ", len(found))
 	}
 	masked := fixedMoment.ReplaceAllStringFunc(
-		readingToken.ReplaceAllStringFunc(text, blank),
+		readingToken.ReplaceAllStringFunc(Unlinked(text), blank),
 		blank,
 	)
 	found := make([]string, 0, 2)

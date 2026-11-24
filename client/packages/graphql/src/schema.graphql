@@ -9625,6 +9625,28 @@ enum CarrierCostEventType {
   LinehaulCost
 }
 
+"""
+An active carrier whose required insurance ends soon or has lapsed: the required policy that ends first and the loads it holds for us now.
+"""
+type CarrierCoverEnding @kind(resource: "carrier") {
+  code: String!
+  complianceStatus: CarrierComplianceStatus!
+  """When that policy ends; before now once it has lapsed."""
+  endsAt: Timestamp!
+  """The carrier's id."""
+  id: ID!
+  """Required policy types the carrier has no policy on file for."""
+  missingPolicyTypes: [CarrierInsurancePolicyType!]!
+  name: String!
+  """
+  Its loads not yet delivered or canceled; null when you may not read shipments or some of them are not yours to read.
+  """
+  openLoads: Int
+  policyNumber: String!
+  """The required policy that ends first."""
+  policyType: CarrierInsurancePolicyType!
+}
+
 type CarrierCoverageSuggestion {
   acceptancePercent: Float
   carrierId: ID!
@@ -13186,10 +13208,41 @@ type DeskBoardAction {
 }
 
 """
+A band across a chart: between two points along the axis, or between two values.
+"""
+type DeskBoardBand {
+  from: Int
+  high: Decimal
+  low: Decimal
+  to: Int
+}
+
+"""
+A row's bar, laid out on one scale for every row of its block. centred bars
+hold their bound at the middle; bound is the mark through the track, a
+fraction of it.
+"""
+type DeskBoardBar {
+  bound: Float
+  centred: Boolean!
+  segments: [DeskBoardBarSegment!]!
+}
+
+"""
+kind: used, beyond, ghost, projected, tail, credit or held; start and width are fractions of the track.
+"""
+type DeskBoardBarSegment {
+  kind: String!
+  start: Float!
+  tone: String!
+  width: Float!
+}
+
+"""
 One block of a board. type says which of the other fields it fills: figures,
-records (rows), compare, table, chart (an analysis chart spec), timeline
-(events, with the record in rows), checks, meter, prose (text) or note (text,
-noteTone and chips).
+records (rows), compare, table, chart and metric (metric), timeline (events,
+with the record in rows), checks, meter, prose (text) or note (text, noteTone
+and chips).
 """
 type DeskBoardBlock {
   actions: [DeskBoardAction!]!
@@ -13197,7 +13250,6 @@ type DeskBoardBlock {
   One plain line under the exhibit's tab, with readings placed in it; empty when the block has none.
   """
   caption: [DeskBoardSegment!]!
-  chart: JSON
   checks: [DeskBoardCheck!]!
   chips: [DeskBoardRow!]!
   compare: DeskBoardCompare
@@ -13206,6 +13258,8 @@ type DeskBoardBlock {
   half: Boolean!
   measure: String!
   meter: DeskBoardMeter
+  """A chart or metric block, drawn in its form."""
+  metric: DeskBoardMetric
   noteTone: String!
   """The block's exhibit numeral; 0 for prose and notes."""
   numeral: Int!
@@ -13255,6 +13309,55 @@ type DeskBoardCard {
   verdict: [DeskBoardSegment!]!
 }
 
+"""A cell of a metric's table; mark is hot, off, w or empty."""
+type DeskBoardCell {
+  mark: String!
+  text: String!
+  value: DeskBoardValue
+}
+
+"""
+A chart the server shaped for a board: ticks along the axis, series of points
+in unit, the points it marks, a band, a target and a reference, a ghost last
+point still running, and rows for ranked bars, dots and spans.
+"""
+type DeskBoardChart {
+  band: DeskBoardBand
+  currency: String!
+  ghost: Boolean!
+  marked: [Int!]!
+  ref: DeskBoardLine
+  rows: [DeskBoardChartRow!]!
+  series: [DeskBoardSeries!]!
+  target: DeskBoardLine
+  ticks: [DeskBoardTick!]!
+  unit: String!
+}
+
+"""A dot on a row of a dots or spans chart: at a moment or a value."""
+type DeskBoardChartMark {
+  at: Timestamp
+  """A unit with too little data to place: drawn hollow, never warned."""
+  ghost: Boolean!
+  label: String!
+  marked: Boolean!
+  value: Decimal
+}
+
+"""A row of a ranked bars, dots or spans chart, and the record it opens."""
+type DeskBoardChartRow {
+  dots: [DeskBoardChartMark!]!
+  label: String!
+  marked: Boolean!
+  record: DeskBoardRow
+  """
+  The row that stands for the rest (3 other customers), drawn lighter than a named row.
+  """
+  rest: Boolean!
+  spans: [DeskBoardSpan!]!
+  value: DeskBoardValue
+}
+
 type DeskBoardCheck {
   """How many of the records it names the reader may read, or its metric."""
   count: DeskBoardValue
@@ -13301,12 +13404,102 @@ type DeskBoardFigure {
   was: DeskBoardValue
 }
 
+type DeskBoardGrid {
+  columns: [DeskBoardGridColumn!]!
+  rows: [DeskBoardGridRow!]!
+}
+
+"""
+have against need, with the high end of need; state covered, short, deep or maybe.
+"""
+type DeskBoardGridCell {
+  have: Int!
+  need: Int!
+  needHigh: Int!
+  state: String!
+}
+
+type DeskBoardGridColumn {
+  label: String!
+  sublabel: String!
+}
+
+type DeskBoardGridRow {
+  cells: [DeskBoardGridCell!]!
+  label: String!
+}
+
+"""A line across a chart: a target or a reference."""
+type DeskBoardLine {
+  label: String!
+  value: Decimal!
+}
+
+"""One line of a log: when, what became of it, and the records it names."""
+type DeskBoardLogEntry {
+  at: Timestamp!
+  detail: String!
+  records: [DeskBoardRow!]!
+  text: String!
+  tone: String!
+}
+
 type DeskBoardMeter {
   clear: Int!
   percent: DeskBoardValue
   """One tone per check, clear first."""
   tones: [String!]!
   total: Int!
+}
+
+"""
+A metric a board reads, drawn in its form: trend, bars, columns, split, grid,
+dots, spans, log, checks, table or figures. The fields its form names are
+filled; figures holds every figure the catalog declares for it.
+"""
+type DeskBoardMetric {
+  chart: DeskBoardChart
+  checks: [DeskBoardCheck!]!
+  figures: [DeskBoardMetricFigure!]!
+  form: String!
+  grid: DeskBoardGrid
+  log: [DeskBoardLogEntry!]!
+  """The metric's name; empty for an analysis chart."""
+  name: String!
+  """Where it was read from, for the source line."""
+  source: String!
+  split: DeskBoardSplit
+  table: DeskBoardMetricTable
+  title: String!
+}
+
+"""A column of a metric's table: text or value."""
+type DeskBoardMetricColumn {
+  kind: String!
+  label: String!
+}
+
+"""A named figure a metric read, with the label the catalog gives it."""
+type DeskBoardMetricFigure {
+  label: String!
+  name: String!
+  """
+  bad, warn, info, ok, or empty: how the metric's owner rates the figure.
+  """
+  tone: String!
+  """Absent when it could not be read or the plan leaves it out."""
+  value: DeskBoardValue
+  """
+  What it read earlier, when the metric compares it (was 34.9 on Oct 23); absent otherwise.
+  """
+  was: DeskBoardValue
+  """When it read was."""
+  wasAt: Timestamp
+}
+
+type DeskBoardMetricTable {
+  columns: [DeskBoardMetricColumn!]!
+  rows: [[DeskBoardCell!]!]!
 }
 
 """
@@ -13332,34 +13525,54 @@ type DeskBoardReading {
   was: DeskBoardValue
 }
 
+"""A record a row opens in place of itself."""
+type DeskBoardRef {
+  id: ID!
+  kind: String!
+}
+
 """
 A record a block names. A record the reader may not read, or that no longer
 exists, has readable false and nothing else.
 """
 type DeskBoardRow {
   id: ID!
+  """
+  The kind of record: shipment, worker_credential, detention_occurrence, …
+  """
+  kind: String!
   label: String!
   measure: DeskBoardRowMeasure
+  """
+  The record the row opens when its own kind has no card (a credential opens its worker).
+  """
+  opens: DeskBoardRef
   readable: Boolean!
-  resource: String!
+  """The status as the product words it."""
   status: String!
+  """
+  The status's tone, chosen by its owner: bad, warn, info, ok, or empty for none.
+  """
+  statusTone: String!
   subtitle: String!
 }
 
 """
-A record's measure: how far behind a shipment is, what an invoice still owes,
-how long a journal entry has waited. state says where the record is (late,
-held at a stop, onTime, projected to miss a window still open, due with no
-estimate, delivered, open, settled), at the moment it is measured against and
-place the stop it is measured at, when it is measured at a stop.
+A record's measure, read by the record's owner: its value, the words it stands
+at, a second fact, and the bar the board laid out for it against the block's
+other rows.
 """
 type DeskBoardRowMeasure {
-  at: Timestamp
+  """Absent for a measure drawn as a figure only."""
+  bar: DeskBoardBar
+  """The second fact, after the subtitle; absent when the measure has none."""
+  fact: DeskBoardWords
   measure: String!
-  place: String!
-  state: String!
+  """What the row says it stands at, right of the label."""
+  standing: DeskBoardWords!
   tone: String!
-  value: DeskBoardValue!
+  """The value readings add up; absent when the reader may not read it."""
+  value: DeskBoardValue
 }
 
 """
@@ -13369,12 +13582,26 @@ it could not be read. A segment that places a reading names its key, and its
 text is the reading's value as answered, empty when it could not be read.
 """
 type DeskBoardSegment {
+  """
+  The id of an artifact this turn made that the words link to, drawn as a link
+  to it; empty when the segment links none.
+  """
+  artifact: String!
   numeral: Int!
   """The key of the reading the segment places; empty when it places none."""
   reading: String!
   struck: Boolean!
   text: String!
   tone: String!
+}
+
+"""
+One series of a chart: now, was (the period before, drawn light) or stack. A null point is a gap.
+"""
+type DeskBoardSeries {
+  name: String!
+  points: [Decimal]!
+  role: String!
 }
 
 """
@@ -13386,8 +13613,32 @@ type DeskBoardSource {
   count: Int!
   kind: String!
   readable: Int!
-  resource: String!
+  """
+  The kind of record a records source names: shipment, worker_credential, …; empty otherwise.
+  """
+  recordKind: String!
   title: String!
+}
+
+"""
+A span along a row of a spans chart, between two moments: cover or gap.
+"""
+type DeskBoardSpan {
+  from: Timestamp!
+  kind: String!
+  to: Timestamp!
+}
+
+type DeskBoardSplit {
+  parts: [DeskBoardSplitPart!]!
+  total: DeskBoardValue!
+}
+
+"""One part of a whole: used, over or credit."""
+type DeskBoardSplitPart {
+  kind: String!
+  label: String!
+  value: DeskBoardValue!
 }
 
 type DeskBoardTable {
@@ -13399,14 +13650,38 @@ type DeskBoardTable {
 }
 
 """
-A value the server read: count, money, percent (a fraction), duration (in
-seconds), number or text.
+A point along a chart's axis: a moment or a label; marked when the chart draws attention to it.
+"""
+type DeskBoardTick {
+  at: Timestamp
+  label: String!
+  marked: Boolean!
+}
+
+"""
+A value the server read: count, money, percent (a fraction), duration (an
+elapsed time in seconds, written in days from three days), hours (a quantity of
+work hours in seconds, never written in days), days (whole days, negative once
+past), number or text.
 """
 type DeskBoardValue {
   currency: String!
   kind: String!
   number: Decimal!
   text: String!
+}
+
+"""
+Words the server wrote in the reader's language. {0} in text is where value
+goes, or the moment at (written as a day when day is true); place is where it
+was measured, drawn after the moment and the first to give way.
+"""
+type DeskBoardWords {
+  at: Timestamp
+  day: Boolean!
+  place: String!
+  text: String!
+  value: DeskBoardValue
 }
 
 """
@@ -14372,6 +14647,41 @@ type DetentionFacilityIntelligence {
   waivedAmount: Decimal!
 }
 
+"""A facility ranked by the time trucks waited past free time there."""
+type DetentionFacilityWait @kind(resource: "detention") {
+  billedAmount: Decimal!
+  city: String!
+  detainedCount: Int!
+  """The location's id."""
+  id: ID!
+  """The median stop's time on site, in minutes."""
+  medianDwellMinutes: Float!
+  """The median free time its policies granted, in minutes."""
+  medianFreeMinutes: Float!
+  name: String!
+  """Nine stops in ten took less than this, in minutes."""
+  p90DwellMinutes: Float!
+  pastFreeMinutes: Int!
+  state: String!
+  stopCount: Int!
+}
+
+"""Why a stopped charge should be held back before it is billed."""
+enum DetentionHoldBack {
+  """The arrival was entered by hand, not captured."""
+  ArrivalByHand
+  """A person must approve it before it is billed."""
+  AwaitingApproval
+  """The departure was entered by hand, not captured."""
+  DepartureByHand
+  """The notice bounced and never reached the customer."""
+  NoticeFailed
+  """The notice went out after its deadline."""
+  NoticeLate
+  """No notice reached the customer inside its window."""
+  NoticeMissed
+}
+
 type DetentionIntelligence {
   arrivals: [DetentionArrivalCell!]!
   """Customers, most hours past free time first."""
@@ -14665,6 +14975,20 @@ enum DetentionOccurrenceStatus {
   Waived
 }
 
+"""
+Whole days of the organization's time zone that a detention list covers.
+"""
+enum DetentionPeriod {
+  LastMonth
+  LastQuarter
+  LastWeek
+  ThisMonth
+  ThisQuarter
+  ThisWeek
+  Today
+  Yesterday
+}
+
 type DetentionPolicy {
   accessorialChargeId: ID!
   appointmentStopsOnly: Boolean!
@@ -14932,6 +15256,42 @@ input DetentionStatsInput {
   """Only the stops made at this location."""
   locationId: ID
   to: Timestamp!
+}
+
+"""
+A detention stay: its clock, the time on site against the free time, what it bills and what holds its bill back.
+"""
+type DetentionStay @kind(resource: "detention") {
+  """
+  What it bills: priced as of now while the clock runs, as recorded once it stopped.
+  """
+  billableAmount: Decimal!
+  """Why to hold it back before billing; null when nothing does."""
+  holdBack: DetentionHoldBack
+  """Minutes the truck was on site, counted to now while it is still there."""
+  minutesOnSite: Int!
+  """Minutes on site past the free time the policy granted."""
+  minutesPastFree: Int!
+  occurrence: DetentionOccurrence!
+}
+
+type DetentionStayList {
+  items: [DetentionStay!]!
+  """Every stay the period and stage hold, however many the page lists."""
+  totalCount: Int!
+}
+
+"""
+Which detention stays a list reads: ToBill is stopped and not yet billed (Pending or Approved),
+Running is still on site, the rest are stopped stays in that status.
+"""
+enum DetentionStayStage {
+  Billed
+  Disputed
+  NotBillable
+  Running
+  ToBill
+  Waived
 }
 
 type DetentionStopSplits {
@@ -16772,6 +17132,23 @@ type DriverSettlement {
   exchangeRateDate: Timestamp
   grossEarningsMinor: Int!
   hasExceptions: Boolean!
+  """When the hold was placed; null when it is not on hold."""
+  heldAt: Timestamp
+  heldBy: User
+  heldById: ID
+  """
+  What the person who held it wrote; empty when there is no note or no hold.
+  """
+  holdNote: String!
+  """
+  Why a person keeps it out of the pay run; null when it is not on hold. A held settlement
+  keeps its status, and approving, posting and paying it are refused until the hold is released.
+  """
+  holdReason: DriverSettlementHoldReason
+  """When the last hold was released."""
+  holdReleasedAt: Timestamp
+  holdReleasedBy: User
+  holdReleasedById: ID
   id: ID!
   """
   The lines summed by how each was paid: one row per pay component, deduction, advance, escrow account or line added by hand. Null when the lines were not read.
@@ -16825,6 +17202,43 @@ input DriverSettlementActionInput {
   settlementId: ID!
 }
 
+"""
+A driver settlement in a pay batch that cannot be released as it stands: a person holds it out
+of the pay run, it has a critical exception, or the driver has a dispute open on it.
+"""
+type DriverSettlementBlocker @kind(resource: "driver_settlement") {
+  batchId: ID
+  """The pay batch's name."""
+  batchName: String!
+  """
+  Below zero when deductions ran past earnings and the rest carries to the next settlement.
+  """
+  carryForwardOutMinor: Int
+  currencyCode: String!
+  deductionsMinor: Int
+  """The driver's name."""
+  driverName: String!
+  grossEarningsMinor: Int
+  """What the person who held it wrote."""
+  holdNote: String
+  """Why a person holds it, in words; empty unless it is on hold."""
+  holdReason: String
+  id: ID!
+  """
+  The critical exception's message, or what the dispute is about; empty for a hold.
+  """
+  message: String!
+  netPayMinor: Int
+  payDate: Timestamp!
+  """
+  What keeps it from release, in the reader's words: On hold, Has a critical exception, or Dispute open.
+  """
+  reason: String!
+  settlementNumber: String!
+  status: DriverSettlementStatus!
+  workerId: ID!
+}
+
 type DriverSettlementConnection {
   edges: [DriverSettlementEdge!]!
   pageInfo: PageInfo!
@@ -16838,6 +17252,15 @@ type DriverSettlementConnection {
 type DriverSettlementEdge {
   cursor: String!
   node: DriverSettlement!
+}
+
+"""Why a person keeps a driver settlement out of the pay run."""
+enum DriverSettlementHoldReason {
+  DeductionReview
+  MissingPaperwork
+  NegativeNet
+  Other
+  RateDispute
 }
 
 """
@@ -17804,6 +18227,11 @@ type EdiTransfer @kind(resource: "edi") {
   rejectionReason: String
   """The service type the tender asks for, as the sender labels it."""
   serviceTypeLabel: String
+  """
+  The PRO number of this organization's shipment the tender made (inbound) or was sent
+  from (outbound), when the reader may see it.
+  """
+  shipmentNumber: String
   """The shipment type the tender names, as the sender labels it."""
   shipmentTypeLabel: String
   sourceBusinessUnitId: ID!
@@ -21592,6 +22020,15 @@ type HeadcountRow {
   staff: Int!
   terminated: Int!
   workers: Int!
+}
+
+input HoldDriverSettlementInput {
+  """
+  What the hold waits on, for whoever releases it; required when the reason is Other. At most 500 characters.
+  """
+  note: String
+  reason: DriverSettlementHoldReason!
+  settlementId: ID!
 }
 
 input HoldPayEventInput {
@@ -25384,6 +25821,11 @@ type Mutation {
   """
   holdDriverPayEvent(input: HoldPayEventInput!): DriverPayEvent!
   """
+  Hold a driver settlement out of the pay run, with the reason. It keeps its status; approving,
+  posting and paying it are refused until the hold is released. A posted settlement cannot be held.
+  """
+  holdDriverSettlement(input: HoldDriverSettlementInput!): DriverSettlement!
+  """
   Leaves a payment recorded in the accounting system out of Trenova, with a reason.
   """
   ignoreAccountingInboundChange(input: IgnoreAccountingInboundChangeInput!): AccountingInboundChange!
@@ -25597,6 +26039,8 @@ type Mutation {
   releaseDeskCase(id: ID!, kind: String!): Boolean!
   """Release a held pay event back into the settlement pool."""
   releaseDriverPayEvent(payEventId: ID!): DriverPayEvent!
+  """Release a held driver settlement back into the pay run."""
+  releaseDriverSettlementHold(settlementId: ID!): DriverSettlement!
   releaseFactoringNoa(input: ReleaseFactoringNoaInput!): FactoringNoa!
   """
   Books the factor's release of an invoice's reserve; the factor's part is then done.
@@ -28627,6 +29071,15 @@ type Query {
     originStateCode: String
   ): CarrierCapacityPostingConnection!
   carrierCostEvents(input: DataTableConnectionInput!): CarrierCostEventConnection!
+  """
+  Active carriers whose required insurance ends within a number of days, or lapsed in the last 90 days, the soonest first.
+  """
+  carrierCoverEnding(
+    """At most this many carriers, from 1 to 100; 25 when left out."""
+    limit: Int
+    """From 1 to 90; 30 when left out."""
+    withinDays: Int
+  ): [CarrierCoverEnding!]!
   carrierEquipmentVerifications(carrierAssignmentId: ID!): [CarrierEquipmentVerification!]!
   carrierIntelControl: CarrierIntelControl!
   carrierIntelCostEstimate(includeOpenTenders: Boolean, policy: CarrierIntelEnrollmentPolicy!, recentUsageDays: Int): CarrierIntelCostEstimate!
@@ -28750,6 +29203,15 @@ type Query {
   detentionDisputePacket(occurrenceId: ID!): DetentionDisputePacket!
   detentionFacilityStats(input: DetentionStatsInput!): [FacilityDetentionStat!]!
   """
+  Facilities ranked by the time trucks waited there past free time in a period, the most first.
+  """
+  detentionFacilityWaits(
+    """At most this many facilities, from 1 to 50; 10 when left out."""
+    limit: Int
+    """The whole days the stops started in, in the organization's time zone."""
+    period: DetentionPeriod!
+  ): [DetentionFacilityWait!]!
+  """
   What an organization needs to lower detention, over a window, compared with the window before it.
   """
   detentionIntelligence(input: DetentionIntelligenceInput!): DetentionIntelligence!
@@ -28757,6 +29219,19 @@ type Query {
   detentionPolicies(input: DataTableConnectionInput!): DetentionPolicyConnection!
   detentionPolicy(id: ID!): DetentionPolicy
   detentionPolicyPreview(policy: DetentionPolicyInput!, scenario: DetentionPreviewScenarioInput!): DetentionPreviewResult!
+  """
+  Detention stays whose clock started in a period, the largest billable first.
+  """
+  detentionStays(
+    limit: Int
+    """Only the stays at this location."""
+    locationId: ID
+    offset: Int
+    """The whole days the clock started in, in the organization's time zone."""
+    period: DetentionPeriod!
+    """Only stays at this stage; every stage when left out."""
+    stage: DetentionStayStage
+  ): DetentionStayList!
   dispatchAssignmentPreview(input: DispatchAssignmentPreviewInput!): DispatchAssignmentPreview!
   dispatchBoard(input: DispatchBoardInput!): DispatchBoard!
   dispatchCarrierAssignmentPreview(input: DispatchCarrierAssignmentPreviewInput!): DispatchCarrierEligibility!
@@ -28809,6 +29284,16 @@ type Query {
   driverPayEvents(input: DataTableConnectionInput!): DriverPayEventConnection!
   driverQualificationFile(workerId: ID!): DQFFile! @authorizes(resource: "qualification")
   driverSettlement(id: ID!): DriverSettlement
+  """
+  The settlements of a pay batch that cannot be released as they stand: a critical exception
+  first, then a dispute open, the largest net first. The batch is the newest pay period's
+  when batchId is left out.
+  """
+  driverSettlementBlockers(
+    batchId: ID
+    """At most this many settlements, from 1 to 100; 25 when left out."""
+    limit: Int
+  ): [DriverSettlementBlocker!]!
   driverSettlements(input: DataTableConnectionInput!): DriverSettlementConnection!
   """
   How partners are acknowledging what was sent: counts by acknowledgment status overall and per partner, the messages whose acknowledgment is overdue, and recent dead letters.
@@ -31289,7 +31774,8 @@ type ReportRunDeskCard {
   """
   Why a finished run's result is not shown: access (the person can no longer
   read everything it shows), plan (it reads data the organization's plan no
-  longer includes) or changed (the report no longer runs as it did).
+  longer includes), changed (the report no longer runs as it did) or deleted
+  (the saved report it came from was deleted; the run is kept).
   """
   withheld: String
   """The add-on the run's report needs, when withheld is plan."""
@@ -32559,6 +33045,12 @@ type SettlementBatch {
   exceptionCount: Int!
   generatedAt: Timestamp
   generatedById: ID
+  """
+  How many of its settlements are on hold, out of the pay run until released.
+  """
+  heldCount: Int!
+  """What its held settlements net."""
+  heldNetMinor: Int!
   id: ID!
   name: String!
   notes: String!
@@ -32751,6 +33243,9 @@ type SettlementWorkspaceSummary {
   exceptionCount: Int!
   heldEventCount: Int!
   heldGrossMinor: Int!
+  """Settlements in the period a person holds out of the pay run."""
+  heldSettlementCount: Int!
+  heldSettlementNetMinor: Int!
   openBatchId: ID
   paidCount: Int!
   payDate: Timestamp!

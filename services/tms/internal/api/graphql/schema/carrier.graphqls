@@ -137,7 +137,32 @@ type CarrierConnection {
   totalCountExact: Boolean!
 }
 
+"An active carrier whose required insurance ends soon or has lapsed: the required policy that ends first and the loads it holds for us now."
+type CarrierCoverEnding @kind(resource: "carrier") {
+  "The carrier's id."
+  id: ID!
+  name: String!
+  code: String!
+  complianceStatus: CarrierComplianceStatus!
+  "The required policy that ends first."
+  policyType: CarrierInsurancePolicyType!
+  policyNumber: String!
+  "When that policy ends; before now once it has lapsed."
+  endsAt: Timestamp!
+  "Required policy types the carrier has no policy on file for."
+  missingPolicyTypes: [CarrierInsurancePolicyType!]!
+  "Its loads not yet delivered or canceled; null when you may not read shipments or some of them are not yours to read."
+  openLoads: Int
+}
+
 extend type Query {
   carriers(input: DataTableConnectionInput!): CarrierConnection!
   carrier(id: ID!): Carrier
+  "Active carriers whose required insurance ends within a number of days, or lapsed in the last 90 days, the soonest first."
+  carrierCoverEnding(
+    "From 1 to 90; 30 when left out."
+    withinDays: Int
+    "At most this many carriers, from 1 to 100; 25 when left out."
+    limit: Int
+  ): [CarrierCoverEnding!]!
 }

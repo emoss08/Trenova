@@ -8,6 +8,8 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/board"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/boardcatalog"
 )
 
 type MarkdownMeta struct {
@@ -80,7 +82,8 @@ func writeBlock(
 		board.BlockTimeline,
 		board.BlockChecks,
 		board.BlockMeter,
-		board.BlockWork:
+		board.BlockWork,
+		board.BlockMetric:
 	}
 
 	sb.WriteString("\n## ")
@@ -106,17 +109,15 @@ func writeBlock(
 	case board.BlockFigures:
 		writeFigures(sb, block.Figures)
 	case board.BlockRecords:
-		writeRows(sb, block)
+		writeRows(sb, block, location)
 	case board.BlockCompare:
 		writeCompare(sb, block.Compare)
 	case board.BlockTable:
 		if block.Table != nil {
 			sb.WriteString(strings.TrimLeft(block.Table.Table.Markdown(), "\n"))
 		}
-	case board.BlockChart:
-		if block.Chart != nil {
-			sb.WriteString(strings.TrimLeft(block.Chart.Markdown(), "\n"))
-		}
+	case board.BlockChart, board.BlockMetric:
+		writeMetric(sb, block.Metric, location)
 	case board.BlockTimeline:
 		writeEvents(sb, block.Events, location)
 	case board.BlockChecks:
@@ -200,14 +201,14 @@ func writeFigures(sb *strings.Builder, figures []board.FilledFigure) {
 	}
 }
 
-func writeRows(sb *strings.Builder, block *board.FilledBlock) {
-	if block.Source.Resource == "" {
+func writeRows(sb *strings.Builder, block *board.FilledBlock, location *time.Location) {
+	if block.Source.RecordKind == "" {
 		return
 	}
-	noun := block.Source.Resource.Noun()
+	noun := block.Source.RecordKind.Noun()
 	header := []string{strings.ToUpper(noun[:1]) + noun[1:], "Detail", "Status"}
 	if block.Measure != "" {
-		header = append(header, measureHeading(block.Measure))
+		header = append(header, measureHeading(block.Source.RecordKind, block.Measure))
 	}
 	writeRow(sb, header)
 	writeRule(sb, len(header))
@@ -220,7 +221,7 @@ func writeRows(sb *strings.Builder, block *board.FilledBlock) {
 		}
 		cells := []string{row.Label, row.Subtitle, row.Status}
 		if block.Measure != "" {
-			cells = append(cells, measureText(row.Measure))
+			cells = append(cells, MeasureText(row.Measure, location))
 		}
 		writeRow(sb, cells)
 	}
@@ -228,50 +229,32 @@ func writeRows(sb *strings.Builder, block *board.FilledBlock) {
 		fmt.Fprintf(
 			sb,
 			"\n%s could not be read.\n",
-			board.RecordsPhrase(block.Source.Resource, hidden),
+			board.RecordsPhrase(block.Source.RecordKind, hidden),
 		)
 	}
 }
 
-func measureHeading(measure board.Measure) string {
-	switch measure {
-	case board.MeasureLateness:
-		return "Behind"
-	case board.MeasureRevenue:
-		return "Revenue"
-	case board.MeasureAmountDue:
-		return "Due"
-	case board.MeasureTotal:
-		return "Total"
-	case board.MeasureAge:
-		return "Age"
-	case board.MeasureAmount:
-		return "Amount"
-	case board.MeasurePendingFor:
-		return "Waiting"
-	default:
-		return string(measure)
+func measureHeading(kind recordkind.Kind, measure board.Measure) string {
+	if spec, ok := measure.Spec(kind); ok && spec.Heading != "" {
+		return spec.Heading
 	}
+
+	return string(measure)
 }
 
-func measureText(measure *board.RowMeasure) string {
+func MeasureText(measure *board.RowMeasure, location *time.Location) string {
 	if measure == nil {
 		return ""
 	}
-	if measure.Measure != board.MeasureLateness {
-		return board.FormatValue(&measure.Value)
+	if measure.Value == nil {
+		return "withheld"
 	}
-	text := board.FormatValue(&measure.Value)
-	switch {
-	case measure.State == board.MeasureDue:
-		text = "not estimated"
-	case measure.State == board.MeasureProjected:
-		text = "estimated " + text + " late"
-	case measure.Value.Number.IsZero():
-		text = "on time"
+	text := board.FormatWords(&measure.Standing, location)
+	if text == "" {
+		text = board.FormatValue(measure.Value)
 	}
-	if measure.Place != "" {
-		text += " (" + measure.Place + ")"
+	if fact := board.FormatWords(measure.Fact, location); fact != "" {
+		text += " (" + fact + ")"
 	}
 
 	return text
@@ -328,7 +311,7 @@ func writeEvents(sb *strings.Builder, events []board.Event, location *time.Locat
 }
 
 func writeChecks(sb *strings.Builder, checks []board.FilledCheck) {
-	for _, tone := range []board.Tone{board.ToneBad, board.ToneWarn, board.ToneInfo, board.ToneOK} {
+	for _, tone := range []boardcatalog.Tone{boardcatalog.ToneBad, boardcatalog.ToneWarn, boardcatalog.ToneInfo, boardcatalog.ToneOK} {
 		heading := false
 		for idx := range checks {
 			check := &checks[idx]
@@ -360,15 +343,15 @@ func writeChecks(sb *strings.Builder, checks []board.FilledCheck) {
 	}
 }
 
-func checkGroup(tone board.Tone) string {
+func checkGroup(tone boardcatalog.Tone) string {
 	switch tone {
-	case board.ToneBad:
+	case boardcatalog.ToneBad:
 		return "Blocks it"
-	case board.ToneWarn:
+	case boardcatalog.ToneWarn:
 		return "Needs a look"
-	case board.ToneInfo:
+	case boardcatalog.ToneInfo:
 		return "Worth knowing"
-	case board.ToneOK:
+	case boardcatalog.ToneOK:
 	}
 
 	return "All clear"
@@ -399,13 +382,13 @@ func writeNote(sb *strings.Builder, f *board.Filled, block *board.FilledBlock) {
 	sb.WriteString("\n")
 }
 
-func NoteLabel(tone board.Tone) string {
+func NoteLabel(tone boardcatalog.Tone) string {
 	switch tone {
-	case board.ToneBad:
+	case boardcatalog.ToneBad:
 		return "Blocks it"
-	case board.ToneWarn:
+	case boardcatalog.ToneWarn:
 		return "Worth acting on"
-	case board.ToneInfo, board.ToneOK:
+	case boardcatalog.ToneInfo, boardcatalog.ToneOK:
 	}
 
 	return "What I'd do"
@@ -449,6 +432,10 @@ func wordsText(f *board.Filled, segments []board.FilledSegment) string {
 			sb.WriteString(readingText(f.Reading(segment.Reading)))
 			continue
 		}
+		if segment.Artifact != "" {
+			sb.WriteString(linked(&segment))
+			continue
+		}
 		sb.WriteString(segment.Text)
 		if segment.Numeral > 0 {
 			fmt.Fprintf(&sb, " [%d]", segment.Numeral)
@@ -475,6 +462,10 @@ func readingText(reading *board.FilledReading) string {
 func Answer(f *board.Filled) string {
 	var sb strings.Builder
 	for _, segment := range f.Verdict {
+		if segment.Artifact != "" {
+			sb.WriteString(linked(&segment))
+			continue
+		}
 		if segment.Reading == "" {
 			sb.WriteString(segment.Text)
 			continue
@@ -487,6 +478,10 @@ func Answer(f *board.Filled) string {
 	}
 
 	return oneLine(sb.String())
+}
+
+func linked(segment *board.FilledSegment) string {
+	return "[" + segment.Text + "](artifact:" + segment.Artifact + ")"
 }
 
 func writeRow(sb *strings.Builder, cells []string) {

@@ -10,6 +10,11 @@ export const bankReceipt = createQueryKeys("bankReceipt", {
     queryKey: ["get", id],
     queryFn: async () => bankReceiptService.getById(id),
   }),
+  card: (id: string) => ({
+    queryKey: ["card", id],
+    queryFn: async ({ signal }: { signal: AbortSignal }) =>
+      bankReceiptService.getCard(id, { signal }),
+  }),
   suggestions: (id: string) => ({
     queryKey: ["suggestions", id],
     queryFn: async () => bankReceiptService.getSuggestions(id),

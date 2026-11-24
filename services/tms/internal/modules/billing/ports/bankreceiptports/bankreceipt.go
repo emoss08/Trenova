@@ -43,6 +43,31 @@ type ListBankReceiptsMatchedToPaymentRequest struct {
 	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
 }
 
+const (
+	DefaultExceptionPage = 20
+	MaxExceptionPage     = 100
+)
+
+type ListBankReceiptExceptionsRequest struct {
+	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
+	Query      string                `json:"query"`
+	Limit      int                   `json:"limit"`
+	Offset     int                   `json:"offset"`
+}
+
+func (r *ListBankReceiptExceptionsRequest) PageLimit() int {
+	if r.Limit <= 0 {
+		return DefaultExceptionPage
+	}
+
+	return min(r.Limit, MaxExceptionPage)
+}
+
+type BankReceiptExceptionPage struct {
+	Items []*bankreceipt.BankReceipt `json:"items"`
+	Total int                        `json:"total"`
+}
+
 type GetBankReceiptSummaryRequest struct {
 	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
 	AsOfDate   int64                 `json:"asOfDate"`
@@ -73,8 +98,8 @@ type BankReceiptRepository interface {
 	) ([]*bankreceipt.BankReceipt, error)
 	ListExceptions(
 		ctx context.Context,
-		tenantInfo pagination.TenantInfo,
-	) ([]*bankreceipt.BankReceipt, error)
+		req *ListBankReceiptExceptionsRequest,
+	) (*BankReceiptExceptionPage, error)
 	GetSummary(
 		ctx context.Context,
 		req GetBankReceiptSummaryRequest,

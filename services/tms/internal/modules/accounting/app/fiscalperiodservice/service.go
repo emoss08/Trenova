@@ -1,4 +1,3 @@
-//nolint:funlen // existing legacy workflow/API shape is intentionally kept stable
 package fiscalperiodservice
 
 import (
@@ -107,21 +106,50 @@ func (s *Service) GetCloseBlockers(
 	}
 
 	checks := []struct {
-		err   error
-		field string
+		err     error
+		refusal fiscalcloseblockers.Refusal
 	}{
-		{err: s.validateCloseWithPeriods(entity, periods).Err(), field: "period"},
-		{err: s.validateCloseControl(ctx, entity), field: "accounting"},
-		{err: s.validator.ValidateClose(ctx, entity), field: "period"},
+		{
+			err:     validateCloseStatus(entity).Err(),
+			refusal: periodRefusal("period", fiscalclose.CheckPeriodStatus),
+		},
+		{
+			err:     validateCloseSequence(entity, periods).Err(),
+			refusal: periodRefusal("period", fiscalclose.CheckEarlierPeriods),
+		},
+		{
+			err:     s.validateCloseControl(ctx, entity),
+			refusal: periodRefusal("accounting", fiscalclose.CheckCloseControl),
+		},
 	}
-	blockers := make([]*fiscalclose.Blocker, 0)
+	blockers := make([]*fiscalclose.Blocker, 0, len(checks))
+	cleared := make([]fiscalclose.Check, 0, len(checks))
 	for _, check := range checks {
-		if blockers, err = fiscalcloseblockers.Append(blockers, check.err, check.field, "period"); err != nil {
+		before := len(blockers)
+		blockers, err = fiscalcloseblockers.Append(ctx, blockers, check.err, check.refusal)
+		if err != nil {
 			return nil, err
 		}
+		if len(blockers) == before {
+			cleared = append(cleared, check.refusal.Check)
+		}
 	}
+	counted, countedClear, err := s.validator.CloseChecks(ctx, entity)
+	if err != nil {
+		return nil, err
+	}
+	blockers = append(blockers, counted...)
+	cleared = append(cleared, countedClear...)
 
-	return &fiscalclose.Result{CanClose: len(blockers) == 0, Blockers: blockers}, nil
+	return &fiscalclose.Result{
+		CanClose: len(blockers) == 0,
+		Blockers: blockers,
+		Cleared:  cleared,
+	}, nil
+}
+
+func periodRefusal(field string, check fiscalclose.Check) fiscalcloseblockers.Refusal {
+	return fiscalcloseblockers.Refusal{Field: field, Category: closeCategory, Check: check}
 }
 
 func (s *Service) Create(
@@ -282,7 +310,7 @@ func (s *Service) closeTransition() transition {
 		operation: permission.OpClose,
 		comment:   "Fiscal period closed",
 		validate: func(ctx context.Context, state transitionState) error {
-			if multiErr := s.validateCloseWithPeriods(
+			if multiErr := validateCloseWithPeriods(
 				state.period,
 				state.periods,
 			); multiErr != nil {
@@ -594,22 +622,37 @@ func (s *Service) validateDelete(entity *fiscalperiod.FiscalPeriod) error {
 	return multiErr.Err()
 }
 
-func (s *Service) validateCloseWithPeriods(
+func validateCloseWithPeriods(
+	entity *fiscalperiod.FiscalPeriod,
+	periods []*fiscalperiod.FiscalPeriod,
+) *errortypes.MultiError {
+	if multiErr := validateCloseStatus(entity); multiErr != nil {
+		return multiErr
+	}
+
+	return validateCloseSequence(entity, periods)
+}
+
+func validateCloseStatus(entity *fiscalperiod.FiscalPeriod) *errortypes.MultiError {
+	if entity.Status.CanClose() {
+		return nil
+	}
+	multiErr := errortypes.NewMultiError()
+	multiErr.Add(
+		"status",
+		errortypes.ErrInvalid,
+		"Only Open or Locked fiscal periods can be closed. Current status: {0}",
+		entity.Status,
+	)
+
+	return multiErr
+}
+
+func validateCloseSequence(
 	entity *fiscalperiod.FiscalPeriod,
 	periods []*fiscalperiod.FiscalPeriod,
 ) *errortypes.MultiError {
 	multiErr := errortypes.NewMultiError()
-
-	if !entity.Status.CanClose() {
-		multiErr.Add(
-			"status",
-			errortypes.ErrInvalid,
-			"Only Open or Locked fiscal periods can be closed. Current status: {0}",
-			entity.Status,
-		)
-		return multiErr
-	}
-
 	for _, p := range periods {
 		if p == nil || p.PeriodNumber >= entity.PeriodNumber {
 			continue

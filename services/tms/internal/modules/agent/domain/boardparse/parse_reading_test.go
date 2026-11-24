@@ -37,7 +37,7 @@ func TestParseReadsReadingsTheWordsPlace(t *testing.T) {
 	require.Len(t, parsed.Readings, 2)
 	assert.Equal(t, "late", parsed.Readings[0].Key)
 	assert.Equal(t, "Late now", parsed.Readings[0].Label)
-	assert.Equal(t, board.MeasureLateness, parsed.Readings[0].Measure)
+	assert.Equal(t, board.Measure("lateness"), parsed.Readings[0].Measure)
 	assert.Equal(t, board.AggregateCount, parsed.Readings[0].Aggregate)
 	assert.Equal(t, board.AggregateMax, parsed.Readings[1].Aggregate)
 	assert.Len(t, parsed.Readings[0].Records.IDs, 6)

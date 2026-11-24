@@ -1,6 +1,5 @@
 import { Link } from "@trenova/shared/components/link";
 import { AnalysisTableView } from "@/components/assistant/analysis-result";
-import { AnalysisChartSkeleton } from "@/components/assistant/analysis-chart-skeleton";
 import { isRecordEntityType, recordPath } from "@/config/record-links";
 import type {
   DeskBoardBlock,
@@ -10,75 +9,60 @@ import type {
   DeskBoardFigure,
   DeskBoardMeter,
   DeskBoardRow,
+  DeskBoardRowMeasure,
 } from "@/lib/graphql/desk-board-card";
-import { lazyComponent } from "@/lib/lazy-component";
-import type { AnalysisChart } from "@/types/analysis";
-import { LazyComponent } from "@trenova/shared/components/error-boundary";
-import {
-  CarrierComplianceStatusBadge,
-  PlainInvoiceStatusBadge,
-  ShipmentStatusBadge,
-  StatusBadge,
-} from "@trenova/shared/components/status-badge";
-import { useRichT } from "@trenova/shared/i18n/rich";
+import { Badge, type BadgeTone } from "@trenova/shared/components/ui/badge";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
-import { shipmentStatusSchema } from "@trenova/shared/types/shipment";
 import type { CSSProperties, ReactNode } from "react";
 import { BoardWords, Numeral, type BoardReadings } from "./board-words";
 import { ArtIcon } from "../../desk-art-kinds";
 import { CardIcon } from "../../record-card/record-card";
 import { activityActor, activitySentence } from "../../record-card/record-activity";
-import { cardMomentAfter } from "../../record-card/record-card-values";
+import { cardDayAfter, cardMomentAfter } from "../../record-card/record-card-values";
+import { SegmentBar } from "./board-bar";
 import {
+  type BoardTone,
+  blockSource,
   boardTone,
   checkGroups,
   formatBoardValue,
   figureRows,
-  furthestOf,
   initialsOf,
-  measureIsTrack,
-  measureReading,
   noteLabel,
-  sourceLine,
+  opened,
   toneClass,
   unreadableRecord,
   readableIds,
-  type MeasureReading,
 } from "./board-card";
-
-const boardChart = lazyComponent(
-  () => import("@/components/assistant/analysis-chart"),
-  (module) => module.AnalysisChartView,
-);
+import { fillWords, wholeWords } from "./board-words-fill";
 
 /** Opens a record a board names in the board's place, in the order its block lists them. */
 export type OpenRecord = (row: DeskBoardRow, order: readonly string[]) => void;
 
 /** Whether a record of a kind opens in place here; a kind that does not opens on its page. */
-export type OpensInPlace = (resource: string) => boolean;
+export type OpensInPlace = (kind: string) => boolean;
 
-const INVOICE_STATUSES = new Set(["Draft", "Posted", "Voided"]);
-const COMPLIANCE_STATUSES = new Set(["Pending", "Qualified", "Disqualified", "Expired"]);
+const STATUS_VARIANT: Record<BoardTone, BadgeTone> = {
+  bad: "danger",
+  warn: "warning",
+  info: "info",
+  ok: "success",
+  "": "neutral",
+};
 
-/** A record's status, drawn with the badge its own pages use. */
-export function BoardStatus({ resource, status }: { resource: string; status: string }) {
+/**
+ * A record's status as the product words it, drawn with the shared badge in the
+ * tone the status's owner gave it on the server; the client keeps no list of
+ * status names.
+ */
+export function BoardStatus({ status, tone }: { status: string; tone: string }) {
   if (status === "") return null;
-  if (resource === "shipment") {
-    const parsed = shipmentStatusSchema.safeParse(status);
-    if (parsed.success) return <ShipmentStatusBadge status={parsed.data} />;
-  }
-  if (resource === "invoice" && INVOICE_STATUSES.has(status)) {
-    return <PlainInvoiceStatusBadge status={status as "Draft" | "Posted" | "Voided"} />;
-  }
-  if (resource === "carrier" && COMPLIANCE_STATUSES.has(status)) {
-    return (
-      <CarrierComplianceStatusBadge
-        status={status as "Pending" | "Qualified" | "Disqualified" | "Expired"}
-      />
-    );
-  }
-  return <StatusBadge status={status} />;
+  return (
+    <Badge variant={STATUS_VARIANT[boardTone(tone)]} dot className="max-h-5">
+      {status}
+    </Badge>
+  );
 }
 
 /** A record named in the words or in a check: its label, opening the record. */
@@ -94,16 +78,17 @@ export function RecordChip({
   opensInPlace: OpensInPlace;
 }) {
   if (!row.readable) return null;
-  if (opensInPlace(row.resource)) {
+  const target = opened(row);
+  if (opensInPlace(target.kind)) {
     return (
       <button type="button" className="dk-bd-ref" onClick={() => open(row, order)}>
         {row.label}
       </button>
     );
   }
-  if (isRecordEntityType(row.resource)) {
+  if (isRecordEntityType(target.kind)) {
     return (
-      <Link className="dk-bd-ref" to={recordPath(row.resource, row.id)}>
+      <Link className="dk-bd-ref" to={recordPath(target.kind, target.id)}>
         {row.label}
       </Link>
     );
@@ -166,7 +151,7 @@ export function Exhibit({
 }) {
   const t = useT();
   const unreadable = block.state === "unreadable";
-  const line = sourceLine(block.source, t);
+  const line = blockSource(block, t);
   return (
     <section
       className={cn(
@@ -299,12 +284,19 @@ export function Empty({ block }: { block: DeskBoardBlock }) {
  * Figures, read now; one that moved since the answer says what it was. More
  * than four are set in balanced rows (figureRows), each its own run.
  */
+/**
+ * A figure as a readout draws it: a metric's figure may carry what it read
+ * earlier and when (`wasAt`), which is said as that day, not as a move since the
+ * answer.
+ */
+export type ReadoutFigure = DeskBoardFigure & { wasAt?: number | null };
+
 export function Readout({
   figures,
   answeredAt,
   now,
 }: {
-  figures: DeskBoardFigure[];
+  figures: ReadoutFigure[];
   answeredAt: number;
   now: number;
 }) {
@@ -333,7 +325,7 @@ function ReadoutRow({
   answeredAt,
   now,
 }: {
-  figures: DeskBoardFigure[];
+  figures: ReadoutFigure[];
   answeredAt: number;
   now: number;
 }) {
@@ -354,7 +346,7 @@ function ReadoutRow({
                 <span className="dk-bd-gone">{t("Could not be read")}</span>
               ) : (
                 <>
-                  {figure.was && (
+                  {figure.was && !figure.wasAt && (
                     <>
                       <s>{formatBoardValue(figure.was)}</s>
                       <span aria-hidden="true">→</span>
@@ -364,10 +356,16 @@ function ReadoutRow({
                 </>
               )}
             </dd>
-            {figure.was && (
-              <em className="dk-moved">
-                {t("since the answer at {0}", cardMomentAfter(now, answeredAt))}
+            {figure.was && figure.wasAt ? (
+              <em>
+                {t("was {0} on {1}", formatBoardValue(figure.was), cardDayAfter(now, figure.wasAt))}
               </em>
+            ) : (
+              figure.was && (
+                <em className="dk-moved">
+                  {t("since the answer at {0}", cardMomentAfter(now, answeredAt))}
+                </em>
+              )
             )}
           </div>
         );
@@ -377,7 +375,7 @@ function ReadoutRow({
 }
 
 /** A record the reader may not read, drawn where it stands in the list. */
-function GoneRow({ resource }: { resource: string }) {
+function GoneRow({ kind }: { kind: string }) {
   const t = useT();
   const why = t("It may have been removed, or you may not be allowed to see it.");
   return (
@@ -386,7 +384,7 @@ function GoneRow({ resource }: { resource: string }) {
         <ArtIcon name="lock" size={12} stroke={2} />
       </span>
       <span className="dk-bd-l1">
-        <b className="dk-bd-id">{unreadableRecord(resource, t)}</b>
+        <b className="dk-bd-id">{unreadableRecord(kind, t)}</b>
       </span>
       <span className="dk-bd-line">
         <span className="dk-bd-sub" title={why}>
@@ -398,54 +396,64 @@ function GoneRow({ resource }: { resource: string }) {
 }
 
 /**
- * What a row draws of its measure's second fact, as siblings on the row's second line: the
- * moment (`dk-bd-at`), which never gives way, then the stop it is measured at (`dk-bd-place`),
+ * A row's second fact as siblings on its second line: the words with their moment
+ * (`dk-bd-at`), which never give way, then the place it was measured at (`dk-bd-place`),
  * which gives way first. Each carries the whole fact in `title`.
  */
-function SecondFact({ reading }: { reading: MeasureReading }) {
-  const rt = useRichT();
-  const tags = {
-    at: (children: ReactNode) => (
-      <span className="dk-bd-at" title={reading.against}>
-        {children}
+function SecondFact({ measure, now }: { measure: DeskBoardRowMeasure; now: number }) {
+  const fact = measure.fact;
+  if (!fact) return null;
+  const shown = fillWords(fact, now);
+  if (shown === "") return null;
+  const whole = wholeWords(fact, now);
+  // Words give way with an ellipsis; a moment, amount, duration or number in the {0} slot never
+  // does. A slot holding text (value kind "text") is words like the rest.
+  const [before, ...rest] = fact.text.split("{0}");
+  const slotted = rest.length > 0 && fact.value?.kind !== "text";
+  const after = rest.join("{0}");
+  return (
+    <>
+      <span className={cn("dk-bd-at", !slotted && "dk-bd-said")} title={whole}>
+        {slotted ? (
+          <>
+            {before !== "" && <span className="dk-bd-words">{before}</span>}
+            <span className="dk-bd-slot">{fillWords({ ...fact, text: "{0}" }, now)}</span>
+            {after !== "" && <span className="dk-bd-words">{after}</span>}
+          </>
+        ) : (
+          <span className="dk-bd-words">{shown}</span>
+        )}
       </span>
-    ),
-    place: (children: ReactNode) => (
-      <span className="dk-bd-place" title={reading.against}>
-        {children}
-      </span>
-    ),
-  };
-  if (!reading.at) {
-    return (
-      <span className="dk-bd-at" title={reading.against}>
-        {reading.shown}
-      </span>
-    );
-  }
-  return reading.at.verb === "due"
-    ? rt("<at>Due {0}</at><place> at {1}</place>", tags, reading.at.when, reading.at.place)
-    : rt("<at>Delivered {0}</at><place> at {1}</place>", tags, reading.at.when, reading.at.place);
+      {fact.place !== "" && (
+        <span className="dk-bd-place" title={whole}>
+          {` ${fact.place}`}
+        </span>
+      )}
+    </>
+  );
 }
 
 /**
- * A record's row, one anatomy at every width (`.dk-bd-row` in desk-v2.css), each
- * line its own box so neither narrows the other: the number and the measure's
- * standing value (`dk-bd-l1`); the subtitle and the measure's second fact as one
- * phrase, then the status (`dk-bd-line`); the track under them for a measure
- * read as one. On the second line the stop gives way first, then the subtitle;
- * the moment never does.
+ * A record's row, one anatomy at every width (`.dk-bd-row` in desk-v2.css), each line its own
+ * box so neither narrows the other: the label and the measure's standing words (`dk-bd-l1`);
+ * the subtitle and the measure's second fact as one phrase, then the status (`dk-bd-line`);
+ * the bar the server laid out under them. A measure the reader may not read says so where the
+ * standing would be.
  */
-function RowBody({ row, furthest, now }: { row: DeskBoardRow; furthest: number; now: number }) {
+function RowBody({ row, now }: { row: DeskBoardRow; now: number }) {
   const t = useT();
-  const reading = row.measure ? measureReading(row.measure, furthest, now, t) : null;
-  const track = reading !== null && measureIsTrack(row.measure?.measure ?? "");
+  const measure = row.measure;
+  const standing = measure
+    ? measure.value
+      ? fillWords(measure.standing, now)
+      : t("Not yours to read")
+    : "";
   return (
     <>
       <span className="dk-bd-l1">
         <b className="dk-bd-id">{row.label}</b>
-        {reading && reading.standing !== "" && (
-          <span className={cn("dk-bd-val", toneClass(reading.tone))}>{reading.standing}</span>
+        {standing !== "" && (
+          <span className={cn("dk-bd-val", toneClass(measure?.tone ?? ""))}>{standing}</span>
         )}
       </span>
       <span className="dk-bd-line">
@@ -454,21 +462,14 @@ function RowBody({ row, furthest, now }: { row: DeskBoardRow; furthest: number; 
             {row.subtitle}
           </span>
         )}
-        {reading && reading.shown !== "" && <SecondFact reading={reading} />}
+        {measure && <SecondFact measure={measure} now={now} />}
         {row.status !== "" && (
           <span className="dk-bd-st">
-            <BoardStatus resource={row.resource} status={row.status} />
+            <BoardStatus status={row.status} tone={row.statusTone} />
           </span>
         )}
       </span>
-      {track && (
-        <span className="dk-bd-track">
-          <i
-            className={cn(reading.held && "dk-bd-held", reading.projected && "dk-bd-projected")}
-            style={{ width: `${Math.round(reading.fraction * 100)}%` }}
-          />
-        </span>
-      )}
+      {measure?.bar && <SegmentBar bar={measure.bar} />}
     </>
   );
 }
@@ -491,16 +492,16 @@ export function RecordRows({
   /** The line after the rows saying how many more the board holds, when the list was cut. */
   more?: ReactNode;
 }) {
-  const furthest = furthestOf(rows);
   return (
     <div className="dk-bd-rows">
       {rows.map((row, index) => {
         if (!row.readable) {
           // oxlint-disable-next-line react/no-array-index-key -- an unread row has only its place
-          return <GoneRow key={`${row.id}-${index}`} resource={row.resource} />;
+          return <GoneRow key={`${row.id}-${index}`} kind={row.kind} />;
         }
-        const body = <RowBody row={row} furthest={furthest} now={now} />;
-        if (opensInPlace(row.resource)) {
+        const body = <RowBody row={row} now={now} />;
+        const target = opened(row);
+        if (opensInPlace(target.kind)) {
           return (
             <button
               key={row.id}
@@ -512,8 +513,8 @@ export function RecordRows({
             </button>
           );
         }
-        return isRecordEntityType(row.resource) ? (
-          <Link key={row.id} className="dk-bd-row" to={recordPath(row.resource, row.id)}>
+        return isRecordEntityType(target.kind) ? (
+          <Link key={row.id} className="dk-bd-row" to={recordPath(target.kind, target.id)}>
             {body}
           </Link>
         ) : (
@@ -577,19 +578,20 @@ function Face({
       <span className="dk-bd-mono">{initialsOf(column.label)}</span>
       <b title={column.label}>{column.label}</b>
       {column.subtitle !== "" && <small title={column.subtitle}>{column.subtitle}</small>}
-      <BoardStatus resource={column.resource} status={column.status} />
+      <BoardStatus status={column.status} tone={column.statusTone} />
     </>
   );
-  if (opensInPlace(column.resource)) {
+  const target = opened(column);
+  if (opensInPlace(target.kind)) {
     return (
       <button type="button" className="dk-bd-face" onClick={() => open(column, order)}>
         {body}
       </button>
     );
   }
-  if (isRecordEntityType(column.resource)) {
+  if (isRecordEntityType(target.kind)) {
     return (
-      <Link className="dk-bd-face" to={recordPath(column.resource, column.id)}>
+      <Link className="dk-bd-face" to={recordPath(target.kind, target.id)}>
         {body}
       </Link>
     );
@@ -630,7 +632,7 @@ export function HeadToHead({
                   <span className="dk-bd-mono">
                     <ArtIcon name="lock" size={12} stroke={2} />
                   </span>
-                  <b>{unreadableRecord(column.resource, t)}</b>
+                  <b>{unreadableRecord(column.kind, t)}</b>
                 </span>
               )}
             </th>
@@ -722,10 +724,12 @@ export function Checks({
                   />
                 </span>
                 <b>{check.title}</b>
-                <span className="dk-bd-count">
-                  {check.count ? formatBoardValue(check.count) : t("unread")}
-                  {check.was && <s>{formatBoardValue(check.was)}</s>}
-                </span>
+                {(check.count || check.was || check.hidden > 0) && (
+                  <span className="dk-bd-count">
+                    {check.count ? formatBoardValue(check.count) : t("unread")}
+                    {check.was && <s>{formatBoardValue(check.was)}</s>}
+                  </span>
+                )}
                 {check.detail !== "" && <span className="dk-bd-ck-d">{check.detail}</span>}
                 {check.hidden > 0 && (
                   <span className="dk-bd-ck-d">
@@ -820,16 +824,6 @@ export function Pips({ meter }: { meter: DeskBoardMeter }) {
         )}
       </div>
     </>
-  );
-}
-
-/** An analysis chart, drawn as the analysis card draws it. */
-export function BoardChart({ chart }: { chart: AnalysisChart }) {
-  const t = useT();
-  return (
-    <LazyComponent fallback={<AnalysisChartSkeleton title={chart.title || t("Chart")} />}>
-      <boardChart.Component chart={chart} />
-    </LazyComponent>
   );
 }
 

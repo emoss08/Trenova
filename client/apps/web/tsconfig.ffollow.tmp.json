@@ -1,0 +1,32 @@
+{
+  "extends": "./tsconfig.app.json",
+  "compilerOptions": {
+    "incremental": false,
+    "tsBuildInfoFile": null,
+    "plugins": []
+  },
+  "include": [
+    "src/*.d.ts",
+    "src/routes/desk/_components/artifacts/kinds/board/board-card.ts",
+    "src/routes/desk/_components/artifacts/kinds/board/board-parts.tsx",
+    "src/routes/desk/_components/artifacts/kinds/board/board-words.tsx",
+    "src/routes/desk/_components/artifacts/kinds/board/__tests__/board-card.test.ts",
+    "src/routes/desk/_components/artifacts/kinds/board/__tests__/board-words.test.tsx",
+    "src/routes/desk/_components/artifacts/kinds/board/__tests__/board-status.test.tsx",
+    "src/routes/desk/_components/artifacts/kinds/board/__tests__/fixtures.ts",
+    "src/routes/desk/_components/artifacts/kinds/board/__tests__/board-reply.test.tsx",
+    "src/routes/desk/_components/artifacts/kinds/board/__tests__/desk-board-body.test.tsx",
+    "src/components/elements/artifact-link-context.ts",
+    "src/components/elements/ai-markdown.tsx",
+    "src/components/desk-chat/desk-thread.tsx",
+    "src/components/elements/__tests__/ai-markdown-artifact-links.test.tsx",
+    "src/components/desk-chat/conversation/__tests__/desk-inline-artifact.test.tsx",
+    "src/routes/desk/_components/artifacts/kinds/board/desk-board-body.tsx",
+    "src/routes/desk/_components/artifacts/kinds/board/board-skeleton.tsx",
+    "src/routes/desk/_components/artifacts/kinds/board/blocks/board-metric.tsx",
+    "src/routes/desk/_components/artifacts/kinds/board/blocks/chart-dots.tsx",
+    "src/routes/desk/_components/artifacts/kinds/board/blocks/chart-bars.tsx",
+    "src/routes/desk/_components/artifacts/kinds/board/blocks/chart-values.ts",
+    "src/routes/desk/_components/artifacts/kinds/board/__tests__/blocks/board-metric.test.tsx"
+  ]
+}

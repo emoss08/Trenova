@@ -6,11 +6,11 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/analysis"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/board"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/boardassemble"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/boardcatalog"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/boardreading"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
@@ -37,19 +37,15 @@ func TestCardKeepsTheAnsweredReadingAndMarksItMoved(t *testing.T) {
 
 	f := newFixture()
 	shipment := pulid.MustNew("shp_")
-	f.summaries.asked[permission.ResourceShipment] = map[pulid.ID]boardassemble.Summary{
-		shipment: {Label: "S2610-0412", Measures: map[board.Measure]board.RowMeasure{
-			board.MeasureLateness: {
-				Measure: board.MeasureLateness,
-				Value:   board.Value{Kind: board.ValueDuration, Number: decimal.Zero},
-			},
-		}},
-	}
+	f.shipments.known[shipment] = boardreading.Summary{Label: "S2610-0412"}
+	f.late.readings = map[pulid.ID]boardreading.Reading{shipment: lateness(0)}
 	shown := parsed(t, readingBoard(shipment))
-	snapshot := board.Snapshot{Values: map[string]board.Value{
-		board.ReadingKey("late"): {Kind: board.ValueCount, Number: decimal.NewFromInt(1)},
+	snapshot := board.Snapshot{Values: map[string]boardcatalog.Value{
+		board.ReadingKey("late"): {Kind: boardcatalog.ValueCount, Number: decimal.NewFromInt(1)},
 	}}
-	payload, err := board.NewPayload(shown, snapshot, "Dispatch Desk").Map()
+	payload, err := (&board.Payload{
+		Board: *shown, Place: board.PlaceConversation, Snapshot: snapshot, Author: "Dispatch Desk",
+	}).Map()
 	require.NoError(t, err)
 	id := pulid.MustNew("art_")
 	f.artifacts.byID[id] = &assistantartifact.Artifact{
@@ -91,7 +87,7 @@ func TestFillReadsAReadingsMetricLikeAFigures(t *testing.T) {
 	filled, err := f.svc.Fill(t.Context(), f.request(shown))
 
 	require.NoError(t, err)
-	require.Len(t, f.analytics.opts, 1)
+	assert.Equal(t, 1, f.dispatch.calls, "a reading and a figure of one metric are one read")
 	assert.Equal(t, "41", board.FormatValue(filled.Readings[0].Value))
 	assert.Equal(t, "41", filled.Verdict[1].Text)
 }

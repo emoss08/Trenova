@@ -407,6 +407,9 @@ query DriverSettlementTable($input: DataTableConnectionInput!, $includeTotalCoun
         shipmentCount
         currencyCode
         hasExceptions
+        holdReason
+        holdNote
+        heldAt
         version
         createdAt
         updatedAt
@@ -470,6 +473,18 @@ query DriverSettlementDetail($id: ID!) {
     voidedById
     voidedAt
     voidReason
+    holdReason
+    holdNote
+    heldAt
+    heldBy {
+      id
+      name
+    }
+    holdReleasedAt
+    holdReleasedBy {
+      id
+      name
+    }
     version
     createdAt
     updatedAt
@@ -513,6 +528,8 @@ query SettlementBatchTable($input: DataTableConnectionInput!, $includeTotalCount
         exceptionCount
         totalGrossMinor
         totalNetMinor
+        heldCount
+        heldNetMinor
         currencyCode
         notes
         generatedById
@@ -642,6 +659,8 @@ query SettlementWorkspaceSummary($periodStart: Timestamp, $periodEnd: Timestamp)
     unsettledGrossMinor
     heldEventCount
     heldGrossMinor
+    heldSettlementCount
+    heldSettlementNetMinor
     unsettledWorkerCount
     openBatchId
   }
@@ -938,6 +957,29 @@ mutation ReleaseDriverPayEvent($payEventId: ID!) {
   }
 }
 
+mutation HoldDriverSettlement($input: HoldDriverSettlementInput!) {
+  holdDriverSettlement(input: $input) {
+    id
+    status
+    holdReason
+    holdNote
+    heldAt
+    version
+  }
+}
+
+mutation ReleaseDriverSettlementHold($settlementId: ID!) {
+  releaseDriverSettlementHold(settlementId: $settlementId) {
+    id
+    status
+    holdReason
+    holdNote
+    heldAt
+    holdReleasedAt
+    version
+  }
+}
+
 mutation AttachPayEventsToSettlement($input: AttachPayEventsInput!) {
   attachPayEventsToSettlement(input: $input) {
     id
@@ -989,6 +1031,8 @@ query SettlementBatchDetail($id: ID!) {
     exceptionCount
     totalGrossMinor
     totalNetMinor
+    heldCount
+    heldNetMinor
     currencyCode
     notes
     version
@@ -1002,6 +1046,9 @@ query SettlementBatchDetail($id: ID!) {
       netPayMinor
       currencyCode
       hasExceptions
+      holdReason
+      holdNote
+      heldAt
       worker {
         id
         firstName

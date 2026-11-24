@@ -929,7 +929,11 @@ func (o *artifactObserver) ObserveTool(
 		Delegated:    run.Delegation != nil,
 	}, observation)
 
-	return o.assistant.ObserveTool(ctx, run.ThreadID, run.Actor, *observation, emit)
+	return o.assistant.ObserveTool(ctx, &assistantservice.ObservedRun{
+		ThreadID:   run.ThreadID,
+		Actor:      run.Actor,
+		DataAccess: run.Definition.DataAccessSensitivity(),
+	}, *observation, emit)
 }
 
 func definitionIDOf(definition *agentdefinition.Definition) pulid.ID {

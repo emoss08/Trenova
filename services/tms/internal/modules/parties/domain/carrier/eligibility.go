@@ -2,7 +2,7 @@ package carrier
 
 import "fmt"
 
-const insuranceWarningWindowSeconds = int64(30 * 24 * 60 * 60)
+const InsuranceWarningWindowSeconds = int64(30 * 24 * 60 * 60)
 
 type IntelAction string
 
@@ -143,7 +143,7 @@ func EvaluateEligibility(in EligibilityInput) EligibilityResult {
 			result.addBlocker(code, EligibilitySourceRecord,
 				fmt.Sprintf("Carrier %s insurance policy %s is expired",
 					policyType, policy.PolicyNumber))
-		case policy.ExpiresWithin(in.Now, insuranceWarningWindowSeconds):
+		case policy.ExpiresWithin(in.Now, InsuranceWarningWindowSeconds):
 			result.addWarning(code, EligibilitySourceRecord,
 				fmt.Sprintf("Carrier %s insurance policy %s expires within 30 days",
 					policyType, policy.PolicyNumber))

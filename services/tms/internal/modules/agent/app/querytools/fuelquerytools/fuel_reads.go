@@ -40,7 +40,9 @@ const (
 	iftaReturnsSummary = "List the organization's quarterly IFTA fuel tax returns with their " +
 		"status, miles, gallons, the net tax due and the problems each carries. A Draft is " +
 		"recomputed with fuel_recalculate_ifta_return or deleted with " +
-		"fuel_delete_ifta_return; a Filed return is corrected with fuel_amend_ifta_return."
+		"fuel_delete_ifta_return; a Filed return is corrected with fuel_amend_ifta_return. " +
+		"One quarter is quarterMin and quarterMax with yearMin and yearMax; " +
+		"fuel_get_ifta_return reads a return's checks and jurisdiction lines by its id."
 	iftaMileageEntriesSummary = "List the jurisdiction miles entered by hand or from " +
 		"telematics rather than routed from moves. Each has the tractor, the state or " +
 		"province, the day and the quarter it counts in. fuel_correct_ifta_mileage_entry " +

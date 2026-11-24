@@ -89,7 +89,9 @@ export function BankReceiptPage() {
 
   const allRows = useMemo(() => listData?.pages.flatMap((page) => page) ?? [], [listData?.pages]);
 
-  const selectedRow = allRows.find((row) => row.id === selectedReceiptId) ?? allRows[0] ?? null;
+  // A link opens its receipt whether or not it is in the list of exceptions: a matched one
+  // never is.
+  const openId = selectedReceiptId ?? allRows[0]?.id ?? null;
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -114,8 +116,8 @@ export function BankReceiptPage() {
   }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   const detailQuery = useQuery({
-    ...bankReceipt.get(selectedRow?.id ?? ""),
-    enabled: Boolean(selectedRow?.id),
+    ...bankReceipt.get(openId ?? ""),
+    enabled: Boolean(openId),
   });
 
   const summaryQuery = useQuery({
@@ -213,7 +215,7 @@ export function BankReceiptPage() {
                 />
               ) : null}
               {allRows.map((row) => {
-                const isSelected = row.id === selectedRow?.id;
+                const isSelected = row.id === openId;
                 return (
                   <button
                     key={row.id}
@@ -261,7 +263,7 @@ export function BankReceiptPage() {
       }
       detail={
         <ScrollArea className="h-full">
-          {!selectedRow ? (
+          {!openId ? (
             <BillingDetailUnselected
               layout="cards"
               title={t("Nothing open")}

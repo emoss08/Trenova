@@ -10,10 +10,7 @@ import {
   type WorkerFormDecision,
 } from "../use-worker-form-gate";
 
-function gate(
-  form: WorkerForm | null,
-  decisions: Partial<Record<WorkerForm, WorkerFormDecision>>,
-) {
+function gate(form: WorkerForm | null, decisions: Partial<Record<WorkerForm, WorkerFormDecision>>) {
   const drop = vi.fn();
   const wrapper = ({ children }: { children: ReactNode }) => (
     <WorkerFormDropContext value={drop}>{children}</WorkerFormDropContext>

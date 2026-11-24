@@ -3,34 +3,39 @@ package boardcardservice
 import (
 	"context"
 	"errors"
+	"maps"
 	"testing"
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/analysis"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/board"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/boardassemble"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/boardparse"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantartifactports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/recordsummaryports"
-	"github.com/emoss08/trenova/internal/modules/billing/ports/customerledgerports"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingboard"
+	"github.com/emoss08/trenova/internal/modules/identity/app/fieldsensitivity"
 	"github.com/emoss08/trenova/internal/modules/identity/app/onplan"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
-	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/boardcatalog"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/boardreading"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/homeboard"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/boardreaderports"
 	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/readscope"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -39,7 +44,11 @@ import (
 	"go.uber.org/zap"
 )
 
-var now = time.Unix(1_793_000_000, 0)
+var (
+	now          = time.Unix(1_793_000_000, 0)
+	shipmentKind = recordkind.Kind(permission.ResourceShipment)
+	invoiceKind  = recordkind.Kind(permission.ResourceInvoice)
+)
 
 type fakePermissions struct{ allowed map[permission.Resource]bool }
 
@@ -52,29 +61,105 @@ func (f *fakePermissions) Check(
 	}, nil
 }
 
-type fakeSummaries struct {
-	asked recordsummaryports.RecordSummaries
-	refs  []map[permission.Resource][]pulid.ID
+type fakeRecords struct {
+	kind   recordkind.Kind
+	known  map[pulid.ID]boardreading.Summary
+	calls  int
+	asked  [][]pulid.ID
+	actors []*permissionports.RequestActor
+	scoped []bool
 }
 
-func (f *fakeSummaries) Summaries(
-	_ context.Context,
-	req *recordsummaryports.RecordSummaryRequest,
-) (recordsummaryports.RecordSummaries, error) {
-	f.refs = append(f.refs, req.Refs)
-	out := recordsummaryports.RecordSummaries{}
-	for resource, ids := range req.Refs {
-		for _, id := range ids {
-			if summary, ok := f.asked[resource][id]; ok {
-				if out[resource] == nil {
-					out[resource] = map[pulid.ID]boardassemble.Summary{}
-				}
-				out[resource][id] = summary
-			}
+func (f *fakeRecords) Kind() recordkind.Kind { return f.kind }
+
+func (f *fakeRecords) Summaries(
+	ctx context.Context,
+	req *boardreaderports.RecordRequest,
+) (map[pulid.ID]boardreading.Summary, error) {
+	f.calls++
+	f.asked = append(f.asked, req.IDs)
+	f.actors = append(f.actors, req.Actor)
+	f.scoped = append(f.scoped, readscope.Current(ctx) != nil)
+	out := map[pulid.ID]boardreading.Summary{}
+	for _, id := range req.IDs {
+		if summary, ok := f.known[id]; ok {
+			out[id] = summary
 		}
 	}
 
 	return out, nil
+}
+
+type fakeMeasure struct {
+	kind     recordkind.Kind
+	measure  string
+	readings map[pulid.ID]boardreading.Reading
+	calls    int
+}
+
+func (f *fakeMeasure) Kind() recordkind.Kind { return f.kind }
+
+func (f *fakeMeasure) Measure() string { return f.measure }
+
+func (f *fakeMeasure) Readings(
+	_ context.Context,
+	req *boardreaderports.RecordRequest,
+) (map[pulid.ID]boardreading.Reading, error) {
+	f.calls++
+	out := map[pulid.ID]boardreading.Reading{}
+	for _, id := range req.IDs {
+		if reading, ok := f.readings[id]; ok {
+			out[id] = reading
+		}
+	}
+
+	return out, nil
+}
+
+type fakeMetric struct {
+	name    string
+	figures map[string]*boardcatalog.Value
+	calls   int
+	asked   []*boardreaderports.MetricRequest
+}
+
+func (f *fakeMetric) Metric() string { return f.name }
+
+func (f *fakeMetric) Read(
+	_ context.Context,
+	req *boardreaderports.MetricRequest,
+) (*boardcatalog.MetricRead, error) {
+	f.calls++
+	f.asked = append(f.asked, req)
+	figures := make(map[string]*boardcatalog.Value, len(f.figures))
+	maps.Copy(figures, f.figures)
+
+	return &boardcatalog.MetricRead{Title: f.name, Figures: figures}, nil
+}
+
+type fakeScopes struct {
+	principals []*permissionports.PermissionCheckRequest
+	grants     readscope.Grants
+}
+
+func (f *fakeScopes) Resolver(principal *permissionports.PermissionCheckRequest) readscope.Resolver {
+	f.principals = append(f.principals, principal)
+
+	return func(context.Context) (readscope.Grants, error) { return f.grants, nil }
+}
+
+func value(kind boardcatalog.ValueKind, number string) *boardcatalog.Value {
+	return &boardcatalog.Value{Kind: kind, Number: decimal.RequireFromString(number)}
+}
+
+func lateness(seconds int64) boardreading.Reading {
+	behind := boardcatalog.Duration(seconds)
+
+	return boardreading.Reading{
+		Value:    behind,
+		Standing: boardreading.Words{Text: "{0} behind", Value: &behind},
+		Track:    &boardreading.TrackFacts{Behind: seconds},
+	}
 }
 
 type fakeArtifacts struct {
@@ -116,37 +201,6 @@ func (f *fakeThreads) GetThread(
 	return &conversation.Thread{}, nil
 }
 
-type fakeAnalytics struct {
-	opts []*kernelports.AnalyticsRequestOptions
-}
-
-func (f *fakeAnalytics) GetAnalytics(
-	_ context.Context,
-	opts *kernelports.AnalyticsRequestOptions,
-) (kernelports.AnalyticsData, error) {
-	f.opts = append(f.opts, opts)
-
-	return kernelports.AnalyticsData{
-		"activeShipments": map[string]any{"count": 41},
-		"onTimePercent":   map[string]any{"percent": 97.4},
-		"profitability":   map[string]any{"avgCpm": 2.31, "avgMarginPct": nil},
-	}, nil
-}
-
-type fakeReceivables struct{ calls int }
-
-func (f *fakeReceivables) GetDashboardKPIs(
-	context.Context,
-	customerledgerports.GetARAnalyticsRequest,
-) (*customerledgerports.ARDashboardKPIs, error) {
-	f.calls++
-
-	return &customerledgerports.ARDashboardKPIs{
-		Overview:       &customerledgerports.ARBalanceOverview{OverdueMinor: 824000},
-		CurrentDSODays: 41.26,
-	}, nil
-}
-
 type fakeActivity struct{ entries []*audit.Entry }
 
 func (f *fakeActivity) ListConnection(
@@ -168,12 +222,16 @@ func (fakeOrganizations) GetByID(
 type fixture struct {
 	svc         *Service
 	permissions *fakePermissions
-	summaries   *fakeSummaries
+	shipments   *fakeRecords
+	invoices    *fakeRecords
+	late        *fakeMeasure
+	revenue     *fakeMeasure
+	dispatch    *fakeMetric
+	receivables *fakeMetric
 	artifacts   *fakeArtifacts
 	threads     *fakeThreads
-	analytics   *fakeAnalytics
-	receivables *fakeReceivables
 	activity    *fakeActivity
+	scopes      *fakeScopes
 	actor       *permissionports.RequestActor
 	thread      pulid.ID
 }
@@ -183,12 +241,29 @@ func newFixture() *fixture {
 		permissions: &fakePermissions{allowed: map[permission.Resource]bool{
 			permission.ResourceShipment: true,
 		}},
-		summaries:   &fakeSummaries{asked: recordsummaryports.RecordSummaries{}},
-		artifacts:   &fakeArtifacts{byID: map[pulid.ID]*assistantartifact.Artifact{}},
-		threads:     &fakeThreads{},
-		analytics:   &fakeAnalytics{},
-		receivables: &fakeReceivables{},
-		activity:    &fakeActivity{},
+		shipments: &fakeRecords{kind: shipmentKind, known: map[pulid.ID]boardreading.Summary{}},
+		invoices:  &fakeRecords{kind: invoiceKind, known: map[pulid.ID]boardreading.Summary{}},
+		late:      &fakeMeasure{kind: shipmentKind, measure: "lateness"},
+		revenue:   &fakeMeasure{kind: shipmentKind, measure: "revenue"},
+		dispatch: &fakeMetric{
+			name: homeboard.MetricDispatchToday,
+			figures: map[string]*boardcatalog.Value{
+				"activeShipments": value(boardcatalog.ValueCount, "41"),
+				"onTimePercent":   value(boardcatalog.ValuePercent, "0.974"),
+				"marginPercent":   value(boardcatalog.ValuePercent, "0.12"),
+				"costPerMile":     value(boardcatalog.ValueMoney, "2.31"),
+			},
+		},
+		receivables: &fakeMetric{
+			name: billingboard.MetricReceivables,
+			figures: map[string]*boardcatalog.Value{
+				"arOverdue": value(boardcatalog.ValueMoney, "8240"),
+			},
+		},
+		artifacts: &fakeArtifacts{byID: map[pulid.ID]*assistantartifact.Artifact{}},
+		threads:   &fakeThreads{},
+		activity:  &fakeActivity{},
+		scopes:    &fakeScopes{},
 		actor: &permissionports.RequestActor{
 			PrincipalType:  permissionports.PrincipalTypeUser,
 			PrincipalID:    pulid.MustNew("usr_"),
@@ -199,16 +274,29 @@ func newFixture() *fixture {
 		thread: pulid.MustNew("thr_"),
 	}
 	f.svc = &Service{
-		l:             zap.NewNop(),
-		permissions:   f.permissions,
-		summaries:     f.summaries,
+		l:           zap.NewNop(),
+		permissions: f.permissions,
+		registry:    fieldsensitivity.DefaultRegistry(),
+		readers: &boardreaderports.Index{
+			Records: map[recordkind.Kind]boardreaderports.RecordReader{
+				shipmentKind: f.shipments,
+				invoiceKind:  f.invoices,
+			},
+			Measures: map[boardreaderports.MeasureKey]boardreaderports.MeasureReader{
+				{Kind: shipmentKind, Measure: "lateness"}: f.late,
+				{Kind: shipmentKind, Measure: "revenue"}:  f.revenue,
+			},
+			Metrics: map[string]boardreaderports.MetricReader{
+				homeboard.MetricDispatchToday:  f.dispatch,
+				billingboard.MetricReceivables: f.receivables,
+			},
+		},
 		artifacts:     f.artifacts,
 		threads:       f.threads,
-		analytics:     f.analytics,
-		receivables:   f.receivables,
 		activity:      f.activity,
 		organizations: fakeOrganizations{},
 		plan:          plantest.AllOn(),
+		scopes:        f.scopes,
 		now:           func() time.Time { return now },
 	}
 
@@ -244,9 +332,7 @@ func TestFillReadsOnlyTheRecordsTheReaderMayRead(t *testing.T) {
 
 	f := newFixture()
 	shipment, invoice := pulid.MustNew("shp_"), pulid.MustNew("inv_")
-	f.summaries.asked[permission.ResourceShipment] = map[pulid.ID]boardassemble.Summary{
-		shipment: {Label: "S2610-0412", Status: "InTransit"},
-	}
+	f.shipments.known[shipment] = boardreading.Summary{Label: "S2610-0412", Status: "InTransit"}
 	shown := parsed(t, map[string]any{
 		"title": "Late and unpaid", "verdict": "Both [late][1].",
 		"blocks": []any{
@@ -258,10 +344,8 @@ func TestFillReadsOnlyTheRecordsTheReaderMayRead(t *testing.T) {
 	filled, err := f.svc.Fill(t.Context(), f.request(shown))
 
 	require.NoError(t, err)
-	require.Len(t, f.summaries.refs, 1)
-	assert.Equal(t, map[permission.Resource][]pulid.ID{
-		permission.ResourceShipment: {shipment},
-	}, f.summaries.refs[0])
+	assert.Equal(t, [][]pulid.ID{{shipment}}, f.shipments.asked)
+	assert.Zero(t, f.invoices.calls, "the reader may not read invoices, so none is read")
 	assert.Equal(t, board.StateReady, filled.Blocks[0].State)
 	assert.Equal(t, "S2610-0412", filled.Blocks[0].Rows[0].Label)
 	assert.Equal(t, board.StateUnreadable, filled.Blocks[1].State)
@@ -286,14 +370,14 @@ func TestFillReadsMetricsFromTheFiguresHomeShows(t *testing.T) {
 	filled, err := f.svc.Fill(t.Context(), f.request(shown))
 
 	require.NoError(t, err)
-	require.Len(t, f.analytics.opts, 1)
-	assert.Equal(t, kernelports.AnalyticsIncludeMetrics, f.analytics.opts[0].Include)
-	assert.Equal(t, "America/Chicago", f.analytics.opts[0].Timezone)
+	assert.Equal(t, 1, f.dispatch.calls, "three figures of one metric are one read")
+	assert.Equal(t, "America/Chicago", f.dispatch.asked[0].Location.String())
+	assert.Equal(t, boardcatalog.PeriodToday, f.dispatch.asked[0].Period)
 	assert.Equal(t, 1, f.receivables.calls)
 	figures := filled.Blocks[0].Figures
 	assert.Equal(t, "41", board.FormatValue(figures[0].Value))
 	assert.Equal(t, "97.4%", board.FormatValue(figures[1].Value))
-	assert.Nil(t, figures[2].Value, "a margin the reader may not see is not shown")
+	assert.Equal(t, "12%", board.FormatValue(figures[2].Value))
 	assert.Equal(t, "$8,240.00", board.FormatValue(figures[3].Value))
 }
 
@@ -321,9 +405,7 @@ func TestFillReadsARecordsHistoryOldestFirst(t *testing.T) {
 	f := newFixture()
 	f.permissions.allowed[permission.ResourceAuditLog] = true
 	shipment := pulid.MustNew("shp_")
-	f.summaries.asked[permission.ResourceShipment] = map[pulid.ID]boardassemble.Summary{
-		shipment: {Label: "S2610-0412"},
-	}
+	f.shipments.known[shipment] = boardreading.Summary{Label: "S2610-0412"}
 	f.activity.entries = []*audit.Entry{
 		{
 			Timestamp:     now.Unix() - 60,
@@ -359,9 +441,7 @@ func TestFillDrawsTheTimelineUnreadableWithoutTheAuditLog(t *testing.T) {
 
 	f := newFixture()
 	shipment := pulid.MustNew("shp_")
-	f.summaries.asked[permission.ResourceShipment] = map[pulid.ID]boardassemble.Summary{
-		shipment: {Label: "S2610-0412"},
-	}
+	f.shipments.known[shipment] = boardreading.Summary{Label: "S2610-0412"}
 	shown := parsed(t, map[string]any{
 		"title": "One load", "verdict": "Stuck [here][1].",
 		"blocks": []any{map[string]any{"type": "timeline", "record": shipment.String()}},
@@ -498,17 +578,11 @@ func TestCardComparesTheBoardWithWhatItShowedWhenAnswered(t *testing.T) {
 
 	f := newFixture()
 	shipment := pulid.MustNew("shp_")
-	f.summaries.asked[permission.ResourceShipment] = map[pulid.ID]boardassemble.Summary{
-		shipment: {Label: "S2610-0412", Measures: map[board.Measure]board.RowMeasure{
-			board.MeasureLateness: {
-				Measure: board.MeasureLateness,
-				Value:   board.Value{Kind: board.ValueDuration, Number: decimal.Zero},
-			},
-		}},
-	}
+	f.shipments.known[shipment] = boardreading.Summary{Label: "S2610-0412"}
+	f.late.readings = map[pulid.ID]boardreading.Reading{shipment: lateness(0)}
 	f.artifacts.questions = map[pulid.ID]string{}
-	id := f.board(t, shipment, board.Snapshot{Values: map[string]board.Value{
-		board.FigureKey(0, 0): {Kind: board.ValueCount, Number: decimal.NewFromInt(1)},
+	id := f.board(t, shipment, board.Snapshot{Values: map[string]boardcatalog.Value{
+		board.FigureKey(0, 0): {Kind: boardcatalog.ValueCount, Number: decimal.NewFromInt(1)},
 	}})
 	for _, artifact := range f.artifacts.byID {
 		f.artifacts.questions[artifact.MessageID] = "Why are these late?"

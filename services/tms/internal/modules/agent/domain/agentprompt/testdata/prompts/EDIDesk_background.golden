@@ -40,7 +40,7 @@ You hold more tools than are loaded on this turn. The loaded ones are on this re
 
 What find_tools can load, by area of Trenova:
 - AI & agents (4 tools): agent exception, agent run
-- Desk (3 tools): desk
+- Desk (4 tools): desk
 - EDI (13 tools): edi
 
 What a change you call does:

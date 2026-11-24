@@ -2,6 +2,7 @@ package customerledgerports
 
 import (
 	"context"
+	"math"
 
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -16,6 +17,12 @@ type ListARSeriesRequest struct {
 	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
 	AsOfDate   int64                 `json:"asOfDate"`
 	Weeks      int                   `json:"weeks"`
+}
+
+type CompareARAgingRequest struct {
+	TenantInfo  pagination.TenantInfo `json:"tenantInfo"`
+	AsOfDate    int64                 `json:"asOfDate"`
+	EarlierDate int64                 `json:"earlierDate"`
 }
 
 type ListARCashFlowRequest struct {
@@ -69,8 +76,9 @@ type ARBalancePoint struct {
 }
 
 type ARAgingTrendPoint struct {
-	PeriodEnd int64               `json:"periodEnd"`
-	Buckets   ARAgingBucketTotals `json:"buckets"`
+	PeriodEnd        int64               `json:"periodEnd"`
+	OpenInvoiceCount int                 `json:"openInvoiceCount"`
+	Buckets          ARAgingBucketTotals `json:"buckets"`
 }
 
 type ARCashFlowPoint struct {
@@ -97,6 +105,19 @@ type ARCollectionTotals struct {
 	ApplicationCount         int     `json:"applicationCount"`
 	DisputedInvoiceCount     int     `json:"disputedInvoiceCount"`
 	PostedInvoiceCount       int     `json:"postedInvoiceCount"`
+}
+
+func (t *ARCollectionTotals) CollectedShare() float64 {
+	if t == nil {
+		return 0
+	}
+	due := t.BeginningOpenMinor + t.CreditSalesMinor - t.EndingCurrentMinor
+	if due <= 0 {
+		return 0
+	}
+	collected := t.BeginningOpenMinor + t.CreditSalesMinor - t.EndingOpenMinor
+
+	return math.Max(0, math.Min(float64(collected)/float64(due), 1))
 }
 
 type ARTopOverdueCustomer struct {
@@ -182,6 +203,10 @@ type ARAnalyticsRepository interface {
 	ListAgingTrend(
 		ctx context.Context,
 		req ListARSeriesRequest,
+	) ([]*ARAgingTrendPoint, error)
+	CompareAging(
+		ctx context.Context,
+		req CompareARAgingRequest,
 	) ([]*ARAgingTrendPoint, error)
 	ListCashFlow(
 		ctx context.Context,

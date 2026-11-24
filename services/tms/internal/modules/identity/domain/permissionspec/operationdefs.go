@@ -135,6 +135,11 @@ var operationDefinitions = map[permission.Operation]OperationDefinition{
 		DisplayName: "Post",
 		Description: "Post records to the ledger",
 	},
+	permission.OpHold: {
+		Operation:   permission.OpHold,
+		DisplayName: "Hold",
+		Description: "Hold records out of their next step and release them",
+	},
 	permission.OpApproveOwn: {
 		Operation:   permission.OpApproveOwn,
 		DisplayName: "Approve own changes",

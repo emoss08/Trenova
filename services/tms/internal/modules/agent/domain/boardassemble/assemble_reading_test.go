@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/boardassemble"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/boardmarkdown"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/boardparse"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/boardcatalog"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -64,10 +64,10 @@ func TestAssembleFillsEachReadingTheWordsPlace(t *testing.T) {
 	require.NotNil(t, late)
 	assert.Equal(t, "2", board.FormatValue(late.Value))
 	assert.Equal(t, "Late now", late.Label)
-	assert.Equal(t, board.MeasureLateness, late.Measure)
+	assert.Equal(t, board.Measure("lateness"), late.Measure)
 	assert.Equal(t, board.AggregateCount, late.Aggregate)
 	assert.Equal(t, board.Source{
-		Kind: board.SourceRecords, Resource: permission.ResourceShipment, Count: 6, Readable: 4,
+		Kind: board.SourceRecords, RecordKind: shipmentKind, Count: 6, Readable: 6,
 	}, late.Source)
 	assert.Equal(t, "1h 40m", board.FormatValue(filled.Reading("furthest").Value))
 	active := filled.Reading("active")
@@ -80,7 +80,7 @@ func TestAssembleFillsEachReadingTheWordsPlace(t *testing.T) {
 		{Text: " late loads, the furthest "},
 		{Text: "1h 40m", Reading: "furthest"},
 		{Text: " behind, "},
-		{Text: "held on one driver's hours", Numeral: 3, Tone: board.ToneInfo},
+		{Text: "held on one driver's hours", Numeral: 3, Tone: boardcatalog.ToneInfo},
 		{Text: "."},
 	}, filled.Verdict)
 	assert.Equal(t, []board.FilledSegment{
@@ -96,8 +96,8 @@ func TestAssembleLeavesAReadingTheReaderMayNotReadWithoutAValue(t *testing.T) {
 	t.Parallel()
 
 	f := newReadingFixture(t)
-	f.reads.Readable[permission.ResourceShipment] = false
-	delete(f.reads.Metrics, "activeShipments")
+	f.reads.Readable[shipmentKind] = false
+	delete(f.reads.Metrics, dispatchAsk)
 	filled := boardassemble.Assemble(f.board, f.reads)
 
 	late := filled.Reading("late")
@@ -119,9 +119,7 @@ func TestAssembleMarksAReadingThatMovedAndKeepsTheAnsweredValue(t *testing.T) {
 	assert.Equal(t, "There are 2 late loads, the furthest 1h 40m behind, held on one driver's "+
 		"hours.", boardmarkdown.Answer(answered))
 
-	summary := f.reads.Summaries[permission.ResourceShipment][f.shipments[1]]
-	summary.Measures[board.MeasureLateness] = lateness(0, board.MeasureDelivered)
-	f.reads.Summaries[permission.ResourceShipment][f.shipments[1]] = summary
+	f.reads.Readings[lateKey][f.shipments[1]] = lateness(0)
 	now := boardassemble.Assemble(f.board, f.reads)
 	now.Compare(&snapshot)
 

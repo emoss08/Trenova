@@ -34,6 +34,9 @@ query DeskDriverSettlementCard($id: ID!) @requiresRead(kind: "escrow_account") @
     paymentReference
     voidedAt
     voidReason
+    holdReason
+    holdNote
+    heldAt
     createdAt
     updatedAt
     worker {
@@ -59,6 +62,10 @@ query DeskDriverSettlementCard($id: ID!) @requiresRead(kind: "escrow_account") @
       name
     }
     voidedBy {
+      id
+      name
+    }
+    heldBy {
       id
       name
     }
@@ -146,6 +153,13 @@ query DeskDriverSettlementStatement($id: ID!) {
     paymentMethod
     voidedAt
     voidReason
+    holdReason
+    holdNote
+    heldAt
+    heldBy {
+      id
+      name
+    }
     worker {
       ...WorkerReference
     }

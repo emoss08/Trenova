@@ -32,6 +32,7 @@ var Shard = &gqlexec.Shard{
 		{Name: "DetentionDisputePacket", Implementors: []string{"DetentionDisputePacket"}},
 		{Name: "DetentionEvidence", Implementors: []string{"DetentionEvidence"}},
 		{Name: "DetentionFacilityIntelligence", Implementors: []string{"DetentionFacilityIntelligence"}},
+		{Name: "DetentionFacilityWait", Implementors: []string{"DetentionFacilityWait"}},
 		{Name: "DetentionIntelligence", Implementors: []string{"DetentionIntelligence"}},
 		{Name: "DetentionIntelligenceTotals", Implementors: []string{"DetentionIntelligenceTotals"}},
 		{Name: "DetentionNarrativeParagraph", Implementors: []string{"DetentionNarrativeParagraph"}},
@@ -50,6 +51,8 @@ var Shard = &gqlexec.Shard{
 		{Name: "DetentionRecoveryStep", Implementors: []string{"DetentionRecoveryStep"}},
 		{Name: "DetentionScoreFactor", Implementors: []string{"DetentionScoreFactor"}},
 		{Name: "DetentionSplitFigure", Implementors: []string{"DetentionSplitFigure"}},
+		{Name: "DetentionStay", Implementors: []string{"DetentionStay"}},
+		{Name: "DetentionStayList", Implementors: []string{"DetentionStayList"}},
 		{Name: "DetentionStopSplits", Implementors: []string{"DetentionStopSplits"}},
 		{Name: "DetentionWaiverLeakageStat", Implementors: []string{"DetentionWaiverLeakageStat"}},
 		{Name: "DetentionWeek", Implementors: []string{"DetentionWeek"}},
@@ -1085,6 +1088,118 @@ var Shard = &gqlexec.Shard{
 					return obj.NoticeOnTimeCount, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+		}},
+		{Object: "DetentionFacilityWait", Fields: []*gqlexec.Field{
+			{
+				Name:     "id",
+				NonNull:  true,
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DetentionFacilityWait)
+					return obj.ID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2string),
+			},
+			{
+				Name:     "name",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DetentionFacilityWait)
+					return obj.Name, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "city",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DetentionFacilityWait)
+					return obj.City, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "state",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DetentionFacilityWait)
+					return obj.State, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "stopCount",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DetentionFacilityWait)
+					return obj.StopCount, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "detainedCount",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DetentionFacilityWait)
+					return obj.DetainedCount, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "pastFreeMinutes",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DetentionFacilityWait)
+					return obj.PastFreeMinutes, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "medianFreeMinutes",
+				NonNull:  true,
+				ChildErr: errNoChild11,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DetentionFacilityWait)
+					return obj.MedianFreeMinutes, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNFloat2float64),
+			},
+			{
+				Name:     "medianDwellMinutes",
+				NonNull:  true,
+				ChildErr: errNoChild11,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DetentionFacilityWait)
+					return obj.MedianDwellMinutes, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNFloat2float64),
+			},
+			{
+				Name:     "p90DwellMinutes",
+				NonNull:  true,
+				ChildErr: errNoChild11,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DetentionFacilityWait)
+					return obj.P90DwellMinutes, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNFloat2float64),
+			},
+			{
+				Name:     "billedAmount",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DetentionFacilityWait)
+					return obj.BilledAmount, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
 		}},
 		{Object: "DetentionIntelligence", Fields: []*gqlexec.Field{
@@ -3546,6 +3661,81 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNInt2int),
 			},
 		}},
+		{Object: "DetentionStay", Fields: []*gqlexec.Field{
+			{
+				Name:      "occurrence",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "DetentionOccurrence",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DetentionStay)
+					return obj.Occurrence, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNDetentionOccurrence2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionOccurrence),
+			},
+			{
+				Name:     "minutesOnSite",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DetentionStay)
+					return obj.MinutesOnSite, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "minutesPastFree",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DetentionStay)
+					return obj.MinutesPastFree, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "billableAmount",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DetentionStay)
+					return obj.BillableAmount, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNDecimal2string),
+			},
+			{
+				Name:     "holdBack",
+				ChildErr: errNoChild32,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DetentionStay)
+					return obj.HoldBack, nil
+				},
+				Marshal: gqlexec.Marshal(marshalODetentionHoldBack2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionHoldBack),
+			},
+		}},
+		{Object: "DetentionStayList", Fields: []*gqlexec.Field{
+			{
+				Name:      "items",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "DetentionStay",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DetentionStayList)
+					return obj.Items, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNDetentionStay2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionStayᚄ),
+			},
+			{
+				Name:     "totalCount",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DetentionStayList)
+					return obj.TotalCount, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+		}},
 		{Object: "DetentionStopSplits", Fields: []*gqlexec.Field{
 			{
 				Name:      "pickup",
@@ -4059,6 +4249,34 @@ var Shard = &gqlexec.Shard{
 				},
 				Marshal: gqlexec.Marshal(marshalNDetentionPreviewResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionPreviewResult),
 			},
+			{
+				Name:       "detentionStays",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "DetentionStayList",
+				Args:       field_Query_detentionStays_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[QueryResolver](ec, "Query@detention").DetentionStays(ctx, fc.Args["period"].(gqlmodel.DetentionPeriod), fc.Args["stage"].(*gqlmodel.DetentionStayStage), fc.Args["locationId"].(*string), fc.Args["limit"].(*int), fc.Args["offset"].(*int))
+				},
+				Marshal: gqlexec.Marshal(marshalNDetentionStayList2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionStayList),
+			},
+			{
+				Name:       "detentionFacilityWaits",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "DetentionFacilityWait",
+				Args:       field_Query_detentionFacilityWaits_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[QueryResolver](ec, "Query@detention").DetentionFacilityWaits(ctx, fc.Args["period"].(gqlmodel.DetentionPeriod), fc.Args["limit"].(*int))
+				},
+				Marshal: gqlexec.Marshal(marshalNDetentionFacilityWait2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionFacilityWaitᚄ),
+			},
 		}},
 	},
 	Inputs: []gqlexec.Input{
@@ -4111,6 +4329,8 @@ type QueryResolver interface {
 	DetentionFacilityStats(ctx context.Context, input gqlmodel.DetentionStatsInput) ([]*gqlmodel.FacilityDetentionStat, error)
 	DetentionIntelligence(ctx context.Context, input gqlmodel.DetentionIntelligenceInput) (*gqlmodel.DetentionIntelligence, error)
 	DetentionPolicyPreview(ctx context.Context, policy gqlmodel.DetentionPolicyInput, scenario gqlmodel.DetentionPreviewScenarioInput) (*gqlmodel.DetentionPreviewResult, error)
+	DetentionStays(ctx context.Context, period gqlmodel.DetentionPeriod, stage *gqlmodel.DetentionStayStage, locationID *string, limit *int, offset *int) (*gqlmodel.DetentionStayList, error)
+	DetentionFacilityWaits(ctx context.Context, period gqlmodel.DetentionPeriod, limit *int) ([]*gqlmodel.DetentionFacilityWait, error)
 }
 
 var (
@@ -4146,6 +4366,7 @@ var (
 	errNoChild29 = errors.New("field of type DetentionUnnotifiedBehavior does not have child fields")
 	errNoChild30 = errors.New("field of type DetentionTierRateUnit does not have child fields")
 	errNoChild31 = errors.New("field of type DetentionRecoveryBucket does not have child fields")
+	errNoChild32 = errors.New("field of type DetentionHoldBack does not have child fields")
 )
 
 func field_Mutation_createDetentionPolicy_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
@@ -4406,6 +4627,72 @@ func field_Query_detentionPolicyPreview_args(ctx context.Context, ec *gqlexec.Ex
 		return nil, err
 	}
 	args["scenario"] = arg1
+	return args, nil
+}
+
+func field_Query_detentionStays_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 5)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "period",
+		func(ctx context.Context, v any) (gqlmodel.DetentionPeriod, error) {
+			return unmarshalNDetentionPeriod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionPeriod(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["period"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "stage",
+		func(ctx context.Context, v any) (*gqlmodel.DetentionStayStage, error) {
+			return unmarshalODetentionStayStage2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionStayStage(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["stage"] = arg1
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "locationId",
+		func(ctx context.Context, v any) (*string, error) {
+			return unmarshalOID2ᚖstring(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["locationId"] = arg2
+	arg3, err := graphql.ProcessArgField(ctx, rawArgs, "limit",
+		func(ctx context.Context, v any) (*int, error) {
+			return unmarshalOInt2ᚖint(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["limit"] = arg3
+	arg4, err := graphql.ProcessArgField(ctx, rawArgs, "offset",
+		func(ctx context.Context, v any) (*int, error) {
+			return unmarshalOInt2ᚖint(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["offset"] = arg4
+	return args, nil
+}
+
+func field_Query_detentionFacilityWaits_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 2)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "period",
+		func(ctx context.Context, v any) (gqlmodel.DetentionPeriod, error) {
+			return unmarshalNDetentionPeriod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionPeriod(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["period"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "limit",
+		func(ctx context.Context, v any) (*int, error) {
+			return unmarshalOInt2ᚖint(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["limit"] = arg1
 	return args, nil
 }
 
@@ -5231,6 +5518,12 @@ func unmarshalNDetentionIntelligenceInput2githubᚗcomᚋemoss08ᚋtrenovaᚋint
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
+func unmarshalNDetentionPeriod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionPeriod(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.DetentionPeriod, error) {
+	var res gqlmodel.DetentionPeriod
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
 func unmarshalNDetentionPolicyInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionPolicyInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.DetentionPolicyInput, error) {
 	res, err := unmarshalInputDetentionPolicyInput(ctx, ec, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -5385,6 +5678,15 @@ func unmarshalODetentionRoundingMode2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinter
 	tmp, err := graphql.UnmarshalString(v)
 	res := detentionpolicy.RoundingMode(tmp)
 	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalODetentionStayStage2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionStayStage(ctx context.Context, ec *gqlexec.Exec, v any) (*gqlmodel.DetentionStayStage, error) {
+	if v == nil {
+		return nil, nil
+	}
+	var res = new(gqlmodel.DetentionStayStage)
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
 }
 
 func unmarshalODetentionTierInput2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionTierInputᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]*gqlmodel.DetentionTierInput, error) {
@@ -5628,6 +5930,22 @@ func marshalNDetentionFacilityIntelligence2ᚖgithubᚗcomᚋemoss08ᚋtrenova�
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "DetentionFacilityIntelligence", v)
+}
+
+func marshalNDetentionFacilityWait2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionFacilityWaitᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*gqlmodel.DetentionFacilityWait) graphql.Marshaler {
+	return gqlexec.List[*gqlmodel.DetentionFacilityWait]{
+		Elem:        marshalNDetentionFacilityWait2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionFacilityWait,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalNDetentionFacilityWait2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionFacilityWait(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.DetentionFacilityWait) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "DetentionFacilityWait", v)
 }
 
 func marshalNDetentionIntelligence2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionIntelligence(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.DetentionIntelligence) graphql.Marshaler {
@@ -5942,6 +6260,30 @@ func marshalNDetentionSplitFigure2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternal
 	return ec.MarshalType(ctx, sel, "DetentionSplitFigure", v)
 }
 
+func marshalNDetentionStay2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionStayᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*gqlmodel.DetentionStay) graphql.Marshaler {
+	return gqlexec.List[*gqlmodel.DetentionStay]{
+		Elem:        marshalNDetentionStay2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionStay,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalNDetentionStay2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionStay(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.DetentionStay) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "DetentionStay", v)
+}
+
+func marshalNDetentionStayList2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionStayList(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.DetentionStayList) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "DetentionStayList", v)
+}
+
 func marshalNDetentionStopSplits2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionStopSplits(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.DetentionStopSplits) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
@@ -6115,6 +6457,13 @@ func marshalODetentionEvidence2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternal
 		Elem:        marshalNDetentionEvidence2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionEvidence,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalODetentionHoldBack2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionHoldBack(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.DetentionHoldBack) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return v
 }
 
 func marshalODetentionNotice2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionNoticeᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*gqlmodel.DetentionNotice) graphql.Marshaler {

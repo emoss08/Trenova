@@ -36,3 +36,66 @@ query DeskIftaReturns($input: IFTAReturnsInput!, $includeTotalCount: Boolean = f
     }
   }
 }
+
+# The Desk's IFTA return card, read by the agent's fuel_get_ifta_return: the
+# quarter and its filing date, where the return stands, its totals, the
+# problems it carries and every jurisdiction line with its net tax, owed or
+# credit.
+query DeskIftaReturnCard($id: ID!) {
+  iftaReturn(id: $id) {
+    id
+    year
+    quarter
+    period {
+      label
+      end
+      dueDate
+    }
+    amendmentNumber
+    status
+    totalMiles
+    totalTaxableMiles
+    totalGallons
+    totalTaxPaidGallons
+    netTaxableGallons
+    taxDue
+    surchargeDue
+    netDue
+    currencyCode
+    unattributedMiles
+    unattributedMoveCount
+    noTractorMiles
+    noTractorMoveCount
+    problems {
+      code
+      message
+      jurisdictionCode
+      fuelType
+      amount
+    }
+    computedAt
+    finalizedAt
+    filedAt
+    filingReference
+    lines {
+      id
+      fuelType
+      isIftaMember
+      totalMiles
+      taxableMiles
+      taxPaidGallons
+      netTaxableGallons
+      ratePerGallon
+      rateMissing
+      taxDue
+      surchargeDue
+      lineTotal
+      sortOrder
+      jurisdiction {
+        id
+        code
+        name
+      }
+    }
+  }
+}

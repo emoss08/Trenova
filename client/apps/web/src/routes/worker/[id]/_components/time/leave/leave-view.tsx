@@ -106,6 +106,7 @@ export default function LeaveView({ workerId, open, onOpen }: LeaveViewProps) {
     leaveCase: null,
   });
   const dayDialogOpened = useOpenedOnce(recording.open);
+  const opens = useWorkerFormGate(open.form, { "open-leave-case": canRead && canRecord });
 
   if (!canRead) {
     return (
@@ -118,8 +119,6 @@ export default function LeaveView({ workerId, open, onOpen }: LeaveViewProps) {
       />
     );
   }
-  const opens = useWorkerFormGate(open.form, { "open-leave-case": canRecord });
-
   if (fileQuery.isPending) return <TimeSkeleton view="leave" />;
   if (fileQuery.isError) {
     return (

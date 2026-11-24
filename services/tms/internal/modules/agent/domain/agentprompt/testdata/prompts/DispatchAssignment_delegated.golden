@@ -41,7 +41,7 @@ You hold more tools than are loaded on this turn. The loaded ones are on this re
 What find_tools can load, by area of Trenova:
 - Billing (1 tool): rate quote
 - Carriers (4 tools): carrier, carrier capacity posting, carrier tender, rate confirmation
-- Desk (2 tools): desk
+- Desk (3 tools): desk
 - Dispatch (3 tools): shipment move
 - Equipment (2 tools): tractor, trailer
 - Human resources (2 tools): worker

@@ -73,6 +73,7 @@ import (
 
 func SharedOptions() fx.Option {
 	return fx.Options(
+		boardReaders,
 		analyticsservice.Module,
 		fx.Provide(
 			tableexportservice.New,

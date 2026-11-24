@@ -146,10 +146,10 @@ func (s *Service) GetClosePreview(
 	}
 
 	yearBlockers, err := fiscalcloseblockers.Append(
+		ctx,
 		make([]*fiscalclose.Blocker, 0, len(plan.Blockers)),
 		s.validateClose(ctx, entity).Err(),
-		"year",
-		"year",
+		fiscalcloseblockers.Refusal{Field: "year", Category: "year"},
 	)
 	if err != nil {
 		return nil, err
@@ -207,7 +207,6 @@ func (s *Service) ensureBootstrapCurrentFiscalYear(
 	return createdFY, nil
 }
 
-//nolint:funlen // existing workflow or route registration is intentionally kept together
 func (s *Service) bootstrapCurrentCalendarFiscalYear(
 	ctx context.Context,
 	orgID pulid.ID,
@@ -734,7 +733,6 @@ func closeAuditComment(result *fiscalclose.PostResult) string {
 	)
 }
 
-//nolint:funlen // existing workflow or route registration is intentionally kept together
 func (s *Service) Activate(
 	ctx context.Context,
 	req fiscalyearports.ActivateFiscalYearRequest,

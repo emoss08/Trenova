@@ -20,6 +20,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerledgerports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer/customerdb"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -247,9 +248,13 @@ func balanceSeriesQuery(req customerledgerports.ListARSeriesRequest) keel.Query[
 	at := seriesWindow(req).build()
 	items := at.items
 	points := at.points
-	balances := keel.CTE("balances", []string{"n", "ar_balance_minor"}, keel.RowsOf(items.TableRef()).
-		Pick(items.Col("n"), keel.Sum(items.Col("open_minor"))).
-		Group(items.Col("n")))
+	balances := keel.CTE(
+		"balances",
+		[]string{"n", "ar_balance_minor"},
+		keel.RowsOf(items.TableRef()).
+			Pick(items.Col("n"), keel.Sum(items.Col("open_minor"))).
+			Group(items.Col("n")),
+	)
 	periodEnd := keel.Int64Of(points.Col(colPeriodEnd))
 	inv := invoicedb.Invoices
 
@@ -298,17 +303,18 @@ func (r *repository) ListBalanceSeries(
 }
 
 type agingTrendRecord struct {
-	PeriodEnd       int64
-	CurrentMinor    int64
-	Days1To30Minor  int64
-	Days31To60Minor int64
-	Days61To90Minor int64
-	DaysOver90Minor int64
-	TotalOpenMinor  int64
+	PeriodEnd        int64
+	CurrentMinor     int64
+	Days1To30Minor   int64
+	Days31To60Minor  int64
+	Days61To90Minor  int64
+	DaysOver90Minor  int64
+	TotalOpenMinor   int64
+	OpenInvoiceCount int
 }
 
-func agingTrendQuery(req customerledgerports.ListARSeriesRequest) keel.Query[*keel.Row] {
-	at := seriesWindow(req).build()
+func agingTrendQuery(window openAsOfWindow) keel.Query[*keel.Row] {
+	at := window.build()
 	items := at.items
 	points := at.points
 	periodEnd := keel.Int64Of(points.Col(colPeriodEnd))
@@ -326,6 +332,7 @@ func agingTrendQuery(req customerledgerports.ListARSeriesRequest) keel.Query[*ke
 			orZero(buckets[3]),
 			orZero(buckets[4]),
 			orZero(open.Sum()),
+			keel.CountOf(items.Col(colInvoiceID)),
 		).
 		Group(periodEnd).
 		Order(periodEnd.Asc())
@@ -335,11 +342,41 @@ func (r *repository) ListAgingTrend(
 	ctx context.Context,
 	req customerledgerports.ListARSeriesRequest,
 ) ([]*customerledgerports.ARAgingTrendPoint, error) {
+	return r.agingAt(ctx, seriesWindow(req))
+}
+
+func (r *repository) CompareAging(
+	ctx context.Context,
+	req customerledgerports.CompareARAgingRequest,
+) ([]*customerledgerports.ARAgingTrendPoint, error) {
+	if req.EarlierDate <= 0 || req.EarlierDate >= req.AsOfDate {
+		return nil, errortypes.NewValidationError(
+			"earlierDate",
+			errortypes.ErrInvalid,
+			"The earlier date must come before the as-of date",
+		)
+	}
+
+	return r.agingAt(ctx, openAsOfWindow{
+		asOf:   req.AsOfDate,
+		step:   req.AsOfDate - req.EarlierDate,
+		points: 2,
+	})
+}
+
+func (r *repository) agingAt(
+	ctx context.Context,
+	window openAsOfWindow,
+) ([]*customerledgerports.ARAgingTrendPoint, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*customerledgerports.ARAgingTrendPoint, error) {
-			records, err := keel.Into[agingTrendRecord](ctx, r.db.Keel(ctx), agingTrendQuery(req))
+			records, err := keel.Into[agingTrendRecord](
+				ctx,
+				r.db.Keel(ctx),
+				agingTrendQuery(window),
+			)
 			if err != nil {
 				return nil, fmt.Errorf("list ar aging trend: %w", err)
 			}
@@ -347,7 +384,8 @@ func (r *repository) ListAgingTrend(
 			points := make([]*customerledgerports.ARAgingTrendPoint, 0, len(records))
 			for _, rec := range records {
 				points = append(points, &customerledgerports.ARAgingTrendPoint{
-					PeriodEnd: rec.PeriodEnd,
+					PeriodEnd:        rec.PeriodEnd,
+					OpenInvoiceCount: rec.OpenInvoiceCount,
 					Buckets: customerledgerports.ARAgingBucketTotals{
 						CurrentMinor:    rec.CurrentMinor,
 						Days1To30Minor:  rec.Days1To30Minor,
@@ -493,8 +531,14 @@ type collectionTotalsRecord struct {
 }
 
 func collectionTotalsQuery(periodStart, periodEnd int64) keel.Query[*keel.Row] {
-	at := instantWindow(periodStart).build()
+	at := openAsOfWindow{asOf: periodEnd, step: periodEnd - periodStart, points: 2}.build()
 	items := at.items
+	openAt := func(n int64, preds ...keel.Pred) keel.Expr {
+		return orZero(keel.Scalar(keel.RowsOf(items.TableRef()).
+			Pick(keel.Sum(items.Col("open_minor"))).
+			Where(append([]keel.Pred{keel.Int64Of(items.Col("n")).Eq(n)}, preds...)...)))
+	}
+	itemDue := keel.Int64Of(items.Col(colDueDate))
 	bounds := keel.CTE("bounds", []string{"period_start", colPeriodEnd}, keel.Rows(
 		"bound",
 		[]string{"period_start", colPeriodEnd},
@@ -515,19 +559,13 @@ func collectionTotalsQuery(periodStart, periodEnd int64) keel.Query[*keel.Row] {
 			Pick(e).
 			Where(append([]keel.Pred{inPeriod(cpa.CreatedAt)}, preds...)...))
 	}
-	open := receivablesql.OpenMinor(inv)
 
 	return keel.RowsOf(bounds.TableRef()).
 		With(append(at.ctes, bounds)...).
 		Pick(
-			orZero(keel.Scalar(keel.RowsOf(items.TableRef()).Pick(keel.Sum(items.Col("open_minor"))))),
-			orZero(keel.Scalar(inv.Pick(open.Sum()).Where(receivablesql.Open(inv)))),
-			orZero(keel.Scalar(inv.
-				Pick(open.Sum()).
-				Where(
-					receivablesql.Open(inv),
-					keel.Or(inv.DueDate.IsNull(), keel.Int64Of(inv.DueDate).GteExpr(end)),
-				))),
+			openAt(1),
+			openAt(0),
+			openAt(0, keel.Or(itemDue.IsNull(), itemDue.GteExpr(end))),
 			orZero(
 				keel.Scalar(inv.Pick(inv.TotalAmountMinor.Sum()).Where(billedIn(inv, start, end))),
 			),
@@ -557,6 +595,13 @@ func (r *repository) GetCollectionTotals(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*customerledgerports.ARCollectionTotals, error) {
+			if req.PeriodDays <= 0 {
+				return nil, errortypes.NewValidationError(
+					"periodDays",
+					errortypes.ErrInvalid,
+					"The collection period must be at least one day",
+				)
+			}
 			periodStart := req.AsOfDate - int64(req.PeriodDays)*secondsPerDay
 			rec, err := keel.IntoOne[collectionTotalsRecord](
 				ctx,

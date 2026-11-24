@@ -21,10 +21,10 @@ var (
 )
 
 const (
-	secondsPerMinute         = int64(60)
-	defaultOvertimeThreshold = int32(2400)
-	maxTimeEntryMinutes      = int32(24 * 60)
-	maxTimesheetWeekMinutes  = int32(7 * 24 * 60)
+	secondsPerMinute                = int64(60)
+	DefaultOvertimeThresholdMinutes = int32(2400)
+	maxTimeEntryMinutes             = int32(24 * 60)
+	maxTimesheetWeekMinutes         = int32(7 * 24 * 60)
 )
 
 // TimeEntrySource is where a punch came from. It is kept because a manual
@@ -143,7 +143,7 @@ type TimeClockEntry struct {
 	WorkerID       pulid.ID `json:"workerId"       keel:"worker_id"`
 	TimesheetID    pulid.ID `json:"timesheetId"    keel:"timesheet_id,nullzero"`
 
-	Source TimeEntrySource `json:"source" keel:"source"`
+	Source TimeEntrySource `json:"source"       keel:"source"`
 	// ClockedOutAt of nil means the worker is still on the clock.
 	ClockedInAt  int64    `json:"clockedInAt"  keel:"clocked_in_at"`
 	ClockedOutAt *int64   `json:"clockedOutAt" keel:"clocked_out_at"`
@@ -296,10 +296,10 @@ type Timesheet struct {
 	PeriodStart int64           `json:"periodStart" keel:"period_start"`
 	PeriodEnd   int64           `json:"periodEnd"   keel:"period_end"`
 
-	RegularMinutes   int32 `json:"regularMinutes"   keel:"regular_minutes"`
-	OvertimeMinutes  int32 `json:"overtimeMinutes"  keel:"overtime_minutes"`
-	PaidLeaveMinutes int32 `json:"paidLeaveMinutes" keel:"paid_leave_minutes"`
-	EntryCount       int32 `json:"entryCount"       keel:"entry_count"`
+	RegularMinutes   int32 `json:"regularMinutes"           keel:"regular_minutes"`
+	OvertimeMinutes  int32 `json:"overtimeMinutes"          keel:"overtime_minutes"`
+	PaidLeaveMinutes int32 `json:"paidLeaveMinutes"         keel:"paid_leave_minutes"`
+	EntryCount       int32 `json:"entryCount"               keel:"entry_count"`
 	// OvertimeThresholdMinutes is copied onto the sheet rather than read from a
 	// setting, so changing the rule next quarter cannot restate a week that was
 	// already approved.
@@ -332,7 +332,7 @@ func (t *Timesheet) TotalMinutes() int32 {
 func (t *Timesheet) ApplyTotals(workedMinutes, paidLeaveMinutes, entryCount int32) {
 	threshold := t.OvertimeThresholdMinutes
 	if threshold <= 0 {
-		threshold = defaultOvertimeThreshold
+		threshold = DefaultOvertimeThresholdMinutes
 	}
 
 	if workedMinutes > threshold {
@@ -414,7 +414,7 @@ func (t *Timesheet) BeforeCreate(_ context.Context) error {
 		t.Status = TimesheetOpen
 	}
 	if t.OvertimeThresholdMinutes <= 0 {
-		t.OvertimeThresholdMinutes = defaultOvertimeThreshold
+		t.OvertimeThresholdMinutes = DefaultOvertimeThresholdMinutes
 	}
 	if t.OvertimeThresholdMinutes == 0 {
 		t.OvertimeThresholdMinutes = 2400

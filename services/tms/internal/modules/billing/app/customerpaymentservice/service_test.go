@@ -196,6 +196,8 @@ func TestPostAndApplyUsesRevenueForCashBasis(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, posted)
 	require.NotNil(t, storedPayment)
+	assert.Equal(t, 1, svc.receiptCandidates.(*quietCandidates).woken,
+		"a posted payment wakes the bank receipt candidate drain once")
 	assert.Equal(t, int64(10000), lastPosting.Lines[0].DebitAmount)
 	assert.Equal(t, int64(10000), lastPosting.Lines[1].CreditAmount)
 	assert.Equal(

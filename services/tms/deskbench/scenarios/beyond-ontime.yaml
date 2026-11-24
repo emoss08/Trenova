@@ -1,0 +1,53 @@
+defaults:
+  agent: Bench · Report analyst
+  tags: [beyond, board, ontime]
+
+scenarios:
+  - name: beyond-on-time-trend
+    description: >
+      On-time delivery over the quarter and where it slipped. On time is the Home page's rule: a
+      completed delivery stop that arrived by the end of its appointment window, counted on the
+      organization's day it arrived, read from the stop_service_daily rollup. The answer is a
+      board in the conversation that draws the weekly trend (onTimeByWeek, the lowest full week
+      marked, the week still running as the ghost) and the late deliveries of that week ranked
+      by customer (lateByCustomer, period slip), and whose words place the quarter's rate and
+      the lowest week's rate as readings, never typed numbers.
+    steps:
+      - say: "how has on-time delivery trended this quarter, and where did it slip?"
+        expect:
+          calls: ["show_answer|show_board"]
+          maxCalls: 5
+          maxFailedCalls: 1
+          noProposals: true
+          noRecordIds: true
+          board:
+            place: conversation
+            minReadings: 1
+            metrics: [onTimeByWeek, lateByCustomer]
+            figures: ["average:onTimeByWeek", "lowest:onTimeByWeek"]
+          rubric: >
+            Answers in the conversation with a board that draws on-time delivery by week this
+            quarter and the late deliveries of the week it slipped, by customer. The words say
+            how on-time has trended (its rate this quarter and the lowest week, with that week
+            named as a week, both placed as readings of onTimeByWeek), and name the customer
+            that held the most late deliveries that week only if the board's customer exhibit
+            is shown. No figure is typed that a reading does not hold, nothing is said about a
+            target unless one is read, and no cause is claimed that the board does not show.
+
+  - name: beyond-on-time-today-is-a-sentence
+    description: >
+      One figure for one day is not a trend: no board. Today's on-time percent is a figure of
+      the dispatchToday metric (the Home page's On-time %), which metric_read reads without
+      drawing a board, so the answer is a sentence with the figure it read, never a guessed one.
+    steps:
+      - say: "what's our on-time percent today?"
+        expect:
+          maxCalls: 4
+          maxFailedCalls: 1
+          noProposals: true
+          noRecordIds: true
+          noBoard: true
+          rubric: >
+            Answers in a sentence without a board. It states no on-time percentage it did not
+            read; saying that today's on-time figure is on the Home page, or that it can draw
+            the trend if asked, is a good answer.

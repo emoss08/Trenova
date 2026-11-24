@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/deskbench/benchscenario"
 	"github.com/emoss08/trenova/internal/deskbench/benchsql"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/replycheck"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimetools"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantstreamports"
 	"github.com/emoss08/trenova/shared/intutils"
@@ -68,6 +69,21 @@ func (e *Evidence) reply() string {
 	return strings.Join(replies, "\n\n")
 }
 
+func (e *Evidence) onScreen() string {
+	shown := []string{e.reply()}
+	for _, turn := range e.Turns {
+		for _, call := range turn.Tools {
+			if (call.Name == runtimetools.ShowAnswerTool || call.Name == runtimetools.ShowBoardTool) &&
+				!call.Refused() &&
+				strings.TrimSpace(call.Result) != "" {
+				shown = append(shown, call.Result)
+			}
+		}
+	}
+
+	return strings.Join(shown, "\n\n")
+}
+
 func (e *Evidence) proposals() []*benchrecord.ProposalRecord {
 	proposals := make([]*benchrecord.ProposalRecord, 0, 2)
 	for _, turn := range e.Turns {
@@ -114,7 +130,9 @@ func (c *Checker) Evaluate(
 	checks = append(checks, callChecks(expect, calls)...)
 	checks = append(checks, replyChecks(expect, evidence, reply)...)
 	checks = append(checks, proposalChecks(expect, evidence)...)
-	checks = append(checks, c.databaseChecks(ctx, session, expect, evidence, reply)...)
+	checks = append(
+		checks,
+		c.databaseChecks(ctx, session, expect, evidence, evidence.onScreen())...)
 	if expect.MaxSeconds != nil {
 		elapsed := evidence.duration().Seconds()
 		checks = append(checks, benchresult.CheckResult{
@@ -769,7 +787,7 @@ func (c *Checker) factCheck(
 	} else {
 		check.Passed = len(missing) == 0
 	}
-	check.Detail = fmt.Sprintf("truth %s; missing from reply: %s",
+	check.Detail = fmt.Sprintf("truth %s; missing from the reply and its board: %s",
 		strings.Join(values, ", "), strings.Join(missing, ", "))
 
 	return check

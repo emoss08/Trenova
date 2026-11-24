@@ -12,11 +12,11 @@ import (
 
 	"github.com/emoss08/trenova/internal/deskbench/benchagent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpagecontext"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/board"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/boardregistry"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/codemode"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationqueue"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/evalsplit"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"gopkg.in/yaml.v3"
 )
@@ -278,14 +278,43 @@ type ExpectedBoard struct {
 	Place       string   `yaml:"place"       json:"place,omitempty"`
 	MinReadings int      `yaml:"minReadings" json:"minReadings,omitempty"`
 	Reads       []string `yaml:"reads"       json:"reads,omitempty"`
+	Kinds       []string `yaml:"kinds"       json:"kinds,omitempty"`
+	Measures    []string `yaml:"measures"    json:"measures,omitempty"`
+	Metrics     []string `yaml:"metrics"     json:"metrics,omitempty"`
+	Figures     []string `yaml:"figures"     json:"figures,omitempty"`
+	Links       bool     `yaml:"links"       json:"links,omitempty"`
+	Actions     bool     `yaml:"actions"     json:"actions,omitempty"`
 }
 
 func (b *ExpectedBoard) validate() error {
 	for _, measure := range b.Reads {
-		if !slices.ContainsFunc(board.Resources(), func(resource permission.Resource) bool {
-			return board.Measure(measure).Of(resource)
-		}) {
+		if !slices.Contains(boardregistry.Catalog().MeasureNames(), measure) {
 			return fmt.Errorf("board.reads: %q is not a measure a board reads", measure)
+		}
+	}
+	for _, measure := range b.Measures {
+		if !slices.Contains(boardregistry.Catalog().MeasureNames(), measure) {
+			return fmt.Errorf("board.measures: %q is not a measure a board reads", measure)
+		}
+	}
+	for _, kind := range b.Kinds {
+		if !boardregistry.Catalog().Supports(recordkind.Kind(kind)) {
+			return fmt.Errorf("board.kinds: %q is not a kind a board shows", kind)
+		}
+	}
+	for _, name := range b.Metrics {
+		if metric, ok := boardregistry.Catalog().MetricNamed(name); !ok || metric.Name != name {
+			return fmt.Errorf("board.metrics: %q is not a metric a board reads", name)
+		}
+	}
+	for _, figure := range b.Figures {
+		name, metricName, ok := strings.Cut(figure, ":")
+		metric, known := boardregistry.Catalog().MetricNamed(metricName)
+		if !ok || !known {
+			return fmt.Errorf("board.figures: %q is not figure:metric", figure)
+		}
+		if _, declared := metric.Figure(name); !declared {
+			return fmt.Errorf("board.figures: the %s metric declares no figure %q", metricName, name)
 		}
 	}
 

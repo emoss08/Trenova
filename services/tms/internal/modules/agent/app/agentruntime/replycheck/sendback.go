@@ -9,6 +9,7 @@ import (
 type SendBack struct {
 	Events   []kernelports.StreamEvent
 	Messages []llmports.Message
+	Guard    string
 }
 
 func SendBackDraft(

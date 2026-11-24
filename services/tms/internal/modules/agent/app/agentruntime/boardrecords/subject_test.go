@@ -80,7 +80,7 @@ func TestGroupFigures_LeavesWhatIsNotOneRecordsFigure(t *testing.T) {
 	read := incidentRead()
 	args := pair("revenue", "{count_1} and {largest} and {total}.")
 	_, changed := read.GroupFigures(args)
-	assert.False(t, changed)
+	assert.False(t, changed, "a bare figure no clause gives one record stays the board's")
 
 	several := pair("revenue", "SEED-SHP-010 brings in {total_1}.")
 	several["groups"].([]any)[0].(map[string]any)["records"] = []any{shp010, shp001}
@@ -89,4 +89,29 @@ func TestGroupFigures_LeavesWhatIsNotOneRecordsFigure(t *testing.T) {
 
 	_, changed = read.GroupFigures(pair("", "SEED-SHP-010 brings in {total_1}."))
 	assert.False(t, changed, "with no measure there is nothing to read")
+}
+
+func TestGroupFigures_GivesABareFigureTheOneRecordItsClauseNames(t *testing.T) {
+	t.Parallel()
+
+	read := incidentRead()
+	got, changed := read.GroupFigures(pair("", "SEED-SHP-010 brings in {total:revenue} and "+
+		"SEED-SHP-008 brings in {total}, so the two together are worth {total}."))
+
+	require.True(t, changed)
+	assert.Equal(t, "SEED-SHP-010 brings in {revenue:"+shp010+"} and SEED-SHP-008 brings in "+
+		"{revenue:"+shp008+"}, so the two together are worth {total}.", got["answer"],
+		"one load's figure is its own, never the pair's sum; the pair's sum stays a total")
+
+	one := map[string]any{
+		"answer": "SEED-SHP-010 brings in {total:revenue}, and the two bring in {total}.",
+		"groups": []any{map[string]any{"title": "Side by side", "records": []any{shp010, shp008}}},
+	}
+	got, changed = read.GroupFigures(one)
+	require.True(t, changed)
+	assert.Equal(t, "SEED-SHP-010 brings in {revenue:"+shp010+"}, and the two bring in {total}.",
+		got["answer"], "the same holds when both loads are in one group")
+
+	_, changed = read.GroupFigures(pair("", "SEED-SHP-010 is the larger at {largest}."))
+	assert.False(t, changed, "the largest is a claim about the set and stays one")
 }

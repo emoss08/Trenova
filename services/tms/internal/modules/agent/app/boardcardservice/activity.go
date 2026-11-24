@@ -28,13 +28,13 @@ func (s *Service) readEvents(
 			continue
 		}
 		set := block.Records
-		if _, read := reads.Summaries[set.Resource][set.IDs[0]]; !read ||
-			!reads.Readable[set.Resource] {
+		if _, read := reads.Summaries[set.Kind][set.IDs[0]]; !read ||
+			!reads.Readable[set.Kind] {
 			continue
 		}
 		if !checked {
-			allowed, err := s.allowed(
-				ctx, req.Actor, permission.ResourceAuditLog, permission.OpRead,
+			allowed, err := s.mayRead(
+				ctx, req.Actor, permission.ResourceAuditLog,
 			)
 			if err != nil {
 				return err

@@ -112,5 +112,6 @@ func Providers() []any {
 	return []any{
 		provideListShipmentPermitsTool,
 		provideListPayrollExportsTool,
+		provideListWeekHoursTool,
 	}
 }

@@ -25,7 +25,7 @@ describe("boardFrom", () => {
           {
             key: "late",
             label: "Late now",
-            records: { resource: "shipment", ids: ["shp_1"] },
+            records: { kind: "shipment", ids: ["shp_1"] },
             measure: "lateness",
             aggregate: "count",
           },
@@ -37,6 +37,7 @@ describe("boardFrom", () => {
       place: "conversation",
       snapshot: { at: 1_793_114_000, values: { "r.late": { kind: "count", number: "6" } } },
       author: "Dispatch desk",
+      sizes: [3, 1, "x"],
     };
 
     expect(boardFrom(artifact)).toEqual({
@@ -57,9 +58,21 @@ describe("boardFrom", () => {
           size: 3,
           caption: "",
           measure: "lateness",
+          kind: "shipment",
+          metric: "",
         },
-        { type: "actions", title: "", half: false, size: 1, caption: "", measure: "" },
+        {
+          type: "actions",
+          title: "",
+          half: false,
+          size: 1,
+          caption: "",
+          measure: "",
+          kind: "",
+          metric: "",
+        },
       ],
+      sizes: [3, 1],
     });
   });
 
@@ -69,10 +82,10 @@ describe("boardFrom", () => {
         blocks: [
           {
             type: "records",
-            records: { resource: "invoice", ids: ["inv_1"] },
+            records: { kind: "invoice", ids: ["inv_1"] },
             measure: "balanceDue",
           },
-          { type: "records", records: { resource: "shipment", ids: ["shp_1"] } },
+          { type: "records", records: { kind: "shipment", ids: ["shp_1"] } },
           { type: "figures", measure: "lateness", figures: [{ label: "Late" }] },
         ],
       },
@@ -104,7 +117,7 @@ describe("boardFrom", () => {
     artifact.payload = {
       board: {
         blocks: [
-          { type: "work", records: { resource: "shipment", ids: ["shp_1", "shp_2"] } },
+          { type: "work", records: { kind: "shipment", ids: ["shp_1", "shp_2"] } },
           { type: "actions", actions: [{ label: "A" }, { label: "B" }] },
           { type: "prose", text: "Words." },
           { type: "nonsense" },
@@ -142,6 +155,7 @@ describe("boardLayoutFrom", () => {
       place: "beside",
       readings: [],
       blocks: [],
+      sizes: [],
     });
   });
 });
@@ -200,8 +214,11 @@ describe("answerLayoutFrom", () => {
           size: 3,
           caption: "All three are past their window.",
           measure: "lateness",
+          kind: "shipment",
+          metric: "",
         },
       ],
+      sizes: [],
     });
   });
 
@@ -234,9 +251,29 @@ describe("answerLayoutFrom", () => {
         size: 4,
         caption: "{count_1} wait on Marcus Bell, the furthest {largest_1} behind.",
         measure: "",
+        kind: "shipment",
+        metric: "",
       },
-      { type: "records", title: "At the dock", half: true, size: 2, caption: "", measure: "" },
-      { type: "actions", title: "", half: false, size: 2, caption: "", measure: "" },
+      {
+        type: "records",
+        title: "At the dock",
+        half: true,
+        size: 2,
+        caption: "",
+        measure: "",
+        kind: "shipment",
+        metric: "",
+      },
+      {
+        type: "actions",
+        title: "",
+        half: false,
+        size: 2,
+        caption: "",
+        measure: "",
+        kind: "",
+        metric: "",
+      },
     ]);
     expect(layout.readings.map((reading) => reading.key)).toEqual(["count_1", "largest_1"]);
     expect(layout.blocks.map((block) => isBoardExhibit(block.type))).toEqual([true, true, false]);
@@ -261,9 +298,36 @@ describe("answerLayoutFrom", () => {
 
     expect(layout.title).toBe("From the artifact");
     expect(layout.blocks).toEqual([
-      { type: "records", title: "First", half: false, size: 1, caption: "", measure: "" },
-      { type: "records", title: "Second", half: false, size: 1, caption: "", measure: "" },
-      { type: "records", title: "Third", half: false, size: 1, caption: "", measure: "" },
+      {
+        type: "records",
+        title: "First",
+        half: false,
+        size: 1,
+        caption: "",
+        measure: "",
+        kind: "shipment",
+        metric: "",
+      },
+      {
+        type: "records",
+        title: "Second",
+        half: false,
+        size: 1,
+        caption: "",
+        measure: "",
+        kind: "shipment",
+        metric: "",
+      },
+      {
+        type: "records",
+        title: "Third",
+        half: false,
+        size: 1,
+        caption: "",
+        measure: "",
+        kind: "shipment",
+        metric: "",
+      },
     ]);
     expect(layout.readings).toEqual([{ key: "count", label: "" }]);
   });
@@ -377,6 +441,7 @@ describe("answerLayoutFrom", () => {
       place: "conversation",
       readings: [],
       blocks: [],
+      sizes: [],
     });
   });
 
@@ -392,5 +457,48 @@ describe("answerLayoutFrom", () => {
         FALLBACK,
       ).blocks[0].caption,
     ).toBe("Past due.");
+  });
+});
+
+/*
+A metric group is a block that draws a metric Trenova keeps; its figures are keyed as the
+server keys them, the figure and the place of the group that shows its metric, so the waiting
+reply holds a blank where each will stand. A kept board's payload says how many rows each block
+drew, so its skeleton reserves them.
+*/
+describe("metric groups and drawn sizes", () => {
+  it("lays a metric group out as a metric block by the metric's own name, keying its figures", () => {
+    const layout = answerLayoutFrom(
+      {
+        answer: "Receivables stand at {arTotalOpen:AR}, and {count} invoices are open.",
+        groups: [
+          { title: "Receivables", metric: "ar" },
+          { title: "Open", records: ["inv_1", "inv_2"] },
+        ],
+      },
+      FALLBACK,
+    );
+
+    expect(layout.blocks.map((block) => [block.type, block.metric, block.kind])).toEqual([
+      ["metric", "receivables", ""],
+      ["records", "", "invoice"],
+    ]);
+    expect(layout.verdict).toBe(
+      "Receivables stand at {arTotalOpen_1}, and {count} invoices are open.",
+    );
+    expect(layout.readings.map((reading) => reading.key)).toEqual(["arTotalOpen_1", "count"]);
+  });
+
+  it("reads a credential's measure by its alias for the kind its ids are", () => {
+    const layout = answerLayoutFrom(
+      {
+        answer: "The soonest runs out in {largest}.",
+        measure: "expiresAt",
+        groups: [{ title: "Running out", records: ["wcred_1", "wcred_2"] }],
+      },
+      FALLBACK,
+    );
+
+    expect(layout.blocks[0]).toMatchObject({ kind: "worker_credential", measure: "expiry" });
   });
 });

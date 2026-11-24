@@ -102,6 +102,9 @@ export function pendingSettlement(
     paymentReference: "",
     voidedAt: null,
     voidReason: "",
+    holdReason: null,
+    holdNote: "",
+    heldAt: null,
     createdAt: DAY.oct12 + 6 * HOUR,
     updatedAt: DAY.oct13 + 16 * HOUR,
     exceptions: [
@@ -122,6 +125,7 @@ export function pendingSettlement(
     postedBy: null,
     paidBy: null,
     voidedBy: null,
+    heldBy: null,
     lineSummary: [
       group({
         componentKind: "Linehaul",

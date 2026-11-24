@@ -1283,6 +1283,8 @@ writes:
     tools: [settlement_generate_driver_batch]
   "mutation holdDriverPayEvent":
     tools: [settlement_hold_pay_event]
+  "mutation holdDriverSettlement":
+    tools: [settlement_hold_driver]
   "mutation issuePayAdvance":
     tools: [settlement_issue_advance]
   "mutation markDriverSettlementPaid":
@@ -1299,6 +1301,8 @@ writes:
     tools: [settlement_reject_driver]
   "mutation releaseDriverPayEvent":
     tools: [settlement_release_pay_event]
+  "mutation releaseDriverSettlementHold":
+    tools: [settlement_hold_driver]
   "mutation removeDriverSettlementAdjustment":
     tools: [settlement_remove_driver_adjustment]
   "mutation submitDriverSettlement":

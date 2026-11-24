@@ -2,6 +2,8 @@ package board
 
 import (
 	"regexp"
+
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/boardcatalog"
 )
 
 const (
@@ -47,7 +49,7 @@ func (f *Filled) Reading(key string) *FilledReading {
 	return nil
 }
 
-func (r *FilledReading) Answered() *Value {
+func (r *FilledReading) Answered() *boardcatalog.Value {
 	if r.Was != nil {
 		return r.Was
 	}

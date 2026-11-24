@@ -3,6 +3,7 @@
 package accountsreceivablerepository
 
 import (
+	"context"
 	"slices"
 	"testing"
 	"time"
@@ -182,7 +183,8 @@ func TestAccountsReceivableRepositoryReturnsLedgerAndAging(t *testing.T) {
 					FiscalPeriodRepo: fiscalPeriodRepo,
 				},
 			),
-			AuditService: &mocks.NoopAuditService{},
+			AuditService:      &mocks.NoopAuditService{},
+			ReceiptCandidates: &quietReceiptCandidates{},
 		},
 	)
 	_, err = paymentSvc.PostAndApply(
@@ -355,7 +357,8 @@ func TestAccountsReceivableRepositoryReturnsOpenItems(t *testing.T) {
 					FiscalPeriodRepo: fiscalPeriodRepo,
 				},
 			),
-			AuditService: &mocks.NoopAuditService{},
+			AuditService:      &mocks.NoopAuditService{},
+			ReceiptCandidates: &quietReceiptCandidates{},
 		},
 	)
 	_, err = paymentSvc.PostAndApply(
@@ -513,7 +516,8 @@ func TestAccountsReceivableRepositoryReturnsCustomerNameAndAging(t *testing.T) {
 					FiscalPeriodRepo: fiscalPeriodRepo,
 				},
 			),
-			AuditService: &mocks.NoopAuditService{},
+			AuditService:      &mocks.NoopAuditService{},
+			ReceiptCandidates: &quietReceiptCandidates{},
 		},
 	)
 	_, err = paymentSvc.PostAndApply(
@@ -564,3 +568,7 @@ func TestAccountsReceivableRepositoryReturnsCustomerNameAndAging(t *testing.T) {
 }
 
 func int64PtrAR(v int64) *int64 { return &v }
+
+type quietReceiptCandidates struct{}
+
+func (quietReceiptCandidates) Wake(context.Context, pagination.TenantInfo) {}

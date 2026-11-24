@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/boardregistry"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/pkg/productguide"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -53,5 +54,38 @@ func TestEveryMemoryRecordKindIsAKindOfRecord(t *testing.T) {
 		got, ok := agentmemory.MemoryRecordKindOfID(pulid.MustNew(prefix))
 		assert.True(t, ok, kind)
 		assert.Equal(t, kind, got)
+	}
+}
+
+func TestEveryBoardKindAndMetricSubjectIsAKindOfRecord(t *testing.T) {
+	t.Parallel()
+
+	for _, kind := range boardregistry.Catalog().Kinds() {
+		assert.True(
+			t,
+			kind.Kind.Known(),
+			"the board catalog lists %s, which the registry does not know",
+			kind.Kind,
+		)
+	}
+	for _, measure := range boardregistry.Catalog().Measures() {
+		assert.True(
+			t,
+			measure.Kind.Known(),
+			"the measure %s is of %s, which the registry does not know",
+			measure.Name,
+			measure.Kind,
+		)
+	}
+	for _, metric := range boardregistry.Catalog().Metrics() {
+		if metric.For != "" {
+			assert.True(
+				t,
+				metric.For.Known(),
+				"the metric %s reads %s, which the registry does not know",
+				metric.Name,
+				metric.For,
+			)
+		}
 	}
 }

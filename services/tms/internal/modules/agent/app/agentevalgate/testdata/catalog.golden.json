@@ -3417,6 +3417,7 @@
               "ai_audit_export",
               "analysis_run",
               "assistant_thread",
+              "bank_receipt",
               "billing_queue_item",
               "capture_batch",
               "carrier",
@@ -3440,6 +3441,7 @@
               "fuel_card",
               "fuel_purchase",
               "hazardous_material",
+              "ifta_return",
               "inbound_message",
               "invoice",
               "journal_entry",
@@ -7725,6 +7727,53 @@
       }
     },
     {
+      "name": "carrier_list_cover_ending",
+      "description": "List the active carriers whose required insurance (auto and cargo liability) ends within withinDays days (30 when left out), or already lapsed in the last 90 days, the soonest first. Each row is a carrier: its id and name, its compliance status, the required policy that ends first (type, number, endsAt), any required policy type it has none on file for, and openLoads, its loads with us not yet delivered. A carrier hauling for us is one with openLoads above 0. A carrier with no required policy ending in the window is not listed.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "limit": {
+            "description": "How many rows to return: 25 unless you ask, at most 100.",
+            "maximum": 100,
+            "minimum": 1,
+            "type": "integer",
+            "x-clamp": true
+          },
+          "withinDays": {
+            "description": "From 1 to 90; 30 when left out.",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "searchTerms": [
+        "carrier insurance lapsing",
+        "insurance about to expire",
+        "carriers losing cover"
+      ],
+      "policy": {
+        "kind": "query",
+        "resource": "carrier",
+        "operation": "read",
+        "scope": "tenant",
+        "defaultTier": "AutoExecute",
+        "maxTier": "AutoExecute",
+        "promotableTo": "AutoExecute",
+        "egress": [
+          "none"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "lookup",
+        "reversible": true,
+        "idempotent": true,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Reads records the caller may already open; it changes nothing and sends nothing."
+      }
+    },
+    {
       "name": "carrier_list_intelligence_events",
       "description": "List carrier intelligence events, newest first: changes found on carriers' authority, insurance and safety records. Each row gives the carrier, the category, the severity, what the rule did, the summary, when it was detected and whether anyone acknowledged or resolved it. Pass a row's id to carrier_get_intelligence_event for its prior and current values, or to carrier_acknowledge_intelligence_event or carrier_resolve_intelligence_event. Filters: acknowledgedAtFrom/To, action, carrierId, category, detectedFrom/To, dotNumber, openOnly, provider, resolution, resolvedAtFrom/To, severity, source, status, subject, subjectName, subjectType, summary.",
       "parameters": {
@@ -9848,6 +9897,66 @@
       }
     },
     {
+      "name": "detention_list_facilities",
+      "description": "Rank facilities by the time trucks waited there past free time in a period, the most first, with stops, the median stop and the slowest one in ten. Each row's id is the location's. On a board the dwell measure reads a facility's time past free: write it as a figure such as {largest:dwell}, never typed in minutes.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "limit": {
+            "description": "How many rows to return: 25 unless you ask, at most 100.",
+            "maximum": 100,
+            "minimum": 1,
+            "type": "integer",
+            "x-clamp": true
+          },
+          "period": {
+            "description": "The whole days the stops started in, in the organization's time zone. Only records whose period is this.",
+            "enum": [
+              "Today",
+              "Yesterday",
+              "ThisWeek",
+              "LastWeek",
+              "ThisMonth",
+              "LastMonth",
+              "ThisQuarter",
+              "LastQuarter"
+            ],
+            "type": "string",
+            "x-enumOf": "graphql.DetentionPeriod"
+          }
+        },
+        "required": [
+          "period"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "waiting time by facility",
+        "worst docks"
+      ],
+      "policy": {
+        "kind": "query",
+        "resource": "detention",
+        "operation": "read",
+        "scope": "tenant",
+        "defaultTier": "AutoExecute",
+        "maxTier": "AutoExecute",
+        "promotableTo": "AutoExecute",
+        "egress": [
+          "none"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "lookup",
+        "reversible": true,
+        "idempotent": true,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Reads records the caller may already open; it changes nothing and sends nothing."
+      }
+    },
+    {
       "name": "detention_list_occurrences",
       "description": "List every open detention occurrence: a truck at a stop past its free time, with minutes until free time ends, notice status and the amount at risk. The notice status says whether the customer notice is due or overdue. Urgency Lost means the notice window closed without a notice and the charge may not be collectable; NoticeOverdue and NoticeDueSoon say what to send. detention_send_notice sends it. The list also carries every stopped charge waiting on approval, as AwaitingApproval: its shipment cannot be invoiced until someone approves or waives it, which detention_approve and detention_waive propose. A running clock is priced as of now, so billableMinutes and amountAtRisk are what it would bill if the truck left this minute. Narrow to one load with shipmentId or proNumber rather than paging through urgencies.",
       "parameters": {
@@ -9883,6 +9992,88 @@
         },
         "type": "object"
       },
+      "policy": {
+        "kind": "query",
+        "resource": "detention",
+        "operation": "read",
+        "scope": "tenant",
+        "defaultTier": "AutoExecute",
+        "maxTier": "AutoExecute",
+        "promotableTo": "AutoExecute",
+        "egress": [
+          "none"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "lookup",
+        "reversible": true,
+        "idempotent": true,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Reads records the caller may already open; it changes nothing and sends nothing."
+      }
+    },
+    {
+      "name": "detention_list_stays",
+      "description": "List detention stays whose clock started in a period, largest billable first: each stay's load, customer, facility, time on site against free time, what it bills, and holdBack, why to hold its bill. stage ToBill is what can go on invoices now. Never add up the rows for a period's total: show_answer's detentionTotals metric reads it, as {readyToBill:detentionTotals} and {readyToBillStays:detentionTotals}.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "after": {
+            "description": "The nextCursor of the previous page, with every other argument unchanged; omit for the first page.",
+            "type": "string"
+          },
+          "limit": {
+            "description": "How many rows to return: 25 unless you ask, at most 100.",
+            "maximum": 100,
+            "minimum": 1,
+            "type": "integer",
+            "x-clamp": true
+          },
+          "locationId": {
+            "description": "Only the stays at this facility, from detention_list_facilities or location_list. Never guess one.",
+            "type": "string",
+            "x-recordOf": "location"
+          },
+          "period": {
+            "description": "The whole days the clock started in, in the organization's time zone. Only records whose period is this.",
+            "enum": [
+              "Today",
+              "Yesterday",
+              "ThisWeek",
+              "LastWeek",
+              "ThisMonth",
+              "LastMonth",
+              "ThisQuarter",
+              "LastQuarter"
+            ],
+            "type": "string",
+            "x-enumOf": "graphql.DetentionPeriod"
+          },
+          "stage": {
+            "description": "Only stays at this stage; every stage when left out. Only records whose stage is this.",
+            "enum": [
+              "ToBill",
+              "Running",
+              "Billed",
+              "Disputed",
+              "Waived",
+              "NotBillable"
+            ],
+            "type": "string",
+            "x-enumOf": "graphql.DetentionStayStage"
+          }
+        },
+        "required": [
+          "period"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "detention to bill",
+        "last week's detention"
+      ],
       "policy": {
         "kind": "query",
         "resource": "detention",
@@ -10566,7 +10757,7 @@
     },
     {
       "name": "dispatch_forecast_demand",
-      "description": "Say which areas will be busy in the coming days and where to send trucks, weighing freight customers have not booked yet against the drivers expected. Answers whether freight is coming into a city, how many loads usually appear and which regions will need more trucks. Learned from this organization's own shipment history, not market data: for each area and four-hour window it gives loads likely, what is booked, the drivers expected and the loads with no truck nearby, then ranked moves (send an empty driver, book a load that ends there, keep a driver, call a customer behind its usual pace) with what each is worth in dollars. Plans use it only once quality.status is Ready; until then say it is not proven yet and why, from quality.meaning, rather than guessing.",
+      "description": "Say which areas will be busy in the coming days and where to send trucks, weighing freight customers have not booked yet against the drivers expected. Answers whether freight is coming into a city, how many loads usually appear and which regions will need more trucks. Learned from this organization's own shipment history, not market data: for each area and four-hour window it gives loads likely, what is booked, the drivers expected and the loads with no truck nearby, then ranked moves (send an empty driver, book a load that ends there, keep a driver, call a customer behind its usual pace) with what each is worth in dollars. Plans use it only once quality.status is Ready; until then say it is not proven yet and why, from quality.meaning, rather than guessing. It looks 48 hours ahead at most: Trenova does not forecast a week, so asked about next week, say it forecasts the next 48 hours and answer for those.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -13463,7 +13654,7 @@
     },
     {
       "name": "edi_list_inbound_files",
-      "description": "List the inbound EDI files trading partners sent, newest first. Each has the partner, how it arrived, whether it was processed, quarantined or rejected as a duplicate, and why it failed. Narrow to a status or a partner; edi_get_inbound_file opens one. The files are the partner's text. Filters: checksum, createdAtFrom/To, failureReason, fileName, hasEdiPartner, interchangeControlNumber, isaReceiver, isaReceiverQualifier, isaSender, isaSenderQualifier, method, partnerId, processedAtFrom/To, rawPurgedAtFrom/To, receivedAtFrom/To, remotePath, sizeBytesMin/Max, status, transactionCountMin/Max, updatedAtFrom/To.",
+      "description": "List the inbound EDI files trading partners sent, newest first. Each has the partner, how it arrived, whether it was processed, quarantined or rejected as a duplicate, and why it failed. Narrow to a status or a partner; edi_get_inbound_file opens one. The files are the partner's text. A partner's day of tenders is the partnerDay metric; list its quarantined files and failed messages first to name them. To show what happened, in order, answer with show_answer and a group {\"title\": \"…\", \"metric\": \"partnerDay\", \"for\": \"the EDI partner's id\", \"period\": \"…\"}. Filters: checksum, createdAtFrom/To, failureReason, fileName, hasEdiPartner, interchangeControlNumber, isaReceiver, isaReceiverQualifier, isaSender, isaSenderQualifier, method, partnerId, processedAtFrom/To, rawPurgedAtFrom/To, receivedAtFrom/To, remotePath, sizeBytesMin/Max, status, transactionCountMin/Max, updatedAtFrom/To.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -14439,7 +14630,7 @@
     },
     {
       "name": "edi_list_transfers",
-      "description": "List EDI load tender transfers, the tenders partners sent in or this organization sent out. Each has the other partner (counterparty), status, BOL, customer, stop count and why it was rejected or failed. Narrow by direction and status, such as tenders pending approval; edi_get_transfer opens one. The tender text is the partner's. Filters: createdAtFrom/To, direction, failureReason, hasInboundMessage, hasSourceShipment, hasTargetShipment, inboundFileId, processedAtFrom/To, rejectionReason, status, submittedAtFrom/To, updatedAtFrom/To.",
+      "description": "List EDI load tender transfers, the tenders partners sent in or this organization sent out. Each has the other partner (counterparty), status, BOL, customer, stop count and why it was rejected or failed. Narrow by direction and status, such as tenders pending approval; edi_get_transfer opens one. The tender text is the partner's. A tender went through only once our 990 answer reached the partner: read it with edi_list_messages by transferId. To show what happened, in order, answer with show_answer and a group {\"title\": \"…\", \"metric\": \"partnerDay\", \"for\": \"the EDI partner's id\", \"period\": \"…\"}. Filters: createdAtFrom/To, direction, failureReason, hasInboundMessage, hasSourceShipment, hasTargetShipment, inboundFileId, processedAtFrom/To, rejectionReason, status, submittedAtFrom/To, updatedAtFrom/To.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -14482,6 +14673,7 @@
               "enum": [
                 "sourceShipmentId",
                 "targetShipmentId",
+                "shipmentNumber",
                 "inboundMessageId",
                 "status",
                 "rejectionReason",
@@ -14493,7 +14685,8 @@
                 "bol",
                 "customerLabel",
                 "serviceTypeLabel",
-                "stopCount"
+                "stopCount",
+                "ourAnswer"
               ],
               "type": "string",
               "x-enumOf": "edi_list_transfers.column"
@@ -14543,7 +14736,7 @@
             "type": "string"
           },
           "query": {
-            "description": "Free text matched against the tender's status; narrow by status instead where you can.",
+            "description": "A tender's number as the partner sent it, its BOL, PRO or PO number, or the number of the shipment it made, such as 88244; or a status.",
             "type": "string"
           },
           "rejectionReason": {
@@ -22670,6 +22863,49 @@
       }
     },
     {
+      "name": "fuel_get_ifta_return",
+      "description": "Retrieve one quarter's IFTA return by id: its status, the filing date, the net tax due, the problems it carries and its jurisdiction lines, each with the net tax it owes or the credit it earns (the largest first, every line with no rate kept). Use it to say whether a return is ready to file; fuel_list_ifta_returns gives the id.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "iftaReturnId": {
+            "description": "The IFTA return's id, from fuel_list_ifta_returns.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "iftaReturnId"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "IFTA return lines",
+        "ready to file IFTA",
+        "fuel tax return"
+      ],
+      "policy": {
+        "kind": "query",
+        "resource": "ifta_return",
+        "operation": "read",
+        "scope": "tenant",
+        "defaultTier": "AutoExecute",
+        "maxTier": "AutoExecute",
+        "promotableTo": "AutoExecute",
+        "egress": [
+          "none"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "lookup",
+        "reversible": true,
+        "idempotent": true,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Reads records the caller may already open; it changes nothing and sends nothing."
+      }
+    },
+    {
       "name": "fuel_list_cards",
       "description": "List the organization's fuel cards with the provider, the last four digits, the status and the tractor or driver each is assigned to. A card a feed discovered is Suspended and unassigned until someone assigns it with fuel_assign_card, and until then its purchases wait in their import. Filters: assignedTractorId, assignedWorkerId, cancelledAtFrom/To, createdAtFrom/To, discoveredAtFrom/To, discoveredOnly, expiresAtFrom/To, hasAssignedTractor, hasAssignedWorker, label, lastFour, note, provider, status, unassignedOnly, updatedAtFrom/To.",
       "parameters": {
@@ -23191,7 +23427,7 @@
     },
     {
       "name": "fuel_list_ifta_returns",
-      "description": "List the organization's quarterly IFTA fuel tax returns with their status, miles, gallons, the net tax due and the problems each carries. A Draft is recomputed with fuel_recalculate_ifta_return or deleted with fuel_delete_ifta_return; a Filed return is corrected with fuel_amend_ifta_return. Filters: amendmentNumberMin/Max, computedAtFrom/To, createdAtFrom/To, currencyCode, filedAtFrom/To, filingReference, finalizedAtFrom/To, hasAmendsReturn, hasFiledBy, hasFinalizedBy, hasReopenedBy, netTaxableGallonsMin/Max, noTractorMilesMin/Max, noTractorMoveCountMin/Max, periodEndFrom/To, periodStartFrom/To, quarterMin/Max, reopenReason, reopenedAtFrom/To, status, statuses, timezone, totalGallonsMin/Max, totalMilesMin/Max, totalTaxPaidGallonsMin/Max, totalTaxableMilesMin/Max, unattributedMilesMin/Max, unattributedMoveCountMin/Max, updatedAtFrom/To, yearMin/Max.",
+      "description": "List the organization's quarterly IFTA fuel tax returns with their status, miles, gallons, the net tax due and the problems each carries. A Draft is recomputed with fuel_recalculate_ifta_return or deleted with fuel_delete_ifta_return; a Filed return is corrected with fuel_amend_ifta_return. One quarter is quarterMin and quarterMax with yearMin and yearMax; fuel_get_ifta_return reads a return's checks and jurisdiction lines by its id. Filters: amendmentNumberMin/Max, computedAtFrom/To, createdAtFrom/To, currencyCode, filedAtFrom/To, filingReference, finalizedAtFrom/To, hasAmendsReturn, hasFiledBy, hasFinalizedBy, hasReopenedBy, netTaxableGallonsMin/Max, noTractorMilesMin/Max, noTractorMoveCountMin/Max, periodEndFrom/To, periodStartFrom/To, quarterMin/Max, reopenReason, reopenedAtFrom/To, status, statuses, timezone, totalGallonsMin/Max, totalMilesMin/Max, totalTaxPaidGallonsMin/Max, totalTaxableMilesMin/Max, unattributedMilesMin/Max, unattributedMoveCountMin/Max, updatedAtFrom/To, yearMin/Max.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -30624,7 +30860,7 @@
     },
     {
       "name": "ledger_get_fiscal_close_blockers",
-      "description": "Say whether a fiscal period can be closed and list every blocker in the way. Blockers include unposted entries, earlier periods still open, subledger differences and accounting controls; nothing changes. Take the period's id from ledger_list_fiscal_periods.",
+      "description": "Say whether a fiscal period can be closed and list every blocker in the way. Blockers include unposted entries, earlier periods still open, subledger differences and accounting controls, each with its count when it has one; nothing changes. Take the period's id from ledger_list_fiscal_periods. To show what holds the close, give show_answer a group with metric periodClose and for the period's id: it draws every check, blocking or clear, and the entries waiting to post.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -35446,6 +35682,75 @@
       }
     },
     {
+      "name": "metric_read",
+      "description": "Read the figures and points of a metric Trenova keeps over time, to answer in a sentence or to look before drawing it. find_tools names the metric for what a question measures: a rate week by week, a ranking, today's figures. Give metric, and for or period when the metric takes them. A figure the person may not see comes back withheld, never as zero, and the result says how to draw the metric with show_answer.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "for": {
+            "description": "The id a tool returned for the record the metric reads, when it reads one.",
+            "type": "string"
+          },
+          "metric": {
+            "description": "The metric, by name. dispatchToday: the dispatch figures the home page shows for today. receivables: open and overdue receivables and days sales outstanding. agingCompare: receivable aging now against a month (or week, quarter) ago, bucket by bucket, the past-due bucket that grew most marked. collecting: how fast customers pay and how much of what was due came in, over 91 days, against a month (or week, quarter) ago. unappliedReceipts: receipts not applied (in Exception): how many, the total, the oldest; how many match an open item exactly, short, over. rotaWeek: this week day by day: worked, still on the rota, the shift that crosses the overtime line; figures over, room, onRota. detentionTotals: detention at every facility: what is ready to bill, time past free, billed, waived, notice on time. detentionByArrivalHour: share of arrivals detained by two-hour arrival window, every facility together, never one facility's. onTimeByWeek: how on-time delivery trended: share on time each week of a quarter, the target and the lowest week marked as the slip. lateByCustomer: where on-time slipped: late deliveries in one week ranked by customer; period slip is the week onTimeByWeek marks lowest. driverCover: where drivers fall short of forecast loads: forecast areas by 4-hour slot, the next 48 hours only (no week). coverAgainstLoads: carriers whose required insurance lapses in the next 30 days, each load they hold against the day cover ends. periodClose: what stops a fiscal period closing: every close check, blocking or clear, with its count; the entries waiting to post. partnerDay: one EDI partner's tenders in a day: each 204, the shipment it made, our 990 and its 997; for: the partner's id. iftaReturnChecks: whether a quarter's IFTA return can be filed: each check on it, what blocks filing and what needs a look. fuelCostPerMile: what fuel costs a mile across the fleet, day by day over a month as a seven-day run, against the month before. fuelCostByTractor: each tractor's cost per mile over a month against the range most of the fleet runs in; the furthest outside named. settlementBatch: the newest driver pay batch: net, gross and deducted, ready to release against what cannot be released as it stands. settlementWeeks: the last five driver pay batches: what each paid out as net and what came off as deductions.",
+            "type": "string"
+          },
+          "period": {
+            "description": "The time the metric covers, when it takes one; left out, the metric's own.",
+            "enum": [
+              "today",
+              "yesterday",
+              "thisWeek",
+              "lastWeek",
+              "nextWeek",
+              "thisMonth",
+              "lastMonth",
+              "thisQuarter",
+              "lastQuarter",
+              "next48Hours",
+              "slip",
+              "next30Days"
+            ],
+            "type": "string",
+            "x-enumOf": "board.period"
+          }
+        },
+        "required": [
+          "metric"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "metric",
+        "kpi",
+        "trend",
+        "figures over time",
+        "rate by week",
+        "ranking"
+      ],
+      "policy": {
+        "kind": "query",
+        "resource": "assistant",
+        "operation": "read",
+        "scope": "tenant",
+        "defaultTier": "AutoExecute",
+        "maxTier": "AutoExecute",
+        "promotableTo": "AutoExecute",
+        "egress": [
+          "none"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "lookup",
+        "reversible": true,
+        "idempotent": true,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Reads one metric Trenova keeps, through the board's own reader and with the board's checks of the caller's access to that metric, its records and its plan; it changes nothing and sends nothing."
+      }
+    },
+    {
       "name": "name_plan",
       "policy": {
         "kind": "runtime",
@@ -39119,7 +39424,7 @@
     },
     {
       "name": "receivable_list_bank_receipt_exceptions",
-      "description": "List the bank receipts that could not be matched to a customer payment on their own and are waiting in the reconciliation queue. Each has its amount, the bank's reference and memo, why it was not matched, and the queue entry with who it is assigned to. Narrow with query to match the reference, memo or reason. Use receivable_get_bank_receipt for one receipt's candidate payments.",
+      "description": "List the bank receipts not yet applied: money in the bank that no posted customer payment matches (status Exception), newest first, with total the count of all of them. Each has its amount, the bank's reference and memo, why it was not matched, and the queue entry with who it is assigned to. Narrow with query to match the reference, memo or reason. Use receivable_get_bank_receipt for one receipt's candidate payments.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -39587,12 +39892,20 @@
             "description": "Only invoices the customer disputes.",
             "type": "boolean"
           },
+          "largestFirst": {
+            "description": "Largest open balance first, instead of most overdue first: the invoices that make up most of a bucket.",
+            "type": "boolean"
+          },
           "limit": {
             "description": "How many rows to return: 25 unless you ask, at most 100.",
             "maximum": 100,
             "minimum": 1,
             "type": "integer",
             "x-clamp": true
+          },
+          "maxDaysPastDue": {
+            "description": "Only invoices at most this many days past due. With minDaysPastDue it is one aging bucket: 31 and 60 for 31 to 60 days past due.",
+            "type": "integer"
           },
           "minDaysPastDue": {
             "description": "Only invoices at least this many days past due.",
@@ -47058,6 +47371,74 @@
       }
     },
     {
+      "name": "settlement_hold_driver",
+      "description": "Propose holding one driver settlement out of the pay run, with the reason and a note saying what it waits on, or releasing a held one (release: true). A held settlement keeps its status, and approving, posting and paying it are refused until it is released; a posted settlement cannot be held. A person always decides. Read it with settlement_get_driver first.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "note": {
+            "description": "What the hold waits on, in a sentence payroll can act on; required when the reason is Other.",
+            "maxLength": 500,
+            "type": "string"
+          },
+          "reason": {
+            "description": "Why it is held; required to hold, left out to release.",
+            "enum": [
+              "RateDispute",
+              "MissingPaperwork",
+              "NegativeNet",
+              "DeductionReview",
+              "Other"
+            ],
+            "type": "string",
+            "x-enumOf": "driverSettlement.holdReason"
+          },
+          "release": {
+            "description": "True to release a held settlement back into the pay run; leave it out to hold.",
+            "type": "boolean"
+          },
+          "settlementId": {
+            "description": "The driver settlement, from settlement_list_driver or settlement_get_driver, settlement_list_batch_blockers or this run's subject. Never guess one.",
+            "type": "string",
+            "x-recordKinds": [
+              "driver_settlement"
+            ]
+          }
+        },
+        "required": [
+          "settlementId"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "hold settlement",
+        "keep out of pay run",
+        "release hold",
+        "unhold"
+      ],
+      "policy": {
+        "kind": "action",
+        "resource": "driver_settlement",
+        "operation": "hold",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "Propose",
+        "promotableTo": "Propose",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "change",
+        "reversible": true,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Keeps a driver's settlement out of the pay run, or lets it back in, inside Trenova; whether a driver's pay waits is a person's decision."
+      }
+    },
+    {
       "name": "settlement_hold_pay_event",
       "description": "Hold a driver's accrued pay for one load so it skips settlement until released, with the reason. The driver is told in the driver portal why pay was deferred, so write the reason for them, such as paperwork still to come or a load under review. Use settlement_release_pay_event when it is resolved.",
       "parameters": {
@@ -47385,6 +47766,56 @@
       "policy": {
         "kind": "query",
         "resource": "pay_advance",
+        "operation": "read",
+        "scope": "tenant",
+        "defaultTier": "AutoExecute",
+        "maxTier": "AutoExecute",
+        "promotableTo": "AutoExecute",
+        "egress": [
+          "none"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "lookup",
+        "reversible": true,
+        "idempotent": true,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Reads records the caller may already open; it changes nothing and sends nothing."
+      }
+    },
+    {
+      "name": "settlement_list_batch_blockers",
+      "description": "List the driver settlements in a pay batch that cannot be released as they stand, by what keeps each one. The reason is Has a critical exception (the message says which) or Dispute open (the driver disputes it), the largest net first. Each row has the settlement number, the driver, its status, the batch and pay date, and net pay when your data access reaches it. The batch's own totals, what is ready and what is deducted, are figures of the settlementBatch metric, never a sum of these rows.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "batchId": {
+            "description": "The pay batch; leave it out for the newest pay period's, from the batchId settlement_list_driver gives. Never guess one.",
+            "type": "string",
+            "x-recordOf": "driver_settlement"
+          },
+          "limit": {
+            "description": "How many rows to return: 25 unless you ask, at most 100.",
+            "maximum": 100,
+            "minimum": 1,
+            "type": "integer",
+            "x-clamp": true
+          }
+        },
+        "type": "object"
+      },
+      "searchTerms": [
+        "settlement batch",
+        "what is holding the batch",
+        "settlements that cannot be paid",
+        "blocked settlements",
+        "this week's pay run"
+      ],
+      "policy": {
+        "kind": "query",
+        "resource": "driver_settlement",
         "operation": "read",
         "scope": "tenant",
         "defaultTier": "AutoExecute",
@@ -47986,6 +48417,9 @@
                 "shipmentCount",
                 "currencyCode",
                 "hasExceptions",
+                "holdReason",
+                "holdNote",
+                "heldAt",
                 "version",
                 "createdAt",
                 "updatedAt",
@@ -48016,6 +48450,14 @@
             "description": "true for only the records whose hasExceptions is true, false for only those whose hasExceptions is false. Leave it out to list them all; false lists only those without exceptions.",
             "type": "boolean"
           },
+          "hasHeldBy": {
+            "description": "true for only records that have a held by, false for only those that have none.",
+            "type": "boolean"
+          },
+          "hasHoldReleasedBy": {
+            "description": "true for only records that have a hold released by, false for only those that have none.",
+            "type": "boolean"
+          },
           "hasPaidBy": {
             "description": "true for only records that have a paid by, false for only those that have none.",
             "type": "boolean"
@@ -48035,6 +48477,58 @@
           "hasVoidedBy": {
             "description": "true for only records that have a voided by, false for only those that have none.",
             "type": "boolean"
+          },
+          "heldAtFrom": {
+            "description": "When the hold was placed; null when it is not on hold. Only records whose held at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "heldAtTo": {
+            "description": "When the hold was placed; null when it is not on hold. Only records whose held at is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "holdNote": {
+            "description": "What the person who held it wrote; empty when there is no note or no hold. Only records whose hold note contains this text.",
+            "type": "string"
+          },
+          "holdReason": {
+            "description": "Why a person keeps it out of the pay run; null when it is not on hold. A held settlement\nkeeps its status, and approving, posting and paying it are refused until the hold is released. Only records whose hold reason is one of these.",
+            "items": {
+              "enum": [
+                "RateDispute",
+                "MissingPaperwork",
+                "NegativeNet",
+                "DeductionReview",
+                "Other"
+              ],
+              "type": "string",
+              "x-enumOf": "graphql.DriverSettlementHoldReason"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "holdReleasedAtFrom": {
+            "description": "When the last hold was released. Only records whose hold released at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "holdReleasedAtTo": {
+            "description": "When the last hold was released. Only records whose hold released at is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
           },
           "limit": {
             "description": "How many rows to return: 25 unless you ask, at most 100.",
@@ -48207,6 +48701,12 @@
               "exchangeRateDate",
               "grossEarningsMinor",
               "hasExceptions",
+              "heldAt",
+              "heldById",
+              "holdNote",
+              "holdReason",
+              "holdReleasedAt",
+              "holdReleasedById",
               "netPayMinor",
               "notes",
               "paidAt",
@@ -48811,10 +49311,41 @@
     },
     {
       "name": "settlement_list_pay_assignments",
-      "description": "List a driver's pay profile assignments, newest first: which profile paid them from when to when, and which one is in force today (inForce). Their share of each load shows when your data access reaches it.",
+      "description": "List a driver's pay profile assignments, newest first: which profile paid them from when to when, and which one is in force today (inForce). Their share of each load shows when your data access reaches it. Filters: workerId.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
+          "after": {
+            "description": "The nextCursor of the previous page, with every other argument unchanged; omit for the first page.",
+            "type": "string"
+          },
+          "fields": {
+            "description": "Only these columns of each row, besides its id, in what you read; a filter such as status or a has... flag is its own parameter, never a column here. The person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "items": {
+              "enum": [
+                "workerId",
+                "payProfileId",
+                "effectiveFrom",
+                "effectiveTo",
+                "splitPercent",
+                "rateOverrides",
+                "notes",
+                "version",
+                "createdAt",
+                "payProfile"
+              ],
+              "type": "string",
+              "x-enumOf": "settlement_list_pay_assignments.column"
+            },
+            "type": "array"
+          },
+          "limit": {
+            "description": "How many rows to return: 25 unless you ask, at most 100.",
+            "maximum": 100,
+            "minimum": 1,
+            "type": "integer",
+            "x-clamp": true
+          },
           "workerId": {
             "description": "The driver, from worker_list. Never guess one.",
             "type": "string",
@@ -57125,13 +57656,45 @@
     },
     {
       "name": "worker_list_injuries",
-      "description": "List injury and illness cases on the OSHA log, for one worker or a year, with the classification, days away or restricted and the workers' comp claim. Medical detail follows the injury permission. It yields the injuryId the injury tools take.",
+      "description": "List injury and illness cases on the OSHA log, for one worker or a year, with the classification, days away or restricted and the workers' comp claim. Medical detail follows the injury permission. It yields the injuryId the injury tools take. Filters: caseYear, openOnly, recordableOnly, workerId.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
+          "after": {
+            "description": "The nextCursor of the previous page, with every other argument unchanged; omit for the first page.",
+            "type": "string"
+          },
           "caseYear": {
             "description": "Only the cases of one calendar year's log, such as 2026.",
             "type": "integer"
+          },
+          "fields": {
+            "description": "Only these columns of each row, besides its id, in what you read; a filter such as status or a has... flag is its own parameter, never a column here. The person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "items": {
+              "enum": [
+                "workerId",
+                "caseNumber",
+                "caseYear",
+                "classification",
+                "illnessType",
+                "treatment",
+                "status",
+                "recordable",
+                "occurredAt",
+                "returnedToWorkAt",
+                "description",
+                "bodyPart",
+                "daysAway",
+                "daysRestricted",
+                "privacyCase",
+                "logName",
+                "claimStatus",
+                "worker"
+              ],
+              "type": "string",
+              "x-enumOf": "worker_list_injuries.column"
+            },
+            "type": "array"
           },
           "limit": {
             "description": "How many rows to return: 25 unless you ask, at most 100.",
@@ -57630,13 +58193,43 @@
     },
     {
       "name": "worker_list_training",
-      "description": "List one worker's training assignments with each course, its status, due date, completion, score and when it expires. It yields the trainingRecordId the training tools take.",
+      "description": "List one worker's training assignments with each course, its status, due date, completion, score and when it expires. It yields the trainingRecordId the training tools take. Filters: includeClosed, workerId.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
+          "after": {
+            "description": "The nextCursor of the previous page, with every other argument unchanged; omit for the first page.",
+            "type": "string"
+          },
+          "fields": {
+            "description": "Only these columns of each row, besides its id, in what you read; a filter such as status or a has... flag is its own parameter, never a column here. The person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "items": {
+              "enum": [
+                "courseId",
+                "course",
+                "status",
+                "assignedAt",
+                "dueAt",
+                "completedAt",
+                "expiresAt",
+                "score",
+                "passed"
+              ],
+              "type": "string",
+              "x-enumOf": "worker_list_training.column"
+            },
+            "type": "array"
+          },
           "includeClosed": {
             "description": "Also the completed, waived, cancelled and expired assignments, not only the open ones. Defaults to false, the open ones only.",
             "type": "boolean"
+          },
+          "limit": {
+            "description": "How many rows to return: 25 unless you ask, at most 100.",
+            "maximum": 100,
+            "minimum": 1,
+            "type": "integer",
+            "x-clamp": true
           },
           "workerId": {
             "description": "The worker, from worker_list. Never guess one.",
@@ -57912,6 +58505,50 @@
       "policy": {
         "kind": "query",
         "resource": "training_course",
+        "operation": "read",
+        "scope": "tenant",
+        "defaultTier": "AutoExecute",
+        "maxTier": "AutoExecute",
+        "promotableTo": "AutoExecute",
+        "egress": [
+          "none"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "lookup",
+        "reversible": true,
+        "idempotent": true,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Reads records the caller may already open; it changes nothing and sends nothing."
+      }
+    },
+    {
+      "name": "worker_list_week_hours",
+      "description": "List this week's hours for the workers on the rota against their overtime line: worked so far, still scheduled on their shifts, projected overtime and the day the shift that crosses the line falls on, most projected overtime first, then those with the most room. Each worker's id is the workerId the worker tools take. Its howToShow says how to show the week.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "limit": {
+            "description": "How many workers nearest or past the line, 12 by default, at most 25.",
+            "maximum": 25,
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "searchTerms": [
+        "overtime",
+        "hours this week",
+        "rota",
+        "timesheet",
+        "shifts"
+      ],
+      "policy": {
+        "kind": "query",
+        "resource": "timesheet",
         "operation": "read",
         "scope": "tenant",
         "defaultTier": "AutoExecute",

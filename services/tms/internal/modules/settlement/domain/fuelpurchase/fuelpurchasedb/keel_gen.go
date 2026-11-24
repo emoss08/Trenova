@@ -3378,6 +3378,537 @@ func beforeCreateImportRow(ctx context.Context, p unsafe.Pointer) error {
 	return (*fuelpurchase.ImportRow)(p).BeforeCreate(ctx)
 }
 
+// tractorDaysTable is the schema of fuelpurchase.TractorDay.
+var tractorDaysTable = schema.Table{
+	Name:   "fuel_tractor_daily",
+	Quoted: `"fuel_tractor_daily"`,
+	Alias:  "ftd",
+	Model:  "fuelpurchase.TractorDay",
+	Label:  `Tractor Day`,
+	Plural: `Tractor Days`,
+	Columns: []schema.Column{
+		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`, JSON: `organizationId`},
+		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
+		{Name: "day_at", Quoted: `"day_at"`, Field: "DayAt", Kind: schema.KindInt64, Flags: schema.FlagPK, Label: `Day At`, JSON: `dayAt`},
+		{Name: "tractor_id", Quoted: `"tractor_id"`, Field: "TractorID", Kind: schema.KindString, Flags: schema.FlagPK, Label: `Tractor ID`, JSON: `tractorId`},
+		{Name: "purchases", Quoted: `"purchases"`, Field: "Purchases", Kind: schema.KindInt64, Flags: 0, Label: `Purchases`, JSON: `purchases`},
+		{Name: "gallons", Quoted: `"gallons"`, Field: "Gallons", Kind: schema.KindOther, Flags: 0, Label: `Gallons`, JSON: `gallons`},
+		{Name: "amount_minor", Quoted: `"amount_minor"`, Field: "AmountMinor", Kind: schema.KindInt64, Flags: 0, Label: `Amount Minor`, JSON: `amountMinor`},
+		{Name: "currency_code", Quoted: `"currency_code"`, Field: "CurrencyCode", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Currency Code`, JSON: `currencyCode`},
+		{Name: "currencies", Quoted: `"currencies"`, Field: "Currencies", Kind: schema.KindInt64, Flags: 0, Label: `Currencies`, JSON: `currencies`},
+		{Name: "miles", Quoted: `"miles"`, Field: "Miles", Kind: schema.KindOther, Flags: 0, Label: `Miles`, JSON: `miles`},
+		{Name: "refreshed_at", Quoted: `"refreshed_at"`, Field: "RefreshedAt", Kind: schema.KindInt64, Flags: 0, Label: `Refreshed At`, JSON: `refreshedAt`},
+	},
+	PK:         []int32{0, 1, 2, 3},
+	Tenant:     []int32{0, 1},
+	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10},
+	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10},
+	Update:     []int32{4, 5, 6, 7, 8, 9, 10},
+	Returning:  nil,
+	Version:    -1,
+	AutoID:     -1,
+	AutoCreate: -1,
+	AutoUpdate: -1,
+	IDPrefix:   "",
+	New:        newTractorDay,
+	NewN:       newNTractorDay,
+	Size:       unsafe.Sizeof(fuelpurchase.TractorDay{}),
+	Ptr:        ptrTractorDay,
+	Value:      valueTractorDay,
+}
+
+var tractorDaysRef = keel.Ref{Table: &tractorDaysTable}
+
+// TractorDaysTable is the table of fuelpurchase.TractorDay.
+type TractorDaysTable struct {
+	keel.TableBase
+	OrganizationID keelkinds.PulidIDCol
+	BusinessUnitID keelkinds.PulidIDCol
+	DayAt          keel.Int64Col
+	TractorID      keelkinds.PulidIDCol
+	Purchases      keel.Int64Col
+	Gallons        keelkinds.DecimalDecimalCol
+	AmountMinor    keel.Int64Col
+	CurrencyCode   keel.StringCol
+	Currencies     keel.Int64Col
+	Miles          keelkinds.DecimalDecimalCol
+	RefreshedAt    keel.Int64Col
+}
+
+// TractorDays references the fuel_tractor_daily table.
+var TractorDays = &TractorDaysTable{
+	TableBase:      keel.TableBase{Ref: &tractorDaysRef},
+	OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &tractorDaysRef, Index: 0}}},
+	BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &tractorDaysRef, Index: 1}}},
+	DayAt:          keel.Int64Col{Col: keel.Col{Ref: &tractorDaysRef, Index: 2}},
+	TractorID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &tractorDaysRef, Index: 3}}},
+	Purchases:      keel.Int64Col{Col: keel.Col{Ref: &tractorDaysRef, Index: 4}},
+	Gallons:        keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &tractorDaysRef, Index: 5}}},
+	AmountMinor:    keel.Int64Col{Col: keel.Col{Ref: &tractorDaysRef, Index: 6}},
+	CurrencyCode:   keel.StringCol{Col: keel.Col{Ref: &tractorDaysRef, Index: 7}},
+	Currencies:     keel.Int64Col{Col: keel.Col{Ref: &tractorDaysRef, Index: 8}},
+	Miles:          keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &tractorDaysRef, Index: 9}}},
+	RefreshedAt:    keel.Int64Col{Col: keel.Col{Ref: &tractorDaysRef, Index: 10}},
+}
+
+// BuildTractorDays builds the table of fuel_tractor_daily for ref. Generated relation and alias methods call it.
+func BuildTractorDays(r *keel.Ref) *TractorDaysTable {
+	return &TractorDaysTable{
+		TableBase:      keel.TableBase{Ref: r},
+		OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		DayAt:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 2}},
+		TractorID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		Purchases:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 4}},
+		Gallons:        keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 5}}},
+		AmountMinor:    keel.Int64Col{Col: keel.Col{Ref: r, Index: 6}},
+		CurrencyCode:   keel.StringCol{Col: keel.Col{Ref: r, Index: 7}},
+		Currencies:     keel.Int64Col{Col: keel.Col{Ref: r, Index: 8}},
+		Miles:          keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 9}}},
+		RefreshedAt:    keel.Int64Col{Col: keel.Col{Ref: r, Index: 10}},
+	}
+}
+
+// TractorDaysSchema returns the schema of fuel_tractor_daily.
+func TractorDaysSchema() *schema.Table { return &tractorDaysTable }
+
+// As returns a handle that references fuel_tractor_daily under its own alias.
+func (t *TractorDaysTable) As(alias string) *TractorDaysTable {
+	return keel.Alias(t.Ref, alias, BuildTractorDays)
+}
+
+// TractorDaysQuery is a query over fuelpurchase.TractorDay.
+type TractorDaysQuery struct{ keel.QueryCore }
+
+var _ keel.Query[*fuelpurchase.TractorDay] = (*TractorDaysQuery)(nil)
+
+// Query starts a query over the table.
+func (t *TractorDaysTable) Query() keel.Query[*fuelpurchase.TractorDay] {
+	return &TractorDaysQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see TractorDaysQuery.Where.
+func (t *TractorDaysTable) Where(ps ...keel.Pred) keel.Query[*fuelpurchase.TractorDay] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see TractorDaysQuery.Pick.
+func (t *TractorDaysTable) Pick(es ...keel.Expr) keel.Query[*fuelpurchase.TractorDay] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see TractorDaysQuery.Load.
+func (t *TractorDaysTable) Load(ls ...keel.Loader) keel.Query[*fuelpurchase.TractorDay] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see TractorDaysQuery.Omit.
+func (t *TractorDaysTable) Omit(cols ...keel.Column) keel.Query[*fuelpurchase.TractorDay] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see TractorDaysQuery.Order.
+func (t *TractorDaysTable) Order(os ...keel.Order) keel.Query[*fuelpurchase.TractorDay] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see TractorDaysQuery.Limit.
+func (t *TractorDaysTable) Limit(n int) keel.Query[*fuelpurchase.TractorDay] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see TractorDaysQuery.Group.
+func (t *TractorDaysTable) Group(es ...keel.Expr) keel.Query[*fuelpurchase.TractorDay] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see TractorDaysQuery.GroupingSets.
+func (t *TractorDaysTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*fuelpurchase.TractorDay] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see TractorDaysQuery.Rollup.
+func (t *TractorDaysTable) Rollup(es ...keel.Expr) keel.Query[*fuelpurchase.TractorDay] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see TractorDaysQuery.Cube.
+func (t *TractorDaysTable) Cube(es ...keel.Expr) keel.Query[*fuelpurchase.TractorDay] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see TractorDaysQuery.AllTenants.
+func (t *TractorDaysTable) AllTenants() keel.Query[*fuelpurchase.TractorDay] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see TractorDaysQuery.Join.
+func (t *TractorDaysTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*fuelpurchase.TractorDay] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see TractorDaysQuery.LeftJoin.
+func (t *TractorDaysTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*fuelpurchase.TractorDay] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see TractorDaysQuery.LeftJoinLateral.
+func (t *TractorDaysTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*fuelpurchase.TractorDay] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see TractorDaysQuery.JoinLateral.
+func (t *TractorDaysTable) JoinLateral(sub keel.LateralSource) keel.Query[*fuelpurchase.TractorDay] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see TractorDaysQuery.Lock.
+func (t *TractorDaysTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*fuelpurchase.TractorDay] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see TractorDaysQuery.DistinctOn.
+func (t *TractorDaysTable) DistinctOn(es ...keel.Expr) keel.Query[*fuelpurchase.TractorDay] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see TractorDaysQuery.Cache.
+func (t *TractorDaysTable) Cache(opts ...keel.CacheOption) keel.Query[*fuelpurchase.TractorDay] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see TractorDaysQuery.LoadStrategy.
+func (t *TractorDaysTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*fuelpurchase.TractorDay] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see TractorDaysQuery.With.
+func (t *TractorDaysTable) With(ctes ...*keel.CTETable) keel.Query[*fuelpurchase.TractorDay] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see TractorDaysQuery.Compute.
+func (t *TractorDaysTable) Compute(col keel.Column, e keel.Expr) keel.Query[*fuelpurchase.TractorDay] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *TractorDaysTable) Create(ctx context.Context, db *keel.DB, row *fuelpurchase.TractorDay) error {
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *TractorDaysTable) CreateMany(ctx context.Context, db *keel.DB, rows []*fuelpurchase.TractorDay) error {
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
+}
+
+// Save updates row by its primary key.
+func (t *TractorDaysTable) Save(ctx context.Context, db *keel.DB, row *fuelpurchase.TractorDay, cols ...keel.Column) error {
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *TractorDaysTable) SaveExcept(ctx context.Context, db *keel.DB, row *fuelpurchase.TractorDay, cols ...keel.Column) error {
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *TractorDaysTable) DeleteRow(ctx context.Context, db *keel.DB, row *fuelpurchase.TractorDay) error {
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *TractorDaysTable) Upsert(ctx context.Context, db *keel.DB, rows []*fuelpurchase.TractorDay, c keel.Conflict) ([]bool, error) {
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *TractorDaysTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*fuelpurchase.TractorDay, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *TractorDaysTable) Copy(ctx context.Context, db *keel.DB, rows []*fuelpurchase.TractorDay) (int64, error) {
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *TractorDaysQuery) Where(ps ...keel.Pred) keel.Query[*fuelpurchase.TractorDay] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *TractorDaysQuery) Pick(es ...keel.Expr) keel.Query[*fuelpurchase.TractorDay] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *TractorDaysQuery) Omit(cols ...keel.Column) keel.Query[*fuelpurchase.TractorDay] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *TractorDaysQuery) Load(ls ...keel.Loader) keel.Query[*fuelpurchase.TractorDay] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *TractorDaysQuery) Order(os ...keel.Order) keel.Query[*fuelpurchase.TractorDay] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *TractorDaysQuery) Distinct() keel.Query[*fuelpurchase.TractorDay] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *TractorDaysQuery) Group(es ...keel.Expr) keel.Query[*fuelpurchase.TractorDay] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *TractorDaysQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*fuelpurchase.TractorDay] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *TractorDaysQuery) Rollup(es ...keel.Expr) keel.Query[*fuelpurchase.TractorDay] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *TractorDaysQuery) Cube(es ...keel.Expr) keel.Query[*fuelpurchase.TractorDay] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *TractorDaysQuery) Window(name string, w keel.Window) keel.Query[*fuelpurchase.TractorDay] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *TractorDaysQuery) Having(ps ...keel.Pred) keel.Query[*fuelpurchase.TractorDay] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *TractorDaysQuery) Limit(n int) keel.Query[*fuelpurchase.TractorDay] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *TractorDaysQuery) Offset(n int) keel.Query[*fuelpurchase.TractorDay] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *TractorDaysQuery) DistinctOn(es ...keel.Expr) keel.Query[*fuelpurchase.TractorDay] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *TractorDaysQuery) AllTenants() keel.Query[*fuelpurchase.TractorDay] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *TractorDaysQuery) CustomPlan() keel.Query[*fuelpurchase.TractorDay] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *TractorDaysQuery) Timeout(d time.Duration) keel.Query[*fuelpurchase.TractorDay] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *TractorDaysQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*fuelpurchase.TractorDay] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *TractorDaysQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*fuelpurchase.TractorDay] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *TractorDaysQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*fuelpurchase.TractorDay] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *TractorDaysQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*fuelpurchase.TractorDay] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *TractorDaysQuery) JoinLateral(sub keel.LateralSource) keel.Query[*fuelpurchase.TractorDay] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *TractorDaysQuery) Cache(opts ...keel.CacheOption) keel.Query[*fuelpurchase.TractorDay] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *TractorDaysQuery) With(ctes ...*keel.CTETable) keel.Query[*fuelpurchase.TractorDay] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *TractorDaysQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*fuelpurchase.TractorDay] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *TractorDaysQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*fuelpurchase.TractorDay] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *TractorDaysQuery) Clone() keel.Query[*fuelpurchase.TractorDay] {
+	return &TractorDaysQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *TractorDaysQuery) One(ctx context.Context, db *keel.DB) (*fuelpurchase.TractorDay, error) {
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*fuelpurchase.TractorDay)(row), err
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *TractorDaysQuery) First(ctx context.Context, db *keel.DB) (*fuelpurchase.TractorDay, error) {
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*fuelpurchase.TractorDay)(row), err
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *TractorDaysQuery) List(ctx context.Context, db *keel.DB) ([]*fuelpurchase.TractorDay, error) {
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*fuelpurchase.TractorDay)(unsafe.Pointer(&rows)), err
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *TractorDaysQuery) All(ctx context.Context, db *keel.DB) ([]*fuelpurchase.TractorDay, error) {
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*fuelpurchase.TractorDay)(unsafe.Pointer(&rows)), err
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *TractorDaysQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*fuelpurchase.TractorDay, error) {
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*fuelpurchase.TractorDay)(unsafe.Pointer(&rows)), err
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *TractorDaysQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*fuelpurchase.TractorDay], error) {
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*fuelpurchase.TractorDay])(unsafe.Pointer(&page)), err
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *TractorDaysQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*fuelpurchase.TractorDay) error) error {
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*fuelpurchase.TractorDay)(unsafe.Pointer(&rows)))
+	})
+}
+
+func newTractorDay() unsafe.Pointer { return unsafe.Pointer(new(fuelpurchase.TractorDay)) }
+
+func newNTractorDay(n int) unsafe.Pointer {
+	return unsafe.Pointer(unsafe.SliceData(make([]fuelpurchase.TractorDay, n)))
+}
+
+func ptrTractorDay(p unsafe.Pointer, c int32) any {
+	r := (*fuelpurchase.TractorDay)(p)
+	switch c {
+	case 0:
+		return (*string)(unsafe.Pointer(&r.OrganizationID))
+	case 1:
+		return (*string)(unsafe.Pointer(&r.BusinessUnitID))
+	case 2:
+		return &r.DayAt
+	case 3:
+		return (*string)(unsafe.Pointer(&r.TractorID))
+	case 4:
+		return (*int64)(unsafe.Pointer(&r.Purchases))
+	case 5:
+		return &r.Gallons
+	case 6:
+		return &r.AmountMinor
+	case 7:
+		return &r.CurrencyCode
+	case 8:
+		return (*int64)(unsafe.Pointer(&r.Currencies))
+	case 9:
+		return &r.Miles
+	case 10:
+		return &r.RefreshedAt
+	}
+	return nil
+}
+
+func valueTractorDay(p unsafe.Pointer, c int32) any {
+	r := (*fuelpurchase.TractorDay)(p)
+	switch c {
+	case 0:
+		return string(r.OrganizationID)
+	case 1:
+		return string(r.BusinessUnitID)
+	case 2:
+		return r.DayAt
+	case 3:
+		return string(r.TractorID)
+	case 4:
+		return int64(r.Purchases)
+	case 5:
+		return r.Gallons
+	case 6:
+		return r.AmountMinor
+	case 7:
+		if r.CurrencyCode == "" {
+			return nil
+		}
+		return r.CurrencyCode
+	case 8:
+		return int64(r.Currencies)
+	case 9:
+		return r.Miles
+	case 10:
+		return r.RefreshedAt
+	}
+	return nil
+}
+
 func init() {
 	fuelCardsTable.Relations[0].Target = workerdb.WorkersSchema()
 	fuelCardsTable.Relations[1].Target = tractordb.TractorsSchema()

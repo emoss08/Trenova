@@ -16,6 +16,9 @@ import {
   RecordTrainingResultPane,
 } from "../development-panes";
 import DevelopmentTab from "../development-tab";
+import { WorkerFormDropContext } from "../../use-worker-form-gate";
+import { permissionManifest } from "@/test/permissions";
+import { usePermissionStore } from "@trenova/shared/stores/permission-store";
 
 const mocks = vi.hoisted(() => ({
   fetchWorkerTrainingSummary: vi.fn(),
@@ -176,23 +179,26 @@ function renderTab(open: Partial<WorkerOpenState>, view: "training" | "reviews" 
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
   });
   const onOpen = vi.fn();
+  const dropForm = vi.fn();
   const view_ = render(
     <QueryClientProvider client={client}>
-      <WorkPaneProvider>
-        <WorkPaneHost>
-          <DevelopmentTab
-            workerId="wrk_1"
-            worker={worker}
-            view={view}
-            open={{ ...CLOSED_WORKER_OPEN_STATE, ...open }}
-            onOpen={onOpen}
-            shown
-          />
-        </WorkPaneHost>
-      </WorkPaneProvider>
+      <WorkerFormDropContext value={dropForm}>
+        <WorkPaneProvider>
+          <WorkPaneHost>
+            <DevelopmentTab
+              workerId="wrk_1"
+              worker={worker}
+              view={view}
+              open={{ ...CLOSED_WORKER_OPEN_STATE, ...open }}
+              onOpen={onOpen}
+              shown
+            />
+          </WorkPaneHost>
+        </WorkPaneProvider>
+      </WorkerFormDropContext>
     </QueryClientProvider>,
   );
-  return { onOpen, client, ...view_ };
+  return { onOpen, dropForm, client, ...view_ };
 }
 
 /** One page of the records connection, as the server answers `WorkerTrainingRecords`. */
@@ -301,6 +307,29 @@ describe("DevelopmentTab panes from the address", () => {
 
     await waitFor(() => expect(mocks.fetchWorkerPerformanceReviews).toHaveBeenCalled());
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
+  it("takes the edit form out of the address when the review it names is no longer a draft", async () => {
+    usePermissionStore.setState({ manifest: permissionManifest({}), isLoading: false });
+    mocks.fetchWorkerTrainingSummary.mockResolvedValue(summary);
+    mocks.fetchWorkerPerformanceReviews.mockResolvedValue([{ ...draft, status: "Submitted" }]);
+    const { dropForm } = renderTab({ form: "edit-review", review: "prv_2026" }, "reviews");
+
+    await waitFor(() => expect(dropForm).toHaveBeenCalledOnce());
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    usePermissionStore.setState({ manifest: null });
+  });
+
+  it("takes the result form out of the address when the training it names does not exist", async () => {
+    usePermissionStore.setState({ manifest: permissionManifest({}), isLoading: false });
+    mocks.fetchWorkerTrainingSummary.mockResolvedValue(summary);
+    mocks.fetchWorkerTrainingRecords.mockResolvedValue(page([hazmatRecord]));
+    mocks.fetchWorkerTrainingRecord.mockRejectedValue(new Error("not found"));
+    const { dropForm } = renderTab({ form: "record-training-result", training: "wtr_missing" });
+
+    await waitFor(() => expect(dropForm).toHaveBeenCalledOnce());
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    usePermissionStore.setState({ manifest: null });
   });
 
   it("reads an earlier record the address names from the records list when no course stands on it", async () => {

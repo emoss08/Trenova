@@ -1,0 +1,71 @@
+defaults:
+  agent: "Bench · Dispatch coverage agent"
+  tags: [beyond, board, coverage]
+
+scenarios:
+  - name: beyond-coverage-next-two-days
+    description: >
+      Where drivers fall short of the freight in the next two days. Trenova's freight forecast
+      balances each forecast area's drivers against the loads it expects, in four-hour slots
+      over the next 48 hours (the freight outlook). The answer is a board in the conversation
+      that draws the driverCover grid (forecast areas by slot, cover against need, short cells
+      hatched, uncertain cells outlined) and whose words place the shortfall as readings of
+      driverCover, never typed numbers. Nothing on the board or in the words speaks of a week or
+      a terminal. The forecast is computed from the fitted model and the live loads and
+      drivers, so the scenario sets nothing up.
+    steps:
+      - say: "where are we going to be short on drivers over the next couple of days?"
+        expect:
+          calls: ["show_answer|show_board"]
+          maxCalls: 5
+          maxFailedCalls: 1
+          noProposals: true
+          noRecordIds: true
+          board:
+            place: conversation
+            minReadings: 1
+            metrics: [driverCover]
+          rubric: >
+            Answers in the conversation with a board that draws driver cover against need by
+            forecast area over the next 48 hours. The words name where and when drivers run
+            short (or say plainly that no area is short), and every count of drivers or loads
+            short is a reading of driverCover, not a typed number. It speaks of forecast areas
+            and the next 48 hours or two days; it never says "next week", "this week",
+            "terminal" or "rota", and it claims no cause the board does not show.
+
+  - name: beyond-coverage-next-week-is-48-hours
+    description: >
+      A dispatcher asks about next week, which Trenova cannot answer: the freight forecast looks
+      48 hours ahead and drivers have no rota. The honest answer says plainly that Trenova
+      forecasts the next 48 hours and answers for those. A board, if drawn, is the 48-hour
+      driverCover grid; no board, title or figure may claim a week.
+    steps:
+      - say: "where are we short on drivers next week?"
+        expect:
+          maxCalls: 5
+          maxFailedCalls: 1
+          noProposals: true
+          noRecordIds: true
+          replyIncludes: ["48 hours|48-hour|two days|2 days|next couple of days"]
+          rubric: >
+            Says plainly that Trenova's forecast covers only the next 48 hours (not a week) and
+            then answers for those 48 hours: where drivers run short, or that none do. It never
+            presents a figure, a board title or a grid as covering next week or seven days, and
+            it does not invent a weekly shortfall, a rota or terminals.
+
+  - name: beyond-coverage-one-area-is-a-sentence
+    description: >
+      One area's next few hours is one fact, not a board: the answer is a sentence read from
+      the freight forecast.
+    steps:
+      - say: "are we short of drivers around Omaha in the next few hours?"
+        expect:
+          maxCalls: 4
+          maxFailedCalls: 1
+          noProposals: true
+          noRecordIds: true
+          noBoard: true
+          rubric: >
+            Answers in a sentence or two without a board, from the freight forecast: whether
+            the Omaha area is short of drivers in the coming hours, or that the forecast does not
+            list it as short. It states no driver or load count it did not read.

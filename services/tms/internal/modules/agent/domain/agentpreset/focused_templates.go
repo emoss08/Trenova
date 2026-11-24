@@ -67,6 +67,7 @@ func workforceCoordinatorTools() []string {
 		"worker_get",
 		"shipment_list",
 		"worker_list_time_off",
+		"metric_read",
 		"worker_request_pto",
 		"worker_update_pto",
 		"worker_approve_pto",
@@ -131,6 +132,7 @@ func fuelTaxClerkTools() []string {
 		"document_get",
 		"fuel_list_ifta_jurisdictions",
 		"fuel_list_purchases",
+		"metric_read",
 		"fuel_record_purchase",
 		"fuel_correct_purchase",
 		"fuel_delete_purchase",
@@ -147,6 +149,7 @@ func fuelTaxClerkTools() []string {
 		"fuel_recalculate_jurisdiction_miles",
 		"fuel_backfill_jurisdiction_miles",
 		"fuel_list_ifta_returns",
+		"fuel_get_ifta_return",
 		"fuel_generate_ifta_return",
 		"fuel_recalculate_ifta_return",
 		"fuel_delete_ifta_return",
@@ -161,6 +164,7 @@ func fuelTaxClerkTools() []string {
 func reportAnalystTools() []string {
 	return []string{
 		"report_list",
+		"metric_read",
 		"report_get",
 		"report_preview",
 		"report_run",

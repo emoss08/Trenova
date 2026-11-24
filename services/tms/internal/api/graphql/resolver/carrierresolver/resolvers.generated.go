@@ -4,12 +4,14 @@ package carrierresolver
 
 import (
 	resolvercore "github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
+	carriercoverports "github.com/emoss08/trenova/internal/modules/operations/ports/carriercoverports"
 	carrierservice "github.com/emoss08/trenova/internal/modules/parties/app/carrierservice"
 )
 
 type Deps struct {
 	*resolvercore.Core
 	CarrierService *carrierservice.Service
+	CarrierCover   carriercoverports.Reader
 }
 
 type CarrierInsurancePolicyResolver struct{ *Deps }

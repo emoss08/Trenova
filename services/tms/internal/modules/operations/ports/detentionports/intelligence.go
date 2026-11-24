@@ -36,16 +36,36 @@ type IntelligenceWindow struct {
 	MonthsEnd  int64
 }
 
+func NewIntelligenceWindow(first, last time.Time) IntelligenceWindow {
+	loc := first.Location()
+	after := last.AddDate(0, 0, 1)
+	months := first
+	if first.Day() != 1 {
+		months = time.Date(first.Year(), first.Month()+1, 1, 0, 0, 0, 0, loc)
+	}
+	end := time.Date(after.Year(), after.Month(), 1, 0, 0, 0, 0, loc)
+	if !end.After(months) {
+		months, end = after, after
+	}
+
+	return IntelligenceWindow{
+		From:       first.Unix(),
+		To:         after.Unix() - 1,
+		MonthsFrom: months.Unix(),
+		MonthsEnd:  end.Unix(),
+	}
+}
+
 // IntelligenceRequest scopes one detention intelligence read: the window and the window before it
 // for comparison, and the organization's time zone, which weekdays and arrival hours are counted
-// in. A location narrows every figure to one facility, which is what its scorecard reads.
+// in. Locations narrow every figure to those facilities: one is what a scorecard reads.
 type IntelligenceRequest struct {
-	TenantInfo pagination.TenantInfo
-	Current    IntelligenceWindow
-	Previous   IntelligenceWindow
-	Timezone   string
-	LocationID pulid.ID
-	Limit      int
+	TenantInfo  pagination.TenantInfo
+	Current     IntelligenceWindow
+	Previous    IntelligenceWindow
+	Timezone    string
+	LocationIDs []pulid.ID
+	Limit       int
 }
 
 type IntelligenceTotals struct {
@@ -212,8 +232,26 @@ type IntelligenceRollup struct {
 	PolicyUses         []PolicyUse
 }
 
+type IntelligenceSummary struct {
+	Totals   IntelligenceTotals
+	Recovery []RecoveryBucket
+}
+
+func (s *IntelligenceSummary) Bucket(name string) RecoveryBucket {
+	for _, bucket := range s.Recovery {
+		if bucket.Bucket == name {
+			return bucket
+		}
+	}
+
+	return RecoveryBucket{Bucket: name}
+}
+
 type DetentionIntelligenceRepository interface {
 	Intelligence(ctx context.Context, req *IntelligenceRequest) (*IntelligenceRollup, error)
+	FacilityFigures(ctx context.Context, req *IntelligenceRequest) ([]FacilityIntelligence, error)
+	TotalFigures(ctx context.Context, req *IntelligenceRequest) (*IntelligenceSummary, error)
+	ArrivalFigures(ctx context.Context, req *IntelligenceRequest) ([]ArrivalCell, error)
 	// OrganizationTimezone is the IANA zone the organization's days are counted in.
 	OrganizationTimezone(ctx context.Context, tenant pagination.TenantInfo) (string, error)
 }

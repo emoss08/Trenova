@@ -3,6 +3,8 @@ package agentruntime
 import (
 	"cmp"
 
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/replycheck"
+
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aimetrics"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/toolcall"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aianalytics"
@@ -47,7 +49,8 @@ const (
 	ReaskCommand     = "command"
 	ReaskGrounding   = "grounding"
 	ReaskPlacement   = "placement"
-	ReaskBoard       = "board"
+	ReaskBoard       = replycheck.GuardBoard
+	ReaskDraft       = replycheck.GuardDraft
 	ReaskBudgetSpent = "budget_spent"
 	ReaskStuck       = "stuck"
 )

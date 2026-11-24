@@ -54,3 +54,31 @@ func TestEDITransferCounterparty_IsThePartnerTheReadingOrganizationKeeps(t *test
 
 	assert.Nil(t, (&editransfer.EDITransfer{TargetOrganizationID: receiver}).Counterparty(receiver))
 }
+
+func TestEDITransferOwnShipment_IsTheShipmentOnTheReadingOrganizationsSide(t *testing.T) {
+	t.Parallel()
+
+	sender := pulid.MustNew("org_")
+	receiver := pulid.MustNew("org_")
+	sent := pulid.MustNew("shp_")
+	made := pulid.MustNew("shp_")
+	transfer := &editransfer.EDITransfer{
+		SourceOrganizationID: sender,
+		TargetOrganizationID: receiver,
+		SourceShipmentID:     sent,
+		TargetShipmentID:     made,
+	}
+	assert.Equal(t, made, transfer.OwnShipmentID(receiver), "the shipment the tender made")
+	assert.Equal(t, sent, transfer.OwnShipmentID(sender), "the shipment the tender came from")
+
+	fromFile := &editransfer.EDITransfer{
+		SourceOrganizationID: receiver,
+		TargetOrganizationID: receiver,
+		TargetShipmentID:     made,
+	}
+	assert.Equal(t, made, fromFile.OwnShipmentID(receiver))
+	assert.True(t, (&editransfer.EDITransfer{
+		SourceOrganizationID: sender,
+		TargetOrganizationID: receiver,
+	}).OwnShipmentID(receiver).IsNil(), "a tender not yet accepted made no shipment")
+}

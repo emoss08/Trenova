@@ -40,11 +40,11 @@ You hold more tools than are loaded on this turn. The loaded ones are on this re
 
 What find_tools can load, by area of Trenova:
 - AI & agents (4 tools): agent exception, agent run
-- Desk (3 tools): desk
+- Desk (4 tools): desk
 - Dispatch (1 tool): shipment move
 - Documents (2 tools): document
 - Equipment (2 tools): tractor
-- Fuel & tax (25 tools): fuel card, fuel purchase, fuel purchase import, fuel surcharge program, ifta return, jurisdiction mileage
+- Fuel & tax (26 tools): fuel card, fuel purchase, fuel purchase import, fuel surcharge program, ifta return, jurisdiction mileage
 - Human resources (1 tool): worker
 - Shipments (2 tools): shipment
 

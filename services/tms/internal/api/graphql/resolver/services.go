@@ -136,6 +136,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/app/recurringshipmentservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/routingguideservice"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/assignmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/carriercoverports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/checkcallports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/customertrackingports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/demandforecastports"
@@ -206,6 +207,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/carriersettlementports"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driversettlementports"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/settlementreleaseports"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/benefitsservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/driverportalinvitationservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/driverportalrecordsservice"
@@ -312,6 +314,7 @@ type Params struct {
 	RoutingGuideService               *routingguideservice.Service
 	TenderRepo                        tenderports.TenderRepository
 	CarrierService                    *carrierservice.Service
+	CarrierCover                      carriercoverports.Reader
 	CarrierIntelService               *carrierintelservice.Service
 	CarrierIntelEnrollmentService     *carrierintelenrollmentservice.Service
 	CarrierIntelMonitorService        *carrierintelmonitorservice.Service
@@ -540,6 +543,7 @@ type Params struct {
 	PermissionEngine                  permissionports.PermissionEngine
 	DriverPayService                  *driverpayservice.Service
 	DriverSettlementService           *driversettlementservice.Service
+	SettlementRelease                 settlementreleaseports.Reader
 	DriverSettlementReviewService     *driversettlementreviewservice.Service
 	DriverSettlementTransferService   *driversettlementtransferservice.Service
 	DriverSettlementWorkspaceService  *driversettlementworkspaceservice.Service
@@ -622,6 +626,7 @@ type Services struct {
 	RoutingGuideService               *routingguideservice.Service
 	TenderRepo                        tenderports.TenderRepository
 	CarrierService                    *carrierservice.Service
+	CarrierCover                      carriercoverports.Reader
 	CarrierIntelService               *carrierintelservice.Service
 	CarrierIntelEnrollmentService     *carrierintelenrollmentservice.Service
 	CarrierIntelMonitorService        *carrierintelmonitorservice.Service
@@ -843,6 +848,7 @@ type Services struct {
 	NotificationService               *notificationservice.Service
 	DriverPayService                  *driverpayservice.Service
 	DriverSettlementService           *driversettlementservice.Service
+	SettlementRelease                 settlementreleaseports.Reader
 	DriverSettlementReviewService     *driversettlementreviewservice.Service
 	DriverSettlementTransferService   *driversettlementtransferservice.Service
 	DriverSettlementWorkspaceService  *driversettlementworkspaceservice.Service
@@ -937,6 +943,7 @@ func newServices(p *Params) *Services {
 		RoutingGuideService:               p.RoutingGuideService,
 		TenderRepo:                        p.TenderRepo,
 		CarrierService:                    p.CarrierService,
+		CarrierCover:                      p.CarrierCover,
 		CarrierIntelService:               p.CarrierIntelService,
 		CarrierIntelEnrollmentService:     p.CarrierIntelEnrollmentService,
 		CarrierIntelMonitorService:        p.CarrierIntelMonitorService,
@@ -1163,6 +1170,7 @@ func newServices(p *Params) *Services {
 		ReportDashboardService:            p.ReportDashboardService,
 		DriverPayService:                  p.DriverPayService,
 		DriverSettlementService:           p.DriverSettlementService,
+		SettlementRelease:                 p.SettlementRelease,
 		DriverSettlementReviewService:     p.DriverSettlementReviewService,
 		DriverSettlementTransferService:   p.DriverSettlementTransferService,
 		DriverSettlementWorkspaceService:  p.DriverSettlementWorkspaceService,

@@ -25,7 +25,10 @@ import {
   type PageBinding,
   type PageRequest,
 } from "@/components/assistant/use-thread-model";
-import { ArtifactLinkContext, type ArtifactLinkRenderer } from "@/components/elements/ai-markdown";
+import {
+  ArtifactLinkContext,
+  type ArtifactLinkRenderer,
+} from "@/components/elements/artifact-link-context";
 import type { AgentChoice } from "@/lib/graphql/agent-definition";
 import { invalidateProposalViews } from "@/lib/proposal-cache";
 import { assistant } from "@/lib/queries/assistant";

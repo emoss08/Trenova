@@ -68,6 +68,8 @@ type snapshot struct {
 	forecaster *demandforecast.Forecaster
 	starts     []int64
 	balances   []demandforecast.AreaBalance
+	drivers    []freightmove.Driver
+	economics  dispatcheconomics.Economics
 	inputs     *freightmove.Inputs
 	names      map[pulid.ID]string
 }
@@ -116,6 +118,33 @@ func (s *Service) Outlook(
 	if out.Positionings, err = s.live(ctx, req.TenantInfo, snap); err != nil {
 		return nil, err
 	}
+
+	return out, nil
+}
+
+func (s *Service) Balances(
+	ctx context.Context,
+	req *freightoutlookports.Request,
+) (*freightoutlookports.Balances, error) {
+	if err := s.requireDispatchIntelligence(ctx); err != nil {
+		return nil, err
+	}
+	snap, err := s.forecast(ctx, req.TenantInfo)
+	if err != nil {
+		return nil, err
+	}
+	out := &freightoutlookports.Balances{
+		Quality:     snap.quality,
+		Refitting:   snap.refitting,
+		GeneratedAt: snap.now,
+		Starts:      []int64{},
+		Areas:       []demandforecast.AreaBalance{},
+	}
+	if snap.forecaster == nil {
+		return out, nil
+	}
+	out.Starts = snap.starts
+	out.Areas = snap.balances
 
 	return out, nil
 }
@@ -203,6 +232,44 @@ func (s *Service) snapshot(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 ) (*snapshot, error) {
+	snap, err := s.forecast(ctx, tenantInfo)
+	if err != nil || snap.forecaster == nil {
+		return snap, err
+	}
+
+	window := &demandforecastports.WindowRequest{
+		TenantInfo: tenantInfo,
+		From:       snap.now,
+		Until:      snap.now + horizonSeconds,
+	}
+	lanes, err := s.repo.ListOpenLanes(ctx, window)
+	if err != nil {
+		return nil, err
+	}
+	departures, err := s.repo.ListDepartures(ctx, window)
+	if err != nil {
+		return nil, err
+	}
+
+	snap.inputs = &freightmove.Inputs{
+		Now:            snap.now,
+		Grid:           snap.forecaster.Grid(),
+		Areas:          snap.balances,
+		Drivers:        snap.drivers,
+		Lanes:          lanesOf(lanes),
+		Departures:     departuresOf(departures),
+		EmptyMileCents: snap.economics.EmptyMileCents,
+		MarginPercent:  snap.economics.CoverageMarginPercent,
+		Valuer:         snap.forecaster,
+	}
+
+	return snap, nil
+}
+
+func (s *Service) forecast(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+) (*snapshot, error) {
 	now := s.clock()
 	standing, err := s.forecasts.Standing(ctx, tenantInfo)
 	if err != nil {
@@ -247,35 +314,12 @@ func (s *Service) snapshot(
 		return snap, nil
 	}
 
-	window := &demandforecastports.WindowRequest{
-		TenantInfo: tenantInfo,
-		From:       now,
-		Until:      now + horizonSeconds,
-	}
-	lanes, err := s.repo.ListOpenLanes(ctx, window)
-	if err != nil {
-		return nil, err
-	}
-	departures, err := s.repo.ListDepartures(ctx, window)
-	if err != nil {
-		return nil, err
-	}
-
 	snap.forecaster = forecaster
+	snap.drivers = drivers
+	snap.economics = economics
 	snap.starts = forecaster.OutlookStarts()
 	for _, cell := range forecaster.Cells() {
 		snap.balances = append(snap.balances, forecaster.Balance(cell, snap.starts))
-	}
-	snap.inputs = &freightmove.Inputs{
-		Now:            now,
-		Grid:           forecaster.Grid(),
-		Areas:          snap.balances,
-		Drivers:        drivers,
-		Lanes:          lanesOf(lanes),
-		Departures:     departuresOf(departures),
-		EmptyMileCents: economics.EmptyMileCents,
-		MarginPercent:  economics.CoverageMarginPercent,
-		Valuer:         forecaster,
 	}
 
 	return snap, nil

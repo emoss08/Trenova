@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/askuser"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimetools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/toolcall"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/toolwords"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/turnhistory"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolcatalog"
 	"github.com/emoss08/trenova/internal/modules/agent/app/planwording"
@@ -144,8 +145,9 @@ type ToolSet struct {
 	Opened []string
 	// NotOnPlan are the add-ons the organization's plan leaves out, for the
 	// prompt to name; empty when everything is on.
-	NotOnPlan []agentturn.PlanAddOn
-	offPlan   map[platformcatalog.FeatureKey]permissionports.PlanDenial
+	NotOnPlan  []agentturn.PlanAddOn
+	offPlan    map[platformcatalog.FeatureKey]permissionports.PlanDenial
+	DataAccess permission.FieldSensitivity
 }
 
 func (s *Access) NewToolSet(ctx context.Context, req *ToolSetRequest) *ToolSet {
@@ -183,7 +185,8 @@ func (s *Access) openToolSet(ctx context.Context, req *ToolSetRequest) *ToolSet 
 		Usable: func(name string) bool {
 			return len(s.PermittedTools(ctx, req.Actor, []string{name})) == 1
 		},
-		Self: req.Definition.ID,
+		Self:       req.Definition.ID,
+		DataAccess: req.Definition.DataAccessSensitivity(),
 	}
 	s.readPlan(ctx, set)
 
@@ -237,6 +240,7 @@ func (s *Access) openToolSet(ctx context.Context, req *ToolSetRequest) *ToolSet 
 		set.Preselected = append(set.Preselected, ranked[idx].Name)
 		s.Load(set, ranked[idx].Name)
 	}
+	s.openMetrics(set, selected, text)
 	s.carryOver(set, req.History)
 
 	return set
@@ -536,12 +540,13 @@ func (s *Access) ResolveFind(
 			Content: "Say what you need in a few words — the tools are matched against it.",
 		}
 	}
+	metrics := s.findMetrics(ctx, set, actor, need)
 	// A turn that was sent everything has nothing left to load; the answer
 	// can still say what exists beyond the agent.
 	if !set.Searchable() {
 		content, handOff := s.nothingLoaded(ctx, set, actor, need)
 
-		return FindAnswer{Content: content, HandOff: handOff}
+		return FindAnswer{Content: metrics.WithTools(content), HandOff: handOff}
 	}
 
 	found := s.withNamedTools(set.Allowed, need, s.catalog.FindHybrid(agenttoolcatalog.Query{
@@ -560,6 +565,9 @@ func (s *Access) ResolveFind(
 	}
 
 	if len(added) == 0 && len(callable) == 0 && len(reached) == 0 {
+		if metrics.Text != "" {
+			return FindAnswer{Content: metrics.Text, Found: metrics.Names(names)}
+		}
 		content, handOff := s.nothingLoaded(ctx, set, actor, need)
 
 		return FindAnswer{Content: content, Found: names, HandOff: handOff}
@@ -593,7 +601,10 @@ func (s *Access) ResolveFind(
 		fmt.Fprintf(&b, "\nNothing new matched %q beyond those.", need)
 	}
 
-	return FindAnswer{Content: strings.TrimRight(b.String(), "\n"), Found: names}
+	return FindAnswer{
+		Content: metrics.WithTools(strings.TrimRight(b.String(), "\n")),
+		Found:   metrics.Names(names),
+	}
 }
 
 type foundLoad struct {
@@ -690,7 +701,7 @@ func (s *Access) withNamedTools(
 	found []agenttoolports.AgentToolDescriptor,
 ) []agenttoolports.AgentToolDescriptor {
 	named := make([]agenttoolports.AgentToolDescriptor, 0, 4)
-	for _, word := range strings.FieldsFunc(need, notToolNameRune) {
+	for _, word := range toolwords.Named(need) {
 		if !slices.Contains(allowed, word) ||
 			slices.ContainsFunc(named, func(d agenttoolports.AgentToolDescriptor) bool {
 				return d.Name == word
@@ -718,10 +729,6 @@ func (s *Access) withNamedTools(
 	}
 
 	return named
-}
-
-func notToolNameRune(r rune) bool {
-	return (r < 'a' || r > 'z') && (r < '0' || r > '9') && r != '_'
 }
 
 // writeToolLines names each tool by its first sentence, and for one done

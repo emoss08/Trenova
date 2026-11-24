@@ -11,12 +11,14 @@ import (
 	driversettlementworkspaceservice "github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementworkspaceservice"
 	driverpayports "github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
 	driversettlementports "github.com/emoss08/trenova/internal/modules/settlement/ports/driversettlementports"
+	settlementreleaseports "github.com/emoss08/trenova/internal/modules/settlement/ports/settlementreleaseports"
 )
 
 type Deps struct {
 	*resolvercore.Core
 	DriverPayService                 *driverpayservice.Service
 	DriverSettlementService          *driversettlementservice.Service
+	SettlementRelease                settlementreleaseports.Reader
 	DriverSettlementTransferService  *driversettlementtransferservice.Service
 	DriverSettlementWorkspaceService *driversettlementworkspaceservice.Service
 	SettlementControlService         *settlementcontrolservice.Service

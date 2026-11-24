@@ -480,6 +480,7 @@ func FromServices(s *Services) *Resolver {
 	carrierDeps := &carrierresolver.Deps{
 		Core:           s.Core,
 		CarrierService: s.CarrierService,
+		CarrierCover:   s.CarrierCover,
 	}
 	carriercapacityDeps := &carriercapacityresolver.Deps{
 		Core:                   s.Core,
@@ -621,6 +622,7 @@ func FromServices(s *Services) *Resolver {
 		Core:                             s.Core,
 		DriverPayService:                 s.DriverPayService,
 		DriverSettlementService:          s.DriverSettlementService,
+		SettlementRelease:                s.SettlementRelease,
 		DriverSettlementTransferService:  s.DriverSettlementTransferService,
 		DriverSettlementWorkspaceService: s.DriverSettlementWorkspaceService,
 		SettlementControlService:         s.SettlementControlService,

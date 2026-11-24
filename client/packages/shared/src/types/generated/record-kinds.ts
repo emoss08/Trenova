@@ -81,6 +81,7 @@ export const RecordKindIDPrefix = {
   ifta_jurisdiction: "ifj_",
   ifta_mileage_entry: "ifme_",
   ifta_return: "ifr_",
+  ifta_return_line: "ifrl_",
   inbound_mailbox: "imbx_",
   inbound_message: "imsg_",
   insight: "inst_",

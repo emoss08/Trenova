@@ -6,5 +6,9 @@ import (
 )
 
 var Module = fx.Module("assistant-artifacts",
-	fx.Provide(fx.Annotate(New, fx.As(new(assistantports.AssistantArtifactService)))),
+	fx.Provide(fx.Annotate(
+		New,
+		fx.As(new(assistantports.AssistantArtifactService)),
+		fx.As(new(assistantports.ListSizer)),
+	)),
 )

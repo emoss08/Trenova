@@ -1,4 +1,5 @@
-import { ArtifactLinkContext, AiMarkdown } from "@/components/elements/ai-markdown";
+import { AiMarkdown } from "@/components/elements/ai-markdown";
+import { ArtifactLinkContext } from "@/components/elements/artifact-link-context";
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 

@@ -33,6 +33,7 @@ const (
 	OpResolve   Operation = "resolve"
 	OpManage    Operation = "manage"
 	OpPost      Operation = "post"
+	OpHold      Operation = "hold"
 	// OpApproveOwn lets a reviewer approve a revision they submitted or authored, where the
 	// two-person rule would otherwise send it to someone else.
 	OpApproveOwn Operation = "approve_own"
@@ -64,6 +65,7 @@ var Dependencies = map[Operation][]Operation{
 	OpResolve:    {OpRead},
 	OpManage:     {OpRead, OpUpdate, OpDelete},
 	OpPost:       {OpRead},
+	OpHold:       {OpRead, OpUpdate},
 	OpApproveOwn: {OpRead, OpUpdate, OpApprove},
 }
 

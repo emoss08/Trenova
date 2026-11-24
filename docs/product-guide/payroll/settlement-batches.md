@@ -10,7 +10,7 @@ related:
 ## What it's for
 Settlement batches are driver payroll runs. Each batch groups the settlements generated for one pay period, and this page is where payroll staff generate a batch for the current period, check how many settlements it holds and how many have exceptions, and download the payroll file.
 
-The table shows each batch's **Status**, **Batch** name, **Period**, **Pay date**, number of **Settlements**, number of **Exceptions**, **Total gross** and **Total net**.
+The table shows each batch's **Status**, **Batch** name, **Period**, **Pay date**, number of **Settlements**, number of **Exceptions**, how many are **On hold**, **Total gross** and **Total net**.
 
 ## Tasks
 
@@ -24,8 +24,8 @@ Keywords: run payroll, create batch, new pay run
 ### Review a batch and its exceptions
 Keywords: batch exceptions, batch totals
 1. Open [Settlement batches](/payroll/settlement-batches).
-2. Select a batch to see its period and pay date, its **Settlements**, **Exceptions**, **Total gross** and **Total net**, and every settlement in it with driver, status, gross and net.
-3. Settlements flagged with exceptions are marked with a warning icon. Work them in the [Workspace](/payroll/workspace).
+2. Select a batch to see its period and pay date, its **Settlements**, **Exceptions**, **On hold**, **Total gross** and **Total net**, and every settlement in it with driver, status, gross and net.
+3. Settlements flagged with exceptions are marked with a warning icon, and settlements a person holds out of the pay run are marked **On hold**. Work them in the [Workspace](/payroll/workspace).
 
 ### Export the payroll file
 Keywords: payroll CSV, download payroll, export to payroll provider
@@ -36,3 +36,5 @@ Keywords: payroll CSV, download payroll, export to payroll provider
 Needs read access to driver settlements to open the page, and the page is only available when the organization has the Asset operations capability.
 
 Clean settlements can be approved automatically, depending on your settlement control policy; anything with exceptions stays in review.
+
+A settlement on hold stays in its batch and in the batch's totals; it waits out of the pay run until someone releases the hold, and the batch says how many are held and what they net.

@@ -692,11 +692,12 @@ func textOf(value any) string {
 }
 
 // recordLabelKeys are tried in order for the words that name a record: a
-// shipment by its PRO, an invoice by its number, a person by their name, a
+// shipment by its PRO, an invoice or a settlement by its number, a person by their name, a
 // unit by its number, a finding by its headline.
 var recordLabelKeys = []string{
 	"proNumber",
 	"invoiceNumber",
+	"settlementNumber",
 	"referenceNumber",
 	"name",
 	"displayName",

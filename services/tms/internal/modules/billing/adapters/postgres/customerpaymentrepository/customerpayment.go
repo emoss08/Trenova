@@ -8,8 +8,7 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/bankreceipt"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/bankreceipt/bankreceiptdb"
+	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/receivablesql"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment/customerpaymentdb"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
@@ -137,14 +136,6 @@ func (r *repository) GetByID(
 	})
 }
 
-func unmatchedPayment(cp *customerpaymentdb.PaymentsTable) keel.Pred {
-	br := bankreceiptdb.BankReceipts.As("br")
-	return keel.NotExists(br.Where(
-		br.MatchedCustomerPaymentID.EqCol(cp.ID),
-		br.Status.Eq(bankreceipt.StatusMatched),
-	))
-}
-
 func (r *repository) FindMatchCandidates(
 	ctx context.Context,
 	req customerpaymentports.FindCustomerPaymentMatchCandidatesRequest,
@@ -155,7 +146,7 @@ func (r *repository) FindMatchCandidates(
 			cp.Status.Eq(customerpayment.StatusPosted),
 			cp.ReferenceNumber.Eq(req.ReferenceNumber),
 			cp.AmountMinor.Eq(req.AmountMinor),
-			unmatchedPayment(cp),
+			receivablesql.UnmatchedPayment(cp),
 		).
 			Order(cp.CreatedAt.Desc()).
 			All(ctx, r.db.Keel(ctx))
@@ -178,7 +169,7 @@ func (r *repository) FindSuggestedMatchCandidates(
 		}
 		items, err := cp.Where(
 			cp.Status.Eq(customerpayment.StatusPosted),
-			unmatchedPayment(cp),
+			receivablesql.UnmatchedPayment(cp),
 			keel.When(req.ReferenceNumber != "", keel.Or(
 				cp.ReferenceNumber.Eq(req.ReferenceNumber),
 				cp.ReferenceNumber.ContainsFold(req.ReferenceNumber),

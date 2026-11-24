@@ -1,0 +1,18 @@
+# Facilities ranked by the time trucks waited there past free time in a
+# period, as the Desk reads them: each location with its stops, the median
+# stop and the slowest one in ten against the free time it grants.
+query DeskDetentionFacilityWaits($period: DetentionPeriod!, $limit: Int) {
+  detentionFacilityWaits(period: $period, limit: $limit) {
+    id
+    name
+    city
+    state
+    stopCount
+    detainedCount
+    pastFreeMinutes
+    medianFreeMinutes
+    medianDwellMinutes
+    p90DwellMinutes
+    billedAmount
+  }
+}

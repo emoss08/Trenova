@@ -344,6 +344,28 @@ func TestRunCard_ASavedReportWhoseRecordIsGoneStillShowsTheRun(t *testing.T) {
 	assert.Empty(t, runs.asked.CannedKey)
 }
 
+func TestRunCard_ARunOfADeletedReportIsKeptAndSaysTheReportWasDeleted(t *testing.T) {
+	t.Parallel()
+
+	run := cardRun(t)
+	run.CannedKey = ""
+	run.RevisionID = pulid.MustNew("rrev_")
+	runs := &cardRuns{run: run}
+	svc := cardService(t, runs)
+	engine, ok := svc.engine.(*reportingtest.Engine)
+	require.True(t, ok)
+
+	card, err := svc.GetRunCard(t.Context(), rowsRequest())
+	require.NoError(t, err)
+
+	assert.Equal(t, RunCardWithheldDeleted, card.Withheld)
+	assert.Equal(t, RunCardReport{}, card.Report)
+	assert.Nil(t, card.Sample)
+	assert.Nil(t, card.Previous)
+	assert.Empty(t, engine.Recorded("compile"), "a deleted report is not compiled")
+	assert.Equal(t, run.ID, card.Run.ID)
+}
+
 func TestRunCard_AnUnreadableSampleStillShowsTheRun(t *testing.T) {
 	t.Parallel()
 

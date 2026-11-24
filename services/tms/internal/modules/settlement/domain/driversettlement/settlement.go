@@ -81,6 +81,12 @@ type Settlement struct {
 	VoidedAt               *int64                        `json:"voidedAt"               keel:"voided_at"`
 	VoidReason             string                        `json:"voidReason"             keel:"void_reason,nullzero"`
 	VoidJournalBatchID     *pulid.ID                     `json:"voidJournalBatchId"     keel:"void_journal_batch_id"`
+	HoldReason             HoldReason                    `json:"holdReason"             keel:"hold_reason,nullzero"`
+	HoldNote               string                        `json:"holdNote"               keel:"hold_note,nullzero"`
+	HeldByID               pulid.ID                      `json:"heldById"               keel:"held_by_id,nullzero"`
+	HeldAt                 *int64                        `json:"heldAt"                 keel:"held_at"`
+	HoldReleasedByID       pulid.ID                      `json:"holdReleasedById"       keel:"hold_released_by_id,nullzero"`
+	HoldReleasedAt         *int64                        `json:"holdReleasedAt"         keel:"hold_released_at"`
 	Version                int64                         `json:"version"                keel:"version,version"`
 	CreatedAt              int64                         `json:"createdAt"              keel:"created_at,autocreate"`
 	UpdatedAt              int64                         `json:"updatedAt"              keel:"updated_at,autoupdate"`
@@ -152,6 +158,7 @@ func (s *Settlement) Validate(multiErr *errortypes.MultiError) {
 			"Period end must be after the period start",
 		)
 	}
+	s.validateHold(multiErr)
 	for idx, line := range s.Lines {
 		if line == nil {
 			multiErr.Add(

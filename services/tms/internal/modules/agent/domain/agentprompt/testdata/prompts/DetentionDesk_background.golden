@@ -41,8 +41,8 @@ You hold more tools than are loaded on this turn. The loaded ones are on this re
 What find_tools can load, by area of Trenova:
 - AI & agents (4 tools): agent exception, agent run
 - Billing (1 tool): customer
-- Desk (3 tools): desk
-- Detention (7 tools): detention
+- Desk (4 tools): desk
+- Detention (9 tools): detention
 - Organization settings (1 tool): email profile
 - Shipments (3 tools): shipment, shipment comment
 - Triage (3 tools): customer communication, triage

@@ -4,6 +4,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingdriftports"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/accountsreceivablerepository"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/bankreceiptbatchrepository"
+	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/bankreceiptcandidaterepository"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/bankreceiptrepository"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/bankreceiptworkitemrepository"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/billingqueuefilterpresetrepository"
@@ -27,6 +28,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/app/accountingdriftservice"
 	"github.com/emoss08/trenova/internal/modules/billing/app/accountsreceivableservice"
 	"github.com/emoss08/trenova/internal/modules/billing/app/bankreceiptbatchservice"
+	"github.com/emoss08/trenova/internal/modules/billing/app/bankreceiptcandidateservice"
+	"github.com/emoss08/trenova/internal/modules/billing/app/bankreceiptcardservice"
 	"github.com/emoss08/trenova/internal/modules/billing/app/bankreceiptservice"
 	"github.com/emoss08/trenova/internal/modules/billing/app/bankreceiptworkitemservice"
 	"github.com/emoss08/trenova/internal/modules/billing/app/billingcontrolpolicyservice"
@@ -71,6 +74,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoicevoidservice"
 	"github.com/emoss08/trenova/internal/modules/billing/app/latechargeservice"
 	"github.com/emoss08/trenova/internal/modules/billing/app/paymentreminderservice"
+	"github.com/emoss08/trenova/internal/modules/billing/jobs/bankreceiptcandidatejobs/bankreceiptcandidatecontract"
 	"github.com/emoss08/trenova/internal/modules/billing/jobs/billingqueuejobs/billingqueuecontract"
 	"github.com/emoss08/trenova/internal/modules/billing/jobs/factoringjobs/factoringcontract"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/bankreceiptbatchports"
@@ -95,6 +99,7 @@ import (
 
 func SharedOptions() fx.Option {
 	return fx.Options(
+		boardReaders,
 		fx.Provide(
 			accountsreceivablerepository.New,
 			accountsreceivablerepository.NewAnalytics,
@@ -113,6 +118,12 @@ func SharedOptions() fx.Option {
 			billingqueuefilterpresetrepository.New,
 			recordversionrepository.New,
 			bankreceiptrepository.New,
+			bankreceiptrepository.NewDeskCardReader,
+			bankreceiptcandidaterepository.New,
+			bankreceiptcandidateservice.New,
+			func(s *bankreceiptcandidateservice.Service) bankreceiptports.CandidateRefresher { return s },
+			bankreceiptcandidatecontract.NewRequester,
+			func(r *bankreceiptcandidatecontract.Requester) bankreceiptports.CandidateWaker { return r },
 			bankreceiptbatchrepository.New,
 			bankreceiptworkitemrepository.New,
 			chargeallocationrepository.New,
@@ -151,6 +162,7 @@ func SharedOptions() fx.Option {
 				fx.As(new(bankreceiptbatchports.BankReceiptBatchService)),
 			),
 			bankreceiptservice.New,
+			bankreceiptcardservice.New,
 			func(s *bankreceiptservice.Service) bankreceiptports.BankReceiptService { return s },
 			bankreceiptworkitemservice.New,
 			fx.Annotate(

@@ -57,6 +57,7 @@ func TestImportBatchAggregatesReceiptOutcomes(t *testing.T) {
 			return &copy, nil
 		}).
 		Once()
+	waker := &countingWaker{}
 	svc := New(
 		Params{
 			Logger:             zap.NewNop(),
@@ -65,6 +66,7 @@ func TestImportBatchAggregatesReceiptOutcomes(t *testing.T) {
 			ReceiptRepo:        receiptRepo,
 			BankReceiptService: bankSvc,
 			AuditService:       auditSvc,
+			Waker:              waker,
 		},
 	)
 	actor := testutil.NewSessionActor(userID, orgID, buID)
@@ -107,6 +109,8 @@ func TestImportBatchAggregatesReceiptOutcomes(t *testing.T) {
 	assert.Equal(t, int64(1), result.Batch.MatchedCount)
 	assert.Equal(t, int64(1), result.Batch.ExceptionCount)
 	assert.Equal(t, int64(15000), result.Batch.ImportedAmountMinor)
+	assert.Equal(t, []pagination.TenantInfo{{OrgID: orgID, BuID: buID, UserID: userID}}, waker.woken,
+		"a batch wakes the candidate drain once, not once per receipt")
 	assert.Equal(t, int64(10000), result.Batch.MatchedAmountMinor)
 	assert.Equal(t, int64(5000), result.Batch.ExceptionAmountMinor)
 	require.Len(t, result.Receipts, 2)
@@ -139,6 +143,7 @@ func TestImportBatchReturnsErrorWhenReceiptImportFails(t *testing.T) {
 			return &copy, nil
 		}).
 		Once()
+	waker := &countingWaker{}
 	svc := New(
 		Params{
 			Logger:             zap.NewNop(),
@@ -147,6 +152,7 @@ func TestImportBatchReturnsErrorWhenReceiptImportFails(t *testing.T) {
 			ReceiptRepo:        receiptRepo,
 			BankReceiptService: bankSvc,
 			AuditService:       auditSvc,
+			Waker:              waker,
 		},
 	)
 	actor := testutil.NewSessionActor(userID, orgID, buID)
@@ -169,6 +175,7 @@ func TestImportBatchReturnsErrorWhenReceiptImportFails(t *testing.T) {
 	require.ErrorIs(t, err, assert.AnError)
 	assert.Nil(t, result)
 	auditSvc.AssertNotCalled(t, "LogAction", mock.Anything, mock.Anything, mock.Anything)
+	assert.Empty(t, waker.woken, "a batch that rolled back queued nothing to wake for")
 }
 
 type fakeBatchDB struct{}

@@ -13,6 +13,7 @@ func settlementToolProviders() []any {
 		append(
 			settlementtools.SettlementDecisionProviders(),
 			settlementtools.SettlementBulkProviders()...),
+		settlementtools.ProvideHoldDriverSettlementTool,
 		paytools.ProvideHoldDriverPayEventTool,
 		paytools.ProvideReleaseDriverPayEventTool,
 		paytools.ProvideAttachPayEventsTool,

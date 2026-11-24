@@ -155,12 +155,19 @@ func (r *batchRepository) RecalculateAggregates(
 					"exception_count",
 					"total_gross_minor",
 					"total_net_minor",
+					"total_reimbursements_minor",
+					"held_count",
+					"held_net_minor",
 				},
 				s.Pick(
 					keel.Count().Filter(live),
 					keel.Count().Filter(keel.And(s.HasExceptions.IsTrue(), live)),
 					keel.Int64Of(s.GrossEarningsMinor.Sum().Filter(live)).Coalesce(0),
 					keel.Int64Of(s.NetPayMinor.Sum().Filter(live)).Coalesce(0),
+					keel.Int64Of(s.ReimbursementsMinor.Sum().Filter(live)).Coalesce(0),
+					keel.Count().Filter(keel.And(s.HoldReason.IsNotNull(), live)),
+					keel.Int64Of(s.NetPayMinor.Sum().Filter(keel.And(s.HoldReason.IsNotNull(), live))).
+						Coalesce(0),
 				).Where(s.BatchID.Eq(batchID)),
 			)
 
@@ -174,6 +181,9 @@ func (r *batchRepository) RecalculateAggregates(
 					b.ExceptionCount.ToExpr(agg.Col("exception_count")),
 					b.TotalGrossMinor.ToExpr(agg.Col("total_gross_minor")),
 					b.TotalNetMinor.ToExpr(agg.Col("total_net_minor")),
+					b.TotalReimbursementsMinor.ToExpr(agg.Col("total_reimbursements_minor")),
+					b.HeldCount.ToExpr(agg.Col("held_count")),
+					b.HeldNetMinor.ToExpr(agg.Col("held_net_minor")),
 				); err != nil {
 				return nil, fmt.Errorf("recalculate settlement batch aggregates: %w", err)
 			}
@@ -223,6 +233,7 @@ func (r *batchRepository) Update(
 				b.ExceptionCount,
 				b.TotalGrossMinor,
 				b.TotalNetMinor,
+				b.TotalReimbursementsMinor,
 				b.Notes,
 				b.GeneratedByID,
 				b.GeneratedAt,

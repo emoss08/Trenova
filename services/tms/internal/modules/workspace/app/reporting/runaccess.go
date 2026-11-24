@@ -58,6 +58,10 @@ func (s *Service) storedRunDefinition(
 	run *report.ReportRun,
 ) (*ir.Definition, error) {
 	switch {
+	case run.ReportDeleted():
+		return nil, errortypes.NewBusinessError(
+			"The report this run came from was deleted, so its result cannot be served",
+		)
 	case !run.RevisionID.IsNil():
 		revision, err := s.defRepo.GetRevision(ctx, &reportports.GetReportRevisionRequest{
 			TenantInfo: req.TenantInfo,

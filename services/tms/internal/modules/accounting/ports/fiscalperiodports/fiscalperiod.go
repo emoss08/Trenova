@@ -3,6 +3,7 @@ package fiscalperiodports
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalclose"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -201,4 +202,11 @@ type FiscalPeriodRepository interface {
 		ctx context.Context,
 		req GetExpiredUnclosedPeriodsRequest,
 	) ([]*fiscalperiod.FiscalPeriod, error)
+}
+
+type CloseBlockerReader interface {
+	GetCloseBlockers(
+		ctx context.Context,
+		req GetFiscalPeriodByIDRequest,
+	) (*fiscalclose.Result, error)
 }

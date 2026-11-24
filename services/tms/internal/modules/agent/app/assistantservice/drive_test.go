@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 )
@@ -66,7 +67,11 @@ func (s *Service) sendMessage(
 		runReq.ToolObserver = func(
 			observation agentruntimeports.ToolObservation,
 		) (*agentruntimeports.ShownArtifact, error) {
-			shown, kept, err := s.ObserveTool(ctx, plan.ThreadID, actor, observation, emit)
+			shown, kept, err := s.ObserveTool(ctx, &ObservedRun{
+				ThreadID:   plan.ThreadID,
+				Actor:      actor,
+				DataAccess: permission.SensitivityInternal,
+			}, observation, emit)
 			artifacts = append(artifacts, kept...)
 
 			return shown, err

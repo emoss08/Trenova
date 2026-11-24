@@ -56,6 +56,7 @@ type Params struct {
 	Realtime           realtimeports.RealtimeService
 	Triage             inboundmessageports.TriageEventSink
 	ReceiptMatches     bankreceiptports.BankReceiptService
+	ReceiptCandidates  bankreceiptports.CandidateWaker
 }
 
 type Service struct {
@@ -74,6 +75,7 @@ type Service struct {
 	realtime           realtimeports.RealtimeService
 	triage             inboundmessageports.TriageEventSink
 	receiptMatches     receiptMatchReleaser
+	receiptCandidates  bankreceiptports.CandidateWaker
 }
 
 // receiptMatchReleaser hands back the deposits a reversed payment was
@@ -104,6 +106,7 @@ func New(p Params) *Service { //nolint:gocritic // stable API shape
 		triage:             p.Triage,
 	}
 	svc.receiptMatches = p.ReceiptMatches
+	svc.receiptCandidates = p.ReceiptCandidates
 
 	return svc
 }
@@ -352,6 +355,10 @@ func (s *Service) PostAndApply( //nolint:funlen,gocognit // legacy workflow
 		s.logInvoiceAudit(ctx, originalInvoices[idx], inv, actor.UserID)
 		s.announceInvoice(ctx, inv, actor)
 	}
+	s.receiptCandidates.Wake(ctx, pagination.TenantInfo{
+		OrgID: created.OrganizationID,
+		BuID:  created.BusinessUnitID,
+	})
 	return created, nil
 }
 

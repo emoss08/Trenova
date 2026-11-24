@@ -5,15 +5,19 @@ import (
 	"maps"
 	"regexp"
 	"slices"
+	"strconv"
 	"strings"
 	"unicode/utf8"
+
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/boardcatalog"
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/toolresult"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpagecontext"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/board"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/boardregistry"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
+	"github.com/emoss08/trenova/shared/inflect"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
 )
@@ -22,6 +26,8 @@ const ExampleNumber = "A-1001"
 
 const (
 	recordsKey     = "records"
+	titleKey       = "title"
+	forKey         = "for"
 	recordKey      = "record"
 	minLabelRunes  = 4
 	maxNamedInNote = 3
@@ -29,14 +35,17 @@ const (
 )
 
 type Read struct {
-	refs  []agentpagecontext.EntityRef
-	pages []listPage
+	refs    []agentpagecontext.EntityRef
+	pages   []listPage
+	parents map[string]string
+	turn    map[string]bool
 }
 
 type listPage struct {
 	ids   map[string]bool
 	total int
 	more  bool
+	table pulid.ID
 }
 
 type Swap struct {
@@ -45,19 +54,30 @@ type Swap struct {
 }
 
 var numberedBy = []struct {
-	resource permission.Resource
+	kind     recordkind.Kind
 	idKey    string
 	labelKey string
 }{
-	{resource: permission.ResourceShipment, idKey: "shipmentId", labelKey: "proNumber"},
-	{resource: permission.ResourceInvoice, idKey: "invoiceId", labelKey: "invoiceNumber"},
+	{
+		kind:     recordkind.Kind(permission.ResourceShipment),
+		idKey:    "shipmentId",
+		labelKey: "proNumber",
+	},
+	{
+		kind:     recordkind.Kind(permission.ResourceInvoice),
+		idKey:    "invoiceId",
+		labelKey: "invoiceNumber",
+	},
 }
 
 func Of(results []string) Read {
-	read := Read{refs: make([]agentpagecontext.EntityRef, 0, 16)}
+	read := Read{
+		refs:    make([]agentpagecontext.EntityRef, 0, 16),
+		parents: make(map[string]string, 4),
+	}
 	seen := make(map[string]struct{}, 16)
 	keep := func(ref agentpagecontext.EntityRef) {
-		if !board.Supports(permission.Resource(ref.Type)) {
+		if !boardregistry.Catalog().Supports(recordkind.Kind(ref.Type)) {
 			return
 		}
 		if _, dup := seen[ref.ID]; dup {
@@ -78,7 +98,9 @@ func Of(results []string) Read {
 		}
 		if payload, ok := toolresult.Payload(content); ok {
 			numberedRows(payload, 0, keepOnPage)
+			partsIn(payload, 0, read.parents)
 			page.total, page.more = longer(payload)
+			page.table = keptTable(content)
 		}
 		if page.more && len(page.ids) > 0 {
 			read.pages = append(read.pages, page)
@@ -86,6 +108,15 @@ func Of(results []string) Read {
 	}
 
 	return read
+}
+
+func (r Read) ThisTurn(results []string) Read {
+	r.turn = make(map[string]bool, 16)
+	for _, ref := range Of(results).refs {
+		r.turn[ref.ID] = true
+	}
+
+	return r
 }
 
 func longer(payload any) (int, bool) {
@@ -114,7 +145,35 @@ func (r Read) Longer(ids []pulid.ID) (int, bool) {
 	return 0, false
 }
 
-func CountRefusal(tool, figure string, shown, total int) string {
+func (r Read) WholeTyped(words string, shown int) bool {
+	for _, page := range r.pages {
+		if page.total <= shown {
+			continue
+		}
+		for _, written := range []string{strconv.Itoa(page.total), grouped(page.total)} {
+			if stringutils.ContainsWords(words, written) {
+				return true
+			}
+		}
+	}
+
+	return false
+}
+
+func grouped(n int) string {
+	digits := strconv.Itoa(n)
+	var b strings.Builder
+	for idx, digit := range digits {
+		if idx > 0 && (len(digits)-idx)%3 == 0 {
+			b.WriteByte(',')
+		}
+		b.WriteRune(digit)
+	}
+
+	return b.String()
+}
+
+func CountRefusal(tool, figure string, kind recordkind.Kind, shown, total int) string {
 	whole := "it has more pages than were read"
 	if total > 0 {
 		whole = fmt.Sprintf("it holds %d in all", total)
@@ -122,11 +181,22 @@ func CountRefusal(tool, figure string, shown, total int) string {
 
 	return fmt.Sprintf(
 		"Tool %q was not run: %s would read %d, the records shown, but they are part of a "+
-			"longer list (%s), so it would state a number that is not true. If the words "+
-			"mean all of them, write the list's own number as the result gave it, or read the "+
-			"whole list first; if they mean only the records shown, count a group, as in "+
-			"\"{count_1} of them\".",
-		tool, figure, shown, whole,
+			"longer list (%s), so it would state a number that is not true. Where the words "+
+			"mean the whole list, write {all}: it reads the list's own number, and again "+
+			"whenever the board is read (\"{all} %s\"). Where they mean only the "+
+			"records shown, say so: \"these {count}\", \"the {count} shown here\"; a "+
+			"count of part of the whole list is a figure Trenova keeps (a metric's) or none.",
+		tool, figure, shown, whole, inflect.PluralNoun(kind.Noun()),
+	)
+}
+
+func UnkeptRefusal(tool string) string {
+	return fmt.Sprintf(
+		"Tool %q was not run: it would count a list longer than the records read, and that "+
+			"list reported no total it can be read again by, so the number would not be true. "+
+			"Count only the records the board shows and say so in the words, or read the list "+
+			"with a tool that reports its total first.",
+		tool,
 	)
 }
 
@@ -142,9 +212,9 @@ func numberedRows(value any, depth int, keep func(agentpagecontext.EntityRef)) {
 			if id == "" || strings.TrimSpace(label) == "" || !pulid.LooksLike(id) {
 				continue
 			}
-			if resource, known := recordkind.ResourceOfIDPrefix(pulid.ID(id).Prefix()); known &&
-				resource == pair.resource {
-				keep(agentpagecontext.EntityRef{Type: resource.String(), ID: id, Label: label})
+			if kind, known := recordkind.OfIDPrefix(pulid.ID(id).Prefix()); known &&
+				kind == pair.kind {
+				keep(agentpagecontext.EntityRef{Type: string(kind), ID: id, Label: label})
 			}
 		}
 		for _, name := range slices.Sorted(maps.Keys(typed)) {
@@ -205,7 +275,7 @@ func (r Read) idFor(text string) (string, bool) {
 }
 
 func (r Read) Unshown(
-	shown map[permission.Resource][]pulid.ID,
+	shown map[recordkind.Kind][]pulid.ID,
 	words string,
 ) []agentpagecontext.EntityRef {
 	shownLabels := make(map[string]struct{}, len(shown))
@@ -216,7 +286,7 @@ func (r Read) Unshown(
 	}
 	unshown := make([]agentpagecontext.EntityRef, 0, 1)
 	for _, ref := range r.refs {
-		if _, kind := shown[permission.Resource(ref.Type)]; !kind || holds(shown, ref) {
+		if _, kind := shown[recordkind.Kind(ref.Type)]; !kind || holds(shown, ref) {
 			continue
 		}
 		if _, same := shownLabels[strings.ToLower(ref.Label)]; same || !named(words, ref.Label) {
@@ -229,7 +299,7 @@ func (r Read) Unshown(
 }
 
 func (r Read) SwapFor(
-	shown map[permission.Resource][]pulid.ID,
+	shown map[recordkind.Kind][]pulid.ID,
 	words string,
 	unshown []agentpagecontext.EntityRef,
 ) (Swap, bool) {
@@ -238,7 +308,7 @@ func (r Read) SwapFor(
 	}
 	wanted := unshown[0]
 	var nameless []agentpagecontext.EntityRef
-	for _, id := range shown[permission.Resource(wanted.Type)] {
+	for _, id := range shown[recordkind.Kind(wanted.Type)] {
 		ref, known := r.ref(id.String())
 		if !known || utf8.RuneCountInString(ref.Label) < minLabelRunes {
 			return Swap{}, false
@@ -250,26 +320,45 @@ func (r Read) SwapFor(
 	if len(nameless) != 1 {
 		return Swap{}, false
 	}
+	if r.turn[nameless[0].ID] {
+		return Swap{From: nameless[0], To: wanted}, false
+	}
 
 	return Swap{From: nameless[0], To: wanted}, true
 }
 
+func SwapRefusal(tool, holder string, swap *Swap) string {
+	return fmt.Sprintf(
+		"Tool %q was not run: its words name %s (the %s %s), but no %s holds it, while a %s "+
+			"holds %s (%s), which this turn read and the words never name. Say which you mean: "+
+			"put %s's id in a %s of its own, or name %s in the words, or take %s out of them.",
+		tool, swap.To.Label, recordkind.Kind(swap.To.Type).Noun(), swap.To.ID, holder, holder,
+		swap.From.Label, swap.From.ID, swap.To.Label, holder, swap.From.Label, swap.To.Label,
+	)
+}
+
 func (s *Swap) Apply(arguments map[string]any) map[string]any {
+	return ReplaceIDs(arguments, map[string]string{s.From.ID: s.To.ID})
+}
+
+func ReplaceIDs(arguments map[string]any, ids map[string]string) map[string]any {
 	swapped, _ := rewrite(arguments, func(text string) (string, bool) {
-		if strings.TrimSpace(text) != s.From.ID {
+		to, found := ids[strings.TrimSpace(text)]
+		if !found {
 			return text, false
 		}
-		return s.To.ID, true
+		return to, true
 	})
 	swapped, _ = rewriteFigures(swapped, func(_ string, _ int, mark string) string {
 		left, right, found := strings.Cut(mark[1:len(mark)-1], ":")
-		switch {
-		case !found:
+		if !found {
 			return mark
-		case strings.TrimSpace(right) == s.From.ID:
-			return "{" + left + ":" + s.To.ID + "}"
-		case strings.TrimSpace(left) == s.From.ID:
-			return "{" + s.To.ID + ":" + right + "}"
+		}
+		if to, known := ids[strings.TrimSpace(right)]; known {
+			return "{" + left + ":" + to + "}"
+		}
+		if to, known := ids[strings.TrimSpace(left)]; known {
+			return "{" + to + ":" + right + "}"
 		}
 		return mark
 	})
@@ -281,7 +370,7 @@ func Refusal(tool, holder string, unshown []agentpagecontext.EntityRef) string {
 	parts := make([]string, 0, min(len(unshown), maxNamedInNote)+1)
 	for _, missing := range unshown[:min(len(unshown), maxNamedInNote)] {
 		parts = append(parts, fmt.Sprintf("%s (the %s %s)", missing.Label,
-			permission.Resource(missing.Type).Noun(), missing.ID))
+			recordkind.Kind(missing.Type).Noun(), missing.ID))
 	}
 	if len(unshown) > maxNamedInNote {
 		parts = append(parts, fmt.Sprintf("%d more", len(unshown)-maxNamedInNote))
@@ -305,8 +394,8 @@ func (r Read) ref(id string) (agentpagecontext.EntityRef, bool) {
 	return agentpagecontext.EntityRef{}, false
 }
 
-func holds(shown map[permission.Resource][]pulid.ID, ref agentpagecontext.EntityRef) bool {
-	return slices.Contains(shown[permission.Resource(ref.Type)], pulid.ID(ref.ID))
+func holds(shown map[recordkind.Kind][]pulid.ID, ref agentpagecontext.EntityRef) bool {
+	return slices.Contains(shown[recordkind.Kind(ref.Type)], pulid.ID(ref.ID))
 }
 
 func named(words, label string) bool {
@@ -330,50 +419,63 @@ func rewrite(
 func rewriteIn(value any, key string, replace func(string) (string, bool)) (any, bool) {
 	switch typed := value.(type) {
 	case map[string]any:
-		var out map[string]any
-		for _, name := range slices.Sorted(maps.Keys(typed)) {
-			next, changed := rewriteIn(typed[name], name, replace)
-			if !changed {
-				continue
-			}
-			if out == nil {
-				out = maps.Clone(typed)
-			}
-			out[name] = next
-		}
-		if out == nil {
-			return value, false
-		}
-		return out, true
+		return rewriteObject(typed, replace)
 	case []any:
-		var out []any
-		for idx, element := range typed {
-			var next any
-			var changed bool
-			if text, isText := element.(string); isText && key == recordsKey {
-				next, changed = replace(text)
-			} else {
-				next, changed = rewriteIn(element, "", replace)
-			}
-			if !changed {
-				continue
-			}
-			if out == nil {
-				out = slices.Clone(typed)
-			}
-			out[idx] = next
-		}
-		if out == nil {
-			return value, false
-		}
-		return out, true
+		return rewriteList(typed, key, replace)
 	case string:
-		if key == recordKey {
+		if key == recordKey || key == forKey {
 			return replace(typed)
 		}
 	}
 
 	return value, false
+}
+
+func rewriteObject(
+	typed map[string]any,
+	replace func(string) (string, bool),
+) (any, bool) {
+	var out map[string]any
+	for _, name := range slices.Sorted(maps.Keys(typed)) {
+		next, changed := rewriteIn(typed[name], name, replace)
+		if !changed {
+			continue
+		}
+		if out == nil {
+			out = maps.Clone(typed)
+		}
+		out[name] = next
+	}
+	if out == nil {
+		return typed, false
+	}
+
+	return out, true
+}
+
+func rewriteList(typed []any, key string, replace func(string) (string, bool)) (any, bool) {
+	var out []any
+	for idx, element := range typed {
+		var next any
+		var changed bool
+		if text, isText := element.(string); isText && key == recordsKey {
+			next, changed = replace(text)
+		} else {
+			next, changed = rewriteIn(element, "", replace)
+		}
+		if !changed {
+			continue
+		}
+		if out == nil {
+			out = slices.Clone(typed)
+		}
+		out[idx] = next
+	}
+	if out == nil {
+		return typed, false
+	}
+
+	return out, true
 }
 
 var figureMark = regexp.MustCompile(`\{([^{}\s]{1,60})\}`)
@@ -464,10 +566,10 @@ func (r Read) figureID(mark string) string {
 
 func AnswerShown(
 	arguments map[string]any,
-) (shown map[permission.Resource][]pulid.ID, words string) {
-	shown = make(map[permission.Resource][]pulid.ID, 1)
+) (shown map[recordkind.Kind][]pulid.ID, words string) {
+	shown = make(map[recordkind.Kind][]pulid.ID, 1)
 	texts := make([]string, 0, 8)
-	for _, key := range []string{"title", "answer"} {
+	for _, key := range []string{titleKey, "answer"} {
 		if text, isText := arguments[key].(string); isText {
 			texts = append(texts, text)
 		}
@@ -478,7 +580,7 @@ func AnswerShown(
 		if !isObject {
 			continue
 		}
-		for _, key := range []string{"title", "note"} {
+		for _, key := range []string{titleKey, "note"} {
 			if text, isText := fields[key].(string); isText {
 				texts = append(texts, text)
 			}
@@ -490,9 +592,9 @@ func AnswerShown(
 			if !pulid.LooksLike(id.String()) {
 				continue
 			}
-			resource, known := recordkind.ResourceOfIDPrefix(id.Prefix())
-			if known && !slices.Contains(shown[resource], id) {
-				shown[resource] = append(shown[resource], id)
+			kind, known := recordkind.OfIDPrefix(id.Prefix())
+			if known && !slices.Contains(shown[kind], id) {
+				shown[kind] = append(shown[kind], id)
 			}
 		}
 	}
@@ -500,7 +602,7 @@ func AnswerShown(
 	return shown, strings.Join(texts, "\n\n")
 }
 
-func (r Read) WithExample(text string, shown map[permission.Resource][]pulid.ID) string {
+func (r Read) WithExample(text string, shown map[recordkind.Kind][]pulid.ID) string {
 	if !strings.Contains(text, ExampleNumber) {
 		return text
 	}
@@ -513,4 +615,36 @@ func (r Read) WithExample(text string, shown map[permission.Resource][]pulid.ID)
 	}
 
 	return text
+}
+
+func MetricsListRecords(names []string) bool {
+	for _, name := range names {
+		metric, known := boardregistry.Catalog().MetricNamed(name)
+		if !known {
+			continue
+		}
+		switch metric.Form {
+		case boardcatalog.FormTrend, boardcatalog.FormColumns, boardcatalog.FormSplit,
+			boardcatalog.FormFigures:
+		case boardcatalog.FormBars, boardcatalog.FormGrid, boardcatalog.FormDots,
+			boardcatalog.FormSpans, boardcatalog.FormLog, boardcatalog.FormChecks,
+			boardcatalog.FormTable:
+			return true
+		}
+	}
+
+	return false
+}
+
+func GroupMetrics(arguments map[string]any) []string {
+	groups, _ := arguments["groups"].([]any)
+	names := make([]string, 0, len(groups))
+	for _, entry := range groups {
+		fields, _ := entry.(map[string]any)
+		if name, isText := fields["metric"].(string); isText && strings.TrimSpace(name) != "" {
+			names = append(names, strings.TrimSpace(name))
+		}
+	}
+
+	return names
 }

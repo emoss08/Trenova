@@ -227,6 +227,28 @@ describe("DeskBoardBody", () => {
     expect(gone.querySelector(".dk-bd-n")).toHaveClass("dk-off");
   });
 
+  it("draws a check's value only when it has one, and says a withheld one is unread", async () => {
+    const card = closeBoard();
+    const checksBlock = card.blocks.find((candidate) => candidate.type === "checks");
+    if (!checksBlock) throw new Error("the close board has a checks block");
+    const empty = { was: null, records: [], hidden: 0, detail: "" };
+    checksBlock.checks = [
+      { ...empty, title: "Nothing to count", tone: "ok", count: null },
+      { ...empty, title: "Counted", tone: "ok", count: count(4) },
+      { ...empty, title: "Not yours to read", tone: "warn", count: null, hidden: 3 },
+    ];
+    const { container } = draw(card);
+    await screen.findByRole("region", { name: "Before the close" });
+
+    const checks = container.querySelectorAll<HTMLElement>(".dk-bd-ck");
+    const byTitle = (title: string) =>
+      Array.from(checks).find((check) => check.textContent?.includes(title)) as HTMLElement;
+    expect(byTitle("Nothing to count").querySelector(".dk-bd-count")).toBeNull();
+    expect(byTitle("Nothing to count")).not.toHaveTextContent("unread");
+    expect(byTitle("Counted").querySelector(".dk-bd-count")).toHaveTextContent("4");
+    expect(byTitle("Not yours to read").querySelector(".dk-bd-count")).toHaveTextContent("unread");
+  });
+
   it("copies the board as text", async () => {
     const writeText = vi.fn().mockResolvedValue(undefined);
     Object.defineProperty(navigator, "clipboard", { value: { writeText }, configurable: true });
@@ -265,7 +287,7 @@ describe("DeskBoardBody's figures", () => {
         type: "figures",
         title: "Today at a glance",
         numeral: 1,
-        source: { kind: "metrics", resource: "", count: 0, readable: 0, title: "" },
+        source: { kind: "metrics", recordKind: "", count: 0, readable: 0, title: "" },
         figures: [
           { label: "Active shipments", value: count(556), was: null, tone: "" },
           { label: "On-time %", value: count(0), was: null, tone: "" },

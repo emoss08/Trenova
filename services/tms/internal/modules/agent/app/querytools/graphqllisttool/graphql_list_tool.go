@@ -8,6 +8,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/modules/agent/domain/boardhint"
+
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/fieldgate"
@@ -764,6 +766,7 @@ type Outcome struct {
 	WithheldByAccess []string         `json:"withheldByAccess,omitempty"`
 	WithheldNote     string           `json:"withheldNote,omitempty"`
 	WithheldByPlan   []string         `json:"withheldByPlan,omitempty"`
+	HowToShow        string           `json:"howToShow,omitempty"`
 
 	Outside []agentrecord.RecordRef `json:"-"`
 	// cursors are the edge cursors of items, in order, and window the call's
@@ -965,6 +968,9 @@ func (t *Tool) outcome(
 	}
 	if len(page.withheld) > 0 {
 		outcome.WithheldNote = fieldgate.WithheldNote
+	}
+	if t.Spec.Shows != nil && len(page.Items) > 0 {
+		outcome.HowToShow = boardhint.Line(t.Spec.Shows)
 	}
 
 	return outcome

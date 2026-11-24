@@ -3,6 +3,7 @@ package stringutils
 import (
 	"strings"
 	"unicode"
+	"unicode/utf8"
 )
 
 func NormalizeIdentifier(value string) string {
@@ -59,6 +60,29 @@ func FirstSentence(text string) string {
 	}
 
 	return text
+}
+
+func WholeSentences(text string, most int) string {
+	text = strings.TrimSpace(text)
+	if utf8.RuneCountInString(text) <= most {
+		return text
+	}
+	fitted := ""
+	for idx, r := range text {
+		if r != '.' && r != '?' && r != '!' {
+			continue
+		}
+		end := idx + utf8.RuneLen(r)
+		if end < len(text) && text[end] != ' ' {
+			continue
+		}
+		if utf8.RuneCountInString(text[:end]) > most {
+			break
+		}
+		fitted = text[:end]
+	}
+
+	return fitted
 }
 
 // CollapseWhitespace folds every run of whitespace, line breaks included,

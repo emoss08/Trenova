@@ -22,6 +22,7 @@ import (
 
 func SharedOptions() fx.Option {
 	return fx.Options(
+		boardReaders,
 		fx.Provide(
 			locationcategoryrepository.New,
 			locationrepository.New,

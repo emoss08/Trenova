@@ -13,6 +13,9 @@ const dirname = path.dirname(fileURLToPath(import.meta.url));
 const srcAlias = path.resolve(dirname, "./src");
 const sharedAlias = path.resolve(dirname, "../../packages/shared/src");
 
+// Fixtures write the server's moments in UTC; every machine reads them in the same zone.
+process.env.TZ = "UTC";
+
 export default defineConfig({
   resolve: {
     alias: { "@": srcAlias, "@trenova/shared": sharedAlias, ...editionAlias() },

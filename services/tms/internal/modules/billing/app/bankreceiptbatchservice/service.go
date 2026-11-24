@@ -30,6 +30,7 @@ type Params struct {
 	ReceiptRepo        bankreceiptports.BankReceiptRepository
 	BankReceiptService bankreceiptports.BankReceiptService
 	AuditService       auditports.AuditService
+	Waker              bankreceiptports.CandidateWaker
 }
 type Service struct {
 	l                  *zap.Logger
@@ -38,6 +39,7 @@ type Service struct {
 	receiptRepo        bankreceiptports.BankReceiptRepository
 	bankReceiptService bankreceiptports.BankReceiptService
 	auditService       auditports.AuditService
+	waker              bankreceiptports.CandidateWaker
 }
 
 //nolint:gocritic // dependency injection
@@ -49,6 +51,7 @@ func New(p Params) *Service {
 		receiptRepo:        p.ReceiptRepo,
 		bankReceiptService: p.BankReceiptService,
 		auditService:       p.AuditService,
+		waker:              p.Waker,
 	}
 }
 
@@ -147,6 +150,7 @@ func (s *Service) Import(
 		return nil, err
 	}
 
+	s.waker.Wake(ctx, req.TenantInfo)
 	s.logAudit(ctx, updatedBatch, nil, actor.UserID, "Bank receipt batch imported")
 	return &bankreceiptbatchports.BankReceiptBatchResult{
 		Batch:    updatedBatch,

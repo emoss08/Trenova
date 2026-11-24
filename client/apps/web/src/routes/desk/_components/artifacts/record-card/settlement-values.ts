@@ -222,6 +222,22 @@ export function settlementActions(status: SettlementStatus): {
   }
 }
 
+/**
+ * The steps left to a settlement a person holds out of the pay run: approving and posting
+ * wait for the hold to be released, so they are not offered.
+ */
+export function heldSettlementActions(actions: {
+  primary: SettlementAction | null;
+  more: SettlementAction[];
+}): { primary: SettlementAction | null; more: SettlementAction[] } {
+  const waits = (action: SettlementAction | null) => action === "approve" || action === "post";
+
+  return {
+    primary: waits(actions.primary) ? null : actions.primary,
+    more: actions.more.filter((action) => !waits(action)),
+  };
+}
+
 /** What each step's button says. */
 export function settlementActionLabel(
   action: SettlementAction,

@@ -15,23 +15,25 @@ import (
 )
 
 type WorkspaceSummary struct {
-	PeriodStart          int64     `json:"periodStart"`
-	PeriodEnd            int64     `json:"periodEnd"`
-	PayDate              int64     `json:"payDate"`
-	DraftCount           int       `json:"draftCount"`
-	PendingApprovalCount int       `json:"pendingApprovalCount"`
-	ApprovedCount        int       `json:"approvedCount"`
-	PostedCount          int       `json:"postedCount"`
-	PaidCount            int       `json:"paidCount"`
-	ExceptionCount       int       `json:"exceptionCount"`
-	TotalNetMinor        int64     `json:"totalNetMinor"`
-	TotalGrossMinor      int64     `json:"totalGrossMinor"`
-	UnsettledEventCount  int       `json:"unsettledEventCount"`
-	UnsettledGrossMinor  int64     `json:"unsettledGrossMinor"`
-	HeldEventCount       int       `json:"heldEventCount"`
-	HeldGrossMinor       int64     `json:"heldGrossMinor"`
-	UnsettledWorkerCount int       `json:"unsettledWorkerCount"`
-	OpenBatchID          *pulid.ID `json:"openBatchId"`
+	PeriodStart            int64     `json:"periodStart"`
+	PeriodEnd              int64     `json:"periodEnd"`
+	PayDate                int64     `json:"payDate"`
+	DraftCount             int       `json:"draftCount"`
+	PendingApprovalCount   int       `json:"pendingApprovalCount"`
+	ApprovedCount          int       `json:"approvedCount"`
+	PostedCount            int       `json:"postedCount"`
+	PaidCount              int       `json:"paidCount"`
+	ExceptionCount         int       `json:"exceptionCount"`
+	TotalNetMinor          int64     `json:"totalNetMinor"`
+	TotalGrossMinor        int64     `json:"totalGrossMinor"`
+	UnsettledEventCount    int       `json:"unsettledEventCount"`
+	UnsettledGrossMinor    int64     `json:"unsettledGrossMinor"`
+	HeldEventCount         int       `json:"heldEventCount"`
+	HeldGrossMinor         int64     `json:"heldGrossMinor"`
+	HeldSettlementCount    int       `json:"heldSettlementCount"`
+	HeldSettlementNetMinor int64     `json:"heldSettlementNetMinor"`
+	UnsettledWorkerCount   int       `json:"unsettledWorkerCount"`
+	OpenBatchID            *pulid.ID `json:"openBatchId"`
 }
 
 func (s *Service) GetWorkspaceSummary(
@@ -66,22 +68,24 @@ func (s *Service) GetWorkspaceSummary(
 	}
 
 	summary := &WorkspaceSummary{
-		PeriodStart:          bounds.PeriodStart,
-		PeriodEnd:            bounds.PeriodEnd,
-		PayDate:              bounds.PayDate,
-		DraftCount:           counts.DraftCount,
-		PendingApprovalCount: counts.PendingApprovalCount,
-		ApprovedCount:        counts.ApprovedCount,
-		PostedCount:          counts.PostedCount,
-		PaidCount:            counts.PaidCount,
-		ExceptionCount:       counts.ExceptionCount,
-		TotalNetMinor:        counts.TotalNetMinor,
-		TotalGrossMinor:      counts.TotalGrossMinor,
-		UnsettledEventCount:  unsettled.AccruedCount,
-		UnsettledGrossMinor:  unsettled.AccruedGrossMinor,
-		HeldEventCount:       unsettled.HeldCount,
-		HeldGrossMinor:       unsettled.HeldGrossMinor,
-		UnsettledWorkerCount: unsettled.WorkerCount,
+		PeriodStart:            bounds.PeriodStart,
+		PeriodEnd:              bounds.PeriodEnd,
+		PayDate:                bounds.PayDate,
+		DraftCount:             counts.DraftCount,
+		PendingApprovalCount:   counts.PendingApprovalCount,
+		ApprovedCount:          counts.ApprovedCount,
+		PostedCount:            counts.PostedCount,
+		PaidCount:              counts.PaidCount,
+		ExceptionCount:         counts.ExceptionCount,
+		TotalNetMinor:          counts.TotalNetMinor,
+		TotalGrossMinor:        counts.TotalGrossMinor,
+		UnsettledEventCount:    unsettled.AccruedCount,
+		UnsettledGrossMinor:    unsettled.AccruedGrossMinor,
+		HeldEventCount:         unsettled.HeldCount,
+		HeldGrossMinor:         unsettled.HeldGrossMinor,
+		HeldSettlementCount:    counts.HeldCount,
+		HeldSettlementNetMinor: counts.HeldNetMinor,
+		UnsettledWorkerCount:   unsettled.WorkerCount,
 	}
 
 	batches, err := s.batchRepo.List(ctx, &driversettlementports.ListSettlementBatchesRequest{

@@ -77,6 +77,8 @@ func TestImportAndMatchBankReceipt(t *testing.T) {
 		accountingRepo: reconciliationDisabled(t),
 		paymentRepo:    paymentRepo,
 		auditService:   &mocks.NoopAuditService{},
+		candidates:     &scoring{},
+		waker:          &countingWaker{},
 	}
 
 	receipt, err := svc.Import(
@@ -136,10 +138,6 @@ func TestImportAutoMatchesWhenUniqueCandidateExists(t *testing.T) {
 			return &copy, nil
 		}).
 		Once()
-	paymentRepo.EXPECT().
-		FindSuggestedMatchCandidates(mock.Anything, mock.Anything).
-		Return([]*customerpayment.Payment{payment}, nil).
-		Once()
 	paymentRepo.EXPECT().GetByID(mock.Anything, mock.Anything).Return(payment, nil).Once()
 	receiptRepo.EXPECT().ListMatchedToPayment(mock.Anything, mock.Anything).Return(nil, nil).Maybe()
 	receiptRepo.EXPECT().
@@ -169,6 +167,12 @@ func TestImportAutoMatchesWhenUniqueCandidateExists(t *testing.T) {
 		paymentRepo:    paymentRepo,
 		accountingRepo: accountingRepo,
 		auditService:   &mocks.NoopAuditService{},
+		candidates: &scoring{payments: []bankreceipt.PaymentEvidence{{
+			ID:          payment.ID,
+			Reference:   payment.ReferenceNumber,
+			AmountMinor: payment.AmountMinor,
+		}}},
+		waker: &countingWaker{},
 	}
 
 	receipt, err := svc.Import(
@@ -207,10 +211,6 @@ func TestImportMarksExceptionWhenNoUniqueCandidateExists(t *testing.T) {
 			return &copy, nil
 		}).
 		Once()
-	paymentRepo.EXPECT().
-		FindSuggestedMatchCandidates(mock.Anything, mock.Anything).
-		Return(nil, nil).
-		Once()
 	receiptRepo.EXPECT().
 		Update(mock.Anything, mock.Anything).
 		RunAndReturn(func(_ context.Context, entity *bankreceipt.BankReceipt) (*bankreceipt.BankReceipt, error) {
@@ -232,6 +232,8 @@ func TestImportMarksExceptionWhenNoUniqueCandidateExists(t *testing.T) {
 		paymentRepo:    paymentRepo,
 		accountingRepo: accountingRepo,
 		auditService:   &mocks.NoopAuditService{},
+		candidates:     &scoring{},
+		waker:          &countingWaker{},
 	}
 
 	receipt, err := svc.Import(
@@ -270,10 +272,6 @@ func TestImportCreatesWorkItemForException(t *testing.T) {
 			return &copy, nil
 		}).
 		Once()
-	paymentRepo.EXPECT().
-		FindSuggestedMatchCandidates(mock.Anything, mock.Anything).
-		Return(nil, nil).
-		Once()
 	receiptRepo.EXPECT().
 		Update(mock.Anything, mock.Anything).
 		RunAndReturn(func(_ context.Context, entity *bankreceipt.BankReceipt) (*bankreceipt.BankReceipt, error) {
@@ -306,6 +304,8 @@ func TestImportCreatesWorkItemForException(t *testing.T) {
 		paymentRepo:    paymentRepo,
 		accountingRepo: accountingRepo,
 		auditService:   &mocks.NoopAuditService{},
+		candidates:     &scoring{},
+		waker:          &countingWaker{},
 	}
 
 	_, err := svc.Import(
@@ -324,7 +324,7 @@ func TestImportCreatesWorkItemForException(t *testing.T) {
 	assert.Equal(t, bankreceiptworkitem.StatusOpen, workItem.Status)
 }
 
-func TestListExceptionsAndSuggestMatches(t *testing.T) {
+func TestListExceptions_ReadsThePageFromTheRepository(t *testing.T) {
 	t.Parallel()
 
 	orgID := pulid.MustNew("org_")
@@ -337,48 +337,22 @@ func TestListExceptionsAndSuggestMatches(t *testing.T) {
 		ReferenceNumber: "SG-1",
 		AmountMinor:     10000,
 	}
-	payment := &customerpayment.Payment{
-		ID:              pulid.MustNew("cpay_"),
-		CustomerID:      pulid.MustNew("cus_"),
-		ReferenceNumber: "SG-1",
-		AmountMinor:     10000,
-		Status:          customerpayment.StatusPosted,
-	}
-	svc := &Service{
-		l:            zap.NewNop(),
-		workItemRepo: noWorkItems(t),
-		db:           passthroughDB{},
-		repo:         bankreceiptportsmock.NewMockBankReceiptRepository(t),
-		paymentRepo:  customerpaymentportsmock.NewMockCustomerPaymentRepository(t),
-		auditService: &mocks.NoopAuditService{},
-	}
-	svc.repo.(*bankreceiptportsmock.MockBankReceiptRepository).EXPECT().
+	repo := bankreceiptportsmock.NewMockBankReceiptRepository(t)
+	svc := &Service{l: zap.NewNop(), repo: repo}
+	repo.EXPECT().
 		ListExceptions(mock.Anything, mock.Anything).
-		Return([]*bankreceipt.BankReceipt{receipt}, nil).
-		Once()
-	svc.repo.(*bankreceiptportsmock.MockBankReceiptRepository).EXPECT().
-		GetByID(mock.Anything, mock.Anything).
-		Return(receipt, nil).
-		Once()
-	svc.paymentRepo.(*customerpaymentportsmock.MockCustomerPaymentRepository).EXPECT().
-		FindSuggestedMatchCandidates(mock.Anything, mock.Anything).
-		Return([]*customerpayment.Payment{payment}, nil).
+		Return(&bankreceiptports.BankReceiptExceptionPage{
+			Items: []*bankreceipt.BankReceipt{receipt},
+			Total: 1,
+		}, nil).
 		Once()
 
-	items, err := svc.ListExceptions(t.Context(), pagination.TenantInfo{OrgID: orgID, BuID: buID})
+	page, err := svc.ListExceptions(t.Context(), &bankreceiptports.ListBankReceiptExceptionsRequest{
+		TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID},
+	})
 	require.NoError(t, err)
-	require.Len(t, items, 1)
-
-	suggestions, err := svc.SuggestMatches(
-		t.Context(),
-		&bankreceiptports.GetBankReceiptRequest{
-			ReceiptID:  receipt.ID,
-			TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID},
-		},
-	)
-	require.NoError(t, err)
-	require.Len(t, suggestions, 1)
-	assert.Equal(t, 95, suggestions[0].Score)
+	require.Len(t, page.Items, 1)
+	assert.Equal(t, 1, page.Total)
 }
 
 func TestPaymentsOfReceiptAmount_AsksForPaymentsOfTheReceiptsAmountUpToTheLimit(t *testing.T) {

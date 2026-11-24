@@ -1,7 +1,12 @@
 import { type TranslateFn, useT } from "@trenova/shared/i18n/use-t";
 import { BulkMarkPaidDialog } from "@/components/settlements/bulk-mark-paid-dialog";
 import { DataTable } from "@/components/data-table/data-table";
-import { eligibleSettlements, settlementLifecycleChoices } from "@/lib/settlement-lifecycle";
+import {
+  eligibleSettlements,
+  heldOutSettlements,
+  settlementLifecycleChoices,
+} from "@/lib/settlement-lifecycle";
+import { heldLeftOut } from "@/lib/settlement-hold";
 import {
   bulkDriverSettlementAction,
   driverSettlementTableGraphQLConfig,
@@ -79,9 +84,15 @@ export default function SettlementsTable() {
       paymentReference?: string,
     ) => {
       const eligible = eligibleSettlements(rows, action);
+      const held = heldOutSettlements(rows, action).length;
       if (eligible.length === 0) {
         toast.info(
-          t("None of the selected settlements are in an eligible status for that action."),
+          held > 0
+            ? t(
+                "{0, plural, one {The selected settlement is on hold; release the hold first.} other {The selected settlements are on hold; release the holds first.}}",
+                held,
+              )
+            : t("None of the selected settlements are in an eligible status for that action."),
         );
         return;
       }
@@ -91,8 +102,12 @@ export default function SettlementsTable() {
         paymentMethod,
         paymentReference,
       });
-      if (result.failureCount === 0) {
+      if (result.failureCount === 0 && held === 0) {
         toast.success(bulkActionSucceeded(t, action, result.successCount));
+      } else if (result.failureCount === 0) {
+        toast.warning(
+          t("{0} — {1}", bulkActionSucceeded(t, action, result.successCount), heldLeftOut(held)),
+        );
       } else {
         const firstError = result.results.find((entry) => !entry.success)?.error;
         const summary = bulkActionPartlyFailed(t, action, result.successCount, result.failureCount);

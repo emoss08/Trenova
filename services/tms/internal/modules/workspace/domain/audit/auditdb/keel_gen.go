@@ -4361,6 +4361,7 @@ var enumPermissionOperation = [...]schema.EnumValue{
 	{Value: `resolve`, Label: `Op Resolve`},
 	{Value: `manage`, Label: `Op Manage`},
 	{Value: `post`, Label: `Op Post`},
+	{Value: `hold`, Label: `Op Hold`},
 	{Value: `approve_own`, Label: `Op Approve Own`, Doc: `OpApproveOwn lets a reviewer approve a revision they submitted or authored, where the two-person rule would otherwise send it to someone else.`},
 }
 

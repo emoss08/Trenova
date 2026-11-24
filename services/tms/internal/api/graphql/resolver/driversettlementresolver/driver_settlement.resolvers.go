@@ -1261,3 +1261,69 @@ func (r *DriverSettlementResolver) PaidBy(ctx context.Context, obj *driversettle
 func (r *DriverSettlementResolver) VoidedBy(ctx context.Context, obj *driversettlement.Settlement) (*tenant.User, error) {
 	return loaderfields.LoadUser(ctx, obj.VoidedByID)
 }
+
+func (r *QueryResolver) DriverSettlementBlockers(ctx context.Context, batchID *string, limit *int) ([]*gqlmodel.DriverSettlementBlocker, error) {
+	if _, err := r.RequirePermission(ctx, permission.ResourceDriverSettlement, permission.OpRead); err != nil {
+		return nil, err
+	}
+	req, err := blockersRequest(batchID, limit)
+	if err != nil {
+		return nil, err
+	}
+	rows, err := r.SettlementRelease.Blocked(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	return blockersToModel(ctx, rows), nil
+}
+
+func (r *DriverSettlementResolver) HoldReason(ctx context.Context, obj *driversettlement.Settlement) (*driversettlement.HoldReason, error) {
+	if !obj.IsHeld() {
+		return nil, nil
+	}
+	reason := obj.HoldReason
+
+	return &reason, nil
+}
+
+func (r *DriverSettlementResolver) HeldBy(ctx context.Context, obj *driversettlement.Settlement) (*tenant.User, error) {
+	return loaderfields.LoadUser(ctx, obj.HeldByID)
+}
+
+func (r *DriverSettlementResolver) HoldReleasedBy(ctx context.Context, obj *driversettlement.Settlement) (*tenant.User, error) {
+	return loaderfields.LoadUser(ctx, obj.HoldReleasedByID)
+}
+
+func (r *MutationResolver) HoldDriverSettlement(ctx context.Context, input gqlmodel.HoldDriverSettlementInput) (*driversettlement.Settlement, error) {
+	authCtx, settlementID, err := r.settlementAction(ctx, input.SettlementID, permission.OpHold)
+	if err != nil {
+		return nil, err
+	}
+	return r.DriverSettlementService.ChangeHold(
+		ctx,
+		&driversettlementservice.HoldRequest{
+			TenantInfo:   resolvercore.TenantInfo(authCtx),
+			SettlementID: settlementID,
+			Reason:       input.Reason,
+			Note:         gqlscalar.StringValue(input.Note),
+		},
+		actorutil.FromAuthContext(authCtx),
+	)
+}
+
+func (r *MutationResolver) ReleaseDriverSettlementHold(ctx context.Context, settlementID string) (*driversettlement.Settlement, error) {
+	authCtx, id, err := r.settlementAction(ctx, settlementID, permission.OpHold)
+	if err != nil {
+		return nil, err
+	}
+	return r.DriverSettlementService.ChangeHold(
+		ctx,
+		&driversettlementservice.HoldRequest{
+			TenantInfo:   resolvercore.TenantInfo(authCtx),
+			SettlementID: id,
+			Release:      true,
+		},
+		actorutil.FromAuthContext(authCtx),
+	)
+}

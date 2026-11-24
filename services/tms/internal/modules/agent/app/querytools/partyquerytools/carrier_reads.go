@@ -6,7 +6,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/boardhint"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/operationsboard"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/partiesboard"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
 )
 
@@ -35,6 +38,33 @@ var carrierReference = readspec.Reference{
 func CarrierReadSpecs() []readspec.List {
 	return []readspec.List{
 		carrierIntelEventsListSpec(), capacityPostingsListSpec(), invoiceMatchesListSpec(),
+		coverEndingListSpec(),
+	}
+}
+
+func coverEndingListSpec() readspec.List {
+	return readspec.List{
+		Name:         "carrier_list_cover_ending",
+		EntityPlural: "carriers whose insurance ends",
+		Summary: "List the active carriers whose required insurance (auto and cargo " +
+			"liability) ends within withinDays days (30 when left out), or already lapsed " +
+			"in the last 90 days, the soonest first. Each row is a carrier: its id and name, " +
+			"its compliance status, the required policy that ends first (type, number, " +
+			"endsAt), any required policy type it has none on file for, and openLoads, " +
+			"its loads with us not yet delivered. A carrier hauling for us is one with " +
+			"openLoads above 0. A carrier with no required policy ending in the window is " +
+			"not listed.",
+		SearchTerms: []string{
+			"carrier insurance lapsing", "insurance about to expire", "carriers losing cover",
+		},
+		Shows: &boardhint.Show{
+			Metric: operationsboard.MetricCoverAgainstLoads,
+			Records: &boardhint.Records{
+				Words:   "these carriers",
+				Measure: partiesboard.MeasureCoverLeft,
+			},
+		},
+		Resource: permission.ResourceCarrier,
 	}
 }
 

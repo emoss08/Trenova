@@ -629,7 +629,8 @@ type ReportRunDeskCard {
   """
   Why a finished run's result is not shown: access (the person can no longer
   read everything it shows), plan (it reads data the organization's plan no
-  longer includes) or changed (the report no longer runs as it did).
+  longer includes), changed (the report no longer runs as it did) or deleted
+  (the saved report it came from was deleted; the run is kept).
   """
   withheld: String
   "The add-on the run's report needs, when withheld is plan."

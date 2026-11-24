@@ -26,6 +26,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantstreamports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -545,6 +546,12 @@ func (s *Service) keepThreadTaint(
 	}
 }
 
+type ObservedRun struct {
+	ThreadID   pulid.ID
+	Actor      *permissionports.RequestActor
+	DataAccess permission.FieldSensitivity
+}
+
 // ObserveTool keeps what a finished tool call produced for a person to see
 // beside the conversation, and says so on emit. It runs where the tool ran,
 // the only place its raw result exists. It answers with what the person now
@@ -554,13 +561,13 @@ func (s *Service) keepThreadTaint(
 //nolint:gocritic // the observation arrives by value from agentruntimeports.ToolObserver
 func (s *Service) ObserveTool(
 	ctx context.Context,
-	threadID pulid.ID,
-	actor *permissionports.RequestActor,
+	run *ObservedRun,
 	observation agentruntimeports.ToolObservation,
 	emit kernelports.AssistantStreamEmitter,
 ) (*agentruntimeports.ShownArtifact, []*assistantartifact.Artifact, error) {
-	thread := &conversation.Thread{ID: threadID}
-	recorder := s.newArtifactRecorder(ctx, thread, actor.TenantInfo(), actor, emit)
+	thread := &conversation.Thread{ID: run.ThreadID}
+	recorder := s.newArtifactRecorder(ctx, thread, run.Actor.TenantInfo(), run.Actor, emit).
+		ReadForAgent(run.DataAccess)
 	if recorder == nil {
 		return nil, nil, nil
 	}

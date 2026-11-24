@@ -1,5 +1,6 @@
 import { DeskInlineArtifact } from "@/components/desk-chat/conversation/desk-turns";
-import { ArtifactLinkContext, AiMarkdown } from "@/components/elements/ai-markdown";
+import { AiMarkdown } from "@/components/elements/ai-markdown";
+import { ArtifactLinkContext } from "@/components/elements/artifact-link-context";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 

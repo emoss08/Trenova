@@ -7,6 +7,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/board"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/boardparse"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/boardcatalog"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/homeboard"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -78,20 +81,22 @@ func TestParseReadsABoardOfEveryKindOfSource(t *testing.T) {
 	require.Len(t, figures.Figures, 3)
 	assert.Equal(t, board.AggregateCount, figures.Figures[0].Aggregate)
 	assert.Equal(t, board.AggregateMax, figures.Figures[1].Aggregate)
-	assert.Equal(t, "activeShipments", figures.Figures[2].Metric)
-	assert.Equal(t, permission.ResourceShipment, figures.Figures[0].Records.Resource)
+	assert.Equal(t, homeboard.MetricDispatchToday, figures.Figures[2].Metric)
+	assert.Equal(t, "activeShipments", figures.Figures[2].Figure)
+	assert.Equal(t, recordkind.Kind(permission.ResourceShipment), figures.Figures[0].Records.Kind)
 
 	records := parsed.Blocks[1]
-	assert.Equal(t, board.MeasureLateness, records.Measure)
+	assert.Equal(t, board.Measure("lateness"), records.Measure)
 	assert.Equal(t, board.OrderMeasure, records.Order)
 	assert.Len(t, records.Records.IDs, 6)
 
 	assert.Equal(t, board.DefaultTimeline, parsed.Blocks[2].Limit)
 	assert.True(t, parsed.Blocks[2].Half)
-	assert.Equal(t, board.ToneInfo, parsed.Blocks[3].Tone)
+	assert.Equal(t, boardcatalog.ToneInfo, parsed.Blocks[3].Tone)
 	assert.Equal(t, []int{1, 2, 3, 0}, parsed.Numerals())
-	assert.Len(t, parsed.Records()[permission.ResourceShipment], 6)
-	assert.Equal(t, []string{"activeShipments"}, parsed.Metrics())
+	assert.Len(t, parsed.Records()[recordkind.Kind(permission.ResourceShipment)], 6)
+	assert.Equal(t, []board.MetricAsk{{Metric: homeboard.MetricDispatchToday, Period: "today"}},
+		parsed.Metrics())
 }
 
 func TestParseRefusesWhatABoardCannotDraw(t *testing.T) {
@@ -428,8 +433,8 @@ func TestParseReadsAMeasureByTheFieldNameAToolResultGave(t *testing.T) {
 	parsed, problems := boardparse.Parse(args)
 
 	require.Empty(t, problems)
-	assert.Equal(t, board.MeasureRevenue, parsed.Blocks[1].Measure)
-	assert.Equal(t, board.MeasureLateness, parsed.Blocks[0].Figures[1].Measure)
+	assert.Equal(t, board.Measure("revenue"), parsed.Blocks[1].Measure)
+	assert.Equal(t, board.Measure("lateness"), parsed.Blocks[0].Figures[1].Measure)
 
 	unknown := lateBoard()
 	unknown["blocks"].([]any)[1].(map[string]any)["measure"] = "daysPastDue"

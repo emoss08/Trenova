@@ -649,8 +649,587 @@ func attachBankReceipt(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	}
 }
 
+// candidatesTable is the schema of bankreceipt.Candidate.
+var candidatesTable = schema.Table{
+	Name:   "bank_receipt_candidates",
+	Quoted: `"bank_receipt_candidates"`,
+	Alias:  "brc",
+	Model:  "bankreceipt.Candidate",
+	Label:  `Candidate`,
+	Plural: `Candidates`,
+	Columns: []schema.Column{
+		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`, JSON: `organizationId`},
+		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
+		{Name: "bank_receipt_id", Quoted: `"bank_receipt_id"`, Field: "BankReceiptID", Kind: schema.KindString, Flags: schema.FlagPK, Label: `Bank Receipt ID`, JSON: `bankReceiptId`},
+		{Name: "rank", Quoted: `"rank"`, Field: "Rank", Kind: schema.KindInt64, Flags: schema.FlagPK, Label: `Rank`, JSON: `rank`},
+		{Name: "candidate_kind", Quoted: `"candidate_kind"`, Field: "Kind", Kind: schema.KindString, Flags: 0, Label: `Kind`, JSON: `kind`, Enum: enumCandidateKind[:]},
+		{Name: "customer_payment_id", Quoted: `"customer_payment_id"`, Field: "CustomerPaymentID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Customer Payment ID`, JSON: `customerPaymentId`},
+		{Name: "invoice_id", Quoted: `"invoice_id"`, Field: "InvoiceID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Invoice ID`, JSON: `invoiceId`},
+		{Name: "customer_id", Quoted: `"customer_id"`, Field: "CustomerID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Customer ID`, JSON: `customerId`},
+		{Name: "score", Quoted: `"score"`, Field: "Score", Kind: schema.KindInt64, Flags: 0, Label: `Score`, JSON: `score`},
+		{Name: "evidence", Quoted: `"evidence"`, Field: "Evidence", Kind: schema.KindStringArray, Flags: schema.FlagNullable, Label: `Evidence`, JSON: `evidence`},
+		{Name: "standing", Quoted: `"standing"`, Field: "Standing", Kind: schema.KindString, Flags: 0, Label: `Standing`, JSON: `standing`, Enum: enumStanding[:]},
+		{Name: "open_minor", Quoted: `"open_minor"`, Field: "OpenMinor", Kind: schema.KindInt64, Flags: 0, Label: `Open Minor`, JSON: `openMinor`},
+		{Name: "difference_minor", Quoted: `"difference_minor"`, Field: "DifferenceMinor", Kind: schema.KindInt64, Flags: 0, Label: `Difference Minor`, JSON: `differenceMinor`},
+		{Name: "computed_at", Quoted: `"computed_at"`, Field: "ComputedAt", Kind: schema.KindInt64, Flags: 0, Label: `Computed At`, JSON: `computedAt`},
+	},
+	PK:         []int32{0, 1, 2, 3},
+	Tenant:     []int32{0, 1},
+	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13},
+	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13},
+	Update:     []int32{4, 5, 6, 7, 8, 9, 10, 11, 12, 13},
+	Returning:  nil,
+	Version:    -1,
+	AutoID:     -1,
+	AutoCreate: -1,
+	AutoUpdate: -1,
+	IDPrefix:   "",
+	New:        newCandidate,
+	NewN:       newNCandidate,
+	Size:       unsafe.Sizeof(bankreceipt.Candidate{}),
+	Ptr:        ptrCandidate,
+	Value:      valueCandidate,
+}
+
+var candidatesRef = keel.Ref{Table: &candidatesTable}
+
+// CandidatesTable is the table of bankreceipt.Candidate.
+type CandidatesTable struct {
+	keel.TableBase
+	OrganizationID    keelkinds.PulidIDCol
+	BusinessUnitID    keelkinds.PulidIDCol
+	BankReceiptID     keelkinds.PulidIDCol
+	Rank              keel.Int64Col
+	Kind              CandidateKindCol
+	CustomerPaymentID keelkinds.PulidIDCol
+	InvoiceID         keelkinds.PulidIDCol
+	CustomerID        keelkinds.PulidIDCol
+	Score             keel.Int64Col
+	Evidence          keel.StringArrayCol
+	Standing          StandingCol
+	OpenMinor         keel.Int64Col
+	DifferenceMinor   keel.Int64Col
+	ComputedAt        keel.Int64Col
+}
+
+// Candidates references the bank_receipt_candidates table.
+var Candidates = &CandidatesTable{
+	TableBase:         keel.TableBase{Ref: &candidatesRef},
+	OrganizationID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &candidatesRef, Index: 0}}},
+	BusinessUnitID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &candidatesRef, Index: 1}}},
+	BankReceiptID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &candidatesRef, Index: 2}}},
+	Rank:              keel.Int64Col{Col: keel.Col{Ref: &candidatesRef, Index: 3}},
+	Kind:              CandidateKindCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &candidatesRef, Index: 4}}},
+	CustomerPaymentID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &candidatesRef, Index: 5}}},
+	InvoiceID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &candidatesRef, Index: 6}}},
+	CustomerID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &candidatesRef, Index: 7}}},
+	Score:             keel.Int64Col{Col: keel.Col{Ref: &candidatesRef, Index: 8}},
+	Evidence:          keel.StringArrayCol{Col: keel.Col{Ref: &candidatesRef, Index: 9}},
+	Standing:          StandingCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &candidatesRef, Index: 10}}},
+	OpenMinor:         keel.Int64Col{Col: keel.Col{Ref: &candidatesRef, Index: 11}},
+	DifferenceMinor:   keel.Int64Col{Col: keel.Col{Ref: &candidatesRef, Index: 12}},
+	ComputedAt:        keel.Int64Col{Col: keel.Col{Ref: &candidatesRef, Index: 13}},
+}
+
+// BuildCandidates builds the table of bank_receipt_candidates for ref. Generated relation and alias methods call it.
+func BuildCandidates(r *keel.Ref) *CandidatesTable {
+	return &CandidatesTable{
+		TableBase:         keel.TableBase{Ref: r},
+		OrganizationID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		BankReceiptID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		Rank:              keel.Int64Col{Col: keel.Col{Ref: r, Index: 3}},
+		Kind:              CandidateKindCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		CustomerPaymentID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		InvoiceID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		CustomerID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 7}}},
+		Score:             keel.Int64Col{Col: keel.Col{Ref: r, Index: 8}},
+		Evidence:          keel.StringArrayCol{Col: keel.Col{Ref: r, Index: 9}},
+		Standing:          StandingCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 10}}},
+		OpenMinor:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 11}},
+		DifferenceMinor:   keel.Int64Col{Col: keel.Col{Ref: r, Index: 12}},
+		ComputedAt:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 13}},
+	}
+}
+
+// CandidatesSchema returns the schema of bank_receipt_candidates.
+func CandidatesSchema() *schema.Table { return &candidatesTable }
+
+// As returns a handle that references bank_receipt_candidates under its own alias.
+func (t *CandidatesTable) As(alias string) *CandidatesTable {
+	return keel.Alias(t.Ref, alias, BuildCandidates)
+}
+
+// CandidatesQuery is a query over bankreceipt.Candidate.
+type CandidatesQuery struct{ keel.QueryCore }
+
+var _ keel.Query[*bankreceipt.Candidate] = (*CandidatesQuery)(nil)
+
+// Query starts a query over the table.
+func (t *CandidatesTable) Query() keel.Query[*bankreceipt.Candidate] {
+	return &CandidatesQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see CandidatesQuery.Where.
+func (t *CandidatesTable) Where(ps ...keel.Pred) keel.Query[*bankreceipt.Candidate] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see CandidatesQuery.Pick.
+func (t *CandidatesTable) Pick(es ...keel.Expr) keel.Query[*bankreceipt.Candidate] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see CandidatesQuery.Load.
+func (t *CandidatesTable) Load(ls ...keel.Loader) keel.Query[*bankreceipt.Candidate] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see CandidatesQuery.Omit.
+func (t *CandidatesTable) Omit(cols ...keel.Column) keel.Query[*bankreceipt.Candidate] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see CandidatesQuery.Order.
+func (t *CandidatesTable) Order(os ...keel.Order) keel.Query[*bankreceipt.Candidate] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see CandidatesQuery.Limit.
+func (t *CandidatesTable) Limit(n int) keel.Query[*bankreceipt.Candidate] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see CandidatesQuery.Group.
+func (t *CandidatesTable) Group(es ...keel.Expr) keel.Query[*bankreceipt.Candidate] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see CandidatesQuery.GroupingSets.
+func (t *CandidatesTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*bankreceipt.Candidate] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see CandidatesQuery.Rollup.
+func (t *CandidatesTable) Rollup(es ...keel.Expr) keel.Query[*bankreceipt.Candidate] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see CandidatesQuery.Cube.
+func (t *CandidatesTable) Cube(es ...keel.Expr) keel.Query[*bankreceipt.Candidate] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see CandidatesQuery.AllTenants.
+func (t *CandidatesTable) AllTenants() keel.Query[*bankreceipt.Candidate] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see CandidatesQuery.Join.
+func (t *CandidatesTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*bankreceipt.Candidate] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see CandidatesQuery.LeftJoin.
+func (t *CandidatesTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*bankreceipt.Candidate] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see CandidatesQuery.LeftJoinLateral.
+func (t *CandidatesTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*bankreceipt.Candidate] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see CandidatesQuery.JoinLateral.
+func (t *CandidatesTable) JoinLateral(sub keel.LateralSource) keel.Query[*bankreceipt.Candidate] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see CandidatesQuery.Lock.
+func (t *CandidatesTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*bankreceipt.Candidate] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see CandidatesQuery.DistinctOn.
+func (t *CandidatesTable) DistinctOn(es ...keel.Expr) keel.Query[*bankreceipt.Candidate] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see CandidatesQuery.Cache.
+func (t *CandidatesTable) Cache(opts ...keel.CacheOption) keel.Query[*bankreceipt.Candidate] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see CandidatesQuery.LoadStrategy.
+func (t *CandidatesTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*bankreceipt.Candidate] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see CandidatesQuery.With.
+func (t *CandidatesTable) With(ctes ...*keel.CTETable) keel.Query[*bankreceipt.Candidate] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see CandidatesQuery.Compute.
+func (t *CandidatesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*bankreceipt.Candidate] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *CandidatesTable) Create(ctx context.Context, db *keel.DB, row *bankreceipt.Candidate) error {
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *CandidatesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*bankreceipt.Candidate) error {
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
+}
+
+// Save updates row by its primary key.
+func (t *CandidatesTable) Save(ctx context.Context, db *keel.DB, row *bankreceipt.Candidate, cols ...keel.Column) error {
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *CandidatesTable) SaveExcept(ctx context.Context, db *keel.DB, row *bankreceipt.Candidate, cols ...keel.Column) error {
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *CandidatesTable) DeleteRow(ctx context.Context, db *keel.DB, row *bankreceipt.Candidate) error {
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *CandidatesTable) Upsert(ctx context.Context, db *keel.DB, rows []*bankreceipt.Candidate, c keel.Conflict) ([]bool, error) {
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *CandidatesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*bankreceipt.Candidate, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *CandidatesTable) Copy(ctx context.Context, db *keel.DB, rows []*bankreceipt.Candidate) (int64, error) {
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *CandidatesQuery) Where(ps ...keel.Pred) keel.Query[*bankreceipt.Candidate] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *CandidatesQuery) Pick(es ...keel.Expr) keel.Query[*bankreceipt.Candidate] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *CandidatesQuery) Omit(cols ...keel.Column) keel.Query[*bankreceipt.Candidate] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *CandidatesQuery) Load(ls ...keel.Loader) keel.Query[*bankreceipt.Candidate] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *CandidatesQuery) Order(os ...keel.Order) keel.Query[*bankreceipt.Candidate] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *CandidatesQuery) Distinct() keel.Query[*bankreceipt.Candidate] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *CandidatesQuery) Group(es ...keel.Expr) keel.Query[*bankreceipt.Candidate] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *CandidatesQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*bankreceipt.Candidate] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *CandidatesQuery) Rollup(es ...keel.Expr) keel.Query[*bankreceipt.Candidate] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *CandidatesQuery) Cube(es ...keel.Expr) keel.Query[*bankreceipt.Candidate] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *CandidatesQuery) Window(name string, w keel.Window) keel.Query[*bankreceipt.Candidate] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *CandidatesQuery) Having(ps ...keel.Pred) keel.Query[*bankreceipt.Candidate] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *CandidatesQuery) Limit(n int) keel.Query[*bankreceipt.Candidate] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *CandidatesQuery) Offset(n int) keel.Query[*bankreceipt.Candidate] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *CandidatesQuery) DistinctOn(es ...keel.Expr) keel.Query[*bankreceipt.Candidate] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *CandidatesQuery) AllTenants() keel.Query[*bankreceipt.Candidate] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *CandidatesQuery) CustomPlan() keel.Query[*bankreceipt.Candidate] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *CandidatesQuery) Timeout(d time.Duration) keel.Query[*bankreceipt.Candidate] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *CandidatesQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*bankreceipt.Candidate] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *CandidatesQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*bankreceipt.Candidate] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *CandidatesQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*bankreceipt.Candidate] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *CandidatesQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*bankreceipt.Candidate] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *CandidatesQuery) JoinLateral(sub keel.LateralSource) keel.Query[*bankreceipt.Candidate] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *CandidatesQuery) Cache(opts ...keel.CacheOption) keel.Query[*bankreceipt.Candidate] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *CandidatesQuery) With(ctes ...*keel.CTETable) keel.Query[*bankreceipt.Candidate] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *CandidatesQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*bankreceipt.Candidate] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *CandidatesQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*bankreceipt.Candidate] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *CandidatesQuery) Clone() keel.Query[*bankreceipt.Candidate] {
+	return &CandidatesQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *CandidatesQuery) One(ctx context.Context, db *keel.DB) (*bankreceipt.Candidate, error) {
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*bankreceipt.Candidate)(row), err
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *CandidatesQuery) First(ctx context.Context, db *keel.DB) (*bankreceipt.Candidate, error) {
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*bankreceipt.Candidate)(row), err
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *CandidatesQuery) List(ctx context.Context, db *keel.DB) ([]*bankreceipt.Candidate, error) {
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*bankreceipt.Candidate)(unsafe.Pointer(&rows)), err
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *CandidatesQuery) All(ctx context.Context, db *keel.DB) ([]*bankreceipt.Candidate, error) {
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*bankreceipt.Candidate)(unsafe.Pointer(&rows)), err
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *CandidatesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*bankreceipt.Candidate, error) {
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*bankreceipt.Candidate)(unsafe.Pointer(&rows)), err
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *CandidatesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*bankreceipt.Candidate], error) {
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*bankreceipt.Candidate])(unsafe.Pointer(&page)), err
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *CandidatesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*bankreceipt.Candidate) error) error {
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*bankreceipt.Candidate)(unsafe.Pointer(&rows)))
+	})
+}
+
+func newCandidate() unsafe.Pointer { return unsafe.Pointer(new(bankreceipt.Candidate)) }
+
+func newNCandidate(n int) unsafe.Pointer {
+	return unsafe.Pointer(unsafe.SliceData(make([]bankreceipt.Candidate, n)))
+}
+
+func ptrCandidate(p unsafe.Pointer, c int32) any {
+	r := (*bankreceipt.Candidate)(p)
+	switch c {
+	case 0:
+		return (*string)(unsafe.Pointer(&r.OrganizationID))
+	case 1:
+		return (*string)(unsafe.Pointer(&r.BusinessUnitID))
+	case 2:
+		return (*string)(unsafe.Pointer(&r.BankReceiptID))
+	case 3:
+		return (*int64)(unsafe.Pointer(&r.Rank))
+	case 4:
+		return (*string)(unsafe.Pointer(&r.Kind))
+	case 5:
+		return (*string)(unsafe.Pointer(&r.CustomerPaymentID))
+	case 6:
+		return (*string)(unsafe.Pointer(&r.InvoiceID))
+	case 7:
+		return (*string)(unsafe.Pointer(&r.CustomerID))
+	case 8:
+		return (*int64)(unsafe.Pointer(&r.Score))
+	case 9:
+		return &r.Evidence
+	case 10:
+		return (*string)(unsafe.Pointer(&r.Standing))
+	case 11:
+		return &r.OpenMinor
+	case 12:
+		return &r.DifferenceMinor
+	case 13:
+		return &r.ComputedAt
+	}
+	return nil
+}
+
+func valueCandidate(p unsafe.Pointer, c int32) any {
+	r := (*bankreceipt.Candidate)(p)
+	switch c {
+	case 0:
+		return string(r.OrganizationID)
+	case 1:
+		return string(r.BusinessUnitID)
+	case 2:
+		return string(r.BankReceiptID)
+	case 3:
+		return int64(r.Rank)
+	case 4:
+		return string(r.Kind)
+	case 5:
+		if r.CustomerPaymentID == "" {
+			return nil
+		}
+		return string(r.CustomerPaymentID)
+	case 6:
+		if r.InvoiceID == "" {
+			return nil
+		}
+		return string(r.InvoiceID)
+	case 7:
+		if r.CustomerID == "" {
+			return nil
+		}
+		return string(r.CustomerID)
+	case 8:
+		return int64(r.Score)
+	case 9:
+		if r.Evidence == nil {
+			return []string{}
+		}
+		return r.Evidence
+	case 10:
+		return string(r.Standing)
+	case 11:
+		return r.OpenMinor
+	case 12:
+		return r.DifferenceMinor
+	case 13:
+		return r.ComputedAt
+	}
+	return nil
+}
+
 func init() {
 	bankReceiptsTable.Relations[0].Target = customerpaymentdb.PaymentsSchema()
+}
+
+// intIs64 fails the build where int is not 64 bits: int fields are read through *int64.
+const intIs64 = unsafe.Sizeof(int(0)) - 8
+
+var enumCandidateKind = [...]schema.EnumValue{
+	{Value: `CustomerPayment`, Label: `Candidate Customer Payment`},
+	{Value: `Invoice`, Label: `Candidate Invoice`},
+}
+
+var enumStanding = [...]schema.EnumValue{
+	{Value: `Exact`, Label: `Exact`},
+	{Value: `SameAmount`, Label: `Same Amount`},
+	{Value: `Short`, Label: `Short`},
+	{Value: `Over`, Label: `Over`},
 }
 
 var enumStatus = [...]schema.EnumValue{
@@ -670,6 +1249,54 @@ var reportDimStringHidden = schema.ReportInfo{Kind: schema.Dimension, Type: sche
 var reportMeasureInteger = schema.ReportInfo{Included: true, Kind: schema.Measure, Type: schema.ValueInt, Aggs: schema.AggsNumeric}
 
 var reportMeasureIntegerHidden = schema.ReportInfo{Kind: schema.Measure, Type: schema.ValueInt, Aggs: schema.AggsNumeric}
+
+// CandidateKindCol is a column of bankreceipt.CandidateKind values.
+type CandidateKindCol struct{ keel.TypedStringCol }
+
+func (c CandidateKindCol) Eq(v bankreceipt.CandidateKind) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c CandidateKindCol) Ne(v bankreceipt.CandidateKind) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c CandidateKindCol) Gt(v bankreceipt.CandidateKind) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c CandidateKindCol) Gte(v bankreceipt.CandidateKind) keel.Pred { return c.Text().Gte(string(v)) }
+func (c CandidateKindCol) Lt(v bankreceipt.CandidateKind) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c CandidateKindCol) Lte(v bankreceipt.CandidateKind) keel.Pred { return c.Text().Lte(string(v)) }
+func (c CandidateKindCol) IsDistinctFrom(v bankreceipt.CandidateKind) keel.Pred {
+	return c.Text().IsDistinctFrom(string(v))
+}
+func (c CandidateKindCol) Between(lo, hi bankreceipt.CandidateKind) keel.Pred {
+	return c.Text().Between(string(lo), string(hi))
+}
+func (c CandidateKindCol) To(v bankreceipt.CandidateKind) keel.Assignment {
+	return c.Text().To(string(v))
+}
+func (c CandidateKindCol) In(vs ...bankreceipt.CandidateKind) keel.Pred {
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
+}
+func (c CandidateKindCol) NotIn(vs ...bankreceipt.CandidateKind) keel.Pred {
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
+}
+
+// StandingCol is a column of bankreceipt.Standing values.
+type StandingCol struct{ keel.TypedStringCol }
+
+func (c StandingCol) Eq(v bankreceipt.Standing) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c StandingCol) Ne(v bankreceipt.Standing) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c StandingCol) Gt(v bankreceipt.Standing) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c StandingCol) Gte(v bankreceipt.Standing) keel.Pred { return c.Text().Gte(string(v)) }
+func (c StandingCol) Lt(v bankreceipt.Standing) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c StandingCol) Lte(v bankreceipt.Standing) keel.Pred { return c.Text().Lte(string(v)) }
+func (c StandingCol) IsDistinctFrom(v bankreceipt.Standing) keel.Pred {
+	return c.Text().IsDistinctFrom(string(v))
+}
+func (c StandingCol) Between(lo, hi bankreceipt.Standing) keel.Pred {
+	return c.Text().Between(string(lo), string(hi))
+}
+func (c StandingCol) To(v bankreceipt.Standing) keel.Assignment { return c.Text().To(string(v)) }
+func (c StandingCol) In(vs ...bankreceipt.Standing) keel.Pred {
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
+}
+func (c StandingCol) NotIn(vs ...bankreceipt.Standing) keel.Pred {
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
+}
 
 // StatusCol is a column of bankreceipt.Status values.
 type StatusCol struct{ keel.TypedStringCol }

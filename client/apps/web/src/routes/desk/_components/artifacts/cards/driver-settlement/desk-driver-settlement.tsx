@@ -46,6 +46,7 @@ import { cardMoment, neighborsIn } from "../../record-card/record-card-values";
 import { useRecordActivity } from "../../record-card/record-activity";
 import { useRecordShipments } from "../../record-card/record-shipments";
 import {
+  heldSettlementActions,
   minor,
   reachedStep,
   settlementActionLabel,
@@ -240,7 +241,10 @@ function DriverSettlementCard({
   const shares = new Map((record.loadShares ?? []).map((share) => [share.shipmentId, share]));
   const signed =
     record.status === "Draft" || record.status === "PendingApproval" ? [] : signoffs(record, t);
-  const actions = settlementActions(record.status);
+  const held = record.heldAt != null;
+  const actions = held
+    ? heldSettlementActions(settlementActions(record.status))
+    : settlementActions(record.status);
   const net = minor(record.netPayMinor, record.currencyCode);
   const busy = step.isPending;
 

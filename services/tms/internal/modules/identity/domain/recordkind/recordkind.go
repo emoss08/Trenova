@@ -68,6 +68,7 @@ const (
 	ScannedDocument          Kind = "scanned_document"
 	IFTAJurisdiction         Kind = "ifta_jurisdiction"
 	IFTAReturn               Kind = "ifta_return"
+	IFTAReturnLine           Kind = "ifta_return_line"
 	IFTAMileageEntry         Kind = "ifta_mileage_entry"
 	USState                  Kind = "us_state"
 	PayEvent                 Kind = "pay_event"
@@ -161,6 +162,7 @@ var recordKinds = map[Kind]recordKindSpec{
 	ScannedDocument:       {"citm_", permission.ResourceCaptureBatch, "scanned document"},
 	IFTAJurisdiction:      {"ifj_", permission.ResourceFuelPurchase, "IFTA jurisdiction"},
 	IFTAReturn:            {"ifr_", permission.ResourceIFTAReturn, "IFTA return"},
+	IFTAReturnLine:        {"ifrl_", permission.ResourceIFTAReturn, "IFTA return line"},
 	IFTAMileageEntry: {
 		"ifme_",
 		permission.ResourceIFTAJurisdictionMileage,

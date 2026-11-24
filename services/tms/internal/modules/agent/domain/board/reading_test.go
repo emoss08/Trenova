@@ -6,6 +6,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/board"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/boardparse"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/boardcatalog"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/homeboard"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -78,15 +81,20 @@ func TestNewPayloadKeepsThePlaceWhereASummaryReadsIt(t *testing.T) {
 	t.Parallel()
 
 	layout := &board.Board{Title: "Board", Place: board.PlaceConversation}
-	fields, err := board.NewPayload(layout, board.Snapshot{}, "Dispatch desk").Map()
+	filled := &board.Filled{Blocks: []board.FilledBlock{
+		{Rows: make([]board.Row, 3)},
+		{Checks: make([]board.FilledCheck, 2)},
+	}}
+	fields, err := board.NewPayload(layout, filled, "Dispatch desk").Map()
 
 	require.NoError(t, err)
+	assert.Equal(t, []any{3.0, 2.0}, fields["sizes"], "each block's drawn rows, for a skeleton")
 	assert.Equal(t, "conversation", fields["place"])
 	assert.Equal(t, "conversation", fields["board"].(map[string]any)["place"])
 }
 
-func count(n int64) *board.Value {
-	return &board.Value{Kind: board.ValueCount, Number: decimal.NewFromInt(n)}
+func count(n int64) *boardcatalog.Value {
+	return &boardcatalog.Value{Kind: boardcatalog.ValueCount, Number: decimal.NewFromInt(n)}
 }
 
 func TestCompareKeepsTheAnsweredValueInTheSentence(t *testing.T) {
@@ -117,7 +125,7 @@ func TestCompareKeepsTheAnsweredValueInTheSentence(t *testing.T) {
 func TestCompareLeavesAnUnmovedOrUnreadReadingAlone(t *testing.T) {
 	t.Parallel()
 
-	snapshot := &board.Snapshot{Values: map[string]board.Value{
+	snapshot := &board.Snapshot{Values: map[string]boardcatalog.Value{
 		board.ReadingKey("late"):   *count(6),
 		board.ReadingKey("locked"): *count(3),
 	}}
@@ -141,9 +149,13 @@ func TestBoardCountsAReadingsSourcesAsItsOwn(t *testing.T) {
 
 	shipment := ids("shp_", 1)[0].(string)
 	layout := &board.Board{Readings: []board.Reading{
-		{Key: "late", FigureSource: board.FigureSource{Metric: "movesLate"}},
+		{Key: "late", FigureSource: board.FigureSource{
+			Metric: homeboard.MetricDispatchToday,
+			Figure: "movesLate",
+		}},
 	}}
-	assert.Equal(t, []string{"movesLate"}, layout.Metrics())
+	assert.Equal(t, []board.MetricAsk{{Metric: homeboard.MetricDispatchToday, Period: "today"}},
+		layout.Metrics())
 
 	parsed := lateBoard()
 	parsed["readings"] = []any{map[string]any{
@@ -152,21 +164,24 @@ func TestBoardCountsAReadingsSourcesAsItsOwn(t *testing.T) {
 	parsed["verdict"] = "There are {held} held, [behind one driver][3]."
 	layout, problems := boardparse.Parse(parsed)
 	require.Empty(t, problems)
-	assert.Len(t, layout.Records()[permission.ResourceShipment], 7)
+	assert.Len(t, layout.Records()[recordkind.Kind(permission.ResourceShipment)], 7)
 }
 
-func TestMeasureNamedReadsAToolResultsFieldAsTheMeasureItMeans(t *testing.T) {
+func TestMeasureSpecReadsAToolResultsFieldAsTheMeasureItMeans(t *testing.T) {
 	t.Parallel()
 
-	assert.Equal(t, board.MeasureRevenue,
-		board.MeasureNamed(permission.ResourceShipment, "totalCharge"))
-	assert.Equal(t, board.MeasureLateness,
-		board.MeasureNamed(permission.ResourceShipment, "lateness"))
-	assert.Equal(t, board.MeasureAmountDue,
-		board.MeasureNamed(permission.ResourceInvoice, "balanceDue"))
-	assert.Empty(t, board.MeasureNamed(permission.ResourceInvoice, "totalCharge"),
+	shipment := recordkind.Kind(permission.ResourceShipment)
+	invoice := recordkind.Kind(permission.ResourceInvoice)
+	named := func(kind recordkind.Kind, name string) string {
+		spec, _ := board.Measure(name).Spec(kind)
+		return spec.Name
+	}
+	assert.Equal(t, "revenue", named(shipment, "totalCharge"))
+	assert.Equal(t, "lateness", named(shipment, "lateness"))
+	assert.Equal(t, "amountDue", named(invoice, "balanceDue"))
+	assert.Empty(t, named(invoice, "totalCharge"),
 		"a name maps only for the kind whose field it is")
-	assert.Empty(t, board.MeasureNamed(permission.ResourceInvoice, "daysPastDue"),
+	assert.Empty(t, named(invoice, "daysPastDue"),
 		"days past due is not the invoice's age, which counts from the invoice date")
-	assert.Empty(t, board.MeasureNamed(permission.ResourceCarrier, "revenue"))
+	assert.Empty(t, named(recordkind.Kind(permission.ResourceCarrier), "revenue"))
 }

@@ -29,6 +29,7 @@ export const Operation = {
   Manage: 1 << 25,
   Post: 1 << 26,
   ApproveOwn: 1 << 27,
+  Hold: 1 << 28,
 } as const;
 
 export type OperationType = (typeof Operation)[keyof typeof Operation];

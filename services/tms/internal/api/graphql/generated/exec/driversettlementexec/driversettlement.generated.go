@@ -39,6 +39,7 @@ var Shard = &gqlexec.Shard{
 		{Name: "DriverPayEventConnection", Implementors: []string{"DriverPayEventConnection"}},
 		{Name: "DriverPayEventEdge", Implementors: []string{"DriverPayEventEdge"}},
 		{Name: "DriverSettlement", Implementors: []string{"DriverSettlement"}},
+		{Name: "DriverSettlementBlocker", Implementors: []string{"DriverSettlementBlocker"}},
 		{Name: "DriverSettlementConnection", Implementors: []string{"DriverSettlementConnection"}},
 		{Name: "DriverSettlementEdge", Implementors: []string{"DriverSettlementEdge"}},
 		{Name: "DriverSettlementLine", Implementors: []string{"DriverSettlementLine"}},
@@ -919,6 +920,63 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
 			{
+				Name:       "holdReason",
+				IsResolver: true,
+				Concurrent: true,
+				ChildErr:   errNoChild11,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*driversettlement.Settlement)
+					return gqlexec.Resolver[DriverSettlementResolver](ec, "DriverSettlement@driversettlement").HoldReason(ctx, obj)
+				},
+				Marshal: gqlexec.Marshal(marshalODriverSettlementHoldReason2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriversettlementᚐHoldReason),
+			},
+			{
+				Name:     "holdNote",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*driversettlement.Settlement)
+					return obj.HoldNote, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "heldById",
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*driversettlement.Settlement)
+					return obj.HeldByID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "heldAt",
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*driversettlement.Settlement)
+					return obj.HeldAt, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
+			},
+			{
+				Name:     "holdReleasedById",
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*driversettlement.Settlement)
+					return obj.HoldReleasedByID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "holdReleasedAt",
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*driversettlement.Settlement)
+					return obj.HoldReleasedAt, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
+			},
+			{
 				Name:     "version",
 				NonNull:  true,
 				ChildErr: errNoChild0,
@@ -1065,6 +1123,195 @@ var Shard = &gqlexec.Shard{
 				},
 				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUser),
 			},
+			{
+				Name:       "heldBy",
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "User",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*driversettlement.Settlement)
+					return gqlexec.Resolver[DriverSettlementResolver](ec, "DriverSettlement@driversettlement").HeldBy(ctx, obj)
+				},
+				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUser),
+			},
+			{
+				Name:       "holdReleasedBy",
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "User",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*driversettlement.Settlement)
+					return gqlexec.Resolver[DriverSettlementResolver](ec, "DriverSettlement@driversettlement").HoldReleasedBy(ctx, obj)
+				},
+				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUser),
+			},
+		}},
+		{Object: "DriverSettlementBlocker", Fields: []*gqlexec.Field{
+			{
+				Name:     "id",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DriverSettlementBlocker)
+					return obj.ID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2string),
+			},
+			{
+				Name:     "settlementNumber",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DriverSettlementBlocker)
+					return obj.SettlementNumber, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "status",
+				NonNull:  true,
+				ChildErr: errNoChild9,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DriverSettlementBlocker)
+					return obj.Status, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNDriverSettlementStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriversettlementᚐStatus),
+			},
+			{
+				Name:     "workerId",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DriverSettlementBlocker)
+					return obj.WorkerID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2string),
+			},
+			{
+				Name:     "driverName",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DriverSettlementBlocker)
+					return obj.DriverName, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "batchId",
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DriverSettlementBlocker)
+					return obj.BatchID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
+			},
+			{
+				Name:     "batchName",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DriverSettlementBlocker)
+					return obj.BatchName, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "payDate",
+				NonNull:  true,
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DriverSettlementBlocker)
+					return obj.PayDate, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNTimestamp2int),
+			},
+			{
+				Name:     "netPayMinor",
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DriverSettlementBlocker)
+					return obj.NetPayMinor, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOInt2ᚖint),
+			},
+			{
+				Name:     "grossEarningsMinor",
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DriverSettlementBlocker)
+					return obj.GrossEarningsMinor, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOInt2ᚖint),
+			},
+			{
+				Name:     "deductionsMinor",
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DriverSettlementBlocker)
+					return obj.DeductionsMinor, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOInt2ᚖint),
+			},
+			{
+				Name:     "carryForwardOutMinor",
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DriverSettlementBlocker)
+					return obj.CarryForwardOutMinor, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOInt2ᚖint),
+			},
+			{
+				Name:     "currencyCode",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DriverSettlementBlocker)
+					return obj.CurrencyCode, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "reason",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DriverSettlementBlocker)
+					return obj.Reason, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "message",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DriverSettlementBlocker)
+					return obj.Message, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "holdReason",
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DriverSettlementBlocker)
+					return obj.HoldReason, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOString2ᚖstring),
+			},
+			{
+				Name:     "holdNote",
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DriverSettlementBlocker)
+					return obj.HoldNote, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOString2ᚖstring),
+			},
 		}},
 		{Object: "DriverSettlementConnection", Fields: []*gqlexec.Field{
 			{
@@ -1166,7 +1413,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "category",
 				NonNull:  true,
-				ChildErr: errNoChild11,
+				ChildErr: errNoChild12,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*driversettlement.SettlementLine)
 					return obj.Category, nil
@@ -1322,7 +1569,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "category",
 				NonNull:  true,
-				ChildErr: errNoChild11,
+				ChildErr: errNoChild12,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*driversettlement.LineGroup)
 					return obj.Category, nil
@@ -1534,7 +1781,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "status",
 				NonNull:  true,
-				ChildErr: errNoChild12,
+				ChildErr: errNoChild13,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*payescrow.EscrowAccount)
 					return obj.Status, nil
@@ -1750,7 +1997,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "type",
 				NonNull:  true,
-				ChildErr: errNoChild13,
+				ChildErr: errNoChild14,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*payescrow.EscrowTransaction)
 					return obj.Type, nil
@@ -2256,6 +2503,32 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNDriverSettlement2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriversettlementᚐSettlement),
 			},
 			{
+				Name:       "holdDriverSettlement",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "DriverSettlement",
+				Args:       field_Mutation_holdDriverSettlement_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@driversettlement").HoldDriverSettlement(ctx, fc.Args["input"].(gqlmodel.HoldDriverSettlementInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNDriverSettlement2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriversettlementᚐSettlement),
+			},
+			{
+				Name:       "releaseDriverSettlementHold",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "DriverSettlement",
+				Args:       field_Mutation_releaseDriverSettlementHold_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@driversettlement").ReleaseDriverSettlementHold(ctx, fc.Args["settlementId"].(string))
+				},
+				Marshal: gqlexec.Marshal(marshalNDriverSettlement2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriversettlementᚐSettlement),
+			},
+			{
 				Name:       "bulkDriverSettlementAction",
 				NonNull:    true,
 				IsResolver: true,
@@ -2313,7 +2586,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "status",
 				NonNull:  true,
-				ChildErr: errNoChild14,
+				ChildErr: errNoChild15,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*payadvance.PayAdvance)
 					return obj.Status, nil
@@ -2323,7 +2596,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "source",
 				NonNull:  true,
-				ChildErr: errNoChild15,
+				ChildErr: errNoChild16,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*payadvance.PayAdvance)
 					return obj.Source, nil
@@ -2560,7 +2833,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "status",
 				NonNull:  true,
-				ChildErr: errNoChild16,
+				ChildErr: errNoChild17,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*paycode.PayCode)
 					return obj.Status, nil
@@ -2570,7 +2843,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "direction",
 				NonNull:  true,
-				ChildErr: errNoChild17,
+				ChildErr: errNoChild18,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*paycode.PayCode)
 					return obj.Direction, nil
@@ -2864,7 +3137,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "status",
 				NonNull:  true,
-				ChildErr: errNoChild16,
+				ChildErr: errNoChild17,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*driverpay.PayProfile)
 					return obj.Status, nil
@@ -3061,7 +3334,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "revenueBasis",
-				ChildErr: errNoChild18,
+				ChildErr: errNoChild19,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*driverpay.PayProfileComponent)
 					return obj.RevenueBasis, nil
@@ -3570,6 +3843,20 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNSettlementPeriodBounds2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋappᚋsettlementsharedᚐPeriodBounds),
 			},
 			{
+				Name:       "driverSettlementBlockers",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "DriverSettlementBlocker",
+				Args:       field_Query_driverSettlementBlockers_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[QueryResolver](ec, "Query@driversettlement").DriverSettlementBlockers(ctx, fc.Args["batchId"].(*string), fc.Args["limit"].(*int))
+				},
+				Marshal: gqlexec.Marshal(marshalNDriverSettlementBlocker2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDriverSettlementBlockerᚄ),
+			},
+			{
 				Name:       "settlementWorkspaceSummary",
 				NonNull:    true,
 				IsResolver: true,
@@ -3688,7 +3975,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "status",
 				NonNull:  true,
-				ChildErr: errNoChild19,
+				ChildErr: errNoChild20,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*recurringpay.RecurringDeduction)
 					return obj.Status, nil
@@ -3698,7 +3985,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "frequency",
 				NonNull:  true,
-				ChildErr: errNoChild20,
+				ChildErr: errNoChild21,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*recurringpay.RecurringDeduction)
 					return obj.Frequency, nil
@@ -3944,7 +4231,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "status",
 				NonNull:  true,
-				ChildErr: errNoChild21,
+				ChildErr: errNoChild22,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*recurringpay.RecurringEarning)
 					return obj.Status, nil
@@ -3954,7 +4241,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "frequency",
 				NonNull:  true,
-				ChildErr: errNoChild22,
+				ChildErr: errNoChild23,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*recurringpay.RecurringEarning)
 					return obj.Frequency, nil
@@ -4180,7 +4467,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "status",
 				NonNull:  true,
-				ChildErr: errNoChild23,
+				ChildErr: errNoChild24,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*driversettlement.SettlementBatch)
 					return obj.Status, nil
@@ -4264,6 +4551,26 @@ var Shard = &gqlexec.Shard{
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*driversettlement.SettlementBatch)
 					return obj.TotalNetMinor, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int64),
+			},
+			{
+				Name:     "heldCount",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*driversettlement.SettlementBatch)
+					return obj.HeldCount, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "heldNetMinor",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*driversettlement.SettlementBatch)
+					return obj.HeldNetMinor, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
 			},
@@ -4473,7 +4780,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "payPeriodFrequency",
 				NonNull:  true,
-				ChildErr: errNoChild24,
+				ChildErr: errNoChild25,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*settlementcontrol.SettlementControl)
 					return obj.PayPeriodFrequency, nil
@@ -4503,7 +4810,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "payTrigger",
 				NonNull:  true,
-				ChildErr: errNoChild25,
+				ChildErr: errNoChild26,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*settlementcontrol.SettlementControl)
 					return obj.PayTrigger, nil
@@ -4903,6 +5210,26 @@ var Shard = &gqlexec.Shard{
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*driversettlementworkspaceservice.WorkspaceSummary)
 					return obj.HeldGrossMinor, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int64),
+			},
+			{
+				Name:     "heldSettlementCount",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*driversettlementworkspaceservice.WorkspaceSummary)
+					return obj.HeldSettlementCount, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "heldSettlementNetMinor",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*driversettlementworkspaceservice.WorkspaceSummary)
+					return obj.HeldSettlementNetMinor, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
 			},
@@ -5386,6 +5713,7 @@ var Shard = &gqlexec.Shard{
 		{Name: "EndWorkerPayAssignmentInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputEndWorkerPayAssignmentInput)},
 		{Name: "GenerateDriverSettlementInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputGenerateDriverSettlementInput)},
 		{Name: "GenerateSettlementBatchInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputGenerateSettlementBatchInput)},
+		{Name: "HoldDriverSettlementInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputHoldDriverSettlementInput)},
 		{Name: "HoldPayEventInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputHoldPayEventInput)},
 		{Name: "IssuePayAdvanceInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputIssuePayAdvanceInput)},
 		{Name: "MarkDriverSettlementPaidInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputMarkDriverSettlementPaidInput)},
@@ -5448,6 +5776,7 @@ type DriverSettlementResolver interface {
 	TotalMiles(ctx context.Context, obj *driversettlement.Settlement) (string, error)
 	ExchangeRate(ctx context.Context, obj *driversettlement.Settlement) (*string, error)
 	PaidExchangeRate(ctx context.Context, obj *driversettlement.Settlement) (*string, error)
+	HoldReason(ctx context.Context, obj *driversettlement.Settlement) (*driversettlement.HoldReason, error)
 	LineSummary(ctx context.Context, obj *driversettlement.Settlement) ([]*driversettlement.LineGroup, error)
 	LoadShares(ctx context.Context, obj *driversettlement.Settlement) ([]*settlementload.Share, error)
 	Disputes(ctx context.Context, obj *driversettlement.Settlement) ([]*driversettlement.Dispute, error)
@@ -5456,6 +5785,8 @@ type DriverSettlementResolver interface {
 	PostedBy(ctx context.Context, obj *driversettlement.Settlement) (*tenant.User, error)
 	PaidBy(ctx context.Context, obj *driversettlement.Settlement) (*tenant.User, error)
 	VoidedBy(ctx context.Context, obj *driversettlement.Settlement) (*tenant.User, error)
+	HeldBy(ctx context.Context, obj *driversettlement.Settlement) (*tenant.User, error)
+	HoldReleasedBy(ctx context.Context, obj *driversettlement.Settlement) (*tenant.User, error)
 }
 
 type EscrowAccountResolver interface {
@@ -5496,6 +5827,8 @@ type MutationResolver interface {
 	ReleaseDriverPayEvent(ctx context.Context, payEventID string) (*driversettlement.PayEvent, error)
 	AttachPayEventsToSettlement(ctx context.Context, input gqlmodel.AttachPayEventsInput) (*driversettlement.Settlement, error)
 	DetachPayEventFromSettlement(ctx context.Context, input gqlmodel.DetachPayEventInput) (*driversettlement.Settlement, error)
+	HoldDriverSettlement(ctx context.Context, input gqlmodel.HoldDriverSettlementInput) (*driversettlement.Settlement, error)
+	ReleaseDriverSettlementHold(ctx context.Context, settlementID string) (*driversettlement.Settlement, error)
 	BulkDriverSettlementAction(ctx context.Context, input gqlmodel.BulkSettlementActionInput) (*driversettlementworkspaceservice.BulkActionPayload, error)
 }
 
@@ -5547,6 +5880,7 @@ type QueryResolver interface {
 	WorkerYtdPaySummaries(ctx context.Context, year int, classification *driverpay.PayeeClassification) ([]*driversettlementworkspaceservice.WorkerYTDPaySummary, error)
 	SettlementControl(ctx context.Context) (*settlementcontrol.SettlementControl, error)
 	CurrentSettlementPeriod(ctx context.Context) (*settlementshared.PeriodBounds, error)
+	DriverSettlementBlockers(ctx context.Context, batchID *string, limit *int) ([]*gqlmodel.DriverSettlementBlocker, error)
 	SettlementWorkspaceSummary(ctx context.Context, periodStart *int, periodEnd *int) (*driversettlementworkspaceservice.WorkspaceSummary, error)
 	UnsettledWorkerSummaries(ctx context.Context, periodStart *int, periodEnd *int) ([]*driversettlementports.UnsettledWorkerSummary, error)
 	PreviewDriverSettlement(ctx context.Context, workerID string, periodStart *int, periodEnd *int) (*driversettlement.Settlement, error)
@@ -5579,21 +5913,22 @@ var (
 	errNoChild8  = errors.New("field of type PayCalcMethod does not have child fields")
 	errNoChild9  = errors.New("field of type DriverSettlementStatus does not have child fields")
 	errNoChild10 = errors.New("field of type PayeeClassification does not have child fields")
-	errNoChild11 = errors.New("field of type SettlementLineCategory does not have child fields")
-	errNoChild12 = errors.New("field of type EscrowAccountStatus does not have child fields")
-	errNoChild13 = errors.New("field of type EscrowTransactionType does not have child fields")
-	errNoChild14 = errors.New("field of type PayAdvanceStatus does not have child fields")
-	errNoChild15 = errors.New("field of type PayAdvanceSource does not have child fields")
-	errNoChild16 = errors.New("field of type EntityStatus does not have child fields")
-	errNoChild17 = errors.New("field of type PayCodeDirection does not have child fields")
-	errNoChild18 = errors.New("field of type PayRevenueBasis does not have child fields")
-	errNoChild19 = errors.New("field of type RecurringDeductionStatus does not have child fields")
-	errNoChild20 = errors.New("field of type RecurringDeductionFrequency does not have child fields")
-	errNoChild21 = errors.New("field of type RecurringEarningStatus does not have child fields")
-	errNoChild22 = errors.New("field of type RecurringEarningFrequency does not have child fields")
-	errNoChild23 = errors.New("field of type SettlementBatchStatus does not have child fields")
-	errNoChild24 = errors.New("field of type PayPeriodFrequency does not have child fields")
-	errNoChild25 = errors.New("field of type SettlementPayTrigger does not have child fields")
+	errNoChild11 = errors.New("field of type DriverSettlementHoldReason does not have child fields")
+	errNoChild12 = errors.New("field of type SettlementLineCategory does not have child fields")
+	errNoChild13 = errors.New("field of type EscrowAccountStatus does not have child fields")
+	errNoChild14 = errors.New("field of type EscrowTransactionType does not have child fields")
+	errNoChild15 = errors.New("field of type PayAdvanceStatus does not have child fields")
+	errNoChild16 = errors.New("field of type PayAdvanceSource does not have child fields")
+	errNoChild17 = errors.New("field of type EntityStatus does not have child fields")
+	errNoChild18 = errors.New("field of type PayCodeDirection does not have child fields")
+	errNoChild19 = errors.New("field of type PayRevenueBasis does not have child fields")
+	errNoChild20 = errors.New("field of type RecurringDeductionStatus does not have child fields")
+	errNoChild21 = errors.New("field of type RecurringDeductionFrequency does not have child fields")
+	errNoChild22 = errors.New("field of type RecurringEarningStatus does not have child fields")
+	errNoChild23 = errors.New("field of type RecurringEarningFrequency does not have child fields")
+	errNoChild24 = errors.New("field of type SettlementBatchStatus does not have child fields")
+	errNoChild25 = errors.New("field of type PayPeriodFrequency does not have child fields")
+	errNoChild26 = errors.New("field of type SettlementPayTrigger does not have child fields")
 )
 
 func field_Mutation_createPayProfile_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
@@ -6025,6 +6360,32 @@ func field_Mutation_detachPayEventFromSettlement_args(ctx context.Context, ec *g
 	return args, nil
 }
 
+func field_Mutation_holdDriverSettlement_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.HoldDriverSettlementInput, error) {
+			return unmarshalNHoldDriverSettlementInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐHoldDriverSettlementInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func field_Mutation_releaseDriverSettlementHold_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "settlementId",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["settlementId"] = arg0
+	return args, nil
+}
+
 func field_Mutation_bulkDriverSettlementAction_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
 	args := make(map[string]any, 1)
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
@@ -6371,6 +6732,27 @@ func field_Query_workerYtdPaySummaries_args(ctx context.Context, ec *gqlexec.Exe
 		return nil, err
 	}
 	args["classification"] = arg1
+	return args, nil
+}
+
+func field_Query_driverSettlementBlockers_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 2)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "batchId",
+		func(ctx context.Context, v any) (*string, error) {
+			return unmarshalOID2ᚖstring(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["batchId"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "limit",
+		func(ctx context.Context, v any) (*int, error) {
+			return unmarshalOInt2ᚖint(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["limit"] = arg1
 	return args, nil
 }
 
@@ -7300,6 +7682,50 @@ func unmarshalInputGenerateSettlementBatchInput(ctx context.Context, ec *gqlexec
 				return it, err
 			}
 			it.Notes = data
+		}
+	}
+	return it, nil
+}
+
+func unmarshalInputHoldDriverSettlementInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.HoldDriverSettlementInput, error) {
+	var it gqlmodel.HoldDriverSettlementInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"settlementId", "reason", "note"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "settlementId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("settlementId"))
+			data, err := unmarshalNID2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.SettlementID = data
+		case "reason":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("reason"))
+			data, err := unmarshalNDriverSettlementHoldReason2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriversettlementᚐHoldReason(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Reason = data
+		case "note":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("note"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Note = data
 		}
 	}
 	return it, nil
@@ -8502,6 +8928,12 @@ func unmarshalNDriverSettlementActionInput2githubᚗcomᚋemoss08ᚋtrenovaᚋin
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
+func unmarshalNDriverSettlementHoldReason2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriversettlementᚐHoldReason(ctx context.Context, ec *gqlexec.Exec, v any) (driversettlement.HoldReason, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := driversettlement.HoldReason(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
 func unmarshalNEndWorkerPayAssignmentInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐEndWorkerPayAssignmentInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.EndWorkerPayAssignmentInput, error) {
 	res, err := unmarshalInputEndWorkerPayAssignmentInput(ctx, ec, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -8520,6 +8952,11 @@ func unmarshalNGenerateDriverSettlementInput2githubᚗcomᚋemoss08ᚋtrenovaᚋ
 
 func unmarshalNGenerateSettlementBatchInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐGenerateSettlementBatchInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.GenerateSettlementBatchInput, error) {
 	res, err := unmarshalInputGenerateSettlementBatchInput(ctx, ec, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNHoldDriverSettlementInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐHoldDriverSettlementInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.HoldDriverSettlementInput, error) {
+	res, err := unmarshalInputHoldDriverSettlementInput(ctx, ec, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
@@ -8918,6 +9355,22 @@ func marshalNDriverSettlement2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋm
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "DriverSettlement", v)
+}
+
+func marshalNDriverSettlementBlocker2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDriverSettlementBlockerᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*gqlmodel.DriverSettlementBlocker) graphql.Marshaler {
+	return gqlexec.List[*gqlmodel.DriverSettlementBlocker]{
+		Elem:        marshalNDriverSettlementBlocker2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDriverSettlementBlocker,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalNDriverSettlementBlocker2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDriverSettlementBlocker(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.DriverSettlementBlocker) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "DriverSettlementBlocker", v)
 }
 
 func marshalNDriverSettlementConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDriverSettlementConnection(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.DriverSettlementConnection) graphql.Marshaler {
@@ -9460,6 +9913,14 @@ func marshalNString2string(ctx context.Context, ec *gqlexec.Exec, sel ast.Select
 	return res
 }
 
+func marshalNTimestamp2int(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v int) graphql.Marshaler {
+	res := graphql.MarshalInt(v)
+	if res == graphql.Null {
+		gqlexec.NullViolation(ctx)
+	}
+	return res
+}
+
 func marshalNTimestamp2int64(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v int64) graphql.Marshaler {
 	res := graphql.MarshalInt64(v)
 	if res == graphql.Null {
@@ -9577,6 +10038,14 @@ func marshalODriverSettlement2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋm
 	return ec.MarshalType(ctx, sel, "DriverSettlement", v)
 }
 
+func marshalODriverSettlementHoldReason2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriversettlementᚐHoldReason(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *driversettlement.HoldReason) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	res := graphql.MarshalString(string(*v))
+	return res
+}
+
 func marshalODriverSettlementLine2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriversettlementᚐSettlementLineᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*driversettlement.SettlementLine) graphql.Marshaler {
 	return gqlexec.List[*driversettlement.SettlementLine]{
 		Elem:        marshalNDriverSettlementLine2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriversettlementᚐSettlementLine,
@@ -9615,6 +10084,14 @@ func marshalOID2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx co
 		return graphql.Null
 	}
 	res := graphql.MarshalString(string(*v))
+	return res
+}
+
+func marshalOID2ᚖstring(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *string) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	res := graphql.MarshalID(*v)
 	return res
 }
 
@@ -9740,6 +10217,14 @@ func marshalOSettlementLoadShare2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋintern
 
 func marshalOString2string(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v string) graphql.Marshaler {
 	res := graphql.MarshalString(v)
+	return res
+}
+
+func marshalOString2ᚖstring(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *string) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	res := graphql.MarshalString(*v)
 	return res
 }
 

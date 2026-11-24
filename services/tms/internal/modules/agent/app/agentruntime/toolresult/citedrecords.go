@@ -179,7 +179,7 @@ func (c *returnedRecordCollector) walk(value any, depth int) {
 
 	switch typed := value.(type) {
 	case map[string]any:
-		if ref, ok := recordRef(typed); ok {
+		if ref, ok := returnedRef(typed); ok {
 			c.keep(ref)
 			return
 		}

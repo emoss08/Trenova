@@ -1,0 +1,47 @@
+# Detention stays as the Desk reads them: each stay whose clock started in a
+# period, largest billable first, with its load, customer, place, time on site
+# against free time, what it bills and what holds its bill back.
+query DeskDetentionStays(
+  $period: DetentionPeriod!
+  $stage: DetentionStayStage
+  $locationId: ID
+  $limit: Int
+  $offset: Int
+) {
+  detentionStays(
+    period: $period
+    stage: $stage
+    locationId: $locationId
+    limit: $limit
+    offset: $offset
+  ) {
+    items {
+      occurrence {
+        id
+        shipmentId
+        shipmentProNumber
+        customerName
+        locationId
+        locationName
+        location {
+          city
+          state {
+            abbreviation
+          }
+        }
+        stopType
+        status
+        notificationStatus
+        arrivedAt
+        departedAt
+        freeMinutesGranted
+        currency
+      }
+      minutesOnSite
+      minutesPastFree
+      billableAmount
+      holdBack
+    }
+    totalCount
+  }
+}

@@ -181,6 +181,7 @@ classification follows the treatment unless a person gave one.
 | `settlement_list_driver_expenses` | driver expense / read | reads only, marked | automatic | — |
 | `settlement_review_driver_expense` | driver expense / approve | driver or money, per call | Propose → Propose | yes |
 | `settlement_list_payroll_exports` | timesheet / read | reads only | automatic | — |
+| `worker_list_week_hours` | timesheet / read, held to the worker schedule's team scope | reads only | automatic | — |
 | `settlement_generate_payroll_export`, `settlement_void_payroll_export` | timesheet / export | money | Propose → Propose | yes |
 
 A time-off request under a policy that needs no approval is booked and the driver told at
@@ -243,6 +244,9 @@ so the agent permission ceiling (`agentceiling/agent.go`) is unchanged.
   organization that wants the workforce coordinator creates it from its starter.
 - `worker_list_dot_random_draws` returns the 24 newest rounds and the active pools;
   `settlement_list_payroll_exports` the 26 newest runs.
+- `worker_list_week_hours` returns at most 25 workers nearest or past the overtime line and three
+  with room; past 117 workers on the rota it reads the 117 whose sheet and pattern could reach the
+  line and leaves the count past the line out unless the rest provably cannot.
 - `worker_assign_training` takes at most 50 workers and 10 courses per proposal.
 - `shipment_list_permits` shows a state's id and abbreviation; there is no separate state
   lookup, so a permit is recorded against a state its shipment's requirements name.

@@ -317,12 +317,12 @@ func TestIntelligence_NarrowsEveryFigureToOneFacility(t *testing.T) {
 	f, _ := settleTheWeek(t)
 
 	scoped, err := f.repo.Intelligence(f.ctx, &detentionports.IntelligenceRequest{
-		TenantInfo: f.tenant,
-		Current:    days(monday, nextMonday),
-		Previous:   days(weekBefore, monday),
-		Timezone:   "America/Chicago",
-		LocationID: f.other,
-		Limit:      100,
+		TenantInfo:  f.tenant,
+		Current:     days(monday, nextMonday),
+		Previous:    days(weekBefore, monday),
+		Timezone:    "America/Chicago",
+		LocationIDs: []pulid.ID{f.other},
+		Limit:       100,
 	})
 	require.NoError(t, err)
 
@@ -341,6 +341,51 @@ func TestIntelligence_NarrowsEveryFigureToOneFacility(t *testing.T) {
 		customers += customer.StopCount
 	}
 	assert.Equal(t, 2, customers, "the facility's own customers")
+}
+
+func TestIntelligenceFigures_ReadOnlyTheFacilitiesAskedForInOneRead(t *testing.T) {
+	f, _ := settleTheWeek(t)
+	req := &detentionports.IntelligenceRequest{
+		TenantInfo:  f.tenant,
+		Current:     days(monday, nextMonday),
+		Timezone:    "America/Chicago",
+		LocationIDs: []pulid.ID{f.dock, f.other},
+		Limit:       2,
+	}
+
+	facilities, err := f.repo.FacilityFigures(f.ctx, req)
+	require.NoError(t, err)
+	require.Len(t, facilities, 2)
+	assert.Equal(t, f.dock, facilities[0].LocationID, "most hours past free time first")
+	assert.Equal(t, int64(290), facilities[0].PastFreeMinutes)
+	assert.Equal(t, f.other, facilities[1].LocationID)
+
+	req.LocationIDs = []pulid.ID{f.other}
+	one, err := f.repo.FacilityFigures(f.ctx, req)
+	require.NoError(t, err)
+	require.Len(t, one, 1)
+	assert.Equal(t, f.other, one[0].LocationID)
+
+	totals, err := f.repo.TotalFigures(f.ctx, req)
+	require.NoError(t, err)
+	assert.Equal(t, 2, totals.Totals.StopCount, "the facility's own stops")
+	assert.Equal(t, int64(30), totals.Totals.OpenMinutes)
+
+	req.LocationIDs = nil
+	all, err := f.repo.TotalFigures(f.ctx, req)
+	require.NoError(t, err)
+	assert.Equal(t, int64(90+60+140+30), all.Totals.PastFreeMinutes)
+	assert.Equal(t, "100", all.Bucket(detentionports.RecoveryWaived).GrossAmount.String())
+
+	arrivals, err := f.repo.ArrivalFigures(f.ctx, req)
+	require.NoError(t, err)
+	morning := 0
+	for _, cell := range arrivals {
+		if cell.Weekday == 1 && cell.Hour == 8 {
+			morning += cell.StopCount
+		}
+	}
+	assert.Equal(t, 4, morning, "every facility's arrivals, in the organization's time zone")
 }
 
 func TestIntelligence_TakesWholeMonthsFromTheMonthlyFiguresAndTheEdgesFromTheDays(t *testing.T) {

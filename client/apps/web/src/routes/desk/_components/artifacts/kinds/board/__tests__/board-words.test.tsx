@@ -1,6 +1,7 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cardTime } from "../../../record-card/record-card-values";
+import { ArtifactLinkContext } from "@/components/elements/artifact-link-context";
 import { writtenSegments } from "../board-card";
 import { BoardWords, type CiteLight } from "../board-words";
 import { ANSWERED_AT, CONVERSATION_SPEC, READ_AT, conversationBoard } from "./fixtures";
@@ -137,5 +138,24 @@ describe("BoardWords", () => {
     );
     expect(container.querySelector(".dk-bd-hl")).toHaveClass("dk-bd-lit");
     expect(screen.getByRole("button", { name: "Show exhibit 1" })).toHaveClass("dk-bd-lit");
+  });
+
+  it("draws a link to an artifact the turn made as the surface draws it, and as words elsewhere", () => {
+    const segments = writtenSegments("I drafted [a request](artifact:art_1).");
+    const { rerender } = render(
+      <p data-testid="linked">
+        <BoardWords segments={segments} board={conversationBoard()} />
+      </p>,
+    );
+    expect(screen.getByTestId("linked")).toHaveTextContent("I drafted a request.");
+
+    rerender(
+      <ArtifactLinkContext value={(id) => <button type="button">{`Open ${id}`}</button>}>
+        <p data-testid="linked">
+          <BoardWords segments={segments} board={conversationBoard()} />
+        </p>
+      </ArtifactLinkContext>,
+    );
+    expect(screen.getByRole("button", { name: "Open art_1" })).toBeInTheDocument();
   });
 });

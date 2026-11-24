@@ -1,5 +1,5 @@
 {
-  "version": "sha256:05f14dba9d9a20cad4e6b4de4457a79c343365938e43085c36c5b961a199442d",
+  "version": "sha256:c91e7e278f6ed262abd2af639e36da394b6229a68ac43cbe96380dff806255c7",
   "modules": [
     {
       "id": "home",
@@ -20285,6 +20285,15 @@
       "params": {}
     },
     {
+      "entity": "bank_receipt",
+      "label": "Bank receipt",
+      "path": "/accounting/reconciliation/bank-receipts",
+      "params": {
+        "item": "{id}"
+      },
+      "deskCard": true
+    },
+    {
       "entity": "billing_queue_item",
       "label": "Billing queue item",
       "path": "/billing/queue",
@@ -20477,6 +20486,15 @@
         "panelType": "edit",
         "panelEntityId": "{id}"
       }
+    },
+    {
+      "entity": "ifta_return",
+      "label": "IFTA return",
+      "path": "/fuel/ifta-returns",
+      "params": {
+        "return": "{id}"
+      },
+      "deskCard": true
     },
     {
       "entity": "inbound_message",

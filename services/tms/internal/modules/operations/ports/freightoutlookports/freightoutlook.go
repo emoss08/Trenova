@@ -52,6 +52,14 @@ type Outlook struct {
 	Positionings []*Positioning
 }
 
+type Balances struct {
+	Quality     *demandforecast.Quality
+	Refitting   bool
+	GeneratedAt int64
+	Starts      []int64
+	Areas       []demandforecast.AreaBalance
+}
+
 type AreaRequest struct {
 	TenantInfo pagination.TenantInfo
 	Cell       int64
@@ -78,5 +86,6 @@ type AreaDetail struct {
 
 type Service interface {
 	Outlook(ctx context.Context, req *Request) (*Outlook, error)
+	Balances(ctx context.Context, req *Request) (*Balances, error)
 	Area(ctx context.Context, req *AreaRequest) (*AreaDetail, error)
 }

@@ -23,6 +23,7 @@ import (
 
 func SharedOptions() fx.Option {
 	return fx.Options(
+		boardReaders,
 		fx.Provide(
 			carriercapacityrepository.New,
 			carrierrepository.New,

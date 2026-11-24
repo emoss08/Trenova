@@ -42,7 +42,7 @@ What find_tools can load, by area of Trenova:
 - AI & agents (4 tools): agent exception, agent run
 - Accounting (14 tools): accounts receivable, customer payment
 - Billing (15 tools): customer, invoice, invoice dispute
-- Desk (3 tools): desk
+- Desk (4 tools): desk
 - Documents (2 tools): document
 - Shipments (1 tool): shipment
 

@@ -25,6 +25,18 @@ type stubRevisions struct {
 	asked      pulid.ID
 }
 
+func (s *stubRevisions) GetByID(
+	_ context.Context,
+	req *reportports.GetReportDefinitionRequest,
+) (*report.ReportDefinition, error) {
+	return &report.ReportDefinition{
+		ID:         req.DefinitionID,
+		Name:       "Revenue by customer",
+		OwnerID:    req.TenantInfo.UserID,
+		Definition: s.definition,
+	}, nil
+}
+
 func (s *stubRevisions) GetRevision(
 	_ context.Context,
 	req *reportports.GetReportRevisionRequest,
@@ -130,6 +142,7 @@ func TestDownloadRun_RechecksACannedRunAgainstItsReport(t *testing.T) {
 	require.NotEmpty(t, entries)
 
 	run := storedRun()
+	run.DefinitionID = ""
 	run.RevisionID = ""
 	run.CannedKey = entries[0].Key
 	run.ArtifactKey = "reports/org/run/1/report.xlsx"
@@ -145,6 +158,24 @@ func TestDownloadRun_RechecksACannedRunAgainstItsReport(t *testing.T) {
 	compiles := engine.Recorded("compile")
 	require.Len(t, compiles, 1)
 	assert.Equal(t, entries[0].Definition, compiles[0].Request.Definition)
+}
+
+func TestDownloadRun_RefusesARunWhoseReportWasDeleted(t *testing.T) {
+	t.Parallel()
+
+	run := storedRun()
+	run.DefinitionID = ""
+	run.CannedKey = ""
+	run.ArtifactKey = "reports/org/run/1/report.xlsx"
+	store := &presigningStorage{}
+	svc := rowsService(t, run, &store.stubRowsStorage)
+	svc.storage = store
+
+	_, err := svc.DownloadRun(t.Context(), rowsRequest())
+	var businessErr *errortypes.BusinessError
+	require.ErrorAs(t, err, &businessErr)
+	assert.Contains(t, businessErr.Error(), "was deleted")
+	assert.Empty(t, store.presigned)
 }
 
 func TestDownloadRun_RefusesARunWhoseReportNoLongerCompiles(t *testing.T) {

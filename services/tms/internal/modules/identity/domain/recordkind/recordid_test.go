@@ -394,6 +394,7 @@ var kindMinters = map[recordkind.Kind]minter{
 	recordkind.ScannedDocument:   prefixed(capturedb.CaptureItemsSchema()),
 	recordkind.IFTAJurisdiction:  prefixed(iftadb.JurisdictionsSchema()),
 	recordkind.IFTAReturn:        prefixed(iftadb.ReturnsSchema()),
+	recordkind.IFTAReturnLine:    prefixed(iftadb.ReturnLinesSchema()),
 	recordkind.IFTAMileageEntry:  prefixed(iftadb.JurisdictionMileageEntriesSchema()),
 	recordkind.USState:           prefixed(usstatedb.UsStatesSchema()),
 	recordkind.PayEvent:          prefixed(driversettlementdb.PayEventsSchema()),

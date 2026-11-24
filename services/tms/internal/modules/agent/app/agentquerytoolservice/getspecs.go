@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/equipmentquerytools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/factoringquerytools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/formulaquerytools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/fuelquerytools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/gettool"
 	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/homequerytools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/inboxquerytools"
@@ -52,6 +53,7 @@ func graphQLGetSpecs() []readspec.Get {
 		homequerytools.HomeLayoutGetSpec(),
 		ratequerytools.RateMatrixGetSpec(),
 		oversightquerytools.DailyBriefingGetSpec(),
+		fuelquerytools.IFTAReturnGetSpec(),
 	}, slices.Concat(
 		accountingquerytools.GetSpecs(),
 		ediquerytools.GetSpecs(),

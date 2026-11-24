@@ -6,6 +6,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpagecontext"
+
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/argcheck"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/boardrecords"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/replycheck"
@@ -14,11 +16,14 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/board"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/boardparse"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/boardregistry"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/boardcatalog"
 	"github.com/emoss08/trenova/pkg/toolschema"
+	"github.com/emoss08/trenova/shared/inflect"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
 )
@@ -65,7 +70,9 @@ const showBoardDescription = "Lay out a larger answer as a board: a page beside 
 	"a board you showed, pass its boardId with the whole new board; the earlier one is kept " +
 	"as a version. Write plain sentences: no markdown, no bold, no headings, no lists. A " +
 	"prose block is one paragraph of at most 600 characters; to say more, use another block. " +
-	"A note needs a title, what it says in a line, and at most 400 characters of text."
+	"A note needs a title, what it says in a line, and at most 400 characters of text. " +
+	"metric (a metric Trenova keeps, drawn in its own form: see show_answer's metric list; " +
+	"name it in the block's metric, with for and period when it takes them)."
 
 const ShowBoardTool = "show_board"
 
@@ -140,22 +147,103 @@ func schemaObject(properties map[string]any, required ...string) map[string]any 
 
 func boardToneSchema() map[string]any {
 	return schemaEnum(
-		string(board.ToneBad), string(board.ToneWarn), string(board.ToneInfo), string(board.ToneOK),
+		string(
+			boardcatalog.ToneBad,
+		),
+		string(boardcatalog.ToneWarn),
+		string(boardcatalog.ToneInfo),
+		string(boardcatalog.ToneOK),
 	)
 }
 
 func boardMeasureSchema() map[string]any {
-	return schemaText("What to measure each record by. A shipment: lateness (past its next " +
-		"window, or estimated to miss one still open) or revenue. An invoice: amountDue, total " +
-		"or age. A journal entry: amount or pendingFor.")
+	return schemaText("What to measure each record by. " + measureWords())
+}
+
+func measureWords() string {
+	lines := make([]string, 0, 8)
+	for _, kind := range boardregistry.Catalog().Kinds() {
+		measures := boardregistry.Catalog().MeasuresOf(kind.Kind)
+		if len(measures) == 0 {
+			continue
+		}
+		names := make([]string, 0, len(measures))
+		for idx := range measures {
+			name := measures[idx].Name
+			if words := measures[idx].Words; words != "" {
+				name += " (" + words + ")"
+			}
+			names = append(names, name)
+		}
+		noun := inflect.WithArticle(kind.Kind.Noun())
+		lines = append(lines, strings.ToUpper(noun[:1])+noun[1:]+": "+
+			stringutils.JoinAlternatives(names)+".")
+	}
+
+	return strings.Join(lines, " ")
 }
 
 func boardMetricSchema() map[string]any {
 	return map[string]any{
 		toolschema.KeyType:        toolschema.TypeString,
-		toolschema.KeyEnum:        board.MetricKeys(),
+		toolschema.KeyEnum:        boardregistry.Catalog().FigureNames(boardcatalog.FormFigures),
 		toolschema.KeyDescription: "A figure Trenova keeps for the whole organization.",
 	}
+}
+
+func blockMetricSchema() map[string]any {
+	return map[string]any{
+		toolschema.KeyType: toolschema.TypeString,
+		toolschema.KeyEnum: slices.Concat(
+			boardregistry.Catalog().MetricNames(),
+			boardregistry.Catalog().FigureNames(boardcatalog.FormFigures),
+		),
+		toolschema.KeyDescription: "metric: the metric the block draws. meter: a percentage " +
+			"figure Trenova keeps, such as onTimePercent.",
+	}
+}
+
+func metricNameSchema() map[string]any {
+	return map[string]any{
+		toolschema.KeyType:        toolschema.TypeString,
+		toolschema.KeyEnum:        boardregistry.Catalog().MetricNames(),
+		toolschema.KeyDescription: metricWords(),
+	}
+}
+
+func metricWords() string {
+	metrics := boardregistry.Catalog().Metrics()
+	lines := make([]string, 0, len(metrics))
+	for idx := range metrics {
+		metric := &metrics[idx]
+		line := metric.Name + ": " + metric.Words
+		figures := make([]string, 0, len(metric.Figures))
+		for _, figure := range metric.Figures {
+			figures = append(figures, figure.Name)
+		}
+		if len(figures) > 0 {
+			line += "; figures " + strings.Join(figures, ", ")
+		}
+		if metric.For != "" {
+			line += "; for a " + metric.For.Noun()
+		}
+		lines = append(lines, line)
+	}
+
+	return "A metric Trenova keeps, drawn in its own form. " + strings.Join(lines, ". ") + "."
+}
+
+func periodSchema() map[string]any {
+	periods := boardcatalog.AllPeriods()
+	names := make([]string, 0, len(periods))
+	for _, period := range periods {
+		names = append(names, string(period))
+	}
+	schema := schemaEnum(names...)
+	schema[toolschema.KeyDescription] = "The time the metric covers, when it takes one; " +
+		"left out, the metric's own."
+
+	return schema
 }
 
 func boardFigureProperties(label string) map[string]any {
@@ -174,6 +262,8 @@ func boardFigureProperties(label string) map[string]any {
 		"aggregate":      aggregate,
 		"analysis":       schemaText(boardAnalysisRef),
 		"figure":         schemaPosition("The analysis figure's position, from 1."),
+		"list": schemaText("The artifactId of a table a list result was kept as: the figure " +
+			"is how many records the whole list holds, read again whenever the board is read."),
 	}
 }
 
@@ -256,7 +346,11 @@ func boardBlockSchema() map[string]any {
 		"checks": schemaList(board.MaxChecks, boardCheckSchema()),
 		"checksBlock": schemaPosition("meter, instead of metric: the position of the " +
 			"checks block whose checks it fills with."),
-		boardPropMetric: boardMetricSchema(),
+		boardPropMetric: blockMetricSchema(),
+		"for": schemaText(
+			"metric: the id of the record the metric reads, when it reads one.",
+		),
+		"period": periodSchema(),
 		"text": schemaWords(board.MaxProseRunes, "prose: one paragraph of plain sentences, "+
 			"at most 600 characters. note: at most 400 characters. A figure goes in as a "+
 			"reading's {key}."),
@@ -340,7 +434,7 @@ func BoardStepOutcome(arguments map[string]any) toolcall.Result {
 }
 
 func showBoard(t Turn, arguments map[string]any) toolcall.Result {
-	read := boardrecords.Of(toolTexts(t))
+	read := boardrecords.Of(toolTexts(t)).ThisTurn(turnTexts(t))
 	arguments, decoded := boardrecords.DecodeLists(arguments, "blocks", "readings")
 	arguments, numbered := read.Numbers(arguments)
 	repaired := decoded || numbered
@@ -360,11 +454,15 @@ func showBoard(t Turn, arguments map[string]any) toolcall.Result {
 			misprefixed(readTexts(t), unread),
 		)
 	}
+	if unmade := unmadeLinks(t, request.Board.ArtifactLinks()); len(unmade) > 0 {
+		return linkRefusal(ShowBoardTool, unmade)
+	}
 	words := boardWords(&request.Board)
-	if unshown := read.Unshown(request.Board.Records(), words); len(unshown) > 0 {
+	if unshown := read.Unshown(request.Board.Records(), words); len(unshown) > 0 &&
+		!boardrecords.MetricsListRecords(metricNames(&request.Board)) {
 		swap, swaps := read.SwapFor(request.Board.Records(), words, unshown)
 		if !swaps {
-			return toolcall.Failed("%s", boardrecords.Refusal(ShowBoardTool, "block", unshown))
+			return toolcall.Failed("%s", unshownRefusal(ShowBoardTool, "block", unshown, &swap))
 		}
 		arguments, repaired = swap.Apply(arguments), true
 		if outcome = BoardStepOutcome(arguments); outcome.Failed {
@@ -387,10 +485,20 @@ func partialCount(read boardrecords.Read, layout *board.Board) string {
 			source.Records == nil {
 			return ""
 		}
-		if total, longer := read.Longer(source.Records.IDs); longer {
-			return boardrecords.CountRefusal(ShowBoardTool, name, len(source.Records.IDs), total)
+		if _, longer := read.Longer(source.Records.IDs); !longer {
+			return ""
 		}
-		return ""
+		whole, kept := read.WholeOf(source.Records.IDs)
+		if !kept {
+			return boardrecords.UnkeptRefusal(ShowBoardTool)
+		}
+		return fmt.Sprintf("Tool %q was not run: %s would read %d, the records shown, but "+
+			"they are part of a longer list (%d in all), so it would state a number that is not "+
+			"true. Where the words mean the whole list, give it \"list\": %q, the table that "+
+			"list was kept as, in place of its records: it reads the list's own number, and "+
+			"again whenever the board is read. Where they mean only the records shown, say so "+
+			"in the words.", ShowBoardTool, name, len(source.Records.IDs), whole.Total,
+			whole.Table.String())
 	}
 	for idx := range layout.Readings {
 		reading := &layout.Readings[idx]
@@ -437,6 +545,46 @@ func toolTexts(t Turn) []string {
 	return read
 }
 
+func turnTexts(t Turn) []string {
+	messages := t.Messages()
+	start := 0
+	for idx := range messages {
+		if messages[idx].Role == llmports.RoleUser {
+			start = idx + 1
+		}
+	}
+	read := make([]string, 0, len(messages)-start)
+	for idx := start; idx < len(messages); idx++ {
+		if messages[idx].Role == llmports.RoleTool && !messages[idx].IsError {
+			read = append(read, messages[idx].Content)
+		}
+	}
+
+	return read
+}
+
+func metricNames(layout *board.Board) []string {
+	asks := layout.Metrics()
+	names := make([]string, 0, len(asks))
+	for _, ask := range asks {
+		names = append(names, ask.Metric)
+	}
+
+	return names
+}
+
+func unshownRefusal(
+	tool, holder string,
+	unshown []agentpagecontext.EntityRef,
+	swap *boardrecords.Swap,
+) string {
+	if len(unshown) == 1 && swap.From.ID != "" {
+		return boardrecords.SwapRefusal(tool, holder, swap)
+	}
+
+	return boardrecords.Refusal(tool, holder, unshown)
+}
+
 func readTexts(t Turn) []string {
 	read := toolTexts(t)
 	if t.Request() != nil {
@@ -446,7 +594,7 @@ func readTexts(t Turn) []string {
 	return read
 }
 
-func unreadRecords(t Turn, refs map[permission.Resource][]pulid.ID) []string {
+func unreadRecords(t Turn, refs map[recordkind.Kind][]pulid.ID) []string {
 	read := readTexts(t)
 	unread := make([]string, 0, 2)
 	for _, ids := range refs {

@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/boardcatalog"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -41,7 +42,7 @@ func (s *StubBoards) Fill(
 			Type: board.BlockFigures, Numeral: 1, State: board.StateReady,
 			Figures: []board.FilledFigure{{
 				Label: "Late now",
-				Value: &board.Value{Kind: board.ValueCount, Number: decimal.NewFromInt(6)},
+				Value: &boardcatalog.Value{Kind: boardcatalog.ValueCount, Number: decimal.NewFromInt(6)},
 			}},
 		}},
 	}, nil

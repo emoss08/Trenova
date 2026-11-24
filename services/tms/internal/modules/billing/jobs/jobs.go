@@ -1,6 +1,7 @@
 package jobs
 
 import (
+	"github.com/emoss08/trenova/internal/modules/billing/jobs/bankreceiptcandidatejobs"
 	"github.com/emoss08/trenova/internal/modules/billing/jobs/billingqueuejobs"
 	"github.com/emoss08/trenova/internal/modules/billing/jobs/billingtransferjobs"
 	"github.com/emoss08/trenova/internal/modules/billing/jobs/creditreviewjobs"
@@ -20,5 +21,6 @@ func WorkerOptions() fx.Option {
 		paymentreminderjobs.Module,
 		customerstatementjobs.Module,
 		factoringjobs.Module,
+		bankreceiptcandidatejobs.Module,
 	)
 }
