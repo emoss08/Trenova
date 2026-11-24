@@ -934,7 +934,7 @@ func TestEveryAgentThatHoldsAReadHoldsTheScriptTool(t *testing.T) {
 
 	tool := queryTool("shipment_list", map[string]any{}, nil)
 	h := newScriptHarness(t, []agenttoolports.AgentQueryTool{tool}, nil, nil)
-	require.NotContains(t, h.req.Definition.ToolNames, "analysis_run")
+	require.NotContains(t, h.req.Definition.Scope.Capabilities, "analysis_run")
 
 	assert.Contains(t, h.rt.access.HeldTools(h.req.Definition), "analysis_run",
 		"no agent is configured with it; holding a tool for its work is enough")
@@ -942,11 +942,12 @@ func TestEveryAgentThatHoldsAReadHoldsTheScriptTool(t *testing.T) {
 	assert.False(t, h.run(t.Context(), read(1, "shipment_list", nil)).Failed)
 
 	switchedOff := *h.req.Definition
-	switchedOff.DisabledToolNames = []string{"analysis_run"}
+	switchedOff.TurnToolOff("analysis_run")
 	assert.NotContains(t, h.rt.access.HeldTools(&switchedOff), "analysis_run",
 		"an administrator may switch it off for one agent")
 
 	noReads := runtimetest.Definition()
+	noReads.Scope = agentdefinition.Scope{DenyAreas: []string{agentdefinition.AllAreas}}
 	assert.NotContains(t, h.rt.access.HeldTools(noReads), "analysis_run",
 		"an agent with only the core tools has nothing to script")
 }
@@ -983,7 +984,7 @@ func TestScriptIndexHoldsWhatTheTurnReached(t *testing.T) {
 	held := queryTool("shipment_list", map[string]any{}, nil)
 	reached := queryTool("fuel_list_purchases", map[string]any{}, nil)
 	h := newScriptHarness(t, []agenttoolports.AgentQueryTool{held, reached}, nil, nil)
-	h.req.Definition.ToolNames = []string{"shipment_list"}
+	h.req.Definition.Scope = agentdefinition.Scope{Capabilities: []string{"shipment_list"}}
 
 	names := func(broker *scriptbroker.Broker) []string {
 		out := make([]string, 0, len(broker.Index()))

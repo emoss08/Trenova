@@ -23,7 +23,7 @@ func (t *DescribeTool) Name() string { return agentcapability.DescribeEntity }
 func (t *DescribeTool) Description() string { return describeEntityDescription }
 
 func (t *DescribeTool) Policy() agenttoolports.ToolPolicy {
-	return readPolicy(t.Name(), "Describes an entity's fields from the registry; it reads no record.")
+	return describePolicy(t.Name(), "Describes an entity's fields from the registry; it reads no record.")
 }
 
 func (t *DescribeTool) ParamSchema() map[string]any {

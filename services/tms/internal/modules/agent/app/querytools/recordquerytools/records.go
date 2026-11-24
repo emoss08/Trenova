@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/querytool"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentcapability"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -43,12 +44,34 @@ func conditionSchema() map[string]any {
 		toolschema.KeyType: toolschema.TypeObject,
 		toolschema.KeyProperties: map[string]any{
 			"field":  map[string]any{toolschema.KeyType: toolschema.TypeString},
-			"op":     map[string]any{toolschema.KeyType: toolschema.TypeString, "enum": operators},
+			"op":     map[string]any{toolschema.KeyType: toolschema.TypeString, "enum": operatorSource.Names(), "x-enumOf": operatorSource.Name},
 			"value":  map[string]any{},
 			"values": map[string]any{toolschema.KeyType: "array"},
 			"days":   map[string]any{toolschema.KeyType: "integer"},
 		},
-		toolschema.KeyRequired: []string{"field", "op"},
+		toolschema.KeyRequired:             []string{"field", "op"},
+		toolschema.KeyAdditionalProperties: false,
+	}
+}
+
+var (
+	operatorSource  = agenttoolschema.Source("records_query.operator", operators)
+	directionSource = agenttoolschema.Source("records_query.direction", []string{"asc", "desc"})
+)
+
+func sortSchema() map[string]any {
+	return map[string]any{
+		toolschema.KeyType: toolschema.TypeObject,
+		toolschema.KeyProperties: map[string]any{
+			"field": map[string]any{toolschema.KeyType: toolschema.TypeString},
+			"direction": map[string]any{
+				toolschema.KeyType: toolschema.TypeString,
+				"enum":             directionSource.Names(),
+				"x-enumOf":         directionSource.Name,
+			},
+		},
+		toolschema.KeyRequired:             []string{"field"},
+		toolschema.KeyAdditionalProperties: false,
 	}
 }
 
@@ -71,16 +94,14 @@ func list(description string, items map[string]any) map[string]any {
 }
 
 func (t *QueryTool) ParamSchema() map[string]any {
-	object := map[string]any{toolschema.KeyType: toolschema.TypeObject}
-
 	return map[string]any{
 		toolschema.KeyType: toolschema.TypeObject,
 		toolschema.KeyProperties: map[string]any{
 			paramEntity:          text(entityHint),
 			paramWhere:           list("", conditionSchema()),
-			paramOr:              list("Groups shaped as where.", map[string]any{toolschema.KeyType: "array", "items": object}),
+			paramOr:              list("Groups of conditions.", map[string]any{toolschema.KeyType: "array", "items": conditionSchema()}),
 			querytool.ParamQuery: text("Free text: names, numbers, words."),
-			paramSort:            list("{field, direction: asc|desc}.", object),
+			paramSort:            list("", sortSchema()),
 			"fields":             list("Columns to keep.", text("")),
 			paramInclude:         list("Related sections, or all.", text("")),
 			paramCountOnly:       map[string]any{toolschema.KeyType: "boolean"},

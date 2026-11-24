@@ -10,7 +10,7 @@ policies, so this page cannot drift from what runs: CI regenerates it and fails
 when it differs. Each tool is listed once, under the furthest class its work
 can reach.
 
-Tools listed: 653.
+Tools listed: 656.
 
 ## The model
 
@@ -88,7 +88,7 @@ and Confidential fields never reach a model at all.
 
 | Class | Means | Runs at most | Held once tainted | Tools that reach it |
 | --- | --- | --- | --- | --- |
-| Reads only | Looks something up. Nothing changes and nothing is sent. | Automatic | No | 224 |
+| Reads only | Looks something up. Nothing changes and nothing is sent. | Automatic | No | 227 |
 | The caller's own records | Changes only the records of the person using the agent. | Automatic | No | 13 |
 | Inside the organization | Changes records only people inside the organization see. | Automatic | No | 269 |
 | Seen by a customer | Changes something a customer can see. | Ask first | Yes | 5 |
@@ -132,6 +132,7 @@ Looks something up. Nothing changes and nothing is sent.
 | Get customer update preferences (`customer_get_update_preferences`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List customers (`customer_list`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | Delegate task (`delegate_task`) | Reads only | Automatic | — | — | Hands a task to another agent of the organization, which runs as the same person under its own tiers. |
+| Describe entity (`describe_entity`) | Reads only | Automatic | — | — | Describes an entity's fields from the registry; it reads no record. |
 | Get detention occurrence (`detention_get_occurrence`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List detention facilities (`detention_list_facilities`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List detention occurrences (`detention_list_occurrences`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
@@ -179,7 +180,6 @@ Looks something up. Nothing changes and nothing is sent.
 | List factoring readiness (`factoring_list_readiness`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List factoring remittances (`factoring_list_remittances`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List factoring submissions (`factoring_list_submissions`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
-| Find tools (`search_tools`) | Reads only | Automatic | — | — | Loads more of the agent's own tools into the turn; it reads the catalog and changes nothing. |
 | Check formula (`formula_check`) | Reads only | Automatic | — | — | Checks source the model holds; nothing is saved and nothing is sent. |
 | Describe formula language (`formula_describe_language`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | Get formula library (`formula_get_library`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
@@ -263,6 +263,8 @@ Looks something up. Nothing changes and nothing is sent.
 | List receivable credit memo applications (`receivable_list_credit_memo_applications`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List customer payments (`receivable_list_customer_payments`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List receivable open items (`receivable_list_open_items`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
+| Record get (`record_get`) | Reads only | Automatic | — | When the record is marked, from record note | Reads records through each entity's own read, which checks the entity's permission, scope and plan for every call. |
+| Records query (`records_query`) | Reads only | Automatic | — | When the record is marked, from record note | Reads one entity's records through that entity's own read, which checks the entity's permission, scope and plan for every call. |
 | Compare report runs (`report_compare_runs`) | Reads only | Automatic | — | Always, from record note | Shows report rows, whose text columns can hold what a trading partner, a bank or a driver wrote; nothing changes and nothing is sent. |
 | Compose report table view (`report_compose_table_view`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | Get report (`report_get`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
@@ -276,6 +278,7 @@ Looks something up. Nothing changes and nothing is sent.
 | List table change alerts (`report_list_table_change_alerts`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | Preview report (`report_preview`) | Reads only | Automatic | — | When the record is marked, from record note | Shows report rows, whose text columns can hold what a trading partner, a bank or a driver wrote; nothing changes and nothing is sent. |
 | Run report (`report_run`) | Reads only | Automatic | — | When the record is marked, from record note | Shows report rows, whose text columns can hold what a trading partner, a bank or a driver wrote; nothing changes and nothing is sent. |
+| Search tools (`search_tools`) | Reads only | Automatic | — | — | Searches the capability registry and loads matching capabilities the agent may use into the turn; it reads the registry and changes nothing. |
 | Get carrier settlement (`settlement_get_carrier`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | Get settlement dispute (`settlement_get_dispute`) | Reads only | Automatic | — | When the record is marked, from record note | Reads a pay dispute whose description a driver wrote in the driver portal; nothing changes and nothing is sent. |
 | Get driver settlement (`settlement_get_driver`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |

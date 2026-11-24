@@ -754,7 +754,9 @@ const searchGuidance = "\n- Before saying something cannot be done, run search_t
 	"Only then report a gap, and name the searches you tried.\n" +
 	"- Not loaded never means not available. Call an available capability by name and it loads.\n" +
 	"- A result outside this agent's scope (not_in_this_agent) gets a hand-off offer, never a " +
-	"workaround. A result the person is not permitted to use is named with its permission."
+	"workaround. A result the person is not permitted to use is named with its permission.\n" +
+	"- Read records with records_query (every record matching conditions, a count or groups) " +
+	"or record_get with include (everything about one record), rather than chaining calls."
 
 const beyondToolsNote = " search_tools searches every capability Trenova has and says, for each, " +
 	"whether you can call it here." + searchGuidance

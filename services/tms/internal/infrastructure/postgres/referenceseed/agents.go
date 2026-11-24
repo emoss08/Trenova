@@ -44,11 +44,7 @@ func CreateSystemAgentDefinitions(
 
 	created := 0
 	now := scope.NowUnix()
-	definitions := SystemAgentDefinitions(orgID, buID)
-	for _, template := range agentpreset.DefaultDesks() {
-		definitions = append(definitions, agentpreset.NewDesk(template, orgID, buID))
-	}
-	for _, definition := range definitions {
+	for _, definition := range SystemAgentDefinitions(orgID, buID) {
 		if _, ok := present[definition.SystemKey]; ok {
 			continue
 		}
@@ -79,7 +75,12 @@ func SystemAgentDefinitions(orgID, buID pulid.ID) []*agentdefinition.Definition 
 	billing := agenttemplate.TemplateBillingException
 	dispatch := agenttemplate.TemplateDispatchAssignment
 
-	return []*agentdefinition.Definition{
+	desks := make([]*agentdefinition.Definition, 0, len(agentpreset.DefaultDesks()))
+	for _, template := range agentpreset.DefaultDesks() {
+		desks = append(desks, agentpreset.NewDesk(template, orgID, buID))
+	}
+
+	return append(desks, []*agentdefinition.Definition{
 		{
 			OrganizationID:  orgID,
 			BusinessUnitID:  buID,
@@ -134,5 +135,5 @@ func SystemAgentDefinitions(orgID, buID pulid.ID) []*agentdefinition.Definition 
 			},
 			Enabled: false,
 		},
-	}
+	}...)
 }

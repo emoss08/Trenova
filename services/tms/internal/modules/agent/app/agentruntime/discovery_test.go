@@ -332,7 +332,7 @@ func TestRun_HoldsTheWritesAHeldToolNamesAsCompanions(t *testing.T) {
 	assert.NotContains(t, held, "delete_customer")
 
 	definition := runtimetest.Definition("shipment_create")
-	definition.DisabledToolNames = []string{"customer_create"}
+	definition.TurnToolOff("customer_create")
 	held = service.access.HeldTools(definition)
 	assert.NotContains(t, held, "customer_create", "a companion switched off stays off")
 	assert.Contains(t, held, "location_create")

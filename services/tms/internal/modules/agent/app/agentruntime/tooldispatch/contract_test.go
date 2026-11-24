@@ -101,7 +101,7 @@ func TestDispatch_AReadGivenNumbersRunsWithTheirRecords(t *testing.T) {
 
 	first, second := pulid.MustNew("shp_"), pulid.MustNew("shp_")
 	tool := &agenttest.StubQueryTool{
-		ToolName: "shipment_get",
+		ToolName: "shipment_compare",
 		Result:   map[string]any{"count": 2},
 		Schema: map[string]any{
 			"type": "object",
@@ -185,7 +185,7 @@ func TestDispatch_ANumberNoRecordCarriesIsRefusedAsBefore(t *testing.T) {
 	t.Parallel()
 
 	tool := &agenttest.StubQueryTool{
-		ToolName: "shipment_get",
+		ToolName: "shipment_compare",
 		Schema: map[string]any{
 			"type": "object",
 			"properties": map[string]any{

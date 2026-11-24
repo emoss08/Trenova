@@ -158,3 +158,34 @@ var workerIncludes = []Include{
 var customerIncludes = []Include{
 	{Name: "update_preferences", Reader: "customer_get_update_preferences", Key: "customerId", Summary: "How and when the customer wants status updates."},
 }
+
+var projections = map[string]string{
+	"billing_list_transfer_candidates":    "shipments computed as ready to move into billing, not a stored list",
+	"dispatch_get_board":                  "the dispatch board, grouped by what needs a driver",
+	"insight_list_weather_alerts":         "live weather alerts on the routes in play",
+	"intake_get_draft":                    "the intake page's draft being edited",
+	"home_list_widgets":                   "the widgets a home page can hold",
+	"home_get_layout":                     "the person's own home layout",
+	"receivable_get_aging":                "aging buckets computed per customer",
+	"receivable_get_statement":            "a customer statement with a running balance",
+	"receivable_list_collection_worklist": "a collector's ranked worklist",
+	"ledger_get_fiscal_close_blockers":    "what stands between a period and its close",
+	"invoice_list_open_statements":        "statement customers' open periods",
+	"invoice_list_share_candidates":       "teammates an invoice can be shared with",
+	"worker_list_week_hours":              "hours worked per driver this week, computed",
+	"equipment_list_positions":            "live positions from telematics",
+	"settlement_list_batch_blockers":      "what holds settlements out of a batch",
+	"carrier_list_cover_ending":           "carriers whose insurance cover is ending",
+	"inbox_list_triage_assignees":         "who an inbound message can be assigned to",
+	"rate_get_matrix":                     "a rate matrix as a grid",
+	"insight_get_daily_briefing":          "the morning briefing",
+	"accounting_get_connection":           "an accounting connection keyed by system",
+	"edi_get_ack_health":                  "acknowledgement health per partner",
+	"settlement_get_driver_earnings":      "a driver's unsettled earnings, computed",
+	"factoring_get_reserve_balance":       "the factoring reserve balance",
+}
+
+func Projection(name string) (string, bool) {
+	reason, ok := projections[name]
+	return reason, ok
+}

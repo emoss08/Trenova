@@ -67,6 +67,7 @@ in [backend/](backend/README.md). Frontend rules are in the `trenova-frontend` s
 |---|---|
 | [nova-harness](nova-harness.md) | any Nova work that is not a Desk conversation: a new background AI task, its prompt, schema, files, tools or batching; moving an existing feature onto the harness |
 | [agent-runtime](agent-runtime.md) | `agentruntime/`, `assistantservice/`, `jobs/{agentflow,modelcall,agentjobs,assistantjobs,completionjobs}`; reflection ("Learning from the work") |
+| [agent-capabilities](agent-capabilities.md) | the capability registry, `search_tools`, agent scopes, `records_query`/`record_get`, the read envelope and the capability eval harness |
 | [agent-tool-conventions](agent-tool-conventions.md) | adding, renaming or merging a tool, or rewriting its description (no aliases on rename) |
 | [agent-write-coverage](agent-write-coverage.md) | any new mutation or write route: it needs a tool, an exemption or a `pending` entry in `writecoverage.yml` |
 | [agent-graphql-reads](agent-graphql-reads.md) ([inventory](agent-graphql-reads-inventory.md)) | a read tool, `agentread`, `gqlext`, `reads.yml`, the field guard, an operation a tool reads through |

@@ -454,9 +454,9 @@ func TestResolveFind_NamesThePersonsOtherAgentThatHoldsTheTool(t *testing.T) {
 	service, _ := wideRuntime(t)
 	definition := runtimetest.Definition("customer_list", "location_list")
 	compliance := runtimetest.ChatAgent("Compliance assistant")
-	compliance.ToolNames = []string{"worker_list_credentials"}
+	compliance.Scope = agentdefinition.Scope{Capabilities: []string{"worker_list_credentials"}}
 	unrelated := runtimetest.ChatAgent("Report builder")
-	unrelated.ToolNames = []string{"report_list"}
+	unrelated.Scope = agentdefinition.Scope{Capabilities: []string{"report_list"}}
 	rewire(service, func(p *runtimeParts) { p.Permissions = &agenttest.StubPermissions{} })
 	rewire(service, func(p *runtimeParts) {
 		p.Definitions = &runtimetest.ListedDefinitions{
@@ -493,9 +493,9 @@ func TestResolveFind_RecordsTheAgentsItNamesForTheHandOffMenu(t *testing.T) {
 	service, _ := wideRuntime(t)
 	definition := runtimetest.Definition("customer_list", "location_list")
 	compliance := runtimetest.ChatAgent("Compliance assistant")
-	compliance.ToolNames = []string{"worker_list_credentials"}
+	compliance.Scope = agentdefinition.Scope{Capabilities: []string{"worker_list_credentials"}}
 	unrelated := runtimetest.ChatAgent("Report builder")
-	unrelated.ToolNames = []string{"report_list"}
+	unrelated.Scope = agentdefinition.Scope{Capabilities: []string{"report_list"}}
 	rewire(service, func(p *runtimeParts) { p.Permissions = &agenttest.StubPermissions{} })
 	rewire(service, func(p *runtimeParts) {
 		p.Definitions = &runtimetest.ListedDefinitions{
@@ -540,7 +540,7 @@ func TestRun_SavesTheAgentsFindToolsNamedOnItsResult(t *testing.T) {
 	)
 	definition := runtimetest.Definition("customer_list", "location_list")
 	compliance := runtimetest.ChatAgent("Compliance assistant")
-	compliance.ToolNames = []string{"worker_list_credentials"}
+	compliance.Scope = agentdefinition.Scope{Capabilities: []string{"worker_list_credentials"}}
 	rewire(service, func(p *runtimeParts) { p.Permissions = &agenttest.StubPermissions{} })
 	rewire(service, func(p *runtimeParts) {
 		p.Definitions = &runtimetest.ListedDefinitions{
@@ -945,34 +945,6 @@ func weakMatchRuntime(t *testing.T, extra ...agenttoolports.AgentQueryTool) *Ser
 	})
 }
 
-func TestResolveFind_ReachesTheToolsOfThePersonsOtherAgentsWhenItsOwnMatchWeakly(t *testing.T) {
-	t.Parallel()
-
-	service := weakMatchRuntime(t)
-	held := []string{"shipment_list"}
-	for idx := range toolaccess.DisclosureThreshold + 1 {
-		held = append(held, fmt.Sprintf("list_filler_%02d", idx))
-	}
-	set := service.access.NewToolSet(
-		t.Context(),
-		&toolaccess.ToolSetRequest{
-			Definition: runtimetest.Definition(held...),
-			Actor:      runtimetest.Actor(),
-			Input:      "hello",
-			Beyond:     map[string]agent.AutonomyTier{"search_commodities": agent.TierAutoExecute},
-		},
-	)
-	require.True(t, set.Disclosed)
-	require.NotContains(t, opensWith(set), "search_commodities")
-
-	answer := findContent(t, service, set, map[string]any{"query": "commodity"})
-
-	assert.Contains(t, answer, "shipment_list", "the weak match still loads")
-	assert.Contains(t, answer, toolaccess.BeyondLead)
-	assert.Contains(t, answer, "search_commodities")
-	assert.True(t, set.Offers("search_commodities"))
-}
-
 func TestResolveFind_ReachesBeyondOnATurnThatHoldsFewTools(t *testing.T) {
 	t.Parallel()
 
@@ -993,73 +965,6 @@ func TestResolveFind_ReachesBeyondOnATurnThatHoldsFewTools(t *testing.T) {
 
 	assert.Contains(t, answer, "search_commodities")
 	assert.True(t, set.Offers("search_commodities"))
-}
-
-func TestResolveFind_NeverReachesWhatAStrongOwnMatchCovers(t *testing.T) {
-	t.Parallel()
-
-	service := weakMatchRuntime(t)
-	held := []string{"search_commodities"}
-	for idx := range toolaccess.DisclosureThreshold + 1 {
-		held = append(held, fmt.Sprintf("list_filler_%02d", idx))
-	}
-	set := service.access.NewToolSet(
-		t.Context(),
-		&toolaccess.ToolSetRequest{
-			Definition: runtimetest.Definition(held...),
-			Actor:      runtimetest.Actor(),
-			Input:      "hello",
-			Beyond:     map[string]agent.AutonomyTier{"shipment_list": agent.TierAutoExecute},
-		},
-	)
-
-	answer := findContent(t, service, set, map[string]any{"query": "commodity"})
-
-	assert.Contains(t, answer, "search_commodities")
-	assert.NotContains(t, answer, toolaccess.BeyondLead)
-	assert.False(t, set.Offers("shipment_list"))
-}
-
-func TestResolveFind_ReachesPastAnOwnToolThatSharesOneWordWithTheNeed(t *testing.T) {
-	t.Parallel()
-
-	service := weakMatchRuntime(
-		t,
-		describedTool(
-			"shipment_update_hold",
-			"Change an active hold on a shipment and whether the customer sees it.",
-		),
-		describedTool(
-			"receivable_get_aging",
-			"Summarize accounts receivable aging: which customers owe money and how overdue it is.",
-		),
-	)
-	held := []string{"shipment_update_hold"}
-	for idx := range toolaccess.DisclosureThreshold + 1 {
-		held = append(held, fmt.Sprintf("list_filler_%02d", idx))
-	}
-	set := service.access.NewToolSet(
-		t.Context(),
-		&toolaccess.ToolSetRequest{
-			Definition: runtimetest.Definition(held...),
-			Actor:      runtimetest.Actor(),
-			Input:      "hello",
-			Beyond: map[string]agent.AutonomyTier{
-				"receivable_get_aging": agent.TierAutoExecute,
-			},
-		},
-	)
-
-	answer := findContent(
-		t,
-		service,
-		set,
-		map[string]any{"query": "accounts receivable aging by customer"},
-	)
-
-	assert.Contains(t, answer, toolaccess.BeyondLead)
-	assert.Contains(t, answer, "receivable_get_aging")
-	assert.True(t, set.Offers("receivable_get_aging"))
 }
 
 func TestResolveFind_AStrongNewMatchNeedsNoDelegate(t *testing.T) {

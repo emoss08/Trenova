@@ -12,6 +12,7 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/querytool"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentcapability"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -123,6 +124,15 @@ func readPolicy(name, rationale string) agenttoolports.ToolPolicy {
 	return querytool.ReadPolicy(name, &querytool.ReadSpec{
 		Resource:  permission.ResourceAssistant,
 		Reads:     agenttooltrust.ExternalReadMarked,
+		Source:    agent.TaintSourceRecordNote,
+		Rationale: rationale,
+	})
+}
+
+func describePolicy(name, rationale string) agenttoolports.ToolPolicy {
+	return querytool.ReadPolicy(name, &querytool.ReadSpec{
+		Resource:  permission.ResourceAssistant,
+		Reads:     agenttooltrust.ExternalReadNever,
 		Rationale: rationale,
 	})
 }
