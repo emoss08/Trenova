@@ -231,7 +231,7 @@ func TestRun_ACommandTurnOffersItsToolsAndAsksForItsExtension(t *testing.T) {
 			assert.Contains(
 				t,
 				offered,
-				"find_tools",
+				"search_tools",
 				"the agent holds enough tools to be narrowed",
 			)
 			for _, name := range tc.held {

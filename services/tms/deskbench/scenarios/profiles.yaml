@@ -9,18 +9,18 @@ scenarios:
       a good turn finds the aging and answers instead of sending the person to another agent.
     agent: Dispatch desk
     tags: [receivables]
-    expectedTools: [find_tools, "receivable_get_aging|receivable_list_open_items"]
+    expectedTools: [search_tools, "receivable_get_aging|receivable_list_open_items"]
     steps:
       - say: "whats the ar aging look like for acme rn, they want another load and im not sure we should"
         expect:
-          calls: [find_tools, "receivable_get_aging|receivable_list_open_items|receivable_get_statement"]
+          calls: [search_tools, "receivable_get_aging|receivable_list_open_items|receivable_get_statement"]
           noProposals: true
           maxFailedCalls: 1
           replyExcludes:
             - "/(switch|go|talk) (over )?to (the )?(receivables|billing|collections)/"
             - "/ask (the )?(receivables|billing|collections) (agent|desk|team)/"
           rubric: >
-            Loads a receivables read with find_tools and states Acme's open balance and how much of
+            Loads a receivables read with search_tools and states Acme's open balance and how much of
             it is past due, by age bucket, then says whether that argues for or against booking
             another load. It does not tell the dispatcher to ask another agent.
 

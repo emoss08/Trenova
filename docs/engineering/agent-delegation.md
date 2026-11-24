@@ -15,7 +15,7 @@ every result they read, word for word. The agent that asked answers from those
 results and makes any change itself.
 
 A change another desk's agent would make is not delegated: the agent the person
-is talking to reaches that agent's tools itself, through `find_tools`, under the
+is talking to reaches that agent's tools itself, through `search_tools`, under the
 approvals that agent would have run them with ("Discovery across desks" in
 [agent-runtime.md](agent-runtime.md#job-profiles-in-one-runtime)). That keeps a
 write in the conversation that proposes it, where the person decides it, rather
@@ -101,7 +101,7 @@ do.
   (`ContextBuilder.delegateTools` keeps `ToolSummary.Lookup`), and the
   pre-turn match keeps a question with the current agent through a delegate
   only when the delegate holds a matching lookup (`matchPool.delegateHolding`).
-- `find_tools` no longer names a delegate for what it could not load: a
+- `search_tools` no longer names a delegate for what it could not load: a
   conversation turn reaches every tool the person's other agents hold, so a
   match it cannot call is one no agent of theirs holds.
 - When nothing the turn reaches matched, the answer names the person's other
@@ -281,7 +281,7 @@ note on how to read it. It is the same object the reader receives as
 `made`, `awaiting` and `published` are filled only for a task the person
 directed; a lookup the agent handed out has none. `findings` are the results the
 delegate's lookups returned, unfenced, in the order it read them, every
-successful call but the runtime's own (`find_tools` and the like): the agent that
+successful call but the runtime's own (`search_tools` and the like): the agent that
 asked works from them rather than from a retelling, which is what the
 "telephone" effect of a supervisor paraphrasing its sub-agents costs. They are
 bounded at 8 KiB each and 10 KiB together (`delegateFindings`), and then to what

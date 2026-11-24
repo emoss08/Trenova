@@ -124,7 +124,7 @@ func TestBuildSystemPrompt_TeachesTheDomainOnceInTheCachedPart(t *testing.T) {
 	t.Parallel()
 
 	for _, template := range []agenttemplate.Template{
-		agenttemplate.TemplateGeneralAssistant,
+		agenttemplate.TemplateUniversal,
 		agenttemplate.TemplateBillingException,
 	} {
 		d := snapshotlessDefinition(template)

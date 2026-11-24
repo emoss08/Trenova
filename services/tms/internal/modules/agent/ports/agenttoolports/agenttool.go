@@ -171,7 +171,7 @@ type CompanionTool interface {
 // its arguments in the order the work is done, the tool itself, and what
 // follows it. A model handed shipment_create with eight id parameters and
 // no order went looking for them one at a time, or guessed; the recipe is
-// told with the tool wherever it is named, in the prompt and in a find_tools
+// told with the tool wherever it is named, in the prompt and in a search_tools
 // answer, so one call does what three round trips used to.
 type RecipeTool interface {
 	Recipe() []string

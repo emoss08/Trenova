@@ -94,7 +94,7 @@ func AgentMatches(
 	tools []string,
 	ceiling agent.AutonomyTier,
 ) bool {
-	held := slices.Clone(existing.ToolNames)
+	held := existing.StarterTools()
 	wanted := slices.Clone(tools)
 	slices.Sort(held)
 	slices.Sort(wanted)

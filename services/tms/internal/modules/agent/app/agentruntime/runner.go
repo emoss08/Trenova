@@ -490,8 +490,8 @@ func (s *Service) runToolCall(t *Turn, effects TurnEffects, loop *driveLoop, rc 
 	}
 
 	switch call.Name {
-	case "find_tools":
-		outcome := s.findTools(t, effects, call)
+	case runtimetools.SearchToolsName:
+		outcome := s.searchTools(t, effects, call)
 		s.recordToolResult(t, effects, call, &outcome)
 		return false
 	case "ask_user":
@@ -560,7 +560,7 @@ func (s *Service) overBudget(t *Turn, call *llmports.ToolCall) (toolcall.Result,
 	), true
 }
 
-func (s *Service) findTools(t *Turn, effects TurnEffects, call *llmports.ToolCall) toolcall.Result {
+func (s *Service) searchTools(t *Turn, effects TurnEffects, call *llmports.ToolCall) toolcall.Result {
 	tools := t.tools
 	tools.FindCalls++
 	if tools.FindCalls > toolaccess.MaxFindCalls {
@@ -576,7 +576,7 @@ func (s *Service) findTools(t *Turn, effects TurnEffects, call *llmports.ToolCal
 		)
 	}
 
-	answer := effects.Find(t, call.Arguments)
+	answer := effects.Search(t, call.Arguments)
 
 	return toolcall.Result{
 		Content: answer.Content + toolaccess.SearchesLeft(tools.FindCalls),
@@ -750,7 +750,7 @@ func (t *Turn) dispatchCall(call *llmports.ToolCall, completionText string) tool
 }
 
 // scriptReach is what the turn reached beyond the agent's own tools, for the
-// call that runs a script. find_tools told the model a read from another desk
+// call that runs a script. search_tools told the model a read from another desk
 // was callable here, and the script, which saw only the agent's own, had no
 // such name: Haiku guessed three spellings of the fuel read and spent the
 // turn's scripts on them.
@@ -842,7 +842,7 @@ func (s *Service) finalAnswer(
 }
 
 // recordToolResult files one tool's outcome into the run, the adapter history
-// and the stream. find_tools and a dispatched tool both come through here so a
+// and the stream. search_tools and a dispatched tool both come through here so a
 // loaded-tools answer is recorded exactly like any other tool result — it is one
 // to the model, and a transcript that hid it would not explain the turn.
 func (s *Service) recordToolResult(

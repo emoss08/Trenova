@@ -441,10 +441,7 @@ func (r *repository) SetToolTier(
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		d := agentdefinitiondb.Definitions
-		n, err := d.Where(
-			d.ID.Eq(req.ID),
-			keel.When(!agentdefinition.IsCoreTool(req.ToolName), d.ToolNames.Has(req.ToolName)),
-		).Update(
+		n, err := d.Where(d.ID.Eq(req.ID)).Update(
 			ctx,
 			r.db.Keel(ctx),
 			d.ToolTiers.ToExpr(keel.CaseJSONB().

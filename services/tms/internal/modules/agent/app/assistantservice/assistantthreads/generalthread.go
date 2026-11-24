@@ -110,7 +110,7 @@ func generalAssistants(
 				{
 					Field:    definitionTemplateField,
 					Operator: dbtype.OpEqual,
-					Value:    string(agenttemplate.TemplateGeneralAssistant),
+					Value:    string(agenttemplate.TemplateUniversal),
 				},
 			},
 		},

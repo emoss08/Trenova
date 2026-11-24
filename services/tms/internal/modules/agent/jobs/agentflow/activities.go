@@ -261,14 +261,14 @@ func (f *firstWords) flush(event kernelports.StreamEvent) bool {
 	return true
 }
 
-// FindToolsActivity answers find_tools for a turn held as data.
-func (a *Activities) FindToolsActivity(
+// SearchToolsActivity answers search_tools for a turn held as data.
+func (a *Activities) SearchToolsActivity(
 	ctx context.Context,
-	in *FindToolsInput,
-) (*FindToolsResult, error) {
-	found := a.runtime.FindFor(ctx, in.Run.request(), &in.Tools, in.Arguments)
+	in *SearchToolsInput,
+) (*SearchToolsResult, error) {
+	found := a.runtime.SearchFor(ctx, in.Run.request(), &in.Tools, in.Arguments)
 
-	return &FindToolsResult{
+	return &SearchToolsResult{
 		Content: found.Content,
 		Loaded:  found.Loaded,
 		Found:   found.Found,

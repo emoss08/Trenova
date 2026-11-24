@@ -15,6 +15,37 @@ func GuidanceFor(id string) (Guidance, bool) {
 }
 
 var guidance = map[string]Guidance{
+	"equipment_list_positions": {
+		Synonyms: []string{"where are my trucks", "truck locations", "gps positions", "where is the truck"},
+	},
+	"analysis_run": {
+		UseWhen: "You need figures worked out over many records: totals, trends, comparisons or a chart.",
+		InsteadOf: []Instead{{Capability: "shipment.list", When: "a count or a grouped count of one kind of record is enough"}},
+		Synonyms: []string{"compare", "revenue", "trend", "margin", "by customer", "by month", "chart"},
+	},
+	"billing_approve_queue_item": {
+		Chain:    []string{"billing_queue_item.list", "billing_approve_queue_item", "invoice_send"},
+		Synonyms: []string{"bill the load", "bill it"},
+	},
+	"edi_accept_tender": {
+		Chain: []string{"edi_transfer.list", "edi_accept_tender"},
+	},
+	"invoice_open_dispute": {
+		Chain:    []string{"invoice.get", "invoice_open_dispute"},
+		Synonyms: []string{"short pay", "dispute an invoice"},
+	},
+	"rate_send_confirmation": {
+		Chain: []string{"carrier_shop", "rate_generate_confirmation", "rate_send_confirmation"},
+	},
+	"customer_payment.list": {
+		Synonyms: []string{"money coming in", "cash in", "payments in"},
+	},
+	"detention_stay.list": {
+		Synonyms: []string{"wait time", "dwell time", "time at the dock"},
+	},
+	"report_schedule.list": {
+		Synonyms: []string{"scheduled reports", "reports that run on a schedule"},
+	},
 	"shipment.list": {
 		UseWhen: "You need loads by status, customer, lane, stop city or state, pickup or delivery window, " +
 			"equipment, driver, tractor, trailer, carrier, holds, lateness or billing readiness, or a count of them.",
@@ -71,9 +102,10 @@ var guidance = map[string]Guidance{
 		UseWhen: "You have a worker and need their profile, with hours of service or schedule through include.",
 	},
 	"dispatch_rank_candidates": {
+		Summary:   "Rank the drivers who could cover a move: who is free, their hours left, distance and fit.",
 		UseWhen:   "You need to know who is free or best placed to cover a move: drivers ranked by hours, distance and fit.",
 		InsteadOf: []Instead{{Capability: "worker.list", When: "you need workers by their own attributes, not fit for a move"}},
-		Synonyms:  []string{"who is free", "available drivers", "who can take this load", "best driver"},
+		Synonyms:  []string{"who is free", "available drivers", "who can take this load", "best driver", "find a driver"},
 		Examples:  []string{"who's free", "who can cover load 4471", "available drivers near Atlanta"},
 		Chain:     []string{"shipment.get", "dispatch_rank_candidates", "dispatch_assign_move"},
 	},
@@ -119,10 +151,6 @@ var guidance = map[string]Guidance{
 	},
 	"worker_send_message": {
 		Synonyms: []string{"text the driver", "message the driver"},
-	},
-	"analysis_run": {
-		UseWhen:   "You need figures worked out over many records: totals, trends, comparisons or a chart.",
-		InsteadOf: []Instead{{Capability: "shipment.list", When: "a count or a grouped count of one kind of record is enough"}},
 	},
 	"report_run": {
 		InsteadOf: []Instead{{Capability: "analysis_run", When: "no saved report answers the question"}},

@@ -89,7 +89,7 @@ const TOOL_TITLES: Record<string, string> = defineLabels({
   formula_list_libraries: "List formula libraries",
   formula_get_library: "Read a formula library",
   ask_user: "Ask you to choose",
-  find_tools: "Look for a tool",
+  search_tools: "Look for a tool",
   agent_find_page: "Search the product guide",
   agent_read_attachment: "Read an attached file",
   agent_open_page: "Open a page",

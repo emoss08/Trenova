@@ -26,7 +26,7 @@
             "input": {
               "need": "trailers due inspection"
             },
-            "name": "find_tools",
+            "name": "search_tools",
             "type": "tool_use"
           }
         ],
@@ -48,7 +48,7 @@
             "cache_control": {
               "type": "ephemeral"
             },
-            "text": "find_tools (call_find):\nThese tools are now callable:\n- list_trailers: List trailers",
+            "text": "search_tools (call_find):\nThese tools are now callable:\n- list_trailers: List trailers",
             "type": "text"
           }
         ],
@@ -129,7 +129,7 @@
           ],
           "type": "object"
         },
-        "name": "find_tools"
+        "name": "search_tools"
       },
       {
         "defer_loading": true,

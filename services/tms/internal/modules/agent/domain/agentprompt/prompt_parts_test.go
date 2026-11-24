@@ -66,7 +66,7 @@ func TestBuildSystemPromptParts_PutsADisclosedToolSectionInTheStablePart(t *test
 
 	assert.Contains(t, parts.Stable, "- Dispatch (2 tools): move")
 	assert.Contains(t, parts.Stable, "dispatch_assign_move")
-	assert.NotContains(t, parts.Volatile, "find_tools")
+	assert.NotContains(t, parts.Volatile, "search_tools")
 	assert.NotContains(t, parts.Volatile, "shipment_get")
 
 	rc.Tools[0].Loaded, rc.Tools[1].Loaded = false, true

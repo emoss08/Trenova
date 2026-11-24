@@ -1,6 +1,9 @@
 package agenttoolcatalog
 
 import (
+	"strings"
+
+	"github.com/emoss08/trenova/internal/modules/agent/app/capabilitysearch"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentcapability"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -54,4 +57,64 @@ func factsOf(
 		SearchTerms: descriptor.SearchTerms,
 		Recipe:      descriptor.Recipe,
 	}
+}
+
+func CapabilityTexts(
+	registry *agentcapability.Registry,
+	queries agenttoolports.AgentQueryToolRegistry,
+	actions agenttoolports.AgentToolRegistry,
+) map[string]capabilitysearch.Text {
+	descriptors := make(map[string]agenttoolports.AgentToolDescriptor, 1024)
+	for _, descriptor := range queries.Descriptors() {
+		descriptors[descriptor.Name] = descriptor
+	}
+	for _, descriptor := range actions.Descriptors() {
+		descriptors[descriptor.Name] = descriptor
+	}
+	textOf := func(name string) capabilitysearch.Text {
+		descriptor, ok := descriptors[name]
+		if !ok {
+			return capabilitysearch.Text{}
+		}
+
+		return capabilitysearch.Text{
+			Body: descriptor.Description + " " + strings.Join(descriptor.SearchTerms, " ") + " " +
+				strings.ReplaceAll(agenttoolports.ReadingOrder(name), "_", " "),
+			Params: parameterText(descriptor.Parameters),
+		}
+	}
+
+	texts := make(map[string]capabilitysearch.Text, len(descriptors))
+	for _, capability := range registry.All() {
+		if !capability.IsEntityRead() {
+			texts[capability.ID] = textOf(capability.Name)
+			continue
+		}
+		entity, ok := agentcapability.EntityNamed(capability.Entity)
+		if !ok {
+			continue
+		}
+		backing := entity.List
+		if capability.Verb == agentcapability.VerbGet {
+			backing = entity.Get
+		}
+		text := textOf(backing)
+		text.Params = ""
+		texts[capability.ID] = text
+	}
+
+	return texts
+}
+
+func BuildCapabilityIndex(
+	queries agenttoolports.AgentQueryToolRegistry,
+	actions agenttoolports.AgentToolRegistry,
+	runtime agenttoolports.RuntimeToolPolicies,
+) (*agentcapability.Registry, *capabilitysearch.Index, error) {
+	registry, err := BuildCapabilities(queries, actions, runtime)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return registry, capabilitysearch.New(registry.All(), CapabilityTexts(registry, queries, actions)), nil
 }

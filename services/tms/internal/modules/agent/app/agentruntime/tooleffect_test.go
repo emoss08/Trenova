@@ -51,7 +51,7 @@ func TestToolEffect_DerivesFromMetadataAndNamesTheRuntimeTools(t *testing.T) {
 	assert.Equal(
 		t,
 		agenttooltrust.ToolEffectDiscover,
-		rt.access.ToolEffect("find_tools"),
+		rt.access.ToolEffect("search_tools"),
 	)
 	assert.Equal(t, agenttooltrust.ToolEffectAsk, rt.access.ToolEffect("ask_user"))
 	assert.Equal(

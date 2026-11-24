@@ -171,7 +171,7 @@ cases:
   - {request: invoice list, kind: denied, denied: ["invoice:read"], expect: invoice.list, status: not_permitted, shape: refusal}
   - {request: unpaid invoices, kind: denied, agent: billing, denied: ["invoice:read"], expect: invoice.list, status: not_permitted, shape: refusal}
   - {request: driver pay, kind: denied, denied: ["driver_settlement:read"], expect: driver_settlement.list, status: not_permitted, shape: refusal}
-  - {request: post invoice 1042, kind: denied, denied: ["invoice:update"], expect: invoice_post, status: not_permitted, shape: refusal}
+  - {request: post invoice 1042, kind: denied, denied: ["invoice:post"], expect: invoice_post, status: not_permitted, shape: refusal}
   - {request: journal entries, kind: denied, denied: ["journal_entry:read"], expect: journal_entry.list, status: not_permitted, shape: refusal}
   - {request: drivers, kind: denied, denied: ["worker:read"], expect: worker.list, status: not_permitted, shape: refusal}
 

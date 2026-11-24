@@ -1,7 +1,6 @@
 package agentdefinition
 
 import (
-	"fmt"
 	"maps"
 	"slices"
 	"strings"
@@ -82,11 +81,11 @@ func (d *Definition) DelegateTopic(id pulid.ID) string {
 	return strings.TrimSpace(d.DelegateTopics[id.String()])
 }
 
-// TurnToolOff removes a tool from the agent's grant and remembers it as
-// switched off, so it can be offered back. Its tier and daily cap go with it,
-// since both are only valid for a tool the agent holds.
+// TurnToolOff takes a capability out of the agent's scope. Its tier, daily
+// cap and pin go with it, since each is only valid inside the scope.
 func (d *Definition) TurnToolOff(name string) {
-	d.ToolNames = slices.DeleteFunc(slices.Clone(d.ToolNames), func(held string) bool {
+	d.Scope.Deny(name)
+	d.PinnedTools = slices.DeleteFunc(slices.Clone(d.PinnedTools), func(held string) bool {
 		return held == name
 	})
 	if _, ok := d.ToolTiers[name]; ok {
@@ -97,31 +96,11 @@ func (d *Definition) TurnToolOff(name string) {
 		d.ToolDailyLimits = maps.Clone(d.ToolDailyLimits)
 		delete(d.ToolDailyLimits, name)
 	}
-	if !slices.Contains(d.DisabledToolNames, name) {
-		d.DisabledToolNames = append(slices.Clone(d.DisabledToolNames), name)
-	}
 }
 
-// TurnToolOn gives a switched-off tool back to the agent.
+// TurnToolOn puts a capability back in the agent's scope.
 func (d *Definition) TurnToolOn(name string) {
-	d.DisabledToolNames = slices.DeleteFunc(slices.Clone(d.DisabledToolNames),
-		func(off string) bool { return off == name })
-	if !slices.Contains(d.ToolNames, name) {
-		d.ToolNames = append(slices.Clone(d.ToolNames), name)
-	}
-}
-
-// ForgetReheldTools drops from the switched-off list any tool the agent
-// holds again, which happens when an administrator picks it in AI Control.
-func (d *Definition) ForgetReheldTools() {
-	if len(d.DisabledToolNames) == 0 {
-		return
-	}
-	d.DisabledToolNames = slices.DeleteFunc(slices.Clone(d.DisabledToolNames),
-		func(off string) bool { return slices.Contains(d.ToolNames, off) })
-	if len(d.DisabledToolNames) == 0 {
-		d.DisabledToolNames = nil
-	}
+	d.Scope.Allow(name)
 }
 
 func (d *Definition) validateCapabilities(multiErr *errortypes.MultiError) {
@@ -148,26 +127,6 @@ func (d *Definition) validateCapabilities(multiErr *errortypes.MultiError) {
 		}
 	}
 
-	seen := make(map[string]struct{}, len(d.DisabledToolNames))
-	for idx, name := range d.DisabledToolNames {
-		field := fmt.Sprintf("disabledToolNames[%d]", idx)
-		switch {
-		case strings.TrimSpace(name) == "":
-			multiErr.Add(field, errortypes.ErrInvalid, "Tool name cannot be empty")
-		case IsCoreTool(name):
-			multiErr.Add(field, errortypes.ErrInvalid, "Every agent holds this tool")
-		case slices.Contains(d.ToolNames, name):
-			multiErr.Add(field, errortypes.ErrInvalid, "A tool cannot be both on and off")
-		}
-		if _, duplicate := seen[name]; duplicate {
-			multiErr.Add(field, errortypes.ErrDuplicate, "Tool is listed more than once")
-		}
-		seen[name] = struct{}{}
-	}
-	if len(d.DisabledToolNames) > MaxTools {
-		multiErr.Add("disabledToolNames", errortypes.ErrInvalid,
-			"An agent cannot have more than 64 tools switched off")
-	}
 }
 
 func (d *Definition) validateBusinessHours(multiErr *errortypes.MultiError) {

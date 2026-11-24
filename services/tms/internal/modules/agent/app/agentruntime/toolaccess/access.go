@@ -86,7 +86,7 @@ func New(p Params) *Access {
 }
 
 // Access decides which tools an agent holds and may call, builds a turn's
-// tool set and answers its find_tools searches.
+// tool set and answers its search_tools searches.
 type Access struct {
 	logger      *zap.Logger
 	queryTools  agenttoolports.AgentQueryToolRegistry
@@ -102,6 +102,8 @@ type Access struct {
 	registry    *permissioncatalog.Registry
 	scripts     llmports.ScriptProviders
 	plan        permissionports.PlanFeatures
+
+	capabilitySet *capabilitySet
 }
 
 func NewAccess(p *AccessParams) *Access {
@@ -120,5 +122,7 @@ func NewAccess(p *AccessParams) *Access {
 		registry:    p.Registry,
 		scripts:     p.Scripts,
 		plan:        p.Plan,
+
+		capabilitySet: &capabilitySet{},
 	}
 }

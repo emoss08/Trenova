@@ -14,7 +14,7 @@ var templateIcons = map[agenttemplate.Template]string{
 	agenttemplate.TemplateBillingAssistant:     agentmark.IconReceipt,
 	agenttemplate.TemplateComplianceAssistant:  agentmark.IconShield,
 	agenttemplate.TemplateCustomerAssistant:    agentmark.IconHeadset,
-	agenttemplate.TemplateGeneralAssistant:     agentmark.IconBot,
+	agenttemplate.TemplateUniversal:            agentmark.IconBot,
 	agenttemplate.TemplateBillingException:     agentmark.IconReceipt,
 	agenttemplate.TemplateDispatchAssignment:   agentmark.IconRoute,
 	agenttemplate.TemplateImportAssistant:      agentmark.IconFile,

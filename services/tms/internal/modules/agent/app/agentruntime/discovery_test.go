@@ -51,7 +51,7 @@ func loadedIn(req *llmports.ChatCompletionRequest) []string {
 }
 
 /*
-find_tools works end to end: what it loads is loaded on the very next request.
+search_tools works end to end: what it loads is loaded on the very next request.
 
 Nothing tested this through Run. The tool set grew, but a test that only looked
 at the set could not see whether the request the model answers next carried it.
@@ -64,8 +64,8 @@ func TestRun_FindToolsLoadsAToolIntoTheNextRequest(t *testing.T) {
 	service, completion, names := wideRun(
 		t,
 		runtimetest.ToolTurn(
-			"find_tools",
-			map[string]any{"need": "trailers due inspection"},
+			"search_tools",
+			map[string]any{"query": "trailers due inspection"},
 		),
 		runtimetest.ToolTurn("equipment_list_trailers", map[string]any{}),
 		runtimetest.TextTurn("Two trailers are due."),
@@ -84,9 +84,9 @@ func TestRun_FindToolsLoadsAToolIntoTheNextRequest(t *testing.T) {
 	assert.Contains(t, requestTools(completion.Requests[0]), "equipment_list_trailers",
 		"it is declared, deferred, from the first call")
 	assert.Contains(t, loadedIn(completion.Requests[1]), "equipment_list_trailers",
-		"what find_tools loaded is loaded on the next request")
+		"what search_tools loaded is loaded on the next request")
 	found := completion.Requests[1].Messages[len(completion.Requests[1].Messages)-1]
-	assert.Equal(t, "find_tools", found.ToolName)
+	assert.Equal(t, "search_tools", found.ToolName)
 	assert.Contains(t, found.ToolReferences, "equipment_list_trailers", "the find result names it")
 	assert.Equal(t, completion.Requests[0].Tools, completion.Requests[1].Tools)
 	assert.Equal(t, "Two trailers are due.", result.Reply)
@@ -96,7 +96,7 @@ func TestRun_FindToolsLoadsAToolIntoTheNextRequest(t *testing.T) {
 /*
 What a turn loaded is still loaded on the next one.
 
-The tool set used to be rebuilt from the new message alone. After find_tools
+The tool set used to be rebuilt from the new message alone. After search_tools
 loaded worker_list_credentials, "yes, do that" reopened on the eight tools
 that ranked first against three words that name nothing, and the tool the
 conversation was about was gone.
@@ -110,8 +110,8 @@ func TestNewToolSet_CarriesWhatTheLastTurnsUsedAndFound(t *testing.T) {
 		{Role: conversation.RoleAssistant, ToolCalls: []conversation.ToolCallRecord{
 			{
 				ID:        "c1",
-				Name:      "find_tools",
-				Arguments: map[string]any{"need": "driver medical card expiry"},
+				Name:      "search_tools",
+				Arguments: map[string]any{"query": "driver medical card expiry"},
 			},
 		}},
 		{Role: conversation.RoleTool, Content: "These tools are now callable"},
@@ -131,7 +131,7 @@ func TestNewToolSet_CarriesWhatTheLastTurnsUsedAndFound(t *testing.T) {
 
 	require.True(t, set.Disclosed)
 	sent := opensWith(set)
-	assert.Contains(t, sent, "worker_list_credentials", "what find_tools found last turn")
+	assert.Contains(t, sent, "worker_list_credentials", "what search_tools found last turn")
 	assert.Contains(t, sent, "report_run", "what the model called last turn")
 }
 
@@ -183,7 +183,7 @@ func TestRun_RefusesAQuestionInARunNobodyIsWatching(t *testing.T) {
 	assert.Contains(t, result.Messages[2].Content, "agent_raise_exception")
 }
 
-// find_tools is not charged against the budget, so a model with a budget of
+// search_tools is not charged against the budget, so a model with a budget of
 // one can still look for the tool and then use it; past the cap it is.
 func TestRun_FindToolsIsNotChargedUntilTheCap(t *testing.T) {
 	t.Parallel()
@@ -192,7 +192,7 @@ func TestRun_FindToolsIsNotChargedUntilTheCap(t *testing.T) {
 	for range toolaccess.MaxFindCalls + 1 {
 		turns = append(
 			turns,
-			runtimetest.ToolTurn("find_tools", map[string]any{"need": "tractors"}),
+			runtimetest.ToolTurn("search_tools", map[string]any{"query": "tractors"}),
 		)
 	}
 	turns = append(turns, runtimetest.TextTurn("done"))
@@ -399,7 +399,7 @@ func TestRun_ADisclosedTurnNeverChangesItsToolArray(t *testing.T) {
 	found, called := unsent[0], unsent[1]
 
 	service, completion, _ := wideRun(t,
-		runtimetest.ToolTurn("find_tools", map[string]any{"need": found}),
+		runtimetest.ToolTurn("search_tools", map[string]any{"query": found}),
 		runtimetest.ToolTurn(called, map[string]any{}),
 		runtimetest.ToolTurn("list_trailer_inspection_dates", map[string]any{}),
 		runtimetest.TextTurn("Done."),
@@ -423,7 +423,7 @@ func TestRun_ADisclosedTurnNeverChangesItsToolArray(t *testing.T) {
 	}
 	assert.NotContains(t, loadedIn(completion.Requests[0]), found)
 	assert.Contains(t, loadedIn(completion.Requests[1]), found,
-		"resolveFind loads what find_tools answered")
+		"resolveFind loads what search_tools answered")
 	assert.NotContains(t, loadedIn(completion.Requests[1]), called)
 	assert.Contains(t, loadedIn(completion.Requests[2]), called,
 		"the runner loads a held tool the model called without it being loaded")

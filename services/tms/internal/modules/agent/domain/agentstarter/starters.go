@@ -27,7 +27,7 @@ func ask(label, prompt string, tools ...string) starterQuestion {
 }
 
 func (q starterQuestion) answerableWith(tools []string) bool {
-	if len(q.tools) == 0 {
+	if len(q.tools) == 0 || tools == nil {
 		return true
 	}
 
@@ -150,7 +150,7 @@ var templateStarters = map[agenttemplate.Template][]starterQuestion{
 			"customer_list",
 		),
 	},
-	agenttemplate.TemplateGeneralAssistant: howToStarters,
+	agenttemplate.TemplateUniversal: howToStarters,
 	agenttemplate.TemplateBillingException: {
 		ask(
 			"Which billing items are blocked, and why?",
@@ -891,7 +891,7 @@ var toolFamilies = [][]starterQuestion{
 }
 
 func Starters(d *agentdefinition.Definition) []Starter {
-	return StartersFor(d.Template, d.ToolNames)
+	return StartersFor(d.Template, d.StarterTools())
 }
 
 func StartersFor(template agenttemplate.Template, tools []string) []Starter {

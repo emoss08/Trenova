@@ -139,7 +139,7 @@ a parameter the input names differently says why in the binding.
 
 ## Descriptions
 
-- The first sentence says what the tool does, in at most 160 characters; it is all `find_tools`
+- The first sentence says what the tool does, in at most 160 characters; it is all `search_tools`
   and the prompt's catalog show.
 - Then when to use it rather than its neighbour, where its ids come from, and what it returns
   that a model would otherwise go and look for.

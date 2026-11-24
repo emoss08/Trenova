@@ -76,8 +76,8 @@ func (fx *handOffEffects) DispatchReads(
 	return outcomes
 }
 
-func (*handOffEffects) Find(*agentruntime.Turn, map[string]any) toolaccess.FindAnswer {
-	return toolaccess.FindAnswer{}
+func (*handOffEffects) Find(*agentruntime.Turn, map[string]any) toolaccess.SearchAnswer {
+	return toolaccess.SearchAnswer{}
 }
 
 func (*handOffEffects) Emit(kernelports.StreamEvent) {}

@@ -96,7 +96,7 @@ func TestValidateToolSelection_AcceptsAnyRegisteredToolOnAnyTemplate(t *testing.
 		t,
 		validate(
 			t,
-			definition(agenttemplate.TemplateGeneralAssistant, "reassign_move", "shipment_get"),
+			definition(agenttemplate.TemplateUniversal, "reassign_move", "shipment_get"),
 		),
 	)
 	assert.Empty(t, validate(t, definition("", "customer_update")))

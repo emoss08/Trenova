@@ -28,7 +28,6 @@ const (
 	MaxInstructionsRunes = 20000
 	MaxGuardrails        = 20
 	MaxGuardrailRunes    = 300
-	MaxTools             = 64
 	maxSystemKeyLength   = 50
 	MaxCronLength        = 100
 	MinIntervalSeconds   = 60
@@ -62,7 +61,8 @@ type Definition struct {
 	Instructions string                 `json:"instructions" keel:"instructions,nullzero"`
 	Guardrails   []string               `json:"guardrails"   keel:"guardrails,nullzero"`
 
-	ToolNames       []string                      `json:"toolNames"       keel:"tool_names,nullzero"`
+	Scope           Scope                         `json:"scope"           keel:"scope,jsonb"`
+	PinnedTools     []string                      `json:"pinnedTools"     keel:"pinned_tools,nullzero"`
 	ToolTiers       map[string]agent.AutonomyTier `json:"toolTiers"       keel:"tool_tiers,jsonb,nullzero"`
 	AutonomyCeiling agent.AutonomyTier            `json:"autonomyCeiling" keel:"autonomy_ceiling"`
 
@@ -124,11 +124,6 @@ type Definition struct {
 	// does sees why it hands work on. A delegate without one is described by
 	// its own description.
 	DelegateTopics map[string]string `json:"delegateTopics" keel:"delegate_topics,jsonb,nullzero"`
-
-	// DisabledToolNames are tools switched off from the agent's capabilities
-	// page. Switching a tool off removes it from ToolNames, which is the
-	// grant; it is listed here only so the page can still offer it back.
-	DisabledToolNames []string `json:"disabledToolNames" keel:"disabled_tool_names,nullzero"`
 
 	// MaxChangeItems is the most records one change by the agent may touch.
 	// A bigger batch is refused with an instruction to split it, so each part
@@ -276,7 +271,7 @@ func (d *Definition) WithinCeiling(tier agent.AutonomyTier) bool {
 }
 
 func (d *Definition) AllowsTool(name string) bool {
-	return IsCoreTool(name) || slices.Contains(d.ToolNames, name)
+	return IsCoreTool(name) || d.Scope.Allows(name)
 }
 
 func (d *Definition) IsSystem() bool {
@@ -545,13 +540,9 @@ func (d *Definition) validateBudget(multiErr *errortypes.MultiError) {
 		)
 	}
 
-	held := make(map[string]struct{}, len(d.ToolNames))
-	for _, name := range d.ToolNames {
-		held[strings.TrimSpace(name)] = struct{}{}
-	}
 	for tool, limit := range d.ToolDailyLimits {
 		field := "toolDailyLimits." + tool
-		if _, ok := held[tool]; !ok && !IsCoreTool(tool) {
+		if !d.AllowsTool(tool) {
 			multiErr.Add(
 				field,
 				errortypes.ErrInvalid,
@@ -605,43 +596,34 @@ func (d *Definition) validateGuardrails(multiErr *errortypes.MultiError) {
 }
 
 func (d *Definition) validateTools(multiErr *errortypes.MultiError) {
-	if len(d.ToolNames) > MaxTools {
-		multiErr.Add(
-			"toolNames",
-			errortypes.ErrInvalid,
-			"An agent cannot be given more than 64 tools",
-		)
+	d.Scope.validate(multiErr)
+	if len(d.PinnedTools) > MaxPinnedTools {
+		multiErr.Add("pinnedTools", errortypes.ErrInvalid,
+			fmt.Sprintf("An agent can pin at most %d capabilities", MaxPinnedTools))
 	}
-
-	seen := make(map[string]struct{}, len(d.ToolNames))
-	for idx, name := range d.ToolNames {
+	seen := make(map[string]struct{}, len(d.PinnedTools))
+	for idx, name := range d.PinnedTools {
+		field := fmt.Sprintf("pinnedTools[%d]", idx)
 		trimmed := strings.TrimSpace(name)
-		if trimmed == "" {
-			multiErr.Add(
-				fmt.Sprintf("toolNames[%d]", idx),
-				errortypes.ErrInvalid,
-				"Tool name cannot be empty",
-			)
+		switch {
+		case trimmed == "":
+			multiErr.Add(field, errortypes.ErrInvalid, "A pinned capability cannot be empty")
 			continue
+		case !d.AllowsTool(trimmed):
+			multiErr.Add(field, errortypes.ErrInvalid,
+				fmt.Sprintf("%q is outside this agent's scope", trimmed))
 		}
 		if _, duplicate := seen[trimmed]; duplicate {
-			multiErr.Add(
-				fmt.Sprintf("toolNames[%d]", idx),
-				errortypes.ErrDuplicate,
-				"Tool is listed more than once",
-			)
+			multiErr.Add(field, errortypes.ErrDuplicate, "Capability is pinned more than once")
 		}
 		seen[trimmed] = struct{}{}
 	}
 
 	for tool, tier := range d.ToolTiers {
 		field := "toolTiers." + tool
-		if _, enabled := seen[tool]; !enabled && !IsCoreTool(tool) {
-			multiErr.Add(
-				field,
-				errortypes.ErrInvalid,
-				fmt.Sprintf("%q is not one of this agent's tools", tool),
-			)
+		if !d.AllowsTool(tool) {
+			multiErr.Add(field, errortypes.ErrInvalid,
+				fmt.Sprintf("%q is outside this agent's scope", tool))
 			continue
 		}
 		if !tier.IsValid() {

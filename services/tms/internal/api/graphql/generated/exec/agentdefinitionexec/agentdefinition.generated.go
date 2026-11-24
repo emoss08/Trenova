@@ -46,6 +46,7 @@ var Shard = &gqlexec.Shard{
 		{Name: "AgentInstructionFinding", Implementors: []string{"AgentInstructionFinding"}},
 		{Name: "AgentInstructionsTightened", Implementors: []string{"AgentInstructionsTightened"}},
 		{Name: "AgentMatchTool", Implementors: []string{"AgentMatchTool"}},
+		{Name: "AgentScope", Implementors: []string{"AgentScope"}},
 		{Name: "AgentShadowReport", Implementors: []string{"AgentShadowReport"}},
 		{Name: "AgentStarter", Implementors: []string{"AgentStarter"}},
 		{Name: "AgentTestPrompt", Implementors: []string{"AgentTestPrompt"}},
@@ -676,12 +677,23 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNString2ᚕstringᚄ),
 			},
 			{
-				Name:     "toolNames",
+				Name:      "scope",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "AgentScope",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*agentdefinition.Definition)
+					return obj.Scope, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNAgentScope2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentdefinitionᚐScope),
+			},
+			{
+				Name:     "pinnedTools",
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentdefinition.Definition)
-					return obj.ToolNames, nil
+					return obj.PinnedTools, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2ᚕstringᚄ),
 			},
@@ -1330,12 +1342,23 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNInt2int),
 			},
 			{
-				Name:     "toolNames",
+				Name:      "scope",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "AgentScope",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*agentdraftports.AgentDraft)
+					return obj.Scope, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNAgentScope2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentdefinitionᚐScope),
+			},
+			{
+				Name:     "pinnedTools",
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentdraftports.AgentDraft)
-					return obj.ToolNames, nil
+					return obj.PinnedTools, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2ᚕstringᚄ),
 			},
@@ -1603,6 +1626,44 @@ var Shard = &gqlexec.Shard{
 					return obj.Summary, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+		}},
+		{Object: "AgentScope", Fields: []*gqlexec.Field{
+			{
+				Name:     "areas",
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*agentdefinition.Scope)
+					return obj.Areas, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOString2ᚕstringᚄ),
+			},
+			{
+				Name:     "capabilities",
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*agentdefinition.Scope)
+					return obj.Capabilities, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOString2ᚕstringᚄ),
+			},
+			{
+				Name:     "denyAreas",
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*agentdefinition.Scope)
+					return obj.DenyAreas, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOString2ᚕstringᚄ),
+			},
+			{
+				Name:     "denyCapabilities",
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*agentdefinition.Scope)
+					return obj.DenyCapabilities, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOString2ᚕstringᚄ),
 			},
 		}},
 		{Object: "AgentShadowReport", Fields: []*gqlexec.Field{
@@ -1899,14 +1960,15 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
 			{
-				Name:     "toolNames",
-				NonNull:  true,
-				ChildErr: errNoChild1,
+				Name:      "scope",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "AgentScope",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentdefinition.Definition)
-					return obj.ToolNames, nil
+					return obj.Scope, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNString2ᚕstringᚄ),
+				Marshal: gqlexec.Marshal(marshalNAgentScope2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentdefinitionᚐScope),
 			},
 			{
 				Name:     "systemKey",
@@ -2230,6 +2292,7 @@ var Shard = &gqlexec.Shard{
 		{Name: "AgentCapabilityToolInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputAgentCapabilityToolInput)},
 		{Name: "AgentDelegateTopicInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputAgentDelegateTopicInput)},
 		{Name: "AgentInstructionLintInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputAgentInstructionLintInput)},
+		{Name: "AgentScopeInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputAgentScopeInput)},
 		{Name: "MyAgentMatchInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputMyAgentMatchInput)},
 		{Name: "MyAgentsInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputMyAgentsInput)},
 		{Name: "SetAgentAccessInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputSetAgentAccessInput)},
@@ -2665,7 +2728,7 @@ func unmarshalInputAgentAccessPreviewInput(ctx context.Context, ec *gqlexec.Exec
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"agentId", "toolNames", "accessMode"}
+	fieldsInOrder := [...]string{"agentId", "scope", "accessMode"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -2679,13 +2742,13 @@ func unmarshalInputAgentAccessPreviewInput(ctx context.Context, ec *gqlexec.Exec
 				return it, err
 			}
 			it.AgentID = data
-		case "toolNames":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("toolNames"))
-			data, err := unmarshalNString2ᚕstringᚄ(ctx, ec, v)
+		case "scope":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("scope"))
+			data, err := unmarshalNAgentScopeInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentdefinitionᚐScope(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
-			it.ToolNames = data
+			it.Scope = data
 		case "accessMode":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("accessMode"))
 			data, err := unmarshalNAgentAccessMode2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentdefinitionᚐAccessMode(ctx, ec, v)
@@ -2783,7 +2846,7 @@ func unmarshalInputAgentInstructionLintInput(ctx context.Context, ec *gqlexec.Ex
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"instructions", "toolNames", "disabledToolNames"}
+	fieldsInOrder := [...]string{"instructions", "scope"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -2797,20 +2860,64 @@ func unmarshalInputAgentInstructionLintInput(ctx context.Context, ec *gqlexec.Ex
 				return it, err
 			}
 			it.Instructions = data
-		case "toolNames":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("toolNames"))
-			data, err := unmarshalNString2ᚕstringᚄ(ctx, ec, v)
+		case "scope":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("scope"))
+			data, err := unmarshalNAgentScopeInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentdefinitionᚐScope(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
-			it.ToolNames = data
-		case "disabledToolNames":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("disabledToolNames"))
+			it.Scope = data
+		}
+	}
+	return it, nil
+}
+
+func unmarshalInputAgentScopeInput(ctx context.Context, ec *gqlexec.Exec, obj any) (agentdefinition.Scope, error) {
+	var it agentdefinition.Scope
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"areas", "capabilities", "denyAreas", "denyCapabilities"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "areas":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("areas"))
 			data, err := unmarshalOString2ᚕstringᚄ(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
-			it.DisabledToolNames = data
+			it.Areas = data
+		case "capabilities":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("capabilities"))
+			data, err := unmarshalOString2ᚕstringᚄ(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Capabilities = data
+		case "denyAreas":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("denyAreas"))
+			data, err := unmarshalOString2ᚕstringᚄ(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.DenyAreas = data
+		case "denyCapabilities":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("denyCapabilities"))
+			data, err := unmarshalOString2ᚕstringᚄ(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.DenyCapabilities = data
 		}
 	}
 	return it, nil
@@ -3111,6 +3218,11 @@ func unmarshalNAgentInstructionLintInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinte
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
+func unmarshalNAgentScopeInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentdefinitionᚐScope(ctx context.Context, ec *gqlexec.Exec, v any) (*agentdefinition.Scope, error) {
+	res, err := unmarshalInputAgentScopeInput(ctx, ec, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
 func unmarshalNDataTableConnectionInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDataTableConnectionInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.DataTableConnectionInput, error) {
 	res, err := unmarshalInputDataTableConnectionInput(ctx, ec, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -3148,10 +3260,6 @@ func unmarshalNSetAgentAccessInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 func unmarshalNString2string(ctx context.Context, ec *gqlexec.Exec, v any) (string, error) {
 	res, err := graphql.UnmarshalString(v)
 	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func unmarshalNString2ᚕstringᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]string, error) {
-	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNString2string)
 }
 
 func unmarshalNUpdateAgentCapabilitiesInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐUpdateAgentCapabilitiesInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.UpdateAgentCapabilitiesInput, error) {
@@ -3500,6 +3608,10 @@ func marshalNAgentOutputMode2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodul
 	return res
 }
 
+func marshalNAgentScope2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentdefinitionᚐScope(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v agentdefinition.Scope) graphql.Marshaler {
+	return ec.MarshalType(ctx, sel, "AgentScope", &v)
+}
+
 func marshalNAgentShadowReport2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentshadowᚐReport(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *agentshadow.Report) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
@@ -3778,6 +3890,14 @@ func marshalOMyAgent2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋ
 func marshalOString2string(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v string) graphql.Marshaler {
 	res := graphql.MarshalString(v)
 	return res
+}
+
+func marshalOString2ᚕstringᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []string) graphql.Marshaler {
+	return gqlexec.List[string]{
+		Elem:        marshalNString2string,
+		NonNullElem: true,
+		Scalar:      true,
+	}.Marshal(ctx, ec, sel, v)
 }
 
 func marshalOTimestamp2ᚖint64(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *int64) graphql.Marshaler {

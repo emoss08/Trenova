@@ -632,7 +632,7 @@ func (r *Runner) sweptAgent(
 	if err != nil {
 		return nil, nil, err
 	}
-	tools, err := benchscenario.SweepTools(base.ToolNames, scenario.ExpectedTools, opts.Sweep.Held)
+	tools, err := benchscenario.SweepTools(base.StarterTools(), scenario.ExpectedTools, opts.Sweep.Held)
 	if err != nil {
 		return nil, nil, err
 	}

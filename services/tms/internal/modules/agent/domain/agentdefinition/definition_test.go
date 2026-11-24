@@ -101,7 +101,7 @@ func TestValidate_AllowsToolsOnAnyTemplate(t *testing.T) {
 	t.Parallel()
 
 	d := validDefinition()
-	d.Template = agenttemplate.TemplateGeneralAssistant
+	d.Template = agenttemplate.TemplateUniversal
 	d.ToolNames = []string{"billing_correct_charge_codes"}
 
 	assert.False(t, fieldErrors(t, d)["toolNames"],
@@ -424,7 +424,7 @@ func TestTemplates_DescribeEveryStarter(t *testing.T) {
 		agentpreset.StarterEvents(agenttemplate.TemplateBillingException),
 		agenttrigger.EventBillingQueueItemException,
 	)
-	assert.Empty(t, agentpreset.StarterTools(agenttemplate.TemplateGeneralAssistant))
+	assert.Empty(t, agentpreset.StarterTools(agenttemplate.TemplateUniversal))
 }
 
 /*

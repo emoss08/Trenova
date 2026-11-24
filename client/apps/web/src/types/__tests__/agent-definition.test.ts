@@ -87,7 +87,7 @@ describe("agentDefinitionSchema", () => {
 describe("agentTemplateSchema", () => {
   it("reads a starter whose optional lists the server wrote as null", () => {
     const parsed = agentTemplateSchema.parse({
-      template: "GeneralAssistant",
+      template: "Universal",
       label: "General assistant",
       description: "Answers questions across the system.",
       starterInstructions: "You explain how Trenova works.",

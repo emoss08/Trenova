@@ -9,7 +9,7 @@ type SuggestionMessage = Pick<AssistantMessage, "role" | "kind" | "handOffAgents
 
 /**
  * The agents the conversation's agent last said hold what it could not do:
- * the newest find_tools result naming any, so long as the person has not
+ * the newest search_tools result naming any, so long as the person has not
  * written since. A newer message from the person is a new question, which
  * the old suggestion may not answer. A step another agent took on a task it
  * was handed is not the conversation's agent speaking, so it is passed over.
@@ -19,7 +19,7 @@ type SuggestionMessage = Pick<AssistantMessage, "role" | "kind" | "handOffAgents
  * messages.
  *
  * The turn being written, when there is one, is newer than anything saved, so
- * it is read first: its own find_tools answer naming agents is the
+ * it is read first: its own search_tools answer naming agents is the
  * suggestion before the turn is saved, and a turn answering words of the
  * person's own is them writing again, so nothing older stands. A turn
  * following up a decision carries no words of theirs; until it names an

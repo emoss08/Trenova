@@ -484,7 +484,7 @@ func FingerprintOf(
 		return nil
 	}
 
-	tools := slices.Clone(definition.EffectiveToolNames())
+	tools := definition.ScopeEntries()
 	slices.Sort(tools)
 
 	return &agentfingerprint.Fingerprint{

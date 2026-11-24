@@ -494,7 +494,8 @@ func apply(
 	definition.Template = req.Template
 	definition.Instructions = strings.TrimSpace(req.Instructions)
 	definition.Guardrails = trimAll(req.Guardrails)
-	definition.ToolNames = agentdefinition.WithoutCoreTools(trimAll(req.ToolNames))
+	definition.Scope = req.Scope
+	definition.PinnedTools = agentdefinition.WithoutCoreTools(trimAll(req.PinnedTools))
 	definition.ToolTiers = copyTiers(req.ToolTiers)
 	definition.AutonomyCeiling = req.AutonomyCeiling
 	if req.DataAccessCeiling != "" {
@@ -528,9 +529,6 @@ func apply(
 	if req.DelegateIDs != nil {
 		definition.DelegateIDs = slices.Clone(*req.DelegateIDs)
 	}
-	// A form that picks a switched-off tool again, or drops a delegate, has
-	// the last word over what the capabilities page remembered about them.
-	definition.ForgetReheldTools()
 	definition.PruneDelegateTopics()
 	definition.ApplyDefaults()
 

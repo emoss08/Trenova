@@ -51,7 +51,7 @@ describe("toolEffect", () => {
 
   it.each<[string, ToolEffect]>([
     ["agent_open_page", "navigate"],
-    ["find_tools", "discover"],
+    ["search_tools", "discover"],
     ["agent_find_page", "discover"],
     ["report_run", "present"],
     ["publish_artifact", "present"],
@@ -194,7 +194,7 @@ describe("describeActivity", () => {
   });
 
   it("says the right tools were found", () => {
-    expect(line([step({ name: "find_tools", summary: "4 results" })]).phrase).toBe(
+    expect(line([step({ name: "search_tools", summary: "4 results" })]).phrase).toBe(
       "Found the right tools",
     );
   });

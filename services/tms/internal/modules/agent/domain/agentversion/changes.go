@@ -45,10 +45,15 @@ var changeRules = []editchange.Rule[agentdefinition.Definition]{
 		Same: func(a, b *agentdefinition.Definition) bool { return a.AccessMode == b.AccessMode },
 	},
 	{
-		Field: "toolNames", Label: "Tools",
+		Field: "scope", Label: "Scope",
 		Same: func(a, b *agentdefinition.Definition) bool {
-			return setutils.SameMembers(a.ToolNames, b.ToolNames) &&
-				setutils.SameMembers(a.DisabledToolNames, b.DisabledToolNames)
+			return setutils.SameMembers(a.ScopeEntries(), b.ScopeEntries())
+		},
+	},
+	{
+		Field: "pinnedTools", Label: "Pinned capabilities",
+		Same: func(a, b *agentdefinition.Definition) bool {
+			return setutils.SameMembers(a.PinnedTools, b.PinnedTools)
 		},
 	},
 	{

@@ -2909,6 +2909,12 @@ models:
   AgentDraft:
     model:
       - github.com/emoss08/trenova/internal/modules/agent/ports/agentdraftports.AgentDraft
+  AgentScope:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition.Scope
+  AgentScopeInput:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition.Scope
   AgentDraftNote:
     model:
       - github.com/emoss08/trenova/internal/modules/agent/ports/agentdraftports.AgentDraftNote

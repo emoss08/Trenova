@@ -2,7 +2,7 @@
 # tool they need. Keyword ranking is measured on them and not gated; hybrid
 # ranking is gated on them together with toolselection.yaml, against the
 # hybrid floors in toolselection.floors.json. `nothing` lists requests no tool
-# answers: find_tools must return nothing for them, by keyword and by meaning.
+# answers: search_tools must return nothing for them, by keyword and by meaning.
 cases:
   - request: chase the shipper for paperwork
     expect: [shipment_request_documents]

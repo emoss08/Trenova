@@ -3224,7 +3224,7 @@ extend type Mutation {
   BillingAssistant
   ComplianceAssistant
   CustomerAssistant
-  GeneralAssistant
+  Universal
   BillingException
   DispatchAssignment
   ImportAssistant
@@ -3323,8 +3323,11 @@ type AgentDefinition {
   template: AgentTemplate
   instructions: String!
   guardrails: [String!]!
-  toolNames: [String!]!
-  "Per-tool autonomy overrides, keyed by tool name; each capped by autonomyCeiling."
+  "What the agent may do: areas and capabilities allowed or denied. An empty scope is everything the person may do."
+  scope: AgentScope!
+  "Capabilities loaded on every turn, at most twelve."
+  pinnedTools: [String!]!
+  "Per-tool approval overrides, keyed by tool name; set by a person only stricter than the tool's default, raised only by earned trust."
   toolTiers: JSON!
   autonomyCeiling: AgentAutonomyTier!
   """
@@ -3437,7 +3440,7 @@ type MyAgent {
   icon: String!
   "Chosen accent name; empty falls back to an accent derived from the agent id."
   accent: String!
-  toolNames: [String!]!
+  scope: AgentScope!
   "Set on the agents the platform itself creates and fires."
   systemKey: String!
   "Up to four opening questions the agent can answer with its tools."
@@ -3566,8 +3569,8 @@ type AgentAudienceSuggestion {
 input AgentAccessPreviewInput {
   "The agent being edited, so each role says whether it is granted now. Absent for a new one."
   agentId: ID
-  "The tools the form has chosen. Core tools every agent holds need not be listed. At most 200."
-  toolNames: [String!]!
+  "The scope the form has chosen."
+  scope: AgentScopeInput!
   "Who the form says may use it. A system agent is always Everyone."
   accessMode: AgentAccessMode!
 }
@@ -3623,12 +3626,11 @@ type AgentShadowReport {
   unanswered: Int!
 }
 
-"Instructions as the builder holds them, with the tools the draft holds."
+"Instructions as the builder holds them, with the scope the draft holds."
 input AgentInstructionLintInput {
   "At most 20000 characters."
   instructions: String!
-  toolNames: [String!]!
-  disabledToolNames: [String!]
+  scope: AgentScopeInput!
 }
 
 """
@@ -3844,7 +3846,7 @@ extend type Mutation {
 
 "Something drafting changed or left out of what the model proposed."
 type AgentDraftNote {
-  "The setting, as the builder names it: toolNames, toolTiers.<tool>, eventKinds, cronExpression and so on."
+  "The setting, as the builder names it: scope, pinnedTools, toolTiers.<tool>, eventKinds, cronExpression and so on."
   field: String!
   "What the model proposed; empty when it proposed nothing."
   value: String!
@@ -3871,7 +3873,8 @@ type AgentDraft {
   cronTimezone: String!
   eventKinds: [String!]!
   intervalSeconds: Int!
-  toolNames: [String!]!
+  scope: AgentScope!
+  pinnedTools: [String!]!
   "Autonomy per change tool, keyed by tool name; each held at the tool's maximum and autonomyCeiling."
   toolTiers: JSON!
   autonomyCeiling: AgentAutonomyTier!
@@ -3913,6 +3916,25 @@ extend type Mutation {
   what they ask for. Saves nothing. Needs permission to create or update agents.
   """
   tightenAgentInstructions(instructions: String!): AgentInstructionsTightened!
+}
+
+"""
+What an agent may do. An area (shipment, invoice, worker, ...) allows every capability in it; a
+capability is a tool name or an entity read (invoice.list, shipment.get). Denials win. Areas and
+capabilities both empty is everything the person may do: the universal agent.
+"""
+type AgentScope {
+  areas: [String!]
+  capabilities: [String!]
+  denyAreas: [String!]
+  denyCapabilities: [String!]
+}
+
+input AgentScopeInput {
+  areas: [String!]
+  capabilities: [String!]
+  denyAreas: [String!]
+  denyCapabilities: [String!]
 }
 `, BuiltIn: false},
 	{Name: "../schema/agentpreview.graphqls", Input: `"How much of what a write would do its preview could say."

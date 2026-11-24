@@ -32,7 +32,8 @@ var definitionsTable = schema.Table{
 		{Name: "template", Quoted: `"template"`, Field: "Template", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Template`, JSON: `template`, Enum: enumAgenttemplateTemplate[:]},
 		{Name: "instructions", Quoted: `"instructions"`, Field: "Instructions", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Instructions`, JSON: `instructions`},
 		{Name: "guardrails", Quoted: `"guardrails"`, Field: "Guardrails", Kind: schema.KindStringArray, Flags: schema.FlagNullable | schema.FlagNullZero, Label: `Guardrails`, JSON: `guardrails`},
-		{Name: "tool_names", Quoted: `"tool_names"`, Field: "ToolNames", Kind: schema.KindStringArray, Flags: schema.FlagNullable | schema.FlagNullZero, Label: `Tool Names`, JSON: `toolNames`},
+		{Name: "scope", Quoted: `"scope"`, Field: "Scope", Kind: schema.KindJSON, Flags: schema.FlagJSONB, Label: `Scope`, JSON: `scope`},
+		{Name: "pinned_tools", Quoted: `"pinned_tools"`, Field: "PinnedTools", Kind: schema.KindStringArray, Flags: schema.FlagNullable | schema.FlagNullZero, Label: `Pinned Tools`, JSON: `pinnedTools`},
 		{Name: "tool_tiers", Quoted: `"tool_tiers"`, Field: "ToolTiers", Kind: schema.KindJSON, Flags: schema.FlagJSONB | schema.FlagNullZero, Label: `Tool Tiers`, JSON: `toolTiers`},
 		{Name: "autonomy_ceiling", Quoted: `"autonomy_ceiling"`, Field: "AutonomyCeiling", Kind: schema.KindString, Flags: 0, Label: `Autonomy Ceiling`, JSON: `autonomyCeiling`, Enum: enumAgentAutonomyTier[:]},
 		{Name: "data_access_ceiling", Quoted: `"data_access_ceiling"`, Field: "DataAccessCeiling", Kind: schema.KindString, Flags: 0, Label: `Data Access Ceiling`, JSON: `dataAccessCeiling`, Enum: enumDataAccessCeiling[:]},
@@ -65,7 +66,6 @@ var definitionsTable = schema.Table{
 		{Name: "system_key", Quoted: `"system_key"`, Field: "SystemKey", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `System Key`, JSON: `systemKey`},
 		{Name: "delegate_ids", Quoted: `"delegate_ids"`, Field: "DelegateIDs", Kind: schema.KindStringArray, Flags: schema.FlagNullable | schema.FlagNullZero, Label: `Delegate IDs`, Doc: `DelegateIDs are the agents this one may hand a task to when a person is talking to it: the ones it asks when the work needs tools it does not hold. Each delegate works with its own tools, tiers, ceiling and budget, as the same person, and never delegates further.`, JSON: `delegateIds`},
 		{Name: "delegate_topics", Quoted: `"delegate_topics"`, Field: "DelegateTopics", Kind: schema.KindJSON, Flags: schema.FlagJSONB | schema.FlagNullZero, Label: `Delegate Topics`, Doc: `DelegateTopics names, per delegate id, the questions that go to that agent ("Pay rates, people records"), so a person reading what an agent does sees why it hands work on. A delegate without one is described by its own description.`, JSON: `delegateTopics`},
-		{Name: "disabled_tool_names", Quoted: `"disabled_tool_names"`, Field: "DisabledToolNames", Kind: schema.KindStringArray, Flags: schema.FlagNullable | schema.FlagNullZero, Label: `Disabled Tool Names`, Doc: `DisabledToolNames are tools switched off from the agent's capabilities page. Switching a tool off removes it from ToolNames, which is the grant; it is listed here only so the page can still offer it back.`, JSON: `disabledToolNames`},
 		{Name: "max_change_items", Quoted: `"max_change_items"`, Field: "MaxChangeItems", Kind: schema.KindInt64, Flags: 0, Label: `Max Change Items`, Doc: `MaxChangeItems is the most records one change by the agent may touch. A bigger batch is refused with an instruction to split it, so each part is proposed and approved on its own.`, JSON: `maxChangeItems`},
 		{Name: "business_hours_only", Quoted: `"business_hours_only"`, Field: "BusinessHoursOnly", Kind: schema.KindBool, Flags: 0, Label: `Business Hours Only`, Doc: `BusinessHoursOnly keeps the agent from making changes on its own outside the window BusinessHoursStart to BusinessHoursEnd (minutes after midnight) in BusinessHoursTimezone, or the organization's zone when that is empty. Outside the window a change is held as a proposal for a person instead of running.`, JSON: `businessHoursOnly`},
 		{Name: "business_hours_start", Quoted: `"business_hours_start"`, Field: "BusinessHoursStart", Kind: schema.KindInt64, Flags: 0, Label: `Business Hours Start`, JSON: `businessHoursStart`},
@@ -111,7 +111,8 @@ type DefinitionsTable struct {
 	Template               keelkinds.AgenttemplateTemplateCol
 	Instructions           keel.StringCol
 	Guardrails             keel.StringArrayCol
-	ToolNames              keel.StringArrayCol
+	Scope                  keel.JSONBCol
+	PinnedTools            keel.StringArrayCol
 	ToolTiers              keel.JSONBCol
 	AutonomyCeiling        agentdb.AutonomyTierCol
 	DataAccessCeiling      DataAccessCeilingCol
@@ -144,7 +145,6 @@ type DefinitionsTable struct {
 	SystemKey              keel.StringCol
 	DelegateIDs            keel.StringArrayCol
 	DelegateTopics         keel.JSONBCol
-	DisabledToolNames      keel.StringArrayCol
 	MaxChangeItems         keel.Int64Col
 	BusinessHoursOnly      keel.BoolCol
 	BusinessHoursStart     keel.Int64Col
@@ -170,40 +170,40 @@ var Definitions = &DefinitionsTable{
 	Template:               keelkinds.AgenttemplateTemplateCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &definitionsRef, Index: 5}}},
 	Instructions:           keel.StringCol{Col: keel.Col{Ref: &definitionsRef, Index: 6}},
 	Guardrails:             keel.StringArrayCol{Col: keel.Col{Ref: &definitionsRef, Index: 7}},
-	ToolNames:              keel.StringArrayCol{Col: keel.Col{Ref: &definitionsRef, Index: 8}},
-	ToolTiers:              keel.JSONBCol{Col: keel.Col{Ref: &definitionsRef, Index: 9}},
-	AutonomyCeiling:        agentdb.AutonomyTierCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &definitionsRef, Index: 10}}},
-	DataAccessCeiling:      DataAccessCeilingCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &definitionsRef, Index: 11}}},
-	UnattendedRoleID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &definitionsRef, Index: 12}}},
-	Enabled:                keel.BoolCol{Col: keel.Col{Ref: &definitionsRef, Index: 13}},
-	DisabledAt:             keel.Int64Col{Col: keel.Col{Ref: &definitionsRef, Index: 14}},
-	DisabledByID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &definitionsRef, Index: 15}}},
-	ShadowMode:             keel.BoolCol{Col: keel.Col{Ref: &definitionsRef, Index: 16}},
-	DecisionTimeoutSeconds: keel.Int64Col{Col: keel.Col{Ref: &definitionsRef, Index: 17}},
-	TriggerMode:            TriggerModeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &definitionsRef, Index: 18}}},
-	CronExpression:         keel.StringCol{Col: keel.Col{Ref: &definitionsRef, Index: 19}},
-	CronTimezone:           keel.StringCol{Col: keel.Col{Ref: &definitionsRef, Index: 20}},
-	EventKinds:             keel.StringArrayCol{Col: keel.Col{Ref: &definitionsRef, Index: 21}},
-	IntervalSeconds:        keel.Int64Col{Col: keel.Col{Ref: &definitionsRef, Index: 22}},
-	EndsAt:                 keel.Int64Col{Col: keel.Col{Ref: &definitionsRef, Index: 23}},
-	MaxConcurrentRuns:      keel.Int64Col{Col: keel.Col{Ref: &definitionsRef, Index: 24}},
-	RunTimeoutSeconds:      keel.Int64Col{Col: keel.Col{Ref: &definitionsRef, Index: 25}},
-	MaxToolCalls:           keel.Int64Col{Col: keel.Col{Ref: &definitionsRef, Index: 26}},
-	MonthlyBudgetUSD:       keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &definitionsRef, Index: 27}}},
-	DailyRunLimit:          keel.Int64Col{Col: keel.Col{Ref: &definitionsRef, Index: 28}},
-	ToolDailyLimits:        keel.JSONBCol{Col: keel.Col{Ref: &definitionsRef, Index: 29}},
-	SimulationMode:         keel.BoolCol{Col: keel.Col{Ref: &definitionsRef, Index: 30}},
-	MemoryTokenBudget:      keel.Int64Col{Col: keel.Col{Ref: &definitionsRef, Index: 31}},
-	LearningOff:            keel.BoolCol{Col: keel.Col{Ref: &definitionsRef, Index: 32}},
-	Icon:                   keel.StringCol{Col: keel.Col{Ref: &definitionsRef, Index: 33}},
-	Accent:                 keel.StringCol{Col: keel.Col{Ref: &definitionsRef, Index: 34}},
-	ContextProviders:       keel.StringArrayCol{Col: keel.Col{Ref: &definitionsRef, Index: 35}},
-	OutputMode:             OutputModeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &definitionsRef, Index: 36}}},
-	PreferredProviderID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &definitionsRef, Index: 37}}},
-	SystemKey:              keel.StringCol{Col: keel.Col{Ref: &definitionsRef, Index: 38}},
-	DelegateIDs:            keel.StringArrayCol{Col: keel.Col{Ref: &definitionsRef, Index: 39}},
-	DelegateTopics:         keel.JSONBCol{Col: keel.Col{Ref: &definitionsRef, Index: 40}},
-	DisabledToolNames:      keel.StringArrayCol{Col: keel.Col{Ref: &definitionsRef, Index: 41}},
+	Scope:                  keel.JSONBCol{Col: keel.Col{Ref: &definitionsRef, Index: 8}},
+	PinnedTools:            keel.StringArrayCol{Col: keel.Col{Ref: &definitionsRef, Index: 9}},
+	ToolTiers:              keel.JSONBCol{Col: keel.Col{Ref: &definitionsRef, Index: 10}},
+	AutonomyCeiling:        agentdb.AutonomyTierCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &definitionsRef, Index: 11}}},
+	DataAccessCeiling:      DataAccessCeilingCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &definitionsRef, Index: 12}}},
+	UnattendedRoleID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &definitionsRef, Index: 13}}},
+	Enabled:                keel.BoolCol{Col: keel.Col{Ref: &definitionsRef, Index: 14}},
+	DisabledAt:             keel.Int64Col{Col: keel.Col{Ref: &definitionsRef, Index: 15}},
+	DisabledByID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &definitionsRef, Index: 16}}},
+	ShadowMode:             keel.BoolCol{Col: keel.Col{Ref: &definitionsRef, Index: 17}},
+	DecisionTimeoutSeconds: keel.Int64Col{Col: keel.Col{Ref: &definitionsRef, Index: 18}},
+	TriggerMode:            TriggerModeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &definitionsRef, Index: 19}}},
+	CronExpression:         keel.StringCol{Col: keel.Col{Ref: &definitionsRef, Index: 20}},
+	CronTimezone:           keel.StringCol{Col: keel.Col{Ref: &definitionsRef, Index: 21}},
+	EventKinds:             keel.StringArrayCol{Col: keel.Col{Ref: &definitionsRef, Index: 22}},
+	IntervalSeconds:        keel.Int64Col{Col: keel.Col{Ref: &definitionsRef, Index: 23}},
+	EndsAt:                 keel.Int64Col{Col: keel.Col{Ref: &definitionsRef, Index: 24}},
+	MaxConcurrentRuns:      keel.Int64Col{Col: keel.Col{Ref: &definitionsRef, Index: 25}},
+	RunTimeoutSeconds:      keel.Int64Col{Col: keel.Col{Ref: &definitionsRef, Index: 26}},
+	MaxToolCalls:           keel.Int64Col{Col: keel.Col{Ref: &definitionsRef, Index: 27}},
+	MonthlyBudgetUSD:       keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &definitionsRef, Index: 28}}},
+	DailyRunLimit:          keel.Int64Col{Col: keel.Col{Ref: &definitionsRef, Index: 29}},
+	ToolDailyLimits:        keel.JSONBCol{Col: keel.Col{Ref: &definitionsRef, Index: 30}},
+	SimulationMode:         keel.BoolCol{Col: keel.Col{Ref: &definitionsRef, Index: 31}},
+	MemoryTokenBudget:      keel.Int64Col{Col: keel.Col{Ref: &definitionsRef, Index: 32}},
+	LearningOff:            keel.BoolCol{Col: keel.Col{Ref: &definitionsRef, Index: 33}},
+	Icon:                   keel.StringCol{Col: keel.Col{Ref: &definitionsRef, Index: 34}},
+	Accent:                 keel.StringCol{Col: keel.Col{Ref: &definitionsRef, Index: 35}},
+	ContextProviders:       keel.StringArrayCol{Col: keel.Col{Ref: &definitionsRef, Index: 36}},
+	OutputMode:             OutputModeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &definitionsRef, Index: 37}}},
+	PreferredProviderID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &definitionsRef, Index: 38}}},
+	SystemKey:              keel.StringCol{Col: keel.Col{Ref: &definitionsRef, Index: 39}},
+	DelegateIDs:            keel.StringArrayCol{Col: keel.Col{Ref: &definitionsRef, Index: 40}},
+	DelegateTopics:         keel.JSONBCol{Col: keel.Col{Ref: &definitionsRef, Index: 41}},
 	MaxChangeItems:         keel.Int64Col{Col: keel.Col{Ref: &definitionsRef, Index: 42}},
 	BusinessHoursOnly:      keel.BoolCol{Col: keel.Col{Ref: &definitionsRef, Index: 43}},
 	BusinessHoursStart:     keel.Int64Col{Col: keel.Col{Ref: &definitionsRef, Index: 44}},
@@ -230,40 +230,40 @@ func BuildDefinitions(r *keel.Ref) *DefinitionsTable {
 		Template:               keelkinds.AgenttemplateTemplateCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
 		Instructions:           keel.StringCol{Col: keel.Col{Ref: r, Index: 6}},
 		Guardrails:             keel.StringArrayCol{Col: keel.Col{Ref: r, Index: 7}},
-		ToolNames:              keel.StringArrayCol{Col: keel.Col{Ref: r, Index: 8}},
-		ToolTiers:              keel.JSONBCol{Col: keel.Col{Ref: r, Index: 9}},
-		AutonomyCeiling:        agentdb.AutonomyTierCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 10}}},
-		DataAccessCeiling:      DataAccessCeilingCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 11}}},
-		UnattendedRoleID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 12}}},
-		Enabled:                keel.BoolCol{Col: keel.Col{Ref: r, Index: 13}},
-		DisabledAt:             keel.Int64Col{Col: keel.Col{Ref: r, Index: 14}},
-		DisabledByID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 15}}},
-		ShadowMode:             keel.BoolCol{Col: keel.Col{Ref: r, Index: 16}},
-		DecisionTimeoutSeconds: keel.Int64Col{Col: keel.Col{Ref: r, Index: 17}},
-		TriggerMode:            TriggerModeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 18}}},
-		CronExpression:         keel.StringCol{Col: keel.Col{Ref: r, Index: 19}},
-		CronTimezone:           keel.StringCol{Col: keel.Col{Ref: r, Index: 20}},
-		EventKinds:             keel.StringArrayCol{Col: keel.Col{Ref: r, Index: 21}},
-		IntervalSeconds:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 22}},
-		EndsAt:                 keel.Int64Col{Col: keel.Col{Ref: r, Index: 23}},
-		MaxConcurrentRuns:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 24}},
-		RunTimeoutSeconds:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 25}},
-		MaxToolCalls:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 26}},
-		MonthlyBudgetUSD:       keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 27}}},
-		DailyRunLimit:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 28}},
-		ToolDailyLimits:        keel.JSONBCol{Col: keel.Col{Ref: r, Index: 29}},
-		SimulationMode:         keel.BoolCol{Col: keel.Col{Ref: r, Index: 30}},
-		MemoryTokenBudget:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 31}},
-		LearningOff:            keel.BoolCol{Col: keel.Col{Ref: r, Index: 32}},
-		Icon:                   keel.StringCol{Col: keel.Col{Ref: r, Index: 33}},
-		Accent:                 keel.StringCol{Col: keel.Col{Ref: r, Index: 34}},
-		ContextProviders:       keel.StringArrayCol{Col: keel.Col{Ref: r, Index: 35}},
-		OutputMode:             OutputModeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 36}}},
-		PreferredProviderID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 37}}},
-		SystemKey:              keel.StringCol{Col: keel.Col{Ref: r, Index: 38}},
-		DelegateIDs:            keel.StringArrayCol{Col: keel.Col{Ref: r, Index: 39}},
-		DelegateTopics:         keel.JSONBCol{Col: keel.Col{Ref: r, Index: 40}},
-		DisabledToolNames:      keel.StringArrayCol{Col: keel.Col{Ref: r, Index: 41}},
+		Scope:                  keel.JSONBCol{Col: keel.Col{Ref: r, Index: 8}},
+		PinnedTools:            keel.StringArrayCol{Col: keel.Col{Ref: r, Index: 9}},
+		ToolTiers:              keel.JSONBCol{Col: keel.Col{Ref: r, Index: 10}},
+		AutonomyCeiling:        agentdb.AutonomyTierCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 11}}},
+		DataAccessCeiling:      DataAccessCeilingCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 12}}},
+		UnattendedRoleID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 13}}},
+		Enabled:                keel.BoolCol{Col: keel.Col{Ref: r, Index: 14}},
+		DisabledAt:             keel.Int64Col{Col: keel.Col{Ref: r, Index: 15}},
+		DisabledByID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 16}}},
+		ShadowMode:             keel.BoolCol{Col: keel.Col{Ref: r, Index: 17}},
+		DecisionTimeoutSeconds: keel.Int64Col{Col: keel.Col{Ref: r, Index: 18}},
+		TriggerMode:            TriggerModeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 19}}},
+		CronExpression:         keel.StringCol{Col: keel.Col{Ref: r, Index: 20}},
+		CronTimezone:           keel.StringCol{Col: keel.Col{Ref: r, Index: 21}},
+		EventKinds:             keel.StringArrayCol{Col: keel.Col{Ref: r, Index: 22}},
+		IntervalSeconds:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 23}},
+		EndsAt:                 keel.Int64Col{Col: keel.Col{Ref: r, Index: 24}},
+		MaxConcurrentRuns:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 25}},
+		RunTimeoutSeconds:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 26}},
+		MaxToolCalls:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 27}},
+		MonthlyBudgetUSD:       keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 28}}},
+		DailyRunLimit:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 29}},
+		ToolDailyLimits:        keel.JSONBCol{Col: keel.Col{Ref: r, Index: 30}},
+		SimulationMode:         keel.BoolCol{Col: keel.Col{Ref: r, Index: 31}},
+		MemoryTokenBudget:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 32}},
+		LearningOff:            keel.BoolCol{Col: keel.Col{Ref: r, Index: 33}},
+		Icon:                   keel.StringCol{Col: keel.Col{Ref: r, Index: 34}},
+		Accent:                 keel.StringCol{Col: keel.Col{Ref: r, Index: 35}},
+		ContextProviders:       keel.StringArrayCol{Col: keel.Col{Ref: r, Index: 36}},
+		OutputMode:             OutputModeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 37}}},
+		PreferredProviderID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 38}}},
+		SystemKey:              keel.StringCol{Col: keel.Col{Ref: r, Index: 39}},
+		DelegateIDs:            keel.StringArrayCol{Col: keel.Col{Ref: r, Index: 40}},
+		DelegateTopics:         keel.JSONBCol{Col: keel.Col{Ref: r, Index: 41}},
 		MaxChangeItems:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 42}},
 		BusinessHoursOnly:      keel.BoolCol{Col: keel.Col{Ref: r, Index: 43}},
 		BusinessHoursStart:     keel.Int64Col{Col: keel.Col{Ref: r, Index: 44}},
@@ -683,73 +683,73 @@ func ptrDefinition(p unsafe.Pointer, c int32) any {
 	case 7:
 		return &r.Guardrails
 	case 8:
-		return &r.ToolNames
+		return &r.Scope
 	case 9:
-		return &r.ToolTiers
+		return &r.PinnedTools
 	case 10:
-		return (*string)(unsafe.Pointer(&r.AutonomyCeiling))
+		return &r.ToolTiers
 	case 11:
-		return (*string)(unsafe.Pointer(&r.DataAccessCeiling))
+		return (*string)(unsafe.Pointer(&r.AutonomyCeiling))
 	case 12:
-		return (*string)(unsafe.Pointer(&r.UnattendedRoleID))
+		return (*string)(unsafe.Pointer(&r.DataAccessCeiling))
 	case 13:
-		return &r.Enabled
+		return (*string)(unsafe.Pointer(&r.UnattendedRoleID))
 	case 14:
-		return &r.DisabledAt
+		return &r.Enabled
 	case 15:
-		return (**string)(unsafe.Pointer(&r.DisabledByID))
+		return &r.DisabledAt
 	case 16:
-		return &r.ShadowMode
+		return (**string)(unsafe.Pointer(&r.DisabledByID))
 	case 17:
-		return (*int64)(unsafe.Pointer(&r.DecisionTimeoutSeconds))
+		return &r.ShadowMode
 	case 18:
-		return (*string)(unsafe.Pointer(&r.TriggerMode))
+		return (*int64)(unsafe.Pointer(&r.DecisionTimeoutSeconds))
 	case 19:
-		return &r.CronExpression
+		return (*string)(unsafe.Pointer(&r.TriggerMode))
 	case 20:
-		return &r.CronTimezone
+		return &r.CronExpression
 	case 21:
-		return (*[]string)(unsafe.Pointer(&r.EventKinds))
+		return &r.CronTimezone
 	case 22:
-		return (*int64)(unsafe.Pointer(&r.IntervalSeconds))
+		return (*[]string)(unsafe.Pointer(&r.EventKinds))
 	case 23:
-		return &r.EndsAt
+		return (*int64)(unsafe.Pointer(&r.IntervalSeconds))
 	case 24:
-		return (*int64)(unsafe.Pointer(&r.MaxConcurrentRuns))
+		return &r.EndsAt
 	case 25:
-		return (*int64)(unsafe.Pointer(&r.RunTimeoutSeconds))
+		return (*int64)(unsafe.Pointer(&r.MaxConcurrentRuns))
 	case 26:
-		return (*int64)(unsafe.Pointer(&r.MaxToolCalls))
+		return (*int64)(unsafe.Pointer(&r.RunTimeoutSeconds))
 	case 27:
-		return &r.MonthlyBudgetUSD
+		return (*int64)(unsafe.Pointer(&r.MaxToolCalls))
 	case 28:
-		return (*int64)(unsafe.Pointer(&r.DailyRunLimit))
+		return &r.MonthlyBudgetUSD
 	case 29:
-		return &r.ToolDailyLimits
+		return (*int64)(unsafe.Pointer(&r.DailyRunLimit))
 	case 30:
-		return &r.SimulationMode
+		return &r.ToolDailyLimits
 	case 31:
-		return (**int64)(unsafe.Pointer(&r.MemoryTokenBudget))
+		return &r.SimulationMode
 	case 32:
-		return &r.LearningOff
+		return (**int64)(unsafe.Pointer(&r.MemoryTokenBudget))
 	case 33:
-		return &r.Icon
+		return &r.LearningOff
 	case 34:
-		return &r.Accent
+		return &r.Icon
 	case 35:
-		return (*[]string)(unsafe.Pointer(&r.ContextProviders))
+		return &r.Accent
 	case 36:
-		return (*string)(unsafe.Pointer(&r.OutputMode))
+		return (*[]string)(unsafe.Pointer(&r.ContextProviders))
 	case 37:
-		return (*string)(unsafe.Pointer(&r.PreferredProviderID))
+		return (*string)(unsafe.Pointer(&r.OutputMode))
 	case 38:
-		return &r.SystemKey
+		return (*string)(unsafe.Pointer(&r.PreferredProviderID))
 	case 39:
-		return (*[]string)(unsafe.Pointer(&r.DelegateIDs))
+		return &r.SystemKey
 	case 40:
-		return &r.DelegateTopics
+		return (*[]string)(unsafe.Pointer(&r.DelegateIDs))
 	case 41:
-		return &r.DisabledToolNames
+		return &r.DelegateTopics
 	case 42:
 		return (*int64)(unsafe.Pointer(&r.MaxChangeItems))
 	case 43:
@@ -810,136 +810,133 @@ func valueDefinition(p unsafe.Pointer, c int32) any {
 		}
 		return r.Guardrails
 	case 8:
-		if r.ToolNames == nil {
+		return r.Scope
+	case 9:
+		if r.PinnedTools == nil {
 			return nil
 		}
-		return r.ToolNames
-	case 9:
+		return r.PinnedTools
+	case 10:
 		if r.ToolTiers == nil {
 			return nil
 		}
 		return r.ToolTiers
-	case 10:
-		return string(r.AutonomyCeiling)
 	case 11:
-		return string(r.DataAccessCeiling)
+		return string(r.AutonomyCeiling)
 	case 12:
+		return string(r.DataAccessCeiling)
+	case 13:
 		if r.UnattendedRoleID == "" {
 			return nil
 		}
 		return string(r.UnattendedRoleID)
-	case 13:
-		return r.Enabled
 	case 14:
+		return r.Enabled
+	case 15:
 		if r.DisabledAt == nil {
 			return nil
 		}
 		return *r.DisabledAt
-	case 15:
+	case 16:
 		if r.DisabledByID == nil {
 			return nil
 		}
 		return string(*r.DisabledByID)
-	case 16:
-		return r.ShadowMode
 	case 17:
-		return int64(r.DecisionTimeoutSeconds)
+		return r.ShadowMode
 	case 18:
-		return string(r.TriggerMode)
+		return int64(r.DecisionTimeoutSeconds)
 	case 19:
+		return string(r.TriggerMode)
+	case 20:
 		if r.CronExpression == "" {
 			return nil
 		}
 		return r.CronExpression
-	case 20:
+	case 21:
 		if r.CronTimezone == "" {
 			return nil
 		}
 		return r.CronTimezone
-	case 21:
+	case 22:
 		if r.EventKinds == nil {
 			return nil
 		}
 		return keel.Strings(r.EventKinds)
-	case 22:
+	case 23:
 		if r.IntervalSeconds == 0 {
 			return nil
 		}
 		return int64(r.IntervalSeconds)
-	case 23:
+	case 24:
 		if r.EndsAt == nil {
 			return nil
 		}
 		return *r.EndsAt
-	case 24:
-		return int64(r.MaxConcurrentRuns)
 	case 25:
-		return int64(r.RunTimeoutSeconds)
+		return int64(r.MaxConcurrentRuns)
 	case 26:
-		return int64(r.MaxToolCalls)
+		return int64(r.RunTimeoutSeconds)
 	case 27:
+		return int64(r.MaxToolCalls)
+	case 28:
 		if r.MonthlyBudgetUSD == nil {
 			return nil
 		}
 		return *r.MonthlyBudgetUSD
-	case 28:
-		return int64(r.DailyRunLimit)
 	case 29:
+		return int64(r.DailyRunLimit)
+	case 30:
 		if r.ToolDailyLimits == nil {
 			return keel.EmptyJSONObject
 		}
 		return r.ToolDailyLimits
-	case 30:
-		return r.SimulationMode
 	case 31:
+		return r.SimulationMode
+	case 32:
 		if r.MemoryTokenBudget == nil {
 			return nil
 		}
 		return int64(*r.MemoryTokenBudget)
-	case 32:
-		return r.LearningOff
 	case 33:
+		return r.LearningOff
+	case 34:
 		if r.Icon == "" {
 			return nil
 		}
 		return r.Icon
-	case 34:
+	case 35:
 		if r.Accent == "" {
 			return nil
 		}
 		return r.Accent
-	case 35:
+	case 36:
 		if r.ContextProviders == nil {
 			return nil
 		}
 		return keel.Strings(r.ContextProviders)
-	case 36:
-		return string(r.OutputMode)
 	case 37:
+		return string(r.OutputMode)
+	case 38:
 		if r.PreferredProviderID == "" {
 			return nil
 		}
 		return string(r.PreferredProviderID)
-	case 38:
+	case 39:
 		if r.SystemKey == "" {
 			return nil
 		}
 		return r.SystemKey
-	case 39:
+	case 40:
 		if r.DelegateIDs == nil {
 			return nil
 		}
 		return keel.Strings(r.DelegateIDs)
-	case 40:
+	case 41:
 		if r.DelegateTopics == nil {
 			return nil
 		}
 		return r.DelegateTopics
-	case 41:
-		if r.DisabledToolNames == nil {
-			return nil
-		}
-		return r.DisabledToolNames
 	case 42:
 		return int64(r.MaxChangeItems)
 	case 43:
@@ -1003,7 +1000,7 @@ var enumAgenttemplateTemplate = [...]schema.EnumValue{
 	{Value: `BillingAssistant`, Label: `Billing Assistant`},
 	{Value: `ComplianceAssistant`, Label: `Compliance Assistant`},
 	{Value: `CustomerAssistant`, Label: `Customer Assistant`},
-	{Value: `GeneralAssistant`, Label: `General Assistant`},
+	{Value: `Universal`, Label: `Universal`},
 	{Value: `BillingException`, Label: `Billing Exception`},
 	{Value: `DispatchAssignment`, Label: `Dispatch Assignment`},
 	{Value: `ImportAssistant`, Label: `Import Assistant`},

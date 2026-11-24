@@ -21,7 +21,7 @@ func findContent(
 ) string {
 	t.Helper()
 
-	return service.access.ResolveFind(t.Context(), set, runtimetest.Actor(), arguments).Content
+	return service.access.ResolveSearch(t.Context(), set, runtimetest.Actor(), arguments).Content
 }
 
 func semanticRuntime(
@@ -45,8 +45,8 @@ func findToolsHistory(result conversation.Message) []conversation.Message {
 		{Role: conversation.RoleUser, Content: "say hello"},
 		{Role: conversation.RoleAssistant, ToolCalls: []conversation.ToolCallRecord{{
 			ID:        "c1",
-			Name:      "find_tools",
-			Arguments: map[string]any{"need": "trailer inspection"},
+			Name:      "search_tools",
+			Arguments: map[string]any{"query": "trailer inspection"},
 		}}},
 		result,
 		{Role: conversation.RoleAssistant, Content: "Which one?"},
@@ -60,7 +60,7 @@ func TestCarryOver_ReloadsTheToolsASearchRecorded(t *testing.T) {
 	history := findToolsHistory(conversation.Message{
 		Role:       conversation.RoleTool,
 		ToolCallID: "c1",
-		ToolName:   "find_tools",
+		ToolName:   "search_tools",
 		Content:    "These tools are now callable",
 		FoundTools: []string{"worker_list"},
 	})
@@ -86,7 +86,7 @@ func TestCarryOver_SearchesAgainForAResultRecordedBeforeNamesWereKept(t *testing
 	history := findToolsHistory(conversation.Message{
 		Role:       conversation.RoleTool,
 		ToolCallID: "c1",
-		ToolName:   "find_tools",
+		ToolName:   "search_tools",
 		Content:    "These tools are now callable",
 	})
 
@@ -121,7 +121,7 @@ func TestCarryOver_NeverWidensPastWhatTheAgentHolds(t *testing.T) {
 	history := findToolsHistory(conversation.Message{
 		Role:       conversation.RoleTool,
 		ToolCallID: "c1",
-		ToolName:   "find_tools",
+		ToolName:   "search_tools",
 		FoundTools: []string{"worker_list"},
 	})
 
@@ -142,8 +142,8 @@ func TestRun_RecordsWhatFindToolsFoundOnItsResult(t *testing.T) {
 	service, _, names := wideRun(
 		t,
 		runtimetest.ToolTurn(
-			"find_tools",
-			map[string]any{"need": "driver medical card expiry"},
+			"search_tools",
+			map[string]any{"query": "driver medical card expiry"},
 		),
 		runtimetest.TextTurn("Two cards are due."),
 	)
@@ -156,7 +156,7 @@ func TestRun_RecordsWhatFindToolsFoundOnItsResult(t *testing.T) {
 	require.NoError(t, err)
 
 	require.Len(t, result.Messages, 4)
-	assert.Equal(t, "find_tools", result.Messages[2].ToolName)
+	assert.Equal(t, "search_tools", result.Messages[2].ToolName)
 	assert.Contains(t, result.Messages[2].FoundTools, "worker_list_credentials")
 }
 
@@ -219,7 +219,7 @@ func TestNewToolSet_PreselectsByMeaningWhenAVectorIsAvailable(t *testing.T) {
 		"a tool below the similarity floor gains nothing from the vector")
 
 	state := set.State()
-	require.NotNil(t, state.Query, "the vector rides on the turn for find_tools")
+	require.NotNil(t, state.Query, "the vector rides on the turn for search_tools")
 	restored := toolaccess.RestoreToolSet(&state)
 	assert.Equal(t, query, restored.Query)
 }
@@ -254,12 +254,12 @@ func TestFindFor_SearchesByMeaningWithTheTurnsVector(t *testing.T) {
 	}
 	callsAtOpen := len(vectorizer.Calls)
 
-	found := service.FindFor(t.Context(), &agentruntimeports.RunRequest{
+	found := service.SearchFor(t.Context(), &agentruntimeports.RunRequest{
 		Definition: runtimetest.Definition(names...),
 		Actor:      runtimetest.Actor(),
-	}, new(set.State()), map[string]any{"need": "who is off this week"})
+	}, new(set.State()), map[string]any{"query": "who is off this week"})
 
-	assert.Equal(t, callsAtOpen, len(vectorizer.Calls), "find_tools reuses the turn's vector")
+	assert.Equal(t, callsAtOpen, len(vectorizer.Calls), "search_tools reuses the turn's vector")
 	assert.Len(t, similarities.Requests, 2)
 	require.NotEmpty(t, found.Found)
 	assert.Equal(t, names[toolaccess.PreselectedTools], found.Found[0],
@@ -289,10 +289,10 @@ func TestFindFor_ReturnsNothingForNonsenseBelowTheFloor(t *testing.T) {
 		},
 	})
 
-	found := service.FindFor(t.Context(), &agentruntimeports.RunRequest{
+	found := service.SearchFor(t.Context(), &agentruntimeports.RunRequest{
 		Definition: runtimetest.Definition(names...),
 		Actor:      runtimetest.Actor(),
-	}, new(set.State()), map[string]any{"need": "zzzz qqqq"})
+	}, new(set.State()), map[string]any{"query": "zzzz qqqq"})
 
 	assert.Empty(t, found.Found)
 	assert.Empty(t, found.Loaded)

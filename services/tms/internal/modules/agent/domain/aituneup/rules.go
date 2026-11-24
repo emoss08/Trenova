@@ -278,7 +278,7 @@ func turnOffIdle(in *Inputs) []*TuneUp {
 			Evidence: Evidence{
 				LastRunAt: definition.LastRunAt,
 				IdleSince: idleSince,
-				Tools:     len(definition.ToolNames),
+				Tools:     len(definition.Scope.Capabilities) + len(definition.Scope.Areas),
 			},
 		})
 	}

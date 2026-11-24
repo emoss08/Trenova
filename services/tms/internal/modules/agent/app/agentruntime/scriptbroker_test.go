@@ -973,8 +973,8 @@ func TestATurnThatNarrowsItsToolsStillCarriesTheScriptTool(t *testing.T) {
 	)
 }
 
-// A read the turn reached from another desk through find_tools is in the
-// script's index, as the model may call it: find_tools said fuel_list_purchases
+// A read the turn reached from another desk through search_tools is in the
+// script's index, as the model may call it: search_tools said fuel_list_purchases
 // was callable here, and a script that could not see it guessed its name three
 // times.
 func TestScriptIndexHoldsWhatTheTurnReached(t *testing.T) {

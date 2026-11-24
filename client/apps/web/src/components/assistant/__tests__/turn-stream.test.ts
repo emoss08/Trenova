@@ -847,13 +847,13 @@ describe("reduceTurn reply_replaced", () => {
 });
 
 /**
- * find_tools names the person's other agents that hold what this agent could
+ * search_tools names the person's other agents that hold what this agent could
  * not load on tool_finished (handOffAgents), so the Desk can offer the
  * hand-off before the turn is saved.
  */
 describe("hand-off agents on a live turn", () => {
   function foundTools(callId: string, handOffAgents?: unknown): AssistantStreamEvent {
-    return wire("tool_finished", { callId, name: "find_tools", content: "{}", handOffAgents });
+    return wire("tool_finished", { callId, name: "search_tools", content: "{}", handOffAgents });
   }
 
   function handOffOf(event: AssistantStreamEvent): unknown {
@@ -869,11 +869,11 @@ describe("hand-off agents on a live turn", () => {
   it("keeps the ids on the call's step and reads the newest step that named any", () => {
     const state = run([
       accepted,
-      wire("tool_started", { callId: "c1", name: "find_tools", arguments: {} }),
+      wire("tool_started", { callId: "c1", name: "search_tools", arguments: {} }),
       foundTools("c1", ["agdef_compliance"]),
-      wire("tool_started", { callId: "c2", name: "find_tools", arguments: {} }),
+      wire("tool_started", { callId: "c2", name: "search_tools", arguments: {} }),
       foundTools("c2", ["agdef_billing", "agdef_cash"]),
-      wire("tool_started", { callId: "c3", name: "find_tools", arguments: {} }),
+      wire("tool_started", { callId: "c3", name: "search_tools", arguments: {} }),
       foundTools("c3", []),
       wire("delta", { text: "The billing assistant can do that." }),
     ]);
@@ -886,7 +886,7 @@ describe("hand-off agents on a live turn", () => {
   it("is the same value while the reply streams on, so a reader keyed on it does not run again", () => {
     const named = run([
       accepted,
-      wire("tool_started", { callId: "c1", name: "find_tools", arguments: {} }),
+      wire("tool_started", { callId: "c1", name: "search_tools", arguments: {} }),
       foundTools("c1", ["agdef_billing"]),
     ]);
     const streamed = run(
@@ -900,7 +900,7 @@ describe("hand-off agents on a live turn", () => {
   it("names nobody once the person has written past the answer that named them", () => {
     const named = run([
       accepted,
-      wire("tool_started", { callId: "c1", name: "find_tools", arguments: {} }),
+      wire("tool_started", { callId: "c1", name: "search_tools", arguments: {} }),
       foundTools("c1", ["agdef_billing"]),
     ]);
     const steered = run(
@@ -909,7 +909,7 @@ describe("hand-off agents on a live turn", () => {
     );
     const answeredAgain = run(
       [
-        wire("tool_started", { callId: "c2", name: "find_tools", arguments: {} }),
+        wire("tool_started", { callId: "c2", name: "search_tools", arguments: {} }),
         foundTools("c2", ["agdef_cash"]),
       ],
       steered,
@@ -922,7 +922,7 @@ describe("hand-off agents on a live turn", () => {
     ]);
   });
 
-  it("names nobody before a find_tools answer has, nor for a delegate's own search", () => {
+  it("names nobody before a search_tools answer has, nor for a delegate's own search", () => {
     expect(turnHandOffAgents(run([accepted]).segments)).toBe(NO_HAND_OFF_AGENTS);
 
     const delegated = run([
@@ -934,14 +934,14 @@ describe("hand-off agents on a live turn", () => {
       }),
       wire("tool_started", {
         callId: "c9",
-        name: "find_tools",
+        name: "search_tools",
         arguments: {},
         agentId: "agdef_other",
         delegateCallId: "call_d",
       }),
       wire("tool_finished", {
         callId: "c9",
-        name: "find_tools",
+        name: "search_tools",
         content: "{}",
         handOffAgents: ["agdef_billing"],
         agentId: "agdef_other",

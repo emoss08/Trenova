@@ -14,7 +14,7 @@ export const agentTemplateKindSchema = z.enum([
   "BillingAssistant",
   "ComplianceAssistant",
   "CustomerAssistant",
-  "GeneralAssistant",
+  "Universal",
   "BillingException",
   "DispatchAssignment",
   "ImportAssistant",
@@ -960,7 +960,7 @@ export const assistantMessageSchema = z.object({
   /** On a tool result: how the runtime judged the call; absent from a result saved before it was kept. */
   toolVerdict: optionalToolVerdict,
   /**
-   * On a find_tools result: the person's other agents it named as holding what
+   * On a search_tools result: the person's other agents it named as holding what
    * this agent could not call, which the hand-off menu offers first.
    */
   handOffAgents: z.array(z.string()).nullish().catch(null),
@@ -1904,7 +1904,7 @@ export const assistantToolFinishedEventSchema = z.object({
   summary: z.string().optional(),
   asked: z.string().optional(),
   verdict: optionalToolVerdict,
-  /** The person's other agents a find_tools answer named as holding what this agent lacks. */
+  /** The person's other agents a search_tools answer named as holding what this agent lacks. */
   handOffAgents: z.array(z.string()).nullish().catch(null),
   /** The records the call's result described, in the order the result named them. */
   records: z.array(entityRefSchema).nullish().catch(null),

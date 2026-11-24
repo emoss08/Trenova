@@ -9,7 +9,7 @@ import (
 /*
 shipment_match_records was loaded on its own, its answer said to call
 shipment_create next, and the model went looking for shipment_create with
-find_tools first. A lookup that feeds one held write brings it; one that many
+search_tools first. A lookup that feeds one held write brings it; one that many
 held recipes start from brings none.
 */
 func TestSoleFed(t *testing.T) {

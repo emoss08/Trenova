@@ -44,7 +44,11 @@ func CreateSystemAgentDefinitions(
 
 	created := 0
 	now := scope.NowUnix()
-	for _, definition := range SystemAgentDefinitions(orgID, buID) {
+	definitions := SystemAgentDefinitions(orgID, buID)
+	for _, template := range agentpreset.DefaultDesks() {
+		definitions = append(definitions, agentpreset.NewDesk(template, orgID, buID))
+	}
+	for _, definition := range definitions {
 		if _, ok := present[definition.SystemKey]; ok {
 			continue
 		}
@@ -85,7 +89,8 @@ func SystemAgentDefinitions(orgID, buID pulid.ID) []*agentdefinition.Definition 
 			Icon:            agentmark.IconReceipt,
 			Accent:          agentmark.AccentAmber,
 			Instructions:    agentinstructions.StarterInstructions(billing),
-			ToolNames:       agentpreset.StarterTools(billing),
+			Scope:           agentpreset.ScopeFor(billing),
+			PinnedTools:     agentpreset.PinnedFor(billing),
 			AutonomyCeiling: agentpreset.StarterCeiling(billing),
 			TriggerMode:     agentpreset.StarterTrigger(billing),
 			EventKinds:      agentpreset.StarterEvents(billing),
@@ -109,7 +114,8 @@ func SystemAgentDefinitions(orgID, buID pulid.ID) []*agentdefinition.Definition 
 			Icon:           agentmark.IconRoute,
 			Accent:         agentmark.AccentIndigo,
 			Instructions:   agentinstructions.StarterInstructions(dispatch),
-			ToolNames:      agentpreset.StarterTools(dispatch),
+			Scope:          agentpreset.ScopeFor(dispatch),
+			PinnedTools:    agentpreset.PinnedFor(dispatch),
 			ToolTiers: map[string]agent.AutonomyTier{
 				"dispatch_assign_move": agent.TierPropose,
 			},

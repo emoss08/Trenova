@@ -25,7 +25,8 @@ type SaveAgentDefinitionRequest struct {
 	Template               agenttemplate.Template
 	Instructions           string
 	Guardrails             []string
-	ToolNames              []string
+	Scope                  agentdefinition.Scope
+	PinnedTools            []string
 	ToolTiers              map[string]agent.AutonomyTier
 	AutonomyCeiling        agent.AutonomyTier
 	DataAccessCeiling      agentdefinition.DataAccessCeiling
@@ -125,10 +126,9 @@ type ToolCatalogEntry struct {
 }
 
 type LintAgentInstructionsRequest struct {
-	TenantInfo        pagination.TenantInfo
-	Instructions      string
-	ToolNames         []string
-	DisabledToolNames []string
+	TenantInfo   pagination.TenantInfo
+	Instructions string
+	Scope        agentdefinition.Scope
 }
 
 type PreviewPromptRequest struct {

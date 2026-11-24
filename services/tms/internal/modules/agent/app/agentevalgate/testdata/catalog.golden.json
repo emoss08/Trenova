@@ -21325,7 +21325,7 @@
       }
     },
     {
-      "name": "find_tools",
+      "name": "search_tools",
       "policy": {
         "kind": "runtime",
         "resource": "assistant",
@@ -35709,7 +35709,7 @@
     },
     {
       "name": "metric_read",
-      "description": "Read the figures and points of a metric Trenova keeps over time, to answer in a sentence or to look before drawing it. find_tools names the metric for what a question measures: a rate week by week, a ranking, today's figures. Give metric, and for or period when the metric takes them. A figure the person may not see comes back withheld, never as zero, and the result says how to draw the metric with show_answer.",
+      "description": "Read the figures and points of a metric Trenova keeps over time, to answer in a sentence or to look before drawing it. search_tools names the metric for what a question measures: a rate week by week, a ranking, today's figures. Give metric, and for or period when the metric takes them. A figure the person may not see comes back withheld, never as zero, and the result says how to draw the metric with show_answer.",
       "parameters": {
         "additionalProperties": false,
         "properties": {

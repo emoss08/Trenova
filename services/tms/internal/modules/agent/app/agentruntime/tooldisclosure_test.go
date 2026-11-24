@@ -39,8 +39,8 @@ func TestRun_ReportsTheOpeningRankingAndEachSearch(t *testing.T) {
 	service, completion, names := wideRun(
 		t,
 		runtimetest.ToolTurn(
-			"find_tools",
-			map[string]any{"need": "trailers due inspection"},
+			"search_tools",
+			map[string]any{"query": "trailers due inspection"},
 		),
 		runtimetest.ToolTurn("equipment_list_trailers", map[string]any{}),
 		runtimetest.TextTurn("Two trailers are due."),
@@ -93,6 +93,6 @@ func TestRun_SendsEveryHeldToolBelowTheConfiguredThreshold(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Empty(t, observed.preselected, "nothing was ranked: every tool was sent")
-	assert.NotContains(t, requestTools(completion.Requests[0]), "find_tools")
+	assert.NotContains(t, requestTools(completion.Requests[0]), "search_tools")
 	assert.Contains(t, requestTools(completion.Requests[0]), "equipment_list_trailers")
 }

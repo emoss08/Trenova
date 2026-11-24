@@ -23,7 +23,7 @@ import (
 )
 
 const (
-	// maxFirstSentence is what find_tools and the prompt's tool list show of a
+	// maxFirstSentence is what search_tools and the prompt's tool list show of a
 	// tool. It has to say what the tool does on its own.
 	maxFirstSentence = 160
 	// maxDescription bounds what every loaded tool costs a turn.
@@ -128,7 +128,7 @@ func TestEveryToolDescribesItselfWellEnoughToBeChosen(t *testing.T) {
 
 		if first := stringutils.FirstSentence(description); len(first) > maxFirstSentence {
 			problems = append(problems, fmt.Sprintf(
-				"%s: first sentence is %d characters; find_tools shows only it, so it must "+
+				"%s: first sentence is %d characters; search_tools shows only it, so it must "+
 					"say what the tool does in %d", name, len(first), maxFirstSentence))
 		}
 		if len(description) > maxDescription {

@@ -455,7 +455,7 @@ func newWorld(t *testing.T, decision *agentdecision.AgentDecision) *world {
 					Name:      "customer_get",
 					Arguments: map[string]any{"name": "Acme Foods"},
 				},
-				{ID: "call_2", Name: "find_tools"},
+				{ID: "call_2", Name: "search_tools"},
 			},
 			CreatedAt: 201,
 		},
@@ -470,9 +470,9 @@ func newWorld(t *testing.T, decision *agentdecision.AgentDecision) *world {
 		{
 			ID:         pulid.MustNew("amsg_"),
 			Role:       conversation.RoleTool,
-			ToolName:   "find_tools",
+			ToolName:   "search_tools",
 			ToolCallID: "call_2",
-			Content:    toolresult.Fence("find_tools", `{"tools":[]}`),
+			Content:    toolresult.Fence("search_tools", `{"tools":[]}`),
 			CreatedAt:  202,
 		},
 		{
@@ -1096,7 +1096,7 @@ func TestBeyondHeld_NamesEachToolTheAgentDoesNotHoldOnce(t *testing.T) {
 	assert.Equal(t,
 		[]string{"shipment_add_comment", "customer_list"},
 		beyondHeld(definition, "shipment_add_comment", []string{
-			"worker_get", "customer_list", "find_tools", "customer_list",
+			"worker_get", "customer_list", "search_tools", "customer_list",
 		}),
 		"the agent's own tools and the runtime's are not beyond it",
 	)

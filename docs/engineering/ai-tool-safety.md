@@ -179,7 +179,7 @@ Looks something up. Nothing changes and nothing is sent.
 | List factoring readiness (`factoring_list_readiness`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List factoring remittances (`factoring_list_remittances`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List factoring submissions (`factoring_list_submissions`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
-| Find tools (`find_tools`) | Reads only | Automatic | — | — | Loads more of the agent's own tools into the turn; it reads the catalog and changes nothing. |
+| Find tools (`search_tools`) | Reads only | Automatic | — | — | Loads more of the agent's own tools into the turn; it reads the catalog and changes nothing. |
 | Check formula (`formula_check`) | Reads only | Automatic | — | — | Checks source the model holds; nothing is saved and nothing is sent. |
 | Describe formula language (`formula_describe_language`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | Get formula library (`formula_get_library`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |

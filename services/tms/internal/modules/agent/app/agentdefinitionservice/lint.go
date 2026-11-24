@@ -43,16 +43,10 @@ func lintRegistry(
 	catalog []agentdefinitionports.ToolCatalogEntry,
 	req *agentdefinitionports.LintAgentInstructionsRequest,
 ) []agentlint.Tool {
-	held := make(map[string]struct{}, len(req.ToolNames))
-	for _, name := range req.ToolNames {
-		held[name] = struct{}{}
-	}
-	for _, name := range req.DisabledToolNames {
-		delete(held, name)
-	}
+	held := make(map[string]struct{}, len(catalog))
 	for idx := range catalog {
 		entry := &catalog[idx]
-		if entry.Core || entry.GrantedToEveryAgent {
+		if entry.Core || entry.GrantedToEveryAgent || req.Scope.Allows(entry.Name) {
 			held[entry.Name] = struct{}{}
 		}
 	}

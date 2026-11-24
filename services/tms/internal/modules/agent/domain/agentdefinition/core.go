@@ -33,17 +33,3 @@ func WithoutCoreTools(names []string) []string {
 
 	return kept
 }
-
-// EffectiveToolNames is every tool the agent holds: the core tools first, then
-// the ones the organization selected.
-func (d *Definition) EffectiveToolNames() []string {
-	names := make([]string, 0, len(coreTools)+len(d.ToolNames))
-	names = append(names, coreTools[:]...)
-	for _, name := range d.ToolNames {
-		if !slices.Contains(names, name) {
-			names = append(names, name)
-		}
-	}
-
-	return names
-}

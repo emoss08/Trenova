@@ -18,6 +18,8 @@ import (
 	"github.com/emoss08/trenova/shared/stringutils"
 )
 
+const maxDraftedCapabilities = 64
+
 const defaultIntervalSeconds = 900
 
 var errEmptyReply = errors.New("the model returned nothing")
@@ -107,7 +109,7 @@ func sanitizeDraft(
 		),
 		Instructions:      instructions,
 		Guardrails:        s.guardrails(),
-		ToolNames:         toolNames,
+		Scope:             agentdefinition.Scope{Capabilities: toolNames},
 		ToolTiers:         toolTiers,
 		AutonomyCeiling:   ceiling,
 		DataAccessCeiling: agentdefinition.DataAccessInternal,
@@ -222,9 +224,10 @@ func (s *sanitizer) tools(
 			continue
 		case entry.Core:
 			continue
-		case len(names) >= agentdefinition.MaxTools:
-			s.drop("toolNames", name, fmt.Sprintf(
-				"An agent can hold at most %d tools.", agentdefinition.MaxTools,
+		case len(names) >= maxDraftedCapabilities:
+			s.drop("scope", name, fmt.Sprintf(
+				"A drafted agent can name at most %d capabilities; give it an area instead.",
+				maxDraftedCapabilities,
 			))
 			continue
 		}

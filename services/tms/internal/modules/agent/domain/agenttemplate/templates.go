@@ -7,7 +7,7 @@ const (
 	TemplateBillingAssistant     = Template("BillingAssistant")
 	TemplateComplianceAssistant  = Template("ComplianceAssistant")
 	TemplateCustomerAssistant    = Template("CustomerAssistant")
-	TemplateGeneralAssistant     = Template("GeneralAssistant")
+	TemplateUniversal            = Template("Universal")
 	TemplateBillingException     = Template("BillingException")
 	TemplateDispatchAssignment   = Template("DispatchAssignment")
 	TemplateImportAssistant      = Template("ImportAssistant")
@@ -40,7 +40,7 @@ func (t Template) IsValid() bool {
 		TemplateBillingAssistant,
 		TemplateComplianceAssistant,
 		TemplateCustomerAssistant,
-		TemplateGeneralAssistant,
+		TemplateUniversal,
 		TemplateBillingException,
 		TemplateDispatchAssignment,
 		TemplateImportAssistant,
@@ -77,7 +77,7 @@ func AllTemplates() []Template {
 		TemplateBillingAssistant,
 		TemplateComplianceAssistant,
 		TemplateCustomerAssistant,
-		TemplateGeneralAssistant,
+		TemplateUniversal,
 		TemplateBillingException,
 		TemplateDispatchAssignment,
 		TemplateImportAssistant,

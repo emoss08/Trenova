@@ -1647,7 +1647,7 @@ export type AgentTemplate =
   | 'FactoringClerk'
   | 'FormulaAssistant'
   | 'FuelTaxClerk'
-  | 'GeneralAssistant'
+  | 'Universal'
   | 'ImportAssistant'
   | 'InsightAnalyst'
   | 'IntakeDesk'

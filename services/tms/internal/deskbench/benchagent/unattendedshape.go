@@ -58,7 +58,8 @@ func UnattendedShape(template agenttemplate.Template) *agentdefinition.Definitio
 		Description:       template.Description(),
 		Template:          template,
 		Instructions:      agentinstructions.StarterInstructions(template),
-		ToolNames:         agentdefinition.WithoutCoreTools(agentpreset.StarterTools(template)),
+		Scope:             agentpreset.ScopeFor(template),
+		PinnedTools:       agentpreset.PinnedFor(template),
 		AutonomyCeiling:   agentpreset.StarterCeiling(template),
 		DataAccessCeiling: agentpreset.StarterDataAccess(template),
 		TriggerMode:       agentpreset.StarterTrigger(template),
@@ -75,8 +76,8 @@ func UnattendedShape(template agenttemplate.Template) *agentdefinition.Definitio
 }
 
 func UnattendedMatches(existing, want *agentdefinition.Definition) bool {
-	held := slices.Clone(existing.ToolNames)
-	wanted := slices.Clone(want.ToolNames)
+	held := existing.ScopeEntries()
+	wanted := want.ScopeEntries()
 	slices.Sort(held)
 	slices.Sort(wanted)
 

@@ -51,7 +51,7 @@ export type ToolSegment = {
   finishedAt?: number;
   /** Set on a delegate_task call: the other agent's work on the task, nested under it. */
   delegate?: DelegateProgress;
-  /** The person's other agents a find_tools answer named as holding what this agent lacks. */
+  /** The person's other agents a search_tools answer named as holding what this agent lacks. */
   handOffAgents?: readonly string[];
   /** The records the call's result described, as the server read them from it. */
   records?: readonly AssistantEntityRef[];
@@ -287,7 +287,7 @@ export function turnCitedRecords(segments: readonly TurnSegment[]): AssistantEnt
 export const NO_HAND_OFF_AGENTS: readonly string[] = Object.freeze([]);
 
 /**
- * The agents the turn's own newest find_tools answer named as holding what its
+ * The agents the turn's own newest search_tools answer named as holding what its
  * agent could not load. It is the step's own list, so the same answer is the
  * same value from one event to the next. Another agent's steps on a task it
  * was handed are nested under the call that handed it over, so they are not
@@ -318,7 +318,7 @@ export function turnHandOffAgents(
 export type TurnHandoff = {
   /** The turn answers words of the person's own; false for one following up a decision. */
   asked: boolean;
-  /** What its own newest find_tools answer named; empty while none has. */
+  /** What its own newest search_tools answer named; empty while none has. */
   agentIds: readonly string[];
 };
 

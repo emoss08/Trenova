@@ -120,7 +120,7 @@ func TestNewToolSet_SendsEverythingForASmallAgent(t *testing.T) {
 
 	assert.False(t, set.Disclosed)
 	assert.Len(t, set.Specs, 5, "the agent's four tools plus ask_user")
-	assert.NotContains(t, opensWith(set), "find_tools")
+	assert.NotContains(t, opensWith(set), "search_tools")
 	assert.Contains(t, opensWith(set), "ask_user",
 		"asking for a missing value is not a capability an agent has to be granted")
 }
@@ -146,9 +146,9 @@ func TestNewToolSet_NarrowsAndOffersFindToolsForALargeAgent(t *testing.T) {
 		t,
 		opensWith(set),
 		toolaccess.PreselectedTools+2,
-		"the preselected tools, find_tools and ask_user",
+		"the preselected tools, search_tools and ask_user",
 	)
-	assert.Contains(t, opensWith(set), "find_tools")
+	assert.Contains(t, opensWith(set), "search_tools")
 	assert.Contains(t, opensWith(set), "ask_user")
 	assert.Less(t, len(opensWith(set)), len(names),
 		"the point is to send fewer schemas than the agent holds")
@@ -259,7 +259,7 @@ func TestResolveFind_MakesTheMissingToolCallable(t *testing.T) {
 		"the fixture depends on this one not being preselected")
 
 	answer := findContent(t, service, set, map[string]any{
-		"need": "trailer inspection date",
+		"query": "trailer inspection date",
 	})
 
 	assert.True(t, set.Offers("equipment_list_trailers"))
@@ -267,7 +267,7 @@ func TestResolveFind_MakesTheMissingToolCallable(t *testing.T) {
 }
 
 /*
-find_tools searches the agent's configuration, never the whole registry. If it
+search_tools searches the agent's configuration, never the whole registry. If it
 could reach past that, an operator granting an agent two tools would in fact be
 granting it every tool the deployment has, and the picker would be decoration.
 */
@@ -288,7 +288,7 @@ func TestResolveFind_CannotReachPastTheAgentsConfiguration(t *testing.T) {
 	)
 	set.Disclosed = true
 
-	findContent(t, service, set, map[string]any{"need": "driver medical card expiry"})
+	findContent(t, service, set, map[string]any{"query": "driver medical card expiry"})
 
 	assert.False(t, set.Offers("worker_list_credentials"))
 	for _, name := range opensWith(set) {
@@ -299,7 +299,7 @@ func TestResolveFind_CannotReachPastTheAgentsConfiguration(t *testing.T) {
 			[]string{
 				"customer_list",
 				"location_list",
-				"find_tools",
+				"search_tools",
 				"ask_user",
 			},
 			name,
@@ -326,7 +326,7 @@ func TestResolveFind_DoesNotReloadWhatIsAlreadyThere(t *testing.T) {
 	)
 	before := len(set.Specs)
 
-	answer := findContent(t, service, set, map[string]any{"need": "driver medical card expiry"})
+	answer := findContent(t, service, set, map[string]any{"query": "driver medical card expiry"})
 
 	assert.Equal(t, before, len(set.Specs))
 	assert.Contains(t, answer, "already loaded")
@@ -362,11 +362,11 @@ func TestSystemPrompt_SaysTheToolListIsPartialWhenDisclosed(t *testing.T) {
 	require.NotEmpty(t, summaries)
 
 	disclosed := agentprompt.BuildSystemPrompt(definition, runtimeContextWith(summaries, true))
-	assert.Contains(t, disclosed, "find_tools")
-	assert.Contains(t, disclosed, "call find_tools before you tell")
+	assert.Contains(t, disclosed, "search_tools")
+	assert.Contains(t, disclosed, "call search_tools before you tell")
 
 	whole := agentprompt.BuildSystemPrompt(definition, runtimeContextWith(summaries, false))
-	assert.NotContains(t, whole, "find_tools")
+	assert.NotContains(t, whole, "search_tools")
 	assert.Contains(t, whole, "are the only ones you have")
 }
 
@@ -395,11 +395,11 @@ func TestSystemPrompt_DisclosedSectionNamesAreasNotTools(t *testing.T) {
 
 	parts := agentprompt.BuildSystemPromptParts(definition, &rc)
 
-	assert.Contains(t, parts.Stable, "What find_tools can load, by area of Trenova:")
+	assert.Contains(t, parts.Stable, "What search_tools can load, by area of Trenova:")
 	assert.Contains(t, parts.Stable, "- Reports (1 tool): report")
 	assert.NotContains(t, parts.Stable, "report_list — List saved reports by name.")
 	assert.NotContains(t, parts.Stable+parts.Volatile, "Loaded now:")
-	assert.NotContains(t, parts.Volatile, "find_tools")
+	assert.NotContains(t, parts.Volatile, "search_tools")
 }
 
 func runtimeContextWith(
@@ -430,7 +430,7 @@ func TestResolveFind_SaysAToolExistsButIsNotEnabled(t *testing.T) {
 	)
 	set.Disclosed = true
 
-	answer := findContent(t, service, set, map[string]any{"need": "driver medical card expiry"})
+	answer := findContent(t, service, set, map[string]any{"query": "driver medical card expiry"})
 
 	require.Contains(t, names, "worker_list_credentials")
 	assert.Contains(t, answer, "not enabled for this agent")
@@ -475,7 +475,7 @@ func TestResolveFind_NamesThePersonsOtherAgentThatHoldsTheTool(t *testing.T) {
 	})
 	set.Disclosed = true
 
-	answer := findContent(t, service, set, map[string]any{"need": "driver medical card expiry"})
+	answer := findContent(t, service, set, map[string]any{"query": "driver medical card expiry"})
 
 	assert.Contains(t, answer, "- Compliance assistant: worker_list_credentials")
 	assert.NotContains(t, answer, "Report builder")
@@ -514,17 +514,17 @@ func TestResolveFind_RecordsTheAgentsItNamesForTheHandOffMenu(t *testing.T) {
 	})
 	set.Disclosed = true
 
-	answer := service.access.ResolveFind(
+	answer := service.access.ResolveSearch(
 		t.Context(),
 		set,
 		runtimetest.Actor(),
-		map[string]any{"need": "driver medical card expiry"},
+		map[string]any{"query": "driver medical card expiry"},
 	)
 
 	assert.Equal(t, []pulid.ID{compliance.ID}, answer.HandOff)
 }
 
-// The ids ride on the find_tools result into the saved tool message, which is
+// The ids ride on the search_tools result into the saved tool message, which is
 // what the Desk reads when it orders the hand-off menu, and on the streamed
 // tool_finished, so the menu can offer the hand-off before the turn is saved.
 func TestRun_SavesTheAgentsFindToolsNamedOnItsResult(t *testing.T) {
@@ -533,8 +533,8 @@ func TestRun_SavesTheAgentsFindToolsNamedOnItsResult(t *testing.T) {
 	service, _, _ := wideRun(
 		t,
 		runtimetest.ToolTurn(
-			"find_tools",
-			map[string]any{"need": "driver medical card expiry"},
+			"search_tools",
+			map[string]any{"query": "driver medical card expiry"},
 		),
 		runtimetest.TextTurn("The compliance assistant can check that."),
 	)
@@ -562,7 +562,7 @@ func TestRun_SavesTheAgentsFindToolsNamedOnItsResult(t *testing.T) {
 	require.NoError(t, err)
 
 	require.Len(t, result.Messages, 4)
-	assert.Equal(t, "find_tools", result.Messages[2].ToolName)
+	assert.Equal(t, "search_tools", result.Messages[2].ToolName)
 	assert.Equal(t, []pulid.ID{compliance.ID}, result.Messages[2].HandOffAgents)
 
 	var finished []assistantstreamports.AssistantToolFinishedEvent
@@ -572,7 +572,7 @@ func TestRun_SavesTheAgentsFindToolsNamedOnItsResult(t *testing.T) {
 		}
 	}
 	require.Len(t, finished, 1)
-	assert.Equal(t, "find_tools", finished[0].Name)
+	assert.Equal(t, "search_tools", finished[0].Name)
 	assert.Equal(t, []pulid.ID{compliance.ID}, finished[0].HandOffAgents)
 }
 
@@ -589,11 +589,11 @@ func TestResolveFind_SuggestsNobodyWhenNoOtherAgentHoldsTheTool(t *testing.T) {
 	})
 	set.Disclosed = true
 
-	answer := service.access.ResolveFind(
+	answer := service.access.ResolveSearch(
 		t.Context(),
 		set,
 		runtimetest.Actor(),
-		map[string]any{"need": "driver medical card expiry"},
+		map[string]any{"query": "driver medical card expiry"},
 	)
 
 	assert.Contains(t, answer.Content, "AI Control")
@@ -617,7 +617,7 @@ func TestResolveFind_DoesNotClaimTheSystemLacksSomethingItDidNotSearchFor(t *tes
 	)
 	set.Disclosed = true
 
-	answer := findContent(t, service, set, map[string]any{"need": "zzzz no such thing zzzz"})
+	answer := findContent(t, service, set, map[string]any{"query": "zzzz no such thing zzzz"})
 
 	assert.Contains(t, answer, "only about the data, not about tools you cannot see")
 	assert.NotContains(t, answer, "not enabled for this agent")
@@ -654,7 +654,7 @@ func TestNewToolSet_WithholdsAskUserFromAnUnattendedRun(t *testing.T) {
 	assert.Contains(
 		t,
 		opensWith(large),
-		"find_tools",
+		"search_tools",
 		"finding tools needs no person",
 	)
 }
@@ -681,8 +681,8 @@ func TestRun_APromptsToolSectionIsTheSameForEveryQuestion(t *testing.T) {
 		require.NoError(t, err)
 		req := completion.LastReq
 		stable = append(stable, req.System[:req.SystemStable])
-		assert.Contains(t, req.System[:req.SystemStable], "What find_tools can load")
-		assert.NotContains(t, req.System, "Callable after find_tools")
+		assert.Contains(t, req.System[:req.SystemStable], "What search_tools can load")
+		assert.NotContains(t, req.System, "Callable after search_tools")
 	}
 
 	assert.Equal(t, stable[0], stable[1])
@@ -726,12 +726,12 @@ func TestNewToolSet_OffersOnlyWhatThePersonMayUse(t *testing.T) {
 	assert.NotContains(t, set.Allowed, "shipment_list")
 	assert.Contains(t, set.Allowed, "worker_list")
 
-	answer := findContent(t, service, set, map[string]any{"need": "search shipments by pro number"})
+	answer := findContent(t, service, set, map[string]any{"query": "search shipments by pro number"})
 	assert.NotContains(
 		t,
 		answer,
 		"shipment_list",
-		"find_tools cannot reach a tool the person may not use",
+		"search_tools cannot reach a tool the person may not use",
 	)
 }
 
@@ -844,7 +844,7 @@ func TestNewToolSet_CoreToolsDoNotCountTowardNarrowing(t *testing.T) {
 	assert.Contains(t, sent, "agent_list_memories")
 	assert.Contains(t, sent, "agent_create_memory")
 	assert.Len(t, sent, toolaccess.PreselectedTools+2+2,
-		"the preselected tools, the two core tools, find_tools and ask_user")
+		"the preselected tools, the two core tools, search_tools and ask_user")
 }
 
 func TestNewToolSet_AnUnattendedRunHoldsItsEscalationFromTheStart(t *testing.T) {
@@ -892,7 +892,7 @@ func TestResolveFind_ListsTheCallableMatchesFirst(t *testing.T) {
 	require.True(t, service.access.Load(set, "worker_list"))
 
 	answer := findContent(t, service, set, map[string]any{
-		"need": "workers and their credentials",
+		"query": "workers and their credentials",
 	})
 
 	callable := strings.Index(answer, "- worker_list")
@@ -965,7 +965,7 @@ func TestResolveFind_ReachesTheToolsOfThePersonsOtherAgentsWhenItsOwnMatchWeakly
 	require.True(t, set.Disclosed)
 	require.NotContains(t, opensWith(set), "search_commodities")
 
-	answer := findContent(t, service, set, map[string]any{"need": "commodity"})
+	answer := findContent(t, service, set, map[string]any{"query": "commodity"})
 
 	assert.Contains(t, answer, "shipment_list", "the weak match still loads")
 	assert.Contains(t, answer, toolaccess.BeyondLead)
@@ -987,9 +987,9 @@ func TestResolveFind_ReachesBeyondOnATurnThatHoldsFewTools(t *testing.T) {
 		},
 	)
 	require.False(t, set.Disclosed)
-	require.Contains(t, opensWith(set), "find_tools")
+	require.Contains(t, opensWith(set), "search_tools")
 
-	answer := findContent(t, service, set, map[string]any{"need": "commodity"})
+	answer := findContent(t, service, set, map[string]any{"query": "commodity"})
 
 	assert.Contains(t, answer, "search_commodities")
 	assert.True(t, set.Offers("search_commodities"))
@@ -1013,7 +1013,7 @@ func TestResolveFind_NeverReachesWhatAStrongOwnMatchCovers(t *testing.T) {
 		},
 	)
 
-	answer := findContent(t, service, set, map[string]any{"need": "commodity"})
+	answer := findContent(t, service, set, map[string]any{"query": "commodity"})
 
 	assert.Contains(t, answer, "search_commodities")
 	assert.NotContains(t, answer, toolaccess.BeyondLead)
@@ -1054,7 +1054,7 @@ func TestResolveFind_ReachesPastAnOwnToolThatSharesOneWordWithTheNeed(t *testing
 		t,
 		service,
 		set,
-		map[string]any{"need": "accounts receivable aging by customer"},
+		map[string]any{"query": "accounts receivable aging by customer"},
 	)
 
 	assert.Contains(t, answer, toolaccess.BeyondLead)
@@ -1085,7 +1085,7 @@ func TestResolveFind_AStrongNewMatchNeedsNoDelegate(t *testing.T) {
 	)
 	require.NotContains(t, opensWith(set), "search_commodities")
 
-	answer := findContent(t, service, set, map[string]any{"need": "commodity"})
+	answer := findContent(t, service, set, map[string]any{"query": "commodity"})
 
 	assert.Contains(t, answer, "search_commodities")
 	assert.NotContains(t, answer, "Operations")
@@ -1108,7 +1108,7 @@ func TestResolveFind_NamesOnlyStrongMatchesBeyondTheAgent(t *testing.T) {
 		},
 	)
 
-	answer := findContent(t, service, set, map[string]any{"need": "commodity"})
+	answer := findContent(t, service, set, map[string]any{"query": "commodity"})
 
 	assert.Contains(t, answer, "search_commodities")
 	assert.NotContains(t, answer, "shipment_list",
@@ -1116,7 +1116,7 @@ func TestResolveFind_NamesOnlyStrongMatchesBeyondTheAgent(t *testing.T) {
 }
 
 /*
-gpt-6-luna asked find_tools for "worker_list, settlement_list_driver and
+gpt-6-luna asked search_tools for "worker_list, settlement_list_driver and
 settlement_list_advances" by name, was handed six other tools ranked above
 worker_list, and searched a fourth time for it. A tool the need names
 outright, and the agent holds, comes first.
@@ -1138,7 +1138,7 @@ func TestResolveFind_LoadsTheToolsANeedNamesOutright(t *testing.T) {
 		"the fixture depends on this one not being preselected")
 
 	answer := findContent(t, service, set, map[string]any{
-		"need": "Use equipment_list_trailers (and list_nothing) to see invoices by due date",
+		"query": "Use equipment_list_trailers (and list_nothing) to see invoices by due date",
 	})
 
 	assert.True(t, set.Offers("equipment_list_trailers"))

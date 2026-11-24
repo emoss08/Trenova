@@ -245,13 +245,13 @@ type DelegateOpening struct {
 	Turn agentruntime.TurnState `json:"turn"`
 }
 
-type FindToolsInput struct {
+type SearchToolsInput struct {
 	Run       RunContext              `json:"run"`
 	Tools     toolaccess.ToolSetState `json:"tools"`
 	Arguments map[string]any          `json:"arguments"`
 }
 
-type FindToolsResult struct {
+type SearchToolsResult struct {
 	Content string     `json:"content"`
 	Loaded  []string   `json:"loaded,omitempty"`
 	Found   []string   `json:"found,omitempty"`

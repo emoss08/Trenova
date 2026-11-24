@@ -6,6 +6,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+
 	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentevalgate"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimetest"
@@ -46,7 +48,7 @@ func runCapabilityTurn(
 	t *testing.T,
 	kit *agentevalgate.Kit,
 	permissions *agenttest.StubPermissions,
-	tools []string,
+	definition *agentdefinition.Definition,
 	searchTool string,
 	searchArg string,
 	request string,
@@ -59,7 +61,7 @@ func runCapabilityTurn(
 	}}
 	rt := kit.NewRuntime(agentevalgate.RuntimeParams{Completion: completion, Permissions: permissions})
 	_, err := rt.Run(t.Context(), &agentruntimeports.RunRequest{
-		Definition: runtimetest.Definition(tools...),
+		Definition: definition,
 		Actor:      runtimetest.Actor(),
 		Input:      request,
 	})

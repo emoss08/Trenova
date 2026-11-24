@@ -1,7 +1,7 @@
 package agentcapability
 
 var entities = []Entity{
-	{Name: "shipment", Area: "shipment", Title: "Shipments", Synonyms: []string{"load", "loads", "pro", "freight", "shipments"}, List: "shipment_list", Get: "shipment_get", Includes: shipmentIncludes},
+	{Name: "shipment", Area: "shipment", Title: "Shipments", Synonyms: []string{"load", "loads", "pro", "freight", "shipments", "running late", "going out", "outbound", "pickups"}, List: "shipment_list", Get: "shipment_get", Includes: shipmentIncludes},
 	{Name: "recurring_shipment", Area: "shipment", Title: "Recurring shipments", Synonyms: []string{"recurring loads", "standing orders", "templates"}, List: "shipment_list_recurring"},
 	{Name: "order", Area: "order", Title: "Orders", Synonyms: []string{"customer orders", "order"}, List: "order_list", Get: "order_get"},
 	{Name: "tender", Area: "dispatch", Title: "Carrier tenders", Synonyms: []string{"tenders", "load offers", "carrier offers"}, List: "dispatch_list_tenders"},

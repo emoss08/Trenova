@@ -160,13 +160,14 @@ const (
 // with their text, and names them on that message in every later turn. v9
 // tells the agent what kind of business the organization is and what the
 // person works on, from profiles worked out from their records. v10 is one
-// stable prefix: the tool section names what find_tools can load by area of
+// stable prefix: the tool section names what search_tools can find by area of
 // Trenova instead of listing each tool the turn did not open with, and it and
 // the person's profile sit in the cached part; a lookup handed to another
 // agent says it changes nothing. A plan without some add-ons adds a section
 // naming them (buildPlanSection); with every add-on on the prompt is
-// unchanged, so the version is too.
-const PromptVersion = "agent-definition/v11"
+// unchanged, so the version is too. v12 replaces find_tools with search_tools
+// and gives every agent the same search, scope and hand-off guidance.
+const PromptVersion = "agent-definition/v12"
 
 // SystemPrompt is a system prompt in the two parts a provider's prompt cache
 // cares about. Stable is the same on every turn of an agent for a person: who
@@ -209,7 +210,7 @@ func BuildSystemPromptParts(
 	section(&stable, domainPrimer)
 
 	// A disclosed turn always says so, whatever providers the agent carries:
-	// a model handed eight of forty tools and no word about find_tools reads
+	// a model handed eight of forty tools and no word about search_tools reads
 	// the eight as the limit of what the system does. The section names what
 	// can be loaded by area, never which tools this turn opened with, so it
 	// is the same on every turn and sits in the cached part.
@@ -385,7 +386,7 @@ func buildLookupOutputSection(delegator string) string {
 // were all answered in prose, and no board had ever been kept.
 const artifactSection = `## Artifacts
 This conversation keeps what your tools return beside it, where the person can open it: a list or search as a table, a record you fetch as a card, a report preview or run with its rows. A tool result kept this way says so and says how to answer from it. Show a result one way, never both: a short answer, a fact or a few rows from a list of about a dozen rows or fewer goes in your reply and is not pointed to; a longer list, and a list of any length that you rank or compare for the person to choose or act from, is pointed to, and your reply gives the count, your pick and what needs attention instead of the rows. Put a pointer inside the sentence that mentions it, never on a line of its own, and never copy a pointed-to result's rows into a markdown table. When the person asks to see a record or its details, fetch it with its get tool and point to its card rather than listing its fields or opening its page.
-When you hold show_answer and your answer weighs two or more records together, or rests on a count, a total or a comparison across records (which loads are late and why, how two shipments or two carriers compare, which of a customer's invoices are unpaid and what they add up to, what stands between a record and its next step), answer with show_answer instead of your reply: not a markdown table, and not figures typed into sentences. It is drawn in the conversation as your reply: the answer in a sentence or two, with {count}, {total} or {largest} where a figure goes, over the records it rests on, in one group or two side by side. It ends your turn, so make every other call first. show_board is the larger page beside the conversation, for records compared in columns, a chart, checks or more than two groups. Your reply stays for a single fact, one record, a yes or no, a list the person only asked to see, anything that is not about records, and an answer a board cannot read (a kind of record or a figure it does not take). A figure Trenova keeps over time (a rate week by week, a ranking, the figures the home page shows) is a metric, never rebuilt from records, reports or scripts: find it by what it measures with find_tools, say it from metric_read when a sentence answers, and draw it as a show_answer group with metric whenever the answer is more than one of its figures.
+When you hold show_answer and your answer weighs two or more records together, or rests on a count, a total or a comparison across records (which loads are late and why, how two shipments or two carriers compare, which of a customer's invoices are unpaid and what they add up to, what stands between a record and its next step), answer with show_answer instead of your reply: not a markdown table, and not figures typed into sentences. It is drawn in the conversation as your reply: the answer in a sentence or two, with {count}, {total} or {largest} where a figure goes, over the records it rests on, in one group or two side by side. It ends your turn, so make every other call first. show_board is the larger page beside the conversation, for records compared in columns, a chart, checks or more than two groups. Your reply stays for a single fact, one record, a yes or no, a list the person only asked to see, anything that is not about records, and an answer a board cannot read (a kind of record or a figure it does not take). A figure Trenova keeps over time (a rate week by week, a ranking, the figures the home page shows) is a metric, never rebuilt from records, reports or scripts: find it by what it measures with search_tools, say it from metric_read when a sentence answers, and draw it as a show_answer group with metric whenever the answer is more than one of its figures.
 When the person asks you to write something for them (a write-up, a summary, a brief, a handover, a message or reminder they will send) or for an artifact, or when your answer would run past a screen, publish it with publish_artifact without being asked, never written out in your reply, and reply in two or three sentences. To change a document you published, publish it again with its artifactId.`
 
 // rememberingSection is when an agent saves a memory without being told to
@@ -748,9 +749,15 @@ func describeMentions(mentions []agentturn.RuntimeMention) string {
 const toolsDecidedPerCall = "Changes that run at once or are recorded as a proposal " +
 	"depending on what the call would reach; the result says which and why"
 
-const beyondToolsNote = " find_tools also reaches the tools of the person's other agents: " +
-	"when none of yours does the job, ask it in a few words and what it loads is yours to " +
-	"call, under the approvals those agents run it with."
+const searchGuidance = "\n- Before saying something cannot be done, run search_tools with the " +
+	"specific need. On low confidence, rephrase once with the entity, the action and the fields. " +
+	"Only then report a gap, and name the searches you tried.\n" +
+	"- Not loaded never means not available. Call an available capability by name and it loads.\n" +
+	"- A result outside this agent's scope (not_in_this_agent) gets a hand-off offer, never a " +
+	"workaround. A result the person is not permitted to use is named with its permission."
+
+const beyondToolsNote = " search_tools searches every capability Trenova has and says, for each, " +
+	"whether you can call it here." + searchGuidance
 
 func buildToolSection(rc *agentturn.RuntimeContext) string {
 	tools, disclosed, beyond := rc.Tools, rc.ToolsDisclosed, rc.ReachesBeyond
@@ -764,19 +771,13 @@ func buildToolSection(rc *agentturn.RuntimeContext) string {
 	if disclosed {
 		// The loaded tools are on the request with their schemas; what else
 		// can be loaded is named by area of Trenova, because a model that
-		// knows what exists asks find_tools for it, and one that sees only
+		// knows what exists asks search_tools for it, and one that sees only
 		// what it holds tells the person the system cannot do it.
 		builder.WriteString(
-			"You hold more tools than are loaded on this turn. The loaded ones are " +
-				"on this request and callable now; every other tool you hold becomes " +
-				"callable the moment you ask find_tools for it, in a few words describing " +
-				"what you need. A tool you cannot see yet is not a tool you do not have: " +
-				"call find_tools before you tell the person something cannot be done, " +
-				"found or tracked.",
+			"You hold more capabilities than are loaded on this turn. The loaded ones are " +
+				"on this request and callable now; every other one in your scope loads the " +
+				"moment you call it by name or search_tools finds it." + searchGuidance,
 		)
-		if beyond {
-			builder.WriteString(beyondToolsNote)
-		}
 		builder.WriteString(buildToolMap(rc.ToolMap))
 		// The descriptions above say what a tool does, not whether calling it
 		// changes anything yet. Without this a dispatch agent told to let a
@@ -824,7 +825,7 @@ func buildToolMap(areas []agentturn.ToolNamespace) string {
 	}
 
 	var builder strings.Builder
-	builder.WriteString("\n\nWhat find_tools can load, by area of Trenova:")
+	builder.WriteString("\n\nWhat search_tools can find, by area of Trenova:")
 	for _, area := range areas {
 		builder.WriteString("\n- ")
 		builder.WriteString(area.Name)
@@ -1094,7 +1095,7 @@ func buildPlanSection(addOns []agentturn.PlanAddOn) string {
 	var builder strings.Builder
 	builder.WriteString("## The organization's plan\n")
 	builder.WriteString("These add-ons are not on this organization's plan. No tool for " +
-		"them exists here, and find_tools cannot load one:")
+		"them exists here, and search_tools cannot load one:")
 	for _, addOn := range addOns {
 		builder.WriteString("\n- ")
 		builder.WriteString(addOn.Name)

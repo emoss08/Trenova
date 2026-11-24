@@ -216,9 +216,9 @@ func TestBuildSystemPrompt_SaysFindToolsReachesThePersonsOtherAgents(t *testing.
 		ReachesBeyond:  true,
 	})
 
-	assert.Contains(t, reaching, "find_tools also reaches the tools of the person's other agents")
+	assert.Contains(t, reaching, "search_tools also reaches the tools of the person's other agents")
 	assert.NotContains(t, reaching, "are the only ones you have")
 	assert.Contains(t, alone, "are the only ones you have")
 	assert.NotContains(t, alone, "other agents")
-	assert.Contains(t, disclosed, "find_tools also reaches the tools of the person's other agents")
+	assert.Contains(t, disclosed, "search_tools also reaches the tools of the person's other agents")
 }

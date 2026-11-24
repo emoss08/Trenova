@@ -6,7 +6,7 @@ import (
 
 func AgentHolding(name string, tools ...string) *agentdefinition.Definition {
 	definition := ChatAgent(name)
-	definition.ToolNames = tools
+	definition.Scope = agentdefinition.Scope{Capabilities: tools}
 
 	return definition
 }

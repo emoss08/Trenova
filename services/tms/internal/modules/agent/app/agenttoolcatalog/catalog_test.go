@@ -314,7 +314,7 @@ Finding one tool of a family makes the rest callable.
 
 The Report Builder found report_run and then had to search again for
 report_list, and a third time for report_get, before it could name the
-report it was asked to run: three find_tools calls for one step of work.
+report it was asked to run: three search_tools calls for one step of work.
 */
 func TestFind_BringsAlongTheToolsUsedWithWhatItFound(t *testing.T) {
 	t.Parallel()

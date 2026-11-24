@@ -94,9 +94,11 @@ func (s *Dispatcher) dispatch(ctx context.Context, p *DispatchParams) toolcall.R
 	if refusal, refused := s.access.PlanRefusal(ctx, req, call.Name); refused {
 		return refusal
 	}
-	if !s.access.HoldsFor(ctx, req, call.Name) && !s.access.Reachable(req, p.beyond) {
+	if !s.access.HoldsFor(ctx, req, call.Name) {
 		return toolcall.Refused(aitrace.OutcomeDenied, aianalytics.ReasonNotHeld,
-			"Tool %q is not available to this agent.", call.Name)
+			"%q is outside this agent's scope, so it was not run. Offer to hand the "+
+				"conversation to the universal agent or another agent whose scope includes it.",
+			call.Name)
 	}
 
 	selfScoped := agenttoolports.IsSelfScoped(s.access.ToolNamed(call.Name))

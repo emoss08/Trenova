@@ -20,7 +20,7 @@ func StarterDataAccess(t agenttemplate.Template) agentdefinition.DataAccessCeili
 		agenttemplate.TemplateBillingAssistant,
 		agenttemplate.TemplateComplianceAssistant,
 		agenttemplate.TemplateCustomerAssistant,
-		agenttemplate.TemplateGeneralAssistant,
+		agenttemplate.TemplateUniversal,
 		agenttemplate.TemplateBillingException,
 		agenttemplate.TemplateDispatchAssignment,
 		agenttemplate.TemplateImportAssistant,

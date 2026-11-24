@@ -59,7 +59,7 @@ func TestNewToolSet_ATurnThatCanSearchDefersTheCoreToolsFewTurnsCall(t *testing.
 	assert.False(t, set.Offers("agent_create_wait"))
 	assert.False(t, set.Offers("agent_cancel_wait"))
 	assert.Contains(t, set.Deferred, "agent_create_wait",
-		"a core tool not loaded is still declared, so find_tools can load it")
+		"a core tool not loaded is still declared, so search_tools can load it")
 
 	asked := service.access.NewToolSet(t.Context(), &toolaccess.ToolSetRequest{
 		Definition: runtimetest.Definition(names...),
@@ -98,8 +98,8 @@ func TestFindFor_LoadsWhatTheActivityFoundIntoTheTurnAsReferences(t *testing.T) 
 	require.False(t, turn.tools.Offers("equipment_list_trailers"))
 	declared := turn.completionRequest()
 
-	found := service.FindFor(t.Context(), req, new(turn.ToolsState()),
-		map[string]any{"need": "trailer inspection date"})
+	found := service.SearchFor(t.Context(), req, new(turn.ToolsState()),
+		map[string]any{"query": "trailer inspection date"})
 	turn.LoadTools(found.Loaded)
 
 	require.Contains(t, found.Loaded, "equipment_list_trailers")
@@ -168,7 +168,7 @@ func TestToolMap_GroupsTheToolsByAreaOfTrenova(t *testing.T) {
 	})
 
 	areas := service.access.ToolMap([]string{
-		"shipment_list", "shipment_get", "invoice_list", "shipment_list", "find_tools",
+		"shipment_list", "shipment_get", "invoice_list", "shipment_list", "search_tools",
 	})
 
 	require.Len(t, areas, 2, "a runtime tool has no area; a name given twice counts once")
