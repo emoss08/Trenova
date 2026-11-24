@@ -46,6 +46,10 @@ cases:
     expect: [dispatch_rank_candidates]
   - request: assign a driver and tractor to the move
     expect: [dispatch_assign_move]
+  - request: assign workers to every shipment
+    expect: [dispatch_assign_move, dispatch_plan]
+  - request: go ahead and assign timothy to the load
+    expect: [dispatch_assign_move]
   - request: tender the load to carriers
     expect: [dispatch_create_tender, dispatch_create_tender_from_routing_guide]
   - request: is freight coming into Houston this weekend

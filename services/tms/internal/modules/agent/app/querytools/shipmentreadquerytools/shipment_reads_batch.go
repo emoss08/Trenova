@@ -121,8 +121,20 @@ type shipmentReadRow struct {
 	Carrying      string              `json:"carrying,omitempty"`
 	TotalCharge   string              `json:"totalCharge,omitempty"`
 	BillingStatus string              `json:"billingStatus,omitempty"`
+	Moves         []shipmentMoveRef   `json:"moves,omitempty"`
 	ActiveHolds   []shipmentHoldRow   `json:"activeHolds,omitempty"`
 	NewestComment *shipmentCommentRow `json:"newestComment,omitempty"`
+}
+
+// shipmentMoveRef is one of a shipment's moves as dispatch_rank_candidates,
+// dispatch_plan and dispatch_assign_move take it: its id, its place in the
+// shipment and whether it is covered. A model reading several shipments got
+// no move ids and fetched each shipment in full, one at a time, to rank one.
+type shipmentMoveRef struct {
+	ID       string `json:"id"`
+	Sequence int    `json:"sequence"`
+	Status   string `json:"status"`
+	Coverage string `json:"coverage"`
 }
 
 type shipmentReadsOutcome struct {
@@ -233,7 +245,25 @@ func shipmentReadRowOf(entity *shipment.Shipment) shipmentReadRow {
 		Carrying:      listed.Carrying,
 		TotalCharge:   listed.TotalCharge,
 		BillingStatus: listed.BillingStatus,
+		Moves:         moveRefsOf(entity.Moves),
 	}
+}
+
+func moveRefsOf(moves []*shipment.ShipmentMove) []shipmentMoveRef {
+	out := make([]shipmentMoveRef, 0, len(moves))
+	for _, move := range moves {
+		if move == nil {
+			continue
+		}
+		out = append(out, shipmentMoveRef{
+			ID:       move.ID.String(),
+			Sequence: int(move.Sequence),
+			Status:   string(move.Status),
+			Coverage: string(move.CoverageType),
+		})
+	}
+
+	return out
 }
 
 func (t *getShipmentTool) readableBatch(

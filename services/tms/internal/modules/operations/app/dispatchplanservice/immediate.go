@@ -88,6 +88,7 @@ func pairingOf(
 	return &dispatchplanports.Pairing{
 		MoveID:      move.MoveID,
 		MoveVersion: move.MoveVersion,
+		ShipmentID:  move.ShipmentID,
 		ProNumber:   move.ProNumber,
 		OriginLabel: placeLabel(move.OriginCity, move.OriginState, move.OriginName),
 		DestinationLabel: placeLabel(

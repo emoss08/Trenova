@@ -11,9 +11,12 @@ import (
 const (
 	maxResultWordChars = 40
 	maxResultNameChars = 200
-	maxResultIDs       = 8
-	maxResultKeyChars  = 64
-	maxResultIDChars   = 100
+	// maxResultStateChars holds where every record of a write over many
+	// stands: who is on each of 25 loads, not the first two of them.
+	maxResultStateChars = 2000
+	maxResultIDs        = 8
+	maxResultKeyChars   = 64
+	maxResultIDChars    = 100
 )
 
 // ToolExecutionResult is what an executed write made, kept on the proposal
@@ -115,7 +118,7 @@ func (r *ToolExecutionResult) Bounded() *ToolExecutionResult {
 		Name:   stringutils.OneLine(r.Name, maxResultNameChars),
 		Record: r.Record.Bounded(),
 		Total:  r.Total,
-		State:  stringutils.OneLine(r.State, maxResultNameChars),
+		State:  stringutils.OneLine(r.State, maxResultStateChars),
 	}
 	for idx, failure := range r.Failed {
 		if idx == maxResultFailures {

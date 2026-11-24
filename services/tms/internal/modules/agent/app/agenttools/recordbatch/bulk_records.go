@@ -39,6 +39,21 @@ type RecordLabels func(
 	ids []pulid.ID,
 ) map[pulid.ID]string
 
+// RecordOwner is the record a person knows a batch's record by: a move is
+// reported as its shipment, which has a page and a card, under its PRO number.
+type RecordOwner struct {
+	ID    pulid.ID
+	Label string
+}
+
+// RecordOwners names, for each record a batch could not change, the record
+// it is reported as.
+type RecordOwners func(
+	ctx context.Context,
+	tenant pagination.TenantInfo,
+	ids []pulid.ID,
+) map[pulid.ID]RecordOwner
+
 type singleRecordTool interface {
 	agenttoolports.AgentTool
 	agenttoolports.ToolPreviewer
@@ -60,6 +75,14 @@ type RecordBatch struct {
 	NeedsPerson error        `json:"-"`
 	Unchanged   string       `json:"-"`
 	Labels      RecordLabels `json:"-"`
+	// Rows, when set, names the parameter holding each record's own
+	// arguments: one object per record, keyed by SingleParam. A record's call
+	// is its row with the shared parameters; Param lists the records the rows
+	// cover and is filled from them when the call leaves it out.
+	Rows string `json:"-"`
+	// Owners, when set, reports each record the batch could not change as
+	// the record that owns it, and takes the place of Labels.
+	Owners RecordOwners `json:"-"`
 }
 
 type batchItem struct {
@@ -99,7 +122,7 @@ func (b *RecordBatch) ids(
 		return nil, err
 	}
 
-	ids, err := toolparams.RequirePulidSlice(params.Params, b.Param, MaxBulkRecords)
+	ids, err := b.recordIDs(params.Params)
 	if err != nil {
 		return nil, err
 	}
@@ -108,13 +131,17 @@ func (b *RecordBatch) ids(
 }
 
 func (b *RecordBatch) singleArguments(params map[string]any, id pulid.ID) map[string]any {
-	arguments := make(map[string]any, len(b.Shared)+1)
-	arguments[b.SingleParam] = id.String()
+	row := b.row(params, id)
+	arguments := make(map[string]any, len(b.Shared)+len(row)+1)
+	for key, value := range row {
+		arguments[key] = value
+	}
 	for _, key := range b.Shared {
 		if value, ok := params[key]; ok {
 			arguments[key] = value
 		}
 	}
+	arguments[b.SingleParam] = id.String()
 
 	return arguments
 }
@@ -135,7 +162,7 @@ func (b *RecordBatch) singleParams(
 // Split is the call naming each record alone, in the order named and each
 // once, with the parameters every record shares.
 func (b *RecordBatch) Split(params map[string]any) ([]map[string]any, error) {
-	ids, err := toolparams.RequirePulidSlice(params, b.Param, MaxBulkRecords)
+	ids, err := b.recordIDs(params)
 	if err != nil {
 		return nil, err
 	}
@@ -143,8 +170,11 @@ func (b *RecordBatch) Split(params map[string]any) ([]map[string]any, error) {
 
 	calls := make([]map[string]any, 0, len(ids))
 	for _, id := range ids {
-		call := make(map[string]any, len(b.Shared)+1)
+		call := make(map[string]any, len(b.Shared)+2)
 		call[b.Param] = []any{id.String()}
+		if b.Rows != "" {
+			call[b.Rows] = b.rowsFor(params, []pulid.ID{id})
+		}
 		for _, key := range b.Shared {
 			if value, ok := params[key]; ok {
 				call[key] = value
@@ -351,7 +381,7 @@ func (b *RecordBatch) Target(params map[string]any) (agenttoolports.ToolTarget, 
 	if !ok {
 		return agenttoolports.ToolTarget{}, false
 	}
-	ids, err := toolparams.RequirePulidSlice(params, b.Param, MaxBulkRecords)
+	ids, err := b.recordIDs(params)
 	if err != nil {
 		return agenttoolports.ToolTarget{}, false
 	}
@@ -444,10 +474,15 @@ func (b *RecordBatch) failedItems(
 		return nil
 	}
 	names := b.failedLabels(ctx, params, failures)
+	owners := b.failedOwners(ctx, params, failures)
 	out := make([]agentrecord.ExecutionItemFail, 0, len(failures))
 	for _, failure := range failures {
+		id := failure.id
+		if owner, ok := owners[failure.id]; ok && owner.ID.IsNotNil() {
+			id = owner.ID
+		}
 		out = append(out, agentrecord.ExecutionItemFail{
-			ID:     failure.id.String(),
+			ID:     id.String(),
 			Label:  names[failure.id],
 			Reason: strings.TrimSpace(failure.cause.Error()),
 		})
@@ -485,11 +520,39 @@ func (b *RecordBatch) outcome(
 	return outcome + "; refused: " + strings.Join(reasons, ", ")
 }
 
+func (b *RecordBatch) failedOwners(
+	ctx context.Context,
+	params *agenttoolports.ToolExecuteParams,
+	failures []batchFailure,
+) map[pulid.ID]RecordOwner {
+	if b.Owners == nil || len(failures) == 0 {
+		return map[pulid.ID]RecordOwner{}
+	}
+	ids := make([]pulid.ID, 0, len(failures))
+	for _, failure := range failures {
+		ids = append(ids, failure.id)
+	}
+	owners := b.Owners(ctx, toolparams.TenantFrom(params), ids)
+	if owners == nil {
+		return map[pulid.ID]RecordOwner{}
+	}
+
+	return owners
+}
+
 func (b *RecordBatch) failedLabels(
 	ctx context.Context,
 	params *agenttoolports.ToolExecuteParams,
 	failures []batchFailure,
 ) map[pulid.ID]string {
+	if b.Owners != nil {
+		labels := make(map[pulid.ID]string, len(failures))
+		for id, owner := range b.failedOwners(ctx, params, failures) {
+			labels[id] = owner.Label
+		}
+
+		return labels
+	}
 	if b.Labels == nil {
 		return map[pulid.ID]string{}
 	}

@@ -20,6 +20,7 @@ import (
 )
 
 type assignmentChecker interface {
+	moveReader
 	PreviewAssignment(
 		ctx context.Context,
 		req *dispatchconsoleservice.PreviewAssignmentRequest,

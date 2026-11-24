@@ -39,7 +39,16 @@ func TestEveryRecordSplitterSplitsIntoSingleRecordCalls(t *testing.T) {
 		}
 		named = append(named, ids[0].String())
 
-		calls, err := splitter.SplitRecords(map[string]any{param: named})
+		args := map[string]any{param: named}
+		if rowsParam, key, hasRows := rowsParamOf(tool); hasRows {
+			rows := make([]any, 0, len(ids))
+			for _, id := range ids {
+				rows = append(rows, map[string]any{key: id.String()})
+			}
+			args[rowsParam] = rows
+		}
+
+		calls, err := splitter.SplitRecords(args)
 		require.NoError(t, err, tool.Name())
 		require.Len(t, calls, len(ids), "%s: each record once", tool.Name())
 		for idx, call := range calls {
@@ -51,6 +60,29 @@ func TestEveryRecordSplitterSplitsIntoSingleRecordCalls(t *testing.T) {
 	}
 
 	assert.Positive(t, splitters, "the record-subset batch tools split")
+}
+
+// rowsParamOf is the parameter of a batch whose records each take their own
+// arguments (RecordBatch.Rows): a list of objects, each keyed by the first
+// field its rows require, the record's id.
+func rowsParamOf(tool agenttoolports.AgentTool) (name, key string, ok bool) {
+	properties, _ := tool.ParamSchema()[toolschema.KeyProperties].(map[string]any)
+	for candidate, raw := range properties {
+		property, isMap := raw.(map[string]any)
+		if !isMap || property[toolschema.KeyType] != toolschema.TypeArray {
+			continue
+		}
+		items, isItems := property[toolschema.KeyItems].(map[string]any)
+		if !isItems || items[toolschema.KeyType] != toolschema.TypeObject {
+			continue
+		}
+		required, _ := items[toolschema.KeyRequired].([]string)
+		if len(required) > 0 {
+			return candidate, required[0], true
+		}
+	}
+
+	return "", "", false
 }
 
 func subsetParam(t *testing.T, tool agenttoolports.AgentTool) string {

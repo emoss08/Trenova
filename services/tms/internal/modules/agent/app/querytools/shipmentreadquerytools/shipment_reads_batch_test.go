@@ -87,8 +87,12 @@ one read each.
 func TestGetShipment_SeveralLoadsAreOneTableReadOnceForEachSource(t *testing.T) {
 	t.Parallel()
 
+	firstMove := &shipment.ShipmentMove{
+		ID: pulid.MustNew("smv_"), Sequence: 0, Status: shipmentvocab.MoveStatusNew,
+		CoverageType: shipmentvocab.MoveCoverageTypeUnassigned,
+	}
 	first := &shipment.Shipment{ID: pulid.MustNew("shp_"), ProNumber: "S-1",
-		Status: shipmentvocab.StatusDelayed}
+		Status: shipmentvocab.StatusDelayed, Moves: []*shipment.ShipmentMove{firstMove, nil}}
 	second := &shipment.Shipment{ID: pulid.MustNew("shp_"), ProNumber: "S-2",
 		Status: shipmentvocab.StatusDelayed}
 	missing := pulid.MustNew("shp_")
@@ -118,6 +122,12 @@ func TestGetShipment_SeveralLoadsAreOneTableReadOnceForEachSource(t *testing.T) 
 	require.True(t, ok)
 	require.Len(t, outcome.Items, 2)
 	assert.Equal(t, "S-1", outcome.Items[0].ProNumber, "rows come in the order named")
+	assert.Equal(t, []shipmentMoveRef{{
+		ID:       firstMove.ID.String(),
+		Sequence: 0,
+		Status:   string(shipmentvocab.MoveStatusNew),
+		Coverage: string(shipmentvocab.MoveCoverageTypeUnassigned),
+	}}, outcome.Items[0].Moves, "a summary row names its moves so they can be ranked or planned")
 	require.Len(t, outcome.Items[0].ActiveHolds, 1)
 	assert.Equal(t, "Holding for a new appointment.", outcome.Items[0].ActiveHolds[0].Notes)
 	require.NotNil(t, outcome.Items[0].NewestComment)

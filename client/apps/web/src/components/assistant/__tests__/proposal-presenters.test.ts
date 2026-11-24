@@ -128,11 +128,15 @@ describe("presentProposal", () => {
       proposal({
         toolName: "dispatch_assign_move",
         arguments: {
-          shipmentMoveId: "smv_1",
-          primaryWorkerId: "wrk_1",
-          secondaryWorkerId: "",
-          tractorId: "trc_1",
-          trailerId: "trl_1",
+          assignments: [
+            {
+              shipmentMoveId: "smv_1",
+              primaryWorkerId: "wrk_1",
+              secondaryWorkerId: "",
+              tractorId: "trc_1",
+              trailerId: "trl_1",
+            },
+          ],
         },
       }),
     );
@@ -156,8 +160,13 @@ describe("presentProposal", () => {
       proposal({
         toolName: "dispatch_assign_move",
         arguments: {
-          shipmentMoveId: "smv_01M2PRNXAMQNKK9HK9V5B817QE",
-          primaryWorkerId: "wrk_01M2PRNXAMQNKK9HK9V5B817QE",
+          shipmentMoveIds: ["smv_01M2PRNXAMQNKK9HK9V5B817QE"],
+          assignments: [
+            {
+              shipmentMoveId: "smv_01M2PRNXAMQNKK9HK9V5B817QE",
+              primaryWorkerId: "wrk_01M2PRNXAMQNKK9HK9V5B817QE",
+            },
+          ],
         },
       }),
     );
@@ -165,6 +174,28 @@ describe("presentProposal", () => {
     expect(view.summary).toBe("Put the chosen driver on this move.");
     expect(view.summary).not.toContain("B817QE");
     expect(view.summary).not.toContain("wrk_01M2PRNXAMQNKK9HK9V5B817QE");
+  });
+
+  it("counts the moves a call assigns, less any the approver dropped", () => {
+    const assignments = ["smv_1", "smv_2", "smv_3"].map((shipmentMoveId) => ({
+      shipmentMoveId,
+      primaryWorkerId: "wrk_01M2PRNXAMQNKK9HK9V5B817QE",
+      tractorId: "trc_01M2PRNXAMQNKK9HK9V5B817QE",
+    }));
+    const all = presentProposal(
+      proposal({ toolName: "dispatch_assign_move", arguments: { assignments } }),
+    );
+    const kept = presentProposal(
+      proposal({
+        toolName: "dispatch_assign_move",
+        arguments: { shipmentMoveIds: ["smv_1", "smv_3"], assignments },
+      }),
+    );
+
+    expect(all.title).toBe("Assign drivers");
+    expect(all.summary).toBe("Put a driver on each of 3 moves. Each driver sees their own load.");
+    expect(all.highlights).toEqual([]);
+    expect(kept.summary).toBe("Put a driver on each of 2 moves. Each driver sees their own load.");
   });
 
   /**

@@ -54,7 +54,7 @@ What a change you call does:
 - Changes that run at once whatever else waits, because they act only on your own work: agent_create_wait, agent_cancel_wait, agent_offer_options
 
 How a task is done with these, in order, each step's result feeding the next; skip a step whose answer you already have:
-- dispatch_assign_move: shipment_get → dispatch_rank_candidates → dispatch_assign_move
+- dispatch_assign_move: shipment_list → dispatch_plan → dispatch_assign_move
 - dispatch_create_carrier_assignment: shipment_get → carrier_shop → dispatch_create_carrier_assignment
 - rate_send_confirmation: rate_list_confirmations → rate_send_confirmation
 

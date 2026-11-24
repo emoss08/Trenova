@@ -72,9 +72,12 @@ func coverageProposal(moveID, workerID pulid.ID, version int64) *agent.AgentProp
 		ID:       pulid.MustNew("ap_"),
 		ToolName: assignMoveTool,
 		ToolParams: map[string]any{
-			"shipmentMoveId":  moveID.String(),
-			"primaryWorkerId": workerID.String(),
-			"tractorId":       pulid.MustNew("trc_").String(),
+			"shipmentMoveIds": []any{moveID.String()},
+			"assignments": []any{map[string]any{
+				"shipmentMoveId":  moveID.String(),
+				"primaryWorkerId": workerID.String(),
+				"tractorId":       pulid.MustNew("trc_").String(),
+			}},
 		},
 		Confidence:     decimal.NewFromFloat(0.91),
 		Rationale:      "18 empty miles to the pickup",
@@ -167,7 +170,7 @@ func TestCoverageProposals_SkipsAProposalWhoseParametersDoNotDecode(t *testing.T
 
 	moveID := pulid.MustNew("sm_")
 	broken := coverageProposal(moveID, pulid.MustNew("wrk_"), 1)
-	broken.ToolParams["primaryWorkerId"] = "not-an-id"
+	broken.ToolParams["assignments"].([]any)[0].(map[string]any)["primaryWorkerId"] = "not-an-id"
 	proposals := &pendingProposals{proposals: []*agent.AgentProposal{broken}}
 
 	pending, err := pendingService(proposals, &namedWorkers{}).CoverageProposals(

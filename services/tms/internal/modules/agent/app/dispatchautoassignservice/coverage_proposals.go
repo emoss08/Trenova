@@ -171,15 +171,30 @@ func (s *Service) nameWorkers(
 	return nil
 }
 
+// proposedWorkers is the row of the proposal's own move: a proposal the plan
+// filed covers one move, and a person's call covering several still names
+// this move's driver in its own row.
 func proposedWorkers(proposal *agent.AgentProposal) (assignMoveToolParams, error) {
-	var params assignMoveToolParams
+	var call assignMovesCall
 	raw, err := sonic.Marshal(proposal.ToolParams)
 	if err != nil {
-		return params, err
+		return assignMoveToolParams{}, err
 	}
-	err = sonic.Unmarshal(raw, &params)
+	if err = sonic.Unmarshal(raw, &call); err != nil {
+		return assignMoveToolParams{}, err
+	}
+	for _, row := range call.Assignments {
+		if row.ShipmentMoveID == proposal.TargetID.String() {
+			return row, nil
+		}
+	}
+	if len(call.Assignments) == 1 {
+		return call.Assignments[0], nil
+	}
 
-	return params, err
+	return assignMoveToolParams{}, fmt.Errorf(
+		"the proposal names no driver for move %s", proposal.TargetID,
+	)
 }
 
 func failedCoverageOf(proposal *agent.AgentProposal) (*dispatchconsoleports.FailedCoverage, error) {

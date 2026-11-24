@@ -78,6 +78,7 @@ func (s *Service) Plan(
 		WindowEnd:    windowEnd,
 		FleetCodeIDs: req.FleetCodeIDs,
 		MoveIDs:      req.MoveIDs,
+		ShipmentIDs:  req.ShipmentIDs,
 		Limit:        maxPlanMoves,
 		DriverLimit:  maxPlanDrivers,
 	}

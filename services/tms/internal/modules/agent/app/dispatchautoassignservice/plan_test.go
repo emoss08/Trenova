@@ -347,16 +347,22 @@ func TestToolParamsFor(t *testing.T) {
 
 	c := candidate()
 
-	params, err := toolParamsFor(c)
+	params, err := toolParamsFor(c, "18 empty miles to the pickup")
 	require.NoError(t, err)
 	assert.Equal(t, map[string]any{
-		"shipmentMoveId":  c.MoveID.String(),
-		"primaryWorkerId": c.WorkerID.String(),
-		"tractorId":       c.TractorID.String(),
+		"shipmentMoveIds": []any{c.MoveID.String()},
+		"assignments": []any{map[string]any{
+			"shipmentMoveId":  c.MoveID.String(),
+			"primaryWorkerId": c.WorkerID.String(),
+			"tractorId":       c.TractorID.String(),
+			"reason":          "18 empty miles to the pickup",
+		}},
 	}, params)
 
 	c.TrailerID = pulid.MustNew("tr_")
-	params, err = toolParamsFor(c)
+	params, err = toolParamsFor(c, "")
 	require.NoError(t, err)
-	assert.Equal(t, c.TrailerID.String(), params["trailerId"])
+	row := params["assignments"].([]any)[0].(map[string]any)
+	assert.Equal(t, c.TrailerID.String(), row["trailerId"])
+	assert.NotContains(t, row, "reason")
 }

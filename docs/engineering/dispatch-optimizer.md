@@ -96,6 +96,26 @@ Dispatch is economics, so every number the optimizer works with is in cents.
 (`dispatchautoassignservice`) only calls the port: it turns pairings into proposals, with a
 confidence of `1 − hard/coverage − 0.1 × warnings` and a rationale in dollars.
 
+The planner takes moves (`MoveIDs`) or shipments (`ShipmentIDs`, every open move of each, on
+`idx_shipment_moves_shipment`), both bounded by the plan's move limit.
+`DispatchAutoAssignService` has two entries over one solve:
+
+- **`Plan`** is automatic assignment: it needs `EnableAutoAssignment`, starts an agent run and
+  files a `dispatch_assign_move` proposal per move (one row each, so the board decides every
+  move on its own), and with `Apply` runs the ones its tier allows.
+- **`Preview`** is the same plan for a reader, the `dispatch_plan` agent tool among them: it
+  needs the planner's features but not automatic assignment, and it files nothing, starts
+  nothing and assigns nothing. A chat read used to call `Plan`, which refused in every
+  organization without automatic assignment and, where it ran, filed a pending proposal per
+  move beside the ones the model then proposed.
+
+`dispatch_plan` plans the shipments a list just read (`shipmentIds`), so a model never fetches
+each shipment for its move ids. Named records plan over the longest horizon, and a named move
+or shipment the plan neither covers nor leaves uncovered is said (`notPlanned`) rather than
+dropped. Its `assignments` are `dispatch_assign_move` rows as they stand, and that tool takes
+every move of a plan in one call the dispatcher approves once (see "Tools that take one record
+or many" in [proposal-previews.md](proposal-previews.md)).
+
 ## Stored plan prices
 
 Every plan rewrites `dispatch_plan_prices`, one row per planned move

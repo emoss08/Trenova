@@ -3950,7 +3950,7 @@ Something the person deciding should know. The code is translated by the
 client; the message is the English fallback, with its arguments in order.
 """
 type AgentPreviewWarning {
-  "would_fail, already_told_customer, driver_unreachable, depends_on_step, target_changed, record_missing, tool_removed, preview_failed, withheld, sensitive_content, retarget_refused, unpinned, rate_coverage, recipient_skipped or equipment_in_use."
+  "would_fail, already_told_customer, driver_unreachable, depends_on_step, target_changed, record_missing, tool_removed, preview_failed, withheld, sensitive_content, retarget_refused, unpinned, rate_coverage, recipient_skipped, equipment_in_use or double_booked."
   code: String!
   args: [String!]!
   message: String!
@@ -15435,6 +15435,12 @@ extend type Query {
   outside the window on screen still opens. Carries its pending proposal like the board.
   """
   dispatchMove(moveId: ID!): DispatchBoardMove!
+  """
+  Up to 50 moves as the board draws them, in one read, whatever window they fall in and
+  whatever their status: a dispatch plan's card reads which of its loads are covered now. A
+  move the organization does not hold is left out.
+  """
+  dispatchMovesByIds(moveIds: [ID!]!): [DispatchBoardMove!]!
   dispatchMoveCandidates(input: DispatchMoveCandidatesInput!): [DispatchCandidate!]!
   dispatchDriverMoves(input: DispatchDriverMovesInput!): [DispatchDriverMoveMatch!]!
   dispatchAssignmentPreview(

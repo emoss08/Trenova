@@ -4484,6 +4484,20 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNDispatchBoardMove2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDispatchBoardMove),
 			},
 			{
+				Name:       "dispatchMovesByIds",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "DispatchBoardMove",
+				Args:       field_Query_dispatchMovesByIds_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[QueryResolver](ec, "Query@dispatchconsole").DispatchMovesByIds(ctx, fc.Args["moveIds"].([]string))
+				},
+				Marshal: gqlexec.Marshal(marshalNDispatchBoardMove2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDispatchBoardMoveᚄ),
+			},
+			{
 				Name:       "dispatchMoveCandidates",
 				NonNull:    true,
 				IsResolver: true,
@@ -4610,6 +4624,7 @@ type MutationResolver interface {
 type QueryResolver interface {
 	DispatchBoard(ctx context.Context, input gqlmodel.DispatchBoardInput) (*gqlmodel.DispatchBoard, error)
 	DispatchMove(ctx context.Context, moveID string) (*gqlmodel.DispatchBoardMove, error)
+	DispatchMovesByIds(ctx context.Context, moveIds []string) ([]*gqlmodel.DispatchBoardMove, error)
 	DispatchMoveCandidates(ctx context.Context, input gqlmodel.DispatchMoveCandidatesInput) ([]*gqlmodel.DispatchCandidate, error)
 	DispatchDriverMoves(ctx context.Context, input gqlmodel.DispatchDriverMovesInput) ([]*gqlmodel.DispatchDriverMoveMatch, error)
 	DispatchAssignmentPreview(ctx context.Context, input gqlmodel.DispatchAssignmentPreviewInput) (*gqlmodel.DispatchAssignmentPreview, error)
@@ -4758,6 +4773,19 @@ func field_Query_dispatchMove_args(ctx context.Context, ec *gqlexec.Exec, rawArg
 		return nil, err
 	}
 	args["moveId"] = arg0
+	return args, nil
+}
+
+func field_Query_dispatchMovesByIds_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "moveIds",
+		func(ctx context.Context, v any) ([]string, error) {
+			return unmarshalNID2ᚕstringᚄ(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["moveIds"] = arg0
 	return args, nil
 }
 

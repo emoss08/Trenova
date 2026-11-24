@@ -562,3 +562,34 @@ func (r *QueryResolver) DispatchFreightArea(ctx context.Context, cell int, slotS
 
 	return mapDispatchFreightAreaDetail(detail), nil
 }
+
+func (r *QueryResolver) DispatchMovesByIds(ctx context.Context, moveIds []string) ([]*gqlmodel.DispatchBoardMove, error) {
+	authCtx, err := r.RequirePermission(
+		ctx,
+		permission.ResourceShipmentMove,
+		permission.OpRead,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	ids, err := gqlid.ParseIDs(moveIds)
+	if err != nil {
+		return nil, err
+	}
+
+	moves, err := r.DispatchConsoleService.GetMoves(ctx, resolvercore.TenantInfo(authCtx), ids)
+	if err != nil {
+		return nil, err
+	}
+
+	mapped := make([]*gqlmodel.DispatchBoardMove, 0, len(moves))
+	for _, move := range moves {
+		mapped = append(mapped, mapDispatchBoardMove(move))
+	}
+	if err = r.attachCoverageProposals(ctx, authCtx, moves, mapped); err != nil {
+		return nil, err
+	}
+
+	return mapped, nil
+}

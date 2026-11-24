@@ -38017,6 +38017,15 @@
       "routes/pay-profile"
     ]
   },
+  "Assign drivers": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Assign each email purpose to an active sender profile. Clearing a purpose removes its assignment on save.": {
     "sites": 1,
     "scope": [
@@ -373625,6 +373634,15 @@
     ],
     "areas": [
       "routes/billing-queue"
+    ]
+  },
+  "{0, plural, one {Put a driver on # move. The driver sees the load.} other {Put a driver on each of # moves. Each driver sees their own load.}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "{0, plural, one {Put the driver back on # move} other {Put the drivers back on # moves}}": {

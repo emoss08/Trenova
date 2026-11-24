@@ -2,6 +2,7 @@ package dispatchconsoleservice
 
 import (
 	"context"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"sort"
 
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
@@ -468,6 +469,44 @@ func (s *Service) PreviewAssignment(
 		control.ComplianceEnforcementLevel.ShouldBlock()
 
 	return preview, nil
+}
+
+// MaxMovesByID is the most moves one GetMoves reads: a dispatch plan's
+// moves, which the planner bounds the same way.
+const MaxMovesByID = 50
+
+// GetMoves is the named moves as the board draws them, in one read, whatever
+// window they fall in and whatever their status, so a dispatch plan's card
+// says which of its loads are covered now. A move outside the organization is
+// left out, never an error, as a list leaves out what it cannot read.
+func (s *Service) GetMoves(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	moveIDs []pulid.ID,
+) ([]*BoardMove, error) {
+	if len(moveIDs) == 0 {
+		return []*BoardMove{}, nil
+	}
+	if len(moveIDs) > MaxMovesByID {
+		return nil, errortypes.NewValidationError(
+			"moveIds",
+			errortypes.ErrInvalid,
+			"Read at most 50 moves at once",
+		)
+	}
+
+	moves, err := s.consoleRepo.ListBoardMoves(ctx, &dispatchboardports.DispatchBoardFilter{
+		TenantInfo:     tenantInfo,
+		MoveIDs:        moveIDs,
+		MoveStatuses:   shipmentvocab.MoveStatuses(),
+		IncludeCovered: true,
+		Limit:          len(moveIDs),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return s.decorateBoardMoves(ctx, tenantInfo, moves, timeutils.NowUnix()), nil
 }
 
 func (s *Service) loadMove(
