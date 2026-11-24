@@ -65,7 +65,7 @@ func CapabilityTexts(
 	actions agenttoolports.AgentToolRegistry,
 ) map[string]capabilitysearch.Text {
 	descriptors := make(map[string]agenttoolports.AgentToolDescriptor, 1024)
-	for _, descriptor := range allDescriptors(queries, actions) {
+	for _, descriptor := range AllDescriptors(queries, actions) {
 		descriptors[descriptor.Name] = descriptor
 	}
 	textOf := func(name string) capabilitysearch.Text {
@@ -122,7 +122,7 @@ func BuildCapabilityIndex(
 	return &CapabilityIndex{
 		Registry: registry,
 		Index:    capabilitysearch.New(registry.All(), CapabilityTexts(registry, queries, actions)),
-		Keyword:  New(allDescriptors(queries, actions)),
+		Keyword:  New(AllDescriptors(queries, actions)),
 	}, nil
 }
 
@@ -135,7 +135,7 @@ func (c *CapabilityIndex) Search(text string, semantic map[string]float64) capab
 	})
 }
 
-func allDescriptors(
+func AllDescriptors(
 	queries agenttoolports.AgentQueryToolRegistry,
 	actions agenttoolports.AgentToolRegistry,
 ) []agenttoolports.AgentToolDescriptor {

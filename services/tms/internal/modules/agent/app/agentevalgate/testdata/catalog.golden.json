@@ -26422,7 +26422,7 @@
             "type": "integer"
           },
           "or": {
-            "description": "Groups of conditions.",
+            "description": "Groups of conditions, each as in where.",
             "items": {
               "items": {
                 "additionalProperties": false,
@@ -26434,26 +26434,7 @@
                     "type": "string"
                   },
                   "op": {
-                    "enum": [
-                      "eq",
-                      "ne",
-                      "in",
-                      "notin",
-                      "contains",
-                      "startswith",
-                      "gt",
-                      "gte",
-                      "lt",
-                      "lte",
-                      "between",
-                      "isnull",
-                      "isnotnull",
-                      "lastndays",
-                      "nextndays",
-                      "today"
-                    ],
-                    "type": "string",
-                    "x-enumOf": "records_query.operator"
+                    "type": "string"
                   },
                   "value": {},
                   "values": {

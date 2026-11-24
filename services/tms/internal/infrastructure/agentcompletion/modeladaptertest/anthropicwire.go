@@ -101,8 +101,8 @@ func DeferredWireRequest() modeladapter.Request {
 		Description: "Load more tools.",
 		Parameters: map[string]any{
 			"type":       "object",
-			"properties": map[string]any{"need": map[string]any{"type": "string"}},
-			"required":   []any{"need"},
+			"properties": map[string]any{"query": map[string]any{"type": "string"}},
+			"required":   []any{"query"},
 		},
 		Searches: true,
 	}, modeladapter.ToolSpec{
@@ -122,7 +122,7 @@ func DeferredWireRequest() modeladapter.Request {
 				Role: modeladapter.RoleAssistant,
 				ToolCalls: []modeladapter.ToolCall{{
 					ID: "call_find", Name: "search_tools",
-					Arguments: map[string]any{"need": "trailers due inspection"},
+					Arguments: map[string]any{"query": "trailers due inspection"},
 				}},
 			},
 			{

@@ -24,7 +24,7 @@
           {
             "id": "call_find",
             "input": {
-              "need": "trailers due inspection"
+              "query": "trailers due inspection"
             },
             "name": "search_tools",
             "type": "tool_use"
@@ -120,12 +120,12 @@
         "description": "Load more tools.",
         "input_schema": {
           "properties": {
-            "need": {
+            "query": {
               "type": "string"
             }
           },
           "required": [
-            "need"
+            "query"
           ],
           "type": "object"
         },
