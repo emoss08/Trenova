@@ -214,7 +214,7 @@ func BindCall(call CursorCall) (pagination.CursorBinding, error) {
 	shape := make(map[string]any, len(call.Params))
 	for key, value := range call.Params {
 		if key == ParamLimit || key == ParamAfter || key == ParamOffset ||
-			key == agenttoolports.ListFieldsParam {
+			key == ParamDetail || key == agenttoolports.ListFieldsParam {
 			continue
 		}
 		shape[key] = value

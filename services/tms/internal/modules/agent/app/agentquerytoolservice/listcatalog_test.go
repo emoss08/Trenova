@@ -3,6 +3,7 @@ package agentquerytoolservice
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/listtool"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -46,6 +47,14 @@ func TestListCatalog_EverySortableFieldIsSortable(t *testing.T) {
 				"%s offers %q as a sort, which the entity cannot sort by",
 				spec.Name, field.Name)
 		}
+	}
+}
+
+func TestListCatalog_EverySortFieldShowsInAColumn(t *testing.T) {
+	t.Parallel()
+
+	for _, spec := range listCatalogSpecs() {
+		assert.Empty(t, listtool.SortColumnProblems(&spec))
 	}
 }
 

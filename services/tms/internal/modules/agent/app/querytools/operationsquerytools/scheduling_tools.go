@@ -42,6 +42,7 @@ type recurringShipmentRow struct {
 	NextOccurrenceAt querytool.OptionalDate `json:"nextOccurrenceAt"`
 	GenerationCount  int64                  `json:"generationCount"`
 	LastShipmentID   string                 `json:"lastGeneratedShipmentId,omitempty"`
+	CreatedAt        querytool.OptionalDate `json:"createdAt"`
 }
 
 func recurringShipmentRowFrom(entity *recurringshipment.RecurringShipment) recurringShipmentRow {
@@ -60,6 +61,7 @@ func recurringShipmentRowFrom(entity *recurringshipment.RecurringShipment) recur
 		),
 		GenerationCount: entity.GenerationCount,
 		LastShipmentID:  querytool.PulidString(entity.LastGeneratedShipmentID),
+		CreatedAt:       querytool.RecordedDate(entity.CreatedAt),
 	}
 	if entity.Customer != nil {
 		row.Customer = entity.Customer.Name

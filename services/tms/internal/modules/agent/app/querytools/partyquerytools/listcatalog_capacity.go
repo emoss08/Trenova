@@ -17,21 +17,22 @@ import (
 )
 
 type capacityPostingRow struct {
-	ID               string `json:"id"`
-	CarrierID        string `json:"carrierId"`
-	Carrier          string `json:"carrier,omitempty"`
-	OriginLocation   string `json:"originLocation,omitempty"`
-	OriginState      string `json:"originState,omitempty"`
-	RadiusMiles      *int   `json:"originRadiusMiles,omitempty"`
-	DestinationState string `json:"destinationState,omitempty"`
-	EquipmentType    string `json:"equipmentType,omitempty"`
-	AvailableFrom    int64  `json:"availableFrom"`
-	AvailableTo      int64  `json:"availableTo"`
-	TruckCount       int    `json:"truckCount"`
-	RateMethod       string `json:"rateMethod"`
-	Rate             string `json:"rate,omitempty"`
-	Source           string `json:"source"`
-	Version          int64  `json:"version"`
+	ID               string                 `json:"id"`
+	CarrierID        string                 `json:"carrierId"`
+	Carrier          string                 `json:"carrier,omitempty"`
+	OriginLocation   string                 `json:"originLocation,omitempty"`
+	OriginState      string                 `json:"originState,omitempty"`
+	RadiusMiles      *int                   `json:"originRadiusMiles,omitempty"`
+	DestinationState string                 `json:"destinationState,omitempty"`
+	EquipmentType    string                 `json:"equipmentType,omitempty"`
+	AvailableFrom    int64                  `json:"availableFrom"`
+	AvailableTo      int64                  `json:"availableTo"`
+	TruckCount       int                    `json:"truckCount"`
+	RateMethod       string                 `json:"rateMethod"`
+	Rate             string                 `json:"rate,omitempty"`
+	Source           string                 `json:"source"`
+	Version          int64                  `json:"version"`
+	CreatedAt        querytool.OptionalDate `json:"createdAt"`
 }
 
 func toCapacityPostingRow(item *carriercapacity.Posting) capacityPostingRow {
@@ -45,6 +46,7 @@ func toCapacityPostingRow(item *carriercapacity.Posting) capacityPostingRow {
 		RateMethod:    string(item.RateMethod),
 		Source:        string(item.Source),
 		Version:       item.Version,
+		CreatedAt:     querytool.RecordedDate(item.CreatedAt),
 	}
 	if item.Carrier != nil {
 		row.Carrier = item.Carrier.Name

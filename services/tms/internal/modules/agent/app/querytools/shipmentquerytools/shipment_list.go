@@ -33,27 +33,29 @@ var (
 
 type Row struct {
 	enteredOverEDI bool
+	source         *shipment.Shipment
 
-	ID                 string                 `json:"id"`
-	ProNumber          string                 `json:"proNumber"`
-	BOL                string                 `json:"bol,omitempty"`
-	Status             string                 `json:"status"`
-	Customer           string                 `json:"customer,omitempty"`
-	Pickup             string                 `json:"pickup,omitempty"`
-	Delivery           string                 `json:"delivery,omitempty"`
-	Drivers            string                 `json:"drivers,omitempty"`
-	Carrying           string                 `json:"carrying,omitempty"`
-	TotalCharge        string                 `json:"totalCharge,omitempty"`
-	ActualShipDate     querytool.OptionalDate `json:"actualShipDate"`
-	ActualDeliveryDate querytool.OptionalDate `json:"actualDeliveryDate"`
-	BillingStatus      string                 `json:"billingStatus,omitempty"`
-	ActiveHolds        []shipmentRowHold      `json:"activeHolds,omitempty"`
+	ID                    string                 `json:"id"`
+	ProNumber             string                 `json:"proNumber"`
+	BOL                   string                 `json:"bol,omitempty"`
+	Status                string                 `json:"status"`
+	Customer              string                 `json:"customer,omitempty"`
+	Pickup                string                 `json:"pickup,omitempty"`
+	Delivery              string                 `json:"delivery,omitempty"`
+	Drivers               string                 `json:"drivers,omitempty"`
+	Carrying              string                 `json:"carrying,omitempty"`
+	TotalChargeAmount     string                 `json:"totalChargeAmount,omitempty"`
+	ActualShipDate        querytool.OptionalDate `json:"actualShipDate"`
+	ActualDeliveryDate    querytool.OptionalDate `json:"actualDeliveryDate"`
+	BillingTransferStatus string                 `json:"billingTransferStatus,omitempty"`
+	CreatedAt             querytool.OptionalDate `json:"createdAt"`
+	ActiveHolds           []shipmentRowHold      `json:"activeHolds,omitempty"`
 }
 
 func ListSpec(repo shipmentports.ShipmentRepository) listtool.Spec {
 	return listtool.Spec{
 		Name:         "shipment_list",
-		Row:          Row{},
+		Row:          FullRow{},
 		EntityPlural: "shipments",
 		Summary: "Shipments by status, billing state, dates or charges, such as picking up " +
 			"today.",
@@ -145,15 +147,17 @@ func countShipments(
 func ToRow(item *shipment.Shipment) Row {
 	row := Row{
 		enteredOverEDI: item.EntryMethod == shipmentvocab.EntryMethodEDI,
+		source:         item,
 
-		ID:            item.ID.String(),
-		ProNumber:     item.ProNumber,
-		BOL:           item.BOL,
-		Status:        string(item.Status),
-		BillingStatus: string(item.BillingTransferStatus),
+		ID:                    item.ID.String(),
+		ProNumber:             item.ProNumber,
+		BOL:                   item.BOL,
+		Status:                string(item.Status),
+		BillingTransferStatus: string(item.BillingTransferStatus),
+		CreatedAt:             querytool.RecordedDate(item.CreatedAt),
 	}
 	if item.TotalChargeAmount.Valid {
-		row.TotalCharge = item.TotalChargeAmount.Decimal.String()
+		row.TotalChargeAmount = item.TotalChargeAmount.Decimal.String()
 	}
 	row.ActualShipDate = querytool.ExpectedDate(
 		typeutils.ValueOrZero(item.ActualShipDate),

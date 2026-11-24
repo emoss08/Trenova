@@ -324,7 +324,58 @@ func FiltersSchema(
 }
 
 func (t *Tool) SortSchema() map[string]any {
-	return agenttoolschema.Enum("Field to order by. Defaults to most recently created.", t.sortable)
+	description := "Field to order by. Defaults to most recently created."
+	if shown := sortColumnsNote(t.Spec.Fields); shown != "" {
+		description += " " + shown
+	}
+
+	return agenttoolschema.Enum(description, t.sortable)
+}
+
+func sortColumnsNote(fields []filtercatalog.Field) string {
+	renamed := make([]string, 0, 2)
+	hidden := make([]string, 0, 2)
+	for _, field := range fields {
+		switch {
+		case !field.Sortable:
+		case field.NoColumn:
+			hidden = append(hidden, field.Name)
+		case field.Column != "":
+			renamed = append(renamed, field.Name+" shows as the column "+field.Column)
+		}
+	}
+
+	parts := make([]string, 0, 2)
+	if len(renamed) > 0 {
+		parts = append(parts, strings.Join(renamed, "; ")+".")
+	}
+	if len(hidden) > 0 {
+		parts = append(parts, strings.Join(hidden, ", ")+" order the rows but are not columns.")
+	}
+
+	return strings.Join(parts, " ")
+}
+
+func SortColumnProblems(spec *Spec) []string {
+	if spec.Row == nil {
+		return nil
+	}
+	columns := rowColumns(spec.Row)
+	var problems []string
+	for _, field := range spec.Fields {
+		if !field.Sortable || field.NoColumn {
+			continue
+		}
+		if !slices.Contains(columns, field.ShownAs()) {
+			problems = append(problems, fmt.Sprintf(
+				"%s sorts by %s, which no row column shows: add column %s, set Column to the "+
+					"column that shows it, or set NoColumn",
+				spec.Name, field.Name, field.ShownAs(),
+			))
+		}
+	}
+
+	return problems
 }
 
 func SortDirectionSchema() map[string]any {

@@ -885,19 +885,20 @@ func (t *listCollectionsWorklistTool) Query(
 }
 
 type glAccountRow struct {
-	ID             string `json:"id"`
-	AccountCode    string `json:"accountCode"`
-	Name           string `json:"name"`
-	Type           string `json:"accountType,omitempty"`
-	Category       string `json:"category,omitempty"`
-	Status         string `json:"status"`
-	Description    string `json:"description,omitempty"`
-	ParentID       string `json:"parentId,omitempty"`
-	System         bool   `json:"isSystem"`
-	AllowManualJE  bool   `json:"allowManualJe"`
-	CurrentBalance string `json:"currentBalance,omitempty"`
-	DebitBalance   string `json:"debitBalance,omitempty"`
-	CreditBalance  string `json:"creditBalance,omitempty"`
+	ID             string                 `json:"id"`
+	AccountCode    string                 `json:"accountCode"`
+	Name           string                 `json:"name"`
+	Type           string                 `json:"accountType,omitempty"`
+	Category       string                 `json:"category,omitempty"`
+	Status         string                 `json:"status"`
+	Description    string                 `json:"description,omitempty"`
+	ParentID       string                 `json:"parentId,omitempty"`
+	System         bool                   `json:"isSystem"`
+	AllowManualJE  bool                   `json:"allowManualJe"`
+	CurrentBalance string                 `json:"currentBalance,omitempty"`
+	DebitBalance   string                 `json:"debitBalance,omitempty"`
+	CreditBalance  string                 `json:"creditBalance,omitempty"`
+	CreatedAt      querytool.OptionalDate `json:"createdAt"`
 }
 
 func NewListGLAccountsTool(
@@ -955,6 +956,7 @@ func NewListGLAccountsTool(
 					ParentID:      querytool.PulidString(item.ParentID),
 					System:        item.IsSystem,
 					AllowManualJE: item.AllowManualJE,
+					CreatedAt:     querytool.RecordedDate(item.CreatedAt),
 				}
 				if item.AccountType != nil {
 					row.Type = item.AccountType.Name

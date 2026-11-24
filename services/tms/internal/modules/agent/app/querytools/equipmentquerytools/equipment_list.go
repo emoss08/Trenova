@@ -19,6 +19,7 @@ import (
 	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/emoss08/trenova/pkg/listcatalog"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/typeutils"
 )
 
 var (
@@ -39,6 +40,8 @@ type equipmentRow struct {
 	LastInspectionDate querytool.OptionalDate `json:"lastInspectionDate"`
 	EquipmentType      string                 `json:"equipmentType,omitempty"`
 	AssignedTo         string                 `json:"assignedTo,omitempty"`
+	CreatedAt          querytool.OptionalDate `json:"createdAt"`
+	LeaseEndDate       querytool.OptionalDate `json:"leaseEndDate"`
 }
 
 func equipmentTypeName(kind *equipmenttype.EquipmentType) string {
@@ -123,6 +126,8 @@ func NewListTractorsTool(
 					Model:         item.Model,
 					LicensePlate:  item.LicensePlateNumber,
 					OwnershipType: string(item.OwnershipType),
+					CreatedAt:     querytool.RecordedDate(item.CreatedAt),
+					LeaseEndDate:  querytool.ExpectedDate(typeutils.ValueOrZero(item.LeaseEndDate), "no lease end recorded"),
 				}
 				if item.Year != nil {
 					row.Year = *item.Year
@@ -180,6 +185,8 @@ func NewListTrailersTool(repo trailerports.TrailerRepository) agenttoolports.Age
 					Model:         item.Model,
 					LicensePlate:  item.LicensePlateNumber,
 					OwnershipType: string(item.OwnershipType),
+					CreatedAt:     querytool.RecordedDate(item.CreatedAt),
+					LeaseEndDate:  querytool.ExpectedDate(typeutils.ValueOrZero(item.LeaseEndDate), "no lease end recorded"),
 				}
 				if item.Year != nil {
 					row.Year = *item.Year

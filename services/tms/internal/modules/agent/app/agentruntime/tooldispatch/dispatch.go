@@ -947,6 +947,10 @@ func (s *Dispatcher) runQueryToolWith(
 			"Tool %q returned data that could not be encoded.", call.Name)
 	}
 	content := ""
+	fence := toolresult.Fence
+	if _, paged := data.(agenttoolports.PageCutter); paged && extras.fitPage {
+		fence = toolresult.FencePage
+	}
 	if extras.fitPage {
 		if fitted, cut := toolresult.FitPage(
 			data,
@@ -962,7 +966,7 @@ func (s *Dispatcher) runQueryToolWith(
 
 	policy := s.Ruled(ctx, req, new(tool.Policy()))
 	outcome := toolcall.Result{
-		Content: toolresult.Fence(call.Name, encoded) + content,
+		Content: fence(call.Name, encoded) + content,
 		Data:    data,
 		Summary: toolsummary.Result(call.Name, document),
 		Asked:   s.asked(ctx, req, call, document),

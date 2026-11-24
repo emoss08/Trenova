@@ -64,11 +64,11 @@ func TestFitPage_CutsToTheRowsThatFitAndResumesAfterThem(t *testing.T) {
 	list := longList(50, true)
 	encoded, err := Encode(list, transcriptNow, "UTC")
 	require.NoError(t, err)
-	require.Greater(t, len(encoded), MaxBytes)
+	require.Greater(t, len(encoded), MaxPageBytes)
 
 	fitted, cut := FitPage(list, encoded, transcriptNow, "UTC", nil)
 	require.True(t, cut)
-	assert.LessOrEqual(t, len(fitted.Encoded), MaxBytes)
+	assert.LessOrEqual(t, len(fitted.Encoded), MaxPageBytes)
 
 	page, ok := fitted.Data.(*cutList)
 	require.True(t, ok)
@@ -79,7 +79,7 @@ func TestFitPage_CutsToTheRowsThatFitAndResumesAfterThem(t *testing.T) {
 	longer, _ := list.CutPage(fitted.kept + 1)
 	longerEncoded, err := Encode(longer, transcriptNow, "UTC")
 	require.NoError(t, err)
-	assert.Greater(t, len(longerEncoded), MaxBytes, "one row more would not have fit")
+	assert.Greater(t, len(longerEncoded), MaxPageBytes, "one row more would not have fit")
 	assert.Contains(t, fitted.Note(), "no row is skipped")
 	assert.Contains(t, fitted.Note(), strconv.Itoa(fitted.kept)+" of the 50")
 }

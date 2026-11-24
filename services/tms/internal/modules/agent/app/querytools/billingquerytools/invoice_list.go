@@ -31,7 +31,8 @@ type invoiceRow struct {
 	InvoiceDate      querytool.OptionalDate `json:"invoiceDate"`
 	// A receivable with no due date is not a receivable that is current; it is
 	// one nobody gave terms to. Omitting the key made it look like the former.
-	DueDate querytool.OptionalDate `json:"dueDate"`
+	DueDate   querytool.OptionalDate `json:"dueDate"`
+	CreatedAt querytool.OptionalDate `json:"createdAt"`
 }
 
 func NewListInvoicesTool(
@@ -116,6 +117,7 @@ func NewListInvoicesTool(
 					Currency:         item.CurrencyCode,
 					InvoiceDate:      querytool.RecordedDate(item.InvoiceDate),
 					DueDate:          querytool.PointerDate(item.DueDate),
+					CreatedAt:        querytool.RecordedDate(item.CreatedAt),
 				}
 				if showTotal {
 					row.TotalAmount = item.TotalAmount.StringFixed(2)

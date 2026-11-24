@@ -26,7 +26,7 @@ import (
 const (
 	maxShipmentComments = 20
 	maxShipmentHolds    = 25
-	paramDetail         = "detail"
+	paramDetail         = querytool.ParamDetail
 )
 
 type getShipmentTool struct {
