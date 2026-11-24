@@ -44,7 +44,6 @@
   "No unsettled pay events are waiting — there is nothing to generate": "没有等待处理的未结算薪酬事件 — 无可生成的内容",
   "Nothing waiting. New pay accrues automatically as moves complete.": "目前没有待处理项目。运程完成时，新薪酬会自动计提。",
   "Off by default so this payout doesn't double-dip items the regular period settlement will take.": "默认为关闭，以免此次拨付与常规期间结算重复计入相同项目。",
-  "On hold: {0}": "暂扣中：{0}",
   "Open the escrow ledger": "打开履约保证账册",
   "Outstanding balances are recovered automatically on each settlement.": "未清偿余额会在每次结算时自动回收。",
   "Pay a driver immediately — builds, approves, posts, and pays an off-cycle settlement in one pass": "立即支付司机 — 一次完成周期外结算的创建、批准、过账与付款",
@@ -86,6 +85,5 @@
   "{0} events · {1} drivers": "{0} 个事件 · {1} 位司机",
   "{0} held (": "{0} 项暂扣 (",
   "{0} held events": "{0} 项暂扣事件",
-  "{0} paid": "{0} 已付",
   "· paused": "· 已暂停"
 }

@@ -25,21 +25,31 @@ function agent(overrides: Partial<AgentDefinitionRow>): AgentDefinitionRow {
     accessMode: "Everyone",
     accessRoles: [],
     nextRunAt: null,
-    toolNames: [],
+    scope: named([]),
+    pinnedTools: [],
     toolTiers: {},
     autonomyCeiling: "AutoExecute",
     ...overrides,
   } as AgentDefinitionRow;
 }
 
-function tool(name: string, kind: "query" | "action", core = false): ToolCatalogEntry {
+function named(capabilities: string[]): AgentDefinitionRow["scope"] {
+  return { areas: [], capabilities, denyAreas: [], denyCapabilities: [] };
+}
+
+function tool(
+  name: string,
+  kind: "query" | "action",
+  core = false,
+  defaultAutonomyTier = "",
+): ToolCatalogEntry {
   return {
     name,
     description: "",
     kind,
     resource: "shipment",
     operation: kind === "query" ? "read" : "update",
-    defaultAutonomyTier: "",
+    defaultAutonomyTier,
     reversible: false,
     core,
     prerequisites: [],
@@ -86,7 +96,7 @@ describe("tierSplit", () => {
   it("splits reads, proposals and acts, capping each change at the ceiling", () => {
     const split = tierSplit(
       agent({
-        toolNames: [
+        scope: named([
           "shipment_list",
           "shipment_get",
           "agent_list_memories",
@@ -94,7 +104,7 @@ describe("tierSplit", () => {
           "tender_to_carrier",
           "release_hold",
           "retired_tool",
-        ],
+        ]),
         toolTiers: {
           assign_driver: "AutoExecute",
           tender_to_carrier: "Propose",
@@ -111,13 +121,35 @@ describe("tierSplit", () => {
     expect(
       tierSplit(
         agent({
-          toolNames: ["assign_driver", "release_hold"],
+          scope: named(["assign_driver", "release_hold"]),
           toolTiers: { assign_driver: "AutoExecute" },
           autonomyCeiling: "Propose",
         }),
         catalog,
       ),
     ).toEqual([0, 2, 0]);
+  });
+
+  it("counts every tool for an agent let do everything, less those switched off", () => {
+    expect(
+      tierSplit(
+        agent({
+          scope: { ...named([]), denyCapabilities: ["shipment_get", "release_hold"] },
+          autonomyCeiling: "ActWithApproval",
+        }),
+        catalog,
+      ),
+    ).toEqual([1, 0, 2]);
+  });
+
+  it("runs a change with no override at its own default, under the ceiling", () => {
+    const withDefaults = [
+      tool("assign_driver", "action", false, "Propose"),
+      tool("release_hold", "action", false, "AutoExecute"),
+    ];
+    expect(
+      tierSplit(agent({ scope: named([]), autonomyCeiling: "AutoExecute" }), withDefaults),
+    ).toEqual([0, 1, 1]);
   });
 });
 
@@ -185,13 +217,15 @@ describe("leadingStreak", () => {
           { toolName: "dropped_tool", streak: 40 },
           { toolName: "tender", streak: 2 },
         ],
-        ["release_hold", "assign_driver", "tender"],
+        named(["release_hold", "assign_driver", "tender"]),
       ),
     ).toEqual({ toolName: "assign_driver", streak: 7 });
   });
 
   it("is nothing before any held tool has a clean approval", () => {
-    expect(leadingStreak([{ toolName: "assign_driver", streak: 0 }], ["assign_driver"])).toBeNull();
-    expect(leadingStreak([], ["assign_driver"])).toBeNull();
+    expect(
+      leadingStreak([{ toolName: "assign_driver", streak: 0 }], named(["assign_driver"])),
+    ).toBeNull();
+    expect(leadingStreak([], named(["assign_driver"]))).toBeNull();
   });
 });

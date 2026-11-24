@@ -3,10 +3,11 @@ import { describe, expect, it } from "vitest";
 
 /**
  * Fixtures come from the Go contract, not from what the UI sends. The
- * definition's list columns (`guardrails`, `tool_names`, `event_kinds`,
+ * definition's list columns (`guardrails`, `pinned_tools`, `event_kinds`,
  * `context_providers`) are `nullzero` arrays and `tool_tiers` is a nullable
  * JSONB map, so an agent saved with none of them is serialized with `null` in
- * each, not `[]`, `{}` or an absent key.
+ * each, not `[]`, `{}` or an absent key. Its `scope` is a struct whose lists
+ * are `omitempty`, so the universal agent's scope is `{}`.
  *
  * The two unset scalars go the opposite ways: `template` is a Go string type,
  * so an agent built without a starter serializes as `""`, while an unset PULID
@@ -21,7 +22,8 @@ const customAgent = {
   template: "",
   instructions: "",
   guardrails: null,
-  toolNames: null,
+  scope: {},
+  pinnedTools: null,
   toolTiers: null,
   autonomyCeiling: "Propose",
   enabled: true,
@@ -53,18 +55,29 @@ describe("agentDefinitionSchema", () => {
 
     expect(parsed.template).toBeNull();
     expect(parsed.preferredProviderId).toBe("");
-    expect(parsed.toolNames).toEqual([]);
+    expect(parsed.scope).toEqual({
+      areas: [],
+      capabilities: [],
+      denyAreas: [],
+      denyCapabilities: [],
+    });
+    expect(parsed.pinnedTools).toEqual([]);
     expect(parsed.guardrails).toEqual([]);
     expect(parsed.eventKinds).toEqual([]);
     expect(parsed.contextProviders).toEqual([]);
     expect(parsed.toolTiers).toEqual({});
   });
 
-  it("keeps the tools, tiers and template of an agent that has them", () => {
+  it("keeps the scope, pins, tiers and template of an agent that has them", () => {
     const parsed = agentDefinitionSchema.parse({
       ...customAgent,
       template: "DispatchAssistant",
-      toolNames: ["shipment_get", "dispatch_assign_move"],
+      scope: {
+        areas: ["shipment"],
+        capabilities: ["dispatch_assign_move"],
+        denyCapabilities: ["shipment_cancel"],
+      },
+      pinnedTools: ["dispatch_assign_move"],
       toolTiers: { dispatch_assign_move: "ActWithApproval" },
       triggerMode: "Scheduled",
       cronExpression: "*/30 * * * *",
@@ -72,15 +85,23 @@ describe("agentDefinitionSchema", () => {
     });
 
     expect(parsed.template).toBe("DispatchAssistant");
-    expect(parsed.toolNames).toEqual(["shipment_get", "dispatch_assign_move"]);
+    expect(parsed.scope).toEqual({
+      areas: ["shipment"],
+      capabilities: ["dispatch_assign_move"],
+      denyAreas: [],
+      denyCapabilities: ["shipment_cancel"],
+    });
+    expect(parsed.pinnedTools).toEqual(["dispatch_assign_move"]);
     expect(parsed.toolTiers).toEqual({ dispatch_assign_move: "ActWithApproval" });
     expect(parsed.nextRunAt).toBe(1_758_001_000);
   });
 
   it("still fills in list fields when a key is absent", () => {
-    const { toolNames: _omitted, ...withoutTools } = customAgent;
+    const { scope: _scope, pinnedTools: _pinned, ...withoutScope } = customAgent;
+    const parsed = agentDefinitionSchema.parse(withoutScope);
 
-    expect(agentDefinitionSchema.parse(withoutTools).toolNames).toEqual([]);
+    expect(parsed.scope.areas).toEqual([]);
+    expect(parsed.pinnedTools).toEqual([]);
   });
 });
 

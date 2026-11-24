@@ -80,7 +80,7 @@ func pageAgentOf(definition *agentdefinition.Definition) assistantports.PageAgen
 		Icon:        definition.Icon,
 		Accent:      definition.Accent,
 		SystemKey:   definition.SystemKey,
-		ToolNames:   definition.StarterTools(),
+		Scope:       definition.Scope,
 		Starters:    agentstarter.Starters(definition),
 	}
 }

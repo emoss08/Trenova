@@ -1,26 +1,30 @@
 import { describe, expect, it } from "vitest";
 import { agentRoleFor, pickAgentFor, type AgentLike } from "../desk/desk-agent";
 
+function capabilities(names: string[], areas: string[] = []): AgentLike["scope"] {
+  return { areas, capabilities: names, denyAreas: [], denyCapabilities: [] };
+}
+
 const DISPATCH: AgentLike = {
   id: "a_dispatch",
   name: "Dispatch",
   description: "Loads, tenders, carriers",
   template: "DispatchAssistant",
-  toolNames: ["shipment_create", "tender_shipment"],
+  scope: capabilities(["shipment_create", "tender_shipment"]),
 };
 const BILLING: AgentLike = {
   id: "a_billing",
   name: "Billing",
   description: "Invoices, detention, pay",
   template: "BillingAssistant",
-  toolNames: ["file_document", "detention_waive"],
+  scope: capabilities(["file_document", "detention_waive"]),
 };
 const SERVICE: AgentLike = {
   id: "a_cs",
   name: "Customer service",
   description: "Status, ETAs, replies",
   template: "CustomerAssistant",
-  toolNames: ["shipment_eta", "draft_reply"],
+  scope: capabilities(["shipment_eta", "draft_reply"]),
 };
 const AGENTS = [SERVICE, BILLING, DISPATCH];
 
@@ -48,9 +52,27 @@ describe("which agent a message is handed to", () => {
       name: "Carrier desk",
       description: "Books carriers on open loads",
       template: null,
-      toolNames: ["invoice_send"],
+      scope: capabilities(["invoice_send"]),
     };
     expect(pickAgentFor([BILLING, carrierDesk], "Tender")?.id).toBe("a_carrier_desk");
+  });
+
+  it("reads the areas an agent may work in when nothing else says what it is for", () => {
+    const ops: AgentLike = {
+      id: "a_ops",
+      name: "Ops",
+      description: "",
+      template: null,
+      scope: capabilities([], ["dispatch"]),
+    };
+    const helper: AgentLike = {
+      id: "a_helper",
+      name: "Helper",
+      description: "",
+      template: null,
+      scope: capabilities([], ["worker"]),
+    };
+    expect(pickAgentFor([helper, ops], "Tender")?.id).toBe("a_ops");
   });
 
   it("falls back to the agent last asked when none fits, then to the first", () => {
@@ -59,14 +81,14 @@ describe("which agent a message is handed to", () => {
       name: "Helper",
       description: "",
       template: null,
-      toolNames: [],
+      scope: capabilities([]),
     };
     const other: AgentLike = {
       id: "a_o",
       name: "Ops",
       description: "",
       template: null,
-      toolNames: [],
+      scope: capabilities([]),
     };
     expect(pickAgentFor([general, other], "Invoice", "a_o")?.id).toBe("a_o");
     expect(pickAgentFor([general, other], "Invoice", "a_missing")?.id).toBe("a_g");

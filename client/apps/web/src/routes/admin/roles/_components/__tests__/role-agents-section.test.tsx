@@ -51,7 +51,7 @@ function choice(id: string, name: string, systemKey = ""): AgentChoice {
     template: null,
     icon: "",
     accent: "",
-    toolNames: [],
+    scope: { areas: [], capabilities: [], denyAreas: [], denyCapabilities: [] },
     systemKey,
     starters: [],
   };

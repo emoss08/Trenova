@@ -44,7 +44,6 @@
   "No unsettled pay events are waiting — there is nothing to generate": "No hay eventos de pago sin liquidar: no hay nada que generar",
   "Nothing waiting. New pay accrues automatically as moves complete.": "No hay nada pendiente. El pago nuevo se devenga automáticamente a medida que se completan los tramos.",
   "Off by default so this payout doesn't double-dip items the regular period settlement will take.": "Desactivado de forma predeterminada para que este pago no duplique partidas que tomará la liquidación normal del período.",
-  "On hold: {0}": "En espera: {0}",
   "Open the escrow ledger": "Abrir el libro del depósito de garantía",
   "Outstanding balances are recovered automatically on each settlement.": "Los saldos pendientes se recuperan automáticamente en cada liquidación.",
   "Pay a driver immediately — builds, approves, posts, and pays an off-cycle settlement in one pass": "Pague a un conductor de inmediato: crea, aprueba, contabiliza y paga una liquidación fuera de ciclo de una sola vez",
@@ -86,6 +85,5 @@
   "{0} events · {1} drivers": "{0} eventos · {1} conductores",
   "{0} held (": "{0} retenido(s) (",
   "{0} held events": "{0} eventos retenidos",
-  "{0} paid": "{0} pagado",
   "· paused": "· en pausa"
 }

@@ -35,7 +35,7 @@ const agent = (id: string, name: string) => ({
   template: null,
   icon: "",
   accent: "",
-  toolNames: [],
+  scope: { areas: null, capabilities: null, denyAreas: null, denyCapabilities: null },
   systemKey: "",
   starters: [{ label: "Build a report", prompt: "Build a report." }],
 });
@@ -175,6 +175,12 @@ describe("fetchAgentChoices", () => {
       excludeIds: ["agdef_9"],
     });
     expect(page.items.map((item) => item.id)).toEqual(["agdef_1", "agdef_2"]);
+    expect(page.items[0].scope).toEqual({
+      areas: [],
+      capabilities: [],
+      denyAreas: [],
+      denyCapabilities: [],
+    });
     expect(page.items[0].starters).toEqual([
       { label: "Build a report", prompt: "Build a report." },
     ]);
@@ -223,7 +229,12 @@ describe("fetchAgentChoices", () => {
       sort: [{ field: "name", direction: "asc" }],
     });
     expect(page).toEqual({
-      items: [agent("agdef_3", "Payroll")],
+      items: [
+        {
+          ...agent("agdef_3", "Payroll"),
+          scope: { areas: [], capabilities: [], denyAreas: [], denyCapabilities: [] },
+        },
+      ],
       endCursor: null,
       hasNextPage: false,
       totalCount: 1,
@@ -343,5 +354,33 @@ describe("fetchMyAgents", () => {
     const [widgets] = await fetchMyAgents();
 
     expect(widgets.delegates).toEqual(delegates);
+  });
+
+  it("reads an agent's scope with every list the server left null as empty", async () => {
+    requestGraphQLMock.mockResolvedValue(
+      myAgents(
+        [
+          {
+            ...agent("agdef_1", "Dispatch"),
+            scope: {
+              areas: ["dispatch"],
+              capabilities: null,
+              denyAreas: null,
+              denyCapabilities: ["dispatch_cancel_tender"],
+            },
+          } as unknown as ReturnType<typeof agent>,
+        ],
+        { hasNextPage: false, endCursor: null },
+      ),
+    );
+
+    const [dispatch] = await fetchMyAgents();
+
+    expect(dispatch.scope).toEqual({
+      areas: ["dispatch"],
+      capabilities: [],
+      denyAreas: [],
+      denyCapabilities: ["dispatch_cancel_tender"],
+    });
   });
 });

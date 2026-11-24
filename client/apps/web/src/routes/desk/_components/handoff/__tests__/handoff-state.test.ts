@@ -28,7 +28,7 @@ function agent(id: string, delegates: string[] = []): AgentChoice {
     template: null,
     icon: "",
     accent: "",
-    toolNames: [],
+    scope: { areas: [], capabilities: [], denyAreas: [], denyCapabilities: [] },
     systemKey: "",
     starters: [],
     delegates: delegates.map((delegate) => ({
@@ -102,9 +102,7 @@ describe("handoffSuggestion", () => {
   }
 
   it("reads the newest search_tools result that named agents since the person last wrote", () => {
-    const pages = [
-      { results: [user(), found(["cash"]), found(["billing", "cash"]), reply()] },
-    ];
+    const pages = [{ results: [user(), found(["cash"]), found(["billing", "cash"]), reply()] }];
 
     expect(handoffSuggestion(pages)).toEqual(["billing", "cash"]);
   });

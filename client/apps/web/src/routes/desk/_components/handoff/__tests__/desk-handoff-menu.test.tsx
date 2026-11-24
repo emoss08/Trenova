@@ -26,7 +26,7 @@ function agent(id: string, name: string, delegates: string[] = []): AgentChoice 
     template: null,
     icon: "",
     accent: "",
-    toolNames: [],
+    scope: { areas: [], capabilities: [], denyAreas: [], denyCapabilities: [] },
     systemKey: "",
     starters: [],
     delegates: delegates.map((delegate) => ({

@@ -3774,10 +3774,8 @@ input AgentAccessPreviewInput {
   The agent being edited, so each role says whether it is granted now. Absent for a new one.
   """
   agentId: ID
-  """
-  The tools the form has chosen. Core tools every agent holds need not be listed. At most 200.
-  """
-  toolNames: [String!]!
+  """The scope the form has chosen."""
+  scope: AgentScopeInput!
 }
 
 """
@@ -4276,8 +4274,14 @@ type AgentDefinition {
   outputMode: AgentOutputMode!
   """Proposals raised by this agent that still await a person's decision."""
   pendingProposals: Int!
+  """Capabilities loaded on every turn, at most twelve."""
+  pinnedTools: [String!]!
   preferredProviderId: ID!
   runTimeoutSeconds: Int!
+  """
+  What the agent may do: areas and capabilities allowed or denied. An empty scope is everything the person may do.
+  """
+  scope: AgentScope!
   shadowMode: Boolean!
   """Writes are previewed and recorded, never made."""
   simulationMode: Boolean!
@@ -4297,9 +4301,8 @@ type AgentDefinition {
   template: AgentTemplate
   """Executions per tool per day, keyed by tool name."""
   toolDailyLimits: JSON!
-  toolNames: [String!]!
   """
-  Per-tool autonomy overrides, keyed by tool name; each capped by autonomyCeiling.
+  Per-tool approval overrides, keyed by tool name; set by a person only stricter than the tool's default, raised only by earned trust.
   """
   toolTiers: JSON!
   triggerMode: AgentTriggerMode!
@@ -4380,9 +4383,10 @@ type AgentDraft {
   """
   notes: [AgentDraftNote!]!
   outputMode: AgentOutputMode!
+  pinnedTools: [String!]!
   runTimeoutSeconds: Int!
+  scope: AgentScope!
   shadowMode: Boolean!
-  toolNames: [String!]!
   """
   Autonomy per change tool, keyed by tool name; each held at the tool's maximum and autonomyCeiling.
   """
@@ -4393,7 +4397,7 @@ type AgentDraft {
 """Something drafting changed or left out of what the model proposed."""
 type AgentDraftNote {
   """
-  The setting, as the builder names it: toolNames, toolTiers.<tool>, eventKinds, cronExpression and so on.
+  The setting, as the builder names it: scope, pinnedTools, toolTiers.<tool>, eventKinds, cronExpression and so on.
   """
   field: String!
   """Why it was changed or left out."""
@@ -4796,13 +4800,12 @@ type AgentInstructionFinding {
 }
 
 """
-Instructions as the builder holds them, with the tools the draft holds.
+Instructions as the builder holds them, with the scope the draft holds.
 """
 input AgentInstructionLintInput {
-  disabledToolNames: [String!]
   """At most 20000 characters."""
   instructions: String!
-  toolNames: [String!]!
+  scope: AgentScopeInput!
 }
 
 """
@@ -6481,6 +6484,25 @@ type AgentSafetySummary {
 }
 
 """
+What an agent may do. An area (shipment, invoice, worker, ...) allows every capability in it; a
+capability is a tool name or an entity read (invoice.list, shipment.get). Denials win. Areas and
+capabilities both empty is everything the person may do: the universal agent.
+"""
+type AgentScope {
+  areas: [String!]
+  capabilities: [String!]
+  denyAreas: [String!]
+  denyCapabilities: [String!]
+}
+
+input AgentScopeInput {
+  areas: [String!]
+  capabilities: [String!]
+  denyAreas: [String!]
+  denyCapabilities: [String!]
+}
+
+"""
 One agent's record, counted at read time from its runs, its proposals and its
 usage. Nothing here is stored, so there is no second copy to drift out of step
 with the rows a person can audit.
@@ -6822,7 +6844,6 @@ enum AgentTemplate {
   FactoringClerk
   FormulaAssistant
   FuelTaxClerk
-  Universal
   ImportAssistant
   InsightAnalyst
   IntakeDesk
@@ -6834,6 +6855,7 @@ enum AgentTemplate {
   ServiceFailureDesk
   SettlementsClerk
   ShipmentIntake
+  Universal
   WorkforceCoordinator
 }
 
@@ -26636,13 +26658,13 @@ type MyAgent {
   icon: String!
   id: ID!
   name: String!
+  scope: AgentScope!
   """Up to four opening questions the agent can answer with its tools."""
   starters: [AgentStarter!]!
   """Set on the agents the platform itself creates and fires."""
   systemKey: String!
   """The starter this agent was created from, if any."""
   template: AgentTemplate
-  toolNames: [String!]!
 }
 
 type MyAgentConnection {

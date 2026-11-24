@@ -2,6 +2,7 @@ import type {
   AgentAccessMode,
   AgentAccessPreviewQuery,
   AgentAudienceCoverage,
+  AgentScopeInput,
   RoleAgentAccessFieldsFragment,
 } from "@trenova/graphql/generated/graphql";
 import {
@@ -18,6 +19,7 @@ import {
 import { getFragmentData } from "@trenova/graphql/fragment-data";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import { rootField } from "@trenova/shared/lib/reference-access";
+import { toAgentScopeInput, type AgentScope } from "@/lib/agent-scope";
 
 type RequestOptions = { signal?: AbortSignal };
 
@@ -58,33 +60,27 @@ export type AgentAudienceSuggestion = {
 export type AgentAccessPreview = Omit<AgentAudienceSuggestion, "agentId">;
 
 /**
- * The agent as the form holds it: the saved agent it edits, if any, the tools
- * chosen and who may use it. Normalized so the same form state is always the
+ * The agent as the form holds it: the saved agent it edits, if any, what it
+ * may do and who may use it. Normalized so the same form state is always the
  * same request, and so the same cache entry.
  */
 export type AgentAccessPreviewRequest = {
   /** The agent being edited; empty for one not yet saved. */
   agentId: string;
-  toolNames: string[];
+  scope: Required<AgentScopeInput>;
   accessMode: AgentAccessMode;
 };
 
-/** The most tools one preview asks about, as the server allows. */
-export const MAX_PREVIEW_TOOLS = 200;
-
 export function agentAccessPreviewRequest({
   agentId,
-  toolNames,
+  scope,
   accessMode,
 }: {
   agentId: string;
-  toolNames: readonly string[];
+  scope: AgentScope;
   accessMode: AgentAccessMode;
 }): AgentAccessPreviewRequest {
-  const tools = [...new Set(toolNames.map((name) => name.trim()).filter((name) => name !== ""))];
-  tools.sort();
-
-  return { agentId, toolNames: tools.slice(0, MAX_PREVIEW_TOOLS), accessMode };
+  return { agentId, scope: toAgentScopeInput(scope), accessMode };
 }
 
 function toAudienceRoles(
@@ -113,7 +109,7 @@ export async function fetchAgentAccessPreview(
     variables: {
       input: {
         ...(request.agentId ? { agentId: request.agentId } : {}),
-        toolNames: request.toolNames,
+        scope: request.scope,
         accessMode: request.accessMode,
       },
     },

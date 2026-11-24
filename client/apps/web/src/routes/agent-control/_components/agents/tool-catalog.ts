@@ -1,4 +1,5 @@
 import { describeToolCall } from "@/components/assistant/tool-presentation";
+import { areaLabel, scopeAllows, toolArea, type AgentScopeLike } from "@/lib/agent-scope";
 import type { AutonomyTier, ToolCatalogEntry } from "@/types/assistant";
 import { resourceLabel } from "@/lib/resource-label";
 import { tierWithin } from "./agent-form-schema";
@@ -40,6 +41,32 @@ export function splitCoreTools(tools: readonly ToolCatalogEntry[]): {
 
 function heldByEveryAgent(tool: ToolCatalogEntry): boolean {
   return tool.core || tool.grantedToEveryAgent;
+}
+
+/**
+ * The tools a scope gives an agent beyond those every agent holds, in catalog order: every one
+ * its areas and capabilities allow, less those switched off.
+ */
+export function heldTools(
+  scope: AgentScopeLike,
+  tools: readonly ToolCatalogEntry[],
+): ToolCatalogEntry[] {
+  return tools.filter((tool) => !heldByEveryAgent(tool) && scopeAllows(scope, tool.name));
+}
+
+/** The areas a catalog's tools fall in, each once, alphabetical by what a person reads. */
+export function areasOf(tools: readonly ToolCatalogEntry[]): string[] {
+  return [...new Set(tools.map((tool) => toolArea(tool.name)))].sort((a, b) =>
+    areaLabel(a).localeCompare(areaLabel(b)),
+  );
+}
+
+/** The tier a tool runs at when no override is set: its own default, or the ceiling for a read. */
+export function defaultTier(tool: ToolCatalogEntry | undefined): AutonomyTier | undefined {
+  const tier = tool?.defaultAutonomyTier;
+  return tier === "Propose" || tier === "ActWithApproval" || tier === "AutoExecute"
+    ? tier
+    : undefined;
 }
 
 export type ImpliedRead = {
@@ -149,13 +176,17 @@ export type SelectionSummary = {
   unknown: string[];
 };
 
-/** The effective tier of a change tool: its own, capped by the ceiling. */
+/**
+ * The effective tier of a change tool: its override, else its default, else the ceiling, and
+ * never past the ceiling.
+ */
 export function effectiveTier(
   tool: string,
   tiers: Record<string, AutonomyTier>,
   ceiling: AutonomyTier,
+  fallback?: AutonomyTier,
 ): AutonomyTier {
-  const own = tiers[tool] ?? ceiling;
+  const own = tiers[tool] ?? fallback ?? ceiling;
   return tierWithin(own, ceiling) ? own : ceiling;
 }
 
@@ -192,25 +223,8 @@ export function summarizeSelection(
       continue;
     }
     summary.changes += 1;
-    summary.byTier[effectiveTier(name, tiers, ceiling)] += 1;
+    summary.byTier[effectiveTier(name, tiers, ceiling, defaultTier(tool))] += 1;
   }
 
   return summary;
-}
-
-/** The selection with one tool added or removed, and its tier dropped with it. */
-export function toggleTool(
-  selected: readonly string[],
-  tiers: Record<string, AutonomyTier>,
-  name: string,
-  on: boolean,
-): { selected: string[]; tiers: Record<string, AutonomyTier> } {
-  if (on) {
-    return {
-      selected: selected.includes(name) ? [...selected] : [...selected, name],
-      tiers,
-    };
-  }
-  const { [name]: _dropped, ...rest } = tiers;
-  return { selected: selected.filter((entry) => entry !== name), tiers: rest };
 }

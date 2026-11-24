@@ -119,10 +119,7 @@ func knownAreas(
 ) []string {
 	areas := make([]string, 0, 40)
 	add := func(name string) {
-		area := agentcapability.AreaOf(name)
-		if entity, _, ok := agentcapability.EntityBacking(name); ok {
-			area = entity.Area
-		}
+		area := toolArea(name)
 		if !slices.Contains(areas, area) {
 			areas = append(areas, area)
 		}
@@ -205,6 +202,8 @@ func catalogEntry(
 ) agentdefinitionports.ToolCatalogEntry {
 	policy := tool.Policy()
 	entry := agentdefinitionports.ToolCatalogEntry{
+		Area:        toolArea(tool.Name()),
+		Capability:  agentcapability.CapabilityIDForTool(tool.Name()),
 		Name:        tool.Name(),
 		Description: agenttoolports.ModelDescription(tool),
 		Parameters:  tool.ParamSchema(),
@@ -255,4 +254,12 @@ func registeredStarterTools(
 	}
 
 	return tools
+}
+
+func toolArea(name string) string {
+	if entity, _, ok := agentcapability.EntityBacking(name); ok {
+		return entity.Area
+	}
+
+	return agentcapability.AreaOf(name)
 }

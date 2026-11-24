@@ -1,5 +1,6 @@
 import { Dialog } from "@base-ui/react/dialog";
 import { agentAccessPreviewRequest } from "@/lib/graphql/agent-access";
+import { allowTool, areaLabel, formScope, isSwitchedOff, toAgentScope } from "@/lib/agent-scope";
 import { fetchAgentDefinition, fetchAgentVersionDraft } from "@/lib/graphql/agent-builder";
 import { agentControlQueryOptions } from "@/lib/graphql/agent-control";
 import type { AgentDefinitionRow } from "@/lib/graphql/agent-definition";
@@ -9,7 +10,7 @@ import { aiControl } from "@/lib/queries/ai-control";
 import { aiProvider } from "@/lib/queries/ai-provider";
 import { assistant } from "@/lib/queries/assistant";
 import { agentDefinitionService } from "@/services/assistant";
-import type { AutonomyTier, SaveAgentDefinitionRequest } from "@/types/assistant";
+import type { SaveAgentDefinitionRequest } from "@/types/assistant";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useDebounce } from "@trenova/shared/hooks/use-debounce";
 import { useT } from "@trenova/shared/i18n/use-t";
@@ -39,6 +40,7 @@ import {
   type AgentFormValues,
 } from "../agent-form-schema";
 import { toolTitle } from "../tool-catalog";
+import { capabilityTitle } from "./tool-picker-model";
 import { Blk, type BlockId } from "./block";
 import { BuilderRail, type RailEntry } from "./builder-rail";
 import {
@@ -47,7 +49,6 @@ import {
   chosenTools,
   opensOnIntro,
   readiness,
-  startingTier,
   startValues,
   triggerProblem,
   type BuilderStart,
@@ -182,8 +183,12 @@ export function AgentBuilder({
   const draftRequest: SaveAgentDefinitionRequest = useMemo(() => toSaveRequest(values), [values]);
   const snapshot = useMemo(() => JSON.stringify(draftRequest), [draftRequest]);
 
+  const heldScope = useMemo(
+    () => formScope(toAgentScope(values.scope), values.limited),
+    [values.limited, values.scope],
+  );
   const lintRequest = useDebounce(
-    { instructions: values.instructions, toolNames: values.toolNames },
+    { instructions: values.instructions, scope: heldScope },
     LINT_DEBOUNCE_MS,
   );
   const lintQuery = useQuery({
@@ -196,7 +201,7 @@ export function AgentBuilder({
   const accessRequest = useDebounce(
     agentAccessPreviewRequest({
       agentId: agent?.id ?? "",
-      toolNames: values.toolNames,
+      scope: heldScope,
       accessMode: values.accessMode,
     }),
     LINT_DEBOUNCE_MS,
@@ -366,17 +371,9 @@ export function AgentBuilder({
 
   const giveTool = useCallback(
     (name: string) => {
-      if (values.toolNames.includes(name)) return;
-      const most = rules.get(name)?.promotableTier as AutonomyTier | undefined;
-      set("toolNames", [...values.toolNames, name]);
-      if (catalog.find((tool) => tool.name === name)?.kind === "action") {
-        set("toolTiers", {
-          ...values.toolTiers,
-          [name]: startingTier(most, values.autonomyCeiling),
-        });
-      }
+      set("scope", allowTool(toAgentScope(values.scope), name, values.limited));
     },
-    [catalog, rules, set, values.autonomyCeiling, values.toolNames, values.toolTiers],
+    [set, values.limited, values.scope],
   );
 
   const restore = useCallback(
@@ -450,12 +447,24 @@ export function AgentBuilder({
       label: t("Roles"),
       item: (id) => roles.find((entry) => entry.role.id === id)?.role.name ?? String(id),
     },
-    toolNames: {
-      label: t("Tools"),
-      item: (name) => {
-        const tool = catalog.find((entry) => entry.name === name);
-        return tool ? toolTitle(tool) : String(name);
+    scope: {
+      label: t("May do"),
+      format: (value) => {
+        const scope = toAgentScope(value as AgentFormValues["scope"] | undefined);
+        if (isSwitchedOff(scope)) return t("Switched off");
+        const allowed = [
+          ...scope.areas.map(areaLabel),
+          ...scope.capabilities.map((name) => capabilityTitle(name, catalog, t)),
+        ];
+        const off = scope.denyAreas.length + scope.denyCapabilities.length;
+        const reach = allowed.length ? allowed.join(", ") : t("Everything the person may do");
+        return off ? t("{0} · {1} switched off", reach, off) : reach;
       },
+    },
+    limited: { label: t("Limited to chosen areas") },
+    pinnedTools: {
+      label: t("Kept at hand"),
+      item: (name) => capabilityTitle(String(name), catalog, t),
     },
     toolTiers: {
       label: t("Tool freedom"),
@@ -916,7 +925,7 @@ export function AgentBuilder({
                       {agent && (
                         <RecordBlock
                           agentId={agent.id}
-                          toolNames={values.toolNames}
+                          scope={heldScope}
                           earnedAutonomy={controlQuery.data?.earnedAutonomy ?? false}
                         />
                       )}
