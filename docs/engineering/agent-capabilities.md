@@ -87,7 +87,7 @@ which no consolidation touches. `ask_user` alone is about 1,580 tokens.
   trailers and carriers filter by id (from `records_query` on worker, tractor, trailer, carrier).
   `status age` and `tender status` beyond the stored `tenderStatus` field are not filters yet.
 - **The legacy selection suite.** On the 568 older selection cases, written and tuned against the
-  previous keyword ranker, top 3 is 90.8% (the old ranker's top 5 was 100%). The new suite was
+  previous keyword ranker, top 3 is 90.8% (the old ranker's top 5 was 100%); on its 80 paraphrases, written to share no word with their tool and served by embeddings in production, keyword-only top 3 is 36.2%. The new suite was
   added because the old one held no short or vague request; both run.
 
 ## Release note

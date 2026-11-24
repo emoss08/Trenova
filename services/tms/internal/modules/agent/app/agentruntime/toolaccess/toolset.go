@@ -907,14 +907,14 @@ func (s *Access) SpecFor(name string) (kernelports.ToolSpec, bool) {
 		return kernelports.ToolSpec{
 			Name:        tool.Name(),
 			Description: agenttoolports.ModelDescription(tool),
-			Parameters:  tool.ParamSchema(),
+			Parameters:  agenttoolports.ModelSchema(tool),
 		}, true
 	}
 	if tool, ok := s.actionTools.Get(name); ok {
 		return kernelports.ToolSpec{
 			Name:        tool.Name(),
 			Description: agenttoolports.ModelDescription(tool),
-			Parameters:  tool.ParamSchema(),
+			Parameters:  agenttoolports.ModelSchema(tool),
 		}, true
 	}
 

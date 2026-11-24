@@ -1,6 +1,7 @@
 package agentcapability
 
 import (
+	"regexp"
 	"slices"
 	"strings"
 )
@@ -332,4 +333,57 @@ func appendUnique(list []string, values ...string) []string {
 	}
 
 	return list
+}
+
+var readerWord = regexp.MustCompile(`\b[a-z]+_(?:list|get)(?:_[a-z_]+)?\b`)
+
+func RewriteReaders(text string) string {
+	if !strings.Contains(text, "_list") && !strings.Contains(text, "_get") {
+		return text
+	}
+
+	return readerWord.ReplaceAllStringFunc(text, func(word string) string {
+		entity, verb, ok := EntityBacking(word)
+		if !ok {
+			return word
+		}
+		if verb == VerbList {
+			return RecordsQuery + " (entity " + entity.Name + ")"
+		}
+
+		return RecordGet + " (entity " + entity.Name + ")"
+	})
+}
+
+func RewriteSchema(schema map[string]any) map[string]any {
+	if schema == nil {
+		return nil
+	}
+	out := make(map[string]any, len(schema))
+	for key, value := range schema {
+		switch typed := value.(type) {
+		case string:
+			if key == "description" {
+				out[key] = RewriteReaders(typed)
+				continue
+			}
+			out[key] = typed
+		case map[string]any:
+			out[key] = RewriteSchema(typed)
+		case []any:
+			items := make([]any, len(typed))
+			for idx, item := range typed {
+				if object, ok := item.(map[string]any); ok {
+					items[idx] = RewriteSchema(object)
+					continue
+				}
+				items[idx] = item
+			}
+			out[key] = items
+		default:
+			out[key] = value
+		}
+	}
+
+	return out
 }

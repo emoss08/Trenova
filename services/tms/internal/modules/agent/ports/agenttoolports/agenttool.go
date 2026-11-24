@@ -191,7 +191,11 @@ func ModelDescription(tool interface {
 	Description() string
 },
 ) string {
-	return agentcapability.Describe(tool.Name(), tool.Description())
+	return agentcapability.RewriteReaders(agentcapability.Describe(tool.Name(), tool.Description()))
+}
+
+func ModelSchema(tool interface{ ParamSchema() map[string]any }) map[string]any {
+	return agentcapability.RewriteSchema(tool.ParamSchema())
 }
 
 func DescribeTool(
@@ -207,7 +211,7 @@ func DescribeTool(
 		Name:         tool.Name(),
 		Namespace:    NamespaceOf(tool.Name()),
 		Description:  ModelDescription(tool),
-		Parameters:   tool.ParamSchema(),
+		Parameters:   ModelSchema(tool),
 		AutonomyTier: tier,
 		Query:        query,
 	}
