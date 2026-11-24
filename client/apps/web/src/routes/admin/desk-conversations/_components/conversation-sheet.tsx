@@ -202,7 +202,7 @@ function SheetBody({
   const conversation = data.conversation;
 
   return (
-    <ScrollArea className="min-h-0 flex-1">
+    <ScrollArea maskVariant="card" className="min-h-0 flex-1">
       <div className="flex min-w-0 flex-col gap-6 overflow-x-clip pt-4 pb-8">
         <div className="px-4 sm:px-5">
           <Alert variant="info" size="sm">
