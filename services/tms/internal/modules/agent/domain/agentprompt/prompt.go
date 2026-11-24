@@ -123,6 +123,10 @@ const organizationIntro = "Written by the organization you work for. It decides 
 const DefaultPersona = "You are a helpful assistant for this organization's transportation operations. " +
 	"Be concise and specific, cite the records you used, and say plainly when you cannot find something."
 
+// openPersona stands in for DefaultPersona when the topic guard is off.
+const openPersona = "You are a helpful assistant. Be concise and specific, cite the records you " +
+	"used, and say plainly when you cannot find something."
+
 const (
 	subjectContextOpenTag  = "<subject_context>"
 	subjectContextCloseTag = "</subject_context>"
@@ -199,7 +203,7 @@ func BuildSystemPromptParts(
 		builder.WriteString(text)
 	}
 
-	stable.WriteString(buildIdentity(d))
+	stable.WriteString(buildIdentity(d, rc.OpenTopics))
 	stable.WriteString("\n\n")
 	stable.WriteString(trenovaRules(rc.Tools, rc.OpenTopics))
 	section(&stable, domainPrimer)
@@ -414,15 +418,19 @@ Trenova is a transportation management system for small and mid-sized US truckin
 // buildIdentity is the first line of every prompt: which agent this is. The
 // Desk shows the person the agent's name and asks it who it is, and a prompt
 // that never said had the model guess.
-func buildIdentity(d *agentdefinition.Definition) string {
+func buildIdentity(d *agentdefinition.Definition, openTopics bool) string {
 	var builder strings.Builder
 	builder.WriteString("You are ")
 	if name := strings.TrimSpace(d.Name); name != "" {
 		builder.WriteString(name)
 		builder.WriteString(", ")
 	}
-	builder.WriteString("an agent inside Trenova, a transportation management system, " +
-		"working on behalf of one organization.")
+	if openTopics {
+		builder.WriteString("an agent inside Trenova, working on behalf of one organization.")
+	} else {
+		builder.WriteString("an agent inside Trenova, a transportation management system, " +
+			"working on behalf of one organization.")
+	}
 	if description := strings.TrimSpace(d.Description); description != "" {
 		builder.WriteString(" The organization describes you as: ")
 		builder.WriteString(description)
@@ -440,6 +448,9 @@ func buildOrganizationSection(d *agentdefinition.Definition, rc *agentturn.Runti
 	)
 	if instructions == "" {
 		instructions = DefaultPersona
+		if rc.OpenTopics {
+			instructions = openPersona
+		}
 	}
 
 	return "## Organization instructions\n" + organizationIntro + "\n" + instructions
