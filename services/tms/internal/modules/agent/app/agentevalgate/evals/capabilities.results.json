@@ -1,0 +1,16 @@
+{
+  "baseline": {
+    "system": "Before (find_tools, 64-tool desks)",
+    "cases": 167,
+    "top1": 0.425,
+    "top3": 0.647,
+    "statusCorrect": 0.725,
+    "callsPerRequest": 2.479,
+    "schemaTokensPerTurn": 5157,
+    "searchTokensMax": 543,
+    "falseNotAvailable": 65,
+    "proposalsForReads": 58,
+    "vagueTop1": 0.271,
+    "deniedOrHandoffCorrect": 0
+  }
+}
