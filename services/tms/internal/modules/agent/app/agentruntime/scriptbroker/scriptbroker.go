@@ -137,7 +137,7 @@ func scriptIndex(
 		tool, _ := s.QueryTools().Get(name)
 		index = append(index, codemode.Read{
 			Name:        name,
-			Description: tool.Description(),
+			Description: agenttoolports.ModelDescription(tool),
 			Parameters:  toolschema.ForModel(tool.ParamSchema()),
 		})
 	}

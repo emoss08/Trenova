@@ -3790,7 +3790,7 @@
     },
     {
       "name": "analysis_run",
-      "description": "Run a short Python script that calls the reads you hold and totals, compares or charts what they return. Use it for every record of a list, two sources reconciled, a report run or attached spreadsheet analyzed, or any figure no read gives; for one or two reads, call them yourself. Call shipment_list as trenova.shipment.list(status=[\"InTransit\"]), any read alike, with its own parameters. A list returns a dict: rows in items, and hasMore with nextCursor, which after= takes for the next page. A read taking ids, such as shipmentIds, takes them all at once. trenova.gather(a.defer(...), b.defer(...)) runs reads together; a refused one raises trenova.Refused. The person sees only show_figure, show_table and show_chart; print and trenova.result(value) reach only you. A script changes nothing: a change it calls is proposed as one batch for a person to approve.",
+      "description": "Run a short Python script that calls the reads you hold and totals, compares or charts what they return. Use it for every record of a list, two sources reconciled, a report run or attached spreadsheet analyzed, or any figure no read gives; for one or two reads, call them yourself. Call shipment_list as trenova.shipment.list(status=[\"InTransit\"]), any read alike, with its own parameters. A list returns a dict: rows in items, and hasMore with nextCursor, which after= takes for the next page. A read taking ids, such as shipmentIds, takes them all at once. trenova.gather(a.defer(...), b.defer(...)) runs reads together; a refused one raises trenova.Refused. The person sees only show_figure, show_table and show_chart; print and trenova.result(value) reach only you. A script changes nothing: a change it calls is proposed as one batch for a person to approve.\nUse this when you need figures worked out over many records: totals, trends, comparisons or a chart.\nUse records_query (entity shipment) instead when a count or a grouped count of one kind of record is enough.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -5484,7 +5484,8 @@
                 "exceptionReason",
                 "ageDays",
                 "queuedAt",
-                "invoiceId"
+                "invoiceId",
+                "reviewStartedAt"
               ],
               "type": "string",
               "x-enumOf": "billing_list_queue_items.column"
@@ -5578,7 +5579,7 @@
             "type": "string"
           },
           "sortBy": {
-            "description": "Field to order by. Defaults to most recently created.",
+            "description": "Field to order by. Defaults to most recently created. createdAt shows as the column queuedAt; allocatedTotalAmount shows as the column amount.",
             "enum": [
               "number",
               "createdAt",
@@ -8413,7 +8414,7 @@
     },
     {
       "name": "carrier_shop",
-      "description": "Price a saved shipment against carriers and rank them by contract cost, margin against the customer's charge, and routing guide rank. Each option says whether the carrier is active and qualified. Leave the carrier list empty to use the shipment's routing guide. Read this before tendering; nothing is tendered or written by it.",
+      "description": "Price a saved shipment against carriers and rank them by contract cost, margin against the customer's charge, and routing guide rank. Each option says whether the carrier is active and qualified. Leave the carrier list empty to use the shipment's routing guide. Read this before tendering; nothing is tendered or written by it.\nUse this when you need carriers to cover a load: ranked by lane history, capacity postings and rates.\nUse records_query (entity carrier) instead when you need carriers by their own attributes.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -8454,6 +8455,11 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "find a carrier",
+        "cover this load",
+        "carriers for this lane"
+      ],
       "policy": {
         "kind": "query",
         "resource": "rate_quote",
@@ -9477,6 +9483,11 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "email the customer",
+        "send an update",
+        "delay notice"
+      ],
       "policy": {
         "kind": "action",
         "resource": "customer_communication",
@@ -10307,7 +10318,7 @@
     },
     {
       "name": "dispatch_assign_move",
-      "description": "Assign a driver and equipment to a shipment move that has no driver yet. Use it once a driver is chosen, usually from dispatch_rank_candidates or dispatch_plan, which hand back the move, driver, tractor and trailer ids together. The move must be unassigned; use reassignment for a move that already has a driver.",
+      "description": "Assign a driver and equipment to a shipment move that has no driver yet. Use it once a driver is chosen, usually from dispatch_rank_candidates or dispatch_plan, which hand back the move, driver, tractor and trailer ids together. The move must be unassigned; use reassignment for a move that already has a driver.\nUse this when you have chosen a driver, tractor and trailer for a move and want them assigned.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -10350,6 +10361,11 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "assign driver",
+        "dispatch the load",
+        "put a driver on"
+      ],
       "prerequisites": [
         "shipment_get",
         "dispatch_rank_candidates",
@@ -10815,7 +10831,7 @@
     },
     {
       "name": "dispatch_get_board",
-      "description": "The dispatch board: moves in the window, furthest behind first, with urgency and coverage, and drivers with availability, hours left and position. Urgency (Late, Now, Today, Tomorrow, Planned) follows the next stop: pickup window until picked up, then delivery window. The one call for \"what is late\" (late), \"what is uncovered\" (uncoveredOnly) and \"who is free\". Say a late move as its lateTo (late to pick up or to deliver) and lateBy (how far past the window). Answer a rundown from the board as it stands, not by tracking each move; check shipment_get_tracking before acting on a late move, since arrivals are sometimes recorded late. summary counts every move in the window, listed or not; on a board, show it with the metrics movesLate, movesDueNow, movesDueToday and movesUncovered. To act on one load, find it with shipment_list.",
+      "description": "The dispatch board: moves in the window, furthest behind first, with urgency and coverage, and drivers with availability, hours left and position. Urgency (Late, Now, Today, Tomorrow, Planned) follows the next stop: pickup window until picked up, then delivery window. The one call for \"what is late\" (late), \"what is uncovered\" (uncoveredOnly) and \"who is free\". Say a late move as its lateTo (late to pick up or to deliver) and lateBy (how far past the window). Answer a rundown from the board as it stands, not by tracking each move; check shipment_get_tracking before acting on a late move, since arrivals are sometimes recorded late. summary counts every move in the window, listed or not; on a board, show it with the metrics movesLate, movesDueNow, movesDueToday and movesUncovered. To act on one load, find it with shipment_list.\nUse this when you want the dispatch board: today's moves grouped by what needs a driver, what is late and what is moving.\nUse records_query (entity shipment) instead when you need shipments by specific conditions or a count.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -10972,7 +10988,7 @@
     },
     {
       "name": "dispatch_rank_candidates",
-      "description": "Rank the drivers who could cover a shipment move, cheapest first, priced as the dispatch console prices them. Each driver comes with what they cost on the move in dollars (empty miles, lateness, waiting, rest, then preferences such as home time and fairness), a verdict, the findings behind it and the cost lines. Call this before dispatch_assign_move, propose from the top of the list unless a finding says why not, and give the cost or finding that decided it as the reason.",
+      "description": "Rank the drivers who could cover a shipment move, cheapest first, priced as the dispatch console prices them. Each driver comes with what they cost on the move in dollars (empty miles, lateness, waiting, rest, then preferences such as home time and fairness), a verdict, the findings behind it and the cost lines. Call this before dispatch_assign_move, propose from the top of the list unless a finding says why not, and give the cost or finding that decided it as the reason.\nUse this when you need to know who is free or best placed to cover a move: drivers ranked by hours, distance and fit.\nUse records_query (entity worker) instead when you need workers by their own attributes, not fit for a move.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -11006,6 +11022,15 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "who is free",
+        "available drivers",
+        "who can take this load",
+        "best driver",
+        "who's free",
+        "who can cover load 4471",
+        "available drivers near Atlanta"
+      ],
       "policy": {
         "kind": "query",
         "resource": "shipment_move",
@@ -15244,7 +15269,7 @@
     },
     {
       "name": "edi_send_tender",
-      "description": "Propose tendering a New shipment to another organization on Trenova over EDI, which it accepts or declines on its side. The partner is the customer's internal EDI partner unless you name one; the shipment is marked Tendered until they answer. A shipment with a tender already out is refused. Carriers outside Trenova are tendered with dispatch_create_tender instead. A person always decides.",
+      "description": "Propose tendering a New shipment to another organization on Trenova over EDI, which it accepts or declines on its side. The partner is the customer's internal EDI partner unless you name one; the shipment is marked Tendered until they answer. A shipment with a tender already out is refused. Carriers outside Trenova are tendered with dispatch_create_tender instead. A person always decides.\nUse this when a move should be offered to a carrier over EDI (a 204 load tender).",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -31011,7 +31036,8 @@
                 "allowManualJe",
                 "currentBalance",
                 "debitBalance",
-                "creditBalance"
+                "creditBalance",
+                "createdAt"
               ],
               "type": "string",
               "x-enumOf": "ledger_list_accounts.column"
@@ -40074,7 +40100,10 @@
       "searchTerms": [
         "received payment",
         "customer paid",
-        "payment against invoices"
+        "payment against invoices",
+        "apply payment",
+        "record payment",
+        "cash application"
       ],
       "policy": {
         "kind": "action",
@@ -44502,7 +44531,7 @@
     },
     {
       "name": "report_run",
-      "description": "Start one of the reports from report_list: a built-in one by reportKey or a saved one by definitionId, whichever dataset it reads. Take every parameter you can from what the person already said — a request naming a window, a date range or a customer has supplied it — and ask_user for the rest, offering the allowed values report_get gave rather than choices you made up. Reports run in the background: a run that finishes within a few seconds comes back with its outcome and a sample of its first rows; otherwise this returns a run id, and you say that it has started and stop there. The conversation tracks the run and shows the person its progress, its row count and a download button as soon as it finishes, so there is nothing to poll and nowhere to send them. Never describe figures you have not seen.",
+      "description": "Start one of the reports from report_list: a built-in one by reportKey or a saved one by definitionId, whichever dataset it reads. Take every parameter you can from what the person already said — a request naming a window, a date range or a customer has supplied it — and ask_user for the rest, offering the allowed values report_get gave rather than choices you made up. Reports run in the background: a run that finishes within a few seconds comes back with its outcome and a sample of its first rows; otherwise this returns a run id, and you say that it has started and stop there. The conversation tracks the run and shows the person its progress, its row count and a download button as soon as it finishes, so there is nothing to poll and nowhere to send them. Never describe figures you have not seen.\nUse analysis_run instead when no saved report answers the question.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -51792,7 +51821,7 @@
     },
     {
       "name": "shipment_add_comment",
-      "description": "Leave a note on a shipment's comment thread, where dispatch will read it. Use it to record what you found or what you did — a carrier's confirmation, a discrepancy, why something was held. The note is internal unless you say otherwise, and is marked as written by the assistant.",
+      "description": "Leave a note on a shipment's comment thread, where dispatch will read it. Use it to record what you found or what you did — a carrier's confirmation, a discrepancy, why something was held. The note is internal unless you say otherwise, and is marked as written by the assistant.\nUse shipment_place_hold instead when the shipment must stop until something is resolved.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -52703,7 +52732,7 @@
     },
     {
       "name": "shipment_list",
-      "description": "Find shipments (loads) by the words people use for them, by status, by holds, or by filters on dates, charges and transfer status. Words match a pro number, BOL, the customer's PO or reference number, a customer's name or code, a stop's place or city, the driver or what it carries; several words each narrow, so \"sunbelt chicago\" finds Sunbelt's loads through Chicago, and a word that names several things narrows to any of them. With no words and no filters it lists the newest. Each row has the first pickup, the final stop, who drives each move, what it carries and the holds in force, each with its note, when it started and the holdId shipment_release_hold takes, so onHold lists held loads and why in one call, and late lists the loads behind schedule by their stops, whatever their status. For more, pass every load you need to shipment_get at once.",
+      "description": "Find shipments (loads) by the words people use for them, by status, by holds, or by filters on dates, charges and transfer status. Words match a pro number, BOL, the customer's PO or reference number, a customer's name or code, a stop's place or city, the driver or what it carries; several words each narrow, so \"sunbelt chicago\" finds Sunbelt's loads through Chicago, and a word that names several things narrows to any of them. With no words and no filters it lists the newest. Each row has the first pickup, the final stop, who drives each move, what it carries and the holds in force, each with its note, when it started and the holdId shipment_release_hold takes, so onHold lists held loads and why in one call, and late lists the loads behind schedule by their stops, whatever their status. detail full adds every stop and move with both drivers, tractor, trailer or carrier, miles, commodities with weight and hazmat, charges, references, service and equipment types and billing dates to each row. For comments and the rating, pass every load you need to shipment_get at once.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -52711,8 +52740,17 @@
             "description": "The nextCursor of the previous page, with every other argument unchanged; omit for the first page.",
             "type": "string"
           },
+          "detail": {
+            "description": "How much each row carries. Omit it for the summary: pro number, BOL, status, customer, first pickup, final stop, drivers, what it carries, total charge, ship, delivery and created dates, billing status and holds. full adds customerReference, billTo, freightTerms, serviceType, shipmentType, equipment, tenderStatus, entryMethod, owner, stops, moves, miles, commodities, pieces, weight, temperature, freightCharge, otherCharges, markedReadyToBillAt, billedAt, canceledAt, cancelReason, updatedAt: every stop, each move's crew or carrier, the commodities and the billing dates. Ask for full when the answer needs any of those.",
+            "enum": [
+              "summary",
+              "full"
+            ],
+            "type": "string",
+            "x-enumOf": "shipment.detail"
+          },
           "fields": {
-            "description": "Only these columns of each row, besides its id, in what you read; a filter such as status or a has... flag is its own parameter, never a column here. The person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "description": "Only these columns of each row, besides its id, in what you read; a filter such as status or a has... flag is its own parameter, never a column here. The person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column. Naming a column only detail full has reads the full row. A sortBy or filter field is a column only when it is listed here.",
             "items": {
               "enum": [
                 "proNumber",
@@ -52723,11 +52761,35 @@
                 "delivery",
                 "drivers",
                 "carrying",
-                "totalCharge",
+                "totalChargeAmount",
                 "actualShipDate",
                 "actualDeliveryDate",
-                "billingStatus",
-                "activeHolds"
+                "billingTransferStatus",
+                "createdAt",
+                "activeHolds",
+                "customerReference",
+                "billTo",
+                "freightTerms",
+                "serviceType",
+                "shipmentType",
+                "equipment",
+                "tenderStatus",
+                "entryMethod",
+                "owner",
+                "stops",
+                "moves",
+                "miles",
+                "commodities",
+                "pieces",
+                "weight",
+                "temperature",
+                "freightCharge",
+                "otherCharges",
+                "markedReadyToBillAt",
+                "billedAt",
+                "canceledAt",
+                "cancelReason",
+                "updatedAt"
               ],
               "type": "string",
               "x-enumOf": "shipment_list.column"
@@ -53501,7 +53563,7 @@
     },
     {
       "name": "shipment_place_hold",
-      "description": "Put a shipment on hold so it stops moving, billing or delivering until someone clears it. The reason decides what the hold blocks, so call masterdata_list_hold_reasons first and use a real reason id rather than describing one.",
+      "description": "Put a shipment on hold so it stops moving, billing or delivering until someone clears it. The reason decides what the hold blocks, so call masterdata_list_hold_reasons first and use a real reason id rather than describing one.\nUse shipment_add_comment instead when you only need to leave a note.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -57300,7 +57362,6 @@
               "profile.twicExpiry",
               "profile.updatedAt",
               "profile.workerId",
-              "profilePicUrl",
               "stateId",
               "status",
               "type",

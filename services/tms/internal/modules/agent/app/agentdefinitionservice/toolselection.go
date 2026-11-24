@@ -151,7 +151,7 @@ func catalogEntry(
 	policy := tool.Policy()
 	entry := agentdefinitionports.ToolCatalogEntry{
 		Name:        tool.Name(),
-		Description: tool.Description(),
+		Description: agenttoolports.ModelDescription(tool),
 		Parameters:  tool.ParamSchema(),
 		Kind:        kind,
 		Resource:    policy.Resource,

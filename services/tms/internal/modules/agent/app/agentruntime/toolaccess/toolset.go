@@ -1136,14 +1136,14 @@ func (s *Access) SpecFor(name string) (kernelports.ToolSpec, bool) {
 	if tool, ok := s.queryTools.Get(name); ok {
 		return kernelports.ToolSpec{
 			Name:        tool.Name(),
-			Description: tool.Description(),
+			Description: agenttoolports.ModelDescription(tool),
 			Parameters:  tool.ParamSchema(),
 		}, true
 	}
 	if tool, ok := s.actionTools.Get(name); ok {
 		return kernelports.ToolSpec{
 			Name:        tool.Name(),
-			Description: tool.Description(),
+			Description: agenttoolports.ModelDescription(tool),
 			Parameters:  tool.ParamSchema(),
 		}, true
 	}

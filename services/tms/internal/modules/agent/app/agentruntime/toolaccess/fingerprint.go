@@ -103,7 +103,7 @@ func (s *Access) fingerprintTool(
 		return fingerprintTool{
 			Name:        name,
 			Registered:  true,
-			Description: tool.Description(),
+			Description: agenttoolports.ModelDescription(tool),
 			Parameters:  tool.ParamSchema(),
 			Policy:      projectPolicy(new(tool.Policy())),
 		}
@@ -113,7 +113,7 @@ func (s *Access) fingerprintTool(
 		projected := fingerprintTool{
 			Name:        name,
 			Registered:  true,
-			Description: tool.Description(),
+			Description: agenttoolports.ModelDescription(tool),
 			Parameters:  tool.ParamSchema(),
 			Tier:        agenttoolpolicy.StaticTier(definition, &policy),
 			Policy:      projectPolicy(&policy),

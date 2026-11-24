@@ -47,9 +47,9 @@ var guidance = map[string]Guidance{
 		InsteadOf: []Instead{{Capability: "invoice.list", When: "you are looking for invoices by customer, status or date"}},
 	},
 	"billing_queue_item.list": {
-		UseWhen: "You need shipments delivered and waiting to be billed, in review, on hold or sent back to operations.",
+		UseWhen:   "You need shipments delivered and waiting to be billed, in review, on hold or sent back to operations.",
 		InsteadOf: []Instead{{Capability: "invoice.list", When: "the shipments are already invoiced"}},
-		Examples: []string{"what is ready to bill", "unbilled loads", "billing queue"},
+		Examples:  []string{"what is ready to bill", "unbilled loads", "billing queue"},
 	},
 	"receivable_open_item.list": {
 		UseWhen: "You need what customers owe right now, by customer and age bucket.",
@@ -71,19 +71,19 @@ var guidance = map[string]Guidance{
 		UseWhen: "You have a worker and need their profile, with hours of service or schedule through include.",
 	},
 	"dispatch_rank_candidates": {
-		UseWhen: "You need to know who is free or best placed to cover a move: drivers ranked by hours, distance and fit.",
+		UseWhen:   "You need to know who is free or best placed to cover a move: drivers ranked by hours, distance and fit.",
 		InsteadOf: []Instead{{Capability: "worker.list", When: "you need workers by their own attributes, not fit for a move"}},
-		Synonyms: []string{"who is free", "available drivers", "who can take this load", "best driver"},
-		Examples: []string{"who's free", "who can cover load 4471", "available drivers near Atlanta"},
-		Chain:    []string{"shipment.get", "dispatch_rank_candidates", "dispatch_assign_move"},
+		Synonyms:  []string{"who is free", "available drivers", "who can take this load", "best driver"},
+		Examples:  []string{"who's free", "who can cover load 4471", "available drivers near Atlanta"},
+		Chain:     []string{"shipment.get", "dispatch_rank_candidates", "dispatch_assign_move"},
 	},
 	"dispatch_assign_move": {
-		UseWhen: "You have chosen a driver, tractor and trailer for a move and want them assigned.",
-		Chain:   []string{"shipment.get", "dispatch_rank_candidates", "dispatch_assign_move"},
+		UseWhen:  "You have chosen a driver, tractor and trailer for a move and want them assigned.",
+		Chain:    []string{"shipment.get", "dispatch_rank_candidates", "dispatch_assign_move"},
 		Synonyms: []string{"assign driver", "dispatch the load", "put a driver on"},
 	},
 	"dispatch_get_board": {
-		UseWhen: "You want the dispatch board: today's moves grouped by what needs a driver, what is late and what is moving.",
+		UseWhen:   "You want the dispatch board: today's moves grouped by what needs a driver, what is late and what is moving.",
 		InsteadOf: []Instead{{Capability: "shipment.list", When: "you need shipments by specific conditions or a count"}},
 	},
 	"edi_send_tender": {
@@ -91,9 +91,9 @@ var guidance = map[string]Guidance{
 		Chain:   []string{"shipment.get", "carrier_shop", "edi_send_tender"},
 	},
 	"carrier_shop": {
-		UseWhen: "You need carriers to cover a load: ranked by lane history, capacity postings and rates.",
+		UseWhen:   "You need carriers to cover a load: ranked by lane history, capacity postings and rates.",
 		InsteadOf: []Instead{{Capability: "carrier.list", When: "you need carriers by their own attributes"}},
-		Synonyms: []string{"find a carrier", "cover this load", "carriers for this lane"},
+		Synonyms:  []string{"find a carrier", "cover this load", "carriers for this lane"},
 	},
 	"tractor.list": {
 		InsteadOf: []Instead{
@@ -121,7 +121,7 @@ var guidance = map[string]Guidance{
 		Synonyms: []string{"text the driver", "message the driver"},
 	},
 	"analysis_run": {
-		UseWhen: "You need figures worked out over many records: totals, trends, comparisons or a chart.",
+		UseWhen:   "You need figures worked out over many records: totals, trends, comparisons or a chart.",
 		InsteadOf: []Instead{{Capability: "shipment.list", When: "a count or a grouped count of one kind of record is enough"}},
 	},
 	"report_run": {

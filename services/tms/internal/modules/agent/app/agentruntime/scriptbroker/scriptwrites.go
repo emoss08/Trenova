@@ -55,7 +55,7 @@ func scriptWriteIndex(
 		tool, _ := s.ActionTools().Get(name)
 		index = append(index, codemode.Read{
 			Name:        name,
-			Description: tool.Description(),
+			Description: agenttoolports.ModelDescription(tool),
 			Parameters:  toolschema.ForModel(tool.ParamSchema()),
 			Writes:      true,
 		})

@@ -5,6 +5,8 @@ import (
 	"errors"
 	"slices"
 
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentcapability"
+
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
@@ -184,6 +186,14 @@ const SelfScopeOwnerParam = "_owner"
 
 // DescribeTool builds a tool's descriptor, reading the optional interfaces
 // both registries share.
+func ModelDescription(tool interface {
+	Name() string
+	Description() string
+},
+) string {
+	return agentcapability.Describe(tool.Name(), tool.Description())
+}
+
 func DescribeTool(
 	tool interface {
 		Name() string
@@ -196,7 +206,7 @@ func DescribeTool(
 	descriptor := AgentToolDescriptor{
 		Name:         tool.Name(),
 		Namespace:    NamespaceOf(tool.Name()),
-		Description:  tool.Description(),
+		Description:  ModelDescription(tool),
 		Parameters:   tool.ParamSchema(),
 		AutonomyTier: tier,
 		Query:        query,
@@ -204,6 +214,7 @@ func DescribeTool(
 	if searchable, ok := tool.(SearchableTool); ok {
 		descriptor.SearchTerms = searchable.SearchTerms()
 	}
+	descriptor.SearchTerms = agentcapability.SearchTermsFor(descriptor.Name, descriptor.SearchTerms)
 	if dependent, ok := tool.(PrerequisiteTool); ok {
 		descriptor.Prerequisites = dependent.Prerequisites()
 	}
