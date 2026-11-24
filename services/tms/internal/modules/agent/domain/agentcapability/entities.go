@@ -1,7 +1,7 @@
 package agentcapability
 
 var entities = []Entity{
-	{Name: "shipment", Area: "shipment", Title: "Shipments", Synonyms: []string{"load", "loads", "pro", "freight", "shipments", "running late", "going out", "outbound", "pickups"}, List: "shipment_list", Get: "shipment_get", Includes: shipmentIncludes},
+	{Name: "shipment", Area: "shipment", Title: "Shipments", Synonyms: []string{"load", "loads", "pro", "freight", "shipments", "running late", "going out", "outbound", "pickups"}, List: "shipment_list", Get: "shipment_get", Includes: shipmentIncludes, Aliases: shipmentAliases},
 	{Name: "recurring_shipment", Area: "shipment", Title: "Recurring shipments", Synonyms: []string{"recurring loads", "standing orders", "templates"}, List: "shipment_list_recurring"},
 	{Name: "order", Area: "order", Title: "Orders", Synonyms: []string{"customer orders", "order"}, List: "order_list", Get: "order_get"},
 	{Name: "tender", Area: "dispatch", Title: "Carrier tenders", Synonyms: []string{"tenders", "load offers", "carrier offers"}, List: "dispatch_list_tenders"},
@@ -107,7 +107,7 @@ var entities = []Entity{
 	{Name: "capture_batch", Area: "inbox", Title: "Capture batches", Synonyms: []string{"scans", "scanned paperwork"}, List: "inbox_list_capture_batches"},
 	{Name: "email_profile", Area: "inbox", Title: "Email profiles", List: "inbox_list_email_profiles"},
 	{Name: "insight", Area: "insight", Title: "Insights", Synonyms: []string{"findings", "recommendations"}, List: "insight_list", Get: "insight_get"},
-	{Name: "report", Area: "report", Title: "Reports", Synonyms: []string{"saved reports"}, List: "report_list", Get: "report_get"},
+	{Name: "report", Area: "report", Title: "Reports", Synonyms: []string{"saved reports", "reports", "report list"}, List: "report_list", Get: "report_get"},
 	{Name: "report_run", Area: "report", Title: "Report runs", List: "report_list_runs", Get: "report_get_run"},
 	{Name: "report_dataset", Area: "report", Title: "Report datasets", Synonyms: []string{"dataset", "data sources"}, List: "report_list_datasets", Get: "report_get_dataset"},
 	{Name: "report_schedule", Area: "report", Title: "Report schedules", List: "report_list_schedules"},
@@ -117,6 +117,23 @@ var entities = []Entity{
 	{Name: "agent_run", Area: "agent", Title: "Agent runs", List: "agent_list_runs", Get: "agent_get_run"},
 	{Name: "web_watch", Area: "web", Title: "Web watches", List: "web_list_watches"},
 	{Name: "portal_site", Area: "web", Title: "Portal sites", List: "web_list_portal_sites"},
+}
+
+var shipmentAliases = map[string]string{
+	"customer":              "customer.name",
+	"billTo":                "billToCustomer.name",
+	"pickup.scheduled":      "pickupAppointment.scheduledWindowStart",
+	"pickup.scheduledEnd":   "pickupAppointment.scheduledWindowEnd",
+	"delivery.scheduled":    "deliveryAppointment.scheduledWindowStart",
+	"delivery.scheduledEnd": "deliveryAppointment.scheduledWindowEnd",
+	"equipment.type":        "trailerTypeId",
+	"tractor.type":          "tractorTypeId",
+	"temperature.min":       "temperatureMin",
+	"temperature.max":       "temperatureMax",
+	"moves.driver":          "driverId",
+	"moves.tractor":         "tractorId",
+	"moves.trailer":         "trailerId",
+	"moves.carrier":         "carrierId",
 }
 
 var shipmentIncludes = []Include{

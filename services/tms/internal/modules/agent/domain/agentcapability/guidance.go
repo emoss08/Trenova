@@ -19,9 +19,9 @@ var guidance = map[string]Guidance{
 		Synonyms: []string{"where are my trucks", "truck locations", "gps positions", "where is the truck"},
 	},
 	"analysis_run": {
-		UseWhen: "You need figures worked out over many records: totals, trends, comparisons or a chart.",
+		UseWhen:   "You need figures worked out over many records: totals, trends, comparisons or a chart.",
 		InsteadOf: []Instead{{Capability: "shipment.list", When: "a count or a grouped count of one kind of record is enough"}},
-		Synonyms: []string{"compare", "revenue", "trend", "margin", "by customer", "by month", "chart"},
+		Synonyms:  []string{"compare", "revenue", "trend", "margin", "by customer", "by month", "chart"},
 	},
 	"billing_approve_queue_item": {
 		Chain:    []string{"billing_queue_item.list", "billing_approve_queue_item", "invoice_send"},
@@ -62,6 +62,7 @@ var guidance = map[string]Guidance{
 			{Capability: "shipment.list", When: "you are searching for shipments by what they match"},
 		},
 		Examples: []string{"where is load 4471", "who is driving pro 123", "everything about this shipment"},
+		Synonyms: []string{"missing documents", "missing paperwork", "documents on a shipment"},
 	},
 	"invoice.list": {
 		UseWhen: "You need invoices by customer, status, date, amount, balance due or days past due, unpaid or open " +
@@ -115,6 +116,7 @@ var guidance = map[string]Guidance{
 		Synonyms: []string{"assign driver", "dispatch the load", "put a driver on"},
 	},
 	"dispatch_get_board": {
+		Synonyms:  []string{"dispatch board", "the board", "board"},
 		UseWhen:   "You want the dispatch board: today's moves grouped by what needs a driver, what is late and what is moving.",
 		InsteadOf: []Instead{{Capability: "shipment.list", When: "you need shipments by specific conditions or a count"}},
 	},

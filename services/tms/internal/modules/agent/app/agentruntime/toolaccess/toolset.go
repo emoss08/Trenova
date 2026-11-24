@@ -18,7 +18,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreset"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aianalytics"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
@@ -47,7 +46,7 @@ const (
 	DisclosureThreshold = aiconfig.DefaultToolDisclosureThreshold
 
 	// PreselectedTools is how many the turn opens with once disclosure is on.
-	PreselectedTools = 8
+	PreselectedTools = 3
 
 	// foundToolsLimit bounds one search_tools answer. A search that returns
 	// fifteen tools has re-created the problem it was added to solve.
@@ -126,6 +125,7 @@ type ToolSet struct {
 	Loaded     map[string]struct{}
 	Allowed    []string
 	Beyond     []string
+	Scope      agentdefinition.Scope
 	Disclosed  bool
 	unattended bool
 	FindCalls  int
@@ -187,6 +187,7 @@ func (s *Access) openToolSet(ctx context.Context, req *ToolSetRequest) *ToolSet 
 		},
 		Self:       req.Definition.ID,
 		DataAccess: req.Definition.DataAccessSensitivity(),
+		Scope:      req.Definition.Scope,
 	}
 	s.readPlan(ctx, set)
 
@@ -217,14 +218,9 @@ func (s *Access) openToolSet(ctx context.Context, req *ToolSetRequest) *ToolSet 
 
 	set.Disclosed = true
 	set.held = len(selected)
-	for _, name := range agentpreset.StandingTools(req.Definition.Template) {
+	for _, name := range req.Definition.PinnedTools {
 		s.Load(set, name)
 	}
-	// Whether a question needs many reads is the model's to judge once it
-	// sees the first result, which is after the turn's tools are fixed, so
-	// the script tool rides on every turn that may run one rather than
-	// waiting on a search the model would not think to make.
-	s.Load(set, "analysis_run")
 	set.add(runtimetools.SearchToolsSpec())
 	s.declare(set, req)
 
@@ -294,6 +290,12 @@ func (s *Access) openCoreTools(set *ToolSet, waiting []string, text string) {
 }
 
 var deferredCoreTools = []string{
+	"agent_list_memories",
+	"agent_create_memory",
+	"agent_edit_memory",
+	"agent_find_page",
+	"agent_open_page",
+	"describe_entity",
 	"agent_cancel_wait",
 	"agent_guide_profile",
 	"agent_raise_exception",

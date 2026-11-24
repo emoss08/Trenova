@@ -181,7 +181,7 @@ func (i *Index) Search(q Query) Answer {
 	expanded := expandTerms(terms)
 	joined := " " + strings.Join(terms, " ") + " "
 	entities := i.mentioned(joined)
-	intent := intentOf(q.Text)
+	intent := intentOf(q.Text, i.entityStart)
 
 	hits := make([]Hit, 0, len(i.entries))
 	for idx := range i.entries {
@@ -325,14 +325,15 @@ func (i *Index) mentioned(joined string) map[string]float64 {
 }
 
 type intent struct {
-	reads   bool
-	writes  bool
-	get     bool
-	actions map[string]struct{}
+	entityStart func(first, second string) bool
+	reads       bool
+	writes      bool
+	get         bool
+	actions     map[string]struct{}
 }
 
-func intentOf(text string) intent {
-	out := intent{actions: make(map[string]struct{}, 4)}
+func intentOf(text string, entityStart func(first, second string) bool) intent {
+	out := intent{actions: make(map[string]struct{}, 4), entityStart: entityStart}
 	for _, clause := range strings.FieldsFunc(text, func(r rune) bool {
 		return r == ',' || r == ';' || r == '.' || r == '!' || r == '?' || r == ':'
 	}) {
@@ -340,6 +341,29 @@ func intentOf(text string) intent {
 	}
 
 	return out
+}
+
+func (i *Index) entityStart(first, second string) bool {
+	pair := Stem(first) + " " + Stem(second)
+	for _, entity := range i.entities {
+		for _, p := range entity.phrases {
+			if strings.HasPrefix(p+" ", pair+" ") {
+				return true
+			}
+		}
+	}
+	for idx := range i.entries {
+		if i.entries[idx].write {
+			continue
+		}
+		for p := range i.entries[idx].phrases {
+			if strings.HasPrefix(p+" ", pair+" ") {
+				return true
+			}
+		}
+	}
+
+	return false
 }
 
 func (out *intent) read(raw []string) {
@@ -354,6 +378,9 @@ func (out *intent) read(raw []string) {
 			out.get = true
 		}
 		if idx > 0 && !leadsVerb(raw[idx-1]) {
+			continue
+		}
+		if idx+1 < len(raw) && out.entityStart != nil && out.entityStart(word, raw[idx+1]) {
 			continue
 		}
 		mapped, known := writeWords[word]

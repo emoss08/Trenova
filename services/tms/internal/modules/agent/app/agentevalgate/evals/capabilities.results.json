@@ -1,16 +1,32 @@
 {
   "baseline": {
-    "system": "Before (search_tools, 64-tool desks)",
+    "system": "Before (find_tools, 64-tool desks)",
     "cases": 167,
-    "top1": 0.425,
-    "top3": 0.647,
+    "top1": 0.419,
+    "top3": 0.641,
     "statusCorrect": 0.725,
-    "callsPerRequest": 2.479,
+    "callsPerRequest": 2.485,
     "schemaTokensPerTurn": 5157,
+    "capabilitySchemaTokensPerTurn": 2937,
     "searchTokensMax": 543,
     "falseNotAvailable": 65,
     "proposalsForReads": 58,
     "vagueTop1": 0.271,
     "deniedOrHandoffCorrect": 0
+  },
+  "current": {
+    "system": "After (search_tools, scoped agents)",
+    "cases": 167,
+    "top1": 0.886,
+    "top3": 0.994,
+    "statusCorrect": 1,
+    "callsPerRequest": 1.725,
+    "schemaTokensPerTurn": 3296,
+    "capabilitySchemaTokensPerTurn": 1023,
+    "searchTokensMax": 738,
+    "falseNotAvailable": 1,
+    "proposalsForReads": 6,
+    "vagueTop1": 0.898,
+    "deniedOrHandoffCorrect": 1
   }
 }

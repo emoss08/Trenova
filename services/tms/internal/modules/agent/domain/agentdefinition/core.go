@@ -15,6 +15,9 @@ var coreTools = [...]string{
 	"agent_offer_options",
 	"agent_create_schedule",
 	"agent_read_attachment",
+	"records_query",
+	"record_get",
+	"describe_entity",
 }
 
 func IsCoreTool(name string) bool {

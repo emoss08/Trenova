@@ -65,10 +65,7 @@ func CapabilityTexts(
 	actions agenttoolports.AgentToolRegistry,
 ) map[string]capabilitysearch.Text {
 	descriptors := make(map[string]agenttoolports.AgentToolDescriptor, 1024)
-	for _, descriptor := range queries.Descriptors() {
-		descriptors[descriptor.Name] = descriptor
-	}
-	for _, descriptor := range actions.Descriptors() {
+	for _, descriptor := range allDescriptors(queries, actions) {
 		descriptors[descriptor.Name] = descriptor
 	}
 	textOf := func(name string) capabilitysearch.Text {
@@ -106,15 +103,51 @@ func CapabilityTexts(
 	return texts
 }
 
+type CapabilityIndex struct {
+	Registry *agentcapability.Registry
+	Index    *capabilitysearch.Index
+	Keyword  *Catalog
+}
+
 func BuildCapabilityIndex(
 	queries agenttoolports.AgentQueryToolRegistry,
 	actions agenttoolports.AgentToolRegistry,
 	runtime agenttoolports.RuntimeToolPolicies,
-) (*agentcapability.Registry, *capabilitysearch.Index, error) {
+) (*CapabilityIndex, error) {
 	registry, err := BuildCapabilities(queries, actions, runtime)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
-	return registry, capabilitysearch.New(registry.All(), CapabilityTexts(registry, queries, actions)), nil
+	return &CapabilityIndex{
+		Registry: registry,
+		Index:    capabilitysearch.New(registry.All(), CapabilityTexts(registry, queries, actions)),
+		Keyword:  New(allDescriptors(queries, actions)),
+	}, nil
+}
+
+func (c *CapabilityIndex) Search(text string, semantic map[string]float64) capabilitysearch.Answer {
+	return c.Index.Search(capabilitysearch.Query{
+		Text:     text,
+		Limit:    capabilitysearch.DefaultLimit,
+		Keyword:  c.Keyword.Scores(text),
+		Semantic: semantic,
+	})
+}
+
+func allDescriptors(
+	queries agenttoolports.AgentQueryToolRegistry,
+	actions agenttoolports.AgentToolRegistry,
+) []agenttoolports.AgentToolDescriptor {
+	queryTools := queries.All()
+	actionTools := actions.All()
+	out := make([]agenttoolports.AgentToolDescriptor, 0, len(queryTools)+len(actionTools))
+	for _, tool := range queryTools {
+		out = append(out, agenttoolports.DescribeTool(tool, "", true))
+	}
+	for _, tool := range actionTools {
+		out = append(out, agenttoolports.DescribeTool(tool, tool.Policy().DefaultTier, false))
+	}
+
+	return out
 }

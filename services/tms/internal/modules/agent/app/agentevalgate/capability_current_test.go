@@ -74,6 +74,12 @@ func parseSearch(content string) agentevalgate.SearchAnswer {
 	answer.LowConfidence = payload.Confidence == toolaccess.ConfidenceLow
 	for _, result := range payload.Results {
 		id := agentcapability.CapabilityIDForTool(result.Name)
+		switch {
+		case result.Entity != "" && result.Name == agentcapability.RecordGet:
+			id = agentcapability.EntityCapabilityID(result.Entity, agentcapability.VerbGet)
+		case result.Entity != "":
+			id = agentcapability.EntityCapabilityID(result.Entity, agentcapability.VerbList)
+		}
 		answer.Candidates = append(answer.Candidates, agentevalgate.Candidate{ID: id, Status: result.Status})
 	}
 

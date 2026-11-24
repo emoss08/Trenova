@@ -109,9 +109,17 @@ type SearchAnswer struct {
 }
 
 type TurnObservation struct {
-	SchemaTokens []int
-	Opened       []string
+	SchemaTokens     []int
+	CapabilityTokens []int
+	Opened           []string
 }
+
+var conversationTools = []string{
+	"ask_user", "withdraw_proposal", "name_plan", "publish_artifact", "show_answer", "show_board",
+	"request_decision", "delegate_task", "search_tools", "find_tools",
+}
+
+func IsConversationTool(name string) bool { return slices.Contains(conversationTools, name) }
 
 type ReadPlan struct {
 	Calls     int
@@ -126,14 +134,15 @@ type CapabilitySystem struct {
 }
 
 type CapabilityOutcome struct {
-	Case     *CapabilityCase
-	Answer   SearchAnswer
-	Rank     int
-	Status   string
-	Calls    int
-	Tokens   float64
-	Opened   bool
-	Proposal bool
+	Case      *CapabilityCase
+	Answer    SearchAnswer
+	Rank      int
+	Status    string
+	Calls     int
+	Tokens    float64
+	CapTokens float64
+	Opened    bool
+	Proposal  bool
 }
 
 type CapabilityMetrics struct {
@@ -144,6 +153,7 @@ type CapabilityMetrics struct {
 	StatusCorrect      float64 `json:"statusCorrect"`
 	CallsPerRequest    float64 `json:"callsPerRequest"`
 	SchemaTokensTurn   float64 `json:"schemaTokensPerTurn"`
+	CapabilityTokens   float64 `json:"capabilitySchemaTokensPerTurn"`
 	SearchTokensMax    int     `json:"searchTokensMax"`
 	FalseNotAvailable  int     `json:"falseNotAvailable"`
 	ProposalsForReads  int     `json:"proposalsForReads"`
@@ -177,6 +187,7 @@ func evaluateCapability(c *CapabilityCase, system *CapabilitySystem) (Capability
 		return outcome, err
 	}
 	outcome.Tokens = mean(turn.SchemaTokens)
+	outcome.CapTokens = mean(turn.CapabilityTokens)
 	outcome.Opened = slices.Contains(turn.Opened, c.Expect)
 
 	answer, err := system.Search(c)
@@ -233,7 +244,7 @@ func (o *CapabilityOutcome) FalseNotAvailable() bool {
 func summarize(system string, outcomes []CapabilityOutcome) CapabilityMetrics {
 	metrics := CapabilityMetrics{System: system, Cases: len(outcomes)}
 	var top1, top3, status, vague, vagueTop1, special, specialHit int
-	var calls, tokens float64
+	var calls, tokens, capTokens float64
 	for idx := range outcomes {
 		outcome := &outcomes[idx]
 		if outcome.Opened || outcome.Rank == 1 {
@@ -265,6 +276,7 @@ func summarize(system string, outcomes []CapabilityOutcome) CapabilityMetrics {
 		}
 		calls += float64(outcome.Calls)
 		tokens += outcome.Tokens
+		capTokens += outcome.CapTokens
 		metrics.SearchTokensMax = max(metrics.SearchTokensMax, outcome.Answer.Tokens)
 	}
 	total := float64(len(outcomes))
@@ -273,6 +285,7 @@ func summarize(system string, outcomes []CapabilityOutcome) CapabilityMetrics {
 	metrics.StatusCorrect = round3(float64(status) / total)
 	metrics.CallsPerRequest = round3(calls / total)
 	metrics.SchemaTokensTurn = math.Round(tokens / total)
+	metrics.CapabilityTokens = math.Round(capTokens / total)
 	if vague > 0 {
 		metrics.VagueTop1 = round3(float64(vagueTop1) / float64(vague))
 	}
@@ -308,13 +321,13 @@ func (r *CapabilityReport) Misses() []string {
 func MetricsTable(rows ...CapabilityMetrics) string {
 	var b strings.Builder
 	b.WriteString("| System | Cases | Top 1 | Top 3 | Vague top 1 | Status right | Denied/hand-off right | " +
-		"Calls per request | Schema tokens per turn | Largest search answer | False \"not available\" | " +
+		"Calls per request | Schema tokens per turn | Capability schema tokens per turn | Largest search answer | False \"not available\" | " +
 		"Proposals where a read was expected |\n")
-	b.WriteString("|---|---|---|---|---|---|---|---|---|---|---|---|\n")
+	b.WriteString("|---|---|---|---|---|---|---|---|---|---|---|---|---|\n")
 	for _, m := range rows {
-		fmt.Fprintf(&b, "| %s | %d | %.1f%% | %.1f%% | %.1f%% | %.1f%% | %.1f%% | %.2f | %.0f | %d | %d | %d |\n",
+		fmt.Fprintf(&b, "| %s | %d | %.1f%% | %.1f%% | %.1f%% | %.1f%% | %.1f%% | %.2f | %.0f | %.0f | %d | %d | %d |\n",
 			m.System, m.Cases, m.Top1*100, m.Top3*100, m.VagueTop1*100, m.StatusCorrect*100,
-			m.DeniedOrHandoffHit*100, m.CallsPerRequest, m.SchemaTokensTurn, m.SearchTokensMax,
+			m.DeniedOrHandoffHit*100, m.CallsPerRequest, m.SchemaTokensTurn, m.CapabilityTokens, m.SearchTokensMax,
 			m.FalseNotAvailable, m.ProposalsForReads)
 	}
 

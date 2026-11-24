@@ -10,6 +10,7 @@ func (t *ToolSet) State() ToolSetState {
 	return ToolSetState{
 		Specs:      append([]kernelports.ToolSpec(nil), t.Specs...),
 		Deferred:   slices.Clone(t.Deferred),
+		Scope:      t.Scope,
 		Loaded:     t.loadedDeferred(),
 		Pending:    slices.Clone(t.Pending),
 		Allowed:    append([]string(nil), t.Allowed...),

@@ -421,7 +421,11 @@ func (t *Tool) Query(
 		return nil, err
 	}
 
+	where := querytool.WhereOf(params.Params)
+	filters = where.ApplyFilters(filters)
+	sorting = where.ApplySort(sorting)
 	opts := &pagination.QueryOptions{
+		FilterGroups: where.FilterGroups(),
 		TenantInfo: pagination.TenantInfo{
 			OrgID:  params.OrganizationID,
 			BuID:   params.BusinessUnitID,
@@ -738,6 +742,8 @@ func toCondition(object map[string]any) filtercatalog.Condition {
 
 	return condition
 }
+
+func (t *Tool) WhereFields() *domaintypes.FieldConfiguration { return t.Spec.Config }
 
 func (t *Tool) BuildSort(params map[string]any) ([]domaintypes.SortField, error) {
 	return t.resource.Sort(

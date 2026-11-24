@@ -511,6 +511,45 @@ func (t *shipmentListTool) Query(
 	var result any
 	query := querytool.OptionalString(params.Params, querytool.ParamQuery)
 	full := detail == DetailFull
+	where := querytool.WhereOf(params.Params)
+	if where != nil {
+		applied, extrasErr := applyExtras(where.Extras, querytool.ClockFor(params).Now)
+		if extrasErr != nil {
+			return nil, extrasErr
+		}
+		if applied.late {
+			lateAt = querytool.ClockFor(params).Now
+		}
+		held.merge(applied.held)
+		if held.set() && !readsHolds {
+			return nil, &graphqlreadports.ReadRefusedError{
+				Resource: permission.ResourceShipmentHold,
+				Message:  "listing shipments by their holds needs read access to shipment holds",
+			}
+		}
+		result, err = t.searchWords(ctx, &wordSearch{
+			params:   params,
+			query:    query,
+			statuses: statuses,
+			held:     held,
+			lateAt:   lateAt,
+			full:     full,
+			where:    where,
+			extras:   applied,
+		})
+		if err != nil {
+			return nil, err
+		}
+		result, err = t.withActiveHolds(ctx, params, result, readsHolds)
+		if err != nil {
+			return nil, err
+		}
+		if full {
+			result = withFullRows(result)
+		}
+
+		return withOutsideRows(result), nil
+	}
 	if query == "" && !held.set() && lateAt == 0 && !full {
 		result, err = t.list.Query(ctx, withStatusFilter(params, statuses))
 	} else {
@@ -591,6 +630,7 @@ func (t *shipmentListTool) readsHolds(
 type shipmentHoldFilter struct {
 	active *bool
 	codes  []string
+	before int64
 }
 
 func shipmentHoldFilterOf(params map[string]any) (shipmentHoldFilter, error) {
@@ -611,13 +651,24 @@ func shipmentHoldFilterOf(params map[string]any) (shipmentHoldFilter, error) {
 	return filter, nil
 }
 
+func (f *shipmentHoldFilter) merge(other shipmentHoldFilter) {
+	if other.active != nil {
+		f.active = other.active
+	}
+	f.codes = sliceutils.DedupeStrings(append(f.codes, other.codes...))
+	if other.before > 0 {
+		f.before = other.before
+	}
+}
+
 func (f shipmentHoldFilter) set() bool {
-	return f.active != nil || len(f.codes) > 0
+	return f.active != nil || len(f.codes) > 0 || f.before > 0
 }
 
 func (f shipmentHoldFilter) apply(options *shipmentports.ShipmentOptions) {
 	options.ActiveHold = f.active
 	options.HoldReasonCodes = f.codes
+	options.HeldBefore = f.before
 }
 
 func (f shipmentHoldFilter) describe(criteria *filtercatalog.Criteria) {
@@ -797,6 +848,8 @@ type wordSearch struct {
 	window  querytool.CursorWindow
 	filters []domaintypes.FieldFilter
 	sorting []domaintypes.SortField
+	where   *querytool.Where
+	extras  shipmentExtras
 }
 
 func (s *wordSearch) options() shipmentports.ShipmentOptions {
@@ -809,6 +862,7 @@ func (s *wordSearch) options() shipmentports.ShipmentOptions {
 	}
 	s.held.apply(&options)
 	options.LateAt = s.lateAt
+	s.extras.apply(&options)
 
 	return options
 }
@@ -842,8 +896,8 @@ func (t *shipmentListTool) searchWords(
 	}
 
 	search.window = window
-	search.filters = filters
-	search.sorting = sorting
+	search.filters = search.where.ApplyFilters(filters)
+	search.sorting = search.where.ApplySort(sorting)
 	found, err := t.search(ctx, search, criteria)
 	if err != nil {
 		return nil, err
@@ -1005,6 +1059,7 @@ func (t *shipmentListTool) search(
 			Pagination:   pagination.Info{Limit: search.window.Limit},
 			Query:        search.query,
 			FieldFilters: search.filters,
+			FilterGroups: search.where.FilterGroups(),
 			Sort:         search.sorting,
 		},
 		Cursor:          search.window.Info,

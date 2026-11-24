@@ -22,6 +22,14 @@ func entityTable(entity domaintypes.PostgresSearchable) (*schema.Table, bool) {
 	return table, ok
 }
 
+func (r *Read) FieldConfiguration() *domaintypes.FieldConfiguration {
+	if r.Entity == nil {
+		return &domaintypes.FieldConfiguration{}
+	}
+
+	return entityFields(r.Entity())
+}
+
 func entityFields(entity domaintypes.PostgresSearchable) *domaintypes.FieldConfiguration {
 	table, ok := entityTable(entity)
 	if !ok {

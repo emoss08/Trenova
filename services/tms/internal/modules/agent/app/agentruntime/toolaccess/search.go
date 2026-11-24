@@ -9,7 +9,6 @@ import (
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimetools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolcatalog"
-	"github.com/emoss08/trenova/internal/modules/agent/app/capabilitysearch"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentcapability"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -61,27 +60,34 @@ type SearchAnswer struct {
 }
 
 type capabilitySet struct {
-	once     sync.Once
-	registry *agentcapability.Registry
-	index    *capabilitysearch.Index
-	err      error
+	once  sync.Once
+	index *agenttoolcatalog.CapabilityIndex
+	err   error
 }
 
-func (s *Access) capabilities() (*agentcapability.Registry, *capabilitysearch.Index, error) {
+func (s *Access) capabilities() (*agenttoolcatalog.CapabilityIndex, error) {
 	s.capabilitySet.once.Do(func() {
-		s.capabilitySet.registry, s.capabilitySet.index, s.capabilitySet.err =
+		s.capabilitySet.index, s.capabilitySet.err =
 			agenttoolcatalog.BuildCapabilityIndex(s.queryTools, s.actionTools, runtimetools.Policies())
 	})
 
-	return s.capabilitySet.registry, s.capabilitySet.index, s.capabilitySet.err
+	return s.capabilitySet.index, s.capabilitySet.err
 }
 
 func (s *Access) Capabilities() (*agentcapability.Registry, error) {
-	registry, _, err := s.capabilities()
-	return registry, err
+	index, err := s.capabilities()
+	if err != nil {
+		return nil, err
+	}
+
+	return index.Registry, nil
 }
 
 func (s *Access) ToolFor(capability *agentcapability.Capability) string {
+	return capability.Name
+}
+
+func checkedTool(capability *agentcapability.Capability) string {
 	if !capability.IsEntityRead() {
 		return capability.Name
 	}
@@ -108,7 +114,7 @@ func (s *Access) ResolveSearch(
 		return SearchAnswer{Content: "Say what you need in a few words: the record, what to do with it " +
 			"and anything it must match. The capabilities are matched against it."}
 	}
-	_, index, err := s.capabilities()
+	index, err := s.capabilities()
 	if err != nil {
 		s.logger.Error("the capability registry could not be built", zap.Error(err))
 
@@ -116,25 +122,20 @@ func (s *Access) ResolveSearch(
 	}
 
 	metrics := s.findMetrics(ctx, set, actor, query)
-	answer := index.Search(capabilitysearch.Query{
-		Text:     query,
-		Limit:    capabilitysearch.DefaultLimit,
-		Keyword:  s.catalog.Scores(query),
-		Semantic: s.capabilitySemantic(ctx, set, actor),
-	})
+	answer := index.Search(query, s.capabilitySemantic(ctx, set, actor))
 	payload := SearchPayload{Query: query, Confidence: ConfidenceHigh}
 	if answer.LowConfidence {
 		payload.Confidence = ConfidenceLow
 		payload.Rephrase = answer.Rephrasings
 	}
 
-	tools := make([]string, 0, len(answer.Hits))
+	checked := make([]string, 0, len(answer.Hits))
 	for idx := range answer.Hits {
-		if tool := s.ToolFor(&answer.Hits[idx].Capability); tool != "" {
-			tools = append(tools, tool)
+		if tool := checkedTool(&answer.Hits[idx].Capability); tool != "" {
+			checked = append(checked, tool)
 		}
 	}
-	permitted := s.PermittedWith(ctx, actor, outsideSet(set, tools), nil)
+	permitted := s.PermittedWith(ctx, actor, outsideSet(set, checked), nil)
 
 	found := make([]string, 0, len(answer.Hits))
 	outOfScope := make([]string, 0, len(answer.Hits))
@@ -142,7 +143,8 @@ func (s *Access) ResolveSearch(
 	for idx := range answer.Hits {
 		capability := &answer.Hits[idx].Capability
 		tool := s.ToolFor(capability)
-		if tool == "" {
+		check := checkedTool(capability)
+		if tool == "" || check == "" {
 			continue
 		}
 		result := SearchResult{
@@ -152,25 +154,26 @@ func (s *Access) ResolveSearch(
 			Summary: clip(capability.Summary, searchSummaryMax),
 			Use:     clip(capability.UseWhen, searchHintMax),
 		}
+		held := slices.Contains(set.Allowed, check)
 		switch {
+		case s.offPlan(set, check):
+			result.Status = StatusNotPermitted
+			result.Permission = s.planPermission(set, check)
+		case !held && !slices.Contains(permitted, check):
+			result.Status = StatusNotPermitted
+			result.Permission = s.permissionOf(check)
+		case !held && !set.Scope.Allows(check):
+			result.Status = StatusNotInThisAgent
+			outOfScope = append(outOfScope, check)
 		case set.Offers(tool):
 			result.Status = StatusLoaded
 			found = append(found, tool)
-		case slices.Contains(set.Allowed, tool):
+		default:
 			result.Status = StatusAvailable
 			found = append(found, tool)
 			if loaded < searchLoadedLimit && s.Load(set, tool) {
 				loaded++
 			}
-		case s.offPlan(set, tool):
-			result.Status = StatusNotPermitted
-			result.Permission = s.planPermission(set, tool)
-		case !slices.Contains(permitted, tool):
-			result.Status = StatusNotPermitted
-			result.Permission = capability.Permission
-		default:
-			result.Status = StatusNotInThisAgent
-			outOfScope = append(outOfScope, tool)
 		}
 		payload.Results = append(payload.Results, result)
 	}
@@ -211,6 +214,15 @@ func (s *Access) capabilitySemantic(
 	}
 
 	return out
+}
+
+func (s *Access) permissionOf(tool string) string {
+	resource, operation, ok := s.ToolGate(tool)
+	if !ok {
+		return ""
+	}
+
+	return resource.String() + ":" + string(operation)
 }
 
 func (s *Access) offPlan(set *ToolSet, tool string) bool {

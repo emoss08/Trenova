@@ -44,6 +44,18 @@ type ShipmentOptions struct {
 	// LateAt, when set, keeps the shipments running late at that instant:
 	// a stop not yet reached whose window closed before it.
 	LateAt int64 `form:"-" json:"-" query:"-"`
+	// Unassigned keeps the shipments with no live driver or carrier assignment.
+	Unassigned bool `form:"-" json:"-" query:"-"`
+	// StopPlaces keeps the shipments with a live stop in each place given.
+	StopPlaces []ShipmentStopPlace `form:"-" json:"-" query:"-"`
+	// HeldBefore keeps the shipments with an active hold placed before it.
+	HeldBefore int64 `form:"-" json:"-" query:"-"`
+}
+
+type ShipmentStopPlace struct {
+	Cities []string
+	States []string
+	Types  []shipmentvocab.StopType
 }
 
 func (o *ShipmentOptions) HasActivityWindow() bool {
@@ -55,7 +67,7 @@ func (o *ShipmentOptions) HasQuickFilters() bool {
 }
 
 func (o *ShipmentOptions) FiltersOnHolds() bool {
-	return o.ActiveHold != nil || len(o.HoldReasonCodes) > 0
+	return o.ActiveHold != nil || len(o.HoldReasonCodes) > 0 || o.HeldBefore > 0
 }
 
 type ShipmentPartyGroup struct {

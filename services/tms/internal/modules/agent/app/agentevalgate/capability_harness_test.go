@@ -70,17 +70,24 @@ func runCapabilityTurn(
 	observation := agentevalgate.TurnObservation{}
 	searchAnswer := ""
 	for idx, req := range completion.Requests {
-		tokens := 0
+		tokens, capTokens := 0, 0
 		for _, spec := range req.Tools {
 			if spec.Deferred {
 				continue
 			}
-			tokens += agentevalgate.SchemaTokens(spec.Name, spec.Description, spec.Parameters)
+			size := agentevalgate.SchemaTokens(spec.Name, spec.Description, spec.Parameters)
+			tokens += size
+			if !agentevalgate.IsConversationTool(spec.Name) {
+				capTokens += size
+			}
 			if idx == 0 {
-				observation.Opened = append(observation.Opened, agentcapability.CapabilityIDForTool(spec.Name))
+				encoded, _ := agentevalgate.MarshalJSON(spec.Parameters)
+				observation.Opened = append(observation.Opened,
+					openedCapabilities(spec.Name, spec.Description+" "+string(encoded))...)
 			}
 		}
 		observation.SchemaTokens = append(observation.SchemaTokens, tokens)
+		observation.CapabilityTokens = append(observation.CapabilityTokens, capTokens)
 		for _, message := range req.Messages {
 			if message.Role == llmports.RoleTool && message.ToolName == searchTool {
 				searchAnswer = message.Content
@@ -139,4 +146,28 @@ func capabilityHarnessEnabled(t *testing.T) {
 	if os.Getenv("TRENOVA_CAPABILITY_HARNESS") == "" && !*update {
 		t.Skip("set TRENOVA_CAPABILITY_HARNESS=1 to run the capability harness")
 	}
+}
+
+func openedCapabilities(tool, schema string) []string {
+	verb := agentcapability.Verb("")
+	switch tool {
+	case agentcapability.RecordsQuery:
+		verb = agentcapability.VerbList
+	case agentcapability.RecordGet:
+		verb = agentcapability.VerbGet
+	default:
+		return []string{agentcapability.CapabilityIDForTool(tool)}
+	}
+	out := make([]string, 0, 128)
+	for _, entity := range agentcapability.Entities() {
+		named := strings.Contains(schema, " "+entity.Name+",") || strings.Contains(schema, " "+entity.Name+";")
+		if !named {
+			continue
+		}
+		if (verb == agentcapability.VerbList && entity.List != "") || (verb == agentcapability.VerbGet && entity.Get != "") {
+			out = append(out, agentcapability.EntityCapabilityID(entity.Name, verb))
+		}
+	}
+
+	return out
 }

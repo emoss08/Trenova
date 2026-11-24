@@ -21,6 +21,7 @@ type Entity struct {
 	List     string
 	Get      string
 	Includes []Include
+	Aliases  map[string]string
 }
 
 func (e *Entity) Words() []string {
