@@ -17,7 +17,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 )
 
@@ -26,12 +25,12 @@ func profileRuntime(t *testing.T, agents ...*agentdefinition.Definition) *Servic
 
 	query := &stubQueryRegistry{Tools: []agenttoolports.AgentQueryTool{
 		&agenttest.StubQueryTool{
-			ToolName: "shipment_list",
+			ToolName: "shipment_list_view",
 			Desc:     "List shipments by status or dates.",
 			Resource: permission.ResourceShipment,
 		},
 		&agenttest.StubQueryTool{
-			ToolName: "invoice_list",
+			ToolName: "invoice_list_view",
 			Desc:     "List invoices by status or due date.",
 			Resource: permission.ResourceInvoice,
 		},
@@ -73,27 +72,27 @@ func conversationRequest(definition *agentdefinition.Definition) *agentruntimepo
 func TestProfile_AConversationNeverReachesAnotherAgentsTools(t *testing.T) {
 	t.Parallel()
 
-	dispatch := runtimetest.AgentHolding("Dispatch helper", "shipment_list", "dispatch_assign_move")
-	billing := runtimetest.AgentHolding("Billing helper", "invoice_list", "invoice_post")
+	dispatch := runtimetest.AgentHolding("Dispatch helper", "shipment_list_view", "dispatch_assign_move")
+	billing := runtimetest.AgentHolding("Billing helper", "invoice_list_view", "invoice_post")
 	service := profileRuntime(t, dispatch, billing)
 
 	profile := service.access.ProfileFor(t.Context(), conversationRequest(dispatch), nil)
 
 	assert.Equal(t, toolaccess.ProfileConversation, profile.Mode)
 	assert.Empty(t, profile.Beyond)
-	assert.Contains(t, profile.Held, "shipment_list")
-	assert.NotContains(t, profile.Held, "invoice_list")
+	assert.Contains(t, profile.Held, "shipment_list_view")
+	assert.NotContains(t, profile.Held, "invoice_list_view")
 	assert.NotContains(t, profile.Held, "invoice_post")
 
 	turn := service.OpenTurn(t.Context(), conversationRequest(dispatch))
 	assert.False(t, turn.Holds("invoice_post"))
-	assert.False(t, turn.Holds("invoice_list"))
+	assert.False(t, turn.Holds("invoice_list_view"))
 }
 
 func TestProfile_ALookupHandedOutHoldsOnlyWhatReads(t *testing.T) {
 	t.Parallel()
 
-	billing := runtimetest.AgentHolding("Billing helper", "invoice_list", "invoice_post")
+	billing := runtimetest.AgentHolding("Billing helper", "invoice_list_view", "invoice_post")
 	service := profileRuntime(t, billing)
 	req := conversationRequest(billing)
 	req.Delegation = &agentruntimeports.Delegation{
@@ -104,7 +103,7 @@ func TestProfile_ALookupHandedOutHoldsOnlyWhatReads(t *testing.T) {
 	profile := service.access.ProfileFor(t.Context(), req, nil)
 
 	assert.Equal(t, toolaccess.ProfileFanOut, profile.Mode)
-	assert.Contains(t, profile.Held, "invoice_list")
+	assert.Contains(t, profile.Held, "invoice_list_view")
 	assert.NotContains(t, profile.Held, "invoice_post")
 	assert.NotContains(t, profile.Held, "agent_create_memory")
 	assert.NotContains(t, profile.Held, "delegate_task")
@@ -113,7 +112,7 @@ func TestProfile_ALookupHandedOutHoldsOnlyWhatReads(t *testing.T) {
 func TestProfile_ATaskThePersonDirectedKeepsItsWrites(t *testing.T) {
 	t.Parallel()
 
-	billing := runtimetest.AgentHolding("Billing helper", "invoice_list", "invoice_post")
+	billing := runtimetest.AgentHolding("Billing helper", "invoice_list_view", "invoice_post")
 	service := profileRuntime(t, billing)
 	req := conversationRequest(billing)
 	req.Delegation = &agentruntimeports.Delegation{ParentAgentID: pulid.MustNew("agdef_")}
@@ -125,26 +124,26 @@ func TestProfile_ATaskThePersonDirectedKeepsItsWrites(t *testing.T) {
 	assert.NotContains(t, profile.Held, "agent_open_page")
 }
 
-func TestDispatchStep_RunsAReachedWriteUnderItsHoldersCeiling(t *testing.T) {
+// Nothing reaches past an agent's scope: a write the agent does not hold is
+// refused with a hand-off, even on a call that claims a holder's ceiling.
+func TestDispatchStep_RefusesAWriteOutsideTheAgentsScope(t *testing.T) {
 	t.Parallel()
 
-	dispatch := runtimetest.AgentHolding("Dispatch helper", "shipment_list")
+	dispatch := runtimetest.AgentHolding("Dispatch helper", "shipment_list_view")
 	dispatch.AutonomyCeiling = agent.TierAutoExecute
 	service := profileRuntime(t)
 	req := conversationRequest(dispatch)
 	call := llmports.ToolCall{ID: "call_1", Name: "invoice_post", Arguments: map[string]any{}}
 
-	refused := service.DispatchStep(t.Context(), req, &toolcall.Call{Call: call})
-	reached := service.DispatchStep(t.Context(), req, &toolcall.Call{
-		Call:   call,
-		Beyond: agent.TierPropose,
-	})
-
-	assert.True(t, refused.Failed, "a write the agent neither holds nor reaches is refused")
-	require.False(t, reached.Failed, reached.Content)
-	require.NotNil(t, reached.Action)
-	assert.Equal(t, agent.TierPropose, reached.Action.Tier)
-	assert.False(t, reached.Action.Executed)
+	for _, step := range []*toolcall.Call{
+		{Call: call},
+		{Call: call, Beyond: agent.TierPropose},
+	} {
+		refused := service.DispatchStep(t.Context(), req, step)
+		assert.True(t, refused.Failed)
+		assert.Nil(t, refused.Action)
+		assert.Contains(t, refused.Content, "outside this agent's scope")
+	}
 }
 
 /*
@@ -156,7 +155,7 @@ post into.
 func TestProfile_OnlyAPersonsConversationHoldsTheScheduleTool(t *testing.T) {
 	t.Parallel()
 
-	billing := runtimetest.AgentHolding("Billing helper", "invoice_list")
+	billing := runtimetest.AgentHolding("Billing helper", "invoice_list_view")
 	service := profileRuntime(t, billing)
 
 	held := service.access.ProfileFor(t.Context(), conversationRequest(billing), nil).Held

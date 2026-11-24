@@ -88,7 +88,7 @@ func TestCommandAvailability_ListsTheCommandsTheAgentCanHonour(t *testing.T) {
 			gate: assistanttest.ExtensionsOn(
 				agentextension.AvailabilitySelectedAgents,
 				both...),
-			definition: assistanttest.Definition(),
+			definition: assistanttest.Definition("report_list"),
 			want:       []agentextension.Command{},
 		},
 		{

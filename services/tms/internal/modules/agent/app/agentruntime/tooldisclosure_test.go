@@ -42,7 +42,7 @@ func TestRun_ReportsTheOpeningRankingAndEachSearch(t *testing.T) {
 			"search_tools",
 			map[string]any{"query": "trailers due inspection"},
 		),
-		runtimetest.ToolTurn("equipment_list_trailers", map[string]any{}),
+		runtimetest.ToolTurn("equipment_list_trailers_view", map[string]any{}),
 		runtimetest.TextTurn("Two trailers are due."),
 	)
 	observed := &recordedDisclosures{}
@@ -70,7 +70,7 @@ func TestRun_ReportsTheOpeningRankingAndEachSearch(t *testing.T) {
 	require.Len(t, observed.found, 1)
 	search := observed.found[0]
 	assert.Equal(t, "trailers due inspection", search.Need)
-	assert.Contains(t, search.Ranked, "equipment_list_trailers")
+	assert.Contains(t, search.Ranked, "equipment_list_trailers_view")
 	assert.Equal(t, threadID, search.Attribution.ThreadID)
 }
 
@@ -94,5 +94,5 @@ func TestRun_SendsEveryHeldToolBelowTheConfiguredThreshold(t *testing.T) {
 
 	assert.Empty(t, observed.preselected, "nothing was ranked: every tool was sent")
 	assert.NotContains(t, requestTools(completion.Requests[0]), "search_tools")
-	assert.Contains(t, requestTools(completion.Requests[0]), "equipment_list_trailers")
+	assert.Contains(t, requestTools(completion.Requests[0]), "equipment_list_trailers_view")
 }

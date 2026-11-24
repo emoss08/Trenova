@@ -22,18 +22,18 @@ The loop now keeps those refusals on the result, with their verdicts.
 func TestRun_KeepsTheCallsTheLoopRefusedWithoutDispatching(t *testing.T) {
 	t.Parallel()
 
-	tool := queryTool("worker_list", map[string]any{}, nil)
+	tool := queryTool("worker_list_view", map[string]any{}, nil)
 	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
-		runtimetest.ToolTurn("worker_list", map[string]any{"query": "Maria"}),
-		runtimetest.ToolTurn("shipment_get", map[string]any{"shipmentId": "shp_1"}),
+		runtimetest.ToolTurn("worker_list_view", map[string]any{"query": "Maria"}),
+		runtimetest.ToolTurn("shipment_get_view", map[string]any{"shipmentId": "shp_1"}),
 		runtimetest.TextTurn("I cannot look that up."),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{Tools: []agenttoolports.AgentQueryTool{
-		tool, queryTool("shipment_get", map[string]any{"id": "shp_1"}, nil),
+		tool, queryTool("shipment_get_view", map[string]any{"id": "shp_1"}, nil),
 	}}, &stubActionRegistry{}, nil)
 
 	result, err := rt.Run(t.Context(), &agentruntimeports.RunRequest{
-		Definition: runtimetest.Definition("shipment_get"),
+		Definition: runtimetest.Definition("shipment_get_view"),
 		Actor:      runtimetest.Actor(),
 		Input:      "Who is Maria?",
 	})
@@ -41,7 +41,7 @@ func TestRun_KeepsTheCallsTheLoopRefusedWithoutDispatching(t *testing.T) {
 
 	require.Len(t, result.LoopRefusals, 1, "a dispatched call writes its own step")
 	refusal := result.LoopRefusals[0]
-	assert.Equal(t, "worker_list", refusal.ToolName)
+	assert.Equal(t, "worker_list_view", refusal.ToolName)
 	assert.Equal(t, aitrace.OutcomeDenied, refusal.Verdict)
 	assert.NotEmpty(t, refusal.CallID)
 	assert.Contains(t, refusal.Content, "not enabled for this agent")

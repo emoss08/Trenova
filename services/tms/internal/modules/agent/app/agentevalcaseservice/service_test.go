@@ -407,7 +407,7 @@ func newWorld(t *testing.T, decision *agentdecision.AgentDecision) *world {
 		BusinessUnitID: tenantInfo.BuID,
 		Name:           "Billing desk",
 		Instructions:   "Clear the billing queue.",
-		ToolNames:      []string{"customer_get", "update_rate"},
+		Scope:          agentdefinition.Scope{Capabilities: []string{"customer_get", "update_rate"}},
 		Version:        4,
 	}
 	thread := &conversation.Thread{
@@ -679,7 +679,7 @@ func TestCreateFromProposal_FreezesTheTurnWithTheCorrectedParameters(t *testing.
 		expected.Params["rate"],
 		"the case expects what the person approved",
 	)
-	assert.ElementsMatch(t, w.definition.EffectiveToolNames(), evalCase.HeldTools)
+	assert.ElementsMatch(t, w.definition.StarterTools(), evalCase.HeldTools)
 	require.NotNil(t, evalCase.CapturedFingerprint)
 	assert.Equal(t, int64(4), evalCase.CapturedFingerprint.DefinitionVersion)
 	assert.NotEmpty(t, evalCase.ContentHash)
@@ -1067,7 +1067,7 @@ func TestCaptureCandidates_ATurnThatUsedAToolTheAgentDoesNotHoldStaysACandidate(
 
 	w := newWorld(t, &agentdecision.AgentDecision{Decision: agentdecision.DecisionAccepted})
 	w.settings.control.AutoActivate = true
-	w.definition.ToolNames = []string{"update_rate"}
+	w.definition.Scope = agentdefinition.Scope{Capabilities: []string{"update_rate"}}
 	w.cases.candidates = []agentqualityports.EvalCaseCaptureCandidate{w.candidate()}
 
 	result, err := w.service.CaptureCandidates(
@@ -1091,7 +1091,9 @@ func TestCaptureCandidates_ATurnThatUsedAToolTheAgentDoesNotHoldStaysACandidate(
 func TestBeyondHeld_NamesEachToolTheAgentDoesNotHoldOnce(t *testing.T) {
 	t.Parallel()
 
-	definition := &agentdefinition.Definition{ToolNames: []string{"worker_get"}}
+	definition := &agentdefinition.Definition{
+		Scope: agentdefinition.Scope{Capabilities: []string{"worker_get"}},
+	}
 
 	assert.Equal(t,
 		[]string{"shipment_add_comment", "customer_list"},

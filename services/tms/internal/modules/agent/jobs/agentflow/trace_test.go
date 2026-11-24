@@ -27,18 +27,18 @@ func TestRunStampsEachEventWithTheWorkflowsClock(t *testing.T) {
 	t.Parallel()
 
 	lookup := &agenttest.StubQueryTool{
-		ToolName: "shipment_get",
+		ToolName: "shipment_fetch",
 		Result:   map[string]any{"status": "InTransit"},
 	}
 	h := newHarness(t, harnessParams{query: []agenttoolports.AgentQueryTool{lookup}})
 	h.replies(
-		toolReply("shipment_get", map[string]any{"proNumber": "12345"}),
+		toolReply("shipment_fetch", map[string]any{"proNumber": "12345"}),
 		textReply("It is in transit."),
 	)
 	started := time.Date(2026, time.March, 2, 9, 30, 0, 0, time.UTC)
 	h.env.SetStartTime(started)
 
-	result := h.run(t, runContext("shipment_get"))
+	result := h.run(t, runContext("shipment_fetch"))
 
 	require.NotEmpty(t, result.Outcome.Events)
 	for _, event := range result.Outcome.Events {

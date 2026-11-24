@@ -68,12 +68,12 @@ func TestRun_CountsEveryToolCallByToolAndVerdict(t *testing.T) {
 			llmports.ToolCall{ID: "invented", Name: "delete_everything"},
 			llmports.ToolCall{
 				ID:        "ran",
-				Name:      "shipment_get",
+				Name:      "shipment_get_view",
 				Arguments: map[string]any{"id": "shp_1"},
 			},
 			llmports.ToolCall{
 				ID:             "cut_off",
-				Name:           "shipment_get",
+				Name:           "shipment_get_view",
 				Arguments:      map[string]any{},
 				ArgumentsError: "unexpected end of JSON input",
 			},
@@ -81,19 +81,19 @@ func TestRun_CountsEveryToolCallByToolAndVerdict(t *testing.T) {
 		runtimetest.TextTurn("Done."),
 	}}
 	rt, registry := countedRuntime(completion, &stubQueryRegistry{
-		Tools: []agenttoolports.AgentQueryTool{queryTool("shipment_get", map[string]any{}, nil)},
+		Tools: []agenttoolports.AgentQueryTool{queryTool("shipment_get_view", map[string]any{}, nil)},
 	})
 
 	_, err := rt.Run(t.Context(), &agentruntimeports.RunRequest{
-		Definition: runtimetest.Definition("shipment_get"),
+		Definition: runtimetest.Definition("shipment_get_view"),
 		Actor:      runtimetest.Actor(),
 		Input:      "Look it up.",
 	})
 	require.NoError(t, err)
 
 	counts := toolOutcomeCounts(t, registry)
-	assert.InDelta(t, 1, counts[[2]string{"shipment_get", aitrace.OutcomeRan}], 0)
-	assert.InDelta(t, 1, counts[[2]string{"shipment_get", aitrace.OutcomeInvalid}], 0)
+	assert.InDelta(t, 1, counts[[2]string{"shipment_get_view", aitrace.OutcomeRan}], 0)
+	assert.InDelta(t, 1, counts[[2]string{"shipment_get_view", aitrace.OutcomeInvalid}], 0)
 	assert.InDelta(
 		t,
 		1,
@@ -116,14 +116,14 @@ func TestDrive_DoesNotCountCallsWhileReplaying(t *testing.T) {
 	t.Parallel()
 
 	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
-		runtimetest.ToolTurn("shipment_get", map[string]any{"id": "shp_1"}),
+		runtimetest.ToolTurn("shipment_get_view", map[string]any{"id": "shp_1"}),
 		runtimetest.TextTurn("Done."),
 	}}
 	rt, registry := countedRuntime(completion, &stubQueryRegistry{
-		Tools: []agenttoolports.AgentQueryTool{queryTool("shipment_get", map[string]any{}, nil)},
+		Tools: []agenttoolports.AgentQueryTool{queryTool("shipment_get_view", map[string]any{}, nil)},
 	})
 	req := &agentruntimeports.RunRequest{
-		Definition: runtimetest.Definition("shipment_get"),
+		Definition: runtimetest.Definition("shipment_get_view"),
 		Actor:      runtimetest.Actor(),
 		Input:      "Look it up.",
 	}
@@ -144,7 +144,7 @@ func TestRestoreTurn_KeepsTheProviderKindItsOutcomesAreLabelledWith(t *testing.T
 
 	rt, _ := countedRuntime(&scriptedCompletion{}, &stubQueryRegistry{})
 	req := &agentruntimeports.RunRequest{
-		Definition: runtimetest.Definition("shipment_get"),
+		Definition: runtimetest.Definition("shipment_get_view"),
 		Actor:      runtimetest.Actor(),
 		Input:      "Look it up.",
 	}

@@ -266,7 +266,7 @@ func newScriptHarness(
 	for _, tool := range actions {
 		names = append(names, tool.Name())
 	}
-	definition := runtimetest.Definition(names...)
+	definition := runtimetest.Definition(append(names, "analysis_run")...)
 	definition.ID = pulid.MustNew("agdef_")
 	ledger := newSyncLedger()
 
@@ -320,7 +320,7 @@ func TestBrokerRefusesWhereTheToolRefuses(t *testing.T) {
 	t.Parallel()
 
 	customer := &agenttest.StubQueryTool{
-		ToolName: "customer_get",
+		ToolName: "customer_get_view",
 		Result:   map[string]any{"name": "Acme"},
 		Resource: permission.ResourceCustomer,
 	}
@@ -330,10 +330,10 @@ func TestBrokerRefusesWhereTheToolRefuses(t *testing.T) {
 		},
 	})
 
-	discrete := h.discrete(t.Context(), "customer_get", map[string]any{})
+	discrete := h.discrete(t.Context(), "customer_get_view", map[string]any{})
 	require.True(t, discrete.Failed, "the person may not read customers")
 
-	outcome := h.run(t.Context(), read(1, "customer_get", map[string]any{}))
+	outcome := h.run(t.Context(), read(1, "customer_get_view", map[string]any{}))
 	require.False(t, outcome.Failed, outcome.Content)
 	require.Len(t, h.script.replies, 1)
 	assert.Equal(t, codemode.CallRefused, h.script.replies[0].Status)
@@ -360,8 +360,8 @@ func TestBrokerRefusesAWriteWhenTheModelMayNotWrite(t *testing.T) {
 func TestBrokerRefusesAReadTheTurnDoesNotHold(t *testing.T) {
 	t.Parallel()
 
-	held := queryTool("shipment_list", map[string]any{"items": []any{}}, nil)
-	unheld := queryTool("worker_get", map[string]any{"name": "Sam"}, nil)
+	held := queryTool("shipment_list_view", map[string]any{"items": []any{}}, nil)
+	unheld := queryTool("worker_get_view", map[string]any{"name": "Sam"}, nil)
 	h := newScriptHarness(t, []agenttoolports.AgentQueryTool{held}, nil, nil)
 	rewire(h.rt, func(p *runtimeParts) {
 		p.QueryTools = &stubQueryRegistry{
@@ -369,7 +369,7 @@ func TestBrokerRefusesAReadTheTurnDoesNotHold(t *testing.T) {
 		}
 	})
 
-	h.run(t.Context(), read(1, "worker_get", map[string]any{}))
+	h.run(t.Context(), read(1, "worker_get_view", map[string]any{}))
 	assert.Equal(t, codemode.CallRefused, h.script.replies[0].Status)
 	assert.Zero(t, unheld.Calls)
 }
@@ -378,7 +378,7 @@ func TestBrokerHandsTheReadTheActorTenantAndCeilingTheToolGets(t *testing.T) {
 	t.Parallel()
 
 	tool := queryTool(
-		"shipment_list",
+		"shipment_list_view",
 		map[string]any{"items": []any{map[string]any{"pro": "P1"}}},
 		nil,
 	)
@@ -387,11 +387,11 @@ func TestBrokerHandsTheReadTheActorTenantAndCeilingTheToolGets(t *testing.T) {
 	tenant := h.req.Actor.DBTenant()
 	ctx := dbscope.WithTenant(t.Context(), tenant)
 
-	h.discrete(ctx, "shipment_list", map[string]any{})
+	h.discrete(ctx, "shipment_list_view", map[string]any{})
 	direct := tool.LastParams
 	directTenant := tool.LastTenant
 
-	h.run(ctx, read(1, "shipment_list", map[string]any{}))
+	h.run(ctx, read(1, "shipment_list_view", map[string]any{}))
 	viaScript := tool.LastParams
 
 	assert.Equal(t, direct.Actor, viaScript.Actor)
@@ -427,15 +427,15 @@ func (c *ceilingTool) Query(
 func TestBrokerWithholdsWhatTheToolWithholds(t *testing.T) {
 	t.Parallel()
 
-	tool := &ceilingTool{queryTool("worker_list", nil, nil)}
+	tool := &ceilingTool{queryTool("worker_list_view", nil, nil)}
 	h := newScriptHarness(t, []agenttoolports.AgentQueryTool{tool}, nil, nil)
 	h.req.Definition.DataAccessCeiling = agentdefinition.DataAccessInternal
 
-	discrete := h.discrete(t.Context(), "worker_list", map[string]any{})
+	discrete := h.discrete(t.Context(), "worker_list_view", map[string]any{})
 	require.False(t, discrete.Failed)
 	assert.NotContains(t, discrete.Content, "555-0100")
 
-	outcome := h.run(t.Context(), read(1, "worker_list", map[string]any{}))
+	outcome := h.run(t.Context(), read(1, "worker_list_view", map[string]any{}))
 	require.False(t, outcome.Failed)
 	reply := h.script.replies[0]
 	assert.NotContains(
@@ -493,7 +493,7 @@ func TestBrokerHoldsTheScriptToItsLimits(t *testing.T) {
 	for idx := range 3000 {
 		rows = append(rows, map[string]any{"n": idx})
 	}
-	wide := queryTool("shipment_list", map[string]any{"items": rows}, nil)
+	wide := queryTool("shipment_list_view", map[string]any{"items": rows}, nil)
 	h := newScriptHarness(t, []agenttoolports.AgentQueryTool{wide}, nil, nil)
 
 	broker := scriptbroker.New(
@@ -507,13 +507,13 @@ func TestBrokerHoldsTheScriptToItsLimits(t *testing.T) {
 		Calls: 3, Rows: 5000, Bytes: 8 << 20, CallBytes: 1 << 20, Concurrent: 8,
 	})
 
-	first := broker.Read(t.Context(), codemode.Call{Seq: 1, Tool: "shipment_list"})
+	first := broker.Read(t.Context(), codemode.Call{Seq: 1, Tool: "shipment_list_view"})
 	assert.Equal(t, codemode.CallOK, first.Status)
-	second := broker.Read(t.Context(), codemode.Call{Seq: 2, Tool: "shipment_list"})
+	second := broker.Read(t.Context(), codemode.Call{Seq: 2, Tool: "shipment_list_view"})
 	assert.Equal(t, codemode.CallLimit, second.Status, "6,000 rows is past 5,000")
 	assert.Equal(t, codemode.LimitRows, second.Limit)
-	broker.Read(t.Context(), codemode.Call{Seq: 3, Tool: "shipment_list"})
-	fourth := broker.Read(t.Context(), codemode.Call{Seq: 4, Tool: "shipment_list"})
+	broker.Read(t.Context(), codemode.Call{Seq: 3, Tool: "shipment_list_view"})
+	fourth := broker.Read(t.Context(), codemode.Call{Seq: 4, Tool: "shipment_list_view"})
 	assert.Equal(t, codemode.LimitCalls, fourth.Limit)
 	assert.Equal(t, 3, wide.Calls, "a read past the call limit never runs")
 	summary := broker.Summary()
@@ -531,7 +531,7 @@ func TestBrokerHoldsTheScriptToItsLimits(t *testing.T) {
 		&codemode.Limits{Calls: 10, Rows: 100_000, Bytes: 1 << 30, CallBytes: 1024, Concurrent: 8},
 	)
 	assert.Equal(t, codemode.LimitCall,
-		small.Read(t.Context(), codemode.Call{Seq: 1, Tool: "shipment_list"}).Limit)
+		small.Read(t.Context(), codemode.Call{Seq: 1, Tool: "shipment_list_view"}).Limit)
 
 	totals := scriptbroker.New(
 		t.Context(),
@@ -552,10 +552,10 @@ func TestBrokerHoldsTheScriptToItsLimits(t *testing.T) {
 	assert.Equal(
 		t,
 		codemode.CallOK,
-		totals.Read(t.Context(), codemode.Call{Seq: 1, Tool: "shipment_list"}).Status,
+		totals.Read(t.Context(), codemode.Call{Seq: 1, Tool: "shipment_list_view"}).Status,
 	)
 	assert.Equal(t, codemode.LimitBytes,
-		totals.Read(t.Context(), codemode.Call{Seq: 2, Tool: "shipment_list"}).Limit)
+		totals.Read(t.Context(), codemode.Call{Seq: 2, Tool: "shipment_list_view"}).Limit)
 }
 
 type slowTool struct {
@@ -583,7 +583,7 @@ func (s *slowTool) Query(context.Context, *agenttoolports.QueryToolParams) (any,
 func TestBrokerSemaphoreBoundsConcurrentDispatches(t *testing.T) {
 	t.Parallel()
 
-	tool := &slowTool{StubQueryTool: queryTool("shipment_get", nil, nil)}
+	tool := &slowTool{StubQueryTool: queryTool("shipment_get_view", nil, nil)}
 	h := newScriptHarness(t, []agenttoolports.AgentQueryTool{tool}, nil, nil)
 	broker := scriptbroker.New(
 		t.Context(),
@@ -600,7 +600,7 @@ func TestBrokerSemaphoreBoundsConcurrentDispatches(t *testing.T) {
 		go func() {
 			defer wg.Done()
 			broker.Read(t.Context(), codemode.Call{
-				Seq: seq, Tool: "shipment_get", Arguments: map[string]any{"n": strconv.Itoa(seq)},
+				Seq: seq, Tool: "shipment_get_view", Arguments: map[string]any{"n": strconv.Itoa(seq)},
 			})
 		}()
 	}
@@ -614,10 +614,10 @@ func TestBrokerSemaphoreBoundsConcurrentDispatches(t *testing.T) {
 func TestScriptToolIsGatedPerProvider(t *testing.T) {
 	t.Parallel()
 
-	tool := queryTool("shipment_list", map[string]any{}, nil)
+	tool := queryTool("shipment_list_view", map[string]any{}, nil)
 	h := newScriptHarness(t, []agenttoolports.AgentQueryTool{tool}, nil, nil)
 
-	h.script.steps = []scriptStep{read(1, "shipment_list", nil)}
+	h.script.steps = []scriptStep{read(1, "shipment_list_view", nil)}
 	denied := h.rt.DispatchStep(t.Context(), h.req, &toolcall.Call{
 		Call:     llmports.ToolCall{ID: "call_haiku", Name: "analysis_run"},
 		Taint:    &agent.RunTaint{},
@@ -647,12 +647,12 @@ func TestScriptToolIsGatedPerProvider(t *testing.T) {
 
 	shipped := newScriptHarness(t, []agenttoolports.AgentQueryTool{tool}, nil, nil)
 	rewire(shipped.rt, func(p *runtimeParts) { p.Scripts = scriptsOn(aiprovider.ScriptSettings{}) })
-	refused := shipped.run(t.Context(), read(1, "shipment_list", nil))
+	refused := shipped.run(t.Context(), read(1, "shipment_list_view", nil))
 	assert.True(t, refused.Failed, "a provider ships with scripts off")
 
 	unwired := newScriptHarness(t, []agenttoolports.AgentQueryTool{tool}, nil, nil)
 	rewire(unwired.rt, func(p *runtimeParts) { p.Scripts = nil })
-	assert.True(t, unwired.run(t.Context(), read(1, "shipment_list", nil)).Failed,
+	assert.True(t, unwired.run(t.Context(), read(1, "shipment_list_view", nil)).Failed,
 		"without the providers' settings no script runs")
 
 	forced := newScriptHarness(t, []agenttoolports.AgentQueryTool{tool}, nil, nil)
@@ -660,14 +660,14 @@ func TestScriptToolIsGatedPerProvider(t *testing.T) {
 		d.CodeMode = codemode.Gate{Forced: true}
 	})
 	forced.req.CodeMode = codemode.OverrideOn
-	assert.False(t, forced.run(t.Context(), read(1, "shipment_list", nil)).Failed,
+	assert.False(t, forced.run(t.Context(), read(1, "shipment_list_view", nil)).Failed,
 		"the bench forces it on in development")
 }
 
 func TestOpenTurnOffersTheScriptToolOnlyWhileTheGateIsOpen(t *testing.T) {
 	t.Parallel()
 
-	tool := queryTool("shipment_list", map[string]any{}, nil)
+	tool := queryTool("shipment_list_view", map[string]any{}, nil)
 	h := newScriptHarness(t, []agenttoolports.AgentQueryTool{tool}, nil, nil)
 	scripts := scriptsOn(aiprovider.ScriptSettings{})
 	rewire(h.rt, func(p *runtimeParts) { p.Scripts = scripts })
@@ -685,15 +685,15 @@ func TestOpenTurnOffersTheScriptToolOnlyWhileTheGateIsOpen(t *testing.T) {
 func TestScriptGateReadsTheAnsweringProviderAtDispatch(t *testing.T) {
 	t.Parallel()
 
-	tool := queryTool("shipment_list", map[string]any{"items": []any{}}, nil)
+	tool := queryTool("shipment_list_view", map[string]any{"items": []any{}}, nil)
 	h := newScriptHarness(t, []agenttoolports.AgentQueryTool{tool}, nil, nil)
 	scripts := scriptsOn(aiprovider.ScriptSettings{Scripts: true})
 	rewire(h.rt, func(p *runtimeParts) { p.Scripts = scripts })
 
-	assert.False(t, h.run(t.Context(), read(1, "shipment_list", nil)).Failed)
+	assert.False(t, h.run(t.Context(), read(1, "shipment_list_view", nil)).Failed)
 
 	scripts.set(aiprovider.ScriptSettings{})
-	h.script.steps = []scriptStep{read(1, "shipment_list", nil)}
+	h.script.steps = []scriptStep{read(1, "shipment_list_view", nil)}
 	turnedOff := h.rt.DispatchStep(t.Context(), h.req, &toolcall.Call{
 		Call:           llmports.ToolCall{ID: "call_second", Name: "analysis_run"},
 		Taint:          &agent.RunTaint{},
@@ -830,7 +830,7 @@ func TestATurnCountsAContinuationThatAddsAndChainsItsCode(t *testing.T) {
 func TestScriptToolRefusesAContinuationOfNothingItMayContinue(t *testing.T) {
 	t.Parallel()
 
-	tool := queryTool("shipment_list", map[string]any{"items": []any{}}, nil)
+	tool := queryTool("shipment_list_view", map[string]any{"items": []any{}}, nil)
 	h := newScriptHarness(t, []agenttoolports.AgentQueryTool{tool}, nil, nil)
 
 	refused := h.rt.DispatchStep(t.Context(), h.req, &toolcall.Call{
@@ -854,13 +854,13 @@ func TestScriptTraceAndSteps(t *testing.T) {
 	t.Parallel()
 	aitracetest.Install()
 
-	tool := queryTool("shipment_list", map[string]any{"items": []any{}}, nil)
+	tool := queryTool("shipment_list_view", map[string]any{"items": []any{}}, nil)
 	h := newScriptHarness(t, []agenttoolports.AgentQueryTool{tool}, nil, nil)
 
 	outcome := h.run(t.Context(),
-		read(1, "shipment_list", map[string]any{"status": []any{"Delayed"}}),
-		read(2, "shipment_list", map[string]any{"status": []any{"InTransit"}}),
-		read(3, "shipment_list", map[string]any{"status": []any{"Delayed"}}),
+		read(1, "shipment_list_view", map[string]any{"status": []any{"Delayed"}}),
+		read(2, "shipment_list_view", map[string]any{"status": []any{"InTransit"}}),
+		read(3, "shipment_list_view", map[string]any{"status": []any{"Delayed"}}),
 	)
 	require.False(t, outcome.Failed, outcome.Content)
 
@@ -872,7 +872,7 @@ func TestScriptTraceAndSteps(t *testing.T) {
 	for seq := 1; seq <= 3; seq++ {
 		step, found := steps[scriptbroker.CallID("call_script", seq)]
 		require.Truef(t, found, "read %d is a step", seq)
-		assert.Equal(t, "shipment_list", step.ToolName)
+		assert.Equal(t, "shipment_list_view", step.ToolName)
 		assert.Equal(t, agentruntimeports.RunStepCompleted, step.Status)
 		assert.Falsef(t, keys[step.Key], "read %d has its own key", seq)
 		keys[step.Key] = true
@@ -881,7 +881,7 @@ func TestScriptTraceAndSteps(t *testing.T) {
 	anchor := aitrace.ForRun(h.req.StepOwner, h.req.Delegation)
 	parent := aitracetest.One(t, anchor.TraceID, "execute_tool analysis_run")
 	assert.Equal(t, anchor.RootSpanID, parent.Parent.SpanID(), "the script hangs under the turn")
-	reads := aitracetest.Named(anchor.TraceID, "execute_tool shipment_list")
+	reads := aitracetest.Named(anchor.TraceID, "execute_tool shipment_list_view")
 	require.Len(t, reads, 3)
 	indexes := make([]int64, 0, 3)
 	for _, span := range reads {
@@ -903,7 +903,7 @@ func TestScriptTraceAndSteps(t *testing.T) {
 func TestScriptIndexListsOnlyHeldReadsAScriptMayCall(t *testing.T) {
 	t.Parallel()
 
-	held := queryTool("shipment_list", map[string]any{}, nil)
+	held := queryTool("shipment_list_view", map[string]any{}, nil)
 	external := &agenttest.StubQueryTool{
 		ToolName: "web_search",
 		Result:   map[string]any{},
@@ -922,7 +922,7 @@ func TestScriptIndexListsOnlyHeldReadsAScriptMayCall(t *testing.T) {
 	for _, entry := range broker.Index() {
 		names = append(names, entry.Name)
 	}
-	assert.Equal(t, []string{"shipment_list"}, names,
+	assert.Equal(t, []string{"shipment_list_view"}, names,
 		"not the script tool itself, and not a web read")
 	encoded, err := sonic.Marshal(broker.Index())
 	require.NoError(t, err)
@@ -932,14 +932,16 @@ func TestScriptIndexListsOnlyHeldReadsAScriptMayCall(t *testing.T) {
 func TestEveryAgentThatHoldsAReadHoldsTheScriptTool(t *testing.T) {
 	t.Parallel()
 
-	tool := queryTool("shipment_list", map[string]any{}, nil)
+	tool := queryTool("shipment_list_view", map[string]any{}, nil)
 	h := newScriptHarness(t, []agenttoolports.AgentQueryTool{tool}, nil, nil)
-	require.NotContains(t, h.req.Definition.Scope.Capabilities, "analysis_run")
+	unconfigured := runtimetest.Definition("shipment_list_view")
+	unconfigured.ID = h.req.Definition.ID
+	h.req.Definition = unconfigured
 
 	assert.Contains(t, h.rt.access.HeldTools(h.req.Definition), "analysis_run",
 		"no agent is configured with it; holding a tool for its work is enough")
 	assert.True(t, h.rt.OpenTurn(t.Context(), h.req).tools.Offers("analysis_run"))
-	assert.False(t, h.run(t.Context(), read(1, "shipment_list", nil)).Failed)
+	assert.False(t, h.run(t.Context(), read(1, "shipment_list_view", nil)).Failed)
 
 	switchedOff := *h.req.Definition
 	switchedOff.TurnToolOff("analysis_run")
@@ -967,24 +969,19 @@ func TestATurnThatNarrowsItsToolsStillCarriesTheScriptTool(t *testing.T) {
 	})
 
 	require.True(t, set.Disclosed)
-	assert.True(
-		t,
-		set.Offers("analysis_run"),
-		"a fan-out question shows itself only after the first read, so the tool is there from the start",
-	)
+	assert.Contains(t, set.Allowed, "analysis_run",
+		"the script tool is held on a narrowed turn, so it loads the moment it is called")
+	assert.Contains(t, set.Deferred, "analysis_run",
+		"it is declared rather than sent in full: its schema costs more than most turns' tools")
 }
 
-// A read the turn reached from another desk through search_tools is in the
-// script's index, as the model may call it: search_tools said fuel_list_purchases
-// was callable here, and a script that could not see it guessed its name three
-// times.
 func TestScriptIndexHoldsWhatTheTurnReached(t *testing.T) {
 	t.Parallel()
 
-	held := queryTool("shipment_list", map[string]any{}, nil)
-	reached := queryTool("fuel_list_purchases", map[string]any{}, nil)
+	held := queryTool("shipment_list_view", map[string]any{}, nil)
+	reached := queryTool("fuel_list_purchases_view", map[string]any{}, nil)
 	h := newScriptHarness(t, []agenttoolports.AgentQueryTool{held, reached}, nil, nil)
-	h.req.Definition.Scope = agentdefinition.Scope{Capabilities: []string{"shipment_list"}}
+	h.req.Definition.Scope = agentdefinition.Scope{Capabilities: []string{"shipment_list_view"}}
 
 	names := func(broker *scriptbroker.Broker) []string {
 		out := make([]string, 0, len(broker.Index()))
@@ -1000,17 +997,17 @@ func TestScriptIndexHoldsWhatTheTurnReached(t *testing.T) {
 			Req: h.req, ParentKey: "p", ParentCallID: "c", Taint: &agent.RunTaint{},
 		},
 	)
-	assert.Equal(t, []string{"shipment_list"}, names(own))
+	assert.Equal(t, []string{"shipment_list_view"}, names(own))
 
 	reaching := scriptbroker.New(
 		t.Context(),
 		h.rt.dispatcher,
 		&tooldispatch.ScriptBrokerParams{
 			Req: h.req, ParentKey: "p", ParentCallID: "c", Taint: &agent.RunTaint{},
-			Reach: map[string]agent.AutonomyTier{"fuel_list_purchases": agent.TierAutoExecute},
+			Reach: map[string]agent.AutonomyTier{"fuel_list_purchases_view": agent.TierAutoExecute},
 		},
 	)
-	assert.Equal(t, []string{"fuel_list_purchases", "shipment_list"}, names(reaching))
+	assert.Equal(t, []string{"fuel_list_purchases_view", "shipment_list_view"}, names(reaching))
 }
 
 // A script that stopped on an error before it read anything is not one of

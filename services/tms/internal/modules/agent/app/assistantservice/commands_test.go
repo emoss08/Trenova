@@ -143,7 +143,7 @@ func TestPrepareTurn_RefusesAnExtensionCommandItCannotHonour(t *testing.T) {
 				gate: assistanttest.ExtensionsOn(
 					agentextension.AvailabilitySelectedAgents, command.Capability,
 				),
-				definition: assistanttest.Definition(),
+				definition: assistanttest.Definition("report_list"),
 				content:    command.Ask,
 				field:      "content",
 			},

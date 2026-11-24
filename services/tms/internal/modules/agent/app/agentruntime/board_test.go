@@ -35,7 +35,7 @@ func listedShipments(ids ...string) agenttoolports.AgentQueryTool {
 		items = append(items, map[string]any{"id": id, "proNumber": "S2610-" + id[len(id)-4:]})
 	}
 
-	return queryTool("shipment_list", map[string]any{"items": items}, nil)
+	return queryTool("shipment_list_view", map[string]any{"items": items}, nil)
 }
 
 func TestRun_OffersABoardWhereArtifactsAreKept(t *testing.T) {
@@ -58,7 +58,7 @@ func TestRun_ShowsABoardOfRecordsTheConversationRead(t *testing.T) {
 	}}
 	result, _ := runWithObserver(t, observer.observe,
 		[]agenttoolports.AgentQueryTool{listedShipments(first, second)},
-		runtimetest.ToolTurn("shipment_list", map[string]any{"query": "late"}),
+		runtimetest.ToolTurn("shipment_list_view", map[string]any{"query": "late"}),
 		runtimetest.ToolTurn("show_board", runtimetest.ShipmentBoard(first, second)),
 		runtimetest.TextTurn("The board is beside the conversation."),
 	)
@@ -83,7 +83,7 @@ func TestRun_RefusesABoardNamingARecordNoToolReturned(t *testing.T) {
 	observer := &boardObserver{}
 	result, _ := runWithObserver(t, observer.observe,
 		[]agenttoolports.AgentQueryTool{listedShipments(read)},
-		runtimetest.ToolTurn("shipment_list", map[string]any{"query": "late"}),
+		runtimetest.ToolTurn("shipment_list_view", map[string]any{"query": "late"}),
 		runtimetest.ToolTurn("show_board", runtimetest.ShipmentBoard(read, invented)),
 		runtimetest.TextTurn("Sorry."),
 	)
@@ -104,7 +104,7 @@ func TestRun_RefusesABoardWhoseWordsStateFigures(t *testing.T) {
 	observer := &boardObserver{}
 	result, _ := runWithObserver(t, observer.observe,
 		[]agenttoolports.AgentQueryTool{listedShipments(id)},
-		runtimetest.ToolTurn("shipment_list", map[string]any{"query": "late"}),
+		runtimetest.ToolTurn("shipment_list_view", map[string]any{"query": "late"}),
 		runtimetest.ToolTurn("show_board", args),
 		runtimetest.TextTurn("Sorry."),
 	)
@@ -144,7 +144,7 @@ func TestRun_AFixableBoardIsSentAgain(t *testing.T) {
 	}}
 	result, _ := runWithObserver(t, observer.observe,
 		[]agenttoolports.AgentQueryTool{listedShipments(id)},
-		runtimetest.ToolTurn("shipment_list", map[string]any{"query": "late"}),
+		runtimetest.ToolTurn("shipment_list_view", map[string]any{"query": "late"}),
 		runtimetest.ToolTurn("show_board", runtimetest.ShipmentBoard(id)),
 		runtimetest.TextTurn("Sorry."),
 	)

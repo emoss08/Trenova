@@ -162,6 +162,8 @@ func (s *Access) ResolveSearch(
 		case !held && !slices.Contains(permitted, check):
 			result.Status = StatusNotPermitted
 			result.Permission = s.permissionOf(check)
+		case !held && !set.Scope.Allows(check) && answer.LowConfidence:
+			continue
 		case !held && !set.Scope.Allows(check):
 			result.Status = StatusNotInThisAgent
 			outOfScope = append(outOfScope, check)
@@ -274,6 +276,10 @@ func nextStep(payload *SearchPayload, unattended bool) string {
 	statuses := make(map[string]bool, 4)
 	for idx := range payload.Results {
 		statuses[payload.Results[idx].Status] = true
+	}
+	if payload.Confidence == ConfidenceLow && !statuses[StatusLoaded] && !statuses[StatusAvailable] {
+		return "Low confidence: these only loosely match. Search once more with the record, the " +
+			"action and the fields, then report the gap naming both searches."
 	}
 	switch {
 	case statuses[StatusLoaded] || statuses[StatusAvailable]:

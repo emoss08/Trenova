@@ -26,13 +26,13 @@ func TestDistinctCallIDs_ReplacesAnIDTheConversationAlreadyUsed(t *testing.T) {
 
 	used := turnhistory.UsedCallIDs([]conversation.Message{{
 		Role:      conversation.RoleAssistant,
-		ToolCalls: []conversation.ToolCallRecord{{ID: "call_0", Name: "shipment_list"}},
+		ToolCalls: []conversation.ToolCallRecord{{ID: "call_0", Name: "shipment_list_view"}},
 	}})
 	completion := &llmports.ChatCompletionResult{ToolCalls: []llmports.ToolCall{
-		{ID: "call_0", Name: "shipment_get"},
-		{ID: "", Name: "customer_get"},
-		{ID: "toolu_unique", Name: "worker_get"},
-		{ID: "toolu_unique", Name: "equipment_get_tractor"},
+		{ID: "call_0", Name: "shipment_get_view"},
+		{ID: "", Name: "customer_get_view"},
+		{ID: "toolu_unique", Name: "worker_get_view"},
+		{ID: "toolu_unique", Name: "equipment_get_tractor_view"},
 	}}
 
 	completion.DistinctCallIDs(used, NewCallID)
@@ -60,9 +60,9 @@ func TestDistinctCallIDs_AlwaysReplacesASynthesizedID(t *testing.T) {
 
 	minted := 0
 	current := &llmports.ChatCompletionResult{ToolCalls: []llmports.ToolCall{
-		{ID: "call_0", SynthesizedID: true, Name: "shipment_get"},
-		{ID: "call_1", SynthesizedID: true, Name: "customer_get"},
-		{ID: "toolu_unique", Name: "worker_get"},
+		{ID: "call_0", SynthesizedID: true, Name: "shipment_get_view"},
+		{ID: "call_1", SynthesizedID: true, Name: "customer_get_view"},
+		{ID: "toolu_unique", Name: "worker_get_view"},
 	}}
 	current.DistinctCallIDs(map[string]struct{}{}, func() string {
 		minted++
@@ -76,7 +76,7 @@ func TestDistinctCallIDs_AlwaysReplacesASynthesizedID(t *testing.T) {
 	assert.Equal(t, "toolu_unique", current.ToolCalls[2].ID, "a provider's own id is kept")
 
 	plain := &llmports.ChatCompletionResult{ToolCalls: []llmports.ToolCall{
-		{ID: "toolu_1", Name: "worker_get"},
+		{ID: "toolu_1", Name: "worker_get_view"},
 	}}
 	plain.DistinctCallIDs(map[string]struct{}{}, func() string {
 		t.Fatal("a provider's own unique id is never replaced")
@@ -97,13 +97,13 @@ func TestRun_GivesSynthesizedCallIDsOfEachTurnTheirOwnID(t *testing.T) {
 			ToolCalls: []llmports.ToolCall{{
 				ID:            "call_0",
 				SynthesizedID: true,
-				Name:          "worker_list",
+				Name:          "worker_list_view",
 				Arguments:     map[string]any{"query": "Maria"},
 			}},
 			ModelIdentifier: "test-model",
 		}
 	}
-	tool := queryTool("worker_list", map[string]any{"results": []any{}}, nil)
+	tool := queryTool("worker_list_view", map[string]any{"results": []any{}}, nil)
 	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
 		synthesized(),
 		synthesized(),
@@ -114,7 +114,7 @@ func TestRun_GivesSynthesizedCallIDsOfEachTurnTheirOwnID(t *testing.T) {
 
 	var observed []string
 	result, err := rt.Run(t.Context(), &agentruntimeports.RunRequest{
-		Definition: runtimetest.Definition("worker_list"),
+		Definition: runtimetest.Definition("worker_list_view"),
 		Actor:      runtimetest.Actor(),
 		Input:      "Who is Maria?",
 		ToolObserver: func(observation agentruntimeports.ToolObservation) (*agentruntimeports.ShownArtifact, error) {

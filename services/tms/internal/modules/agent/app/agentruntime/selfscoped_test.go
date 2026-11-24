@@ -228,7 +228,7 @@ func TestNewToolSet_MyDashboardReachesTheHomePage(t *testing.T) {
 			terms: []string{"my dashboard", "home page", "widgets"},
 		},
 		describedTool(
-			"report_list_dashboards",
+			"report_list_dashboards_view",
 			"List the report dashboards under Reports, with their tiles.",
 		),
 	)
@@ -241,7 +241,7 @@ func TestNewToolSet_MyDashboardReachesTheHomePage(t *testing.T) {
 
 	set := service.access.NewToolSet(t.Context(), &toolaccess.ToolSetRequest{
 		Definition: runtimetest.Definition(
-			append(names, "home_get_layout", "report_list_dashboards")...),
+			append(names, "home_get_layout", "report_list_dashboards_view")...),
 		Actor: runtimetest.Actor(),
 		Input: "Tell me what I have on my dashboard currently",
 	})
@@ -249,5 +249,5 @@ func TestNewToolSet_MyDashboardReachesTheHomePage(t *testing.T) {
 	require.True(t, set.Disclosed)
 	sent := opensWith(set)
 	assert.Contains(t, sent, "home_get_layout")
-	assert.Contains(t, sent, "report_list_dashboards")
+	assert.Contains(t, sent, "report_list_dashboards_view")
 }

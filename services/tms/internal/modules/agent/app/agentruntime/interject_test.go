@@ -80,18 +80,18 @@ func TestDrive_TellsTheModelWhenAWatchedRecordChangesElsewhere(t *testing.T) {
 		ActorUserID: other.String(),
 	}}}
 	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
-		runtimetest.ToolTurn("customer_get", map[string]any{"customerId": "cus_1"}),
+		runtimetest.ToolTurn("customer_get_view", map[string]any{"customerId": "cus_1"}),
 		runtimetest.TextTurn("The shipment moved; I read it again."),
 	}}
 	rt := newRuntime(completion,
 		&stubQueryRegistry{Tools: []agenttoolports.AgentQueryTool{
-			queryTool("customer_get", map[string]any{"name": "Acme"}, nil),
+			queryTool("customer_get_view", map[string]any{"name": "Acme"}, nil),
 		}},
 		&stubActionRegistry{}, nil)
 	rt.changes = feed
 
 	turn := rt.OpenTurn(t.Context(), &agentruntimeports.RunRequest{
-		Definition: runtimetest.Definition("customer_get"),
+		Definition: runtimetest.Definition("customer_get_view"),
 		Actor:      actor,
 		Input:      "Is S-1001 ready to bill?",
 		Records: []agentpagecontext.EntityRef{

@@ -11,7 +11,8 @@ import (
 )
 
 const (
-	DefaultLimit = 8
+	DefaultLimit  = 8
+	relativeFloor = 3.0
 
 	entityKeywordCap  = 10.0
 	secondOpinionSlot = 3
@@ -190,6 +191,11 @@ func (i *Index) Search(q Query) Answer {
 			continue
 		}
 		score := i.lexical(e, terms, joined) + expansionWeight*i.termScore(e, expanded)
+		_, named := entities[e.capability.Entity]
+		keyword := i.keyword(e, q.Keyword)
+		if score <= 0 && !named && keyword <= 0 && q.Semantic[e.capability.ID] <= 0 {
+			continue
+		}
 		if weight, ok := entities[e.capability.Entity]; ok {
 			if e.write {
 				weight *= 0.5
@@ -213,6 +219,16 @@ func (i *Index) Search(q Query) Answer {
 		hits = append(hits, Hit{Capability: e.capability, Score: score})
 	}
 	sortHits(hits)
+	if len(hits) > 0 {
+		floor := hits[0].Score / relativeFloor
+		kept := hits[:0]
+		for _, hit := range hits {
+			if hit.Score >= floor || q.Semantic[hit.Capability.ID] > 0 {
+				kept = append(kept, hit)
+			}
+		}
+		hits = kept
+	}
 	hits = i.withSecondOpinion(hits, q.Keyword, intent)
 	hits = i.withChain(hits)
 	if len(hits) > limit {

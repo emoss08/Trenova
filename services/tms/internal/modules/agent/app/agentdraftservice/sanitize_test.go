@@ -98,7 +98,7 @@ func TestSanitizeDraftKeepsAValidDraftAndStartsItInShadow(t *testing.T) {
 	assert.Equal(t, "Customer desk", req.Name)
 	assert.Equal(t, agentmark.IconHeadset, req.Icon)
 	assert.Equal(t, agentmark.AccentTeal, req.Accent)
-	assert.Equal(t, []string{"shipment_get"}, req.ToolNames)
+	assert.Equal(t, []string{"shipment_get"}, req.Scope.Capabilities)
 	assert.Empty(t, req.ToolTiers)
 	assert.Equal(t, agent.TierActWithApproval, req.AutonomyCeiling)
 	assert.Equal(t, agentdefinition.TriggerChat, req.TriggerMode)
@@ -122,7 +122,7 @@ func TestSanitizeDraftDropsToolsTheRegistryDoesNotOffer(t *testing.T) {
 
 	req, notes := sanitize(t, reply)
 
-	assert.Equal(t, []string{"shipment_get", "customer_update"}, req.ToolNames)
+	assert.Equal(t, []string{"shipment_get", "customer_update"}, req.Scope.Capabilities)
 	require.Len(t, notes, 1)
 	assert.Equal(t, "toolNames", notes[0].Field)
 	assert.Equal(t, "exec_shell", notes[0].Value)

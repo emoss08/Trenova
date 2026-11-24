@@ -273,7 +273,7 @@ func newHarness(t *testing.T, opts harnessOptions) *harness {
 			OrganizationID:  orgID,
 			BusinessUnitID:  buID,
 			Name:            "Dispatch coverage",
-			ToolNames:       []string{"dispatch_assign_move"},
+			Scope:           agentdefinition.Scope{Capabilities: []string{"dispatch_assign_move"}},
 			ToolTiers:       opts.toolTiers,
 			AutonomyCeiling: opts.ceiling,
 		}},

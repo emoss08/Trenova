@@ -68,7 +68,7 @@ func backgroundTools(t *testing.T) map[string][]agenttemplate.Template {
 		for _, tool := range agentpreset.StarterTools(template) {
 			out[tool] = append(out[tool], template)
 		}
-		for _, tool := range (&agentdefinition.Definition{}).EffectiveToolNames() {
+		for _, tool := range (&agentdefinition.Definition{}).Holds(nil) {
 			out[tool] = append(out[tool], template)
 		}
 	}

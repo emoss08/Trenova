@@ -62,7 +62,7 @@ func TestCarryOver_ReloadsTheToolsASearchRecorded(t *testing.T) {
 		ToolCallID: "c1",
 		ToolName:   "search_tools",
 		Content:    "These tools are now callable",
-		FoundTools: []string{"worker_list"},
+		FoundTools: []string{"worker_list_view"},
 	})
 
 	set := service.access.NewToolSet(t.Context(), &toolaccess.ToolSetRequest{
@@ -74,38 +74,9 @@ func TestCarryOver_ReloadsTheToolsASearchRecorded(t *testing.T) {
 
 	require.True(t, set.Disclosed)
 	sent := opensWith(set)
-	assert.Contains(t, sent, "worker_list", "the recorded result is reloaded as it was")
-	assert.NotContains(t, sent, "equipment_list_trailers",
+	assert.Contains(t, sent, "worker_list_view", "the recorded result is reloaded as it was")
+	assert.NotContains(t, sent, "equipment_list_trailers_view",
 		"the search is not run again when its result named what it found")
-}
-
-func TestCarryOver_SearchesAgainForAResultRecordedBeforeNamesWereKept(t *testing.T) {
-	t.Parallel()
-
-	service, names := wideRuntime(t)
-	history := findToolsHistory(conversation.Message{
-		Role:       conversation.RoleTool,
-		ToolCallID: "c1",
-		ToolName:   "search_tools",
-		Content:    "These tools are now callable",
-	})
-
-	set := service.access.NewToolSet(t.Context(), &toolaccess.ToolSetRequest{
-		Definition: runtimetest.Definition(names...),
-		Actor:      runtimetest.Actor(),
-		Input:      "yes, do that",
-		History:    history,
-	})
-
-	require.True(t, set.Disclosed)
-	sent := opensWith(set)
-	assert.Contains(
-		t,
-		sent,
-		"equipment_list_trailers",
-		"an older result is answered by searching again",
-	)
-	assert.NotContains(t, sent, "worker_list")
 }
 
 func TestCarryOver_NeverWidensPastWhatTheAgentHolds(t *testing.T) {
@@ -114,7 +85,7 @@ func TestCarryOver_NeverWidensPastWhatTheAgentHolds(t *testing.T) {
 	service, names := wideRuntime(t)
 	held := make([]string, 0, len(names))
 	for _, name := range names {
-		if name != "worker_list" {
+		if name != "worker_list_view" {
 			held = append(held, name)
 		}
 	}
@@ -122,7 +93,7 @@ func TestCarryOver_NeverWidensPastWhatTheAgentHolds(t *testing.T) {
 		Role:       conversation.RoleTool,
 		ToolCallID: "c1",
 		ToolName:   "search_tools",
-		FoundTools: []string{"worker_list"},
+		FoundTools: []string{"worker_list_view"},
 	})
 
 	set := service.access.NewToolSet(t.Context(), &toolaccess.ToolSetRequest{
@@ -133,7 +104,7 @@ func TestCarryOver_NeverWidensPastWhatTheAgentHolds(t *testing.T) {
 	})
 
 	require.True(t, set.Disclosed)
-	assert.False(t, set.Offers("worker_list"))
+	assert.False(t, set.Offers("worker_list_view"))
 }
 
 func TestRun_RecordsWhatFindToolsFoundOnItsResult(t *testing.T) {
@@ -157,7 +128,7 @@ func TestRun_RecordsWhatFindToolsFoundOnItsResult(t *testing.T) {
 
 	require.Len(t, result.Messages, 4)
 	assert.Equal(t, "search_tools", result.Messages[2].ToolName)
-	assert.Contains(t, result.Messages[2].FoundTools, "worker_list_credentials")
+	assert.Contains(t, result.Messages[2].FoundTools, "worker_list_credentials_view")
 }
 
 func TestNewToolSet_KeywordRankingIsUnchangedWithoutAVector(t *testing.T) {
@@ -167,7 +138,7 @@ func TestNewToolSet_KeywordRankingIsUnchangedWithoutAVector(t *testing.T) {
 	unavailable, _, vectorizer, similarities := semanticRuntime(
 		t,
 		retrievalports.UnavailableQueryVector(airetrieval.UnavailableReasonNotIndexed),
-		map[string]float64{"carrier_list": 0.99},
+		map[string]float64{"carrier_list_view": 0.99},
 	)
 
 	request := toolaccess.ToolSetRequest{
@@ -193,9 +164,9 @@ func TestNewToolSet_PreselectsByMeaningWhenAVectorIsAvailable(t *testing.T) {
 
 	query := runtimetest.UsableQuery()
 	service, names, vectorizer, similarities := semanticRuntime(t, query, map[string]float64{
-		"worker_list_credentials": 0.83,
-		"worker_list":             0.61,
-		"carrier_list":            0.12,
+		"worker_list_credentials_view": 0.83,
+		"worker_list_view":             0.61,
+		"carrier_list_view":            0.12,
 	})
 
 	set := service.access.NewToolSet(t.Context(), &toolaccess.ToolSetRequest{
@@ -213,9 +184,9 @@ func TestNewToolSet_PreselectsByMeaningWhenAVectorIsAvailable(t *testing.T) {
 	require.Len(t, similarities.Requests, 1)
 	assert.Equal(t, airetrieval.CatalogCorpusTools, similarities.Requests[0].Corpus)
 	require.NotEmpty(t, set.Preselected)
-	assert.Equal(t, "worker_list_credentials", set.Preselected[0],
+	assert.Equal(t, "worker_list_credentials_view", set.Preselected[0],
 		"the closest tool by meaning leads when no word matches")
-	assert.NotContains(t, set.Preselected[:3], "carrier_list",
+	assert.NotContains(t, set.Preselected[:3], "carrier_list_view",
 		"a tool below the similarity floor gains nothing from the vector")
 
 	state := set.State()
@@ -262,11 +233,10 @@ func TestFindFor_SearchesByMeaningWithTheTurnsVector(t *testing.T) {
 	assert.Equal(t, callsAtOpen, len(vectorizer.Calls), "search_tools reuses the turn's vector")
 	assert.Len(t, similarities.Requests, 2)
 	require.NotEmpty(t, found.Found)
-	assert.Equal(t, names[toolaccess.PreselectedTools], found.Found[0],
-		"the next closest tool the turn does not carry comes first")
-	for _, name := range found.Found {
-		assert.NotContains(t, names[:toolaccess.PreselectedTools], name,
-			"a tool the turn already carries takes no slot")
+	assert.Contains(t, found.Found, names[toolaccess.PreselectedTools],
+		"the next closest tool the turn does not carry is found")
+	for _, name := range names[:toolaccess.PreselectedTools] {
+		assert.NotContains(t, found.Loaded, name, "a tool the turn already carries is not loaded again")
 	}
 	assert.Contains(t, found.Loaded, names[toolaccess.PreselectedTools])
 }
@@ -275,8 +245,8 @@ func TestFindFor_ReturnsNothingForNonsenseBelowTheFloor(t *testing.T) {
 	t.Parallel()
 
 	service, names, _, _ := semanticRuntime(t, runtimetest.UsableQuery(), map[string]float64{
-		"carrier_list": 0.21,
-		"worker_list":  0.18,
+		"carrier_list_view": 0.21,
+		"worker_list_view":  0.18,
 	})
 
 	set := service.access.NewToolSet(t.Context(), &toolaccess.ToolSetRequest{

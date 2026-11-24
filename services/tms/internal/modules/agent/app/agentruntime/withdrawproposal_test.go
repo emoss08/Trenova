@@ -198,11 +198,11 @@ func TestWithdrawProposal_IsNotDeclaredWhereNothingCanBeProposed(t *testing.T) {
 		runtimetest.TextTurn("Nothing to do."),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{
-		Tools: []agenttoolports.AgentQueryTool{queryTool("shipment_get", map[string]any{}, nil)},
+		Tools: []agenttoolports.AgentQueryTool{queryTool("shipment_get_view", map[string]any{}, nil)},
 	}, &stubActionRegistry{}, nil)
 
 	_, err := rt.Run(t.Context(), &agentruntimeports.RunRequest{
-		Definition: runtimetest.Definition("shipment_get"),
+		Definition: runtimetest.Definition("shipment_get_view"),
 		Actor:      runtimetest.Actor(),
 		Input:      "where is S-1",
 	})

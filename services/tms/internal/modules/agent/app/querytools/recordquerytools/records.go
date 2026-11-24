@@ -59,6 +59,21 @@ var (
 	directionSource = agenttoolschema.Source("records_query.direction", []string{"asc", "desc"})
 )
 
+func orConditionSchema() map[string]any {
+	return map[string]any{
+		toolschema.KeyType: toolschema.TypeObject,
+		toolschema.KeyProperties: map[string]any{
+			"field":  map[string]any{toolschema.KeyType: toolschema.TypeString},
+			"op":     map[string]any{toolschema.KeyType: toolschema.TypeString},
+			"value":  map[string]any{},
+			"values": map[string]any{toolschema.KeyType: "array"},
+			"days":   map[string]any{toolschema.KeyType: "integer"},
+		},
+		toolschema.KeyRequired:             []string{"field", "op"},
+		toolschema.KeyAdditionalProperties: false,
+	}
+}
+
 func sortSchema() map[string]any {
 	return map[string]any{
 		toolschema.KeyType: toolschema.TypeObject,
@@ -99,7 +114,7 @@ func (t *QueryTool) ParamSchema() map[string]any {
 		toolschema.KeyProperties: map[string]any{
 			paramEntity:          text(entityHint),
 			paramWhere:           list("", conditionSchema()),
-			paramOr:              list("Groups of conditions.", map[string]any{toolschema.KeyType: "array", "items": conditionSchema()}),
+			paramOr:              list("Groups of conditions, each as in where.", map[string]any{toolschema.KeyType: "array", "items": orConditionSchema()}),
 			querytool.ParamQuery: text("Free text: names, numbers, words."),
 			paramSort:            list("", sortSchema()),
 			"fields":             list("Columns to keep.", text("")),

@@ -15,6 +15,7 @@ var stopWords = map[string]struct{}{
 	"want": {}, "some": {}, "them": {}, "their": {}, "there": {}, "then": {}, "so": {},
 	"just": {}, "right": {}, "now": {}, "up": {}, "about": {}, "into": {},
 	"will": {}, "or": {}, "if": {}, "as": {}, "like": {}, "got": {},
+	"no": {}, "such": {}, "other": {}, "every": {}, "anything": {}, "something": {},
 	"tool": {}, "tools": {}, "data": {}, "one": {}, "ones": {}, "thing": {}, "things": {},
 }
 

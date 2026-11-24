@@ -32,7 +32,7 @@ func effectRuntime() *Service {
 	return newRuntime(
 		&scriptedCompletion{},
 		&stubQueryRegistry{Tools: []agenttoolports.AgentQueryTool{
-			queryTool("customer_list", nil, nil),
+			queryTool("customer_list_view", nil, nil),
 		}},
 		&stubActionRegistry{Tools: []agenttoolports.AgentTool{
 			actionTool("report_create", agent.TierPropose, nil),
@@ -46,7 +46,7 @@ func TestToolEffect_DerivesFromMetadataAndNamesTheRuntimeTools(t *testing.T) {
 
 	rt := effectRuntime()
 
-	assert.Equal(t, agenttooltrust.ToolEffectLookup, rt.access.ToolEffect("customer_list"))
+	assert.Equal(t, agenttooltrust.ToolEffectLookup, rt.access.ToolEffect("customer_list_view"))
 	assert.Equal(t, agenttooltrust.ToolEffectChange, rt.access.ToolEffect("report_create"))
 	assert.Equal(
 		t,
@@ -71,12 +71,12 @@ func TestMarkToolEffects_LabelsCallsAndResultsWithoutTouchingTheStoredCalls(t *t
 
 	rt := effectRuntime()
 	stored := []conversation.ToolCallRecord{
-		{ID: "c1", Name: "customer_list"},
+		{ID: "c1", Name: "customer_list_view"},
 		{ID: "c2", Name: "retired_tool"},
 	}
 	messages := []conversation.Message{
 		{Role: conversation.RoleAssistant, ToolCalls: stored},
-		{Role: conversation.RoleTool, ToolName: "customer_list", ToolCallID: "c1"},
+		{Role: conversation.RoleTool, ToolName: "customer_list_view", ToolCallID: "c1"},
 		{Role: conversation.RoleTool, ToolName: "retired_tool", ToolCallID: "c2"},
 		{Role: conversation.RoleUser, Content: "Thanks."},
 	}
@@ -98,13 +98,13 @@ func TestDrive_StampsEachMessageWhenItWasProducedAndLabelsTheToolTraffic(t *test
 	t.Parallel()
 
 	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
-		runtimetest.ToolTurn("customer_list", map[string]any{"query": "peak"}),
+		runtimetest.ToolTurn("customer_list_view", map[string]any{"query": "peak"}),
 		runtimetest.TextTurn("Peak Distributing is on file."),
 	}}
 	rt := newRuntime(
 		completion,
 		&stubQueryRegistry{Tools: []agenttoolports.AgentQueryTool{
-			queryTool("customer_list", map[string]any{
+			queryTool("customer_list_view", map[string]any{
 				"count": 1,
 				"items": []map[string]any{{"name": "Peak Distributing"}},
 			}, nil),
@@ -115,7 +115,7 @@ func TestDrive_StampsEachMessageWhenItWasProducedAndLabelsTheToolTraffic(t *test
 
 	var events []kernelports.StreamEvent
 	req := &agentruntimeports.RunRequest{
-		Definition: runtimetest.Definition("customer_list"),
+		Definition: runtimetest.Definition("customer_list_view"),
 		Actor:      runtimetest.Actor(),
 		Input:      "Is Peak on file?",
 	}

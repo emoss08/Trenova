@@ -108,7 +108,7 @@ func TestRecordedReads_AReplaysCallLoadsWhatItsCaseWasGiven(t *testing.T) {
 	t.Parallel()
 
 	recording := (&agentquality.EvalCase{ToolFixtures: []agentquality.ToolFixture{{
-		Tool:   "shipment_get",
+		Tool:   "shipment_fetch",
 		Args:   map[string]any{"id": "shp_1"},
 		Result: map[string]any{"status": "InTransit"},
 	}}}).Recording()
@@ -121,7 +121,7 @@ func TestRecordedReads_AReplaysCallLoadsWhatItsCaseWasGiven(t *testing.T) {
 	require.NoError(t, err)
 
 	require.NotNil(t, recorded)
-	result, _, ok := recorded.Recorded("shipment_get", map[string]any{"id": "shp_1"})
+	result, _, ok := recorded.Recorded("shipment_fetch", map[string]any{"id": "shp_1"})
 	require.True(t, ok)
 	assert.Equal(t, map[string]any{"status": "InTransit"}, result)
 	assert.Equal(t, []pulid.ID{caseID}, cases.asked)

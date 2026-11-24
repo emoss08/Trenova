@@ -82,7 +82,9 @@ func definition() *agentdefinition.Definition {
 		OrganizationID: pulid.MustNew("org_"),
 		BusinessUnitID: pulid.MustNew("bu_"),
 		Name:           "Night desk",
-		ToolNames:      []string{"dispatch_assign_move", "shipment_cancel"},
+		Scope: agentdefinition.Scope{
+			Capabilities: []string{"dispatch_assign_move", "shipment_cancel"},
+		},
 	}
 }
 

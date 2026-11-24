@@ -32,17 +32,17 @@ func placementRun(
 	t.Helper()
 
 	turns := []*llmports.ChatCompletionResult{
-		runtimetest.ToolTurn("formula_get_template", map[string]any{}),
+		runtimetest.ToolTurn("formula_get_template_view", map[string]any{}),
 	}
 	for _, reply := range replies {
 		turns = append(turns, runtimetest.TextTurn(reply))
 	}
 	completion := &scriptedCompletion{Turns: turns}
 	rt := newRuntime(completion, &stubQueryRegistry{Tools: []agenttoolports.AgentQueryTool{
-		queryTool("formula_get_template", map[string]any{"id": "ft_1"}, nil),
+		queryTool("formula_get_template_view", map[string]any{"id": "ft_1"}, nil),
 	}}, &stubActionRegistry{}, nil)
 	req := &agentruntimeports.RunRequest{
-		Definition: runtimetest.Definition("formula_get_template"),
+		Definition: runtimetest.Definition("formula_get_template_view"),
 		Actor:      runtimetest.Actor(),
 		Input:      "Show me formula template Per CWT (Hundredweight)",
 		Delegation: delegation,

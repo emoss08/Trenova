@@ -57,7 +57,7 @@ change with the same suite.
 | | Top 1 | Top 3 | Vague top 1 | Status right | Denied/hand-off right | Calls per request | Schema tokens per turn | Capability schema tokens per turn | False "not available" | Proposals where a read was expected |
 |---|---|---|---|---|---|---|---|---|---|---|
 | Before | 41.9% | 64.1% | 27.1% | 72.5% | 0% | 2.49 | 5,157 | 2,937 | 65 | 58 |
-| After | 88.6% | 99.4% | 89.8% | 100% | 100% | 1.73 | 3,296 | 1,023 | 1 | 6 |
+| After | 88.6% | 99.4% | 89.8% | 100% | 100% | 1.73 | 3,539 | 1,266 | 1 | 6 |
 
 Schema tokens count every schema sent in full on a turn; capability schema tokens leave out the
 conversation tools (`ask_user`, `search_tools`, `withdraw_proposal`, `name_plan` and the like),
@@ -79,8 +79,9 @@ which no consolidation touches. `ask_user` alone is about 1,580 tokens.
 - **Specialized reads keep their shapes.** Projections (the dispatch board, aging, briefings) are
   declared in the registry and return what their cards draw; the envelope covers every record
   list and get.
-- **Schema budget.** The capability schemas fell 65%, not 70%; total per-turn schemas fell 36%
-  because `ask_user` and the other conversation tools were left as they are. Removing the entity
+- **Schema budget.** The capability schemas fell 57%, not 70%; total per-turn schemas fell 31%
+  because `ask_user` and the other conversation tools were left as they are, and each desk's
+  pinned capabilities ride on every turn by design. Removing the entity
   list from `records_query` would reach 70% at the cost of a search before most reads; the
   harness shows the trade (`calls per request`) and it was not taken.
 - **Names, not ids, for shipment parties.** `customer.name` filters by name; drivers, tractors,
@@ -89,6 +90,14 @@ which no consolidation touches. `ask_user` alone is about 1,580 tokens.
 - **The legacy selection suite.** On the 568 older selection cases, written and tuned against the
   previous keyword ranker, top 3 is 90.8% (the old ranker's top 5 was 100%); on its 80 paraphrases, written to share no word with their tool and served by embeddings in production, keyword-only top 3 is 36.2%. The new suite was
   added because the old one held no short or vague request; both run.
+
+## Known gaps
+
+- The red-team cases (`agentredteam/testdata/cases`) and their cassettes still have the model
+  call `inbox_get_inbound_message` directly, which dispatch now refuses; they need rewriting to
+  `record_get` (entity `inbound_message`) and re-recording against a live model.
+- `analysis_run` is held by every agent its scope does not deny, and loads when called rather
+  than riding on every turn.
 
 ## Release note
 

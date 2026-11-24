@@ -26,8 +26,8 @@ func TestOpenTurn_KeepsTheFiguresOfShortenedResultsAsEvidence(t *testing.T) {
 	history := append(
 		runtimetest.ReadTurn(
 			"c1",
-			"shipment_list",
-			toolresult.Fence("shipment_list", payload),
+			"shipment_list_view",
+			toolresult.Fence("shipment_list_view", payload),
 		),
 		runtimetest.QuietTurns(turnhistory.RecentToolTurns)...,
 	)

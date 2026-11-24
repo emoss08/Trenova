@@ -87,7 +87,7 @@ func (s *Dispatcher) dispatch(ctx context.Context, p *DispatchParams) toolcall.R
 	ctx = permissionports.BindActorSession(ctx, req.Actor)
 	// The loop refuses a tool the agent does not hold before it gets here, with
 	// the nearest tools it does hold; this is the backstop for any other caller.
-	if agentcapability.IsBacking(call.Name) {
+	if agentcapability.IsBacking(call.Name) && p.caller != aitrace.CallerScript {
 		entity, _, _ := agentcapability.EntityBacking(call.Name)
 		return toolcall.Refused(aitrace.OutcomeInvalid, aianalytics.ReasonUnregistered,
 			"%q is not a tool. Read %s records with records_query or record_get, entity %q.",
@@ -101,6 +101,14 @@ func (s *Dispatcher) dispatch(ctx context.Context, p *DispatchParams) toolcall.R
 	}
 	if resolved {
 		gate = backing.Name()
+	}
+	if !resolved && agentcapability.IsBacking(call.Name) {
+		reader, ok := s.queryTools.Get(call.Name)
+		if !ok {
+			return toolcall.Refused(aitrace.OutcomeInvalid, aianalytics.ReasonUnregistered,
+				"Tool %q does not exist.", call.Name)
+		}
+		resolved, backing = true, reader
 	}
 	if refusal, refused := s.access.ExtensionRefusal(ctx, req, gate); refused {
 		refusal.Verdict = aitrace.OutcomeDenied
@@ -137,6 +145,9 @@ func (s *Dispatcher) dispatch(ctx context.Context, p *DispatchParams) toolcall.R
 		)
 	}
 
+	if resolved && backing.Name() == call.Name {
+		return s.dispatchQuery(ctx, p, backing, selfScoped)
+	}
 	if resolved {
 		records, _ := s.queryTools.Get(call.Name)
 		return s.dispatchQuery(ctx, p, resolvedQuery{AgentQueryTool: records, backing: backing}, selfScoped)

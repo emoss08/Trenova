@@ -704,8 +704,8 @@ func (s *Access) HeldTools(definition *agentdefinition.Definition) []string {
 func (s *Access) withScripts(definition *agentdefinition.Definition, names []string) []string {
 	if !s.LooksUp("analysis_run") ||
 		slices.Contains(names, "analysis_run") ||
-		!definition.AllowsTool("analysis_run") ||
-		!slices.ContainsFunc(names, scriptable) {
+		slices.Contains(definition.Scope.DenyCapabilities, "analysis_run") ||
+		slices.Contains(definition.Scope.DenyAreas, agentdefinition.AllAreas) {
 		return names
 	}
 
