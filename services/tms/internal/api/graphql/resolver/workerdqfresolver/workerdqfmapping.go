@@ -38,9 +38,14 @@ func employmentVerificationFromInput(
 		EmployedTo:        gqlscalar.Int64Ptr(input.EmployedTo),
 		// A previous carrier is DOT-regulated unless the office says
 		// otherwise, which is the case for all but a handful of records.
-		WasDOTRegulated: true,
-		RequestedAt:     gqlscalar.Int64Ptr(input.RequestedAt),
-		Notes:           gqlscalar.StringValue(input.Notes),
+		WasDOTRegulated:               true,
+		RequestedAt:                   gqlscalar.Int64Ptr(input.RequestedAt),
+		ResponseReceivedAt:            gqlscalar.Int64Ptr(input.ResponseReceivedAt),
+		DrugAlcoholResponseReceivedAt: gqlscalar.Int64Ptr(input.DrugAlcoholResponseReceivedAt),
+		HadAccidents:                  gqlscalar.BoolValue(input.HadAccidents),
+		HadDrugAlcoholViolations:      gqlscalar.BoolValue(input.HadDrugAlcoholViolations),
+		Findings:                      gqlscalar.StringValue(input.Findings),
+		Notes:                         gqlscalar.StringValue(input.Notes),
 	}
 	if input.WasDOTRegulated != nil {
 		entity.WasDOTRegulated = *input.WasDOTRegulated
@@ -50,6 +55,13 @@ func employmentVerificationFromInput(
 	}
 	if input.Method != nil {
 		entity.Method = *input.Method
+	}
+	if err = gqlscalar.ApplyInt(
+		"accidentCount",
+		input.AccidentCount,
+		&entity.AccidentCount,
+	); err != nil {
+		return nil, err
 	}
 
 	return entity, nil

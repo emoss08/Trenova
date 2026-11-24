@@ -85,8 +85,8 @@ func TestAnthropicAdapter_KeepsTheBudgetForOlderModels(t *testing.T) {
 
 /*
 None is the least thinking each model allows. Opus 5.5 and Fable always think
-and Sonnet 5.5 refuses "disabled", so they think at low effort, with the
-summary shown, since the thinking is paid for either way; Opus 5 takes
+and Sonnet 5.5 refuses "disabled", so they think at low effort with the
+thinking omitted: nobody asked to read it, and only its signature is replayed; Opus 5 takes
 "disabled" at this effort; Opus 4.8 and earlier adaptive models do not think
 unless asked, so they are sent nothing.
 */
@@ -97,7 +97,7 @@ func TestAnthropicAdapter_SendsTheLeastThinkingEachModelAllowsForNone(t *testing
 		thinking, output := sentThinking(t, model, aireasoning.ReasoningNone)
 		require.NotNil(t, thinking, model)
 		assert.Equal(t, "adaptive", thinking["type"], model)
-		assert.Equal(t, "summarized", thinking["display"], model)
+		assert.Equal(t, "omitted", thinking["display"], model)
 		require.NotNil(t, output, model)
 		assert.Equal(t, "low", output["effort"], model)
 	}
@@ -130,7 +130,7 @@ func TestAnthropicAdapter_SendsNoThinkingSettingForOff(t *testing.T) {
 A model that thinks when a request says nothing about thinking thinks before
 every reply, tool calls included, and on the Desk that was a second or more of
 every step. Off therefore asks for no thinking, as None does: "disabled" where
-the model takes it, and the least effort where it cannot stop. A provider that
+the model takes it, and the least effort, its thinking omitted, where it cannot stop. A provider that
 wants thinking names an effort.
 */
 func TestAnthropicAdapter_OffTurnsOffTheThinkingAModelDoesUnasked(t *testing.T) {
@@ -146,7 +146,7 @@ func TestAnthropicAdapter_OffTurnsOffTheThinkingAModelDoesUnasked(t *testing.T) 
 		thinking, output := sentThinking(t, model, aireasoning.ReasoningOff)
 		require.NotNil(t, thinking, model)
 		assert.Equal(t, "adaptive", thinking["type"], model)
-		assert.Equal(t, "summarized", thinking["display"], model)
+		assert.Equal(t, "omitted", thinking["display"], model)
 		require.NotNil(t, output, model)
 		assert.Equal(t, "low", output["effort"], model)
 	}

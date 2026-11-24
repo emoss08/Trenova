@@ -44,7 +44,7 @@ Copyable patterns for the common tasks are in [patterns.md](patterns.md).
   files. Existing helpers worth knowing: `useObjectUrl`, `useElementSize`/`useElementWidth`,
   `useDebounce`, `useSettledValue`, `useLatestCallback` (shared hooks); `usePermission`,
   `useApiMutation`, `useCopyToClipboard`, `useSignOut` (web hooks); `useImageUpload` for a logo, an
-  icon or a person's photo (`components/image-upload/`); `apiUrl`/`apiEndpoint`,
+  icon or a person's photo (`@trenova/shared/components/image-upload/`); `apiUrl`/`apiEndpoint`,
   `escapeRegExp`, `escapeHtml`, `cn`, `toSentenceFragment` (shared lib); `formatMinor`,
   `formatMinorAmount`, `isMinorAmountField` for `…Minor` money fields (`@trenova/shared/lib/money`).
 - **A module that pages share holds only what is light.** A key, a constant or a pure function
@@ -92,7 +92,7 @@ Copyable patterns for the common tasks are in [patterns.md](patterns.md).
   `Link`/`navigate` with a typed `to` (and `params`); a path held as a string comes from
   `appPath` (`lib/app-path.ts`), so a removed route fails the typecheck.
 - A component that should start loading on hover is a `lazyComponent`
-  (`lib/lazy-component.ts`) and calls its `preload` on intent.
+  (`@trenova/shared/lib/lazy-component`) and calls its `preload` on intent.
 - Record links come from `recordPath` (`config/record-links.ts`), never hand-built.
 - Gate actions with `usePermission(Resource.X, Operation.Y)`; the server checks again, so
   this is for the interface, not for security.

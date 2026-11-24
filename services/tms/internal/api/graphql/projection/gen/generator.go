@@ -508,8 +508,14 @@ func hasExplicitModelBinding(name string, data discovery) bool {
 	return firstModelBinding(data.Gqlgen.Models[name]) != ""
 }
 
+const notProjected = "-"
+
 func selectProjectionType(typeName string, data discovery) (typeSelection, error) {
-	if override := data.Manifest.ModelOverrides[typeName]; override != "" {
+	switch override := data.Manifest.ModelOverrides[typeName]; override {
+	case notProjected:
+		return typeSelection{}, nil
+	case "":
+	default:
 		return selectionForModelOverride(typeName, override, data)
 	}
 
@@ -590,7 +596,7 @@ func tableColumns(st *goStruct) (tableColumnMap, bool) {
 
 	values := make(map[string]string, len(st.Fields))
 	for _, field := range st.Fields {
-		if field.IsColumn {
+		if field.IsColumn && !field.Hidden {
 			values[field.JSONName] = field.ColumnName
 		}
 	}
@@ -713,18 +719,21 @@ func fieldCoverage(
 
 	var score int
 	for _, field := range def.Fields {
-		if _, ok := st.Fields[field.Name]; ok {
+		if visibleField(st, field.Name) {
 			score++
 			continue
 		}
-		if key := aliases[field.Name]; key != "" {
-			if _, ok := st.Fields[key]; ok {
-				score++
-			}
+		if key := aliases[field.Name]; key != "" && visibleField(st, key) {
+			score++
 		}
 	}
 
 	return score, float64(score) / float64(len(def.Fields))
+}
+
+func visibleField(st goStruct, name string) bool {
+	field, ok := st.Fields[name]
+	return ok && !field.Hidden
 }
 
 func validateOverrideTypes(data discovery) error {
@@ -770,7 +779,13 @@ func validateOverrideTypes(data discovery) error {
 			return fmt.Errorf("always override references non-projection type %q", typeName)
 		}
 	}
-	for typeName := range data.Manifest.ModelOverrides {
+	for typeName, override := range data.Manifest.ModelOverrides {
+		if override == notProjected {
+			if _, ok := data.Schema.Types[typeName]; !ok {
+				return fmt.Errorf("modelOverrides names %q, which is not in the schema", typeName)
+			}
+			continue
+		}
 		if _, ok := data.Selections[typeName]; !ok {
 			return fmt.Errorf("modelOverrides override references non-projection type %q", typeName)
 		}
@@ -957,6 +972,9 @@ func buildAlwaysColumns(
 	for _, field := range keys {
 		key := columnKey(field, data.Aliases[typeName])
 		column, ok := selection.Columns.Values[key]
+		if hidden, found := selection.Struct.Fields[key]; !ok && found && hidden.Hidden {
+			column, ok = hidden.ColumnName, true
+		}
 		if !ok {
 			return nil, fmt.Errorf(
 				"type %q always field %q uses missing column key %q",
@@ -1274,8 +1292,13 @@ func parseGoStructField(field *ast.Field) (goField, bool) {
 	if !tagged && isRelationType(field.Type) {
 		isRelation = true
 	}
+	hidden := false
 	if jsonName == "-" && isRelation {
 		jsonName = lowerCamel(name)
+	}
+	if jsonName == "-" && head != "" && head != keelTagSkip && !strings.Contains(head, ":") {
+		jsonName = lowerCamel(name)
+		hidden = true
 	}
 	if jsonName == "" || jsonName == "-" {
 		return goField{}, false
@@ -1285,6 +1308,7 @@ func parseGoStructField(field *ast.Field) (goField, bool) {
 		JSONName: jsonName,
 		GoName:   name,
 		TypeName: exprName(field.Type),
+		Hidden:   hidden,
 	}
 
 	switch {

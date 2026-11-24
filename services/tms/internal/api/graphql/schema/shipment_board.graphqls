@@ -238,6 +238,8 @@ type CapacityUnit {
   acceptancePercent: Float
   driveRemainingMs: Int
   tractorId: ID
+  "The driver's photo, signed for a short while; null for a carrier or a driver with none."
+  photo: PersonPhoto
 }
 
 type DriverCapacitySummary {
@@ -291,6 +293,8 @@ type DriverCoverageSuggestion {
   driveRemainingMs: Int
   "What this driver taking the move costs the plan, in cents: empty miles, lateness, waiting and preferences."
   costCents: Int
+  "The driver's photo, signed for a short while; null when they have none."
+  photo: PersonPhoto
 }
 
 type CarrierCoverageSuggestion {

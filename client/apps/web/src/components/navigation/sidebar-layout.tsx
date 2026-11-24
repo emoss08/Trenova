@@ -3,7 +3,7 @@ import { useBreadcrumbs } from "@/hooks/use-breadcrumb";
 import { useFilteredNavigation } from "@/hooks/use-filtered-navigation";
 import { getPageTitle } from "@/lib/route-utils";
 import { usePageAccessOffered } from "@/hooks/use-permission";
-import { lazyComponent } from "@/lib/lazy-component";
+import { lazyComponent } from "@trenova/shared/lib/lazy-component";
 import { useAppDialogPrepared, useAppDialogsStore } from "@/stores/app-dialogs-store";
 import { useNavigationStore } from "@/stores/navigation-store";
 import { useHotkey } from "@tanstack/react-hotkeys";

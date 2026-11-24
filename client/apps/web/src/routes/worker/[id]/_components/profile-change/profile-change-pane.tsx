@@ -18,7 +18,7 @@ import { Button } from "@trenova/shared/components/ui/button";
 import { Form } from "@trenova/shared/components/ui/form";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatUnixDateMedium } from "@trenova/shared/lib/date";
-import { changeRequestTone } from "@trenova/shared/lib/self-service";
+import { changeRequestTone, isPhotoChange } from "@trenova/shared/lib/self-service";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import {
   decideProfileChangeFormSchema,
@@ -27,6 +27,7 @@ import {
 import { FormProvider, useForm, useWatch, type Resolver } from "react-hook-form";
 import { PaneSection } from "../pane-section";
 import { useWorkerInvalidation } from "../use-worker-invalidation";
+import { PhotoComparison } from "./photo-comparison";
 import { workerProfileChangesQuery } from "./profile-change-query";
 
 type FieldChange = ProfileChangeRequestRow["changes"][number];
@@ -91,6 +92,7 @@ export function ProfileChangePane({
   });
   const request = requests.data?.find((row) => row.id === requestId) ?? null;
   const pending = request?.status === "Pending";
+  const photoRequest = request ? isPhotoChange(request.changes) : false;
 
   const form = useForm<DecideProfileChangeFormValues>({
     resolver: zodResolver(decideProfileChangeFormSchema) as Resolver<DecideProfileChangeFormValues>,
@@ -127,10 +129,15 @@ export function ProfileChangePane({
   };
 
   const description = request
-    ? t(
-        "Asked {0} from Dash. Approving writes the listed fields to the profile.",
-        formatUnixDateMedium(request.submittedAt),
-      )
+    ? photoRequest
+      ? t(
+          "Sent {0} from Dash. Approving makes it their photo.",
+          formatUnixDateMedium(request.submittedAt),
+        )
+      : t(
+          "Asked {0} from Dash. Approving writes the listed fields to the profile.",
+          formatUnixDateMedium(request.submittedAt),
+        )
     : undefined;
 
   return (
@@ -190,9 +197,28 @@ export function ProfileChangePane({
                     ) : null}
                   </div>
                 ) : null}
-                <PaneSection title={t("What they changed")}>
-                  <ChangedFields changes={request.changes} />
-                </PaneSection>
+                {photoRequest ? (
+                  <PaneSection title={t("Their new photo")}>
+                    {request.proposedPhoto ? (
+                      <PhotoComparison
+                        firstName={request.worker?.firstName ?? workerFirstName}
+                        lastName={request.worker?.lastName ?? ""}
+                        current={request.worker?.photo}
+                        proposed={request.proposedPhoto}
+                      />
+                    ) : (
+                      <p className="text-sm text-muted-foreground">
+                        {t(
+                          "Once a photo request is decided, only the photo on the record is kept.",
+                        )}
+                      </p>
+                    )}
+                  </PaneSection>
+                ) : (
+                  <PaneSection title={t("What they changed")}>
+                    <ChangedFields changes={request.changes} />
+                  </PaneSection>
+                )}
                 {request.note ? (
                   <PaneSection title={t("Their note")}>
                     <blockquote className="border-l-2 border-border-strong py-0.5 pl-2.5 text-sm">

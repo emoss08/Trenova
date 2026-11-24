@@ -5,7 +5,7 @@ import { SectionStrip } from "@/components/section-strip";
 import { UnsavedChangesGuard } from "@/components/unsaved-changes-guard";
 import { WorkPaneHost, WorkPaneProvider, lazyWorkPane, useWorkPane } from "@/components/work-pane";
 import { useBreadcrumbLabel } from "@/hooks/use-breadcrumb-label";
-import { lazyComponent } from "@/lib/lazy-component";
+import { lazyComponent } from "@trenova/shared/lib/lazy-component";
 import { whenIdle } from "@/lib/when-idle";
 import {
   worker as workerQueries,

@@ -66,27 +66,6 @@
   flex: 1;
   min-height: 0;
 }
-.dk-w-mg-new {
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  min-height: 0;
-  overflow: auto;
-}
-.dk-w-mg-hint {
-  margin: 0;
-  padding: 20px 18px;
-  font-size: 13.5px;
-  line-height: 1.65;
-  color: var(--dsk-subtle);
-}
-.dk-w-mg-f {
-  padding: 10px 12px 14px;
-}
-.dk-w-mg-f .dk-cmp .dk-ed {
-  min-height: 40px;
-  font-size: 13px;
-}
 .dk-w-mg-load {
   display: grid;
   gap: 10px;

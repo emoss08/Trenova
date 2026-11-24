@@ -27,7 +27,28 @@ describe("resolveCoverage", () => {
       name: "Jaime Park",
       initials: "JP",
       detail: "T-211",
+      photo: null,
     });
+  });
+
+  it("carries the driver's photo, so every coverage surface can draw their face", () => {
+    const photo = {
+      url: "https://files.example/wrk_1/photo.jpg?sig=a",
+      thumbnailUrl: "https://files.example/wrk_1/thumb.jpg?sig=a",
+    };
+    const coverage = resolveCoverage(
+      shipment({
+        moves: [
+          {
+            coverageType: "driver",
+            assignment: {
+              primaryWorker: { id: "wrk_1", firstName: "Jaime", lastName: "Park", photo },
+            },
+          },
+        ],
+      }),
+    );
+    expect(coverage).toMatchObject({ kind: "driver", id: "wrk_1", photo });
   });
 
   it("prefers an active carrier assignment and shows its driver or SCAC", () => {
@@ -69,7 +90,11 @@ describe("resolveCoverage", () => {
           moves: [
             {
               coverageType: "carrier",
-              carrierAssignment: { id: "ca_2", status: "Canceled", carrier: { id: "c", name: "X" } },
+              carrierAssignment: {
+                id: "ca_2",
+                status: "Canceled",
+                carrier: { id: "c", name: "X" },
+              },
             },
           ],
         }),

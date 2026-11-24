@@ -25,7 +25,10 @@ function user(t, id) {
     id: u.id,
     name: u.name,
     emailAddress: u.emailAddress,
-    thumbnailUrl: `${MOCK_ORIGIN}/__mock/avatar/${u.id}.svg`,
+    photo: {
+      url: `${MOCK_ORIGIN}/__mock/avatar/${u.id}.svg`,
+      thumbnailUrl: `${MOCK_ORIGIN}/__mock/avatar/${u.id}.svg`,
+    },
   };
 }
 

@@ -4,7 +4,7 @@ import { Button } from "@trenova/shared/components/ui/button";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { Send01Icon } from "@trenova/shared/components/icons";
-import { lazyComponent } from "@/lib/lazy-component";
+import { lazyComponent } from "@trenova/shared/lib/lazy-component";
 import { BulkBillingTransferDialogSkeleton } from "./bulk-billing-transfer-dialog-skeleton";
 
 // Read when the pointer or focus reaches the button, so by the click the dialog is usually here.

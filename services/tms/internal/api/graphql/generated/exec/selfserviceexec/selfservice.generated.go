@@ -9,6 +9,7 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlexec"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/personphoto"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/profilechange"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerpolicy"
@@ -163,6 +164,18 @@ var Shard = &gqlexec.Shard{
 					return obj.SignatureName, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOString2ᚖstring),
+			},
+			{
+				Name:       "photo",
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "PersonPhoto",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.PolicyComplianceRow)
+					return gqlexec.Resolver[PolicyComplianceRowResolver](ec, "PolicyComplianceRow@selfservice").Photo(ctx, obj)
+				},
+				Marshal: gqlexec.Marshal(marshalOPersonPhoto2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋkernelᚋdomainᚋpersonphotoᚐURLs),
 			},
 		}},
 		{Object: "ProfileFieldChange", Fields: []*gqlexec.Field{
@@ -716,6 +729,18 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNProfileFieldChange2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐProfileFieldChangeᚄ),
 			},
 			{
+				Name:       "proposedPhoto",
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "PersonPhoto",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*profilechange.WorkerProfileChangeRequest)
+					return gqlexec.Resolver[WorkerProfileChangeRequestResolver](ec, "WorkerProfileChangeRequest@selfservice").ProposedPhoto(ctx, obj)
+				},
+				Marshal: gqlexec.Marshal(marshalOPersonPhoto2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋkernelᚋdomainᚋpersonphotoᚐURLs),
+			},
+			{
 				Name:     "note",
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
@@ -790,6 +815,7 @@ var Shard = &gqlexec.Shard{
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
 		{Root: "Mutation@selfservice", Check: func(r any) bool { _, ok := r.(MutationResolver); return ok }},
+		{Root: "PolicyComplianceRow@selfservice", Check: func(r any) bool { _, ok := r.(PolicyComplianceRowResolver); return ok }},
 		{Root: "Query@selfservice", Check: func(r any) bool { _, ok := r.(QueryResolver); return ok }},
 		{Root: "WorkerProfileChangeRequest@selfservice", Check: func(r any) bool { _, ok := r.(WorkerProfileChangeRequestResolver); return ok }},
 	},
@@ -799,6 +825,10 @@ type MutationResolver interface {
 	CreateWorkerPolicy(ctx context.Context, input gqlmodel.WorkerPolicyInput) (*workerpolicy.WorkerPolicy, error)
 	UpdateWorkerPolicy(ctx context.Context, id string, input gqlmodel.WorkerPolicyInput) (*workerpolicy.WorkerPolicy, error)
 	DecideProfileChange(ctx context.Context, input gqlmodel.DecideProfileChangeInput) (*profilechange.WorkerProfileChangeRequest, error)
+}
+
+type PolicyComplianceRowResolver interface {
+	Photo(ctx context.Context, obj *gqlmodel.PolicyComplianceRow) (*personphoto.URLs, error)
 }
 
 type QueryResolver interface {
@@ -811,6 +841,7 @@ type QueryResolver interface {
 
 type WorkerProfileChangeRequestResolver interface {
 	Changes(ctx context.Context, obj *profilechange.WorkerProfileChangeRequest) ([]*gqlmodel.ProfileFieldChange, error)
+	ProposedPhoto(ctx context.Context, obj *profilechange.WorkerProfileChangeRequest) (*personphoto.URLs, error)
 }
 
 var (
@@ -1452,6 +1483,13 @@ func marshalOInt2ᚖint(ctx context.Context, ec *gqlexec.Exec, sel ast.Selection
 	}
 	res := graphql.MarshalInt(*v)
 	return res
+}
+
+func marshalOPersonPhoto2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋkernelᚋdomainᚋpersonphotoᚐURLs(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *personphoto.URLs) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "PersonPhoto", v)
 }
 
 func marshalOString2string(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v string) graphql.Marshaler {

@@ -10,8 +10,9 @@ import { Button } from "@trenova/shared/components/ui/button";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatUnixDateMedium } from "@trenova/shared/lib/date";
-import { changeRequestTone } from "@trenova/shared/lib/self-service";
+import { changeRequestTone, isPhotoChange } from "@trenova/shared/lib/self-service";
 import { Operation, Resource } from "@trenova/shared/types/permission";
+import { PhotoComparison } from "../../profile-change/photo-comparison";
 import {
   pendingProfileChanges,
   workerProfileChangesQuery,
@@ -23,6 +24,13 @@ type FieldChange = ProfileChangeRequestRow["changes"][number];
 /** One field as before and after, so the eye lands on what moves. */
 export function ChangeChip({ change }: { change: FieldChange }) {
   const t = useT();
+  if (isPhotoChange([change])) {
+    return (
+      <span className="inline-flex max-w-full items-center rounded-md border border-border-subtle bg-sunken px-1.5 py-0.5 text-xs">
+        {t("A new photo")}
+      </span>
+    );
+  }
   const shown = (value: string) => (value.trim() === "" ? t("(blank)") : value);
   return (
     <span className="inline-flex max-w-full flex-wrap items-center gap-1 rounded-md border border-border-subtle bg-sunken px-1.5 py-0.5 text-xs">
@@ -33,6 +41,31 @@ export function ChangeChip({ change }: { change: FieldChange }) {
       <ArrowRightIcon className="size-3 shrink-0 text-muted-foreground" />
       <ins className="font-medium tabular-nums no-underline">{shown(change.to)}</ins>
     </span>
+  );
+}
+
+/**
+ * What a waiting request asks for: the photo they sent beside the one on the record, or each field
+ * as before and after.
+ */
+function RequestedChange({ request }: { request: ProfileChangeRequestRow }) {
+  if (isPhotoChange(request.changes) && request.proposedPhoto) {
+    return (
+      <PhotoComparison
+        size="sm"
+        firstName={request.worker?.firstName ?? ""}
+        lastName={request.worker?.lastName ?? ""}
+        current={request.worker?.photo}
+        proposed={request.proposedPhoto}
+      />
+    );
+  }
+  return (
+    <div className="flex flex-wrap gap-1.5">
+      {request.changes.map((change) => (
+        <ChangeChip key={change.field} change={change} />
+      ))}
+    </div>
   );
 }
 
@@ -113,11 +146,7 @@ export function ProfileChangeList({
               <p className="text-xs text-muted-foreground tabular-nums">
                 {t("Asked {0} from Dash", formatUnixDateMedium(request.submittedAt))}
               </p>
-              <div className="flex flex-wrap gap-1.5">
-                {request.changes.map((change) => (
-                  <ChangeChip key={change.field} change={change} />
-                ))}
-              </div>
+              <RequestedChange request={request} />
               {request.note ? (
                 <blockquote className="border-l-2 border-border-strong py-0.5 pl-2.5 text-sm text-pretty">
                   {request.note}

@@ -1,3 +1,4 @@
+import type { PersonPhoto } from "@trenova/shared/types/person-photo";
 import { HoverGlideGroup } from "@/components/hover-glide";
 import { ResolvedUserAvatar } from "@/components/resolved-user-avatar";
 import type { AuditActorStat } from "@/lib/graphql/audit-overview";
@@ -26,7 +27,7 @@ export function ActorMark({
 }: {
   kind: AuditActorKind;
   name: string;
-  user?: { id: string; profilePicUrl?: string | null; thumbnailUrl?: string | null } | null;
+  user?: { id: string; photo?: PersonPhoto | null } | null;
   size?: "md" | "lg";
 }) {
   const box = size === "lg" ? "size-8" : "size-6";
@@ -35,8 +36,7 @@ export function ActorMark({
       <ResolvedUserAvatar
         userId={user?.id}
         name={name}
-        profilePicUrl={user?.profilePicUrl ?? undefined}
-        thumbnailUrl={user?.thumbnailUrl ?? undefined}
+        photo={user?.photo}
         className={cn("shrink-0 rounded-md bg-muted", box)}
         imageClassName="rounded-md bg-muted"
         fallbackClassName="text-xs"

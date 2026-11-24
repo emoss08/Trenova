@@ -1172,6 +1172,9 @@ writes:
   "POST /api/v1/portal/profile/documents/":
     exempt: counterparty
     reason: "The driver doing this for themselves in their own portal; an agent acting for the organization must not act as the driver."
+  "POST /api/v1/portal/profile/photo/":
+    exempt: counterparty
+    reason: "The driver sending their own picture for the office to approve; an agent acting for the organization must not act as the driver."
   "mutation acknowledgeMyPolicy":
     exempt: counterparty
     reason: "The driver doing this for themselves in their own portal; an agent acting for the organization must not act as the driver."
@@ -3132,9 +3135,15 @@ writes:
     tools: [exception_wake]
 
   # worker
+  "DELETE /api/v1/workers/:workerID/photo/":
+    exempt: attestation
+    reason: "Taking down a worker's picture is a judgement on an image a person looks at; an agent cannot see the picture it would remove."
   "POST /api/v1/workers/":
     exempt: attestation
     reason: "Hiring a worker is an employment decision with its eligibility and qualification checks; a person makes it."
+  "POST /api/v1/workers/:workerID/photo/":
+    exempt: infrastructure
+    reason: "Moves a photo's bytes from a browser into storage; an agent has no picture of a person to give and cannot see one."
   "mutation approveWorkerPTO":
     tools: [worker_approve_pto]
   "mutation bulkWorkerPTOAction":

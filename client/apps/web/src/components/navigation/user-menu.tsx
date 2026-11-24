@@ -60,8 +60,7 @@ export function UserMenu({ compact = false }: { compact?: boolean }) {
             <ResolvedUserAvatar
               userId={user?.id}
               name={user?.name}
-              profilePicUrl={user?.profilePicUrl}
-              thumbnailUrl={user?.thumbnailUrl}
+              photo={user?.photo}
               className="size-5"
               fallbackClassName="bg-muted text-2xs font-medium text-muted-foreground"
             />
@@ -78,8 +77,7 @@ export function UserMenu({ compact = false }: { compact?: boolean }) {
             <ResolvedUserAvatar
               userId={user?.id}
               name={user?.name}
-              profilePicUrl={user?.profilePicUrl}
-              thumbnailUrl={user?.thumbnailUrl}
+              photo={user?.photo}
               className="size-7"
               fallbackClassName="bg-muted text-2xs font-medium text-muted-foreground"
             />
@@ -102,8 +100,7 @@ export function UserMenu({ compact = false }: { compact?: boolean }) {
                 <ResolvedUserAvatar
                   userId={user?.id}
                   name={user?.name}
-                  profilePicUrl={user?.profilePicUrl}
-                  thumbnailUrl={user?.thumbnailUrl}
+                  photo={user?.photo}
                   className="size-8"
                   fallbackClassName="rounded-lg bg-sidebar-accent text-xs font-semibold text-sidebar-accent-foreground"
                 />

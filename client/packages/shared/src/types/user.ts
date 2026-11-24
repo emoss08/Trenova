@@ -1,5 +1,6 @@
 import { DEFAULT_LOCALE, LOCALES } from "@trenova/shared/i18n/generated/locales";
 import { z } from "zod";
+import { personPhotoSchema } from "./person-photo";
 import {
   auditTimestampSchema,
   capabilityFlagSchema,
@@ -96,8 +97,7 @@ export const userSchema = z.object({
   name: z.string().min(1, { error: () => translate("Name is required") }),
   username: z.string().min(1, { error: () => translate("Username is required") }),
   emailAddress: z.email().min(1, { error: () => translate("Email address is required") }),
-  profilePicUrl: optionalStringSchema,
-  thumbnailUrl: optionalStringSchema,
+  photo: personPhotoSchema.nullish(),
   timezone: z.string().min(1, { error: () => translate("Timezone is required") }),
   timeFormat: TimeFormat.default("12-hour"),
   locale: z.enum(LOCALES).default(DEFAULT_LOCALE),
@@ -128,8 +128,7 @@ export const userReferenceSchema = userSchema.pick({
   id: true,
   name: true,
   username: true,
-  profilePicUrl: true,
-  thumbnailUrl: true,
+  photo: true,
 });
 
 export type UserReference = z.infer<typeof userReferenceSchema>;
@@ -213,12 +212,6 @@ export const changeMyPasswordSchema = z.object({
 });
 
 export type ChangeMyPassword = z.infer<typeof changeMyPasswordSchema>;
-
-export const profilePictureUrlResponseSchema = z.object({
-  url: z.string(),
-});
-
-export type ProfilePictureUrlResponse = z.infer<typeof profilePictureUrlResponseSchema>;
 
 export const bulkUpdateUserStatusRequestSchema = z.object({
   userIds: z.array(z.string()),

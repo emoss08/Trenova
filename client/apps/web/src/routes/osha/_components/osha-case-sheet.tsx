@@ -3,7 +3,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import type { OshaLogCase } from "@/lib/graphql/worker-injury";
 import { caseLabel, illnessTypeNumber, logColumn } from "@/lib/osha-log";
 import { workerPath } from "@/routes/worker/use-worker-state";
-import { Avatar, AvatarFallback, AvatarImage } from "@trenova/shared/components/ui/avatar";
+import { WorkerAvatar } from "@trenova/shared/components/worker-avatar";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import { DescriptionItem, DescriptionList } from "@trenova/shared/components/ui/description-list";
@@ -25,7 +25,6 @@ import {
   injuryTreatmentLabel,
   MAX_COUNTED_DAYS,
 } from "@trenova/shared/lib/injury";
-import { initials } from "@trenova/shared/lib/utils";
 import { Edit02Icon, Lock01Icon, Trash01Icon } from "@trenova/shared/components/icons";
 import type { ReactNode } from "react";
 import { FormMark } from "./osha-form-marks";
@@ -110,14 +109,13 @@ function CaseDetail({
           to={workerPath(entry.workerId, { tab: "safety" })}
           className="hover:bg-accent -mx-2 flex items-center gap-2.5 rounded-md px-2 py-1.5 transition-colors"
         >
-          <Avatar size="sm">
-            {entry.worker?.profilePicUrl ? (
-              <AvatarImage src={entry.worker.profilePicUrl} alt="" />
-            ) : null}
-            <AvatarFallback className="text-2xs font-medium">
-              {entry.worker ? initials(entry.worker.firstName, entry.worker.lastName) : "?"}
-            </AvatarFallback>
-          </Avatar>
+          <WorkerAvatar
+            size="sm"
+            firstName={entry.worker?.firstName}
+            lastName={entry.worker?.lastName}
+            photo={entry.worker?.photo}
+            fallbackClassName="text-2xs"
+          />
           <span className="flex min-w-0 flex-col leading-tight">
             <span className="truncate text-xs font-medium">{workerName}</span>
             <span className="text-muted-foreground text-2xs">

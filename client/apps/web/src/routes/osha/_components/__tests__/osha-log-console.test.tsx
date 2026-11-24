@@ -42,10 +42,10 @@ const NOW = Date.UTC(2026, 8, 7, 15, 30) / 1000;
 const POST_FROM = Date.UTC(2027, 1, 1) / 1000;
 const POST_THROUGH = Date.UTC(2027, 3, 30, 23, 59, 59) / 1000;
 
-const ADA = { id: "wrk_ada", firstName: "Ada", lastName: "Byrne", profilePicUrl: "" };
-const BEN = { id: "wrk_ben", firstName: "Ben", lastName: "Cole", profilePicUrl: "" };
-const CARA = { id: "wrk_cara", firstName: "Cara", lastName: "Diaz", profilePicUrl: "" };
-const DEV = { id: "wrk_dev", firstName: "Dev", lastName: "Ely", profilePicUrl: "" };
+const ADA = { id: "wrk_ada", firstName: "Ada", lastName: "Byrne", photo: null };
+const BEN = { id: "wrk_ben", firstName: "Ben", lastName: "Cole", photo: null };
+const CARA = { id: "wrk_cara", firstName: "Cara", lastName: "Diaz", photo: null };
+const DEV = { id: "wrk_dev", firstName: "Dev", lastName: "Ely", photo: null };
 
 function totals(over: Record<string, number> = {}) {
   return {

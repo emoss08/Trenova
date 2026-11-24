@@ -90,7 +90,7 @@ The four override kinds:
 | `aliases` | The field reads a differently-named column (`totalAmount` → `totalAmountMinor`). |
 | `virtuals` | No column at all: a resolver computes it, or it is a deprecated field kept as a constant. |
 | `specials` | One field needs several columns (`lastKnownLocation` needs the id and name too). |
-| `modelOverrides` | The GraphQL type maps to a different Go type than the name implies. |
+| `modelOverrides` | The GraphQL type maps to a different Go type than the name implies, or `"-"` for a DTO the resolver builds whose fields happen to match a table's columns (`DeskBoardRef`): it is not projected. |
 
 So: **removing a column means editing `projection.yml`, not only the migration.** Adding a
 resolver-computed field means adding it to `virtuals` in the same commit.

@@ -2,7 +2,10 @@ fragment TriageUserFields on User {
   id
   name
   username
-  thumbnailUrl
+  photo {
+    url
+    thumbnailUrl
+  }
 }
 
 fragment InboundAttachmentFields on InboundAttachment {

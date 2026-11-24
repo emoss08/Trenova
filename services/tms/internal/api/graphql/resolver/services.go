@@ -227,6 +227,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerinjuryservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerleaveservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workeroverviewservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/app/workerphotoservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workersafetyservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workertrainingservice"
@@ -366,6 +367,7 @@ type Params struct {
 	WorkerEmploymentService           *workeremploymentservice.Service
 	WorkerChecklistService            *workerchecklistservice.Service
 	OrgHolidayService                 *orgholidayservice.Service
+	WorkerPhotoService                *workerphotoservice.Service
 	WorkflowStarter                   kernelports.WorkflowStarter
 	FiscalYearService                 *fiscalyearservice.Service
 	FiscalPeriodService               *fiscalperiodservice.Service
@@ -677,6 +679,7 @@ type Services struct {
 	WorkerEmploymentService           *workeremploymentservice.Service
 	WorkerChecklistService            *workerchecklistservice.Service
 	OrgHolidayService                 *orgholidayservice.Service
+	WorkerPhotoService                *workerphotoservice.Service
 	WorkflowStarter                   kernelports.WorkflowStarter
 	FiscalYearService                 *fiscalyearservice.Service
 	FiscalPeriodService               *fiscalperiodservice.Service
@@ -994,6 +997,7 @@ func newServices(p *Params) *Services {
 		WorkerEmploymentService:           p.WorkerEmploymentService,
 		WorkerChecklistService:            p.WorkerChecklistService,
 		OrgHolidayService:                 p.OrgHolidayService,
+		WorkerPhotoService:                p.WorkerPhotoService,
 		WorkflowStarter:                   p.WorkflowStarter,
 		FiscalYearService:                 p.FiscalYearService,
 		FiscalPeriodService:               p.FiscalPeriodService,

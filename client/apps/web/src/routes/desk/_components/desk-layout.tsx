@@ -66,10 +66,12 @@ import {
 import { DeskTop } from "./top/desk-top";
 import { CommandPaletteMount } from "@/components/command-palette/command-palette-mount";
 import { PAGE_TRANSITION_CLASS } from "./desk-motion";
-import { caseOfThread } from "./record-case/case-subject";
+import { caseOfThread, caseThreadOf } from "./record-case/case-subject";
+import { useAskNew } from "./today/ask-new";
 import { railViewOf, TRIAGE_BACK_HOME, type TriageBack } from "./rail/desk-rail";
 import { useGoToChords } from "@/components/navigation/use-go-to-chords";
 import { useCommandPaletteStore } from "@/stores/command-palette-store";
+import { useDeskAskStore } from "@/stores/desk-ask-store";
 import { useDeskMarginStore } from "@/stores/desk-margin-store";
 import { DeskMargin } from "./margin/desk-margin";
 
@@ -104,10 +106,11 @@ export type DeskContextValue = {
   agentsUnavailable: boolean;
   isLoading: boolean;
   isStarting: boolean;
-  /** Opens a conversation, optionally with the question that prompted it. */
-  start: (agentId: string, question?: string, extras?: DeskStartExtras) => void;
-  /** Starts a conversation in Nova's margin, beside the page, instead of on a page of its own. */
-  startInMargin: (
+  /**
+   * Opens a new conversation full width, on its own page, optionally with the
+   * question that prompted it and the case and page it is bound to.
+   */
+  start: (
     agentId: string,
     question?: string,
     extras?: DeskStartExtras,
@@ -441,10 +444,6 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
     origin: "Desk",
     onStarted: (thread) => void navigate({ to: conversationPath(thread.id) }),
   });
-  const startMarginConversation = useStartConversation({
-    origin: "Desk",
-    onStarted: (thread) => useDeskMarginStore.getState().showThread(thread.id),
-  });
   const marginOpen = useDeskMarginStore((state) => state.margin !== null);
   // A conversation opened full width is the margin's conversation: the margin
   // folds rather than draw the same thread twice.
@@ -675,16 +674,46 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
     [setPane],
   );
 
+  // A record carried to Today's box for a new conversation goes no further
+  // than Today: leaving it leaves the record behind.
+  useEffect(() => {
+    if (pathname !== "/desk") {
+      useDeskAskStore.getState().reset();
+    }
+  }, [pathname]);
+
+  const askNew = useAskNew();
   // ⌘J is Nova everywhere: in a conversation it puts the caret in its box;
-  // anywhere else it opens Nova's margin beside the page, on what the page is
-  // about, and folds it again.
+  // with a conversation open beside the page it folds it; on a case it
+  // continues the case's conversation beside it, or puts the caret in the
+  // case's own box; anywhere else it opens a new conversation full width, on
+  // what the page is about.
   const askNova = useCallback(() => {
     if (activeThreadId !== null) {
       document.querySelector<HTMLElement>('.dk-mainc .dk-cmp [role="textbox"]')?.focus();
       return;
     }
-    useDeskMarginStore.getState().toggleMargin();
-  }, [activeThreadId]);
+    const margin = useDeskMarginStore.getState();
+    if (margin.margin !== null) {
+      margin.closeMargin();
+      return;
+    }
+    const casePage = margin.casePage;
+    if (casePage !== null) {
+      const existing = caseThreadOf(threads, casePage.kind, casePage.id, casePage.agentId);
+      if (existing !== null) {
+        margin.showThread(existing.id, casePage);
+        return;
+      }
+      const box = document.querySelector<HTMLElement>('#dk-cz-ask [role="textbox"]');
+      if (box !== null) {
+        box.focus();
+        box.scrollIntoView({ block: "nearest" });
+        return;
+      }
+    }
+    askNew(margin.pageSubject);
+  }, [activeThreadId, askNew, threads]);
 
   useGoToChords(DESK_CHORDS, { viewTransition: true });
 
@@ -721,13 +750,9 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
       const key = event.key.toLowerCase();
       if (key === "o" && event.shiftKey) {
         // Ctrl+N belongs to the browser, which opens a window and never hands
-        // the key to the page. A new conversation opens in Nova's margin.
+        // the key to the page. A new conversation opens full width.
         event.preventDefault();
-        if (useDeskMarginStore.getState().casePage !== null) {
-          void navigate({ to: "/desk" });
-          return;
-        }
-        useDeskMarginStore.getState().openMargin(null);
+        askNew(null);
       } else if (key === "\\" && useDeskMarginStore.getState().margin !== null) {
         event.preventDefault();
         useDeskMarginStore.getState().closeMargin();
@@ -753,7 +778,7 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
     window.addEventListener("keydown", onKeyDown);
 
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [activeThread, askNova, navigate, setPane]);
+  }, [activeThread, askNew, askNova, setPane]);
 
   const value = useMemo<DeskContextValue>(
     () => ({
@@ -763,9 +788,8 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
       agentsById,
       agentsUnavailable: agentsQuery.isError,
       isLoading: threadsQuery.isLoading || agentsQuery.isLoading || unlistedQuery.isLoading,
-      isStarting: startConversation.isStarting || startMarginConversation.isStarting,
+      isStarting: startConversation.isStarting,
       start: startConversation.start,
-      startInMargin: startMarginConversation.start,
       remove: (thread) => deleteMutation.mutate(thread),
       deletingActive: activeDeleting,
       setPinned: (thread, pinned) => pinMutation.mutate({ thread, pinned }),
@@ -798,8 +822,6 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
       setWorkspaceOpen,
       startConversation.isStarting,
       startConversation.start,
-      startMarginConversation.isStarting,
-      startMarginConversation.start,
       threads,
       threadsQuery.isLoading,
       unlistedQuery.isLoading,
@@ -909,6 +931,7 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
         <div className={cn("dk-mainc", railFloats && "col-span-full")}>
           <DeskTop
             onOpenRail={() => setRailOpen(true)}
+            onAsk={askNova}
             canWatch={canWatch}
             needsYou={lensCounts.everything}
             onUnfoldRail={

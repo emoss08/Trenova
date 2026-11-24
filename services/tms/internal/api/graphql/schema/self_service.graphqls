@@ -86,6 +86,8 @@ type PolicyComplianceRow {
   workerType: String!
   acknowledgedAt: Timestamp
   signatureName: String
+  "The worker's photo, signed for a short while; null when they have none."
+  photo: PersonPhoto
 }
 
 type PolicyCompliance {
@@ -115,6 +117,8 @@ type WorkerProfileChangeRequest {
   workerId: ID!
   status: ProfileChangeStatus!
   changes: [ProfileFieldChange!]!
+  "The photo a waiting photo request proposes; null for any other request or once it is decided."
+  proposedPhoto: PersonPhoto
   note: String
   submittedAt: Timestamp!
   decidedAt: Timestamp

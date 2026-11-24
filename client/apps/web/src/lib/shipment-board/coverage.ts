@@ -1,12 +1,21 @@
 import { getNameInitials } from "@trenova/shared/lib/utils";
 import { isActiveCarrierAssignment, type Shipment } from "@trenova/shared/types/shipment";
+import type { PersonPhoto } from "@trenova/shared/types/person-photo";
 
 function initialsOf(name: string): string {
   return getNameInitials(name.replace(/[-.&+]/g, " "));
 }
 
 export type Coverage =
-  | { kind: "driver"; id: string; name: string; initials: string; detail: string | null }
+  | {
+      kind: "driver";
+      id: string;
+      name: string;
+      initials: string;
+      detail: string | null;
+      /** Signed links that expire: drawn from the read that carried them, never kept. */
+      photo: PersonPhoto | null;
+    }
   | { kind: "carrier"; id: string; name: string; initials: string; detail: string | null }
   | { kind: "tendered" }
   | { kind: "uncovered" };
@@ -40,6 +49,7 @@ export function resolveCoverage(shipment: Shipment): Coverage {
       name,
       initials: initialsOf(name),
       detail: move?.assignment?.tractor?.code ?? null,
+      photo: driver.photo ?? null,
     };
   }
 

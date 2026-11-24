@@ -6,6 +6,7 @@ import { Button } from "@trenova/shared/components/ui/button";
 import { useNow } from "@trenova/shared/hooks/use-now";
 import { formatList, formatRelativeTime } from "@trenova/shared/i18n/format";
 import { useT } from "@trenova/shared/i18n/use-t";
+import { isPhotoChange } from "@trenova/shared/lib/self-service";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import {
   pendingProfileChanges,
@@ -39,19 +40,22 @@ export function ProfileChangeAlert({
   const first = pending[0];
   if (!canRead || !first) return null;
 
+  const asked = formatRelativeTime(Math.min(first.submittedAt - now, 0));
   const message =
-    pending.length === 1
-      ? t(
-          "{0} asked {1} for a profile change: {2}.",
-          firstName,
-          formatRelativeTime(Math.min(first.submittedAt - now, 0)),
-          formatList(first.changes.map((change) => t(change.label))),
-        )
-      : t(
-          "{0} has {1, plural, one {# profile change} other {# profile changes}} waiting for a decision.",
-          firstName,
-          pending.length,
-        );
+    pending.length === 1 && isPhotoChange(first.changes)
+      ? t("{0} sent a new profile photo {1}.", firstName, asked)
+      : pending.length === 1
+        ? t(
+            "{0} asked {1} for a profile change: {2}.",
+            firstName,
+            asked,
+            formatList(first.changes.map((change) => t(change.label))),
+          )
+        : t(
+            "{0} has {1, plural, one {# profile change} other {# profile changes}} waiting for a decision.",
+            firstName,
+            pending.length,
+          );
 
   return (
     <Alert size="sm" variant="warning">

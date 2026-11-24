@@ -17,10 +17,10 @@ import {
   availabilityMeta,
   dutyStatusMeta,
   formatMiles,
-  workerInitials,
   type CapacityFilter,
 } from "./dispatch-vocabulary";
 import { GroupHeading, type QueueRead } from "./move-queue";
+import { WorkerAvatar } from "@trenova/shared/components/worker-avatar";
 
 /** The drivers' columns, shared by their rows, their heading and the empty sheet. */
 export const DRIVER_GRID_CLASS =
@@ -186,12 +186,14 @@ function DriverRow({
         )}
       >
         <div className="flex min-w-0 items-center gap-2.5">
-          <span
+          <WorkerAvatar
             aria-hidden
-            className="bg-muted text-muted-foreground flex size-6 shrink-0 items-center justify-center rounded-full text-3xs font-medium"
-          >
-            {workerInitials(driver.firstName, driver.lastName)}
-          </span>
+            firstName={driver.firstName}
+            lastName={driver.lastName}
+            photo={driver.photo}
+            className="size-6"
+            fallbackClassName="text-3xs"
+          />
           <div className="min-w-0">
             <div className="truncate font-medium">
               {t("{0} {1}", driver.firstName, driver.lastName)}

@@ -22,7 +22,7 @@ function driver(overrides: Partial<DispatchBoardDriver> = {}): DispatchBoardDriv
     city: "Joliet",
     stateAbbreviation: "IL",
     postalCode: "60431",
-    profilePicUrl: "",
+    photo: null,
     assignmentBlocked: "",
     availableForDispatch: true,
     tractorId: "trc_1",

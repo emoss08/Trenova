@@ -85,6 +85,11 @@ func (h *Handler) RegisterProtectedRoutes(rg *gin.RouterGroup) {
 		h.uploadProfileDocument,
 	)
 	api.POST(
+		"profile/photo/",
+		middleware.NewBodyLimit(maxPhotoBodyBytes),
+		h.submitPhoto,
+	)
+	api.POST(
 		"credentials/:credentialID/document/",
 		middleware.NewBodyLimit(maxUploadBodyBytes),
 		h.uploadCredentialDocument,

@@ -28,6 +28,7 @@ type PresignedURLParams struct {
 	Key                string
 	Expiry             time.Duration
 	ContentDisposition string
+	SignedAt           time.Time
 }
 
 type PresignedUploadURLParams struct {

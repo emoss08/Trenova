@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useState } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -63,6 +63,7 @@ function renderControl(props: { disabled?: boolean } = {}) {
 }
 
 afterEach(() => {
+  cleanup();
   vi.clearAllMocks();
 });
 

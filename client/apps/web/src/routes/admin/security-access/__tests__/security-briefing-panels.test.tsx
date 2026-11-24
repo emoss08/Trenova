@@ -1,10 +1,13 @@
 import { TestRouter } from "@trenova/shared/testing/test-router";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen } from "@testing-library/react";
 import { translate } from "@trenova/shared/i18n/runtime";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import type { SecurityBriefing } from "@trenova/shared/types/iam";
 import type { User } from "@trenova/shared/types/user";
 import { afterEach, describe, expect, it, vi } from "vitest";
+
+vi.mock("@/lib/user-avatars", () => ({ loadUserAvatar: async () => null }));
 import { UnenrolledMembersPanel } from "../_components/security-access/briefing/briefing-aside";
 import { PostureRing } from "../_components/security-access/briefing/posture-ring";
 import {
@@ -139,28 +142,64 @@ describe("BriefingFindings", () => {
 });
 
 describe("UnenrolledMembersPanel", () => {
+  it("draws a member's photo from the links the briefing carries", () => {
+    const { container } = render(
+      <QueryClientProvider client={new QueryClient()}>
+        <TestRouter>
+          <UnenrolledMembersPanel
+            canOpenUsers
+            mfa={{
+              enrolled: 1,
+              total: 2,
+              unenrolled: [
+                {
+                  userId: "usr_02",
+                  name: "Lee Park",
+                  emailAddress: "lee@example.com",
+                  lastLoginAt: null,
+                  photo: {
+                    url: "https://files.example/usr_02/photo.jpg?sig=a",
+                    thumbnailUrl: "https://files.example/usr_02/thumb.jpg?sig=a",
+                  },
+                },
+              ],
+            }}
+          />
+        </TestRouter>
+      </QueryClientProvider>,
+    );
+
+    expect(container.querySelector("img")?.getAttribute("src")).toBe(
+      "https://files.example/usr_02/thumb.jpg?sig=a",
+    );
+  });
+
   it("says how many more there are than the server listed", () => {
     render(
-      <TestRouter>
-        <UnenrolledMembersPanel
-          canOpenUsers
-          mfa={{
-            enrolled: 10,
-            total: 40,
-            unenrolled: [
-              {
-                userId: "usr_01",
-                name: "Dana Ruiz",
-                emailAddress: "dana@example.com",
-                lastLoginAt: null,
-              },
-            ],
-          }}
-        />
-      </TestRouter>,
+      <QueryClientProvider client={new QueryClient()}>
+        <TestRouter>
+          <UnenrolledMembersPanel
+            canOpenUsers
+            mfa={{
+              enrolled: 10,
+              total: 40,
+              unenrolled: [
+                {
+                  userId: "usr_01",
+                  name: "Dana Ruiz",
+                  emailAddress: "dana@example.com",
+                  lastLoginAt: null,
+                  photo: null,
+                },
+              ],
+            }}
+          />
+        </TestRouter>
+      </QueryClientProvider>,
     );
 
     expect(screen.getByText("Dana Ruiz")).toBeInTheDocument();
+    expect(screen.getByRole("img", { name: "Dana Ruiz" })).toBeInTheDocument();
     expect(screen.getByTitle("Never signed in")).toHaveTextContent("Never");
     expect(screen.getByText("and 29 more")).toBeInTheDocument();
   });

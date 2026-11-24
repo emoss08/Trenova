@@ -1,4 +1,4 @@
-import { preloadable } from "@/lib/lazy-component";
+import { preloadable } from "@trenova/shared/lib/lazy-component";
 import type { Extension } from "@codemirror/state";
 import { toast } from "@trenova/shared/components/ui/toast";
 import { useT } from "@trenova/shared/i18n/use-t";

@@ -23,6 +23,7 @@ import {
   tariffFormInputValuesSchema,
 } from "./tariff-form";
 import { userReferenceSchema } from "./user";
+import { personPhotoSchema } from "./person-photo";
 import { translate } from "@trenova/shared/i18n/runtime";
 
 export const shipmentStatusSchema = z.enum([
@@ -289,7 +290,7 @@ const assignmentWorkerSummarySchema = z.object({
   firstName: optionalStringSchema,
   lastName: optionalStringSchema,
   wholeName: optionalStringSchema,
-  profilePicUrl: nullableStringSchema,
+  photo: personPhotoSchema.nullish(),
 });
 
 export const assignmentSchema = z.object({

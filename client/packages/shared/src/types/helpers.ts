@@ -172,7 +172,7 @@ export type CustomFields = z.infer<typeof customFieldsSchema>;
  * covers the first case and still trips `min(1)` and enum checks on the second,
  * so zero values are stripped before the partial schema sees them.
  */
-export const relationSchema = <T extends z.ZodObject<z.ZodRawShape>>(schema: T) =>
+export const relationSchema = <Shape extends z.ZodRawShape>(schema: z.ZodObject<Shape>) =>
   z.preprocess((value) => {
     if (value === null || typeof value !== "object" || Array.isArray(value)) {
       return value;

@@ -22,7 +22,6 @@ export const NEW_WORKER_VALUES: Worker = {
   emergencyContactName: "",
   emergencyContactPhone: "",
   externalId: "",
-  profilePicUrl: "",
   canBeAssigned: false,
   availableForDispatch: true,
   homeLatitude: null,
@@ -75,7 +74,6 @@ const WORKER_TEXT = [
   "emergencyContactName",
   "emergencyContactPhone",
   "externalId",
-  "profilePicUrl",
   "homePlaceId",
   "assignmentBlocked",
 ] as const;
@@ -122,14 +120,16 @@ export function workerSaveValues(values: Worker): Worker {
 
 /**
  * The stored worker as the Profile form holds it: optional text as empty strings, so a field
- * cleared and a field never filled compare equal, and without the relations the form only reads
- * (position, manager), so the full-record save sends exactly the worker's own fields.
+ * cleared and a field never filled compare equal, and without what the form only reads (position,
+ * manager, and the photo, which changes through its own upload), so the full-record save sends
+ * exactly the worker's own fields.
  */
 export function workerFormValues(record: WorkerRecord): Worker {
   const { profile } = record;
   const values = { ...record } as Record<string, unknown>;
   delete values.position;
   delete values.manager;
+  delete values.photo;
   for (const key of WORKER_TEXT) values[key] = record[key] ?? "";
   let formProfile: Record<string, unknown> | null = null;
   if (profile) {

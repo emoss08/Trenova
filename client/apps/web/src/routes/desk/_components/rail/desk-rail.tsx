@@ -43,6 +43,7 @@ import { isRecordEntityType, recordPath } from "@/config/record-links";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 import { casePath } from "../attention/attention-record";
 import { caseOfThread } from "../record-case/case-subject";
+import { useAskNew } from "../today/ask-new";
 import { railCaseRows, type RailCaseRow } from "./open-work";
 import { threadMenu, workMenu } from "./rail-menus";
 import { RenameConversationDialog } from "./rename-conversation-dialog";
@@ -291,6 +292,7 @@ export function DeskRail({
   const [search] = useQueryParams();
   const { pathname } = useLocation();
   const navigate = useNavigate();
+  const askNew = useAskNew();
   const lens = place === "needs" ? (search.get("lens") ?? "") : "";
   const openWork = useDeskMarginStore((state) => state.openWork);
   const rows = useMemo(
@@ -484,15 +486,7 @@ export function DeskRail({
             label={t("New conversation")}
             hint={t("New conversation ({0})", formatModShiftShortcut("O"))}
             bordered
-            onClick={() => {
-              // Beside a case sits the case's conversation, so a new one
-              // starts on the Desk's own page.
-              if (place === "case") {
-                void navigate({ to: "/desk" });
-                return;
-              }
-              useDeskMarginStore.getState().openMargin(null);
-            }}
+            onClick={() => askNew(null)}
           >
             <DeskIcon name="plus" size={14} />
           </RailIconButton>

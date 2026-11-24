@@ -38,6 +38,7 @@ type Client struct {
 	publicCore       *minio.Core
 	bucket           string
 	autoCreateBucket bool
+	signer           *stableSigner
 	l                *zap.Logger
 }
 
@@ -89,6 +90,7 @@ func New(p Params) (kernelports.Client, error) {
 		publicCore:       publicCore,
 		bucket:           cfg.Bucket,
 		autoCreateBucket: storageCfg.autoCreateBucket,
+		signer:           newStableSigner(cfg.AccessKey, cfg.SecretKey, cfg.SessionToken),
 		l:                p.Logger.Named("infrastructure.minio"),
 	}
 
@@ -424,8 +426,16 @@ func (c *Client) GetPresignedURL(
 		log.Error("failed to generate presigned URL", zap.Error(err))
 		return "", fmt.Errorf("failed to generate download URL: %w", err)
 	}
+	if params.SignedAt.IsZero() {
+		return presignedURL.String(), nil
+	}
 
-	return presignedURL.String(), nil
+	stable, err := c.signer.resign(ctx, presignedURL, params.Expiry, params.SignedAt)
+	if err != nil {
+		log.Error("failed to sign a stable download URL", zap.Error(err))
+		return "", fmt.Errorf("failed to generate download URL: %w", err)
+	}
+	return stable, nil
 }
 
 func (c *Client) GetPresignedUploadURL(

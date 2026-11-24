@@ -98,7 +98,10 @@ query BenefitEnrollments(
       id
       firstName
       lastName
-      profilePicUrl
+      photo {
+        url
+        thumbnailUrl
+      }
       fleetCode {
         id
         code

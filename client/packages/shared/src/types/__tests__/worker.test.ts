@@ -17,7 +17,7 @@ function workerTableRow() {
     type: "Employee",
     driverType: "OTR",
     leaveType: "",
-    profilePicUrl: null,
+    photo: null,
     firstName: "Ada",
     lastName: "Lovelace",
     wholeName: "Ada Lovelace",

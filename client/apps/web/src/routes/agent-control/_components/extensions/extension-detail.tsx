@@ -13,7 +13,7 @@ import {
   type AgentExtensionCatalogItem,
   type AgentExtensionConfigResponse,
 } from "@/types/agent-extension";
-import { lazyComponent } from "@/lib/lazy-component";
+import { lazyComponent } from "@trenova/shared/lib/lazy-component";
 import { LazyComponent } from "@trenova/shared/components/error-boundary";
 import { PortalRunsSkeleton } from "./portal-runs-skeleton";
 import { PortalSitesSkeleton } from "./portal-sites-skeleton";

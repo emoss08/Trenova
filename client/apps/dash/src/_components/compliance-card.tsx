@@ -19,7 +19,11 @@ import {
   withdrawMyProfileChange,
   type PortalComplianceProfile,
 } from "@trenova/shared/lib/graphql/driver-portal";
-import { changeRequestTone, describeChanges } from "@trenova/shared/lib/self-service";
+import {
+  changeRequestTone,
+  describeChanges,
+  isPhotoChange,
+} from "@trenova/shared/lib/self-service";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Edit02Icon, ShieldAlertIcon, ShieldTickIcon } from "@trenova/shared/components/icons";
 import { useState } from "react";
@@ -145,7 +149,8 @@ function PendingChangeNotice() {
     onError: (error: Error) => toast.error(error.message || translate("Could not withdraw it.")),
   });
 
-  const latest = requests.data?.[0];
+  // A photo request waits beside the photo at the head of the profile, not under the details.
+  const latest = requests.data?.find((request) => !isPhotoChange(request.changes));
   if (!latest) return null;
   const pending = latest.status === "Pending";
   if (!pending && latest.status !== "Rejected") return null;

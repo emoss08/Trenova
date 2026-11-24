@@ -34,7 +34,10 @@ query RateMatrixRecord($id: ID!) {
       id
       name
       username
-      profilePicUrl
+      photo {
+        url
+        thumbnailUrl
+      }
     }
   }
   rateMatrixReviews(rateMatrixId: $id) {
@@ -50,14 +53,20 @@ query RateMatrixRecord($id: ID!) {
       id
       name
       username
-      profilePicUrl
+      photo {
+        url
+        thumbnailUrl
+      }
     }
     requestedReviewerId
     requestedReviewer {
       id
       name
       username
-      profilePicUrl
+      photo {
+        url
+        thumbnailUrl
+      }
     }
     reviewerNote
   }

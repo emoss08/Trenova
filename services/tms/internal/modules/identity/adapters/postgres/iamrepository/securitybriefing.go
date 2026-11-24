@@ -18,6 +18,7 @@ import (
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/zap"
 )
 
@@ -135,11 +136,18 @@ func (r *securityBriefingRepository) MFACoverage(
 
 		u := tenantdb.Users
 		lastSignIn := u.LastLoginAt.NullIf(0)
-		members, err := keel.Into[iam.SecurityMemberRef](
+		members, err := keel.Into[memberRow](
 			ctx,
 			db,
 			memberQuery(ctx, scope).
-				Pick(u.ID, u.Name, u.EmailAddress, lastSignIn).
+				Pick(
+					u.ID,
+					u.Name,
+					u.EmailAddress,
+					lastSignIn,
+					u.ProfilePicURL.Coalesce(""),
+					u.ThumbnailURL.Coalesce(""),
+				).
 				Where(keel.Not(activeTOTP(ctx))).
 				Order(keel.Desc(lastSignIn).NullsLast(), u.Name.Asc()).
 				Limit(req.Limit),
@@ -148,12 +156,28 @@ func (r *securityBriefingRepository) MFACoverage(
 			r.l.Error("failed to list members without two-factor", zap.Error(err))
 			return nil, fmt.Errorf("list members without two-factor: %w", err)
 		}
-		for i := range members {
-			coverage.Unenrolled = append(coverage.Unenrolled, &members[i])
+		for _, member := range members {
+			coverage.Unenrolled = append(coverage.Unenrolled, &iam.SecurityMemberRef{
+				UserID:        member.UserID,
+				Name:          member.Name,
+				EmailAddress:  member.EmailAddress,
+				LastLoginAt:   member.LastLoginAt,
+				ProfilePicURL: member.ProfilePicURL,
+				ThumbnailURL:  member.ThumbnailURL,
+			})
 		}
 
 		return coverage, nil
 	})
+}
+
+type memberRow struct {
+	UserID        pulid.ID
+	Name          string
+	EmailAddress  string
+	LastLoginAt   *int64
+	ProfilePicURL string
+	ThumbnailURL  string
 }
 
 type signInCounts struct {

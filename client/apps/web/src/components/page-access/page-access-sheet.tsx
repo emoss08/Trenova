@@ -1,5 +1,5 @@
 import { usePermission } from "@/hooks/use-permission";
-import { lazyComponent } from "@/lib/lazy-component";
+import { lazyComponent } from "@trenova/shared/lib/lazy-component";
 import { useAppDialogOpen, useAppDialogsStore } from "@/stores/app-dialogs-store";
 import { Sheet, SheetContent } from "@trenova/shared/components/ui/sheet";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";

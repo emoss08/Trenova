@@ -1,4 +1,4 @@
-import { lazyComponent } from "@/lib/lazy-component";
+import { lazyComponent } from "@trenova/shared/lib/lazy-component";
 import { LazyComponent } from "@trenova/shared/components/error-boundary";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { useRef, useState, type ClipboardEvent, type DragEvent, type ReactNode } from "react";

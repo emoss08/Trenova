@@ -13,7 +13,7 @@ import {
   type PositionHolderRow,
 } from "@/lib/graphql/org-structure";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Avatar, AvatarFallback } from "@trenova/shared/components/ui/avatar";
+import { WorkerAvatar } from "@trenova/shared/components/worker-avatar";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form";
@@ -26,7 +26,6 @@ import {
 } from "@trenova/shared/components/ui/sheet";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { jobDepartmentLabel } from "@trenova/shared/lib/org-structure";
-import { getNameInitials } from "@trenova/shared/lib/utils";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { PlusIcon, XCloseIcon } from "@trenova/shared/components/icons";
 import { useEffect } from "react";
@@ -205,11 +204,12 @@ export function PositionHoldersSheet({ position, onOpenChange }: PositionHolders
                       to={holderHref(holder)}
                       className="flex min-w-0 items-center gap-2.5 hover:underline"
                     >
-                      <Avatar size="sm">
-                        <AvatarFallback className="text-2xs font-medium">
-                          {getNameInitials(holder.name)}
-                        </AvatarFallback>
-                      </Avatar>
+                      <WorkerAvatar
+                        size="sm"
+                        name={holder.name}
+                        photo={holder.photo}
+                        fallbackClassName="text-2xs"
+                      />
                       <span className="flex min-w-0 flex-col leading-tight">
                         <span className="truncate text-sm font-medium">{holder.name}</span>
                         <span className="text-muted-foreground truncate text-xs">

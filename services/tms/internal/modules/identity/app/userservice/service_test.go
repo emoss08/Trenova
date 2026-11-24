@@ -8,8 +8,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
-	"github.com/emoss08/trenova/internal/infrastructure/config/storageconfig"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/session"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/iamports"
@@ -17,10 +15,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/kernelportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/permissionportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/sessionportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
+	"github.com/emoss08/trenova/internal/testutil/phototest"
 	"github.com/emoss08/trenova/internal/testutil/securityaudittest"
 	"github.com/emoss08/trenova/internal/testutil/sessiontest"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -49,7 +47,7 @@ type testDeps struct {
 	roleRepo    *permissionportsmock.MockRoleRepository
 	sessionRepo *sessionportsmock.MockSessionRepository
 	permissions *permissionportsmock.MockPermissionEngine
-	storage     *kernelportsmock.MockClient
+	photos      *phototest.Fake
 	audit       *auditportsmock.MockAuditService
 	svc         *Service
 }
@@ -66,7 +64,7 @@ func setupTest(t *testing.T) *testDeps {
 	roleRepo := permissionportsmock.NewMockRoleRepository(t)
 	sessionRepo := sessionportsmock.NewMockSessionRepository(t)
 	permissions := permissionportsmock.NewMockPermissionEngine(t)
-	storageClient := kernelportsmock.NewMockClient(t)
+	photos := &phototest.Fake{}
 	auditSvc := auditportsmock.NewMockAuditService(t)
 	ssoConfigs := tenantportsmock.NewMockSSOConfigRepository(t)
 	ssoConfigs.EXPECT().
@@ -74,23 +72,18 @@ func setupTest(t *testing.T) *testDeps {
 		Return(nil, nil).
 		Maybe()
 	svc := &Service{
-		permissions:  permissions,
-		l:            zap.NewNop(),
-		repo:         repo,
-		ssoConfigs:   ssoConfigs,
-		roleRepo:     roleRepo,
-		sr:           sessionRepo,
-		rotator:      sessiontest.Rotator(sessionRepo),
-		auditService: auditSvc,
-		authEvents:   &recordedEvents{},
-		auditor:      &securityaudittest.Recorder{},
-		realtime:     &mocks.NoopRealtimeService{},
-		storage:      storageClient,
-		storageCfg: &storageconfig.Config{
-			MaxFileSize:        5 * 1024 * 1024,
-			PresignedURLExpiry: 15 * time.Minute,
-			AllowedMIMETypes:   []string{"image/jpeg", "image/png", "image/webp"},
-		},
+		permissions:    permissions,
+		l:              zap.NewNop(),
+		repo:           repo,
+		ssoConfigs:     ssoConfigs,
+		roleRepo:       roleRepo,
+		sr:             sessionRepo,
+		rotator:        sessiontest.Rotator(sessionRepo),
+		auditService:   auditSvc,
+		authEvents:     &recordedEvents{},
+		auditor:        &securityaudittest.Recorder{},
+		realtime:       &mocks.NoopRealtimeService{},
+		photos:         photos,
 		validator:      newTestValidator(),
 		passwordStepUp: sessiontest.OpenStepUp{},
 	}
@@ -99,7 +92,7 @@ func setupTest(t *testing.T) *testDeps {
 		roleRepo:    roleRepo,
 		sessionRepo: sessionRepo,
 		permissions: permissions,
-		storage:     storageClient,
+		photos:      photos,
 		audit:       auditSvc,
 		svc:         svc,
 	}
@@ -925,16 +918,8 @@ func TestNew(t *testing.T) {
 
 	repo := tenantportsmock.NewMockUserRepository(t)
 	sessionRepo := sessionportsmock.NewMockSessionRepository(t)
-	storageClient := kernelportsmock.NewMockClient(t)
 	auditSvc := auditportsmock.NewMockAuditService(t)
 	validator := newTestValidator()
-	cfg := &config.Config{
-		Storage: storageconfig.Config{
-			MaxFileSize:        5 * 1024 * 1024,
-			PresignedURLExpiry: 15 * time.Minute,
-			AllowedMIMETypes:   []string{"image/jpeg", "image/png", "image/webp"},
-		},
-	}
 
 	svc := New(Params{
 		Logger:            zap.NewNop(),
@@ -942,8 +927,7 @@ func TestNew(t *testing.T) {
 		SessionRepository: sessionRepo,
 		AuditService:      auditSvc,
 		Realtime:          &mocks.NoopRealtimeService{},
-		Storage:           storageClient,
-		StorageConfig:     &cfg.Storage,
+		Photos:            &phototest.Fake{},
 		Validator:         validator,
 	})
 
@@ -1048,8 +1032,6 @@ func TestUserManagementAnswersForTheSystemActorAsForAnUnknownUser(t *testing.T) 
 		testSystemActorID, tenantInfo.OrgID, tenantInfo.BuID, []pulid.ID{tenantInfo.OrgID})
 	unknown(t, err)
 	unknown(t, deps.svc.EndUserAccess(t.Context(), tenantInfo, testSystemActorID))
-	_, err = deps.svc.GetProfilePictureURL(t.Context(), tenantInfo, testSystemActorID, "")
-	unknown(t, err)
 
 	people, err := deps.svc.GetByIDs(t.Context(), tenantports.GetUsersByIDsRequest{
 		TenantInfo: tenantInfo, UserIDs: []pulid.ID{testSystemActorID},

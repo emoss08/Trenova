@@ -5,6 +5,8 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/personphoto"
+
 	"github.com/emoss08/trenova/internal/modules/identity/domain/dashcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
@@ -42,6 +44,8 @@ type PortalProfile struct {
 	DriverType       string   `json:"driverType"`
 	FleetCodeName    string   `json:"fleetCodeName"`
 	OrganizationName string   `json:"organizationName"`
+
+	Photo *personphoto.URLs `json:"photo"`
 }
 
 type PortalStop struct {
@@ -145,6 +149,9 @@ func (s *Service) MyProfile(
 	}
 	if wrk.Organization != nil {
 		profile.OrganizationName = wrk.Organization.Name
+	}
+	if profile.Photo, err = s.workerPhotos.URLs(ctx, wrk); err != nil {
+		return nil, err
 	}
 	return profile, nil
 }

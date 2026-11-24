@@ -65,8 +65,10 @@ query AuditOverview($days: Int!) @requiresRead(kind: "user") {
       user {
         id
         name
-        profilePicUrl
-        thumbnailUrl
+        photo {
+          url
+          thumbnailUrl
+        }
       }
     }
     otherActors

@@ -9,11 +9,14 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/identityloaders"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/workforceloaders"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/identity/app/orgstructureservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/personphoto"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/approvaldelegation"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/orgstructureports"
@@ -373,4 +376,17 @@ func (r *QueryResolver) ApprovalDelegations(ctx context.Context, delegatorID *st
 	}
 
 	return r.OrgStructureService.ListDelegations(ctx, req)
+}
+
+// Photo is the resolver for the photo field.
+func (r *TeamMemberResolver) Photo(ctx context.Context, obj *gqlmodel.TeamMember) (*personphoto.URLs, error) {
+	return workforceloaders.WorkerPhotoByID(ctx, pulid.ID(obj.WorkerID))
+}
+
+// Photo is the resolver for the photo field.
+func (r *PositionHolderResolver) Photo(ctx context.Context, obj *gqlmodel.PositionHolder) (*personphoto.URLs, error) {
+	if obj.Kind == gqlmodel.PositionHolderKindUser {
+		return identityloaders.UserPhotoByID(ctx, pulid.ID(obj.ID))
+	}
+	return workforceloaders.WorkerPhotoByID(ctx, pulid.ID(obj.ID))
 }

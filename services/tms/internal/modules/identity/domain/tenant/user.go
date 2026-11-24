@@ -7,6 +7,7 @@ import (
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/personphoto"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -70,8 +71,9 @@ type User struct {
 	TimeFormat            domaintypes.TimeFormat `json:"timeFormat"            keel:"time_format"`
 	Password              string                 `json:"-"                     keel:"password"` // Hidden in responses
 	EmailAddress          string                 `json:"emailAddress"          keel:"email_address"`
-	ProfilePicURL         string                 `json:"profilePicUrl"         keel:"profile_pic_url,nullzero"`
-	ThumbnailURL          string                 `json:"thumbnailUrl"          keel:"thumbnail_url,nullzero"`
+	ProfilePicURL         string                 `json:"-"                     keel:"profile_pic_url,nullzero"`
+	ThumbnailURL          string                 `json:"-"                     keel:"thumbnail_url,nullzero"`
+	Photo                 *personphoto.URLs      `json:"photo,omitempty"       keel:"-"`
 	Timezone              string                 `json:"timezone"              keel:"timezone"`
 	Locale                string                 `json:"locale"                keel:"locale"`
 	IsLocked              bool                   `json:"isLocked"              keel:"is_locked"`

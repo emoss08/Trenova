@@ -63,8 +63,7 @@ export function AcknowledgeRow({
                           <ResolvedUserAvatar
                             userId={ack.user?.id}
                             name={ack.user?.name}
-                            profilePicUrl={ack.user?.profilePicUrl}
-                            thumbnailUrl={ack.user?.thumbnailUrl}
+                            photo={ack.user?.photo}
                             className="size-3"
                             fallbackClassName="text-3xs"
                           />

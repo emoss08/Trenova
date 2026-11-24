@@ -3,11 +3,12 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { SectionPanel, SectionPanelQuiet } from "@/components/section-panel";
 import { terminalStandings } from "@/lib/fleet-safety-console";
 import type { FleetSafetyRankRow, FleetSafetyTerminalRow } from "@/lib/graphql/fleet-safety";
-import { Avatar, AvatarBadge, AvatarFallback } from "@trenova/shared/components/ui/avatar";
+import { AvatarBadge } from "@trenova/shared/components/ui/avatar";
+import { WorkerAvatar } from "@trenova/shared/components/worker-avatar";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { safetyRatingLabel, safetyRatingTone } from "@trenova/shared/lib/csa";
 import { formatUnixDate } from "@trenova/shared/lib/date";
-import { cn, getNameInitials } from "@trenova/shared/lib/utils";
+import { cn } from "@trenova/shared/lib/utils";
 import { Award01Icon, Building07Icon, ShieldAlertIcon } from "@trenova/shared/components/icons";
 import { useMemo } from "react";
 import { workerPath } from "@/routes/worker/use-worker-state";
@@ -177,14 +178,16 @@ export function RankList({ title, kind, empty, rows }: RankListProps) {
                 className="hover:bg-accent grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-3 py-2 transition-colors"
               >
                 <span className="flex min-w-0 items-center gap-2.5">
-                  <Avatar size="sm">
-                    <AvatarFallback className="text-2xs font-medium">
-                      {getNameInitials(row.name)}
-                    </AvatarFallback>
+                  <WorkerAvatar
+                    size="sm"
+                    name={row.name}
+                    photo={row.photo}
+                    fallbackClassName="text-2xs"
+                  >
                     {row.fleetColor ? (
                       <AvatarBadge aria-hidden style={{ backgroundColor: row.fleetColor }} />
                     ) : null}
-                  </Avatar>
+                  </WorkerAvatar>
                   <span className="flex min-w-0 flex-col leading-tight">
                     <span className="flex min-w-0 items-center gap-1.5">
                       <span className="truncate text-sm font-medium">{row.name}</span>

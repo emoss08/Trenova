@@ -1,10 +1,11 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import type { TeamMemberRow } from "@/lib/graphql/org-structure";
 import { memberHealth } from "@/lib/my-team";
-import { Avatar, AvatarBadge, AvatarFallback } from "@trenova/shared/components/ui/avatar";
+import { AvatarBadge } from "@trenova/shared/components/ui/avatar";
+import { WorkerAvatar } from "@trenova/shared/components/worker-avatar";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
-import { cn, getNameInitials } from "@trenova/shared/lib/utils";
+import { cn } from "@trenova/shared/lib/utils";
 import type { WorkerHealthMeta } from "@trenova/shared/lib/worker-health";
 import { workerPath } from "@/routes/worker/use-worker-state";
 
@@ -13,22 +14,25 @@ export function memberHref(workerId: string): string {
 }
 
 type MemberAvatarProps = {
-  member: Pick<TeamMemberRow, "name" | "fleetColor" | "fleetCode">;
+  member: Pick<TeamMemberRow, "name" | "fleetColor" | "fleetCode" | "photo">;
   size?: "sm" | "default";
   className?: string;
 };
 
 /**
- * Initials in the design system's avatar, with the terminal's own colour as
+ * The member's photo, or their initials, with the terminal's own colour as
  * the one badge. The colour is the fleet's, not ours, which is why it is the
  * only raw colour on the row.
  */
 export function MemberAvatar({ member, size = "default", className }: MemberAvatarProps) {
   return (
-    <Avatar size={size} className={className}>
-      <AvatarFallback className="text-xs font-medium">
-        {getNameInitials(member.name)}
-      </AvatarFallback>
+    <WorkerAvatar
+      size={size}
+      className={className}
+      name={member.name}
+      photo={member.photo}
+      fallbackClassName="text-xs"
+    >
       {member.fleetColor ? (
         <AvatarBadge
           aria-hidden
@@ -36,7 +40,7 @@ export function MemberAvatar({ member, size = "default", className }: MemberAvat
           style={{ backgroundColor: member.fleetColor }}
         />
       ) : null}
-    </Avatar>
+    </WorkerAvatar>
   );
 }
 

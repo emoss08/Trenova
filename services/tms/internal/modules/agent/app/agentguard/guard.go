@@ -57,6 +57,10 @@ type Service struct {
 	// request proceeds on the deterministic verdict alone.
 	ClassifierTimeout time.Duration
 
+	// topicGuard is off only on a developer's machine: every question is
+	// allowed without a rule or a classifier call.
+	topicGuard bool
+
 	// verdicts remembers classifications already made, so the same question
 	// asked twice costs one call rather than two.
 	verdicts *verdictCache
@@ -76,6 +80,7 @@ func New(p Params) *Service {
 		logger:            logger,
 		completion:        p.Completion,
 		metrics:           metrics.AssistantFrom(p.Metrics),
+		topicGuard:        p.AIConfig.TopicGuardEnabled(),
 		verdicts:          newVerdictCache(p.Verdicts, p.AIConfig.GetVerdictCacheTTL(), logger),
 		ClassifierTimeout: DefaultClassifierTimeout,
 	}
@@ -159,7 +164,16 @@ func (s *Service) Evaluate(ctx context.Context, req EvaluateRequest) Decision {
 	return decision
 }
 
+// TopicGuardEnabled says whether questions are held to the assistant's remit.
+func (s *Service) TopicGuardEnabled() bool { return s.topicGuard }
+
+// Unguarded is the decision for a question asked with the topic guard off.
+func Unguarded() Decision { return allowed(StageAllowed, CategoryOther) }
+
 func (s *Service) evaluate(ctx context.Context, req *EvaluateRequest) Decision {
+	if !s.topicGuard {
+		return Unguarded()
+	}
 	if decision := EvaluateDeterministic(req.Input); !decision.Allowed {
 		s.logger.Info("request refused by deterministic scope rule",
 			zap.String("rule", decision.MatchedRule),

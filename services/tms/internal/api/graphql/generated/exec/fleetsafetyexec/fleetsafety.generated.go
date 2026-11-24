@@ -9,6 +9,7 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlexec"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/personphoto"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/fleetsafety"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety"
@@ -443,6 +444,18 @@ var Shard = &gqlexec.Shard{
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
 			},
+			{
+				Name:       "photo",
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "PersonPhoto",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*fleetsafety.FleetSafetyRank)
+					return gqlexec.Resolver[FleetSafetyRankResolver](ec, "FleetSafetyRank@fleetsafety").Photo(ctx, obj)
+				},
+				Marshal: gqlexec.Marshal(marshalOPersonPhoto2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋkernelᚋdomainᚋpersonphotoᚐURLs),
+			},
 		}},
 		{Object: "FleetSafetyRatingCount", Fields: []*gqlexec.Field{
 			{
@@ -848,6 +861,7 @@ var Shard = &gqlexec.Shard{
 
 type FleetSafetyRankResolver interface {
 	FleetCodeID(ctx context.Context, obj *fleetsafety.FleetSafetyRank) (*string, error)
+	Photo(ctx context.Context, obj *fleetsafety.FleetSafetyRank) (*personphoto.URLs, error)
 }
 
 type FleetSafetyTerminalResolver interface {
@@ -1381,6 +1395,13 @@ func marshalOID2ᚖstring(ctx context.Context, ec *gqlexec.Exec, sel ast.Selecti
 	}
 	res := graphql.MarshalID(*v)
 	return res
+}
+
+func marshalOPersonPhoto2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋkernelᚋdomainᚋpersonphotoᚐURLs(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *personphoto.URLs) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "PersonPhoto", v)
 }
 
 func marshalOString2string(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v string) graphql.Marshaler {

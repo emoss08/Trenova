@@ -88,32 +88,32 @@ matches anything fails too, so the file cannot drift behind the tools.
 | `security` | Sign-in, sessions, passwords, API keys, SSO, identity providers, roles, permissions and every other grant of access. Never agent-operated: an agent that could widen access could widen its own. | 103 |
 | `configuration` | Organization-wide settings, controls, lookup tables, templates and integration connections an administrator sets once and every later write depends on. | 245 |
 | `user-preference` | A person's own interface state: saved table views, the sidebar, favorites, notification read state, a profile picture. | 43 |
-| `infrastructure` | Plumbing a client, a provider or the platform drives rather than a decision a person makes: upload sessions, inbound webhooks, presence signals, the GraphQL transport, repair operations. | 49 |
+| `infrastructure` | Plumbing a client, a provider or the platform drives rather than a decision a person makes: upload sessions, inbound webhooks, presence signals, the GraphQL transport, repair operations. | 50 |
 | `agent-administration` | Defining, configuring, evaluating and overseeing agents, including deciding what they propose. An agent that did this would be grading its own work. | 109 |
-| `counterparty` | Done by someone other than the organization's staff acting for themselves: a driver in their own portal, a customer or carrier through a public link. An agent acts for the organization and must not act as them. | 35 |
+| `counterparty` | Done by someone other than the organization's staff acting for themselves: a driver in their own portal, a customer or carrier through a public link. An agent acts for the organization and must not act as them. | 36 |
 | `read-only` | Sent as a POST or a mutation but only computes, previews, validates or tests, and changes nothing. | 51 |
-| `attestation` | A sign-off a named, accountable person must make: certifying a regulatory summary, filing a return, overriding a failed vetting. | 55 |
+| `attestation` | A sign-off a named, accountable person must make: certifying a regulatory summary, filing a return, overriding a failed vetting. | 56 |
 | `duplicate` | Another surface for a write listed elsewhere that the analysis could not merge on its own. The reason names the write it duplicates. | 11 |
 
 ## Totals
 
-1154 writes: 697 GraphQL mutations and 457 REST writes, after merging 27 REST routes into the mutation they duplicate.
+1157 writes: 697 GraphQL mutations and 460 REST writes, after merging 27 REST routes into the mutation they duplicate.
 
 | Decision | Writes |
 | --- | --- |
 | Covered by a tool | 449 |
-| Exempt | 701 |
+| Exempt | 704 |
 | — Security | 103 |
 | — Configuration | 245 |
 | — User preference | 43 |
-| — Infrastructure | 49 |
+| — Infrastructure | 50 |
 | — Agent administration | 109 |
-| — Counterparty | 35 |
+| — Counterparty | 36 |
 | — Read-only | 51 |
-| — Attestation | 55 |
+| — Attestation | 56 |
 | — Duplicate | 11 |
 | **Pending** | **4** |
-| Total | 1154 |
+| Total | 1157 |
 
 Of the 453 writes an agent should be able to make, 449 have a tool (99%).
 
@@ -198,7 +198,7 @@ The writes no tool performs yet, and what the tool would do.
 | documentpacketrule | 3 | 0 | 3 | 0 |
 | documenttemplate | 12 | 0 | 12 | 0 |
 | documenttype | 2 | 0 | 2 | 0 |
-| driverportal | 31 | 3 | 28 | 0 |
+| driverportal | 32 | 3 | 29 | 0 |
 | driversettlement | 36 | 31 | 5 | 0 |
 | edi | 9 | 6 | 3 | 0 |
 | edilading | 13 | 1 | 11 | 1 |
@@ -302,7 +302,7 @@ The writes no tool performs yet, and what the tool would do.
 | triage | 8 | 2 | 6 | 0 |
 | user | 20 | 0 | 20 | 0 |
 | watchtower | 15 | 9 | 6 | 0 |
-| worker | 8 | 5 | 3 | 0 |
+| worker | 10 | 5 | 5 | 0 |
 | workerchecklist | 10 | 6 | 4 | 0 |
 | workercredential | 9 | 4 | 5 | 0 |
 | workerdqf | 5 | 5 | 0 | 0 |
@@ -1087,6 +1087,7 @@ Tools that change something no person-facing write does, such as sending a messa
 | `POST /api/v1/portal/invitations/accept`<br>driverportalhandler.acceptInvitation | Exempt, security: A driver accepting a portal invitation creates their own sign-in. |
 | `POST /api/v1/portal/loads/:shipmentID/documents/`<br>driverportalhandler.uploadLoadDocument | Exempt, counterparty: The driver doing this for themselves in their own portal; an agent acting for the organization must not act as the driver. |
 | `POST /api/v1/portal/profile/documents/`<br>driverportalhandler.uploadProfileDocument | Exempt, counterparty: The driver doing this for themselves in their own portal; an agent acting for the organization must not act as the driver. |
+| `POST /api/v1/portal/profile/photo/`<br>driverportalhandler.submitPhoto | Exempt, counterparty: The driver sending their own picture for the office to approve; an agent acting for the organization must not act as the driver. |
 
 ### driversettlement
 
@@ -2267,7 +2268,9 @@ Tools that change something no person-facing write does, such as sending a messa
 | `mutation patchWorker`<br>twin `PATCH /api/v1/workers/:workerID/`<br>twin `PUT /api/v1/workers/:workerID/` | Exempt, attestation: Changes a worker's employment status, classification or personal record, which are HR decisions a person makes and signs. |
 | `mutation rejectWorkerPTO` | Tool: `worker_reject_pto` |
 | `mutation updateWorkerPTO` | Tool: `worker_update_pto` |
+| `DELETE /api/v1/workers/:workerID/photo/`<br>workerhandler.removePhoto | Exempt, attestation: Taking down a worker's picture is a judgement on an image a person looks at; an agent cannot see the picture it would remove. |
 | `POST /api/v1/workers/`<br>workerhandler.create | Exempt, attestation: Hiring a worker is an employment decision with its eligibility and qualification checks; a person makes it. |
+| `POST /api/v1/workers/:workerID/photo/`<br>workerhandler.uploadPhoto | Exempt, infrastructure: Moves a photo's bytes from a browser into storage; an agent has no picture of a person to give and cannot see one. |
 
 ### workerchecklist
 

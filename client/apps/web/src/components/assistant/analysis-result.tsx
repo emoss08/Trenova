@@ -3,7 +3,7 @@ import { KpiStrip, KpiStripItem } from "@/components/kpi/kpi-strip";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 import { analysisRunStatusAttrs } from "@/lib/analysis-run";
 import { formatAnalysisValue, isNumericKind } from "@/lib/analysis-values";
-import { lazyComponent } from "@/lib/lazy-component";
+import { lazyComponent } from "@trenova/shared/lib/lazy-component";
 import type {
   AnalysisBlock,
   AnalysisChart,

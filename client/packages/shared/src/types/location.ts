@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { nullableStringSchema, statusSchema, tenantInfoSchema } from "./helpers";
-import { usStateSchema } from "./us-state";
+import { usStateRelationSchema } from "./us-state";
 import { translate } from "@trenova/shared/i18n/runtime";
 
 export const locationGeofenceTypeSchema = z.enum(["auto", "circle", "rectangle", "draw"]);
@@ -71,7 +71,7 @@ export const locationSchema = z.object({
   geofenceType: locationGeofenceTypeSchema.default("auto"),
   geofenceRadiusMeters: z.number().positive().nullable().optional(),
   geofenceVertices: locationGeofenceVerticesSchema,
-  state: usStateSchema.nullish(),
+  state: usStateRelationSchema,
 });
 
 export type Location = z.infer<typeof locationSchema>;

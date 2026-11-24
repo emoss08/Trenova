@@ -54,7 +54,6 @@ const config: StorybookConfig = {
           "react-dom",
           "react/jsx-dev-runtime",
           "storybook/test",
-          "@base-ui/react/avatar",
           "@base-ui/react/collapsible",
           "@tanstack/react-hotkeys",
           "@vis.gl/react-google-maps",

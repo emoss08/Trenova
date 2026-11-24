@@ -4,12 +4,14 @@ package workerresolver
 
 import (
 	resolvercore "github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
+	workerphotoservice "github.com/emoss08/trenova/internal/modules/workforce/app/workerphotoservice"
 	workerservice "github.com/emoss08/trenova/internal/modules/workforce/app/workerservice"
 )
 
 type Deps struct {
 	*resolvercore.Core
-	WorkerService *workerservice.Service
+	WorkerService      *workerservice.Service
+	WorkerPhotoService *workerphotoservice.Service
 }
 
 type MutationResolver struct{ *Deps }

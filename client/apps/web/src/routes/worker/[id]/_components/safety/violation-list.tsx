@@ -2,7 +2,7 @@ import { preloadOn } from "@/components/work-pane";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { useOpenedOnce } from "@/hooks/use-opened-once";
 import { usePermission } from "@/hooks/use-permission";
-import { lazyComponent } from "@/lib/lazy-component";
+import { lazyComponent } from "@trenova/shared/lib/lazy-component";
 import { deleteSafetyViolation, type SafetyViolationRow } from "@/lib/graphql/fleet-safety";
 import type { WorkerSafetyEventRow } from "@/lib/graphql/worker-safety";
 import { LazyComponent } from "@trenova/shared/components/error-boundary";

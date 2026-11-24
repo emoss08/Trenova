@@ -241,6 +241,9 @@ func (r *QueryResolver) DispatchBoard(ctx context.Context, input gqlmodel.Dispat
 	if mapped == nil {
 		return nil, nil
 	}
+	if err = r.attachDriverPhotos(ctx, authCtx, board.Drivers, mapped.Drivers); err != nil {
+		return nil, err
+	}
 	if err = r.attachCoverageProposals(ctx, authCtx, board.Moves, mapped.Moves); err != nil {
 		return nil, err
 	}

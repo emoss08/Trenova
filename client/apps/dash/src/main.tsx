@@ -1,3 +1,4 @@
+import { registerPhotoRefresh } from "@trenova/shared/lib/photo-refresh";
 import { LazyMotion, domAnimation } from "motion/react";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
@@ -27,6 +28,9 @@ const queryClient = new QueryClient({
     },
   },
 });
+
+// A picture whose signed link has expired reads the data that carried it again.
+registerPhotoRefresh(queryClient);
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>

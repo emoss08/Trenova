@@ -98,8 +98,7 @@ export function SettingsHero({
         <ResolvedUserAvatar
           userId={user?.id}
           name={user?.name}
-          profilePicUrl={user?.profilePicUrl}
-          thumbnailUrl={user?.thumbnailUrl}
+          photo={user?.photo}
           variant="full"
           className="size-16"
         />

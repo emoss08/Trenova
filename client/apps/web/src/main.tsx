@@ -7,6 +7,8 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { RouterProvider } from "@tanstack/react-router";
 import { installChunkRecovery } from "@/lib/chunk-recovery";
+import { queryClient } from "@/lib/query-client";
+import { registerPhotoRefresh } from "@trenova/shared/lib/photo-refresh";
 import { predictLinksWhenIdle } from "@/lib/link-foresight";
 import { registerServiceWorker } from "@/lib/service-worker";
 import { preloadRulesWhenIdle } from "@trenova/shared/rules/preload";
@@ -14,6 +16,8 @@ import { Providers } from "./providers";
 import { router } from "./router";
 
 installChunkRecovery();
+// A picture whose signed link has expired reads the data that carried it again.
+registerPhotoRefresh(queryClient);
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>

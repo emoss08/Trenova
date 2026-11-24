@@ -1,17 +1,13 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import type { OpenTimeEntryRow } from "@/lib/graphql/timesheet";
 import { isOverlong, rankRunning } from "@/lib/time-attendance";
-import {
-  Avatar,
-  AvatarBadge,
-  AvatarFallback,
-  AvatarImage,
-} from "@trenova/shared/components/ui/avatar";
+import { AvatarBadge } from "@trenova/shared/components/ui/avatar";
+import { WorkerAvatar } from "@trenova/shared/components/worker-avatar";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import { formatUnixInUserTimezone } from "@trenova/shared/lib/date";
 import { formatHours } from "@trenova/shared/lib/timesheet";
-import { cn, initials } from "@trenova/shared/lib/utils";
+import { cn } from "@trenova/shared/lib/utils";
 import {
   AlertTriangleIcon,
   ClockStopwatchIcon,
@@ -172,15 +168,15 @@ function BoardList({
               aria-label={t("Open the clock for {0}", name)}
               className="ui-focus-ring flex min-w-0 items-center gap-2.5 rounded-md text-left outline-none"
             >
-              <Avatar size="sm">
-                {entry.worker?.profilePicUrl ? (
-                  <AvatarImage src={entry.worker.profilePicUrl} alt="" />
-                ) : null}
-                <AvatarFallback className="text-2xs font-medium">
-                  {entry.worker ? initials(entry.worker.firstName, entry.worker.lastName) : "?"}
-                </AvatarFallback>
+              <WorkerAvatar
+                size="sm"
+                firstName={entry.worker?.firstName}
+                lastName={entry.worker?.lastName}
+                photo={entry.worker?.photo}
+                fallbackClassName="text-2xs"
+              >
                 <AvatarBadge aria-hidden className={overlong ? "bg-warning" : "bg-success"} />
-              </Avatar>
+              </WorkerAvatar>
               <span className="flex min-w-0 flex-1 flex-col gap-1 leading-tight">
                 <span className="flex min-w-0 items-center gap-1.5">
                   <span className="truncate text-sm font-medium">{name}</span>

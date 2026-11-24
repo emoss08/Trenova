@@ -255,6 +255,7 @@
         "motion": "catalog:",
         "react": "catalog:",
         "react-day-picker": "^10.0.2",
+        "react-easy-crop": "^6.2.5",
         "react-error-boundary": "catalog:",
         "react-hook-form": "catalog:",
         "react-phone-number-input": "^3.4.18",

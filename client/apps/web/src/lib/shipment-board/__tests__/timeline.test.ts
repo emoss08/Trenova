@@ -308,6 +308,43 @@ describe("buildCoverageLanes", () => {
 
     expect(lanes.drivers.map((d) => d.id)).toEqual(["wrk_double", "wrk_calm"]);
   });
+
+  it("gives each driver lane the photo the strip or the driver's load carries", () => {
+    const stripPhoto = {
+      url: "https://files.example/k.jpg",
+      thumbnailUrl: "https://files.example/k-t.jpg",
+    };
+    const loadPhoto = {
+      url: "https://files.example/m.jpg",
+      thumbnailUrl: "https://files.example/m-t.jpg",
+    };
+    const busy = driven("busy", 8, 12, "wrk_1", "Marco Ortiz", "trc_1");
+    const withPhoto = buildTimelineLoads([
+      withMove(busy.shipment, {
+        coverageType: "driver",
+        assignment: {
+          tractorId: "trc_1",
+          primaryWorker: { id: "wrk_1", firstName: "Marco", lastName: "Ortiz", photo: loadPhoto },
+          tractor: { id: "trc_1", code: "T-trc_1" },
+        },
+      }),
+    ])[0];
+    const kim = {
+      ...capacityDriver("wrk_2", "Kim Johnson", "trc_2"),
+      photo: stripPhoto,
+    } as CapacityUnit;
+
+    const lanes = buildCoverageLanes(
+      [withPhoto, driven("lone", 9, 10, "wrk_3", "Lin Chen", "trc_3")],
+      [kim],
+    );
+
+    expect(lanes.drivers.map((d) => [d.id, d.photo])).toEqual([
+      ["wrk_1", loadPhoto],
+      ["wrk_3", null],
+      ["wrk_2", stripPhoto],
+    ]);
+  });
 });
 
 describe("checkAssignment", () => {
@@ -315,6 +352,7 @@ describe("checkAssignment", () => {
     id: "wrk_1",
     name: "Kim Johnson",
     initials: "KJ",
+    photo: null,
     tractorId,
     tractorCode: tractorId ? "T-1031" : null,
     driveRemainingMs: null,

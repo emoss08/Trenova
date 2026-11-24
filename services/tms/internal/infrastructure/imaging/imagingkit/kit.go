@@ -208,6 +208,35 @@ func RenderPage(
 	return out, nil
 }
 
+func Normalize(
+	ctx context.Context,
+	img kernelports.Imaging,
+	req *kernelports.ImagingNormalizeRequest,
+	limit int64,
+) (*Rendered, error) {
+	var out *Rendered
+	_, err := img.NormalizeImage(ctx, req, func(artifact *kernelports.ImagingArtifact) error {
+		data, collectErr := Collect(artifact, limit)
+		if collectErr != nil {
+			return collectErr
+		}
+		out = &Rendered{
+			Data:        data,
+			ContentType: artifact.ContentType,
+			Width:       artifact.Width,
+			Height:      artifact.Height,
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	if out == nil {
+		return nil, ErrNoOutput
+	}
+	return out, nil
+}
+
 type Range struct {
 	First int
 	Last  int

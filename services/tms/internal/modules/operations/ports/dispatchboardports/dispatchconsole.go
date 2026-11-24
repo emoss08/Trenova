@@ -131,7 +131,6 @@ type BoardDriver struct {
 	City                 string            `json:"city"`
 	StateAbbr            string            `json:"stateAbbreviation"`
 	PostalCode           string            `json:"postalCode"`
-	ProfilePicURL        string            `json:"profilePicUrl"`
 	AssignmentNote       string            `json:"assignmentBlocked"`
 	AvailableForDispatch bool              `json:"availableForDispatch"`
 

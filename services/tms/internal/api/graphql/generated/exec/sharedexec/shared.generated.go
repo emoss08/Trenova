@@ -9,6 +9,7 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlexec"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/personphoto"
 	"github.com/vektah/gqlparser/v2/ast"
 )
 
@@ -16,6 +17,7 @@ var Shard = &gqlexec.Shard{
 	Name: "shared",
 	Objects: []*gqlexec.Object{
 		{Name: "PageInfo", Implementors: []string{"PageInfo"}},
+		{Name: "PersonPhoto", Implementors: []string{"PersonPhoto"}},
 	},
 	Fields: []gqlexec.Fields{
 		{Object: "PageInfo", Fields: []*gqlexec.Field{
@@ -37,6 +39,28 @@ var Shard = &gqlexec.Shard{
 					return obj.EndCursor, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOString2ᚖstring),
+			},
+		}},
+		{Object: "PersonPhoto", Fields: []*gqlexec.Field{
+			{
+				Name:     "url",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*personphoto.URLs)
+					return obj.URL, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "thumbnailUrl",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*personphoto.URLs)
+					return obj.ThumbnailURL, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
 		}},
 	},
@@ -303,6 +327,14 @@ func unmarshalOString2ᚖstring(ctx context.Context, ec *gqlexec.Exec, v any) (*
 
 func marshalNBoolean2bool(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v bool) graphql.Marshaler {
 	res := graphql.MarshalBoolean(v)
+	if res == graphql.Null {
+		gqlexec.NullViolation(ctx)
+	}
+	return res
+}
+
+func marshalNString2string(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v string) graphql.Marshaler {
+	res := graphql.MarshalString(v)
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
 	}

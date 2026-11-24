@@ -229,7 +229,10 @@ query PtoLiabilityReport($asOf: Timestamp) {
         wholeName
         firstName
         lastName
-        profilePicUrl
+        photo {
+          url
+          thumbnailUrl
+        }
         status
       }
       ptoType

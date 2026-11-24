@@ -1,6 +1,9 @@
-import { PROFILE_PICTURE } from "@/components/image-upload/image-spec";
-import { ProfilePicturePreview } from "@/components/image-upload/profile-picture-preview";
-import { useImageUpload, type ImageDropTarget } from "@/components/image-upload/use-image-upload";
+import { PROFILE_PICTURE } from "@trenova/shared/components/image-upload/image-spec";
+import { ProfilePicturePreview } from "@trenova/shared/components/image-upload/profile-picture-preview";
+import {
+  useImageUpload,
+  type ImageDropTarget,
+} from "@trenova/shared/components/image-upload/use-image-upload";
 import { user } from "@/lib/queries/user";
 import { userService } from "@trenova/shared/services/user";
 import { useQueryClient } from "@tanstack/react-query";
@@ -34,18 +37,13 @@ export function useProfilePicture(): ProfilePictureControls {
   const [removing, setRemoving] = useState(false);
   const me = useAuthStore((state) => state.user);
 
+  // The answer is the person with their new signed photo (or none): the signed-in record takes
+  // it at once, and reads that show this person elsewhere (their user detail) are read again.
   const sync = useCallback(
     async (updated: User) => {
       useAuthStore.getState().setUser(updated);
       if (!updated.id) return;
-      await Promise.all([
-        queryClient.invalidateQueries({
-          queryKey: user.profilePicture(updated.id, "thumbnail").queryKey,
-        }),
-        queryClient.invalidateQueries({
-          queryKey: user.profilePicture(updated.id, "full").queryKey,
-        }),
-      ]);
+      await queryClient.invalidateQueries({ queryKey: user.detail(updated.id).queryKey });
     },
     [queryClient],
   );

@@ -153,6 +153,30 @@ motion ([permissions.md](../permissions.md#what-the-plan-includes)).
 - **Retried writes** are safe through `Idempotency-Key` ([idempotency.md](../idempotency.md));
   a write that creates something a client may resend stores the key under a unique index.
 
+## Pictures of people and records
+
+A photo goes through `kernelports.Photos` (`kernel/app/photoservice`): it validates the file,
+sniffs its bytes (JPEG, PNG or WebP; the `Content-Type` header is never trusted), runs the content
+scan, has the imaging worker normalize it to a 1024-pixel JPEG and a 256-pixel thumbnail made from
+that picture (orientation applied, metadata dropped), and stores both under an `objectkey.Organization`
+key that names its holder: `<org>/<folder>/<record id>/<uuid>.jpg` (`kernelports.PhotoHolder`).
+
+- **Keys never leave the server.** The row keeps the two keys with `json:"-"`; reads sign them.
+  Signing refuses a key that does not sit under its holder's folder and id, so a stored value
+  pointing at another record's or tenant's object signs nothing (`kernelports.UserPhotoKeys` for
+  users, whose pictures follow them across organizations).
+- **Links are stable.** `Sign` signs with a time floored to ten minutes and a 70-minute lifetime
+  (`PresignedURLParams.SignedAt`), so the same photo read twice in a window is the same URL and the
+  browser cache holds; every link is valid for at least an hour.
+- **Visibility is checked once.** A photo shown beside another record (a board row, a ranking, a
+  team) is signed through `workerphotoservice.URLsByWorker`, which signs nothing unless the reader
+  holds worker read and the `photo` field's sensitivity; `Worker.photo` itself is held by the
+  GraphQL field guard. GraphQL exposes both as `PersonPhoto { url thumbnailUrl }`, through the
+  `WorkerPhotoByID` and `UserPhotoByID` loaders when the row does not carry the keys.
+- **Cleanup outlives the request.** A write that replaces a photo deletes the old objects after
+  commit, a failed write deletes the new ones, and `Discard` runs on a detached context with its
+  own timeout (`workerphotoservice`, `userservice`).
+
 ## Every write is reachable by an agent
 
 A new mutation or write route needs an agent tool, a reasoned exemption or a `pending` entry in

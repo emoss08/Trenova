@@ -156,8 +156,7 @@ export function CommentItem({
         <ResolvedUserAvatar
           userId={comment.user?.id}
           name={comment.user?.name}
-          profilePicUrl={comment.user?.profilePicUrl}
-          thumbnailUrl={comment.user?.thumbnailUrl}
+          photo={comment.user?.photo}
           className={cn("size-7", isResolved && "opacity-70")}
           fallbackClassName="text-xs"
         />

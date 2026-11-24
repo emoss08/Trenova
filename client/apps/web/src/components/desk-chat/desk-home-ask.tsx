@@ -197,6 +197,8 @@ export function useDeskHomeAsk({
     }
   };
 
+  const focus = () => setFocusSignal((signal) => signal + 1);
+
   const dismissNobody = () => {
     setNobodyDismissed(true);
     setFocusSignal((signal) => signal + 1);
@@ -250,6 +252,8 @@ export function useDeskHomeAsk({
     dismissNobody,
     routing,
     focusSignal,
+    /** Puts the caret in the box. */
+    focus,
     acceptRecommendation,
     keepAgent,
     draft,

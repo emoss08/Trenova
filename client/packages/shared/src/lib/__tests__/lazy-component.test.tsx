@@ -1,7 +1,9 @@
-import { act, render, screen } from "@testing-library/react";
+import { act, cleanup, render, screen } from "@testing-library/react";
 import { Suspense } from "react";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { lazyComponent, preloadable } from "../lazy-component";
+
+afterEach(cleanup);
 
 describe("preloadable", () => {
   it("reads the module once however often it is asked for", async () => {

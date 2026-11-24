@@ -34,6 +34,10 @@ query Rota($filter: RotaFilterInput) {
       shiftColor
       scheduledDays
       conflicts
+      photo {
+        url
+        thumbnailUrl
+      }
       days {
         date
         state
@@ -99,11 +103,19 @@ query ShiftSwapRequests($workerId: ID, $openOnly: Boolean, $since: Timestamp, $l
       id
       firstName
       lastName
+      photo {
+        url
+        thumbnailUrl
+      }
     }
     counterpartyWorker {
       id
       firstName
       lastName
+      photo {
+        url
+        thumbnailUrl
+      }
     }
   }
 }

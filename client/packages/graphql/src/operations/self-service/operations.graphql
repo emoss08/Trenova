@@ -32,6 +32,10 @@ query WorkerPolicyCompliance($id: ID!) {
       workerType
       acknowledgedAt
       signatureName
+      photo {
+        url
+        thumbnailUrl
+      }
     }
   }
 }
@@ -84,10 +88,18 @@ query ProfileChangeRequests($filter: ProfileChangeFilterInput) {
       from
       to
     }
+    proposedPhoto {
+      url
+      thumbnailUrl
+    }
     worker {
       id
       firstName
       lastName
+      photo {
+        url
+        thumbnailUrl
+      }
     }
   }
 }

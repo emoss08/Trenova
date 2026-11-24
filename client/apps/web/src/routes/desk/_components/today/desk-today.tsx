@@ -29,8 +29,12 @@ import {
 } from "@trenova/shared/lib/date";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { useState } from "react";
+import type { StartBinding } from "@/components/assistant/use-start-conversation";
+import { recordSpace } from "@/stores/composer-draft-store";
+import { useDeskAskStore } from "@/stores/desk-ask-store";
+import { useEffect, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
+import { startAbout } from "./ask-new";
 import { attentionPath } from "../attention/attention-record";
 import { AttentionRow } from "../attention/attention-row";
 import { usePendingDecisionSummary } from "../decisions/use-pending-decisions";
@@ -57,7 +61,12 @@ export type DeskTodayProps = {
   threads: AssistantThread[];
   isLoading: boolean;
   isStarting: boolean;
-  onStart: (agentId: string, question?: string, extras?: DeskStartExtras) => void;
+  onStart: (
+    agentId: string,
+    question?: string,
+    extras?: DeskStartExtras,
+    binding?: StartBinding,
+  ) => void;
 };
 
 /**
@@ -106,14 +115,32 @@ export function DeskToday({ agents, threads, isLoading, isStarting, onStart }: D
   });
 
   const preferredAgent = useDeskSetting("agent");
+  // A new conversation asked for from another page about a record starts
+  // here, full width, with that record riding on the question.
+  const about = useDeskAskStore((state) => state.subject);
+  const focusPending = useDeskAskStore((state) => state.focusPending);
   const ask = useDeskHomeAsk({
     agents,
     threads,
     isLoading,
     preferId: preferredAgent,
-    space: "desk-today",
-    onStart,
+    subjectAgentId: about?.agentId,
+    space: about ? recordSpace(about.kind, about.id) : "desk-today",
+    onStart: (agentId, question, extras) => {
+      if (about === null) {
+        onStart(agentId, question, extras);
+        return;
+      }
+      const start = startAbout(about, extras);
+      onStart(agentId, question, start.extras, start.binding);
+    },
   });
+  const { focus } = ask;
+  useEffect(() => {
+    if (focusPending && !isLoading && useDeskAskStore.getState().takeFocus()) {
+      focus();
+    }
+  }, [focus, focusPending, isLoading]);
 
   const dateline = new Intl.DateTimeFormat(undefined, {
     weekday: "long",
@@ -207,7 +234,15 @@ export function DeskToday({ agents, threads, isLoading, isStarting, onStart }: D
           )}
 
           <div className="dk-dy-cmp">
-            <DeskHomeComposer ask={ask} isStarting={isStarting} />
+            <DeskHomeComposer
+              ask={ask}
+              isStarting={isStarting}
+              placeholder={
+                about
+                  ? t("Ask anything about {0}. The record goes with your question.", about.label)
+                  : undefined
+              }
+            />
           </div>
 
           {briefing && <DayStrip sections={briefing.sections} />}

@@ -319,7 +319,7 @@ type DispatchBoardDriver {
   city: String!
   stateAbbreviation: String!
   postalCode: String!
-  profilePicUrl: String!
+  photo: PersonPhoto
   assignmentBlocked: String!
   availableForDispatch: Boolean!
 

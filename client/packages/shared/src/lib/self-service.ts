@@ -6,6 +6,7 @@
 
 import type { BadgeVariant } from "@trenova/shared/types/badge";
 import { defineLabels } from "@trenova/shared/i18n/labels";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 /**
  * Whether a typed signature is the worker's own name. Case and surrounding
@@ -79,10 +80,28 @@ type FieldChangeLike = {
   to: string;
 };
 
-/** A request's changes as lines a manager can scan. A cleared field says so. */
+/**
+ * The field a photo request names. It carries no before and after in words: the pictures are the
+ * worker's photo and the request's proposed photo.
+ */
+export const PHOTO_CHANGE_FIELD = "photo";
+
+/** Whether a request asks for a new photo rather than new details. */
+export function isPhotoChange(changes: readonly Pick<FieldChangeLike, "field">[]): boolean {
+  return changes.some((change) => change.field === PHOTO_CHANGE_FIELD);
+}
+
+/**
+ * A request's changes as lines a manager can scan. A cleared field says so; a new photo, which has
+ * no words to compare, says only that.
+ */
 export function describeChanges(changes: readonly FieldChangeLike[]): string[] {
   const shown = (value: string) => (value.trim() === "" ? "(blank)" : value);
-  return changes.map((change) => `${change.label}: ${shown(change.from)} → ${shown(change.to)}`);
+  return changes.map((change) =>
+    change.field === PHOTO_CHANGE_FIELD
+      ? translate("A new photo")
+      : `${change.label}: ${shown(change.from)} → ${shown(change.to)}`,
+  );
 }
 
 const AUDIENCE_LABELS: Record<string, string> = defineLabels({

@@ -626,7 +626,7 @@ function buildShipment(raw, index, anchor) {
                 id: driver.id,
                 ...splitName(driver),
                 wholeName: `${driver.first} ${driver.last}`,
-                profilePicUrl: null,
+                photo: null,
               },
               secondaryWorker: null,
             }

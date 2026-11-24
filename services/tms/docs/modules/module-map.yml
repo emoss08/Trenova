@@ -19,6 +19,7 @@ modules:
       - entitlementservice
       - managedfeaturesservice
       - managedusageservice
+      - photoservice
       - realtimeservice
       - secretconfig
       - statuschange
@@ -428,6 +429,7 @@ modules:
       - workerinjuryservice
       - workerleaveservice
       - workeroverviewservice
+      - workerphotoservice
       - workersafetyservice
       - workerservice
       - workertrainingservice

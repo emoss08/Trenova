@@ -102,6 +102,16 @@ input DataTableConnectionInput {
   sort: [SortFieldInput!]
 }
 
+"""
+A person's photo, a worker's or a user's, as two signed links: the picture, at most 1024 pixels
+on its longest side, and a thumbnail at most 256. The links expire, so read them again rather
+than storing them.
+"""
+type PersonPhoto {
+  url: String!
+  thumbnailUrl: String!
+}
+
 type PageInfo {
   hasNextPage: Boolean!
   endCursor: String

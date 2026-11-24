@@ -21,6 +21,7 @@ import {
   tariffTraceEventSchema,
   type TariffInputValues,
 } from "./tariff";
+import { personPhotoSchema } from "./person-photo";
 import { userSchema } from "./user";
 
 export const formulaTemplateStatusSchema = z.enum(["Active", "Inactive", "Draft", "InReview"]);
@@ -557,7 +558,7 @@ export const formulaReviewerSchema = z.object({
   id: z.string(),
   name: z.string(),
   username: z.string().nullish(),
-  profilePicUrl: z.string().nullish(),
+  photo: personPhotoSchema.nullish(),
 });
 export type FormulaReviewer = z.output<typeof formulaReviewerSchema>;
 export const listFormulaReviewersResponseSchema = z.array(formulaReviewerSchema);

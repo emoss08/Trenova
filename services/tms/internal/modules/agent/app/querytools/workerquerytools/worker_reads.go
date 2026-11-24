@@ -39,7 +39,6 @@ const (
 	workerBlockedField    = "assignmentBlocked"
 	workerComplianceKey   = "complianceStatus"
 	workerAvailableField  = "availableForDispatch"
-	workerPictureField    = "profilePicUrl"
 	DispatchableField     = "dispatchable"
 	workerNotDispatchBy   = "notDispatchableBecause"
 	workerComplianceKeyAt = workerProfileField + "." + workerComplianceKey
@@ -77,7 +76,7 @@ func ReadSpecs() []readspec.List {
 		Rank:       rankWorkerRows,
 		Shape:      shapeWorkerRow,
 		Derived:    []string{DispatchableField, workerNotDispatchBy},
-		Unoffered:  []string{workerBlockedField, workerAvailableField, workerPictureField},
+		Unoffered:  []string{workerBlockedField, workerAvailableField},
 		Conditions: []readspec.Condition{dispatchableCondition},
 	}}
 }

@@ -150,7 +150,7 @@
       "block_binding": {
         "prefix_mismatch_behavior": "drop_block"
       },
-      "display": "summarized",
+      "display": "omitted",
       "type": "adaptive"
     },
     "tool_choice": {

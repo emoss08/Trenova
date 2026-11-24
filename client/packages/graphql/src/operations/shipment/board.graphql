@@ -66,6 +66,10 @@ query ShipmentCapacity($kind: CapacityUnitKind!) {
       acceptancePercent
       driveRemainingMs
       tractorId
+      photo {
+        url
+        thumbnailUrl
+      }
     }
     drivers {
       ready
@@ -111,6 +115,10 @@ query ShipmentCoverageSuggestions($shipmentId: ID!) {
       distanceMiles
       driveRemainingMs
       costCents
+      photo {
+        url
+        thumbnailUrl
+      }
     }
     carriers {
       carrierId

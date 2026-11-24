@@ -66,6 +66,10 @@ query JobPositionHolders($id: ID!) {
     name
     status
     detail
+    photo {
+      url
+      thumbnailUrl
+    }
   }
 }
 
@@ -86,6 +90,10 @@ query MyTeam($includeInactive: Boolean) {
     safetyRating
     hireDate
     terminationDate
+    photo {
+      url
+      thumbnailUrl
+    }
   }
 }
 

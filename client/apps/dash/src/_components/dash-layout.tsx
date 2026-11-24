@@ -13,6 +13,7 @@ import {
   Truck01Icon,
   Wallet02Icon,
 } from "@trenova/shared/components/icons";
+import { WorkerAvatar } from "@trenova/shared/components/worker-avatar";
 import { m } from "motion/react";
 import { useEffect } from "react";
 import { Outlet, useLocation } from "@tanstack/react-router";
@@ -72,10 +73,6 @@ export function DashLayout() {
   const { data: profile } = useDashProfile();
   useDashRealtime();
 
-  const initials = profile
-    ? `${profile.firstName.charAt(0)}${profile.lastName.charAt(0)}`.toUpperCase()
-    : "";
-
   return (
     <div className="flex min-h-dvh flex-col bg-background text-foreground">
       <header className="sticky top-0 z-20 border-b border-border bg-background/80 backdrop-blur-md">
@@ -96,9 +93,16 @@ export function DashLayout() {
               to="/dash/profile"
               activeOptions={{ includeSearch: false }}
               aria-label={t("Profile")}
-              className="flex size-8 items-center justify-center rounded-full border border-border bg-muted text-xs font-semibold text-muted-foreground data-[status=active]:border-primary data-[status=active]:text-foreground"
+              className="flex size-8 items-center justify-center rounded-full ui-focus-ring data-[status=active]:ring-2 data-[status=active]:ring-primary"
             >
-              {initials || "•"}
+              <WorkerAvatar
+                aria-hidden
+                firstName={profile?.firstName}
+                lastName={profile?.lastName}
+                photo={profile?.photo}
+                className="size-8"
+                fallbackClassName="text-xs font-semibold"
+              />
             </Link>
           </div>
         </div>

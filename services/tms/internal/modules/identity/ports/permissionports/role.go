@@ -25,6 +25,7 @@ type PermittedUser struct {
 	Username      string
 	EmailAddress  string
 	ProfilePicURL string
+	ThumbnailURL  string
 	Locale        string
 }
 

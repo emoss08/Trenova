@@ -263,6 +263,7 @@ func (s *Service) Create(
 	)
 
 	entity.UserID = pulid.Nil
+	entity.KeepPhoto(nil)
 	entity.Profile.ResetServerFields()
 
 	if err := s.planFields.Keep(
@@ -416,6 +417,7 @@ func (s *Service) update(
 		entity.LeaveType = original.LeaveType
 	}
 	entity.UserID = original.UserID
+	entity.KeepPhoto(original)
 
 	updatedEntity, err := s.updateAndQueueSync(ctx, entity, original)
 	if err != nil {

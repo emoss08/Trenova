@@ -1,6 +1,6 @@
 import { useInView } from "@/hooks/use-in-view";
 import { describeApiError } from "@/lib/api-error-message";
-import { lazyComponent } from "@/lib/lazy-component";
+import { lazyComponent } from "@trenova/shared/lib/lazy-component";
 import {
   hasPendingDocumentWork,
   PENDING_DOCUMENTS_REFETCH_MS,

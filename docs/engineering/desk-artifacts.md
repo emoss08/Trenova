@@ -358,7 +358,7 @@ an artifact of its own when the agent looked it up with a `get_` tool
 a card). Both come from the card's one module.
 
 Each card in `cards/registry.tsx` is its own chunk (`lazyComponent` from
-`src/lib/lazy-component.ts`), read the first time one is opened, or while the
+`@trenova/shared/lib/lazy-component`), read the first time one is opened, or while the
 browser is idle once a table of its kind is on screen (`usePreloadRecordCard`).
 Every entry names a `Skeleton`: the card's outline, drawn on the card's own
 layout classes with the Desk shimmer and each bar sized to the text it stands

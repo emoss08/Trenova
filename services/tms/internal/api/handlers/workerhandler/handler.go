@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/workforce/app/workerphotoservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
@@ -23,6 +24,7 @@ type Params struct {
 	fx.In
 
 	Service              *workerservice.Service
+	Photos               *workerphotoservice.Service
 	PermissionMiddleware *middleware.PermissionMiddleware
 	PermissionEngine     permissionports.PermissionEngine
 	ErrorHandler         *helpers.ErrorHandler
@@ -30,6 +32,7 @@ type Params struct {
 
 type Handler struct {
 	service *workerservice.Service
+	photos  *workerphotoservice.Service
 	pm      *middleware.PermissionMiddleware
 	engine  permissionports.PermissionEngine
 	eh      *helpers.ErrorHandler
@@ -38,6 +41,7 @@ type Handler struct {
 func New(p Params) *Handler {
 	return &Handler{
 		service: p.Service,
+		photos:  p.Photos,
 		pm:      p.PermissionMiddleware,
 		engine:  p.PermissionEngine,
 		eh:      p.ErrorHandler,
@@ -64,6 +68,17 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		"/:workerID/",
 		h.pm.RequirePermission(permission.ResourceWorker.String(), permission.OpUpdate),
 		h.patch,
+	)
+	api.POST(
+		"/:workerID/photo/",
+		h.pm.RequirePermission(permission.ResourceWorker.String(), permission.OpUpdate),
+		middleware.NewBodyLimit(maxPhotoBodyBytes),
+		h.uploadPhoto,
+	)
+	api.DELETE(
+		"/:workerID/photo/",
+		h.pm.RequirePermission(permission.ResourceWorker.String(), permission.OpUpdate),
+		h.removePhoto,
 	)
 }
 

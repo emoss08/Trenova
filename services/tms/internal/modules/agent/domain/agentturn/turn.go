@@ -50,6 +50,9 @@ type RuntimeAttachment struct {
 }
 
 type RuntimeContext struct {
+	// OpenTopics drops the rule that keeps the agent off software work, for a
+	// server running with its topic guard off.
+	OpenTopics       bool
 	OrganizationName string
 	BusinessUnitName string
 	Timezone         string

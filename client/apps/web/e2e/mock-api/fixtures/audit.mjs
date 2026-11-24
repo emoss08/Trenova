@@ -132,7 +132,7 @@ function entry(anchor, spec) {
     previousState: spec.previousState ?? null,
     currentState: spec.currentState ?? null,
     metadata: spec.metadata ?? null,
-    user: person ? { ...person, profilePicUrl: "", thumbnailUrl: "" } : null,
+    user: person ? { ...person, photo: null } : null,
   };
 }
 

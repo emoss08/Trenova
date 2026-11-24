@@ -12,6 +12,7 @@ import {
   tenantInfoSchema,
 } from "./helpers";
 import { usStateRelationSchema } from "./us-state";
+import { personPhotoSchema } from "./person-photo";
 import { drugAlcoholStatusSchema, returnToDutyStatusSchema } from "./worker-drug-alcohol-status";
 import { safetyRatingSchema } from "./worker-safety";
 import { workerTrainingHealthSchema } from "./worker-training-health";
@@ -246,7 +247,7 @@ export const workerSchema = z.object({
   type: workerTypeSchema,
   driverType: driverTypeSchema,
   leaveType: nullableEnumSchema(workerLeaveTypeSchema),
-  profilePicUrl: nullableStringSchema,
+  photo: personPhotoSchema.nullish(),
   firstName: z.string().min(1, {
     error: () => translate("First name is required"),
   }),

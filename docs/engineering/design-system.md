@@ -807,7 +807,7 @@ hyphen.
 - An inline callout is `<Alert variant size="sm">`, not a hand-tinted box.
   `bg-warning/10 rounded-md p-3` was written sixty times at fifteen opacities.
 - A picture someone uploads (a logo, an icon, a person's photo) goes through
-  `useImageUpload` (`components/image-upload/`): it takes a file from the picker, a drop or a
+  `useImageUpload` (`@trenova/shared/components/image-upload/`, shared by the TMS and Dash): it takes a file from the picker, a drop or a
   paste (PNG, JPG, WebP, or an SVG, which is drawn large before it is positioned), says what
   was wrong with one it cannot use, and opens the crop dialog, where the picture is dragged,
   zoomed and turned inside a fixed frame with the places that draw it shown live beside the
@@ -824,6 +824,15 @@ hyphen.
   write another file input, drop zone or crop dialog for a picture. The dialog's code,
   cropper included, loads when a picture is first offered, so import the spec and the hook,
   never `image-crop-dialog` itself.
+- A person's face is `WorkerAvatar` (a worker, or anyone a read carries a `photo` for) or
+  `ResolvedUserAvatar` (a user, with their gradient), both on the shared `Avatar`. Its picture is
+  a native lazy image over the initials in the same box: nothing moves when it arrives, a new
+  link loads behind the picture already shown (the same path signed again swaps without a
+  flicker), and the initials show only when nothing has loaded. Photos are signed links that
+  expire: a link that fails is reported once (`reportExpiredPhoto`,
+  `@trenova/shared/lib/photo-expiry`), and `registerPhotoRefresh` (called once in each app's
+  `main.tsx`) reads again every query on screen whose data holds it, and the signed-in person's
+  record when it is theirs. Callers wire nothing; never store a photo link.
 - A preview of what an invoice will carry draws `SampleInvoice`
   (`components/documents/sample-invoice.tsx`), the one drawing of the Ledger invoice template
   in the app: the factoring company page fills in its remit-to, notice and payment box, and

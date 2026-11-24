@@ -138,7 +138,10 @@ query DispatchBoard($input: DispatchBoardInput!) @requiresRead(kind: "tender") {
       city
       stateAbbreviation
       postalCode
-      profilePicUrl
+      photo {
+        url
+        thumbnailUrl
+      }
       assignmentBlocked
       availableForDispatch
       tractorId

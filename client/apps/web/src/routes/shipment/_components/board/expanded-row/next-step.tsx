@@ -76,6 +76,7 @@ function CommittedState({ coverage }: { coverage: Coverage }) {
           id={coverage.id}
           initials={coverage.initials}
           shape={isCarrier ? "square" : "circle"}
+          photo={coverage.kind === "driver" ? coverage.photo : null}
           className="size-7 text-xs"
         />
         <span className="flex min-w-0 flex-col">
@@ -155,6 +156,7 @@ function CoverageOptions({
                   id={driver.workerId}
                   initials={driver.initials}
                   shape="circle"
+                  photo={driver.photo}
                   className="size-7 text-xs"
                 />
               }
@@ -316,6 +318,7 @@ function CoveredBy({ shipment, coverage }: { shipment: Shipment; coverage: Cover
           id={coverage.id}
           initials={coverage.initials}
           shape={isCarrier ? "square" : "circle"}
+          photo={coverage.kind === "driver" ? coverage.photo : null}
           className="size-7 text-xs"
         />
         <span className="flex min-w-0 flex-1 flex-col">

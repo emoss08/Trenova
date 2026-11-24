@@ -1,6 +1,6 @@
 import { INVOICE_LOGO_CLASS } from "@/components/documents/sample-invoice-data";
 import { SampleInvoice } from "@/components/documents/sample-invoice";
-import type { ImageDropTarget } from "@/components/image-upload/use-image-upload";
+import type { ImageDropTarget } from "@trenova/shared/components/image-upload/use-image-upload";
 import {
   ChevronSelectorVerticalIcon,
   ImagePlusIcon,

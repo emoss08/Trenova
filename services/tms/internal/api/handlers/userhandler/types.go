@@ -18,10 +18,6 @@ type UpdateMySettingsRequest struct {
 	Locale     string                 `json:"locale"`
 }
 
-type ProfilePictureURLResponse struct {
-	URL string `json:"url"`
-}
-
 type ChangeMyPasswordRequest struct {
 	CurrentPassword string `json:"currentPassword"`
 	NewPassword     string `json:"newPassword"`

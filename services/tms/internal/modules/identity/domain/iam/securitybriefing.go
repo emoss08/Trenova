@@ -3,6 +3,7 @@ package iam
 import (
 	"slices"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/personphoto"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -92,10 +93,14 @@ type SecurityMemberSummary struct {
 }
 
 type SecurityMemberRef struct {
-	UserID       pulid.ID `json:"userId"`
-	Name         string   `json:"name"`
-	EmailAddress string   `json:"emailAddress"`
-	LastLoginAt  *int64   `json:"lastLoginAt"`
+	UserID        pulid.ID `json:"userId"`
+	Name          string   `json:"name"`
+	EmailAddress  string   `json:"emailAddress"`
+	LastLoginAt   *int64   `json:"lastLoginAt"`
+	ProfilePicURL string   `json:"-"`
+	ThumbnailURL  string   `json:"-"`
+
+	Photo *personphoto.URLs `json:"photo"`
 }
 
 type SecurityMFACoverage struct {

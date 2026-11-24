@@ -29,7 +29,7 @@ The client installs and runs on Bun, not Node. Its commands and traps (per-packa
 `index.html` loads the entry, preloads the modules it imports statically, and links one
 stylesheet. `bun run --filter @trenova/web bundle:check` measures that set against
 `bundle-budget.json` and runs in CI after the build. When it fails, move what the first page
-does not need behind `lazyComponent` (`src/lib/lazy-component.ts`), or raise the budget in the
+does not need behind `lazyComponent` (`@trenova/shared/lib/lazy-component`), or raise the budget in the
 same change if the growth is intended.
 
 Things that were on every page and are not any more, and how they were kept off:

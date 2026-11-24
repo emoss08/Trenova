@@ -181,6 +181,7 @@ export function CoverageMark({ load }: { load: TimelineLoad }) {
           id={coverage.id}
           initials={coverage.initials}
           shape={coverage.kind === "driver" ? "circle" : "square"}
+          photo={coverage.kind === "driver" ? coverage.photo : null}
           className="size-5.5 text-2xs"
         />
       </span>

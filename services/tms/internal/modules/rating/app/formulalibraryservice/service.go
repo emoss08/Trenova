@@ -53,6 +53,7 @@ type usageLister interface {
 type Params struct {
 	fx.In
 
+	Photos           kernelports.Photos
 	Logger           *zap.Logger
 	DB               kernelports.Transactor
 	Repo             formulalibraryports.FormulaLibraryRepository
@@ -66,6 +67,7 @@ type Params struct {
 }
 
 type Service struct {
+	photos        kernelports.Photos
 	l             *zap.Logger
 	db            kernelports.Transactor
 	repo          formulalibraryports.FormulaLibraryRepository
@@ -80,6 +82,7 @@ type Service struct {
 
 func New(p Params) *Service { //nolint:gocritic // fx param structs are passed by value
 	return &Service{
+		photos:        p.Photos,
 		l:             p.Logger.Named("service.formulalibrary"),
 		db:            p.DB,
 		repo:          p.Repo,

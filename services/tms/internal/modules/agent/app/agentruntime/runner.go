@@ -6,6 +6,7 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/infrastructure/config/aiconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aimetrics"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
@@ -85,6 +86,7 @@ type Params struct {
 	// Every tool call is counted by tool and by what became of it.
 	Metrics   *metrics.Registry
 	AppConfig *appconfig.Config
+	AIConfig  *aiconfig.Config
 	Shadow    *agentshadow.Resolver
 	// The code-mode gate reads the chat providers' script settings.
 	Scripts llmports.ScriptProviders
@@ -100,6 +102,7 @@ type Service struct {
 	access      *toolaccess.Access
 	dispatcher  *tooldispatch.Dispatcher
 	streamer    *modelstream.Streamer
+	topicGuard  bool
 }
 
 func New(p Params) *Service {
@@ -128,6 +131,7 @@ func assemble(
 		access:      access,
 		streamer:    modelstream.NewStreamer(p.Completion, access),
 		dispatcher:  tooldispatch.NewDispatcher(dispatchParts),
+		topicGuard:  p.AIConfig.TopicGuardEnabled(),
 	}
 }
 
@@ -931,7 +935,10 @@ func (s *Service) finish(
 	completion *llmports.ChatCompletionResult,
 	effects TurnEffects,
 ) *agentruntimeports.RunResult {
-	guarded, outputDecision := agentguard.EvaluateOutput(completion.Text)
+	guarded, outputDecision := completion.Text, agentguard.Decision{}
+	if s.topicGuard {
+		guarded, outputDecision = agentguard.EvaluateOutput(completion.Text)
+	}
 	if outputDecision.Altered {
 		s.logger.Warn("agent reply altered by output guard",
 			zap.String("rule", outputDecision.MatchedRule),

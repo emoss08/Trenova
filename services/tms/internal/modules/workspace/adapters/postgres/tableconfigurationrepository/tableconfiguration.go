@@ -128,7 +128,7 @@ func (r *repository) ListConnection(
 						q keel.Query[*tableconfiguration.TableConfiguration],
 					) keel.Query[*tableconfiguration.TableConfiguration] {
 						return q.Load(
-							user.Pick(user.ID, user.Name, user.EmailAddress, user.ProfilePicURL),
+							user.Pick(user.ID, user.Name, user.EmailAddress),
 						)
 					},
 				},

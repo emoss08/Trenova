@@ -69,6 +69,7 @@ const (
 	ProfileFieldPostalCode            = ProfileField("postalCode")
 	ProfileFieldEmergencyContactName  = ProfileField("emergencyContactName")
 	ProfileFieldEmergencyContactPhone = ProfileField("emergencyContactPhone")
+	ProfileFieldPhoto                 = ProfileField("photo")
 )
 
 // profileFieldOrder is the order changes are listed in, which is the order a
@@ -81,6 +82,7 @@ var profileFieldOrder = []ProfileField{
 	ProfileFieldPostalCode,
 	ProfileFieldEmergencyContactName,
 	ProfileFieldEmergencyContactPhone,
+	ProfileFieldPhoto,
 }
 
 func (f ProfileField) IsValid() bool {
@@ -109,6 +111,8 @@ func (f ProfileField) Label() string {
 		return "Emergency contact"
 	case ProfileFieldEmergencyContactPhone:
 		return "Emergency contact phone"
+	case ProfileFieldPhoto:
+		return "Photo"
 	default:
 		return string(f)
 	}
@@ -198,13 +202,17 @@ type WorkerProfileChangeRequest struct {
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
 	WorkerID       pulid.ID `json:"workerId"       keel:"worker_id"`
 
-	Status       ProfileChangeStatus `json:"status"       keel:"status"`
-	Changes      []FieldChange       `json:"changes"      keel:"changes,jsonb"`
-	Note         string              `json:"note"         keel:"note,nullzero"`
-	SubmittedAt  int64               `json:"submittedAt"  keel:"submitted_at"`
-	DecidedAt    *int64              `json:"decidedAt"    keel:"decided_at"`
-	DecidedByID  pulid.ID            `json:"decidedById"  keel:"decided_by_id,nullzero"`
-	DecisionNote string              `json:"decisionNote" keel:"decision_note,nullzero"`
+	Status  ProfileChangeStatus `json:"status"       keel:"status"`
+	Changes []FieldChange       `json:"changes"      keel:"changes,jsonb"`
+
+	ProposedPhotoKey          string `json:"proposedPhotoKey"          keel:"proposed_photo_key,nullzero"`
+	ProposedPhotoThumbnailKey string `json:"proposedPhotoThumbnailKey" keel:"proposed_photo_thumbnail_key,nullzero"`
+
+	Note         string   `json:"note"         keel:"note,nullzero"`
+	SubmittedAt  int64    `json:"submittedAt"  keel:"submitted_at"`
+	DecidedAt    *int64   `json:"decidedAt"    keel:"decided_at"`
+	DecidedByID  pulid.ID `json:"decidedById"  keel:"decided_by_id,nullzero"`
+	DecisionNote string   `json:"decisionNote" keel:"decision_note,nullzero"`
 
 	Version   int64 `json:"version"   keel:"version,version"`
 	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
@@ -237,6 +245,7 @@ func (r *WorkerProfileChangeRequest) Validate(multiErr *errortypes.MultiError) {
 	if len(r.Changes) == 0 {
 		multiErr.Add("changes", errortypes.ErrRequired, "Nothing would change")
 	}
+	r.validatePhoto(multiErr)
 	for i, change := range r.Changes {
 		if !change.Field.IsValid() {
 			multiErr.Add(
@@ -266,8 +275,9 @@ func (r *WorkerProfileChangeRequest) Validate(multiErr *errortypes.MultiError) {
 	}
 }
 
-// ApplyTo writes the approved changes onto the worker. Only the closed list of
-// fields is ever touched, whatever the stored changes say.
+// ApplyTo writes the approved contact changes onto the worker. Only the closed
+// list of fields is ever touched, whatever the stored changes say; a photo is
+// moved onto the worker by the photo service, which owns its stored objects.
 func (r *WorkerProfileChangeRequest) ApplyTo(w *worker.Worker) {
 	for _, change := range r.Changes {
 		switch change.Field {
@@ -343,6 +353,10 @@ func (WorkerProfileChangeRequest) Constraints() []keel.Constraint {
 		{
 			Name:    "uq_worker_profile_change_requests_open",
 			Message: "Worker already has a pending profile change request",
+		},
+		{
+			Name:    "uq_worker_profile_change_requests_open_photo",
+			Message: "Worker already has a pending photo change request",
 		},
 		{
 			Name:    "fk_worker_profile_change_requests_worker",

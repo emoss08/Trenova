@@ -15239,7 +15239,7 @@ type DispatchBoardDriver {
   city: String!
   stateAbbreviation: String!
   postalCode: String!
-  profilePicUrl: String!
+  photo: PersonPhoto
   assignmentBlocked: String!
   availableForDispatch: Boolean!
 
@@ -16618,6 +16618,7 @@ type PortalProfile {
   driverType: String!
   fleetCodeName: String!
   organizationName: String!
+  photo: PersonPhoto
 }
 
 type PortalStop {
@@ -21918,6 +21919,8 @@ type FleetSafetyRank {
   activePoints: Int!
   events: Int!
   lastEventAt: Timestamp
+  "The driver's photo, signed for a short while; null when they have none."
+  photo: PersonPhoto
 }
 
 type FleetSafetyRatingCount {
@@ -27240,6 +27243,8 @@ type PositionHolder {
   status: String!
   "The terminal for a worker, the email address for a user."
   detail: String!
+  "The worker's or user's photo, signed for a short while; null when they have none."
+  photo: PersonPhoto
 }
 
 "One person on a manager's team."
@@ -27269,6 +27274,8 @@ type TeamMember {
   safetyRating: String!
   hireDate: Timestamp!
   terminationDate: Timestamp
+  "The worker's photo, signed for a short while; null when they have none."
+  photo: PersonPhoto
 }
 
 extend type Query {
@@ -29790,6 +29797,8 @@ type RotaRow {
   days: [RotaDay!]!
   scheduledDays: Int!
   conflicts: Int!
+  "The worker's photo, signed for a short while; null when they have none."
+  photo: PersonPhoto
 }
 
 """
@@ -30228,6 +30237,8 @@ type PolicyComplianceRow {
   workerType: String!
   acknowledgedAt: Timestamp
   signatureName: String
+  "The worker's photo, signed for a short while; null when they have none."
+  photo: PersonPhoto
 }
 
 type PolicyCompliance {
@@ -30257,6 +30268,8 @@ type WorkerProfileChangeRequest {
   workerId: ID!
   status: ProfileChangeStatus!
   changes: [ProfileFieldChange!]!
+  "The photo a waiting photo request proposes; null for any other request or once it is decided."
+  proposedPhoto: PersonPhoto
   note: String
   submittedAt: Timestamp!
   decidedAt: Timestamp
@@ -30627,6 +30640,16 @@ input DataTableConnectionInput {
   fieldFilters: [FieldFilterInput!]
   filterGroups: [FilterGroupInput!]
   sort: [SortFieldInput!]
+}
+
+"""
+A person's photo, a worker's or a user's, as two signed links: the picture, at most 1024 pixels
+on its longest side, and a thumbnail at most 256. The links expire, so read them again rather
+than storing them.
+"""
+type PersonPhoto {
+  url: String!
+  thumbnailUrl: String!
 }
 
 type PageInfo {
@@ -33152,6 +33175,8 @@ type CapacityUnit {
   acceptancePercent: Float
   driveRemainingMs: Int
   tractorId: ID
+  "The driver's photo, signed for a short while; null for a carrier or a driver with none."
+  photo: PersonPhoto
 }
 
 type DriverCapacitySummary {
@@ -33205,6 +33230,8 @@ type DriverCoverageSuggestion {
   driveRemainingMs: Int
   "What this driver taking the move costs the plan, in cents: empty miles, lateness, waiting and preferences."
   costCents: Int
+  "The driver's photo, signed for a short while; null when they have none."
+  photo: PersonPhoto
 }
 
 type CarrierCoverageSuggestion {
@@ -34248,8 +34275,8 @@ type User {
   username: String!
   timeFormat: TimeFormat!
   emailAddress: String
-  profilePicUrl: String!
-  thumbnailUrl: String!
+  "The user's picture, signed for a short while; null when they have none."
+  photo: PersonPhoto
   timezone: String!
   isLocked: Boolean!
   mustChangePassword: Boolean!
@@ -36297,7 +36324,8 @@ type Worker {
   Set while a leave of absence is open on the timeline.
   """
   leaveType: WorkerLeaveType
-  profilePicUrl: String!
+  "The worker's photo, signed for a short while; null when they have none."
+  photo: PersonPhoto
   firstName: String!
   lastName: String!
   wholeName: String!
@@ -37181,6 +37209,12 @@ input RecordEmploymentVerificationInput {
   status: EmploymentVerificationStatus
   method: EmploymentVerificationMethod
   requestedAt: Timestamp
+  responseReceivedAt: Timestamp
+  drugAlcoholResponseReceivedAt: Timestamp
+  hadAccidents: Boolean
+  accidentCount: Int
+  hadDrugAlcoholViolations: Boolean
+  findings: String
   notes: String
 }
 

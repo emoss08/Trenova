@@ -229,6 +229,8 @@ export const WORKER_WRITE_REACH = {
   },
   // The Profile form writes the record itself.
   profile: { keys: () => [], overview: true, record: true, roster: true },
+  // The photo is on the record (the header) and the roster's rows; nothing the overview counts.
+  photo: { keys: () => [], overview: false, record: true, roster: true },
   // The waiting count; an approval writes the listed fields onto the record.
   "profile-change": {
     keys: (id) => [[PROFILE_CHANGES, id]],

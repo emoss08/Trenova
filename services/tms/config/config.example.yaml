@@ -230,6 +230,7 @@ storage:
 ai:
   enabled: true # Set false to stop all AI at once
   verdictCacheTtl: 24h # How long a scope verdict is shared between replicas; the same question is classified once, not once per replica
+  topicGuard: true # Keep questions to transportation work (scope rules, classifier, no-software prompt rule, code taken out of replies). false only on your own machine; production refuses to start with it off. Env: TRENOVA_AI_TOPICGUARD
 
   # Timeouts. A probe and a completion wait on different things: a probe asks
   # for a short generation, a blocking completion sends nothing until the model

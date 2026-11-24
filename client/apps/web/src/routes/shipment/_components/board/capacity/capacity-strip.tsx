@@ -41,6 +41,7 @@ const SCROLL_STEP = 320;
 const LEAVE_MS = 320;
 const OVERFLOW_FETCH_LIMIT = 500;
 const INTEGRATIONS_PATH = appPath("/admin/integrations");
+const CAPACITY_STALE_TIME = 15_000;
 
 type DockItem =
   | { type: "label"; key: string; group: CapacityGroup }
@@ -355,7 +356,7 @@ function CapacityDock({
             updateEdges();
             if (openId) setOpenId(null);
           }}
-          className="overflow-x-auto overflow-y-hidden pr-12 pl-6 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          className="overflow-x-auto overflow-y-hidden pr-12 pl-6 scrollbar-none [&::-webkit-scrollbar]:hidden"
           role="list"
           aria-label={provider.kind === "Driver" ? t("Available drivers") : t("Available carriers")}
         >
@@ -413,14 +414,14 @@ function CapacityDock({
         <span
           aria-hidden
           className={cn(
-            "from-canvas pointer-events-none absolute inset-y-0 left-0 w-6 bg-gradient-to-r to-transparent transition-opacity",
+            "from-canvas pointer-events-none absolute inset-y-0 left-0 w-6 bg-linear-to-r to-transparent transition-opacity",
             edges.start ? "opacity-0" : "opacity-100",
           )}
         />
         <span
           aria-hidden
           className={cn(
-            "from-canvas pointer-events-none absolute inset-y-0 right-0 w-12 bg-gradient-to-l to-transparent transition-opacity",
+            "from-canvas pointer-events-none absolute inset-y-0 right-0 w-12 bg-linear-to-l to-transparent transition-opacity",
             edges.end ? "opacity-0" : "opacity-100",
           )}
         />
@@ -461,11 +462,6 @@ function CapacityDock({
   );
 }
 
-/**
- * Who can take the uncovered loads right now: a summary of driver or carrier
- * capacity against the loads waiting, and a dock of the drivers or carriers
- * themselves. An organization that does both switches between the two.
- */
 export function CapacityStrip() {
   const t = useT();
   const { operationType, runsBrokerage } = useShipmentCapabilities();
@@ -477,16 +473,16 @@ export function CapacityStrip() {
   const driverCount = useQuery({
     ...shipmentBoard.capacity("Driver"),
     enabled: operationType === "both",
-    staleTime: 15_000,
+    staleTime: CAPACITY_STALE_TIME,
   });
   const carrierCount = useQuery({
     ...shipmentBoard.capacity("Carrier"),
     enabled: operationType === "both",
-    staleTime: 15_000,
+    staleTime: CAPACITY_STALE_TIME,
   });
   const { data, isLoading } = useQuery({
     ...shipmentBoard.capacity(kind),
-    staleTime: 15_000,
+    staleTime: CAPACITY_STALE_TIME,
   });
 
   const loading = isLoading || !data;

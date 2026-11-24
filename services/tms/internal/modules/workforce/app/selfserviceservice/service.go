@@ -18,7 +18,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/notificationtemplate"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/personphoto"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/drivernotificationservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/app/workerphotoservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerpolicy"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/selfserviceports"
@@ -52,6 +55,24 @@ type WorkerReader interface {
 	GetByID(ctx context.Context, req workerports.GetWorkerByIDRequest) (*worker.Worker, error)
 }
 
+type WorkerPhotos interface {
+	Stage(
+		ctx context.Context,
+		req *workerphotoservice.StageRequest,
+	) (*kernelports.StoredPhoto, error)
+	Apply(ctx context.Context, req *workerphotoservice.ApplyRequest) (*worker.Worker, error)
+	Discard(
+		ctx context.Context,
+		ref workerphotoservice.WorkerRef,
+		photo *kernelports.StoredPhoto,
+	)
+	ProposedURLs(
+		ctx context.Context,
+		ref workerphotoservice.WorkerRef,
+		photo *kernelports.StoredPhoto,
+	) (*personphoto.URLs, error)
+}
+
 // DocumentChecksums is the slice of the document store an acknowledgement
 // needs: the checksum of what was signed, so the signature can be tied to the
 // bytes and not just the row.
@@ -70,9 +91,11 @@ type Params struct {
 	Repo          selfserviceports.SelfServiceRepository
 	WorkerRepo    workerports.WorkerRepository
 	WorkerUpdater WorkerUpdater
+	WorkerPhotos  WorkerPhotos
 	Checksums     DocumentChecksums
 	AuditService  auditports.AuditService
 	DriverNotify  *drivernotificationservice.Service
+	DB            kernelports.Transactor
 }
 
 type Service struct {
@@ -80,9 +103,11 @@ type Service struct {
 	repo          selfserviceports.SelfServiceRepository
 	workerRepo    WorkerReader
 	workerUpdater WorkerUpdater
+	workerPhotos  WorkerPhotos
 	checksums     DocumentChecksums
 	auditService  auditports.AuditService
 	driverNotify  *drivernotificationservice.Service
+	db            kernelports.Transactor
 }
 
 func New(p Params) *Service {
@@ -91,9 +116,11 @@ func New(p Params) *Service {
 		repo:          p.Repo,
 		workerRepo:    p.WorkerRepo,
 		workerUpdater: p.WorkerUpdater,
+		workerPhotos:  p.WorkerPhotos,
 		checksums:     p.Checksums,
 		auditService:  p.AuditService,
 		driverNotify:  p.DriverNotify,
+		db:            p.DB,
 	}
 }
 

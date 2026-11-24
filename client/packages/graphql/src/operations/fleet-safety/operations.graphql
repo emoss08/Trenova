@@ -64,6 +64,10 @@ query FleetSafety($input: FleetSafetyInput) {
       activePoints
       events
       lastEventAt
+      photo {
+        url
+        thumbnailUrl
+      }
     }
     best {
       workerId
@@ -76,6 +80,10 @@ query FleetSafety($input: FleetSafetyInput) {
       activePoints
       events
       lastEventAt
+      photo {
+        url
+        thumbnailUrl
+      }
     }
   }
 }

@@ -3,7 +3,7 @@ import {
   CLOSED_WORKER_OPEN_STATE as CLOSED,
   type WorkerTabProps,
 } from "@/routes/worker/use-worker-state";
-import { lazyComponent } from "@/lib/lazy-component";
+import { lazyComponent } from "@trenova/shared/lib/lazy-component";
 import { LazyComponent } from "@trenova/shared/components/error-boundary";
 import { WORKER_VIEW_MODULES } from "../worker-view-modules";
 import { QualificationSkeleton } from "./qualification-skeleton";

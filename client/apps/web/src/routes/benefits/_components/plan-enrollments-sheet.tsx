@@ -9,7 +9,7 @@ import {
   matchesEnrollmentSearch,
 } from "@/lib/benefits-console";
 import { useQuery } from "@tanstack/react-query";
-import { Avatar, AvatarFallback, AvatarImage } from "@trenova/shared/components/ui/avatar";
+import { WorkerAvatar } from "@trenova/shared/components/worker-avatar";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Input } from "@trenova/shared/components/ui/input";
 import {
@@ -23,7 +23,6 @@ import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { coverageTierLabel } from "@trenova/shared/lib/benefits";
 import { formatMinor } from "@trenova/shared/lib/money";
 import { formatUnixDate } from "@trenova/shared/lib/date";
-import { initials } from "@trenova/shared/lib/utils";
 import { SearchLgIcon } from "@trenova/shared/components/icons";
 import { useMemo, useState } from "react";
 import { planEnrollmentsQuery } from "./queries";
@@ -132,16 +131,13 @@ export function PlanEnrollmentsSheet({ plan, now, onOpenChange }: PlanEnrollment
                       className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-3 py-2 transition-colors hover:bg-accent"
                     >
                       <span className="flex min-w-0 items-center gap-2.5">
-                        <Avatar size="sm">
-                          {entry.worker?.profilePicUrl ? (
-                            <AvatarImage src={entry.worker.profilePicUrl} alt="" />
-                          ) : null}
-                          <AvatarFallback className="text-2xs font-medium">
-                            {entry.worker
-                              ? initials(entry.worker.firstName, entry.worker.lastName)
-                              : "?"}
-                          </AvatarFallback>
-                        </Avatar>
+                        <WorkerAvatar
+                          size="sm"
+                          firstName={entry.worker?.firstName}
+                          lastName={entry.worker?.lastName}
+                          photo={entry.worker?.photo}
+                          fallbackClassName="text-2xs"
+                        />
                         <span className="flex min-w-0 flex-col leading-tight">
                           <span className="flex min-w-0 items-center gap-1.5">
                             <span className="truncate text-sm font-medium">{name}</span>

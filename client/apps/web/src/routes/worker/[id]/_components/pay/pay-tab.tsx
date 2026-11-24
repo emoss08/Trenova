@@ -1,5 +1,5 @@
 import { Kept } from "@/components/kept";
-import { lazyComponent } from "@/lib/lazy-component";
+import { lazyComponent } from "@trenova/shared/lib/lazy-component";
 import {
   CLOSED_WORKER_OPEN_STATE as CLOSED,
   type WorkerTabProps,

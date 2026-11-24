@@ -10,11 +10,11 @@ export type DeskSubject = {
 };
 
 /**
- * Nova's margin beside the work: the conversation it holds, or none yet while
- * the person is about to ask, and the record the question goes with.
+ * Nova's margin beside the work: a conversation that already exists, and the
+ * record it is about. A new conversation never starts here: it opens full width.
  */
 export type DeskMargin = {
-  threadId: string | null;
+  threadId: string;
   subject: DeskSubject | null;
 };
 
@@ -44,10 +44,8 @@ interface DeskMarginState {
    */
   openWork: DeskOpenWork[];
 
-  openMargin: (subject?: DeskSubject | null) => void;
   showThread: (threadId: string, subject?: DeskSubject | null) => void;
   closeMargin: () => void;
-  toggleMargin: () => void;
   setPageSubject: (subject: DeskSubject | null) => void;
   setPageTitle: (title: string | null) => void;
   setCasePage: (subject: DeskSubject | null) => void;
@@ -74,14 +72,6 @@ export const useDeskMarginStore = create<DeskMarginState>()((set, get) => ({
   casePage: null,
   openWork: [],
 
-  openMargin: (subject) => {
-    const about = get().casePage ?? (subject === undefined ? get().pageSubject : subject);
-    const current = get().margin;
-    if (current && current.threadId !== null && sameSubject(current.subject, about)) {
-      return;
-    }
-    set({ margin: { threadId: null, subject: about } });
-  },
   showThread: (threadId, subject) =>
     set((state) => {
       const about = subject === undefined ? (state.margin?.subject ?? null) : subject;
@@ -91,13 +81,6 @@ export const useDeskMarginStore = create<DeskMarginState>()((set, get) => ({
       return { margin: { threadId, subject: about } };
     }),
   closeMargin: () => set({ margin: null }),
-  toggleMargin: () => {
-    if (get().margin) {
-      set({ margin: null });
-      return;
-    }
-    get().openMargin();
-  },
   setPageSubject: (subject) => {
     if (sameSubject(get().pageSubject, subject) && get().pageSubject?.label === subject?.label) {
       return;
@@ -114,9 +97,10 @@ export const useDeskMarginStore = create<DeskMarginState>()((set, get) => ({
     if (sameSubject(casePage, subject) && casePage?.agentId === subject?.agentId) {
       return;
     }
-    // A margin opened on something else gives way to the case's conversation.
+    // A conversation about something else folds when a case opens: beside a
+    // case sits only the case's own.
     const held = subject !== null && margin !== null && !sameSubject(margin.subject, subject);
-    set({ casePage: subject, margin: held ? { threadId: null, subject } : margin });
+    set({ casePage: subject, margin: held ? null : margin });
   },
   noteOpenWork: (work) => set((state) => ({ openWork: withOpenWork(state.openWork, work) })),
   forgetOpenWork: (kind, id) =>

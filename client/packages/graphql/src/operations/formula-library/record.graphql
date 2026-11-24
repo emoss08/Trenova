@@ -48,7 +48,10 @@ query FormulaLibrary($id: ID!) {
       id
       name
       username
-      profilePicUrl
+      photo {
+        url
+        thumbnailUrl
+      }
     }
   }
   formulaLibraryReviews(libraryId: $id) {
@@ -64,14 +67,20 @@ query FormulaLibrary($id: ID!) {
       id
       name
       username
-      profilePicUrl
+      photo {
+        url
+        thumbnailUrl
+      }
     }
     requestedReviewerId
     requestedReviewer {
       id
       name
       username
-      profilePicUrl
+      photo {
+        url
+        thumbnailUrl
+      }
     }
     reviewerNote
   }

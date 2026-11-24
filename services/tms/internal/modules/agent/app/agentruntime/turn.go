@@ -425,6 +425,7 @@ func (s *Service) OpenTurn(ctx context.Context, req *agentruntimeports.RunReques
 	messages = append(messages, asked)
 	taint, opened := turntaint.Open(req, &runtimeContext, now)
 
+	runtimeContext.OpenTopics = !s.topicGuard
 	prompt := agentprompt.BuildSystemPromptParts(definition, &runtimeContext)
 
 	return &Turn{

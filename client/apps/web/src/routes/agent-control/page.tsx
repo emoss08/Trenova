@@ -1,6 +1,6 @@
 import { useSearchValue } from "@trenova/shared/hooks/use-search-state";
 import { usePermission } from "@/hooks/use-permission";
-import { lazyComponent } from "@/lib/lazy-component";
+import { lazyComponent } from "@trenova/shared/lib/lazy-component";
 import { LazyComponent } from "@trenova/shared/components/error-boundary";
 import { useT } from "@trenova/shared/i18n/use-t";
 import type { RowTotal } from "@trenova/shared/lib/row-total";

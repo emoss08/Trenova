@@ -1,4 +1,6 @@
 import { api } from "@trenova/shared/lib/api";
+import { safeParse } from "@trenova/shared/lib/parse";
+import { portalPhotoRequestSchema } from "@trenova/shared/types/person-photo";
 
 export type PortalLoadDocument = {
   id: string;
@@ -57,6 +59,17 @@ export async function uploadMyProfileDocument(file: File, documentTypeId?: strin
     formData.append("documentTypeId", documentTypeId);
   }
   return api.upload<PortalLoadDocument>("/portal/profile/documents/", formData);
+}
+
+/** Sends a new photo of the signed-in driver to the office, which decides whether it replaces theirs. */
+export async function submitMyPhoto(file: File, note?: string) {
+  const formData = new FormData();
+  formData.append("file", file);
+  if (note?.trim()) {
+    formData.append("note", note.trim());
+  }
+  const response = await api.upload<unknown>("/portal/profile/photo/", formData);
+  return safeParse(portalPhotoRequestSchema, response, "Photo request");
 }
 
 export async function uploadMyCredentialDocument(credentialId: string, file: File) {

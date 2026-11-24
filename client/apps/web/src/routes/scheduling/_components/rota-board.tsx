@@ -10,7 +10,7 @@ import {
   type RotaCellMode,
   type RotaDensity,
 } from "@/lib/scheduling-board";
-import { Avatar, AvatarFallback } from "@trenova/shared/components/ui/avatar";
+import { WorkerAvatar } from "@trenova/shared/components/worker-avatar";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import { getTodayDate } from "@trenova/shared/lib/date";
@@ -24,7 +24,7 @@ import {
   summariseRotaRow,
 } from "@trenova/shared/lib/scheduling";
 import { formatHours } from "@trenova/shared/lib/timesheet";
-import { cn, initials } from "@trenova/shared/lib/utils";
+import { cn } from "@trenova/shared/lib/utils";
 import { AlertTriangleIcon } from "@trenova/shared/components/icons";
 import { useMemo } from "react";
 
@@ -210,11 +210,12 @@ function WorkerCell({ row, compact }: { row: RotaBoardRow; compact: boolean }) {
 
   return (
     <div className="flex items-center gap-2.5">
-      <Avatar className="size-7">
-        <AvatarFallback className="text-2xs font-medium">
-          {initials(...splitName(row.name))}
-        </AvatarFallback>
-      </Avatar>
+      <WorkerAvatar
+        name={row.name}
+        photo={row.photo}
+        className="size-7"
+        fallbackClassName="text-2xs"
+      />
       <div className="flex min-w-0 flex-col leading-tight">
         <span className="truncate font-medium">{row.name}</span>
         {shift}
@@ -324,11 +325,6 @@ function CoverageCell({
       </span>
     </div>
   );
-}
-
-function splitName(name: string): [string, string] {
-  const [first = "", ...rest] = name.trim().split(/\s+/);
-  return [first, rest.join(" ")];
 }
 
 function DayHeading({ date, today, compact }: { date: number; today: boolean; compact: boolean }) {

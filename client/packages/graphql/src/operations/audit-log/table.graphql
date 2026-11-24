@@ -26,8 +26,10 @@ fragment AuditLogTableRowFields on AuditEntry {
     name
     username
     emailAddress
-    profilePicUrl
-    thumbnailUrl
+    photo {
+      url
+      thumbnailUrl
+    }
   }
 }
 

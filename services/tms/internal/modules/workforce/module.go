@@ -48,6 +48,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerinjuryservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerleaveservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workeroverviewservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/app/workerphotoservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workersafetyservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workertrainingservice"
@@ -161,6 +162,8 @@ func SharedOptions() fx.Option {
 			workerservice.New,
 			permitservice.NewService,
 			func(ws *workerservice.Service) selfserviceservice.WorkerUpdater { return ws },
+			workerphotoservice.New,
+			func(s *workerphotoservice.Service) selfserviceservice.WorkerPhotos { return s },
 			workeroverviewservice.New,
 			func(r workerreviewports.PerformanceReviewRepository) workeroverviewservice.ReviewCounter {
 				return r

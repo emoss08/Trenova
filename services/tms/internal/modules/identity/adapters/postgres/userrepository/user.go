@@ -748,6 +748,30 @@ func (ur *repository) GetByIDs(
 	})
 }
 
+func (ur *repository) GetPhotoKeys(
+	ctx context.Context,
+	req tenantports.GetUsersByIDsRequest,
+) ([]tenantports.UserPhotoKeys, error) {
+	return dbtx.Read(ctx, ur.db, func(ctx context.Context) ([]tenantports.UserPhotoKeys, error) {
+		if len(req.UserIDs) == 0 {
+			return []tenantports.UserPhotoKeys{}, nil
+		}
+
+		u := tenantdb.Users
+		rows, err := keel.Into[tenantports.UserPhotoKeys](ctx, ur.db.Keel(ctx),
+			tenantUsers(ctx, req.TenantInfo.OrgID).
+				Pick(u.ID, u.ProfilePicURL.Coalesce(""), u.ThumbnailURL.Coalesce("")).
+				Where(u.ID.In(req.UserIDs...), u.ProfilePicURL.IsNotNull()).
+				Limit(len(req.UserIDs)))
+		if err != nil {
+			ur.l.Error("failed to read user photo keys", zap.Error(err))
+			return nil, err
+		}
+
+		return rows, nil
+	})
+}
+
 func (ur *repository) BulkUpdateStatus(
 	ctx context.Context,
 	req *tenantports.BulkUpdateUserStatusRequest,

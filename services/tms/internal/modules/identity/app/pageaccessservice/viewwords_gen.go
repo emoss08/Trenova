@@ -335,14 +335,13 @@ var viewWords = map[string][]viewWord{
 	"user": {
 		{Label: "name", Fields: []string{"name"}},
 		{Label: "username", Fields: []string{"username"}},
-		{Label: "profile pic URL", Fields: []string{"profilePicUrl"}},
-		{Label: "thumbnail URL", Fields: []string{"thumbnailUrl"}},
+		{Label: "photo", Fields: []string{"photo"}},
 	},
 	"worker": {
 		{Label: "first name", Fields: []string{"firstName"}},
 		{Label: "last name", Fields: []string{"lastName"}},
 		{Label: "whole name", Fields: []string{"wholeName"}},
-		{Label: "profile pic URL", Fields: []string{"profilePicUrl"}},
+		{Label: "photo", Fields: []string{"photo"}},
 		{Label: "status", Fields: []string{"status"}},
 		{Label: "type", Fields: []string{"type"}},
 		{Label: "fleet code", Fields: []string{"fleetCodeId", "fleetCode"}},

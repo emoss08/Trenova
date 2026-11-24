@@ -217,6 +217,7 @@ const (
 )
 
 var envOnlyKeys = []string{
+	"ai.topicGuard",
 	"security.encryption.retiredKeys",
 	"contentScan.failOpen",
 	"contentScan.clamav.address",
@@ -398,6 +399,7 @@ func validateProductionSecurity(config *Config) error {
 		config.Search.ValidateProduction,
 		config.Renderer.ValidateProduction,
 		config.Temporal.ValidateProduction,
+		config.AI.ValidateProduction,
 	}
 	for _, validate := range validators {
 		if err := validate(); err != nil {

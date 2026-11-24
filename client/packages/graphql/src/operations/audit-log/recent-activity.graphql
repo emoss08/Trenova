@@ -13,8 +13,10 @@ query RecentActivity($first: Int!, $after: String) {
           id
           name
           username
-          profilePicUrl
-          thumbnailUrl
+          photo {
+            url
+            thumbnailUrl
+          }
         }
       }
     }

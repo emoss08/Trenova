@@ -47,6 +47,7 @@ export function CoverageCell({ shipment }: { shipment: Shipment }) {
         id={coverage.id}
         initials={coverage.initials}
         shape={isCarrier ? "square" : "circle"}
+        photo={coverage.kind === "driver" ? coverage.photo : null}
         className="size-6 text-2xs"
       />
       <div className="flex min-w-0 flex-col">

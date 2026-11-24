@@ -14,7 +14,7 @@ function review(id: string, decision: string, round = 1): FormulaLibraryRecord["
     createdAt: 1_700_000_000,
     requestedReviewerId: null,
     reviewerNote: "",
-    actor: { id: "usr_1", name: "Ada", username: "ada", profilePicUrl: "" },
+    actor: { id: "usr_1", name: "Ada", username: "ada", photo: null },
     requestedReviewer: null,
   };
 }

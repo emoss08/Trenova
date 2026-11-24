@@ -171,6 +171,10 @@ query MyPortalProfile {
     driverType
     fleetCodeName
     organizationName
+    photo {
+      url
+      thumbnailUrl
+    }
   }
 }
 
@@ -735,6 +739,10 @@ query MyProfileChangeRequests {
       label
       from
       to
+    }
+    proposedPhoto {
+      url
+      thumbnailUrl
     }
   }
 }

@@ -106,8 +106,7 @@ export function ActivityRow({ entry }: { entry: RecentActivityEntry }) {
         <ResolvedUserAvatar
           userId={entry.user?.id}
           name={actorName}
-          profilePicUrl={entry.user?.profilePicUrl ?? undefined}
-          thumbnailUrl={entry.user?.thumbnailUrl ?? undefined}
+          photo={entry.user?.photo}
           className="mt-0.5 size-4"
           fallbackClassName="bg-muted text-3xs font-medium text-muted-foreground"
         />

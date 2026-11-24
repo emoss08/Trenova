@@ -903,7 +903,7 @@ func unmarshalInputRecordEmploymentVerificationInput(ctx context.Context, ec *gq
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"workerId", "employerName", "employerDotNumber", "employerMcNumber", "contactName", "contactPhone", "contactEmail", "employedFrom", "employedTo", "wasDotRegulated", "status", "method", "requestedAt", "notes"}
+	fieldsInOrder := [...]string{"workerId", "employerName", "employerDotNumber", "employerMcNumber", "contactName", "contactPhone", "contactEmail", "employedFrom", "employedTo", "wasDotRegulated", "status", "method", "requestedAt", "responseReceivedAt", "drugAlcoholResponseReceivedAt", "hadAccidents", "accidentCount", "hadDrugAlcoholViolations", "findings", "notes"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -1001,6 +1001,48 @@ func unmarshalInputRecordEmploymentVerificationInput(ctx context.Context, ec *gq
 				return it, err
 			}
 			it.RequestedAt = data
+		case "responseReceivedAt":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("responseReceivedAt"))
+			data, err := unmarshalOTimestamp2ᚖint(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.ResponseReceivedAt = data
+		case "drugAlcoholResponseReceivedAt":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("drugAlcoholResponseReceivedAt"))
+			data, err := unmarshalOTimestamp2ᚖint(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.DrugAlcoholResponseReceivedAt = data
+		case "hadAccidents":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("hadAccidents"))
+			data, err := unmarshalOBoolean2ᚖbool(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.HadAccidents = data
+		case "accidentCount":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("accidentCount"))
+			data, err := unmarshalOInt2ᚖint(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.AccidentCount = data
+		case "hadDrugAlcoholViolations":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("hadDrugAlcoholViolations"))
+			data, err := unmarshalOBoolean2ᚖbool(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.HadDrugAlcoholViolations = data
+		case "findings":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("findings"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Findings = data
 		case "notes":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("notes"))
 			data, err := unmarshalOString2ᚖstring(ctx, ec, v)

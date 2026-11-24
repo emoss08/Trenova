@@ -20,25 +20,29 @@ the surfaces copy its anatomy. Shared pieces live in `routes/desk/_styles/desk-r
 ## The room and Nova's margin
 
 `.dsk` is a grid of rail, canvas and, while it is open, a 380px margin (`dk-w-mg-open`). The margin
-holds one conversation (`DeskThread`, compact) or, before one exists, the Desk's box. Its state is
-`useDeskMarginStore`, in memory only: which thread, the record it is about, the subject the open
-page publishes (`setPageSubject`) and the cases opened this session (Open work in the rail). A
-record's name is never written to browser storage, and the store is cleared with the session.
+holds one conversation that already exists (`DeskThread`, compact); a new conversation never starts
+there. Its state is `useDeskMarginStore`, in memory only: which thread, the record it is about, the
+subject the open page publishes (`setPageSubject`) and the cases opened this session (Open work in
+the rail). A record's name is never written to browser storage, and the store is cleared with the
+session.
 
-- **Asking opens the margin, never a page.** Today's box, the case's box, ⌘J and the top bar's
-  **Ask** start a conversation in the margin (`DeskContext.startInMargin`). A question about a
-  record carries it as a mention and binds the thread to the record's case
-  (`useStartConversation`'s `StartBinding`: title, case subject, page context), so the margin
-  reopens the same case conversation next time.
+- **A new conversation always opens full width.** Today's box and a case's box start it with
+  `DeskContext.start`, which goes to `/desk/t/:id`. The rail's New conversation, ⌘⇧O, ⌘J and the
+  top bar's **Ask** go to Today's box through `useAskNew` (`today/ask-new.ts`), which puts the caret
+  in it and carries the record the page was about in `useDeskAskStore`; the record is dropped once
+  the reader leaves Today. A question about a record carries it as a mention and binds the thread
+  to the record's case (`startAbout`, then `useStartConversation`'s `StartBinding`: case subject and
+  page context), so the case finds the same conversation next time.
 - **The rail opens conversations beside the work.** A plain click on a conversation row shows it in
   the margin; a modified click, or a click while a conversation fills the room, follows the link.
   **Open full width** goes to `/desk/t/:id`, which closes the margin on that thread.
 - **Beside a case sits the case's conversation and no other.** While a case is in front
   (`casePage` in the margin store, set by the case page), `showThread` refuses a conversation about
-  anything else and `openMargin` opens on the case. A rail conversation clicked there follows its
-  link, and New conversation goes to `/desk`. A margin opened on something else gives way when a
-  case opens.
-- ⌘J toggles the margin on what the page is about; ⌘\ and Esc fold it.
+  anything else, and a conversation about something else folds when a case opens. Asking on the
+  case continues its existing conversation in the margin; with none yet, it starts one full width.
+- ⌘J in a conversation puts the caret in its box; with a conversation beside the page it folds
+  it; on a case it shows the case's conversation or focuses the case's box; anywhere else it opens
+  a new conversation full width on what the page is about. ⌘\ and Esc fold the margin.
 - **What an agent makes opens on the canvas.** An artifact opened from the margin's conversation,
   or with **Open on the canvas** in a conversation's workspace, goes to
   `/desk/v/:viewThreadId/:slug` (`view/desk-view.tsx`, `viewPath`): the question it answers, its

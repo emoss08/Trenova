@@ -1,4 +1,4 @@
-import { lazyComponent } from "@/lib/lazy-component";
+import { lazyComponent } from "@trenova/shared/lib/lazy-component";
 import { whenIdle } from "@/lib/when-idle";
 import { SETTINGS_PATH } from "@/lib/settings-path";
 import { useCommandPaletteStore } from "@/stores/command-palette-store";

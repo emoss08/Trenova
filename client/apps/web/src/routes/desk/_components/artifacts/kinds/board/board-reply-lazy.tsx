@@ -3,7 +3,7 @@ import type {
   ReplyBoardRenderer,
   ReplyBoardsProps,
 } from "@/components/assistant/artifact-opener";
-import { lazyComponent, preloadable } from "@/lib/lazy-component";
+import { lazyComponent, preloadable } from "@trenova/shared/lib/lazy-component";
 import { LazyComponent } from "@trenova/shared/components/error-boundary";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { useState } from "react";

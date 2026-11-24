@@ -1,6 +1,6 @@
 import { useInView } from "@/hooks/use-in-view";
 import { describeApiError } from "@/lib/api-error-message";
-import { lazyComponent } from "@/lib/lazy-component";
+import { lazyComponent } from "@trenova/shared/lib/lazy-component";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { Suspense, type ReactNode } from "react";

@@ -66,6 +66,12 @@ fragment CarrierReference on Carrier {
   scac
 }
 
+fragment CarrierCoverEndingReference on CarrierCoverEnding {
+  id
+  name
+  code
+}
+
 fragment CarrierInvoiceMatchReference on CarrierInvoiceMatch {
   id
   status
@@ -179,6 +185,13 @@ fragment DriverSettlementReference on DriverSettlement {
   status
   periodStart
   periodEnd
+}
+
+fragment DriverSettlementBlockerReference on DriverSettlementBlocker {
+  id
+  settlementNumber
+  status
+  workerId
 }
 
 fragment EdiCarrierInvoiceReference on EdiCarrierInvoice {
@@ -620,8 +633,10 @@ fragment UserReference on User {
   id
   name
   username
-  profilePicUrl
-  thumbnailUrl
+  photo {
+    url
+    thumbnailUrl
+  }
 }
 
 fragment WorkerReference on Worker {
@@ -629,7 +644,10 @@ fragment WorkerReference on Worker {
   fleetCodeId
   status
   type
-  profilePicUrl
+  photo {
+    url
+    thumbnailUrl
+  }
   firstName
   lastName
   wholeName

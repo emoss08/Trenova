@@ -65,6 +65,12 @@ type GetUsersByIDsRequest struct {
 	UserIDs    []pulid.ID            `json:"userIds"`
 }
 
+type UserPhotoKeys struct {
+	UserID       pulid.ID
+	Key          string
+	ThumbnailKey string
+}
+
 type ReplaceOrganizationMembershipsRequest struct {
 	ActorID         pulid.ID
 	UserID          pulid.ID
@@ -146,6 +152,10 @@ type UserRepository interface {
 		ctx context.Context,
 		req GetUsersByIDsRequest,
 	) ([]*tenant.User, error)
+	GetPhotoKeys(
+		ctx context.Context,
+		req GetUsersByIDsRequest,
+	) ([]UserPhotoKeys, error)
 	SystemActorID(ctx context.Context, businessUnitID pulid.ID) (pulid.ID, error)
 	GetTenantMember(ctx context.Context, req GetTenantMemberRequest) (*tenant.User, error)
 }

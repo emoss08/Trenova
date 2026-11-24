@@ -1,17 +1,12 @@
 package userservice
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"mime/multipart"
 	"slices"
 
-	"github.com/emoss08/trenova/internal/modules/kernel/domain/objectkey"
-
-	"github.com/emoss08/trenova/internal/infrastructure/config/storageconfig"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
-	"github.com/emoss08/trenova/internal/modules/documents/ports/contentscanports"
 	"github.com/emoss08/trenova/internal/modules/identity/app/accountguard"
 	"github.com/emoss08/trenova/internal/modules/identity/app/sessionrotation"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -31,11 +26,14 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
-	"github.com/emoss08/trenova/shared/fileutils"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
+)
+
+const (
+	profilePictureResourceType = "user-profile-picture"
 )
 
 type Params struct {
@@ -49,8 +47,7 @@ type Params struct {
 	AuditService      auditports.AuditService
 	Auditor           permissionports.SecurityAuditor
 	Realtime          realtimeports.RealtimeService
-	Storage           kernelports.Client
-	StorageConfig     *storageconfig.Config
+	Photos            kernelports.Photos
 	Validator         *Validator
 	DB                kernelports.Transactor
 	Roles             RoleAssigner
@@ -59,7 +56,6 @@ type Params struct {
 	PermissionEngine  permissionports.PermissionEngine
 	AuthEventHistory  iamports.AuthEventHistoryRepository
 	AuthEvents        iamports.AuthEventRecorder
-	ContentGate       contentscanports.Gate
 	SSOConfigs        tenantports.SSOConfigRepository
 	PasswordStepUp    sessionports.PasswordStepUp
 	AccessRevokers    []tenantports.UserAccessRevoker `group:"userAccessRevokers"`
@@ -74,8 +70,7 @@ type Service struct {
 	auditService   auditports.AuditService
 	auditor        permissionports.SecurityAuditor
 	realtime       realtimeports.RealtimeService
-	storage        kernelports.Client
-	storageCfg     *storageconfig.Config
+	photos         kernelports.Photos
 	validator      *Validator
 	db             kernelports.Transactor
 	roles          RoleAssigner
@@ -84,7 +79,6 @@ type Service struct {
 	permissions    permissionports.PermissionEngine
 	signIns        iamports.AuthEventHistoryRepository
 	authEvents     iamports.AuthEventRecorder
-	contentGate    contentscanports.Gate
 	accessRevokers []tenantports.UserAccessRevoker
 	ssoConfigs     tenantports.SSOConfigRepository
 	passwordStepUp sessionports.PasswordStepUp
@@ -100,8 +94,7 @@ func New(p Params) *Service { //nolint:gocritic // stable API shape
 		auditService:   p.AuditService,
 		auditor:        p.Auditor,
 		realtime:       p.Realtime,
-		storage:        p.Storage,
-		storageCfg:     p.StorageConfig,
+		photos:         p.Photos,
 		validator:      p.Validator,
 		db:             p.DB,
 		roles:          p.Roles,
@@ -110,7 +103,6 @@ func New(p Params) *Service { //nolint:gocritic // stable API shape
 		permissions:    p.PermissionEngine,
 		signIns:        p.AuthEventHistory,
 		authEvents:     p.AuthEvents,
-		contentGate:    p.ContentGate,
 		accessRevokers: p.AccessRevokers,
 		passwordStepUp: p.PasswordStepUp,
 		ssoConfigs:     p.SSOConfigs,
@@ -467,10 +459,6 @@ func (s *Service) UploadProfilePicture(
 	tenantInfo pagination.TenantInfo,
 	fileHeader *multipart.FileHeader,
 ) (*tenant.User, error) {
-	if multiErr := s.validateProfilePictureFile(fileHeader); multiErr != nil {
-		return nil, multiErr
-	}
-
 	user, err := s.repo.GetByID(ctx, tenantports.GetUserByIDRequest{
 		TenantInfo:         tenantInfo,
 		IncludeMemberships: true,
@@ -479,47 +467,24 @@ func (s *Service) UploadProfilePicture(
 		return nil, err
 	}
 
-	content, err := fileutils.ReadMultipart(fileHeader)
-	if err != nil {
-		return nil, errortypes.NewDatabaseError("Failed to process uploaded profile picture").
-			WithInternal(err)
-	}
-	if _, err = contentscanports.Check(ctx, s.contentGate, &contentscanports.ScanRequest{
+	stored, err := s.photos.Store(ctx, &kernelports.StorePhotoRequest{
 		TenantInfo: tenantInfo,
-		Source:     contentscanports.SourceUpload,
-		FileName:   fileHeader.Filename,
-		Content:    content,
-	}); err != nil {
-		return nil, contentscanports.RefusalError("file", err)
-	}
-
-	contentType := fileHeader.Header.Get("Content-Type")
-	key := objectkey.Organization.NewKey(
-		tenantInfo.OrgID,
-		"user/profile-picture",
-		fileHeader.Filename,
-	)
-
-	if _, err = s.storage.Upload(ctx, &kernelports.UploadParams{
-		Key:         key,
-		ContentType: contentType,
-		Size:        int64(len(content)),
-		Body:        bytes.NewReader(content),
-		Metadata: map[string]string{
-			"original_name": fileHeader.Filename,
-			"resource_type": "user-profile-picture",
-			"resource_id":   tenantInfo.UserID.String(),
+		File:       fileHeader,
+		Holder: kernelports.PhotoHolder{
+			OrganizationID: tenantInfo.OrgID,
+			Folder:         kernelports.UserPhotoFolder,
+			ID:             user.ID,
 		},
-	}); err != nil {
-		return nil, errortypes.NewDatabaseError("Failed to upload profile picture").
-			WithInternal(err)
+		ResourceType: profilePictureResourceType,
+	})
+	if err != nil {
+		return nil, err
 	}
 
 	original := *user
-	previousProfilePicture := user.ProfilePicURL
-	previousThumbnail := user.ThumbnailURL
-	user.ProfilePicURL = key
-	user.ThumbnailURL = key
+	previous := profilePictureKeys(user)
+	user.ProfilePicURL = stored.Key
+	user.ThumbnailURL = stored.ThumbnailKey
 
 	cols := tenantdb.Users
 	updatedUser, err := s.updateColumns(ctx, &columnUpdate{
@@ -530,16 +495,12 @@ func (s *Service) UploadProfilePicture(
 		comment:    "Profile picture updated",
 	})
 	if err != nil {
-		_ = s.storage.Delete(ctx, key)
+		s.photos.Discard(ctx, kernelports.UserPhotoKeys(user.ID, stored.Key, stored.ThumbnailKey))
 		return nil, err
 	}
 
-	s.deleteProfilePictureObject(ctx, previousProfilePicture, key)
-	if previousThumbnail != previousProfilePicture {
-		s.deleteProfilePictureObject(ctx, previousThumbnail, key)
-	}
-
-	return updatedUser, nil
+	s.photos.Discard(ctx, previous)
+	return s.withPhoto(ctx, updatedUser)
 }
 
 func (s *Service) DeleteProfilePicture(
@@ -555,8 +516,7 @@ func (s *Service) DeleteProfilePicture(
 	}
 
 	original := *user
-	previousProfilePicture := user.ProfilePicURL
-	previousThumbnail := user.ThumbnailURL
+	previous := profilePictureKeys(user)
 	user.ProfilePicURL = ""
 	user.ThumbnailURL = ""
 
@@ -572,104 +532,12 @@ func (s *Service) DeleteProfilePicture(
 		return nil, err
 	}
 
-	s.deleteProfilePictureObject(ctx, previousProfilePicture, "")
-	if previousThumbnail != previousProfilePicture {
-		s.deleteProfilePictureObject(ctx, previousThumbnail, "")
-	}
-
+	s.photos.Discard(ctx, previous)
 	return updatedUser, nil
 }
 
-func (s *Service) GetProfilePictureURL(
-	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
-	userID pulid.ID,
-	variant string,
-) (string, error) {
-	if err := accountguard.RequirePeople(ctx, s.repo, tenantInfo.BuID, userID); err != nil {
-		return "", err
-	}
-	user, err := s.repo.GetByID(ctx, tenantports.GetUserByIDRequest{
-		TenantInfo:   tenantInfo,
-		LookupUserID: userID,
-	})
-	if err != nil {
-		return "", err
-	}
-
-	profilePictureKey := user.ProfilePicURL
-	if variant == "thumbnail" && user.ThumbnailURL != "" {
-		profilePictureKey = user.ThumbnailURL
-	}
-	if profilePictureKey == "" {
-		profilePictureKey = user.ProfilePicURL
-	}
-	if profilePictureKey == "" {
-		return "", errortypes.NewNotFoundError("Profile picture not found")
-	}
-
-	if fileutils.IsExternalURL(profilePictureKey) {
-		return profilePictureKey, nil
-	}
-
-	url, err := s.storage.GetPresignedURL(ctx, &kernelports.PresignedURLParams{
-		Key:    profilePictureKey,
-		Expiry: s.storageCfg.GetPresignedURLExpiry(),
-	})
-	if err != nil {
-		return "", errortypes.NewDatabaseError("Failed to generate profile picture URL").
-			WithInternal(err)
-	}
-
-	return url, nil
-}
-
-func (s *Service) validateProfilePictureFile(file *multipart.FileHeader) error {
-	me := errortypes.NewMultiError()
-	if file == nil {
-		me.Add("file", errortypes.ErrRequired, "Profile picture file is required")
-		return me.Err()
-	}
-
-	if file.Size == 0 {
-		me.Add("file", errortypes.ErrRequired, "Profile picture file cannot be empty")
-	}
-
-	if file.Size > s.storageCfg.GetMaxFileSize() {
-		me.Add(
-			"file",
-			errortypes.ErrInvalidLength,
-			"Profile picture file exceeds maximum allowed size",
-		)
-	}
-
-	if !fileutils.IsSupportedImageContentType(file.Header.Get("Content-Type")) {
-		me.Add(
-			"file",
-			errortypes.ErrInvalidFormat,
-			"Only image files are allowed for profile pictures",
-		)
-	}
-
-	if !fileutils.HasSupportedImageExtension(file.Filename) {
-		me.Add("file", errortypes.ErrInvalidFormat, "Unsupported profile picture file extension")
-	}
-
-	return me.Err()
-}
-
-func (s *Service) deleteProfilePictureObject(ctx context.Context, objectKey, currentKey string) {
-	if objectKey == "" || objectKey == currentKey || fileutils.IsExternalURL(objectKey) {
-		return
-	}
-
-	if err := s.storage.Delete(ctx, objectKey); err != nil {
-		s.l.Warn(
-			"failed to delete profile picture object",
-			zap.String("objectKey", objectKey),
-			zap.Error(err),
-		)
-	}
+func profilePictureKeys(user *tenant.User) *kernelports.PhotoKeys {
+	return kernelports.UserPhotoKeys(user.ID, user.ProfilePicURL, user.ThumbnailURL)
 }
 
 func (s *Service) UpdateMySettings(

@@ -108,3 +108,109 @@ func dedupeTrace(
 func indexFold(haystack, needle string) int {
 	return strings.Index(strings.ToLower(haystack), needle)
 }
+
+// inlineThinkingStream routes a streamed reply's marked thinking to the
+// thinking sink as it arrives, so a person sees only that the model is
+// thinking and then its answer, never the thought written out as the reply.
+// A tag split across deltas is held back until it is whole or ruled out.
+type inlineThinkingStream struct {
+	reply   modeladapter.StreamSink
+	think   func(string)
+	pending string
+	closing string
+}
+
+func newInlineThinkingStream(
+	reply modeladapter.StreamSink,
+	think func(string),
+) *inlineThinkingStream {
+	return &inlineThinkingStream{reply: reply, think: think}
+}
+
+func (s *inlineThinkingStream) Write(delta string) {
+	buf := s.pending + delta
+	s.pending = ""
+
+	for buf != "" {
+		if s.closing == "" {
+			at, tag := firstOpeningTag(buf)
+			if at >= 0 {
+				s.emitReply(buf[:at])
+				s.closing = tag[1]
+				buf = buf[at+len(tag[0]):]
+				continue
+			}
+			keep := partialTagSuffix(buf, openingTags())
+			s.emitReply(buf[:len(buf)-keep])
+			s.pending = buf[len(buf)-keep:]
+			return
+		}
+
+		if at := indexTagFold(buf, s.closing); at >= 0 {
+			s.think(buf[:at])
+			buf = buf[at+len(s.closing):]
+			s.closing = ""
+			continue
+		}
+		keep := partialTagSuffix(buf, []string{s.closing})
+		s.think(buf[:len(buf)-keep])
+		s.pending = buf[len(buf)-keep:]
+		return
+	}
+}
+
+func (s *inlineThinkingStream) Flush() {
+	held := s.pending
+	s.pending = ""
+	if s.closing != "" {
+		s.think(held)
+		return
+	}
+	s.emitReply(held)
+}
+
+func (s *inlineThinkingStream) emitReply(text string) {
+	if text != "" {
+		s.reply(text)
+	}
+}
+
+func openingTags() []string {
+	tags := make([]string, 0, len(thinkTags))
+	for _, tag := range thinkTags {
+		tags = append(tags, tag[0])
+	}
+	return tags
+}
+
+func firstOpeningTag(text string) (int, [2]string) {
+	first, found := -1, [2]string{}
+	for _, tag := range thinkTags {
+		if at := indexTagFold(text, tag[0]); at >= 0 && (first < 0 || at < first) {
+			first, found = at, tag
+		}
+	}
+	return first, found
+}
+
+func indexTagFold(text, tag string) int {
+	for i := 0; i+len(tag) <= len(text); i++ {
+		if strings.EqualFold(text[i:i+len(tag)], tag) {
+			return i
+		}
+	}
+	return -1
+}
+
+func partialTagSuffix(text string, tags []string) int {
+	longest := 0
+	for _, tag := range tags {
+		for size := min(len(tag)-1, len(text)); size > longest; size-- {
+			if strings.EqualFold(text[len(text)-size:], tag[:size]) {
+				longest = size
+				break
+			}
+		}
+	}
+	return longest
+}

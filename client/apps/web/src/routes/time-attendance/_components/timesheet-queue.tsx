@@ -18,7 +18,7 @@ import {
   type QueueSegment,
 } from "@/lib/time-attendance";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Avatar, AvatarFallback } from "@trenova/shared/components/ui/avatar";
+import { WorkerAvatar } from "@trenova/shared/components/worker-avatar";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import { CompositionBar } from "@trenova/shared/components/ui/composition-bar";
@@ -42,7 +42,7 @@ import {
   timesheetActionsFor,
   timesheetStatusTone,
 } from "@trenova/shared/lib/timesheet";
-import { cn, initials } from "@trenova/shared/lib/utils";
+import { cn } from "@trenova/shared/lib/utils";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import {
   CheckIcon,
@@ -316,11 +316,13 @@ function QueueRow({
         className="ui-focus-ring flex min-w-0 items-center gap-3 rounded-md text-left outline-none"
         onClick={onOpen}
       >
-        <Avatar size="sm">
-          <AvatarFallback className="text-2xs font-medium">
-            {sheet.worker ? initials(sheet.worker.firstName, sheet.worker.lastName) : "?"}
-          </AvatarFallback>
-        </Avatar>
+        <WorkerAvatar
+          size="sm"
+          firstName={sheet.worker?.firstName}
+          lastName={sheet.worker?.lastName}
+          photo={sheet.worker?.photo}
+          fallbackClassName="text-2xs"
+        />
         <span className="flex min-w-0 flex-1 flex-col gap-0.5 leading-tight">
           <span className="flex min-w-0 flex-wrap items-center gap-2">
             <span className="truncate text-sm font-medium">{name}</span>

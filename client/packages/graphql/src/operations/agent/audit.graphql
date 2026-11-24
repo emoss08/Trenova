@@ -51,15 +51,19 @@ fragment AIAuditEventDetailFields on AIAuditEvent {
     id
     name
     username
-    profilePicUrl
-    thumbnailUrl
+    photo {
+      url
+      thumbnailUrl
+    }
   }
   decidedBy {
     id
     name
     username
-    profilePicUrl
-    thumbnailUrl
+    photo {
+      url
+      thumbnailUrl
+    }
   }
   agent {
     id
@@ -122,8 +126,10 @@ fragment AIAuditExportFields on AIAuditExport {
     id
     name
     username
-    profilePicUrl
-    thumbnailUrl
+    photo {
+      url
+      thumbnailUrl
+    }
   }
   format
   filters

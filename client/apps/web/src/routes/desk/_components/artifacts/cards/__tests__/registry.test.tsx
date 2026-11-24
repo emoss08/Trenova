@@ -1,5 +1,5 @@
 import { TestRouter } from "@trenova/shared/testing/test-router";
-import { lazyComponent } from "@/lib/lazy-component";
+import { lazyComponent } from "@trenova/shared/lib/lazy-component";
 import type { AssistantArtifact } from "@/types/assistant";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, render, screen } from "@testing-library/react";

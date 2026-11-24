@@ -1,5 +1,5 @@
 import { DeskWorkspaceSkeleton } from "@/components/desk-chat/desk-skeletons";
-import { preloadable } from "@/lib/lazy-component";
+import { preloadable } from "@trenova/shared/lib/lazy-component";
 import { lazy, Suspense, type ComponentProps } from "react";
 
 /**

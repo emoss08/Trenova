@@ -268,7 +268,12 @@ func (r *QueryResolver) ShipmentCapacity(
 		return nil, err
 	}
 
-	return capacityToModel(capacity), nil
+	out := capacityToModel(capacity)
+	if err = r.attachCapacityPhotos(ctx, resolvercore.TenantInfo(authCtx), out.Units); err != nil {
+		return nil, err
+	}
+
+	return out, nil
 }
 
 func (r *QueryResolver) CapacityUnitMatches(
@@ -340,7 +345,12 @@ func (r *QueryResolver) ShipmentCoverageSuggestions(
 		return nil, err
 	}
 
-	return coverageSuggestionsToModel(suggestions), nil
+	out := coverageSuggestionsToModel(suggestions)
+	if err = r.attachSuggestionPhotos(ctx, resolvercore.TenantInfo(authCtx), out.Drivers); err != nil {
+		return nil, err
+	}
+
+	return out, nil
 }
 
 func (r *QueryResolver) ShipmentSuggestions(

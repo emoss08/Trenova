@@ -179,8 +179,7 @@ function ownerUser({ id, name }) {
     emailAddress: `${username}@mock.trenova.test`,
     timezone: "America/Chicago",
     status: "Active",
-    profilePicUrl: null,
-    thumbnailUrl: null,
+    photo: null,
   };
 }
 
@@ -345,7 +344,7 @@ function buildShipment(raw, index, anchor) {
               primaryWorkerId: driverPerson.id, tractorId: `trc_${index}`, trailerId: null, secondaryWorkerId: null,
               status: "New", archivedAt: null, version: 1, createdAt: 0, updatedAt: 0,
               tractor: { id: `trc_${index}`, code: driver.unit }, trailer: null,
-              primaryWorker: { id: driverPerson.id, ...driverPerson, wholeName: driver.name, profilePicUrl: null },
+              primaryWorker: { id: driverPerson.id, ...driverPerson, wholeName: driver.name, photo: null },
               secondaryWorker: null,
             }
           : null,
