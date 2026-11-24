@@ -1,17 +1,10 @@
-import { deliverToDesktop } from "@/lib/desktop-notifications";
-import { announceUnlessWatched, billingTransferResultKey } from "@/lib/watched-results";
 import { leaveExpiredSession } from "@/lib/session-exit";
+import type { RealtimeEventRouter } from "@/lib/realtime-events";
+import { loadRealtimeEvents } from "@/lib/realtime-events-loader";
+import { retryDelay } from "@/lib/query-retry";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { downloadReportRun } from "@/hooks/use-reports";
-import { aiAuditExportNotice, downloadAIAuditExport } from "@/lib/ai-audit-exports";
-import {
-  billingTransferRunIdOf,
-  reportRunIdOf,
-  shouldToastNotification,
-} from "@/lib/notification-toast";
-import { graphQLErrorMessage } from "@trenova/shared/lib/graphql";
 import { APP_ENV } from "@trenova/shared/lib/constants";
-import { notification } from "@trenova/shared/lib/queries/notification";
+import { reportFailure } from "@trenova/shared/lib/failure-reporter";
 import {
   REALTIME_SESSION_ENDED_EVENT,
   realtimeClient,
@@ -22,33 +15,13 @@ import { useRealtimeStore } from "@/stores/realtime-store";
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useLayoutEffect, useRef } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import { toast } from "@trenova/shared/components/ui/toast";
 import {
   CORE_QUERY_KEYS,
   RESOURCE_EVENT_NAME,
-  invalidationFor,
-  parseInvalidationEvent,
   queryKeyPrefix,
   queryKeyRootId,
   type QueryKeyRoot,
 } from "@trenova/shared/hooks/realtime-patching";
-import {
-  handleShipmentCommentEvent,
-  isShipmentCommentEvent,
-} from "@/lib/shipment-comment-realtime";
-import { isOtherUsersTurnEvent } from "@/lib/assistant-turn-realtime";
-import {
-  boundCaseRecordsIn,
-  CASE_QUERY_ROOTS,
-  mayTouchCase,
-  touchesCase,
-} from "@/lib/case-realtime";
-import { cachedThreadLists } from "@/lib/thread-list";
-import { createInboundMessagePatcher, isInboundMessageEvent } from "@/lib/triage/realtime";
-import { createWatchtowerPatcher, isWatchtowerEvent } from "@/lib/watchtower-realtime";
-import { useTriageStore } from "@/stores/triage-store";
-import { parseReplyReady } from "@/components/assistant/reply-ready";
-import { announceReplyReady } from "@/components/assistant/reply-ready-toast";
 import { releaseTurnReaders } from "@/components/assistant/turn-readers";
 
 const COALESCE_DELAY_MS = 300;
@@ -56,6 +29,9 @@ const COALESCE_DELAY_MS = 300;
 // burst of events on one conversation is one refetch a second, not one per
 // event; the first change still lands after COALESCE_DELAY_MS.
 const MIN_REFETCH_INTERVAL_MS = 1000;
+// Events held while the event reader loads. Past this the oldest go, and the reader's arrival
+// refetches what every screen leans on instead, as after a gap in the stream.
+const MAX_HELD_EVENTS = 200;
 
 export function useRealtimeConnection() {
   const t = useT();
@@ -97,20 +73,6 @@ export function useRealtimeConnection() {
     const pendingKeys = pendingKeysRef.current;
     const lastFlushedAt = new Map<string, number>();
     let disposed = false;
-
-    // A message that arrives while Triage is open joins its folder marked as
-    // new; anywhere else it only moves the counts.
-    const inboundMessages = createInboundMessagePatcher({
-      queryClient,
-      meId: user.id,
-      onArrival: (message) => {
-        const triage = useTriageStore.getState();
-        if (triage.mounted === 0) {
-          return;
-        }
-        triage.markArrival(message.id);
-      },
-    });
 
     // Refetches every pending root not refetched within the last
     // MIN_REFETCH_INTERVAL_MS, and comes back for the rest when their
@@ -157,14 +119,6 @@ export function useRealtimeConnection() {
       flushTimeoutRef.current = window.setTimeout(flush, COALESCE_DELAY_MS);
     };
 
-    // A watchtower item that changed is read once and put where it now
-    // belongs in the queue, and a run that moved redraws the rows it works.
-    // Its refetches share this connection's throttle.
-    const watchtowerItems = createWatchtowerPatcher({
-      queryClient,
-      invalidate: enqueueInvalidation,
-    });
-
     const invalidateCoreKeys = () => {
       enqueueInvalidation(CORE_QUERY_KEYS);
     };
@@ -188,181 +142,65 @@ export function useRealtimeConnection() {
       useRealtimeStore.getState().setConnectionState(state);
     };
 
-    const onResourceEvent = (data: unknown) => {
-      const notifEvt = parseInvalidationEvent(data);
-      if (
-        notifEvt &&
-        notifEvt.resource === "notifications" &&
-        notifEvt.action === "created" &&
-        notifEvt.entity
-      ) {
-        if (
-          notifEvt.organizationId !== user.currentOrganizationId ||
-          notifEvt.businessUnitId !== user.businessUnitId
-        ) {
-          // Ignore notifications from other tenants
-        } else {
-          const notif = notifEvt.entity as {
-            id?: string;
-            targetUserId?: string | null;
-            eventType?: string;
-            title?: string;
-            message?: string;
-            data?: Record<string, unknown> | null;
-          };
+    // What an event changes (toasts, Triage, the watchtower, comments, refetches) is a module
+    // of its own, loaded as the connection opens rather than with the first page. Events that
+    // arrive before it are held and handled in order once it is in. A load that fails (a
+    // network blip, or a release that replaced the file under an open tab) is retried with
+    // backoff until it succeeds or the connection closes; a failed release file also reaches
+    // chunk recovery (lib/chunk-recovery.ts) through Vite's preload error, which reloads into
+    // the new build when that is safe.
+    let events: RealtimeEventRouter | null = null;
+    const held: unknown[] = [];
+    let droppedWhileLoading = false;
+    let failedLoads = 0;
+    let retryTimeout: number | null = null;
+    const identity = {
+      id: user.id,
+      currentOrganizationId: user.currentOrganizationId,
+      businessUnitId: user.businessUnitId,
+    };
 
-          const isForCurrentUser = !notif.targetUserId || notif.targetUserId === user.id;
-          const replyReady = isForCurrentUser ? parseReplyReady(notif) : null;
-
-          if (replyReady) {
-            void announceReplyReady({
-              reply: replyReady,
-              notificationId: notif.id ?? null,
-              queryClient,
-              navigate: (to) => void navigateRef.current({ to }),
-              t,
-            });
-          } else if (isForCurrentUser && notif.title) {
-            const title = notif.title;
-            deliverToDesktop(notif, () => {
-              const link = notif.data?.link;
-              if (typeof link === "string" && link.startsWith("/")) {
-                void navigateRef.current({ to: link });
-              }
-            });
-
-            if (shouldToastNotification(notif)) {
-              const runId = reportRunIdOf(notif);
-              const transferRunId = billingTransferRunIdOf(notif);
-
-              // An AI audit export is only ever downloaded by the person who
-              // asked for it, which is who this notice is addressed to, so the
-              // toast downloads it directly; a failed one opens the exports.
-              const auditExport = aiAuditExportNotice(notif);
-              const noticeLink =
-                typeof notif.data?.link === "string" && notif.data.link.startsWith("/")
-                  ? notif.data.link
-                  : null;
-
-              const announce = () =>
-                toast.info(title, {
-                  description: notif.message,
-                  action: runId
-                    ? {
-                        label: t("Download"),
-                        onClick: () => downloadReportRun({ id: runId }),
-                      }
-                    : transferRunId
-                      ? {
-                          label: t("View report"),
-                          onClick: () =>
-                            navigateRef.current({
-                              to: "/billing/queue",
-                              search: { transferRun: transferRunId },
-                            }),
-                        }
-                      : auditExport?.kind === "download"
-                        ? {
-                            label: t("Download"),
-                            onClick: () =>
-                              void downloadAIAuditExport(auditExport.exportId).catch((error) => {
-                                toast.error(t("The file could not be downloaded"), {
-                                  description: graphQLErrorMessage(error, t("Try again shortly.")),
-                                });
-                              }),
-                          }
-                        : auditExport
-                          ? {
-                              label: t("View exports"),
-                              onClick: () => navigateRef.current({ to: auditExport.link }),
-                            }
-                          : noticeLink
-                            ? {
-                                label: t("Open"),
-                                onClick: () => navigateRef.current({ to: noticeLink }),
-                              }
-                            : undefined,
-                });
-
-              // A transfer the person is watching in its dialog announces itself there; the
-              // notice waits, and interrupts only if the dialog closes before showing it.
-              if (transferRunId) {
-                announceUnlessWatched(billingTransferResultKey(transferRunId), announce);
-              } else {
-                announce();
-              }
-            }
+    const loadEvents = () => {
+      retryTimeout = null;
+      void loadRealtimeEvents().then(
+        ({ createRealtimeEventRouter }) => {
+          if (disposed) return;
+          const router = createRealtimeEventRouter({
+            queryClient,
+            user: identity,
+            t,
+            navigate: navigateRef,
+            invalidate: enqueueInvalidation,
+          });
+          events = router;
+          held.splice(0).forEach(router.handle);
+          if (droppedWhileLoading) {
+            onReset();
           }
-        }
+        },
+        (error: unknown) => {
+          if (disposed) return;
+          // Once per connection: a file that stays missing would otherwise report every retry.
+          if (failedLoads === 0) {
+            reportFailure(error, { source: "background", operation: "realtime events" });
+          }
+          retryTimeout = window.setTimeout(loadEvents, retryDelay(failedLoads));
+          failedLoads += 1;
+        },
+      );
+    };
+    loadEvents();
 
-        void queryClient.invalidateQueries({
-          queryKey: notification._def,
-        });
-      }
-
-      // A notification that cleared itself (the work it pointed at was finished) leaves
-      // every panel it was open in. One event covers everyone it reached, so it is batched
-      // with whatever else arrives in the same moment.
-      if (
-        notifEvt?.resource === "notifications" &&
-        notifEvt.action === "resolved" &&
-        notifEvt.organizationId === user.currentOrganizationId &&
-        notifEvt.businessUnitId === user.businessUnitId
-      ) {
-        enqueueInvalidation([notification._def], true);
+    const onResourceEvent = (data: unknown) => {
+      if (events) {
+        events.handle(data);
         return;
       }
-
-      const evt = parseInvalidationEvent(data);
-      if (!evt) return;
-      if (
-        evt.organizationId !== user.currentOrganizationId ||
-        evt.businessUnitId !== user.businessUnitId
-      ) {
-        return;
+      held.push(data);
+      if (held.length > MAX_HELD_EVENTS) {
+        held.shift();
+        droppedWhileLoading = true;
       }
-      useRealtimeStore.getState().setLastEventAt(Date.now());
-
-      // A change to the record a Desk case is about can settle the case or
-      // tick its checklist, whatever else the event moves.
-      if (
-        mayTouchCase(evt) &&
-        touchesCase(evt, boundCaseRecordsIn(cachedThreadLists(queryClient)))
-      ) {
-        enqueueInvalidation(CASE_QUERY_ROOTS);
-      }
-
-      if (isInboundMessageEvent(evt)) {
-        inboundMessages.handle(evt);
-        return;
-      }
-
-      if (isWatchtowerEvent(evt)) {
-        watchtowerItems.handle(evt);
-        return;
-      }
-      watchtowerItems.handleRun(evt);
-
-      if (isShipmentCommentEvent(evt)) {
-        handleShipmentCommentEvent(queryClient, evt, user.id);
-        return;
-      }
-
-      if (isOtherUsersTurnEvent(evt, user.id)) {
-        return;
-      }
-
-      const { roots: queryKeys, activeOnly, activeRoots } = invalidationFor(evt);
-      if (activeRoots.length > 0) {
-        enqueueInvalidation(activeRoots, true);
-      }
-      if (queryKeys.length === 0) return;
-      if (activeOnly) {
-        enqueueInvalidation(queryKeys, true);
-        return;
-      }
-
-      enqueueInvalidation(queryKeys);
     };
 
     const offState = realtimeClient.onStateChange(onConnectionState);
@@ -379,8 +217,13 @@ export function useRealtimeConnection() {
 
     return () => {
       disposed = true;
-      inboundMessages.dispose();
-      watchtowerItems.dispose();
+      events?.dispose();
+      events = null;
+      held.length = 0;
+      if (retryTimeout !== null) {
+        clearTimeout(retryTimeout);
+        retryTimeout = null;
+      }
       offState();
       offResource();
       offReset();

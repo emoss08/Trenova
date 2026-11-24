@@ -12,6 +12,7 @@ import { routeCatalogs } from "./vite/route-catalogs.ts";
 import { serviceWorker } from "./vite/service-worker.ts";
 
 const dirname = import.meta.dirname;
+const FONT_FILE = /\.(woff2?|eot|ttf|otf)$/;
 
 export default defineConfig(({ command }) => ({
   envDir: path.resolve(dirname, "../.."),
@@ -94,6 +95,11 @@ export default defineConfig(({ command }) => ({
   },
   build: {
     minify: "oxc",
+    // A font is never inlined. Its @font-face rules sit in the startup stylesheet, and the
+    // browser fetches a face only for the characters a page draws (unicode-range); inlined as
+    // base64 below the 4 kB default, six small subsets added 18 kB gzip to that stylesheet,
+    // downloaded on every first visit whether or not a page used them.
+    assetsInlineLimit: (file) => (FONT_FILE.test(file) ? false : undefined),
     sourcemap: process.env.NODE_ENV === "development",
     rolldownOptions: {
       // Leaves the unused re-exports of side-effect-free barrel modules in dependencies
@@ -112,8 +118,8 @@ export default defineConfig(({ command }) => ({
         entryFileNames: "assets/js/[name].[hash].js",
         chunkFileNames: "assets/js/[name].[hash].js",
         assetFileNames: (assetInfo) => {
-          if (assetInfo.names?.[0] && /\.(woff|woff2|eot|ttf|otf)$/.test(assetInfo.names[0])) {
-            return "assets/fonts/[name][extname]";
+          if (assetInfo.names?.[0] && FONT_FILE.test(assetInfo.names[0])) {
+            return "assets/fonts/[name].[hash][extname]";
           }
           return "assets/[name].[hash][extname]";
         },

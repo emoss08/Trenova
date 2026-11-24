@@ -44,6 +44,22 @@ Things that were on every page and are not any more, and how they were kept off:
 - The Desk's 400 kB of CSS: the Desk loading screen, which the router imports for every page,
   imports `components/desk-chat/desk-frame.css`, the few rules it draws with, not the Desk's
   stylesheets.
+- What a realtime event changes (about 27 kB gzip of startup): notification toasts, the
+  Triage, watchtower and shipment comment patchers, Desk case checks and the report download
+  they offer. `useRealtimeConnection` keeps the connection, the throttled refetch queue and the
+  reset handling, and imports `lib/realtime-events.ts` as the connection opens; events that
+  arrive before it are held (the newest 200; dropping any refetches the core queries once it
+  arrives) and handled in order. A failed load is retried with `retryDelay`'s backoff until
+  the connection closes, so a network blip or a release that replaced the file never leaves
+  realtime dead; Vite's preload error also hands a release to chunk recovery. A handler for a new kind of event goes in
+  that module, never back in the hook, which every page mounts.
+- The organization logo in the rail (6.4 kB gzip): `react-lazy-load-image-component` came with
+  it for a 28 pixel image that is always on screen. A plain `<img decoding="async">` is enough
+  for an image above the fold; `LazyImage` is for lists of images further down a page.
+- Fonts inlined into the startup stylesheet (19 kB gzip): below Vite's 4 kB inline limit, six
+  small font subsets were written into the CSS as base64, which every first visit downloaded,
+  though the browser fetches a face only for the characters a page draws (`unicode-range`).
+  `build.assetsInlineLimit` never inlines a font.
 - The password and role gates with `react-hook-form`: `routes/session-gates.tsx`, loaded when
   a session meets one.
 - GraphQL fragment text and unused documents: see below.
@@ -232,7 +248,10 @@ SPA) must be added to `routeRequest`'s exclusions, or the worker answers it with
   order and the app failed to start with "s is not a function".
 - **`$initial` follows re-exports.** One icon in the shell made the whole icon set "initial".
   Modules reached through a barrel are listed in `REACHED_THROUGH_BARRELS` and left to
-  automatic chunking.
+  automatic chunking. That helps only when no startup group captures a module importing the
+  barrel; otherwise the group's dependencies bring the barrel's re-exports back (motion, under
+  "Evaluated and not adopted"). A lazy `import()` of a library's export does not keep it out
+  of startup while the shell imports anything else from the same barrel.
 - A group pulls in its modules' dependencies (`includeDependenciesRecursively`), whatever its
   `test` says about them. Excluding a module from a group does not keep it out if a captured
   module imports it.
@@ -302,6 +321,15 @@ has a test that fails without it, and goes away when a release carries the fix.
   blocks unless it lists the map's hash. Cloud's CSP (set by the `trenova` Worker) already lists
   `sha256-` hashes for inline scripts, so adopting it means adding the map's hash, which changes
   with every build, to that list at deploy; the self-hosted Caddy CSP would need the same.
+- **Loading motion's features lazily** (`<LazyMotion features={() => import(…)}>`; layout
+  projection, drag and the animation engine are most of motion's 46 kB gzip of startup). The
+  split never reaches the build: `main.tsx` and the shell import from the `motion/react`
+  barrel, which re-exports `domMax`, so a startup group following the barrel takes the
+  features along. Listing motion in `REACHED_THROUGH_BARRELS` moved them into
+  the `initial` chunk instead (a captured shell component imports the barrel, and a group pulls
+  in its modules' dependencies), and a `motion-features` group by path was imported by the
+  entry anyway, since the group claims the value and render helpers that `m` itself needs.
+  It works only if motion ships its features behind an entry the barrel does not re-export.
 - Rolldown `experimental.nativeMagicString` (slower here) and `tsc --checkers 8` (slower and
   9 GB, against 4 checkers' 6 GB).
 

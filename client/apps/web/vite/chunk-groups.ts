@@ -48,7 +48,9 @@ function group(name: string, ...packages: string[]): Group {
 // the shell made all of the icon set "initial", so every icon the app uses anywhere
 // arrived with the first page, and the same went for every GraphQL document graphql.ts
 // re-exports. These are left to automatic chunking, which places each module with the
-// routes that use it.
+// routes that use it. Exclusion is not enough when a module a startup group captures imports
+// the barrel: the group pulls in its dependencies, re-exports and all. That is why motion's
+// features cannot be loaded lazily (docs/engineering/web-build.md, "Evaluated and not adopted").
 const REACHED_THROUGH_BARRELS = [
   packageTest("@untitledui/icons"),
   /[\\/]packages[\\/]graphql[\\/]src[\\/]generated[\\/]/,

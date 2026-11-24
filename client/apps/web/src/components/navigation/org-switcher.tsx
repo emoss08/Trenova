@@ -1,5 +1,4 @@
 import { useT } from "@trenova/shared/i18n/use-t";
-import { LazyImage } from "@/components/image";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -57,8 +56,9 @@ function OrgLogo({
 
   if (hasLogo) {
     return (
-      <LazyImage
+      <img
         src={logoURL}
+        decoding="async"
         alt={orgName ? t("{0} logo", orgName) : t("Organization logo")}
         className={cn("size-7 shrink-0 rounded-md", whole ? "object-contain" : "object-cover")}
         onError={() => {
