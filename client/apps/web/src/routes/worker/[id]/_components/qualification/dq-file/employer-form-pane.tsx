@@ -1,17 +1,9 @@
-import { useT } from "@trenova/shared/i18n/use-t";
 import { AutoCompleteDateField } from "@/components/fields/date-field/date-field";
 import { InputField } from "@/components/fields/input-field";
 import { NumberField } from "@/components/fields/number-field";
 import { SelectField } from "@/components/fields/select-field";
 import { SwitchField } from "@/components/fields/switch-field";
 import { TextareaField } from "@/components/fields/textarea-field";
-import { useApiMutation } from "@/hooks/use-api-mutation";
-import {
-  recordEmploymentVerification,
-  updateEmploymentVerification,
-  type EmploymentVerificationRow,
-} from "@/lib/graphql/worker-dqf";
-import { zodResolver } from "@hookform/resolvers/zod";
 import {
   WorkPane,
   WorkPaneBody,
@@ -19,18 +11,38 @@ import {
   WorkPaneDirtyTracker,
   WorkPaneFooter,
 } from "@/components/work-pane";
+import { useApiMutation } from "@/hooks/use-api-mutation";
+import {
+  recordEmploymentVerification,
+  updateEmploymentVerification,
+  type EmploymentVerificationRow,
+} from "@/lib/graphql/worker-dqf";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@trenova/shared/components/ui/button";
-import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form";
-import { verificationMethodLabel, verificationStatusLabel } from "@trenova/shared/lib/dqf";
+import {
+  Form,
+  FormControl,
+  FormGroup,
+} from "@trenova/shared/components/ui/form";
+import { useT } from "@trenova/shared/i18n/use-t";
+import {
+  verificationMethodLabel,
+  verificationStatusLabel,
+} from "@trenova/shared/lib/dqf";
 import {
   employmentVerificationFormSchema,
   employmentVerificationMethodSchema,
   employmentVerificationStatusSchema,
   type EmploymentVerificationFormValues,
 } from "@trenova/shared/types/worker-dqf";
-import { FormProvider, useForm, useWatch, type Resolver } from "react-hook-form";
-import { useWorkerInvalidation } from "../../use-worker-invalidation";
+import {
+  FormProvider,
+  useForm,
+  useWatch,
+  type Resolver,
+} from "react-hook-form";
 import { PaneFormSection } from "../../pane-section";
+import { useWorkerInvalidation } from "../../use-worker-invalidation";
 
 export type EmployerFormPaneProps = {
   open: boolean;
@@ -80,7 +92,8 @@ function defaultsFor(
     method: verification.method,
     requestedAt: verification.requestedAt ?? null,
     responseReceivedAt: verification.responseReceivedAt ?? null,
-    drugAlcoholResponseReceivedAt: verification.drugAlcoholResponseReceivedAt ?? null,
+    drugAlcoholResponseReceivedAt:
+      verification.drugAlcoholResponseReceivedAt ?? null,
     hadAccidents: verification.hadAccidents,
     accidentCount: verification.accidentCount,
     hadDrugAlcoholViolations: verification.hadDrugAlcoholViolations,
@@ -100,14 +113,18 @@ export function EmployerFormPane({
 
   const invalidate = useWorkerInvalidation(workerId, "dq-file");
   const isEdit = Boolean(verification);
-  const statusOptions = employmentVerificationStatusSchema.options.map((value) => ({
-    value,
-    label: verificationStatusLabel(value),
-  }));
-  const methodOptions = employmentVerificationMethodSchema.options.map((value) => ({
-    value,
-    label: verificationMethodLabel(value),
-  }));
+  const statusOptions = employmentVerificationStatusSchema.options.map(
+    (value) => ({
+      value,
+      label: verificationStatusLabel(value),
+    }),
+  );
+  const methodOptions = employmentVerificationMethodSchema.options.map(
+    (value) => ({
+      value,
+      label: verificationMethodLabel(value),
+    }),
+  );
   const form = useForm<EmploymentVerificationFormValues>({
     resolver: zodResolver(
       employmentVerificationFormSchema,
@@ -151,7 +168,8 @@ export function EmployerFormPane({
             ...shared,
             verificationId: verification.id,
             responseReceivedAt: values.responseReceivedAt ?? undefined,
-            drugAlcoholResponseReceivedAt: values.drugAlcoholResponseReceivedAt ?? undefined,
+            drugAlcoholResponseReceivedAt:
+              values.drugAlcoholResponseReceivedAt ?? undefined,
             hadAccidents: values.hadAccidents,
             accidentCount: values.accidentCount,
             hadDrugAlcoholViolations: values.hadDrugAlcoholViolations,
@@ -179,6 +197,7 @@ export function EmployerFormPane({
       <WorkPaneDirtyTracker form={form} />
       <FormProvider {...form}>
         <Form
+          showFormRefusal={false}
           onSubmit={(submitEvent) => {
             submitEvent.preventDefault();
             submitEvent.stopPropagation();
@@ -205,7 +224,9 @@ export function EmployerFormPane({
                   label={t("USDOT number")}
                   placeholder={t("e.g. 1234567")}
                   inputClassProps="font-mono"
-                  description={t("Identifies the carrier when the request is sent.")}
+                  description={t(
+                    "Identifies the carrier when the request is sent.",
+                  )}
                 />
               </FormControl>
               <FormControl>
@@ -242,6 +263,7 @@ export function EmployerFormPane({
                   description={t(
                     "Turn off for a job with no safety-sensitive duties; there is then no testing record to ask about.",
                   )}
+                  outlined
                 />
               </FormControl>
             </PaneFormSection>
@@ -297,13 +319,16 @@ export function EmployerFormPane({
               <FormControl cols="full">
                 <AutoCompleteDateField<EmploymentVerificationFormValues>
                   control={control}
+                  required
                   name="requestedAt"
                   label={t("Requested on")}
                   placeholder={t("Date the request went out")}
-                  description={t("Needed once the status moves past not yet requested.")}
+                  description={t(
+                    "Needed once the status moves past not yet requested.",
+                  )}
                 />
               </FormControl>
-              {isEdit && answered ? (
+              {answered ? (
                 <>
                   <FormControl>
                     <AutoCompleteDateField<EmploymentVerificationFormValues>
@@ -311,7 +336,7 @@ export function EmployerFormPane({
                       name="responseReceivedAt"
                       label={t("Response received")}
                       placeholder={t("Date the reply arrived")}
-                      required
+                      rules={{ required: true }}
                     />
                   </FormControl>
                   {wasDotRegulated ? (
@@ -321,7 +346,9 @@ export function EmployerFormPane({
                         name="drugAlcoholResponseReceivedAt"
                         label={t("Drug and alcohol history received")}
                         placeholder={t("Date the testing history arrived")}
-                        description={t("49 CFR 382.413 asks for this specifically.")}
+                        description={t(
+                          "49 CFR 382.413 asks for this specifically.",
+                        )}
                       />
                     </FormControl>
                   ) : null}
@@ -363,7 +390,9 @@ export function EmployerFormPane({
                     control={control}
                     name="findings"
                     label={t("What the employer reported")}
-                    placeholder={t("e.g. Company driver, no accidents, eligible for rehire")}
+                    placeholder={t(
+                      "e.g. Company driver, no accidents, eligible for rehire",
+                    )}
                     maxLength={4000}
                   />
                 </FormControl>

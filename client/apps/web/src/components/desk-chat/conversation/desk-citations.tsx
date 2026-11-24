@@ -2,7 +2,7 @@ import { describeActivity, groupActivity, type ToolStep } from "@/components/ass
 import { describeToolCall } from "@/components/assistant/tool-presentation";
 import { ReasoningDisclosure } from "@/components/assistant/reasoning-disclosure";
 import { ArtifactKindIcon } from "@/components/assistant/voice/artifact-chrome";
-import { MarkdownLink } from "@/components/elements/ai-markdown";
+import { MarkdownLink, type MarkdownOverrides } from "@/components/elements/ai-markdown";
 import type { AssistantArtifact } from "@/types/assistant";
 import { Button } from "@trenova/shared/components/ui/button";
 import { useT } from "@trenova/shared/i18n/use-t";
@@ -17,7 +17,6 @@ import {
   type ReactNode,
 } from "react";
 import { createPortal } from "react-dom";
-import type { Components } from "react-markdown";
 import { DeskIcon } from "../desk-icons";
 import { CITATION_HREF, groupCitations, type Citation, type CitationGroup } from "./citations";
 
@@ -289,7 +288,7 @@ export function useCitationOverrides(
   citations: readonly Citation[],
   artifacts: readonly Pick<AssistantArtifact, "id" | "kind" | "title" | "sourceToolCallId">[],
   onOpenArtifact: (id: string) => void,
-): Components | undefined {
+): MarkdownOverrides | undefined {
   return useMemo(() => {
     if (citations.length === 0) {
       return undefined;

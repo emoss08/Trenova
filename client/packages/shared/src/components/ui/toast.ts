@@ -61,6 +61,7 @@ type Shown = {
 
 const BASE_DURATION = 5000;
 const ACTION_DURATION = 8000;
+const ERROR_DURATION = 10000;
 const MAX_DURATION = 16000;
 const READING_LEAD_MS = 1500;
 const READING_MS_PER_WORD = 260;
@@ -100,9 +101,9 @@ function clampProgress(fraction: number): number {
 }
 
 /**
- * How long a toast stays, in ding's terms (0 keeps it). Errors and loading toasts stay until
- * they change or the person closes them; anything else stays long enough to read at an
- * unhurried pace, and at least eight seconds when it offers something to press.
+ * How long a toast stays, in ding's terms (0 keeps it). A loading toast stays until its work
+ * settles; anything else stays long enough to read at an unhurried pace, at least eight seconds
+ * when it offers something to press and ten when something failed.
  */
 export function toastDuration(
   type: DingType,
@@ -112,12 +113,15 @@ export function toastDuration(
   if (requested !== undefined) {
     return Number.isFinite(requested) ? Math.max(1, Math.round(requested)) : 0;
   }
-  if (type === "error" || type === "loading") {
+  if (type === "loading") {
     return 0;
   }
   const reading =
     READING_LEAD_MS + (words(content.title) + words(content.description)) * READING_MS_PER_WORD;
-  const floor = content.hasAction ? ACTION_DURATION : BASE_DURATION;
+  const floor = Math.max(
+    type === "error" ? ERROR_DURATION : BASE_DURATION,
+    content.hasAction ? ACTION_DURATION : BASE_DURATION,
+  );
   return Math.min(MAX_DURATION, Math.max(floor, reading));
 }
 

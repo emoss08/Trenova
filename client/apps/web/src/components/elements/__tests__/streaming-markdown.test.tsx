@@ -4,12 +4,16 @@ import { StreamingAiMarkdown } from "../ai-markdown";
 
 const parsed = vi.hoisted(() => [] as string[]);
 
-vi.mock("react-markdown", () => ({
-  default: ({ children }: { children: string }) => {
-    parsed.push(children);
-    return <p>{children}</p>;
-  },
-}));
+vi.mock("@tanstack/markdown/parser", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@tanstack/markdown/parser")>();
+  return {
+    ...actual,
+    parseMarkdown: (...args: Parameters<typeof actual.parseMarkdown>) => {
+      parsed.push(args[0]);
+      return actual.parseMarkdown(...args);
+    },
+  };
+});
 
 afterEach(() => {
   cleanup();

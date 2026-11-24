@@ -36,6 +36,7 @@ const formGroupVariants = cva("grid gap-2", {
 
 interface FormProps extends React.FormHTMLAttributes<HTMLFormElement> {
   onSubmit?: (e: React.FormEvent<HTMLFormElement>) => void;
+  showFormRefusal?: boolean;
 }
 
 interface FormGroupProps
@@ -97,7 +98,10 @@ function FormRefusalAlert({ control, className }: { control: Control; className?
 
   React.useEffect(() => {
     if (shown !== "") {
-      alertRef.current?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+      alertRef.current?.scrollIntoView({
+        block: "nearest",
+        behavior: "smooth",
+      });
     }
   }, [shown]);
 
@@ -124,42 +128,44 @@ function FormRefusalAlert({ control, className }: { control: Control; className?
   );
 }
 
-export const Form = React.memo(({ className, onSubmit, children, ...props }: FormProps) => {
-  const form = useFormContext();
-  // Every form keeps a registry of the fields it draws, so a change review or a save
-  // dock can name them as the form does. A form panel provides one above its form,
-  // to share with its footer; a form without one gets its own.
-  const enclosing = useFormFieldRegistry();
-  const [own] = React.useState(() => (enclosing ? null : createFieldRegistry()));
-  const registry = enclosing ?? own;
+export const Form = React.memo(
+  ({ className, onSubmit, children, showFormRefusal = true, ...props }: FormProps) => {
+    const form = useFormContext();
+    // Every form keeps a registry of the fields it draws, so a change review or a save
+    // dock can name them as the form does. A form panel provides one above its form,
+    // to share with its footer; a form without one gets its own.
+    const enclosing = useFormFieldRegistry();
+    const [own] = React.useState(() => (enclosing ? null : createFieldRegistry()));
+    const registry = enclosing ?? own;
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    // react-hook-form clears root inside handleSubmit, but only for submits that go
-    // through it. Clearing here covers the ones that do not — a dialog wired straight to
-    // mutate(), for instance — so a stale server complaint never outlives the attempt
-    // that produced it.
-    form?.clearErrors("root");
-    onSubmit?.(e);
-  };
+    const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+      e.preventDefault();
+      // react-hook-form clears root inside handleSubmit, but only for submits that go
+      // through it. Clearing here covers the ones that do not — a dialog wired straight to
+      // mutate(), for instance — so a stale server complaint never outlives the attempt
+      // that produced it.
+      form?.clearErrors("root");
+      onSubmit?.(e);
+    };
 
-  return (
-    // Validation is react-hook-form's and zod's job, and native constraint validation
-    // only gets in its way: a control that fails a browser constraint blocks submission
-    // before React sees the event. The controls that trip it are usually invisible —
-    // Base UI's NumberField, for one, mirrors its value into an aria-hidden input
-    // carrying min/max/step — so the browser refuses a submit it cannot even focus a
-    // control to explain ("An invalid form control with name='' is not focusable").
-    <form onSubmit={handleSubmit} className={className} noValidate {...props}>
-      <FormRefusal className="mb-4" />
-      {registry && registry !== enclosing ? (
-        <FormFieldsProvider registry={registry}>{children}</FormFieldsProvider>
-      ) : (
-        children
-      )}
-    </form>
-  );
-});
+    return (
+      // Validation is react-hook-form's and zod's job, and native constraint validation
+      // only gets in its way: a control that fails a browser constraint blocks submission
+      // before React sees the event. The controls that trip it are usually invisible —
+      // Base UI's NumberField, for one, mirrors its value into an aria-hidden input
+      // carrying min/max/step — so the browser refuses a submit it cannot even focus a
+      // control to explain ("An invalid form control with name='' is not focusable").
+      <form onSubmit={handleSubmit} className={className} noValidate {...props}>
+        {showFormRefusal && <FormRefusal className="mb-4" />}
+        {registry && registry !== enclosing ? (
+          <FormFieldsProvider registry={registry}>{children}</FormFieldsProvider>
+        ) : (
+          children
+        )}
+      </form>
+    );
+  },
+);
 
 Form.displayName = "Form";
 

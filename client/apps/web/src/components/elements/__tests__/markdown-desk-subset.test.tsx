@@ -34,6 +34,21 @@ describe("the Desk's markdown subset", () => {
     expect(container.textContent).toContain("indented code");
   });
 
+  it("keeps a footnote definition nothing refers to as its written text", () => {
+    const { container } = render(<AiMarkdown deskSubset content={"[^note]: Only a note."} />);
+    expect(container.textContent).toBe("[^note]: Only a note.");
+  });
+
+  it("keeps footnotes for the surfaces that are not the Desk", () => {
+    const { container } = render(<AiMarkdown content={"Note[^1].\n\n[^1]: A footnote."} />);
+    expect(container.querySelector("sup")?.textContent).toBe("1");
+  });
+
+  it("links a bare address on the surfaces that are not the Desk", () => {
+    const { container } = render(<AiMarkdown content={"See https://example.com/rates."} />);
+    expect(container.querySelector("a")?.getAttribute("href")).toBe("https://example.com/rates");
+  });
+
   it("labels an unlabelled fence as text", () => {
     const { container } = render(<AiMarkdown deskSubset content={"```\nplain\n```"} />);
     expect(container.querySelector(".md-code-h span")?.textContent).toBe("text");

@@ -59,7 +59,7 @@ describe("Toaster", () => {
     render(<Toaster />);
 
     act(() => {
-      toast.error("Couldn't send the invoice");
+      toast.error("Couldn't send the invoice", { duration: Infinity });
     });
 
     await waitFor(() =>

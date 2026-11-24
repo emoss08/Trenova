@@ -197,3 +197,42 @@ describe("code in a reply", () => {
     expect(pre.querySelector("[class*='text-syntax-']")).toBeNull();
   });
 });
+
+describe("lists in a reply", () => {
+  it("draws a checklist's boxes, done and not, and marks the items as tasks", () => {
+    renderReply("- [x] Called the shipper\n- [ ] Rebook the load");
+
+    const items = [...document.querySelectorAll("li")];
+    expect(items.map((item) => item.classList.contains("md-task"))).toEqual([true, true]);
+    expect(screen.getByRole("img", { name: "Done" })).toHaveClass("md-check", "md-checked");
+    expect(screen.getByRole("img", { name: "Not done" })).not.toHaveClass("md-checked");
+    expect(document.querySelector("input")).toBeNull();
+  });
+
+  it("marks a task in a loose list, where its box sits in a paragraph", () => {
+    renderReply("- [x] Called the shipper\n\n- [ ] Rebook the load");
+
+    expect(document.querySelectorAll("li.md-task")).toHaveLength(2);
+  });
+
+  it("leaves a plain item a plain item", () => {
+    renderReply("- Dallas\n- Austin");
+
+    expect(document.querySelector("li.md-task")).toBeNull();
+  });
+
+  it("numbers an ordered list from where it was written to start", () => {
+    renderReply("3. Call the shipper\n4. Rebook");
+
+    expect(document.querySelector("ol")).toHaveAttribute("start", "3");
+  });
+});
+
+describe("raw markup in a reply", () => {
+  it("shows markup as the text it is, never as elements", () => {
+    renderReply('Hello <img src="x" onerror="alert(1)"> there\n\n<script>alert(1)</script>');
+
+    expect(document.querySelector("img, script")).toBeNull();
+    expect(document.body.textContent).toContain('<img src="x" onerror="alert(1)">');
+  });
+});

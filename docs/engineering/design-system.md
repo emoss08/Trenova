@@ -934,9 +934,11 @@ Options are `id`, `description`, `action`, `duration` and `progress`.
   counts up (×2) and restarts its clock instead of replacing itself.
 - **The clock reads the content.** Unset, a toast stays long enough to read its words, and at
   least eight seconds when it offers something to press, with a countdown along the bottom.
-  Errors and loading toasts stay until they change or the person closes them. The clock stops
-  while the person hovers the toast or has focus in it. Pass `duration` only for a reason the
-  content cannot show; `Infinity` keeps the toast up.
+  An error stays at least ten seconds, then closes like any other toast: a failure that must
+  stay on screen belongs on the form, the row or an error state, not in a toast. Only a loading
+  toast stays until its work settles. The clock stops while the person hovers the toast or has
+  focus in it. Pass `duration` only for a reason the content cannot show; `Infinity` keeps the
+  toast up, with a close button.
 - **No references in a toast.** A toast says what happened and what to do next; it carries
   no trace id or anything to copy for support. A failure support needs to trace belongs on a
   surface that stays, the error screen's details (`components/errors/error-details.tsx`).

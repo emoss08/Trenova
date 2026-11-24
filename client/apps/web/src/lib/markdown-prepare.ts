@@ -9,6 +9,9 @@
  *   escaped, so it reads as written.
  * - While a reply is still arriving, a `$$` block that has not closed yet is
  *   left as raw text rather than set as math that is about to change.
+ * - For the Desk, a footnote definition (`[^1]: …` at the start of a line) is
+ *   escaped, so it reads as the words that were written; see
+ *   markdown-desk-subset.
  */
 
 const FENCE = /^ {0,3}(`{3,}|~{3,})/u;
@@ -78,10 +81,19 @@ function pairDelimiters(text: string, open: string, close: string, as: string): 
 /** A dollar sign before a digit, not escaped and not part of `$$`: money. */
 const MONEY = /(?<![\\$])\$(?=\d)/gu;
 
-function prepareProse(text: string, streaming: boolean, last: boolean): string {
+/** A footnote definition, which the parser would lift out of the text. */
+const FOOTNOTE_DEFINITION = /^( {0,3})\[\^/gmu;
+
+type PrepareOptions = { streaming?: boolean; deskSubset?: boolean };
+
+function prepareProse(text: string, options: PrepareOptions, last: boolean): string {
+  const { streaming = false, deskSubset = false } = options;
   let next = pairDelimiters(text, "\\[", "\\]", "$$");
   next = pairDelimiters(next, "\\(", "\\)", "$");
   next = next.replace(MONEY, "\\$");
+  if (deskSubset) {
+    next = next.replace(FOOTNOTE_DEFINITION, "$1\\[^");
+  }
   if (streaming && last) {
     const blocks = [...next.matchAll(/(?<!\\)\$\$/gu)];
     if (blocks.length % 2 === 1) {
@@ -100,30 +112,14 @@ function prepareProse(text: string, streaming: boolean, last: boolean): string {
 /** The code fence the renderer draws an unfinished math block in; see ai-markdown. */
 const RAW_MATH_FENCE = "dk-math-raw";
 
-export function prepareMarkdown(text: string, { streaming = false } = {}): string {
-  if (!/[$\\]/u.test(text)) {
+export function prepareMarkdown(text: string, options: PrepareOptions = {}): string {
+  if (!/[$\\]/u.test(text) && !(options.deskSubset && text.includes("[^"))) {
     return text;
   }
 
   return segments(text)
     .map((part, index, parts) =>
-      part.code ? part.text : prepareProse(part.text, streaming, index === parts.length - 1),
+      part.code ? part.text : prepareProse(part.text, options, index === parts.length - 1),
     )
     .join("");
-}
-
-/** A dollar sign the money rule above left unescaped: the start or end of math. */
-const MATH_DELIMITER = /(?<!\\)\$/u;
-
-/**
- * Whether markdown that has been through prepareMarkdown has math in it
- * outside code, so the typesetter is fetched only for a reply that needs it.
- * A sign that escaped the money rule but is not math only costs a fetch.
- */
-export function markdownHasMath(prepared: string): boolean {
-  if (!prepared.includes("$")) {
-    return false;
-  }
-
-  return segments(prepared).some((part) => !part.code && MATH_DELIMITER.test(part.text));
 }

@@ -137,9 +137,19 @@ describe("toast", () => {
 describe("toastDuration", () => {
   const plain = { title: "Saved", description: "", hasAction: false };
 
-  it("keeps errors and loading toasts until they change or are closed", () => {
-    expect(toastDuration("error", undefined, plain)).toBe(0);
+  it("keeps a loading toast until its work settles", () => {
     expect(toastDuration("loading", undefined, plain)).toBe(0);
+  });
+
+  it("closes an error on its own after ten seconds at least, longer when it has more to read", () => {
+    expect(toastDuration("error", undefined, plain)).toBe(10000);
+    expect(toastDuration("error", undefined, { ...plain, hasAction: true })).toBe(10000);
+    expect(toastDuration("error", undefined, { ...plain, description: "word ".repeat(40) })).toBe(
+      1500 + 41 * 260,
+    );
+    expect(toastDuration("error", undefined, { ...plain, description: "word ".repeat(100) })).toBe(
+      16000,
+    );
   });
 
   it("reads the words, with eight seconds at least for a button and sixteen at most", () => {

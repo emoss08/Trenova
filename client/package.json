@@ -54,8 +54,7 @@
     "@codemirror/state": "^6.7.6",
     "@codemirror/view": "6.43.6",
     "@tanstack/query-core": "5.102.8",
-    "@tanstack/table-core": "9.3.1",
-    "katex": "^0.18.2"
+    "@tanstack/table-core": "9.3.1"
   },
   "patchedDependencies": {
     "@uiw/react-codemirror@4.25.12": "patches/@uiw__react-codemirror@4.25.12.patch"
