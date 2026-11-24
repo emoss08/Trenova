@@ -236,7 +236,10 @@ func billingQueueRowFrom(
 		AgeDays:         max(now-item.CreatedAt, 0) / secondsPerDayInQueue,
 		QueuedAt:        querytool.RecordedDate(item.CreatedAt),
 		InvoiceID:       querytool.PulidString(item.InvoiceID),
-		ReviewStartedAt: querytool.ExpectedDate(typeutils.ValueOrZero(item.ReviewStartedAt), "review not started"),
+		ReviewStartedAt: querytool.ExpectedDate(
+			typeutils.ValueOrZero(item.ReviewStartedAt),
+			"review not started",
+		),
 	}
 	if item.Shipment != nil {
 		row.ProNumber = item.Shipment.ProNumber
