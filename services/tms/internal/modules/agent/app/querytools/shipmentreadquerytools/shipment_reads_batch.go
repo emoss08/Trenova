@@ -61,16 +61,17 @@ func loadShipments(
 	shipments shipmentports.ShipmentRepository,
 	tenant pagination.TenantInfo,
 	ids []pulid.ID,
-	options shipmentports.ShipmentOptions,
+	options *shipmentports.ShipmentOptions,
 ) ([]*shipment.Shipment, []string, error) {
-	options.IDs = ids
+	scoped := *options
+	scoped.IDs = ids
 	result, err := shipments.List(ctx, &shipmentports.ListShipmentsRequest{
 		Filter: &pagination.QueryOptions{
 			TenantInfo: tenant,
 			Pagination: pagination.Info{Limit: len(ids)},
 		},
 		Cursor:          pagination.CursorInfo{Limit: len(ids)},
-		ShipmentOptions: options,
+		ShipmentOptions: scoped,
 	})
 	if err != nil {
 		return nil, nil, err
@@ -136,7 +137,7 @@ func (t *getShipmentTool) several(
 	detail shipmentquerytools.Detail,
 ) (any, error) {
 	entities, missing, err := loadShipments(ctx, t.repo, querytool.TenantOf(params), ids,
-		shipmentports.ShipmentOptions{ExpandShipmentDetails: true, IncludeCustomer: true})
+		&shipmentports.ShipmentOptions{ExpandShipmentDetails: true, IncludeCustomer: true})
 	if err != nil {
 		return nil, err
 	}
