@@ -13,7 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/detentionsync"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/chargeallocation"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detentioncharge"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentrating"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentstate"
@@ -731,54 +731,8 @@ func ensureGeneratedFuelSurchargeCharge(
 	entity.AdditionalCharges = filtered
 }
 
-func isDetentionChargeFor(charge *shipment.AdditionalCharge, accessorialID pulid.ID) bool {
-	if charge == nil || !charge.IsSystemGenerated || charge.AccessorialChargeID != accessorialID {
-		return false
-	}
-
-	owner := charge.Owner()
-
-	return owner == shipmentvocab.SystemOwnerDetention || owner == shipmentvocab.SystemOwnerNone
-}
-
-func preferDetentionCharge(candidate, current *shipment.AdditionalCharge) bool {
-	switch {
-	case candidate.ID.IsNil() != current.ID.IsNil():
-		return current.ID.IsNil()
-	case candidate.CreatedAt != current.CreatedAt:
-		return candidate.CreatedAt < current.CreatedAt
-	default:
-		return candidate.ID.String() < current.ID.String()
-	}
-}
-
-func takeDetentionCharge(
-	charges []*shipment.AdditionalCharge,
-	accessorialID pulid.ID,
-) (*shipment.AdditionalCharge, []*shipment.AdditionalCharge) {
-	var found *shipment.AdditionalCharge
-	rest := make([]*shipment.AdditionalCharge, 0, len(charges))
-
-	for _, charge := range charges {
-		if charge == nil {
-			continue
-		}
-
-		if !isDetentionChargeFor(charge, accessorialID) {
-			rest = append(rest, charge)
-			continue
-		}
-
-		if found == nil || preferDetentionCharge(charge, found) {
-			found = charge
-		}
-	}
-
-	return found, rest
-}
-
 func removeGeneratedDetentionCharges(entity *shipment.Shipment, detentionChargeID pulid.ID) {
-	_, rest := takeDetentionCharge(entity.AdditionalCharges, detentionChargeID)
+	_, rest := detentioncharge.Take(entity.AdditionalCharges, detentionChargeID)
 	entity.AdditionalCharges = rest
 }
 
@@ -787,7 +741,7 @@ func ensureGeneratedDetentionCharge(
 	accessorial *accessorialcharge.AccessorialCharge,
 	unit int16,
 ) {
-	generated, rest := takeDetentionCharge(entity.AdditionalCharges, accessorial.ID)
+	generated, rest := detentioncharge.Take(entity.AdditionalCharges, accessorial.ID)
 	if generated == nil {
 		generated = &shipment.AdditionalCharge{}
 	}
@@ -827,103 +781,11 @@ func (c *Calculator) syncDetentionFromPolicyEngine(
 	}
 
 	if result == nil {
-		reconcileDetentionOccurrenceCharges(entity, nil)
+		detentioncharge.Reconcile(entity, nil)
 		return nil
 	}
 
-	reconcileDetentionOccurrenceCharges(entity, pass.billableOccurrences(result.Occurrences))
+	detentioncharge.Reconcile(entity, pass.billableOccurrences(result.Occurrences))
 
 	return nil
-}
-
-// reconcileDetentionOccurrenceCharges rewrites the shipment's detention charges
-// so exactly one charge survives per accessorial the engine bills, carrying the
-// sum of every billable occurrence behind it. The existing row is reused rather
-// than replaced: a charge that keeps its identity keeps its audit trail, and
-// the occurrences it bills are pointed at it when the shipment is saved.
-func reconcileDetentionOccurrenceCharges(
-	entity *shipment.Shipment,
-	occurrences []*detention.DetentionOccurrence,
-) {
-	groups := groupChargeableOccurrences(occurrences)
-
-	rest := entity.AdditionalCharges
-	generated := make([]*shipment.AdditionalCharge, 0, len(groups))
-
-	for i := range groups {
-		var existing *shipment.AdditionalCharge
-		existing, rest = takeDetentionCharge(rest, groups[i].accessorialID)
-		generated = append(generated, detentionGroupCharge(entity, &groups[i], existing))
-	}
-
-	kept := make([]*shipment.AdditionalCharge, 0, len(rest)+len(generated))
-	for _, charge := range rest {
-		if charge == nil || charge.Owner() == shipmentvocab.SystemOwnerDetention {
-			continue
-		}
-		kept = append(kept, charge)
-	}
-
-	entity.AdditionalCharges = append(kept, generated...)
-}
-
-type detentionChargeGroup struct {
-	accessorialID pulid.ID
-	amount        decimal.Decimal
-	occurrenceIDs []pulid.ID
-}
-
-func groupChargeableOccurrences(
-	occurrences []*detention.DetentionOccurrence,
-) []detentionChargeGroup {
-	groups := make([]detentionChargeGroup, 0, 1)
-	index := make(map[pulid.ID]int, 1)
-
-	for _, occurrence := range occurrences {
-		if !occurrence.Chargeable() {
-			continue
-		}
-
-		accessorialID := occurrence.PolicySnapshot.AccessorialChargeID
-
-		i, ok := index[accessorialID]
-		if !ok {
-			i = len(groups)
-			index[accessorialID] = i
-			groups = append(groups, detentionChargeGroup{
-				accessorialID: accessorialID,
-				amount:        decimal.Zero,
-				occurrenceIDs: make([]pulid.ID, 0, 2),
-			})
-		}
-
-		groups[i].amount = groups[i].amount.Add(occurrence.BillableAmount)
-		groups[i].occurrenceIDs = append(groups[i].occurrenceIDs, occurrence.ID)
-	}
-
-	return groups
-}
-
-func detentionGroupCharge(
-	entity *shipment.Shipment,
-	group *detentionChargeGroup,
-	existing *shipment.AdditionalCharge,
-) *shipment.AdditionalCharge {
-	charge := existing
-	if charge == nil {
-		charge = &shipment.AdditionalCharge{}
-	}
-
-	charge.OrganizationID = entity.OrganizationID
-	charge.BusinessUnitID = entity.BusinessUnitID
-	charge.ShipmentID = entity.ID
-	charge.IsSystemGenerated = true
-	charge.IsDetention = true
-	charge.AccessorialChargeID = group.accessorialID
-	charge.Method = accessorialcharge.MethodFlat
-	charge.Amount = group.amount
-	charge.Unit = 1
-	charge.DetentionOccurrenceIDs = group.occurrenceIDs
-
-	return charge
 }

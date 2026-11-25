@@ -400,6 +400,8 @@ func operationsServices(conn *postgres.Connection, services *agentread.ResolverP
 		PlanFields: plantest.Keeper(nil),
 	})
 	services.DetentionReview = detentionreview.New(detentionreview.Params{
+		Logger: logger,
+		DB:     conn,
 		OccurrenceRepo: detentionrepository.NewOccurrenceRepository(
 			detentionrepository.OccurrenceParams{DB: conn, Logger: logger}),
 		Effects: detentioneffects.New(detentioneffects.Params{Logger: logger}),

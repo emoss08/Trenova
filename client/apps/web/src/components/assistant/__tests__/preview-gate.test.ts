@@ -182,6 +182,21 @@ describe("preview warnings", () => {
     ).toBe("warning");
   });
 
+  it("counts the shipments a transfer carries into billing with detention still held", () => {
+    const held = (args: string[]) =>
+      previewWarningText({ code: "detention_held", args, message: "", reasons: [], remedies: [] }, t);
+
+    expect(held(["1"])).toBe(
+      "1 shipment carries detention still waiting on approval. Billing cannot approve them until each charge is approved or waived.",
+    );
+    expect(held(["3"])).toBe(
+      "3 shipments carry detention still waiting on approval. Billing cannot approve them until each charge is approved or waived.",
+    );
+    expect(held([])).toBe(
+      "Detention is still waiting on approval. Billing cannot approve these shipments until each charge is approved or waived.",
+    );
+  });
+
   it("shows the server's words for a code this client does not know", () => {
     const warning = {
       code: "new_kind",

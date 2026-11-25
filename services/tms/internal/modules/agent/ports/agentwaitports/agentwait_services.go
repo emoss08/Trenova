@@ -93,6 +93,10 @@ type FoundRecord struct {
 	Known  bool
 	Exists bool
 	Label  string
+	// Status is the record's lifecycle status when its kind has one a wait
+	// can name; HasStatus says the kind has one.
+	Status    string
+	HasStatus bool
 }
 
 // RecordFinder reads whether a record a wait names is there and what it is

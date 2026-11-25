@@ -52,6 +52,13 @@ func (*NoopDetentionBilling) HoldsForShipments(
 	return nil, nil
 }
 
+func (*NoopDetentionBilling) SettleCharges(
+	context.Context,
+	*detentionports.SettleDetentionChargesRequest,
+) error {
+	return nil
+}
+
 func (*NoopDetentionBilling) SyncInvoiceBilling(
 	context.Context,
 	*detentionports.SyncDetentionInvoiceBillingRequest,

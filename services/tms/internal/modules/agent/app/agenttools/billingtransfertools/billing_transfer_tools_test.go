@@ -19,6 +19,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentbillingports"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -195,6 +196,55 @@ func TestTransferToBilling_PreviewWarnsWhenNothingWouldGo(t *testing.T) {
 
 	agenttoolstest.RequireWarning(t, preview, agentpreview.PreviewWarningWouldFail)
 	assert.Contains(t, preview.Summary, "1 would stay with operations")
+}
+
+func TestTransferToBilling_PreviewNamesTheDetentionStillWaitingOnApproval(t *testing.T) {
+	t.Parallel()
+
+	id := pulid.MustNew("shp_")
+	planner := &fakeTransferPlanner{preview: true, plan: &shipmentbillingports.BillingTransferPlan{
+		Transfer: 1,
+		Decisions: []shipmentbillingports.BillingTransferDecision{{
+			ShipmentID: id, ProNumber: "S26110001005205", Status: shipmentvocab.StatusCompleted,
+			Outcome: shipmentbillingports.BillingTransferOutcomeMarkReadyAndTransfer,
+			HeldDetention: []shipmentbillingports.BillingTransferDetentionHold{
+				{
+					OccurrenceID: pulid.MustNew("dto_"),
+					LocationName: "Kestrel Valve Works Plant 1",
+					Amount:       decimal.NewFromInt(1425),
+					Currency:     "USD",
+					Reason:       "OverApprovalThreshold",
+				},
+				{
+					OccurrenceID: pulid.MustNew("dto_"),
+					LocationName: "Prairie Industrial Supply Birmingham",
+					Amount:       decimal.NewFromInt(1650),
+					Currency:     "USD",
+					Reason:       "OverApprovalThreshold",
+				},
+			},
+		}},
+	}}
+	tool := NewTransferToBillingTool(planner, &fakeRunStarter{}).(*TransferToBillingTool)
+
+	preview, err := tool.Preview(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
+		toolparams.ParamShipmentIDs:      []any{id.String()},
+		paramMarkCompletedReadyToInvoice: true,
+	}))
+	require.NoError(t, err)
+
+	agenttoolstest.RequireWarning(t, preview, agentpreview.PreviewWarningDetentionHeld)
+	for _, warning := range preview.Warnings {
+		if warning.Code == agentpreview.PreviewWarningDetentionHeld {
+			assert.Equal(t, []string{"1"}, warning.Args)
+		}
+	}
+	require.Len(t, preview.Changes, 1)
+	assert.Equal(t,
+		"1425.00 USD at Kestrel Valve Works Plant 1 (OverApprovalThreshold); "+
+			"1650.00 USD at Prairie Industrial Supply Birmingham (OverApprovalThreshold). "+
+			"Billing cannot approve it until each is approved or waived.",
+		agenttoolstest.FieldByPath(t, &preview.Changes[0], "heldDetention").After)
 }
 
 // A transfer the synchronous path takes runs in the call, with the same

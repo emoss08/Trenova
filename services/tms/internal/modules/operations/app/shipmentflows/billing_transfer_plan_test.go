@@ -1,6 +1,7 @@
 package shipmentflows
 
 import (
+	"context"
 	"slices"
 	"testing"
 
@@ -8,16 +9,21 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/billingcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionpolicy"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentbillingports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype"
+	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -419,4 +425,64 @@ func TestPlanBillingTransfers_NamesTheCurrencyEachShipmentIsBilledIn(t *testing.
 	assert.Equal(t, "CAD", plan.Decisions[0].CurrencyCode)
 	assert.Equal(t, shipmentbillingports.BillingTransferOutcomeRefused, plan.Decisions[1].Outcome)
 	assert.Equal(t, "EUR", plan.Decisions[1].CurrencyCode)
+}
+
+type heldDetention struct {
+	mocks.NoopDetentionBilling
+
+	holds    []*detention.DetentionOccurrence
+	requests []*detentionports.DetentionBillingHoldsRequest
+}
+
+func (h *heldDetention) HoldsForShipments(
+	_ context.Context,
+	req *detentionports.DetentionBillingHoldsRequest,
+) ([]*detention.DetentionOccurrence, error) {
+	h.requests = append(h.requests, req)
+	return h.holds, nil
+}
+
+func TestPlanBillingTransfers_NamesTheDetentionStillWaitingOnApproval(t *testing.T) {
+	t.Parallel()
+
+	f := newPlanFixture(t)
+	held := f.newShipment("S26110001005205", shipmentvocab.StatusCompleted)
+	clear := f.newShipment("PRO-2", shipmentvocab.StatusReadyToInvoice)
+	f.detention.holds = []*detention.DetentionOccurrence{{
+		ID:               pulid.MustNew("dto_"),
+		ShipmentID:       held.ID,
+		Status:           detention.OccurrenceStatusPending,
+		RequiresApproval: true,
+		BillableAmount:   decimal.NewFromInt(1425),
+		Currency:         "USD",
+		LocationName:     "Kestrel Valve Works Plant 1",
+		PolicySnapshot: &detentionpolicy.PolicySnapshot{
+			RequireApprovalOverAmount: decimal.NewNullDecimal(decimal.NewFromInt(750)),
+		},
+	}}
+	f.expectSources(
+		[]*shipment.Shipment{held, clear},
+		manualBillingControl(),
+		[]*document.Document{f.podFor(held), f.podFor(clear)},
+	)
+
+	plan, err := f.svc.transfer.PlanBillingTransfers(
+		t.Context(),
+		&shipmentbillingports.PlanBillingTransfersRequest{
+			TenantInfo:                  f.tenant(),
+			ShipmentIDs:                 []pulid.ID{held.ID, clear.ID},
+			MarkCompletedReadyToInvoice: true,
+		},
+	)
+
+	require.NoError(t, err)
+	require.Len(t, f.detention.requests, 1, "one holds read for the whole plan")
+	assert.Equal(t, []pulid.ID{held.ID, clear.ID}, f.detention.requests[0].ShipmentIDs)
+	require.Len(t, plan.Decisions[0].HeldDetention, 1)
+	assert.Equal(t,
+		"1425.00 USD at Kestrel Valve Works Plant 1 (OverApprovalThreshold). "+
+			"Billing cannot approve it until each is approved or waived.",
+		plan.Decisions[0].HeldDetentionSummary())
+	assert.Empty(t, plan.Decisions[1].HeldDetention)
+	assert.Empty(t, plan.Decisions[1].HeldDetentionSummary())
 }

@@ -24,11 +24,17 @@ Keywords: approve billing, start review, billing check, ready to invoice, flagge
 6. Select **Approve**. While a check is flagged, required documents are missing, or a detention charge on the shipment still needs approval, **Approve** stays disabled and its tooltip says why. After approval the next open item is selected automatically.
 
 ### Clear a detention charge that is holding an item
-Keywords: held detention, detention needs approval, detention blocking approval, approve detention charge
+Keywords: held detention, detention needs approval, detention blocking approval, approve detention charge, waive detention in billing
 1. Open [Billing queue](/billing/queue) and select the item. A notice above the tabs lists each detention charge on the shipment that still needs approval, with its amount and why it is held: over the policy's approval threshold, a required notice not sent in time, or escalated for review.
-2. Select a charge in the notice to open it on the [Detention desk](/detention/desk).
-3. Check the evidence, then select **Approve charge** if it supports the charge, or **Waive** with a coded **Reason** and a **Note** if it does not.
-4. Go back to the item. Once no charge is held, the notice goes away and **Approve** is available again.
+2. To check the evidence first, select the charge's name to open it on the [Detention desk](/detention/desk).
+3. Select **Approve** beside a charge to bill it, or **Waive** to forgive it with a coded **Reason** and a **Note**. A waived charge comes off the shipment's detention line and the invoice straight away, and the shipment's comments record what was taken off and why.
+4. Once no charge is held, the notice goes away and **Approve** is available again.
+
+### Waive detention that is not holding the item
+Keywords: remove detention charge, take detention off invoice, waive detention in billing, detention line locked
+1. On the **Charges** tab, hover the line marked **Detention** and select the clock button beside it. The line bills every detained stop on the shipment, so it is changed stop by stop rather than edited by hand.
+2. The list shows each detained stop with where its charge stands. Select **Approve** for a charge still waiting on approval, or **Waive** with a coded **Reason** and a **Note** to forgive it.
+3. The line drops by the waived amount, or leaves the sheet when nothing on it is still billed.
 
 ### Put an item on hold, send it back or flag an exception
 Keywords: hold billing, send back to ops, billing exception, dispute charges

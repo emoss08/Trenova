@@ -34618,7 +34618,7 @@
     ]
   },
   "Approve": {
-    "sites": 66,
+    "sites": 68,
     "scope": [
       "go",
       "ts"
@@ -35322,7 +35322,7 @@
     ]
   },
   "Approved": {
-    "sites": 68,
+    "sites": 69,
     "scope": [
       "go",
       "ts"
@@ -35335,6 +35335,7 @@
       "packages/shared/components",
       "packages/shared/lib",
       "routes/agent-control",
+      "routes/billing-queue",
       "routes/carrier-settlement",
       "routes/carrier-settlement-workspace",
       "routes/desk",
@@ -35789,6 +35790,15 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "Approving": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
     ]
   },
   "Approving a settlement posts it to the general ledger in the same step.": {
@@ -45931,7 +45941,7 @@
     ]
   },
   "Billed": {
-    "sites": 18,
+    "sites": 19,
     "scope": [
       "go",
       "ts"
@@ -69630,7 +69640,7 @@
       "ts"
     ],
     "areas": [
-      "routes/detention-desk"
+      "apps/web/components"
     ]
   },
   "Context window": {
@@ -77487,7 +77497,7 @@
       "ts"
     ],
     "areas": [
-      "routes/detention-desk"
+      "apps/web/components"
     ]
   },
   "Customer copy lists every charge": {
@@ -86008,7 +86018,7 @@
     ]
   },
   "Detention": {
-    "sites": 16,
+    "sites": 17,
     "scope": [
       "go",
       "ts"
@@ -86016,6 +86026,7 @@
     "areas": [
       "apps/web/lib",
       "go/other",
+      "routes/billing-queue",
       "routes/dash-control",
       "routes/desk",
       "routes/shipment",
@@ -86373,6 +86384,15 @@
       "go/other"
     ]
   },
+  "Detention is still waiting on approval. Billing cannot approve these shipments until each charge is approved or waived.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Detention lane": {
     "sites": 1,
     "scope": [
@@ -86497,6 +86517,15 @@
     ],
     "areas": [
       "template/detention.notice.email"
+    ]
+  },
+  "Detention on this shipment": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
     ]
   },
   "Detention paid out to drivers": {
@@ -88852,6 +88881,15 @@
       "packages/shared/types"
     ]
   },
+  "Disputed by the customer": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
   "Disputed invoices": {
     "sites": 2,
     "scope": [
@@ -89854,7 +89892,7 @@
       "ts"
     ],
     "areas": [
-      "routes/detention-desk"
+      "apps/web/components"
     ]
   },
   "Dock to side": {
@@ -96567,6 +96605,24 @@
     ],
     "areas": [
       "routes/freight-outlook"
+    ]
+  },
+  "Each detained stop bills on this one line, as listed here.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
+  "Each detained stop bills on this one line. Approve a charge to bill it, or waive it to take it off the line and the invoice.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
     ]
   },
   "Each document can be filed only once in a request": {
@@ -111470,7 +111526,7 @@
       "ts"
     ],
     "areas": [
-      "routes/detention-desk"
+      "apps/web/components"
     ]
   },
   "Explain why this event is a false positive": {
@@ -156119,6 +156175,15 @@
       "routes/carrier-invoice-matching"
     ]
   },
+  "Loading the detention charges": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
   "Loading the detention charge…": {
     "sites": 1,
     "scope": [
@@ -182918,6 +182983,15 @@
       "routes/desk"
     ]
   },
+  "No stop on this shipment bills detention.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
   "No stop settled detention in the last {0} days.": {
     "sites": 1,
     "scope": [
@@ -185358,7 +185432,7 @@
     ]
   },
   "Not billable": {
-    "sites": 7,
+    "sites": 8,
     "scope": [
       "go",
       "ts"
@@ -187205,7 +187279,6 @@
       "routes/carrier-tracking-public",
       "routes/collections",
       "routes/desk",
-      "routes/detention-desk",
       "routes/driver-settlement",
       "routes/fuel-purchase",
       "routes/holiday",
@@ -230063,7 +230136,6 @@
       "routes/carrier-monitoring",
       "routes/customer-payments",
       "routes/desk",
-      "routes/detention-desk",
       "routes/dispatch-console",
       "routes/factoring-submission",
       "routes/fiscal-year",
@@ -232219,7 +232291,7 @@
       "ts"
     ],
     "areas": [
-      "routes/detention-desk"
+      "apps/web/components"
     ]
   },
   "Record a factor's funding, release a reserve, and record or reverse a chargeback": {
@@ -232465,6 +232537,7 @@
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "routes/desk",
       "routes/detention-desk"
     ]
@@ -233183,7 +233256,7 @@
       "ts"
     ],
     "areas": [
-      "routes/detention-desk"
+      "apps/web/components"
     ]
   },
   "Record what this was checked against, at least 10 characters": {
@@ -233560,8 +233633,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components",
-      "routes/detention-desk"
+      "apps/web/components"
     ]
   },
   "Recording an acceptance, a counter or a carrier backing out moves money or the carrier off the move, so it is a proposal a person decides; a decline runs once a person approves it.": {
@@ -233579,7 +233651,7 @@
       "ts"
     ],
     "areas": [
-      "routes/detention-desk"
+      "apps/web/components"
     ]
   },
   "Recording...": {
@@ -245601,6 +245673,15 @@
       "apps/web/components"
     ]
   },
+  "Review the detention on {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
   "Review the draft": {
     "sites": 2,
     "scope": [
@@ -257524,7 +257605,7 @@
       "ts"
     ],
     "areas": [
-      "routes/detention-desk"
+      "apps/web/components"
     ]
   },
   "Select a colleague": {
@@ -276934,6 +277015,15 @@
       "routes/desk"
     ]
   },
+  "Still at the dock": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
   "Still employed": {
     "sites": 1,
     "scope": [
@@ -289544,7 +289634,7 @@
       "ts"
     ],
     "areas": [
-      "routes/detention-desk"
+      "apps/web/components"
     ]
   },
   "The colleague who approves in your place while the cover runs.": {
@@ -309963,7 +310053,7 @@
       "ts"
     ],
     "areas": [
-      "routes/detention-desk"
+      "apps/web/components"
     ]
   },
   "Their codes we know": {
@@ -315312,7 +315402,16 @@
       "go/other"
     ]
   },
-  "This item cannot be approved until each charge is approved or waived on the detention desk.": {
+  "This item cannot be approved until each charge is approved or waived by someone who decides detention.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
+  "This item cannot be approved until each charge is approved or waived. A waived charge comes off the shipment and the invoice.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -338280,7 +338379,7 @@
     ]
   },
   "Waiting on approval": {
-    "sites": 9,
+    "sites": 10,
     "scope": [
       "go",
       "ts"
@@ -338288,6 +338387,7 @@
     "areas": [
       "apps/web/components",
       "go/other",
+      "routes/billing-queue",
       "routes/desk"
     ]
   },
@@ -338677,13 +338777,14 @@
     ]
   },
   "Waive": {
-    "sites": 5,
+    "sites": 7,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "go/other",
+      "routes/billing-queue",
       "routes/desk",
       "routes/detention-desk",
       "routes/shipment",
@@ -338714,7 +338815,7 @@
       "ts"
     ],
     "areas": [
-      "routes/detention-desk"
+      "apps/web/components"
     ]
   },
   "Waive course": {
@@ -338786,7 +338887,7 @@
       "ts"
     ],
     "areas": [
-      "routes/detention-desk"
+      "apps/web/components"
     ]
   },
   "Waive this detention charge as {0}.": {
@@ -338818,7 +338919,7 @@
     ]
   },
   "Waived": {
-    "sites": 14,
+    "sites": 15,
     "scope": [
       "go",
       "ts"
@@ -338911,7 +339012,7 @@
       "ts"
     ],
     "areas": [
-      "routes/detention-desk"
+      "apps/web/components"
     ]
   },
   "Waiving a billed detention charge credits the invoice, which needs permission to update invoices": {
@@ -338938,7 +339039,7 @@
       "ts"
     ],
     "areas": [
-      "routes/detention-desk"
+      "apps/web/components"
     ]
   },
   "Waiving the detention": {
@@ -342343,7 +342444,7 @@
       "ts"
     ],
     "areas": [
-      "routes/detention-desk"
+      "apps/web/components"
     ]
   },
   "What is the status of PRO S12345?": {
@@ -350190,6 +350291,15 @@
     ],
     "areas": [
       "packages/shared/lib"
+    ]
+  },
+  "Will bill": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
     ]
   },
   "Will it hold up": {
@@ -376547,6 +376657,15 @@
     ],
     "areas": [
       "routes/billing-queue"
+    ]
+  },
+  "{0, plural, one {# shipment carries} other {# shipments carry}} detention still waiting on approval. Billing cannot approve them until each charge is approved or waived.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "{0, plural, one {# shipment isn't booked as an order} other {# shipments aren't booked as orders}}, so splitting by order bills each on its own invoice. If {1} expects one invoice for the period,": {

@@ -15,11 +15,16 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionevidence"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionnotice"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionpolicy"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/orderports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentcommentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/email"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
+	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/mocks/documenttemplateportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/documenttypeportsmock"
@@ -124,9 +129,75 @@ func (discardedEvidence) Append(
 	return req.Entry, nil
 }
 
+type previewShipments struct {
+	shipmentports.ShipmentRepository
+
+	stored *shipment.Shipment
+	saved  []*shipment.Shipment
+}
+
+func (r *previewShipments) GetByID(
+	context.Context,
+	*shipmentports.GetShipmentByIDRequest,
+) (*shipment.Shipment, error) {
+	if r.stored == nil {
+		return &shipment.Shipment{}, nil
+	}
+	copied := *r.stored
+	copied.AdditionalCharges = make([]*shipment.AdditionalCharge, 0, len(r.stored.AdditionalCharges))
+	for _, charge := range r.stored.AdditionalCharges {
+		dup := *charge
+		copied.AdditionalCharges = append(copied.AdditionalCharges, &dup)
+	}
+
+	return &copied, nil
+}
+
+func (r *previewShipments) UpdateDerivedState(
+	_ context.Context,
+	entity *shipment.Shipment,
+) (*shipment.Shipment, error) {
+	r.saved = append(r.saved, entity)
+
+	return entity, nil
+}
+
+type previewOrders struct {
+	orderports.OrderDerivationService
+
+	recomputed []pulid.ID
+}
+
+func (o *previewOrders) RecomputeForShipment(
+	_ context.Context,
+	_ pagination.TenantInfo,
+	shipmentID pulid.ID,
+) error {
+	o.recomputed = append(o.recomputed, shipmentID)
+	return nil
+}
+
+type previewComments struct {
+	shipmentcommentports.ShipmentCommentRepository
+
+	created []*shipment.ShipmentComment
+}
+
+func (c *previewComments) Create(
+	_ context.Context,
+	entity *shipment.ShipmentComment,
+) (*shipment.ShipmentComment, error) {
+	c.created = append(c.created, entity)
+	return entity, nil
+}
+
 func previewWiring(repo *previewOccurrenceRepo) *wiring {
 	return &wiring{
 		Logger:         zap.NewNop(),
+		DB:             dbtest.NopConnection{},
+		Shipments:      &previewShipments{},
+		Orders:         &previewOrders{},
+		CommentRepo:    &previewComments{},
 		OccurrenceRepo: repo,
 		Organizations:  previewOrganizations{},
 		EvidenceRepo:   discardedEvidence{},

@@ -38,6 +38,7 @@ type Params struct {
 	AuditService   auditports.AuditService
 	Watchtower     watchtowerports.WatchtowerProjector
 	Features       platformcatalogports.FeatureGate
+	Charges        detentionports.DetentionChargeSettler
 }
 
 type Service struct {
@@ -48,6 +49,7 @@ type Service struct {
 	auditService   auditports.AuditService
 	watchtower     watchtowerports.WatchtowerProjector
 	features       platformcatalogports.FeatureGate
+	charges        detentionports.DetentionChargeSettler
 	now            func() int64
 }
 
@@ -63,6 +65,7 @@ func New(p Params) detentionports.DetentionBillingService {
 		auditService:   p.AuditService,
 		watchtower:     p.Watchtower,
 		features:       p.Features,
+		charges:        p.Charges,
 		now:            timeutils.NowUnix,
 	}
 }
@@ -102,6 +105,22 @@ func (s *Service) GuardShipments(
 	}
 
 	return detention.BillingHoldError(holds)
+}
+
+func (s *Service) SettleCharges(
+	ctx context.Context,
+	req *detentionports.SettleDetentionChargesRequest,
+) error {
+	if req == nil || req.Shipment == nil {
+		return nil
+	}
+	if on, err := s.detentionOn(ctx); err != nil || !on {
+		return err
+	}
+
+	_, err := s.charges.SettleShipmentCharges(ctx, req)
+
+	return err
 }
 
 func (s *Service) SyncInvoiceBilling(

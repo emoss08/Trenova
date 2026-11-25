@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"slices"
+	"strconv"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
@@ -24,6 +25,7 @@ type transferView struct {
 	Outcome               string `json:"outcome"`
 	MissingDocuments      string `json:"missingDocuments"`
 	Issues                string `json:"issues"`
+	HeldDetention         string `json:"heldDetention"`
 }
 
 var transferLabels = map[string]string{
@@ -31,6 +33,7 @@ var transferLabels = map[string]string{
 	"outcome":               "What the transfer does",
 	"missingDocuments":      "Missing documents",
 	"issues":                "Rate and validation issues",
+	"heldDetention":         "Detention awaiting approval",
 }
 
 func (t *TransferToBillingTool) Preview(
@@ -64,6 +67,12 @@ func (t *TransferToBillingTool) Preview(
 		toolpreview.Warn(preview, agentpreview.PreviewWarningWouldFail,
 			"None of the checked shipments would transfer as they stand.")
 	}
+	if held := heldDetentionCount(plan.Decisions); held > 0 {
+		toolpreview.Warn(preview, agentpreview.PreviewWarningDetentionHeld, fmt.Sprintf(
+			"%d of these shipments carry detention still waiting on approval; billing cannot "+
+				"approve them until each charge is approved or waived.", held),
+			strconv.Itoa(held))
+	}
 
 	return preview, nil
 }
@@ -93,6 +102,17 @@ func (t *TransferToBillingTool) previewPlan(
 		ShipmentIDs:                 checked,
 		MarkCompletedReadyToInvoice: request.markReady,
 	})
+}
+
+func heldDetentionCount(decisions []shipmentbillingports.BillingTransferDecision) int {
+	held := 0
+	for idx := range decisions {
+		if decisions[idx].Outcome.Transfers() && len(decisions[idx].HeldDetention) > 0 {
+			held++
+		}
+	}
+
+	return held
 }
 
 // refusalsFirst orders the shipments a person most needs to see ahead of the
@@ -133,6 +153,7 @@ func transferChange(
 	after.Outcome = transferOutcomeText(decision)
 	after.MissingDocuments = missingDocuments(decision)
 	after.Issues = validationIssues(decision)
+	after.HeldDetention = decision.HeldDetentionSummary()
 
 	switch decision.Outcome {
 	case shipmentbillingports.BillingTransferOutcomeMarkReadyAndTransfer:

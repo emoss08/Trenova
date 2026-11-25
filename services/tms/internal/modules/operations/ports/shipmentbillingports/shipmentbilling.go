@@ -1,6 +1,9 @@
 package shipmentbillingports
 
 import (
+	"fmt"
+	"strings"
+
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingtransfer"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
@@ -254,6 +257,37 @@ type BillingTransferDecision struct {
 	PayerCount  int  `json:"payerCount"`
 	// Version is the shipment's version the decision was read at.
 	Version int64 `json:"version"`
+	// HeldDetention lists the detention charges on the shipment still waiting
+	// on an approver. They travel into billing and keep the queue item from
+	// being approved until someone approves or waives each one.
+	HeldDetention []BillingTransferDetentionHold `json:"heldDetention"`
+}
+
+func (d *BillingTransferDecision) HeldDetentionSummary() string {
+	if len(d.HeldDetention) == 0 {
+		return ""
+	}
+
+	parts := make([]string, 0, len(d.HeldDetention))
+	for _, hold := range d.HeldDetention {
+		where := hold.LocationName
+		if where == "" {
+			where = "a stop"
+		}
+		parts = append(parts, fmt.Sprintf("%s %s at %s (%s)",
+			hold.Amount.StringFixed(2), hold.Currency, where, hold.Reason))
+	}
+
+	return strings.Join(parts, "; ") +
+		". Billing cannot approve it until each is approved or waived."
+}
+
+type BillingTransferDetentionHold struct {
+	OccurrenceID pulid.ID        `json:"occurrenceId"`
+	LocationName string          `json:"locationName"`
+	Amount       decimal.Decimal `json:"amount"`
+	Currency     string          `json:"currency"`
+	Reason       string          `json:"reason"`
 }
 
 // BillingTransferPlan is every requested shipment's decision, in request

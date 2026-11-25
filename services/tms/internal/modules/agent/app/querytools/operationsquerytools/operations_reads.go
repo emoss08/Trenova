@@ -75,6 +75,8 @@ const (
 		"propose. A running clock is priced as of now, so billableMinutes and amountAtRisk " +
 		"are what it would bill if the truck left this minute. Narrow to one load with " +
 		"shipmentId or proNumber rather than paging through urgencies."
+	detentionOccurrencesQueryNote = "Words to look for in the shipment's PRO number, the " +
+		"facility's name or the customer's name."
 	shipmentTendersSummary = "List a shipment's tenders, newest first, with every offer in " +
 		"rank order. Each tender shows its mode and status; each offer the carrier, the " +
 		"rate, how it was sent, its status, any counter the carrier made and when it lapses " +
@@ -193,6 +195,12 @@ func ReadSpecs() []readspec.List {
 			},
 			Defaults:   map[string]any{fieldIncludeAwaitingApproval: true},
 			References: map[string]readspec.Reference{querytool.ParamShipmentID: shipmentReference},
+			Matches: []string{
+				"occurrence.shipmentProNumber",
+				"occurrence.locationName",
+				"occurrence.customerName",
+			},
+			QueryNote: detentionOccurrencesQueryNote,
 		},
 		{
 			Name:         "dispatch_list_tenders",

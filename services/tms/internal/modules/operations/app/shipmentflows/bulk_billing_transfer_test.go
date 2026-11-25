@@ -54,6 +54,7 @@ type bulkTransferFixture struct {
 	shipments    map[pulid.ID]*shipment.Shipment
 	payers       map[pulid.ID]*customer.Customer
 	documents    []*document.Document
+	detention    *heldDetention
 
 	// billingControlExpected keeps the org-level read registered once, which is
 	// how many times a run makes it.
@@ -76,8 +77,10 @@ func newBulkTransferFixture(t *testing.T) *bulkTransferFixture {
 		realtime:     realtimeportsmock.NewMockRealtimeService(t),
 		shipments:    map[pulid.ID]*shipment.Shipment{},
 		payers:       map[pulid.ID]*customer.Customer{},
+		detention:    &heldDetention{},
 	}
 	f.svc = assembled(&rig{
+		detentionBilling:    f.detention,
 		l:                   zap.NewNop(),
 		repo:                f.repo,
 		customerRepo:        f.customerRepo,

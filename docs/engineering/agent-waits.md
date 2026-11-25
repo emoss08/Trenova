@@ -43,7 +43,7 @@ The workflow costs nothing while it waits and survives every restart.
 | `PortalRun` | `portalRunId` | the portal task an approved `web_use_portal` started, or a `web_read_portal` that stopped for a sign-in code, ends (`NotifyPortalRun` from `PortalRunWorkflow`) |
 | `DocumentRead` | `documentId` | the file's extraction is saved (`document.extracted`), or a look every minute finds its reading over: text in, and no shipment draft still `Pending` |
 | `WebWatch` | `webWatchId` | the web watch finds something new (`NotifyWebWatch` from `CheckDueWebWatchesWorkflow`), or fails |
-| `RecordChanged` | `recordId` (any record, by its id) | someone other than this conversation's own turn changes the record, then it is quiet for 30 s (at most 2 min from the first change) |
+| `RecordChanged` | `recordId` (any record, by its id), optional `untilStatus` | someone other than this conversation's own turn changes the record (with `untilStatus`, a change that leaves it in one of those statuses), then it is quiet for 30 s (at most 2 min from the first change) |
 | `ReportRun` | `reportRunId` | the report run finishes (its `report-run` invalidation), or a look every two minutes finds it finished |
 
 `PortalRun` is not one an agent asks for: `agent_create_wait` offers only `AgentKinds()`, and the
@@ -88,6 +88,14 @@ kind, and that the record is the organization's (`agentwaitports.RecordFinder`, 
 labeler's projections, which also give the label the wait keeps on `Condition.RecordLabel`). A
 record they may not read is refused with the same words as a missing one. See "Hearing a
 record change" below.
+
+`untilStatus` makes "tell me when the shipment is completed" one wait instead of one per edit:
+a driver assigned or a stop time typed in leaves the shipment short of `Completed`, so the
+change is not passed on. The finder reads the status through `statusSources`
+(`recordlabelrepository/statuses.go`: shipments, billing queue items, invoices, orders and
+detention occurrences); a kind with no entry refuses `untilStatus`, and a record already in a
+named status is refused as already true. A read that fails picks the work up rather than
+leave it waiting on a record it cannot see.
 
 `ReportRun` is not one an agent asks for. `report_run` sets it (`WaitForReportRun`, one open
 wait per run and conversation, two-hour expiry) when the run is still going after the tool's

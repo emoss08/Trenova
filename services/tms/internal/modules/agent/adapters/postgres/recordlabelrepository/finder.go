@@ -35,12 +35,11 @@ func (l *Labeler) Find(
 			if len(rows) == 0 {
 				return &agentwaitports.FoundRecord{Known: true}, nil
 			}
-
-			return &agentwaitports.FoundRecord{
+			return l.withStatus(ctx, resource, id, &agentwaitports.FoundRecord{
 				Known:  true,
 				Exists: true,
 				Label:  strings.TrimSpace(rows[0].Label),
-			}, nil
+			})
 		}
 
 		read := l.reader(resource)
@@ -52,9 +51,35 @@ func (l *Labeler) Find(
 			return nil, err
 		}
 		label, exists := found[id]
+		if !exists {
+			return &agentwaitports.FoundRecord{Known: true}, nil
+		}
 
-		return &agentwaitports.FoundRecord{Known: true, Exists: exists, Label: label}, nil
+		return l.withStatus(ctx, resource, id,
+			&agentwaitports.FoundRecord{Known: true, Exists: true, Label: label})
 	})
+}
+
+func (l *Labeler) withStatus(
+	ctx context.Context,
+	resource permission.Resource,
+	id pulid.ID,
+	found *agentwaitports.FoundRecord,
+) (*agentwaitports.FoundRecord, error) {
+	status, ok := statusSources[resource]
+	if !ok {
+		return found, nil
+	}
+	rows, err := keel.Into[labelRow](ctx, l.db.Keel(ctx), status(id))
+	if err != nil {
+		return nil, err
+	}
+	found.HasStatus = true
+	if len(rows) > 0 {
+		found.Status = strings.TrimSpace(rows[0].Label)
+	}
+
+	return found, nil
 }
 
 func (l *Labeler) UserNames(
