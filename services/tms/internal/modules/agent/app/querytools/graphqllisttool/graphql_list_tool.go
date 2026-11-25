@@ -161,7 +161,7 @@ func New(
 		registry:    fieldsensitivity.DefaultRegistry(),
 		rowFields:   presentedFields(read.Fields, spec.Presents),
 	}
-	tool.columns = agenttoolschema.Derived(spec.Name+".column",
+	tool.columns = listtool.ColumnSource(spec.Name+".column",
 		append(graphqlread.ListColumns(tool.rowFields, spec.Amounts), spec.Derived...))
 	tool.Params = slices.DeleteFunc(params, func(param graphqlread.Param) bool {
 		return tool.confidential(&param)
@@ -652,7 +652,7 @@ func (t *Tool) ParamSchema() map[string]any {
 	for name, property := range querytool.CursorPageSchema(t.pageBounds()) {
 		properties[name] = property
 	}
-	if len(t.columns.Names()) > 1 {
+	if listtool.OffersFields(t.columns) {
 		properties[agenttoolports.ListFieldsParam] = listtool.FieldsSchema(t.columns)
 	}
 

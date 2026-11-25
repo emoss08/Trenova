@@ -143,13 +143,13 @@ func Build(spec *Spec) *Tool {
 		Fields:      agenttoolschema.Derived(spec.Name+".field", resource.FieldNames()),
 		Operators:   agenttoolschema.Derived(spec.Name+".operator", operators),
 		sortable:    agenttoolschema.Derived(spec.Name+".sortBy", resource.SortableNames()),
-		Columns:     agenttoolschema.Derived(spec.Name+".column", rowColumns(spec.Row)),
+		Columns:     ColumnSource(spec.Name+".column", rowColumns(spec.Row)),
 		description: buildListDescription(spec),
 	}
 }
 
-// rowColumns are the columns of a list's row but the id, which every row
-// keeps: what a call may name in fields.
+// rowColumns are the columns of a list's row but the id, which ColumnSource
+// adds first.
 func rowColumns(row any) []string {
 	if row == nil {
 		return nil
@@ -263,7 +263,7 @@ func (t *Tool) ParamSchema() map[string]any {
 	for name, property := range t.pagingSchema() {
 		properties[name] = property
 	}
-	if len(t.Columns.Names()) > 1 {
+	if OffersFields(t.Columns) {
 		properties[agenttoolports.ListFieldsParam] = FieldsSchema(t.Columns)
 	}
 
