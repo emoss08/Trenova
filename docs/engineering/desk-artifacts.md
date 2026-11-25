@@ -91,7 +91,8 @@ kinds or two cards use moves to `kinds/artifact-body-parts.tsx`, `record-card/` 
 `routes/desk/_styles/desk-v2.css`; a card's own styles take its own prefix
 (`dk-pln-*` for the plan, `dk-bi-*` for the billing item, `dk-ft-*` for the formula template, `dk-sh-*` for the
 shipment, `dk-cu-*` for the customer, `dk-ra-*` for the rate agreement, `dk-tr-*` for the
-tractor, `dk-tl-*` for the trailer, `dk-wk-*` for the worker, `dk-lo-*` for the location, `dk-ca-*` for the carrier, `dk-or-*` for the order, `dk-svf-*` for the service failure, `dk-edi-*` for the EDI message, `dk-eif-*` for the EDI inbound file, `dk-tdr-*` for the EDI transfer, `dk-inv-*` for the invoice, `dk-pay-*` for the worker settlement, `dk-cset-*` for the carrier settlement, `dk-dtn-*` for the detention charge, `dk-edp-*` for the EDI partner, `dk-jen-*` for the journal entry, `dk-mj-*` for the manual journal, `dk-fpu-*` for the fuel purchase, `dk-fcd-*` for the fuel card, `dk-tv-*` for a table that pages, `dk-rr-*` for a report run or preview, `dk-bd-*` for a board; the parts the two settlement cards share are `dk-rec-*` in `record-card/`, and so are the parts the two journal cards share: `dk-rec-jrnl`, `dk-rec-eqn`, `dk-rec-jref`, `dk-rec-seal` and `dk-rec-period`; the two fuel cards share `dk-fu-*`). An artifact kind drawn on the card frame takes one too:
+tractor, `dk-tl-*` for the trailer, `dk-wk-*` for the worker, `dk-lo-*` for the location, `dk-ca-*` for the carrier, `dk-or-*` for the order, `dk-svf-*` for the service failure, `dk-edi-*` for the EDI message, `dk-eif-*` for the EDI inbound file, `dk-tdr-*` for the EDI transfer, `dk-inv-*` for the invoice, `dk-pay-*` for the worker settlement, `dk-cset-*` for the carrier settlement, `dk-dtn-*` for the detention charge, `dk-edp-*` for the EDI partner, `dk-jen-*` for the journal entry, `dk-mj-*` for the manual journal, `dk-fpu-*` for the fuel purchase, `dk-fcd-*` for the fuel card, `dk-tv-*` for a table that pages, `dk-rr-*` for a report run or preview, `dk-bd-*` for a board,
+`dk-dpl-*` for a dispatch plan; the parts the two settlement cards share are `dk-rec-*` in `record-card/`, and so are the parts the two journal cards share: `dk-rec-jrnl`, `dk-rec-eqn`, `dk-rec-jref`, `dk-rec-seal` and `dk-rec-period`; the two fuel cards share `dk-fu-*`). An artifact kind drawn on the card frame takes one too:
 `dk-ecd-*` for the EDI connection draft.
 Before taking a prefix or a modifier class, search every stylesheet the Desk loads, the
 Desk chat's `components/desk-chat/desk-chat.css` included: `dk-sf` is the chat's tool
@@ -191,6 +192,27 @@ The mock API serves the plan as `athr_desk_plan` with the `deskPlan` scenario fi
 held, approving, running, failed, done, declined, expired, superseded), and
 `e2e/mock-api/desk-plan-screenshots.mjs` shoots every stage. While the plans, steps or preview
 are read the card draws `PlanSkeleton`, which `ArtifactBodySkeleton` draws too.
+
+## The dispatch plan
+
+`dispatch_plan` is the dispatch optimizer's plan for a set of loads, drawn from the
+`dispatch_plan` tool's result (`toolartifacts/dispatch_plan_artifact.go`, read by
+`dispatchPlanFrom`): each load as a ticket beside the driver the plan put on it, joined by how
+the pairing stands, with the plan's cost, the driver's empty miles and hours, the next best
+drivers and the warnings that ask for a look; the loads nobody can take beside the reason; and a
+count of named loads it left out (their ids stay in the model's copy). `kinds/dispatch-plan/`
+reads every load back in one query (`dispatchMovesByIds`, the board's move fragment, keyed under
+the board's prefix so any assignment redraws it), and `dispatch-plan-model.ts` says where each
+stands: planned, proposed (an agent proposed the planned driver), assigned (the planned driver
+is on it), taken (someone else covers it, named), closed or unread. If the moves cannot be read
+the card says so and draws the plan as it was made.
+
+"Assign N loads" makes every assignment still open in one call to the console's own
+`dispatchAssignMoves`, shown to someone holding shipment move assign. A load the service refuses
+is named by its PRO number in the card, with the server's words passed through
+`withoutRecordIds`; there is no success toast, the loads redraw as assigned. "Open dispatch
+board" goes to the console. The next best drivers are shown, not offered: the plan holds no
+tractor for them, so they could not be assigned as they stand.
 
 ## The extraction card
 

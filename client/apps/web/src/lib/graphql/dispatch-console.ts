@@ -35,6 +35,7 @@ import {
   DispatchDriverMovesDocument,
   DispatchMoveCandidatesDocument,
   DispatchMoveDocument,
+  DispatchMovesByIdsDocument,
   DispatchPlanAutoAssignDocument,
   DispatchUnassignMovesDocument,
 } from "@trenova/graphql/generated/documents/dispatch-console/page";
@@ -111,6 +112,20 @@ export async function getDispatchMoveGraphQL(
     signal: options?.signal,
   });
   return getFragmentData(DispatchBoardMoveFieldsFragmentDoc, data.dispatchMove);
+}
+
+/** Up to 50 moves as the board draws them, in one read, whatever their window or status. */
+export async function getDispatchMovesByIdsGraphQL(
+  moveIds: readonly string[],
+  options?: { signal?: AbortSignal },
+): Promise<DispatchBoardMove[]> {
+  const data = await requestGraphQL({
+    document: DispatchMovesByIdsDocument,
+    operationName: "DispatchMovesByIds",
+    variables: { moveIds: [...moveIds] },
+    signal: options?.signal,
+  });
+  return [...getFragmentData(DispatchBoardMoveFieldsFragmentDoc, data.dispatchMovesByIds)];
 }
 
 export async function getDispatchMoveCandidatesGraphQL(

@@ -107,6 +107,12 @@ query DispatchMove($moveId: ID!) @requiresRead(kind: "tender") {
   }
 }
 
+query DispatchMovesByIds($moveIds: [ID!]!) @requiresRead(kind: "tender") {
+  dispatchMovesByIds(moveIds: $moveIds) {
+    ...DispatchBoardMoveFields
+  }
+}
+
 query DispatchBoard($input: DispatchBoardInput!) @requiresRead(kind: "tender") {
   dispatchBoard(input: $input) {
     driversTruncated

@@ -6,6 +6,7 @@ import {
   getDispatchForecastQualityGraphQL,
   getDispatchMoveCandidatesGraphQL,
   getDispatchMoveGraphQL,
+  getDispatchMovesByIdsGraphQL,
 } from "@/lib/graphql/dispatch-console";
 import { getLiveTenderByMoveGraphQL, getTendersByShipmentGraphQL } from "@/lib/graphql/tender";
 import type {
@@ -47,6 +48,12 @@ export const dispatchConsoleQueries = {
   move: (moveId: string) => ({
     queryKey: [DISPATCH_BOARD_KEY, "move", moveId] as const,
     queryFn: ({ signal }: { signal?: AbortSignal }) => getDispatchMoveGraphQL(moveId, { signal }),
+  }),
+  // Under the board's prefix too, so an assignment made anywhere redraws a dispatch plan's card.
+  moves: (moveIds: readonly string[]) => ({
+    queryKey: [DISPATCH_BOARD_KEY, "moves", [...moveIds]] as const,
+    queryFn: ({ signal }: { signal?: AbortSignal }) =>
+      getDispatchMovesByIdsGraphQL(moveIds, { signal }),
   }),
   moveCandidates: (input: DispatchMoveCandidatesInput) => ({
     queryKey: [DISPATCH_MOVE_CANDIDATES_KEY, input] as const,

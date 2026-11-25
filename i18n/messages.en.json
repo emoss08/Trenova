@@ -39005,7 +39005,7 @@
     ]
   },
   "Assigned": {
-    "sites": 23,
+    "sites": 25,
     "scope": [
       "go",
       "ts"
@@ -39342,6 +39342,15 @@
       "routes/shipment"
     ]
   },
+  "Assigning drivers takes the move assign permission.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Assigning it activates the card": {
     "sites": 1,
     "scope": [
@@ -39361,6 +39370,15 @@
     ]
   },
   "Assigning it ties the card to who carries it": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "Assigning tells each driver about their load.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -57717,7 +57735,7 @@
     ]
   },
   "Check": {
-    "sites": 10,
+    "sites": 11,
     "scope": [
       "go",
       "ts"
@@ -64089,7 +64107,7 @@
     ]
   },
   "Closed": {
-    "sites": 33,
+    "sites": 34,
     "scope": [
       "go",
       "ts"
@@ -73833,13 +73851,14 @@
     ]
   },
   "Covered": {
-    "sites": 3,
+    "sites": 6,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/lib",
       "packages/shared/lib",
+      "routes/desk",
       "routes/dispatch-console"
     ]
   },
@@ -88307,6 +88326,16 @@
       "apps/web/config"
     ]
   },
+  "Dispatch plan": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components",
+      "routes/desk"
+    ]
+  },
   "Dispatch plans home time from this.": {
     "sites": 1,
     "scope": [
@@ -100286,11 +100315,12 @@
     ]
   },
   "Empty miles": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/desk",
       "routes/dispatch-console"
     ]
   },
@@ -106852,6 +106882,15 @@
     ],
     "areas": [
       "routes/benefits"
+    ]
+  },
+  "Every planned load is covered or closed.": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Every postal range on {0} has {1} characters; {2} has a different length": {
@@ -156053,6 +156092,15 @@
       "routes/shipment"
     ]
   },
+  "Loading the dispatch plan…": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Loading the document": {
     "sites": 4,
     "scope": [
@@ -173753,6 +173801,15 @@
       "routes/agent-control"
     ]
   },
+  "Next best": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Next card": {
     "sites": 1,
     "scope": [
@@ -174729,6 +174786,15 @@
     ],
     "areas": [
       "routes/edi"
+    ]
+  },
+  "No ELD has reported this driver's hours; they are unknown, not zero.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "No ETA yet": {
@@ -177411,6 +177477,33 @@
     ],
     "areas": [
       "apps/web/hooks"
+    ]
+  },
+  "No driver": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "No driver can take it": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "No driver can take these loads as things stand; offer them to a carrier.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "No driver could take it.": {
@@ -184417,7 +184510,7 @@
     ]
   },
   "None": {
-    "sites": 49,
+    "sites": 50,
     "scope": [
       "go",
       "ts"
@@ -187601,6 +187694,15 @@
     ],
     "areas": [
       "routes/dispatch-console"
+    ]
+  },
+  "Nothing can be covered": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Nothing can be sent from here for this kind of item": {
@@ -191883,6 +191985,15 @@
       "routes/worker"
     ]
   },
+  "Now covered by {0}": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Now due {0}": {
     "sites": 1,
     "scope": [
@@ -195729,6 +195840,15 @@
       "rules/tariff"
     ]
   },
+  "Only a call covering one move may run without a decision; several moves always wait for a person, who may drop any of them.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Only a cancelled card carries a cancellation date": {
     "sites": 1,
     "scope": [
@@ -199352,11 +199472,12 @@
     ]
   },
   "Open dispatch board": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/desk",
       "routes/home"
     ]
   },
@@ -208380,6 +208501,15 @@
       "routes/desk"
     ]
   },
+  "Partly assigned": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Partly filed": {
     "sites": 1,
     "scope": [
@@ -214765,6 +214895,15 @@
       "routes/desk"
     ]
   },
+  "Pickup time not on file": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Pickup window": {
     "sites": 1,
     "scope": [
@@ -214784,11 +214923,12 @@
     ]
   },
   "Pickup {0}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/desk",
       "routes/shipment"
     ]
   },
@@ -215548,6 +215688,15 @@
       "go/other"
     ]
   },
+  "Plan cost": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Plan dispatch": {
     "sites": 1,
     "scope": [
@@ -215676,12 +215825,13 @@
     ]
   },
   "Planned": {
-    "sites": 2,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/lib",
+      "routes/desk",
       "routes/dispatch-console"
     ]
   },
@@ -215748,6 +215898,24 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Planned together, so no driver is on two loads": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "Planned, nothing assigned": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Planner costs": {
@@ -221929,7 +222097,7 @@
     ]
   },
   "Proposed": {
-    "sites": 11,
+    "sites": 12,
     "scope": [
       "ts"
     ],
@@ -221937,6 +222105,7 @@
       "apps/web/hooks",
       "routes/accounting-mapping",
       "routes/agent-control",
+      "routes/desk",
       "routes/detention-policy",
       "routes/worker"
     ]
@@ -228007,6 +228176,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Read at most 50 moves at once": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Read by Nova": {
@@ -287213,6 +287391,15 @@
       "routes/worker"
     ]
   },
+  "The assignments could not be made. Try again.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "The assistant": {
     "sites": 1,
     "scope": [
@@ -291773,6 +291960,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "The driver has no tractor on file, so this load cannot be assigned from here.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "The driver is back on duty. Follow-up testing does not bar dispatch on its own; the violation stays open until the last follow-up test is recorded.": {
@@ -321105,7 +321301,7 @@
     ]
   },
   "To check": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -329577,7 +329773,7 @@
     ]
   },
   "Unknown": {
-    "sites": 23,
+    "sites": 24,
     "scope": [
       "ts"
     ],
@@ -329589,6 +329785,7 @@
       "routes/admin",
       "routes/agent-control",
       "routes/carrier-sourcing",
+      "routes/desk",
       "routes/dispatch-console",
       "routes/edi",
       "routes/invoice-approval",
@@ -337630,7 +337827,7 @@
     ]
   },
   "Waiting for a decision": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -347947,6 +348144,15 @@
       "apps/web/components"
     ]
   },
+  "Which loads are covered now could not be read; this is the plan as it was made.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Which location?": {
     "sites": 1,
     "scope": [
@@ -348740,6 +348946,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Who takes each load": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Who the contract is with and how it is identified across the system.": {
@@ -358915,6 +359130,15 @@
       "apps/web/components"
     ]
   },
+  "a load": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "a mile": {
     "sites": 3,
     "scope": [
@@ -364583,6 +364807,15 @@
     ],
     "areas": [
       "routes/dispatch-console"
+    ]
+  },
+  "hours unknown": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "hundredweight": {
@@ -373878,8 +374111,26 @@
       "routes/desk"
     ]
   },
+  "{0, plural, one {# load was not assigned:} other {# loads were not assigned:}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "{0, plural, one {# load you named was not planned: it is covered, closed or picks up later.} other {# loads you named were not planned: they are covered, closed or pick up later.}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "{0, plural, one {# load} other {# loads}}": {
-    "sites": 10,
+    "sites": 12,
     "scope": [
       "ts"
     ],
@@ -374123,6 +374374,15 @@
     ],
     "areas": [
       "routes/admin",
+      "routes/desk"
+    ]
+  },
+  "{0, plural, one {# mile empty} other {# miles empty}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
       "routes/desk"
     ]
   },
@@ -377445,6 +377705,15 @@
     ],
     "areas": [
       "routes/billing-queue"
+    ]
+  },
+  "{0, plural, one {Assign # load} other {Assign # loads}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "{0, plural, one {Assign # unassigned item to you} other {Assign # unassigned items to you}}": {
@@ -384352,6 +384621,15 @@
       "go/other"
     ]
   },
+  "{0} h to drive": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "{0} h vs prior": {
     "sites": 1,
     "scope": [
@@ -390618,7 +390896,7 @@
     ]
   },
   "{0} of {1}": {
-    "sites": 43,
+    "sites": 44,
     "scope": [
       "ts"
     ],
@@ -394025,7 +394303,7 @@
     ]
   },
   "{0} to {1}": {
-    "sites": 30,
+    "sites": 31,
     "scope": [
       "go",
       "ts"

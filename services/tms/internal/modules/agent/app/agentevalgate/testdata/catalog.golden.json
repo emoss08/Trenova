@@ -7617,12 +7617,12 @@
     },
     {
       "name": "dispatch_assign_move",
-      "description": "Assign a driver and equipment to one shipment move or to many in one call the person decides once, each move with its own driver. Use it once each driver is chosen: dispatch_plan hands back an assignments list ready to send for a set of shipments or moves, and dispatch_rank_candidates gives the choices for one. Send every move you want covered in one call rather than a call per move; the person approving may drop any of them. Each move must have no driver yet; one the service would refuse is reported and the rest still go. The same driver or tractor on two moves of one call is flagged for the person to check. Once it runs, its result says who is on each load with what equipment, so no read is needed to confirm it.\nUse this when you have chosen drivers and equipment for one move or several and want them assigned, in one call the person approves once.",
+      "description": "Assign a driver and equipment to one shipment move or to many in one call the person decides once, each move with its own driver. Use it once each driver is chosen: dispatch_plan hands back an assignments list ready to send for a set of shipments or moves, and dispatch_rank_candidates gives the choices for one. Send every move you want covered in one call rather than a call per move; the person approving may drop any of them. Each move must have no driver yet; one the service would refuse is reported and the rest still go. The same driver or tractor on two moves of one call is flagged for the person to check. Once it runs, its result says who is on each move with what equipment, so no read is needed to confirm it.\nUse this when you have chosen a driver, tractor and trailer for a move and want them assigned.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
           "assignments": {
-            "description": "One entry per move to cover: the move, the driver, the tractor and, when the move needs one, the trailer, with why this driver. Take each from dispatch_plan's assignments or from dispatch_rank_candidates; never send a shipment id as a move id.",
+            "description": "One entry per move to cover: the move, the driver, the tractor and, when the move needs one, the trailer, with why this driver. Take each from dispatch_plan's assignments or from dispatch_rank_candidates; never send a shipment id for a move id.",
             "items": {
               "additionalProperties": false,
               "properties": {
@@ -7670,7 +7670,7 @@
             "type": "array"
           },
           "shipmentMoveIds": {
-            "description": "The moves this call covers, the same moves as in assignments, which come from dispatch_plan or dispatch_rank_candidates. Leave it out: the runtime fills it from assignments, and the person approving may drop moves from it.",
+            "description": "The moves this call covers, one for each entry in assignments, which come from dispatch_plan or dispatch_rank_candidates. Leave it out: the runtime fills it from assignments, and the person approving may drop moves from it.",
             "items": {
               "type": "string",
               "x-recordOf": "shipment_move"
@@ -7689,7 +7689,6 @@
       "searchTerms": [
         "bulk",
         "assign driver",
-        "assign workers",
         "dispatch the load",
         "put a driver on"
       ],
@@ -8252,7 +8251,7 @@
     },
     {
       "name": "dispatch_plan",
-      "description": "Plan which driver takes each uncovered move of a set of shipments or a window, pricing every driver against every move at once so none is planned twice. Pass the shipments a list just read (shipmentIds) rather than looking up their moves. Returns each move's driver, cost, confidence and the next best drivers, what stopped the rest, and assignments ready to send to dispatch_assign_move as they are. Nothing is assigned or proposed.\nUse this when you need drivers for several loads at once, such as the shipments a list just showed: the optimizer plans them together so no driver is used twice.\nUse dispatch_rank_candidates instead when you are weighing drivers for one move.",
+      "description": "Plan which driver takes each uncovered move of a set of shipments or a window, pricing every driver against every move at once so none is planned twice. Pass the shipments a list just read (shipmentIds) rather than looking up their moves. Returns each move's driver, cost, confidence and the next best drivers, what stopped the rest, and assignments ready to send to dispatch_assign_move as they are. Nothing is assigned or proposed.\nUse this when you need drivers for several shipments at once, such as the ones a list just showed: the optimizer plans them together so no driver is used twice.\nUse dispatch_rank_candidates instead when you are weighing drivers for one move.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -8290,14 +8289,9 @@
         "type": "object"
       },
       "searchTerms": [
-        "which drivers for these loads",
+        "dispatch plan",
         "plan drivers",
-        "cover these shipments",
-        "who should take each load",
-        "auto assign",
-        "which drivers should take these shipments",
-        "plan drivers for the new loads",
-        "tell me what workers I should assign to what shipments"
+        "auto assign"
       ],
       "policy": {
         "kind": "query",
@@ -8323,7 +8317,7 @@
     },
     {
       "name": "dispatch_rank_candidates",
-      "description": "Rank the drivers who could cover a move: who is free, their hours left, distance and fit. Each driver comes with what they cost on the move in dollars (empty miles, lateness, waiting, rest, then preferences such as home time and fairness), a verdict, the findings behind it and the cost lines. Call this before dispatch_assign_move, propose from the top of the list unless a finding says why not, and give the cost or finding that decided it as the reason.\nUse this when you need to know who is free or best placed to cover one move: drivers ranked by hours, distance and fit.\nUse records_query (entity worker) instead when you need workers by their own attributes, not fit for a move.\nUse dispatch_plan instead when you need drivers for several loads at once.",
+      "description": "Rank the drivers who could cover a move: who is free, their hours left, distance and fit. Each driver comes with what they cost on the move in dollars (empty miles, lateness, waiting, rest, then preferences such as home time and fairness), a verdict, the findings behind it and the cost lines. Call this before dispatch_assign_move, propose from the top of the list unless a finding says why not, and give the cost or finding that decided it as the reason.\nUse this when you need to know who is free or best placed to cover a move: drivers ranked by hours, distance and fit.\nUse records_query (entity worker) instead when you need workers by their own attributes, not fit for a move.",
       "parameters": {
         "additionalProperties": false,
         "properties": {

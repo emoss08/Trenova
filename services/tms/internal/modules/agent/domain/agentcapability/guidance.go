@@ -103,38 +103,26 @@ var guidance = map[string]Guidance{
 		UseWhen: "You have a worker and need their profile, with hours of service or schedule through include.",
 	},
 	"dispatch_rank_candidates": {
-		Summary: "Rank the drivers who could cover a move: who is free, their hours left, distance and fit.",
-		UseWhen: "You need to know who is free or best placed to cover one move: drivers ranked by hours, distance and fit.",
-		InsteadOf: []Instead{
-			{Capability: "worker.list", When: "you need workers by their own attributes, not fit for a move"},
-			{Capability: "dispatch_plan", When: "you need drivers for several loads at once"},
-		},
-		Synonyms: []string{"who is free", "available drivers", "who can take this load", "best driver", "find a driver"},
-		Examples: []string{"who's free", "who can cover load 4471", "available drivers near Atlanta"},
-		Chain:    []string{"shipment.get", "dispatch_rank_candidates", "dispatch_assign_move"},
+		Summary:   "Rank the drivers who could cover a move: who is free, their hours left, distance and fit.",
+		UseWhen:   "You need to know who is free or best placed to cover a move: drivers ranked by hours, distance and fit.",
+		InsteadOf: []Instead{{Capability: "worker.list", When: "you need workers by their own attributes, not fit for a move"}},
+		Synonyms:  []string{"who is free", "available drivers", "who can take this load", "best driver", "find a driver"},
+		Examples:  []string{"who's free", "who can cover load 4471", "available drivers near Atlanta"},
+		Chain:     []string{"shipment.get", "dispatch_rank_candidates", "dispatch_assign_move"},
 	},
 	"dispatch_plan": {
-		UseWhen: "You need drivers for several loads at once, such as the shipments a list just " +
+		UseWhen: "You need drivers for several shipments at once, such as the ones a list just " +
 			"showed: the optimizer plans them together so no driver is used twice.",
 		InsteadOf: []Instead{
 			{Capability: "dispatch_rank_candidates", When: "you are weighing drivers for one move"},
 		},
-		Synonyms: []string{
-			"which drivers for these loads", "plan drivers", "cover these shipments",
-			"who should take each load", "auto assign",
-		},
-		Examples: []string{
-			"which drivers should take these shipments",
-			"plan drivers for the new loads",
-			"tell me what workers I should assign to what shipments",
-		},
-		Chain: []string{"shipment.list", "dispatch_plan", "dispatch_assign_move"},
+		Synonyms: []string{"dispatch plan", "plan drivers", "auto assign"},
+		Chain:    []string{"shipment.list", "dispatch_plan", "dispatch_assign_move"},
 	},
 	"dispatch_assign_move": {
-		UseWhen: "You have chosen drivers and equipment for one move or several and want them " +
-			"assigned, in one call the person approves once.",
+		UseWhen:  "You have chosen a driver, tractor and trailer for a move and want them assigned.",
 		Chain:    []string{"shipment.list", "dispatch_plan", "dispatch_assign_move"},
-		Synonyms: []string{"assign driver", "assign workers", "dispatch the load", "put a driver on"},
+		Synonyms: []string{"assign driver", "dispatch the load", "put a driver on"},
 	},
 	"dispatch_get_board": {
 		Synonyms:  []string{"dispatch board", "the board", "board"},

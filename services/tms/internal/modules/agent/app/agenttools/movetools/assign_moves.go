@@ -36,14 +36,14 @@ const assignMovesDescription = "Assign a driver and equipment to one shipment mo
 	"approving may drop any of them. Each move must have no driver yet; one the service " +
 	"would refuse is reported and the rest still go. The same driver or tractor on two moves " +
 	"of one call is flagged for the person to check. Once it runs, its result says who is on " +
-	"each load with what equipment, so no read is needed to confirm it."
+	"each move with what equipment, so no read is needed to confirm it."
 
 const assignmentsDescription = "One entry per move to cover: the move, the driver, the " +
 	"tractor and, when the move needs one, the trailer, with why this driver. Take each " +
 	"from dispatch_plan's assignments or from dispatch_rank_candidates; never send a " +
-	"shipment id as a move id."
+	"shipment id for a move id."
 
-const assignMoveIDsDescription = "The moves this call covers, the same moves as in " +
+const assignMoveIDsDescription = "The moves this call covers, one for each entry in " +
 	"assignments, which come from dispatch_plan or dispatch_rank_candidates. Leave it out: " +
 	"the runtime fills it from assignments, and the person approving may drop moves from it."
 

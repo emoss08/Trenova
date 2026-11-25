@@ -1442,3 +1442,134 @@ export function boardFrom(artifact: AssistantArtifact): BoardArtifact {
     sizes: listOf(payload.sizes).filter((size): size is number => typeof size === "number"),
   });
 }
+
+/** A finding the dispatch check made about a planned driver, in its own words. */
+export type DispatchPlanFinding = { code: string; severity: string; message: string };
+
+/** A load the plan covers: its move, the driver it chose, and what that costs. */
+export type DispatchPlanLine = {
+  moveId: string;
+  proNumber: string;
+  lane: string;
+  /** When the pickup window opens, unix seconds; null when the plan did not know. */
+  pickupAt: number | null;
+  workerId: string;
+  workerName: string;
+  /** Hours the driver has left to drive; null when no ELD reported them. */
+  driveHours: number | null;
+  deadheadMiles: number | null;
+  /** Dollars as the optimizer wrote them ("$412"). */
+  cost: string;
+  confidence: number | null;
+  rationale: string;
+  /** Said when the driver's hours are unknown rather than zero. */
+  hoursNote: string;
+  findings: DispatchPlanFinding[];
+  nextBest: { workerName: string; extraCost: string }[];
+  /** Why the line cannot be assigned as it stands (no tractor on file); empty when it can. */
+  notSendable: string;
+};
+
+/** A load nobody can take as things stand, and why. */
+export type DispatchPlanGap = {
+  moveId: string;
+  proNumber: string;
+  reason: string;
+  findings: DispatchPlanFinding[];
+};
+
+/** One assignment the plan makes, in dispatch_assign_move's own shape. */
+export type DispatchPlanAssignment = {
+  moveId: string;
+  workerId: string;
+  tractorId: string;
+  trailerId: string | null;
+};
+
+export type DispatchPlanArtifact = {
+  planningMode: string;
+  cost: string;
+  lines: DispatchPlanLine[];
+  gaps: DispatchPlanGap[];
+  assignments: DispatchPlanAssignment[];
+  /** Loads the request named that the plan left out: covered, closed or picking up later. */
+  notPlanned: number;
+};
+
+function findingsOf(value: unknown): DispatchPlanFinding[] {
+  return listOf(value)
+    .filter(isRecord)
+    .map((entry) => ({
+      code: stringOf(entry.code),
+      severity: stringOf(entry.severity),
+      message: stringOf(entry.message),
+    }))
+    .filter((finding) => finding.message !== "");
+}
+
+function finiteOrNull(value: unknown): number | null {
+  return typeof value === "number" && Number.isFinite(value) ? value : null;
+}
+
+/**
+ * A dispatch plan as the dispatch_plan tool wrote it (toolartifacts/dispatch_plan_artifact.go).
+ * A line without a move or a driver is no line at all and is dropped; an assignment without its
+ * tractor could not be sent, so it is dropped too.
+ */
+export function dispatchPlanFrom(artifact: AssistantArtifact): DispatchPlanArtifact {
+  const payload = artifact.payload;
+  const confidence = (value: unknown): number | null => {
+    const figure = typeof value === "string" ? Number(value) : value;
+    return finiteOrNull(figure);
+  };
+
+  return {
+    planningMode: stringOf(payload.planningMode),
+    cost: stringOf(payload.cost),
+    lines: listOf(payload.lines)
+      .filter(isRecord)
+      .map((line) => ({
+        moveId: stringOf(line.shipmentMoveId),
+        proNumber: stringOf(line.proNumber),
+        lane: stringOf(line.lane),
+        pickupAt: finiteOrNull(line.pickupAt),
+        workerId: stringOf(line.workerId),
+        workerName: stringOf(line.workerName),
+        driveHours: finiteOrNull(line.driveRemainingHours),
+        deadheadMiles: finiteOrNull(line.deadheadMiles),
+        cost: stringOf(line.cost),
+        confidence: confidence(line.confidence),
+        rationale: stringOf(line.rationale),
+        hoursNote: stringOf(line.hours),
+        findings: findingsOf(line.findings),
+        nextBest: listOf(line.nextBest)
+          .filter(isRecord)
+          .map((alt) => ({
+            workerName: stringOf(alt.workerName),
+            extraCost: stringOf(alt.extraCost),
+          }))
+          .filter((alt) => alt.workerName !== ""),
+        notSendable: stringOf(line.notSendable),
+      }))
+      .filter((line) => line.moveId !== "" && line.workerName !== ""),
+    gaps: listOf(payload.uncovered)
+      .filter(isRecord)
+      .map((gap) => ({
+        moveId: stringOf(gap.shipmentMoveId),
+        proNumber: stringOf(gap.proNumber),
+        reason: stringOf(gap.reason),
+        findings: findingsOf(gap.findings),
+      }))
+      .filter((gap) => gap.moveId !== ""),
+    assignments: listOf(payload.assignments)
+      .filter(isRecord)
+      .map((row) => ({
+        moveId: stringOf(row.shipmentMoveId),
+        workerId: stringOf(row.primaryWorkerId),
+        tractorId: stringOf(row.tractorId),
+        trailerId: stringOf(row.trailerId) || null,
+      }))
+      .filter((row) => row.moveId !== "" && row.workerId !== "" && row.tractorId !== ""),
+    notPlanned: Math.max(0, Math.trunc(numberOf(payload.notPlannedCount))),
+  };
+}
