@@ -71,9 +71,9 @@ func (t *getShipmentTool) Description() string {
 		"or one by its PRO number. One load shows the customer and rating, each move's " +
 		"stops with their windows in the stop's local time, who drives it with what " +
 		"equipment, the holds on it now and its newest comments; pass detail full only for " +
-		"a field that summary leaves out. Several come as a table of each load's route, " +
-		"driver, holds in force with their notes and newest comment. Each hold carries the " +
-		"holdId shipment_update_hold and shipment_release_hold take. leftOutForAccess says " +
+		"a field that summary leaves out. Several come back as the same record each, with " +
+		"their five newest comments and commentCount saying how many there are. Each hold " +
+		"carries the holdId shipment_update_hold and shipment_release_hold take. leftOutForAccess says " +
 		"when the holds or comments could not be read. Find loads with shipment_list when " +
 		"you have only a customer, a place, a PO or a BOL."
 }
@@ -142,7 +142,7 @@ func (t *getShipmentTool) Query(
 	}
 
 	readable := t.readableActivity(ctx, params)
-	comments, err := t.recentComments(ctx, readable, tenant, entity.ID)
+	comments, total, err := t.recentComments(ctx, readable, tenant, entity.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -153,6 +153,7 @@ func (t *getShipmentTool) Query(
 	}
 
 	activity := newShipmentActivity(comments, holds)
+	activity.countComments(total)
 	activity.noteEntry(entity)
 	activity.LeftOutForAccess = readable.leftOutNote(params)
 	people := t.access.Redactor(ctx, params)
@@ -268,9 +269,23 @@ func (t *getShipmentTool) recentComments(
 	readable shipmentActivityAccess,
 	tenant pagination.TenantInfo,
 	shipmentID pulid.ID,
-) ([]*shipment.ShipmentComment, error) {
+) ([]*shipment.ShipmentComment, int, error) {
 	if !readable.comments {
-		return nil, nil
+		return nil, 0, nil
+	}
+	if t.batchComments != nil {
+		digests, err := t.batchComments.NewestComments(ctx, &shipmentports.NewestCommentsRequest{
+			ShipmentIDs: []pulid.ID{shipmentID},
+			PerShipment: maxShipmentComments,
+		})
+		if err != nil {
+			return nil, 0, fmt.Errorf("read the shipment's comments: %w", err)
+		}
+		if digest, ok := digests[shipmentID]; ok {
+			return digest.Newest, digest.Total, nil
+		}
+
+		return nil, 0, nil
 	}
 
 	page, err := t.comments.ListByShipmentID(ctx, &shipmentcommentports.ListShipmentCommentsRequest{
@@ -282,11 +297,11 @@ func (t *getShipmentTool) recentComments(
 		ShipmentID: shipmentID,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("read the shipment's comments: %w", err)
+		return nil, 0, fmt.Errorf("read the shipment's comments: %w", err)
 	}
 	if page == nil {
-		return nil, nil
+		return nil, 0, nil
 	}
 
-	return page.Items, nil
+	return page.Items, len(page.Items), nil
 }

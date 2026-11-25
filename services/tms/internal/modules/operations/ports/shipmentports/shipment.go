@@ -44,18 +44,30 @@ type ShipmentOptions struct {
 	// LateAt, when set, keeps the shipments running late at that instant:
 	// a stop not yet reached whose window closed before it.
 	LateAt int64 `form:"-" json:"-" query:"-"`
-	// Unassigned keeps the shipments with no live driver or carrier assignment.
-	Unassigned bool `form:"-" json:"-" query:"-"`
+	// Unassigned keeps the shipments with no live driver or carrier assignment, or with one
+	// when false.
+	Unassigned *bool `form:"-" json:"-" query:"-"`
 	// StopPlaces keeps the shipments with a live stop in each place given.
 	StopPlaces []ShipmentStopPlace `form:"-" json:"-" query:"-"`
 	// HeldBefore keeps the shipments with an active hold placed before it.
-	HeldBefore int64 `form:"-" json:"-" query:"-"`
+	HeldBefore        int64      `form:"-" json:"-" query:"-"`
+	InStatusSince     int64      `form:"-" json:"-" query:"-"`
+	BillingReady      *bool      `form:"-" json:"-" query:"-"`
+	EquipmentTypeIDs  []pulid.ID `form:"-" json:"-" query:"-"`
+	EquipmentTypeText string     `form:"-" json:"-" query:"-"`
+	CommodityText     string     `form:"-" json:"-" query:"-"`
 }
 
 type ShipmentStopPlace struct {
-	Cities []string
-	States []string
-	Types  []shipmentvocab.StopType
+	Cities     []string
+	States     []string
+	Types      []shipmentvocab.StopType
+	WindowFrom int64
+	WindowTo   int64
+}
+
+func (p *ShipmentStopPlace) Set() bool {
+	return len(p.Cities)+len(p.States)+len(p.Types) > 0 || p.WindowFrom > 0 || p.WindowTo > 0
 }
 
 func (o *ShipmentOptions) HasActivityWindow() bool {

@@ -144,7 +144,7 @@ func (t *getShipmentTrackingTool) Query(
 	tenant := querytool.TenantOf(params)
 	if len(ids) > 1 {
 		entities, missing, loadErr := loadShipments(ctx, t.shipments, tenant, ids,
-			shipmentports.ShipmentOptions{ExpandShipmentDetails: true, IncludeCustomer: true})
+			&shipmentports.ShipmentOptions{ExpandShipmentDetails: true, IncludeCustomer: true})
 		if loadErr != nil {
 			return nil, loadErr
 		}

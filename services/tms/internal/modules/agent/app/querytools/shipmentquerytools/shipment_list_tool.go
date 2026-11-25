@@ -513,7 +513,7 @@ func (t *shipmentListTool) Query(
 	full := detail == DetailFull
 	where := querytool.WhereOf(params.Params)
 	if where != nil {
-		applied, extrasErr := applyExtras(where.Extras, querytool.ClockFor(params).Now)
+		applied, extrasErr := applyExtras(where.Extras, querytool.ClockFor(params))
 		if extrasErr != nil {
 			return nil, extrasErr
 		}
