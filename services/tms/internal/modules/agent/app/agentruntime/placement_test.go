@@ -339,14 +339,14 @@ func TestDrive_NamesALeftOutTableInTheRepliesOwnLanguage(t *testing.T) {
 
 	table := runtimetest.KeptShipments(15)
 	reply := "Hay quince cargas retrasadas. La más antigua es de Acme.\n\n" +
-		"¿Quieres que llame a los transportistas?"
+		"Puedo llamar a los transportistas."
 
 	result, events, completion := placementRun(t, &table, nil, reply)
 
 	assert.Equal(t, "Hay quince cargas retrasadas. La más antigua es de Acme ("+
 		replycheck.ArtifactRef(
 			&table,
-		)+").\n\n¿Quieres que llame a los transportistas?", result.Reply)
+		)+").\n\nPuedo llamar a los transportistas.", result.Reply)
 	assert.NotContains(t, result.Reply, "The full table")
 	assert.Empty(t, replycheck.StrayArtifactLinks(result.Reply))
 	assert.False(t, retried(events))

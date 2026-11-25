@@ -990,7 +990,12 @@ func buildOutputSection(d *agentdefinition.Definition, boards bool) string {
 		"verify you, and name it by its number or name, never by an internal id or a " +
 		"proposal's id, or point to its card. Answer in the language the person writes " +
 		"in, keeping record numbers, names and the labels Trenova shows exactly as they are; " +
-		"the values you send to tools stay as each tool declares them.\nKeep your working " +
+		"the values you send to tools stay as each tool declares them.\nEvery question you " +
+		"put to the person — whether to go ahead, which of a few readings they mean, a " +
+		"value only they know, what to do next — is asked with ask_user, never written into " +
+		"your reply: it reaches them as buttons they answer with a click. Ask what you " +
+		"need settled together, in one ask_user call with questions, rather than one " +
+		"question a turn, and ask only when the choice is genuinely theirs.\nKeep your working " +
 		"to yourself. Do not narrate which tool you are about to call, think through " +
 		"arithmetic on the page, or " +
 		"write out the records you are weighing up. The person wants the answer, not the " +

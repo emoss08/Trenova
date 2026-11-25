@@ -51,6 +51,7 @@ const (
 	ReaskPlacement   = "placement"
 	ReaskBoard       = replycheck.GuardBoard
 	ReaskDraft       = replycheck.GuardDraft
+	ReaskQuestion    = replycheck.GuardQuestion
 	ReaskBudgetSpent = "budget_spent"
 	ReaskStuck       = "stuck"
 )

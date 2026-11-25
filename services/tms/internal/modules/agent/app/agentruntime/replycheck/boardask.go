@@ -42,8 +42,9 @@ const (
 )
 
 type BoardAskState struct {
-	Asked   bool
-	Drafted bool
+	Asked      bool
+	Drafted    bool
+	Questioned bool
 }
 
 func WithBoardNote(

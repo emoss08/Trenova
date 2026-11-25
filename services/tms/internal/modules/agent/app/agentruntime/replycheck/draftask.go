@@ -40,8 +40,11 @@ func AskAgain(
 	if back, ask := AskForDraft(t, draft, state); ask {
 		return back, true
 	}
+	if back, ask := AskForBoard(t, draft, state); ask {
+		return back, true
+	}
 
-	return AskForBoard(t, draft, state)
+	return AskForQuestion(t, draft, state)
 }
 
 func AskForDraft(

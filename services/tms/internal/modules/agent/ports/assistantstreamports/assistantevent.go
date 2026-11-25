@@ -210,6 +210,10 @@ const RegroundAnswerWithBoard RegroundAction = "answer_with_board"
 
 const RegroundPublishDraft RegroundAction = "publish_draft"
 
+// RegroundAskUser is a reply that asked the person a question in prose,
+// asked again so the question goes to them with ask_user.
+const RegroundAskUser RegroundAction = "ask_user"
+
 type AssistantReplyRegroundedEvent struct {
 	Action  RegroundAction `json:"action"`
 	Figures []string       `json:"figures,omitempty"`
