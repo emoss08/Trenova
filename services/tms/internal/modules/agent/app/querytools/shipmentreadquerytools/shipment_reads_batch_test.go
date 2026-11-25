@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/querytooltest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/shipmentquerytools"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmenthold"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
@@ -18,18 +19,32 @@ import (
 
 type fakeNewestComments struct {
 	comments []*shipment.ShipmentComment
+	totals   map[pulid.ID]int
 	calls    int
 	asked    []pulid.ID
+	per      int
 }
 
 func (f *fakeNewestComments) NewestComments(
 	_ context.Context,
 	req *shipmentports.NewestCommentsRequest,
-) ([]*shipment.ShipmentComment, error) {
+) (map[pulid.ID]*shipmentports.ShipmentCommentDigest, error) {
 	f.calls++
 	f.asked = append(f.asked, req.ShipmentIDs...)
+	f.per = req.PerShipment
 
-	return f.comments, nil
+	out := make(map[pulid.ID]*shipmentports.ShipmentCommentDigest)
+	for _, comment := range f.comments {
+		digest, ok := out[comment.ShipmentID]
+		if !ok {
+			digest = &shipmentports.ShipmentCommentDigest{ShipmentID: comment.ShipmentID}
+			out[comment.ShipmentID] = digest
+		}
+		digest.Newest = append(digest.Newest, comment)
+		digest.Total = max(f.totals[comment.ShipmentID], len(digest.Newest))
+	}
+
+	return out, nil
 }
 
 func noteHold(
@@ -80,11 +95,11 @@ func TestShipmentList_RowsCarryTheHoldsNoteAndWhenItStarted(t *testing.T) {
 }
 
 /*
-The same question took a shipment_get per held load. shipment_get now takes
-every load at once and reads them, their holds and their newest comments in
-one read each.
+Asked for new reefer loads with their comments and tracking, an agent listed them and then
+read each in full. shipment_get now reads every load named as the same full record one load
+gets, with its holds and its newest comments and how many there are, one read per source.
 */
-func TestGetShipment_SeveralLoadsAreOneTableReadOnceForEachSource(t *testing.T) {
+func TestGetShipment_SeveralLoadsAreFullRecordsReadOnceForEachSource(t *testing.T) {
 	t.Parallel()
 
 	first := &shipment.Shipment{ID: pulid.MustNew("shp_"), ProNumber: "S-1",
@@ -96,16 +111,19 @@ func TestGetShipment_SeveralLoadsAreOneTableReadOnceForEachSource(t *testing.T) 
 	holds := &fakeActiveHolds{holds: []*shipmenthold.ShipmentHold{
 		noteHold(first.ID, shipmenthold.HoldSourceUser, "Holding for a new appointment."),
 	}}
-	comments := &fakeNewestComments{comments: []*shipment.ShipmentComment{
-		{
-			ID: pulid.MustNew("shc_"), ShipmentID: first.ID, Comment: "Receiver closed",
-			Source: shipmentvocab.CommentSourceUser,
+	comments := &fakeNewestComments{
+		comments: []*shipment.ShipmentComment{
+			{
+				ID: pulid.MustNew("shc_"), ShipmentID: first.ID, Comment: "Receiver closed",
+				Source: shipmentvocab.CommentSourceUser,
+			},
+			{
+				ID: pulid.MustNew("shc_"), ShipmentID: second.ID, Comment: "ETA 4pm",
+				Source: shipmentvocab.CommentSourceIntegration,
+			},
 		},
-		{
-			ID: pulid.MustNew("shc_"), ShipmentID: second.ID, Comment: "ETA 4pm",
-			Source: shipmentvocab.CommentSourceIntegration,
-		},
-	}}
+		totals: map[pulid.ID]int{first.ID: 9},
+	}
 	tool := newGetShipmentTool(repo, nil, nil, &querytooltest.FakePermissions{Allowed: true}).
 		withBatchReads(holds, comments)
 
@@ -114,50 +132,56 @@ func TestGetShipment_SeveralLoadsAreOneTableReadOnceForEachSource(t *testing.T) 
 	}))
 	require.NoError(t, err)
 
-	outcome, ok := result.(*shipmentReadsOutcome)
+	document := querytooltest.EncodedDocument(t, result)
+	rows, ok := document["items"].([]any)
 	require.True(t, ok)
-	require.Len(t, outcome.Items, 2)
-	assert.Equal(t, "S-1", outcome.Items[0].ProNumber, "rows come in the order named")
-	require.Len(t, outcome.Items[0].ActiveHolds, 1)
-	assert.Equal(t, "Holding for a new appointment.", outcome.Items[0].ActiveHolds[0].Notes)
-	require.NotNil(t, outcome.Items[0].NewestComment)
-	assert.Equal(t, "Receiver closed", outcome.Items[0].NewestComment.Comment)
-	assert.Empty(t, outcome.Items[1].ActiveHolds)
-	assert.Contains(t, outcome.Note, missing.String())
+	require.Len(t, rows, 2)
+	firstRow, ok := rows[0].(map[string]any)
+	require.True(t, ok)
+	assert.Equal(t, "S-1", firstRow["proNumber"], "records come in the order named")
+	assert.Contains(t, firstRow, "rating", "each record is the full summary, not a table row")
+	assert.Contains(t, firstRow, "moves")
+	assert.InDelta(t, 9, firstRow["commentCount"], 0)
+	held := querytooltest.ObjectAt(t, rows, 0, "activeHolds", 0)
+	assert.Equal(t, "Holding for a new appointment.", held["notes"])
+	comment := querytooltest.ObjectAt(t, rows, 0, "recentComments", 0)
+	assert.Equal(t, "Receiver closed", comment["comment"])
+	assert.Contains(t, document["note"], missing.String())
 
 	assert.Equal(t, 1, repo.lists)
 	assert.Equal(t, 1, holds.calls)
 	assert.Equal(t, 1, comments.calls)
+	assert.Equal(t, batchCommentsPerShipment, comments.per)
 	assert.ElementsMatch(t, []pulid.ID{first.ID, second.ID}, comments.asked)
 
-	require.Len(t, outcome.TaintedRecords(), 1, "the integration's comment marks the read")
-	assert.Equal(t, comments.comments[1].ID.String(), outcome.TaintedRecords()[0].ID)
-	assert.NotEmpty(t, outcome.CommentsNote)
-	assert.Equal(t, shipmentReadColumns, encodedColumns(t, outcome))
+	carrier, ok := result.(agent.TaintCarrier)
+	require.True(t, ok)
+	require.Len(t, carrier.TaintedRecords(), 1, "the integration's comment marks the read")
+	assert.Equal(t, comments.comments[1].ID.String(), carrier.TaintedRecords()[0].ID)
+	assert.NotEmpty(t, document["commentsNote"])
 }
 
-func TestGetShipment_SeveralLoadsReadOneAtATimeOnlyInFull(t *testing.T) {
+func TestGetShipment_SeveralLoadsReadInFull(t *testing.T) {
 	t.Parallel()
 
-	tool := newGetShipmentTool(&fakeTrackingShipments{}, nil, nil,
-		&querytooltest.FakePermissions{Allowed: true})
+	first := &shipment.Shipment{ID: pulid.MustNew("shp_"), ProNumber: "S-1"}
+	second := &shipment.Shipment{ID: pulid.MustNew("shp_"), ProNumber: "S-2"}
+	tool := newGetShipmentTool(
+		&fakeTrackingShipments{listed: []*shipment.Shipment{first, second}},
+		nil, nil, &querytooltest.FakePermissions{Allowed: true},
+	)
 
-	_, err := tool.Query(t.Context(), querytooltest.TestParams(map[string]any{
-		"shipmentIds": []any{pulid.MustNew("shp_").String(), pulid.MustNew("shp_").String()},
+	result, err := tool.Query(t.Context(), querytooltest.TestParams(map[string]any{
+		"shipmentIds": []any{first.ID.String(), second.ID.String()},
 		"detail":      "full",
 	}))
-	require.ErrorContains(t, err, "detail full reads one shipment")
-}
+	require.NoError(t, err)
 
-func encodedColumns(t *testing.T, result any) []string {
-	t.Helper()
-
-	raw, ok := querytooltest.EncodedDocument(t, result)["columns"].([]any)
+	rows, ok := querytooltest.EncodedDocument(t, result)["items"].([]any)
 	require.True(t, ok)
-	columns := make([]string, 0, len(raw))
-	for _, column := range raw {
-		columns = append(columns, column.(string))
-	}
-
-	return columns
+	require.Len(t, rows, 2)
+	row, ok := rows[1].(map[string]any)
+	require.True(t, ok)
+	assert.Equal(t, "S-2", row["proNumber"])
+	assert.Contains(t, row, "activeHolds")
 }

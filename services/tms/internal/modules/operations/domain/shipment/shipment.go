@@ -121,6 +121,7 @@ type Shipment struct {
 	TransferredToBillingAt    *int64                              `json:"transferredToBillingAt"     keel:"transferred_to_billing_at"`
 	MarkedReadyToBillAt       *int64                              `json:"markedReadyToBillAt"        keel:"marked_ready_to_bill_at,label=Ready to Bill At"`
 	BilledAt                  *int64                              `json:"billedAt"                   keel:"billed_at"`
+	StatusChangedAt           int64                               `json:"statusChangedAt"            keel:"status_changed_at,readonly,noreport"`
 	FuelSurchargeLocked       bool                                `json:"fuelSurchargeLocked"        keel:"fuel_surcharge_locked"`
 	RatingDetail              *RatingDetail                       `json:"ratingDetail"               keel:"rating_detail,jsonb"`
 	RateQuoteID               *pulid.ID                           `json:"rateQuoteId"                keel:"rate_quote_id"`

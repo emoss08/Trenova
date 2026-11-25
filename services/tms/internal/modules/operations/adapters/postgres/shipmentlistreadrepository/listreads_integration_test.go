@@ -131,15 +131,22 @@ func TestListReads_FindTheOrdersPOAndTheHoldsInForce(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	newest, err := newestCommentsQuery([]pulid.ID{held.ShipmentID, free.ShipmentID}).
-		All(tenantCtx, db)
+	reader := NewNewestCommentReader(ListReadParams{DB: postgres.WrapDB(db)})
+	digests, err := reader.NewestComments(tenantCtx, &shipmentports.NewestCommentsRequest{
+		ShipmentIDs: []pulid.ID{held.ShipmentID, free.ShipmentID},
+		PerShipment: 1,
+	})
 	require.NoError(t, err)
-	byShipment := make(map[pulid.ID]string, len(newest))
-	for _, comment := range newest {
-		byShipment[comment.ShipmentID] = comment.Comment
-	}
-	assert.Equal(t, "newer note", byShipment[held.ShipmentID],
-		"each shipment's newest comment, in one read")
+	digest, ok := digests[held.ShipmentID]
+	require.True(t, ok)
+	assert.GreaterOrEqual(t, digest.Total, 2, "the count reads every top-level comment")
+	require.Len(t, digest.Newest, 1, "only the newest one is read back")
+	assert.Equal(t, "newer note", digest.Newest[0].Comment)
+
+	both, err := newestCommentsQuery([]pulid.ID{held.ShipmentID}, 2).All(tenantCtx, db)
+	require.NoError(t, err)
+	require.GreaterOrEqual(t, len(both), 2)
+	assert.Equal(t, "newer note", both[0].Comment, "newest first")
 
 	otherTenant := dbscope.WithTenant(ctx, dbscope.Tenant{
 		OrganizationID: pulid.MustNew("org_"),

@@ -37,13 +37,22 @@ type ActiveHoldReader interface {
 	) ([]*shipmenthold.ShipmentHold, error)
 }
 
+const MaxNewestCommentsPerShipment = 20
+
 type NewestCommentsRequest struct {
 	ShipmentIDs []pulid.ID
+	PerShipment int
+}
+
+type ShipmentCommentDigest struct {
+	ShipmentID pulid.ID
+	Total      int
+	Newest     []*shipment.ShipmentComment
 }
 
 type NewestCommentReader interface {
 	NewestComments(
 		ctx context.Context,
 		req *NewestCommentsRequest,
-	) ([]*shipment.ShipmentComment, error)
+	) (map[pulid.ID]*ShipmentCommentDigest, error)
 }

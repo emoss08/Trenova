@@ -199,6 +199,7 @@ func TestSearchShipments_DistinguishesInTransitFromUnrecorded(t *testing.T) {
 
 	repo := &fakeShipmentRepo{items: []*shipment.Shipment{{
 		ID: pulid.MustNew("shp_"), ProNumber: "S-1001", Status: shipmentvocab.StatusNew,
+		CreatedAt: 1_790_000_000,
 	}}}
 
 	result, err := shipmentquerytools.NewShipmentListTool(

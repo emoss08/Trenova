@@ -10,12 +10,12 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/listtool"
 	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/querytool"
 	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/shipmentquerytools"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmenttracking"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmenthold"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -61,16 +61,17 @@ func loadShipments(
 	shipments shipmentports.ShipmentRepository,
 	tenant pagination.TenantInfo,
 	ids []pulid.ID,
-	options shipmentports.ShipmentOptions,
+	options *shipmentports.ShipmentOptions,
 ) ([]*shipment.Shipment, []string, error) {
-	options.IDs = ids
+	scoped := *options
+	scoped.IDs = ids
 	result, err := shipments.List(ctx, &shipmentports.ListShipmentsRequest{
 		Filter: &pagination.QueryOptions{
 			TenantInfo: tenant,
 			Pagination: pagination.Info{Limit: len(ids)},
 		},
 		Cursor:          pagination.CursorInfo{Limit: len(ids)},
-		ShipmentOptions: options,
+		ShipmentOptions: scoped,
 	})
 	if err != nil {
 		return nil, nil, err
@@ -105,39 +106,19 @@ func missingShipmentsNote(missing []string) string {
 	return "No shipment of this organization has these ids: " + strings.Join(missing, ", ") + "."
 }
 
-var shipmentReadColumns = []string{
-	"proNumber", "status", "customer", "pickup", "delivery", "drivers", "carrying",
-}
+const batchCommentsPerShipment = 5
 
-type shipmentReadRow struct {
-	ID                    string              `json:"id"`
-	ProNumber             string              `json:"proNumber"`
-	BOL                   string              `json:"bol,omitempty"`
-	Status                string              `json:"status"`
-	Customer              string              `json:"customer,omitempty"`
-	Pickup                string              `json:"pickup,omitempty"`
-	Delivery              string              `json:"delivery,omitempty"`
-	Drivers               string              `json:"drivers,omitempty"`
-	Carrying              string              `json:"carrying,omitempty"`
-	TotalChargeAmount     string              `json:"totalChargeAmount,omitempty"`
-	BillingTransferStatus string              `json:"billingTransferStatus,omitempty"`
-	ActiveHolds           []shipmentHoldRow   `json:"activeHolds,omitempty"`
-	NewestComment         *shipmentCommentRow `json:"newestComment,omitempty"`
-}
-
-type shipmentReadsOutcome struct {
-	Count            int               `json:"count"`
-	SearchedFor      []string          `json:"searchedFor"`
-	Columns          []string          `json:"columns"`
-	Items            []shipmentReadRow `json:"items"`
-	Note             string            `json:"note,omitempty"`
-	CommentsNote     string            `json:"commentsNote,omitempty"`
-	LeftOutForAccess string            `json:"leftOutForAccess,omitempty"`
+type shipmentRecordsOutcome struct {
+	Count            int    `json:"count"`
+	Items            []any  `json:"items"`
+	Note             string `json:"note,omitempty"`
+	CommentsNote     string `json:"commentsNote,omitempty"`
+	LeftOutForAccess string `json:"leftOutForAccess,omitempty"`
 
 	outside []agentrecord.RecordRef
 }
 
-func (o *shipmentReadsOutcome) TaintedRecords() []agentrecord.RecordRef { return o.outside }
+func (o *shipmentRecordsOutcome) TaintedRecords() []agentrecord.RecordRef { return o.outside }
 
 func (t *getShipmentTool) withBatchReads(
 	holds shipmentports.ActiveHoldReader,
@@ -155,16 +136,8 @@ func (t *getShipmentTool) several(
 	ids []pulid.ID,
 	detail shipmentquerytools.Detail,
 ) (any, error) {
-	if detail == shipmentquerytools.DetailFull {
-		return nil, fmt.Errorf("detail full reads one shipment; name one id for it")
-	}
-
 	entities, missing, err := loadShipments(ctx, t.repo, querytool.TenantOf(params), ids,
-		shipmentports.ShipmentOptions{
-			IncludeCustomer:    true,
-			IncludeRoute:       true,
-			IncludeCommodities: true,
-		})
+		&shipmentports.ShipmentOptions{ExpandShipmentDetails: true, IncludeCustomer: true})
 	if err != nil {
 		return nil, err
 	}
@@ -178,62 +151,49 @@ func (t *getShipmentTool) several(
 	if err != nil {
 		return nil, err
 	}
-	comments, err := t.batchNewestComments(ctx, readable, found)
+	comments, err := t.newestComments(ctx, readable, found)
 	if err != nil {
 		return nil, err
 	}
 
-	outcome := &shipmentReadsOutcome{
+	people := t.access.Redactor(ctx, params)
+	outcome := &shipmentRecordsOutcome{
 		Count:            len(entities),
-		SearchedFor:      []string{"shipments by id"},
-		Columns:          shipmentReadColumns,
-		Items:            make([]shipmentReadRow, 0, len(entities)),
+		Items:            make([]any, 0, len(entities)),
 		Note:             missingShipmentsNote(missing),
 		LeftOutForAccess: readable.leftOutNote(params),
 	}
 	for _, entity := range entities {
-		row := shipmentReadRowOf(entity)
-		row.ActiveHolds = holds[entity.ID]
-		if comment, ok := comments[entity.ID]; ok {
-			commentRow, outside := commentRowOf(comment)
-			row.NewestComment = &commentRow
-			if outside {
-				outcome.outside = append(outcome.outside, agentrecord.RecordRef{
-					EntityType: agent.TaintEntityShipmentComment,
-					ID:         comment.ID.String(),
-				})
-			}
+		var newest []*shipment.ShipmentComment
+		total := 0
+		if digest, ok := comments[entity.ID]; ok {
+			newest, total = digest.Newest, digest.Total
 		}
-		outcome.Items = append(outcome.Items, row)
-	}
-	if len(outcome.outside) > 0 {
-		outcome.CommentsNote = outsideCommentsNote
-	}
-	for _, entity := range entities {
-		if ref, outside := enteredOutside(entity); outside {
-			outcome.outside = append(outcome.outside, ref)
+		activity := newShipmentActivity(newest, holds[entity.ID])
+		activity.countComments(total)
+		activity.noteEntry(entity)
+		outcome.outside = append(outcome.outside, activity.outside...)
+		if activity.CommentsNote != "" {
+			outcome.CommentsNote = activity.CommentsNote
+			activity.CommentsNote = ""
 		}
+		if detail == shipmentquerytools.DetailFull {
+			outcome.Items = append(outcome.Items, newShipmentView(entity, activity))
+			continue
+		}
+		outcome.Items = append(outcome.Items, summarizeShipment(&shipmentSummaryInput{
+			entity:   entity,
+			activity: activity,
+			timezone: params.Timezone,
+			people:   people,
+		}))
 	}
 
-	return outcome, nil
-}
-
-func shipmentReadRowOf(entity *shipment.Shipment) shipmentReadRow {
-	listed := shipmentquerytools.ToRow(entity)
-
-	return shipmentReadRow{
-		ID:                    listed.ID,
-		ProNumber:             listed.ProNumber,
-		BOL:                   listed.BOL,
-		Status:                listed.Status,
-		Customer:              listed.Customer,
-		Pickup:                listed.Pickup,
-		Delivery:              listed.Delivery,
-		Drivers:               listed.Drivers,
-		Carrying:              listed.Carrying,
-		TotalChargeAmount:     listed.TotalChargeAmount,
-		BillingTransferStatus: listed.BillingTransferStatus,
+	if detail == shipmentquerytools.DetailFull {
+		return people.Withhold(outcome)
 	}
+
+	return people.Annotate(outcome)
 }
 
 func (t *getShipmentTool) readableBatch(
@@ -257,8 +217,8 @@ func (t *getShipmentTool) batchActiveHolds(
 	ctx context.Context,
 	readable shipmentActivityAccess,
 	ids []pulid.ID,
-) (map[pulid.ID][]shipmentHoldRow, error) {
-	out := make(map[pulid.ID][]shipmentHoldRow, len(ids))
+) (map[pulid.ID][]*shipmenthold.ShipmentHold, error) {
+	out := make(map[pulid.ID][]*shipmenthold.ShipmentHold, len(ids))
 	if !readable.holds || len(ids) == 0 {
 		return out, nil
 	}
@@ -269,35 +229,31 @@ func (t *getShipmentTool) batchActiveHolds(
 	}
 	for _, hold := range holds {
 		if hold != nil {
-			out[hold.ShipmentID] = append(out[hold.ShipmentID], holdRowOf(hold))
+			out[hold.ShipmentID] = append(out[hold.ShipmentID], hold)
 		}
 	}
 
 	return out, nil
 }
 
-func (t *getShipmentTool) batchNewestComments(
+func (t *getShipmentTool) newestComments(
 	ctx context.Context,
 	readable shipmentActivityAccess,
 	ids []pulid.ID,
-) (map[pulid.ID]*shipment.ShipmentComment, error) {
-	out := make(map[pulid.ID]*shipment.ShipmentComment, len(ids))
+) (map[pulid.ID]*shipmentports.ShipmentCommentDigest, error) {
 	if !readable.comments || len(ids) == 0 {
-		return out, nil
+		return map[pulid.ID]*shipmentports.ShipmentCommentDigest{}, nil
 	}
 
-	comments, err := t.batchComments.NewestComments(ctx,
-		&shipmentports.NewestCommentsRequest{ShipmentIDs: ids})
+	digests, err := t.batchComments.NewestComments(ctx, &shipmentports.NewestCommentsRequest{
+		ShipmentIDs: ids,
+		PerShipment: batchCommentsPerShipment,
+	})
 	if err != nil {
 		return nil, fmt.Errorf("read the newest comments on these shipments: %w", err)
 	}
-	for _, comment := range comments {
-		if comment != nil && !comment.IsDeleted() {
-			out[comment.ShipmentID] = comment
-		}
-	}
 
-	return out, nil
+	return digests, nil
 }
 
 var trackingColumns = []string{"proNumber", "status", "customer", "summary"}
