@@ -138,7 +138,13 @@ never picks up clean what it set aside after reading outside content; see
   them driving again. The projection is only as wrong as a duty change since
   the last read, which the next read corrects within a minute.
 - **Arrivals and departures, three ways.**
-  - Recorded stop actuals publish `shipment_move.arrived` / `departed`, above.
+  - Recorded stop actuals publish `shipment_move.arrived` / `departed`, above,
+    whichever path wrote them: a recorded or reconciled actual, or stop times
+    typed into the shipment form and saved (`shipmentwrite.announceStopActuals`).
+    Every writer of stop times compares the move before and after through
+    `operations/app/stopactualnotice`, which records the stop events and
+    publishes the first arrival or departure; a new writer uses it too, or
+    waits on that move never hear the truck.
   - A provider's geofence entry or exit (`telematicsservice.applyStopEvent`)
     reaches the waits on the tractor's active move whether or not the
     organization records stop actuals from it (`EnableAutoStopActuals`), for a

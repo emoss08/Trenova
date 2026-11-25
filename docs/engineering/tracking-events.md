@@ -29,6 +29,7 @@ EDI 214 (every AT7)  ─────────────────┴ Reco
 | Which stop a visit is about | `domain/stopvisit` (`StopForObserved`, `StopForReported`, `MatchObserved`) |
 | Service | `internal/modules/operations/app/trackingeventservice` |
 | Reconcile under the move lock | `app/shipmentmoveservice/stopactual_reconcile.go` |
+| Stop events and arrival/departure agent events for any write of stop times | `app/stopactualnotice` (move service and shipment save) |
 | Repository and table | `adapters/postgres/trackingeventrepository`, migration `20261231008990_tracking_events` |
 | Telematics port | `workforce/ports/telematicsports.StopVisitRecorder` |
 | Driver portal port | `workforce/ports/driverportalports.StopReporter` |
