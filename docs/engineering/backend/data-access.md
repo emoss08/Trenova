@@ -244,8 +244,12 @@ struct.
   an index on it serves the filter and the list's count, while its patterns compare its text;
   `contains`/`startswith`/`endswith` escape `%` and `_`. A filter it cannot apply is skipped. Search uses the entity's `tsvector`
   column under the `simple` and `english` configurations (`websearch` plus prefix matching while
-  typing), or its configured searchable fields with `ILIKE`. Never build a `WHERE` or `ORDER BY`
-  from input.
+  typing), or its configured searchable fields with `ILIKE`. A query of nothing but two to 50
+  identifiers (tokens with a digit, split by spaces, commas, semicolons or pipes: three pro
+  numbers) matches a row holding any of them, not all (`searchtext.IdentifierTerms`; one
+  `or`'d `tsquery` on the vector's GIN index, or each term's `ILIKE`s `OR`'d). A custom search
+  matches its vector through `searchtext.MatchVector` to get the same. Never build a `WHERE` or
+  `ORDER BY` from input.
 - **Close spellings.** An entity whose search config lists `FuzzyFields` (customers, locations,
   workers, commodities) falls back, only when its search matches nothing, to the rows where every
   query word of four or more letters is a close spelling of one of those fields: pg_trgm

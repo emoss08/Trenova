@@ -504,6 +504,39 @@ func TestSearch_WebsearchSyntaxDropsThePrefixQuery(t *testing.T) {
 	}
 }
 
+/*
+records_query searched shipments for three pro numbers in one query and found
+none: the vector matched a shipment holding all three. A query of nothing but
+identifiers finds a record matching any of them.
+*/
+func TestSearch_SeveralIdentifiersMatchAnyOfThem(t *testing.T) {
+	t.Parallel()
+
+	sql, args := filtered(t, &pagination.QueryOptions{
+		Query: "S26110991834141 S26110900411775, S26110908864487",
+	})
+
+	assert.Contains(t, sql, `t."search_vector" @@ (websearch_to_tsquery('simple'::regconfig, $3) || `+
+		`websearch_to_tsquery('english'::regconfig, $3))`)
+	assert.Equal(t, []any{
+		"org_1", "bu_1", "S26110991834141 or S26110900411775 or S26110908864487",
+	}, args)
+}
+
+func TestSearch_SeveralIdentifiersMatchAnyOfThemWithoutAVector(t *testing.T) {
+	t.Parallel()
+
+	q := testPlainTrucks.Query()
+	p := newPlan(t.Context(), q, nil)
+	q.Where(p.where(&pagination.QueryOptions{Query: "TRK-101 TRK-102"})...).Limit(10)
+
+	sql, args := render(t, q)
+
+	assert.Contains(t, sql, `AND (((pt."code" ILIKE $3) OR (CAST(pt."status" AS text) ILIKE $4)) OR `+
+		`((pt."code" ILIKE $5) OR (CAST(pt."status" AS text) ILIKE $6))) LIMIT 10`)
+	assert.Equal(t, []any{"org_1", "bu_1", "%TRK-101%", "%TRK-101%", "%TRK-102%", "%TRK-102%"}, args)
+}
+
 func TestSearch_ConfiguredFieldsWithoutAVector(t *testing.T) {
 	t.Parallel()
 

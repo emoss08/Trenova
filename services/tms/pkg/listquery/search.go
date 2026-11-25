@@ -16,9 +16,13 @@ func (p *plan) search(query string) keel.Pred {
 	}
 
 	if p.cat.Vector >= 0 {
-		return p.vector().Match(query, searchtext.Options(query)...)
+		return searchtext.MatchVector(p.vector(), query)
 	}
 
+	return anyTerm(query, p.textSearch)
+}
+
+func (p *plan) textSearch(query string) keel.Pred {
 	if len(p.cat.Search) > 0 {
 		return p.configuredSearch(query)
 	}
@@ -26,12 +30,31 @@ func (p *plan) search(query string) keel.Pred {
 	return p.columnSearch(query)
 }
 
+// anyTerm is match for the query, or for any of the identifiers it lists.
+func anyTerm(query string, match func(string) keel.Pred) keel.Pred {
+	terms := searchtext.IdentifierTerms(query)
+	if terms == nil {
+		return match(query)
+	}
+	alternatives := make([]keel.Pred, 0, len(terms))
+	for _, term := range terms {
+		if pred := match(term); pred != nil {
+			alternatives = append(alternatives, pred)
+		}
+	}
+	if len(alternatives) == 0 {
+		return nil
+	}
+
+	return keel.Or(alternatives...)
+}
+
 func (p *plan) rank(query string) keel.Expr {
 	if query == "" || p.cat.Vector < 0 {
 		return nil
 	}
 
-	return p.vector().Rank(query, searchtext.Options(query)...)
+	return searchtext.RankVector(p.vector(), query)
 }
 
 func (p *plan) vector() keel.TSVectorCol {

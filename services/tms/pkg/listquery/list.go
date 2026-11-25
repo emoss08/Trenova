@@ -98,7 +98,9 @@ func narrow[T any](p *plan, q keel.Query[*T], req *Request[T]) *fuzzyRead[T] {
 	query := queryOf(req.Filter)
 	if search := p.search(query); search != nil {
 		if req.AlsoMatch != nil {
-			search = keel.Or(search, req.AlsoMatch(query))
+			if also := anyTerm(query, req.AlsoMatch); also != nil {
+				search = keel.Or(search, also)
+			}
 		}
 		q.Where(search)
 	}

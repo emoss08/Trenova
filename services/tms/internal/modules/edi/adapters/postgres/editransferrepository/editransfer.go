@@ -449,7 +449,7 @@ func transferSearch(term string, made []pulid.ID) keel.Pred {
 		return nil
 	}
 	t := editransferdb.EDITransfers
-	matches := []keel.Pred{t.SearchVector.Match(term, searchtext.Options(term)...)}
+	matches := []keel.Pred{searchtext.MatchVector(t.SearchVector, term)}
 	if len(made) > 0 {
 		matches = append(matches, t.TargetShipmentID.In(made...), t.SourceShipmentID.In(made...))
 	}
