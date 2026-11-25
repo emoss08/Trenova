@@ -27282,6 +27282,7 @@
   "Send a whole number from {0} to {1}": "請傳送 {0} 到 {1} 之間的整數",
   "Send again": "再次寄送",
   "Send an id from the read tool named here; never guess one": "請傳送此處指定之讀取工具提供的 ID；切勿猜測",
+  "Send answers": "送出回答",
   "Send any email to the address. We'll wait for it here.": "向該地址傳送任何郵件。我們會在這裡等待它。",
   "Send anyway": "仍要傳送",
   "Send at most 20 details": "最多傳送 20 項詳細資料",

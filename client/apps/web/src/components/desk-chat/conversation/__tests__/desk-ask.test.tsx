@@ -33,6 +33,7 @@ const reportWindow: ThreadAskRequest = {
   suggestion: "",
   input: { type: "text" },
   fields: [],
+  questions: [],
 };
 
 /** The dock sits in a conversation's room, beside the composer. */
@@ -225,6 +226,63 @@ function said(content: string, overrides: Partial<AssistantMessage> = {}): Assis
     ...overrides,
   } as AssistantMessage;
 }
+
+describe("DeskAskDock with questions asked together", () => {
+  const together: ThreadAskRequest = {
+    ...reportWindow,
+    question: "Before I plan the delayed loads",
+    options: [],
+    allowOther: false,
+    otherHint: "",
+    questions: [
+      {
+        question: "Which batches should I plan?",
+        options: [
+          { value: "all", label: "All four", detail: "164 shipments" },
+          { value: "Batch 1 only", label: "Batch 1 only", detail: "" },
+        ],
+        allowOther: false,
+        otherHint: "",
+        input: { type: "text" },
+      },
+      {
+        question: "Per-cwt rate for S26110991834141?",
+        options: [],
+        allowOther: true,
+        otherHint: "Rate per cwt",
+        input: { type: "number" },
+      },
+    ],
+  };
+
+  it("sends every answer together, one line per question, once each has one", async () => {
+    const onAnswer = dock(together);
+    const send = screen.getByRole("button", { name: "Send answers" });
+
+    expect(send).toBeDisabled();
+    await userEvent.click(screen.getByRole("button", { name: /All four/ }));
+    expect(screen.getByRole("button", { name: /All four/ })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+    expect(send).toBeDisabled();
+    await userEvent.type(screen.getByRole("spinbutton", { name: "Rate per cwt" }), "120.5");
+    await userEvent.click(send);
+
+    expect(onAnswer).toHaveBeenCalledWith(
+      "Which batches should I plan? — All four (all)\nPer-cwt rate for S26110991834141? — 120.5",
+      [],
+    );
+  });
+
+  it("takes no number key, because a key cannot say which question it answers", () => {
+    const onAnswer = dock(together);
+
+    fireEvent.keyDown(document.body, { key: "1" });
+
+    expect(onAnswer).not.toHaveBeenCalled();
+  });
+});
 
 describe("DeskAskRecord", () => {
   it("records the question and the choice the person picked, by its label", () => {

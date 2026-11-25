@@ -364,6 +364,7 @@ describe("DeskThread's open question", () => {
     suggestion: "",
     input: { type: "text" },
     fields: [],
+    questions: [],
   };
 
   /** The reply asked the question and nothing has answered it. */

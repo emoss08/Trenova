@@ -1,4 +1,4 @@
-import type { AskField, AskInput } from "@/components/assistant/ask-requests";
+import type { AskField, AskInput, AskQuestionItem } from "@/components/assistant/ask-requests";
 import { mentionToken } from "@/components/assistant/composer-types";
 import type { AssistantEntityRef } from "@/types/assistant";
 import { fromISODateString } from "@trenova/shared/lib/date";
@@ -96,6 +96,54 @@ export function askFieldsAnswer(
       return null;
     }
     lines.push(`${field.label}: ${entered.text}`);
+    const mention = entered.mention;
+    if (mention && !mentions.some((m) => m.type === mention.type && m.id === mention.id)) {
+      mentions.push(mention);
+    }
+  }
+
+  return lines.length === 0 ? null : { text: lines.join("\n"), mentions };
+}
+
+/** What a person has given one question of several: an option they picked, or a value of their own. */
+export type AskPick = { option: string } | { own: AskValue };
+
+/**
+ * The answer to several questions asked together: one line per question,
+ * `Question — answer`, in the order they were asked. An option answers with
+ * its label as the person read it and its value when the two differ, so the
+ * agent reads exactly what it offered. Null until every question is answered.
+ */
+export function askQuestionsAnswer(
+  items: readonly AskQuestionItem[],
+  picks: readonly (AskPick | undefined)[],
+): AskAnswer | null {
+  const lines: string[] = [];
+  const mentions: AssistantEntityRef[] = [];
+
+  for (const [index, item] of items.entries()) {
+    const pick = picks[index];
+    if (pick === undefined) {
+      return null;
+    }
+    if ("option" in pick) {
+      const option = item.options.find((candidate) => candidate.value === pick.option);
+      if (option === undefined) {
+        return null;
+      }
+      const said =
+        option.label === option.value ? option.label : `${option.label} (${option.value})`;
+      lines.push(`${item.question} — ${said}`);
+      continue;
+    }
+    if (!item.allowOther) {
+      return null;
+    }
+    const entered = askValueText(item.input, pick.own);
+    if (entered === null) {
+      return null;
+    }
+    lines.push(`${item.question} — ${entered.text}`);
     const mention = entered.mention;
     if (mention && !mentions.some((m) => m.type === mention.type && m.id === mention.id)) {
       mentions.push(mention);

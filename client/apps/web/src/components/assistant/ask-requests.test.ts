@@ -69,8 +69,60 @@ describe("askRequestsFrom", () => {
         suggestion: "",
         input: { type: "text" },
         fields: [],
+        questions: [],
       },
     ]);
+  });
+
+  // The Go contract sends questions asked together as a list of their own,
+  // under a heading; each keeps its own options, box and type.
+  it("reads questions asked together, each with its own answer", () => {
+    const together = {
+      question: "Before I re-rate the loads",
+      options: [],
+      allowOther: true,
+      questions: [
+        {
+          question: "Per-cwt rate for S26110991834141?",
+          options: [],
+          allowOther: true,
+          otherHint: "Between 1.00 and 500.00",
+          input: { type: "number" },
+        },
+        {
+          question: "Which batches should I plan?",
+          options: [{ value: "all", label: "All four", detail: "164 shipments" }],
+          allowOther: false,
+        },
+        { question: "Which batches should I plan?", options: [], allowOther: true },
+        { question: "", options: [], allowOther: true },
+        { question: "Nothing answers this", options: [], allowOther: false },
+      ],
+      note: "",
+    };
+
+    const [request] = askRequestsFrom([exchange("ask_user", fenced(together))]);
+
+    expect(request.question).toBe("Before I re-rate the loads");
+    expect(request.options).toEqual([]);
+    expect(request.allowOther).toBe(false);
+    expect(request.questions).toEqual([
+      {
+        question: "Per-cwt rate for S26110991834141?",
+        options: [],
+        allowOther: true,
+        otherHint: "Between 1.00 and 500.00",
+        input: { type: "number" },
+      },
+      {
+        question: "Which batches should I plan?",
+        options: [{ value: "all", label: "All four", detail: "164 shipments" }],
+        allowOther: false,
+        otherHint: "",
+        input: { type: "text" },
+      },
+    ]);
+    expect(answersInComposer(request)).toBe(false);
   });
 
   it("keeps the free-text box off for a closed set", () => {
@@ -463,6 +515,7 @@ describe("answersInComposer", () => {
     suggestion: "",
     input: { type: "text" },
     fields: [],
+    questions: [],
   };
 
   it("is the composer for a value in words", () => {

@@ -29,6 +29,9 @@ const (
 	// maxAskFields bounds one form. A write refused for more missing values
 	// than this was called with too little looked up, not too little asked.
 	maxAskFields = 8
+	// maxAskQuestions bounds the questions asked together. Past it the
+	// person is filling in a survey, not settling what the work turns on.
+	maxAskQuestions = 6
 
 	// maxOpenQuestionRunes is the longest a question answered only by typing
 	// may be. One value fits in one short sentence; the question that asked
@@ -77,7 +80,12 @@ const askUserDescription = "Ask the person for one value you need and cannot saf
 	"few readings, or a choice where picking wrongly would do work nobody asked for. " +
 	"Infer everything you can first — a request naming a window, a date range or a " +
 	"customer has answered the question already — and never ask for something the " +
-	"person has already told you. Ask for one value per call. For a choice, give options, " +
+	"person has already told you. Every question to the person goes through this " +
+	"tool, never into your reply: whether to go ahead, what to do next, which of a " +
+	"few readings they mean. When you need several things settled — which batches to " +
+	"plan and whether to include delayed loads, or a rate for each of three loads — " +
+	"ask them together in one call with questions, one entry each, rather than one " +
+	"question a turn. For a single choice, give options, " +
 	"shown as buttons; the person can also type their own value unless you set " +
 	"allowOther false. For a typed value, set input to its type: a number, a date, a " +
 	"date and time, or a record such as a customer or a location, which the person " +
@@ -97,17 +105,23 @@ const askUserDescription = "Ask the person for one value you need and cannot saf
 // and price, all in one question: a form in disguise, answered by a person
 // retyping a load sheet into a chat box.
 const multiPartAskRefusal = "This question asks for several values at once, and a " +
-	"person can only answer it by typing all of them into one box. Ask for the one " +
-	"value you need most, in one short question, with any examples in otherHint " +
-	"rather than the question. To create or change a record, do not collect its " +
+	"person can only answer it by typing all of them into one box. Ask each value as " +
+	"its own entry of questions, in one call, each a short question with its own " +
+	"options or input, with any examples in otherHint. To create or change a record, " +
+	"do not collect its " +
 	"details first: call the write tool with what you already know, and if it is " +
 	"refused for missing values, call ask_user with fields for exactly those values."
 
 // mixedAskRefusal answers a question that offers choices and a form at once.
 // The person cannot both pick one value and fill several.
-const mixedAskRefusal = "ask_user takes options, for one choice, or fields, for the " +
-	"values a write tool said are missing, but not both. Ask for the choice on its " +
-	"own, or send only the fields."
+const mixedAskRefusal = "ask_user takes options, for one choice, questions, for " +
+	"several asked together, or fields, for the values a write tool said are missing, " +
+	"but only one of them. Put each choice in questions, or send only the fields."
+
+// unshowableQuestionsRefusal answers questions none of which could be shown.
+const unshowableQuestionsRefusal = "None of the questions could be shown. Each needs a " +
+	"question and either options to choose from or allowOther left true. Send them " +
+	"again with those."
 
 // unshowableFieldsRefusal answers a form none of whose fields could be shown.
 const unshowableFieldsRefusal = "None of the fields could be shown. Each needs a key, " +
@@ -210,7 +224,8 @@ func Spec() kernelports.ToolSpec {
 					toolschema.KeyType: toolschema.TypeString,
 					toolschema.KeyDescription: "What you need, as one short, plain question about one " +
 						"value. \"Which window should the report cover?\" Examples of an " +
-						"answer go in otherHint, not here.",
+						"answer go in otherHint, not here. With questions, the heading over " +
+						"them: \"Before I plan the delayed loads\".",
 				},
 				"options": askOptionsSchema(),
 				"allowOther": map[string]any{
@@ -235,8 +250,9 @@ func Spec() kernelports.ToolSpec {
 						"otherHint. Leave it out only when nothing points to any value, such " +
 						"as a PO number only the person knows.",
 				},
-				"input":  askInputSchema(),
-				"fields": askFieldsSchema(),
+				"input":     askInputSchema(),
+				"fields":    askFieldsSchema(),
+				"questions": askQuestionsSchema(),
 			},
 			toolschema.KeyRequired:             []string{"question"},
 			toolschema.KeyAdditionalProperties: false,
@@ -270,6 +286,42 @@ func askOptionsSchema() map[string]any {
 				},
 			},
 			toolschema.KeyRequired:             []string{askPropLabel},
+			toolschema.KeyAdditionalProperties: false,
+		},
+	}
+}
+
+// askQuestionsSchema is several questions asked together, each answered on
+// its own: a choice of its own options, a value typed in its own box, or both.
+func askQuestionsSchema() map[string]any {
+	return map[string]any{
+		toolschema.KeyType: toolschema.TypeArray,
+		toolschema.KeyDescription: "Several questions asked at once, when the work needs more " +
+			"than one thing settled: each is answered on its own and the answers arrive " +
+			"together, one line per question. Never with options or fields at the top level.",
+		toolschema.KeyMinItems: 1,
+		toolschema.KeyMaxItems: maxAskQuestions,
+		toolschema.KeyItems: map[string]any{
+			toolschema.KeyType: toolschema.TypeObject,
+			toolschema.KeyProperties: map[string]any{
+				"question": map[string]any{
+					toolschema.KeyType: toolschema.TypeString,
+					toolschema.KeyDescription: "One short, plain question about one value. " +
+						"\"Which batches should I plan?\"",
+				},
+				"options": askOptionsSchema(),
+				"allowOther": map[string]any{
+					toolschema.KeyType: toolschema.TypeBoolean,
+					toolschema.KeyDescription: "Whether the person may type a value instead of " +
+						"picking one. True unless the value is genuinely closed.",
+				},
+				"otherHint": map[string]any{
+					toolschema.KeyType:        toolschema.TypeString,
+					toolschema.KeyDescription: "What a typed value should look like.",
+				},
+				"input": askInputSchema(),
+			},
+			toolschema.KeyRequired:             []string{"question"},
 			toolschema.KeyAdditionalProperties: false,
 		},
 	}
@@ -367,16 +419,27 @@ type askField struct {
 	Optional   bool   `json:"optional,omitempty"`
 }
 
-// askRequest is what the client renders and what the model gets back.
-type askRequest struct {
+// askQuestion is one of several questions asked together, answered on its
+// own: one of its options, or a value of the person's own.
+type askQuestion struct {
 	Question   string      `json:"question"`
 	Options    []askOption `json:"options"`
 	AllowOther bool        `json:"allowOther"`
 	OtherHint  string      `json:"otherHint,omitempty"`
-	Suggestion string      `json:"suggestion,omitempty"`
 	Input      *askInput   `json:"input,omitempty"`
-	Fields     []askField  `json:"fields,omitempty"`
-	Note       string      `json:"note"`
+}
+
+// askRequest is what the client renders and what the model gets back.
+type askRequest struct {
+	Question   string        `json:"question"`
+	Options    []askOption   `json:"options"`
+	AllowOther bool          `json:"allowOther"`
+	OtherHint  string        `json:"otherHint,omitempty"`
+	Suggestion string        `json:"suggestion,omitempty"`
+	Input      *askInput     `json:"input,omitempty"`
+	Fields     []askField    `json:"fields,omitempty"`
+	Questions  []askQuestion `json:"questions,omitempty"`
+	Note       string        `json:"note"`
 }
 
 // Resolve turns a model's ask_user call into the question the thread shows,
@@ -420,6 +483,22 @@ func askRequestFrom(
 	arguments map[string]any,
 ) (request *askRequest, refusal string) {
 	rawOptions := arrayArg(arguments, "options")
+	if rawQuestions := arrayArg(arguments, "questions"); len(rawQuestions) > 0 {
+		if len(rawOptions) > 0 || len(arrayArg(arguments, "fields")) > 0 {
+			return nil, mixedAskRefusal
+		}
+		questions, several := askQuestionsFrom(rawQuestions)
+		if several != "" {
+			return nil, several
+		}
+		if len(questions) == 0 {
+			return nil, unshowableQuestionsRefusal
+		}
+		request = &askRequest{Question: question, Options: []askOption{}, Questions: questions}
+		request.Note = askNote(request)
+
+		return request, ""
+	}
 	if rawFields := arrayArg(arguments, "fields"); len(rawFields) > 0 {
 		if len(rawOptions) > 0 {
 			return nil, mixedAskRefusal
@@ -477,7 +556,12 @@ func askRequestFrom(
 // prompt above".
 func askNote(request *askRequest) string {
 	var b strings.Builder
-	if fields := len(request.Fields); fields > 0 {
+	if questions := len(request.Questions); questions > 0 {
+		fmt.Fprintf(&b, "The person has been shown %d %s together, pinned above their "+
+			"message box, each with its choices. Their answers arrive together as their "+
+			"next message, one line per question. ", questions,
+			inflect.Pluralize("question", "questions", questions))
+	} else if fields := len(request.Fields); fields > 0 {
 		fmt.Fprintf(&b, "The person has been shown a form with %d %s for this question, "+
 			"pinned above their message box. Their answers arrive together as their next "+
 			"message. ", fields, inflect.Pluralize("field", "fields", fields))
@@ -550,6 +634,57 @@ func askOptionsFrom(raw []any) []askOption {
 	}
 
 	return options
+}
+
+// askQuestionsFrom reads questions asked together, dropping one that cannot
+// be shown as a malformed option is dropped: no question, or nothing to
+// answer it with. One that asks for several values in a single box is
+// refused, as a single question would be, because splitting it is the
+// model's to do.
+func askQuestionsFrom(raw []any) (questions []askQuestion, refusal string) {
+	questions = make([]askQuestion, 0, min(len(raw), maxAskQuestions))
+	seen := make(map[string]struct{}, len(raw))
+	for _, entry := range raw {
+		if len(questions) == maxAskQuestions {
+			break
+		}
+		spec, ok := entry.(map[string]any)
+		if !ok {
+			continue
+		}
+		text := strings.TrimSpace(argcheck.String(spec, "question"))
+		comparable := ComparableQuestion(text)
+		if comparable == "" {
+			continue
+		}
+		if _, duplicate := seen[comparable]; duplicate {
+			continue
+		}
+
+		options := askOptionsFrom(arrayArg(spec, "options"))
+		allowOther := boolArg(spec, "allowOther", true)
+		if len(options) == 0 && !allowOther {
+			continue
+		}
+		var input *askInput
+		if allowOther {
+			input = askInputFrom(spec)
+		}
+		if len(options) == 0 && input == nil && asksForSeveral(text) {
+			return nil, multiPartAskRefusal
+		}
+		seen[comparable] = struct{}{}
+
+		questions = append(questions, askQuestion{
+			Question:   text,
+			Options:    options,
+			AllowOther: allowOther,
+			OtherHint:  strings.TrimSpace(argcheck.String(spec, "otherHint")),
+			Input:      input,
+		})
+	}
+
+	return questions, ""
 }
 
 // askFieldsFrom reads the fields of a form, dropping what cannot be rendered

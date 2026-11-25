@@ -83,7 +83,7 @@ export function DeskAskForm({
 }
 
 /** One value of the form: its label, the control its kind takes, and what it should look like. */
-function DeskAskFieldRow({
+export function DeskAskFieldRow({
   id,
   field,
   value,

@@ -6906,6 +6906,44 @@
   color: var(--dsk-muted);
   text-wrap: pretty;
 }
+.dk-ask-opt[aria-pressed="true"] {
+  background: var(--dsk-hover);
+  box-shadow: inset 0 0 0 1.5px var(--dsk-ink);
+}
+.dk-ask-qs {
+  gap: 14px;
+}
+.dk-ask-q {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.dk-ask-q .dk-ask-opts {
+  margin-top: 4px;
+}
+.dk-ask-q .dk-ask-f {
+  margin-top: 6px;
+}
+.dk-ask-qt {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+  font-size: 12.5px;
+  font-weight: 500;
+  line-height: 18px;
+  color: var(--dsk-fg);
+  text-wrap: pretty;
+}
+.dk-ask-qn {
+  flex: none;
+  min-width: 16px;
+  font-variant-numeric: tabular-nums;
+  color: var(--dsk-subtle);
+}
 .dk-ask-form {
   display: flex;
   flex-direction: column;

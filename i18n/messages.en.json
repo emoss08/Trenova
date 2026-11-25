@@ -5874,6 +5874,15 @@
       "edi/lading"
     ]
   },
+  "A commodity carried whose name contains these words.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "A commodity on a load": {
     "sites": 2,
     "scope": [
@@ -14196,6 +14205,24 @@
     ]
   },
   "A stop was reached late, or missed, and a service failure was opened on the shipment.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "A stop whose scheduled window is open on or after this day (YYYY-MM-DD or today); the same stop as stops.city and stops.type. Not the actual dates.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "A stop whose scheduled window opens on or before this day (YYYY-MM-DD or today).": {
     "sites": 1,
     "scope": [
       "go"
@@ -83620,7 +83647,7 @@
       "routes/billing-queue"
     ]
   },
-  "Delivered and ready to transfer to billing.": {
+  "Delivered and ready to transfer to billing; false for the rest.": {
     "sites": 1,
     "scope": [
       "go"
@@ -135671,6 +135698,15 @@
       "routes/my-team"
     ]
   },
+  "In its current status for at least this many days.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "In libraries": {
     "sites": 2,
     "scope": [
@@ -179328,7 +179364,7 @@
       "routes/journal-entry"
     ]
   },
-  "No live driver or carrier assignment.": {
+  "No live driver or carrier assignment; false for loads one covers.": {
     "sites": 1,
     "scope": [
       "go"
@@ -260285,6 +260321,15 @@
       "go/other"
     ]
   },
+  "Send answers": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Send any email to the address. We'll wait for it here.": {
     "sites": 1,
     "scope": [
@@ -324502,6 +324547,15 @@
       "packages/shared/types"
     ]
   },
+  "Trailer or tractor equipment type: words in its code or description (reefer), or equipment type ids.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Trailer records.": {
     "sites": 1,
     "scope": [
@@ -348396,7 +348450,7 @@
       "routes/jurisdiction-rule"
     ]
   },
-  "Which stops stops.city and stops.state read.": {
+  "Which stops stops.city, stops.state and the scheduled window read; without it, any pickup or delivery.": {
     "sites": 1,
     "scope": [
       "go"
@@ -357075,7 +357129,7 @@
     ]
   },
   "Your own answer": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],

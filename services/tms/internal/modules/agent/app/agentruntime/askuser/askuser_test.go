@@ -787,3 +787,100 @@ func TestAskedQuestions_LeavesOutAQuestionThatWasRefused(t *testing.T) {
 
 	assert.Equal(t, map[string]struct{}{"which customer is it for": {}}, asked)
 }
+
+// Three loads needed a per-cwt rate each, and the agent asked for them one
+// turn at a time. They are asked together now, each answered on its own.
+func TestResolveAsk_AsksSeveralQuestionsTogether(t *testing.T) {
+	t.Parallel()
+
+	content, shown := Resolve(askNow, map[string]any{
+		"question": "Before I re-rate the three loads",
+		"questions": []any{
+			map[string]any{
+				"question":  "Per-cwt rate for S26110991834141?",
+				"input":     map[string]any{"type": "number"},
+				"otherHint": "Between 1.00 and 500.00",
+			},
+			map[string]any{
+				"question": "Which batches should I plan?",
+				"options": []any{
+					map[string]any{"label": "All four", "detail": "164 delayed shipments"},
+					map[string]any{"label": "Batch 1 only"},
+				},
+				"allowOther": false,
+			},
+			map[string]any{"question": "Which batches should I plan?"},
+			map[string]any{"question": "  "},
+			map[string]any{"question": "Nothing to answer with", "allowOther": false},
+		},
+	})
+
+	require.True(t, shown)
+	request := decodeAsk(t, content)
+	assert.Equal(t, "Before I re-rate the three loads", request.Question)
+	assert.Empty(t, request.Options)
+	require.Len(t, request.Questions, 2, "a repeat, a blank and an unanswerable one are dropped")
+	assert.Equal(t, "Per-cwt rate for S26110991834141?", request.Questions[0].Question)
+	require.NotNil(t, request.Questions[0].Input)
+	assert.Equal(t, askTypeNumber, request.Questions[0].Input.Type)
+	assert.True(t, request.Questions[0].AllowOther)
+	assert.Equal(t, "Between 1.00 and 500.00", request.Questions[0].OtherHint)
+	assert.False(t, request.Questions[1].AllowOther)
+	require.Len(t, request.Questions[1].Options, 2)
+	assert.Equal(t, "All four", request.Questions[1].Options[0].Value)
+	assert.Contains(t, request.Note, "2 questions together")
+	assert.Contains(t, request.Note, "one line per question")
+	assert.Contains(t, request.Note, "End your turn now")
+}
+
+func TestResolveAsk_RefusesQuestionsBesideChoicesOrAForm(t *testing.T) {
+	t.Parallel()
+
+	questions := []any{map[string]any{"question": "Which batches?"}}
+	for name, extra := range map[string]map[string]any{
+		"options": {"options": []any{map[string]any{"label": "A"}}},
+		"fields":  {"fields": runtimetest.AskFieldArgs()},
+	} {
+		arguments := map[string]any{"question": "Before I plan", "questions": questions}
+		for key, value := range extra {
+			arguments[key] = value
+		}
+		content, shown := Resolve(askNow, arguments)
+		assert.False(t, shown, name)
+		assert.Equal(t, mixedAskRefusal, content, name)
+	}
+}
+
+func TestResolveAsk_RefusesQuestionsNoneOfWhichCanBeAnswered(t *testing.T) {
+	t.Parallel()
+
+	content, shown := Resolve(askNow, map[string]any{
+		"question":  "Before I plan",
+		"questions": []any{map[string]any{"question": "Closed", "allowOther": false}, "x"},
+	})
+	assert.False(t, shown)
+	assert.Equal(t, unshowableQuestionsRefusal, content)
+}
+
+func TestResolveAsk_RefusesAQuestionAmongSeveralThatAsksForSeveral(t *testing.T) {
+	t.Parallel()
+
+	content, shown := Resolve(askNow, map[string]any{
+		"question": "Before I book it",
+		"questions": []any{map[string]any{
+			"question": "Which customer, pickup, delivery and freight should it carry?",
+		}},
+	})
+	assert.False(t, shown)
+	assert.Equal(t, multiPartAskRefusal, content)
+}
+
+func TestAskUserSpec_OffersQuestions(t *testing.T) {
+	t.Parallel()
+
+	properties := Spec().Parameters["properties"].(map[string]any)
+	questions, ok := properties["questions"].(map[string]any)
+	require.True(t, ok)
+	assert.Equal(t, maxAskQuestions, questions["maxItems"])
+	assert.Contains(t, Spec().Description, "ask them together in one call with questions")
+}

@@ -33,6 +33,18 @@ export type AskField = AskInput & {
   optional: boolean;
 };
 
+/**
+ * One of several questions asked together. Each is answered on its own: one of
+ * its options, or a value of the person's own when it takes one.
+ */
+export type AskQuestionItem = {
+  question: string;
+  options: AskOption[];
+  allowOther: boolean;
+  otherHint: string;
+  input: AskInput;
+};
+
 /** A question the assistant put to the person, as the thread records it. */
 export type ThreadAskRequest = {
   /** The tool message's position, used to tell an answered question from an open one. */
@@ -52,6 +64,12 @@ export type ThreadAskRequest = {
   input: AskInput;
   /** The values asked for together. When there are any, there are no options and no own value. */
   fields: AskField[];
+  /**
+   * Several questions asked at once, each answered on its own and sent
+   * together. When there are any, the question is their heading and there are
+   * no options, no fields and no own value.
+   */
+  questions: AskQuestionItem[];
 };
 
 /** A question in the thread, and the message that answered it once one has. */
@@ -72,6 +90,9 @@ const ASK_TOOL = "ask_user";
 
 /** The contract's bound on one form; a longer one is a page, not a question. */
 const MAX_ASK_FIELDS = 8;
+
+/** The contract's bound on questions asked together. */
+const MAX_ASK_QUESTIONS = 6;
 
 /** The contract's bound on a suggestion; a longer one was not meant to be taken at a glance. */
 const MAX_ASK_SUGGESTION_CHARS = 120;
@@ -219,7 +240,12 @@ export function askAnswerIds(asks: ThreadAsks): ReadonlySet<string> {
  * question does not draw a second one.
  */
 export function answersInComposer(request: ThreadAskRequest): boolean {
-  return request.fields.length === 0 && request.allowOther && request.input.type === "text";
+  return (
+    request.fields.length === 0 &&
+    request.questions.length === 0 &&
+    request.allowOther &&
+    request.input.type === "text"
+  );
 }
 
 type ParsedAsk = Omit<ThreadAskRequest, "sequence" | "callId">;
@@ -245,6 +271,22 @@ function parseAskResult(content: string): ParsedAsk | null {
   const otherHint = typeof payload.otherHint === "string" ? payload.otherHint : "";
   const input = inputFrom(payload.input);
 
+  // Questions asked together are answered one by one and sent as one
+  // message, so the heading over them takes no answer of its own.
+  const questions = questionsFrom(payload.questions);
+  if (questions.length > 0) {
+    return {
+      question,
+      options: [],
+      allowOther: false,
+      otherHint: "",
+      suggestion: "",
+      input: TEXT_INPUT,
+      fields: [],
+      questions,
+    };
+  }
+
   // A form is the whole answer: the values it asks for complete one change,
   // so a choice or a value of the person's own beside it has nothing to mean.
   const fields = fieldsFrom(payload.fields);
@@ -257,6 +299,7 @@ function parseAskResult(content: string): ParsedAsk | null {
       suggestion: "",
       input,
       fields,
+      questions: [],
     };
   }
 
@@ -271,7 +314,48 @@ function parseAskResult(content: string): ParsedAsk | null {
       ? suggestionFrom(payload.suggestion)
       : "";
 
-  return { question, options, allowOther, otherHint, suggestion, input, fields: [] };
+  return { question, options, allowOther, otherHint, suggestion, input, fields: [], questions: [] };
+}
+
+/**
+ * Questions asked together. One with no question or nothing to answer it with
+ * is dropped, as a malformed option is, and so is a repeat.
+ */
+function questionsFrom(raw: unknown): AskQuestionItem[] {
+  if (!Array.isArray(raw)) {
+    return [];
+  }
+
+  const items: AskQuestionItem[] = [];
+  const seen = new Set<string>();
+  for (const entry of raw) {
+    if (items.length === MAX_ASK_QUESTIONS) {
+      break;
+    }
+    if (typeof entry !== "object" || entry === null) {
+      continue;
+    }
+    const item = entry as Record<string, unknown>;
+    const question = typeof item.question === "string" ? item.question.trim() : "";
+    if (question === "" || seen.has(question)) {
+      continue;
+    }
+    const options = optionsFrom(item.options);
+    const allowOther = item.allowOther !== false;
+    if (options.length === 0 && !allowOther) {
+      continue;
+    }
+    seen.add(question);
+    items.push({
+      question,
+      options,
+      allowOther,
+      otherHint: typeof item.otherHint === "string" ? item.otherHint.trim() : "",
+      input: inputFrom(item.input),
+    });
+  }
+
+  return items;
 }
 
 /**

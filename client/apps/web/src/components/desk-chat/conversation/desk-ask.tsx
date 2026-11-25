@@ -20,6 +20,7 @@ import { DeskMentionText } from "../composer/desk-mentions";
 import { DeskCard } from "../desk-card";
 import { DeskIcon } from "../desk-icons";
 import { DeskAskForm } from "./desk-ask-fields";
+import { DeskAskQuestions } from "./desk-ask-questions";
 
 /** The most choices a number key reaches. */
 const MAX_KEYED_OPTIONS = 9;
@@ -77,7 +78,7 @@ export function DeskAskDock({
   const id = useId();
   const ref = useRef<HTMLDivElement>(null);
   const focusedFor = useRef<string | null>(null);
-  const { options, fields } = request;
+  const { options, fields, questions } = request;
   const typed = !answersInComposer(request) && request.allowOther && fields.length === 0;
   const keyed = !disabled && options.length > 0;
   const own = useMemo<AskField[]>(
@@ -142,7 +143,7 @@ export function DeskAskDock({
 
   const sub = disabled
     ? (disabledNote ?? t("You can answer once the reply finishes."))
-    : fields.length > 0
+    : fields.length > 0 || questions.length > 0
       ? undefined
       : answersInComposer(request)
         ? options.length > 0
@@ -196,6 +197,9 @@ export function DeskAskDock({
         )}
         {fields.length > 0 && (
           <DeskAskForm fields={fields} disabled={disabled} onAnswer={onAnswer} />
+        )}
+        {questions.length > 0 && (
+          <DeskAskQuestions items={questions} disabled={disabled} onAnswer={onAnswer} />
         )}
         {typed && <DeskAskForm fields={own} single disabled={disabled} onAnswer={onAnswer} />}
       </DeskCard>
