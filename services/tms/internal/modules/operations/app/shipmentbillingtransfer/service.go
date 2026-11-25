@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmenteffects"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentbillingports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentinvalidationports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
@@ -43,6 +44,7 @@ type Service struct {
 	invalidator         shipmentinvalidationports.ShipmentInvalidator
 	effects             *shipmenteffects.Effects
 	readiness           *shipmentbillingreadiness.Service
+	detentionBilling    detentionports.DetentionBillingService
 }
 
 // ListAutoTransferCandidateIDs finds the shipments an automatic transfer may
@@ -491,8 +493,50 @@ func (s *Service) planTransfers(
 	if err = s.stampCurrencies(ctx, tenantInfo, decisions, batch.pending, batch.payers); err != nil {
 		return nil, err
 	}
+	if err = s.stampDetentionHolds(ctx, tenantInfo, decisions); err != nil {
+		return nil, err
+	}
 
 	return summarize(decisions), nil
+}
+
+func (s *Service) stampDetentionHolds(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	decisions []shipmentbillingports.BillingTransferDecision,
+) error {
+	ids := make([]pulid.ID, 0, len(decisions))
+	for idx := range decisions {
+		ids = append(ids, decisions[idx].ShipmentID)
+	}
+
+	holds, err := s.detentionBilling.HoldsForShipments(ctx, &detentionports.DetentionBillingHoldsRequest{
+		TenantInfo:  tenantInfo,
+		ShipmentIDs: ids,
+	})
+	if err != nil {
+		return err
+	}
+
+	byShipment := make(map[pulid.ID][]shipmentbillingports.BillingTransferDetentionHold, len(holds))
+	for _, hold := range holds {
+		if hold == nil {
+			continue
+		}
+		byShipment[hold.ShipmentID] = append(byShipment[hold.ShipmentID],
+			shipmentbillingports.BillingTransferDetentionHold{
+				OccurrenceID: hold.ID,
+				LocationName: hold.LocationName,
+				Amount:       hold.BillableAmount,
+				Currency:     hold.Currency,
+				Reason:       string(hold.BillingHoldReason()),
+			})
+	}
+	for idx := range decisions {
+		decisions[idx].HeldDetention = byShipment[decisions[idx].ShipmentID]
+	}
+
+	return nil
 }
 
 func (s *Service) stampCurrencies(
@@ -797,11 +841,13 @@ type Params struct {
 	Invalidator         shipmentinvalidationports.ShipmentInvalidator
 	Effects             *shipmenteffects.Effects
 	Readiness           *shipmentbillingreadiness.Service
+	DetentionBilling    detentionports.DetentionBillingService
 }
 
 //nolint:gocritic // fx requires an fx.In parameter struct to be passed by value.
 func New(p Params) *Service {
 	return &Service{
+		detentionBilling:    p.DetentionBilling,
 		l:                   p.Logger.Named("service.shipment"),
 		repo:                p.Repo,
 		customerRepo:        p.CustomerRepo,

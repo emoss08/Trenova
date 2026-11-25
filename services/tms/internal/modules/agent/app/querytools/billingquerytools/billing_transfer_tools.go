@@ -49,7 +49,10 @@ func (t *listBillingTransferCandidatesTool) Description() string {
 		"list the transfer-to-billing dialog offers. Each row says what a transfer would do " +
 		"with it (Transfer, MarkReadyAndTransfer, Refused with a failure code, or " +
 		"ReturnToOperations), the documents it still lacks and its rate or validation " +
-		"issues, decided by the checks the transfer itself makes. totals counts and sums " +
+		"issues, decided by the checks the transfer itself makes. heldDetention names the " +
+		"detention charges still waiting on approval, which go into billing with the " +
+		"shipment and hold its approval until each is approved or waived: say so before " +
+		"proposing the transfer. totals counts and sums " +
 		"the charges of each outcome per currency, so quote them rather than adding rows " +
 		"yourself. A question about what is waiting is answered from this list; propose a " +
 		"transfer only when asked to send them. To transfer, propose one billing_transfer: " +
@@ -89,6 +92,7 @@ type billingTransferCandidateRow struct {
 	FailureCode   string                 `json:"failureCode,omitempty"`
 	MissingDocs   string                 `json:"missingDocuments,omitempty"`
 	Issues        string                 `json:"issues,omitempty"`
+	HeldDetention string                 `json:"heldDetention,omitempty"`
 	Reason        string                 `json:"reason,omitempty"`
 	AutoApproves  bool                   `json:"autoApproves"`
 	MultiplePayer bool                   `json:"splitBilled,omitempty"`
@@ -240,6 +244,7 @@ func candidateRow(
 		issues = append(issues, failure.Message)
 	}
 	row.Issues = strings.Join(issues, "; ")
+	row.HeldDetention = decision.HeldDetentionSummary()
 
 	return row
 }

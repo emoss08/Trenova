@@ -28,6 +28,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentstate"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/assignmentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/chargeallocationports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/orderports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentdistanceports"
@@ -46,6 +47,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/permitports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/notificationservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
+	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/notificationtest"
 	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -116,6 +118,7 @@ type rig struct {
 	billingRepo          tenantports.BillingControlRepository
 	notificationService  *notificationservice.Service
 	billingQueueService  billingqueueports.BillingQueueService
+	detentionBilling     detentionports.DetentionBillingService
 	serviceFailureRepo   servicefailureports.ServiceFailureRepository
 	serviceFailures      servicefailureports.ServiceFailureEvaluator
 	permissions          permissionports.PermissionEngine
@@ -295,6 +298,9 @@ func (s *rig) fillUnsetCollaborators() {
 	if s.permitService == nil {
 		s.permitService = noPermits{}
 	}
+	if s.detentionBilling == nil {
+		s.detentionBilling = &mocks.NoopDetentionBilling{}
+	}
 }
 
 func (s *rig) assemble() {
@@ -332,6 +338,7 @@ func (s *rig) assemble() {
 		Invalidator:         s.invalidator,
 		Effects:             s.effects,
 		Readiness:           s.readiness,
+		DetentionBilling:    s.detentionBilling,
 	})
 	s.autorater = shipmentautorate.New(shipmentautorate.Params{
 		Logger:              s.l,

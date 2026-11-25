@@ -24,6 +24,7 @@ export const PREVIEW_WARNING_CODES = [
   "unpinned",
   "rate_coverage",
   "recipient_skipped",
+  "detention_held",
 ] as const;
 
 export type PreviewWarningCode = (typeof PREVIEW_WARNING_CODES)[number];
@@ -47,6 +48,7 @@ const TONES: Record<PreviewWarningCode, PreviewWarningTone> = {
   sensitive_content: "warning",
   rate_coverage: "warning",
   recipient_skipped: "warning",
+  detention_held: "warning",
   depends_on_step: "info",
   withheld: "info",
   unpinned: "info",
@@ -297,6 +299,18 @@ export function previewWarningText(warning: PreviewWarning, t: TranslateFn): str
       return arg !== ""
         ? t("{0} is on the suppression list and would be skipped.", warning.args.join(", "))
         : t("A recipient is on the suppression list and would be skipped.");
+    case "detention_held": {
+      const count = Number(arg);
+
+      return Number.isInteger(count) && count > 0
+        ? t(
+            "{0, plural, one {# shipment carries} other {# shipments carry}} detention still waiting on approval. Billing cannot approve them until each charge is approved or waived.",
+            count,
+          )
+        : t(
+            "Detention is still waiting on approval. Billing cannot approve these shipments until each charge is approved or waived.",
+          );
+    }
     default:
       return warning.message;
   }
