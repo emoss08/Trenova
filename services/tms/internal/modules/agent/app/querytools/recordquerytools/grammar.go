@@ -286,6 +286,13 @@ func shown(cond *condition) any {
 }
 
 func unknownField(fields *fieldSet, field string) error {
+	suggested := fields.suggestions()
+	if len(suggested) == 0 {
+		return fmt.Errorf("%w: %q is not a field this entity can be filtered by, and it takes no "+
+			"where conditions at all; use query or the arguments describe_entity lists",
+			ErrBadArgument, field)
+	}
+
 	return fmt.Errorf("%w: %q is not a field this entity can be filtered by; valid fields include %s "+
-		"(describe_entity lists every one)", ErrBadArgument, field, strings.Join(fields.suggestions(), ", "))
+		"(describe_entity lists every one)", ErrBadArgument, field, strings.Join(suggested, ", "))
 }

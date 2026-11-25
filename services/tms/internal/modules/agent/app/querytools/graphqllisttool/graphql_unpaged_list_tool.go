@@ -198,6 +198,9 @@ func (t *UnpagedTool) Query(
 	if err := querytool.GuardQuery(params); err != nil {
 		return nil, err
 	}
+	if err := t.checkQuery(params.Params); err != nil {
+		return nil, err
+	}
 	clk := querytool.ClockFor(params)
 	args := applyDefaults(&t.spec, params.Params, clk)
 	if err := t.checkArguments(args); err != nil {
@@ -452,6 +455,23 @@ func matchesQuery(row map[string]any, paths []string, query string) bool {
 	}
 
 	return false
+}
+
+func (t *UnpagedTool) checkQuery(args map[string]any) error {
+	query := strings.TrimSpace(querytool.OptionalString(args, querytool.ParamQuery))
+	if query == "" || len(t.spec.Matches) > 0 {
+		return nil
+	}
+	names := make([]string, 0, len(t.Params))
+	for _, param := range t.Params {
+		names = append(names, param.Name)
+	}
+
+	return fmt.Errorf(
+		"%s takes no free-text query, so %q would match nothing; narrow with its arguments "+
+			"instead: %s",
+		t.spec.EntityPlural, query, strings.Join(names, ", "),
+	)
 }
 
 // checkArguments refuses a call that leaves out a required argument or names
