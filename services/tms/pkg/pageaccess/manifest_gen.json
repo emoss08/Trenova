@@ -1,5 +1,5 @@
 {
-  "version": "sha256:80552ee4a8416c3aaef0dbca14e6a00d1a42968c76a1149cc9f9132b424f91df",
+  "version": "sha256:403cdbaf8ef95d4386b9e4c1b3c2ad6f56ab04d82561108b2eb8845889a82d9d",
   "screens": [
     {
       "path": "/",
@@ -3902,6 +3902,7 @@
         "DispatchForecastQuality",
         "DispatchMove",
         "DispatchMoveCandidates",
+        "DispatchMovesByIds",
         "DispatchStyle",
         "LiveTenderByMove",
         "ResetDispatchStyle",
@@ -12682,7 +12683,9 @@
         "CarrierTrackingLink",
         "CustomerStatusNotifications",
         "CustomerTrackingLinks",
+        "DeskDetentionCard",
         "DeskRecordActivity",
+        "DetentionIntelligence",
         "MyActiveBillingTransferRun",
         "RetryBillingTransferRun",
         "SelectOptions",
@@ -13284,6 +13287,7 @@
       ],
       "reads": [
         "audit_legal_hold",
+        "detention",
         "formula_template",
         "rate_agreement",
         "shipment"
@@ -14586,6 +14590,15 @@
         "DetachPayEventFromSettlement",
         "DetentionIntelligence",
         "DismissDeskMemory",
+        "DispatchAssignMoves",
+        "DispatchAssignmentPreview",
+        "DispatchBoard",
+        "DispatchCarrierAssignmentPreview",
+        "DispatchDriverMoves",
+        "DispatchForecastQuality",
+        "DispatchMove",
+        "DispatchMoveCandidates",
+        "DispatchMovesByIds",
         "DrillThroughReport",
         "DriverSettlementDetail",
         "EdiPartnerScorecards",
@@ -14609,6 +14622,7 @@
         "JournalReviewTable",
         "JournalSourceByObject",
         "LateChargePreview",
+        "LiveTenderByMove",
         "MarkCarrierSettlementPaid",
         "MarkDriverSettlementPaid",
         "MyCaptureAccess",
@@ -14656,6 +14670,7 @@
         "ShipmentProfitability",
         "SubmitCarrierSettlement",
         "SubmitDriverSettlement",
+        "TendersByShipment",
         "TodaysBriefing",
         "TriageAssignees",
         "TriageBriefing",
@@ -16239,6 +16254,7 @@
         "report",
         "service_failure",
         "shipment",
+        "tender",
         "tractor",
         "trailer",
         "user",
@@ -16271,6 +16287,7 @@
         "performance_review",
         "service_failure_reason_code",
         "shipment",
+        "tender",
         "worker_checklist"
       ]
     },
@@ -16318,16 +16335,1829 @@
         }
       ],
       "operations": [
+        "AIAgentRoster",
+        "AIControlSummary",
+        "AITuneUps",
+        "AIUsageDaily",
+        "AccountingBackfills",
+        "AccountingBriefing",
+        "AccountingDriftFinding",
+        "AccountingDriftFixPreview",
+        "AccountingDriftOverview",
+        "AccountingInboundApplyPreview",
+        "AccountingInboundChange",
+        "AccountingInboundOverview",
+        "AccountingMappingSummary",
+        "AccountingReferenceObjects",
+        "AccountingSyncAttempts",
+        "AccountingSyncObjectStates",
+        "AccountingSyncRecord",
+        "AccountingSyncStatus",
+        "AccountingSyncSummary",
+        "AddCarrierSettlementAdjustment",
+        "AddDriverSettlementAdjustment",
+        "AgentActivitySummary",
+        "AgentMemoryCount",
+        "AgentMemoryTable",
+        "AgentPlanPreview",
+        "AgentPromotionPreview",
+        "AgentProposalPreview",
+        "AgentProposalPreviews",
+        "ApproveCarrierSettlement",
+        "ApproveDriverSettlement",
+        "ApproveJournalEntries",
+        "ArAgingSummary",
+        "ArAgingTrend",
+        "ArCashFlowForecast",
+        "ArCollectionsWorklist",
+        "ArCustomerLedger",
+        "ArCustomerProfile",
+        "ArCustomerStatement",
+        "ArDashboardKpis",
+        "ArDsoTrend",
+        "ArOpenItems",
+        "ArPaymentStats",
+        "ArTopOverdueCustomers",
+        "AssignBillingQueueBiller",
+        "AssignFuelCard",
+        "AvailableCaptureProfiles",
+        "BillingQueueFormulaTemplate",
+        "BillingQueueRateAgreement",
+        "BillingQueueShipment",
+        "CancelCaptureRequest",
+        "CancelReportRun",
+        "CannedReports",
+        "CaptureAgentRelease",
+        "CaptureBatch",
+        "CaptureBatchCount",
+        "CaptureBatches",
+        "CaptureDevicePairing",
+        "CaptureDevices",
+        "CaptureProfiles",
+        "CaptureRequestsForTarget",
+        "CarrierInvoiceMatches",
+        "CarrierSettlementDetail",
+        "CarrierTrackingLink",
+        "CommitMyDecisionNow",
+        "ConfirmDeskMemory",
+        "CreateCaptureRequest",
+        "CreateReportDashboard",
+        "CreateReportDefinition",
+        "CreateReportSchedule",
+        "CreateReportView",
+        "CustomerStatusNotifications",
+        "CustomerTrackingLinks",
+        "CustomerTrackingProfile",
+        "DecideMyPlan",
+        "DecideMyProposal",
+        "DecideMyProposals",
+        "DeleteReportDashboard",
+        "DeleteReportDefinition",
+        "DeleteReportSchedule",
+        "DeleteReportView",
         "DeskActivity",
-        "DeskActivityEntry"
+        "DeskActivityEntry",
+        "DeskAttention",
+        "DeskBoardCard",
+        "DeskCarrierCard",
+        "DeskCarrierEligibility",
+        "DeskCarrierIntel",
+        "DeskCarrierSettlementCard",
+        "DeskCarrierSettlements",
+        "DeskCustomerCard",
+        "DeskCustomerRateAgreements",
+        "DeskDetentionCard",
+        "DeskDriverSettlementCard",
+        "DeskEdiPartnerCard",
+        "DeskEdiPartnerMessages",
+        "DeskFuelCardCard",
+        "DeskFuelPurchaseCard",
+        "DeskIftaReturnCard",
+        "DeskInvoiceCard",
+        "DeskJournalEntryCard",
+        "DeskLocationCard",
+        "DeskLocationDwell",
+        "DeskLocationPolicies",
+        "DeskManualJournalCard",
+        "DeskMemoriesByIds",
+        "DeskMemorySettings",
+        "DeskOrderCard",
+        "DeskRateAgreementPricing",
+        "DeskRecordActivity",
+        "DeskRecordFailures",
+        "DeskRecordShipments",
+        "DeskReportRunCard",
+        "DeskServiceFailureCard",
+        "DeskTractorCard",
+        "DeskTractorInspections",
+        "DeskTractorPosition",
+        "DeskTrailerCard",
+        "DeskWorkerCard",
+        "DeskWorkerCredentials",
+        "DeskWorkerHos",
+        "DeskWorkerStanding",
+        "DetachPayEventFromSettlement",
+        "DetentionIntelligence",
+        "DismissDeskMemory",
+        "DispatchAssignMoves",
+        "DispatchAssignmentPreview",
+        "DispatchBoard",
+        "DispatchCarrierAssignmentPreview",
+        "DispatchDriverMoves",
+        "DispatchForecastQuality",
+        "DispatchMove",
+        "DispatchMoveCandidates",
+        "DispatchMovesByIds",
+        "DrillThroughReport",
+        "DriverSettlementDetail",
+        "EdiPartnerScorecards",
+        "EdiSummary",
+        "EdiVolumeSeries",
+        "ExportCarrierSettlementBatchCsv",
+        "ForkCannedReport",
+        "HoldDriverSettlement",
+        "InboundMailboxes",
+        "InboundMessage",
+        "InboundMessageCounts",
+        "InboundMessages",
+        "InboundReplyAttachables",
+        "InboundSenderProfile",
+        "InboundThread",
+        "InviteWorkerToPortal",
+        "InvoiceArContext",
+        "JournalEntriesBySource",
+        "JournalEntryDetail",
+        "JournalReviewSummary",
+        "JournalReviewTable",
+        "JournalSourceByObject",
+        "LateChargePreview",
+        "LiveTenderByMove",
+        "MarkCarrierSettlementPaid",
+        "MarkDriverSettlementPaid",
+        "MyCaptureAccess",
+        "MyCaptureDevices",
+        "MyPlanPreview",
+        "MyProposalPreview",
+        "MyTriageViews",
+        "PostCarrierSettlement",
+        "PostDriverSettlement",
+        "PostJournalEntries",
+        "PreviewReport",
+        "RecalculateCarrierSettlement",
+        "RecalculateDriverSettlement",
+        "RecordMyAgentSuggestion",
+        "RecordShareCandidates",
+        "RecordShares",
+        "RejectCarrierSettlement",
+        "RejectDriverSettlement",
+        "ReleaseDriverSettlementHold",
+        "RemoveCarrierSettlementAdjustment",
+        "RemoveDriverSettlementAdjustment",
+        "RenderTriageReplyTemplate",
+        "ReportCatalog",
+        "ReportDashboardById",
+        "ReportDashboards",
+        "ReportDefinitionById",
+        "ReportDefinitionRevisions",
+        "ReportDefinitionsTable",
+        "ReportRunById",
+        "ReportSchedules",
+        "ReportViews",
+        "ResetCannedFork",
+        "ResolveFuelPurchaseImportRows",
+        "ReviseDeskMemory",
+        "RunReport",
+        "SelectOptions",
+        "SendInvoiceEdi",
+        "SetDeskMemoryStatus",
+        "SettleMyAgentSuggestion",
+        "ShareRecord",
+        "ShipmentCheckCalls",
+        "ShipmentCustomerBillingRules",
+        "ShipmentInvoices",
+        "ShipmentProfitability",
+        "SubmitCarrierSettlement",
+        "SubmitDriverSettlement",
+        "TendersByShipment",
+        "TodaysBriefing",
+        "TriageAssignees",
+        "TriageBriefing",
+        "TriageCustomerPeek",
+        "TriageReplyTemplates",
+        "TriageResponseTargets",
+        "TriageRuleMatches",
+        "TriageRulePreview",
+        "TriageRules",
+        "TriageSenderDomains",
+        "TriageSettings",
+        "TriageShipmentPeek",
+        "TriageStopTimes",
+        "UndoMyDecision",
+        "UnshareRecord",
+        "UpcomingWorkerPto",
+        "UpdateReportDashboard",
+        "UpdateReportDefinition",
+        "UpdateReportSchedule",
+        "UpdateReportView",
+        "VoidCarrierSettlement",
+        "VoidDriverSettlement",
+        "VoidInvoice",
+        "WatchtowerCleared",
+        "WatchtowerCounts",
+        "WatchtowerFeed",
+        "WatchtowerHandOffAgents",
+        "WatchtowerItemDetail",
+        "WatchtowerPlay",
+        "WorkerCredentialTypeChoices",
+        "WorkerOverview",
+        "WorkerPtoChartData",
+        "WorkerRecord",
+        "WorkingAgentRuns"
       ],
-      "endpoints": [],
-      "reads": [],
-      "references": [
+      "endpoints": [
+        {
+          "method": "GET",
+          "path": "/accounting/bank-receipts/:param/",
+          "requires": [
+            {
+              "resource": "bank_receipt",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/accounting/bank-receipts/:param/card/",
+          "requires": [
+            {
+              "resource": "bank_receipt",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/accounting/bank-receipts/:param/suggestions/",
+          "requires": [
+            {
+              "resource": "bank_receipt",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/accounting/bank-receipts/summary/",
+          "requires": [
+            {
+              "resource": "bank_receipt",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "POST",
+          "path": "/accounting/journal-reversals/",
+          "requires": [
+            {
+              "resource": "journal_reversal",
+              "operation": "create"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/accounting/manual-journals/:param/",
+          "requires": [
+            {
+              "resource": "manual_journal",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "POST",
+          "path": "/accounting/manual-journals/:param/approve/",
+          "requires": [
+            {
+              "resource": "manual_journal",
+              "operation": "approve"
+            }
+          ]
+        },
+        {
+          "method": "POST",
+          "path": "/accounting/manual-journals/:param/cancel/",
+          "requires": [
+            {
+              "resource": "manual_journal",
+              "operation": "cancel"
+            }
+          ]
+        },
+        {
+          "method": "POST",
+          "path": "/accounting/manual-journals/:param/post/",
+          "requires": [
+            {
+              "resource": "manual_journal",
+              "operation": "approve"
+            }
+          ]
+        },
+        {
+          "method": "POST",
+          "path": "/accounting/manual-journals/:param/reject/",
+          "requires": [
+            {
+              "resource": "manual_journal",
+              "operation": "reject"
+            }
+          ]
+        },
+        {
+          "method": "POST",
+          "path": "/accounting/manual-journals/:param/submit/",
+          "requires": [
+            {
+              "resource": "manual_journal",
+              "operation": "submit"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/agent-analysis/runs/:param/",
+          "requires": []
+        },
+        {
+          "method": "POST",
+          "path": "/agent-definitions/",
+          "requires": [
+            {
+              "resource": "agent_definition",
+              "operation": "create"
+            }
+          ]
+        },
+        {
+          "method": "DELETE",
+          "path": "/agent-definitions/:param/",
+          "requires": [
+            {
+              "resource": "agent_definition",
+              "operation": "delete"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/agent-definitions/:param/",
+          "requires": [
+            {
+              "resource": "agent_definition",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "PUT",
+          "path": "/agent-definitions/:param/",
+          "requires": [
+            {
+              "resource": "agent_definition",
+              "operation": "update"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/agent-definitions/:param/budget/",
+          "requires": [
+            {
+              "resource": "agent_definition",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/agent-definitions/:param/trust/",
+          "requires": [
+            {
+              "resource": "agent_definition",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/agent-definitions/event-kinds/",
+          "requires": [
+            {
+              "resource": "agent_definition",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/agent-definitions/system/:param/",
+          "requires": [
+            {
+              "resource": "agent_definition",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/agent-definitions/templates/",
+          "requires": [
+            {
+              "resource": "agent_definition",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/agent-definitions/tools/",
+          "requires": [
+            {
+              "resource": "agent_definition",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/agent-extensions/:param/config/",
+          "requires": [
+            {
+              "resource": "agent_extension",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/agent-extensions/catalog/",
+          "requires": [
+            {
+              "resource": "agent_extension",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/agent-portals/runs/:param",
+          "requires": []
+        },
+        {
+          "method": "GET",
+          "path": "/agent-portals/runs/:param/",
+          "requires": []
+        },
+        {
+          "method": "GET",
+          "path": "/agent-portals/runs/:param/live/",
+          "requires": []
+        },
+        {
+          "method": "GET",
+          "path": "/agent-portals/runs/:param/recording/",
+          "requires": [
+            {
+              "resource": "agent_extension",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "POST",
+          "path": "/agent-portals/runs/:param/sign-in-code/",
+          "requires": []
+        },
+        {
+          "method": "GET",
+          "path": "/agent-portals/sites/",
+          "requires": [
+            {
+              "resource": "agent_extension",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/agent-web-watches/:param",
+          "requires": []
+        },
+        {
+          "method": "GET",
+          "path": "/agent-web-watches/:param/findings/",
+          "requires": [
+            {
+              "resource": "agent_extension",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "POST",
+          "path": "/agent-web-watches/:param/stop/",
+          "requires": []
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/agents/:param/commands/",
+          "requires": [
+            {
+              "resource": "assistant",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/ask/",
+          "requires": [
+            {
+              "resource": "assistant",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "DELETE",
+          "path": "/assistant/ask/:param/",
+          "requires": [
+            {
+              "resource": "assistant",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/ask/:param/keep/",
+          "requires": [
+            {
+              "resource": "assistant",
+              "operation": "create"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/mentions/",
+          "requires": [
+            {
+              "resource": "assistant",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/providers/",
+          "requires": [
+            {
+              "resource": "assistant",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/schedules/",
+          "requires": []
+        },
+        {
+          "method": "DELETE",
+          "path": "/assistant/schedules/:param/",
+          "requires": []
+        },
+        {
+          "method": "PATCH",
+          "path": "/assistant/schedules/:param/",
+          "requires": []
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/schedules/:param/run/",
+          "requires": []
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/search/",
+          "requires": [
+            {
+              "resource": "assistant",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/",
+          "requires": [
+            {
+              "resource": "assistant",
+              "operation": "create"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param",
+          "requires": [
+            {
+              "resource": "assistant",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "DELETE",
+          "path": "/assistant/threads/:param/",
+          "requires": [
+            {
+              "resource": "assistant",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param/",
+          "requires": [
+            {
+              "resource": "assistant",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "PATCH",
+          "path": "/assistant/threads/:param/",
+          "requires": [
+            {
+              "resource": "assistant",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param/artifacts/:param",
+          "requires": []
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param/artifacts/:param/",
+          "requires": []
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/artifacts/:param/pin/",
+          "requires": [
+            {
+              "resource": "assistant",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/artifacts/:param/restore/",
+          "requires": []
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/artifacts/:param/rewrite/",
+          "requires": []
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param/artifacts/:param/rows/",
+          "requires": []
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/artifacts/:param/run/",
+          "requires": [
+            {
+              "resource": "report",
+              "operation": "export"
+            }
+          ]
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/artifacts/:param/versions/",
+          "requires": []
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param/artifacts/by-slug/:param/",
+          "requires": []
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param/budget/",
+          "requires": [
+            {
+              "resource": "assistant",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "DELETE",
+          "path": "/assistant/threads/:param/case/",
+          "requires": []
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param/case/",
+          "requires": []
+        },
+        {
+          "method": "PUT",
+          "path": "/assistant/threads/:param/case/",
+          "requires": []
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/case/await-reply/",
+          "requires": []
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/case/snooze/",
+          "requires": []
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/case/ticks/",
+          "requires": []
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/case/wake/",
+          "requires": []
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param/chapters/",
+          "requires": []
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/chapters/",
+          "requires": []
+        },
+        {
+          "method": "DELETE",
+          "path": "/assistant/threads/:param/chapters/:param/",
+          "requires": []
+        },
+        {
+          "method": "PATCH",
+          "path": "/assistant/threads/:param/chapters/:param/",
+          "requires": []
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/compact/",
+          "requires": [
+            {
+              "resource": "assistant",
+              "operation": "create"
+            }
+          ]
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/handoff/",
+          "requires": [
+            {
+              "resource": "assistant",
+              "operation": "create"
+            }
+          ]
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/messages/",
+          "requires": [
+            {
+              "resource": "assistant",
+              "operation": "create"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param/messages/:param",
+          "requires": []
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param/plans/",
+          "requires": [
+            {
+              "resource": "assistant",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param/proposals/",
+          "requires": [
+            {
+              "resource": "assistant",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "PUT",
+          "path": "/assistant/threads/:param/proposals/:param/edits/",
+          "requires": [
+            {
+              "resource": "assistant",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param/queue/",
+          "requires": []
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/queue/",
+          "requires": []
+        },
+        {
+          "method": "DELETE",
+          "path": "/assistant/threads/:param/queue/:param/",
+          "requires": []
+        },
+        {
+          "method": "PATCH",
+          "path": "/assistant/threads/:param/queue/:param/",
+          "requires": []
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/queue/:param/send/",
+          "requires": []
+        },
+        {
+          "method": "PUT",
+          "path": "/assistant/threads/:param/queue/order/",
+          "requires": []
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/read/",
+          "requires": [
+            {
+              "resource": "assistant",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/requests/",
+          "requires": [
+            {
+              "resource": "assistant",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param/schedules/",
+          "requires": []
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/schedules/",
+          "requires": []
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/turns/",
+          "requires": [
+            {
+              "resource": "assistant",
+              "operation": "create"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param/turns/active/",
+          "requires": [
+            {
+              "resource": "assistant",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param/waits/",
+          "requires": []
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/waits/:param/cancel/",
+          "requires": []
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/shelves/",
+          "requires": [
+            {
+              "resource": "assistant",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/turns/:param/stop/",
+          "requires": [
+            {
+              "resource": "assistant",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/turns/active/",
+          "requires": [
+            {
+              "resource": "assistant",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/billing-queue/:param/activity/",
+          "requires": [
+            {
+              "resource": "billing_queue",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "POST",
+          "path": "/billing-queue/:param/issues/:param/resolve/",
+          "requires": [
+            {
+              "resource": "billing_queue",
+              "operation": "update"
+            }
+          ]
+        },
+        {
+          "method": "POST",
+          "path": "/billing-queue/:param/issues/:param/undo/",
+          "requires": [
+            {
+              "resource": "billing_queue",
+              "operation": "update"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/billing-queue/:param/neighbors/:param",
+          "requires": []
+        },
+        {
+          "method": "POST",
+          "path": "/billing-queue/:param/post/",
+          "requires": [
+            {
+              "resource": "billing_queue",
+              "operation": "update"
+            }
+          ]
+        },
+        {
+          "method": "POST",
+          "path": "/billing-queue/:param/release/",
+          "requires": [
+            {
+              "resource": "billing_queue",
+              "operation": "update"
+            }
+          ]
+        },
+        {
+          "method": "PUT",
+          "path": "/billing-queue/:param/status/",
+          "requires": [
+            {
+              "resource": "billing_queue",
+              "operation": "update"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/billing-queue/assist/",
+          "requires": [
+            {
+              "resource": "billing_queue",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/billing-queue/brief/",
+          "requires": [
+            {
+              "resource": "billing_queue",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "POST",
+          "path": "/billing-queue/bulk/",
+          "requires": [
+            {
+              "resource": "billing_queue",
+              "operation": "update"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/billing-queue/bulk/:param/",
+          "requires": [
+            {
+              "resource": "billing_queue",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "POST",
+          "path": "/billing-queue/bulk/:param/cancel/",
+          "requires": [
+            {
+              "resource": "billing_queue",
+              "operation": "update"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/billing-queue/recommendations/",
+          "requires": [
+            {
+              "resource": "billing_queue",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/billing-queue/summaries/",
+          "requires": [
+            {
+              "resource": "billing_queue",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/billing/invoices/:param/",
+          "requires": [
+            {
+              "resource": "invoice",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/billing/invoices/:param/email-attempts/:param",
+          "requires": []
+        },
+        {
+          "method": "POST",
+          "path": "/billing/invoices/:param/generate-pdf/",
+          "requires": [
+            {
+              "resource": "invoice",
+              "operation": "update"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/billing/invoices/:param/post-preview/",
+          "requires": [
+            {
+              "resource": "invoice",
+              "operation": "post"
+            }
+          ]
+        },
+        {
+          "method": "POST",
+          "path": "/billing/invoices/:param/post/",
+          "requires": [
+            {
+              "resource": "invoice",
+              "operation": "post"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/billing/invoices/:param/send-plan/",
+          "requires": [
+            {
+              "resource": "invoice",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "POST",
+          "path": "/billing/invoices/:param/send/",
+          "requires": [
+            {
+              "resource": "invoice",
+              "operation": "submit"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/case-checklists/",
+          "requires": [
+            {
+              "resource": "billing_control",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "PUT",
+          "path": "/case-checklists/",
+          "requires": [
+            {
+              "resource": "billing_control",
+              "operation": "update"
+            }
+          ]
+        },
+        {
+          "method": "DELETE",
+          "path": "/case-checklists/:param/",
+          "requires": [
+            {
+              "resource": "billing_control",
+              "operation": "update"
+            }
+          ]
+        },
+        {
+          "method": "DELETE",
+          "path": "/documents/:param/",
+          "requires": [
+            {
+              "resource": "document",
+              "operation": "delete"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/documents/:param/",
+          "requires": [
+            {
+              "resource": "document",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "POST",
+          "path": "/documents/:param/approve/",
+          "requires": [
+            {
+              "resource": "document",
+              "operation": "approve"
+            }
+          ]
+        },
+        {
+          "method": "POST",
+          "path": "/documents/:param/attach-to-shipment/",
+          "requires": [
+            {
+              "resource": "document",
+              "operation": "update"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/documents/:param/content/",
+          "requires": [
+            {
+              "resource": "document",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "POST",
+          "path": "/documents/:param/delivery-facts/",
+          "requires": [
+            {
+              "resource": "document",
+              "operation": "update"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/documents/:param/import-assistant/history/",
+          "requires": [
+            {
+              "resource": "document",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "POST",
+          "path": "/documents/:param/import-assistant/thread/",
+          "requires": [
+            {
+              "resource": "assistant",
+              "operation": "create"
+            },
+            {
+              "resource": "document",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/documents/:param/reading/",
+          "requires": [
+            {
+              "resource": "document",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "POST",
+          "path": "/documents/:param/reject/",
+          "requires": [
+            {
+              "resource": "document",
+              "operation": "reject"
+            }
+          ]
+        },
+        {
+          "method": "POST",
+          "path": "/documents/:param/restore/",
+          "requires": [
+            {
+              "resource": "document",
+              "operation": "update"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/documents/:param/shipment-draft/",
+          "requires": [
+            {
+              "resource": "document",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "POST",
+          "path": "/documents/:param/shipment-draft/reextract/",
+          "requires": [
+            {
+              "resource": "document",
+              "operation": "update"
+            }
+          ]
+        },
+        {
+          "method": "POST",
+          "path": "/documents/:param/signature/",
+          "requires": [
+            {
+              "resource": "document",
+              "operation": "update"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/documents/:param/versions/",
+          "requires": [
+            {
+              "resource": "document",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "POST",
+          "path": "/documents/bulk-delete/",
+          "requires": [
+            {
+              "resource": "document",
+              "operation": "delete"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/documents/extraction-status/",
+          "requires": [
+            {
+              "resource": "document",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/documents/resource/:param/:param/packet-summary/",
+          "requires": [
+            {
+              "resource": "document",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/documents/storage/",
+          "requires": [
+            {
+              "resource": "organization",
+              "operation": "update"
+            }
+          ]
+        },
+        {
+          "method": "POST",
+          "path": "/documents/uploads/",
+          "requires": [
+            {
+              "resource": "document",
+              "operation": "create"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/documents/uploads/:param/",
+          "requires": [
+            {
+              "resource": "document",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "POST",
+          "path": "/documents/uploads/:param/cancel/",
+          "requires": [
+            {
+              "resource": "document",
+              "operation": "create"
+            }
+          ]
+        },
+        {
+          "method": "POST",
+          "path": "/documents/uploads/:param/complete/",
+          "requires": [
+            {
+              "resource": "document",
+              "operation": "create"
+            }
+          ]
+        },
+        {
+          "method": "POST",
+          "path": "/documents/uploads/:param/parts/",
+          "requires": [
+            {
+              "resource": "document",
+              "operation": "create"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/documents/uploads/active/",
+          "requires": [
+            {
+              "resource": "document",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "POST",
+          "path": "/edi/communication-profiles/:param/poll/",
+          "requires": [
+            {
+              "resource": "edi",
+              "operation": "update"
+            }
+          ]
+        },
+        {
+          "method": "POST",
+          "path": "/edi/communication-profiles/:param/test-connection/",
+          "requires": [
+            {
+              "resource": "edi",
+              "operation": "update"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/edi/connections/:param",
+          "requires": [
+            {
+              "resource": "edi",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/edi/inbound-files/:param/",
+          "requires": [
+            {
+              "resource": "edi",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/edi/inbound-files/:param/inspect/",
+          "requires": [
+            {
+              "resource": "edi",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/edi/messages/:param",
+          "requires": [
+            {
+              "resource": "edi",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/edi/messages/:param/",
+          "requires": [
+            {
+              "resource": "edi",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/edi/messages/:param/inspect/",
+          "requires": [
+            {
+              "resource": "edi",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/edi/partners/:param/",
+          "requires": [
+            {
+              "resource": "edi",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/edi/partners/:param/mapping-profile/",
+          "requires": [
+            {
+              "resource": "edi",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/edi/transfers/",
+          "requires": [
+            {
+              "resource": "edi",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/edi/transfers/:param/",
+          "requires": [
+            {
+              "resource": "edi",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/edi/transfers/:param/mapping-preview/",
+          "requires": [
+            {
+              "resource": "edi",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/locations/",
+          "requires": [
+            {
+              "resource": "location",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/pricing-templates/:param/inputs",
+          "requires": []
+        },
+        {
+          "method": "GET",
+          "path": "/rate-agreements/:param/",
+          "requires": [
+            {
+              "resource": "rate_agreement",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/rate-agreements/:param/lanes/",
+          "requires": [
+            {
+              "resource": "rate_agreement",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/rate-agreements/:param/lanes/summary/",
+          "requires": [
+            {
+              "resource": "rate_agreement",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/rate-agreements/:param/versions/",
+          "requires": [
+            {
+              "resource": "rate_agreement",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/search/global/",
+          "requires": []
+        },
+        {
+          "method": "GET",
+          "path": "/service-failures/",
+          "requires": [
+            {
+              "resource": "service_failure",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/service-failures/:param/",
+          "requires": [
+            {
+              "resource": "service_failure",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/service-failures/:param/edi-214-readiness/:param",
+          "requires": []
+        },
+        {
+          "method": "GET",
+          "path": "/service-failures/:param/edi-214-status/",
+          "requires": [
+            {
+              "resource": "service_failure",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/shipment-moves/:param/rate-confirmations/",
+          "requires": [
+            {
+              "resource": "rate_confirmation",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/shipments/:param/customer-tracking/preview/",
+          "requires": [
+            {
+              "resource": "shipment",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/shipments/:param/eta/",
+          "requires": [
+            {
+              "resource": "shipment",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/shipments/:param/permit-assessment/",
+          "requires": [
+            {
+              "resource": "shipment",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/shipments/:param/permit-requirements/",
+          "requires": [
+            {
+              "resource": "permit",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/shipments/:param/permits/",
+          "requires": [
+            {
+              "resource": "permit",
+              "operation": "read"
+            }
+          ]
+        }
+      ],
+      "reads": [
+        "accounting_integration",
+        "accounting_reconciliation",
+        "accounting_sync",
         "agent_definition",
-        "user"
+        "agent_memory",
+        "agent_run",
+        "briefing",
+        "capture_batch",
+        "capture_device",
+        "capture_profile",
+        "carrier",
+        "carrier_invoice_match",
+        "carrier_settlement",
+        "customer",
+        "detention",
+        "detention_policy",
+        "driver_settlement",
+        "edi",
+        "formula_template",
+        "fuel_card",
+        "fuel_purchase",
+        "ifta_return",
+        "inbound_mailbox",
+        "inbound_message",
+        "invoice",
+        "journal_entry",
+        "journal_reversal",
+        "location",
+        "manual_journal",
+        "order",
+        "rate_agreement",
+        "rate_quote",
+        "record_share",
+        "report",
+        "service_failure",
+        "shipment",
+        "tender",
+        "tractor",
+        "trailer",
+        "user",
+        "worker",
+        "worker_credential",
+        "worker_credential_type",
+        "worker_pto"
       ],
-      "declared": []
+      "references": [
+        "commodity",
+        "document_type",
+        "equipment_manufacturer",
+        "equipment_type",
+        "fleet_code",
+        "fuel_purchase_import",
+        "organization"
+      ],
+      "declared": [
+        "accounts_receivable",
+        "agent_definition",
+        "carrier",
+        "customer_payment",
+        "edi",
+        "escrow_account",
+        "fiscal_period",
+        "fuel_card",
+        "invoice_dispute",
+        "location_category",
+        "pay_advance",
+        "performance_review",
+        "service_failure_reason_code",
+        "shipment",
+        "tender",
+        "worker_checklist"
+      ]
     },
     {
       "path": "/desk/memory",
@@ -16621,6 +18451,15 @@
         "DetachPayEventFromSettlement",
         "DetentionIntelligence",
         "DismissDeskMemory",
+        "DispatchAssignMoves",
+        "DispatchAssignmentPreview",
+        "DispatchBoard",
+        "DispatchCarrierAssignmentPreview",
+        "DispatchDriverMoves",
+        "DispatchForecastQuality",
+        "DispatchMove",
+        "DispatchMoveCandidates",
+        "DispatchMovesByIds",
         "DrillThroughReport",
         "DriverSettlementDetail",
         "EdiPartnerScorecards",
@@ -16645,6 +18484,7 @@
         "JournalReviewTable",
         "JournalSourceByObject",
         "LateChargePreview",
+        "LiveTenderByMove",
         "MarkCarrierSettlementPaid",
         "MarkDriverSettlementPaid",
         "MyCaptureAccess",
@@ -16696,6 +18536,7 @@
         "ShipmentProfitability",
         "SubmitCarrierSettlement",
         "SubmitDriverSettlement",
+        "TendersByShipment",
         "TodaysBriefing",
         "TriageAssignees",
         "TriageBriefing",
@@ -18346,6 +20187,7 @@
         "report",
         "service_failure",
         "shipment",
+        "tender",
         "tractor",
         "trailer",
         "user",
@@ -18378,6 +20220,7 @@
         "performance_review",
         "service_failure_reason_code",
         "shipment",
+        "tender",
         "worker_checklist"
       ]
     },
@@ -18554,6 +20397,15 @@
         "DetachPayEventFromSettlement",
         "DetentionIntelligence",
         "DismissDeskMemory",
+        "DispatchAssignMoves",
+        "DispatchAssignmentPreview",
+        "DispatchBoard",
+        "DispatchCarrierAssignmentPreview",
+        "DispatchDriverMoves",
+        "DispatchForecastQuality",
+        "DispatchMove",
+        "DispatchMoveCandidates",
+        "DispatchMovesByIds",
         "DrillThroughReport",
         "DriverSettlementDetail",
         "EdiPartnerScorecards",
@@ -18577,6 +20429,7 @@
         "JournalReviewTable",
         "JournalSourceByObject",
         "LateChargePreview",
+        "LiveTenderByMove",
         "MarkCarrierSettlementPaid",
         "MarkDriverSettlementPaid",
         "MyCaptureAccess",
@@ -18623,6 +20476,7 @@
         "ShipmentProfitability",
         "SubmitCarrierSettlement",
         "SubmitDriverSettlement",
+        "TendersByShipment",
         "TodaysBriefing",
         "TriageAssignees",
         "TriageBriefing",
@@ -20206,6 +22060,7 @@
         "report",
         "service_failure",
         "shipment",
+        "tender",
         "tractor",
         "trailer",
         "user",
@@ -20238,6 +22093,7 @@
         "performance_review",
         "service_failure_reason_code",
         "shipment",
+        "tender",
         "worker_checklist"
       ]
     },
@@ -21440,6 +23296,15 @@
         "DetachPayEventFromSettlement",
         "DetentionIntelligence",
         "DismissDeskMemory",
+        "DispatchAssignMoves",
+        "DispatchAssignmentPreview",
+        "DispatchBoard",
+        "DispatchCarrierAssignmentPreview",
+        "DispatchDriverMoves",
+        "DispatchForecastQuality",
+        "DispatchMove",
+        "DispatchMoveCandidates",
+        "DispatchMovesByIds",
         "DrillThroughReport",
         "DriverSettlementDetail",
         "EdiPartnerScorecards",
@@ -21463,6 +23328,7 @@
         "JournalReviewTable",
         "JournalSourceByObject",
         "LateChargePreview",
+        "LiveTenderByMove",
         "MarkCarrierSettlementPaid",
         "MarkDriverSettlementPaid",
         "MyCaptureAccess",
@@ -21509,6 +23375,7 @@
         "ShipmentProfitability",
         "SubmitCarrierSettlement",
         "SubmitDriverSettlement",
+        "TendersByShipment",
         "TodaysBriefing",
         "TriageAssignees",
         "TriageBriefing",
@@ -23092,6 +24959,7 @@
         "report",
         "service_failure",
         "shipment",
+        "tender",
         "tractor",
         "trailer",
         "user",
@@ -23124,6 +24992,7 @@
         "performance_review",
         "service_failure_reason_code",
         "shipment",
+        "tender",
         "worker_checklist"
       ]
     },
@@ -23544,6 +25413,7 @@
         "DispatchForecastQuality",
         "DispatchMove",
         "DispatchMoveCandidates",
+        "DispatchMovesByIds",
         "DispatchPlanAutoAssign",
         "DispatchUnassignMoves",
         "GrantCarrierIntelOverride",
@@ -43204,6 +45074,27 @@
       "reads": [],
       "linked": [],
       "declared": []
+    },
+    {
+      "name": "DispatchMovesByIds",
+      "type": "query",
+      "reads": [],
+      "linked": [
+        {
+          "kind": "tender",
+          "fields": [
+            "currentCarrierName",
+            "currentOfferExpiresAt",
+            "currentRank",
+            "mode",
+            "offerCount",
+            "status"
+          ]
+        }
+      ],
+      "declared": [
+        "tender"
+      ]
     },
     {
       "name": "DispatchPlanAutoAssign",

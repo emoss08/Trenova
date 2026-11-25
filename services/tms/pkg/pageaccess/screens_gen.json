@@ -2413,6 +2413,7 @@
         "DispatchForecastQuality",
         "DispatchMove",
         "DispatchMoveCandidates",
+        "DispatchMovesByIds",
         "DispatchStyle",
         "LiveTenderByMove",
         "ResetDispatchStyle",
@@ -7512,7 +7513,9 @@
         "CarrierTrackingLink",
         "CustomerStatusNotifications",
         "CustomerTrackingLinks",
+        "DeskDetentionCard",
         "DeskRecordActivity",
+        "DetentionIntelligence",
         "MyActiveBillingTransferRun",
         "RetryBillingTransferRun",
         "SelectOptions",
@@ -8502,6 +8505,15 @@
         "DetachPayEventFromSettlement",
         "DetentionIntelligence",
         "DismissDeskMemory",
+        "DispatchAssignMoves",
+        "DispatchAssignmentPreview",
+        "DispatchBoard",
+        "DispatchCarrierAssignmentPreview",
+        "DispatchDriverMoves",
+        "DispatchForecastQuality",
+        "DispatchMove",
+        "DispatchMoveCandidates",
+        "DispatchMovesByIds",
         "DrillThroughReport",
         "DriverSettlementDetail",
         "EdiPartnerScorecards",
@@ -8525,6 +8537,7 @@
         "JournalReviewTable",
         "JournalSourceByObject",
         "LateChargePreview",
+        "LiveTenderByMove",
         "MarkCarrierSettlementPaid",
         "MarkDriverSettlementPaid",
         "MyCaptureAccess",
@@ -8572,6 +8585,7 @@
         "ShipmentProfitability",
         "SubmitCarrierSettlement",
         "SubmitDriverSettlement",
+        "TendersByShipment",
         "TodaysBriefing",
         "TriageAssignees",
         "TriageBriefing",
@@ -9340,10 +9354,939 @@
         }
       ],
       "operations": [
+        "AIAgentRoster",
+        "AIControlSummary",
+        "AITuneUps",
+        "AIUsageDaily",
+        "AccountingBackfills",
+        "AccountingBriefing",
+        "AccountingDriftFinding",
+        "AccountingDriftFixPreview",
+        "AccountingDriftOverview",
+        "AccountingInboundApplyPreview",
+        "AccountingInboundChange",
+        "AccountingInboundOverview",
+        "AccountingMappingSummary",
+        "AccountingReferenceObjects",
+        "AccountingSyncAttempts",
+        "AccountingSyncObjectStates",
+        "AccountingSyncRecord",
+        "AccountingSyncStatus",
+        "AccountingSyncSummary",
+        "AddCarrierSettlementAdjustment",
+        "AddDriverSettlementAdjustment",
+        "AgentActivitySummary",
+        "AgentMemoryCount",
+        "AgentMemoryTable",
+        "AgentPlanPreview",
+        "AgentPromotionPreview",
+        "AgentProposalPreview",
+        "AgentProposalPreviews",
+        "ApproveCarrierSettlement",
+        "ApproveDriverSettlement",
+        "ApproveJournalEntries",
+        "ArAgingSummary",
+        "ArAgingTrend",
+        "ArCashFlowForecast",
+        "ArCollectionsWorklist",
+        "ArCustomerLedger",
+        "ArCustomerProfile",
+        "ArCustomerStatement",
+        "ArDashboardKpis",
+        "ArDsoTrend",
+        "ArOpenItems",
+        "ArPaymentStats",
+        "ArTopOverdueCustomers",
+        "AssignBillingQueueBiller",
+        "AssignFuelCard",
+        "AvailableCaptureProfiles",
+        "BillingQueueFormulaTemplate",
+        "BillingQueueRateAgreement",
+        "BillingQueueShipment",
+        "CancelCaptureRequest",
+        "CancelReportRun",
+        "CannedReports",
+        "CaptureAgentRelease",
+        "CaptureBatch",
+        "CaptureBatchCount",
+        "CaptureBatches",
+        "CaptureDevicePairing",
+        "CaptureDevices",
+        "CaptureProfiles",
+        "CaptureRequestsForTarget",
+        "CarrierInvoiceMatches",
+        "CarrierSettlementDetail",
+        "CarrierTrackingLink",
+        "CommitMyDecisionNow",
+        "ConfirmDeskMemory",
+        "CreateCaptureRequest",
+        "CreateReportDashboard",
+        "CreateReportDefinition",
+        "CreateReportSchedule",
+        "CreateReportView",
+        "CustomerStatusNotifications",
+        "CustomerTrackingLinks",
+        "CustomerTrackingProfile",
+        "DecideMyPlan",
+        "DecideMyProposal",
+        "DecideMyProposals",
+        "DeleteReportDashboard",
+        "DeleteReportDefinition",
+        "DeleteReportSchedule",
+        "DeleteReportView",
         "DeskActivity",
-        "DeskActivityEntry"
+        "DeskActivityEntry",
+        "DeskAttention",
+        "DeskBoardCard",
+        "DeskCarrierCard",
+        "DeskCarrierEligibility",
+        "DeskCarrierIntel",
+        "DeskCarrierSettlementCard",
+        "DeskCarrierSettlements",
+        "DeskCustomerCard",
+        "DeskCustomerRateAgreements",
+        "DeskDetentionCard",
+        "DeskDriverSettlementCard",
+        "DeskEdiPartnerCard",
+        "DeskEdiPartnerMessages",
+        "DeskFuelCardCard",
+        "DeskFuelPurchaseCard",
+        "DeskIftaReturnCard",
+        "DeskInvoiceCard",
+        "DeskJournalEntryCard",
+        "DeskLocationCard",
+        "DeskLocationDwell",
+        "DeskLocationPolicies",
+        "DeskManualJournalCard",
+        "DeskMemoriesByIds",
+        "DeskMemorySettings",
+        "DeskOrderCard",
+        "DeskRateAgreementPricing",
+        "DeskRecordActivity",
+        "DeskRecordFailures",
+        "DeskRecordShipments",
+        "DeskReportRunCard",
+        "DeskServiceFailureCard",
+        "DeskTractorCard",
+        "DeskTractorInspections",
+        "DeskTractorPosition",
+        "DeskTrailerCard",
+        "DeskWorkerCard",
+        "DeskWorkerCredentials",
+        "DeskWorkerHos",
+        "DeskWorkerStanding",
+        "DetachPayEventFromSettlement",
+        "DetentionIntelligence",
+        "DismissDeskMemory",
+        "DispatchAssignMoves",
+        "DispatchAssignmentPreview",
+        "DispatchBoard",
+        "DispatchCarrierAssignmentPreview",
+        "DispatchDriverMoves",
+        "DispatchForecastQuality",
+        "DispatchMove",
+        "DispatchMoveCandidates",
+        "DispatchMovesByIds",
+        "DrillThroughReport",
+        "DriverSettlementDetail",
+        "EdiPartnerScorecards",
+        "EdiSummary",
+        "EdiVolumeSeries",
+        "ExportCarrierSettlementBatchCsv",
+        "ForkCannedReport",
+        "HoldDriverSettlement",
+        "InboundMailboxes",
+        "InboundMessage",
+        "InboundMessageCounts",
+        "InboundMessages",
+        "InboundReplyAttachables",
+        "InboundSenderProfile",
+        "InboundThread",
+        "InviteWorkerToPortal",
+        "InvoiceArContext",
+        "JournalEntriesBySource",
+        "JournalEntryDetail",
+        "JournalReviewSummary",
+        "JournalReviewTable",
+        "JournalSourceByObject",
+        "LateChargePreview",
+        "LiveTenderByMove",
+        "MarkCarrierSettlementPaid",
+        "MarkDriverSettlementPaid",
+        "MyCaptureAccess",
+        "MyCaptureDevices",
+        "MyPlanPreview",
+        "MyProposalPreview",
+        "MyTriageViews",
+        "PostCarrierSettlement",
+        "PostDriverSettlement",
+        "PostJournalEntries",
+        "PreviewReport",
+        "RecalculateCarrierSettlement",
+        "RecalculateDriverSettlement",
+        "RecordMyAgentSuggestion",
+        "RecordShareCandidates",
+        "RecordShares",
+        "RejectCarrierSettlement",
+        "RejectDriverSettlement",
+        "ReleaseDriverSettlementHold",
+        "RemoveCarrierSettlementAdjustment",
+        "RemoveDriverSettlementAdjustment",
+        "RenderTriageReplyTemplate",
+        "ReportCatalog",
+        "ReportDashboardById",
+        "ReportDashboards",
+        "ReportDefinitionById",
+        "ReportDefinitionRevisions",
+        "ReportDefinitionsTable",
+        "ReportRunById",
+        "ReportSchedules",
+        "ReportViews",
+        "ResetCannedFork",
+        "ResolveFuelPurchaseImportRows",
+        "ReviseDeskMemory",
+        "RunReport",
+        "SelectOptions",
+        "SendInvoiceEdi",
+        "SetDeskMemoryStatus",
+        "SettleMyAgentSuggestion",
+        "ShareRecord",
+        "ShipmentCheckCalls",
+        "ShipmentCustomerBillingRules",
+        "ShipmentInvoices",
+        "ShipmentProfitability",
+        "SubmitCarrierSettlement",
+        "SubmitDriverSettlement",
+        "TendersByShipment",
+        "TodaysBriefing",
+        "TriageAssignees",
+        "TriageBriefing",
+        "TriageCustomerPeek",
+        "TriageReplyTemplates",
+        "TriageResponseTargets",
+        "TriageRuleMatches",
+        "TriageRulePreview",
+        "TriageRules",
+        "TriageSenderDomains",
+        "TriageSettings",
+        "TriageShipmentPeek",
+        "TriageStopTimes",
+        "UndoMyDecision",
+        "UnshareRecord",
+        "UpcomingWorkerPto",
+        "UpdateReportDashboard",
+        "UpdateReportDefinition",
+        "UpdateReportSchedule",
+        "UpdateReportView",
+        "VoidCarrierSettlement",
+        "VoidDriverSettlement",
+        "VoidInvoice",
+        "WatchtowerCleared",
+        "WatchtowerCounts",
+        "WatchtowerFeed",
+        "WatchtowerHandOffAgents",
+        "WatchtowerItemDetail",
+        "WatchtowerPlay",
+        "WorkerCredentialTypeChoices",
+        "WorkerOverview",
+        "WorkerPtoChartData",
+        "WorkerRecord",
+        "WorkingAgentRuns"
       ],
-      "rest": []
+      "rest": [
+        {
+          "method": "GET",
+          "path": "/accounting/bank-receipts/:param/"
+        },
+        {
+          "method": "GET",
+          "path": "/accounting/bank-receipts/:param/card/"
+        },
+        {
+          "method": "GET",
+          "path": "/accounting/bank-receipts/:param/suggestions/"
+        },
+        {
+          "method": "GET",
+          "path": "/accounting/bank-receipts/summary/"
+        },
+        {
+          "method": "POST",
+          "path": "/accounting/journal-reversals/"
+        },
+        {
+          "method": "GET",
+          "path": "/accounting/manual-journals/:param/"
+        },
+        {
+          "method": "POST",
+          "path": "/accounting/manual-journals/:param/approve/"
+        },
+        {
+          "method": "POST",
+          "path": "/accounting/manual-journals/:param/cancel/"
+        },
+        {
+          "method": "POST",
+          "path": "/accounting/manual-journals/:param/post/"
+        },
+        {
+          "method": "POST",
+          "path": "/accounting/manual-journals/:param/reject/"
+        },
+        {
+          "method": "POST",
+          "path": "/accounting/manual-journals/:param/submit/"
+        },
+        {
+          "method": "GET",
+          "path": "/agent-analysis/runs/:param/"
+        },
+        {
+          "method": "POST",
+          "path": "/agent-definitions/"
+        },
+        {
+          "method": "DELETE",
+          "path": "/agent-definitions/:param/"
+        },
+        {
+          "method": "GET",
+          "path": "/agent-definitions/:param/"
+        },
+        {
+          "method": "PUT",
+          "path": "/agent-definitions/:param/"
+        },
+        {
+          "method": "GET",
+          "path": "/agent-definitions/:param/budget/"
+        },
+        {
+          "method": "GET",
+          "path": "/agent-definitions/:param/trust/"
+        },
+        {
+          "method": "GET",
+          "path": "/agent-definitions/event-kinds/"
+        },
+        {
+          "method": "GET",
+          "path": "/agent-definitions/system/:param/"
+        },
+        {
+          "method": "GET",
+          "path": "/agent-definitions/templates/"
+        },
+        {
+          "method": "GET",
+          "path": "/agent-definitions/tools/"
+        },
+        {
+          "method": "GET",
+          "path": "/agent-extensions/:param/config/"
+        },
+        {
+          "method": "GET",
+          "path": "/agent-extensions/catalog/"
+        },
+        {
+          "method": "GET",
+          "path": "/agent-portals/runs/:param"
+        },
+        {
+          "method": "GET",
+          "path": "/agent-portals/runs/:param/"
+        },
+        {
+          "method": "GET",
+          "path": "/agent-portals/runs/:param/live/"
+        },
+        {
+          "method": "GET",
+          "path": "/agent-portals/runs/:param/recording/"
+        },
+        {
+          "method": "POST",
+          "path": "/agent-portals/runs/:param/sign-in-code/"
+        },
+        {
+          "method": "GET",
+          "path": "/agent-portals/sites/"
+        },
+        {
+          "method": "GET",
+          "path": "/agent-web-watches/:param"
+        },
+        {
+          "method": "GET",
+          "path": "/agent-web-watches/:param/findings/"
+        },
+        {
+          "method": "POST",
+          "path": "/agent-web-watches/:param/stop/"
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/agents/:param/commands/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/ask/"
+        },
+        {
+          "method": "DELETE",
+          "path": "/assistant/ask/:param/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/ask/:param/keep/"
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/mentions/"
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/providers/"
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/schedules/"
+        },
+        {
+          "method": "DELETE",
+          "path": "/assistant/schedules/:param/"
+        },
+        {
+          "method": "PATCH",
+          "path": "/assistant/schedules/:param/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/schedules/:param/run/"
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/search/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/"
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param"
+        },
+        {
+          "method": "DELETE",
+          "path": "/assistant/threads/:param/"
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param/"
+        },
+        {
+          "method": "PATCH",
+          "path": "/assistant/threads/:param/"
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param/artifacts/:param"
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param/artifacts/:param/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/artifacts/:param/pin/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/artifacts/:param/restore/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/artifacts/:param/rewrite/"
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param/artifacts/:param/rows/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/artifacts/:param/run/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/artifacts/:param/versions/"
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param/artifacts/by-slug/:param/"
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param/budget/"
+        },
+        {
+          "method": "DELETE",
+          "path": "/assistant/threads/:param/case/"
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param/case/"
+        },
+        {
+          "method": "PUT",
+          "path": "/assistant/threads/:param/case/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/case/await-reply/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/case/snooze/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/case/ticks/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/case/wake/"
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param/chapters/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/chapters/"
+        },
+        {
+          "method": "DELETE",
+          "path": "/assistant/threads/:param/chapters/:param/"
+        },
+        {
+          "method": "PATCH",
+          "path": "/assistant/threads/:param/chapters/:param/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/compact/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/handoff/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/messages/"
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param/messages/:param"
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param/plans/"
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param/proposals/"
+        },
+        {
+          "method": "PUT",
+          "path": "/assistant/threads/:param/proposals/:param/edits/"
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param/queue/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/queue/"
+        },
+        {
+          "method": "DELETE",
+          "path": "/assistant/threads/:param/queue/:param/"
+        },
+        {
+          "method": "PATCH",
+          "path": "/assistant/threads/:param/queue/:param/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/queue/:param/send/"
+        },
+        {
+          "method": "PUT",
+          "path": "/assistant/threads/:param/queue/order/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/read/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/requests/"
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param/schedules/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/schedules/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/turns/"
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param/turns/active/"
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param/waits/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/waits/:param/cancel/"
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/shelves/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/turns/:param/stop/"
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/turns/active/"
+        },
+        {
+          "method": "GET",
+          "path": "/billing-queue/:param/activity/"
+        },
+        {
+          "method": "POST",
+          "path": "/billing-queue/:param/issues/:param/resolve/"
+        },
+        {
+          "method": "POST",
+          "path": "/billing-queue/:param/issues/:param/undo/"
+        },
+        {
+          "method": "GET",
+          "path": "/billing-queue/:param/neighbors/:param"
+        },
+        {
+          "method": "POST",
+          "path": "/billing-queue/:param/post/"
+        },
+        {
+          "method": "POST",
+          "path": "/billing-queue/:param/release/"
+        },
+        {
+          "method": "PUT",
+          "path": "/billing-queue/:param/status/"
+        },
+        {
+          "method": "GET",
+          "path": "/billing-queue/assist/"
+        },
+        {
+          "method": "GET",
+          "path": "/billing-queue/brief/"
+        },
+        {
+          "method": "POST",
+          "path": "/billing-queue/bulk/"
+        },
+        {
+          "method": "GET",
+          "path": "/billing-queue/bulk/:param/"
+        },
+        {
+          "method": "POST",
+          "path": "/billing-queue/bulk/:param/cancel/"
+        },
+        {
+          "method": "GET",
+          "path": "/billing-queue/recommendations/"
+        },
+        {
+          "method": "GET",
+          "path": "/billing-queue/summaries/"
+        },
+        {
+          "method": "GET",
+          "path": "/billing/invoices/:param/"
+        },
+        {
+          "method": "GET",
+          "path": "/billing/invoices/:param/email-attempts/:param"
+        },
+        {
+          "method": "POST",
+          "path": "/billing/invoices/:param/generate-pdf/"
+        },
+        {
+          "method": "GET",
+          "path": "/billing/invoices/:param/post-preview/"
+        },
+        {
+          "method": "POST",
+          "path": "/billing/invoices/:param/post/"
+        },
+        {
+          "method": "GET",
+          "path": "/billing/invoices/:param/send-plan/"
+        },
+        {
+          "method": "POST",
+          "path": "/billing/invoices/:param/send/"
+        },
+        {
+          "method": "GET",
+          "path": "/case-checklists/"
+        },
+        {
+          "method": "PUT",
+          "path": "/case-checklists/"
+        },
+        {
+          "method": "DELETE",
+          "path": "/case-checklists/:param/"
+        },
+        {
+          "method": "DELETE",
+          "path": "/documents/:param/"
+        },
+        {
+          "method": "GET",
+          "path": "/documents/:param/"
+        },
+        {
+          "method": "POST",
+          "path": "/documents/:param/approve/"
+        },
+        {
+          "method": "POST",
+          "path": "/documents/:param/attach-to-shipment/"
+        },
+        {
+          "method": "GET",
+          "path": "/documents/:param/content/"
+        },
+        {
+          "method": "POST",
+          "path": "/documents/:param/delivery-facts/"
+        },
+        {
+          "method": "GET",
+          "path": "/documents/:param/import-assistant/history/"
+        },
+        {
+          "method": "POST",
+          "path": "/documents/:param/import-assistant/thread/"
+        },
+        {
+          "method": "GET",
+          "path": "/documents/:param/reading/"
+        },
+        {
+          "method": "POST",
+          "path": "/documents/:param/reject/"
+        },
+        {
+          "method": "POST",
+          "path": "/documents/:param/restore/"
+        },
+        {
+          "method": "GET",
+          "path": "/documents/:param/shipment-draft/"
+        },
+        {
+          "method": "POST",
+          "path": "/documents/:param/shipment-draft/reextract/"
+        },
+        {
+          "method": "POST",
+          "path": "/documents/:param/signature/"
+        },
+        {
+          "method": "GET",
+          "path": "/documents/:param/versions/"
+        },
+        {
+          "method": "POST",
+          "path": "/documents/bulk-delete/"
+        },
+        {
+          "method": "GET",
+          "path": "/documents/extraction-status/"
+        },
+        {
+          "method": "GET",
+          "path": "/documents/resource/:param/:param/packet-summary/"
+        },
+        {
+          "method": "GET",
+          "path": "/documents/storage/"
+        },
+        {
+          "method": "POST",
+          "path": "/documents/uploads/"
+        },
+        {
+          "method": "GET",
+          "path": "/documents/uploads/:param/"
+        },
+        {
+          "method": "POST",
+          "path": "/documents/uploads/:param/cancel/"
+        },
+        {
+          "method": "POST",
+          "path": "/documents/uploads/:param/complete/"
+        },
+        {
+          "method": "POST",
+          "path": "/documents/uploads/:param/parts/"
+        },
+        {
+          "method": "GET",
+          "path": "/documents/uploads/active/"
+        },
+        {
+          "method": "POST",
+          "path": "/edi/communication-profiles/:param/poll/"
+        },
+        {
+          "method": "POST",
+          "path": "/edi/communication-profiles/:param/test-connection/"
+        },
+        {
+          "method": "GET",
+          "path": "/edi/connections/:param"
+        },
+        {
+          "method": "GET",
+          "path": "/edi/inbound-files/:param/"
+        },
+        {
+          "method": "GET",
+          "path": "/edi/inbound-files/:param/inspect/"
+        },
+        {
+          "method": "GET",
+          "path": "/edi/messages/:param"
+        },
+        {
+          "method": "GET",
+          "path": "/edi/messages/:param/"
+        },
+        {
+          "method": "GET",
+          "path": "/edi/messages/:param/inspect/"
+        },
+        {
+          "method": "GET",
+          "path": "/edi/partners/:param/"
+        },
+        {
+          "method": "GET",
+          "path": "/edi/partners/:param/mapping-profile/"
+        },
+        {
+          "method": "GET",
+          "path": "/edi/transfers/"
+        },
+        {
+          "method": "GET",
+          "path": "/edi/transfers/:param/"
+        },
+        {
+          "method": "GET",
+          "path": "/edi/transfers/:param/mapping-preview/"
+        },
+        {
+          "method": "GET",
+          "path": "/locations/"
+        },
+        {
+          "method": "GET",
+          "path": "/pricing-templates/:param/inputs"
+        },
+        {
+          "method": "GET",
+          "path": "/rate-agreements/:param/"
+        },
+        {
+          "method": "GET",
+          "path": "/rate-agreements/:param/lanes/"
+        },
+        {
+          "method": "GET",
+          "path": "/rate-agreements/:param/lanes/summary/"
+        },
+        {
+          "method": "GET",
+          "path": "/rate-agreements/:param/versions/"
+        },
+        {
+          "method": "GET",
+          "path": "/search/global/"
+        },
+        {
+          "method": "GET",
+          "path": "/service-failures/"
+        },
+        {
+          "method": "GET",
+          "path": "/service-failures/:param/"
+        },
+        {
+          "method": "GET",
+          "path": "/service-failures/:param/edi-214-readiness/:param"
+        },
+        {
+          "method": "GET",
+          "path": "/service-failures/:param/edi-214-status/"
+        },
+        {
+          "method": "GET",
+          "path": "/shipment-moves/:param/rate-confirmations/"
+        },
+        {
+          "method": "GET",
+          "path": "/shipments/:param/customer-tracking/preview/"
+        },
+        {
+          "method": "GET",
+          "path": "/shipments/:param/eta/"
+        },
+        {
+          "method": "GET",
+          "path": "/shipments/:param/permit-assessment/"
+        },
+        {
+          "method": "GET",
+          "path": "/shipments/:param/permit-requirements/"
+        },
+        {
+          "method": "GET",
+          "path": "/shipments/:param/permits/"
+        }
+      ]
     },
     {
       "path": "/desk/memory",
@@ -9587,6 +10530,15 @@
         "DetachPayEventFromSettlement",
         "DetentionIntelligence",
         "DismissDeskMemory",
+        "DispatchAssignMoves",
+        "DispatchAssignmentPreview",
+        "DispatchBoard",
+        "DispatchCarrierAssignmentPreview",
+        "DispatchDriverMoves",
+        "DispatchForecastQuality",
+        "DispatchMove",
+        "DispatchMoveCandidates",
+        "DispatchMovesByIds",
         "DrillThroughReport",
         "DriverSettlementDetail",
         "EdiPartnerScorecards",
@@ -9611,6 +10563,7 @@
         "JournalReviewTable",
         "JournalSourceByObject",
         "LateChargePreview",
+        "LiveTenderByMove",
         "MarkCarrierSettlementPaid",
         "MarkDriverSettlementPaid",
         "MyCaptureAccess",
@@ -9662,6 +10615,7 @@
         "ShipmentProfitability",
         "SubmitCarrierSettlement",
         "SubmitDriverSettlement",
+        "TendersByShipment",
         "TodaysBriefing",
         "TriageAssignees",
         "TriageBriefing",
@@ -10586,6 +11540,15 @@
         "DetachPayEventFromSettlement",
         "DetentionIntelligence",
         "DismissDeskMemory",
+        "DispatchAssignMoves",
+        "DispatchAssignmentPreview",
+        "DispatchBoard",
+        "DispatchCarrierAssignmentPreview",
+        "DispatchDriverMoves",
+        "DispatchForecastQuality",
+        "DispatchMove",
+        "DispatchMoveCandidates",
+        "DispatchMovesByIds",
         "DrillThroughReport",
         "DriverSettlementDetail",
         "EdiPartnerScorecards",
@@ -10609,6 +11572,7 @@
         "JournalReviewTable",
         "JournalSourceByObject",
         "LateChargePreview",
+        "LiveTenderByMove",
         "MarkCarrierSettlementPaid",
         "MarkDriverSettlementPaid",
         "MyCaptureAccess",
@@ -10655,6 +11619,7 @@
         "ShipmentProfitability",
         "SubmitCarrierSettlement",
         "SubmitDriverSettlement",
+        "TendersByShipment",
         "TodaysBriefing",
         "TriageAssignees",
         "TriageBriefing",
@@ -12114,6 +13079,15 @@
         "DetachPayEventFromSettlement",
         "DetentionIntelligence",
         "DismissDeskMemory",
+        "DispatchAssignMoves",
+        "DispatchAssignmentPreview",
+        "DispatchBoard",
+        "DispatchCarrierAssignmentPreview",
+        "DispatchDriverMoves",
+        "DispatchForecastQuality",
+        "DispatchMove",
+        "DispatchMoveCandidates",
+        "DispatchMovesByIds",
         "DrillThroughReport",
         "DriverSettlementDetail",
         "EdiPartnerScorecards",
@@ -12137,6 +13111,7 @@
         "JournalReviewTable",
         "JournalSourceByObject",
         "LateChargePreview",
+        "LiveTenderByMove",
         "MarkCarrierSettlementPaid",
         "MarkDriverSettlementPaid",
         "MyCaptureAccess",
@@ -12183,6 +13158,7 @@
         "ShipmentProfitability",
         "SubmitCarrierSettlement",
         "SubmitDriverSettlement",
+        "TendersByShipment",
         "TodaysBriefing",
         "TriageAssignees",
         "TriageBriefing",
@@ -13238,6 +14214,7 @@
         "DispatchForecastQuality",
         "DispatchMove",
         "DispatchMoveCandidates",
+        "DispatchMovesByIds",
         "DispatchPlanAutoAssign",
         "DispatchUnassignMoves",
         "GrantCarrierIntelOverride",
