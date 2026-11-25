@@ -1,5 +1,5 @@
 import { useOpenedOnce } from "@/hooks/use-opened-once";
-import { lazyComponent } from "@/lib/lazy-component";
+import { lazyComponent } from "@trenova/shared/lib/lazy-component";
 import { LazyComponent } from "@trenova/shared/components/error-boundary";
 import type { Document } from "@trenova/shared/types/document";
 import { WORKER_DOCUMENT_RESOURCE } from "./documents-model";

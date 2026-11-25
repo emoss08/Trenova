@@ -98,7 +98,7 @@ func TestTruncateToolResult_KeepsTotalsAndShortensTheLists(t *testing.T) {
 	require.NoError(t, err)
 	require.Greater(t, len(payload), MaxBytes)
 
-	out := truncateToolResult(string(payload))
+	out := truncateToolResult(string(payload), MaxBytes)
 
 	body, note, found := strings.Cut(out, "\n\n[")
 	require.True(t, found, "the shortening is named")
@@ -113,6 +113,16 @@ func TestTruncateToolResult_KeepsTotalsAndShortensTheLists(t *testing.T) {
 	assert.Equal(t, "200 moves in the window", decoded["note"])
 	assert.NotEmpty(t, decoded["moves"])
 	assert.Less(t, len(decoded["moves"].([]any)), 200)
+}
+
+func TestFencePage_KeepsAPageTheResultBudgetWouldCut(t *testing.T) {
+	t.Parallel()
+
+	payload := `{"items":["` + strings.Repeat("x", MaxBytes+1000) + `"]}`
+	require.Less(t, len(payload), MaxPageBytes)
+
+	assert.Contains(t, FencePage("shipment_list", payload), payload)
+	assert.NotContains(t, Fence("shipment_list", payload), payload)
 }
 
 func TestFenceToolResultEndsOnlyAtItsOwnCloseTag(t *testing.T) {

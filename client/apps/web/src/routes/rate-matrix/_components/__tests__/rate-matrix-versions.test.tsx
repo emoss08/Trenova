@@ -26,7 +26,7 @@ vi.mock("@/services/rate", () => ({
   },
 }));
 
-const USER = { id: "usr_1", name: "Ada Reviewer", username: "ada", profilePicUrl: null };
+const USER = { id: "usr_1", name: "Ada Reviewer", username: "ada", photo: null };
 
 function record(overrides: Partial<RateMatrixRecord> = {}): RateMatrixRecord {
   return {

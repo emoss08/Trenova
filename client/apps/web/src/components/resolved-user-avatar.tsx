@@ -1,7 +1,9 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@trenova/shared/components/ui/avatar";
 import { user } from "@/lib/queries/user";
 import { avatarBackground } from "@trenova/shared/lib/avatar-gradient";
-import { cn, isAbsoluteUrl } from "@trenova/shared/lib/utils";
+import { personPhotoSource } from "@trenova/shared/components/worker-avatar";
+import { cn } from "@trenova/shared/lib/utils";
+import type { PersonPhoto } from "@trenova/shared/types/person-photo";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import type { User } from "@trenova/shared/types/user";
 import { useQuery } from "@tanstack/react-query";
@@ -12,8 +14,8 @@ const AVATAR_STALE_MS = 5 * 60 * 1000;
 type ResolvedUserAvatarProps = React.ComponentProps<typeof Avatar> & {
   userId?: User["id"];
   name?: string;
-  profilePicUrl?: string | null;
-  thumbnailUrl?: string | null;
+  /** The person's signed photo, as the read that names them carries it. */
+  photo?: PersonPhoto | null;
   imageClassName?: string;
   fallbackClassName?: string;
   alt?: string;
@@ -50,8 +52,7 @@ function useAvatarGradient(userId: string | undefined, name: string | undefined)
 export function ResolvedUserAvatar({
   userId,
   name,
-  profilePicUrl,
-  thumbnailUrl,
+  photo,
   imageClassName,
   fallbackClassName,
   alt,
@@ -59,19 +60,7 @@ export function ResolvedUserAvatar({
   className,
   ...avatarProps
 }: ResolvedUserAvatarProps) {
-  const preferredSource =
-    variant === "thumbnail"
-      ? thumbnailUrl || profilePicUrl || undefined
-      : profilePicUrl || thumbnailUrl || undefined;
-  const shouldResolve = Boolean(userId && preferredSource && !isAbsoluteUrl(preferredSource));
-
-  const { data: resolvedUrl } = useQuery({
-    ...user.profilePicture(userId ?? "", variant),
-    enabled: shouldResolve,
-    retry: false,
-  });
-
-  const imageSrc = isAbsoluteUrl(preferredSource) ? preferredSource : (resolvedUrl ?? undefined);
+  const imageSrc = personPhotoSource(photo, variant);
   const gradient = useAvatarGradient(userId, name);
 
   return (

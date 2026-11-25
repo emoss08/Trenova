@@ -50,6 +50,9 @@ type RuntimeAttachment struct {
 }
 
 type RuntimeContext struct {
+	// OpenTopics drops the rule that keeps the agent off software work, for a
+	// server running with its topic guard off.
+	OpenTopics       bool
 	OrganizationName string
 	BusinessUnitName string
 	Timezone         string
@@ -218,7 +221,7 @@ type ToolSummary struct {
 	Query       bool
 	Lookup      bool
 	// Loaded says the tool's schema is on this turn's request. Meaningful
-	// only when the turn disclosed a subset; the rest load through find_tools.
+	// only when the turn disclosed a subset; the rest load through search_tools.
 	Loaded bool
 	// PersonalRunsUnasked says a call that touches only the person's own
 	// records runs at once while they are in the conversation, whatever

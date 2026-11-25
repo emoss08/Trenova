@@ -126,6 +126,7 @@ type PortalProfile {
   driverType: String!
   fleetCodeName: String!
   organizationName: String!
+  photo: PersonPhoto
 }
 
 type PortalStop {

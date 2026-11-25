@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/testutil/phototest"
 	"github.com/emoss08/trenova/internal/testutil/validationtest"
 
 	"github.com/emoss08/trenova/internal/api/handlers/userhandler"
@@ -17,7 +18,6 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/securityconfig"
-	"github.com/emoss08/trenova/internal/infrastructure/config/storageconfig"
 	"github.com/emoss08/trenova/internal/modules/identity/app/roleservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/userservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
@@ -31,8 +31,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
-	"github.com/emoss08/trenova/internal/testutil/mocks/contentscanportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/kernelportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/permissionportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/sessionportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
@@ -57,7 +55,6 @@ type setupOptions struct {
 	userRepo    *tenantportsmock.MockUserRepository
 	roleRepo    *permissionportsmock.MockRoleRepository
 	sessionRepo *sessionportsmock.MockSessionRepository
-	storage     *kernelportsmock.MockClient
 	orgs        *tenantportsmock.MockOrganizationService
 	permEngine  permissionports.PermissionEngine
 	mfa         sessionports.MFAService
@@ -84,9 +81,6 @@ func setupUserHandler(t *testing.T, opts setupOptions) *userhandler.Handler {
 	if opts.permEngine == nil {
 		opts.permEngine = &mocks.AllowAllPermissionEngine{}
 	}
-	if opts.storage == nil {
-		opts.storage = kernelportsmock.NewMockClient(t)
-	}
 	if opts.orgs == nil {
 		opts.orgs = organizationsReturning(t, completeOrganization())
 	}
@@ -97,11 +91,6 @@ func setupUserHandler(t *testing.T, opts setupOptions) *userhandler.Handler {
 				Session: securityconfig.SessionConfig{
 					Name: "trenova_session",
 				},
-			},
-			Storage: storageconfig.Config{
-				MaxFileSize:        5 * 1024 * 1024,
-				PresignedURLExpiry: 15 * time.Minute,
-				AllowedMIMETypes:   []string{"image/jpeg", "image/png", "image/webp"},
 			},
 		}
 	}
@@ -118,15 +107,13 @@ func setupUserHandler(t *testing.T, opts setupOptions) *userhandler.Handler {
 		DB:                dbtest.NopConnection{},
 		Auditor:           &securityaudittest.Recorder{},
 		AuthEvents:        noopAuthEvents{},
-		ContentGate:       contentscanportsmock.NewCleanGate(),
 		Logger:            logger,
 		Repo:              opts.userRepo,
 		SessionRepository: opts.sessionRepo,
 		Rotator:           sessiontest.Rotator(opts.sessionRepo),
 		AuditService:      &mocks.NoopAuditService{},
 		Realtime:          &mocks.NoopRealtimeService{},
-		Storage:           opts.storage,
-		StorageConfig:     &opts.cfg.Storage,
+		Photos:            &phototest.Fake{},
 		Validator:         userservice.NewValidator(userservice.ValidatorParams{Repo: opts.userRepo}),
 		PermissionEngine:  opts.permEngine,
 		SSOConfigs:        ssoConfigs,

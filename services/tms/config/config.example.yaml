@@ -230,6 +230,7 @@ storage:
 ai:
   enabled: true # Set false to stop all AI at once
   verdictCacheTtl: 24h # How long a scope verdict is shared between replicas; the same question is classified once, not once per replica
+  topicGuard: true # Keep questions to transportation work (scope rules, classifier, no-software prompt rule, code taken out of replies). false only on your own machine; production refuses to start with it off. Env: TRENOVA_AI_TOPICGUARD
 
   # Timeouts. A probe and a completion wait on different things: a probe asks
   # for a short generation, a blocking completion sends nothing until the model
@@ -241,7 +242,7 @@ ai:
   privateNetworkProviders: true # Let organizations point a provider at a private or loopback address (self-hosted models). Set false when many organizations share this server
   serverCloudCredentials: false # Let a Bedrock, Vertex AI or Claude Platform provider sign in with this server's own cloud identity (IAM role, application default credentials). Leave false when many organizations share this server
   cacheDiagnostics: false # Ask the Claude API where each agent turn's prompt stopped matching the call before it, and log and trace why the cache missed. Claude API providers only
-  toolDisclosureThreshold: 12 # Tools an agent may hold, core tools aside, before a turn is sent only the 8 ranked for its request plus find_tools. Set from the desk bench's tool-count sweep
+  toolDisclosureThreshold: 12 # Tools an agent may hold, core tools aside, before a turn is sent only the 8 ranked for its request plus search_tools. Set from the desk bench's tool-count sweep
   maxRetries: 2 # Retries for transient failures
   modelPriceReference: true # Estimate a model's price from OpenRouter's public catalog when its provider lists none; set false to make no outside call
   modelPriceReferenceTtl: 24h # How long that catalog is kept before it is read again

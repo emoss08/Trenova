@@ -1,7 +1,10 @@
 import type { AgentEgressClass, AgentToolPolicy } from "@/lib/graphql/agent-safety";
+import { describeToolCall } from "@/components/assistant/tool-presentation";
+import { allowTool, denyTool, isEntityCapability, type AgentScope } from "@/lib/agent-scope";
+import { resourceLabel } from "@/lib/resource-label";
 import type { AutonomyTier, ToolCatalogEntry } from "@/types/assistant";
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
-import { groupToolsByResource, type ToolGroup } from "../tool-catalog";
+import { groupToolsByResource, toolTitle, type ToolGroup } from "../tool-catalog";
 
 /** Which tools the picker shows: every one, the reads, or the changes. */
 export type KindFilter = "all" | "read" | "act";
@@ -87,35 +90,21 @@ export function pickerRows(groups: readonly ToolGroup[], chosen: ReadonlySet<str
 }
 
 /**
- * The selection with many tools added or removed at once. A change tool newly added
- * starts at the tier `tierFor` gives it; one already held keeps its own. A removed tool
- * takes its tier with it, and tools not named are left exactly as they were.
+ * The scope with many tools given or taken at once, each the way the server's `Scope.Allow` and
+ * `Scope.Deny` do it: a tool given is named among the capabilities unless an area already allows
+ * it, and a tool taken that an area still allows is switched off by name. Tools not named are
+ * left exactly as they were. A `limited` scope names nothing yet and holds nothing.
  */
-export function setTools(
-  selected: readonly string[],
-  tiers: Readonly<Record<string, AutonomyTier>>,
+export function setHeld(
+  scope: AgentScope,
   tools: readonly ToolCatalogEntry[],
   on: boolean,
-  tierFor: (tool: ToolCatalogEntry) => AutonomyTier,
-): { selected: string[]; tiers: Record<string, AutonomyTier> } {
-  const held = new Set(selected);
-  if (on) {
-    const nextSelected = [...selected];
-    const nextTiers = { ...tiers };
-    for (const tool of tools) {
-      if (held.has(tool.name)) continue;
-      held.add(tool.name);
-      nextSelected.push(tool.name);
-      if (tool.kind === "action") nextTiers[tool.name] = tierFor(tool);
-    }
-    return { selected: nextSelected, tiers: nextTiers };
-  }
-
-  const dropped = new Set(tools.map((tool) => tool.name));
-  return {
-    selected: selected.filter((name) => !dropped.has(name)),
-    tiers: Object.fromEntries(Object.entries(tiers).filter(([name]) => !dropped.has(name))),
-  };
+  limited = false,
+): AgentScope {
+  return tools.reduce(
+    (next, tool) => (on ? allowTool(next, tool.name, limited) : denyTool(next, tool.name, limited)),
+    scope,
+  );
 }
 
 /** How far each class of work reaches, nearest first. */
@@ -166,4 +155,27 @@ export function tierName(tier: AutonomyTier, t: TranslateFn): string {
     case "AutoExecute":
       return t("Automatic");
   }
+}
+
+/**
+ * A capability in words: a catalog tool by its title, an entity read (`invoice.list`) by the
+ * record it reads, and any other tool name by the words the chat uses for it.
+ */
+export function capabilityTitle(
+  name: string,
+  catalog: readonly ToolCatalogEntry[],
+  t: TranslateFn,
+): string {
+  const tool = catalog.find((entry) => entry.name === name);
+  if (tool) {
+    return toolTitle(tool);
+  }
+  if (isEntityCapability(name)) {
+    const [entity = "", verb] = name.split(".");
+    return verb === "list"
+      ? t("Find {0}", resourceLabel(entity))
+      : t("Read one {0} record", resourceLabel(entity));
+  }
+
+  return describeToolCall(name, null).title;
 }

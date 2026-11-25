@@ -26,14 +26,14 @@ func passRun(t *testing.T, reply string, shown *agentruntimeports.ShownArtifact)
 	t.Helper()
 
 	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
-		runtimetest.ToolTurn("shipment_list", map[string]any{}),
+		runtimetest.ToolTurn("shipment_list_view", map[string]any{}),
 		runtimetest.TextTurn(reply),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{Tools: []agenttoolports.AgentQueryTool{
-		queryTool("shipment_list", map[string]any{"items": []any{}}, nil),
+		queryTool("shipment_list_view", map[string]any{"items": []any{}}, nil),
 	}}, &stubActionRegistry{}, nil)
 	req := &agentruntimeports.RunRequest{
-		Definition: runtimetest.Definition("shipment_list"),
+		Definition: runtimetest.Definition("shipment_list_view"),
 		Actor:      runtimetest.Actor(),
 		Input:      "Which loads are late?",
 		ToolObserver: func(agentruntimeports.ToolObservation) (*agentruntimeports.ShownArtifact, error) {

@@ -3,11 +3,11 @@ import { useNowSeconds } from "@/hooks/use-now-seconds";
 import { organization } from "@/lib/queries/organization";
 import { useQuery } from "@tanstack/react-query";
 import { ActivityIcon, Lock01Icon } from "@trenova/shared/components/icons";
-import { Avatar, AvatarFallback } from "@trenova/shared/components/ui/avatar";
+import { ResolvedUserAvatar } from "@/components/resolved-user-avatar";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatCompactAge, formatUnixDateTimeOrDash } from "@trenova/shared/lib/date";
-import { cn, getNameInitials } from "@trenova/shared/lib/utils";
+import { cn } from "@trenova/shared/lib/utils";
 import type { SecurityBriefing } from "@trenova/shared/types/iam";
 import type { ReactNode } from "react";
 import { SecuritySection } from "../shared";
@@ -119,9 +119,12 @@ export function UnenrolledMembersPanel({
               <AsideRow
                 key={member.userId}
                 lead={
-                  <Avatar size="sm">
-                    <AvatarFallback>{getNameInitials(member.name)}</AvatarFallback>
-                  </Avatar>
+                  <ResolvedUserAvatar
+                    userId={member.userId}
+                    name={member.name}
+                    photo={member.photo}
+                    className="size-6"
+                  />
                 }
                 title={member.name}
                 detail={member.emailAddress}

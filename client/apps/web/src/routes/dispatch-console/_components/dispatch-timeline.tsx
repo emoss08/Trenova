@@ -33,7 +33,7 @@ import type {
 } from "@/lib/graphql/dispatch-console";
 import { packLane, type PackedLane, type TimelineSpan } from "@/lib/timeline/lanes";
 import { useDraggable, useDroppable } from "@dnd-kit/core";
-import { Avatar, AvatarFallback, AvatarImage } from "@trenova/shared/components/ui/avatar";
+import { WorkerAvatar } from "@trenova/shared/components/worker-avatar";
 import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
 import { formatClockDurationMs } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
@@ -42,7 +42,6 @@ import {
   availabilityMeta,
   groupMovesByUrgency,
   urgencyMeta,
-  workerInitials,
   type UrgencyBucket,
 } from "./dispatch-vocabulary";
 
@@ -561,12 +560,13 @@ function DriverLaneRow({
       labelTitle={name}
       label={
         <>
-          <Avatar className="size-5.5 shrink-0">
-            {driver.profilePicUrl ? <AvatarImage src={driver.profilePicUrl} alt={name} /> : null}
-            <AvatarFallback className="text-3xs">
-              {workerInitials(driver.firstName, driver.lastName)}
-            </AvatarFallback>
-          </Avatar>
+          <WorkerAvatar
+            firstName={driver.firstName}
+            lastName={driver.lastName}
+            photo={driver.photo}
+            className="size-5.5"
+            fallbackClassName="text-3xs"
+          />
           <TimelineLaneLabel
             title={name}
             flag={packed.conflicts.size > 0 ? <TimelineConflictFlag /> : null}

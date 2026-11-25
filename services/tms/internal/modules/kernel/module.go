@@ -18,11 +18,13 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/app/managedfeaturesservice"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/managedplanservice"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/managedusageservice"
+	"github.com/emoss08/trenova/internal/modules/kernel/app/photoservice"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/realtimeservice"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/usageservice"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/usstateservice"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/versionservice"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/managedscope"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/managedfeaturesports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/managedusageports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
@@ -63,6 +65,8 @@ func SharedOptions() fx.Option {
 			func(s *managedusageservice.Service) managedusageports.UsageReader { return s },
 			usageProvider,
 			usstateservice.New,
+			photoservice.New,
+			func(s *photoservice.Service) kernelports.Photos { return s },
 			spreadsheetLimits,
 			timeutils.SystemClock,
 		),

@@ -1,4 +1,4 @@
-# Natural-language requests and the tools find_tools should load for them.
+# Natural-language requests and the tools search_tools should load for them.
 # A case passes top-1 when the first tool found is one of `expect`, and
 # recall@5 when one of them is among the first five. The floors both are
 # checked against live in toolselection.floors.json; raise them with -update

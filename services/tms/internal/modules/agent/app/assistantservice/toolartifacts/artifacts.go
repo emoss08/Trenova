@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/assistantservice/recordviews"
 	"github.com/emoss08/trenova/internal/modules/agent/app/filterwords"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentcapability"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
@@ -470,13 +471,19 @@ func ArtifactFromObservation(
 		return artifact
 	}
 
-	order := agenttoolports.ReadingOrder(call.Name)
+	reader := agentcapability.ReaderOf(call.Name, call.Arguments)
+	order := agenttoolports.ReadingOrder(reader)
 	if strings.HasPrefix(order, getToolPrefix) {
+		if items, listed := result["items"].([]any); listed && reader != call.Name {
+			if card := soleItemCard(call.ID, reader, items, result); card != nil {
+				return card
+			}
+		}
 		if isRowSet(result) {
-			return tableArtifact(call, result)
+			return tableArtifact(call, reader, result)
 		}
 
-		return EntityCardArtifact(call.ID, call.Name, document)
+		return EntityCardArtifact(call.ID, reader, document)
 	}
 
 	if artifact, matched := namedToolArtifact(call, result); matched {
@@ -484,11 +491,11 @@ func ArtifactFromObservation(
 	}
 
 	if strings.HasPrefix(order, listToolPrefix) || strings.HasPrefix(order, searchToolPrefix) {
-		if card := soleRecordCard(call.ID, call.Name, result); card != nil {
+		if card := soleRecordCard(call.ID, reader, result); card != nil {
 			return card
 		}
 
-		return tableArtifact(call, result)
+		return tableArtifact(call, reader, result)
 	}
 
 	return nil
@@ -562,6 +569,7 @@ func isRowSet(result map[string]any) bool {
 // one either.
 func tableArtifact(
 	call *llmports.ToolCall,
+	reader string,
 	result map[string]any,
 ) *assistantartifact.Artifact {
 	callID, toolName := call.ID, call.Name
@@ -574,7 +582,7 @@ func tableArtifact(
 		return nil
 	}
 
-	entity := listedEntity(toolName)
+	entity := listedEntity(reader)
 	projection := artifactpayload.ProjectTable(entity, declared, rows)
 	if len(projection.Columns) == 0 {
 		return nil
@@ -586,7 +594,7 @@ func tableArtifact(
 		artifactpayload.PayloadEntity:   entity,
 		artifactpayload.PayloadColumns:  projection.Columns,
 		artifactpayload.PayloadRows:     projection.Rows,
-		artifactpayload.PayloadRowCount: result["count"],
+		artifactpayload.PayloadRowCount: rowCount(result, rows),
 		artifactpayload.PayloadFilters:  filterwords.OfResult(result, call.Arguments),
 	}
 	if projection.RecordEntity != "" {
@@ -602,6 +610,41 @@ func tableArtifact(
 		Payload:          payload,
 		SourceToolCallID: callID,
 	}
+}
+
+func rowCount(result map[string]any, rows []any) any {
+	if count, counted := result["count"]; counted {
+		return count
+	}
+
+	return len(rows)
+}
+
+// soleItemCard is a get through record_get, which answers in the read
+// envelope: one record is drawn as its card, as the reader's own get was.
+func soleItemCard(
+	callID, reader string,
+	items []any,
+	result map[string]any,
+) *assistantartifact.Artifact {
+	if len(items) != 1 {
+		return nil
+	}
+	record, ok := items[0].(map[string]any)
+	if !ok {
+		return nil
+	}
+
+	return RecordCardArtifact(&RecordCard{
+		CallID:   callID,
+		ToolName: reader,
+		Entity:   strings.TrimPrefix(agenttoolports.ReadingOrder(reader), getToolPrefix),
+		Record:   record,
+		Order: declaredOrder(
+			artifactpayload.StringsOf(result[artifactpayload.PayloadColumns]),
+			record,
+		),
+	})
 }
 
 // listedEntity is what a list, search or get tool names its records by:

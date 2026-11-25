@@ -202,7 +202,7 @@ func RunConversation(ctx context.Context, c *ConversationCase) (*ConversationOut
 	definition := &agentdefinition.Definition{
 		Name:            "Scripted agent",
 		Instructions:    "Work the organization's records as the tools allow.",
-		ToolNames:       names,
+		Scope:           agentdefinition.Scope{Capabilities: names},
 		AutonomyCeiling: agent.TierActWithApproval,
 		TriggerMode:     agentdefinition.TriggerChat,
 		Enabled:         true,

@@ -79,7 +79,7 @@ func userResource() *permissionspec.ResourceDefinition {
 		DisplayName:   "User",
 		Description:   "User account management",
 		Category:      "Users & security",
-		ReferenceView: []string{"name", "username", "profilePicUrl", "thumbnailUrl"},
+		ReferenceView: []string{"name", "username", "photo"},
 		Operations: []permissionspec.OperationDefinition{
 			{
 				Operation:   permission.OpRead,

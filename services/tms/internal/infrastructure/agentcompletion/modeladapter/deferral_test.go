@@ -12,7 +12,7 @@ func TestOpenedTools_DeclaresWhatAPersonsMessageOpened(t *testing.T) {
 	t.Parallel()
 
 	tools := []modeladapter.ToolSpec{
-		{Name: "find_tools"},
+		{Name: "search_tools"},
 		{Name: "list_trailers", Deferred: true},
 		{Name: "list_workers", Deferred: true},
 	}

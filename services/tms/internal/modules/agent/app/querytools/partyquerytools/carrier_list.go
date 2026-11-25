@@ -16,15 +16,16 @@ import (
 )
 
 type carrierRow struct {
-	ID               string `json:"id"`
-	Code             string `json:"code"`
-	Name             string `json:"name"`
-	Status           string `json:"status"`
-	CarrierType      string `json:"carrierType,omitempty"`
-	ComplianceStatus string `json:"complianceStatus,omitempty"`
-	SafetyRating     string `json:"safetyRating,omitempty"`
-	DOTNumber        string `json:"dotNumber,omitempty"`
-	MCNumber         string `json:"mcNumber,omitempty"`
+	ID               string                 `json:"id"`
+	Code             string                 `json:"code"`
+	Name             string                 `json:"name"`
+	Status           string                 `json:"status"`
+	CarrierType      string                 `json:"carrierType,omitempty"`
+	ComplianceStatus string                 `json:"complianceStatus,omitempty"`
+	SafetyRating     string                 `json:"safetyRating,omitempty"`
+	DOTNumber        string                 `json:"dotNumber,omitempty"`
+	MCNumber         string                 `json:"mcNumber,omitempty"`
+	CreatedAt        querytool.OptionalDate `json:"createdAt"`
 }
 
 func NewListCarriersTool(repo carrierports.CarrierRepository) agenttoolports.AgentQueryTool {
@@ -80,6 +81,7 @@ func NewListCarriersTool(repo carrierports.CarrierRepository) agenttoolports.Age
 					SafetyRating:     string(item.SafetyRating),
 					DOTNumber:        item.DOTNumber,
 					MCNumber:         item.MCNumber,
+					CreatedAt:        querytool.RecordedDate(item.CreatedAt),
 				}
 			}), nil
 		},

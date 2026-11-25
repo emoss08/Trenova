@@ -25,7 +25,8 @@ type SaveAgentDefinitionRequest struct {
 	Template               agenttemplate.Template
 	Instructions           string
 	Guardrails             []string
-	ToolNames              []string
+	Scope                  agentdefinition.Scope
+	PinnedTools            []string
 	ToolTiers              map[string]agent.AutonomyTier
 	AutonomyCeiling        agent.AutonomyTier
 	DataAccessCeiling      agentdefinition.DataAccessCeiling
@@ -112,6 +113,8 @@ type ToolCatalogEntry struct {
 	MaxAutonomyTier     agent.AutonomyTier        `json:"maxAutonomyTier,omitempty"`
 	Reversible          bool                      `json:"reversible"`
 	Core                bool                      `json:"core"`
+	Area                string                    `json:"area"`
+	Capability          string                    `json:"capability"`
 	Effect              agenttooltrust.ToolEffect `json:"effect"`
 	// Prerequisites are the tools this one takes its arguments from. The
 	// reads among them are held by any agent holding this tool.
@@ -125,10 +128,9 @@ type ToolCatalogEntry struct {
 }
 
 type LintAgentInstructionsRequest struct {
-	TenantInfo        pagination.TenantInfo
-	Instructions      string
-	ToolNames         []string
-	DisabledToolNames []string
+	TenantInfo   pagination.TenantInfo
+	Instructions string
+	Scope        agentdefinition.Scope
 }
 
 type PreviewPromptRequest struct {

@@ -19,13 +19,14 @@ import (
 )
 
 type customerRow struct {
-	ID        string `json:"id"`
-	Code      string `json:"code"`
-	Name      string `json:"name"`
-	Status    string `json:"status"`
-	City      string `json:"city,omitempty"`
-	DOTNumber string `json:"dotNumber,omitempty"`
-	MCNumber  string `json:"mcNumber,omitempty"`
+	ID        string                 `json:"id"`
+	Code      string                 `json:"code"`
+	Name      string                 `json:"name"`
+	Status    string                 `json:"status"`
+	City      string                 `json:"city,omitempty"`
+	DOTNumber string                 `json:"dotNumber,omitempty"`
+	MCNumber  string                 `json:"mcNumber,omitempty"`
+	CreatedAt querytool.OptionalDate `json:"createdAt"`
 }
 
 func NewListCustomersTool(repo customerports.CustomerRepository) agenttoolports.AgentQueryTool {
@@ -64,6 +65,7 @@ func NewListCustomersTool(repo customerports.CustomerRepository) agenttoolports.
 					City:      item.City,
 					DOTNumber: item.DOTNumber,
 					MCNumber:  item.MCNumber,
+					CreatedAt: querytool.RecordedDate(item.CreatedAt),
 				}
 			}), nil
 		},
@@ -71,12 +73,13 @@ func NewListCustomersTool(repo customerports.CustomerRepository) agenttoolports.
 }
 
 type locationRow struct {
-	ID      string `json:"id"`
-	Code    string `json:"code"`
-	Name    string `json:"name"`
-	Status  string `json:"status"`
-	Address string `json:"address,omitempty"`
-	City    string `json:"city,omitempty"`
+	ID        string                 `json:"id"`
+	Code      string                 `json:"code"`
+	Name      string                 `json:"name"`
+	Status    string                 `json:"status"`
+	Address   string                 `json:"address,omitempty"`
+	City      string                 `json:"city,omitempty"`
+	CreatedAt querytool.OptionalDate `json:"createdAt"`
 }
 
 func NewListLocationsTool(repo locationports.LocationRepository) agenttoolports.AgentQueryTool {
@@ -107,12 +110,13 @@ func NewListLocationsTool(repo locationports.LocationRepository) agenttoolports.
 
 			return listtool.ResultPage(result, func(item *location.Location) any {
 				return locationRow{
-					ID:      item.ID.String(),
-					Code:    item.Code,
-					Name:    item.Name,
-					Status:  string(item.Status),
-					Address: item.AddressLine1,
-					City:    item.City,
+					ID:        item.ID.String(),
+					Code:      item.Code,
+					Name:      item.Name,
+					Status:    string(item.Status),
+					Address:   item.AddressLine1,
+					City:      item.City,
+					CreatedAt: querytool.RecordedDate(item.CreatedAt),
 				}
 			}), nil
 		},

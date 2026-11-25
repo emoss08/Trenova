@@ -57,6 +57,16 @@ type Field struct {
 	Values         []string
 	ValuesUnlisted bool
 	Sortable       bool
+	Column         string
+	NoColumn       bool
+}
+
+func (f Field) ShownAs() string {
+	if f.Column != "" {
+		return f.Column
+	}
+
+	return f.Name
 }
 
 // Resource is one entity and the fields it answers to.

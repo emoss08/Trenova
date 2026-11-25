@@ -5,6 +5,8 @@ import (
 	"strings"
 	"unicode/utf8"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/personphoto"
+
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -655,10 +657,10 @@ func staleSubmissionError() error {
 }
 
 type Reviewer struct {
-	ID            pulid.ID `json:"id"`
-	Name          string   `json:"name"`
-	Username      string   `json:"username"`
-	ProfilePicURL string   `json:"profilePicUrl,omitempty"`
+	ID       pulid.ID          `json:"id"`
+	Name     string            `json:"name"`
+	Username string            `json:"username"`
+	Photo    *personphoto.URLs `json:"photo,omitempty"`
 }
 
 func (s *Service) ListReviewers(
@@ -684,11 +686,19 @@ func (s *Service) ListReviewers(
 		if user.UserID.IsNil() || user.UserID == tenantInfo.UserID {
 			continue
 		}
+		photo, signErr := s.photos.Sign(ctx, kernelports.UserPhotoKeys(
+			user.UserID,
+			user.ProfilePicURL,
+			user.ThumbnailURL,
+		))
+		if signErr != nil {
+			return nil, signErr
+		}
 		reviewers = append(reviewers, Reviewer{
-			ID:            user.UserID,
-			Name:          user.Name,
-			Username:      user.Username,
-			ProfilePicURL: user.ProfilePicURL,
+			ID:       user.UserID,
+			Name:     user.Name,
+			Username: user.Username,
+			Photo:    photo,
 		})
 	}
 	return reviewers, nil

@@ -21,7 +21,7 @@ const COMPLETE: RuleDraft = {
   assigneeId: null,
 };
 
-const USER = { id: "usr_dana", name: "Dana", emailAddress: "", thumbnailUrl: "" };
+const USER = { id: "usr_dana", name: "Dana", emailAddress: "", photo: null };
 
 function rule(overrides: Partial<TriageRule> = {}): TriageRule {
   return {

@@ -661,7 +661,7 @@ func TestRuntimeToolsStayInside(t *testing.T) {
 	}
 
 	assert.Equal(t, map[string]agent.EgressClass{
-		"find_tools":        agent.EgressNone,
+		"search_tools":        agent.EgressNone,
 		"ask_user":          agent.EgressNone,
 		"publish_artifact":  agent.EgressPersonal,
 		"show_board":        agent.EgressPersonal,

@@ -6,6 +6,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/notificationtemplate"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/workforce/app/workerphotoservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/profilechange"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/selfserviceports"
@@ -58,19 +60,11 @@ func (s *Service) SubmitChange(
 		)
 	}
 
-	pending, err := s.repo.ListChangeRequests(
-		ctx,
-		&selfserviceports.ListProfileChangeRequestsRequest{
-			TenantInfo: req.TenantInfo,
-			WorkerID:   req.Worker.ID,
-			Statuses:   []profilechange.ProfileChangeStatus{profilechange.ProfileChangePending},
-			Limit:      1,
-		},
-	)
+	pending, err := s.pendingChange(ctx, req.TenantInfo, req.Worker.ID, false)
 	if err != nil {
 		return nil, err
 	}
-	if len(pending) > 0 {
+	if pending != nil {
 		return nil, errortypes.NewValidationError(
 			"changes",
 			errortypes.ErrInvalidOperation,
@@ -134,10 +128,17 @@ func (s *Service) WithdrawChange(
 	}
 
 	now := timeutils.NowUnix()
+	staged := takeProposedPhoto(entity)
 	entity.Status = profilechange.ProfileChangeWithdrawn
 	entity.DecidedAt = &now
 
-	return s.repo.UpdateChangeRequest(ctx, entity)
+	updated, err := s.repo.UpdateChangeRequest(ctx, entity)
+	if err != nil {
+		return nil, err
+	}
+	s.workerPhotos.Discard(ctx, workerRef(entity), staged)
+
+	return updated, nil
 }
 
 // DecideChangeRequest is the office answering.
@@ -185,6 +186,7 @@ func (s *Service) DecideChange(
 
 	previous := *entity
 	now := timeutils.NowUnix()
+	staged := takeProposedPhoto(entity)
 	entity.Status = next
 	entity.DecidedAt = &now
 	entity.DecidedByID = req.UserID
@@ -196,23 +198,22 @@ func (s *Service) DecideChange(
 		return nil, multiErr
 	}
 
-	if req.Approve {
-		wrk, wErr := s.workerRepo.GetByID(ctx, workerports.GetWorkerByIDRequest{
-			ID:         entity.WorkerID,
-			TenantInfo: req.TenantInfo,
-		})
-		if wErr != nil {
-			return nil, wErr
+	var updated *profilechange.WorkerProfileChangeRequest
+	err = s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
+		if req.Approve {
+			if applyErr := s.applyChange(txCtx, entity, staged, req); applyErr != nil {
+				return applyErr
+			}
 		}
-		entity.ApplyTo(wrk)
-		if _, wErr = s.workerUpdater.Update(ctx, wrk, req.Actor); wErr != nil {
-			return nil, wErr
-		}
-	}
-
-	updated, err := s.repo.UpdateChangeRequest(ctx, entity)
+		var txErr error
+		updated, txErr = s.repo.UpdateChangeRequest(txCtx, entity)
+		return txErr
+	})
 	if err != nil {
 		return nil, err
+	}
+	if !req.Approve {
+		s.workerPhotos.Discard(ctx, workerRef(entity), staged)
 	}
 
 	operation := permission.OpReject
@@ -240,4 +241,79 @@ func (s *Service) DecideChange(
 	)
 
 	return updated, nil
+}
+
+func (s *Service) applyChange(
+	ctx context.Context,
+	entity *profilechange.WorkerProfileChangeRequest,
+	staged *kernelports.StoredPhoto,
+	req *DecideChangeRequest,
+) error {
+	if entity.IsPhoto() {
+		if staged == nil {
+			return errortypes.NewValidationError(
+				"photo",
+				errortypes.ErrInvalidOperation,
+				"The proposed photo is no longer available",
+			)
+		}
+		_, err := s.workerPhotos.Apply(ctx, &workerphotoservice.ApplyRequest{
+			TenantInfo: req.TenantInfo,
+			WorkerID:   entity.WorkerID,
+			Photo:      *staged,
+			Actor:      req.Actor,
+		})
+		return err
+	}
+
+	wrk, err := s.workerRepo.GetByID(ctx, workerports.GetWorkerByIDRequest{
+		ID:         entity.WorkerID,
+		TenantInfo: req.TenantInfo,
+	})
+	if err != nil {
+		return err
+	}
+	entity.ApplyTo(wrk)
+	_, err = s.workerUpdater.Update(ctx, wrk, req.Actor)
+	return err
+}
+
+func (s *Service) pendingChange(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	workerID pulid.ID,
+	photo bool,
+) (*profilechange.WorkerProfileChangeRequest, error) {
+	pending, err := s.repo.ListChangeRequests(
+		ctx,
+		&selfserviceports.ListProfileChangeRequestsRequest{
+			TenantInfo: tenantInfo,
+			WorkerID:   workerID,
+			Statuses:   []profilechange.ProfileChangeStatus{profilechange.ProfileChangePending},
+			Limit:      2,
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+	for _, request := range pending {
+		if request.IsPhoto() == photo {
+			return request, nil
+		}
+	}
+	return nil, nil //nolint:nilnil // nothing waiting is not an error
+}
+
+func takeProposedPhoto(
+	entity *profilechange.WorkerProfileChangeRequest,
+) *kernelports.StoredPhoto {
+	if !entity.HasProposedPhoto() {
+		return nil
+	}
+	staged := &kernelports.StoredPhoto{
+		Key:          entity.ProposedPhotoKey,
+		ThumbnailKey: entity.ProposedPhotoThumbnailKey,
+	}
+	entity.ProposePhoto("", "")
+	return staged
 }

@@ -931,7 +931,7 @@ export function reviewers() {
       id: user.id,
       name: user.name,
       username: user.username,
-      profilePicUrl: user.profilePicUrl,
+      photo: user.photo,
     };
   });
 }

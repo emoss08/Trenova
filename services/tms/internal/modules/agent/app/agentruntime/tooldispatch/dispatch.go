@@ -22,8 +22,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolpolicy"
 	"github.com/emoss08/trenova/internal/modules/agent/app/filterwords"
 	"github.com/emoss08/trenova/internal/modules/agent/app/planwording"
+	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/recordquerytools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolsimulation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentcapability"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
@@ -83,23 +85,47 @@ func (s *Dispatcher) dispatch(ctx context.Context, p *DispatchParams) toolcall.R
 	req := p.req
 	call := p.call
 	ctx = permissionports.BindActorSession(ctx, req.Actor)
-	// The loop refuses a tool the agent does not hold before it gets here, with
-	// the nearest tools it does hold; this is the backstop for any other caller.
-	if refusal, refused := s.access.ExtensionRefusal(ctx, req, call.Name); refused {
+	gate := call.Name
+	resolved, backing, err := s.resolveRecords(&call)
+	if err != nil {
+		return toolcall.Refused(aitrace.OutcomeInvalid, "its entity is not one Trenova reads",
+			"%s", err.Error())
+	}
+	if resolved {
+		gate = backing.Name()
+	}
+	if !resolved && agentcapability.IsBacking(call.Name) {
+		reader, ok := s.queryTools.Get(call.Name)
+		if !ok {
+			return toolcall.Refused(aitrace.OutcomeInvalid, aianalytics.ReasonUnregistered,
+				"Tool %q does not exist.", call.Name)
+		}
+		resolved, backing = true, reader
+	}
+	if refusal, refused := s.access.ExtensionRefusal(ctx, req, gate); refused {
 		refusal.Verdict = aitrace.OutcomeDenied
 		refusal.Reason = "its extension is turned off or not set up"
 
 		return refusal
 	}
-	if refusal, refused := s.access.PlanRefusal(ctx, req, call.Name); refused {
+	if refusal, refused := s.access.PlanRefusal(ctx, req, gate); refused {
 		return refusal
 	}
-	if !s.access.HoldsFor(ctx, req, call.Name) && !s.access.Reachable(req, p.beyond) {
+	if resolved && !req.Definition.AllowsTool(gate) {
+		entity, _, _ := agentcapability.EntityBacking(gate)
 		return toolcall.Refused(aitrace.OutcomeDenied, aianalytics.ReasonNotHeld,
-			"Tool %q is not available to this agent.", call.Name)
+			"%s records are outside this agent's scope, so they were not read. Offer to hand the "+
+				"conversation to the universal agent or another agent whose scope includes them.",
+			entity.Title)
+	}
+	if !resolved && !s.access.HoldsFor(ctx, req, call.Name) {
+		return toolcall.Refused(aitrace.OutcomeDenied, aianalytics.ReasonNotHeld,
+			"%q is outside this agent's scope, so it was not run. Offer to hand the "+
+				"conversation to the universal agent or another agent whose scope includes it.",
+			call.Name)
 	}
 
-	selfScoped := agenttoolports.IsSelfScoped(s.access.ToolNamed(call.Name))
+	selfScoped := agenttoolports.IsSelfScoped(s.access.ToolNamed(gate))
 	if selfScoped && (req.Unattended || req.Actor == nil ||
 		req.Actor.PrincipalType != permissionports.PrincipalTypeUser) {
 		return toolcall.Refused(
@@ -111,6 +137,13 @@ func (s *Dispatcher) dispatch(ctx context.Context, p *DispatchParams) toolcall.R
 		)
 	}
 
+	if resolved && backing.Name() == call.Name {
+		return s.dispatchQuery(ctx, p, backing, selfScoped)
+	}
+	if resolved {
+		records, _ := s.queryTools.Get(call.Name)
+		return s.dispatchQuery(ctx, p, resolvedQuery{AgentQueryTool: records, backing: backing}, selfScoped)
+	}
 	if tool, ok := s.queryTools.Get(call.Name); ok {
 		return s.dispatchQuery(ctx, p, tool, selfScoped)
 	}
@@ -947,6 +980,10 @@ func (s *Dispatcher) runQueryToolWith(
 			"Tool %q returned data that could not be encoded.", call.Name)
 	}
 	content := ""
+	fence := toolresult.Fence
+	if _, paged := data.(agenttoolports.PageCutter); paged && extras.fitPage {
+		fence = toolresult.FencePage
+	}
 	if extras.fitPage {
 		if fitted, cut := toolresult.FitPage(
 			data,
@@ -962,7 +999,7 @@ func (s *Dispatcher) runQueryToolWith(
 
 	policy := s.Ruled(ctx, req, new(tool.Policy()))
 	outcome := toolcall.Result{
-		Content: toolresult.Fence(call.Name, encoded) + content,
+		Content: fence(call.Name, encoded) + content,
 		Data:    data,
 		Summary: toolsummary.Result(call.Name, document),
 		Asked:   s.asked(ctx, req, call, document),
@@ -1412,4 +1449,36 @@ func (s *Dispatcher) Ruled(
 	}
 
 	return agenttoolpolicy.ApplyOverrides(policy, rules)
+}
+
+type resolvedQuery struct {
+	agenttoolports.AgentQueryTool
+	backing agenttoolports.AgentQueryTool
+}
+
+func (r resolvedQuery) Policy() agenttoolports.ToolPolicy {
+	policy := r.backing.Policy()
+	policy.Name = r.AgentQueryTool.Name()
+
+	return policy
+}
+
+func (s *Dispatcher) resolveRecords(
+	call *llmports.ToolCall,
+) (bool, agenttoolports.AgentQueryTool, error) {
+	switch call.Name {
+	case agentcapability.RecordsQuery, agentcapability.RecordGet, agentcapability.DescribeEntity:
+	default:
+		return false, nil, nil
+	}
+	name, err := recordquerytools.Backing(call.Name, call.Arguments)
+	if err != nil {
+		return false, nil, err
+	}
+	backing, ok := s.queryTools.Get(name)
+	if !ok {
+		return false, nil, fmt.Errorf("no reader is registered for %s", name)
+	}
+
+	return true, backing, nil
 }

@@ -344,7 +344,7 @@ function useUnguardedTriageActions(): TriageActions {
             id: me.id,
             name: me.name,
             username: me.username,
-            thumbnailUrl: me.thumbnailUrl ?? "",
+            photo: me.photo ?? null,
           };
     const context = (): MembershipContext => ({ meId, now: Math.floor(Date.now() / 1000) });
     const fail = (error: unknown) => handleMutationError({ error, resourceName: "Message" });

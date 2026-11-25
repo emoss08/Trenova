@@ -4,6 +4,7 @@ import (
 	"cmp"
 	"slices"
 
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
@@ -23,6 +24,7 @@ type ToolSetState struct {
 	Unattended bool                   `json:"unattended"`
 	FindCalls  int                    `json:"findCalls"`
 	Beyond     []string               `json:"beyond,omitempty"`
+	Scope      agentdefinition.Scope  `json:"scope"`
 	Query      *QueryVectorState      `json:"query,omitempty"`
 	// OffPlan is what the plan left out when the turn opened, in catalog
 	// order, so a restored turn refuses those tools naming the add-on too.
@@ -37,6 +39,7 @@ func RestoreToolSet(state *ToolSetState) *ToolSet {
 		unattended: state.Unattended,
 		FindCalls:  state.FindCalls,
 		Beyond:     state.Beyond,
+		Scope:      state.Scope,
 		Query:      state.Query.unpack(),
 	}
 	for _, spec := range state.Specs {

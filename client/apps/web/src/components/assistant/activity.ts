@@ -66,7 +66,7 @@ export type DelegateSource =
  */
 const NAMED_EFFECTS: Readonly<Record<string, ToolEffect>> = {
   agent_open_page: "navigate",
-  find_tools: "discover",
+  search_tools: "discover",
   agent_find_page: "discover",
   report_run: "present",
   publish_artifact: "present",

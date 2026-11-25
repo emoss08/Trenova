@@ -16,4 +16,8 @@ type JobPositionResolver struct{ *Deps }
 
 type MutationResolver struct{ *Deps }
 
+type PositionHolderResolver struct{ *Deps }
+
 type QueryResolver struct{ *Deps }
+
+type TeamMemberResolver struct{ *Deps }

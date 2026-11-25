@@ -255,8 +255,9 @@ func (s *Service) rows(
 	definition *agentdefinition.Definition,
 ) []agentcapabilityports.AgentCapabilityTool {
 	prerequisites := s.prerequisiteReads(definition)
-	rows := make([]agentcapabilityports.AgentCapabilityTool, 0,
-		len(definition.ToolNames)+len(definition.DisabledToolNames))
+	held := definition.Holds(s.catalogNames())
+	denied := definition.Scope.Denied()
+	rows := make([]agentcapabilityports.AgentCapabilityTool, 0, len(held)+len(denied))
 	seen := make(map[string]struct{})
 	add := func(name string, held bool) {
 		if _, dup := seen[name]; dup || agentdefinition.IsCoreTool(name) {
@@ -267,24 +268,38 @@ func (s *Service) rows(
 			rows = append(rows, row)
 		}
 	}
-	for _, name := range definition.ToolNames {
+	for _, name := range held {
 		add(name, true)
 	}
 	for _, name := range s.companionWrites(definition) {
-		if !slices.Contains(definition.DisabledToolNames, name) {
+		if definition.AllowsTool(name) {
 			add(name, true)
 		}
 	}
-	for _, name := range definition.DisabledToolNames {
+	for _, name := range denied {
 		add(name, false)
 	}
 
 	return rows
 }
 
+func (s *Service) catalogNames() []string {
+	queries := s.queryTools.All()
+	actions := s.tools.All()
+	names := make([]string, 0, len(queries)+len(actions))
+	for _, tool := range queries {
+		names = append(names, tool.Name())
+	}
+	for _, tool := range actions {
+		names = append(names, tool.Name())
+	}
+
+	return names
+}
+
 func (s *Service) companionWrites(definition *agentdefinition.Definition) []string {
 	companions := make([]string, 0, 4)
-	for _, name := range definition.ToolNames {
+	for _, name := range definition.PinnedTools {
 		tool, ok := s.tools.Get(name)
 		if !ok {
 			continue
@@ -390,7 +405,7 @@ func ModeForTier(tier agent.AutonomyTier) agentcapabilityports.AgentCapabilityMo
 // is held with the write whatever the page says, so it cannot be turned off.
 func (s *Service) prerequisiteReads(definition *agentdefinition.Definition) map[string]string {
 	needed := make(map[string]string)
-	for _, name := range definition.ToolNames {
+	for _, name := range definition.Holds(s.catalogNames()) {
 		tool, ok := s.tools.Get(name)
 		if !ok {
 			continue

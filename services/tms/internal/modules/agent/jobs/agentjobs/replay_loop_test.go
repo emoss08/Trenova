@@ -47,7 +47,7 @@ func loopReplayDefinition(id pulid.ID) *agentdefinition.Definition {
 		Name:            "Recorded desk",
 		Instructions:    "Keep moves covered.",
 		AutonomyCeiling: agent.TierPropose,
-		ToolNames:       []string{loopReplayRead, loopReplayWrite},
+		Scope:           agentdefinition.Scope{Capabilities: []string{loopReplayRead, loopReplayWrite}},
 		TriggerMode:     agentdefinition.TriggerEvent,
 		Enabled:         true,
 	}

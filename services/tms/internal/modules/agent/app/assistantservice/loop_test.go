@@ -113,11 +113,11 @@ func TestRun_RunsAnEnabledQueryToolAndAnswersFromIt(t *testing.T) {
 	t.Parallel()
 
 	tool := &agenttest.StubQueryTool{
-		ToolName: "shipment_get",
+		ToolName: "shipment_fetch",
 		Result:   map[string]any{"proNumber": "S12345", "status": "InTransit"},
 	}
 	completion := &assistanttest.ScriptedCompletion{Turns: []*llmports.ChatCompletionResult{
-		toolTurn("shipment_get", map[string]any{"shipmentId": "shp_1"}),
+		toolTurn("shipment_fetch", map[string]any{"shipmentId": "shp_1"}),
 		assistanttest.TextTurn("S12345 is in transit."),
 	}}
 	svc := newService(
@@ -127,7 +127,7 @@ func TestRun_RunsAnEnabledQueryToolAndAnswersFromIt(t *testing.T) {
 	)
 
 	result, err := svc.run(t.Context(), &TurnRequest{
-		Definition: assistanttest.Definition("shipment_get"),
+		Definition: assistanttest.Definition("shipment_fetch"),
 		Actor:      assistanttest.Actor(),
 		Input:      "Where is S12345?",
 	})
@@ -168,11 +168,11 @@ func TestRun_ReportsToolFailureToTheModel(t *testing.T) {
 	t.Parallel()
 
 	tool := &agenttest.StubQueryTool{
-		ToolName: "shipment_get",
+		ToolName: "shipment_fetch",
 		Err:      errors.New("shipment not found"),
 	}
 	completion := &assistanttest.ScriptedCompletion{Turns: []*llmports.ChatCompletionResult{
-		toolTurn("shipment_get", map[string]any{"shipmentId": "bogus"}),
+		toolTurn("shipment_fetch", map[string]any{"shipmentId": "bogus"}),
 		assistanttest.TextTurn("I could not find that shipment."),
 	}}
 	svc := newService(
@@ -182,7 +182,7 @@ func TestRun_ReportsToolFailureToTheModel(t *testing.T) {
 	)
 
 	result, err := svc.run(t.Context(), &TurnRequest{
-		Definition: assistanttest.Definition("shipment_get"),
+		Definition: assistanttest.Definition("shipment_fetch"),
 		Actor:      assistanttest.Actor(),
 		Input:      "Where is bogus?",
 	})
@@ -234,13 +234,13 @@ func TestRunObserved_ReportsTheTurnInOrder(t *testing.T) {
 	t.Parallel()
 
 	tool := &agenttest.StubQueryTool{
-		ToolName: "shipment_get",
+		ToolName: "shipment_fetch",
 		Result:   map[string]any{"proNumber": "S12345"},
 	}
 	completion := &assistanttest.ScriptedCompletion{Turns: []*llmports.ChatCompletionResult{
 		{
 			Text:            "Let me check.",
-			ToolCalls:       []llmports.ToolCall{{ID: "call_1", Name: "shipment_get"}},
+			ToolCalls:       []llmports.ToolCall{{ID: "call_1", Name: "shipment_fetch"}},
 			ModelIdentifier: "test-model",
 		},
 		assistanttest.TextTurn("S12345 is in transit."),
@@ -253,7 +253,7 @@ func TestRunObserved_ReportsTheTurnInOrder(t *testing.T) {
 
 	var names []string
 	result, err := svc.runObserved(t.Context(), &TurnRequest{
-		Definition: assistanttest.Definition("shipment_get"),
+		Definition: assistanttest.Definition("shipment_fetch"),
 		Actor:      assistanttest.Actor(),
 		Input:      "Where is S12345?",
 	}, func(event kernelports.StreamEvent) {

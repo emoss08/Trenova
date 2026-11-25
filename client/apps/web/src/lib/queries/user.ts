@@ -25,10 +25,6 @@ export const user = createQueryKeys("user", {
       return fetchUserDetail(id, { signal });
     },
   }),
-  profilePicture: (id: User["id"], variant: "thumbnail" | "full" = "thumbnail") => ({
-    queryKey: ["profile-picture", id, variant],
-    queryFn: async () => (id ? userService.getProfilePictureURL(id, variant) : null),
-  }),
   avatar: (id: string) => ({
     queryKey: ["avatar", id],
     queryFn: async () => loadUserAvatar(id),

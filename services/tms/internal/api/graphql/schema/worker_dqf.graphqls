@@ -150,6 +150,12 @@ input RecordEmploymentVerificationInput {
   status: EmploymentVerificationStatus
   method: EmploymentVerificationMethod
   requestedAt: Timestamp
+  responseReceivedAt: Timestamp
+  drugAlcoholResponseReceivedAt: Timestamp
+  hadAccidents: Boolean
+  accidentCount: Int
+  hadDrugAlcoholViolations: Boolean
+  findings: String
   notes: String
 }
 

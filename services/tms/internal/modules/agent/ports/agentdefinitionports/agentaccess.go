@@ -41,7 +41,7 @@ type SuggestAgentAudienceRequest struct {
 type PreviewAgentAudienceRequest struct {
 	TenantInfo pagination.TenantInfo
 	AgentID    pulid.ID
-	ToolNames  []string
+	Scope      agentdefinition.Scope
 	Mode       agentdefinition.AccessMode
 }
 

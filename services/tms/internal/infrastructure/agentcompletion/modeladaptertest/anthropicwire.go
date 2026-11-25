@@ -97,12 +97,12 @@ func WireTools() []modeladapter.ToolSpec {
 
 func DeferredWireRequest() modeladapter.Request {
 	tools := append(WireTools(), modeladapter.ToolSpec{
-		Name:        "find_tools",
+		Name:        "search_tools",
 		Description: "Load more tools.",
 		Parameters: map[string]any{
 			"type":       "object",
-			"properties": map[string]any{"need": map[string]any{"type": "string"}},
-			"required":   []any{"need"},
+			"properties": map[string]any{"query": map[string]any{"type": "string"}},
+			"required":   []any{"query"},
 		},
 		Searches: true,
 	}, modeladapter.ToolSpec{
@@ -121,12 +121,12 @@ func DeferredWireRequest() modeladapter.Request {
 			{
 				Role: modeladapter.RoleAssistant,
 				ToolCalls: []modeladapter.ToolCall{{
-					ID: "call_find", Name: "find_tools",
-					Arguments: map[string]any{"need": "trailers due inspection"},
+					ID: "call_find", Name: "search_tools",
+					Arguments: map[string]any{"query": "trailers due inspection"},
 				}},
 			},
 			{
-				Role: modeladapter.RoleTool, ToolCallID: "call_find", ToolName: "find_tools",
+				Role: modeladapter.RoleTool, ToolCallID: "call_find", ToolName: "search_tools",
 				Content:        "These tools are now callable:\n- list_trailers: List trailers",
 				ToolReferences: []string{"list_trailers", "get_shipment", "not_declared"},
 			},

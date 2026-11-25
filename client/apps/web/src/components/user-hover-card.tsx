@@ -43,8 +43,7 @@ export function UserHoverCard({ userId, username }: { userId?: string; username:
               <ResolvedUserAvatar
                 userId={userId}
                 name={hoveredUserData?.name || username}
-                profilePicUrl={hoveredUserData?.profilePicUrl}
-                thumbnailUrl={hoveredUserData?.thumbnailUrl}
+                photo={hoveredUserData?.photo}
                 className="size-8"
               />
               <div className="flex flex-col text-xs">

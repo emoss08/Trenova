@@ -69,7 +69,8 @@ func (s *stubDefinitions) Draft(
 		Description:       req.Description,
 		Instructions:      req.Instructions,
 		Guardrails:        req.Guardrails,
-		ToolNames:         req.ToolNames,
+		Scope:             req.Scope,
+		PinnedTools:       req.PinnedTools,
 		ToolTiers:         req.ToolTiers,
 		AutonomyCeiling:   req.AutonomyCeiling,
 		DataAccessCeiling: req.DataAccessCeiling,
@@ -195,7 +196,7 @@ func TestDraftFromDescriptionAsksTheChatProvidersAndSavesNothing(t *testing.T) {
 	require.NotNil(t, definitions.drafted)
 	assert.True(t, definitions.drafted.ID.IsNil())
 	assert.Equal(t, "Delivery desk", draft.Name)
-	assert.Equal(t, []string{"shipment_get", "send_customer_email"}, draft.ToolNames)
+	assert.Equal(t, []string{"shipment_get", "send_customer_email"}, draft.Scope.Capabilities)
 	assert.Equal(
 		t,
 		map[string]agent.AutonomyTier{"send_customer_email": agent.TierActWithApproval},

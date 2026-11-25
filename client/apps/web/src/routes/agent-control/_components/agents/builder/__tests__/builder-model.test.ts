@@ -5,7 +5,6 @@ import {
   aboveCeiling,
   capToCeiling,
   changeTiers,
-  startingTier,
   dateIn,
   endOfDay,
   checklist,
@@ -41,12 +40,16 @@ const catalog = [
   tool("assign_driver", "action"),
 ];
 
+function named(capabilities: string[]): AgentFormValues["scope"] {
+  return { areas: [], capabilities, denyAreas: [], denyCapabilities: [] };
+}
+
 function values(overrides: Partial<AgentFormValues>): AgentFormValues {
   return { ...agentFormDefaults, ...overrides };
 }
 
 describe("startValues", () => {
-  it("starts live, asking first, with the trigger and tool its start implies", () => {
+  it("starts live, asking first, able to do everything, with the trigger and tool its start implies", () => {
     const scheduled = startValues("scheduled", { timezone: "America/Chicago", catalog });
     expect(scheduled.shadowMode).toBe(false);
     expect(scheduled.simulationMode).toBe(false);
@@ -54,14 +57,19 @@ describe("startValues", () => {
     expect(scheduled.triggerMode).toBe("Scheduled");
     expect(scheduled.cronExpression).toBe("0 6 * * 1-5");
     expect(scheduled.cronTimezone).toBe("America/Chicago");
-    expect(scheduled.toolNames).toEqual(["schedule_report_email"]);
+    expect(scheduled.limited).toBe(false);
+    expect(scheduled.scope).toEqual(named([]));
+    expect(scheduled.pinnedTools).toEqual(["schedule_report_email"]);
     expect(scheduled.toolTiers).toEqual({ schedule_report_email: "Propose" });
   });
 
-  it("chooses no tool the catalog does not offer, and no schedule for a chat agent", () => {
+  it("pins no tool the catalog does not offer, and no schedule for a chat agent", () => {
+    const bare = startValues("scheduled", { timezone: "UTC", catalog: [] });
+    expect(bare.pinnedTools).toEqual([]);
+    expect(bare.toolTiers).toEqual({});
     const event = startValues("event", { timezone: "UTC", catalog });
     expect(event.triggerMode).toBe("Event");
-    expect(event.toolNames).toEqual([]);
+    expect(event.pinnedTools).toEqual([]);
     const chat = startValues("blank", { timezone: "UTC", catalog });
     expect(chat.triggerMode).toBe("Chat");
     expect(chat.cronExpression).toBe("");
@@ -153,13 +161,27 @@ describe("changeTiers", () => {
     expect(
       changeTiers(
         values({
-          toolNames: ["agent_list_memories", "shipment_list", "assign_driver", "send_customer_reply"],
+          limited: true,
+          scope: named([
+            "agent_list_memories",
+            "shipment_list",
+            "assign_driver",
+            "send_customer_reply",
+          ]),
           toolTiers: { assign_driver: "AutoExecute", send_customer_reply: "Propose" },
           autonomyCeiling: "ActWithApproval",
         }),
         catalog,
       ),
     ).toEqual({ reads: 1, byTier: { Propose: 1, ActWithApproval: 1, AutoExecute: 0 } });
+  });
+
+  it("counts nothing for an agent being narrowed that names nothing yet", () => {
+    expect(changeTiers(values({ limited: true, scope: named([]) }), catalog)).toEqual({
+      reads: 0,
+      byTier: { Propose: 0, ActWithApproval: 0, AutoExecute: 0 },
+    });
+    expect(changeTiers(values({ limited: false, scope: named([]) }), catalog).reads).toBe(1);
   });
 });
 
@@ -221,7 +243,13 @@ describe("tools set above the ceiling", () => {
       aboveCeiling(
         {
           autonomyCeiling: "Propose",
-          toolNames: ["customer_create", "customer_update", "dispatch_assign_move", "customer_get"],
+          limited: true,
+          scope: named([
+            "customer_create",
+            "customer_update",
+            "dispatch_assign_move",
+            "customer_get",
+          ]),
           toolTiers: {
             customer_create: "AutoExecute",
             customer_update: "ActWithApproval",
@@ -239,7 +267,8 @@ describe("tools set above the ceiling", () => {
       aboveCeiling(
         {
           autonomyCeiling: "Propose",
-          toolNames: ["dispatch_assign_move"],
+          limited: true,
+          scope: named(["dispatch_assign_move"]),
           toolTiers: { customer_create: "AutoExecute" },
         },
         catalog,
@@ -262,11 +291,5 @@ describe("tools set above the ceiling", () => {
       customer_update: "ActWithApproval",
       dispatch_assign_move: "Propose",
     });
-  });
-
-  it("starts a new tool at the lower of its own most and the ceiling", () => {
-    expect(startingTier("AutoExecute", "Propose")).toBe("Propose");
-    expect(startingTier("Propose", "AutoExecute")).toBe("Propose");
-    expect(startingTier(undefined, "ActWithApproval")).toBe("ActWithApproval");
   });
 });

@@ -31,6 +31,7 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/sliceutils"
 	"github.com/emoss08/trenova/shared/timeutils"
+	"github.com/emoss08/trenova/shared/typeutils"
 )
 
 const (
@@ -84,6 +85,7 @@ type billingQueueRow struct {
 	AgeDays         int64                  `json:"ageDays"`
 	QueuedAt        querytool.OptionalDate `json:"queuedAt"`
 	InvoiceID       string                 `json:"invoiceId,omitempty"`
+	ReviewStartedAt querytool.OptionalDate `json:"reviewStartedAt"`
 }
 
 // NewListBillingQueueItemsTool reads the queue through the repository the
@@ -146,9 +148,15 @@ func buildBillingQueueList(
 				Kind:     filtercatalog.KindDate,
 				Sortable: true,
 				Note:     "when it was queued",
+				Column:   "queuedAt",
 			},
 			{Name: "reviewStartedAt", Kind: filtercatalog.KindDate, Sortable: true},
-			{Name: fieldAllocatedTotalAmount, Kind: filtercatalog.KindNumber, Sortable: true},
+			{
+				Name:     fieldAllocatedTotalAmount,
+				Kind:     filtercatalog.KindNumber,
+				Sortable: true,
+				Column:   "amount",
+			},
 		},
 		Access: access,
 		FetchGated: func(
@@ -221,13 +229,17 @@ func billingQueueRowFrom(
 	now int64,
 ) billingQueueRow {
 	row := billingQueueRow{
-		ID:        item.ID.String(),
-		Number:    item.Number,
-		Status:    string(item.Status),
-		BillType:  string(item.BillType),
-		AgeDays:   max(now-item.CreatedAt, 0) / secondsPerDayInQueue,
-		QueuedAt:  querytool.RecordedDate(item.CreatedAt),
-		InvoiceID: querytool.PulidString(item.InvoiceID),
+		ID:              item.ID.String(),
+		Number:          item.Number,
+		Status:          string(item.Status),
+		BillType:        string(item.BillType),
+		AgeDays:         max(now-item.CreatedAt, 0) / secondsPerDayInQueue,
+		QueuedAt:        querytool.RecordedDate(item.CreatedAt),
+		InvoiceID:       querytool.PulidString(item.InvoiceID),
+		ReviewStartedAt: querytool.ExpectedDate(
+			typeutils.ValueOrZero(item.ReviewStartedAt),
+			"review not started",
+		),
 	}
 	if item.Shipment != nil {
 		row.ProNumber = item.Shipment.ProNumber
@@ -363,7 +375,6 @@ type billingQueueDetail struct {
 	ReviewNotes               string                   `json:"reviewNotes,omitempty"`
 	ExceptionNotes            string                   `json:"exceptionNotes,omitempty"`
 	CancelReason              string                   `json:"cancelReason,omitempty"`
-	ReviewStartedAt           querytool.OptionalDate   `json:"reviewStartedAt"`
 	RequiresReplacementReview bool                     `json:"requiresReplacementReview,omitempty"`
 	SplitBilled               bool                     `json:"splitBilled,omitempty"`
 	Charges                   []billingQueueChargeLine `json:"charges"`
@@ -446,7 +457,6 @@ func (r queueDetailReader) detail(
 		ReviewNotes:               item.ReviewNotes,
 		ExceptionNotes:            item.ExceptionNotes,
 		CancelReason:              item.CancelReason,
-		ReviewStartedAt:           querytool.PointerDate(item.ReviewStartedAt),
 		RequiresReplacementReview: item.RequiresReplacementReview,
 		Charges:                   []billingQueueChargeLine{},
 		DetentionHolds:            holdsOf(item.DetentionHolds, showAmount),

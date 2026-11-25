@@ -17,7 +17,8 @@ import {
 } from "@trenova/shared/components/ui/segmented-control";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { formatShiftDate, isSwapOpen, SWAP_STATUS_TONES } from "@trenova/shared/lib/scheduling";
-import { initials } from "@trenova/shared/lib/utils";
+import { WorkerAvatar } from "@trenova/shared/components/worker-avatar";
+import type { PersonPhoto } from "@trenova/shared/types/person-photo";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { ArrowRightIcon, CheckIcon, XCloseIcon } from "@trenova/shared/components/icons";
 import { useMemo, useState } from "react";
@@ -193,15 +194,27 @@ function SwapRow({
   );
 }
 
-type PersonLike = { firstName: string; lastName: string } | null | undefined;
+type PersonLike =
+  | { firstName: string; lastName: string; photo?: PersonPhoto | null }
+  | null
+  | undefined;
 
 function Person({ person, placeholder = "" }: { person: PersonLike; placeholder?: string }) {
+  if (!person) {
+    return (
+      <Avatar className="size-7 rounded-full after:rounded-full">
+        <AvatarFallback className="rounded-full text-2xs font-medium">{placeholder}</AvatarFallback>
+      </Avatar>
+    );
+  }
   return (
-    <Avatar className="size-7">
-      <AvatarFallback className="text-2xs font-medium">
-        {person ? initials(person.firstName, person.lastName) : placeholder}
-      </AvatarFallback>
-    </Avatar>
+    <WorkerAvatar
+      firstName={person.firstName}
+      lastName={person.lastName}
+      photo={person.photo}
+      className="size-7"
+      fallbackClassName="text-2xs"
+    />
   );
 }
 

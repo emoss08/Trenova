@@ -96,7 +96,7 @@ describe("citation numbering", () => {
   it("numbers citations in reading order, skipping steps the reply never cites", () => {
     const steps = [
       step("customer_list", { items: [{ name: "Acme" }] }),
-      step("find_tools", { tools: ["x"] }),
+      step("search_tools", { tools: ["x"] }),
       step("worker_get", { name: "Dana Ortiz" }),
     ];
     const citations = citeSteps("Dana Ortiz drives for Acme.", steps);

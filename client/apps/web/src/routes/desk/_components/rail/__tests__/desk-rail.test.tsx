@@ -3,7 +3,7 @@ import type { AgentChoice } from "@/lib/graphql/agent-definition";
 import { stubLayout } from "@/test/layout";
 import type { AssistantThread } from "@/types/assistant";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { act, fireEvent, render, screen, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { useLocation } from "@tanstack/react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type {
@@ -17,6 +17,7 @@ import {
   groupDeskThreadsByShelf,
   type DeskShelfKey,
 } from "@/components/desk-chat/rail/desk-threads";
+import { useDeskAskStore } from "@/stores/desk-ask-store";
 import { useDeskMarginStore } from "@/stores/desk-margin-store";
 import { useDeskRailSlotStore } from "@/stores/desk-rail-slot-store";
 import { DeskRail, type DeskRailProps, railViewOf } from "../desk-rail";
@@ -593,14 +594,17 @@ describe("DeskRail fold", () => {
     expect(handlers.onFold).toHaveBeenCalledTimes(1);
   });
 
-  it("opens a new conversation in Nova's margin", () => {
+  it("opens a new conversation full width on Today's box, never beside the page", async () => {
     useDeskMarginStore.getState().clearSession();
-    renderRail();
+    useDeskAskStore.getState().reset();
+    renderRail({ at: "/desk/r/shipment/shp_1", place: "case" });
 
     fireEvent.click(screen.getByRole("button", { name: "New conversation" }));
 
-    expect(useDeskMarginStore.getState().margin).toEqual({ threadId: null, subject: null });
-    useDeskMarginStore.getState().clearSession();
+    await waitFor(() => expect(screen.getByTestId("location")).toHaveTextContent(/^\/desk$/));
+    expect(useDeskAskStore.getState()).toMatchObject({ subject: null, focusPending: true });
+    expect(useDeskMarginStore.getState().margin).toBeNull();
+    useDeskAskStore.getState().reset();
   });
 
   it("floats over the page as a card, out of reach until it is shown", () => {

@@ -1,5 +1,4 @@
-import { Avatar, AvatarFallback, AvatarImage } from "@trenova/shared/components/ui/avatar";
-import { initials } from "@trenova/shared/lib/utils";
+import { WorkerAvatar } from "@trenova/shared/components/worker-avatar";
 import type { WorkerPTO } from "@trenova/shared/types/worker";
 import { UpcomingPTOContent } from "./upcoming-pto-content";
 
@@ -24,15 +23,13 @@ export function UpcomingPTOCard({ workerPTO }: { workerPTO: WorkerPTO }) {
   return (
     <UpcomingPTOCardOuter>
       <UpcomingPTOCardInner>
-        <Avatar className="bg-muted ring-border size-9 ring-1">
-          <AvatarImage
-            src={worker?.profilePicUrl ?? undefined}
-            alt={`${worker?.firstName ?? ""} ${worker?.lastName ?? ""}`}
-          />
-          <AvatarFallback className="text-xs">
-            {initials(worker?.firstName, worker?.lastName)}
-          </AvatarFallback>
-        </Avatar>
+        <WorkerAvatar
+          firstName={worker?.firstName}
+          lastName={worker?.lastName}
+          photo={worker?.photo}
+          className="size-9"
+          fallbackClassName="text-xs"
+        />
         <UpcomingPTOContent pto={workerPTO} />
       </UpcomingPTOCardInner>
     </UpcomingPTOCardOuter>

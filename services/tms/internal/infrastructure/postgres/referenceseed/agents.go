@@ -75,7 +75,12 @@ func SystemAgentDefinitions(orgID, buID pulid.ID) []*agentdefinition.Definition 
 	billing := agenttemplate.TemplateBillingException
 	dispatch := agenttemplate.TemplateDispatchAssignment
 
-	return []*agentdefinition.Definition{
+	desks := make([]*agentdefinition.Definition, 0, len(agentpreset.DefaultDesks()))
+	for _, template := range agentpreset.DefaultDesks() {
+		desks = append(desks, agentpreset.NewDesk(template, orgID, buID))
+	}
+
+	return append(desks, []*agentdefinition.Definition{
 		{
 			OrganizationID:  orgID,
 			BusinessUnitID:  buID,
@@ -85,7 +90,8 @@ func SystemAgentDefinitions(orgID, buID pulid.ID) []*agentdefinition.Definition 
 			Icon:            agentmark.IconReceipt,
 			Accent:          agentmark.AccentAmber,
 			Instructions:    agentinstructions.StarterInstructions(billing),
-			ToolNames:       agentpreset.StarterTools(billing),
+			Scope:           agentpreset.ScopeFor(billing),
+			PinnedTools:     agentpreset.PinnedFor(billing),
 			AutonomyCeiling: agentpreset.StarterCeiling(billing),
 			TriggerMode:     agentpreset.StarterTrigger(billing),
 			EventKinds:      agentpreset.StarterEvents(billing),
@@ -109,7 +115,8 @@ func SystemAgentDefinitions(orgID, buID pulid.ID) []*agentdefinition.Definition 
 			Icon:           agentmark.IconRoute,
 			Accent:         agentmark.AccentIndigo,
 			Instructions:   agentinstructions.StarterInstructions(dispatch),
-			ToolNames:      agentpreset.StarterTools(dispatch),
+			Scope:          agentpreset.ScopeFor(dispatch),
+			PinnedTools:    agentpreset.PinnedFor(dispatch),
 			ToolTiers: map[string]agent.AutonomyTier{
 				"dispatch_assign_move": agent.TierPropose,
 			},
@@ -128,5 +135,5 @@ func SystemAgentDefinitions(orgID, buID pulid.ID) []*agentdefinition.Definition 
 			},
 			Enabled: false,
 		},
-	}
+	}...)
 }

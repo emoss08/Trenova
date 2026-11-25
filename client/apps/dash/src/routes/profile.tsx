@@ -30,6 +30,7 @@ import { useDashProfile } from "../_components/dash-layout";
 import { ProfileDocuments } from "../_components/profile-documents";
 import { PtoSection } from "../_components/pto-section";
 import { useDashFeatures } from "../_components/use-dash-features";
+import { ProfilePhoto } from "../_components/profile-photo";
 import { cn } from "@trenova/shared/lib/utils";
 import { translate } from "@trenova/shared/i18n/runtime";
 
@@ -63,10 +64,14 @@ export function DashProfilePage() {
         <Skeleton className="h-40 w-full rounded-2xl" />
       ) : profile.data ? (
         <div className="rounded-2xl border border-border bg-card p-4">
-          <p className="text-lg font-semibold">
-            {profile.data.firstName} {profile.data.lastName}
-          </p>
-          <p className="text-sm text-muted-foreground">{profile.data.organizationName}</p>
+          <ProfilePhoto person={profile.data} profileReadAt={profile.dataUpdatedAt}>
+            <p className="truncate text-lg font-semibold">
+              {t("{0} {1}", profile.data.firstName, profile.data.lastName)}
+            </p>
+            <p className="truncate text-sm text-muted-foreground">
+              {profile.data.organizationName}
+            </p>
+          </ProfilePhoto>
           <dl className="mt-3 flex flex-col gap-1.5 border-t border-border pt-3 text-sm">
             <ProfileRow label={t("Email")} value={profile.data.email} />
             <ProfileRow label={t("Phone")} value={profile.data.phoneNumber} />

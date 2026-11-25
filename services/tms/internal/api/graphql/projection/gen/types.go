@@ -47,6 +47,7 @@ type goField struct {
 	TypeName      string
 	ColumnName    string
 	IsColumn      bool
+	Hidden        bool
 	IsRelation    bool
 	RelationKind  string
 	RelationLocal string

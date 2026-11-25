@@ -1,4 +1,4 @@
-import { z } from "zod/v4";
+import { z } from "zod";
 import { capabilityFlagSchema } from "./helpers";
 import { userSchema } from "./user";
 import { translate } from "@trenova/shared/i18n/runtime";

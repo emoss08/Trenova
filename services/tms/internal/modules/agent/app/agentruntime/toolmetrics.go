@@ -22,7 +22,7 @@ type ReplayAware interface {
 // countToolOutcome counts one finished call by tool and verdict. Every call
 // the loop answers comes through recordToolResult, refusals included, so this
 // is the one place a call is counted. A call with no verdict of its own, a
-// find_tools answer or a repeated read, is counted as the verdict its result
+// search_tools answer or a repeated read, is counted as the verdict its result
 // implies.
 func (s *Service) countToolOutcome(
 	t *Turn,

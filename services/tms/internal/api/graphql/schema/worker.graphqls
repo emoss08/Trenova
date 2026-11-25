@@ -136,7 +136,8 @@ type Worker {
   Set while a leave of absence is open on the timeline.
   """
   leaveType: WorkerLeaveType
-  profilePicUrl: String!
+  "The worker's photo, signed for a short while; null when they have none."
+  photo: PersonPhoto
   firstName: String!
   lastName: String!
   wholeName: String!

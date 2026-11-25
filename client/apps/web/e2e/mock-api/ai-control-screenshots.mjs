@@ -468,7 +468,7 @@ const SHOTS = [
     act: async (page) => {
       await page.getByRole("button", { name: /Tools and autonomy/ }).click();
       await page.waitForTimeout(700);
-      await page.getByRole("button", { name: "Add tools" }).first().click();
+      await page.getByRole("button", { name: "Choose capabilities" }).first().click();
     },
   },
   {

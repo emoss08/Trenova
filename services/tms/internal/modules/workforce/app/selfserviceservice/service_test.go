@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerpolicy"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/selfserviceports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -186,13 +187,23 @@ func (fakeChecksums) Checksum(
 }
 
 func newService(repo *fakeRepo, workers *fakeWorkers) *selfserviceservice.Service {
+	return newServiceWithPhotos(repo, workers, &fakeWorkerPhotos{})
+}
+
+func newServiceWithPhotos(
+	repo *fakeRepo,
+	workers *fakeWorkers,
+	photos *fakeWorkerPhotos,
+) *selfserviceservice.Service {
 	return selfserviceservice.New(selfserviceservice.Params{
 		Logger:        zap.NewNop(),
 		Repo:          repo,
 		WorkerRepo:    workerReader{workers: workers},
 		WorkerUpdater: workers,
+		WorkerPhotos:  photos,
 		Checksums:     fakeChecksums{},
 		AuditService:  &mocks.NoopAuditService{},
+		DB:            dbtest.NopConnection{},
 		DriverNotify: drivernotificationservice.New(drivernotificationservice.Params{
 			Logger:     zap.NewNop(),
 			WorkerRepo: noPortalWorkers{},

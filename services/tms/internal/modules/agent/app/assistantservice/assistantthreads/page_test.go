@@ -94,7 +94,7 @@ func TestOpenPageThread_NamesTheAgentThePageTalksTo(t *testing.T) {
 	assert.Equal(t, agentdefinition.SystemKeyFormulaAssistant, opened.Agent.SystemKey)
 	assert.Equal(t, agenttemplate.TemplateFormulaAssistant, opened.Agent.Template)
 	assert.NotEmpty(t, opened.Agent.Name)
-	assert.NotEmpty(t, opened.Agent.ToolNames)
+	assert.Equal(t, agentpreset.ScopeFor(agenttemplate.TemplateFormulaAssistant), opened.Agent.Scope)
 	assert.NotEmpty(t, opened.Agent.Starters)
 }
 

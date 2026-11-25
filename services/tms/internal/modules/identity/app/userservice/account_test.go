@@ -210,12 +210,11 @@ func TestDeleteProfilePictureWritesTheEmptiedColumns(t *testing.T) {
 	t.Parallel()
 	deps := setupTest(t)
 	user := newTestUser()
-	user.ProfilePicURL = "user/profile-picture/a.webp"
-	user.ThumbnailURL = "user/profile-picture/a.webp"
+	user.ProfilePicURL = user.CurrentOrganizationID.String() + "/user/profile-picture/a.jpg"
+	user.ThumbnailURL = user.CurrentOrganizationID.String() + "/user/profile-picture/b.jpg"
 	expectSelfLoad(deps, user)
 	deps.expectAuditLog()
 	columns := capturedColumns(deps)
-	deps.storage.On("Delete", mock.Anything, mock.Anything).Return(nil).Maybe()
 
 	_, err := deps.svc.DeleteProfilePicture(t.Context(), tenantOf(user))
 
@@ -227,6 +226,10 @@ func TestDeleteProfilePictureWritesTheEmptiedColumns(t *testing.T) {
 		*columns,
 	)
 	assert.Empty(t, user.ProfilePicURL)
+	assert.ElementsMatch(t, []string{
+		user.CurrentOrganizationID.String() + "/user/profile-picture/a.jpg",
+		user.CurrentOrganizationID.String() + "/user/profile-picture/b.jpg",
+	}, deps.photos.DiscardedKeys(), "the old picture and its thumbnail are deleted")
 }
 
 func sessionFor(userID pulid.ID, lastSeen int64, ua string) *session.Session {

@@ -59,10 +59,7 @@ func FromTools(
 		Queries: queryRegistry,
 		Actions: actionRegistry,
 		Runtime: runtime,
-		Catalog: agenttoolcatalog.NewFromRegistries(agenttoolcatalog.Params{
-			QueryTools:  queryRegistry,
-			ActionTools: actionRegistry,
-		}),
+		Catalog: agenttoolcatalog.New(agenttoolcatalog.AllDescriptors(queryRegistry, actionRegistry)),
 	}
 }
 

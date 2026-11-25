@@ -30,7 +30,7 @@ import {
   type DeskArtifactShape,
 } from "@/components/desk-chat/desk-skeletons";
 import { whenIdle } from "@/lib/when-idle";
-import { lazyComponent } from "@/lib/lazy-component";
+import { lazyComponent } from "@trenova/shared/lib/lazy-component";
 import { LazyComponent } from "@trenova/shared/components/error-boundary";
 import { ArtIcon, DeskArtKindIcon, deskArtKind, deskArtKindName } from "./desk-art-kinds";
 import { recordCardFor } from "./cards/registry";

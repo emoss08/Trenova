@@ -6,6 +6,7 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/infrastructure/config/aiconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aimetrics"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
@@ -85,6 +86,7 @@ type Params struct {
 	// Every tool call is counted by tool and by what became of it.
 	Metrics   *metrics.Registry
 	AppConfig *appconfig.Config
+	AIConfig  *aiconfig.Config
 	Shadow    *agentshadow.Resolver
 	// The code-mode gate reads the chat providers' script settings.
 	Scripts llmports.ScriptProviders
@@ -100,6 +102,7 @@ type Service struct {
 	access      *toolaccess.Access
 	dispatcher  *tooldispatch.Dispatcher
 	streamer    *modelstream.Streamer
+	topicGuard  bool
 }
 
 func New(p Params) *Service {
@@ -128,6 +131,7 @@ func assemble(
 		access:      access,
 		streamer:    modelstream.NewStreamer(p.Completion, access),
 		dispatcher:  tooldispatch.NewDispatcher(dispatchParts),
+		topicGuard:  p.AIConfig.TopicGuardEnabled(),
 	}
 }
 
@@ -486,8 +490,8 @@ func (s *Service) runToolCall(t *Turn, effects TurnEffects, loop *driveLoop, rc 
 	}
 
 	switch call.Name {
-	case "find_tools":
-		outcome := s.findTools(t, effects, call)
+	case runtimetools.SearchToolsName:
+		outcome := s.searchTools(t, effects, call)
 		s.recordToolResult(t, effects, call, &outcome)
 		return false
 	case "ask_user":
@@ -556,7 +560,7 @@ func (s *Service) overBudget(t *Turn, call *llmports.ToolCall) (toolcall.Result,
 	), true
 }
 
-func (s *Service) findTools(t *Turn, effects TurnEffects, call *llmports.ToolCall) toolcall.Result {
+func (s *Service) searchTools(t *Turn, effects TurnEffects, call *llmports.ToolCall) toolcall.Result {
 	tools := t.tools
 	tools.FindCalls++
 	if tools.FindCalls > toolaccess.MaxFindCalls {
@@ -572,7 +576,7 @@ func (s *Service) findTools(t *Turn, effects TurnEffects, call *llmports.ToolCal
 		)
 	}
 
-	answer := effects.Find(t, call.Arguments)
+	answer := effects.Search(t, call.Arguments)
 
 	return toolcall.Result{
 		Content: answer.Content + toolaccess.SearchesLeft(tools.FindCalls),
@@ -746,7 +750,7 @@ func (t *Turn) dispatchCall(call *llmports.ToolCall, completionText string) tool
 }
 
 // scriptReach is what the turn reached beyond the agent's own tools, for the
-// call that runs a script. find_tools told the model a read from another desk
+// call that runs a script. search_tools told the model a read from another desk
 // was callable here, and the script, which saw only the agent's own, had no
 // such name: Haiku guessed three spellings of the fuel read and spent the
 // turn's scripts on them.
@@ -838,7 +842,7 @@ func (s *Service) finalAnswer(
 }
 
 // recordToolResult files one tool's outcome into the run, the adapter history
-// and the stream. find_tools and a dispatched tool both come through here so a
+// and the stream. search_tools and a dispatched tool both come through here so a
 // loaded-tools answer is recorded exactly like any other tool result — it is one
 // to the model, and a transcript that hid it would not explain the turn.
 func (s *Service) recordToolResult(
@@ -931,7 +935,10 @@ func (s *Service) finish(
 	completion *llmports.ChatCompletionResult,
 	effects TurnEffects,
 ) *agentruntimeports.RunResult {
-	guarded, outputDecision := agentguard.EvaluateOutput(completion.Text)
+	guarded, outputDecision := completion.Text, agentguard.Decision{}
+	if s.topicGuard {
+		guarded, outputDecision = agentguard.EvaluateOutput(completion.Text)
+	}
 	if outputDecision.Altered {
 		s.logger.Warn("agent reply altered by output guard",
 			zap.String("rule", outputDecision.MatchedRule),

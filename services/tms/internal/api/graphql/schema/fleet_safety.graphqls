@@ -131,6 +131,8 @@ type FleetSafetyRank {
   activePoints: Int!
   events: Int!
   lastEventAt: Timestamp
+  "The driver's photo, signed for a short while; null when they have none."
+  photo: PersonPhoto
 }
 
 type FleetSafetyRatingCount {

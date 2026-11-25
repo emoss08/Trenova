@@ -1,4 +1,5 @@
 import type { CapacityUnit } from "@/lib/graphql/shipment-board";
+import type { PersonPhoto } from "@trenova/shared/types/person-photo";
 import { resolveCoverage, type Coverage } from "@/lib/shipment-board/coverage";
 import { ACTIVE_STAGES, isActiveStage, type ActiveStage } from "@/lib/shipment-board/stage";
 import { packLane, type PackedLane } from "@/lib/timeline/lanes";
@@ -221,6 +222,8 @@ export type DriverLane = {
   id: string;
   name: string;
   initials: string;
+  /** The driver's photo from the capacity strip or their load's assignment; null with none. */
+  photo: PersonPhoto | null;
   tractorId: string | null;
   tractorCode: string | null;
   /** From the capacity strip when it knows the driver; otherwise read per lane. */
@@ -272,6 +275,7 @@ export function buildCoverageLanes(
       id: unit.id,
       name: unit.name,
       initials: unit.initials,
+      photo: unit.photo ?? null,
       tractorId: unit.tractorId ?? null,
       tractorCode: unit.unitLabel ?? null,
       driveRemainingMs: unit.driveRemainingMs ?? null,
@@ -290,6 +294,7 @@ export function buildCoverageLanes(
           id: coverage.id,
           name: coverage.name,
           initials: coverage.initials,
+          photo: coverage.photo,
           tractorId: null,
           tractorCode: coverage.detail,
           driveRemainingMs: null,
@@ -297,6 +302,7 @@ export function buildCoverageLanes(
         };
         drivers.set(coverage.id, lane);
       }
+      lane.photo ??= coverage.photo;
       lane.tractorId ??= tractorIdOf(load);
       lane.tractorCode ??= coverage.detail;
       lane.loads.push(load);

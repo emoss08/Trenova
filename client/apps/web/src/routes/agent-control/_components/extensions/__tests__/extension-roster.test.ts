@@ -1,3 +1,4 @@
+import type { AgentScope } from "@/lib/agent-scope";
 import type { AgentExtensionCatalogItem } from "@/types/agent-extension";
 import { describe, expect, it } from "vitest";
 import {
@@ -168,26 +169,42 @@ describe("holdsExtension and withExtensionTools", () => {
     { name: "web_search", label: "", description: "" },
     { name: "web_fetch", label: "", description: "" },
   ];
-
-  it("holds only with every one of the extension's tools", () => {
-    expect(holdsExtension(["web_search", "web_fetch", "list_loads"], tools)).toBe(true);
-    expect(holdsExtension(["web_search", "list_loads"], tools)).toBe(false);
-    expect(holdsExtension([], tools)).toBe(false);
-    expect(holdsExtension(["list_loads"], [])).toBe(false);
+  const named = (capabilities: string[], over: Partial<AgentScope> = {}): AgentScope => ({
+    areas: [],
+    capabilities,
+    denyAreas: [],
+    denyCapabilities: [],
+    ...over,
   });
 
-  it("adds the missing tools once and keeps the agent's own order", () => {
-    expect(withExtensionTools(["list_loads", "web_search"], tools, true)).toEqual([
-      "list_loads",
-      "web_search",
-      "web_fetch",
-    ]);
+  it("holds only when the scope allows every one of the extension's tools", () => {
+    expect(holdsExtension(named(["web_search", "web_fetch", "shipment_list"]), tools)).toBe(true);
+    expect(holdsExtension(named(["web_search", "shipment_list"]), tools)).toBe(false);
+    expect(holdsExtension(named([], { areas: ["web"] }), tools)).toBe(true);
+    expect(holdsExtension(named([]), tools)).toBe(true);
+    expect(holdsExtension(named([], { denyCapabilities: ["web_fetch"] }), tools)).toBe(false);
+    expect(holdsExtension(named(["shipment_list"]), [])).toBe(false);
   });
 
-  it("removes only the extension's tools", () => {
-    expect(withExtensionTools(["web_search", "list_loads", "web_fetch"], tools, false)).toEqual([
-      "list_loads",
-    ]);
+  it("names the missing tools once and keeps the agent's own order", () => {
+    expect(withExtensionTools(named(["shipment_list", "web_search"]), tools, true)).toEqual(
+      named(["shipment_list", "web_search", "web_fetch"]),
+    );
+  });
+
+  it("lifts a switch-off rather than naming a tool everything already allows", () => {
+    expect(withExtensionTools(named([], { denyCapabilities: ["web_fetch"] }), tools, true)).toEqual(
+      named([]),
+    );
+  });
+
+  it("takes only the extension's tools, switching off what an area still gives", () => {
+    expect(
+      withExtensionTools(named(["web_search", "shipment_list", "web_fetch"]), tools, false),
+    ).toEqual(named(["shipment_list"]));
+    expect(withExtensionTools(named([], { areas: ["web"] }), tools, false)).toEqual(
+      named([], { areas: ["web"], denyCapabilities: ["web_search", "web_fetch"] }),
+    );
   });
 });
 

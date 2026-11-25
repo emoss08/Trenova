@@ -203,6 +203,8 @@ type RotaRow {
   days: [RotaDay!]!
   scheduledDays: Int!
   conflicts: Int!
+  "The worker's photo, signed for a short while; null when they have none."
+  photo: PersonPhoto
 }
 
 """

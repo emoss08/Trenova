@@ -20,7 +20,7 @@ function agentNamed(id: string, name: string): AgentChoice {
     template: null,
     icon: "",
     accent: "",
-    toolNames: [],
+    scope: { areas: [], capabilities: [], denyAreas: [], denyCapabilities: [] },
     systemKey: "",
     starters: [],
   } as unknown as AgentChoice;

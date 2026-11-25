@@ -1,7 +1,7 @@
 import type { RecordEntityType } from "@/config/record-links";
 import { useScrollFromTop } from "@/hooks/use-scroll-from-top";
 import { useCanRead } from "../record-card/card-access";
-import { lazyComponent, preloadable, type LazyComponent } from "@/lib/lazy-component";
+import { lazyComponent, preloadable, type LazyComponent } from "@trenova/shared/lib/lazy-component";
 import { whenIdle } from "@/lib/when-idle";
 import { Resource } from "@trenova/shared/types/permission";
 import type { AssistantArtifact } from "@/types/assistant";

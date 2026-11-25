@@ -16,4 +16,6 @@ type MutationResolver struct{ *Deps }
 
 type QueryResolver struct{ *Deps }
 
+type RotaRowResolver struct{ *Deps }
+
 type ShiftTemplateResolver struct{ *Deps }

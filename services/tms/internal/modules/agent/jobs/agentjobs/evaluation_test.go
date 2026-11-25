@@ -187,7 +187,7 @@ func newReplayWorld(t *testing.T) *replayWorld {
 		OrganizationID: tenantInfo.OrgID,
 		BusinessUnitID: tenantInfo.BuID,
 		Name:           "Billing desk",
-		ToolNames:      []string{"update_rate"},
+		Scope:          agentdefinition.Scope{Capabilities: []string{"update_rate"}},
 		Version:        7,
 	}
 	thread := &conversation.Thread{

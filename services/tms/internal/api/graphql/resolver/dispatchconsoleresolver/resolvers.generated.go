@@ -10,11 +10,13 @@ import (
 	driverpositioningports "github.com/emoss08/trenova/internal/modules/operations/ports/driverpositioningports"
 	freightoutlookports "github.com/emoss08/trenova/internal/modules/operations/ports/freightoutlookports"
 	carrierassignmentservice "github.com/emoss08/trenova/internal/modules/rating/app/carrierassignmentservice"
+	workerphotoservice "github.com/emoss08/trenova/internal/modules/workforce/app/workerphotoservice"
 )
 
 type Deps struct {
 	*resolvercore.Core
 	CarrierAssignmentService  *carrierassignmentservice.Service
+	WorkerPhotoService        *workerphotoservice.Service
 	DispatchConsoleService    dispatchconsoleports.DispatchConsoleService
 	DispatchAutoAssignService dispatchconsoleports.DispatchAutoAssignService
 	DemandForecastService     demandforecastports.Service

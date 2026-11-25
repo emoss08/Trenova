@@ -10,8 +10,10 @@ query UserDetail($id: ID!) {
     name
     username
     emailAddress
-    profilePicUrl
-    thumbnailUrl
+    photo {
+      url
+      thumbnailUrl
+    }
     timezone
     timeFormat
     locale
@@ -58,8 +60,10 @@ mutation PatchUser($id: ID!, $input: UserPatchInput!) {
     name
     username
     emailAddress
-    profilePicUrl
-    thumbnailUrl
+    photo {
+      url
+      thumbnailUrl
+    }
     timezone
     timeFormat
     locale

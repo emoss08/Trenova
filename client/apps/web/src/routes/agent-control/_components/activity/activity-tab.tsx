@@ -1,4 +1,4 @@
-import { lazyComponent } from "@/lib/lazy-component";
+import { lazyComponent } from "@trenova/shared/lib/lazy-component";
 import { aiControl } from "@/lib/queries/ai-control";
 import { useQuery } from "@tanstack/react-query";
 import { DataTableLazyComponent, LazyComponent } from "@trenova/shared/components/error-boundary";

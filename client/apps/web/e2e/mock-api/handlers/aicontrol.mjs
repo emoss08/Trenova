@@ -524,10 +524,16 @@ export const AI_HANDLERS = {
       cronTimezone: "",
       eventKinds: EVENT_KINDS.events.slice(0, 1).map((event) => event.kind),
       intervalSeconds: 0,
-      toolNames: TOOL_CATALOG.tools
-        .filter((tool) => !tool.core && tool.resource.startsWith("shipment"))
-        .slice(0, 6)
-        .map((tool) => tool.name),
+      scope: {
+        areas: null,
+        capabilities: TOOL_CATALOG.tools
+          .filter((tool) => !tool.core && tool.resource.startsWith("shipment"))
+          .slice(0, 6)
+          .map((tool) => tool.name),
+        denyAreas: null,
+        denyCapabilities: null,
+      },
+      pinnedTools: [],
       toolTiers: {},
       autonomyCeiling: "ActWithApproval",
       dataAccessCeiling: "Internal",
@@ -837,10 +843,32 @@ function rosterStat(agent) {
   };
 }
 
+/**
+ * The catalog tools a scope allows, as the server's Scope.Allows reads it: an area by the word
+ * before a tool's first underscore, denials first, and nothing named meaning everything.
+ */
+function scopeTools(scope) {
+  const areas = scope?.areas ?? [];
+  const capabilities = scope?.capabilities ?? [];
+  const denyAreas = scope?.denyAreas ?? [];
+  const denyCapabilities = scope?.denyCapabilities ?? [];
+  const everything = areas.length === 0 && capabilities.length === 0;
+  return TOOL_CATALOG.tools
+    .map((tool) => tool.name)
+    .filter((name) => {
+      const area = name.split("_")[0];
+      if (denyAreas.includes("*") || denyAreas.includes(area) || denyCapabilities.includes(name)) {
+        return false;
+      }
+      return everything || areas.includes(area) || capabilities.includes(name);
+    });
+}
+
 function streakTool(agent) {
+  const held = scopeTools(agent.node.scope);
   return (
-    agent.node.toolNames.find((name) => agent.node.toolTiers[name] === "ActWithApproval") ??
-    agent.node.toolNames.find((name) => TOOL_BY_NAME.get(name)?.kind === "action") ??
+    held.find((name) => agent.node.toolTiers[name] === "ActWithApproval") ??
+    held.find((name) => TOOL_BY_NAME.get(name)?.kind === "action") ??
     null
   );
 }
@@ -899,7 +927,7 @@ function versionsOf(state, agent) {
 }
 
 function accessPreview(state, input) {
-  const tools = input.toolNames ?? [];
+  const tools = scopeTools(input.scope);
   const sensitive =
     input.accessMode === "Everyone"
       ? tools.filter((name) => {
@@ -978,7 +1006,7 @@ function scorecardOf(state, agent) {
 
 function lintOf(input) {
   const text = input.instructions ?? "";
-  const held = new Set(input.toolNames ?? []);
+  const held = new Set(scopeTools(input.scope));
   const findings = [];
   const email = /\bemail\b/i.exec(text);
   if (email && !TOOL_CATALOG.tools.some((tool) => held.has(tool.name) && /email/.test(tool.name))) {
@@ -1040,7 +1068,7 @@ function savedNode(state, base, request, id) {
 
 function dryRunFrames(state, body) {
   const draft = body?.draft ?? {};
-  const held = draft.toolNames ?? [];
+  const held = scopeTools(draft.scope);
   const reads = held.filter((name) => TOOL_BY_NAME.get(name)?.kind === "query").slice(0, 2);
   const change = held.find((name) => TOOL_BY_NAME.get(name)?.kind === "action");
   const calls = [...reads, ...(change ? [change] : [])];

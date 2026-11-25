@@ -46,6 +46,20 @@ type GetWorkersByIDsRequest struct {
 	WorkerIDs  []pulid.ID            `json:"workerIds"`
 }
 
+type UpdateWorkerPhotoRequest struct {
+	TenantInfo        pagination.TenantInfo
+	WorkerID          pulid.ID
+	Version           int64
+	PhotoKey          string
+	PhotoThumbnailKey string
+}
+
+type WorkerPhotoKeys struct {
+	WorkerID          pulid.ID
+	PhotoKey          string
+	PhotoThumbnailKey string
+}
+
 type WorkerSyncReadinessCounts struct {
 	TotalWorkers        int `json:"totalWorkers"`
 	ActiveWorkers       int `json:"activeWorkers"`
@@ -95,6 +109,14 @@ type WorkerRepository interface {
 		ctx context.Context,
 		entity *worker.Worker,
 	) (*worker.Worker, error)
+	UpdatePhoto(
+		ctx context.Context,
+		req *UpdateWorkerPhotoRequest,
+	) (*worker.Worker, error)
+	GetPhotoKeys(
+		ctx context.Context,
+		req GetWorkersByIDsRequest,
+	) ([]WorkerPhotoKeys, error)
 	GetWorkerSyncReadinessCounts(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,

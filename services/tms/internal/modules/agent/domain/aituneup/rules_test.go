@@ -40,7 +40,7 @@ func chatAgent(id string) *agentdefinition.Definition {
 		TriggerMode: agentdefinition.TriggerChat,
 		CreatedAt:   now - 90*day,
 		LastRunAt:   &lastRun,
-		ToolNames:   []string{"shipment_list", "shipment_get"},
+		Scope:       agentdefinition.Scope{Capabilities: []string{"shipment_list", "shipment_get"}},
 	}
 }
 

@@ -1,5 +1,5 @@
 {
-  "version": "sha256:55c6116bc5a51e2031d2f736f277ead1ffdb760d8a3823ce2e27d86ea0ba7683",
+  "version": "sha256:80552ee4a8416c3aaef0dbca14e6a00d1a42968c76a1149cc9f9132b424f91df",
   "screens": [
     {
       "path": "/",
@@ -19,21 +19,47 @@
         "ArOpenItems",
         "ArPaymentStats",
         "ArTopOverdueCustomers",
+        "CancelReportRun",
+        "CannedReports",
         "CarrierTrackingLink",
         "ClearMyAIFeedback",
         "CreateHomeLayoutPreset",
+        "CreateReportDashboard",
+        "CreateReportDefinition",
+        "CreateReportSchedule",
+        "CreateReportView",
         "CustomerStatusNotifications",
         "CustomerTrackingLinks",
         "DeleteHomeLayoutPreset",
+        "DeleteReportDashboard",
+        "DeleteReportDefinition",
+        "DeleteReportSchedule",
+        "DeleteReportView",
         "DeskLocationCard",
         "DeskLocationDwell",
         "DeskLocationPolicies",
+        "DeskReportRunCard",
+        "DrillThroughReport",
         "ExceptionShipments",
+        "ForkCannedReport",
         "HosCertificationSummary",
         "LateChargePreview",
         "MapShipments",
         "MyAIFeedback",
+        "PreviewReport",
+        "ReportCatalog",
+        "ReportDashboardById",
+        "ReportDashboards",
+        "ReportDefinitionById",
+        "ReportDefinitionOptions",
+        "ReportDefinitionRevisions",
+        "ReportDefinitionsTable",
+        "ReportRunById",
+        "ReportSchedules",
+        "ReportViews",
+        "ResetCannedFork",
         "ResetHomeLayout",
+        "RunReport",
         "SetMyAIFeedback",
         "ShipmentCheckCalls",
         "ShipmentDriverFeasibility",
@@ -45,6 +71,10 @@
         "UnassignedShipments",
         "UpdateHomeLayout",
         "UpdateHomeLayoutPreset",
+        "UpdateReportDashboard",
+        "UpdateReportDefinition",
+        "UpdateReportSchedule",
+        "UpdateReportView",
         "VehicleInspections",
         "VehiclePositions",
         "WorkerFormSubmissions",
@@ -232,6 +262,7 @@
         "detention_policy",
         "formula_template",
         "location",
+        "report",
         "shipment"
       ],
       "references": [
@@ -324,7 +355,8 @@
         "ArOpenItems",
         "ArPaymentStats",
         "ArTopOverdueCustomers",
-        "LateChargePreview"
+        "LateChargePreview",
+        "SelectOptions"
       ],
       "endpoints": [],
       "reads": [],
@@ -340,7 +372,9 @@
           "operation": "read"
         }
       ],
-      "operations": [],
+      "operations": [
+        "SelectOptions"
+      ],
       "endpoints": [],
       "reads": [],
       "references": [],
@@ -374,6 +408,7 @@
         "ExportCustomerLedger",
         "InvoiceArContext",
         "LateChargePreview",
+        "SelectOptions",
         "ShipmentInvoices"
       ],
       "endpoints": [
@@ -475,6 +510,7 @@
         "DeskInvoiceCard",
         "InvoiceArContext",
         "LateChargePreview",
+        "SelectOptions",
         "ShipmentInvoices"
       ],
       "endpoints": [
@@ -551,7 +587,8 @@
         "ArOpenItems",
         "ArPaymentStats",
         "ArTopOverdueCustomers",
-        "LateChargePreview"
+        "LateChargePreview",
+        "SelectOptions"
       ],
       "endpoints": [],
       "reads": [],
@@ -618,6 +655,7 @@
         "ReverseCustomerPayment",
         "SaveMyTableLayout",
         "ScheduleTableView",
+        "SelectOptions",
         "StartBulkEdit",
         "UndoMyBulkEdit"
       ],
@@ -673,6 +711,7 @@
         "ResetMyTableLayout",
         "SaveMyTableLayout",
         "ScheduleTableView",
+        "SelectOptions",
         "StartBulkEdit",
         "UndoMyBulkEdit"
       ],
@@ -718,6 +757,7 @@
         "ResetMyTableLayout",
         "SaveMyTableLayout",
         "ScheduleTableView",
+        "SelectOptions",
         "StartBulkEdit",
         "UndoMyBulkEdit"
       ],
@@ -873,6 +913,7 @@
         "ResetMyTableLayout",
         "SaveMyTableLayout",
         "ScheduleTableView",
+        "SelectOptions",
         "StartBulkEdit",
         "UndoMyBulkEdit"
       ],
@@ -986,6 +1027,7 @@
         "ResetMyTableLayout",
         "SaveMyTableLayout",
         "ScheduleTableView",
+        "SelectOptions",
         "StartBulkEdit",
         "UndoMyBulkEdit"
       ],
@@ -1036,6 +1078,7 @@
         "ResetMyTableLayout",
         "SaveMyTableLayout",
         "ScheduleTableView",
+        "SelectOptions",
         "StartBulkEdit",
         "UndoMyBulkEdit"
       ],
@@ -1165,6 +1208,16 @@
           ]
         },
         {
+          "method": "GET",
+          "path": "/accounting/bank-receipts/:param/card/",
+          "requires": [
+            {
+              "resource": "bank_receipt",
+              "operation": "read"
+            }
+          ]
+        },
+        {
           "method": "POST",
           "path": "/accounting/bank-receipts/:param/match/",
           "requires": [
@@ -1213,7 +1266,9 @@
           "operation": "read"
         }
       ],
-      "operations": [],
+      "operations": [
+        "SelectOptions"
+      ],
       "endpoints": [
         {
           "method": "GET",
@@ -1300,6 +1355,16 @@
         {
           "method": "GET",
           "path": "/accounting/bank-receipts/:param/",
+          "requires": [
+            {
+              "resource": "bank_receipt",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/accounting/bank-receipts/:param/card/",
           "requires": [
             {
               "resource": "bank_receipt",
@@ -1415,6 +1480,16 @@
         },
         {
           "method": "GET",
+          "path": "/accounting/bank-receipts/:param/card/",
+          "requires": [
+            {
+              "resource": "bank_receipt",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
           "path": "/accounting/bank-receipts/:param/suggestions/",
           "requires": [
             {
@@ -1447,7 +1522,9 @@
           "operation": "read"
         }
       ],
-      "operations": [],
+      "operations": [
+        "SelectOptions"
+      ],
       "endpoints": [
         {
           "method": "GET",
@@ -1493,7 +1570,9 @@
           "operation": "read"
         }
       ],
-      "operations": [],
+      "operations": [
+        "SelectOptions"
+      ],
       "endpoints": [
         {
           "method": "GET",
@@ -1539,7 +1618,9 @@
           "operation": "read"
         }
       ],
-      "operations": [],
+      "operations": [
+        "SelectOptions"
+      ],
       "endpoints": [
         {
           "method": "GET",
@@ -1619,6 +1700,7 @@
         "RetryAccountingSync",
         "SaveMyTableLayout",
         "ScheduleTableView",
+        "SelectOptions",
         "SkipAccountingSync",
         "StartBulkEdit",
         "UndoMyBulkEdit"
@@ -1686,6 +1768,7 @@
         "ResolveAccountingDrift",
         "SaveMyTableLayout",
         "ScheduleTableView",
+        "SelectOptions",
         "StartBulkEdit",
         "UndoMyBulkEdit"
       ],
@@ -1751,6 +1834,7 @@
         "ResetMyTableLayout",
         "SaveMyTableLayout",
         "ScheduleTableView",
+        "SelectOptions",
         "StartBulkEdit",
         "UndoMyBulkEdit"
       ],
@@ -1896,7 +1980,9 @@
           "operation": "read"
         }
       ],
-      "operations": [],
+      "operations": [
+        "SelectOptions"
+      ],
       "endpoints": [
         {
           "method": "GET",
@@ -2018,6 +2104,13 @@
         }
       ],
       "operations": [
+        "AIAgentRoster",
+        "AIAuditChainStatus",
+        "AIAuditEventDetail",
+        "AIAuditEventTable",
+        "AIAuditExportDownload",
+        "AIAuditExportTable",
+        "AIControlSummary",
         "AICorrectionDetail",
         "AICorrectionTable",
         "AIProviderCards",
@@ -2029,14 +2122,18 @@
         "AIRetrievalReindexEstimate",
         "AIRetrievalStatus",
         "AIRoutePreview",
+        "AITuneUps",
+        "AIUsageDaily",
         "AIUsageFeatures",
         "AIUsageSummary",
         "AddAgentOrganizationProfileGuidance",
         "AddMyAgentProfileGuidance",
+        "AgentActivitySummary",
         "AgentAnalytics",
         "AgentAnalyticsToolFailures",
         "AgentControlSettings",
         "AgentDefinitionCard",
+        "AgentDefinitionCount",
         "AgentDefinitionVersionDraft",
         "AgentDefinitionVersions",
         "AgentDraftingAvailable",
@@ -2046,10 +2143,17 @@
         "AgentEvaluationTable",
         "AgentExceptionTable",
         "AgentInstructionLint",
+        "AgentLearningStats",
+        "AgentMemoryCount",
+        "AgentMemoryTable",
+        "AgentMemoryUpkeep",
+        "AgentMemoryUsage",
         "AgentOrganizationProfile",
         "AgentOrganizationProfileHistory",
         "AgentPlanPreview",
         "AgentPlanTable",
+        "AgentPromotionPreview",
+        "AgentProposalCount",
         "AgentProposalPreview",
         "AgentProposalPreviews",
         "AgentProposalTable",
@@ -2058,6 +2162,7 @@
         "AgentQualityControl",
         "AgentQualityOverview",
         "AgentReflections",
+        "AgentRunCount",
         "AgentRunDetail",
         "AgentRunTable",
         "AgentSafety",
@@ -2072,24 +2177,44 @@
         "AgentToolRuleTable",
         "AgentToolSafetyTable",
         "AgentWorstRatedAnswerTable",
+        "ApplyAITuneUp",
+        "ApproveAgentMemorySuggestion",
         "ApproveAgentOrganizationProfileGuidance",
         "BulkEditFields",
+        "CancelReportRun",
+        "CannedReports",
         "ClearMyAIFeedback",
+        "ConfirmAgentMemory",
         "ConfirmDeskMemory",
         "CreateAgentEvalCase",
+        "CreateAgentMemory",
+        "CreateReportDashboard",
+        "CreateReportDefinition",
+        "CreateReportSchedule",
+        "CreateReportView",
         "DataTableAggregates",
         "DataTableFacets",
         "DataTableInsightFields",
         "DecideAgentPlan",
         "DecideAgentProposal",
+        "DeleteReportDashboard",
+        "DeleteReportDefinition",
+        "DeleteReportSchedule",
+        "DeleteReportView",
         "DeskMemoriesByIds",
         "DeskMemorySettings",
+        "DeskReportRunCard",
+        "DismissAIProviderFailure",
+        "DismissAITuneUp",
+        "DismissAgentMemorySuggestion",
         "DismissAgentOrganizationProfileGuidance",
         "DismissDeskMemory",
         "DraftAgentFromDescription",
+        "DrillThroughReport",
         "ExportTableView",
         "ExtractionAccuracy",
         "ExtractionProviderTrends",
+        "ForkCannedReport",
         "MyAIFeedback",
         "MyAgentProfile",
         "MyBulkEdit",
@@ -2098,23 +2223,41 @@
         "MyTableLayout",
         "PatchAIProvider",
         "PreviewBulkEdit",
+        "PreviewReport",
         "RegenerateAgentOrganizationProfile",
         "RegenerateMyAgentProfile",
         "ReindexAIRetrievalSource",
         "ReorderAIProviders",
         "ReplayAgentEvalCase",
         "ReplayAgentRun",
+        "ReportCatalog",
+        "ReportDashboardById",
+        "ReportDashboards",
+        "ReportDefinitionById",
+        "ReportDefinitionRevisions",
+        "ReportDefinitionsTable",
+        "ReportRunById",
+        "ReportSchedules",
+        "ReportViews",
+        "RequestAIAuditExport",
+        "ResetCannedFork",
         "ResetMyTableLayout",
         "ResolveAgentException",
+        "RestoreAIProviderFailure",
+        "RestoreAITuneUp",
         "RetireAgentOrganizationProfileGuidance",
         "RetireMyAgentProfileGuidance",
+        "ReviewAgentMemory",
         "ReviseDeskMemory",
         "RouteAITask",
         "RunAgentSuite",
+        "RunReport",
         "SaveAgentToolRule",
         "SaveMyTableLayout",
         "ScheduleTableView",
+        "SelectOptions",
         "SetAgentEvalCaseStatus",
+        "SetAgentMemoryStatus",
         "SetDeskMemoryStatus",
         "SetMyAIFeedback",
         "StartBulkEdit",
@@ -2124,7 +2267,14 @@
         "UpdateAIRetrievalSettings",
         "UpdateAgentControl",
         "UpdateAgentEvalCase",
-        "UpdateAgentQualityControl"
+        "UpdateAgentMemory",
+        "UpdateAgentQualityControl",
+        "UpdateReportDashboard",
+        "UpdateReportDefinition",
+        "UpdateReportSchedule",
+        "UpdateReportView",
+        "VerifyAIAuditChain",
+        "WorkingAgentRuns"
       ],
       "endpoints": [
         {
@@ -3062,16 +3212,18 @@
         "agent_control",
         "agent_definition",
         "agent_exception",
+        "agent_memory",
         "agent_proposal",
         "agent_run",
-        "ai_provider"
+        "ai_provider",
+        "report"
       ],
       "references": [
-        "report",
-        "role",
-        "user"
+        "role"
       ],
-      "declared": []
+      "declared": [
+        "user"
+      ]
     },
     {
       "path": "/admin/api-keys",
@@ -3095,6 +3247,7 @@
         "ResetMyTableLayout",
         "SaveMyTableLayout",
         "ScheduleTableView",
+        "SelectOptions",
         "ShipmentPageAnalytics",
         "StartBulkEdit",
         "UndoMyBulkEdit"
@@ -3279,6 +3432,7 @@
         "ResetMyTableLayout",
         "SaveMyTableLayout",
         "ScheduleTableView",
+        "SelectOptions",
         "StartBulkEdit",
         "UndoMyBulkEdit",
         "UpdateAuditAlertPolicy"
@@ -3314,7 +3468,9 @@
           "operation": "read"
         }
       ],
-      "operations": [],
+      "operations": [
+        "SelectOptions"
+      ],
       "endpoints": [
         {
           "method": "GET",
@@ -3430,6 +3586,7 @@
       ],
       "operations": [
         "CarrierSettlementControl",
+        "SelectOptions",
         "UpdateCarrierSettlementControl"
       ],
       "endpoints": [],
@@ -3455,6 +3612,7 @@
         "CustomerTrackingLinks",
         "ResolvedCostProfilePage",
         "SaveCostingControl",
+        "SelectOptions",
         "ShipmentCheckCalls",
         "ShipmentProfitability"
       ],
@@ -3540,6 +3698,7 @@
         "ResetMyTableLayout",
         "SaveMyTableLayout",
         "ScheduleTableView",
+        "SelectOptions",
         "StartBulkEdit",
         "UndoMyBulkEdit"
       ],
@@ -3640,6 +3799,93 @@
       "declared": []
     },
     {
+      "path": "/admin/desk-conversations",
+      "name": "Desk conversations",
+      "requires": [
+        {
+          "resource": "desk_transcript",
+          "operation": "read"
+        }
+      ],
+      "operations": [
+        "BulkEditFields",
+        "CancelReportRun",
+        "CannedReports",
+        "ClearMyAIFeedback",
+        "ConfirmDeskMemory",
+        "CreateReportDashboard",
+        "CreateReportDefinition",
+        "CreateReportSchedule",
+        "CreateReportView",
+        "DataTableAggregates",
+        "DataTableFacets",
+        "DataTableInsightFields",
+        "DeleteReportDashboard",
+        "DeleteReportDefinition",
+        "DeleteReportSchedule",
+        "DeleteReportView",
+        "DeskConversationTable",
+        "DeskMemoriesByIds",
+        "DeskMemorySettings",
+        "DeskReportRunCard",
+        "DeskTranscriptExportDownload",
+        "DeskTranscriptExportPreview",
+        "DeskTranscriptExportTable",
+        "DismissDeskMemory",
+        "DrillThroughReport",
+        "ExportTableView",
+        "ForkCannedReport",
+        "MyAIFeedback",
+        "MyBulkEdit",
+        "MyTableLayout",
+        "OpenDeskConversation",
+        "PreviewBulkEdit",
+        "PreviewReport",
+        "ReportCatalog",
+        "ReportDashboardById",
+        "ReportDashboards",
+        "ReportDefinitionById",
+        "ReportDefinitionRevisions",
+        "ReportDefinitionsTable",
+        "ReportRunById",
+        "ReportSchedules",
+        "ReportViews",
+        "RequestDeskTranscriptExport",
+        "ResetCannedFork",
+        "ResetMyTableLayout",
+        "ReviseDeskMemory",
+        "RunReport",
+        "SaveMyTableLayout",
+        "ScheduleTableView",
+        "SelectOptions",
+        "SetDeskMemoryStatus",
+        "SetMyAIFeedback",
+        "StartBulkEdit",
+        "UndoMyBulkEdit",
+        "UpdateReportDashboard",
+        "UpdateReportDefinition",
+        "UpdateReportSchedule",
+        "UpdateReportView"
+      ],
+      "endpoints": [
+        {
+          "method": "GET",
+          "path": "/tables/",
+          "requires": []
+        },
+        {
+          "method": "POST",
+          "path": "/tables/:param/compose/",
+          "requires": []
+        }
+      ],
+      "reads": [
+        "report"
+      ],
+      "references": [],
+      "declared": []
+    },
+    {
       "path": "/admin/dispatch-controls",
       "name": "Dispatch controls",
       "requires": [
@@ -3659,6 +3905,7 @@
         "DispatchStyle",
         "LiveTenderByMove",
         "ResetDispatchStyle",
+        "SelectOptions",
         "TendersByShipment"
       ],
       "endpoints": [
@@ -3702,7 +3949,9 @@
           "operation": "read"
         }
       ],
-      "operations": [],
+      "operations": [
+        "SelectOptions"
+      ],
       "endpoints": [
         {
           "method": "GET",
@@ -3751,6 +4000,7 @@
         "ResetMyTableLayout",
         "SaveMyTableLayout",
         "ScheduleTableView",
+        "SelectOptions",
         "StartBulkEdit",
         "UndoMyBulkEdit"
       ],
@@ -3808,6 +4058,7 @@
         "ResetMyTableLayout",
         "SaveMyTableLayout",
         "ScheduleTableView",
+        "SelectOptions",
         "StartBulkEdit",
         "UndoMyBulkEdit"
       ],
@@ -3929,6 +4180,7 @@
         "ResetMyTableLayout",
         "SaveMyTableLayout",
         "ScheduleTableView",
+        "SelectOptions",
         "StartBulkEdit",
         "UndoMyBulkEdit"
       ],
@@ -3974,6 +4226,7 @@
         "ResetMyTableLayout",
         "SaveMyTableLayout",
         "ScheduleTableView",
+        "SelectOptions",
         "StartBulkEdit",
         "UndoMyBulkEdit"
       ],
@@ -4010,6 +4263,7 @@
         "CreateHomeLayoutPreset",
         "DeleteHomeLayoutPreset",
         "ResetHomeLayout",
+        "SelectOptions",
         "UpdateHomeLayout",
         "UpdateHomeLayoutPreset"
       ],
@@ -4041,21 +4295,48 @@
         "ArOpenItems",
         "ArPaymentStats",
         "ArTopOverdueCustomers",
+        "CancelReportRun",
+        "CannedReports",
         "CarrierTrackingLink",
         "ClearMyAIFeedback",
         "CreateHomeLayoutPreset",
+        "CreateReportDashboard",
+        "CreateReportDefinition",
+        "CreateReportSchedule",
+        "CreateReportView",
         "CustomerStatusNotifications",
         "CustomerTrackingLinks",
         "DeleteHomeLayoutPreset",
+        "DeleteReportDashboard",
+        "DeleteReportDefinition",
+        "DeleteReportSchedule",
+        "DeleteReportView",
         "DeskLocationCard",
         "DeskLocationDwell",
         "DeskLocationPolicies",
+        "DeskReportRunCard",
+        "DrillThroughReport",
         "ExceptionShipments",
+        "ForkCannedReport",
         "HosCertificationSummary",
         "LateChargePreview",
         "MapShipments",
         "MyAIFeedback",
+        "PreviewReport",
+        "ReportCatalog",
+        "ReportDashboardById",
+        "ReportDashboards",
+        "ReportDefinitionById",
+        "ReportDefinitionOptions",
+        "ReportDefinitionRevisions",
+        "ReportDefinitionsTable",
+        "ReportRunById",
+        "ReportSchedules",
+        "ReportViews",
+        "ResetCannedFork",
         "ResetHomeLayout",
+        "RunReport",
+        "SelectOptions",
         "SetMyAIFeedback",
         "ShipmentCheckCalls",
         "ShipmentDriverFeasibility",
@@ -4067,6 +4348,10 @@
         "UnassignedShipments",
         "UpdateHomeLayout",
         "UpdateHomeLayoutPreset",
+        "UpdateReportDashboard",
+        "UpdateReportDefinition",
+        "UpdateReportSchedule",
+        "UpdateReportView",
         "VehicleInspections",
         "VehiclePositions",
         "WorkerFormSubmissions",
@@ -4254,6 +4539,7 @@
         "detention_policy",
         "formula_template",
         "location",
+        "report",
         "shipment"
       ],
       "references": [
@@ -4295,21 +4581,48 @@
         "ArOpenItems",
         "ArPaymentStats",
         "ArTopOverdueCustomers",
+        "CancelReportRun",
+        "CannedReports",
         "CarrierTrackingLink",
         "ClearMyAIFeedback",
         "CreateHomeLayoutPreset",
+        "CreateReportDashboard",
+        "CreateReportDefinition",
+        "CreateReportSchedule",
+        "CreateReportView",
         "CustomerStatusNotifications",
         "CustomerTrackingLinks",
         "DeleteHomeLayoutPreset",
+        "DeleteReportDashboard",
+        "DeleteReportDefinition",
+        "DeleteReportSchedule",
+        "DeleteReportView",
         "DeskLocationCard",
         "DeskLocationDwell",
         "DeskLocationPolicies",
+        "DeskReportRunCard",
+        "DrillThroughReport",
         "ExceptionShipments",
+        "ForkCannedReport",
         "HosCertificationSummary",
         "LateChargePreview",
         "MapShipments",
         "MyAIFeedback",
+        "PreviewReport",
+        "ReportCatalog",
+        "ReportDashboardById",
+        "ReportDashboards",
+        "ReportDefinitionById",
+        "ReportDefinitionOptions",
+        "ReportDefinitionRevisions",
+        "ReportDefinitionsTable",
+        "ReportRunById",
+        "ReportSchedules",
+        "ReportViews",
+        "ResetCannedFork",
         "ResetHomeLayout",
+        "RunReport",
+        "SelectOptions",
         "SetMyAIFeedback",
         "ShipmentCheckCalls",
         "ShipmentDriverFeasibility",
@@ -4321,6 +4634,10 @@
         "UnassignedShipments",
         "UpdateHomeLayout",
         "UpdateHomeLayoutPreset",
+        "UpdateReportDashboard",
+        "UpdateReportDefinition",
+        "UpdateReportSchedule",
+        "UpdateReportView",
         "VehicleInspections",
         "VehiclePositions",
         "WorkerFormSubmissions",
@@ -4508,6 +4825,7 @@
         "detention_policy",
         "formula_template",
         "location",
+        "report",
         "shipment"
       ],
       "references": [
@@ -4535,10 +4853,46 @@
           "operation": "read"
         }
       ],
-      "operations": [],
+      "operations": [
+        "CreateInboundMailbox",
+        "InboundMailboxes",
+        "InboundMessage",
+        "InboundMessageCounts",
+        "InboundMessages",
+        "InboundReplyAttachables",
+        "InboundSenderProfile",
+        "InboundThread",
+        "MyTriageViews",
+        "RenderTriageReplyTemplate",
+        "RotateInboundMailboxToken",
+        "SelectOptions",
+        "SendInboundMailboxTest",
+        "SetInboundMailboxApiKey",
+        "SetInboundMailboxSigningSecret",
+        "TriageAssignees",
+        "TriageBriefing",
+        "TriageCustomerPeek",
+        "TriageReplyTemplates",
+        "TriageResponseTargets",
+        "TriageRuleMatches",
+        "TriageRulePreview",
+        "TriageRules",
+        "TriageSenderDomains",
+        "TriageSettings",
+        "TriageShipmentPeek",
+        "TriageStopTimes",
+        "UpdateInboundMailbox"
+      ],
       "endpoints": [],
-      "reads": [],
-      "references": [],
+      "reads": [
+        "inbound_mailbox",
+        "inbound_message"
+      ],
+      "references": [
+        "customer",
+        "shipment",
+        "user"
+      ],
       "declared": []
     },
     {
@@ -4946,6 +5300,7 @@
         "ResetMyTableLayout",
         "SaveMyTableLayout",
         "ScheduleTableView",
+        "SelectOptions",
         "StartBulkEdit",
         "UndoMyBulkEdit"
       ],
@@ -5011,6 +5366,7 @@
         "ResetMyTableLayout",
         "SaveMyTableLayout",
         "ScheduleTableView",
+        "SelectOptions",
         "StartBulkEdit",
         "UndoMyBulkEdit"
       ],
@@ -5063,7 +5419,9 @@
           "operation": "read"
         }
       ],
-      "operations": [],
+      "operations": [
+        "SelectOptions"
+      ],
       "endpoints": [],
       "reads": [],
       "references": [],
@@ -5108,6 +5466,7 @@
         "RoleTable",
         "SaveMyTableLayout",
         "ScheduleTableView",
+        "SelectOptions",
         "StartBulkEdit",
         "UndoMyBulkEdit"
       ],
@@ -5524,6 +5883,7 @@
         "SCIMGroupRoleMappingsTable",
         "SaveMyTableLayout",
         "ScheduleTableView",
+        "SelectOptions",
         "StartBulkEdit",
         "UndoMyBulkEdit"
       ],
@@ -5775,6 +6135,7 @@
         "ResetMyTableLayout",
         "SaveMyTableLayout",
         "ScheduleTableView",
+        "SelectOptions",
         "ServiceFailureReasonCodeTable",
         "StartBulkEdit",
         "UndoMyBulkEdit"
@@ -5858,7 +6219,9 @@
           "operation": "read"
         }
       ],
-      "operations": [],
+      "operations": [
+        "SelectOptions"
+      ],
       "endpoints": [
         {
           "method": "GET",
@@ -5906,6 +6269,7 @@
         "ResetMyTableLayout",
         "SaveMyTableLayout",
         "ScheduleTableView",
+        "SelectOptions",
         "StartBulkEdit",
         "StoredMileageTable",
         "UndoMyBulkEdit"
@@ -5986,6 +6350,7 @@
         "ResetMyTableLayout",
         "SaveMyTableLayout",
         "ScheduleTableView",
+        "SelectOptions",
         "StartBulkEdit",
         "TCASubscriptionTable",
         "UndoMyBulkEdit"
@@ -6054,6 +6419,7 @@
         "RoleTable",
         "SaveMyTableLayout",
         "ScheduleTableView",
+        "SelectOptions",
         "StartBulkEdit",
         "UndoMyBulkEdit",
         "UserTable"
@@ -6352,6 +6718,7 @@
         "ResetMyTableLayout",
         "SaveMyTableLayout",
         "ScheduleTableView",
+        "SelectOptions",
         "StartBulkEdit",
         "UndoMyBulkEdit"
       ],
@@ -6484,6 +6851,7 @@
         "ReviseDeskMemory",
         "SaveMyTableLayout",
         "ScheduleTableView",
+        "SelectOptions",
         "SendFactoringNoa",
         "SetDeskMemoryStatus",
         "ShipmentInvoices",
@@ -6652,6 +7020,7 @@
         "ResetMyTableLayout",
         "SaveMyTableLayout",
         "ScheduleTableView",
+        "SelectOptions",
         "StartBulkEdit",
         "UndoMyBulkEdit"
       ],
@@ -6706,6 +7075,7 @@
         "ResetMyTableLayout",
         "SaveMyTableLayout",
         "ScheduleTableView",
+        "SelectOptions",
         "StartBulkEdit",
         "UndoMyBulkEdit",
         "UpdateDocumentType"
@@ -6752,6 +7122,7 @@
         "ResetMyTableLayout",
         "SaveMyTableLayout",
         "ScheduleTableView",
+        "SelectOptions",
         "StartBulkEdit",
         "UndoMyBulkEdit"
       ],
@@ -6845,6 +7216,7 @@
         "SaveFactoringTransport",
         "SaveMyTableLayout",
         "ScheduleTableView",
+        "SelectOptions",
         "SendFactoringNoa",
         "StageFactoringRemittance",
         "StartBulkEdit",
@@ -7023,7 +7395,8 @@
         }
       ],
       "operations": [
-        "CreateFactoringCompany"
+        "CreateFactoringCompany",
+        "SelectOptions"
       ],
       "endpoints": [],
       "reads": [],
@@ -7111,6 +7484,7 @@
         "ResetMyTableLayout",
         "SaveMyTableLayout",
         "ScheduleTableView",
+        "SelectOptions",
         "StartBulkEdit",
         "UndoMyBulkEdit"
       ],
@@ -7155,6 +7529,8 @@
         "AgentProposalPreviews",
         "AvailableCaptureProfiles",
         "CancelCaptureRequest",
+        "CancelReportRun",
+        "CannedReports",
         "CaptureAgentRelease",
         "CaptureBatch",
         "CaptureBatchCount",
@@ -7166,23 +7542,51 @@
         "CommitMyDecisionNow",
         "ConfirmDeskMemory",
         "CreateCaptureRequest",
+        "CreateReportDashboard",
+        "CreateReportDefinition",
+        "CreateReportSchedule",
+        "CreateReportView",
         "DecideMyPlan",
         "DecideMyProposal",
         "DecideMyProposals",
+        "DeleteReportDashboard",
+        "DeleteReportDefinition",
+        "DeleteReportSchedule",
+        "DeleteReportView",
         "DeskMemoriesByIds",
         "DeskMemorySettings",
+        "DeskReportRunCard",
         "DismissDeskMemory",
+        "DrillThroughReport",
+        "ForkCannedReport",
         "FormulaLibrary",
         "FormulaLibraryTable",
         "MyCaptureAccess",
         "MyCaptureDevices",
         "MyPlanPreview",
         "MyProposalPreview",
+        "PreviewReport",
         "RecordMyAgentSuggestion",
+        "ReportCatalog",
+        "ReportDashboardById",
+        "ReportDashboards",
+        "ReportDefinitionById",
+        "ReportDefinitionRevisions",
+        "ReportDefinitionsTable",
+        "ReportRunById",
+        "ReportSchedules",
+        "ReportViews",
+        "ResetCannedFork",
         "ReviseDeskMemory",
+        "RunReport",
+        "SelectOptions",
         "SetDeskMemoryStatus",
         "SettleMyAgentSuggestion",
-        "UndoMyDecision"
+        "UndoMyDecision",
+        "UpdateReportDashboard",
+        "UpdateReportDefinition",
+        "UpdateReportSchedule",
+        "UpdateReportView"
       ],
       "endpoints": [
         {
@@ -7895,7 +8299,8 @@
         "capture_batch",
         "capture_device",
         "capture_profile",
-        "formula_library"
+        "formula_library",
+        "report"
       ],
       "references": [
         "user"
@@ -7917,6 +8322,8 @@
         "AgentProposalPreviews",
         "AvailableCaptureProfiles",
         "CancelCaptureRequest",
+        "CancelReportRun",
+        "CannedReports",
         "CaptureAgentRelease",
         "CaptureBatch",
         "CaptureBatchCount",
@@ -7928,23 +8335,51 @@
         "CommitMyDecisionNow",
         "ConfirmDeskMemory",
         "CreateCaptureRequest",
+        "CreateReportDashboard",
+        "CreateReportDefinition",
+        "CreateReportSchedule",
+        "CreateReportView",
         "DecideMyPlan",
         "DecideMyProposal",
         "DecideMyProposals",
+        "DeleteReportDashboard",
+        "DeleteReportDefinition",
+        "DeleteReportSchedule",
+        "DeleteReportView",
         "DeskMemoriesByIds",
         "DeskMemorySettings",
+        "DeskReportRunCard",
         "DismissDeskMemory",
+        "DrillThroughReport",
+        "ForkCannedReport",
         "FormulaLibrary",
         "FormulaLibraryTable",
         "MyCaptureAccess",
         "MyCaptureDevices",
         "MyPlanPreview",
         "MyProposalPreview",
+        "PreviewReport",
         "RecordMyAgentSuggestion",
+        "ReportCatalog",
+        "ReportDashboardById",
+        "ReportDashboards",
+        "ReportDefinitionById",
+        "ReportDefinitionRevisions",
+        "ReportDefinitionsTable",
+        "ReportRunById",
+        "ReportSchedules",
+        "ReportViews",
+        "ResetCannedFork",
         "ReviseDeskMemory",
+        "RunReport",
+        "SelectOptions",
         "SetDeskMemoryStatus",
         "SettleMyAgentSuggestion",
-        "UndoMyDecision"
+        "UndoMyDecision",
+        "UpdateReportDashboard",
+        "UpdateReportDefinition",
+        "UpdateReportSchedule",
+        "UpdateReportView"
       ],
       "endpoints": [
         {
@@ -8657,7 +9092,8 @@
         "capture_batch",
         "capture_device",
         "capture_profile",
-        "formula_library"
+        "formula_library",
+        "report"
       ],
       "references": [
         "user"
@@ -8686,6 +9122,7 @@
         "ResetMyTableLayout",
         "SaveMyTableLayout",
         "ScheduleTableView",
+        "SelectOptions",
         "StartBulkEdit",
         "UndoMyBulkEdit"
       ],
@@ -8729,6 +9166,8 @@
         "AgentProposalPreviews",
         "AvailableCaptureProfiles",
         "CancelCaptureRequest",
+        "CancelReportRun",
+        "CannedReports",
         "CaptureAgentRelease",
         "CaptureBatch",
         "CaptureBatchCount",
@@ -8740,22 +9179,50 @@
         "CommitMyDecisionNow",
         "ConfirmDeskMemory",
         "CreateCaptureRequest",
+        "CreateReportDashboard",
+        "CreateReportDefinition",
+        "CreateReportSchedule",
+        "CreateReportView",
         "DecideMyPlan",
         "DecideMyProposal",
         "DecideMyProposals",
+        "DeleteReportDashboard",
+        "DeleteReportDefinition",
+        "DeleteReportSchedule",
+        "DeleteReportView",
         "DeskMemoriesByIds",
         "DeskMemorySettings",
+        "DeskReportRunCard",
         "DismissDeskMemory",
+        "DrillThroughReport",
+        "ForkCannedReport",
         "FormulaTemplateTables",
         "MyCaptureAccess",
         "MyCaptureDevices",
         "MyPlanPreview",
         "MyProposalPreview",
+        "PreviewReport",
         "RecordMyAgentSuggestion",
+        "ReportCatalog",
+        "ReportDashboardById",
+        "ReportDashboards",
+        "ReportDefinitionById",
+        "ReportDefinitionRevisions",
+        "ReportDefinitionsTable",
+        "ReportRunById",
+        "ReportSchedules",
+        "ReportViews",
+        "ResetCannedFork",
         "ReviseDeskMemory",
+        "RunReport",
+        "SelectOptions",
         "SetDeskMemoryStatus",
         "SettleMyAgentSuggestion",
-        "UndoMyDecision"
+        "UndoMyDecision",
+        "UpdateReportDashboard",
+        "UpdateReportDefinition",
+        "UpdateReportSchedule",
+        "UpdateReportView"
       ],
       "endpoints": [
         {
@@ -9468,7 +9935,8 @@
         "capture_batch",
         "capture_device",
         "capture_profile",
-        "formula_template"
+        "formula_template",
+        "report"
       ],
       "references": [
         "user"
@@ -9490,6 +9958,8 @@
         "AgentProposalPreviews",
         "AvailableCaptureProfiles",
         "CancelCaptureRequest",
+        "CancelReportRun",
+        "CannedReports",
         "CaptureAgentRelease",
         "CaptureBatch",
         "CaptureBatchCount",
@@ -9501,22 +9971,50 @@
         "CommitMyDecisionNow",
         "ConfirmDeskMemory",
         "CreateCaptureRequest",
+        "CreateReportDashboard",
+        "CreateReportDefinition",
+        "CreateReportSchedule",
+        "CreateReportView",
         "DecideMyPlan",
         "DecideMyProposal",
         "DecideMyProposals",
+        "DeleteReportDashboard",
+        "DeleteReportDefinition",
+        "DeleteReportSchedule",
+        "DeleteReportView",
         "DeskMemoriesByIds",
         "DeskMemorySettings",
+        "DeskReportRunCard",
         "DismissDeskMemory",
+        "DrillThroughReport",
+        "ForkCannedReport",
         "FormulaTemplateTables",
         "MyCaptureAccess",
         "MyCaptureDevices",
         "MyPlanPreview",
         "MyProposalPreview",
+        "PreviewReport",
         "RecordMyAgentSuggestion",
+        "ReportCatalog",
+        "ReportDashboardById",
+        "ReportDashboards",
+        "ReportDefinitionById",
+        "ReportDefinitionRevisions",
+        "ReportDefinitionsTable",
+        "ReportRunById",
+        "ReportSchedules",
+        "ReportViews",
+        "ResetCannedFork",
         "ReviseDeskMemory",
+        "RunReport",
+        "SelectOptions",
         "SetDeskMemoryStatus",
         "SettleMyAgentSuggestion",
-        "UndoMyDecision"
+        "UndoMyDecision",
+        "UpdateReportDashboard",
+        "UpdateReportDefinition",
+        "UpdateReportSchedule",
+        "UpdateReportView"
       ],
       "endpoints": [
         {
@@ -10229,7 +10727,8 @@
         "capture_batch",
         "capture_device",
         "capture_profile",
-        "formula_template"
+        "formula_template",
+        "report"
       ],
       "references": [
         "user"
@@ -10262,6 +10761,7 @@
         "ResetMyTableLayout",
         "SaveMyTableLayout",
         "ScheduleTableView",
+        "SelectOptions",
         "StartBulkEdit",
         "UndoMyBulkEdit"
       ],
@@ -10437,6 +10937,7 @@
         "ResetMyTableLayout",
         "SaveMyTableLayout",
         "ScheduleTableView",
+        "SelectOptions",
         "StartBulkEdit",
         "UndoMyBulkEdit"
       ],
@@ -10514,6 +11015,7 @@
         "ResetMyTableLayout",
         "SaveMyTableLayout",
         "ScheduleTableView",
+        "SelectOptions",
         "StageFactoringRemittance",
         "StartBulkEdit",
         "SubmitInvoicesToFactor",
@@ -10662,6 +11164,7 @@
         "FactoringTransport",
         "InvoiceFactoring",
         "RematchFactoringRemittance",
+        "SelectOptions",
         "StageFactoringRemittance",
         "UpdateFactoringRemittanceLine"
       ],
@@ -11111,6 +11614,7 @@
         "ResetMyTableLayout",
         "SaveMyTableLayout",
         "ScheduleTableView",
+        "SelectOptions",
         "ShipmentInvoices",
         "StartBulkEdit",
         "UndoMyBulkEdit",
@@ -11267,6 +11771,7 @@
         "RecordShares",
         "RequestMissingFactoringDocuments",
         "ResolveInvoiceDispute",
+        "SelectOptions",
         "SendInvoiceEdi",
         "SetInvoiceFactoringOverride",
         "ShareRecord",
@@ -12180,6 +12685,7 @@
         "DeskRecordActivity",
         "MyActiveBillingTransferRun",
         "RetryBillingTransferRun",
+        "SelectOptions",
         "ShipmentCheckCalls",
         "ShipmentDetail",
         "ShipmentProfitability",
@@ -12823,6 +13329,7 @@
         "ResetMyTableLayout",
         "SaveMyTableLayout",
         "ScheduleTableView",
+        "SelectOptions",
         "StartBulkEdit",
         "UndoMyBulkEdit"
       ],
@@ -13180,6 +13687,7 @@
         "ResetMyTableLayout",
         "SaveMyTableLayout",
         "ScheduleTableView",
+        "SelectOptions",
         "StartBulkEdit",
         "UndoMyBulkEdit"
       ],
@@ -13226,6 +13734,7 @@
         "ResetMyTableLayout",
         "SaveMyTableLayout",
         "ScheduleTableView",
+        "SelectOptions",
         "StartBulkEdit",
         "UndoMyBulkEdit"
       ],
@@ -13266,6 +13775,7 @@
         "EdiCarrierInvoices",
         "LinkEdiCarrierInvoiceToCarrier",
         "RejectCarrierInvoiceMatch",
+        "SelectOptions",
         "SuggestCarrierForEdiInvoice"
       ],
       "endpoints": [],
@@ -13323,6 +13833,7 @@
         "ResetMyTableLayout",
         "SaveMyTableLayout",
         "ScheduleTableView",
+        "SelectOptions",
         "StartBulkEdit",
         "SubmitCarrierSettlement",
         "UndoMyBulkEdit",
@@ -13951,6 +14462,10 @@
         }
       ],
       "operations": [
+        "AIAgentRoster",
+        "AIControlSummary",
+        "AITuneUps",
+        "AIUsageDaily",
         "AccountingBackfills",
         "AccountingBriefing",
         "AccountingDriftFinding",
@@ -13968,7 +14483,11 @@
         "AccountingSyncSummary",
         "AddCarrierSettlementAdjustment",
         "AddDriverSettlementAdjustment",
+        "AgentActivitySummary",
+        "AgentMemoryCount",
+        "AgentMemoryTable",
         "AgentPlanPreview",
+        "AgentPromotionPreview",
         "AgentProposalPreview",
         "AgentProposalPreviews",
         "ApproveCarrierSettlement",
@@ -13993,6 +14512,8 @@
         "BillingQueueRateAgreement",
         "BillingQueueShipment",
         "CancelCaptureRequest",
+        "CancelReportRun",
+        "CannedReports",
         "CaptureAgentRelease",
         "CaptureBatch",
         "CaptureBatchCount",
@@ -14007,12 +14528,23 @@
         "CommitMyDecisionNow",
         "ConfirmDeskMemory",
         "CreateCaptureRequest",
+        "CreateReportDashboard",
+        "CreateReportDefinition",
+        "CreateReportSchedule",
+        "CreateReportView",
         "CustomerStatusNotifications",
         "CustomerTrackingLinks",
         "CustomerTrackingProfile",
         "DecideMyPlan",
         "DecideMyProposal",
         "DecideMyProposals",
+        "DeleteReportDashboard",
+        "DeleteReportDefinition",
+        "DeleteReportSchedule",
+        "DeleteReportView",
+        "DeskActivity",
+        "DeskActivityEntry",
+        "DeskAttention",
         "DeskBoardCard",
         "DeskCarrierCard",
         "DeskCarrierEligibility",
@@ -14027,6 +14559,7 @@
         "DeskEdiPartnerMessages",
         "DeskFuelCardCard",
         "DeskFuelPurchaseCard",
+        "DeskIftaReturnCard",
         "DeskInvoiceCard",
         "DeskJournalEntryCard",
         "DeskLocationCard",
@@ -14040,6 +14573,7 @@
         "DeskRecordActivity",
         "DeskRecordFailures",
         "DeskRecordShipments",
+        "DeskReportRunCard",
         "DeskServiceFailureCard",
         "DeskTractorCard",
         "DeskTractorInspections",
@@ -14052,11 +14586,21 @@
         "DetachPayEventFromSettlement",
         "DetentionIntelligence",
         "DismissDeskMemory",
+        "DrillThroughReport",
         "DriverSettlementDetail",
         "EdiPartnerScorecards",
         "EdiSummary",
         "EdiVolumeSeries",
         "ExportCarrierSettlementBatchCsv",
+        "ForkCannedReport",
+        "HoldDriverSettlement",
+        "InboundMailboxes",
+        "InboundMessage",
+        "InboundMessageCounts",
+        "InboundMessages",
+        "InboundReplyAttachables",
+        "InboundSenderProfile",
+        "InboundThread",
         "InviteWorkerToPortal",
         "InvoiceArContext",
         "JournalEntriesBySource",
@@ -14071,10 +14615,12 @@
         "MyCaptureDevices",
         "MyPlanPreview",
         "MyProposalPreview",
+        "MyTriageViews",
         "PendingDecisionSummary",
         "PostCarrierSettlement",
         "PostDriverSettlement",
         "PostJournalEntries",
+        "PreviewReport",
         "RecalculateCarrierSettlement",
         "RecalculateDriverSettlement",
         "RecordMyAgentSuggestion",
@@ -14082,10 +14628,24 @@
         "RecordShares",
         "RejectCarrierSettlement",
         "RejectDriverSettlement",
+        "ReleaseDriverSettlementHold",
         "RemoveCarrierSettlementAdjustment",
         "RemoveDriverSettlementAdjustment",
+        "RenderTriageReplyTemplate",
+        "ReportCatalog",
+        "ReportDashboardById",
+        "ReportDashboards",
+        "ReportDefinitionById",
+        "ReportDefinitionRevisions",
+        "ReportDefinitionsTable",
+        "ReportRunById",
+        "ReportSchedules",
+        "ReportViews",
+        "ResetCannedFork",
         "ResolveFuelPurchaseImportRows",
         "ReviseDeskMemory",
+        "RunReport",
+        "SelectOptions",
         "SendInvoiceEdi",
         "SetDeskMemoryStatus",
         "SettleMyAgentSuggestion",
@@ -14097,19 +14657,81 @@
         "SubmitCarrierSettlement",
         "SubmitDriverSettlement",
         "TodaysBriefing",
+        "TriageAssignees",
+        "TriageBriefing",
+        "TriageCustomerPeek",
+        "TriageReplyTemplates",
+        "TriageResponseTargets",
+        "TriageRuleMatches",
+        "TriageRulePreview",
+        "TriageRules",
+        "TriageSenderDomains",
+        "TriageSettings",
+        "TriageShipmentPeek",
+        "TriageStopTimes",
         "UndoMyDecision",
         "UnshareRecord",
         "UpcomingWorkerPto",
+        "UpdateReportDashboard",
+        "UpdateReportDefinition",
+        "UpdateReportSchedule",
+        "UpdateReportView",
         "VoidCarrierSettlement",
         "VoidDriverSettlement",
         "VoidInvoice",
+        "WatchtowerCleared",
+        "WatchtowerCounts",
+        "WatchtowerFeed",
+        "WatchtowerHandOffAgents",
+        "WatchtowerItemDetail",
+        "WatchtowerPlay",
         "WorkerCredentialTypeChoices",
         "WorkerOverview",
         "WorkerPtoChartData",
-        "WorkerPtoTable",
-        "WorkerRecord"
+        "WorkerRecord",
+        "WorkingAgentRuns"
       ],
       "endpoints": [
+        {
+          "method": "GET",
+          "path": "/accounting/bank-receipts/:param/",
+          "requires": [
+            {
+              "resource": "bank_receipt",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/accounting/bank-receipts/:param/card/",
+          "requires": [
+            {
+              "resource": "bank_receipt",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/accounting/bank-receipts/:param/suggestions/",
+          "requires": [
+            {
+              "resource": "bank_receipt",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/accounting/bank-receipts/summary/",
+          "requires": [
+            {
+              "resource": "bank_receipt",
+              "operation": "read"
+            }
+          ]
+        },
         {
           "method": "POST",
           "path": "/accounting/journal-reversals/",
@@ -15584,6 +16206,9 @@
         "accounting_integration",
         "accounting_reconciliation",
         "accounting_sync",
+        "agent_definition",
+        "agent_memory",
+        "agent_run",
         "briefing",
         "capture_batch",
         "capture_device",
@@ -15599,6 +16224,9 @@
         "formula_template",
         "fuel_card",
         "fuel_purchase",
+        "ifta_return",
+        "inbound_mailbox",
+        "inbound_message",
         "invoice",
         "journal_entry",
         "journal_reversal",
@@ -15608,6 +16236,7 @@
         "rate_agreement",
         "rate_quote",
         "record_share",
+        "report",
         "service_failure",
         "shipment",
         "tractor",
@@ -15629,6 +16258,7 @@
       ],
       "declared": [
         "accounts_receivable",
+        "agent_definition",
         "carrier",
         "customer_payment",
         "edi",
@@ -15687,10 +16317,16 @@
           "operation": "read"
         }
       ],
-      "operations": [],
+      "operations": [
+        "DeskActivity",
+        "DeskActivityEntry"
+      ],
       "endpoints": [],
       "reads": [],
-      "references": [],
+      "references": [
+        "agent_definition",
+        "user"
+      ],
       "declared": []
     },
     {
@@ -15746,15 +16382,28 @@
         "DecideAgentPlan",
         "DecideAgentProposal",
         "DecideAgentProposals",
+        "DeskActivity",
+        "DeskActivityEntry",
+        "DeskAttention",
+        "HandOffWatchtowerItem",
         "InviteWorkerToPortal",
+        "MarkWatchtowerItemSeen",
         "MyPlanPreview",
         "MyProposalPreview",
         "PendingDecisionSummary",
         "PendingDecisions",
         "PlanSteps",
         "RecentDecisions",
+        "ResolveWatchtowerItem",
         "ShipmentCheckCalls",
-        "ShipmentProfitability"
+        "ShipmentProfitability",
+        "SnoozeWatchtowerItem",
+        "WatchtowerCleared",
+        "WatchtowerCounts",
+        "WatchtowerFeed",
+        "WatchtowerHandOffAgents",
+        "WatchtowerItemDetail",
+        "WatchtowerPlay"
       ],
       "endpoints": [
         {
@@ -15819,13 +16468,16 @@
         }
       ],
       "reads": [
+        "agent_definition",
         "agent_proposal"
       ],
       "references": [
-        "agent_definition",
-        "agent_run"
+        "agent_run",
+        "user"
       ],
-      "declared": []
+      "declared": [
+        "agent_definition"
+      ]
     },
     {
       "path": "/desk/r/$kind/$id",
@@ -15837,6 +16489,11 @@
         }
       ],
       "operations": [
+        "AIAgentRoster",
+        "AIControlSummary",
+        "AITuneUps",
+        "AIUsageDaily",
+        "AcceptDeskCaseRisk",
         "AccountingBackfills",
         "AccountingBriefing",
         "AccountingDriftFinding",
@@ -15854,7 +16511,11 @@
         "AccountingSyncSummary",
         "AddCarrierSettlementAdjustment",
         "AddDriverSettlementAdjustment",
+        "AgentActivitySummary",
+        "AgentMemoryCount",
+        "AgentMemoryTable",
         "AgentPlanPreview",
+        "AgentPromotionPreview",
         "AgentProposalPreview",
         "AgentProposalPreviews",
         "ApproveCarrierSettlement",
@@ -15873,12 +16534,16 @@
         "ArPaymentStats",
         "ArTopOverdueCustomers",
         "AssignBillingQueueBiller",
+        "AssignDeskCase",
         "AssignFuelCard",
         "AvailableCaptureProfiles",
         "BillingQueueFormulaTemplate",
         "BillingQueueRateAgreement",
         "BillingQueueShipment",
+        "BringBackDeskCase",
         "CancelCaptureRequest",
+        "CancelReportRun",
+        "CannedReports",
         "CaptureAgentRelease",
         "CaptureBatch",
         "CaptureBatchCount",
@@ -15890,9 +16555,15 @@
         "CarrierInvoiceMatches",
         "CarrierSettlementDetail",
         "CarrierTrackingLink",
+        "ChooseDeskCaseOption",
+        "CommitAgentDecisionNow",
         "CommitMyDecisionNow",
         "ConfirmDeskMemory",
         "CreateCaptureRequest",
+        "CreateReportDashboard",
+        "CreateReportDefinition",
+        "CreateReportSchedule",
+        "CreateReportView",
         "CustomerStatusNotifications",
         "CustomerTrackingLinks",
         "CustomerTrackingProfile",
@@ -15901,12 +16572,20 @@
         "DecideMyPlan",
         "DecideMyProposal",
         "DecideMyProposals",
+        "DeleteReportDashboard",
+        "DeleteReportDefinition",
+        "DeleteReportSchedule",
+        "DeleteReportView",
+        "DeskActivity",
+        "DeskActivityEntry",
+        "DeskAttention",
         "DeskBoardCard",
         "DeskCarrierCard",
         "DeskCarrierEligibility",
         "DeskCarrierIntel",
         "DeskCarrierSettlementCard",
         "DeskCarrierSettlements",
+        "DeskCase",
         "DeskCustomerCard",
         "DeskCustomerRateAgreements",
         "DeskDetentionCard",
@@ -15915,6 +16594,7 @@
         "DeskEdiPartnerMessages",
         "DeskFuelCardCard",
         "DeskFuelPurchaseCard",
+        "DeskIftaReturnCard",
         "DeskInvoiceCard",
         "DeskJournalEntryCard",
         "DeskLocationCard",
@@ -15928,6 +16608,7 @@
         "DeskRecordActivity",
         "DeskRecordFailures",
         "DeskRecordShipments",
+        "DeskReportRunCard",
         "DeskServiceFailureCard",
         "DeskTractorCard",
         "DeskTractorInspections",
@@ -15940,11 +16621,22 @@
         "DetachPayEventFromSettlement",
         "DetentionIntelligence",
         "DismissDeskMemory",
+        "DrillThroughReport",
         "DriverSettlementDetail",
         "EdiPartnerScorecards",
         "EdiSummary",
         "EdiVolumeSeries",
         "ExportCarrierSettlementBatchCsv",
+        "ForkCannedReport",
+        "HandOffWatchtowerItem",
+        "HoldDriverSettlement",
+        "InboundMailboxes",
+        "InboundMessage",
+        "InboundMessageCounts",
+        "InboundMessages",
+        "InboundReplyAttachables",
+        "InboundSenderProfile",
+        "InboundThread",
         "InviteWorkerToPortal",
         "InvoiceArContext",
         "JournalEntriesBySource",
@@ -15959,10 +16651,13 @@
         "MyCaptureDevices",
         "MyPlanPreview",
         "MyProposalPreview",
+        "MyTriageViews",
         "PlanSteps",
         "PostCarrierSettlement",
         "PostDriverSettlement",
         "PostJournalEntries",
+        "PreviewReport",
+        "PutAwayDeskCase",
         "RecalculateCarrierSettlement",
         "RecalculateDriverSettlement",
         "RecordMyAgentSuggestion",
@@ -15970,11 +16665,28 @@
         "RecordShares",
         "RejectCarrierSettlement",
         "RejectDriverSettlement",
+        "ReleaseDeskCase",
+        "ReleaseDriverSettlementHold",
         "RemoveCarrierSettlementAdjustment",
         "RemoveDriverSettlementAdjustment",
+        "RenderTriageReplyTemplate",
+        "ReportCatalog",
+        "ReportDashboardById",
+        "ReportDashboards",
+        "ReportDefinitionById",
+        "ReportDefinitionRevisions",
+        "ReportDefinitionsTable",
+        "ReportRunById",
+        "ReportSchedules",
+        "ReportViews",
+        "ResetCannedFork",
         "ResolveFuelPurchaseImportRows",
         "ReviseDeskMemory",
+        "RewordWatchtowerPlay",
+        "RunReport",
+        "SelectOptions",
         "SendInvoiceEdi",
+        "SendWatchtowerPlay",
         "SetDeskMemoryStatus",
         "SettleMyAgentSuggestion",
         "ShareRecord",
@@ -15985,19 +16697,82 @@
         "SubmitCarrierSettlement",
         "SubmitDriverSettlement",
         "TodaysBriefing",
+        "TriageAssignees",
+        "TriageBriefing",
+        "TriageCustomerPeek",
+        "TriageReplyTemplates",
+        "TriageResponseTargets",
+        "TriageRuleMatches",
+        "TriageRulePreview",
+        "TriageRules",
+        "TriageSenderDomains",
+        "TriageSettings",
+        "TriageShipmentPeek",
+        "TriageStopTimes",
+        "UndoAgentDecision",
         "UndoMyDecision",
         "UnshareRecord",
         "UpcomingWorkerPto",
+        "UpdateReportDashboard",
+        "UpdateReportDefinition",
+        "UpdateReportSchedule",
+        "UpdateReportView",
         "VoidCarrierSettlement",
         "VoidDriverSettlement",
         "VoidInvoice",
+        "WatchtowerCleared",
+        "WatchtowerCounts",
+        "WatchtowerFeed",
+        "WatchtowerHandOffAgents",
+        "WatchtowerItemDetail",
+        "WatchtowerPlay",
         "WorkerCredentialTypeChoices",
         "WorkerOverview",
         "WorkerPtoChartData",
-        "WorkerPtoTable",
-        "WorkerRecord"
+        "WorkerRecord",
+        "WorkingAgentRuns"
       ],
       "endpoints": [
+        {
+          "method": "GET",
+          "path": "/accounting/bank-receipts/:param/",
+          "requires": [
+            {
+              "resource": "bank_receipt",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/accounting/bank-receipts/:param/card/",
+          "requires": [
+            {
+              "resource": "bank_receipt",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/accounting/bank-receipts/:param/suggestions/",
+          "requires": [
+            {
+              "resource": "bank_receipt",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/accounting/bank-receipts/summary/",
+          "requires": [
+            {
+              "resource": "bank_receipt",
+              "operation": "read"
+            }
+          ]
+        },
         {
           "method": "POST",
           "path": "/accounting/journal-reversals/",
@@ -17537,7 +18312,10 @@
         "accounting_integration",
         "accounting_reconciliation",
         "accounting_sync",
+        "agent_definition",
+        "agent_memory",
         "agent_proposal",
+        "agent_run",
         "briefing",
         "capture_batch",
         "capture_device",
@@ -17553,6 +18331,9 @@
         "formula_template",
         "fuel_card",
         "fuel_purchase",
+        "ifta_return",
+        "inbound_mailbox",
+        "inbound_message",
         "invoice",
         "journal_entry",
         "journal_reversal",
@@ -17562,6 +18343,7 @@
         "rate_agreement",
         "rate_quote",
         "record_share",
+        "report",
         "service_failure",
         "shipment",
         "tractor",
@@ -17573,8 +18355,6 @@
         "worker_pto"
       ],
       "references": [
-        "agent_definition",
-        "agent_run",
         "commodity",
         "document_type",
         "equipment_manufacturer",
@@ -17585,6 +18365,7 @@
       ],
       "declared": [
         "accounts_receivable",
+        "agent_definition",
         "carrier",
         "customer_payment",
         "edi",
@@ -17651,6 +18432,10 @@
         }
       ],
       "operations": [
+        "AIAgentRoster",
+        "AIControlSummary",
+        "AITuneUps",
+        "AIUsageDaily",
         "AccountingBackfills",
         "AccountingBriefing",
         "AccountingDriftFinding",
@@ -17668,7 +18453,11 @@
         "AccountingSyncSummary",
         "AddCarrierSettlementAdjustment",
         "AddDriverSettlementAdjustment",
+        "AgentActivitySummary",
+        "AgentMemoryCount",
+        "AgentMemoryTable",
         "AgentPlanPreview",
+        "AgentPromotionPreview",
         "AgentProposalPreview",
         "AgentProposalPreviews",
         "ApproveCarrierSettlement",
@@ -17693,6 +18482,8 @@
         "BillingQueueRateAgreement",
         "BillingQueueShipment",
         "CancelCaptureRequest",
+        "CancelReportRun",
+        "CannedReports",
         "CaptureAgentRelease",
         "CaptureBatch",
         "CaptureBatchCount",
@@ -17707,12 +18498,21 @@
         "CommitMyDecisionNow",
         "ConfirmDeskMemory",
         "CreateCaptureRequest",
+        "CreateReportDashboard",
+        "CreateReportDefinition",
+        "CreateReportSchedule",
+        "CreateReportView",
         "CustomerStatusNotifications",
         "CustomerTrackingLinks",
         "CustomerTrackingProfile",
         "DecideMyPlan",
         "DecideMyProposal",
         "DecideMyProposals",
+        "DeleteReportDashboard",
+        "DeleteReportDefinition",
+        "DeleteReportSchedule",
+        "DeleteReportView",
+        "DeskAttention",
         "DeskBoardCard",
         "DeskCarrierCard",
         "DeskCarrierEligibility",
@@ -17727,6 +18527,7 @@
         "DeskEdiPartnerMessages",
         "DeskFuelCardCard",
         "DeskFuelPurchaseCard",
+        "DeskIftaReturnCard",
         "DeskInvoiceCard",
         "DeskJournalEntryCard",
         "DeskLocationCard",
@@ -17740,6 +18541,7 @@
         "DeskRecordActivity",
         "DeskRecordFailures",
         "DeskRecordShipments",
+        "DeskReportRunCard",
         "DeskServiceFailureCard",
         "DeskTractorCard",
         "DeskTractorInspections",
@@ -17752,11 +18554,21 @@
         "DetachPayEventFromSettlement",
         "DetentionIntelligence",
         "DismissDeskMemory",
+        "DrillThroughReport",
         "DriverSettlementDetail",
         "EdiPartnerScorecards",
         "EdiSummary",
         "EdiVolumeSeries",
         "ExportCarrierSettlementBatchCsv",
+        "ForkCannedReport",
+        "HoldDriverSettlement",
+        "InboundMailboxes",
+        "InboundMessage",
+        "InboundMessageCounts",
+        "InboundMessages",
+        "InboundReplyAttachables",
+        "InboundSenderProfile",
+        "InboundThread",
         "InviteWorkerToPortal",
         "InvoiceArContext",
         "JournalEntriesBySource",
@@ -17771,9 +18583,11 @@
         "MyCaptureDevices",
         "MyPlanPreview",
         "MyProposalPreview",
+        "MyTriageViews",
         "PostCarrierSettlement",
         "PostDriverSettlement",
         "PostJournalEntries",
+        "PreviewReport",
         "RecalculateCarrierSettlement",
         "RecalculateDriverSettlement",
         "RecordMyAgentSuggestion",
@@ -17781,10 +18595,24 @@
         "RecordShares",
         "RejectCarrierSettlement",
         "RejectDriverSettlement",
+        "ReleaseDriverSettlementHold",
         "RemoveCarrierSettlementAdjustment",
         "RemoveDriverSettlementAdjustment",
+        "RenderTriageReplyTemplate",
+        "ReportCatalog",
+        "ReportDashboardById",
+        "ReportDashboards",
+        "ReportDefinitionById",
+        "ReportDefinitionRevisions",
+        "ReportDefinitionsTable",
+        "ReportRunById",
+        "ReportSchedules",
+        "ReportViews",
+        "ResetCannedFork",
         "ResolveFuelPurchaseImportRows",
         "ReviseDeskMemory",
+        "RunReport",
+        "SelectOptions",
         "SendInvoiceEdi",
         "SetDeskMemoryStatus",
         "SettleMyAgentSuggestion",
@@ -17796,19 +18624,81 @@
         "SubmitCarrierSettlement",
         "SubmitDriverSettlement",
         "TodaysBriefing",
+        "TriageAssignees",
+        "TriageBriefing",
+        "TriageCustomerPeek",
+        "TriageReplyTemplates",
+        "TriageResponseTargets",
+        "TriageRuleMatches",
+        "TriageRulePreview",
+        "TriageRules",
+        "TriageSenderDomains",
+        "TriageSettings",
+        "TriageShipmentPeek",
+        "TriageStopTimes",
         "UndoMyDecision",
         "UnshareRecord",
         "UpcomingWorkerPto",
+        "UpdateReportDashboard",
+        "UpdateReportDefinition",
+        "UpdateReportSchedule",
+        "UpdateReportView",
         "VoidCarrierSettlement",
         "VoidDriverSettlement",
         "VoidInvoice",
+        "WatchtowerCleared",
+        "WatchtowerCounts",
+        "WatchtowerFeed",
+        "WatchtowerHandOffAgents",
+        "WatchtowerItemDetail",
+        "WatchtowerPlay",
         "WorkerCredentialTypeChoices",
         "WorkerOverview",
         "WorkerPtoChartData",
-        "WorkerPtoTable",
-        "WorkerRecord"
+        "WorkerRecord",
+        "WorkingAgentRuns"
       ],
       "endpoints": [
+        {
+          "method": "GET",
+          "path": "/accounting/bank-receipts/:param/",
+          "requires": [
+            {
+              "resource": "bank_receipt",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/accounting/bank-receipts/:param/card/",
+          "requires": [
+            {
+              "resource": "bank_receipt",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/accounting/bank-receipts/:param/suggestions/",
+          "requires": [
+            {
+              "resource": "bank_receipt",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/accounting/bank-receipts/summary/",
+          "requires": [
+            {
+              "resource": "bank_receipt",
+              "operation": "read"
+            }
+          ]
+        },
         {
           "method": "POST",
           "path": "/accounting/journal-reversals/",
@@ -19283,6 +20173,9 @@
         "accounting_integration",
         "accounting_reconciliation",
         "accounting_sync",
+        "agent_definition",
+        "agent_memory",
+        "agent_run",
         "briefing",
         "capture_batch",
         "capture_device",
@@ -19298,6 +20191,9 @@
         "formula_template",
         "fuel_card",
         "fuel_purchase",
+        "ifta_return",
+        "inbound_mailbox",
+        "inbound_message",
         "invoice",
         "journal_entry",
         "journal_reversal",
@@ -19307,6 +20203,7 @@
         "rate_agreement",
         "rate_quote",
         "record_share",
+        "report",
         "service_failure",
         "shipment",
         "tractor",
@@ -19328,6 +20225,7 @@
       ],
       "declared": [
         "accounts_receivable",
+        "agent_definition",
         "carrier",
         "customer_payment",
         "edi",
@@ -19360,8 +20258,12 @@
         "AgentPlanPreview",
         "AgentProposalPreview",
         "AgentProposalPreviews",
+        "AssignInboundMessages",
         "AvailableCaptureProfiles",
+        "BlockInboundSender",
         "CancelCaptureRequest",
+        "CancelReportRun",
+        "CannedReports",
         "CaptureAgentRelease",
         "CaptureBatch",
         "CaptureBatchCount",
@@ -19372,13 +20274,37 @@
         "CaptureRequestsForTarget",
         "CommitMyDecisionNow",
         "ConfirmDeskMemory",
+        "CorrectInboundClassification",
         "CreateCaptureRequest",
+        "CreateInboundLoad",
+        "CreateInboundMailbox",
+        "CreateMyTriageView",
+        "CreateReportDashboard",
+        "CreateReportDefinition",
+        "CreateReportSchedule",
+        "CreateReportView",
+        "CreateTriageReplyTemplate",
+        "CreateTriageRule",
+        "DecideInboundStops",
         "DecideMyPlan",
         "DecideMyProposal",
         "DecideMyProposals",
+        "DeleteMyTriageView",
+        "DeleteReportDashboard",
+        "DeleteReportDefinition",
+        "DeleteReportSchedule",
+        "DeleteReportView",
+        "DeleteTriageRule",
         "DeskMemoriesByIds",
         "DeskMemorySettings",
+        "DeskReportRunCard",
+        "DiscardInboundLoad",
+        "DiscardInboundReplyDraft",
         "DismissDeskMemory",
+        "DraftInboundLoad",
+        "DraftInboundMany",
+        "DraftInboundReply",
+        "DrillThroughReport",
         "FactoringAgreementActivity",
         "FactoringAgreementOwner",
         "FactoringAgreements",
@@ -19407,16 +20333,79 @@
         "FactoringSubmissionTable",
         "FactoringSummary",
         "FactoringTransport",
+        "FileInboundAttachment",
+        "FileInboundMany",
+        "FlagInboundFact",
+        "ForkCannedReport",
+        "HandOffTriage",
+        "InboundMailboxes",
+        "InboundMessage",
+        "InboundMessageCounts",
+        "InboundMessages",
+        "InboundReplyAttachables",
+        "InboundSenderProfile",
+        "InboundThread",
         "InvoiceFactoring",
+        "LinkInboundMessage",
+        "LogInboundException",
         "MyCaptureAccess",
         "MyCaptureDevices",
         "MyPlanPreview",
         "MyProposalPreview",
+        "MyTriageViews",
+        "PreviewReport",
+        "ReadUnreadInboundMessages",
         "RecordMyAgentSuggestion",
+        "RenameMyTriageView",
+        "RenderTriageReplyTemplate",
+        "ReopenInboundConflict",
+        "ReopenInboundMessages",
+        "ReportCatalog",
+        "ReportDashboardById",
+        "ReportDashboards",
+        "ReportDefinitionById",
+        "ReportDefinitionRevisions",
+        "ReportDefinitionsTable",
+        "ReportRunById",
+        "ReportSchedules",
+        "ReportViews",
+        "ResetCannedFork",
+        "ResolveInboundConflict",
+        "ReviewInboundMessages",
         "ReviseDeskMemory",
+        "RunReport",
+        "SaveInboundReplyDraft",
+        "SelectOptions",
+        "SendInboundMailboxTest",
+        "SendInboundReply",
         "SetDeskMemoryStatus",
+        "SetInboundMailboxSigningSecret",
+        "SetTriageRuleEnabled",
         "SettleMyAgentSuggestion",
-        "UndoMyDecision"
+        "SnoozeInboundMessages",
+        "StopWaitingForInboundReply",
+        "TriageAssignees",
+        "TriageBriefing",
+        "TriageCustomerPeek",
+        "TriageReplyTemplates",
+        "TriageResponseTargets",
+        "TriageRuleMatches",
+        "TriageRulePreview",
+        "TriageRules",
+        "TriageSenderDomains",
+        "TriageSettings",
+        "TriageShipmentPeek",
+        "TriageStopTimes",
+        "UndoMyDecision",
+        "UnfileInboundAttachment",
+        "UnlinkInboundMessage",
+        "UpdateReportDashboard",
+        "UpdateReportDefinition",
+        "UpdateReportSchedule",
+        "UpdateReportView",
+        "UpdateTriageRule",
+        "WaitForInboundReply",
+        "WakeInboundMessage"
       ],
       "endpoints": [
         {
@@ -20304,11 +21293,15 @@
         "factoring_remittance",
         "factoring_reserve",
         "factoring_submission",
-        "invoice"
+        "inbound_mailbox",
+        "inbound_message",
+        "invoice",
+        "report"
       ],
       "references": [
         "customer",
         "document_type",
+        "shipment",
         "user"
       ],
       "declared": [
@@ -20325,6 +21318,10 @@
         }
       ],
       "operations": [
+        "AIAgentRoster",
+        "AIControlSummary",
+        "AITuneUps",
+        "AIUsageDaily",
         "AccountingBackfills",
         "AccountingBriefing",
         "AccountingDriftFinding",
@@ -20342,7 +21339,11 @@
         "AccountingSyncSummary",
         "AddCarrierSettlementAdjustment",
         "AddDriverSettlementAdjustment",
+        "AgentActivitySummary",
+        "AgentMemoryCount",
+        "AgentMemoryTable",
         "AgentPlanPreview",
+        "AgentPromotionPreview",
         "AgentProposalPreview",
         "AgentProposalPreviews",
         "ApproveCarrierSettlement",
@@ -20367,6 +21368,8 @@
         "BillingQueueRateAgreement",
         "BillingQueueShipment",
         "CancelCaptureRequest",
+        "CancelReportRun",
+        "CannedReports",
         "CaptureAgentRelease",
         "CaptureBatch",
         "CaptureBatchCount",
@@ -20381,12 +21384,21 @@
         "CommitMyDecisionNow",
         "ConfirmDeskMemory",
         "CreateCaptureRequest",
+        "CreateReportDashboard",
+        "CreateReportDefinition",
+        "CreateReportSchedule",
+        "CreateReportView",
         "CustomerStatusNotifications",
         "CustomerTrackingLinks",
         "CustomerTrackingProfile",
         "DecideMyPlan",
         "DecideMyProposal",
         "DecideMyProposals",
+        "DeleteReportDashboard",
+        "DeleteReportDefinition",
+        "DeleteReportSchedule",
+        "DeleteReportView",
+        "DeskAttention",
         "DeskBoardCard",
         "DeskCarrierCard",
         "DeskCarrierEligibility",
@@ -20401,6 +21413,7 @@
         "DeskEdiPartnerMessages",
         "DeskFuelCardCard",
         "DeskFuelPurchaseCard",
+        "DeskIftaReturnCard",
         "DeskInvoiceCard",
         "DeskJournalEntryCard",
         "DeskLocationCard",
@@ -20414,6 +21427,7 @@
         "DeskRecordActivity",
         "DeskRecordFailures",
         "DeskRecordShipments",
+        "DeskReportRunCard",
         "DeskServiceFailureCard",
         "DeskTractorCard",
         "DeskTractorInspections",
@@ -20426,11 +21440,21 @@
         "DetachPayEventFromSettlement",
         "DetentionIntelligence",
         "DismissDeskMemory",
+        "DrillThroughReport",
         "DriverSettlementDetail",
         "EdiPartnerScorecards",
         "EdiSummary",
         "EdiVolumeSeries",
         "ExportCarrierSettlementBatchCsv",
+        "ForkCannedReport",
+        "HoldDriverSettlement",
+        "InboundMailboxes",
+        "InboundMessage",
+        "InboundMessageCounts",
+        "InboundMessages",
+        "InboundReplyAttachables",
+        "InboundSenderProfile",
+        "InboundThread",
         "InviteWorkerToPortal",
         "InvoiceArContext",
         "JournalEntriesBySource",
@@ -20445,9 +21469,11 @@
         "MyCaptureDevices",
         "MyPlanPreview",
         "MyProposalPreview",
+        "MyTriageViews",
         "PostCarrierSettlement",
         "PostDriverSettlement",
         "PostJournalEntries",
+        "PreviewReport",
         "RecalculateCarrierSettlement",
         "RecalculateDriverSettlement",
         "RecordMyAgentSuggestion",
@@ -20455,10 +21481,24 @@
         "RecordShares",
         "RejectCarrierSettlement",
         "RejectDriverSettlement",
+        "ReleaseDriverSettlementHold",
         "RemoveCarrierSettlementAdjustment",
         "RemoveDriverSettlementAdjustment",
+        "RenderTriageReplyTemplate",
+        "ReportCatalog",
+        "ReportDashboardById",
+        "ReportDashboards",
+        "ReportDefinitionById",
+        "ReportDefinitionRevisions",
+        "ReportDefinitionsTable",
+        "ReportRunById",
+        "ReportSchedules",
+        "ReportViews",
+        "ResetCannedFork",
         "ResolveFuelPurchaseImportRows",
         "ReviseDeskMemory",
+        "RunReport",
+        "SelectOptions",
         "SendInvoiceEdi",
         "SetDeskMemoryStatus",
         "SettleMyAgentSuggestion",
@@ -20470,19 +21510,81 @@
         "SubmitCarrierSettlement",
         "SubmitDriverSettlement",
         "TodaysBriefing",
+        "TriageAssignees",
+        "TriageBriefing",
+        "TriageCustomerPeek",
+        "TriageReplyTemplates",
+        "TriageResponseTargets",
+        "TriageRuleMatches",
+        "TriageRulePreview",
+        "TriageRules",
+        "TriageSenderDomains",
+        "TriageSettings",
+        "TriageShipmentPeek",
+        "TriageStopTimes",
         "UndoMyDecision",
         "UnshareRecord",
         "UpcomingWorkerPto",
+        "UpdateReportDashboard",
+        "UpdateReportDefinition",
+        "UpdateReportSchedule",
+        "UpdateReportView",
         "VoidCarrierSettlement",
         "VoidDriverSettlement",
         "VoidInvoice",
+        "WatchtowerCleared",
+        "WatchtowerCounts",
+        "WatchtowerFeed",
+        "WatchtowerHandOffAgents",
+        "WatchtowerItemDetail",
+        "WatchtowerPlay",
         "WorkerCredentialTypeChoices",
         "WorkerOverview",
         "WorkerPtoChartData",
-        "WorkerPtoTable",
-        "WorkerRecord"
+        "WorkerRecord",
+        "WorkingAgentRuns"
       ],
       "endpoints": [
+        {
+          "method": "GET",
+          "path": "/accounting/bank-receipts/:param/",
+          "requires": [
+            {
+              "resource": "bank_receipt",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/accounting/bank-receipts/:param/card/",
+          "requires": [
+            {
+              "resource": "bank_receipt",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/accounting/bank-receipts/:param/suggestions/",
+          "requires": [
+            {
+              "resource": "bank_receipt",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/accounting/bank-receipts/summary/",
+          "requires": [
+            {
+              "resource": "bank_receipt",
+              "operation": "read"
+            }
+          ]
+        },
         {
           "method": "POST",
           "path": "/accounting/journal-reversals/",
@@ -21957,6 +23059,9 @@
         "accounting_integration",
         "accounting_reconciliation",
         "accounting_sync",
+        "agent_definition",
+        "agent_memory",
+        "agent_run",
         "briefing",
         "capture_batch",
         "capture_device",
@@ -21972,6 +23077,9 @@
         "formula_template",
         "fuel_card",
         "fuel_purchase",
+        "ifta_return",
+        "inbound_mailbox",
+        "inbound_message",
         "invoice",
         "journal_entry",
         "journal_reversal",
@@ -21981,6 +23089,7 @@
         "rate_agreement",
         "rate_quote",
         "record_share",
+        "report",
         "service_failure",
         "shipment",
         "tractor",
@@ -22002,6 +23111,7 @@
       ],
       "declared": [
         "accounts_receivable",
+        "agent_definition",
         "carrier",
         "customer_payment",
         "edi",
@@ -22039,6 +23149,7 @@
         "ResetMyTableLayout",
         "SaveMyTableLayout",
         "ScheduleTableView",
+        "SelectOptions",
         "StartBulkEdit",
         "UndoMyBulkEdit"
       ],
@@ -22142,6 +23253,7 @@
         "ResumeCarrierIntelMonitoring",
         "SaveMyTableLayout",
         "ScheduleTableView",
+        "SelectOptions",
         "SetCarrierMonitoring",
         "StartBulkEdit",
         "UndoMyBulkEdit"
@@ -22249,6 +23361,7 @@
         "RevokeCarrierIntelOverride",
         "SaveMyTableLayout",
         "ScheduleTableView",
+        "SelectOptions",
         "SetCarrierMonitoring",
         "SetDeskMemoryStatus",
         "StartBulkEdit",
@@ -22332,6 +23445,7 @@
         "ResetMyTableLayout",
         "SaveMyTableLayout",
         "ScheduleTableView",
+        "SelectOptions",
         "StartBulkEdit",
         "UndoMyBulkEdit"
       ],
@@ -22379,6 +23493,7 @@
         "ResetMyTableLayout",
         "SaveMyTableLayout",
         "ScheduleTableView",
+        "SelectOptions",
         "StartBulkEdit",
         "UndoMyBulkEdit",
         "UpdateLocationCategory"
@@ -22439,9 +23554,16 @@
         "OverrideCarrierEquipmentVerification",
         "RoutingGuideOptions",
         "RoutingGuideTable",
+        "SelectOptions",
         "TendersByShipment",
         "UndoMyDecision",
-        "VerifyCarrierEquipment"
+        "VerifyCarrierEquipment",
+        "WatchtowerCleared",
+        "WatchtowerCounts",
+        "WatchtowerFeed",
+        "WatchtowerHandOffAgents",
+        "WatchtowerItemDetail",
+        "WatchtowerPlay"
       ],
       "endpoints": [
         {
@@ -22820,12 +23942,16 @@
         }
       ],
       "reads": [
+        "agent_definition",
         "carrier",
         "routing_guide",
         "tender"
       ],
-      "references": [],
+      "references": [
+        "user"
+      ],
       "declared": [
+        "agent_definition",
         "tender"
       ]
     },
@@ -22840,21 +23966,18 @@
       ],
       "operations": [
         "BulkEditFields",
-        "CreateDeskMemory",
         "DataTableAggregates",
         "DataTableFacets",
         "DataTableInsightFields",
-        "DeskMemories",
         "ExportTableView",
         "LocationTable",
         "MyBulkEdit",
         "MyTableLayout",
         "PreviewBulkEdit",
         "ResetMyTableLayout",
-        "ReviseDeskMemory",
         "SaveMyTableLayout",
         "ScheduleTableView",
-        "SetDeskMemoryStatus",
+        "SelectOptions",
         "StartBulkEdit",
         "UndoMyBulkEdit"
       ],
@@ -23084,6 +24207,7 @@
         "RoutingGuideTable",
         "SaveMyTableLayout",
         "ScheduleTableView",
+        "SelectOptions",
         "StartBulkEdit",
         "UndoMyBulkEdit"
       ],
@@ -23172,6 +24296,7 @@
         "ResetMyTableLayout",
         "SaveMyTableLayout",
         "ScheduleTableView",
+        "SelectOptions",
         "StartBulkEdit",
         "UndoMyBulkEdit"
       ],
@@ -23661,6 +24786,7 @@
         "ResetMyTableLayout",
         "SaveMyTableLayout",
         "ScheduleTableView",
+        "SelectOptions",
         "StartBulkEdit",
         "UndoMyBulkEdit"
       ],
@@ -24150,6 +25276,7 @@
         "ResetMyTableLayout",
         "SaveMyTableLayout",
         "ScheduleTableView",
+        "SelectOptions",
         "StartBulkEdit",
         "UndoMyBulkEdit"
       ],
@@ -24634,6 +25761,7 @@
         "ResetMyTableLayout",
         "SaveMyTableLayout",
         "ScheduleTableView",
+        "SelectOptions",
         "StartBulkEdit",
         "UndoMyBulkEdit"
       ],
@@ -24672,7 +25800,8 @@
         "DeskEdiPartnerMessages",
         "EdiPartnerScorecards",
         "EdiSummary",
-        "EdiVolumeSeries"
+        "EdiVolumeSeries",
+        "SelectOptions"
       ],
       "endpoints": [
         {
@@ -25004,6 +26133,7 @@
         "ResetMyTableLayout",
         "SaveMyTableLayout",
         "ScheduleTableView",
+        "SelectOptions",
         "StartBulkEdit",
         "UndoMyBulkEdit"
       ],
@@ -25493,6 +26623,7 @@
         "ResetMyTableLayout",
         "SaveMyTableLayout",
         "ScheduleTableView",
+        "SelectOptions",
         "StartBulkEdit",
         "UndoMyBulkEdit"
       ],
@@ -25982,6 +27113,7 @@
         "ResetMyTableLayout",
         "SaveMyTableLayout",
         "ScheduleTableView",
+        "SelectOptions",
         "StartBulkEdit",
         "UndoMyBulkEdit"
       ],
@@ -26471,6 +27603,7 @@
         "ResetMyTableLayout",
         "SaveMyTableLayout",
         "ScheduleTableView",
+        "SelectOptions",
         "StartBulkEdit",
         "UndoMyBulkEdit"
       ],
@@ -26960,6 +28093,7 @@
         "ResetMyTableLayout",
         "SaveMyTableLayout",
         "ScheduleTableView",
+        "SelectOptions",
         "StartBulkEdit",
         "UndoMyBulkEdit"
       ],
@@ -27449,6 +28583,7 @@
         "ResetMyTableLayout",
         "SaveMyTableLayout",
         "ScheduleTableView",
+        "SelectOptions",
         "StartBulkEdit",
         "UndoMyBulkEdit"
       ],
@@ -27926,6 +29061,7 @@
         "ResetMyTableLayout",
         "SaveMyTableLayout",
         "ScheduleTableView",
+        "SelectOptions",
         "StartBulkEdit",
         "UndoMyBulkEdit"
       ],
@@ -27971,6 +29107,7 @@
         "ResetMyTableLayout",
         "SaveMyTableLayout",
         "ScheduleTableView",
+        "SelectOptions",
         "StartBulkEdit",
         "TractorTable",
         "TrailerTable",
@@ -28077,6 +29214,7 @@
         "RevokeCarrierTrackingLink",
         "SaveMyTableLayout",
         "ScheduleTableView",
+        "SelectOptions",
         "ShipmentCheckCalls",
         "ShipmentCustomerBillingRules",
         "ShipmentDetail",
@@ -28891,6 +30029,7 @@
         "RevokeCarrierTrackingLink",
         "SaveMyTableLayout",
         "ScheduleTableView",
+        "SelectOptions",
         "ShipmentCheckCalls",
         "ShipmentCustomerBillingRules",
         "ShipmentDetail",
@@ -29654,6 +30793,7 @@
         "ResetMyTableLayout",
         "SaveMyTableLayout",
         "ScheduleTableView",
+        "SelectOptions",
         "StartBulkEdit",
         "UndoMyBulkEdit",
         "UpdateFuelCard"
@@ -29704,6 +30844,7 @@
         "ResetMyTableLayout",
         "SaveMyTableLayout",
         "ScheduleTableView",
+        "SelectOptions",
         "StartBulkEdit",
         "UndoMyBulkEdit",
         "UpsertIftaTaxRates"
@@ -29749,6 +30890,7 @@
         "FuelProgramCurrentRates",
         "FuelSurchargeProgramDetail",
         "GenerateFuelSurchargeTable",
+        "SelectOptions",
         "UpdateFuelIndex",
         "UpdateFuelSurchargeProgram"
       ],
@@ -29785,6 +30927,7 @@
         "ResolveFuelPurchaseImportRows",
         "SaveMyTableLayout",
         "ScheduleTableView",
+        "SelectOptions",
         "StartBulkEdit",
         "SyncFuelCardFeed",
         "UndoMyBulkEdit"
@@ -29824,6 +30967,7 @@
         "AmendIftaReturn",
         "BackfillJurisdictionMiles",
         "DeleteIftaReturn",
+        "DeskIftaReturnCard",
         "FinalizeIftaReturn",
         "GenerateIftaReturn",
         "IftaPeriod",
@@ -29866,6 +31010,7 @@
         "ResetMyTableLayout",
         "SaveMyTableLayout",
         "ScheduleTableView",
+        "SelectOptions",
         "StartBulkEdit",
         "UndoMyBulkEdit",
         "UpdateIftaMileageEntry"
@@ -29971,6 +31116,7 @@
         "RevokeCarrierTrackingLink",
         "SaveMyTableLayout",
         "ScheduleTableView",
+        "SelectOptions",
         "ShipmentCheckCalls",
         "ShipmentCustomerBillingRules",
         "ShipmentDetail",
@@ -30714,6 +31860,7 @@
         "ResetMyTableLayout",
         "SaveMyTableLayout",
         "ScheduleTableView",
+        "SelectOptions",
         "StartBulkEdit",
         "UndoMyBulkEdit",
         "UpdateFuelCard"
@@ -30754,6 +31901,7 @@
         "BenefitEnrollments",
         "BenefitPlans",
         "CreateBenefitPlan",
+        "SelectOptions",
         "UpdateBenefitPlan"
       ],
       "endpoints": [],
@@ -30791,6 +31939,7 @@
         "RestoreWorkerChecklistTemplate",
         "SaveMyTableLayout",
         "ScheduleTableView",
+        "SelectOptions",
         "StartBulkEdit",
         "UndoMyBulkEdit",
         "UpdateWorkerChecklistTemplate",
@@ -30841,6 +31990,7 @@
         "RestoreWorkerCredentialType",
         "SaveMyTableLayout",
         "ScheduleTableView",
+        "SelectOptions",
         "StartBulkEdit",
         "UndoMyBulkEdit",
         "UpdateWorkerCredentialType",
@@ -30992,6 +32142,7 @@
         "JobPositionHolders",
         "JobPositions",
         "RevokeApprovalDelegation",
+        "SelectOptions",
         "UpdateJobPosition"
       ],
       "endpoints": [],
@@ -31079,6 +32230,7 @@
         "RestorePtoPolicy",
         "SaveMyTableLayout",
         "ScheduleTableView",
+        "SelectOptions",
         "StartBulkEdit",
         "UndoMyBulkEdit",
         "UpdatePtoPolicy"
@@ -31157,6 +32309,7 @@
         "RestorePerformanceReviewTemplate",
         "SaveMyTableLayout",
         "ScheduleTableView",
+        "SelectOptions",
         "StartBulkEdit",
         "UndoMyBulkEdit",
         "UpdatePerformanceReviewTemplate"
@@ -31193,6 +32346,7 @@
       "operations": [
         "CreateShiftTemplate",
         "Rota",
+        "SelectOptions",
         "ShiftSwapRequests",
         "ShiftTemplates",
         "TransitionShiftSwap",
@@ -31227,6 +32381,7 @@
         "PayrollExportRows",
         "PayrollExports",
         "RecordTimeEntry",
+        "SelectOptions",
         "TimeClockEntries",
         "Timesheet",
         "Timesheets",
@@ -31267,6 +32422,7 @@
         "RestoreTrainingCourse",
         "SaveMyTableLayout",
         "ScheduleTableView",
+        "SelectOptions",
         "StartBulkEdit",
         "TrainingCourseTable",
         "UndoMyBulkEdit",
@@ -31327,6 +32483,7 @@
         "ResetMyTableLayout",
         "SaveMyTableLayout",
         "ScheduleTableView",
+        "SelectOptions",
         "StartBulkEdit",
         "UndoMyBulkEdit",
         "UpcomingWorkerPto",
@@ -31379,7 +32536,6 @@
       ],
       "operations": [
         "AccountingBackfills",
-        "AccountingBriefing",
         "AccountingDriftFinding",
         "AccountingDriftFixPreview",
         "AccountingDriftOverview",
@@ -31398,18 +32554,6 @@
         "AmendWorkerEmploymentEvent",
         "ApproveShipmentRatingReview",
         "ApproveWorkerPto",
-        "ArAgingSummary",
-        "ArAgingTrend",
-        "ArCashFlowForecast",
-        "ArCollectionsWorklist",
-        "ArCustomerLedger",
-        "ArCustomerProfile",
-        "ArCustomerStatement",
-        "ArDashboardKpis",
-        "ArDsoTrend",
-        "ArOpenItems",
-        "ArPaymentStats",
-        "ArTopOverdueCustomers",
         "ArchiveWorkerCredential",
         "AssignPayProfileToWorker",
         "AssignRequiredWorkerTraining",
@@ -31418,13 +32562,6 @@
         "AssignWorkerTraining",
         "AttachWorkerTrainingDocument",
         "AvailableCaptureProfiles",
-        "BillingQueueFormulaTemplate",
-        "BillingQueueItems",
-        "BillingQueueRateAgreement",
-        "BillingQueueShipment",
-        "BillingTransferCandidates",
-        "BillingTransferRun",
-        "BillingTransferRunItems",
         "BulkWorkerPtoAction",
         "CancelCaptureRequest",
         "CancelDotTest",
@@ -31473,7 +32610,6 @@
         "DeskCustomerCard",
         "DeskCustomerRateAgreements",
         "DeskDetentionCard",
-        "DeskInvoiceCard",
         "DeskMemories",
         "DeskWorkerCard",
         "DeskWorkerCredentials",
@@ -31490,13 +32626,10 @@
         "GrantCarrierIntelOverride",
         "HosCertificationSummary",
         "InviteWorkerToPortal",
-        "InvoiceArContext",
         "IssueCarrierTrackingLink",
         "IssueDisciplinaryAction",
-        "LateChargePreview",
         "MarkEmploymentVerificationRequested",
         "MarkWorkerChecklistItemNotApplicable",
-        "MyActiveBillingTransferRun",
         "MyCaptureAccess",
         "MyCaptureDevices",
         "OpenLeaveCase",
@@ -31525,15 +32658,14 @@
         "RevokeCarrierTrackingLink",
         "RevokeWorkerPortalAccess",
         "RunPtoAccrual",
+        "SelectOptions",
         "SetDeskMemoryStatus",
         "SetWorkerAvailabilityPreference",
         "ShiftSwapRequests",
         "ShipmentCheckCalls",
         "ShipmentCustomerBillingRules",
-        "ShipmentDetail",
         "ShipmentDriverFeasibility",
         "ShipmentFormSubmissions",
-        "ShipmentInvoices",
         "ShipmentProfitability",
         "SkipWorkerChecklistItem",
         "StartWorkerChecklist",
@@ -31561,10 +32693,12 @@
         "WorkerCredentialSummary",
         "WorkerCredentialTypeChoices",
         "WorkerCredentials",
+        "WorkerDisciplinaryAction",
         "WorkerDisciplinaryActions",
         "WorkerDisciplinaryLadder",
         "WorkerDrugAlcoholFile",
         "WorkerEarningsSummary",
+        "WorkerEmploymentEvent",
         "WorkerEmploymentEventOptions",
         "WorkerEmploymentEvents",
         "WorkerFormSubmissions",
@@ -31575,12 +32709,14 @@
         "WorkerHosStates",
         "WorkerHosViolations",
         "WorkerInjuries",
+        "WorkerInjury",
         "WorkerLeaveFile",
         "WorkerOverview",
         "WorkerPayAssignments",
         "WorkerPerformanceReviews",
         "WorkerPolicyAcknowledgements",
         "WorkerPortalStatus",
+        "WorkerPto",
         "WorkerPtoAvailability",
         "WorkerPtoBalances",
         "WorkerPtoChartData",
@@ -31589,10 +32725,12 @@
         "WorkerPtoTable",
         "WorkerRecognitions",
         "WorkerRecord",
+        "WorkerSafetyEvent",
         "WorkerSafetyEvents",
         "WorkerSafetyScorecard",
         "WorkerShiftAssignments",
         "WorkerTotalCompensation",
+        "WorkerTrainingRecord",
         "WorkerTrainingRecords",
         "WorkerTrainingSummary"
       ],
@@ -31633,116 +32771,6 @@
           "requires": [
             {
               "resource": "shipment_move",
-              "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "GET",
-          "path": "/billing-queue/",
-          "requires": [
-            {
-              "resource": "billing_queue",
-              "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "GET",
-          "path": "/billing-queue/:param/activity/",
-          "requires": [
-            {
-              "resource": "billing_queue",
-              "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "GET",
-          "path": "/billing-queue/:param/neighbors/:param",
-          "requires": []
-        },
-        {
-          "method": "GET",
-          "path": "/billing-queue/assist/",
-          "requires": [
-            {
-              "resource": "billing_queue",
-              "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "GET",
-          "path": "/billing-queue/brief/",
-          "requires": [
-            {
-              "resource": "billing_queue",
-              "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "GET",
-          "path": "/billing-queue/bulk/:param/",
-          "requires": [
-            {
-              "resource": "billing_queue",
-              "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "GET",
-          "path": "/billing-queue/filter-presets/",
-          "requires": [
-            {
-              "resource": "billing_queue",
-              "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "GET",
-          "path": "/billing-queue/recommendations/",
-          "requires": [
-            {
-              "resource": "billing_queue",
-              "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "GET",
-          "path": "/billing-queue/summaries/",
-          "requires": [
-            {
-              "resource": "billing_queue",
-              "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "GET",
-          "path": "/billing/invoices/:param/",
-          "requires": [
-            {
-              "resource": "invoice",
-              "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "GET",
-          "path": "/billing/invoices/:param/email-attempts/:param",
-          "requires": []
-        },
-        {
-          "method": "GET",
-          "path": "/billing/invoices/:param/send-plan/",
-          "requires": [
-            {
-              "resource": "invoice",
               "operation": "read"
             }
           ]
@@ -32330,6 +33358,16 @@
               "operation": "update"
             }
           ]
+        },
+        {
+          "method": "DELETE",
+          "path": "/workers/:param/photo/",
+          "requires": [
+            {
+              "resource": "worker",
+              "operation": "update"
+            }
+          ]
         }
       ],
       "reads": [
@@ -32346,14 +33384,11 @@
         "dot_random_pool",
         "driver_pay_profile",
         "driver_settlement",
-        "formula_template",
-        "invoice",
         "performance_review",
         "pto_policy",
         "qualification",
         "rate_agreement",
         "shift_swap",
-        "shipment",
         "worker",
         "worker_checklist",
         "worker_checklist_template",
@@ -32373,6 +33408,7 @@
         "accessorial_charge",
         "commodity",
         "document_type",
+        "edi",
         "fleet_code",
         "location",
         "performance_review_template",
@@ -32382,13 +33418,8 @@
         "worker_policy"
       ],
       "declared": [
-        "accounts_receivable",
-        "customer_payment",
-        "edi",
-        "invoice_dispute",
         "performance_review",
         "shift_template",
-        "shipment",
         "user",
         "worker_checklist",
         "worker_credential_type"
@@ -32405,7 +33436,8 @@
       ],
       "operations": [
         "CustomFieldFormFields",
-        "CustomFieldResourceTypes"
+        "CustomFieldResourceTypes",
+        "SelectOptions"
       ],
       "endpoints": [
         {
@@ -32579,7 +33611,8 @@
         "FileCaptureItem",
         "FileCaptureItems",
         "MyCaptureAccess",
-        "MyCaptureDevices"
+        "MyCaptureDevices",
+        "SelectOptions"
       ],
       "endpoints": [],
       "reads": [
@@ -32596,7 +33629,9 @@
       "path": "/onboarding",
       "name": "",
       "requires": [],
-      "operations": [],
+      "operations": [
+        "SelectOptions"
+      ],
       "endpoints": [],
       "reads": [],
       "references": [],
@@ -32711,6 +33746,7 @@
         "ResetMyTableLayout",
         "SaveMyTableLayout",
         "ScheduleTableView",
+        "SelectOptions",
         "StartBulkEdit",
         "UndoMyBulkEdit"
       ],
@@ -32822,6 +33858,7 @@
         "ResetMyTableLayout",
         "SaveMyTableLayout",
         "ScheduleTableView",
+        "SelectOptions",
         "StartBulkEdit",
         "UndoMyBulkEdit",
         "WriteOffPayAdvance"
@@ -32870,6 +33907,7 @@
         "ResetMyTableLayout",
         "SaveMyTableLayout",
         "ScheduleTableView",
+        "SelectOptions",
         "StartBulkEdit",
         "UndoMyBulkEdit",
         "UpdateRecurringDeduction"
@@ -32918,6 +33956,7 @@
         "ResolveSettlementDispute",
         "SaveMyTableLayout",
         "ScheduleTableView",
+        "SelectOptions",
         "SettlementDisputeDetail",
         "SettlementDisputeTable",
         "StartBulkEdit",
@@ -32971,6 +34010,7 @@
         "ResetMyTableLayout",
         "SaveMyTableLayout",
         "ScheduleTableView",
+        "SelectOptions",
         "StartBulkEdit",
         "UndoMyBulkEdit",
         "UpdateRecurringEarning"
@@ -33023,6 +34063,7 @@
         "ResetMyTableLayout",
         "SaveMyTableLayout",
         "ScheduleTableView",
+        "SelectOptions",
         "StartBulkEdit",
         "UndoMyBulkEdit"
       ],
@@ -33071,6 +34112,7 @@
         "ReviewDriverExpense",
         "SaveMyTableLayout",
         "ScheduleTableView",
+        "SelectOptions",
         "StartBulkEdit",
         "UndoMyBulkEdit"
       ],
@@ -33120,6 +34162,7 @@
         "ResetMyTableLayout",
         "SaveMyTableLayout",
         "ScheduleTableView",
+        "SelectOptions",
         "StartBulkEdit",
         "UndoMyBulkEdit",
         "UpdatePayCode"
@@ -33168,6 +34211,7 @@
         "ResetMyTableLayout",
         "SaveMyTableLayout",
         "ScheduleTableView",
+        "SelectOptions",
         "StartBulkEdit",
         "UndoMyBulkEdit"
       ],
@@ -33218,6 +34262,7 @@
         "ResetMyTableLayout",
         "SaveMyTableLayout",
         "ScheduleTableView",
+        "SelectOptions",
         "StartBulkEdit",
         "UndoMyBulkEdit",
         "UpdatePayProfile"
@@ -33267,6 +34312,7 @@
         "ResetMyTableLayout",
         "SaveMyTableLayout",
         "ScheduleTableView",
+        "SelectOptions",
         "SettlementBatchTable",
         "StartBulkEdit",
         "UndoMyBulkEdit"
@@ -33324,6 +34370,7 @@
         "DriverSettlementDetail",
         "DriverSettlementTable",
         "ExportTableView",
+        "HoldDriverSettlement",
         "MarkDriverSettlementPaid",
         "MyBulkEdit",
         "MyTableLayout",
@@ -33331,10 +34378,12 @@
         "PreviewBulkEdit",
         "RecalculateDriverSettlement",
         "RejectDriverSettlement",
+        "ReleaseDriverSettlementHold",
         "RemoveDriverSettlementAdjustment",
         "ResetMyTableLayout",
         "SaveMyTableLayout",
         "ScheduleTableView",
+        "SelectOptions",
         "StartBulkEdit",
         "SubmitDriverSettlement",
         "UndoMyBulkEdit",
@@ -33400,6 +34449,7 @@
         "GenerateDriverSettlement",
         "GenerateSettlementBatch",
         "HoldDriverPayEvent",
+        "HoldDriverSettlement",
         "MarkDriverSettlementPaid",
         "PayAdvanceTable",
         "PayWorkerNow",
@@ -33409,7 +34459,9 @@
         "RecurringEarningTable",
         "RejectDriverSettlement",
         "ReleaseDriverPayEvent",
+        "ReleaseDriverSettlementHold",
         "RemoveDriverSettlementAdjustment",
+        "SelectOptions",
         "SettlementWorkspaceSummary",
         "SubmitDriverSettlement",
         "UnsettledPayEvents",
@@ -33445,9 +34497,42 @@
           "operation": "read"
         }
       ],
-      "operations": [],
+      "operations": [
+        "CancelReportRun",
+        "CannedReports",
+        "CreateReportDashboard",
+        "CreateReportDefinition",
+        "CreateReportSchedule",
+        "CreateReportView",
+        "DeleteReportDashboard",
+        "DeleteReportDefinition",
+        "DeleteReportSchedule",
+        "DeleteReportView",
+        "DeskReportRunCard",
+        "DrillThroughReport",
+        "ForkCannedReport",
+        "PreviewReport",
+        "ReportCatalog",
+        "ReportDashboardById",
+        "ReportDashboards",
+        "ReportDefinitionById",
+        "ReportDefinitionRevisions",
+        "ReportDefinitionsTable",
+        "ReportRunById",
+        "ReportSchedules",
+        "ReportViews",
+        "ResetCannedFork",
+        "RunReport",
+        "SelectOptions",
+        "UpdateReportDashboard",
+        "UpdateReportDefinition",
+        "UpdateReportSchedule",
+        "UpdateReportView"
+      ],
       "endpoints": [],
-      "reads": [],
+      "reads": [
+        "report"
+      ],
       "references": [],
       "declared": []
     },
@@ -33460,7 +34545,38 @@
           "operation": "create"
         }
       ],
-      "operations": [],
+      "operations": [
+        "CancelReportRun",
+        "CannedReports",
+        "CreateReportDashboard",
+        "CreateReportDefinition",
+        "CreateReportSchedule",
+        "CreateReportView",
+        "DeleteReportDashboard",
+        "DeleteReportDefinition",
+        "DeleteReportSchedule",
+        "DeleteReportView",
+        "DeskReportRunCard",
+        "DrillThroughReport",
+        "ForkCannedReport",
+        "PreviewReport",
+        "ReportCatalog",
+        "ReportDashboardById",
+        "ReportDashboards",
+        "ReportDefinitionById",
+        "ReportDefinitionRevisions",
+        "ReportDefinitionsTable",
+        "ReportRunById",
+        "ReportSchedules",
+        "ReportViews",
+        "ResetCannedFork",
+        "RunReport",
+        "SelectOptions",
+        "UpdateReportDashboard",
+        "UpdateReportDefinition",
+        "UpdateReportSchedule",
+        "UpdateReportView"
+      ],
       "endpoints": [
         {
           "method": "GET",
@@ -33528,7 +34644,9 @@
           ]
         }
       ],
-      "reads": [],
+      "reads": [
+        "report"
+      ],
       "references": [],
       "declared": []
     },
@@ -33541,7 +34659,38 @@
           "operation": "read"
         }
       ],
-      "operations": [],
+      "operations": [
+        "CancelReportRun",
+        "CannedReports",
+        "CreateReportDashboard",
+        "CreateReportDefinition",
+        "CreateReportSchedule",
+        "CreateReportView",
+        "DeleteReportDashboard",
+        "DeleteReportDefinition",
+        "DeleteReportSchedule",
+        "DeleteReportView",
+        "DeskReportRunCard",
+        "DrillThroughReport",
+        "ForkCannedReport",
+        "PreviewReport",
+        "ReportCatalog",
+        "ReportDashboardById",
+        "ReportDashboards",
+        "ReportDefinitionById",
+        "ReportDefinitionRevisions",
+        "ReportDefinitionsTable",
+        "ReportRunById",
+        "ReportSchedules",
+        "ReportViews",
+        "ResetCannedFork",
+        "RunReport",
+        "SelectOptions",
+        "UpdateReportDashboard",
+        "UpdateReportDefinition",
+        "UpdateReportSchedule",
+        "UpdateReportView"
+      ],
       "endpoints": [
         {
           "method": "GET",
@@ -33609,7 +34758,9 @@
           ]
         }
       ],
-      "reads": [],
+      "reads": [
+        "report"
+      ],
       "references": [],
       "declared": []
     },
@@ -33622,7 +34773,39 @@
           "operation": "read"
         }
       ],
-      "operations": [],
+      "operations": [
+        "CancelReportRun",
+        "CannedReports",
+        "CreateReportDashboard",
+        "CreateReportDefinition",
+        "CreateReportSchedule",
+        "CreateReportView",
+        "DeleteReportDashboard",
+        "DeleteReportDefinition",
+        "DeleteReportSchedule",
+        "DeleteReportView",
+        "DeskReportRunCard",
+        "DrillThroughReport",
+        "ForkCannedReport",
+        "PreviewReport",
+        "ReportCatalog",
+        "ReportDashboardById",
+        "ReportDashboards",
+        "ReportDefinitionById",
+        "ReportDefinitionOptions",
+        "ReportDefinitionRevisions",
+        "ReportDefinitionsTable",
+        "ReportRunById",
+        "ReportSchedules",
+        "ReportViews",
+        "ResetCannedFork",
+        "RunReport",
+        "SelectOptions",
+        "UpdateReportDashboard",
+        "UpdateReportDefinition",
+        "UpdateReportSchedule",
+        "UpdateReportView"
+      ],
       "endpoints": [
         {
           "method": "GET",
@@ -33690,7 +34873,9 @@
           ]
         }
       ],
-      "reads": [],
+      "reads": [
+        "report"
+      ],
       "references": [],
       "declared": []
     },
@@ -33703,7 +34888,38 @@
           "operation": "read"
         }
       ],
-      "operations": [],
+      "operations": [
+        "CancelReportRun",
+        "CannedReports",
+        "CreateReportDashboard",
+        "CreateReportDefinition",
+        "CreateReportSchedule",
+        "CreateReportView",
+        "DeleteReportDashboard",
+        "DeleteReportDefinition",
+        "DeleteReportSchedule",
+        "DeleteReportView",
+        "DeskReportRunCard",
+        "DrillThroughReport",
+        "ForkCannedReport",
+        "PreviewReport",
+        "ReportCatalog",
+        "ReportDashboardById",
+        "ReportDashboards",
+        "ReportDefinitionById",
+        "ReportDefinitionRevisions",
+        "ReportDefinitionsTable",
+        "ReportRunById",
+        "ReportSchedules",
+        "ReportViews",
+        "ResetCannedFork",
+        "RunReport",
+        "SelectOptions",
+        "UpdateReportDashboard",
+        "UpdateReportDefinition",
+        "UpdateReportSchedule",
+        "UpdateReportView"
+      ],
       "endpoints": [
         {
           "method": "GET",
@@ -33771,7 +34987,9 @@
           ]
         }
       ],
-      "reads": [],
+      "reads": [
+        "report"
+      ],
       "references": [],
       "declared": []
     },
@@ -33784,7 +35002,38 @@
           "operation": "read"
         }
       ],
-      "operations": [],
+      "operations": [
+        "CancelReportRun",
+        "CannedReports",
+        "CreateReportDashboard",
+        "CreateReportDefinition",
+        "CreateReportSchedule",
+        "CreateReportView",
+        "DeleteReportDashboard",
+        "DeleteReportDefinition",
+        "DeleteReportSchedule",
+        "DeleteReportView",
+        "DeskReportRunCard",
+        "DrillThroughReport",
+        "ForkCannedReport",
+        "PreviewReport",
+        "ReportCatalog",
+        "ReportDashboardById",
+        "ReportDashboards",
+        "ReportDefinitionById",
+        "ReportDefinitionRevisions",
+        "ReportDefinitionsTable",
+        "ReportRunById",
+        "ReportSchedules",
+        "ReportViews",
+        "ResetCannedFork",
+        "RunReport",
+        "SelectOptions",
+        "UpdateReportDashboard",
+        "UpdateReportDefinition",
+        "UpdateReportSchedule",
+        "UpdateReportView"
+      ],
       "endpoints": [
         {
           "method": "GET",
@@ -33852,7 +35101,9 @@
           ]
         }
       ],
-      "reads": [],
+      "reads": [
+        "report"
+      ],
       "references": [],
       "declared": []
     },
@@ -33867,18 +35118,49 @@
       ],
       "operations": [
         "BulkEditFields",
+        "CancelReportRun",
+        "CannedReports",
+        "CreateReportDashboard",
+        "CreateReportDefinition",
+        "CreateReportSchedule",
+        "CreateReportView",
         "DataTableAggregates",
         "DataTableFacets",
         "DataTableInsightFields",
+        "DeleteReportDashboard",
+        "DeleteReportDefinition",
+        "DeleteReportSchedule",
+        "DeleteReportView",
+        "DeskReportRunCard",
+        "DrillThroughReport",
         "ExportTableView",
+        "ForkCannedReport",
         "MyBulkEdit",
         "MyTableLayout",
         "PreviewBulkEdit",
+        "PreviewReport",
+        "ReportCatalog",
+        "ReportDashboardById",
+        "ReportDashboards",
+        "ReportDefinitionById",
+        "ReportDefinitionRevisions",
+        "ReportDefinitionsTable",
+        "ReportRunById",
+        "ReportRunsTable",
+        "ReportSchedules",
+        "ReportViews",
+        "ResetCannedFork",
         "ResetMyTableLayout",
+        "RunReport",
         "SaveMyTableLayout",
         "ScheduleTableView",
+        "SelectOptions",
         "StartBulkEdit",
-        "UndoMyBulkEdit"
+        "UndoMyBulkEdit",
+        "UpdateReportDashboard",
+        "UpdateReportDefinition",
+        "UpdateReportSchedule",
+        "UpdateReportView"
       ],
       "endpoints": [
         {
@@ -33892,17 +35174,22 @@
           "requires": []
         }
       ],
-      "reads": [],
-      "references": [
+      "reads": [
         "report"
       ],
+      "references": [],
       "declared": []
     },
     {
       "path": "/settings",
       "name": "Settings",
       "requires": [],
-      "operations": [],
+      "operations": [
+        "AIAuditEventTable",
+        "AIAuditExportDownload",
+        "AIAuditExportTable",
+        "SelectOptions"
+      ],
       "endpoints": [
         {
           "method": "DELETE",
@@ -33916,7 +35203,9 @@
         }
       ],
       "reads": [],
-      "references": [],
+      "references": [
+        "user"
+      ],
       "declared": []
     },
     {
@@ -33941,6 +35230,7 @@
         "ResetMyTableLayout",
         "SaveMyTableLayout",
         "ScheduleTableView",
+        "SelectOptions",
         "StartBulkEdit",
         "UndoMyBulkEdit"
       ],
@@ -33986,6 +35276,7 @@
         "ResetMyTableLayout",
         "SaveMyTableLayout",
         "ScheduleTableView",
+        "SelectOptions",
         "StartBulkEdit",
         "UndoMyBulkEdit"
       ],
@@ -34030,6 +35321,7 @@
         "ResetMyTableLayout",
         "SaveMyTableLayout",
         "ScheduleTableView",
+        "SelectOptions",
         "ServiceTypeTable",
         "StartBulkEdit",
         "UndoMyBulkEdit"
@@ -34095,6 +35387,7 @@
         "ResetMyTableLayout",
         "SaveMyTableLayout",
         "ScheduleTableView",
+        "SelectOptions",
         "ShipmentTypeTable",
         "StartBulkEdit",
         "UndoMyBulkEdit"
@@ -34182,6 +35475,7 @@
         "ResetMyTableLayout",
         "SaveMyTableLayout",
         "ScheduleTableView",
+        "SelectOptions",
         "StartBulkEdit",
         "UndoMyBulkEdit",
         "UpdateOrder",
@@ -34234,6 +35528,7 @@
         "ResetMyTableLayout",
         "SaveMyTableLayout",
         "ScheduleTableView",
+        "SelectOptions",
         "StartBulkEdit",
         "UndoMyBulkEdit"
       ],
@@ -34320,6 +35615,7 @@
         "ResetMyTableLayout",
         "SaveMyTableLayout",
         "ScheduleTableView",
+        "SelectOptions",
         "ServiceFailureTable",
         "StartBulkEdit",
         "UndoMyBulkEdit"
@@ -34468,6 +35764,7 @@
         "RevokeCustomerTrackingLink",
         "SaveMyTableLayout",
         "ScheduleTableView",
+        "SelectOptions",
         "ShipmentBoardCapabilities",
         "ShipmentBoardGroups",
         "ShipmentBoardTable",
@@ -35369,6 +36666,8 @@
         "AgentProposalPreviews",
         "AvailableCaptureProfiles",
         "CancelCaptureRequest",
+        "CancelReportRun",
+        "CannedReports",
         "CaptureAgentRelease",
         "CaptureBatch",
         "CaptureBatchCount",
@@ -35380,21 +36679,49 @@
         "CommitMyDecisionNow",
         "ConfirmDeskMemory",
         "CreateCaptureRequest",
+        "CreateReportDashboard",
+        "CreateReportDefinition",
+        "CreateReportSchedule",
+        "CreateReportView",
         "DecideMyPlan",
         "DecideMyProposal",
         "DecideMyProposals",
+        "DeleteReportDashboard",
+        "DeleteReportDefinition",
+        "DeleteReportSchedule",
+        "DeleteReportView",
         "DeskMemoriesByIds",
         "DeskMemorySettings",
+        "DeskReportRunCard",
         "DismissDeskMemory",
+        "DrillThroughReport",
+        "ForkCannedReport",
         "MyCaptureAccess",
         "MyCaptureDevices",
         "MyPlanPreview",
         "MyProposalPreview",
+        "PreviewReport",
         "RecordMyAgentSuggestion",
+        "ReportCatalog",
+        "ReportDashboardById",
+        "ReportDashboards",
+        "ReportDefinitionById",
+        "ReportDefinitionRevisions",
+        "ReportDefinitionsTable",
+        "ReportRunById",
+        "ReportSchedules",
+        "ReportViews",
+        "ResetCannedFork",
         "ReviseDeskMemory",
+        "RunReport",
+        "SelectOptions",
         "SetDeskMemoryStatus",
         "SettleMyAgentSuggestion",
-        "UndoMyDecision"
+        "UndoMyDecision",
+        "UpdateReportDashboard",
+        "UpdateReportDefinition",
+        "UpdateReportSchedule",
+        "UpdateReportView"
       ],
       "endpoints": [
         {
@@ -36275,7 +37602,8 @@
       "reads": [
         "capture_batch",
         "capture_device",
-        "capture_profile"
+        "capture_profile",
+        "report"
       ],
       "references": [
         "user"
@@ -36284,6 +37612,82 @@
     }
   ],
   "operations": [
+    {
+      "name": "AIAgentRoster",
+      "type": "query",
+      "reads": [],
+      "linked": [],
+      "declared": []
+    },
+    {
+      "name": "AIAuditChainStatus",
+      "type": "query",
+      "reads": [],
+      "linked": [],
+      "declared": []
+    },
+    {
+      "name": "AIAuditEventDetail",
+      "type": "query",
+      "reads": [],
+      "linked": [
+        {
+          "kind": "agent_definition",
+          "fields": [
+            "name"
+          ]
+        },
+        {
+          "kind": "user",
+          "fields": [
+            "emailAddress",
+            "name",
+            "photo",
+            "username"
+          ]
+        }
+      ],
+      "declared": [
+        "user"
+      ]
+    },
+    {
+      "name": "AIAuditEventTable",
+      "type": "query",
+      "reads": [],
+      "linked": [],
+      "declared": []
+    },
+    {
+      "name": "AIAuditExportDownload",
+      "type": "mutation",
+      "reads": [],
+      "linked": [],
+      "declared": []
+    },
+    {
+      "name": "AIAuditExportTable",
+      "type": "query",
+      "reads": [],
+      "linked": [
+        {
+          "kind": "user",
+          "fields": [
+            "name",
+            "photo",
+            "username"
+          ]
+        }
+      ],
+      "declared": []
+    },
+    {
+      "name": "AIControlSummary",
+      "type": "query",
+      "reads": [],
+      "linked": [],
+      "declared": []
+    },
     {
       "name": "AICorrectionDetail",
       "type": "query",
@@ -36382,6 +37786,20 @@
       "declared": []
     },
     {
+      "name": "AITuneUps",
+      "type": "query",
+      "reads": [],
+      "linked": [],
+      "declared": []
+    },
+    {
+      "name": "AIUsageDaily",
+      "type": "query",
+      "reads": [],
+      "linked": [],
+      "declared": []
+    },
+    {
       "name": "AIUsageFeatures",
       "type": "query",
       "reads": [],
@@ -36404,6 +37822,13 @@
     },
     {
       "name": "AcceptCarrierInvoiceMatchWithVariance",
+      "type": "mutation",
+      "reads": [],
+      "linked": [],
+      "declared": []
+    },
+    {
+      "name": "AcceptDeskCaseRisk",
       "type": "mutation",
       "reads": [],
       "linked": [],
@@ -36791,6 +38216,13 @@
       "declared": []
     },
     {
+      "name": "AgentActivitySummary",
+      "type": "query",
+      "reads": [],
+      "linked": [],
+      "declared": []
+    },
+    {
       "name": "AgentAnalytics",
       "type": "query",
       "reads": [],
@@ -36827,6 +38259,13 @@
           ]
         }
       ],
+      "declared": []
+    },
+    {
+      "name": "AgentDefinitionCount",
+      "type": "query",
+      "reads": [],
+      "linked": [],
       "declared": []
     },
     {
@@ -36911,6 +38350,85 @@
       "declared": []
     },
     {
+      "name": "AgentLearningStats",
+      "type": "query",
+      "reads": [],
+      "linked": [],
+      "declared": []
+    },
+    {
+      "name": "AgentMemoryCount",
+      "type": "query",
+      "reads": [],
+      "linked": [],
+      "declared": []
+    },
+    {
+      "name": "AgentMemoryTable",
+      "type": "query",
+      "reads": [
+        "agent_memory"
+      ],
+      "linked": [],
+      "declared": []
+    },
+    {
+      "name": "AgentMemoryUpkeep",
+      "type": "query",
+      "reads": [],
+      "linked": [
+        {
+          "kind": "agent_memory",
+          "fields": [
+            "agentDefinitionId",
+            "businessUnitId",
+            "confirmedAt",
+            "content",
+            "createdAt",
+            "createdByUserId",
+            "evidence",
+            "expiresAt",
+            "kind",
+            "lastUsedAt",
+            "organizationId",
+            "ownerUserId",
+            "reflectionId",
+            "replacedBy",
+            "retiredAt",
+            "retiredByUserId",
+            "reviewedAt",
+            "reviewedByUserId",
+            "roleId",
+            "scope",
+            "source",
+            "sourceProposalId",
+            "sourceRunId",
+            "sourceThreadId",
+            "status",
+            "subjectId",
+            "subjectLabel",
+            "subjectType",
+            "supersedes",
+            "supersedesId",
+            "tainted",
+            "taints",
+            "toolName",
+            "updatedAt",
+            "useCount",
+            "version"
+          ]
+        }
+      ],
+      "declared": []
+    },
+    {
+      "name": "AgentMemoryUsage",
+      "type": "query",
+      "reads": [],
+      "linked": [],
+      "declared": []
+    },
+    {
       "name": "AgentOrganizationProfile",
       "type": "query",
       "reads": [],
@@ -36933,6 +38451,20 @@
     },
     {
       "name": "AgentPlanTable",
+      "type": "query",
+      "reads": [],
+      "linked": [],
+      "declared": []
+    },
+    {
+      "name": "AgentPromotionPreview",
+      "type": "query",
+      "reads": [],
+      "linked": [],
+      "declared": []
+    },
+    {
+      "name": "AgentProposalCount",
       "type": "query",
       "reads": [],
       "linked": [],
@@ -36998,6 +38530,13 @@
     },
     {
       "name": "AgentReflections",
+      "type": "query",
+      "reads": [],
+      "linked": [],
+      "declared": []
+    },
+    {
+      "name": "AgentRunCount",
       "type": "query",
       "reads": [],
       "linked": [],
@@ -37180,6 +38719,13 @@
       "declared": []
     },
     {
+      "name": "ApplyAITuneUp",
+      "type": "mutation",
+      "reads": [],
+      "linked": [],
+      "declared": []
+    },
+    {
       "name": "ApplyAccountingInboundChange",
       "type": "mutation",
       "reads": [],
@@ -37243,6 +38789,13 @@
           ]
         }
       ],
+      "declared": []
+    },
+    {
+      "name": "ApproveAgentMemorySuggestion",
+      "type": "mutation",
+      "reads": [],
+      "linked": [],
       "declared": []
     },
     {
@@ -37406,8 +38959,7 @@
           "kind": "user",
           "fields": [
             "name",
-            "profilePicUrl",
-            "thumbnailUrl",
+            "photo",
             "username"
           ]
         },
@@ -37416,7 +38968,7 @@
           "fields": [
             "firstName",
             "lastName",
-            "profilePicUrl",
+            "photo",
             "wholeName"
           ]
         }
@@ -37439,7 +38991,7 @@
           "fields": [
             "firstName",
             "lastName",
-            "profilePicUrl",
+            "photo",
             "wholeName"
           ]
         }
@@ -37626,6 +39178,13 @@
       "declared": []
     },
     {
+      "name": "AssignDeskCase",
+      "type": "mutation",
+      "reads": [],
+      "linked": [],
+      "declared": []
+    },
+    {
       "name": "AssignFuelCard",
       "type": "mutation",
       "reads": [],
@@ -37642,6 +39201,41 @@
             "firstName",
             "lastName",
             "wholeName"
+          ]
+        }
+      ],
+      "declared": []
+    },
+    {
+      "name": "AssignInboundMessages",
+      "type": "mutation",
+      "reads": [],
+      "linked": [
+        {
+          "kind": "customer",
+          "fields": [
+            "code",
+            "name"
+          ]
+        },
+        {
+          "kind": "shipment",
+          "fields": [
+            "bol",
+            "destinationCity",
+            "destinationState",
+            "originCity",
+            "originState",
+            "poNumber",
+            "proNumber"
+          ]
+        },
+        {
+          "kind": "user",
+          "fields": [
+            "name",
+            "photo",
+            "username"
           ]
         }
       ],
@@ -37840,8 +39434,7 @@
           "fields": [
             "emailAddress",
             "name",
-            "profilePicUrl",
-            "thumbnailUrl",
+            "photo",
             "username"
           ]
         }
@@ -37917,8 +39510,7 @@
           "fields": [
             "emailAddress",
             "name",
-            "profilePicUrl",
-            "thumbnailUrl",
+            "photo",
             "username"
           ]
         }
@@ -37936,8 +39528,7 @@
           "kind": "user",
           "fields": [
             "name",
-            "profilePicUrl",
-            "thumbnailUrl"
+            "photo"
           ]
         }
       ],
@@ -37982,8 +39573,7 @@
           "fields": [
             "emailAddress",
             "name",
-            "profilePicUrl",
-            "thumbnailUrl"
+            "photo"
           ]
         }
       ],
@@ -38034,7 +39624,7 @@
             "firstName",
             "fleetCode",
             "lastName",
-            "profilePicUrl"
+            "photo"
           ]
         }
       ],
@@ -38188,6 +39778,57 @@
       "declared": []
     },
     {
+      "name": "BlockInboundSender",
+      "type": "mutation",
+      "reads": [],
+      "linked": [
+        {
+          "kind": "customer",
+          "fields": [
+            "code",
+            "name"
+          ]
+        },
+        {
+          "kind": "inbound_mailbox",
+          "fields": [
+            "address",
+            "name",
+            "provider",
+            "status"
+          ]
+        },
+        {
+          "kind": "shipment",
+          "fields": [
+            "bol",
+            "destinationCity",
+            "destinationState",
+            "originCity",
+            "originState",
+            "poNumber",
+            "proNumber"
+          ]
+        },
+        {
+          "kind": "user",
+          "fields": [
+            "name",
+            "photo",
+            "username"
+          ]
+        }
+      ],
+      "declared": []
+    },
+    {
+      "name": "BringBackDeskCase",
+      "type": "mutation",
+      "reads": [],
+      "linked": [],
+      "declared": []
+    },
+    {
       "name": "BulkAssignTraining",
       "type": "mutation",
       "reads": [],
@@ -38303,6 +39944,13 @@
       "declared": []
     },
     {
+      "name": "CancelReportRun",
+      "type": "mutation",
+      "reads": [],
+      "linked": [],
+      "declared": []
+    },
+    {
       "name": "CancelWorkerChecklist",
       "type": "mutation",
       "reads": [],
@@ -38339,7 +39987,7 @@
           "fields": [
             "firstName",
             "lastName",
-            "profilePicUrl",
+            "photo",
             "wholeName"
           ]
         }
@@ -38384,6 +40032,13 @@
           ]
         }
       ],
+      "declared": []
+    },
+    {
+      "name": "CannedReports",
+      "type": "query",
+      "reads": [],
+      "linked": [],
       "declared": []
     },
     {
@@ -38872,6 +40527,13 @@
       "declared": []
     },
     {
+      "name": "ChooseDeskCaseOption",
+      "type": "mutation",
+      "reads": [],
+      "linked": [],
+      "declared": []
+    },
+    {
       "name": "ClearAccountingMapping",
       "type": "mutation",
       "reads": [],
@@ -38962,6 +40624,13 @@
           ]
         }
       ],
+      "declared": []
+    },
+    {
+      "name": "CommitAgentDecisionNow",
+      "type": "mutation",
+      "reads": [],
+      "linked": [],
       "declared": []
     },
     {
@@ -39093,6 +40762,13 @@
       "declared": []
     },
     {
+      "name": "ConfirmAgentMemory",
+      "type": "mutation",
+      "reads": [],
+      "linked": [],
+      "declared": []
+    },
+    {
       "name": "ConfirmDeskMemory",
       "type": "mutation",
       "reads": [],
@@ -39108,6 +40784,50 @@
           "kind": "user",
           "fields": [
             "name"
+          ]
+        }
+      ],
+      "declared": []
+    },
+    {
+      "name": "CorrectInboundClassification",
+      "type": "mutation",
+      "reads": [],
+      "linked": [
+        {
+          "kind": "customer",
+          "fields": [
+            "code",
+            "name"
+          ]
+        },
+        {
+          "kind": "inbound_mailbox",
+          "fields": [
+            "address",
+            "name",
+            "provider",
+            "status"
+          ]
+        },
+        {
+          "kind": "shipment",
+          "fields": [
+            "bol",
+            "destinationCity",
+            "destinationState",
+            "originCity",
+            "originState",
+            "poNumber",
+            "proNumber"
+          ]
+        },
+        {
+          "kind": "user",
+          "fields": [
+            "name",
+            "photo",
+            "username"
           ]
         }
       ],
@@ -39138,6 +40858,13 @@
     },
     {
       "name": "CreateAgentEvalCase",
+      "type": "mutation",
+      "reads": [],
+      "linked": [],
+      "declared": []
+    },
+    {
+      "name": "CreateAgentMemory",
       "type": "mutation",
       "reads": [],
       "linked": [],
@@ -39341,6 +41068,57 @@
       "declared": []
     },
     {
+      "name": "CreateInboundLoad",
+      "type": "mutation",
+      "reads": [],
+      "linked": [
+        {
+          "kind": "customer",
+          "fields": [
+            "code",
+            "name"
+          ]
+        },
+        {
+          "kind": "inbound_mailbox",
+          "fields": [
+            "address",
+            "name",
+            "provider",
+            "status"
+          ]
+        },
+        {
+          "kind": "shipment",
+          "fields": [
+            "bol",
+            "destinationCity",
+            "destinationState",
+            "originCity",
+            "originState",
+            "poNumber",
+            "proNumber"
+          ]
+        },
+        {
+          "kind": "user",
+          "fields": [
+            "name",
+            "photo",
+            "username"
+          ]
+        }
+      ],
+      "declared": []
+    },
+    {
+      "name": "CreateInboundMailbox",
+      "type": "mutation",
+      "reads": [],
+      "linked": [],
+      "declared": []
+    },
+    {
       "name": "CreateInvoicesFromShipments",
       "type": "mutation",
       "reads": [],
@@ -39375,6 +41153,13 @@
     },
     {
       "name": "CreateMemo",
+      "type": "mutation",
+      "reads": [],
+      "linked": [],
+      "declared": []
+    },
+    {
+      "name": "CreateMyTriageView",
       "type": "mutation",
       "reads": [],
       "linked": [],
@@ -39460,6 +41245,34 @@
       "declared": []
     },
     {
+      "name": "CreateReportDashboard",
+      "type": "mutation",
+      "reads": [],
+      "linked": [],
+      "declared": []
+    },
+    {
+      "name": "CreateReportDefinition",
+      "type": "mutation",
+      "reads": [],
+      "linked": [],
+      "declared": []
+    },
+    {
+      "name": "CreateReportSchedule",
+      "type": "mutation",
+      "reads": [],
+      "linked": [],
+      "declared": []
+    },
+    {
+      "name": "CreateReportView",
+      "type": "mutation",
+      "reads": [],
+      "linked": [],
+      "declared": []
+    },
+    {
       "name": "CreateShiftTemplate",
       "type": "mutation",
       "reads": [],
@@ -39471,6 +41284,38 @@
       "type": "mutation",
       "reads": [],
       "linked": [],
+      "declared": []
+    },
+    {
+      "name": "CreateTriageReplyTemplate",
+      "type": "mutation",
+      "reads": [],
+      "linked": [
+        {
+          "kind": "user",
+          "fields": [
+            "name",
+            "photo",
+            "username"
+          ]
+        }
+      ],
+      "declared": []
+    },
+    {
+      "name": "CreateTriageRule",
+      "type": "mutation",
+      "reads": [],
+      "linked": [
+        {
+          "kind": "user",
+          "fields": [
+            "name",
+            "photo",
+            "username"
+          ]
+        }
+      ],
       "declared": []
     },
     {
@@ -39555,7 +41400,7 @@
           "fields": [
             "firstName",
             "lastName",
-            "profilePicUrl",
+            "photo",
             "wholeName"
           ]
         }
@@ -39773,6 +41618,50 @@
       "declared": []
     },
     {
+      "name": "DecideInboundStops",
+      "type": "mutation",
+      "reads": [],
+      "linked": [
+        {
+          "kind": "customer",
+          "fields": [
+            "code",
+            "name"
+          ]
+        },
+        {
+          "kind": "inbound_mailbox",
+          "fields": [
+            "address",
+            "name",
+            "provider",
+            "status"
+          ]
+        },
+        {
+          "kind": "shipment",
+          "fields": [
+            "bol",
+            "destinationCity",
+            "destinationState",
+            "originCity",
+            "originState",
+            "poNumber",
+            "proNumber"
+          ]
+        },
+        {
+          "kind": "user",
+          "fields": [
+            "name",
+            "photo",
+            "username"
+          ]
+        }
+      ],
+      "declared": []
+    },
+    {
       "name": "DecideLeaveCase",
       "type": "mutation",
       "reads": [],
@@ -39899,6 +41788,13 @@
       "declared": []
     },
     {
+      "name": "DeleteMyTriageView",
+      "type": "mutation",
+      "reads": [],
+      "linked": [],
+      "declared": []
+    },
+    {
       "name": "DeleteOrgHoliday",
       "type": "mutation",
       "reads": [],
@@ -39907,6 +41803,34 @@
     },
     {
       "name": "DeletePerformanceReview",
+      "type": "mutation",
+      "reads": [],
+      "linked": [],
+      "declared": []
+    },
+    {
+      "name": "DeleteReportDashboard",
+      "type": "mutation",
+      "reads": [],
+      "linked": [],
+      "declared": []
+    },
+    {
+      "name": "DeleteReportDefinition",
+      "type": "mutation",
+      "reads": [],
+      "linked": [],
+      "declared": []
+    },
+    {
+      "name": "DeleteReportSchedule",
+      "type": "mutation",
+      "reads": [],
+      "linked": [],
+      "declared": []
+    },
+    {
+      "name": "DeleteReportView",
       "type": "mutation",
       "reads": [],
       "linked": [],
@@ -39928,6 +41852,13 @@
     },
     {
       "name": "DeleteTimeEntry",
+      "type": "mutation",
+      "reads": [],
+      "linked": [],
+      "declared": []
+    },
+    {
+      "name": "DeleteTriageRule",
       "type": "mutation",
       "reads": [],
       "linked": [],
@@ -39959,6 +41890,78 @@
       "type": "mutation",
       "reads": [],
       "linked": [],
+      "declared": []
+    },
+    {
+      "name": "DeskActivity",
+      "type": "query",
+      "reads": [],
+      "linked": [
+        {
+          "kind": "agent_definition",
+          "fields": [
+            "accent",
+            "description",
+            "icon",
+            "name",
+            "template"
+          ]
+        },
+        {
+          "kind": "user",
+          "fields": [
+            "name"
+          ]
+        }
+      ],
+      "declared": []
+    },
+    {
+      "name": "DeskActivityEntry",
+      "type": "query",
+      "reads": [],
+      "linked": [
+        {
+          "kind": "agent_definition",
+          "fields": [
+            "accent",
+            "description",
+            "icon",
+            "name",
+            "template"
+          ]
+        },
+        {
+          "kind": "user",
+          "fields": [
+            "name"
+          ]
+        }
+      ],
+      "declared": []
+    },
+    {
+      "name": "DeskAttention",
+      "type": "query",
+      "reads": [],
+      "linked": [
+        {
+          "kind": "agent_definition",
+          "fields": [
+            "accent",
+            "description",
+            "icon",
+            "name",
+            "template"
+          ]
+        },
+        {
+          "kind": "user",
+          "fields": [
+            "name"
+          ]
+        }
+      ],
       "declared": []
     },
     {
@@ -40033,6 +42036,37 @@
       "reads": [
         "carrier_settlement"
       ],
+      "linked": [],
+      "declared": []
+    },
+    {
+      "name": "DeskCase",
+      "type": "query",
+      "reads": [],
+      "linked": [
+        {
+          "kind": "agent_definition",
+          "fields": [
+            "accent",
+            "description",
+            "icon",
+            "name",
+            "template"
+          ]
+        },
+        {
+          "kind": "user",
+          "fields": [
+            "name"
+          ]
+        }
+      ],
+      "declared": []
+    },
+    {
+      "name": "DeskConversationTable",
+      "type": "query",
+      "reads": [],
       "linked": [],
       "declared": []
     },
@@ -40260,6 +42294,15 @@
       "declared": [
         "fuel_card"
       ]
+    },
+    {
+      "name": "DeskIftaReturnCard",
+      "type": "query",
+      "reads": [
+        "ifta_return"
+      ],
+      "linked": [],
+      "declared": []
     },
     {
       "name": "DeskInvoiceCard",
@@ -40543,6 +42586,15 @@
       "declared": []
     },
     {
+      "name": "DeskReportRunCard",
+      "type": "query",
+      "reads": [
+        "report"
+      ],
+      "linked": [],
+      "declared": []
+    },
+    {
       "name": "DeskServiceFailureCard",
       "type": "query",
       "reads": [
@@ -40682,6 +42734,27 @@
           ]
         }
       ],
+      "declared": []
+    },
+    {
+      "name": "DeskTranscriptExportDownload",
+      "type": "mutation",
+      "reads": [],
+      "linked": [],
+      "declared": []
+    },
+    {
+      "name": "DeskTranscriptExportPreview",
+      "type": "query",
+      "reads": [],
+      "linked": [],
+      "declared": []
+    },
+    {
+      "name": "DeskTranscriptExportTable",
+      "type": "query",
+      "reads": [],
+      "linked": [],
       "declared": []
     },
     {
@@ -40841,6 +42914,94 @@
       "declared": []
     },
     {
+      "name": "DiscardInboundLoad",
+      "type": "mutation",
+      "reads": [],
+      "linked": [
+        {
+          "kind": "customer",
+          "fields": [
+            "code",
+            "name"
+          ]
+        },
+        {
+          "kind": "inbound_mailbox",
+          "fields": [
+            "address",
+            "name",
+            "provider",
+            "status"
+          ]
+        },
+        {
+          "kind": "shipment",
+          "fields": [
+            "bol",
+            "destinationCity",
+            "destinationState",
+            "originCity",
+            "originState",
+            "poNumber",
+            "proNumber"
+          ]
+        },
+        {
+          "kind": "user",
+          "fields": [
+            "name",
+            "photo",
+            "username"
+          ]
+        }
+      ],
+      "declared": []
+    },
+    {
+      "name": "DiscardInboundReplyDraft",
+      "type": "mutation",
+      "reads": [],
+      "linked": [
+        {
+          "kind": "customer",
+          "fields": [
+            "code",
+            "name"
+          ]
+        },
+        {
+          "kind": "inbound_mailbox",
+          "fields": [
+            "address",
+            "name",
+            "provider",
+            "status"
+          ]
+        },
+        {
+          "kind": "shipment",
+          "fields": [
+            "bol",
+            "destinationCity",
+            "destinationState",
+            "originCity",
+            "originState",
+            "poNumber",
+            "proNumber"
+          ]
+        },
+        {
+          "kind": "user",
+          "fields": [
+            "name",
+            "photo",
+            "username"
+          ]
+        }
+      ],
+      "declared": []
+    },
+    {
       "name": "DisconnectAccountingSystem",
       "type": "mutation",
       "reads": [],
@@ -40855,6 +43016,20 @@
       "declared": []
     },
     {
+      "name": "DismissAIProviderFailure",
+      "type": "mutation",
+      "reads": [],
+      "linked": [],
+      "declared": []
+    },
+    {
+      "name": "DismissAITuneUp",
+      "type": "mutation",
+      "reads": [],
+      "linked": [],
+      "declared": []
+    },
+    {
       "name": "DismissAccountingDrift",
       "type": "mutation",
       "reads": [],
@@ -40866,6 +43041,13 @@
           ]
         }
       ],
+      "declared": []
+    },
+    {
+      "name": "DismissAgentMemorySuggestion",
+      "type": "mutation",
+      "reads": [],
+      "linked": [],
       "declared": []
     },
     {
@@ -41168,6 +43350,80 @@
       "declared": []
     },
     {
+      "name": "DraftInboundLoad",
+      "type": "mutation",
+      "reads": [],
+      "linked": [
+        {
+          "kind": "customer",
+          "fields": [
+            "code",
+            "name"
+          ]
+        },
+        {
+          "kind": "inbound_mailbox",
+          "fields": [
+            "address",
+            "name",
+            "provider",
+            "status"
+          ]
+        },
+        {
+          "kind": "shipment",
+          "fields": [
+            "bol",
+            "destinationCity",
+            "destinationState",
+            "originCity",
+            "originState",
+            "poNumber",
+            "proNumber"
+          ]
+        },
+        {
+          "kind": "user",
+          "fields": [
+            "name",
+            "photo",
+            "username"
+          ]
+        }
+      ],
+      "declared": []
+    },
+    {
+      "name": "DraftInboundMany",
+      "type": "mutation",
+      "reads": [],
+      "linked": [],
+      "declared": []
+    },
+    {
+      "name": "DraftInboundReply",
+      "type": "mutation",
+      "reads": [],
+      "linked": [
+        {
+          "kind": "user",
+          "fields": [
+            "name",
+            "photo",
+            "username"
+          ]
+        }
+      ],
+      "declared": []
+    },
+    {
+      "name": "DrillThroughReport",
+      "type": "query",
+      "reads": [],
+      "linked": [],
+      "declared": []
+    },
+    {
       "name": "DriverExpenseDetail",
       "type": "query",
       "reads": [
@@ -41260,6 +43516,12 @@
         "driver_settlement"
       ],
       "linked": [
+        {
+          "kind": "user",
+          "fields": [
+            "name"
+          ]
+        },
         {
           "kind": "worker",
           "fields": [
@@ -41678,8 +43940,7 @@
           "kind": "user",
           "fields": [
             "name",
-            "profilePicUrl",
-            "thumbnailUrl",
+            "photo",
             "username"
           ]
         },
@@ -41688,7 +43949,7 @@
           "fields": [
             "firstName",
             "lastName",
-            "profilePicUrl",
+            "photo",
             "wholeName"
           ]
         }
@@ -41745,8 +44006,7 @@
           "fields": [
             "emailAddress",
             "name",
-            "profilePicUrl",
-            "thumbnailUrl"
+            "photo"
           ]
         }
       ],
@@ -42275,6 +44535,85 @@
       "declared": []
     },
     {
+      "name": "FileInboundAttachment",
+      "type": "mutation",
+      "reads": [],
+      "linked": [
+        {
+          "kind": "customer",
+          "fields": [
+            "code",
+            "name"
+          ]
+        },
+        {
+          "kind": "inbound_mailbox",
+          "fields": [
+            "address",
+            "name",
+            "provider",
+            "status"
+          ]
+        },
+        {
+          "kind": "shipment",
+          "fields": [
+            "bol",
+            "destinationCity",
+            "destinationState",
+            "originCity",
+            "originState",
+            "poNumber",
+            "proNumber"
+          ]
+        },
+        {
+          "kind": "user",
+          "fields": [
+            "name",
+            "photo",
+            "username"
+          ]
+        }
+      ],
+      "declared": []
+    },
+    {
+      "name": "FileInboundMany",
+      "type": "mutation",
+      "reads": [],
+      "linked": [
+        {
+          "kind": "customer",
+          "fields": [
+            "code",
+            "name"
+          ]
+        },
+        {
+          "kind": "shipment",
+          "fields": [
+            "bol",
+            "destinationCity",
+            "destinationState",
+            "originCity",
+            "originState",
+            "poNumber",
+            "proNumber"
+          ]
+        },
+        {
+          "kind": "user",
+          "fields": [
+            "name",
+            "photo",
+            "username"
+          ]
+        }
+      ],
+      "declared": []
+    },
+    {
       "name": "FinalizeDotRandomDraw",
       "type": "mutation",
       "reads": [],
@@ -42340,6 +44679,50 @@
       ]
     },
     {
+      "name": "FlagInboundFact",
+      "type": "mutation",
+      "reads": [],
+      "linked": [
+        {
+          "kind": "customer",
+          "fields": [
+            "code",
+            "name"
+          ]
+        },
+        {
+          "kind": "inbound_mailbox",
+          "fields": [
+            "address",
+            "name",
+            "provider",
+            "status"
+          ]
+        },
+        {
+          "kind": "shipment",
+          "fields": [
+            "bol",
+            "destinationCity",
+            "destinationState",
+            "originCity",
+            "originState",
+            "poNumber",
+            "proNumber"
+          ]
+        },
+        {
+          "kind": "user",
+          "fields": [
+            "name",
+            "photo",
+            "username"
+          ]
+        }
+      ],
+      "declared": []
+    },
+    {
       "name": "FleetCodeTable",
       "type": "query",
       "reads": [
@@ -42363,6 +44746,13 @@
       "declared": []
     },
     {
+      "name": "ForkCannedReport",
+      "type": "mutation",
+      "reads": [],
+      "linked": [],
+      "declared": []
+    },
+    {
       "name": "FormulaLibrary",
       "type": "query",
       "reads": [
@@ -42373,7 +44763,7 @@
           "kind": "user",
           "fields": [
             "name",
-            "profilePicUrl",
+            "photo",
             "username"
           ]
         }
@@ -42619,6 +45009,52 @@
       "declared": []
     },
     {
+      "name": "HandOffTriage",
+      "type": "mutation",
+      "reads": [],
+      "linked": [
+        {
+          "kind": "user",
+          "fields": [
+            "name",
+            "photo",
+            "username"
+          ]
+        }
+      ],
+      "declared": []
+    },
+    {
+      "name": "HandOffWatchtowerItem",
+      "type": "mutation",
+      "reads": [],
+      "linked": [
+        {
+          "kind": "agent_definition",
+          "fields": [
+            "accent",
+            "description",
+            "icon",
+            "name",
+            "template"
+          ]
+        },
+        {
+          "kind": "agent_run",
+          "fields": []
+        },
+        {
+          "kind": "user",
+          "fields": [
+            "name"
+          ]
+        }
+      ],
+      "declared": [
+        "agent_definition"
+      ]
+    },
+    {
       "name": "HazardousMaterialTable",
       "type": "query",
       "reads": [
@@ -42645,6 +45081,13 @@
     },
     {
       "name": "HoldDriverPayEvent",
+      "type": "mutation",
+      "reads": [],
+      "linked": [],
+      "declared": []
+    },
+    {
+      "name": "HoldDriverSettlement",
       "type": "mutation",
       "reads": [],
       "linked": [],
@@ -42738,6 +45181,165 @@
       "type": "mutation",
       "reads": [],
       "linked": [],
+      "declared": []
+    },
+    {
+      "name": "InboundMailboxes",
+      "type": "query",
+      "reads": [
+        "inbound_mailbox"
+      ],
+      "linked": [],
+      "declared": []
+    },
+    {
+      "name": "InboundMessage",
+      "type": "query",
+      "reads": [
+        "inbound_message"
+      ],
+      "linked": [
+        {
+          "kind": "customer",
+          "fields": [
+            "code",
+            "name"
+          ]
+        },
+        {
+          "kind": "inbound_mailbox",
+          "fields": [
+            "address",
+            "name",
+            "provider",
+            "status"
+          ]
+        },
+        {
+          "kind": "shipment",
+          "fields": [
+            "bol",
+            "destinationCity",
+            "destinationState",
+            "originCity",
+            "originState",
+            "poNumber",
+            "proNumber"
+          ]
+        },
+        {
+          "kind": "user",
+          "fields": [
+            "name",
+            "photo",
+            "username"
+          ]
+        }
+      ],
+      "declared": []
+    },
+    {
+      "name": "InboundMessageCounts",
+      "type": "query",
+      "reads": [],
+      "linked": [],
+      "declared": []
+    },
+    {
+      "name": "InboundMessages",
+      "type": "query",
+      "reads": [
+        "inbound_message"
+      ],
+      "linked": [
+        {
+          "kind": "customer",
+          "fields": [
+            "code",
+            "name"
+          ]
+        },
+        {
+          "kind": "shipment",
+          "fields": [
+            "bol",
+            "destinationCity",
+            "destinationState",
+            "originCity",
+            "originState",
+            "poNumber",
+            "proNumber"
+          ]
+        },
+        {
+          "kind": "user",
+          "fields": [
+            "name",
+            "photo",
+            "username"
+          ]
+        }
+      ],
+      "declared": []
+    },
+    {
+      "name": "InboundReplyAttachables",
+      "type": "query",
+      "reads": [],
+      "linked": [],
+      "declared": []
+    },
+    {
+      "name": "InboundSenderProfile",
+      "type": "query",
+      "reads": [],
+      "linked": [
+        {
+          "kind": "user",
+          "fields": [
+            "name",
+            "photo",
+            "username"
+          ]
+        }
+      ],
+      "declared": []
+    },
+    {
+      "name": "InboundThread",
+      "type": "query",
+      "reads": [
+        "inbound_message"
+      ],
+      "linked": [
+        {
+          "kind": "customer",
+          "fields": [
+            "code",
+            "name"
+          ]
+        },
+        {
+          "kind": "shipment",
+          "fields": [
+            "bol",
+            "destinationCity",
+            "destinationState",
+            "originCity",
+            "originState",
+            "poNumber",
+            "proNumber"
+          ]
+        },
+        {
+          "kind": "user",
+          "fields": [
+            "name",
+            "photo",
+            "username"
+          ]
+        }
+      ],
       "declared": []
     },
     {
@@ -43114,6 +45716,50 @@
       "declared": []
     },
     {
+      "name": "LinkInboundMessage",
+      "type": "mutation",
+      "reads": [],
+      "linked": [
+        {
+          "kind": "customer",
+          "fields": [
+            "code",
+            "name"
+          ]
+        },
+        {
+          "kind": "inbound_mailbox",
+          "fields": [
+            "address",
+            "name",
+            "provider",
+            "status"
+          ]
+        },
+        {
+          "kind": "shipment",
+          "fields": [
+            "bol",
+            "destinationCity",
+            "destinationState",
+            "originCity",
+            "originState",
+            "poNumber",
+            "proNumber"
+          ]
+        },
+        {
+          "kind": "user",
+          "fields": [
+            "name",
+            "photo",
+            "username"
+          ]
+        }
+      ],
+      "declared": []
+    },
+    {
       "name": "LiveTenderByMove",
       "type": "query",
       "reads": [
@@ -43164,6 +45810,50 @@
       "declared": []
     },
     {
+      "name": "LogInboundException",
+      "type": "mutation",
+      "reads": [],
+      "linked": [
+        {
+          "kind": "customer",
+          "fields": [
+            "code",
+            "name"
+          ]
+        },
+        {
+          "kind": "inbound_mailbox",
+          "fields": [
+            "address",
+            "name",
+            "provider",
+            "status"
+          ]
+        },
+        {
+          "kind": "shipment",
+          "fields": [
+            "bol",
+            "destinationCity",
+            "destinationState",
+            "originCity",
+            "originState",
+            "poNumber",
+            "proNumber"
+          ]
+        },
+        {
+          "kind": "user",
+          "fields": [
+            "name",
+            "photo",
+            "username"
+          ]
+        }
+      ],
+      "declared": []
+    },
+    {
       "name": "MFAAuthenticatorsTable",
       "type": "query",
       "reads": [
@@ -43175,8 +45865,7 @@
           "fields": [
             "emailAddress",
             "name",
-            "profilePicUrl",
-            "thumbnailUrl"
+            "photo"
           ]
         }
       ],
@@ -43243,6 +45932,7 @@
           "fields": [
             "firstName",
             "lastName",
+            "photo",
             "wholeName"
           ]
         }
@@ -43306,6 +45996,32 @@
         }
       ],
       "declared": []
+    },
+    {
+      "name": "MarkWatchtowerItemSeen",
+      "type": "mutation",
+      "reads": [],
+      "linked": [
+        {
+          "kind": "agent_definition",
+          "fields": [
+            "accent",
+            "description",
+            "icon",
+            "name",
+            "template"
+          ]
+        },
+        {
+          "kind": "user",
+          "fields": [
+            "name"
+          ]
+        }
+      ],
+      "declared": [
+        "agent_definition"
+      ]
     },
     {
       "name": "MarkWorkerChecklistItemNotApplicable",
@@ -43432,7 +46148,21 @@
       "declared": []
     },
     {
+      "name": "MyTriageViews",
+      "type": "query",
+      "reads": [],
+      "linked": [],
+      "declared": []
+    },
+    {
       "name": "NotifyShipmentDelay",
+      "type": "mutation",
+      "reads": [],
+      "linked": [],
+      "declared": []
+    },
+    {
+      "name": "OpenDeskConversation",
       "type": "mutation",
       "reads": [],
       "linked": [],
@@ -43477,7 +46207,7 @@
             "firstName",
             "fleetCode",
             "lastName",
-            "profilePicUrl"
+            "photo"
           ]
         }
       ],
@@ -43545,7 +46275,7 @@
           "fields": [
             "firstName",
             "lastName",
-            "profilePicUrl"
+            "photo"
           ]
         }
       ],
@@ -43840,6 +46570,13 @@
       "declared": []
     },
     {
+      "name": "PreviewReport",
+      "type": "query",
+      "reads": [],
+      "linked": [],
+      "declared": []
+    },
+    {
       "name": "PreviewWorkerEmploymentEvent",
       "type": "query",
       "reads": [],
@@ -43855,7 +46592,8 @@
           "kind": "worker",
           "fields": [
             "firstName",
-            "lastName"
+            "lastName",
+            "photo"
           ]
         }
       ],
@@ -43878,7 +46616,7 @@
           "fields": [
             "firstName",
             "lastName",
-            "profilePicUrl",
+            "photo",
             "status",
             "wholeName"
           ]
@@ -43892,6 +46630,13 @@
       "reads": [
         "pto_policy"
       ],
+      "linked": [],
+      "declared": []
+    },
+    {
+      "name": "PutAwayDeskCase",
+      "type": "mutation",
+      "reads": [],
       "linked": [],
       "declared": []
     },
@@ -43915,7 +46660,7 @@
           "kind": "user",
           "fields": [
             "name",
-            "profilePicUrl",
+            "photo",
             "username"
           ]
         }
@@ -43944,6 +46689,13 @@
       "reads": [
         "rate_zone"
       ],
+      "linked": [],
+      "declared": []
+    },
+    {
+      "name": "ReadUnreadInboundMessages",
+      "type": "mutation",
+      "reads": [],
       "linked": [],
       "declared": []
     },
@@ -44125,8 +46877,7 @@
           "fields": [
             "emailAddress",
             "name",
-            "profilePicUrl",
-            "thumbnailUrl",
+            "photo",
             "username"
           ]
         }
@@ -44340,7 +47091,7 @@
           "fields": [
             "firstName",
             "lastName",
-            "profilePicUrl",
+            "photo",
             "wholeName"
           ]
         }
@@ -44369,7 +47120,21 @@
       "declared": []
     },
     {
+      "name": "ReleaseDeskCase",
+      "type": "mutation",
+      "reads": [],
+      "linked": [],
+      "declared": []
+    },
+    {
       "name": "ReleaseDriverPayEvent",
+      "type": "mutation",
+      "reads": [],
+      "linked": [],
+      "declared": []
+    },
+    {
+      "name": "ReleaseDriverSettlementHold",
       "type": "mutation",
       "reads": [],
       "linked": [],
@@ -44463,6 +47228,20 @@
       "declared": []
     },
     {
+      "name": "RenameMyTriageView",
+      "type": "mutation",
+      "reads": [],
+      "linked": [],
+      "declared": []
+    },
+    {
+      "name": "RenderTriageReplyTemplate",
+      "type": "query",
+      "reads": [],
+      "linked": [],
+      "declared": []
+    },
+    {
       "name": "RenewAccountingCertificate",
       "type": "mutation",
       "reads": [],
@@ -44501,6 +47280,85 @@
           "kind": "user",
           "fields": [
             "name"
+          ]
+        }
+      ],
+      "declared": []
+    },
+    {
+      "name": "ReopenInboundConflict",
+      "type": "mutation",
+      "reads": [],
+      "linked": [
+        {
+          "kind": "customer",
+          "fields": [
+            "code",
+            "name"
+          ]
+        },
+        {
+          "kind": "inbound_mailbox",
+          "fields": [
+            "address",
+            "name",
+            "provider",
+            "status"
+          ]
+        },
+        {
+          "kind": "shipment",
+          "fields": [
+            "bol",
+            "destinationCity",
+            "destinationState",
+            "originCity",
+            "originState",
+            "poNumber",
+            "proNumber"
+          ]
+        },
+        {
+          "kind": "user",
+          "fields": [
+            "name",
+            "photo",
+            "username"
+          ]
+        }
+      ],
+      "declared": []
+    },
+    {
+      "name": "ReopenInboundMessages",
+      "type": "mutation",
+      "reads": [],
+      "linked": [
+        {
+          "kind": "customer",
+          "fields": [
+            "code",
+            "name"
+          ]
+        },
+        {
+          "kind": "shipment",
+          "fields": [
+            "bol",
+            "destinationCity",
+            "destinationState",
+            "originCity",
+            "originState",
+            "poNumber",
+            "proNumber"
+          ]
+        },
+        {
+          "kind": "user",
+          "fields": [
+            "name",
+            "photo",
+            "username"
           ]
         }
       ],
@@ -44586,6 +47444,105 @@
       "declared": []
     },
     {
+      "name": "ReportCatalog",
+      "type": "query",
+      "reads": [],
+      "linked": [],
+      "declared": []
+    },
+    {
+      "name": "ReportDashboardById",
+      "type": "query",
+      "reads": [],
+      "linked": [],
+      "declared": []
+    },
+    {
+      "name": "ReportDashboards",
+      "type": "query",
+      "reads": [],
+      "linked": [],
+      "declared": []
+    },
+    {
+      "name": "ReportDefinitionById",
+      "type": "query",
+      "reads": [],
+      "linked": [],
+      "declared": []
+    },
+    {
+      "name": "ReportDefinitionOptions",
+      "type": "query",
+      "reads": [],
+      "linked": [],
+      "declared": []
+    },
+    {
+      "name": "ReportDefinitionRevisions",
+      "type": "query",
+      "reads": [],
+      "linked": [],
+      "declared": []
+    },
+    {
+      "name": "ReportDefinitionsTable",
+      "type": "query",
+      "reads": [],
+      "linked": [],
+      "declared": []
+    },
+    {
+      "name": "ReportRunById",
+      "type": "query",
+      "reads": [
+        "report"
+      ],
+      "linked": [],
+      "declared": []
+    },
+    {
+      "name": "ReportRunsTable",
+      "type": "query",
+      "reads": [
+        "report"
+      ],
+      "linked": [],
+      "declared": []
+    },
+    {
+      "name": "ReportSchedules",
+      "type": "query",
+      "reads": [
+        "report"
+      ],
+      "linked": [],
+      "declared": []
+    },
+    {
+      "name": "ReportViews",
+      "type": "query",
+      "reads": [],
+      "linked": [],
+      "declared": []
+    },
+    {
+      "name": "RequestAIAuditExport",
+      "type": "mutation",
+      "reads": [],
+      "linked": [
+        {
+          "kind": "user",
+          "fields": [
+            "name",
+            "photo",
+            "username"
+          ]
+        }
+      ],
+      "declared": []
+    },
+    {
       "name": "RequestAccountingBackfill",
       "type": "mutation",
       "reads": [],
@@ -44594,6 +47551,13 @@
     },
     {
       "name": "RequestAuditExport",
+      "type": "mutation",
+      "reads": [],
+      "linked": [],
+      "declared": []
+    },
+    {
+      "name": "RequestDeskTranscriptExport",
       "type": "mutation",
       "reads": [],
       "linked": [],
@@ -44639,6 +47603,13 @@
           ]
         }
       ],
+      "declared": []
+    },
+    {
+      "name": "ResetCannedFork",
+      "type": "mutation",
+      "reads": [],
+      "linked": [],
       "declared": []
     },
     {
@@ -44714,6 +47685,50 @@
       "declared": []
     },
     {
+      "name": "ResolveInboundConflict",
+      "type": "mutation",
+      "reads": [],
+      "linked": [
+        {
+          "kind": "customer",
+          "fields": [
+            "code",
+            "name"
+          ]
+        },
+        {
+          "kind": "inbound_mailbox",
+          "fields": [
+            "address",
+            "name",
+            "provider",
+            "status"
+          ]
+        },
+        {
+          "kind": "shipment",
+          "fields": [
+            "bol",
+            "destinationCity",
+            "destinationState",
+            "originCity",
+            "originState",
+            "poNumber",
+            "proNumber"
+          ]
+        },
+        {
+          "kind": "user",
+          "fields": [
+            "name",
+            "photo",
+            "username"
+          ]
+        }
+      ],
+      "declared": []
+    },
+    {
       "name": "ResolveInvoiceDispute",
       "type": "mutation",
       "reads": [],
@@ -44728,8 +47743,48 @@
       "declared": []
     },
     {
+      "name": "ResolveWatchtowerItem",
+      "type": "mutation",
+      "reads": [],
+      "linked": [
+        {
+          "kind": "agent_definition",
+          "fields": [
+            "accent",
+            "description",
+            "icon",
+            "name",
+            "template"
+          ]
+        },
+        {
+          "kind": "user",
+          "fields": [
+            "name"
+          ]
+        }
+      ],
+      "declared": [
+        "agent_definition"
+      ]
+    },
+    {
       "name": "ResolvedCostProfilePage",
       "type": "query",
+      "reads": [],
+      "linked": [],
+      "declared": []
+    },
+    {
+      "name": "RestoreAIProviderFailure",
+      "type": "mutation",
+      "reads": [],
+      "linked": [],
+      "declared": []
+    },
+    {
+      "name": "RestoreAITuneUp",
+      "type": "mutation",
       "reads": [],
       "linked": [],
       "declared": []
@@ -44864,10 +47919,52 @@
       "declared": []
     },
     {
+      "name": "ReviewAgentMemory",
+      "type": "mutation",
+      "reads": [],
+      "linked": [],
+      "declared": []
+    },
+    {
       "name": "ReviewDriverExpense",
       "type": "mutation",
       "reads": [],
       "linked": [],
+      "declared": []
+    },
+    {
+      "name": "ReviewInboundMessages",
+      "type": "mutation",
+      "reads": [],
+      "linked": [
+        {
+          "kind": "customer",
+          "fields": [
+            "code",
+            "name"
+          ]
+        },
+        {
+          "kind": "shipment",
+          "fields": [
+            "bol",
+            "destinationCity",
+            "destinationState",
+            "originCity",
+            "originState",
+            "poNumber",
+            "proNumber"
+          ]
+        },
+        {
+          "kind": "user",
+          "fields": [
+            "name",
+            "photo",
+            "username"
+          ]
+        }
+      ],
       "declared": []
     },
     {
@@ -44948,6 +48045,13 @@
       "declared": []
     },
     {
+      "name": "RewordWatchtowerPlay",
+      "type": "mutation",
+      "reads": [],
+      "linked": [],
+      "declared": []
+    },
+    {
       "name": "RiskDecisionsTable",
       "type": "query",
       "reads": [
@@ -44959,8 +48063,7 @@
           "fields": [
             "emailAddress",
             "name",
-            "profilePicUrl",
-            "thumbnailUrl"
+            "photo"
           ]
         }
       ],
@@ -44987,6 +48090,13 @@
     {
       "name": "Rota",
       "type": "query",
+      "reads": [],
+      "linked": [],
+      "declared": []
+    },
+    {
+      "name": "RotateInboundMailboxToken",
+      "type": "mutation",
       "reads": [],
       "linked": [],
       "declared": []
@@ -45062,6 +48172,13 @@
       "declared": []
     },
     {
+      "name": "RunReport",
+      "type": "mutation",
+      "reads": [],
+      "linked": [],
+      "declared": []
+    },
+    {
       "name": "SCIMGroupRoleMappingsTable",
       "type": "query",
       "reads": [],
@@ -45118,6 +48235,22 @@
       "declared": []
     },
     {
+      "name": "SaveInboundReplyDraft",
+      "type": "mutation",
+      "reads": [],
+      "linked": [
+        {
+          "kind": "user",
+          "fields": [
+            "name",
+            "photo",
+            "username"
+          ]
+        }
+      ],
+      "declared": []
+    },
+    {
       "name": "SaveMyTableLayout",
       "type": "mutation",
       "reads": [],
@@ -45151,6 +48284,13 @@
       "declared": []
     },
     {
+      "name": "SelectOptions",
+      "type": "query",
+      "reads": [],
+      "linked": [],
+      "declared": []
+    },
+    {
       "name": "SendFactoringNoa",
       "type": "mutation",
       "reads": [],
@@ -45173,11 +48313,60 @@
       "declared": []
     },
     {
+      "name": "SendInboundMailboxTest",
+      "type": "mutation",
+      "reads": [],
+      "linked": [],
+      "declared": []
+    },
+    {
+      "name": "SendInboundReply",
+      "type": "mutation",
+      "reads": [],
+      "linked": [
+        {
+          "kind": "user",
+          "fields": [
+            "name",
+            "photo",
+            "username"
+          ]
+        }
+      ],
+      "declared": []
+    },
+    {
       "name": "SendInvoiceEdi",
       "type": "mutation",
       "reads": [],
       "linked": [],
       "declared": []
+    },
+    {
+      "name": "SendWatchtowerPlay",
+      "type": "mutation",
+      "reads": [],
+      "linked": [
+        {
+          "kind": "agent_definition",
+          "fields": [
+            "accent",
+            "description",
+            "icon",
+            "name",
+            "template"
+          ]
+        },
+        {
+          "kind": "user",
+          "fields": [
+            "name"
+          ]
+        }
+      ],
+      "declared": [
+        "agent_definition"
+      ]
     },
     {
       "name": "ServiceFailureReasonCodeTable",
@@ -45252,6 +48441,13 @@
       "declared": []
     },
     {
+      "name": "SetAgentMemoryStatus",
+      "type": "mutation",
+      "reads": [],
+      "linked": [],
+      "declared": []
+    },
+    {
       "name": "SetCarrierMonitoring",
       "type": "mutation",
       "reads": [],
@@ -45260,6 +48456,20 @@
     },
     {
       "name": "SetDeskMemoryStatus",
+      "type": "mutation",
+      "reads": [],
+      "linked": [],
+      "declared": []
+    },
+    {
+      "name": "SetInboundMailboxApiKey",
+      "type": "mutation",
+      "reads": [],
+      "linked": [],
+      "declared": []
+    },
+    {
+      "name": "SetInboundMailboxSigningSecret",
       "type": "mutation",
       "reads": [],
       "linked": [],
@@ -45299,6 +48509,22 @@
       "type": "mutation",
       "reads": [],
       "linked": [],
+      "declared": []
+    },
+    {
+      "name": "SetTriageRuleEnabled",
+      "type": "mutation",
+      "reads": [],
+      "linked": [
+        {
+          "kind": "user",
+          "fields": [
+            "name",
+            "photo",
+            "username"
+          ]
+        }
+      ],
       "declared": []
     },
     {
@@ -45432,8 +48658,7 @@
           "fields": [
             "emailAddress",
             "name",
-            "profilePicUrl",
-            "thumbnailUrl",
+            "photo",
             "username"
           ]
         }
@@ -45451,7 +48676,8 @@
           "kind": "worker",
           "fields": [
             "firstName",
-            "lastName"
+            "lastName",
+            "photo"
           ]
         }
       ],
@@ -45532,7 +48758,8 @@
           "kind": "worker",
           "fields": [
             "firstName",
-            "lastName"
+            "lastName",
+            "photo"
           ]
         }
       ],
@@ -45695,8 +48922,7 @@
           "kind": "user",
           "fields": [
             "name",
-            "profilePicUrl",
-            "thumbnailUrl",
+            "photo",
             "username"
           ]
         },
@@ -45705,7 +48931,7 @@
           "fields": [
             "firstName",
             "lastName",
-            "profilePicUrl",
+            "photo",
             "wholeName"
           ]
         }
@@ -45822,6 +49048,7 @@
           "fields": [
             "firstName",
             "lastName",
+            "photo",
             "wholeName"
           ]
         }
@@ -45880,6 +49107,67 @@
         }
       ],
       "declared": []
+    },
+    {
+      "name": "SnoozeInboundMessages",
+      "type": "mutation",
+      "reads": [],
+      "linked": [
+        {
+          "kind": "customer",
+          "fields": [
+            "code",
+            "name"
+          ]
+        },
+        {
+          "kind": "shipment",
+          "fields": [
+            "bol",
+            "destinationCity",
+            "destinationState",
+            "originCity",
+            "originState",
+            "poNumber",
+            "proNumber"
+          ]
+        },
+        {
+          "kind": "user",
+          "fields": [
+            "name",
+            "photo",
+            "username"
+          ]
+        }
+      ],
+      "declared": []
+    },
+    {
+      "name": "SnoozeWatchtowerItem",
+      "type": "mutation",
+      "reads": [],
+      "linked": [
+        {
+          "kind": "agent_definition",
+          "fields": [
+            "accent",
+            "description",
+            "icon",
+            "name",
+            "template"
+          ]
+        },
+        {
+          "kind": "user",
+          "fields": [
+            "name"
+          ]
+        }
+      ],
+      "declared": [
+        "agent_definition"
+      ]
     },
     {
       "name": "StageFactoringRemittance",
@@ -45956,6 +49244,50 @@
           "fields": [
             "code",
             "name"
+          ]
+        }
+      ],
+      "declared": []
+    },
+    {
+      "name": "StopWaitingForInboundReply",
+      "type": "mutation",
+      "reads": [],
+      "linked": [
+        {
+          "kind": "customer",
+          "fields": [
+            "code",
+            "name"
+          ]
+        },
+        {
+          "kind": "inbound_mailbox",
+          "fields": [
+            "address",
+            "name",
+            "provider",
+            "status"
+          ]
+        },
+        {
+          "kind": "shipment",
+          "fields": [
+            "bol",
+            "destinationCity",
+            "destinationState",
+            "originCity",
+            "originState",
+            "poNumber",
+            "proNumber"
+          ]
+        },
+        {
+          "kind": "user",
+          "fields": [
+            "name",
+            "photo",
+            "username"
           ]
         }
       ],
@@ -46156,6 +49488,7 @@
           "fields": [
             "firstName",
             "lastName",
+            "photo",
             "type"
           ]
         }
@@ -46260,6 +49593,173 @@
       "type": "mutation",
       "reads": [],
       "linked": [],
+      "declared": []
+    },
+    {
+      "name": "TriageAssignees",
+      "type": "query",
+      "reads": [
+        "inbound_message"
+      ],
+      "linked": [
+        {
+          "kind": "user",
+          "fields": [
+            "name",
+            "photo",
+            "username"
+          ]
+        }
+      ],
+      "declared": []
+    },
+    {
+      "name": "TriageBriefing",
+      "type": "query",
+      "reads": [],
+      "linked": [
+        {
+          "kind": "inbound_mailbox",
+          "fields": [
+            "address",
+            "name",
+            "provider",
+            "status"
+          ]
+        },
+        {
+          "kind": "shipment",
+          "fields": [
+            "bol",
+            "destinationCity",
+            "destinationState",
+            "originCity",
+            "originState",
+            "poNumber",
+            "proNumber"
+          ]
+        },
+        {
+          "kind": "user",
+          "fields": [
+            "name",
+            "photo",
+            "username"
+          ]
+        }
+      ],
+      "declared": []
+    },
+    {
+      "name": "TriageCustomerPeek",
+      "type": "query",
+      "reads": [],
+      "linked": [],
+      "declared": []
+    },
+    {
+      "name": "TriageReplyTemplates",
+      "type": "query",
+      "reads": [],
+      "linked": [
+        {
+          "kind": "user",
+          "fields": [
+            "name",
+            "photo",
+            "username"
+          ]
+        }
+      ],
+      "declared": []
+    },
+    {
+      "name": "TriageResponseTargets",
+      "type": "query",
+      "reads": [],
+      "linked": [],
+      "declared": []
+    },
+    {
+      "name": "TriageRuleMatches",
+      "type": "query",
+      "reads": [],
+      "linked": [],
+      "declared": []
+    },
+    {
+      "name": "TriageRulePreview",
+      "type": "query",
+      "reads": [],
+      "linked": [],
+      "declared": []
+    },
+    {
+      "name": "TriageRules",
+      "type": "query",
+      "reads": [],
+      "linked": [
+        {
+          "kind": "user",
+          "fields": [
+            "name",
+            "photo",
+            "username"
+          ]
+        }
+      ],
+      "declared": []
+    },
+    {
+      "name": "TriageSenderDomains",
+      "type": "query",
+      "reads": [],
+      "linked": [],
+      "declared": []
+    },
+    {
+      "name": "TriageSettings",
+      "type": "query",
+      "reads": [
+        "inbound_message"
+      ],
+      "linked": [
+        {
+          "kind": "user",
+          "fields": [
+            "name",
+            "photo",
+            "username"
+          ]
+        }
+      ],
+      "declared": []
+    },
+    {
+      "name": "TriageShipmentPeek",
+      "type": "query",
+      "reads": [],
+      "linked": [],
+      "declared": []
+    },
+    {
+      "name": "TriageStopTimes",
+      "type": "query",
+      "reads": [],
+      "linked": [
+        {
+          "kind": "shipment",
+          "fields": [
+            "bol",
+            "destinationCity",
+            "destinationState",
+            "originCity",
+            "originState",
+            "poNumber",
+            "proNumber"
+          ]
+        }
+      ],
       "declared": []
     },
     {
@@ -46391,8 +49891,7 @@
           "kind": "user",
           "fields": [
             "name",
-            "profilePicUrl",
-            "thumbnailUrl",
+            "photo",
             "username"
           ]
         },
@@ -46401,7 +49900,7 @@
           "fields": [
             "firstName",
             "lastName",
-            "profilePicUrl",
+            "photo",
             "wholeName"
           ]
         }
@@ -46410,6 +49909,13 @@
     },
     {
       "name": "UncertifyOshaSummary",
+      "type": "mutation",
+      "reads": [],
+      "linked": [],
+      "declared": []
+    },
+    {
+      "name": "UndoAgentDecision",
       "type": "mutation",
       "reads": [],
       "linked": [],
@@ -46434,6 +49940,94 @@
       "type": "mutation",
       "reads": [],
       "linked": [],
+      "declared": []
+    },
+    {
+      "name": "UnfileInboundAttachment",
+      "type": "mutation",
+      "reads": [],
+      "linked": [
+        {
+          "kind": "customer",
+          "fields": [
+            "code",
+            "name"
+          ]
+        },
+        {
+          "kind": "inbound_mailbox",
+          "fields": [
+            "address",
+            "name",
+            "provider",
+            "status"
+          ]
+        },
+        {
+          "kind": "shipment",
+          "fields": [
+            "bol",
+            "destinationCity",
+            "destinationState",
+            "originCity",
+            "originState",
+            "poNumber",
+            "proNumber"
+          ]
+        },
+        {
+          "kind": "user",
+          "fields": [
+            "name",
+            "photo",
+            "username"
+          ]
+        }
+      ],
+      "declared": []
+    },
+    {
+      "name": "UnlinkInboundMessage",
+      "type": "mutation",
+      "reads": [],
+      "linked": [
+        {
+          "kind": "customer",
+          "fields": [
+            "code",
+            "name"
+          ]
+        },
+        {
+          "kind": "inbound_mailbox",
+          "fields": [
+            "address",
+            "name",
+            "provider",
+            "status"
+          ]
+        },
+        {
+          "kind": "shipment",
+          "fields": [
+            "bol",
+            "destinationCity",
+            "destinationState",
+            "originCity",
+            "originState",
+            "poNumber",
+            "proNumber"
+          ]
+        },
+        {
+          "kind": "user",
+          "fields": [
+            "name",
+            "photo",
+            "username"
+          ]
+        }
+      ],
       "declared": []
     },
     {
@@ -46462,8 +50056,7 @@
           "fields": [
             "emailAddress",
             "name",
-            "profilePicUrl",
-            "thumbnailUrl",
+            "photo",
             "username"
           ]
         }
@@ -46488,7 +50081,7 @@
           "fields": [
             "firstName",
             "lastName",
-            "profilePicUrl",
+            "photo",
             "wholeName"
           ]
         }
@@ -46525,6 +50118,13 @@
     },
     {
       "name": "UpdateAgentEvalCase",
+      "type": "mutation",
+      "reads": [],
+      "linked": [],
+      "declared": []
+    },
+    {
+      "name": "UpdateAgentMemory",
       "type": "mutation",
       "reads": [],
       "linked": [],
@@ -46770,6 +50370,13 @@
       "declared": []
     },
     {
+      "name": "UpdateInboundMailbox",
+      "type": "mutation",
+      "reads": [],
+      "linked": [],
+      "declared": []
+    },
+    {
       "name": "UpdateJobPosition",
       "type": "mutation",
       "reads": [],
@@ -46884,6 +50491,34 @@
       "declared": []
     },
     {
+      "name": "UpdateReportDashboard",
+      "type": "mutation",
+      "reads": [],
+      "linked": [],
+      "declared": []
+    },
+    {
+      "name": "UpdateReportDefinition",
+      "type": "mutation",
+      "reads": [],
+      "linked": [],
+      "declared": []
+    },
+    {
+      "name": "UpdateReportSchedule",
+      "type": "mutation",
+      "reads": [],
+      "linked": [],
+      "declared": []
+    },
+    {
+      "name": "UpdateReportView",
+      "type": "mutation",
+      "reads": [],
+      "linked": [],
+      "declared": []
+    },
+    {
       "name": "UpdateSafetyViolation",
       "type": "mutation",
       "reads": [],
@@ -46909,6 +50544,22 @@
       "type": "mutation",
       "reads": [],
       "linked": [],
+      "declared": []
+    },
+    {
+      "name": "UpdateTriageRule",
+      "type": "mutation",
+      "reads": [],
+      "linked": [
+        {
+          "kind": "user",
+          "fields": [
+            "name",
+            "photo",
+            "username"
+          ]
+        }
+      ],
       "declared": []
     },
     {
@@ -46993,7 +50644,7 @@
           "fields": [
             "firstName",
             "lastName",
-            "profilePicUrl",
+            "photo",
             "wholeName"
           ]
         }
@@ -47040,6 +50691,13 @@
     {
       "name": "VehiclePositions",
       "type": "query",
+      "reads": [],
+      "linked": [],
+      "declared": []
+    },
+    {
+      "name": "VerifyAIAuditChain",
+      "type": "mutation",
       "reads": [],
       "linked": [],
       "declared": []
@@ -47202,6 +50860,50 @@
       "declared": []
     },
     {
+      "name": "WaitForInboundReply",
+      "type": "mutation",
+      "reads": [],
+      "linked": [
+        {
+          "kind": "customer",
+          "fields": [
+            "code",
+            "name"
+          ]
+        },
+        {
+          "kind": "inbound_mailbox",
+          "fields": [
+            "address",
+            "name",
+            "provider",
+            "status"
+          ]
+        },
+        {
+          "kind": "shipment",
+          "fields": [
+            "bol",
+            "destinationCity",
+            "destinationState",
+            "originCity",
+            "originState",
+            "poNumber",
+            "proNumber"
+          ]
+        },
+        {
+          "kind": "user",
+          "fields": [
+            "name",
+            "photo",
+            "username"
+          ]
+        }
+      ],
+      "declared": []
+    },
+    {
       "name": "WaiveWorkerTraining",
       "type": "mutation",
       "reads": [],
@@ -47239,6 +50941,132 @@
           ]
         }
       ],
+      "declared": []
+    },
+    {
+      "name": "WakeInboundMessage",
+      "type": "mutation",
+      "reads": [],
+      "linked": [
+        {
+          "kind": "customer",
+          "fields": [
+            "code",
+            "name"
+          ]
+        },
+        {
+          "kind": "inbound_mailbox",
+          "fields": [
+            "address",
+            "name",
+            "provider",
+            "status"
+          ]
+        },
+        {
+          "kind": "shipment",
+          "fields": [
+            "bol",
+            "destinationCity",
+            "destinationState",
+            "originCity",
+            "originState",
+            "poNumber",
+            "proNumber"
+          ]
+        },
+        {
+          "kind": "user",
+          "fields": [
+            "name",
+            "photo",
+            "username"
+          ]
+        }
+      ],
+      "declared": []
+    },
+    {
+      "name": "WatchtowerCleared",
+      "type": "query",
+      "reads": [],
+      "linked": [],
+      "declared": []
+    },
+    {
+      "name": "WatchtowerCounts",
+      "type": "query",
+      "reads": [],
+      "linked": [],
+      "declared": []
+    },
+    {
+      "name": "WatchtowerFeed",
+      "type": "query",
+      "reads": [],
+      "linked": [
+        {
+          "kind": "agent_definition",
+          "fields": [
+            "accent",
+            "description",
+            "icon",
+            "name",
+            "template"
+          ]
+        },
+        {
+          "kind": "user",
+          "fields": [
+            "name"
+          ]
+        }
+      ],
+      "declared": [
+        "agent_definition"
+      ]
+    },
+    {
+      "name": "WatchtowerHandOffAgents",
+      "type": "query",
+      "reads": [
+        "agent_definition"
+      ],
+      "linked": [],
+      "declared": []
+    },
+    {
+      "name": "WatchtowerItemDetail",
+      "type": "query",
+      "reads": [],
+      "linked": [
+        {
+          "kind": "agent_definition",
+          "fields": [
+            "accent",
+            "description",
+            "icon",
+            "name",
+            "template"
+          ]
+        },
+        {
+          "kind": "user",
+          "fields": [
+            "name"
+          ]
+        }
+      ],
+      "declared": [
+        "agent_definition"
+      ]
+    },
+    {
+      "name": "WatchtowerPlay",
+      "type": "query",
+      "reads": [],
+      "linked": [],
       "declared": []
     },
     {
@@ -47414,6 +51242,29 @@
       "declared": []
     },
     {
+      "name": "WorkerDisciplinaryAction",
+      "type": "query",
+      "reads": [
+        "worker_disciplinary_action"
+      ],
+      "linked": [
+        {
+          "kind": "user",
+          "fields": [
+            "name"
+          ]
+        },
+        {
+          "kind": "worker_safety_event",
+          "fields": [
+            "kind",
+            "occurredAt"
+          ]
+        }
+      ],
+      "declared": []
+    },
+    {
       "name": "WorkerDisciplinaryActions",
       "type": "query",
       "reads": [
@@ -47442,7 +51293,14 @@
       "reads": [
         "worker_disciplinary_action"
       ],
-      "linked": [],
+      "linked": [
+        {
+          "kind": "user",
+          "fields": [
+            "name"
+          ]
+        }
+      ],
       "declared": []
     },
     {
@@ -47470,6 +51328,22 @@
         "driver_settlement"
       ],
       "linked": [],
+      "declared": []
+    },
+    {
+      "name": "WorkerEmploymentEvent",
+      "type": "query",
+      "reads": [
+        "worker_employment_event"
+      ],
+      "linked": [
+        {
+          "kind": "user",
+          "fields": [
+            "name"
+          ]
+        }
+      ],
       "declared": []
     },
     {
@@ -47546,6 +51420,15 @@
     },
     {
       "name": "WorkerInjuries",
+      "type": "query",
+      "reads": [
+        "worker_injury"
+      ],
+      "linked": [],
+      "declared": []
+    },
+    {
+      "name": "WorkerInjury",
       "type": "query",
       "reads": [
         "worker_injury"
@@ -47703,6 +51586,31 @@
       ]
     },
     {
+      "name": "WorkerPto",
+      "type": "query",
+      "reads": [
+        "worker_pto"
+      ],
+      "linked": [
+        {
+          "kind": "user",
+          "fields": [
+            "name"
+          ]
+        },
+        {
+          "kind": "worker",
+          "fields": [
+            "firstName",
+            "lastName",
+            "photo",
+            "wholeName"
+          ]
+        }
+      ],
+      "declared": []
+    },
+    {
       "name": "WorkerPtoAvailability",
       "type": "query",
       "reads": [],
@@ -47757,7 +51665,7 @@
           "fields": [
             "firstName",
             "lastName",
-            "profilePicUrl",
+            "photo",
             "wholeName"
           ]
         }
@@ -47811,6 +51719,22 @@
       "declared": []
     },
     {
+      "name": "WorkerSafetyEvent",
+      "type": "query",
+      "reads": [
+        "worker_safety_event"
+      ],
+      "linked": [
+        {
+          "kind": "user",
+          "fields": [
+            "name"
+          ]
+        }
+      ],
+      "declared": []
+    },
+    {
       "name": "WorkerSafetyEvents",
       "type": "query",
       "reads": [
@@ -47830,7 +51754,21 @@
       "name": "WorkerSafetyScorecard",
       "type": "query",
       "reads": [],
-      "linked": [],
+      "linked": [
+        {
+          "kind": "worker_safety_event",
+          "fields": [
+            "activePoints",
+            "inspectionLevel",
+            "inspectionResult",
+            "kind",
+            "occurredAt",
+            "pointsExpireAt",
+            "preventable",
+            "severity"
+          ]
+        }
+      ],
       "declared": []
     },
     {
@@ -47871,6 +51809,46 @@
           "fields": [
             "name",
             "planType"
+          ]
+        }
+      ],
+      "declared": []
+    },
+    {
+      "name": "WorkerTrainingRecord",
+      "type": "query",
+      "reads": [],
+      "linked": [
+        {
+          "kind": "training_course",
+          "fields": [
+            "businessUnitId",
+            "category",
+            "code",
+            "contentUrl",
+            "createdAt",
+            "delivery",
+            "description",
+            "dueDaysAfterAssignment",
+            "durationMinutes",
+            "isRequired",
+            "name",
+            "organizationId",
+            "passingScore",
+            "renewalWindowDays",
+            "requiredForDriverTypes",
+            "requiresAcknowledgement",
+            "sortOrder",
+            "status",
+            "updatedAt",
+            "validityMonths",
+            "version"
+          ]
+        },
+        {
+          "kind": "user",
+          "fields": [
+            "name"
           ]
         }
       ],
@@ -47951,6 +51929,25 @@
           "kind": "user",
           "fields": [
             "name"
+          ]
+        }
+      ],
+      "declared": []
+    },
+    {
+      "name": "WorkingAgentRuns",
+      "type": "query",
+      "reads": [
+        "agent_run"
+      ],
+      "linked": [
+        {
+          "kind": "agent_definition",
+          "fields": [
+            "accent",
+            "icon",
+            "name",
+            "template"
           ]
         }
       ],

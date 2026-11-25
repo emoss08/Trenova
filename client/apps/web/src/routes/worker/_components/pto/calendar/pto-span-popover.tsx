@@ -1,6 +1,6 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { PTOStatusBadge, PTOTypeBadge } from "@trenova/shared/components/status-badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@trenova/shared/components/ui/avatar";
+import { WorkerAvatar } from "@trenova/shared/components/worker-avatar";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { formatRange, formatUnixDateMedium } from "@trenova/shared/lib/date";
 import { formatPtoDays, ptoTypeMeta } from "@trenova/shared/lib/pto";
@@ -10,7 +10,7 @@ import { CalendarRangeIcon, ClockIcon, Wallet02Icon } from "@trenova/shared/comp
 import { useMemo } from "react";
 import { PTOActionsMenu } from "../pto-actions-menu";
 import { ptoDaysOf, ptoDecision } from "../pto-columns";
-import { ptoWorkerInitials, ptoWorkerName } from "../pto-worker";
+import { ptoWorkerName } from "../pto-worker";
 import { ptoTiming, spansOnDay, type PTOTimingTone } from "./calendar-layout";
 
 const TIMING_TONE_CLASS: Record<PTOTimingTone, string> = {
@@ -42,10 +42,13 @@ export function PTOSpanDetails({ pto, todayUnix }: PTOSpanDetailsProps) {
   return (
     <div className="flex flex-col gap-2.5" data-testid={`pto-span-details-${pto.id}`}>
       <div className="flex items-start gap-2.5">
-        <Avatar className="ring-border size-9 ring-1">
-          <AvatarImage src={pto.worker?.profilePicUrl ?? undefined} alt={name} />
-          <AvatarFallback className="text-xs font-medium">{ptoWorkerInitials(pto)}</AvatarFallback>
-        </Avatar>
+        <WorkerAvatar
+          firstName={pto.worker?.firstName}
+          lastName={pto.worker?.lastName}
+          photo={pto.worker?.photo}
+          className="size-9"
+          fallbackClassName="text-xs"
+        />
         <div className="min-w-0 flex-1 leading-tight">
           <p className="truncate text-sm font-medium">{name}</p>
           <div className="mt-1 flex flex-wrap items-center gap-1">

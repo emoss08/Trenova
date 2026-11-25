@@ -106,6 +106,8 @@ export type DeskTopProps = {
   onDelete: (thread: AssistantThread) => void;
   /** Opens the rail over the page on a phone. */
   onOpenRail: () => void;
+  /** Ask (⌘J): a new conversation full width, or folds the one open beside the page. */
+  onAsk: () => void;
   /** Opens the rail again beside the page, given only while it is folded away. */
   onUnfoldRail?: () => void;
   /** Whether the person may read the Watchtower, which the live figures count. */
@@ -136,6 +138,7 @@ export function DeskTop({
   onRename,
   onDelete,
   onOpenRail,
+  onAsk,
   onUnfoldRail,
   canWatch,
   needsYou,
@@ -145,7 +148,6 @@ export function DeskTop({
   const subject = useDeskMarginStore((state) => state.pageSubject);
   const pageTitle = useDeskMarginStore((state) => state.pageTitle);
   const marginOpen = useDeskMarginStore((state) => state.margin !== null);
-  const toggleMargin = useDeskMarginStore((state) => state.toggleMargin);
   const deletion = useDeleteConversation(onDelete);
   const timezone = resolveUserTimezone(useAuthStore((state) => state.user?.timezone));
   const inThread = place === "thread" && thread !== null;
@@ -238,7 +240,7 @@ export function DeskTop({
           className="dk-tb-kbtn ui-focus-ring"
           aria-pressed={marginOpen}
           aria-label={t("Ask Nova")}
-          onClick={toggleMargin}
+          onClick={onAsk}
         >
           <NovaBadge size="xs" />
           <span className="dk-tb-lbl">{t("Ask")}</span>

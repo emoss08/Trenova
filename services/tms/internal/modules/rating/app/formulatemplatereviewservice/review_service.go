@@ -15,6 +15,7 @@ import (
 type Params struct {
 	fx.In
 
+	Photos        kernelports.Photos
 	Logger        *zap.Logger
 	DB            kernelports.Transactor
 	Templates     *formulatemplateservice.Service
@@ -29,6 +30,7 @@ type Params struct {
 }
 
 type Service struct {
+	photos        kernelports.Photos
 	l             *zap.Logger
 	db            kernelports.Transactor
 	templates     *formulatemplateservice.Service
@@ -45,6 +47,7 @@ type Service struct {
 //nolint:gocritic // fx param structs are passed by value
 func New(p Params) *Service {
 	return &Service{
+		photos:        p.Photos,
 		l:             p.Logger.Named("service.formulatemplate"),
 		db:            p.DB,
 		templates:     p.Templates,

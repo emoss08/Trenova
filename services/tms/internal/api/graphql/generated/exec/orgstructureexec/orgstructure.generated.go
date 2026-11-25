@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/modules/identity/app/orgstructureservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/personphoto"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/approvaldelegation"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/orgstructureports"
@@ -643,6 +644,18 @@ var Shard = &gqlexec.Shard{
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
+			{
+				Name:       "photo",
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "PersonPhoto",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.PositionHolder)
+					return gqlexec.Resolver[PositionHolderResolver](ec, "PositionHolder@orgstructure").Photo(ctx, obj)
+				},
+				Marshal: gqlexec.Marshal(marshalOPersonPhoto2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋkernelᚋdomainᚋpersonphotoᚐURLs),
+			},
 		}},
 		{Object: "Query", Fields: []*gqlexec.Field{
 			{
@@ -875,6 +888,18 @@ var Shard = &gqlexec.Shard{
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint),
 			},
+			{
+				Name:       "photo",
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "PersonPhoto",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.TeamMember)
+					return gqlexec.Resolver[TeamMemberResolver](ec, "TeamMember@orgstructure").Photo(ctx, obj)
+				},
+				Marshal: gqlexec.Marshal(marshalOPersonPhoto2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋkernelᚋdomainᚋpersonphotoᚐURLs),
+			},
 		}},
 	},
 	Inputs: []gqlexec.Input{
@@ -886,7 +911,9 @@ var Shard = &gqlexec.Shard{
 		{Root: "ApprovalDelegation@orgstructure", Check: func(r any) bool { _, ok := r.(ApprovalDelegationResolver); return ok }},
 		{Root: "JobPosition@orgstructure", Check: func(r any) bool { _, ok := r.(JobPositionResolver); return ok }},
 		{Root: "Mutation@orgstructure", Check: func(r any) bool { _, ok := r.(MutationResolver); return ok }},
+		{Root: "PositionHolder@orgstructure", Check: func(r any) bool { _, ok := r.(PositionHolderResolver); return ok }},
 		{Root: "Query@orgstructure", Check: func(r any) bool { _, ok := r.(QueryResolver); return ok }},
+		{Root: "TeamMember@orgstructure", Check: func(r any) bool { _, ok := r.(TeamMemberResolver); return ok }},
 	},
 }
 
@@ -910,6 +937,10 @@ type MutationResolver interface {
 	RevokeApprovalDelegation(ctx context.Context, id string) (*approvaldelegation.ApprovalDelegation, error)
 }
 
+type PositionHolderResolver interface {
+	Photo(ctx context.Context, obj *gqlmodel.PositionHolder) (*personphoto.URLs, error)
+}
+
 type QueryResolver interface {
 	JobPositions(ctx context.Context, activeOnly *bool, drivingOnly *bool) ([]*worker.JobPosition, error)
 	JobPosition(ctx context.Context, id string) (*worker.JobPosition, error)
@@ -917,6 +948,10 @@ type QueryResolver interface {
 	JobPositionHolders(ctx context.Context, id string) ([]*gqlmodel.PositionHolder, error)
 	MyTeam(ctx context.Context, includeInactive *bool) ([]*gqlmodel.TeamMember, error)
 	ApprovalDelegations(ctx context.Context, delegatorID *string, delegateID *string, activeOnly *bool) ([]*approvaldelegation.ApprovalDelegation, error)
+}
+
+type TeamMemberResolver interface {
+	Photo(ctx context.Context, obj *gqlmodel.TeamMember) (*personphoto.URLs, error)
 }
 
 var (
@@ -1629,6 +1664,13 @@ func marshalOJobPosition2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodule
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "JobPosition", v)
+}
+
+func marshalOPersonPhoto2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋkernelᚋdomainᚋpersonphotoᚐURLs(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *personphoto.URLs) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "PersonPhoto", v)
 }
 
 func marshalOString2string(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v string) graphql.Marshaler {

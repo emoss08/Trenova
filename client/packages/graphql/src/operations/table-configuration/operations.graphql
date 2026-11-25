@@ -16,7 +16,10 @@ fragment TableConfigurationFields on TableConfiguration {
   user {
     id
     name
-    profilePicUrl
+    photo {
+      url
+      thumbnailUrl
+    }
   }
 }
 

@@ -1,5 +1,5 @@
 import { InputFieldSkeleton } from "@/components/fields/field-skeletons";
-import { lazyComponent } from "@/lib/lazy-component";
+import { lazyComponent } from "@trenova/shared/lib/lazy-component";
 import { ErrorState } from "@trenova/shared/components/errors/error-state";
 import { reportFailure } from "@trenova/shared/lib/failure-reporter";
 import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";

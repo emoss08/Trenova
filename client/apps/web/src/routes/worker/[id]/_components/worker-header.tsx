@@ -2,7 +2,6 @@ import { AccountingSyncStateLine } from "@/components/accounting-sync/sync-state
 import {
   MetaItem,
   RecordHeader,
-  RecordMark,
   RecordTabs,
   TabCount,
   TabDot,
@@ -29,6 +28,7 @@ import { formatPhoneForDisplay } from "@trenova/shared/lib/phone";
 import { WORKER_STANDING_LABELS } from "@trenova/shared/types/worker-overview";
 import { WorkerRecordMenus } from "./add-to-record-menu";
 import { workerTabLabel, workerTabMarks, workerTenure } from "./overview-model";
+import { WorkerPhotoMark } from "./worker-photo-mark";
 
 type Standing = WorkerOverview["standing"];
 
@@ -56,19 +56,6 @@ function standingExplanation(standing: Standing, concerns: number, t: TranslateF
         )
       : null;
   return [reason, count].filter(Boolean).join(" ");
-}
-
-function driverTypeShort(driverType: WorkerRecord["driverType"], t: TranslateFn): string {
-  switch (driverType) {
-    case "Local":
-      return t("Local");
-    case "Regional":
-      return t("Regional");
-    case "OTR":
-      return t("OTR");
-    case "Team":
-      return t("Team");
-  }
 }
 
 /** The phone on the meta line, with a copy button that shows on hover without moving anything. */
@@ -153,17 +140,13 @@ export function WorkerHeader({
 
   return (
     <RecordHeader
-      mark={<RecordMark name={name} />}
+      mark={<WorkerPhotoMark worker={worker} />}
       title={name}
       badges={
         <>
           <Badge variant={worker.status === "Active" ? "success" : "neutral"} dot>
             {worker.status === "Active" ? t("Active") : t("Inactive")}
           </Badge>
-          <Badge variant="neutral">
-            {worker.type === "Employee" ? t("Employee") : t("Contractor")}
-          </Badge>
-          <Badge variant="neutral">{driverTypeShort(worker.driverType, t)}</Badge>
           {overview ? (
             <Tooltip>
               <TooltipTrigger

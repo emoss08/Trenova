@@ -280,28 +280,28 @@ func unsettledToolOutcome(name string, err error) toolcall.Outcome {
 	}
 }
 
-func (fx *workflowEffects) Find(
+func (fx *workflowEffects) Search(
 	t *agentruntime.Turn,
 	arguments map[string]any,
-) toolaccess.FindAnswer {
+) toolaccess.SearchAnswer {
 	var a *Activities
-	ctx := workflow.WithActivityOptions(fx.ctx, fx.findOptions())
+	ctx := workflow.WithActivityOptions(fx.ctx, fx.searchOptions())
 
-	var result FindToolsResult
-	err := workflow.ExecuteActivity(ctx, a.FindToolsActivity, &FindToolsInput{
+	var result SearchToolsResult
+	err := workflow.ExecuteActivity(ctx, a.SearchToolsActivity, &SearchToolsInput{
 		Run:       fx.run,
 		Tools:     t.ToolsState(),
 		Arguments: arguments,
 	}).Get(ctx, &result)
 	if err != nil {
-		return toolaccess.FindAnswer{
-			Content: "Tools could not be searched just now. Use the ones you have.",
+		return toolaccess.SearchAnswer{
+			Content: "Capabilities could not be searched just now. Use the ones you have.",
 		}
 	}
 
 	t.LoadTools(result.Loaded)
 
-	return toolaccess.FindAnswer{
+	return toolaccess.SearchAnswer{
 		Content: result.Content,
 		Found:   result.Found,
 		HandOff: result.HandOff,
@@ -618,7 +618,7 @@ func (fx *workflowEffects) publishOptions() workflow.ActivityOptions {
 	}
 }
 
-func (fx *workflowEffects) findOptions() workflow.ActivityOptions {
+func (fx *workflowEffects) searchOptions() workflow.ActivityOptions {
 	return workflow.ActivityOptions{
 		StartToCloseTimeout: findTimeout,
 		Priority:            fx.priority(),

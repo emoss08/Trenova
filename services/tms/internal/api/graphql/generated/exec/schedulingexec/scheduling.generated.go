@@ -9,6 +9,7 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlexec"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/personphoto"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerschedule"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -461,6 +462,18 @@ var Shard = &gqlexec.Shard{
 					return obj.Conflicts, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:       "photo",
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "PersonPhoto",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RotaRow)
+					return gqlexec.Resolver[RotaRowResolver](ec, "RotaRow@scheduling").Photo(ctx, obj)
+				},
+				Marshal: gqlexec.Marshal(marshalOPersonPhoto2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋkernelᚋdomainᚋpersonphotoᚐURLs),
 			},
 		}},
 		{Object: "ShiftSwapRequest", Fields: []*gqlexec.Field{
@@ -1060,6 +1073,7 @@ var Shard = &gqlexec.Shard{
 	Resolvers: []gqlexec.ResolverRequirement{
 		{Root: "Mutation@scheduling", Check: func(r any) bool { _, ok := r.(MutationResolver); return ok }},
 		{Root: "Query@scheduling", Check: func(r any) bool { _, ok := r.(QueryResolver); return ok }},
+		{Root: "RotaRow@scheduling", Check: func(r any) bool { _, ok := r.(RotaRowResolver); return ok }},
 		{Root: "ShiftTemplate@scheduling", Check: func(r any) bool { _, ok := r.(ShiftTemplateResolver); return ok }},
 	},
 }
@@ -1082,6 +1096,10 @@ type QueryResolver interface {
 	ShiftSwapRequests(ctx context.Context, workerID *string, openOnly *bool, since *int, limit *int) ([]*workerschedule.ShiftSwapRequest, error)
 	ShiftSwapRequest(ctx context.Context, id string) (*workerschedule.ShiftSwapRequest, error)
 	Rota(ctx context.Context, filter *gqlmodel.RotaFilterInput) (*gqlmodel.Rota, error)
+}
+
+type RotaRowResolver interface {
+	Photo(ctx context.Context, obj *gqlmodel.RotaRow) (*personphoto.URLs, error)
 }
 
 type ShiftTemplateResolver interface {
@@ -2045,6 +2063,13 @@ func marshalOID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx conte
 func marshalOInt2int16(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v int16) graphql.Marshaler {
 	res := graphql.MarshalInt16(v)
 	return res
+}
+
+func marshalOPersonPhoto2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋkernelᚋdomainᚋpersonphotoᚐURLs(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *personphoto.URLs) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "PersonPhoto", v)
 }
 
 func marshalOShiftTemplate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerscheduleᚐShiftTemplate(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *workerschedule.ShiftTemplate) graphql.Marshaler {

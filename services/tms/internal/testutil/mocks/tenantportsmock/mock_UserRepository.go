@@ -517,6 +517,74 @@ func (_c *MockUserRepository_GetByIDs_Call) RunAndReturn(run func(ctx context.Co
 	return _c
 }
 
+// GetPhotoKeys provides a mock function for the type MockUserRepository
+func (_mock *MockUserRepository) GetPhotoKeys(ctx context.Context, req tenantports.GetUsersByIDsRequest) ([]tenantports.UserPhotoKeys, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetPhotoKeys")
+	}
+
+	var r0 []tenantports.UserPhotoKeys
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, tenantports.GetUsersByIDsRequest) ([]tenantports.UserPhotoKeys, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, tenantports.GetUsersByIDsRequest) []tenantports.UserPhotoKeys); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]tenantports.UserPhotoKeys)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, tenantports.GetUsersByIDsRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockUserRepository_GetPhotoKeys_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetPhotoKeys'
+type MockUserRepository_GetPhotoKeys_Call struct {
+	*mock.Call
+}
+
+// GetPhotoKeys is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req repositories.GetUsersByIDsRequest
+func (_e *MockUserRepository_Expecter) GetPhotoKeys(ctx any, req any) *MockUserRepository_GetPhotoKeys_Call {
+	return &MockUserRepository_GetPhotoKeys_Call{Call: _e.mock.On("GetPhotoKeys", ctx, req)}
+}
+
+func (_c *MockUserRepository_GetPhotoKeys_Call) Run(run func(ctx context.Context, req tenantports.GetUsersByIDsRequest)) *MockUserRepository_GetPhotoKeys_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 tenantports.GetUsersByIDsRequest
+		if args[1] != nil {
+			arg1 = args[1].(tenantports.GetUsersByIDsRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockUserRepository_GetPhotoKeys_Call) Return(userPhotoKeyss []tenantports.UserPhotoKeys, err error) *MockUserRepository_GetPhotoKeys_Call {
+	_c.Call.Return(userPhotoKeyss, err)
+	return _c
+}
+
+func (_c *MockUserRepository_GetPhotoKeys_Call) RunAndReturn(run func(ctx context.Context, req tenantports.GetUsersByIDsRequest) ([]tenantports.UserPhotoKeys, error)) *MockUserRepository_GetPhotoKeys_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetOrganizations provides a mock function for the type MockUserRepository
 func (_mock *MockUserRepository) GetOrganizations(ctx context.Context, userID pulid.ID) ([]*tenant.OrganizationMembership, error) {
 	ret := _mock.Called(ctx, userID)

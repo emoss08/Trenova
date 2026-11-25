@@ -9,10 +9,12 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/workforceloaders"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/personphoto"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workersafetyservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/fleetsafety"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workersafetyports"
@@ -160,4 +162,9 @@ func (r *QueryResolver) WorkerSafetyViolations(ctx context.Context, safetyEventI
 			WorkerID:       wrkID,
 		},
 	)
+}
+
+// Photo is the resolver for the photo field.
+func (r *FleetSafetyRankResolver) Photo(ctx context.Context, obj *fleetsafety.FleetSafetyRank) (*personphoto.URLs, error) {
+	return workforceloaders.WorkerPhotoByID(ctx, obj.WorkerID)
 }

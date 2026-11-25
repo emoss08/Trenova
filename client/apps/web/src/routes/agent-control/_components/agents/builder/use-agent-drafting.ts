@@ -4,6 +4,7 @@ import {
   type AgentDraft,
   type TightenedInstructions,
 } from "@/lib/graphql/agent-builder";
+import { coversEverything, toAgentScope } from "@/lib/agent-scope";
 import { agentBuilder } from "@/lib/queries/agent-builder";
 import type { AutonomyTier, TriggerMode } from "@/types/assistant";
 import { useQuery } from "@tanstack/react-query";
@@ -35,7 +36,9 @@ export function draftedValues(draft: AgentDraft): DraftedAgent {
     cronTimezone: draft.cronTimezone,
     eventKinds: [...draft.eventKinds],
     intervalSeconds: draft.intervalSeconds,
-    toolNames: [...draft.toolNames],
+    scope: toAgentScope(draft.scope),
+    limited: !coversEverything(draft.scope),
+    pinnedTools: [...draft.pinnedTools],
     toolTiers: { ...tiers },
     autonomyCeiling: draft.autonomyCeiling,
     dataAccessCeiling: draft.dataAccessCeiling,

@@ -5,6 +5,7 @@ import (
 	"io"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpagecontext"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentstarter"
@@ -168,7 +169,7 @@ type PageAgent struct {
 	Icon        string                 `json:"icon"`
 	Accent      string                 `json:"accent"`
 	SystemKey   string                 `json:"systemKey"`
-	ToolNames   []string               `json:"toolNames"`
+	Scope       agentdefinition.Scope  `json:"scope"`
 	Starters    []agentstarter.Starter `json:"starters"`
 }
 

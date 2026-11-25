@@ -88,9 +88,14 @@ func (p *runtimeParts) runtime() Params {
 }
 
 func (p *runtimeParts) access() toolaccess.AccessParams {
+	queries := p.QueryTools
+	if queries != nil {
+		queries = accesstest.WithEntityReaders(queries)
+	}
+
 	return toolaccess.AccessParams{
 		Logger:         p.Logger,
-		QueryTools:     p.QueryTools,
+		QueryTools:     queries,
 		ActionTools:    p.ActionTools,
 		Permissions:    p.Permissions,
 		Catalog:        p.Catalog,

@@ -288,6 +288,7 @@ import (
 	workerdrugalcoholservice "github.com/emoss08/trenova/internal/modules/workforce/app/workerdrugalcoholservice"
 	workerinjuryservice "github.com/emoss08/trenova/internal/modules/workforce/app/workerinjuryservice"
 	workerleaveservice "github.com/emoss08/trenova/internal/modules/workforce/app/workerleaveservice"
+	workerphotoservice "github.com/emoss08/trenova/internal/modules/workforce/app/workerphotoservice"
 	workersafetyservice "github.com/emoss08/trenova/internal/modules/workforce/app/workersafetyservice"
 	workerservice "github.com/emoss08/trenova/internal/modules/workforce/app/workerservice"
 	workertrainingservice "github.com/emoss08/trenova/internal/modules/workforce/app/workertrainingservice"
@@ -497,6 +498,7 @@ type ResolverParams struct {
 	WorkerInjuryService               *workerinjuryservice.Service
 	WorkerLeaveService                *workerleaveservice.Service
 	WorkerPTOService                  workerptoports.WorkerPTOService
+	WorkerPhotoService                *workerphotoservice.Service
 	WorkerSafetyService               *workersafetyservice.Service
 	WorkerService                     *workerservice.Service
 	WorkerTrainingService             *workertrainingservice.Service
@@ -959,13 +961,13 @@ var operations = []Operation{
 	},
 	{
 		Name:     "TriageAssignees",
-		Hash:     "sha256:e2414df1870c17c547f73f2befc21285cbf55c5af765b1977d1863f55e99a6f7",
-		Document: "fragment TriageUserFields on User { id name thumbnailUrl username } query TriageAssignees { triageAssignees { user { ...TriageUserFields } waiting } }",
+		Hash:     "sha256:ca897a05c1c89fb34f2fba5a382cd4988bc9152c629e0d02acf76badc492424f",
+		Document: "fragment TriageUserFields on User { id name photo { thumbnailUrl url } username } query TriageAssignees { triageAssignees { user { ...TriageUserFields } waiting } }",
 	},
 	{
 		Name:     "TriageSettings",
-		Hash:     "sha256:77a40f1d9dd2cac2182abc1bd45a1b2b83400969bcf322869a7c329607fca2ea",
-		Document: "fragment TriageUserFields on User { id name thumbnailUrl username } query TriageSettings { triageSettings { endOfDayMinute onCallUser { ...TriageUserFields } onCallUserId timezone version } }",
+		Hash:     "sha256:0247a4be0468ad13b3f239c4315802e84334515c8f529ebb545c73cd7b45311a",
+		Document: "fragment TriageUserFields on User { id name photo { thumbnailUrl url } username } query TriageSettings { triageSettings { endOfDayMinute onCallUser { ...TriageUserFields } onCallUserId timezone version } }",
 	},
 	{
 		Name:     "TodaysBriefing",
@@ -1139,8 +1141,8 @@ var operations = []Operation{
 	},
 	{
 		Name:     "DeskDriverSettlementStatement",
-		Hash:     "sha256:318010f8b231ea39b7edca1efe9cab1f0d630ad0a81e39f87b3c85b3ba58dfa3",
-		Document: "fragment FleetCodeReference on FleetCode { code color id } fragment WorkerReference on Worker { assignmentBlocked canBeAssigned firstName fleetCode { ...FleetCodeReference } fleetCodeId id lastName profilePicUrl status type wholeName } query DeskDriverSettlementStatement($id: ID!) { driverSettlement(id: $id) { approvedAt carryForwardInMinor carryForwardOutMinor classification currencyCode deductionsMinor disputes { category createdAt id resolvedAt settlementLineId status } exceptions { code message severity } grossEarningsMinor hasExceptions heldAt heldBy { id name } holdNote holdReason id lines { amountMinor category description id lineNumber payEventId proNumber quantity rate shipmentId } netPayMinor notes paidAt payDate payProfileName paymentMethod periodEnd periodStart postedAt reimbursementsMinor settlementNumber shipmentCount status submittedAt totalMiles voidReason voidedAt worker { ...WorkerReference } workerId } }",
+		Hash:     "sha256:f05592568e4ae28478d1eca5cf34eba8efe0705e57c265fe1f43e8d783b238f5",
+		Document: "fragment FleetCodeReference on FleetCode { code color id } fragment WorkerReference on Worker { assignmentBlocked canBeAssigned firstName fleetCode { ...FleetCodeReference } fleetCodeId id lastName photo { thumbnailUrl url } status type wholeName } query DeskDriverSettlementStatement($id: ID!) { driverSettlement(id: $id) { approvedAt carryForwardInMinor carryForwardOutMinor classification currencyCode deductionsMinor disputes { category createdAt id resolvedAt settlementLineId status } exceptions { code message severity } grossEarningsMinor hasExceptions heldAt heldBy { id name } holdNote holdReason id lines { amountMinor category description id lineNumber payEventId proNumber quantity rate shipmentId } netPayMinor notes paidAt payDate payProfileName paymentMethod periodEnd periodStart postedAt reimbursementsMinor settlementNumber shipmentCount status submittedAt totalMiles voidReason voidedAt worker { ...WorkerReference } workerId } }",
 	},
 	{
 		Name:     "WorkerEarningsSummary",
@@ -1219,8 +1221,8 @@ var operations = []Operation{
 	},
 	{
 		Name:     "DeskWorkerCredential",
-		Hash:     "sha256:d27e395a2c03027a8b2c624044c30b21656aee61d56dbb0a2598a8cfdc45ac22",
-		Document: "fragment FleetCodeReference on FleetCode { code color id } fragment WorkerCredentialTypeReference on WorkerCredentialType { category code id isRequired isSystem name profileField renewalWindowDays requiresDocument requiresNumber sortOrder validityMonths } fragment WorkerReference on Worker { assignmentBlocked canBeAssigned firstName fleetCode { ...FleetCodeReference } fleetCodeId id lastName profilePicUrl status type wholeName } query DeskWorkerCredential($id: ID!) { workerCredential(id: $id) { archiveReason archivedAt credentialType { ...WorkerCredentialTypeReference } credentialTypeId daysUntilExpiry documentId expiresAt health id issuedAt issuingAuthority notes status verifiedAt version worker { ...WorkerReference } workerId } }",
+		Hash:     "sha256:e317f09debdaab2d21713e073bf10d2cb16f87849c3582a0ea462b3ad50f84ba",
+		Document: "fragment FleetCodeReference on FleetCode { code color id } fragment WorkerCredentialTypeReference on WorkerCredentialType { category code id isRequired isSystem name profileField renewalWindowDays requiresDocument requiresNumber sortOrder validityMonths } fragment WorkerReference on Worker { assignmentBlocked canBeAssigned firstName fleetCode { ...FleetCodeReference } fleetCodeId id lastName photo { thumbnailUrl url } status type wholeName } query DeskWorkerCredential($id: ID!) { workerCredential(id: $id) { archiveReason archivedAt credentialType { ...WorkerCredentialTypeReference } credentialTypeId daysUntilExpiry documentId expiresAt health id issuedAt issuingAuthority notes status verifiedAt version worker { ...WorkerReference } workerId } }",
 	},
 	{
 		Name:     "DotRandomDraw",
@@ -1244,8 +1246,8 @@ var operations = []Operation{
 	},
 	{
 		Name:     "ShiftSwapRequests",
-		Hash:     "sha256:ddc6208c93f72be57bee681f5003436a37fa8d7092ea6716e72cb13b012b3132",
-		Document: "query ShiftSwapRequests($limit: Int, $openOnly: Boolean, $since: Timestamp, $workerId: ID) { shiftSwapRequests( workerId: $workerId openOnly: $openOnly since: $since limit: $limit ) { counterpartyShiftDate counterpartyWorker { firstName id lastName } counterpartyWorkerId decidedAt id reason requestingWorker { firstName id lastName } requestingWorkerId respondedAt responseNote shiftDate status version } }",
+		Hash:     "sha256:67fe4f5d352842522b08bab4713bd7f4a876c4f52a8005b9a7113b3cc37e910a",
+		Document: "query ShiftSwapRequests($limit: Int, $openOnly: Boolean, $since: Timestamp, $workerId: ID) { shiftSwapRequests( workerId: $workerId openOnly: $openOnly since: $since limit: $limit ) { counterpartyShiftDate counterpartyWorker { firstName id lastName photo { thumbnailUrl url } } counterpartyWorkerId decidedAt id reason requestingWorker { firstName id lastName photo { thumbnailUrl url } } requestingWorkerId respondedAt responseNote shiftDate status version } }",
 	},
 	{
 		Name:     "DeskWorkers",
@@ -1264,8 +1266,8 @@ var operations = []Operation{
 	},
 	{
 		Name:     "DeskWorkerCredentialList",
-		Hash:     "sha256:4695b97cd9414641ab43a27040d12dcd029327243e721b794f1be58fedbcb866",
-		Document: "fragment FleetCodeReference on FleetCode { code color id } fragment WorkerCredentialTypeReference on WorkerCredentialType { category code id isRequired isSystem name profileField renewalWindowDays requiresDocument requiresNumber sortOrder validityMonths } fragment WorkerReference on Worker { assignmentBlocked canBeAssigned firstName fleetCode { ...FleetCodeReference } fleetCodeId id lastName profilePicUrl status type wholeName } query DeskWorkerCredentialList($credentialTypeCode: String, $expiringWithinDays: Int, $includeArchived: Boolean, $includeExpired: Boolean, $limit: Int, $offset: Int, $requiredOnly: Boolean, $workerIds: [ID!]) @requiresRead(kind: \"worker\") { workerCredentials( workerIds: $workerIds includeArchived: $includeArchived expiringWithinDays: $expiringWithinDays includeExpired: $includeExpired credentialTypeCode: $credentialTypeCode requiredOnly: $requiredOnly limit: $limit offset: $offset ) { credentialType { ...WorkerCredentialTypeReference } credentialTypeId daysUntilExpiry documentId expiresAt health id issuedAt issuingAuthority status verifiedAt worker { assignmentBlocked canBeAssigned profile { complianceStatus } ...WorkerReference } workerId } }",
+		Hash:     "sha256:1e1badfd8be3a9acdf7882be0a453c662131bb294ed8c6cf3ce104ff3da54652",
+		Document: "fragment FleetCodeReference on FleetCode { code color id } fragment WorkerCredentialTypeReference on WorkerCredentialType { category code id isRequired isSystem name profileField renewalWindowDays requiresDocument requiresNumber sortOrder validityMonths } fragment WorkerReference on Worker { assignmentBlocked canBeAssigned firstName fleetCode { ...FleetCodeReference } fleetCodeId id lastName photo { thumbnailUrl url } status type wholeName } query DeskWorkerCredentialList($credentialTypeCode: String, $expiringWithinDays: Int, $includeArchived: Boolean, $includeExpired: Boolean, $limit: Int, $offset: Int, $requiredOnly: Boolean, $workerIds: [ID!]) @requiresRead(kind: \"worker\") { workerCredentials( workerIds: $workerIds includeArchived: $includeArchived expiringWithinDays: $expiringWithinDays includeExpired: $includeExpired credentialTypeCode: $credentialTypeCode requiredOnly: $requiredOnly limit: $limit offset: $offset ) { credentialType { ...WorkerCredentialTypeReference } credentialTypeId daysUntilExpiry documentId expiresAt health id issuedAt issuingAuthority status verifiedAt worker { assignmentBlocked canBeAssigned profile { complianceStatus } ...WorkerReference } workerId } }",
 	},
 	{
 		Name:     "DeskWorkerCredentialTypes",
@@ -1284,23 +1286,23 @@ var operations = []Operation{
 	},
 	{
 		Name:     "DeskWorkerDotTests",
-		Hash:     "sha256:ab111736039b229fe30504ddc167a5c5053459d7e4df28c160a8e8fa494cf479",
-		Document: "fragment FleetCodeReference on FleetCode { code color id } fragment WorkerReference on Worker { assignmentBlocked canBeAssigned firstName fleetCode { ...FleetCodeReference } fleetCodeId id lastName profilePicUrl status type wholeName } query DeskWorkerDotTests($limit: Int, $openOnly: Boolean, $workerId: ID) { workerDotTests(workerId: $workerId, openOnly: $openOnly, limit: $limit) { collectedAt collectionSite drawEntryId id isDot reason result safetyEventId scheduledAt status substance testType worker { ...WorkerReference } workerId } }",
+		Hash:     "sha256:30e71d20b834da7a6f9ceda6b1076ee7592999d013ad9649db4fc300c7c3ddd7",
+		Document: "fragment FleetCodeReference on FleetCode { code color id } fragment WorkerReference on Worker { assignmentBlocked canBeAssigned firstName fleetCode { ...FleetCodeReference } fleetCodeId id lastName photo { thumbnailUrl url } status type wholeName } query DeskWorkerDotTests($limit: Int, $openOnly: Boolean, $workerId: ID) { workerDotTests(workerId: $workerId, openOnly: $openOnly, limit: $limit) { collectedAt collectionSite drawEntryId id isDot reason result safetyEventId scheduledAt status substance testType worker { ...WorkerReference } workerId } }",
 	},
 	{
 		Name:     "DeskWorkerEmploymentVerifications",
-		Hash:     "sha256:e59afa6a0b13ef7ab55ec17eee0e83ec536f0763f3aba9f9973ef606c925d6aa",
-		Document: "fragment FleetCodeReference on FleetCode { code color id } fragment WorkerReference on Worker { assignmentBlocked canBeAssigned firstName fleetCode { ...FleetCodeReference } fleetCodeId id lastName profilePicUrl status type wholeName } query DeskWorkerEmploymentVerifications($limit: Int, $outstandingOnly: Boolean, $workerId: ID) { workerEmploymentVerifications( workerId: $workerId outstandingOnly: $outstandingOnly limit: $limit ) { accidentCount employedFrom employedTo employerDotNumber employerName findings followUpCount hadAccidents hadDrugAlcoholViolations id method requestedAt responseReceivedAt status wasDotRegulated worker { ...WorkerReference } workerId } }",
+		Hash:     "sha256:725f91d26de56271cc9c7cc2e5614cffdd0fb3303f08ee329843a655dd0603d9",
+		Document: "fragment FleetCodeReference on FleetCode { code color id } fragment WorkerReference on Worker { assignmentBlocked canBeAssigned firstName fleetCode { ...FleetCodeReference } fleetCodeId id lastName photo { thumbnailUrl url } status type wholeName } query DeskWorkerEmploymentVerifications($limit: Int, $outstandingOnly: Boolean, $workerId: ID) { workerEmploymentVerifications( workerId: $workerId outstandingOnly: $outstandingOnly limit: $limit ) { accidentCount employedFrom employedTo employerDotNumber employerName findings followUpCount hadAccidents hadDrugAlcoholViolations id method requestedAt responseReceivedAt status wasDotRegulated worker { ...WorkerReference } workerId } }",
 	},
 	{
 		Name:     "DeskWorkerInjuries",
-		Hash:     "sha256:707afa3bb96af0277e8874e4a6aac225944ca1390a87314911c69e0ec55fa41c",
-		Document: "fragment FleetCodeReference on FleetCode { code color id } fragment WorkerReference on Worker { assignmentBlocked canBeAssigned firstName fleetCode { ...FleetCodeReference } fleetCodeId id lastName profilePicUrl status type wholeName } query DeskWorkerInjuries($after: String, $caseYear: Int, $first: Int, $openOnly: Boolean, $recordableOnly: Boolean, $workerId: ID) { workerInjuries( workerId: $workerId caseYear: $caseYear recordableOnly: $recordableOnly openOnly: $openOnly first: $first after: $after ) { edges { cursor node { bodyPart caseNumber caseYear claimStatus classification daysAway daysRestricted description id illnessType logName occurredAt privacyCase recordable returnedToWorkAt status treatment worker { ...WorkerReference } workerId } } pageInfo { endCursor hasNextPage } } }",
+		Hash:     "sha256:8f9aaf005d80f563ba9a80a949f4754ad6ebe78223df6cf1fd9be5eb65d00fc1",
+		Document: "fragment FleetCodeReference on FleetCode { code color id } fragment WorkerReference on Worker { assignmentBlocked canBeAssigned firstName fleetCode { ...FleetCodeReference } fleetCodeId id lastName photo { thumbnailUrl url } status type wholeName } query DeskWorkerInjuries($after: String, $caseYear: Int, $first: Int, $openOnly: Boolean, $recordableOnly: Boolean, $workerId: ID) { workerInjuries( workerId: $workerId caseYear: $caseYear recordableOnly: $recordableOnly openOnly: $openOnly first: $first after: $after ) { edges { cursor node { bodyPart caseNumber caseYear claimStatus classification daysAway daysRestricted description id illnessType logName occurredAt privacyCase recordable returnedToWorkAt status treatment worker { ...WorkerReference } workerId } } pageInfo { endCursor hasNextPage } } }",
 	},
 	{
 		Name:     "DeskWorkerLeaveCases",
-		Hash:     "sha256:55738e33c137a724bf6346966bece6ccc68ea22d7cb51143af356d7d6640e732",
-		Document: "fragment FleetCodeReference on FleetCode { code color id } fragment WorkerReference on Worker { assignmentBlocked canBeAssigned firstName fleetCode { ...FleetCodeReference } fleetCodeId id lastName profilePicUrl status type wholeName } query DeskWorkerLeaveCases($certificationOutstandingOnly: Boolean, $limit: Int, $openOnly: Boolean, $workerId: ID) { workerLeaveCases( workerId: $workerId openOnly: $openOnly certificationOutstandingOnly: $certificationOutstandingOnly limit: $limit ) { certificationDueAt certificationLate certificationStatus endsAt entries { countsAgainstEntitlement hours id ptoId usedOn } fmlaDesignated frequency id leaveType reason requestedAt startsAt status worker { ...WorkerReference } workerId } }",
+		Hash:     "sha256:ff7adee64ca8dfb4b664a31f9f4f35ae767fb3338d59282ceff27e003fd9eb60",
+		Document: "fragment FleetCodeReference on FleetCode { code color id } fragment WorkerReference on Worker { assignmentBlocked canBeAssigned firstName fleetCode { ...FleetCodeReference } fleetCodeId id lastName photo { thumbnailUrl url } status type wholeName } query DeskWorkerLeaveCases($certificationOutstandingOnly: Boolean, $limit: Int, $openOnly: Boolean, $workerId: ID) { workerLeaveCases( workerId: $workerId openOnly: $openOnly certificationOutstandingOnly: $certificationOutstandingOnly limit: $limit ) { certificationDueAt certificationLate certificationStatus endsAt entries { countsAgainstEntitlement hours id ptoId usedOn } fmlaDesignated frequency id leaveType reason requestedAt startsAt status worker { ...WorkerReference } workerId } }",
 	},
 	{
 		Name:     "DeskWorkerPerformanceReviews",
@@ -1314,8 +1316,8 @@ var operations = []Operation{
 	},
 	{
 		Name:     "DeskWorkerSafetyEvents",
-		Hash:     "sha256:831beae5cc82f9d913fe2b9b438b9fd885a182ff0c3bb4e68be98cf0a811430f",
-		Document: "fragment FleetCodeReference on FleetCode { code color id } fragment WorkerReference on Worker { assignmentBlocked canBeAssigned firstName fleetCode { ...FleetCodeReference } fleetCodeId id lastName profilePicUrl status type wholeName } query DeskWorkerSafetyEvents($limit: Int, $openOnly: Boolean, $workerId: ID) { workerSafetyEvents(workerId: $workerId, openOnly: $openOnly, limit: $limit) { activePoints closedAt description id inspectionLevel inspectionResult kind location occurredAt outOfService points pointsExpireAt preventable referenceNumber resolution severity shipmentId status violations { basic code description id outOfService severityWeight } worker { ...WorkerReference } workerId } }",
+		Hash:     "sha256:8a7c087ab01a6039aa9abddcc909dacb510ab0f5ea0a3821f2eb6b0420e54e27",
+		Document: "fragment FleetCodeReference on FleetCode { code color id } fragment WorkerReference on Worker { assignmentBlocked canBeAssigned firstName fleetCode { ...FleetCodeReference } fleetCodeId id lastName photo { thumbnailUrl url } status type wholeName } query DeskWorkerSafetyEvents($limit: Int, $openOnly: Boolean, $workerId: ID) { workerSafetyEvents(workerId: $workerId, openOnly: $openOnly, limit: $limit) { activePoints closedAt description id inspectionLevel inspectionResult kind location occurredAt outOfService points pointsExpireAt preventable referenceNumber resolution severity shipmentId status violations { basic code description id outOfService severityWeight } worker { ...WorkerReference } workerId } }",
 	},
 	{
 		Name:     "DeskWorkerRecognitions",
@@ -1329,8 +1331,8 @@ var operations = []Operation{
 	},
 	{
 		Name:     "WorkerPtoTable",
-		Hash:     "sha256:960ed1c3af77306841c0de1882bfe06ea874a32b37ba15d5d60904f5af33f1bc",
-		Document: "fragment WorkerDataTablePageInfoFields on PageInfo { endCursor hasNextPage } fragment WorkerPtoActorFields on User { id name } fragment WorkerPtoRowFields on WorkerPTO { approver { ...WorkerPtoActorFields } approverId autoApproved balanceAfterDays businessUnitId cancellationReason cancelledBy { ...WorkerPtoActorFields } cancelledById createdAt days endDate id organizationId reason rejectionReason rejector { ...WorkerPtoActorFields } rejectorId startDate status type updatedAt version worker { ...WorkerPtoWorkerFields } workerId } fragment WorkerPtoWorkerFields on Worker { firstName id lastName profilePicUrl wholeName } query WorkerPtoTable($includeTotalCount: Boolean = true, $input: WorkerPTOEntriesInput!) { workerPTOEntries(input: $input) { edges { cursor node { ...WorkerPtoRowFields } } pageInfo { ...WorkerDataTablePageInfoFields } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
+		Hash:     "sha256:44daef6dff775db88bbd367e5a70aedca729de3a13f3f2abdcd19e28f2ebef8c",
+		Document: "fragment WorkerDataTablePageInfoFields on PageInfo { endCursor hasNextPage } fragment WorkerPtoActorFields on User { id name } fragment WorkerPtoRowFields on WorkerPTO { approver { ...WorkerPtoActorFields } approverId autoApproved balanceAfterDays businessUnitId cancellationReason cancelledBy { ...WorkerPtoActorFields } cancelledById createdAt days endDate id organizationId reason rejectionReason rejector { ...WorkerPtoActorFields } rejectorId startDate status type updatedAt version worker { ...WorkerPtoWorkerFields } workerId } fragment WorkerPtoWorkerFields on Worker { firstName id lastName photo { thumbnailUrl url } wholeName } query WorkerPtoTable($includeTotalCount: Boolean = true, $input: WorkerPTOEntriesInput!) { workerPTOEntries(input: $input) { edges { cursor node { ...WorkerPtoRowFields } } pageInfo { ...WorkerDataTablePageInfoFields } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
 	},
 	{
 		Name:     "DeskWorkerTrainingRecords",
@@ -1444,6 +1446,7 @@ func NewSchema(p ResolverParams) Schema {
 	dispatchconsoleDeps := &dispatchconsoleresolver.Deps{
 		Core:                      core,
 		CarrierAssignmentService:  p.CarrierAssignmentService,
+		WorkerPhotoService:        p.WorkerPhotoService,
 		DispatchConsoleService:    p.DispatchConsoleService,
 		DispatchAutoAssignService: p.DispatchAutoAssignService,
 		DemandForecastService:     p.DemandForecastService,
@@ -1725,8 +1728,9 @@ func NewSchema(p ResolverParams) Schema {
 		TriageConflictService:   p.TriageConflictService,
 	}
 	workerDeps := &workerresolver.Deps{
-		Core:          core,
-		WorkerService: p.WorkerService,
+		Core:               core,
+		WorkerService:      p.WorkerService,
+		WorkerPhotoService: p.WorkerPhotoService,
 	}
 	workerchecklistDeps := &workerchecklistresolver.Deps{
 		Core:                   core,
@@ -2047,6 +2051,7 @@ func NewSchema(p ResolverParams) Schema {
 	rateRateMatrixVersion := &rateresolver.RateMatrixVersionResolver{Deps: rateDeps}
 	reportReportSchedule := &reportresolver.ReportScheduleResolver{Deps: reportDeps}
 	performancereviewReviewRating := &performancereviewresolver.ReviewRatingResolver{Deps: performancereviewDeps}
+	schedulingRotaRow := &schedulingresolver.RotaRowResolver{Deps: schedulingDeps}
 	workersafetySafetyScorecard := &workersafetyresolver.SafetyScorecardResolver{Deps: workersafetyDeps}
 	servicefailureServiceFailure := &servicefailureresolver.ServiceFailureResolver{Deps: servicefailureDeps}
 	servicefailureServiceFailureShipment := &servicefailureresolver.ServiceFailureShipmentResolver{Deps: servicefailureDeps}
@@ -2387,6 +2392,7 @@ func NewSchema(p ResolverParams) Schema {
 		"RateMatrixVersion@rate":                               rateRateMatrixVersion,
 		"ReportSchedule@report":                                reportReportSchedule,
 		"ReviewRating@performancereview":                       performancereviewReviewRating,
+		"RotaRow@scheduling":                                   schedulingRotaRow,
 		"SafetyScorecard@workersafety":                         workersafetySafetyScorecard,
 		"ServiceFailure@servicefailure":                        servicefailureServiceFailure,
 		"ServiceFailureShipment@servicefailure":                servicefailureServiceFailureShipment,

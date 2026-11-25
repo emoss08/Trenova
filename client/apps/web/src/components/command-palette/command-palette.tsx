@@ -8,7 +8,7 @@ import { turnFailureDetail } from "@/components/assistant/follow-turn";
 import { useAsk } from "@/components/assistant/use-ask";
 import { usePageContext } from "@/components/assistant/use-page-context";
 import { isRecordEntityType, recordPath } from "@/config/record-links";
-import { lazyComponent } from "@/lib/lazy-component";
+import { lazyComponent } from "@trenova/shared/lib/lazy-component";
 import { conversationPath } from "@/lib/conversation-path";
 import { isGlobalSearchEntityType } from "@/services/global-search";
 import { useCommandPaletteStore } from "@/stores/command-palette-store";

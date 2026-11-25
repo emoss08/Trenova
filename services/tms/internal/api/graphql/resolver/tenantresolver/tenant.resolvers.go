@@ -8,6 +8,9 @@ package tenantresolver
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/identityloaders"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/personphoto"
+
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/usermapping"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -125,4 +128,9 @@ func (r *UserResolver) CurrentOrganization(ctx context.Context, obj *tenant.User
 	}
 
 	return r.currentOrganization(ctx, obj)
+}
+
+// Photo is the resolver for the photo field.
+func (r *UserResolver) Photo(ctx context.Context, obj *tenant.User) (*personphoto.URLs, error) {
+	return identityloaders.UserPhotoByID(ctx, obj.ID)
 }

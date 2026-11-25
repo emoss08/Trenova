@@ -503,8 +503,7 @@ function PersonAvatar({ user }: { user: RecordShareUser }) {
     <ResolvedUserAvatar
       userId={user.id}
       name={user.name}
-      profilePicUrl={user.profilePicUrl}
-      thumbnailUrl={user.thumbnailUrl}
+      photo={user.photo}
       size="sm"
       className="rounded-full after:rounded-full"
       imageClassName="rounded-full"

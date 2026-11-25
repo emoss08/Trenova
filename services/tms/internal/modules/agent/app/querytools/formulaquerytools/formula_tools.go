@@ -128,12 +128,13 @@ var formulaStatuses = []string{
 }
 
 type formulaTemplateRow struct {
-	ID            string `json:"id"`
-	Name          string `json:"name"`
-	Description   string `json:"description,omitempty"`
-	Status        string `json:"status"`
-	VersionNumber int64  `json:"versionNumber"`
-	TestCount     int32  `json:"testCount"`
+	ID            string                 `json:"id"`
+	Name          string                 `json:"name"`
+	Description   string                 `json:"description,omitempty"`
+	Status        string                 `json:"status"`
+	VersionNumber int64                  `json:"versionNumber"`
+	TestCount     int32                  `json:"testCount"`
+	CreatedAt     querytool.OptionalDate `json:"createdAt"`
 }
 
 // NewListFormulaTemplatesTool is the repository-backed list
@@ -181,6 +182,7 @@ func NewListFormulaTemplatesTool(
 						Status:        string(item.Status),
 						VersionNumber: item.CurrentVersionNumber,
 						TestCount:     item.TestCount,
+						CreatedAt:     querytool.RecordedDate(item.CreatedAt),
 					}
 				},
 			), nil

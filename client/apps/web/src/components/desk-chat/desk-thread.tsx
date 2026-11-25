@@ -497,7 +497,7 @@ export function DeskThread({
     clearDraft: () => model.onDraftChange(""),
   });
 
-  // The agents the reply's own find_tools answer named, told to the surface
+  // The agents the reply's own search_tools answer named, told to the surface
   // only when they change: the list is the step's own, so a streamed word
   // leaves it the same value.
   const liveHandOffAgents = turn

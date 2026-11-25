@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/iamports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -42,6 +43,7 @@ type Params struct {
 	IAM            iamports.IAMRepository
 	AccessSettings iamports.AccessSettingsService
 	Permissions    permissionports.PermissionEngine
+	Photos         kernelports.Photos
 	SecurityConfig *securityconfig.Config
 	Logger         *zap.Logger
 }
@@ -51,6 +53,7 @@ type Service struct {
 	iam            iamports.IAMRepository
 	accessSettings iamports.AccessSettingsService
 	permissions    permissionports.PermissionEngine
+	photos         kernelports.Photos
 	session        securityconfig.SessionConfig
 	l              *zap.Logger
 }
@@ -61,6 +64,7 @@ func New(p Params) *Service {
 		iam:            p.IAM,
 		accessSettings: p.AccessSettings,
 		permissions:    p.Permissions,
+		photos:         p.Photos,
 		session:        p.SecurityConfig.Session,
 		l:              p.Logger.Named("service.security-briefing"),
 	}
@@ -106,7 +110,10 @@ func (s *Service) Get(
 				Limit:       iam.SecurityUnenrolledListLimit,
 				IncludeList: access[permission.ResourceUser],
 			})
-			return loadErr
+			if loadErr != nil {
+				return loadErr
+			}
+			return s.signMemberPhotos(gctx, briefing.MFA)
 		})
 	}
 	if access[permission.ResourceAuthEvent] {
@@ -287,4 +294,22 @@ func (s *Service) policySummary(
 	}
 
 	return summary, nil
+}
+
+func (s *Service) signMemberPhotos(ctx context.Context, coverage *iam.SecurityMFACoverage) error {
+	if coverage == nil {
+		return nil
+	}
+	for _, member := range coverage.Unenrolled {
+		photo, err := s.photos.Sign(ctx, kernelports.UserPhotoKeys(
+			member.UserID,
+			member.ProfilePicURL,
+			member.ThumbnailURL,
+		))
+		if err != nil {
+			return err
+		}
+		member.Photo = photo
+	}
+	return nil
 }

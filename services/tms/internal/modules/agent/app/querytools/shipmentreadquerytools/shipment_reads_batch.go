@@ -110,20 +110,20 @@ var shipmentReadColumns = []string{
 }
 
 type shipmentReadRow struct {
-	ID            string              `json:"id"`
-	ProNumber     string              `json:"proNumber"`
-	BOL           string              `json:"bol,omitempty"`
-	Status        string              `json:"status"`
-	Customer      string              `json:"customer,omitempty"`
-	Pickup        string              `json:"pickup,omitempty"`
-	Delivery      string              `json:"delivery,omitempty"`
-	Drivers       string              `json:"drivers,omitempty"`
-	Carrying      string              `json:"carrying,omitempty"`
-	TotalCharge   string              `json:"totalCharge,omitempty"`
-	BillingStatus string              `json:"billingStatus,omitempty"`
-	Moves         []shipmentMoveRef   `json:"moves,omitempty"`
-	ActiveHolds   []shipmentHoldRow   `json:"activeHolds,omitempty"`
-	NewestComment *shipmentCommentRow `json:"newestComment,omitempty"`
+	ID                    string              `json:"id"`
+	ProNumber             string              `json:"proNumber"`
+	BOL                   string              `json:"bol,omitempty"`
+	Status                string              `json:"status"`
+	Customer              string              `json:"customer,omitempty"`
+	Pickup                string              `json:"pickup,omitempty"`
+	Delivery              string              `json:"delivery,omitempty"`
+	Drivers               string              `json:"drivers,omitempty"`
+	Carrying              string              `json:"carrying,omitempty"`
+	TotalChargeAmount     string              `json:"totalChargeAmount,omitempty"`
+	BillingTransferStatus string              `json:"billingTransferStatus,omitempty"`
+	ActiveHolds           []shipmentHoldRow   `json:"activeHolds,omitempty"`
+	Moves                 []shipmentMoveRef   `json:"moves,omitempty"`
+	NewestComment         *shipmentCommentRow `json:"newestComment,omitempty"`
 }
 
 // shipmentMoveRef is one of a shipment's moves as dispatch_rank_candidates,
@@ -234,18 +234,18 @@ func shipmentReadRowOf(entity *shipment.Shipment) shipmentReadRow {
 	listed := shipmentquerytools.ToRow(entity)
 
 	return shipmentReadRow{
-		ID:            listed.ID,
-		ProNumber:     listed.ProNumber,
-		BOL:           listed.BOL,
-		Status:        listed.Status,
-		Customer:      listed.Customer,
-		Pickup:        listed.Pickup,
-		Delivery:      listed.Delivery,
-		Drivers:       listed.Drivers,
-		Carrying:      listed.Carrying,
-		TotalCharge:   listed.TotalCharge,
-		BillingStatus: listed.BillingStatus,
-		Moves:         moveRefsOf(entity.Moves),
+		ID:                    listed.ID,
+		ProNumber:             listed.ProNumber,
+		BOL:                   listed.BOL,
+		Status:                listed.Status,
+		Customer:              listed.Customer,
+		Pickup:                listed.Pickup,
+		Delivery:              listed.Delivery,
+		Drivers:               listed.Drivers,
+		Carrying:              listed.Carrying,
+		TotalChargeAmount:     listed.TotalChargeAmount,
+		Moves:                 moveRefsOf(entity.Moves),
+		BillingTransferStatus: listed.BillingTransferStatus,
 	}
 }
 

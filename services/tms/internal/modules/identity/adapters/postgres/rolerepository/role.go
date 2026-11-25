@@ -882,7 +882,15 @@ func usersWithPermissionQuery(
 		Distinct()
 
 	return u.With(held).
-		Pick(u.ID, u.Name, u.Username, u.EmailAddress, u.ProfilePicURL.Coalesce(""), u.Locale).
+		Pick(
+			u.ID,
+			u.Name,
+			u.Username,
+			u.EmailAddress,
+			u.ProfilePicURL.Coalesce(""),
+			u.ThumbnailURL.Coalesce(""),
+			u.Locale,
+		).
 		Where(
 			u.Status.Eq(domaintypes.StatusActive),
 			keel.Exists(keel.RowsOf(held.TableRef()).

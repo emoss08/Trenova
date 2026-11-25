@@ -3774,10 +3774,8 @@ input AgentAccessPreviewInput {
   The agent being edited, so each role says whether it is granted now. Absent for a new one.
   """
   agentId: ID
-  """
-  The tools the form has chosen. Core tools every agent holds need not be listed. At most 200.
-  """
-  toolNames: [String!]!
+  """The scope the form has chosen."""
+  scope: AgentScopeInput!
 }
 
 """
@@ -4276,8 +4274,14 @@ type AgentDefinition {
   outputMode: AgentOutputMode!
   """Proposals raised by this agent that still await a person's decision."""
   pendingProposals: Int!
+  """Capabilities loaded on every turn, at most twelve."""
+  pinnedTools: [String!]!
   preferredProviderId: ID!
   runTimeoutSeconds: Int!
+  """
+  What the agent may do: areas and capabilities allowed or denied. An empty scope is everything the person may do.
+  """
+  scope: AgentScope!
   shadowMode: Boolean!
   """Writes are previewed and recorded, never made."""
   simulationMode: Boolean!
@@ -4297,9 +4301,8 @@ type AgentDefinition {
   template: AgentTemplate
   """Executions per tool per day, keyed by tool name."""
   toolDailyLimits: JSON!
-  toolNames: [String!]!
   """
-  Per-tool autonomy overrides, keyed by tool name; each capped by autonomyCeiling.
+  Per-tool approval overrides, keyed by tool name; set by a person only stricter than the tool's default, raised only by earned trust.
   """
   toolTiers: JSON!
   triggerMode: AgentTriggerMode!
@@ -4380,9 +4383,10 @@ type AgentDraft {
   """
   notes: [AgentDraftNote!]!
   outputMode: AgentOutputMode!
+  pinnedTools: [String!]!
   runTimeoutSeconds: Int!
+  scope: AgentScope!
   shadowMode: Boolean!
-  toolNames: [String!]!
   """
   Autonomy per change tool, keyed by tool name; each held at the tool's maximum and autonomyCeiling.
   """
@@ -4393,7 +4397,7 @@ type AgentDraft {
 """Something drafting changed or left out of what the model proposed."""
 type AgentDraftNote {
   """
-  The setting, as the builder names it: toolNames, toolTiers.<tool>, eventKinds, cronExpression and so on.
+  The setting, as the builder names it: scope, pinnedTools, toolTiers.<tool>, eventKinds, cronExpression and so on.
   """
   field: String!
   """Why it was changed or left out."""
@@ -4796,13 +4800,12 @@ type AgentInstructionFinding {
 }
 
 """
-Instructions as the builder holds them, with the tools the draft holds.
+Instructions as the builder holds them, with the scope the draft holds.
 """
 input AgentInstructionLintInput {
-  disabledToolNames: [String!]
   """At most 20000 characters."""
   instructions: String!
-  toolNames: [String!]!
+  scope: AgentScopeInput!
 }
 
 """
@@ -6481,6 +6484,25 @@ type AgentSafetySummary {
 }
 
 """
+What an agent may do. An area (shipment, invoice, worker, ...) allows every capability in it; a
+capability is a tool name or an entity read (invoice.list, shipment.get). Denials win. Areas and
+capabilities both empty is everything the person may do: the universal agent.
+"""
+type AgentScope {
+  areas: [String!]
+  capabilities: [String!]
+  denyAreas: [String!]
+  denyCapabilities: [String!]
+}
+
+input AgentScopeInput {
+  areas: [String!]
+  capabilities: [String!]
+  denyAreas: [String!]
+  denyCapabilities: [String!]
+}
+
+"""
 One agent's record, counted at read time from its runs, its proposals and its
 usage. Nothing here is stored, so there is no second copy to drift out of step
 with the rows a person can audit.
@@ -6822,7 +6844,6 @@ enum AgentTemplate {
   FactoringClerk
   FormulaAssistant
   FuelTaxClerk
-  GeneralAssistant
   ImportAssistant
   InsightAnalyst
   IntakeDesk
@@ -6834,6 +6855,7 @@ enum AgentTemplate {
   ServiceFailureDesk
   SettlementsClerk
   ShipmentIntake
+  Universal
   WorkforceCoordinator
 }
 
@@ -8762,6 +8784,10 @@ type CapacityUnit {
   initials: String!
   kind: CapacityUnitKind!
   name: String!
+  """
+  The driver's photo, signed for a short while; null for a carrier or a driver with none.
+  """
+  photo: PersonPhoto
   ratePerMile: Decimal
   ring: CapacityRing
   tractorId: ID
@@ -15505,10 +15531,10 @@ type DispatchBoardDriver {
   latitude: Float
   longitude: Float
   openAssignments: Int!
+  photo: PersonPhoto
   plannedMove: DispatchDriverPlannedMove
   positionRecordedAt: Timestamp!
   postalCode: String!
-  profilePicUrl: String!
   projectedTimeAvailable: Int!
   shiftRemainingMs: Int!
   stateAbbreviation: String!
@@ -16947,6 +16973,10 @@ type DriverCoverageSuggestion {
   initials: String!
   moveId: ID!
   name: String!
+  """
+  The driver's photo, signed for a short while; null when they have none.
+  """
+  photo: PersonPhoto
   tractorId: ID
   unitLabel: String
   workerId: ID!
@@ -20573,6 +20603,10 @@ type FleetSafetyRank {
   fleetColor: String!
   lastEventAt: Timestamp
   name: String!
+  """
+  The driver's photo, signed for a short while; null when they have none.
+  """
+  photo: PersonPhoto
   rating: SafetyRating!
   score: Int!
   workerId: ID!
@@ -26624,13 +26658,13 @@ type MyAgent {
   icon: String!
   id: ID!
   name: String!
+  scope: AgentScope!
   """Up to four opening questions the agent can answer with its tools."""
   starters: [AgentStarter!]!
   """Set on the agents the platform itself creates and fires."""
   systemKey: String!
   """The starter this agent was created from, if any."""
   template: AgentTemplate
-  toolNames: [String!]!
 }
 
 type MyAgentConnection {
@@ -28100,6 +28134,16 @@ enum PeriodType {
   Week
 }
 
+"""
+A person's photo, a worker's or a user's, as two signed links: the picture, at most 1024 pixels
+on its longest side, and a thumbnail at most 256. The links expire, so read them again rather
+than storing them.
+"""
+type PersonPhoto {
+  thumbnailUrl: String!
+  url: String!
+}
+
 input PlaceAuditLegalHoldInput {
   name: String!
   reason: String!
@@ -28142,6 +28186,10 @@ Who a policy binds and whether they have signed the version in force. Derived on
 """
 type PolicyComplianceRow {
   acknowledgedAt: Timestamp
+  """
+  The worker's photo, signed for a short while; null when they have none.
+  """
+  photo: PersonPhoto
   signatureName: String
   workerId: ID!
   workerName: String!
@@ -28402,6 +28450,7 @@ type PortalProfile {
   lastName: String!
   organizationName: String!
   phoneNumber: String!
+  photo: PersonPhoto
   workerId: ID!
   workerType: String!
 }
@@ -28544,6 +28593,10 @@ type PositionHolder {
   id: ID!
   kind: PositionHolderKind!
   name: String!
+  """
+  The worker's or user's photo, signed for a short while; null when they have none.
+  """
+  photo: PersonPhoto
   status: String!
 }
 
@@ -30915,17 +30968,23 @@ input RecordDOTViolationInput {
 }
 
 input RecordEmploymentVerificationInput {
+  accidentCount: Int
   contactEmail: String
   contactName: String
   contactPhone: String
+  drugAlcoholResponseReceivedAt: Timestamp
   employedFrom: Timestamp
   employedTo: Timestamp
   employerDotNumber: String
   employerMcNumber: String
   employerName: String!
+  findings: String
+  hadAccidents: Boolean
+  hadDrugAlcoholViolations: Boolean
   method: EmploymentVerificationMethod
   notes: String
   requestedAt: Timestamp
+  responseReceivedAt: Timestamp
   status: EmploymentVerificationStatus
   wasDotRegulated: Boolean
   workerId: ID!
@@ -32324,6 +32383,10 @@ type RotaRow {
   fleetCode: String
   fleetColor: String
   name: String!
+  """
+  The worker's photo, signed for a short while; null when they have none.
+  """
+  photo: PersonPhoto
   scheduledDays: Int!
   shiftCode: String
   shiftColor: String
@@ -36313,6 +36376,10 @@ type TeamMember {
   """
   managerId: ID
   name: String!
+  """
+  The worker's photo, signed for a short while; null when they have none.
+  """
+  photo: PersonPhoto
   positionId: ID
   positionTitle: String!
   safetyRating: String!
@@ -38325,9 +38392,11 @@ type User {
   name: String!
   passwordChangedAt: Timestamp
   phoneNumber: String!
-  profilePicUrl: String!
+  """
+  The user's picture, signed for a short while; null when they have none.
+  """
+  photo: PersonPhoto
   status: EntityStatus!
-  thumbnailUrl: String!
   timeFormat: TimeFormat!
   timezone: String!
   updatedAt: Timestamp!
@@ -39182,6 +39251,10 @@ type Worker {
   organization: Organization
   organizationId: ID!
   phoneNumber: String!
+  """
+  The worker's photo, signed for a short while; null when they have none.
+  """
+  photo: PersonPhoto
   """The job position the worker holds; null when positionId is null."""
   position: JobPosition
   """
@@ -39190,7 +39263,6 @@ type Worker {
   positionId: ID
   postalCode: String!
   profile: WorkerProfile
-  profilePicUrl: String!
   pto: [WorkerPTO!]
   state: UsState
   stateId: ID!
@@ -41097,6 +41169,10 @@ type WorkerProfileChangeRequest {
   id: ID!
   note: String
   organizationId: ID!
+  """
+  The photo a waiting photo request proposes; null for any other request or once it is decided.
+  """
+  proposedPhoto: PersonPhoto
   status: ProfileChangeStatus!
   submittedAt: Timestamp!
   version: Int!

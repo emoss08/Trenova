@@ -8,6 +8,9 @@ vi.mock("../add-to-record-menu", () => ({ WorkerRecordMenus: () => null }));
 vi.mock("@/components/accounting-sync/sync-state-line", () => ({
   AccountingSyncStateLine: () => null,
 }));
+vi.mock("@/hooks/use-permission", () => ({
+  usePermission: () => ({ allowed: false, isLoading: false }),
+}));
 
 afterEach(cleanup);
 
@@ -77,14 +80,19 @@ function renderHeader(props: Partial<WorkerHeaderProps> = {}) {
 }
 
 describe("the worker's record header", () => {
-  it("names the worker with their status, types and standing", () => {
+  it("names the worker with their status and standing", () => {
     renderHeader();
 
     expect(screen.getByRole("heading", { name: "Maria Alvarez" })).toBeTruthy();
     expect(screen.getByText("Active")).toBeTruthy();
-    expect(screen.getByText("Employee")).toBeTruthy();
-    expect(screen.getByText("OTR")).toBeTruthy();
     expect(screen.getByText("Worth watching")).toBeTruthy();
+  });
+
+  it("marks the header with the worker's face, their initials while they have no photo", () => {
+    renderHeader({ worker: mariaRecord({ photo: null }) });
+
+    expect(screen.getByText("MA")).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Add a photo" })).toBeNull();
   });
 
   it("puts the facts a dispatcher reaches for on the meta line", () => {

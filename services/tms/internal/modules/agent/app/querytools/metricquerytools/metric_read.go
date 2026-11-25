@@ -48,7 +48,7 @@ func (t *ReadMetricTool) Name() string { return agenttoolports.MetricReadTool }
 
 func (t *ReadMetricTool) Description() string {
 	return "Read the figures and points of a metric Trenova keeps over time, to answer in a " +
-		"sentence or to look before drawing it. find_tools names the metric for what a " +
+		"sentence or to look before drawing it. search_tools names the metric for what a " +
 		"question measures: a rate week by week, a ranking, today's figures. Give metric, " +
 		"and for or period when the metric takes them. A figure the person may not see " +
 		"comes back withheld, never as zero, and the result says how to draw the metric " +
@@ -107,7 +107,7 @@ func (t *ReadMetricTool) Readable(
 	access permission.FieldSensitivity,
 	metric string,
 ) bool {
-	if actor == nil {
+	if actor == nil || t.boards == nil {
 		return false
 	}
 
@@ -204,7 +204,7 @@ func namedMetric(params map[string]any) (boardcatalog.Metric, string, error) {
 	}
 
 	return boardcatalog.Metric{}, "", invalid(paramMetric,
-		errortypes.ErrInvalid, "%q is not a metric Trenova keeps. Ask find_tools with "+
+		errortypes.ErrInvalid, "%q is not a metric Trenova keeps. Ask search_tools with "+
 			"what it measures, or give one of %s.", name,
 		stringutils.JoinAlternatives(boardregistry.Catalog().MetricNames()))
 }

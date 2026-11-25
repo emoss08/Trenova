@@ -32,7 +32,7 @@ func Definition(tools ...string) *agentdefinition.Definition {
 		Template:        agenttemplate.TemplateDispatchAssistant,
 		Instructions:    "Help the dispatch desk.",
 		AutonomyCeiling: agent.TierPropose,
-		ToolNames:       tools,
+		Scope:           agentdefinition.Scope{Capabilities: tools},
 		Enabled:         true,
 	}
 	d.ApplyDefaults()

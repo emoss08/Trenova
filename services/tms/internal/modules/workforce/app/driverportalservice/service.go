@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driversettlementports"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/selfserviceservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/app/workerphotoservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/driverportalports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/portalaccessports"
@@ -39,6 +40,7 @@ type Params struct {
 	CommentService      shipmentcommentports.ShipmentCommentService
 	StopReporter        driverportalports.StopReporter
 	WorkerService       *workerservice.Service
+	WorkerPhotos        *workerphotoservice.Service
 	DocumentService     *documentservice.Service
 	PTOService          workerptoports.WorkerPTOService
 	PTOLedger           *ptoledgerservice.Service
@@ -64,6 +66,7 @@ type Service struct {
 	commentService      shipmentcommentports.ShipmentCommentService
 	stopReporter        driverportalports.StopReporter
 	workerService       *workerservice.Service
+	workerPhotos        *workerphotoservice.Service
 	documentService     *documentservice.Service
 	ptoService          workerptoports.WorkerPTOService
 	ptoLedger           *ptoledgerservice.Service
@@ -90,6 +93,7 @@ func New(p Params) *Service { //nolint:gocritic // stable API shape
 		commentService:      p.CommentService,
 		stopReporter:        p.StopReporter,
 		workerService:       p.WorkerService,
+		workerPhotos:        p.WorkerPhotos,
 		documentService:     p.DocumentService,
 		ptoService:          p.PTOService,
 		ptoLedger:           p.PTOLedger,

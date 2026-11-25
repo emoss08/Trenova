@@ -1,18 +1,13 @@
 import { useT } from "@trenova/shared/i18n/use-t";
-import {
-  Avatar,
-  AvatarFallback,
-  AvatarGroup,
-  AvatarGroupCount,
-  AvatarImage,
-} from "@trenova/shared/components/ui/avatar";
+import { WorkerAvatar } from "@trenova/shared/components/worker-avatar";
+import { AvatarGroup, AvatarGroupCount } from "@trenova/shared/components/ui/avatar";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import { formatUnixWeekday } from "@trenova/shared/lib/date";
 import { ptoTypeMeta } from "@trenova/shared/lib/pto";
 import { cn } from "@trenova/shared/lib/utils";
 import type { WorkerPTO } from "@trenova/shared/types/worker";
 import { useMemo } from "react";
-import { ptoWorkerInitials, ptoWorkerName } from "../pto-worker";
+import { ptoWorkerName } from "../pto-worker";
 import { DAY_SECONDS } from "./calendar-layout";
 
 export const WHOS_OUT_DAYS = 7;
@@ -141,16 +136,14 @@ function DayTile({
       {count > 0 ? (
         <AvatarGroup className="-space-x-1.5">
           {day.out.slice(0, MAX_FACES).map((pto) => (
-            <Avatar key={pto.id} className="size-5 rounded-full after:rounded-full">
-              <AvatarImage
-                src={pto.worker?.profilePicUrl ?? undefined}
-                alt=""
-                className="rounded-full"
-              />
-              <AvatarFallback className="rounded-full text-3xs font-medium">
-                {ptoWorkerInitials(pto)}
-              </AvatarFallback>
-            </Avatar>
+            <WorkerAvatar
+              key={pto.id}
+              firstName={pto.worker?.firstName}
+              lastName={pto.worker?.lastName}
+              photo={pto.worker?.photo}
+              className="size-5"
+              fallbackClassName="text-3xs"
+            />
           ))}
           {count > MAX_FACES ? (
             <AvatarGroupCount className="size-5 text-3xs font-medium">

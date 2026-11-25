@@ -9,7 +9,13 @@ fragment AgentDefinitionCardFields on AgentDefinition {
   accent
   instructions
   guardrails
-  toolNames
+  scope {
+    areas
+    capabilities
+    denyAreas
+    denyCapabilities
+  }
+  pinnedTools
   toolTiers
   autonomyCeiling
   dataAccessCeiling
@@ -85,7 +91,12 @@ fragment AgentChoiceFields on AgentDefinition {
   template
   icon
   accent
-  toolNames
+  scope {
+    areas
+    capabilities
+    denyAreas
+    denyCapabilities
+  }
   systemKey
   starters {
     label

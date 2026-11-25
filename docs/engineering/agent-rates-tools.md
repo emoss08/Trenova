@@ -216,7 +216,7 @@ the service still lets only a run's starter cancel it and only a schedule's owne
 outside content and never past Ask first. Its data access is Restricted, because what it
 analyzes is money: open balances, revenue and pay are Restricted amounts, and an analyst held to
 Internal read them from a report run but not from the receivable and invoice reads it reaches
-through `find_tools`, so it could not check a figure against the records. The insight analyst, an unattended desk, keeps its report reads and
+through `search_tools`, so it could not check a figure against the records. The insight analyst, an unattended desk, keeps its report reads and
 holds none of the report writes.
 
 All three run at a Propose ceiling, so every write they make waits for a person, and none needs

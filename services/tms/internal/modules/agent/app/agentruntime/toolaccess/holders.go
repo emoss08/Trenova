@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/usableagents"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/zap"
@@ -20,11 +21,11 @@ import (
 // administrator; the person guessed at an agent in the hand-off menu and
 // picked the billing exceptions analyst rather than the billing assistant.
 // The agents that hold the tool were there to be named. It is read only when
-// a find_tools search matches nothing the agent holds, so the listing costs
+// a search_tools search matches nothing the agent holds, so the listing costs
 // nothing on an ordinary turn, and a failure to read it leaves the note out.
 //
 // The agents it names are returned too, in the note's order, and ride on the
-// find_tools answer into the saved tool message, so the Desk's hand-off menu
+// search_tools answer into the saved tool message, so the Desk's hand-off menu
 // can put them first rather than leave the person to match a name in prose.
 func (s *Access) handOffNote(
 	ctx context.Context,
@@ -47,6 +48,16 @@ func (s *Access) handOffNote(
 		return "", nil
 	}
 
+	slices.SortStableFunc(others, func(a, b *agentdefinition.Definition) int {
+		switch {
+		case a.IsUniversal() && !b.IsUniversal():
+			return -1
+		case b.IsUniversal() && !a.IsUniversal():
+			return 1
+		}
+
+		return 0
+	})
 	lines := make([]string, 0, len(others))
 	holders := make([]pulid.ID, 0, len(others))
 	for _, other := range others {
@@ -66,7 +77,7 @@ func (s *Access) handOffNote(
 		return "", nil
 	}
 
-	note := "These of the person's other agents hold them:\n" + strings.Join(lines, "\n") +
+	note := "These of the person's other agents have them in scope (the universal agent first):\n" + strings.Join(lines, "\n") +
 		"\nTell the person which agent can do this, by its name, and that they can hand " +
 		"this conversation to it with Hand off to another agent at the top of the " +
 		"conversation; it carries a summary over. Say what you would have done so they " +

@@ -19,6 +19,9 @@ import { useEffect } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { aiControlAgentPath } from "@/routes/agent-control/ai-control-tabs";
 import { casePath } from "../attention/attention-record";
+import { useDesk } from "../desk-layout";
+import { caseThreadOf } from "../record-case/case-subject";
+import { useAskNew } from "../today/ask-new";
 import { LifeBadge, outcomeLife } from "../attention/life-badge";
 import { recordLine, runTrail } from "./handled-lines";
 
@@ -60,6 +63,8 @@ function ruleLine(t: TranslateFn, detail: DeskActivityDetail): string {
 export function DeskHandled({ id }: { id: string }) {
   const t = useT();
   const navigate = useNavigate();
+  const desk = useDesk();
+  const askNew = useAskNew();
   const timezone = resolveUserTimezone(useAuthStore((state) => state.user?.timezone));
   const { allowed: canSeeControl } = usePermission(Resource.AgentDefinition, Operation.Read);
   const query = useQuery(deskActivity.entry(id));
@@ -233,11 +238,17 @@ export function DeskHandled({ id }: { id: string }) {
           {first && (
             <Button
               variant="outline"
-              onClick={() =>
-                useDeskMarginStore
-                  .getState()
-                  .openMargin({ kind: first.kind, id: first.id, label: first.label })
-              }
+              onClick={() => {
+                // The record's case conversation, when there is one, opens
+                // beside the page; otherwise a new one opens full width.
+                const subject = { kind: first.kind, id: first.id, label: first.label };
+                const existing = caseThreadOf(desk.threads, first.kind, first.id, null);
+                if (existing !== null) {
+                  useDeskMarginStore.getState().showThread(existing.id, subject);
+                  return;
+                }
+                askNew(subject);
+              }}
             >
               <DeskIcon name="chat" size={13} />
               {t("Ask about this")}

@@ -5,7 +5,7 @@ import { PageLayout } from "@/components/navigation/sidebar-layout";
 import { Button } from "@trenova/shared/components/ui/button";
 import { panelSearchParamsParser } from "@/hooks/data-table/use-data-table-state";
 import { shipmentBoard } from "@/lib/queries/shipment-board";
-import { lazyComponent } from "@/lib/lazy-component";
+import { lazyComponent } from "@trenova/shared/lib/lazy-component";
 import { tableConfiguration } from "@/lib/queries/table-configuration";
 import type { RoutePrefetch, RoutePrefetchQuery } from "@/lib/route-prefetch";
 import { ShipmentCapabilitiesProvider } from "@/lib/shipment-board/capabilities";

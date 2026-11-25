@@ -2,8 +2,10 @@ fragment SecurityActivityUserFields on User {
   id
   name
   emailAddress
-  profilePicUrl
-  thumbnailUrl
+  photo {
+    url
+    thumbnailUrl
+  }
 }
 
 fragment AuthEventTableRowFields on AuthEvent {

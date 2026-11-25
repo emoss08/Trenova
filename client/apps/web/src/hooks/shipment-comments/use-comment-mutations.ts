@@ -1,3 +1,4 @@
+import type { PersonPhoto } from "@trenova/shared/types/person-photo";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
@@ -39,16 +40,14 @@ function toUserSnapshot(
   user: {
     id?: string;
     name: string;
-    profilePicUrl?: string | null;
-    thumbnailUrl?: string | null;
+    photo?: PersonPhoto | null;
   } | null,
 ): CommentUserSnapshot | null {
   if (!user?.id) return null;
   return {
     id: user.id,
     name: user.name,
-    profilePicUrl: user.profilePicUrl ?? null,
-    thumbnailUrl: user.thumbnailUrl ?? null,
+    photo: user.photo ?? null,
   };
 }
 

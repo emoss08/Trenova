@@ -287,6 +287,8 @@ func (a openAIChatAdapter) Stream(
 	}
 	defer func() { _ = stream.Close() }()
 
+	content := newInlineThinkingStream(sink, call.Think)
+
 	var (
 		text      strings.Builder
 		thinking  strings.Builder
@@ -339,7 +341,7 @@ func (a openAIChatAdapter) Stream(
 			}
 			if choice.Delta.Content != "" {
 				text.WriteString(choice.Delta.Content)
-				sink(choice.Delta.Content)
+				content.Write(choice.Delta.Content)
 			}
 			for _, fragment := range choice.Delta.ToolCalls {
 				key, ok := active[fragment.Index]
@@ -362,6 +364,7 @@ func (a openAIChatAdapter) Stream(
 
 		return nil
 	})
+	content.Flush()
 	if err == nil && !finished {
 		err = modeladapter.ErrStreamCut
 	}
@@ -386,11 +389,8 @@ func (a openAIChatAdapter) Stream(
 		toolCalls = nil
 	}
 
-	// The inline block is lifted after the stream rather than during it.
-	// A tag arrives split across deltas, so deciding mid-stream would mean
-	// buffering until a close tag that may never come; the person watching
-	// sees the thinking appear and then settle into the answer, which is
-	// what a reasoning model looks like anyway.
+	// The stream already routed the inline block to the thinking sink as it
+	// arrived; the finished reply is split the same way for what is stored.
 	reply, reasoning := mergeInlineThinking(text.String(), textReasoning(thinking.String()))
 	lifted := liftInlineToolCalls(reply, call.Request.Tools, len(toolCalls))
 

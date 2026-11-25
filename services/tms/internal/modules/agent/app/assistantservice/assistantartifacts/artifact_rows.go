@@ -22,6 +22,7 @@ const (
 	argQuery         = "query"
 	argSortBy        = "sortBy"
 	argSortDirection = "sortDirection"
+	argRecordsSort   = "sort"
 
 	defaultRowsPage = 25
 	maxRowsPage     = 100
@@ -38,7 +39,11 @@ var errStalePage = errortypes.NewValidationError(
 )
 
 type listReader struct {
-	tool      agenttoolports.AgentQueryTool
+	tool agenttoolports.AgentQueryTool
+	// sorter is the entity reader a records_query table reads through: its
+	// sortable fields are the table's, and a sort goes to records_query as
+	// its own sort list.
+	sorter    agenttoolports.AgentQueryTool
 	params    agenttoolports.QueryToolParams
 	arguments map[string]any
 	entity    string
@@ -52,6 +57,16 @@ func (l *listReader) read(
 	arguments := make(map[string]any, len(l.arguments)+len(overrides))
 	maps.Copy(arguments, l.arguments)
 	maps.Copy(arguments, overrides)
+	if l.sorter != nil {
+		if field := typeutils.StringOfTrimmed(arguments[argSortBy]); field != "" {
+			arguments[argRecordsSort] = []any{map[string]any{
+				"field":     field,
+				"direction": typeutils.StringOfTrimmed(arguments[argSortDirection]),
+			}}
+		}
+		delete(arguments, argSortBy)
+		delete(arguments, argSortDirection)
+	}
 
 	params := l.params
 	params.Params = arguments
@@ -81,7 +96,11 @@ func (l *listReader) searchable() bool {
 }
 
 func (l *listReader) sortFields(columns []assistantartifact.DisplayColumn) map[string]string {
-	property, _ := l.properties()[argSortBy].(map[string]any)
+	properties := l.properties()
+	if l.sorter != nil {
+		properties, _ = l.sorter.ParamSchema()[toolschema.KeyProperties].(map[string]any)
+	}
+	property, _ := properties[argSortBy].(map[string]any)
 	fields := artifactpayload.StringsOf(property[toolschema.KeyEnum])
 	out := make(map[string]string, len(columns))
 	for _, column := range columns {

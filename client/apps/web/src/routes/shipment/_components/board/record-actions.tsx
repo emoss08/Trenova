@@ -9,7 +9,7 @@ import { useShipmentBillingActions } from "@/hooks/use-shipment-billing-actions"
 import { shipment as shipmentQueries } from "@/lib/queries/shipment";
 import { shipmentService } from "@/services/shipment";
 import { useOpenedOnce } from "@/hooks/use-opened-once";
-import { lazyComponent } from "@/lib/lazy-component";
+import { lazyComponent } from "@trenova/shared/lib/lazy-component";
 import { LazyComponent } from "@trenova/shared/components/error-boundary";
 import { usePermissionStore } from "@trenova/shared/stores/permission-store";
 import type { PanelMode, Row, RowAction } from "@trenova/shared/types/data-table";

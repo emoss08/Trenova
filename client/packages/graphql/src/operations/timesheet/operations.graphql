@@ -23,6 +23,10 @@ query Timesheets($filter: TimesheetFilterInput) {
       firstName
       lastName
       type
+      photo {
+        url
+        thumbnailUrl
+      }
     }
   }
 }
@@ -87,7 +91,10 @@ query OpenTimeClockEntries($teamOnly: Boolean, $limit: Int) {
       id
       firstName
       lastName
-      profilePicUrl
+      photo {
+        url
+        thumbnailUrl
+      }
       fleetCode {
         id
         code

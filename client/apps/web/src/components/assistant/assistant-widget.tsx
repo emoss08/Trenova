@@ -1,7 +1,7 @@
 import { useQueryParams } from "@trenova/shared/hooks/use-query-params";
 import { usePermission } from "@/hooks/use-permission";
 import { useAttentionSummary } from "@/hooks/use-attention";
-import { lazyComponent } from "@/lib/lazy-component";
+import { lazyComponent } from "@trenova/shared/lib/lazy-component";
 import {
   DEFAULT_PANEL_SIZE,
   dockPositionClass,

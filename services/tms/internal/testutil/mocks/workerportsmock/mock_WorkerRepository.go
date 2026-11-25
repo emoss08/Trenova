@@ -647,6 +647,142 @@ func (_c *MockWorkerRepository_Update_Call) RunAndReturn(run func(ctx context.Co
 	return _c
 }
 
+// UpdatePhoto provides a mock function for the type MockWorkerRepository
+func (_mock *MockWorkerRepository) UpdatePhoto(ctx context.Context, req *workerports.UpdateWorkerPhotoRequest) (*worker.Worker, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdatePhoto")
+	}
+
+	var r0 *worker.Worker
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *workerports.UpdateWorkerPhotoRequest) (*worker.Worker, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *workerports.UpdateWorkerPhotoRequest) *worker.Worker); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*worker.Worker)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *workerports.UpdateWorkerPhotoRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockWorkerRepository_UpdatePhoto_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdatePhoto'
+type MockWorkerRepository_UpdatePhoto_Call struct {
+	*mock.Call
+}
+
+// UpdatePhoto is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *workerports.UpdateWorkerPhotoRequest
+func (_e *MockWorkerRepository_Expecter) UpdatePhoto(ctx any, req any) *MockWorkerRepository_UpdatePhoto_Call {
+	return &MockWorkerRepository_UpdatePhoto_Call{Call: _e.mock.On("UpdatePhoto", ctx, req)}
+}
+
+func (_c *MockWorkerRepository_UpdatePhoto_Call) Run(run func(ctx context.Context, req *workerports.UpdateWorkerPhotoRequest)) *MockWorkerRepository_UpdatePhoto_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *workerports.UpdateWorkerPhotoRequest
+		if args[1] != nil {
+			arg1 = args[1].(*workerports.UpdateWorkerPhotoRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockWorkerRepository_UpdatePhoto_Call) Return(worker1 *worker.Worker, err error) *MockWorkerRepository_UpdatePhoto_Call {
+	_c.Call.Return(worker1, err)
+	return _c
+}
+
+func (_c *MockWorkerRepository_UpdatePhoto_Call) RunAndReturn(run func(ctx context.Context, entity *workerports.UpdateWorkerPhotoRequest) (*worker.Worker, error)) *MockWorkerRepository_UpdatePhoto_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetPhotoKeys provides a mock function for the type MockWorkerRepository
+func (_mock *MockWorkerRepository) GetPhotoKeys(ctx context.Context, req workerports.GetWorkersByIDsRequest) ([]workerports.WorkerPhotoKeys, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetPhotoKeys")
+	}
+
+	var r0 []workerports.WorkerPhotoKeys
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, workerports.GetWorkersByIDsRequest) ([]workerports.WorkerPhotoKeys, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, workerports.GetWorkersByIDsRequest) []workerports.WorkerPhotoKeys); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]workerports.WorkerPhotoKeys)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, workerports.GetWorkersByIDsRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockWorkerRepository_GetPhotoKeys_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetPhotoKeys'
+type MockWorkerRepository_GetPhotoKeys_Call struct {
+	*mock.Call
+}
+
+// GetPhotoKeys is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req workerports.GetWorkersByIDsRequest
+func (_e *MockWorkerRepository_Expecter) GetPhotoKeys(ctx any, req any) *MockWorkerRepository_GetPhotoKeys_Call {
+	return &MockWorkerRepository_GetPhotoKeys_Call{Call: _e.mock.On("GetPhotoKeys", ctx, req)}
+}
+
+func (_c *MockWorkerRepository_GetPhotoKeys_Call) Run(run func(ctx context.Context, req workerports.GetWorkersByIDsRequest)) *MockWorkerRepository_GetPhotoKeys_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 workerports.GetWorkersByIDsRequest
+		if args[1] != nil {
+			arg1 = args[1].(workerports.GetWorkersByIDsRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockWorkerRepository_GetPhotoKeys_Call) Return(workerPhotoKeyss []workerports.WorkerPhotoKeys, err error) *MockWorkerRepository_GetPhotoKeys_Call {
+	_c.Call.Return(workerPhotoKeyss, err)
+	return _c
+}
+
+func (_c *MockWorkerRepository_GetPhotoKeys_Call) RunAndReturn(run func(ctx context.Context, entity workerports.GetWorkersByIDsRequest) ([]workerports.WorkerPhotoKeys, error)) *MockWorkerRepository_GetPhotoKeys_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // PatchProfileCredentialField provides a mock function for the type MockWorkerRepository
 func (_mock *MockWorkerRepository) PatchProfileCredentialField(ctx context.Context, req *workerports.PatchProfileCredentialFieldRequest) error {
 	ret := _mock.Called(ctx, req)

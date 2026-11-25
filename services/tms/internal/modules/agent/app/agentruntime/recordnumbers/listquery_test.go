@@ -64,7 +64,7 @@ func TestListQuery_ListsExactlyTheRecordsAQueryOfNumbersNames(t *testing.T) {
 	records, _, _ := twoShipments()
 	listed, err := newResolver(records, nil).ListQuery(t.Context(), listQuery(map[string]any{
 		"query":  "SEED-SHP-008 and SEED-SHP-010",
-		"fields": []any{"proNumber", "totalCharge"},
+		"fields": []any{"proNumber", "totalChargeAmount"},
 	}, shipmentListSchema("status", "proNumber")))
 
 	require.NoError(t, err)
@@ -73,7 +73,7 @@ func TestListQuery_ListsExactlyTheRecordsAQueryOfNumbersNames(t *testing.T) {
 		shipmentKind: {"SEED-SHP-008", "SEED-SHP-010"},
 	}, records.asked[0])
 	assert.Equal(t, map[string]any{
-		"fields": []any{"proNumber", "totalCharge"},
+		"fields": []any{"proNumber", "totalChargeAmount"},
 		"filters": []any{map[string]any{
 			"field":    "proNumber",
 			"operator": "in",

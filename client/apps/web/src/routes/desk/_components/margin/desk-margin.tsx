@@ -1,36 +1,22 @@
 import { DeskThread } from "@/components/desk-chat/desk-thread";
-import {
-  DeskHomeComposer,
-  useDeskHomeAsk,
-  type DeskStartExtras,
-} from "@/components/desk-chat/desk-home-ask";
 import { DeskIcon } from "@/components/desk-chat/desk-icons";
 import { DeskTip } from "@/components/desk-chat/desk-tip";
 import { deskIconClass } from "@/components/desk-chat/desk-button-styles";
 import { conversationPath } from "@/lib/conversation-path";
 import { assistant } from "@/lib/queries/assistant";
-import { useDeskSetting } from "@/stores/desk-settings-store";
-import { recordSpace } from "@/stores/composer-draft-store";
-import { useDeskMarginStore, type DeskSubject } from "@/stores/desk-margin-store";
+import { useDeskMarginStore } from "@/stores/desk-margin-store";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@trenova/shared/components/ui/button";
 import { NovaBadge } from "@trenova/shared/components/ui/nova-badge";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { useNavigate } from "@tanstack/react-router";
 import { useDesk } from "../desk-layout";
-import { casePath } from "../attention/attention-record";
 import { viewPath } from "../view/view-path";
-import { casePageContext, caseThreadOf, threadSubjectOf } from "../record-case/case-subject";
-
-/** The record a margin question carries, as the composer's mention of it. */
-function subjectMention(subject: DeskSubject | null) {
-  return subject ? [{ type: subject.kind, id: subject.id, label: subject.label }] : [];
-}
 
 /**
- * Nova's margin: the conversation beside the work, never in front of it. It
- * opens on what the page is about, keeps the page in view while the agent
- * answers, and opens full width as the Desk's own conversation.
+ * Nova's margin: a conversation that already exists, beside the work. It keeps
+ * the page in view while the agent answers, and opens full width as the
+ * Desk's own conversation. A new conversation never starts here.
  */
 export function DeskMargin() {
   const t = useT();
@@ -39,12 +25,7 @@ export function DeskMargin() {
   const margin = useDeskMarginStore((state) => state.margin);
   const closeMargin = useDeskMarginStore((state) => state.closeMargin);
   const subject = margin?.subject ?? null;
-  // A record a case can be about keeps one conversation: the margin opens on
-  // it rather than starting another.
-  const caseThread = subject
-    ? caseThreadOf(desk.threads, subject.kind, subject.id, subject.agentId)
-    : null;
-  const threadId = margin?.threadId ?? caseThread?.id ?? null;
+  const threadId = margin?.threadId ?? null;
   const threadQuery = useQuery({
     ...assistant.thread(threadId ?? ""),
     enabled: threadId !== null,
@@ -56,24 +37,14 @@ export function DeskMargin() {
     return null;
   }
 
-  const title = thread ? (
-    subject ? (
-      <>
-        <b>{agent?.name ?? t("Agent unavailable")}</b>
-        <span className="dk-w-mg-sep">·</span>
-        <span>{t("about {0}", subject.label)}</span>
-      </>
-    ) : (
-      <b>{thread.title || t("Untitled conversation")}</b>
-    )
-  ) : subject ? (
+  const title = subject ? (
     <>
-      <b>{t("New conversation")}</b>
+      <b>{thread ? (agent?.name ?? t("Agent unavailable")) : t("Opening the conversation")}</b>
       <span className="dk-w-mg-sep">·</span>
       <span>{t("about {0}", subject.label)}</span>
     </>
   ) : (
-    <b>{t("New conversation")}</b>
+    <b>{thread ? thread.title || t("Untitled conversation") : t("Opening the conversation")}</b>
   );
 
   return (
@@ -109,9 +80,7 @@ export function DeskMargin() {
           </Button>
         </DeskTip>
       </div>
-      {threadId === null ? (
-        <MarginAsk subject={subject} />
-      ) : thread === null ? (
+      {thread === null ? (
         <div className="dk-w-mg-load" aria-busy aria-label={t("Opening the conversation")}>
           <i className="dk-sk" />
           <i className="dk-sk" />
@@ -142,62 +111,5 @@ export function DeskMargin() {
         </div>
       )}
     </aside>
-  );
-}
-
-/**
- * The margin before its conversation exists: the Desk's box, with the record
- * the page is about riding on the question. Asking starts the conversation
- * here, beside the work.
- */
-function MarginAsk({ subject }: { subject: DeskSubject | null }) {
-  const t = useT();
-  const desk = useDesk();
-  const preferredAgent = useDeskSetting("agent");
-  const ask = useDeskHomeAsk({
-    agents: desk.agents,
-    threads: desk.threads,
-    isLoading: desk.isLoading,
-    preferId: preferredAgent,
-    subjectAgentId: subject?.agentId,
-    pageSource: "screen",
-    space: subject ? recordSpace(subject.kind, subject.id) : "desk-margin",
-    onStart: (agentId: string, question?: string, extras?: DeskStartExtras) => {
-      const caseType = subject ? threadSubjectOf(subject.kind) : null;
-      desk.startInMargin(
-        agentId,
-        question,
-        {
-          files: extras?.files ?? [],
-          providerId: extras?.providerId ?? "",
-          mentions: [...subjectMention(subject), ...(extras?.mentions ?? [])],
-        },
-        subject
-          ? {
-              subjectType: caseType ?? undefined,
-              subjectId: caseType ? subject.id : undefined,
-              page: casePageContext(
-                casePath(subject.kind, subject.id),
-                subject.kind,
-                subject.id,
-                subject.label,
-              ),
-            }
-          : undefined,
-      );
-    },
-  });
-
-  return (
-    <div className="dk-w-mg-new">
-      <p className="dk-w-mg-hint">
-        {subject
-          ? t("Ask anything about {0}. The record goes with your question.", subject.label)
-          : t("Ask anything. Whatever is open on the canvas goes with the question.")}
-      </p>
-      <div className="dk-w-mg-f">
-        <DeskHomeComposer ask={ask} isStarting={desk.isStarting} />
-      </div>
-    </div>
   );
 }

@@ -14,6 +14,8 @@ type Deps struct {
 
 type MutationResolver struct{ *Deps }
 
+type PolicyComplianceRowResolver struct{ *Deps }
+
 type QueryResolver struct{ *Deps }
 
 type WorkerProfileChangeRequestResolver struct{ *Deps }

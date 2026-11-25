@@ -132,7 +132,7 @@ function openEntry(over: Record<string, unknown> = {}) {
     note: null,
     worker: {
       ...ADA,
-      profilePicUrl: "",
+      photo: null,
       fleetCode: { id: "fc_1", code: "SOUTH", color: "#2563eb" },
     },
     ...over,
@@ -229,7 +229,7 @@ describe("TimeAttendanceConsole", () => {
           id: "tce_open_2",
           workerId: BEN.id,
           clockedInAt: NOW - HOUR,
-          worker: { ...BEN, profilePicUrl: "", fleetCode: null },
+          worker: { ...BEN, photo: null, fleetCode: null },
         }),
       ],
     });
@@ -260,7 +260,7 @@ describe("TimeAttendanceConsole", () => {
           id: "tce_open_2",
           workerId: BEN.id,
           clockedInAt: NOW - HOUR,
-          worker: { ...BEN, profilePicUrl: "", fleetCode: null },
+          worker: { ...BEN, photo: null, fleetCode: null },
         }),
         openEntry(),
       ],

@@ -2,6 +2,7 @@ import { useSearchState } from "@trenova/shared/hooks/use-search-state";
 import { DataTable } from "@/components/data-table/data-table";
 import { describeToolCall } from "@/components/assistant/tool-presentation";
 import { searchParamsParser } from "@/hooks/data-table/use-data-table-state";
+import { coversEverything, isSwitchedOff } from "@/lib/agent-scope";
 import type { AgentDefinitionRow } from "@/lib/graphql/agent-definition";
 import {
   AGENT_TOOL_SAFETY_LIST_KEY,
@@ -127,11 +128,21 @@ export default function ByAgentView() {
                       <DropdownMenuItem
                         key={agent.id}
                         title={agent.name}
-                        description={t(
-                          "{0, plural, one {# tool} other {# tools}} · ceiling {1}",
-                          agent.toolNames.length,
-                          tierLabel(t, agent.autonomyCeiling),
-                        )}
+                        description={
+                          isSwitchedOff(agent.scope)
+                            ? t("Switched off · ceiling {0}", tierLabel(t, agent.autonomyCeiling))
+                            : coversEverything(agent.scope)
+                              ? t(
+                                  "Everything the person may do · ceiling {0}",
+                                  tierLabel(t, agent.autonomyCeiling),
+                                )
+                              : t(
+                                  "{0, plural, one {# area} other {# areas}} · {1, plural, one {# capability} other {# capabilities}} · ceiling {2}",
+                                  agent.scope.areas.length,
+                                  agent.scope.capabilities.length,
+                                  tierLabel(t, agent.autonomyCeiling),
+                                )
+                        }
                         startContent={<Tile agent={agent} s={18} />}
                         onClick={() => setPicked([...picked, agent.id])}
                       />

@@ -20,6 +20,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/ptomapping"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/personphoto"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerptoports"
@@ -348,6 +349,11 @@ func (r *WorkerResolver) FleetCodeID(ctx context.Context, obj *worker.Worker) (*
 
 func (r *WorkerResolver) ManagerID(ctx context.Context, obj *worker.Worker) (*string, error) {
 	return gqlid.IDPtr(obj.ManagerID), nil
+}
+
+// Photo is the resolver for the photo field.
+func (r *WorkerResolver) Photo(ctx context.Context, obj *worker.Worker) (*personphoto.URLs, error) {
+	return r.WorkerPhotoService.URLs(ctx, obj)
 }
 
 func (r *WorkerPTOResolver) ApproverID(ctx context.Context, obj *worker.WorkerPTO) (*string, error) {

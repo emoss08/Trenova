@@ -8,7 +8,7 @@ import {
   type WorkerTrainingRecordRow,
   type WorkerTrainingSummaryItem,
 } from "@/lib/graphql/worker-training";
-import { lazyComponent } from "@/lib/lazy-component";
+import { lazyComponent } from "@trenova/shared/lib/lazy-component";
 import type { WorkerTabProps, WorkerTarget, WorkerViewOf } from "@/routes/worker/use-worker-state";
 import { useQuery } from "@tanstack/react-query";
 import { LazyComponent } from "@trenova/shared/components/error-boundary";

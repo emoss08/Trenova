@@ -24,7 +24,7 @@ const (
 	descriptionMatchWeight = 2
 	parameterMatchWeight   = 1
 
-	// findCutoffDivisor keeps a find_tools answer to the tools that matched
+	// findCutoffDivisor keeps a search_tools answer to the tools that matched
 	// about as well as the best one. Without it "list trailers" loaded the
 	// trailer tools and then every other list tool on the word "list".
 	findCutoffDivisor = 2
@@ -408,4 +408,16 @@ func parameterText(schema map[string]any) string {
 	}
 
 	return b.String()
+}
+
+func (c *Catalog) Scores(query string) map[string]float64 {
+	terms := agentsearch.Terms(query)
+	scores := make(map[string]float64, len(c.entries))
+	for i := range c.entries {
+		if value := score(&c.entries[i], terms, false); value > 0 {
+			scores[c.entries[i].descriptor.Name] = float64(value)
+		}
+	}
+
+	return scores
 }

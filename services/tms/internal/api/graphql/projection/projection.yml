@@ -202,6 +202,11 @@ aliases:
     mine: runAsId
 
 virtuals:
+  User:
+    - photo
+  DeskTranscriptExport:
+    - requestedByName
+    - downloadable
   TariffChoice:
     - currency
     - options
@@ -230,6 +235,7 @@ virtuals:
     - downloadable
   EdiTransfer:
     - counterparty
+    - shipmentNumber
   EdiTenderCommodity:
     - commodity
   EdiTenderCharge:
@@ -249,6 +255,8 @@ virtuals:
     - lineSummary
     - loadShares
     - disputes
+    - heldBy
+    - holdReleasedBy
   CarrierSettlement:
     - costSummary
     - loadShares
@@ -472,9 +480,6 @@ virtuals:
     - paidMinutes
   ShiftTemplate:
     - activeAssignmentCount
-  PolicyComplianceRow:
-    - workerType
-    - workerName
   PerformanceReviewTemplate:
     - openReviewCount
   PTOPolicy:
@@ -590,6 +595,9 @@ virtuals:
     - customFields
   Worker:
     - customFields
+    - photo
+  WorkerProfileChangeRequest:
+    - proposedPhoto
   PayProfile:
     - activeAssignmentCount
   PayAdvance:
@@ -669,6 +677,11 @@ gates:
 
 
 modelOverrides:
+  DriverSettlementBlocker: "-"
+  DetentionStayList: "-"
+  DeskBoardSplitPart: "-"
+  DeskBoardRef: "-"
+  DeskBoardMetricColumn: "-"
   EdiPartnerCustomer: github.com/emoss08/trenova/internal/modules/parties/domain/customer.Customer
   EdiCarrierInvoiceList: github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment.InvoiceAdjustmentBatch
   EdiTenderCharge: github.com/emoss08/trenova/internal/modules/edi/domain/editransfer.EDITransfer
@@ -686,6 +699,9 @@ modelOverrides:
   RateAgreementLane: github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement.RateAgreementRule
 
 always:
+  Worker:
+    - photoKey
+    - photoThumbnailKey
   AgentProposal:
     - tainted
     - egressClass

@@ -2,7 +2,7 @@ import { RouteErrorBoundary, RouteErrorEmbedding } from "@trenova/shared/compone
 import { SidebarLayout } from "@/components/navigation";
 import { SessionIdleTimeout } from "@/components/session-idle-timeout";
 import { SupportSessionBanner } from "@/components/session-context/support-session-banner";
-import { lazyComponent } from "@/lib/lazy-component";
+import { lazyComponent } from "@trenova/shared/lib/lazy-component";
 import LoadingSkeleton from "@trenova/shared/components/loading-skeleton";
 import { usePermissionPolling } from "@/hooks/use-permission-polling";
 import { useRealtimeConnection } from "@/hooks/use-realtime-connection";

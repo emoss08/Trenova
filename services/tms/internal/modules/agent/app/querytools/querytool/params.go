@@ -286,6 +286,7 @@ func PointerIDString(id *pulid.ID) string {
 
 const (
 	ParamStatus         = "status"
+	ParamDetail         = "detail"
 	ParamCustomerID     = "customerId"
 	ParamCarrierID      = "carrierId"
 	ParamWorkerID       = "workerId"

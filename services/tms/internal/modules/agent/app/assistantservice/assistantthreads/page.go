@@ -2,7 +2,6 @@ package assistantthreads
 
 import (
 	"context"
-	"slices"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/assistantservice/agentaccess"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
@@ -81,7 +80,7 @@ func pageAgentOf(definition *agentdefinition.Definition) assistantports.PageAgen
 		Icon:        definition.Icon,
 		Accent:      definition.Accent,
 		SystemKey:   definition.SystemKey,
-		ToolNames:   slices.Clone(definition.ToolNames),
+		Scope:       definition.Scope,
 		Starters:    agentstarter.Starters(definition),
 	}
 }

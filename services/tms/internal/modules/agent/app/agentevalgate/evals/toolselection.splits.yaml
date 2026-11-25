@@ -1,4 +1,4 @@
-# The held-out find_tools cases, by desk and by chat or unattended. Generated from
+# The held-out search_tools cases, by desk and by chat or unattended. Generated from
 # the rule in docs/engineering/desk-bench.md (Labels and splits) by running, in
 # services/tms:
 #   go test -count=1 -run 'AgainstFloors|Splits' ./internal/modules/agent/app/agentevalgate/ -update

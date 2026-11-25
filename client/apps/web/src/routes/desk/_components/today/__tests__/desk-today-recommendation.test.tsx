@@ -1,10 +1,11 @@
 import { TestRouter } from "@trenova/shared/testing/test-router";
 import { placeholderOf, writeInBox } from "@/components/desk-chat/composer/editor/editor-test-kit";
 import type { AgentChoice, AgentMatch } from "@/lib/graphql/agent-definition";
+import { useDeskAskStore } from "@/stores/desk-ask-store";
 import { useDeskSettingsStore } from "@/stores/desk-settings-store";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { DeskToday, type DeskTodayProps } from "../desk-today";
 
 const state = vi.hoisted(() => ({
@@ -126,7 +127,7 @@ function agentNamed(id: string, name: string): AgentChoice {
     template: null,
     icon: "",
     accent: "",
-    toolNames: [],
+    scope: { areas: [], capabilities: [], denyAreas: [], denyCapabilities: [] },
     systemKey: "",
     starters: [],
   } as unknown as AgentChoice;
@@ -699,5 +700,63 @@ describe("Desk home suggesting the agent with the tools for a question", () => {
     await type(QUESTION);
 
     await waitFor(() => expect(state.contextKinds).toEqual([[]]), { timeout: 2000 });
+  });
+});
+
+describe("Desk home asked about a record from another page", () => {
+  const SHIPMENT = { kind: "shipment", id: "shp_1", label: "S-240412" };
+
+  afterEach(() => useDeskAskStore.getState().reset());
+
+  it("says the question goes with the record", async () => {
+    useDeskAskStore.getState().askNew(SHIPMENT);
+    renderHome(vi.fn());
+
+    const box = await screen.findByRole("textbox", { name: /Message/ });
+
+    expect(placeholderOf(box)).toBe(
+      "Ask anything about S-240412. The record goes with your question.",
+    );
+  });
+
+  it("starts the conversation full width with the record named and bound to its case", async () => {
+    state.recommend = () => Promise.resolve(NO_MATCH);
+    useDeskAskStore.getState().askNew(SHIPMENT);
+    const onStart = vi.fn();
+    renderHome(onStart);
+
+    const box = await type("Where is it now?");
+    pressEnter(box);
+
+    await waitFor(() => expect(onStart).toHaveBeenCalledTimes(1));
+    expect(onStart).toHaveBeenCalledWith(
+      dispatch.id,
+      "Where is it now?",
+      expect.objectContaining({
+        files: [],
+        mentions: [{ type: "shipment", id: "shp_1", label: "S-240412" }],
+      }),
+      {
+        subjectType: "Shipment",
+        subjectId: "shp_1",
+        page: {
+          path: "/desk/r/shipment/shp_1",
+          entityType: "shipment",
+          entityId: "shp_1",
+          title: "S-240412",
+          view: null,
+          draft: null,
+        },
+      },
+    );
+  });
+
+  it("puts the caret in the box once, when a new conversation was asked for", async () => {
+    useDeskAskStore.getState().askNew(null);
+    renderHome(vi.fn());
+
+    await screen.findByRole("textbox", { name: /Message/ });
+
+    await waitFor(() => expect(useDeskAskStore.getState().focusPending).toBe(false));
   });
 });

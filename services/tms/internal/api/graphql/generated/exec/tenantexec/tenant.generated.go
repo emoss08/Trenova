@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlexec"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/personphoto"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -431,24 +432,16 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalOString2string),
 			},
 			{
-				Name:     "profilePicUrl",
-				NonNull:  true,
-				ChildErr: errNoChild1,
+				Name:       "photo",
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "PersonPhoto",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*tenant.User)
-					return obj.ProfilePicURL, nil
+					return gqlexec.Resolver[UserResolver](ec, "User@tenant").Photo(ctx, obj)
 				},
-				Marshal: gqlexec.Marshal(marshalNString2string),
-			},
-			{
-				Name:     "thumbnailUrl",
-				NonNull:  true,
-				ChildErr: errNoChild1,
-				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*tenant.User)
-					return obj.ThumbnailURL, nil
-				},
-				Marshal: gqlexec.Marshal(marshalNString2string),
+				Marshal: gqlexec.Marshal(marshalOPersonPhoto2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋkernelᚋdomainᚋpersonphotoᚐURLs),
 			},
 			{
 				Name:     "timezone",
@@ -624,6 +617,7 @@ type QueryResolver interface {
 
 type UserResolver interface {
 	TimeFormat(ctx context.Context, obj *tenant.User) (gqlmodel.TimeFormat, error)
+	Photo(ctx context.Context, obj *tenant.User) (*personphoto.URLs, error)
 	BusinessUnit(ctx context.Context, obj *tenant.User) (*tenant.BusinessUnit, error)
 	CurrentOrganization(ctx context.Context, obj *tenant.User) (*tenant.Organization, error)
 }
@@ -947,6 +941,13 @@ func marshalOOrganization2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodul
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "Organization", v)
+}
+
+func marshalOPersonPhoto2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋkernelᚋdomainᚋpersonphotoᚐURLs(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *personphoto.URLs) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "PersonPhoto", v)
 }
 
 func marshalOString2string(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v string) graphql.Marshaler {

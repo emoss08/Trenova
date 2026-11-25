@@ -78,6 +78,6 @@ func TestToolNameFor_UndoesReadingOrder(t *testing.T) {
 	}
 	assert.Equal(t, "receivable_get_bank_receipt", agenttoolports.ToolNameFor("get_bank_receipt"),
 		"a record kind finds the tool that reads it")
-	assert.Equal(t, "find_tools", agenttoolports.ToolNameFor("find_tools"),
+	assert.Equal(t, "search_tools", agenttoolports.ToolNameFor("search_tools"),
 		"a name no namespace reads is its own")
 }

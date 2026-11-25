@@ -7,9 +7,9 @@ const DANA = {
   id: "usr_dana",
   name: "Dana Whitfield",
   username: "dana",
-  thumbnailUrl: "",
+  photo: null,
 };
-const ME = { id: "usr_me", name: "System Administrator", username: "admin", thumbnailUrl: "" };
+const ME = { id: "usr_me", name: "System Administrator", username: "admin", photo: null };
 
 const context: ActivityContext = {
   meId: ME.id,

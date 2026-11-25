@@ -16,8 +16,8 @@ type FittedPage struct {
 	read     int
 }
 
-// FitPage cuts a list page whose result is too long for the model to read
-// whole to the most rows that fit, so the page and its cursor agree. The fence
+// FitPage cuts a list page whose result is longer than MaxPageBytes to the
+// most rows that fit, so the page and its cursor agree. The fence
 // would otherwise shorten the encoded list and keep the page's own cursor,
 // and every row between the cut and the page's end would be skipped by the
 // next page. A page that cannot say where a shorter page goes on, or whose
@@ -32,7 +32,7 @@ func FitPage(
 	timezone string,
 	fields []string,
 ) (FittedPage, bool) {
-	if len(encoded) <= MaxBytes {
+	if len(encoded) <= MaxPageBytes {
 		return FittedPage{}, false
 	}
 	page, ok := data.(agenttoolports.PageCutter)
@@ -50,7 +50,7 @@ func FitPage(
 			return FittedPage{}, false
 		}
 		text, document, err := EncodeModelDocument(cut, now, timezone, fields)
-		if err != nil || len(text) > MaxBytes {
+		if err != nil || len(text) > MaxPageBytes {
 			return FittedPage{}, false
 		}
 

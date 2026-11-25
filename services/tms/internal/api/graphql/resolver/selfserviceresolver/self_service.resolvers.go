@@ -10,11 +10,13 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/workforceloaders"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/personphoto"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/selfserviceservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/approvaldelegation"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/profilechange"
@@ -248,6 +250,11 @@ func (r *QueryResolver) ProfileChangeRequests(ctx context.Context, filter *gqlmo
 	return r.SelfServiceService.ListChangeRequests(ctx, req)
 }
 
+// ProposedPhoto is the resolver for the proposedPhoto field.
+func (r *WorkerProfileChangeRequestResolver) ProposedPhoto(ctx context.Context, obj *profilechange.WorkerProfileChangeRequest) (*personphoto.URLs, error) {
+	return r.SelfServiceService.ProposedPhoto(ctx, obj)
+}
+
 // Changes is the resolver for the changes field.
 func (r *WorkerProfileChangeRequestResolver) Changes(ctx context.Context, obj *profilechange.WorkerProfileChangeRequest) ([]*gqlmodel.ProfileFieldChange, error) {
 	out := make([]*gqlmodel.ProfileFieldChange, 0, len(obj.Changes))
@@ -260,4 +267,9 @@ func (r *WorkerProfileChangeRequestResolver) Changes(ctx context.Context, obj *p
 		})
 	}
 	return out, nil
+}
+
+// Photo is the resolver for the photo field.
+func (r *PolicyComplianceRowResolver) Photo(ctx context.Context, obj *gqlmodel.PolicyComplianceRow) (*personphoto.URLs, error) {
+	return workforceloaders.WorkerPhotoByID(ctx, pulid.ID(obj.WorkerID))
 }

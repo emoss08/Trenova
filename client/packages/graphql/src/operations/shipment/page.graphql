@@ -2,8 +2,10 @@ fragment ShipmentUserFields on User {
   id
   name
   username
-  profilePicUrl
-  thumbnailUrl
+  photo {
+    url
+    thumbnailUrl
+  }
 }
 
 fragment ShipmentLocationFields on Location {
@@ -33,7 +35,10 @@ fragment ShipmentWorkerFields on Worker {
   firstName
   lastName
   wholeName
-  profilePicUrl
+  photo {
+    url
+    thumbnailUrl
+  }
 }
 
 fragment ShipmentTractorFields on Tractor {
@@ -629,8 +634,10 @@ fragment ShipmentEventFields on ShipmentEvent {
   actor {
     id
     name
-    profilePicUrl
-    thumbnailUrl
+    photo {
+      url
+      thumbnailUrl
+    }
   }
   shipment {
     id
@@ -772,6 +779,10 @@ fragment ShipmentBoardRowFields on Shipment {
         id
         firstName
         lastName
+        photo {
+          url
+          thumbnailUrl
+        }
       }
     }
     carrierAssignment {
@@ -1621,6 +1632,10 @@ fragment ShipmentScheduleFields on Shipment {
         firstName
         lastName
         wholeName
+        photo {
+          url
+          thumbnailUrl
+        }
       }
     }
     carrierAssignment {

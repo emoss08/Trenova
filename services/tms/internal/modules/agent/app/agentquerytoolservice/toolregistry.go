@@ -4,7 +4,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/graphqllisttool"
 	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/listtool"
 	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/querytool"
+	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/recordquerytools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/tableviewquerytools"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentcapability"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"go.uber.org/fx"
@@ -21,22 +23,6 @@ type registry struct {
 	ordered []agenttoolports.AgentQueryTool
 }
 
-// legacyToolNames maps a name an agent may still have saved to the tool that
-// now carries it.
-//
-// A tool name is persisted — in agent_definitions.tool_names and as a key in
-// tool_tiers — so renaming one is a data change. The migration rewrites both
-// columns, but a definition written by an API client that hard-coded the old
-// name would otherwise resolve to nothing, and the failure mode is silent: the
-// agent simply stops being able to look drivers up. Resolving the old name
-// costs one map entry.
-//
-// These are deliberately absent from Descriptors, so the model is never offered
-// a name we no longer want it to learn.
-var legacyToolNames = map[string]string{
-	"search_workers": "worker_list",
-}
-
 func NewRegistry(p RegistryParams) agenttoolports.AgentQueryToolRegistry {
 	byName := make(map[string]agenttoolports.AgentQueryTool, len(p.Tools))
 	ordered := make([]agenttoolports.AgentQueryTool, 0, len(p.Tools))
@@ -49,18 +35,15 @@ func NewRegistry(p RegistryParams) agenttoolports.AgentQueryToolRegistry {
 		ordered = append(ordered, tool)
 	}
 
-	for legacy, current := range legacyToolNames {
-		if _, taken := byName[legacy]; taken {
-			continue
-		}
-		if tool, ok := byName[current]; ok {
-			byName[legacy] = tool
+	linkViewsToLists(ordered)
+	built := &registry{byName: byName, ordered: ordered}
+	for _, tool := range ordered {
+		if linker, ok := tool.(recordquerytools.Linker); ok {
+			linker.Link(built)
 		}
 	}
 
-	linkViewsToLists(ordered)
-
-	return &registry{byName: byName, ordered: ordered}
+	return built
 }
 
 // linkViewsToLists gives the view composer each table's list tool, so a view
@@ -100,6 +83,9 @@ func (r *registry) Descriptors() []agenttoolports.AgentToolDescriptor {
 	descriptors := make([]agenttoolports.AgentToolDescriptor, 0, len(r.ordered))
 
 	for _, tool := range r.ordered {
+		if agentcapability.IsBacking(tool.Name()) {
+			continue
+		}
 		descriptors = append(descriptors, agenttoolports.DescribeTool(tool, "", true))
 	}
 

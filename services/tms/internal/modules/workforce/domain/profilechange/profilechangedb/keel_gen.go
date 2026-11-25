@@ -33,6 +33,8 @@ var workerProfileChangeRequestsTable = schema.Table{
 		{Name: "worker_id", Quoted: `"worker_id"`, Field: "WorkerID", Kind: schema.KindString, Flags: 0, Label: `Worker ID`, JSON: `workerId`},
 		{Name: "status", Quoted: `"status"`, Field: "Status", Kind: schema.KindString, Flags: 0, Label: `Status`, JSON: `status`, Enum: enumProfileChangeStatus[:]},
 		{Name: "changes", Quoted: `"changes"`, Field: "Changes", Kind: schema.KindJSON, Flags: schema.FlagJSONB, Label: `Changes`, JSON: `changes`},
+		{Name: "proposed_photo_key", Quoted: `"proposed_photo_key"`, Field: "ProposedPhotoKey", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Proposed Photo Key`, JSON: `proposedPhotoKey`},
+		{Name: "proposed_photo_thumbnail_key", Quoted: `"proposed_photo_thumbnail_key"`, Field: "ProposedPhotoThumbnailKey", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Proposed Photo Thumbnail Key`, JSON: `proposedPhotoThumbnailKey`},
 		{Name: "note", Quoted: `"note"`, Field: "Note", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Note`, JSON: `note`},
 		{Name: "submitted_at", Quoted: `"submitted_at"`, Field: "SubmittedAt", Kind: schema.KindInt64, Flags: 0, Label: `Submitted At`, JSON: `submittedAt`},
 		{Name: "decided_at", Quoted: `"decided_at"`, Field: "DecidedAt", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Decided At`, JSON: `decidedAt`},
@@ -47,14 +49,14 @@ var workerProfileChangeRequestsTable = schema.Table{
 	},
 	PK:           []int32{0, 1, 2},
 	Tenant:       []int32{1, 2},
-	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13},
-	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13},
-	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 13},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 15},
 	Returning:    nil,
-	Version:      11,
+	Version:      13,
 	AutoID:       0,
-	AutoCreate:   12,
-	AutoUpdate:   13,
+	AutoCreate:   14,
+	AutoUpdate:   15,
 	IDPrefix:     "wpcr_",
 	New:          newWorkerProfileChangeRequest,
 	NewN:         newNWorkerProfileChangeRequest,
@@ -70,59 +72,65 @@ var workerProfileChangeRequestsRef = keel.Ref{Table: &workerProfileChangeRequest
 // WorkerProfileChangeRequestsTable is the table of profilechange.WorkerProfileChangeRequest.
 type WorkerProfileChangeRequestsTable struct {
 	keel.TableBase
-	ID             keelkinds.PulidIDCol
-	BusinessUnitID keelkinds.PulidIDCol
-	OrganizationID keelkinds.PulidIDCol
-	WorkerID       keelkinds.PulidIDCol
-	Status         ProfileChangeStatusCol
-	Changes        keel.JSONBCol
-	Note           keel.StringCol
-	SubmittedAt    keel.Int64Col
-	DecidedAt      keel.Int64Col
-	DecidedByID    keelkinds.PulidIDCol
-	DecisionNote   keel.StringCol
-	Version        keel.Int64Col
-	CreatedAt      keel.Int64Col
-	UpdatedAt      keel.Int64Col
+	ID                        keelkinds.PulidIDCol
+	BusinessUnitID            keelkinds.PulidIDCol
+	OrganizationID            keelkinds.PulidIDCol
+	WorkerID                  keelkinds.PulidIDCol
+	Status                    ProfileChangeStatusCol
+	Changes                   keel.JSONBCol
+	ProposedPhotoKey          keel.StringCol
+	ProposedPhotoThumbnailKey keel.StringCol
+	Note                      keel.StringCol
+	SubmittedAt               keel.Int64Col
+	DecidedAt                 keel.Int64Col
+	DecidedByID               keelkinds.PulidIDCol
+	DecisionNote              keel.StringCol
+	Version                   keel.Int64Col
+	CreatedAt                 keel.Int64Col
+	UpdatedAt                 keel.Int64Col
 }
 
 // WorkerProfileChangeRequests references the worker_profile_change_requests table.
 var WorkerProfileChangeRequests = &WorkerProfileChangeRequestsTable{
-	TableBase:      keel.TableBase{Ref: &workerProfileChangeRequestsRef},
-	ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerProfileChangeRequestsRef, Index: 0}}},
-	BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerProfileChangeRequestsRef, Index: 1}}},
-	OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerProfileChangeRequestsRef, Index: 2}}},
-	WorkerID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerProfileChangeRequestsRef, Index: 3}}},
-	Status:         ProfileChangeStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerProfileChangeRequestsRef, Index: 4}}},
-	Changes:        keel.JSONBCol{Col: keel.Col{Ref: &workerProfileChangeRequestsRef, Index: 5}},
-	Note:           keel.StringCol{Col: keel.Col{Ref: &workerProfileChangeRequestsRef, Index: 6}},
-	SubmittedAt:    keel.Int64Col{Col: keel.Col{Ref: &workerProfileChangeRequestsRef, Index: 7}},
-	DecidedAt:      keel.Int64Col{Col: keel.Col{Ref: &workerProfileChangeRequestsRef, Index: 8}},
-	DecidedByID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerProfileChangeRequestsRef, Index: 9}}},
-	DecisionNote:   keel.StringCol{Col: keel.Col{Ref: &workerProfileChangeRequestsRef, Index: 10}},
-	Version:        keel.Int64Col{Col: keel.Col{Ref: &workerProfileChangeRequestsRef, Index: 11}},
-	CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: &workerProfileChangeRequestsRef, Index: 12}},
-	UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: &workerProfileChangeRequestsRef, Index: 13}},
+	TableBase:                 keel.TableBase{Ref: &workerProfileChangeRequestsRef},
+	ID:                        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerProfileChangeRequestsRef, Index: 0}}},
+	BusinessUnitID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerProfileChangeRequestsRef, Index: 1}}},
+	OrganizationID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerProfileChangeRequestsRef, Index: 2}}},
+	WorkerID:                  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerProfileChangeRequestsRef, Index: 3}}},
+	Status:                    ProfileChangeStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerProfileChangeRequestsRef, Index: 4}}},
+	Changes:                   keel.JSONBCol{Col: keel.Col{Ref: &workerProfileChangeRequestsRef, Index: 5}},
+	ProposedPhotoKey:          keel.StringCol{Col: keel.Col{Ref: &workerProfileChangeRequestsRef, Index: 6}},
+	ProposedPhotoThumbnailKey: keel.StringCol{Col: keel.Col{Ref: &workerProfileChangeRequestsRef, Index: 7}},
+	Note:                      keel.StringCol{Col: keel.Col{Ref: &workerProfileChangeRequestsRef, Index: 8}},
+	SubmittedAt:               keel.Int64Col{Col: keel.Col{Ref: &workerProfileChangeRequestsRef, Index: 9}},
+	DecidedAt:                 keel.Int64Col{Col: keel.Col{Ref: &workerProfileChangeRequestsRef, Index: 10}},
+	DecidedByID:               keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerProfileChangeRequestsRef, Index: 11}}},
+	DecisionNote:              keel.StringCol{Col: keel.Col{Ref: &workerProfileChangeRequestsRef, Index: 12}},
+	Version:                   keel.Int64Col{Col: keel.Col{Ref: &workerProfileChangeRequestsRef, Index: 13}},
+	CreatedAt:                 keel.Int64Col{Col: keel.Col{Ref: &workerProfileChangeRequestsRef, Index: 14}},
+	UpdatedAt:                 keel.Int64Col{Col: keel.Col{Ref: &workerProfileChangeRequestsRef, Index: 15}},
 }
 
 // BuildWorkerProfileChangeRequests builds the table of worker_profile_change_requests for ref. Generated relation and alias methods call it.
 func BuildWorkerProfileChangeRequests(r *keel.Ref) *WorkerProfileChangeRequestsTable {
 	return &WorkerProfileChangeRequestsTable{
-		TableBase:      keel.TableBase{Ref: r},
-		ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		WorkerID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		Status:         ProfileChangeStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
-		Changes:        keel.JSONBCol{Col: keel.Col{Ref: r, Index: 5}},
-		Note:           keel.StringCol{Col: keel.Col{Ref: r, Index: 6}},
-		SubmittedAt:    keel.Int64Col{Col: keel.Col{Ref: r, Index: 7}},
-		DecidedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 8}},
-		DecidedByID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 9}}},
-		DecisionNote:   keel.StringCol{Col: keel.Col{Ref: r, Index: 10}},
-		Version:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 11}},
-		CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 12}},
-		UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 13}},
+		TableBase:                 keel.TableBase{Ref: r},
+		ID:                        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		WorkerID:                  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		Status:                    ProfileChangeStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		Changes:                   keel.JSONBCol{Col: keel.Col{Ref: r, Index: 5}},
+		ProposedPhotoKey:          keel.StringCol{Col: keel.Col{Ref: r, Index: 6}},
+		ProposedPhotoThumbnailKey: keel.StringCol{Col: keel.Col{Ref: r, Index: 7}},
+		Note:                      keel.StringCol{Col: keel.Col{Ref: r, Index: 8}},
+		SubmittedAt:               keel.Int64Col{Col: keel.Col{Ref: r, Index: 9}},
+		DecidedAt:                 keel.Int64Col{Col: keel.Col{Ref: r, Index: 10}},
+		DecidedByID:               keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 11}}},
+		DecisionNote:              keel.StringCol{Col: keel.Col{Ref: r, Index: 12}},
+		Version:                   keel.Int64Col{Col: keel.Col{Ref: r, Index: 13}},
+		CreatedAt:                 keel.Int64Col{Col: keel.Col{Ref: r, Index: 14}},
+		UpdatedAt:                 keel.Int64Col{Col: keel.Col{Ref: r, Index: 15}},
 	}
 }
 
@@ -533,20 +541,24 @@ func ptrWorkerProfileChangeRequest(p unsafe.Pointer, c int32) any {
 	case 5:
 		return &r.Changes
 	case 6:
-		return &r.Note
+		return &r.ProposedPhotoKey
 	case 7:
-		return &r.SubmittedAt
+		return &r.ProposedPhotoThumbnailKey
 	case 8:
-		return &r.DecidedAt
+		return &r.Note
 	case 9:
-		return (*string)(unsafe.Pointer(&r.DecidedByID))
+		return &r.SubmittedAt
 	case 10:
-		return &r.DecisionNote
+		return &r.DecidedAt
 	case 11:
-		return &r.Version
+		return (*string)(unsafe.Pointer(&r.DecidedByID))
 	case 12:
-		return &r.CreatedAt
+		return &r.DecisionNote
 	case 13:
+		return &r.Version
+	case 14:
+		return &r.CreatedAt
+	case 15:
 		return &r.UpdatedAt
 	}
 	return nil
@@ -571,32 +583,42 @@ func valueWorkerProfileChangeRequest(p unsafe.Pointer, c int32) any {
 		}
 		return r.Changes
 	case 6:
+		if r.ProposedPhotoKey == "" {
+			return nil
+		}
+		return r.ProposedPhotoKey
+	case 7:
+		if r.ProposedPhotoThumbnailKey == "" {
+			return nil
+		}
+		return r.ProposedPhotoThumbnailKey
+	case 8:
 		if r.Note == "" {
 			return nil
 		}
 		return r.Note
-	case 7:
+	case 9:
 		return r.SubmittedAt
-	case 8:
+	case 10:
 		if r.DecidedAt == nil {
 			return nil
 		}
 		return *r.DecidedAt
-	case 9:
+	case 11:
 		if r.DecidedByID == "" {
 			return nil
 		}
 		return string(r.DecidedByID)
-	case 10:
+	case 12:
 		if r.DecisionNote == "" {
 			return nil
 		}
 		return r.DecisionNote
-	case 11:
-		return r.Version
-	case 12:
-		return r.CreatedAt
 	case 13:
+		return r.Version
+	case 14:
+		return r.CreatedAt
+	case 15:
 		return r.UpdatedAt
 	}
 	return nil

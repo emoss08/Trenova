@@ -182,7 +182,7 @@ func proposalCase(p *proposalCapture) *agentquality.EvalCase {
 		Trigger:           p.run.Trigger,
 		SourceRunID:       &runID,
 		SourceProposalID:  &proposalID,
-		HeldTools:         p.definition.EffectiveToolNames(),
+		HeldTools:         p.definition.StarterTools(),
 		Expected: agentquality.Expected{
 			ToolMode: agentquality.ToolMatchAnyOrder,
 			Proposals: []agentquality.ExpectedProposal{{
@@ -346,7 +346,7 @@ func (s *Service) captureMessage(
 		Source:            agentquality.CaseSourceThumbsUp,
 		Status:            agentquality.CaseStatusCandidate,
 		Trigger:           agent.RunTriggerChat,
-		HeldTools:         definition.EffectiveToolNames(),
+		HeldTools:         definition.StarterTools(),
 		Expected: agentquality.Expected{
 			ToolMode: agentquality.ToolMatchAnyOrder,
 			Tools:    tools,
@@ -673,10 +673,9 @@ func beyondHeld(
 	proposed string,
 	called []string,
 ) []string {
-	held := definition.EffectiveToolNames()
 	reached := make([]string, 0)
 	for _, name := range append([]string{proposed}, called...) {
-		if name == "" || agentquality.IsRuntimeTool(name) || slices.Contains(held, name) ||
+		if name == "" || agentquality.IsRuntimeTool(name) || definition.AllowsTool(name) ||
 			slices.Contains(reached, name) {
 			continue
 		}

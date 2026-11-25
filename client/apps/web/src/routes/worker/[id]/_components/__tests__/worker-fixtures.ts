@@ -17,7 +17,7 @@ export function mariaRecord(overrides: Partial<WorkerRecord> = {}): WorkerRecord
     type: "Employee",
     driverType: "OTR",
     leaveType: null,
-    profilePicUrl: null,
+    photo: null,
     firstName: "Maria",
     lastName: "Alvarez",
     wholeName: "Maria Alvarez",

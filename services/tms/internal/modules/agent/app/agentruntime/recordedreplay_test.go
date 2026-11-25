@@ -39,18 +39,18 @@ func TestRun_AReplayReadsWhatItsOriginalWasGivenAsOfWhenItWasAsked(t *testing.T)
 	asked := time.Date(2026, time.March, 3, 9, 30, 0, 0, time.UTC).Unix()
 	eta := asked + 2*24*60*60
 	live := &agenttest.StubQueryTool{
-		ToolName: "shipment_get",
+		ToolName: "shipment_get_view",
 		Resource: permission.ResourceShipment,
 		Result:   map[string]any{"proNumber": "S-100", "status": "Delivered"},
 	}
 	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
-		runtimetest.ToolTurn("shipment_get", map[string]any{"id": "shp_1"}),
+		runtimetest.ToolTurn("shipment_get_view", map[string]any{"id": "shp_1"}),
 		runtimetest.TextTurn("S-100 is in transit and due in two days."),
 	}}
 	rt := newRuntime(completion,
 		&stubQueryRegistry{Tools: []agenttoolports.AgentQueryTool{live}}, nil, nil)
 	recording := (&agentquality.EvalCase{ToolFixtures: []agentquality.ToolFixture{{
-		Tool: "shipment_get",
+		Tool: "shipment_get_view",
 		Args: map[string]any{"id": "shp_1"},
 		Result: map[string]any{
 			"proNumber": "S-100",
@@ -61,7 +61,7 @@ func TestRun_AReplayReadsWhatItsOriginalWasGivenAsOfWhenItWasAsked(t *testing.T)
 	require.NotNil(t, recording)
 
 	result, err := rt.Run(t.Context(), &agentruntimeports.RunRequest{
-		Definition: runtimetest.Definition("shipment_get"),
+		Definition: runtimetest.Definition("shipment_get_view"),
 		Actor:      runtimetest.Actor(),
 		Input:      "Where is S-100?",
 		Context:    agentturn.RuntimeContext{Now: asked, Timezone: "UTC"},
@@ -90,19 +90,19 @@ func TestRun_ATurnWithNothingRecordedReadsTheRecords(t *testing.T) {
 	t.Parallel()
 
 	live := &agenttest.StubQueryTool{
-		ToolName: "shipment_get",
+		ToolName: "shipment_get_view",
 		Resource: permission.ResourceShipment,
 		Result:   map[string]any{"proNumber": "S-100", "status": "Delivered"},
 	}
 	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
-		runtimetest.ToolTurn("shipment_get", map[string]any{"id": "shp_1"}),
+		runtimetest.ToolTurn("shipment_get_view", map[string]any{"id": "shp_1"}),
 		runtimetest.TextTurn("S-100 was delivered."),
 	}}
 	rt := newRuntime(completion,
 		&stubQueryRegistry{Tools: []agenttoolports.AgentQueryTool{live}}, nil, nil)
 
 	_, err := rt.Run(t.Context(), &agentruntimeports.RunRequest{
-		Definition: runtimetest.Definition("shipment_get"),
+		Definition: runtimetest.Definition("shipment_get_view"),
 		Actor:      runtimetest.Actor(),
 		Input:      "Where is S-100?",
 	})

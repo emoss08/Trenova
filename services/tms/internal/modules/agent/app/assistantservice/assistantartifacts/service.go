@@ -18,6 +18,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/querytool"
 	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/reportquerytools"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentcapability"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
@@ -579,8 +580,14 @@ func (s *Service) listOf(
 	delete(arguments, artifactpayload.ArgOffset)
 	delete(arguments, argLimit)
 
+	var sorter agenttoolports.AgentQueryTool
+	if reader := agentcapability.ReaderOf(toolName, source.arguments); reader != toolName {
+		sorter, _ = s.queries.Get(reader)
+	}
+
 	return &listReader{
-		tool: tool,
+		tool:   tool,
+		sorter: sorter,
 		params: agenttoolports.QueryToolParams{
 			OrganizationID:    req.TenantInfo.OrgID,
 			BusinessUnitID:    req.TenantInfo.BuID,

@@ -1,6 +1,7 @@
 package aiconfig
 
 import (
+	"errors"
 	"time"
 )
 
@@ -21,6 +22,13 @@ type Config struct {
 	// router can only reach a provider row somebody configured and enabled.
 	// This switch is here for an operator who wants to stop all of it at once.
 	Enabled *bool `mapstructure:"enabled"`
+	// TopicGuard keeps the assistant and agents to transportation work: the
+	// scope rules and classifier in front of a question, the software rule in
+	// the system prompt and the output check that takes code out of a reply.
+	// A pointer so an absent key means on. Off is for a developer's own
+	// machine, to ask the configured models anything through Trenova; a
+	// production-like environment refuses to start with it off.
+	TopicGuard *bool `mapstructure:"topicGuard"`
 	// VerdictCacheTTL is how long a scope verdict is shared between replicas.
 	// A verdict is a pure function of the question, so it can be long; it is
 	// bounded so a change to the classifier's prompt reaches every replica
@@ -137,6 +145,18 @@ func (c *Config) GetToolDisclosureThreshold() int {
 // their prompt cache missed.
 func (c *Config) CacheDiagnosticsEnabled() bool {
 	return c != nil && c.CacheDiagnostics
+}
+
+func (c *Config) TopicGuardEnabled() bool {
+	return c == nil || c.TopicGuard == nil || *c.TopicGuard
+}
+
+func (c *Config) ValidateProduction() error {
+	if !c.TopicGuardEnabled() {
+		return errors.New("ai.topicGuard cannot be turned off in a production-like environment")
+	}
+
+	return nil
 }
 
 func (c *Config) AIEnabled() bool {

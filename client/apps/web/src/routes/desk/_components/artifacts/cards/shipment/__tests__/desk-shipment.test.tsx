@@ -89,7 +89,7 @@ function driver(): Assignment {
       firstName: "Ana",
       lastName: "Ruiz",
       wholeName: "Ana Ruiz",
-      profilePicUrl: null,
+      photo: null,
     },
     secondaryWorker: null,
   };

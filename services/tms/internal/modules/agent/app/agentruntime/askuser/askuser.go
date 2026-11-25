@@ -384,7 +384,7 @@ type askRequest struct {
 // do instead, and the person sees nothing.
 //
 // The runtime answers it rather than a registry tool for the same reason
-// find_tools is answered here: its effect is on the conversation, not on data.
+// search_tools is answered here: its effect is on the conversation, not on data.
 // Nothing is read, nothing is written, and no tenant is touched — which is also
 // why it needs no permission of its own.
 func Resolve(now time.Time, arguments map[string]any) (content string, shown bool) {

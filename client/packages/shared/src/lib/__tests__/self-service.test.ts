@@ -3,6 +3,7 @@ import {
   changeRequestTone,
   compliancePercent,
   describeChanges,
+  isPhotoChange,
   orderPoliciesForSigning,
   policyAudienceLabel,
   policyStanding,
@@ -57,6 +58,20 @@ describe("describeChanges", () => {
     expect(
       describeChanges([{ field: "addressLine2", label: "Address line 2", from: "Apt 2", to: "" }]),
     ).toEqual(["Address line 2: Apt 2 → (blank)"]);
+  });
+
+  it("says a photo request is a new photo, never the field's code or empty values", () => {
+    expect(describeChanges([{ field: "photo", label: "Photo", from: "", to: "" }])).toEqual([
+      "A new photo",
+    ]);
+  });
+});
+
+describe("isPhotoChange", () => {
+  it("tells a photo request from a request for new details", () => {
+    expect(isPhotoChange([{ field: "photo" }])).toBe(true);
+    expect(isPhotoChange([{ field: "city" }, { field: "phoneNumber" }])).toBe(false);
+    expect(isPhotoChange([])).toBe(false);
   });
 });
 

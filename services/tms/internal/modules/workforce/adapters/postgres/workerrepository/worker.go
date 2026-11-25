@@ -345,6 +345,72 @@ func (r *repository) update(ctx context.Context, entity *worker.Worker) error {
 	return nil
 }
 
+func (r *repository) UpdatePhoto(
+	ctx context.Context,
+	req *workerports.UpdateWorkerPhotoRequest,
+) (*worker.Worker, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*worker.Worker, error) {
+		w := workerdb.Workers
+		updated, err := w.Where(w.ID.Eq(req.WorkerID), w.Version.Eq(req.Version)).
+			UpdateReturning(
+				ctx,
+				r.db.Keel(ctx),
+				photoAssignment(w.PhotoKey, req.PhotoKey),
+				photoAssignment(w.PhotoThumbnailKey, req.PhotoThumbnailKey),
+			)
+		if err != nil {
+			r.l.Error(
+				"failed to update worker photo",
+				zap.String("id", req.WorkerID.String()),
+				zap.Error(err),
+			)
+			return nil, dberror.MapRetryableTransactionError(
+				workerErrors.Map(err, req.WorkerID.String()),
+				workerBusyMessage,
+			)
+		}
+		if err = dberror.CheckAffected(
+			int64(len(updated)),
+			"Worker",
+			req.WorkerID.String(),
+		); err != nil {
+			return nil, err
+		}
+
+		return updated[0], nil
+	})
+}
+
+func (r *repository) GetPhotoKeys(
+	ctx context.Context,
+	req workerports.GetWorkersByIDsRequest,
+) ([]workerports.WorkerPhotoKeys, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]workerports.WorkerPhotoKeys, error) {
+		if len(req.WorkerIDs) == 0 {
+			return []workerports.WorkerPhotoKeys{}, nil
+		}
+
+		w := workerdb.Workers
+		rows, err := keel.Into[workerports.WorkerPhotoKeys](ctx, r.db.Keel(ctx), w.
+			Pick(w.ID, w.PhotoKey.Coalesce(""), w.PhotoThumbnailKey.Coalesce("")).
+			Where(w.ID.In(req.WorkerIDs...), w.PhotoKey.IsNotNull()).
+			Limit(len(req.WorkerIDs)))
+		if err != nil {
+			r.l.Error("failed to read worker photo keys", zap.Error(err))
+			return nil, fmt.Errorf("read worker photo keys: %w", err)
+		}
+
+		return rows, nil
+	})
+}
+
+func photoAssignment(col keel.StringCol, key string) keel.Assignment {
+	if key == "" {
+		return col.ToNull()
+	}
+	return col.To(key)
+}
+
 func (r *repository) GetWorkerSyncReadinessCounts(
 	ctx context.Context,
 	_ pagination.TenantInfo,

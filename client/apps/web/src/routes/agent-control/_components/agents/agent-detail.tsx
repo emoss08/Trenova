@@ -59,8 +59,8 @@ export function AgentDetail({
   const tools = split[0] + split[1] + split[2];
   const trustQuery = useQuery(assistant.agentTrust(agent.id));
   const streak = useMemo(
-    () => leadingStreak(trustQuery.data?.results ?? [], agent.toolNames),
-    [agent.toolNames, trustQuery.data?.results],
+    () => leadingStreak(trustQuery.data?.results ?? [], agent.scope),
+    [agent.scope, trustQuery.data?.results],
   );
   const threshold = control?.promotionThreshold ?? 0;
   const decided = stat ? stat.approved + stat.modified + stat.rejected + stat.failed : 0;

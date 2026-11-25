@@ -1,5 +1,5 @@
 import type { DeskCaseRoute } from "@/lib/graphql/desk-case";
-import { lazyComponent } from "@/lib/lazy-component";
+import { lazyComponent } from "@trenova/shared/lib/lazy-component";
 import { integration } from "@/lib/queries/integration";
 import { useQuery } from "@tanstack/react-query";
 import { Suspense, useState } from "react";

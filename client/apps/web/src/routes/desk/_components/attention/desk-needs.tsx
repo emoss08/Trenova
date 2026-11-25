@@ -1,7 +1,7 @@
 import { useSearchValue } from "@trenova/shared/hooks/use-search-state";
 import { Kept } from "@/components/kept";
 import { usePermission } from "@/hooks/use-permission";
-import { lazyComponent } from "@/lib/lazy-component";
+import { lazyComponent } from "@trenova/shared/lib/lazy-component";
 import { deskAttention } from "@/lib/queries/desk-attention";
 import { whenIdle } from "@/lib/when-idle";
 import { useDeskSetting } from "@/stores/desk-settings-store";

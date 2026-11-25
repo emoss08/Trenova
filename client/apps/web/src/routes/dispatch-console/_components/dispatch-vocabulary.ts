@@ -326,10 +326,3 @@ export function hosStrategyMeta(value: string | null | undefined) {
   if (!value) return null;
   return HOS_STRATEGY_META[value] ?? null;
 }
-
-export function workerInitials(firstName: string, lastName: string): string {
-  const first = firstName.trim().charAt(0);
-  const last = lastName.trim().charAt(0);
-  const initials = `${first}${last}`.toUpperCase();
-  return initials || "?";
-}

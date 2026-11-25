@@ -13,7 +13,7 @@ named below.
 `RestoreTurn` and the durable-step facade the workflows call) and `Turn` with
 its state. `New` assembles it from three parts, each with its own params:
 `toolaccess.Access` (which tools an agent holds and may call, the turn's
-`ToolSet`, `find_tools`), `tooldispatch.Dispatcher` (one tool call: arguments,
+`ToolSet`, `search_tools`), `tooldispatch.Dispatcher` (one tool call: arguments,
 permission, write decision, ledger guard, the script tool) and
 `modelstream.Streamer` (the model call). Everything else is a package the loop
 imports, named for what it provides: `runtimetools` (the runtime's own tools
@@ -220,7 +220,7 @@ over a `Turn`) from workflow code, through the `TurnEffects` seam:
   never reads; a write after it always waits for the batch. In process
   (`localEffects`, the red-team harness) the reads run one after another, since
   a request's context may carry a transaction.
-- `find_tools` and `publish_artifact` are activities of their own. Call ids
+- `search_tools` and `publish_artifact` are activities of their own. Call ids
   are minted through `workflow.SideEffect`, so a replay reads back the same id.
   An id an adapter made up from the call's position (an OpenAI-compatible
   stream that sends none, or a call lifted from the reply's text) is marked
@@ -1364,7 +1364,7 @@ another agent is the profile's **mode**, worked out once when the turn opens
 
 | Mode | When | Holds | Reaches |
 |---|---|---|---|
-| `conversation` | A person is in a Desk or panel conversation | The definition's tools, core tools, `delegate_task` when it may delegate | Every tool the person's other agents hold (below) |
+| `conversation` | A person is in a Desk or panel conversation | The scope's capabilities, core tools, `delegate_task` when it may delegate | Nothing beyond its scope; out of scope is a hand-off (below) |
 | `unattended` | An event, schedule, continuous pass or ended wait started the run | The definition's tools, no conversational tools, no self-scoped tools | Nothing: an unattended run's profile is decided by its trigger |
 | `fan_out` | A lookup another agent handed out (`Delegation.ReadOnly`) | Only the tools it holds whose effect is `lookup` | Nothing |
 | `delegated` | A task the person directed to another agent | The delegate's tools, without `agent_open_page` | Nothing |
@@ -1375,41 +1375,23 @@ person (the schedule also needs the conversation it posts into); the mode decide
 (`profileHolds`). The mode travels on `TurnState.Mode`, so a turn
 restored in workflow code is the same profile it was opened as.
 
-### Discovery across desks
+### Scope, search and hand-off
 
-Picking an agent is a soft default. A conversation turn reaches the tools the
-person's other enabled chat agents hold (`beyondFor`: `OtherUsableAgents`, then
-each one's `heldTools`), less the core tools, its own, and anything its own
-definition switched off. A turn without a thread reaches nothing beyond. Each reached tool carries a ceiling: the most permissive static
-tier any holding agent would run it at (`agenttoolpolicy.StaticTier` over that
-agent's ceiling and tool tiers; a read is `AutoExecute`). So a Dispatch
-conversation asked to "bill it and email the customer" finds the billing tools
-without a hand-off, and they run no higher than the Billing assistant would run
-them, and no higher than the Dispatch agent's own ceiling either.
+An agent is a policy, not a tool list ([agent-capabilities.md](agent-capabilities.md)): a scope of
+areas and capabilities allowed or denied, at most twelve pinned capabilities, and approval
+overrides. The universal agent's scope is empty, which is everything the person may do. A turn
+holds the catalog narrowed to the scope and then to the person's permissions; the per-entity
+list and get readers are not tools, and every read of records goes through `records_query`
+or `record_get`, which dispatch resolves to the entity's reader and gates on that reader's
+scope, extension, plan, permission and taint policy.
 
-- **Held, not shown.** Reached tools are narrowed to the person's permissions
-  and the organization's extensions like any other (`permittedWith`), kept on
-  the tool set (`toolSet.beyond`, `ToolSetState.Beyond`) and on the turn
-  (`Turn.beyond`, `TurnState.Beyond`), and never preselected: the turn opens
-  with its own tools ranked as before.
-- **Found by `find_tools`.** `find_tools` searches the reached tools too, strong
-  matches only, and loads one that matches the need more strongly than the best
-  of the turn's own matches (`Catalog.StrongScore`) under "These come from the
-  desks of the person's other agents" (`reachBeyond`). Weak is relative: a
-  dispatch tool that says "customer" once must not stand in for the AR aging
-  read that names the need outright. A turn that holds few enough tools to be
-  sent all of them is still offered `find_tools` when it reaches beyond them.
-- **Decided under the holder's ceiling.** The loop treats a reached tool as
-  held (`Turn.holds`), and each call carries its ceiling
-  (`DispatchCall.Beyond`, from `Turn.beyondTier`) through `DispatchStep` and the
-  ledger to `dispatch`, which runs it only on a conversation turn
-  (`Service.reachable`) and decides it with `DecideInput.HolderCeiling`. A
-  ceiling that holds the call is recorded as `agent_ceiling` in `HeldBy`, the
-  same reason the agent's own ceiling gives, because it is one: the holding
-  agent's. Permission, schema, validator, preview and taint checks are the
-  same as for any call.
-- **Hand-off stays for what nobody reaches.** `find_tools` names another agent
-  only for a tool no agent of the person's holds within reach, as before.
+- **Found by `search_tools`.** It ranks the whole capability registry and answers each
+  candidate with a status: `loaded`, `available` (call it by name and it loads),
+  `not_permitted` (the permission or add-on named) or `not_in_this_agent` (outside the
+  scope, with the agents whose scope includes it, the universal agent first, for the
+  Desk's hand-off menu). The answer is compact JSON capped at 1,500 tokens.
+- **Never improvised.** A dedicated agent offers a hand-off for `not_in_this_agent`; dispatch
+  refuses a call outside the scope whatever the model sends.
 
 ### Delegation is read-only fan-out
 
@@ -1571,13 +1553,13 @@ Every tool call a reader sees says what it does. `tool_started`, `tool_finished`
 and the tool calls on `message` carry `effect` (`lookup`, `change`, `navigate`,
 `discover`, `present`, `ask` or `delegate`), read from the tool's metadata
 (`agenttoolports.EffectOf`, which reads `Effect` from the tool's `Policy()`;
-`find_tools`, `ask_user`, `publish_artifact` and `delegate_task` declare theirs in
+`search_tools`, `ask_user`, `publish_artifact` and `delegate_task` declare theirs in
 `agentruntime/runtimetools/runtimepolicies.go`). `tool_finished` also carries `summary`, a one-line label worked out
 where the tool ran from what it returned, or from a write's name or title. The
 thread's saved messages carry the same fields: `summary` is stored on the
 result, and `effect` is read from the registry when the messages are served, so
 a tool that no longer exists has none. The labels are data only; the loop
-decides nothing from them. A `find_tools` answer's `tool_finished` also carries
+decides nothing from them. A `search_tools` answer's `tool_finished` also carries
 `handOffAgents`, the person's other agents it named as holding what this agent
 could not load, the same ids its saved tool message keeps (`hand_off_agents`),
 so the Desk's hand-off menu leads with them while the turn is still running
@@ -1648,7 +1630,7 @@ before changing it.**
 Before a question is asked, the Desk asks `myAgentMatch` how well the person's agents fit
 it (`agentmatch.Matcher.MatchAgent`, the `AgentRecommender` port): the front page and the
 assistant's home for a new question, and an open conversation for the reply being
-written. It is the find_tools hand-off asked before the turn instead of during it, and it
+written. It is the search_tools hand-off asked before the turn instead of during it, and it
 is built from the same parts. The answer is one of four outcomes:
 
 | Outcome | When |
@@ -2475,8 +2457,8 @@ tell the person and not to try another way (`deniedAdvice`), and `agent_create_m
 says whether the memory is kept or only offered on a card
 (`savedMemoryContent`). A tool done as a sequence declares it
 (`agenttoolports.RecipeTool`), and the order is shown in the prompt's tool
-section and under the tool in a `find_tools` answer, with the prerequisite
-reads that were loaded alongside it. A `find_tools` need that names a tool the
+section and under the tool in a `search_tools` answer, with the prerequisite
+reads that were loaded alongside it. A `search_tools` need that names a tool the
 agent holds outright (`worker_list`) loads that tool first, ahead of the ranked
 matches, since the prompt lists what can be loaded by name. That is the only place the order of a
 piece of work is written: a template's starter instructions
@@ -2491,7 +2473,7 @@ own tool (`TestEveryRecipeNamesRegisteredTools`).
 A lookup that is a step of exactly one held tool's recipe brings that tool when it
 loads (`Catalog.Feeds`, `soleFed`): `shipment_match_records` brings `shipment_create`.
 Its answer said to call `shipment_create` next, and the model went looking for it
-with `find_tools` first. A lookup many held recipes start from (`shipment_list`,
+with `search_tools` first. A lookup many held recipes start from (`shipment_list`,
 `shipment_get`) brings none of them.
 
 A prerequisite only ever grants a read. A write a tool cannot finish its job without is
@@ -2993,7 +2975,7 @@ front of the prompt.
   eight preselected with their companions, the waiting core tools the request names, what
   recent turns used and a command's tools. Each is a deferred tool marked loaded, and
   together they are `ToolSet.Opened`, which `OpenTurn` puts on the person's message
-  (`Message.ToolReferences`). Loading a tool later (`find_tools`, a call to a held tool that
+  (`Message.ToolReferences`). Loading a tool later (`search_tools`, a call to a held tool that
   was not loaded, a read joining a batch, the nearest tools after an unheld call) works the
   same way and names the tool on the next tool result (`toolSet.takeLoaded`).
   `TestOpenTurn_DeclaresTheSameToolsWhateverIsAsked` and
@@ -3025,7 +3007,7 @@ front of the prompt.
   it may ask, artifacts, the product guide, how to answer, the organization's
   instructions and its Never list, the organization's profile and the person's.
   The tool section never names which tools a turn opened with: a disclosed one
-  says find_tools loads the rest and names **what it can load by area of
+  says search_tools loads the rest and names **what it can load by area of
   Trenova** (`RuntimeContext.ToolMap`, built by `Service.toolMap` from each
   tool's permission resource: the resource's category in the permission
   registry is the area, its display name what the area covers, so a renamed or
@@ -3064,7 +3046,7 @@ front of the prompt.
   sends the tools without it (a new tools prefix) under the advisor beta, and its
   replayed advice is the same bytes on every later call.
 - **OpenAI Responses**, on OpenAI's own platform with a model that takes it
-  (gpt-5.4 and later, `toolSearchModel`), declares `find_tools` as the
+  (gpt-5.4 and later, `toolSearchModel`), declares `search_tools` as the
   client-executed `tool_search` (the spec marked `Searches`), leaves deferred
   tools out of `tools`, replays a search as `tool_search_call` and its result
   as `tool_search_output` carrying the loaded tools' full definitions, followed
@@ -3829,7 +3811,7 @@ describer sets a field on the subject in the activity that prepares the run,
 code only carries the two results between them.
 
 Hybrid tool ranking took no gate. The turn's query vector rides on `ToolSetState.Query`, and
-the tools a `find_tools` call found ride on `FindToolsResult.Found` into the saved message;
+the tools a `search_tools` call found ride on `FindToolsResult.Found` into the saved message;
 both are optional data, and a history without them replays by keyword. The person's other
 agents that answer named as holding what the agent could not call ride the same way, on
 `FindToolsResult.HandOff` into the message's `hand_off_agents`; a history without them

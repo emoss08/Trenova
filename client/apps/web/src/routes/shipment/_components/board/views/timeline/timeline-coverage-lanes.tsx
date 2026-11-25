@@ -370,6 +370,7 @@ function DriverLaneRow({
             id={lane.id}
             initials={lane.initials}
             shape="circle"
+            photo={lane.photo}
             className="size-5.5 text-2xs"
           />
           <TimelineLaneLabel

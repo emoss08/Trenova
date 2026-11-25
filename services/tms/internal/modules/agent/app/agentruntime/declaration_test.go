@@ -55,11 +55,12 @@ func TestNewToolSet_ATurnThatCanSearchDefersTheCoreToolsFewTurnsCall(t *testing.
 	})
 
 	require.True(t, set.Disclosed)
-	assert.True(t, set.Offers("agent_list_memories"), "memory stays loaded")
+	assert.False(t, set.Offers("agent_list_memories"), "memory waits until a turn needs it")
+	assert.Contains(t, set.Deferred, "agent_list_memories")
 	assert.False(t, set.Offers("agent_create_wait"))
 	assert.False(t, set.Offers("agent_cancel_wait"))
 	assert.Contains(t, set.Deferred, "agent_create_wait",
-		"a core tool not loaded is still declared, so find_tools can load it")
+		"a core tool not loaded is still declared, so search_tools can load it")
 
 	asked := service.access.NewToolSet(t.Context(), &toolaccess.ToolSetRequest{
 		Definition: runtimetest.Definition(names...),
@@ -75,7 +76,7 @@ func TestNewToolSet_ATurnThatCannotSearchLoadsEveryCoreTool(t *testing.T) {
 
 	service, _ := deferredCoreRuntime(t)
 	set := service.access.NewToolSet(t.Context(), &toolaccess.ToolSetRequest{
-		Definition: runtimetest.Definition("worker_list", "agent_create_wait"),
+		Definition: runtimetest.Definition("worker_list_view", "agent_create_wait"),
 		Actor:      runtimetest.Actor(),
 		Input:      "say hello",
 	})
@@ -95,25 +96,25 @@ func TestFindFor_LoadsWhatTheActivityFoundIntoTheTurnAsReferences(t *testing.T) 
 		Input:      "say hello",
 	}
 	turn := service.RestoreTurn(req, new(service.OpenTurn(t.Context(), req).State()))
-	require.False(t, turn.tools.Offers("equipment_list_trailers"))
+	require.False(t, turn.tools.Offers("equipment_list_trailers_view"))
 	declared := turn.completionRequest()
 
-	found := service.FindFor(t.Context(), req, new(turn.ToolsState()),
-		map[string]any{"need": "trailer inspection date"})
+	found := service.SearchFor(t.Context(), req, new(turn.ToolsState()),
+		map[string]any{"query": "trailer inspection date"})
 	turn.LoadTools(found.Loaded)
 
-	require.Contains(t, found.Loaded, "equipment_list_trailers")
-	assert.True(t, turn.tools.Offers("equipment_list_trailers"))
+	require.Contains(t, found.Loaded, "equipment_list_trailers_view")
+	assert.True(t, turn.tools.Offers("equipment_list_trailers_view"))
 	assert.Equal(t, declared.Tools, turn.completionRequest().Tools,
 		"loading a tool leaves what the turn declared as it was")
 	assert.Equal(t, declared.DeferredTools, turn.completionRequest().DeferredTools)
-	assert.Contains(t, turn.tools.TakeLoaded(), "equipment_list_trailers",
+	assert.Contains(t, turn.tools.TakeLoaded(), "equipment_list_trailers_view",
 		"the next tool result names it")
 
 	restored := service.RestoreTurn(req, new(turn.State()))
 	assert.True(
 		t,
-		restored.tools.Offers("equipment_list_trailers"),
+		restored.tools.Offers("equipment_list_trailers_view"),
 		"a restored turn keeps what it loaded",
 	)
 }
@@ -157,9 +158,9 @@ func TestToolMap_GroupsTheToolsByAreaOfTrenova(t *testing.T) {
 	t.Parallel()
 
 	query := &stubQueryRegistry{Tools: []agenttoolports.AgentQueryTool{
-		&agenttest.StubQueryTool{ToolName: "shipment_list", Resource: permission.ResourceShipment},
-		&agenttest.StubQueryTool{ToolName: "shipment_get", Resource: permission.ResourceShipment},
-		&agenttest.StubQueryTool{ToolName: "invoice_list", Resource: permission.ResourceInvoice},
+		&agenttest.StubQueryTool{ToolName: "shipment_list_view", Resource: permission.ResourceShipment},
+		&agenttest.StubQueryTool{ToolName: "shipment_get_view", Resource: permission.ResourceShipment},
+		&agenttest.StubQueryTool{ToolName: "invoice_list_view", Resource: permission.ResourceInvoice},
 	}}
 	service := buildRuntime(runtimeParts{
 		Logger:      zap.NewNop(),
@@ -168,7 +169,7 @@ func TestToolMap_GroupsTheToolsByAreaOfTrenova(t *testing.T) {
 	})
 
 	areas := service.access.ToolMap([]string{
-		"shipment_list", "shipment_get", "invoice_list", "shipment_list", "find_tools",
+		"shipment_list_view", "shipment_get_view", "invoice_list_view", "shipment_list_view", "search_tools",
 	})
 
 	require.Len(t, areas, 2, "a runtime tool has no area; a name given twice counts once")

@@ -19,7 +19,7 @@ func TestScoreSelection(t *testing.T) {
 		ForbiddenTools: []string{"shipment_cancel"},
 	}
 	turns := []*benchrecord.TurnRecord{toolTurnRecord(
-		"find_tools", "customer_list", "shipment_list", "shipment_cancel", "agent_list_memories",
+		"search_tools", "customer_list", "shipment_list", "shipment_cancel", "agent_list_memories",
 	)}
 
 	selection := scoreSelection(scenario, turns)
@@ -38,7 +38,7 @@ func TestScoreRetrieval_AgainstTheToolsThePassingTrialUsed(t *testing.T) {
 	t.Parallel()
 
 	turn := toolTurnRecord(
-		"find_tools",
+		"search_tools",
 		"shipment_get",
 		"equipment_list_trailers",
 		"shipment_add_comment",
@@ -47,7 +47,7 @@ func TestScoreRetrieval_AgainstTheToolsThePassingTrialUsed(t *testing.T) {
 	turn.ModelCalls = []*benchrecord.ModelCall{
 		{Chat: &llmports.ChatCompletionRequest{Tools: []kernelports.ToolSpec{
 			{Name: "shipment_get"}, {Name: "shipment_add_comment"}, {Name: "customer_get"},
-			{Name: "find_tools"},
+			{Name: "search_tools"},
 		}}},
 	}
 	turn.Disclosures = []benchrecord.Disclosure{

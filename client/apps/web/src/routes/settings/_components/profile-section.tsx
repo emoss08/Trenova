@@ -75,7 +75,7 @@ function AboutCard({ user, picture }: { user: User | null; picture: ProfilePictu
   const feedback = useSettingsFeedback();
   const form = useForm<AboutValues>({ defaultValues: aboutValues(user) });
   const avatarStyle = useWatch({ control: form.control, name: "avatarStyle" });
-  const hasPhoto = Boolean(user?.profilePicUrl || user?.thumbnailUrl);
+  const hasPhoto = Boolean(user?.photo);
 
   const { commit } = useAutosaveForm({
     form,
@@ -115,8 +115,7 @@ function AboutCard({ user, picture }: { user: User | null; picture: ProfilePictu
             <ResolvedUserAvatar
               userId={user?.id}
               name={user?.name}
-              profilePicUrl={user?.profilePicUrl}
-              thumbnailUrl={user?.thumbnailUrl}
+              photo={user?.photo}
               className="size-9"
             />
             <Button

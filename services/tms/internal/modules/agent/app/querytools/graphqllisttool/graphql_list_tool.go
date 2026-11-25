@@ -846,6 +846,23 @@ func (t *Tool) Query(
 	}
 	req.query = strings.TrimSpace(querytool.OptionalString(params.Params, querytool.ParamQuery))
 	req.sort = t.sort(params.Params)
+	if where := querytool.WhereOf(params.Params); where != nil {
+		req.filters = append(req.filters, whereFilters(where.Filters)...)
+		for _, group := range where.Groups {
+			req.groups = append(req.groups, map[string]any{
+				groupFilters: whereFilters(group.Filters),
+			})
+		}
+		if len(where.Sort) > 0 {
+			req.sort = make([]map[string]any, 0, len(where.Sort))
+			for _, field := range where.Sort {
+				req.sort = append(req.sort, map[string]any{
+					"field":     field.Field,
+					"direction": string(field.Direction),
+				})
+			}
+		}
+	}
 	req.limit = window.Limit
 	req.after = window.Info.After
 	req.total = params.IncludeTotal
@@ -887,6 +904,23 @@ func (t *Tool) Query(
 	}
 
 	return WithBeside(&outcome, beside)
+}
+
+func (t *Tool) WhereFields() *domaintypes.FieldConfiguration { return t.Read.FieldConfiguration() }
+
+const groupFilters = "filters"
+
+func whereFilters(filters []domaintypes.FieldFilter) []map[string]any {
+	out := make([]map[string]any, 0, len(filters))
+	for _, filter := range filters {
+		out = append(out, map[string]any{
+			"field":    filter.Field,
+			"operator": string(filter.Operator),
+			"value":    filter.Value,
+		})
+	}
+
+	return out
 }
 
 func (t *Tool) compileRequest(

@@ -164,9 +164,9 @@ from a script when `ToolPolicy.CallableFromScript()` holds:
 
 It must also not be an extension tool (web, portal or the script tool itself), and
 not one of the tools that read pasted partner text (`ReadsExternalContent`). Reads another
-desk's agents hold, which the turn reached through `find_tools`, are in the index too
+desk's agents hold, which the turn reached through `search_tools`, are in the index too
 (`DispatchCall.ScriptReach`, the turn's reach, sent only with the call that runs a script), and the
-broker dispatches each on its tier as the model's own call of it would be: find_tools told the
+broker dispatches each on its tier as the model's own call of it would be: search_tools told the
 model `fuel_list_purchases` was callable here, the script left it out, and Haiku spent the turn's
 three scripts guessing its name. A script that names a read it may not call gets the reads it may
 call in its result's note (`missingReadNote`), nearest first, with how a tool's name becomes
@@ -185,7 +185,7 @@ The tool is named under [agent-tool-conventions.md](agent-tool-conventions.md):
 - the object is `script`, so in reading order it is `run_agent_script`.
 
 `TestNamespacedToolsFollowTheConventions` covers it. It lives in `querytools/scriptquerytools`
-(`script_tool.go`), so the catalog, `find_tools`, the safety doc and the contract tests treat it
+(`script_tool.go`), so the catalog, `search_tools`, the safety doc and the contract tests treat it
 as any other read.
 
 | Parameter | Type | Rule |
@@ -215,7 +215,7 @@ fans out inside itself. **Search terms:** "for each", "every one of", "reconcile
   extension ran scripts it granted the tool; moving scripts in-house first dropped that grant,
   and no agent was offered a script until this rule replaced it.
 - **When it loads.** Whenever the gate is open, on every turn, a narrowed one included: the
-  turn opens with it rather than waiting for `find_tools`. Whether a question needs many reads
+  turn opens with it rather than waiting for `search_tools`. Whether a question needs many reads
   shows only once the first result says how many rows there are, after the turn's tools are
   fixed, and a model that has just read one page of 568 does not search for a scripting tool;
   it offers to page through the rest.

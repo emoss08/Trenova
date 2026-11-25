@@ -18,7 +18,7 @@ export function WorkerPageSkeleton() {
     <div aria-busy aria-label={t("Loading the worker")} className="flex min-w-0 flex-col">
       <div aria-hidden className="flex flex-col gap-2.5 border-b bg-card px-6 pt-3.5">
         <div className="flex items-start gap-3.5">
-          <span className="block size-10 shrink-0 ui-shimmer rounded-md" />
+          <span className="block size-10 shrink-0 ui-shimmer rounded-full" />
           <div className="flex flex-1 flex-col gap-2 pt-1">
             <div className="flex items-center gap-2">
               <Line className="h-3.5 w-36" />

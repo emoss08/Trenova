@@ -330,8 +330,11 @@ func (t *shipmentListTool) Description() string {
 		"Each row has the first pickup, the final stop, who drives each move, what it carries " +
 		"and the holds in force, each with its note, when it started and the holdId " +
 		"shipment_release_hold takes, so onHold lists held loads and why in one call, and late " +
-		"lists the loads behind schedule by their stops, whatever their status. For " +
-		"more, pass every load you need to shipment_get at once."
+		"lists the loads behind schedule by their stops, whatever their status. detail full " +
+		"adds every stop and move with both drivers, tractor, trailer or carrier, miles, " +
+		"commodities with weight and hazmat, charges, references, service and equipment " +
+		"types and billing dates to each row. For comments and the rating, pass every load " +
+		"you need to shipment_get at once."
 }
 
 func (t *shipmentListTool) SearchTerms() []string {
@@ -390,10 +393,52 @@ func (t *shipmentListTool) ParamSchema() map[string]any {
 					"give words, %d otherwise, at most %d.",
 					defaultShipmentWordLimit, listtool.DefaultLimit, listtool.MaxLimit),
 			}),
-			querytool.ParamAfter:           querytool.CursorPageSchema(listtool.DefaultLimit, listtool.MaxLimit)[querytool.ParamAfter],
-			agenttoolports.ListFieldsParam: listtool.FieldsSchema(t.columns),
+			querytool.ParamAfter: querytool.CursorPageSchema(listtool.DefaultLimit, listtool.MaxLimit)[querytool.ParamAfter],
+			querytool.ParamDetail: agenttoolschema.Enum(
+				"How much each row carries. Omit it for the summary: pro number, BOL, status, "+
+					"customer, first pickup, final stop, drivers, what it carries, total charge, "+
+					"ship, delivery and created dates, billing status and holds. full adds "+
+					strings.Join(fullOnly, ", ")+
+					": every stop, each move's crew or carrier, the commodities and the billing "+
+					"dates. Ask for full when the answer needs any of those.",
+				DetailLevels,
+			),
+			agenttoolports.ListFieldsParam: t.fieldsSchema(),
 		},
 		toolschema.KeyAdditionalProperties: false,
+	}
+}
+
+func (t *shipmentListTool) fieldsSchema() map[string]any {
+	schema := listtool.FieldsSchema(t.columns)
+	schema[toolschema.KeyDescription] = schema[toolschema.KeyDescription].(string) +
+		" Naming a column only detail full has reads the full row. A sortBy or filter field " +
+		"is a column only when it is listed here."
+
+	return schema
+}
+
+func shipmentDetailOf(params map[string]any) (Detail, error) {
+	value, err := querytool.ValidEnum(params, querytool.ParamDetail, DetailLevels.AsStrings())
+	if err != nil {
+		return "", err
+	}
+	named := slices.DeleteFunc(
+		slices.Clone(querytool.OptionalStrings(params, agenttoolports.ListFieldsParam)),
+		func(name string) bool { return !slices.Contains(fullOnly, name) },
+	)
+	switch {
+	case Detail(value) == DetailSummary && len(named) > 0:
+		return "", fmt.Errorf(
+			"fields %s are only in the full row; pass detail full or leave detail out",
+			strings.Join(named, ", "),
+		)
+	case value == "" && len(named) > 0:
+		return DetailFull, nil
+	case value == "":
+		return DetailSummary, nil
+	default:
+		return Detail(value), nil
 	}
 }
 
@@ -445,6 +490,11 @@ func (t *shipmentListTool) Query(
 		return nil, err
 	}
 
+	detail, err := shipmentDetailOf(params.Params)
+	if err != nil {
+		return nil, err
+	}
+
 	var lateAt int64
 	if querytool.OptionalBool(params.Params, paramLate) {
 		lateAt = querytool.ClockFor(params).Now
@@ -460,7 +510,47 @@ func (t *shipmentListTool) Query(
 
 	var result any
 	query := querytool.OptionalString(params.Params, querytool.ParamQuery)
-	if query == "" && !held.set() && lateAt == 0 {
+	full := detail == DetailFull
+	where := querytool.WhereOf(params.Params)
+	if where != nil {
+		applied, extrasErr := applyExtras(where.Extras, querytool.ClockFor(params).Now)
+		if extrasErr != nil {
+			return nil, extrasErr
+		}
+		if applied.late {
+			lateAt = querytool.ClockFor(params).Now
+		}
+		held.merge(applied.held)
+		if held.set() && !readsHolds {
+			return nil, &graphqlreadports.ReadRefusedError{
+				Resource: permission.ResourceShipmentHold,
+				Message:  "listing shipments by their holds needs read access to shipment holds",
+			}
+		}
+		result, err = t.searchWords(ctx, &wordSearch{
+			params:   params,
+			query:    query,
+			statuses: statuses,
+			held:     held,
+			lateAt:   lateAt,
+			full:     full,
+			where:    where,
+			extras:   applied,
+		})
+		if err != nil {
+			return nil, err
+		}
+		result, err = t.withActiveHolds(ctx, params, result, readsHolds)
+		if err != nil {
+			return nil, err
+		}
+		if full {
+			result = withFullRows(result)
+		}
+
+		return withOutsideRows(result), nil
+	}
+	if query == "" && !held.set() && lateAt == 0 && !full {
 		result, err = t.list.Query(ctx, withStatusFilter(params, statuses))
 	} else {
 		result, err = t.searchWords(ctx, &wordSearch{
@@ -469,6 +559,7 @@ func (t *shipmentListTool) Query(
 			statuses: statuses,
 			held:     held,
 			lateAt:   lateAt,
+			full:     full,
 		})
 	}
 	if err != nil {
@@ -478,6 +569,9 @@ func (t *shipmentListTool) Query(
 	result, err = t.withActiveHolds(ctx, params, result, readsHolds)
 	if err != nil {
 		return nil, err
+	}
+	if full {
+		result = withFullRows(result)
 	}
 
 	return withOutsideRows(result), nil
@@ -511,6 +605,10 @@ func outsideRows(items any) []agentrecord.RecordRef {
 		for idx := range typed {
 			mark(&typed[idx])
 		}
+	case []FullRow:
+		for idx := range typed {
+			mark(&typed[idx].Row)
+		}
 	case []any:
 		for _, item := range typed {
 			if row, ok := item.(Row); ok {
@@ -532,6 +630,7 @@ func (t *shipmentListTool) readsHolds(
 type shipmentHoldFilter struct {
 	active *bool
 	codes  []string
+	before int64
 }
 
 func shipmentHoldFilterOf(params map[string]any) (shipmentHoldFilter, error) {
@@ -552,13 +651,24 @@ func shipmentHoldFilterOf(params map[string]any) (shipmentHoldFilter, error) {
 	return filter, nil
 }
 
+func (f *shipmentHoldFilter) merge(other shipmentHoldFilter) {
+	if other.active != nil {
+		f.active = other.active
+	}
+	f.codes = sliceutils.DedupeStrings(append(f.codes, other.codes...))
+	if other.before > 0 {
+		f.before = other.before
+	}
+}
+
 func (f shipmentHoldFilter) set() bool {
-	return f.active != nil || len(f.codes) > 0
+	return f.active != nil || len(f.codes) > 0 || f.before > 0
 }
 
 func (f shipmentHoldFilter) apply(options *shipmentports.ShipmentOptions) {
 	options.ActiveHold = f.active
 	options.HoldReasonCodes = f.codes
+	options.HeldBefore = f.before
 }
 
 func (f shipmentHoldFilter) describe(criteria *filtercatalog.Criteria) {
@@ -734,20 +844,25 @@ type wordSearch struct {
 	held     shipmentHoldFilter
 	// lateAt keeps the shipments running late at that instant, when set.
 	lateAt  int64
+	full    bool
 	window  querytool.CursorWindow
 	filters []domaintypes.FieldFilter
 	sorting []domaintypes.SortField
+	where   *querytool.Where
+	extras  shipmentExtras
 }
 
 func (s *wordSearch) options() shipmentports.ShipmentOptions {
 	options := shipmentports.ShipmentOptions{
-		Statuses:           s.statuses,
-		IncludeCustomer:    true,
-		IncludeRoute:       true,
-		IncludeCommodities: true,
+		Statuses:              s.statuses,
+		IncludeCustomer:       true,
+		IncludeRoute:          true,
+		IncludeCommodities:    true,
+		ExpandShipmentDetails: s.full,
 	}
 	s.held.apply(&options)
 	options.LateAt = s.lateAt
+	s.extras.apply(&options)
 
 	return options
 }
@@ -781,8 +896,8 @@ func (t *shipmentListTool) searchWords(
 	}
 
 	search.window = window
-	search.filters = filters
-	search.sorting = sorting
+	search.filters = search.where.ApplyFilters(filters)
+	search.sorting = search.where.ApplySort(sorting)
 	found, err := t.search(ctx, search, criteria)
 	if err != nil {
 		return nil, err
@@ -844,6 +959,7 @@ func (t *shipmentListTool) wordOutcome(
 		options.IncludeCustomer = false
 		options.IncludeRoute = false
 		options.IncludeCommodities = false
+		options.ExpandShipmentDetails = false
 		if total, exact, err := countShipments(ctx, t.repo, &pagination.QueryOptions{
 			TenantInfo:   querytool.TenantOf(search.params),
 			Query:        search.query,
@@ -943,6 +1059,7 @@ func (t *shipmentListTool) search(
 			Pagination:   pagination.Info{Limit: search.window.Limit},
 			Query:        search.query,
 			FieldFilters: search.filters,
+			FilterGroups: search.where.FilterGroups(),
 			Sort:         search.sorting,
 		},
 		Cursor:          search.window.Info,

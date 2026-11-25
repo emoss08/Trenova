@@ -65,8 +65,8 @@ type User {
   username: String!
   timeFormat: TimeFormat!
   emailAddress: String
-  profilePicUrl: String!
-  thumbnailUrl: String!
+  "The user's picture, signed for a short while; null when they have none."
+  photo: PersonPhoto
   timezone: String!
   isLocked: Boolean!
   mustChangePassword: Boolean!

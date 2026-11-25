@@ -160,7 +160,5 @@ func userSummary(u *tenantdb.UsersTable) keel.Query[*tenant.User] {
 		u.Username,
 		u.EmailAddress,
 		u.Status,
-		u.ProfilePicURL,
-		u.ThumbnailURL,
 	)
 }

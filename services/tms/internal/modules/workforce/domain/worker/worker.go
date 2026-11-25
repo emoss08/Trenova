@@ -47,7 +47,8 @@ type Worker struct {
 	Type                  WorkerType         `keel:"type"                                     json:"type"`
 	DriverType            DriverType         `keel:"driver_type"                              json:"driverType"`
 	LeaveType             LeaveType          `keel:"leave_type,nullzero"                      json:"leaveType"`
-	ProfilePicURL         string             `keel:"profile_pic_url,nullzero"                 json:"profilePicUrl"`
+	PhotoKey              string             `keel:"photo_key,nullzero,noreport"              json:"-"`
+	PhotoThumbnailKey     string             `keel:"photo_thumbnail_key,nullzero,noreport"    json:"-"`
 	FirstName             string             `keel:"first_name"                               json:"firstName"`
 	LastName              string             `keel:"last_name"                                json:"lastName"`
 	WholeName             string             `keel:"whole_name,readonly,label=Full Name"      json:"wholeName"`

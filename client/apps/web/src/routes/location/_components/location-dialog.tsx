@@ -31,10 +31,6 @@ import { XCloseIcon } from "@trenova/shared/components/icons";
 import { useEffect } from "react";
 import { FormProvider, useForm, type UseFormReturn } from "react-hook-form";
 import type { z } from "zod";
-import {
-  RecordMemories,
-  useRecordMemoriesAvailable,
-} from "@/components/record-memories/record-memories";
 import { LocationForm } from "./location-form";
 import { LocationGeofenceMap } from "./location-geofence-editor";
 import { PlanFeature } from "@/lib/plan-feature";
@@ -195,6 +191,7 @@ function CreateDialog({ open, onOpenChange }: CreateDialogProps) {
           </Button>
           <SplitButton
             options={CREATE_SAVE_OPTIONS}
+            buttonVariant="default"
             selectedOption={defaultAction}
             onOptionSelect={handleOptionSelect}
             isLoading={isSubmitting}
@@ -217,7 +214,6 @@ type EditDialogProps = {
 
 function EditDialog({ open, onOpenChange, row }: EditDialogProps) {
   const t = useT();
-  const remembers = useRecordMemoriesAvailable();
 
   const form = useForm<LocationFormInput, unknown, Location>({
     resolver: zodResolver(locationSchema),
@@ -248,7 +244,7 @@ function EditDialog({ open, onOpenChange, row }: EditDialogProps) {
     unknown,
     Location
   >({
-    mutationFn: async ({ values }) => api.put<Location>(`${URL}${row?.id as string}/`, values),
+    mutationFn: async ({ values }) => api.patch<Location>(`${URL}${row?.id as string}/`, values),
     onMutate: async (newValues) => {
       await queryClient.cancelQueries({ queryKey: [QUERY_KEY] });
       const previousRecord = queryClient.getQueryData([QUERY_KEY]);
@@ -307,14 +303,6 @@ function EditDialog({ open, onOpenChange, row }: EditDialogProps) {
 
   return (
     <DialogShell
-      after={
-        remembers && row?.id ? (
-          <div className="border-border flex flex-col gap-2 border-t p-4">
-            <h3 className="text-sm font-semibold">{t("What agents remember")}</h3>
-            <RecordMemories subject={{ type: "Location", id: row.id }} />
-          </div>
-        ) : null
-      }
       open={open}
       onOpenChange={(next) => {
         if (!next) reset();
@@ -353,6 +341,7 @@ function EditDialog({ open, onOpenChange, row }: EditDialogProps) {
             options={EDIT_SAVE_OPTIONS}
             selectedOption={defaultAction}
             onOptionSelect={handleOptionSelect}
+            buttonVariant="default"
             isLoading={isSubmitting}
             loadingText={t("Saving...")}
             formId={FORM_ID}

@@ -17,7 +17,8 @@ func baseDefinition() *agentdefinition.Definition {
 		ID:               pulid.MustNew(agentdefinition.IDPrefix),
 		Name:             "Billing desk",
 		Instructions:     "Answer billing questions.",
-		ToolNames:        []string{"read_invoice", "send_reminder"},
+		Scope:            agentdefinition.Scope{Capabilities: []string{"read_invoice", "send_reminder"}},
+		PinnedTools:      []string{"read_invoice", "send_reminder"},
 		ToolTiers:        map[string]agent.AutonomyTier{"send_reminder": agent.TierPropose},
 		TriggerMode:      agentdefinition.TriggerChat,
 		MonthlyBudgetUSD: &budget,
@@ -48,7 +49,8 @@ func TestChangesIgnoresWhatNoPersonChanged(t *testing.T) {
 
 	before := baseDefinition()
 	after := baseDefinition()
-	after.ToolNames = []string{"send_reminder", "read_invoice"}
+	after.Scope.Capabilities = []string{"send_reminder", "read_invoice"}
+	after.PinnedTools = []string{"send_reminder", "read_invoice"}
 	sameBudget := decimal.RequireFromString("50.000")
 	after.MonthlyBudgetUSD = &sameBudget
 	after.Version = 9
@@ -63,9 +65,9 @@ func TestChangesIgnoresWhatNoPersonChanged(t *testing.T) {
 func TestChangeSummaryJoinsTheLabels(t *testing.T) {
 	t.Parallel()
 
-	assert.Equal(t, "Instructions, Tools", editchange.Summary([]editchange.Change{
+	assert.Equal(t, "Instructions, Scope", editchange.Summary([]editchange.Change{
 		{Field: "instructions", Label: "Instructions"},
-		{Field: "toolNames", Label: "Tools"},
+		{Field: "scope", Label: "Scope"},
 	}))
 	assert.Empty(t, editchange.Summary(nil))
 }

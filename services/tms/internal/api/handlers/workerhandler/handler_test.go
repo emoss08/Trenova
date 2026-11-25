@@ -14,11 +14,13 @@ import (
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/ptopolicyservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workercredentialservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/app/workerphotoservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/customfieldservice"
@@ -32,6 +34,7 @@ import (
 	"github.com/emoss08/trenova/internal/testutil/mocks/dispatchcontrolportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/workerportsmock"
 	"github.com/emoss08/trenova/internal/testutil/pgstubtest"
+	"github.com/emoss08/trenova/internal/testutil/phototest"
 	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/internal/testutil/validationtest"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -51,6 +54,7 @@ type handlerDeps struct {
 	defRepo   *customfieldportsmock.MockCustomFieldDefinitionRepository
 	auditSvc  *auditportsmock.MockAuditService
 	cacheRepo *customerportsmock.MockWorkerCacheRepository
+	photos    *phototest.Fake
 }
 
 func setupWorkerHandler(
@@ -157,8 +161,21 @@ func setupWorkerHandlerWithEngines(
 		ErrorHandler:     errorHandler,
 	})
 
+	photos := &phototest.Fake{}
+	photoService := workerphotoservice.New(workerphotoservice.Params{
+		Logger:       logger,
+		Repo:         repo,
+		Photos:       photos,
+		AuditService: auditSvc,
+		Realtime:     &mocks.NoopRealtimeService{},
+		DB:           dbtest.NopConnection{},
+		Permissions:  &mocks.AllowAllPermissionEngine{},
+		Registry:     permissioncatalog.Default(),
+	})
+
 	handler := workerhandler.New(workerhandler.Params{
 		Service:              service,
+		Photos:               photoService,
 		ErrorHandler:         errorHandler,
 		PermissionMiddleware: pm,
 		PermissionEngine:     engine,
@@ -166,6 +183,7 @@ func setupWorkerHandlerWithEngines(
 
 	return &handlerDeps{
 		handler:   handler,
+		photos:    photos,
 		valueRepo: valueRepo,
 		defRepo:   defRepo,
 		auditSvc:  auditSvc,

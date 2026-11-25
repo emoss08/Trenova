@@ -47,7 +47,7 @@ var sweepCmd = &cobra.Command{
 	Long: `For each held tool count N (default 8, 12, 20 and 30) the scenario's agent is held to N
 tools: the ones the scenario needs and the agent's others up to N. Every scenario then runs with
 every held tool sent ("all", the disclosure threshold lifted) and disclosed ("disclosed", 8
-ranked tools and find_tools), on every cell. Writes one run per point and sweep.md and
+ranked tools and search_tools), on every cell. Writes one run per point and sweep.md and
 sweep.json, from which ai.toolDisclosureThreshold is set.
 
 Examples:

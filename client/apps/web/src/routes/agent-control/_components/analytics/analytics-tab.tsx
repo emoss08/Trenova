@@ -2,7 +2,7 @@ import { useSearchValue } from "@trenova/shared/hooks/use-search-state";
 import { usePermission } from "@/hooks/use-permission";
 import { downloadCsv, exportFilename } from "@/lib/data-table-export";
 import type { AgentAnalytics, AIAnalyticsInput } from "@/lib/graphql/ai-analytics";
-import { lazyComponent } from "@/lib/lazy-component";
+import { lazyComponent } from "@trenova/shared/lib/lazy-component";
 import { aiAnalytics } from "@/lib/queries/ai-analytics";
 import { aiProvider } from "@/lib/queries/ai-provider";
 import { assistant } from "@/lib/queries/assistant";

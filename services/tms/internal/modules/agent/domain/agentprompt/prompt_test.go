@@ -34,7 +34,7 @@ func validDefinition() *agentdefinition.Definition {
 		Name:            "Night dispatch helper",
 		Instructions:    "You help the night dispatch desk. Check hours of service first.",
 		AutonomyCeiling: agent.TierPropose,
-		ToolNames:       []string{"shipment_get", "agent_raise_exception"},
+		Scope:           agentdefinition.Scope{Capabilities: []string{"shipment_get"}},
 		TriggerMode:     agentdefinition.TriggerChat,
 		Enabled:         true,
 	}
@@ -742,9 +742,9 @@ func TestBuildSystemPrompt_NamesThePlanAWaitingStepBelongsTo(t *testing.T) {
 
 // A model handed eight of forty tools and a bare list of names told the
 // person the system could not do what a ninth tool did. The disclosed
-// section names the areas find_tools can load from, with how many tools and
+// section names the areas search_tools can load from, with how many tools and
 // what they cover, and tells the model to search before saying no.
-func TestBuildSystemPrompt_DisclosedSectionNamesWhatFindToolsCanLoad(t *testing.T) {
+func TestBuildSystemPrompt_DisclosedSectionNamesWhatSearchToolsCanFind(t *testing.T) {
 	t.Parallel()
 
 	d := &agentdefinition.Definition{
@@ -781,12 +781,12 @@ func TestBuildSystemPrompt_DisclosedSectionNamesWhatFindToolsCanLoad(t *testing.
 		},
 	})
 
-	assert.Contains(t, prompt, "What find_tools can load, by area of Trenova:\n"+
+	assert.Contains(t, prompt, "What search_tools can find, by area of Trenova:\n"+
 		"- Reports (1 tool): report, report schedule\n"+
 		"- Shipments (9 tools): shipment, shipment move, stop and 2 more")
 	assert.NotContains(t, prompt, "Loaded now:")
-	assert.NotContains(t, prompt, "Callable after find_tools")
-	assert.Contains(t, prompt, "call find_tools before you tell the person")
+	assert.NotContains(t, prompt, "Callable after search_tools")
+	assert.Contains(t, prompt, "Before saying something cannot be done, run search_tools")
 	assert.False(
 		t,
 		d.HasContextProvider(agentdefinition.ContextTools),

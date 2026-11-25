@@ -240,7 +240,7 @@ func TestListWorkers_ReturnsTheCuratedRowNotTheStoredEntity(t *testing.T) {
 
 	encoded, err := sonic.Marshal(rows)
 	require.NoError(t, err)
-	for _, noise := range []string{"profilePicUrl", "addressLine2", "externalId", "gender"} {
+	for _, noise := range []string{"photoKey", "addressLine2", "externalId", "gender"} {
 		assert.NotContains(t, string(encoded), noise,
 			"the entity's %s costs context and answers nothing", noise)
 	}

@@ -225,7 +225,8 @@ type saveAgentRequest struct {
 	Template               agenttemplate.Template            `json:"template"`
 	Instructions           string                            `json:"instructions"`
 	Guardrails             []string                          `json:"guardrails"`
-	ToolNames              []string                          `json:"toolNames"`
+	Scope                  agentdefinition.Scope             `json:"scope"`
+	PinnedTools            []string                          `json:"pinnedTools"`
 	ToolTiers              map[string]agent.AutonomyTier     `json:"toolTiers"`
 	AutonomyCeiling        agent.AutonomyTier                `json:"autonomyCeiling"`
 	DataAccessCeiling      agentdefinition.DataAccessCeiling `json:"dataAccessCeiling"`
@@ -303,7 +304,8 @@ func (r *saveAgentRequest) toServiceRequest(
 		Template:               r.Template,
 		Instructions:           r.Instructions,
 		Guardrails:             r.Guardrails,
-		ToolNames:              r.ToolNames,
+		Scope:                  r.Scope,
+		PinnedTools:            r.PinnedTools,
 		ToolTiers:              r.ToolTiers,
 		AutonomyCeiling:        r.AutonomyCeiling,
 		DataAccessCeiling:      r.DataAccessCeiling,

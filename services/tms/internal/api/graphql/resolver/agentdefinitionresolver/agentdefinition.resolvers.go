@@ -429,8 +429,7 @@ func (r *QueryResolver) AgentInstructionLint(ctx context.Context, input gqlmodel
 	findings, err := r.AgentDefinitionService.LintInstructions(ctx, &agentdefinitionports.LintAgentInstructionsRequest{
 		TenantInfo:        resolvercore.TenantInfo(authCtx),
 		Instructions:      input.Instructions,
-		ToolNames:         input.ToolNames,
-		DisabledToolNames: input.DisabledToolNames,
+		Scope:             *input.Scope,
 	})
 	if err != nil {
 		return nil, err

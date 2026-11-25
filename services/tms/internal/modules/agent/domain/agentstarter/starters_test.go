@@ -43,8 +43,10 @@ func TestStarters_ReportBuilderAsksAboutReports(t *testing.T) {
 	t.Parallel()
 
 	definition := &agentdefinition.Definition{
-		Name:      "Report Builder",
-		ToolNames: []string{"report_create", "report_list", "report_run", "report_get_dataset"},
+		Name: "Report Builder",
+		Scope: agentdefinition.Scope{
+			Capabilities: []string{"report_create", "report_list", "report_run", "report_get_dataset"},
+		},
 	}
 
 	starters := agentstarter.Starters(definition)
@@ -107,9 +109,22 @@ func TestStarters_CustomAgentMixesItsToolFamilies(t *testing.T) {
 func TestStarters_AgentWithoutToolsGetsHowToQuestions(t *testing.T) {
 	t.Parallel()
 
-	starters := agentstarter.StartersFor("", nil)
+	starters := agentstarter.StartersFor("", []string{})
 
 	require.Len(t, starters, 3)
+	assert.Equal(t, "How do I create a new shipment, step by step?", starters[0].Prompt)
+}
+
+// The universal agent has no explicit tools because its scope is everything,
+// so every question is one it can answer.
+func TestStarters_TheUniversalAgentCanAnswerAnyQuestion(t *testing.T) {
+	t.Parallel()
+
+	starters := agentstarter.Starters(&agentdefinition.Definition{
+		Template: agenttemplate.TemplateUniversal,
+	})
+
+	require.Len(t, starters, agentstarter.MaxStarters)
 	assert.Equal(t, "How do I create a new shipment, step by step?", starters[0].Prompt)
 }
 

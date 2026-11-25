@@ -2,7 +2,7 @@ import { SectionPanel, SectionPanelQuiet } from "@/components/section-panel";
 import { VirtualRows } from "@/components/virtual-rows";
 import { lazyWorkPane, preloadOn, useWorkPane } from "@/components/work-pane";
 import { useOpenedOnce } from "@/hooks/use-opened-once";
-import { lazyComponent } from "@/lib/lazy-component";
+import { lazyComponent } from "@trenova/shared/lib/lazy-component";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { usePermission } from "@/hooks/use-permission";
 import {

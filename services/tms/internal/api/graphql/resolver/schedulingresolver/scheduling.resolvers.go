@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/personphoto"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/schedulingservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/approvaldelegation"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerschedule"
@@ -370,4 +371,9 @@ func (r *ShiftTemplateResolver) ActiveAssignmentCount(ctx context.Context, obj *
 	}
 
 	return r.SchedulingService.CountTemplateAssignments(ctx, resolvercore.TenantInfo(authCtx), obj.ID)
+}
+
+// Photo is the resolver for the photo field.
+func (r *RotaRowResolver) Photo(ctx context.Context, obj *gqlmodel.RotaRow) (*personphoto.URLs, error) {
+	return workforceloaders.WorkerPhotoByID(ctx, pulid.ID(obj.WorkerID))
 }

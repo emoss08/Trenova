@@ -1,7 +1,7 @@
 import { Kept } from "@/components/kept";
 import { lazyWorkPane, useWorkPane } from "@/components/work-pane";
 import { usePermission } from "@/hooks/use-permission";
-import { lazyComponent } from "@/lib/lazy-component";
+import { lazyComponent } from "@trenova/shared/lib/lazy-component";
 import type { WorkerTabProps, WorkerTarget, WorkerViewOf } from "@/routes/worker/use-worker-state";
 import { LazyComponent } from "@trenova/shared/components/error-boundary";
 import { Operation, Resource } from "@trenova/shared/types/permission";

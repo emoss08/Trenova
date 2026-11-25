@@ -267,7 +267,7 @@ var starterTools = map[agenttemplate.Template][]string{
 		"exception_set_due",
 		"exception_resolve",
 	},
-	agenttemplate.TemplateGeneralAssistant: nil,
+	agenttemplate.TemplateUniversal: nil,
 	agenttemplate.TemplateDetentionDesk: {
 		"detention_get_occurrence",
 		"detention_list_occurrences",

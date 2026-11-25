@@ -13,16 +13,24 @@ import (
 
 const (
 	MaxBytes          = 12000
+	MaxPageBytes      = 24000
 	UntrustedOpenTag  = "<untrusted_data>"
 	UntrustedCloseTag = "</untrusted_data>"
 )
 
 func Fence(toolName, payload string) string {
-	return FenceUntrusted("Result from "+toolName+":", truncateToolResult(payload))
+	return FenceUntrusted("Result from "+toolName+":", truncateToolResult(payload, MaxBytes))
+}
+
+func FencePage(toolName, payload string) string {
+	return FenceUntrusted("Result from "+toolName+":", truncateToolResult(payload, MaxPageBytes))
 }
 
 func FenceFailure(toolName, message string) string {
-	return FenceUntrusted(fmt.Sprintf("Tool %q failed:", toolName), truncateToolResult(message))
+	return FenceUntrusted(
+		fmt.Sprintf("Tool %q failed:", toolName),
+		truncateToolResult(message, MaxBytes),
+	)
 }
 
 func FenceInline(text string) string {
@@ -62,17 +70,17 @@ func FenceUntrusted(header, payload string) string {
 // rows it could see, announced "let me see the remaining two workers from the
 // truncated data", and then filled them in from nothing. Naming the loss and
 // the remedy is the difference between a short answer and an invented one.
-func truncateToolResult(payload string) string {
-	if len(payload) <= MaxBytes {
+func truncateToolResult(payload string, limit int) string {
+	if len(payload) <= limit {
 		return payload
 	}
-	if shortened, ok := shortenObjectLists(payload); ok {
+	if shortened, ok := shortenObjectLists(payload, limit); ok {
 		return shortened
 	}
 
 	// Cutting mid-rune would put invalid UTF-8 on the wire. Walking back to a
 	// boundary costs at most three bytes.
-	cut := MaxBytes
+	cut := limit
 	for cut > 0 && !utf8.RuneStart(payload[cut]) {
 		cut--
 	}
@@ -98,7 +106,7 @@ const listCutNoteBudget = 600
 // result's keys arrive sorted, so a byte cut kept the dispatch board's drivers
 // and moves and dropped its summary and note: asked which loads need a driver,
 // a model was handed half a list and none of the totals it was asked for.
-func shortenObjectLists(payload string) (string, bool) {
+func shortenObjectLists(payload string, limit int) (string, bool) {
 	object, err := jsonflex.DecodeObject([]byte(payload))
 	if err != nil {
 		return "", false
@@ -112,7 +120,7 @@ func shortenObjectLists(payload string) (string, bool) {
 
 	fields := make([]string, 0, len(keys))
 	lists := make([]string, 0, len(keys))
-	budget := MaxBytes - listCutNoteBudget - 2
+	budget := limit - listCutNoteBudget - 2
 	for _, key := range keys {
 		if jsonflex.KindOf(object[key]) == jsonflex.KindArray {
 			lists = append(lists, key)

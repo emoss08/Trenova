@@ -9,6 +9,8 @@ import {
   toSaveRequest,
 } from "../agent-form-schema";
 
+const UNIVERSAL = { areas: [], capabilities: [], denyAreas: [], denyCapabilities: [] };
+
 function values(overrides: Record<string, unknown>) {
   return { ...agentFormDefaults, name: "Night desk", ...overrides };
 }
@@ -60,18 +62,16 @@ describe("agentFormSchema", () => {
     expect(toAgentPanelRow(agentRow()).memoryTokenBudget).toBeNull();
   });
 
-  // The server refuses a daily limit on a tool the agent does not hold. A
-  // tool taken off the agent leaves its limit behind with no box to clear it
-  // from, so the form does not refuse it; the save drops it, with any zero.
-  it("keeps daily tool limits to the agent's own tools and drops empty ones", () => {
-    expect(
-      issuesOf(values({ toolNames: ["dispatch_assign_move"], toolDailyLimits: { shipment_cancel: 3 } })),
-    ).toEqual({});
+  // A tool switched off leaves its limit behind with no box to clear it from, so the form
+  // does not refuse it; the save drops it, with any zero.
+  it("drops daily limits on switched-off tools and empty ones", () => {
+    const scope = { ...UNIVERSAL, denyCapabilities: ["shipment_cancel"] };
+    expect(issuesOf(values({ scope, toolDailyLimits: { shipment_cancel: 3 } }))).toEqual({});
 
     const sent = toSaveRequest({
       ...agentFormDefaults,
       name: "Night desk",
-      toolNames: ["dispatch_assign_move"],
+      scope,
       toolDailyLimits: { dispatch_assign_move: 4, shipment_cancel: 2, remember: 0 },
       monthlyBudgetUsd: 25,
     });
@@ -85,7 +85,6 @@ describe("agentFormSchema", () => {
     expect(
       issuesOf(
         values({
-          toolNames: ["dispatch_assign_move"],
           toolDailyLimits: { dispatch_assign_move: undefined, insight_get: null },
         }),
       ),
@@ -94,10 +93,76 @@ describe("agentFormSchema", () => {
     const sent = toSaveRequest({
       ...agentFormDefaults,
       name: "Home builder",
-      toolNames: ["dispatch_assign_move", "insight_get"],
       toolDailyLimits: { dispatch_assign_move: undefined, insight_get: null },
     });
     expect(sent.toolDailyLimits).toEqual({});
+  });
+
+  it("sends an agent let do everything with no areas or capabilities, keeping its denials", () => {
+    const sent = toSaveRequest({
+      ...agentFormDefaults,
+      name: "Everything",
+      limited: false,
+      scope: {
+        areas: ["shipment"],
+        capabilities: ["invoice.list"],
+        denyAreas: ["billing"],
+        denyCapabilities: ["shipment_cancel"],
+      },
+    });
+    expect(sent.scope).toEqual({
+      areas: [],
+      capabilities: [],
+      denyAreas: ["billing"],
+      denyCapabilities: ["shipment_cancel"],
+    });
+  });
+
+  it("sends a limited agent's areas and capabilities as chosen", () => {
+    const scope = {
+      areas: ["shipment", "dispatch"],
+      capabilities: ["invoice.list"],
+      denyAreas: [],
+      denyCapabilities: ["shipment_cancel"],
+    };
+    expect(
+      toSaveRequest({ ...agentFormDefaults, name: "Ops", limited: true, scope }).scope,
+    ).toEqual(scope);
+  });
+
+  it("refuses a limited agent that names no area or capability", () => {
+    expect(issuesOf(values({ limited: true, scope: UNIVERSAL }))).toHaveProperty("scope");
+    expect(issuesOf(values({ limited: true, scope: { ...UNIVERSAL, areas: ["worker"] } }))).toEqual(
+      {},
+    );
+  });
+
+  it("keeps at most twelve capabilities at hand, each once", () => {
+    const thirteen = Array.from({ length: 13 }, (_, index) => `shipment_tool_${index}`);
+    expect(issuesOf(values({ pinnedTools: thirteen }))).toHaveProperty("pinnedTools");
+    expect(issuesOf(values({ pinnedTools: thirteen.slice(0, 12) }))).toEqual({});
+    expect(issuesOf(values({ pinnedTools: ["shipment_get", "shipment_get"] }))).toHaveProperty(
+      "pinnedTools.1",
+    );
+  });
+
+  it("drops a pinned capability the scope no longer allows", () => {
+    const sent = toSaveRequest({
+      ...agentFormDefaults,
+      name: "Ops",
+      limited: true,
+      scope: { ...UNIVERSAL, areas: ["dispatch"] },
+      pinnedTools: ["dispatch_assign_move", "invoice_send"],
+    });
+    expect(sent.pinnedTools).toEqual(["dispatch_assign_move"]);
+  });
+
+  it("opens a saved agent as limited only when its scope names areas or capabilities", () => {
+    expect(toAgentPanelRow(agentRow()).limited).toBe(false);
+    expect(
+      toAgentPanelRow({ ...agentRow(), scope: { ...UNIVERSAL, capabilities: ["invoice.list"] } })
+        .limited,
+    ).toBe(true);
   });
 
   it("requires a cron expression for a scheduled agent", () => {
@@ -122,12 +187,11 @@ describe("agentFormSchema", () => {
 
   // The server holds a tool set above the ceiling at the ceiling when the agent runs, and
   // the builder offers to raise the ceiling, so the form does not refuse it.
-  it("accepts a tool tier above the ceiling, and one left by a removed tool", () => {
+  it("accepts a tool tier above the ceiling, and one left by a tool switched off", () => {
     expect(
       issuesOf(
         values({
           autonomyCeiling: "Propose",
-          toolNames: ["dispatch_assign_move"],
           toolTiers: { dispatch_assign_move: "AutoExecute" },
         }),
       ),
@@ -136,7 +200,7 @@ describe("agentFormSchema", () => {
       issuesOf(
         values({
           autonomyCeiling: "Propose",
-          toolNames: ["shipment_get"],
+          scope: { ...UNIVERSAL, denyCapabilities: ["dispatch_assign_move"] },
           toolTiers: { dispatch_assign_move: "AutoExecute" },
         }),
       ),
@@ -163,10 +227,10 @@ describe("toSaveRequest", () => {
     expect(request.endsAt).toBeNull();
   });
 
-  it("drops tool tiers for tools that are no longer selected", () => {
+  it("drops tool tiers for tools switched off", () => {
     const request = toSaveRequest(
       values({
-        toolNames: ["shipment_get"],
+        scope: { ...UNIVERSAL, denyCapabilities: ["dispatch_assign_move"] },
         toolTiers: { shipment_get: "Propose", dispatch_assign_move: "ActWithApproval" },
       }),
     );
@@ -335,7 +399,8 @@ function agentRow(): AgentDefinitionRow {
     accent: "",
     instructions: "",
     guardrails: [],
-    toolNames: [],
+    scope: UNIVERSAL,
+    pinnedTools: [],
     toolTiers: {},
     autonomyCeiling: "Propose",
     dataAccessCeiling: "Restricted",

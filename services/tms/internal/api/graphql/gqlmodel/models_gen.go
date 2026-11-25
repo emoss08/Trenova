@@ -101,6 +101,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/settlementcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/personphoto"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/checkcall"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/customertracking"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
@@ -983,8 +984,8 @@ type AgentAccessPreview struct {
 type AgentAccessPreviewInput struct {
 	// The agent being edited, so each role says whether it is granted now. Absent for a new one.
 	AgentID *string `json:"agentId,omitempty"`
-	// The tools the form has chosen. Core tools every agent holds need not be listed. At most 200.
-	ToolNames []string `json:"toolNames"`
+	// The scope the form has chosen.
+	Scope *agentdefinition.Scope `json:"scope"`
 	// Who the form says may use it. A system agent is always Everyone.
 	AccessMode agentdefinition.AccessMode `json:"accessMode"`
 }
@@ -1224,12 +1225,11 @@ type AgentFingerprintChange struct {
 	To    string `json:"to"`
 }
 
-// Instructions as the builder holds them, with the tools the draft holds.
+// Instructions as the builder holds them, with the scope the draft holds.
 type AgentInstructionLintInput struct {
 	// At most 20000 characters.
-	Instructions      string   `json:"instructions"`
-	ToolNames         []string `json:"toolNames"`
-	DisabledToolNames []string `json:"disabledToolNames,omitempty"`
+	Instructions string                 `json:"instructions"`
+	Scope        *agentdefinition.Scope `json:"scope"`
 }
 
 // A tool that matched a question.
@@ -2387,6 +2387,8 @@ type CapacityUnit struct {
 	AcceptancePercent *float64 `json:"acceptancePercent,omitempty"`
 	DriveRemainingMs  *int     `json:"driveRemainingMs,omitempty"`
 	TractorID         *string  `json:"tractorId,omitempty"`
+	// The driver's photo, signed for a short while; null for a carrier or a driver with none.
+	Photo *personphoto.URLs `json:"photo,omitempty"`
 }
 
 type CaptureBatchConnection struct {
@@ -5046,7 +5048,7 @@ type DispatchBoardDriver struct {
 	City                   string                     `json:"city"`
 	StateAbbreviation      string                     `json:"stateAbbreviation"`
 	PostalCode             string                     `json:"postalCode"`
-	ProfilePicURL          string                     `json:"profilePicUrl"`
+	Photo                  *personphoto.URLs          `json:"photo,omitempty"`
 	AssignmentBlocked      string                     `json:"assignmentBlocked"`
 	AvailableForDispatch   bool                       `json:"availableForDispatch"`
 	TractorID              *string                    `json:"tractorId,omitempty"`
@@ -5968,6 +5970,8 @@ type DriverCoverageSuggestion struct {
 	DriveRemainingMs *int     `json:"driveRemainingMs,omitempty"`
 	// What this driver taking the move costs the plan, in cents: empty miles, lateness, waiting and preferences.
 	CostCents *int `json:"costCents,omitempty"`
+	// The driver's photo, signed for a short while; null when they have none.
+	Photo *personphoto.URLs `json:"photo,omitempty"`
 }
 
 type DriverExpenseConnection struct {
@@ -9256,6 +9260,8 @@ type PolicyComplianceRow struct {
 	WorkerType     string  `json:"workerType"`
 	AcknowledgedAt *int    `json:"acknowledgedAt,omitempty"`
 	SignatureName  *string `json:"signatureName,omitempty"`
+	// The worker's photo, signed for a short while; null when they have none.
+	Photo *personphoto.URLs `json:"photo,omitempty"`
 }
 
 // One person in a position. A driving title is held by a worker; a front-office
@@ -9267,6 +9273,8 @@ type PositionHolder struct {
 	Status string             `json:"status"`
 	// The terminal for a worker, the email address for a user.
 	Detail string `json:"detail"`
+	// The worker's or user's photo, signed for a short while; null when they have none.
+	Photo *personphoto.URLs `json:"photo,omitempty"`
 }
 
 type PostCustomerPaymentInput struct {
@@ -9697,20 +9705,26 @@ type RecordDOTViolationInput struct {
 }
 
 type RecordEmploymentVerificationInput struct {
-	WorkerID          string                                   `json:"workerId"`
-	EmployerName      string                                   `json:"employerName"`
-	EmployerDOTNumber *string                                  `json:"employerDotNumber,omitempty"`
-	EmployerMcNumber  *string                                  `json:"employerMcNumber,omitempty"`
-	ContactName       *string                                  `json:"contactName,omitempty"`
-	ContactPhone      *string                                  `json:"contactPhone,omitempty"`
-	ContactEmail      *string                                  `json:"contactEmail,omitempty"`
-	EmployedFrom      *int                                     `json:"employedFrom,omitempty"`
-	EmployedTo        *int                                     `json:"employedTo,omitempty"`
-	WasDOTRegulated   *bool                                    `json:"wasDotRegulated,omitempty"`
-	Status            *employment.EmploymentVerificationStatus `json:"status,omitempty"`
-	Method            *employment.EmploymentVerificationMethod `json:"method,omitempty"`
-	RequestedAt       *int                                     `json:"requestedAt,omitempty"`
-	Notes             *string                                  `json:"notes,omitempty"`
+	WorkerID                      string                                   `json:"workerId"`
+	EmployerName                  string                                   `json:"employerName"`
+	EmployerDOTNumber             *string                                  `json:"employerDotNumber,omitempty"`
+	EmployerMcNumber              *string                                  `json:"employerMcNumber,omitempty"`
+	ContactName                   *string                                  `json:"contactName,omitempty"`
+	ContactPhone                  *string                                  `json:"contactPhone,omitempty"`
+	ContactEmail                  *string                                  `json:"contactEmail,omitempty"`
+	EmployedFrom                  *int                                     `json:"employedFrom,omitempty"`
+	EmployedTo                    *int                                     `json:"employedTo,omitempty"`
+	WasDOTRegulated               *bool                                    `json:"wasDotRegulated,omitempty"`
+	Status                        *employment.EmploymentVerificationStatus `json:"status,omitempty"`
+	Method                        *employment.EmploymentVerificationMethod `json:"method,omitempty"`
+	RequestedAt                   *int                                     `json:"requestedAt,omitempty"`
+	ResponseReceivedAt            *int                                     `json:"responseReceivedAt,omitempty"`
+	DrugAlcoholResponseReceivedAt *int                                     `json:"drugAlcoholResponseReceivedAt,omitempty"`
+	HadAccidents                  *bool                                    `json:"hadAccidents,omitempty"`
+	AccidentCount                 *int                                     `json:"accidentCount,omitempty"`
+	HadDrugAlcoholViolations      *bool                                    `json:"hadDrugAlcoholViolations,omitempty"`
+	Findings                      *string                                  `json:"findings,omitempty"`
+	Notes                         *string                                  `json:"notes,omitempty"`
 }
 
 type RecordFactoringFundingInput struct {
@@ -10714,6 +10728,8 @@ type RotaRow struct {
 	Days          []*RotaDay `json:"days"`
 	ScheduledDays int        `json:"scheduledDays"`
 	Conflicts     int        `json:"conflicts"`
+	// The worker's photo, signed for a short while; null when they have none.
+	Photo *personphoto.URLs `json:"photo,omitempty"`
 }
 
 type RoutingGuideConnection struct {
@@ -13447,6 +13463,8 @@ type TeamMember struct {
 	SafetyRating     string  `json:"safetyRating"`
 	HireDate         int     `json:"hireDate"`
 	TerminationDate  *int    `json:"terminationDate,omitempty"`
+	// The worker's photo, signed for a short while; null when they have none.
+	Photo *personphoto.URLs `json:"photo,omitempty"`
 }
 
 type TelematicsFormFieldValue struct {

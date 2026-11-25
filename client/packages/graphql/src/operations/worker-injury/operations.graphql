@@ -125,7 +125,10 @@ query OshaLog($year: Int) {
         id
         firstName
         lastName
-        profilePicUrl
+        photo {
+          url
+          thumbnailUrl
+        }
       }
     }
   }

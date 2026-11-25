@@ -26,28 +26,19 @@ describe("withOpenWork", () => {
 });
 
 describe("Nova's margin", () => {
-  it("opens on what the page in front of the person is about", () => {
+  it("holds a conversation that already exists with the record it is about", () => {
     const store = useDeskMarginStore.getState();
-    store.setPageSubject(SHIPMENT);
-    store.toggleMargin();
-
-    expect(useDeskMarginStore.getState().margin).toEqual({ threadId: null, subject: SHIPMENT });
-  });
-
-  it("folds on the second toggle", () => {
-    const store = useDeskMarginStore.getState();
-    store.toggleMargin();
-    store.toggleMargin();
-
-    expect(useDeskMarginStore.getState().margin).toBeNull();
-  });
-
-  it("keeps the record a conversation is about when the conversation starts", () => {
-    const store = useDeskMarginStore.getState();
-    store.openMargin(SHIPMENT);
-    store.showThread("ath_1");
+    store.showThread("ath_1", SHIPMENT);
 
     expect(useDeskMarginStore.getState().margin).toEqual({ threadId: "ath_1", subject: SHIPMENT });
+  });
+
+  it("keeps the record it was about when another conversation on it is shown", () => {
+    const store = useDeskMarginStore.getState();
+    store.showThread("ath_1", SHIPMENT);
+    store.showThread("ath_2");
+
+    expect(useDeskMarginStore.getState().margin).toEqual({ threadId: "ath_2", subject: SHIPMENT });
   });
 
   it("holds only the case's conversation while a case is in front", () => {
@@ -61,19 +52,25 @@ describe("Nova's margin", () => {
       threadId: "ath_case",
       subject: SHIPMENT,
     });
-
-    store.closeMargin();
-    store.openMargin(null);
-
-    expect(useDeskMarginStore.getState().margin).toEqual({ threadId: null, subject: SHIPMENT });
   });
 
-  it("gives a margin opened on something else over to the case that opens", () => {
+  it("folds a conversation about something else when a case opens", () => {
     const store = useDeskMarginStore.getState();
     store.showThread("ath_other", null);
     store.setCasePage(SHIPMENT);
 
-    expect(useDeskMarginStore.getState().margin).toEqual({ threadId: null, subject: SHIPMENT });
+    expect(useDeskMarginStore.getState().margin).toBeNull();
+  });
+
+  it("keeps the case's own conversation when its case opens", () => {
+    const store = useDeskMarginStore.getState();
+    store.showThread("ath_case", SHIPMENT);
+    store.setCasePage(SHIPMENT);
+
+    expect(useDeskMarginStore.getState().margin).toEqual({
+      threadId: "ath_case",
+      subject: SHIPMENT,
+    });
   });
 
   it("takes any conversation again once the case is left", () => {
@@ -88,7 +85,7 @@ describe("Nova's margin", () => {
   it("forgets the open cases and the margin when the session ends", () => {
     const store = useDeskMarginStore.getState();
     store.noteOpenWork(SHIPMENT);
-    store.openMargin(SHIPMENT);
+    store.showThread("ath_1", SHIPMENT);
     store.clearSession();
 
     expect(useDeskMarginStore.getState()).toMatchObject({

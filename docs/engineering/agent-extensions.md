@@ -52,7 +52,7 @@ as an `agentextension.Active` (capability → serving type and availability), an
 tool is offered asks it through `Offers`, `Grants` and `Serving`:
 
 - `permittedTools` drops an inactive extension's tools, so a turn is never offered one and
-  `find_tools` never names one.
+  `search_tools` never names one.
 - With **Every agent** availability, `OpenTurn` adds the tools to what every agent holds (the
   assistant included) and to the prompt's tool list. With **Agents you choose**, an administrator
   adds them to an agent under **Choose tools**.

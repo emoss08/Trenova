@@ -1,3 +1,4 @@
+import type { PersonPhoto } from "@trenova/shared/types/person-photo";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import { ResolvedUserAvatar } from "@/components/resolved-user-avatar";
 import type {
@@ -45,8 +46,7 @@ type ActivityUser = {
   name: string;
   /** Outside the user's reference view: null for someone without user read. */
   emailAddress: string | null;
-  profilePicUrl: string;
-  thumbnailUrl: string;
+  photo: PersonPhoto | null;
 } | null;
 
 /** Who a row is about: their avatar, name and email, or a plain line when nobody was known. */
@@ -60,8 +60,7 @@ function UserCell({ user, unknown }: { user: ActivityUser | undefined; unknown: 
       <ResolvedUserAvatar
         userId={user.id}
         name={user.name}
-        profilePicUrl={user.profilePicUrl}
-        thumbnailUrl={user.thumbnailUrl}
+        photo={user.photo}
         className="bg-muted size-6 rounded-md"
         imageClassName="rounded-md bg-muted"
         fallbackClassName="text-2xs"

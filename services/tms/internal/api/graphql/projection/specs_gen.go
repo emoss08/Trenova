@@ -210,6 +210,8 @@ var DashControlSpec TypeSpec
 
 var DeskCaseOptionSpec TypeSpec
 
+var DeskTranscriptExportSpec TypeSpec
+
 var DetentionClockPriceSpec TypeSpec
 
 var DetentionEvidenceSpec TypeSpec
@@ -469,8 +471,6 @@ var PendingDecisionHoldSpec TypeSpec
 var PerformanceReviewSpec TypeSpec
 
 var PerformanceReviewTemplateSpec TypeSpec
-
-var PolicyComplianceRowSpec TypeSpec
 
 var PortalInvitationSpec TypeSpec
 
@@ -10627,6 +10627,68 @@ func init() {
 		},
 	}
 
+	DeskTranscriptExportSpec = TypeSpec{
+		TypeName: "DeskTranscriptExport",
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:   "id",
+				Column: "id",
+			},
+			{
+				Name:    "requestedByName",
+				Special: "requestedByName",
+			},
+			{
+				Name:   "kind",
+				Column: "kind",
+			},
+			{
+				Name:   "coverage",
+				Column: "coverage",
+			},
+			{
+				Name:   "status",
+				Column: "status",
+			},
+			{
+				Name:   "conversationCount",
+				Column: "conversation_count",
+			},
+			{
+				Name:   "byteSize",
+				Column: "byte_size",
+			},
+			{
+				Name:   "artifactExpiresAt",
+				Column: "artifact_expires_at",
+			},
+			{
+				Name:   "errorMessage",
+				Column: "error_message",
+			},
+			{
+				Name:   "startedAt",
+				Column: "started_at",
+			},
+			{
+				Name:   "completedAt",
+				Column: "completed_at",
+			},
+			{
+				Name:    "downloadable",
+				Special: "downloadable",
+			},
+			{
+				Name:   "createdAt",
+				Column: "created_at",
+			},
+		},
+	}
+
 	DetentionClockPriceSpec = TypeSpec{
 		TypeName: "DetentionClockPrice",
 		AlwaysColumns: []string{
@@ -12434,6 +12496,30 @@ func init() {
 				Column: "void_reason",
 			},
 			{
+				Name:   "holdReason",
+				Column: "hold_reason",
+			},
+			{
+				Name:   "holdNote",
+				Column: "hold_note",
+			},
+			{
+				Name:   "heldById",
+				Column: "held_by_id",
+			},
+			{
+				Name:   "heldAt",
+				Column: "held_at",
+			},
+			{
+				Name:   "holdReleasedById",
+				Column: "hold_released_by_id",
+			},
+			{
+				Name:   "holdReleasedAt",
+				Column: "hold_released_at",
+			},
+			{
 				Name:   "version",
 				Column: "version",
 			},
@@ -12489,6 +12575,14 @@ func init() {
 			{
 				Name:   "voidedBy",
 				Column: "voided_by_id",
+			},
+			{
+				Name:    "heldBy",
+				Special: "heldBy",
+			},
+			{
+				Name:    "holdReleasedBy",
+				Special: "holdReleasedBy",
 			},
 		},
 	}
@@ -13715,6 +13809,10 @@ func init() {
 			{
 				Name:   "targetShipmentId",
 				Column: "target_shipment_id",
+			},
+			{
+				Name:    "shipmentNumber",
+				Special: "shipmentNumber",
 			},
 			{
 				Name:   "inboundMessageId",
@@ -21602,36 +21700,6 @@ func init() {
 		},
 	}
 
-	PolicyComplianceRowSpec = TypeSpec{
-		TypeName: "PolicyComplianceRow",
-		AlwaysColumns: []string{
-			"id",
-			"created_at",
-		},
-		Fields: []FieldSpec{
-			{
-				Name:   "workerId",
-				Column: "worker_id",
-			},
-			{
-				Name:    "workerName",
-				Special: "workerName",
-			},
-			{
-				Name:    "workerType",
-				Special: "workerType",
-			},
-			{
-				Name:   "acknowledgedAt",
-				Column: "acknowledged_at",
-			},
-			{
-				Name:   "signatureName",
-				Column: "signature_name",
-			},
-		},
-	}
-
 	PortalInvitationSpec = TypeSpec{
 		TypeName: "PortalInvitation",
 		AlwaysColumns: []string{
@@ -24274,6 +24342,14 @@ func init() {
 			{
 				Name:   "totalNetMinor",
 				Column: "total_net_minor",
+			},
+			{
+				Name:   "heldCount",
+				Column: "held_count",
+			},
+			{
+				Name:   "heldNetMinor",
+				Column: "held_net_minor",
 			},
 			{
 				Name:   "currencyCode",
@@ -28766,12 +28842,8 @@ func init() {
 				Column: "email_address",
 			},
 			{
-				Name:   "profilePicUrl",
-				Column: "profile_pic_url",
-			},
-			{
-				Name:   "thumbnailUrl",
-				Column: "thumbnail_url",
+				Name:    "photo",
+				Special: "photo",
 			},
 			{
 				Name:   "timezone",
@@ -29244,6 +29316,8 @@ func init() {
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
+			"photo_key",
+			"photo_thumbnail_key",
 		},
 		Fields: []FieldSpec{
 			{
@@ -29291,8 +29365,8 @@ func init() {
 				Column: "leave_type",
 			},
 			{
-				Name:   "profilePicUrl",
-				Column: "profile_pic_url",
+				Name:    "photo",
+				Special: "photo",
 			},
 			{
 				Name:   "firstName",
@@ -32099,6 +32173,10 @@ func init() {
 			{
 				Name:   "changes",
 				Column: "changes",
+			},
+			{
+				Name:    "proposedPhoto",
+				Special: "proposedPhoto",
 			},
 			{
 				Name:   "note",

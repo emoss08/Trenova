@@ -36,6 +36,7 @@ function member(over: Partial<TeamMemberRow> = {}): TeamMemberRow {
     safetyRating: "Excellent",
     hireDate: Date.UTC(2023, 10, 14) / 1000,
     terminationDate: null,
+    photo: null,
     ...over,
   };
 }

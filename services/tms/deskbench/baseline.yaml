@@ -12,7 +12,7 @@ cells:
 
 # `trenova desk sweep` (`task desk-sweep`): the agent is held to N tools (the scenario's own and
 # the agent's others up to N) and every scenario runs once with every held tool sent ("all") and
-# once disclosed (the 8 ranked for the request plus find_tools), to set
+# once disclosed (the 8 ranked for the request plus search_tools), to set
 # ai.toolDisclosureThreshold from data. Cells defaults to the baseline's cells.
 sweep:
   held: [8, 12, 20, 30]

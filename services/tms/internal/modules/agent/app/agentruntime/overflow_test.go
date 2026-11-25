@@ -20,9 +20,9 @@ what the turn hands back to be saved keeps every read whole.
 func TestRun_ShortensEarlierReadsWhenTheTurnOutgrowsTheWindow(t *testing.T) {
 	t.Parallel()
 
-	tool := queryTool("shipment_get", map[string]any{"notes": strings.Repeat("n", 9_000)}, nil)
+	tool := queryTool("shipment_get_view", map[string]any{"notes": strings.Repeat("n", 9_000)}, nil)
 	read := func(id string) *llmports.ChatCompletionResult {
-		turn := runtimetest.ToolTurn("shipment_get", map[string]any{"shipmentId": id})
+		turn := runtimetest.ToolTurn("shipment_get_view", map[string]any{"shipmentId": id})
 		turn.ContextWindow = 4_096
 
 		return turn
@@ -36,7 +36,7 @@ func TestRun_ShortensEarlierReadsWhenTheTurnOutgrowsTheWindow(t *testing.T) {
 		&stubActionRegistry{}, nil)
 
 	result, err := rt.Run(t.Context(), &agentruntimeports.RunRequest{
-		Definition: runtimetest.Definition("shipment_get"),
+		Definition: runtimetest.Definition("shipment_get_view"),
 		Actor:      runtimetest.Actor(),
 		Input:      "Which of these are late?",
 	})
@@ -57,7 +57,7 @@ func TestRun_ShortensEarlierReadsWhenTheTurnOutgrowsTheWindow(t *testing.T) {
 	assert.NotContains(t, results[2], "was shortened", "the newest read goes whole")
 
 	for _, message := range result.Messages {
-		if message.ToolName == "shipment_get" {
+		if message.ToolName == "shipment_get_view" {
 			assert.NotContains(t, message.Content, "was shortened", "what is saved is never cut")
 		}
 	}

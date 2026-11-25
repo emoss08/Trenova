@@ -54,43 +54,58 @@ func TestTurnToolOffAndOn(t *testing.T) {
 	t.Parallel()
 
 	d := &Definition{
-		ToolNames:       []string{"invoice_post", "assign_biller"},
+		Scope:           Scope{Capabilities: []string{"invoice_post", "assign_biller"}},
+		PinnedTools:     []string{"invoice_post"},
 		ToolTiers:       map[string]agent.AutonomyTier{"invoice_post": agent.TierActWithApproval},
 		ToolDailyLimits: map[string]int{"invoice_post": 5},
 	}
 	tiers := d.ToolTiers
 
 	d.TurnToolOff("invoice_post")
-	assert.Equal(t, []string{"assign_biller"}, d.ToolNames)
-	assert.Equal(t, []string{"invoice_post"}, d.DisabledToolNames)
+	assert.Equal(t, []string{"assign_biller"}, d.Scope.Capabilities)
+	assert.Equal(t, []string{"invoice_post"}, d.Scope.DenyCapabilities)
+	assert.False(t, d.AllowsTool("invoice_post"))
+	assert.Empty(t, d.PinnedTools, "a pin goes with the capability")
 	assert.NotContains(t, d.ToolTiers, "invoice_post")
 	assert.NotContains(t, d.ToolDailyLimits, "invoice_post")
 	assert.Contains(t, tiers, "invoice_post", "a copy sharing the old map is left alone")
 
 	d.TurnToolOn("invoice_post")
-	assert.Equal(t, []string{"assign_biller", "invoice_post"}, d.ToolNames)
-	assert.Empty(t, d.DisabledToolNames)
+	assert.Equal(t, []string{"assign_biller", "invoice_post"}, d.Scope.Capabilities)
+	assert.Empty(t, d.Scope.DenyCapabilities)
+	assert.True(t, d.AllowsTool("invoice_post"))
 }
 
-func TestForgetReheldToolsAndPruneTopics(t *testing.T) {
+func TestTurnToolOffAndOnForTheUniversalAgent(t *testing.T) {
+	t.Parallel()
+
+	d := &Definition{}
+	d.TurnToolOff("invoice_post")
+	assert.False(t, d.AllowsTool("invoice_post"))
+	assert.True(t, d.AllowsTool("assign_biller"))
+	assert.False(t, d.IsUniversal())
+
+	d.TurnToolOn("invoice_post")
+	assert.True(t, d.AllowsTool("invoice_post"))
+	assert.Empty(t, d.Scope.Capabilities, "re-allowing inside an open scope adds nothing")
+	assert.True(t, d.IsUniversal())
+}
+
+func TestPruneDelegateTopics(t *testing.T) {
 	t.Parallel()
 
 	kept := pulid.MustNew(IDPrefix)
 	dropped := pulid.MustNew(IDPrefix)
 	d := &Definition{
-		ToolNames:         []string{"invoice_void"},
-		DisabledToolNames: []string{"invoice_void", "send_email"},
-		DelegateIDs:       []pulid.ID{kept},
+		DelegateIDs: []pulid.ID{kept},
 		DelegateTopics: map[string]string{
 			kept.String():    " Pay rates ",
 			dropped.String(): "Dispatch",
 		},
 	}
 
-	d.ForgetReheldTools()
 	d.PruneDelegateTopics()
 
-	assert.Equal(t, []string{"send_email"}, d.DisabledToolNames)
 	assert.Equal(t, map[string]string{kept.String(): "Pay rates"}, d.DelegateTopics)
 	assert.Equal(t, "Pay rates", d.DelegateTopic(kept))
 	assert.Empty(t, d.DelegateTopic(dropped))
@@ -115,16 +130,13 @@ func TestValidateCapabilities(t *testing.T) {
 		{"topic for a stranger", func(d *Definition) {
 			d.DelegateTopics = map[string]string{pulid.MustNew(IDPrefix).String(): "x"}
 		}, "delegateTopics."},
-		{"on and off at once", func(d *Definition) {
-			d.DisabledToolNames = []string{"invoice_post"}
-		}, "disabledToolNames[0]"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
 			d := &Definition{
-				ToolNames:      []string{"invoice_post"},
+				Scope:          Scope{Capabilities: []string{"invoice_post"}},
 				DelegateIDs:    []pulid.ID{delegate},
 				DelegateTopics: map[string]string{delegate.String(): "Pay rates"},
 			}

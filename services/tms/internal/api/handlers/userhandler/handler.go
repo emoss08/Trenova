@@ -131,7 +131,6 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	meAPI.POST("/mfa/totp/confirm/", h.confirmTOTPEnrollment)
 	meAPI.POST("/mfa/totp/disable/", h.disableTOTP)
 	meAPI.POST("/mfa/recovery-codes/", h.regenerateRecoveryCodes)
-	api.GET("/:userID/profile-picture/", h.getProfilePictureURL)
 	api.GET("/avatars/", h.listAvatars)
 }
 
@@ -160,13 +159,20 @@ func (h *Handler) list(c *gin.Context) {
 		req,
 		h.eh,
 		func() (*pagination.ListResult[*tenant.User], error) {
-			return h.service.List(
+			result, err := h.service.List(
 				c.Request.Context(),
 				&tenantports.ListUsersRequest{
 					Filter:             req,
 					IncludeMemberships: helpers.QueryBool(c, "includeMemberships", false),
 				},
 			)
+			if err != nil {
+				return nil, err
+			}
+			if err = h.service.SignPhotos(c.Request.Context(), result.Items...); err != nil {
+				return nil, err
+			}
+			return result, nil
 		},
 	)
 }
@@ -205,6 +211,10 @@ func (h *Handler) bulkUpdateStatus(c *gin.Context) {
 		return
 	}
 
+	if err = h.service.SignPhotos(c.Request.Context(), results...); err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
 	helpers.JSON(c, http.StatusOK, results)
 }
 
@@ -239,7 +249,7 @@ func (h *Handler) get(c *gin.Context) {
 		return
 	}
 
-	helpers.JSON(c, http.StatusOK, entity)
+	h.respondWithUser(c, entity)
 }
 
 // @Summary Get current user
@@ -270,7 +280,7 @@ func (h *Handler) me(c *gin.Context) {
 	}
 	entity.OrganizationSetup = setup
 
-	respondWithSelf(c, entity)
+	h.respondWithSelf(c, entity)
 }
 
 func (h *Handler) organizationSetup(
@@ -421,7 +431,7 @@ func (h *Handler) updateMySettings(c *gin.Context) {
 		return
 	}
 
-	respondWithSelf(c, updated)
+	h.respondWithSelf(c, updated)
 }
 
 // @Summary Upload current user profile picture
@@ -455,7 +465,7 @@ func (h *Handler) uploadProfilePicture(c *gin.Context) {
 		return
 	}
 
-	respondWithSelf(c, updated)
+	h.respondWithSelf(c, updated)
 }
 
 // @Summary Delete current user profile picture
@@ -480,47 +490,7 @@ func (h *Handler) deleteProfilePicture(c *gin.Context) {
 		return
 	}
 
-	respondWithSelf(c, updated)
-}
-
-// @Summary Get user profile picture URL
-// @ID getUserProfilePictureURL
-// @Tags Users
-// @Produce json
-// @Param userID path string true "User ID"
-// @Param variant query string false "Image variant"
-// @Success 200 {object} userhandler.ProfilePictureURLResponse
-// @Failure 400 {object} helpers.ProblemDetail
-// @Failure 401 {object} helpers.ProblemDetail
-// @Failure 404 {object} helpers.ProblemDetail
-// @Failure 500 {object} helpers.ProblemDetail
-// @Security BearerAuth
-// @Router /users/{userID}/profile-picture/ [get]
-func (h *Handler) getProfilePictureURL(c *gin.Context) {
-	authCtx := authctx.GetAuthContext(c)
-
-	userID, err := pulid.MustParse(c.Param("userID"))
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	url, err := h.service.GetProfilePictureURL(
-		c.Request.Context(),
-		pagination.TenantInfo{
-			OrgID:  authCtx.OrganizationID,
-			BuID:   authCtx.BusinessUnitID,
-			UserID: authCtx.UserID,
-		},
-		userID,
-		c.Query("variant"),
-	)
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	helpers.JSON(c, http.StatusOK, ProfilePictureURLResponse{URL: url})
+	h.respondWithSelf(c, updated)
 }
 
 // @Summary Change current user password
@@ -564,7 +534,7 @@ func (h *Handler) changeMyPassword(c *gin.Context) {
 		sessioncookie.Clear(c, &h.securityConfig.Session)
 	}
 
-	respondWithSelf(c, result.User)
+	h.respondWithSelf(c, result.User)
 }
 
 func validateMySettingsFields(raw map[string]any) error {
@@ -720,5 +690,5 @@ func (h *Handler) switchOrganization(c *gin.Context) {
 	}
 
 	sessioncookie.Set(c, &h.securityConfig.Session, resp.SessionToken, resp.ExpiresAt)
-	helpers.JSON(c, http.StatusOK, resp.User)
+	h.respondWithUser(c, resp.User)
 }

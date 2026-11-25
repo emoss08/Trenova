@@ -3224,7 +3224,7 @@ extend type Mutation {
   BillingAssistant
   ComplianceAssistant
   CustomerAssistant
-  GeneralAssistant
+  Universal
   BillingException
   DispatchAssignment
   ImportAssistant
@@ -3323,8 +3323,11 @@ type AgentDefinition {
   template: AgentTemplate
   instructions: String!
   guardrails: [String!]!
-  toolNames: [String!]!
-  "Per-tool autonomy overrides, keyed by tool name; each capped by autonomyCeiling."
+  "What the agent may do: areas and capabilities allowed or denied. An empty scope is everything the person may do."
+  scope: AgentScope!
+  "Capabilities loaded on every turn, at most twelve."
+  pinnedTools: [String!]!
+  "Per-tool approval overrides, keyed by tool name; set by a person only stricter than the tool's default, raised only by earned trust."
   toolTiers: JSON!
   autonomyCeiling: AgentAutonomyTier!
   """
@@ -3437,7 +3440,7 @@ type MyAgent {
   icon: String!
   "Chosen accent name; empty falls back to an accent derived from the agent id."
   accent: String!
-  toolNames: [String!]!
+  scope: AgentScope!
   "Set on the agents the platform itself creates and fires."
   systemKey: String!
   "Up to four opening questions the agent can answer with its tools."
@@ -3566,8 +3569,8 @@ type AgentAudienceSuggestion {
 input AgentAccessPreviewInput {
   "The agent being edited, so each role says whether it is granted now. Absent for a new one."
   agentId: ID
-  "The tools the form has chosen. Core tools every agent holds need not be listed. At most 200."
-  toolNames: [String!]!
+  "The scope the form has chosen."
+  scope: AgentScopeInput!
   "Who the form says may use it. A system agent is always Everyone."
   accessMode: AgentAccessMode!
 }
@@ -3623,12 +3626,11 @@ type AgentShadowReport {
   unanswered: Int!
 }
 
-"Instructions as the builder holds them, with the tools the draft holds."
+"Instructions as the builder holds them, with the scope the draft holds."
 input AgentInstructionLintInput {
   "At most 20000 characters."
   instructions: String!
-  toolNames: [String!]!
-  disabledToolNames: [String!]
+  scope: AgentScopeInput!
 }
 
 """
@@ -3844,7 +3846,7 @@ extend type Mutation {
 
 "Something drafting changed or left out of what the model proposed."
 type AgentDraftNote {
-  "The setting, as the builder names it: toolNames, toolTiers.<tool>, eventKinds, cronExpression and so on."
+  "The setting, as the builder names it: scope, pinnedTools, toolTiers.<tool>, eventKinds, cronExpression and so on."
   field: String!
   "What the model proposed; empty when it proposed nothing."
   value: String!
@@ -3871,7 +3873,8 @@ type AgentDraft {
   cronTimezone: String!
   eventKinds: [String!]!
   intervalSeconds: Int!
-  toolNames: [String!]!
+  scope: AgentScope!
+  pinnedTools: [String!]!
   "Autonomy per change tool, keyed by tool name; each held at the tool's maximum and autonomyCeiling."
   toolTiers: JSON!
   autonomyCeiling: AgentAutonomyTier!
@@ -3913,6 +3916,25 @@ extend type Mutation {
   what they ask for. Saves nothing. Needs permission to create or update agents.
   """
   tightenAgentInstructions(instructions: String!): AgentInstructionsTightened!
+}
+
+"""
+What an agent may do. An area (shipment, invoice, worker, ...) allows every capability in it; a
+capability is a tool name or an entity read (invoice.list, shipment.get). Denials win. Areas and
+capabilities both empty is everything the person may do: the universal agent.
+"""
+type AgentScope {
+  areas: [String!]
+  capabilities: [String!]
+  denyAreas: [String!]
+  denyCapabilities: [String!]
+}
+
+input AgentScopeInput {
+  areas: [String!]
+  capabilities: [String!]
+  denyAreas: [String!]
+  denyCapabilities: [String!]
 }
 `, BuiltIn: false},
 	{Name: "../schema/agentpreview.graphqls", Input: `"How much of what a write would do its preview could say."
@@ -15239,7 +15261,7 @@ type DispatchBoardDriver {
   city: String!
   stateAbbreviation: String!
   postalCode: String!
-  profilePicUrl: String!
+  photo: PersonPhoto
   assignmentBlocked: String!
   availableForDispatch: Boolean!
 
@@ -16624,6 +16646,7 @@ type PortalProfile {
   driverType: String!
   fleetCodeName: String!
   organizationName: String!
+  photo: PersonPhoto
 }
 
 type PortalStop {
@@ -21924,6 +21947,8 @@ type FleetSafetyRank {
   activePoints: Int!
   events: Int!
   lastEventAt: Timestamp
+  "The driver's photo, signed for a short while; null when they have none."
+  photo: PersonPhoto
 }
 
 type FleetSafetyRatingCount {
@@ -27246,6 +27271,8 @@ type PositionHolder {
   status: String!
   "The terminal for a worker, the email address for a user."
   detail: String!
+  "The worker's or user's photo, signed for a short while; null when they have none."
+  photo: PersonPhoto
 }
 
 "One person on a manager's team."
@@ -27275,6 +27302,8 @@ type TeamMember {
   safetyRating: String!
   hireDate: Timestamp!
   terminationDate: Timestamp
+  "The worker's photo, signed for a short while; null when they have none."
+  photo: PersonPhoto
 }
 
 extend type Query {
@@ -29796,6 +29825,8 @@ type RotaRow {
   days: [RotaDay!]!
   scheduledDays: Int!
   conflicts: Int!
+  "The worker's photo, signed for a short while; null when they have none."
+  photo: PersonPhoto
 }
 
 """
@@ -30234,6 +30265,8 @@ type PolicyComplianceRow {
   workerType: String!
   acknowledgedAt: Timestamp
   signatureName: String
+  "The worker's photo, signed for a short while; null when they have none."
+  photo: PersonPhoto
 }
 
 type PolicyCompliance {
@@ -30263,6 +30296,8 @@ type WorkerProfileChangeRequest {
   workerId: ID!
   status: ProfileChangeStatus!
   changes: [ProfileFieldChange!]!
+  "The photo a waiting photo request proposes; null for any other request or once it is decided."
+  proposedPhoto: PersonPhoto
   note: String
   submittedAt: Timestamp!
   decidedAt: Timestamp
@@ -30633,6 +30668,16 @@ input DataTableConnectionInput {
   fieldFilters: [FieldFilterInput!]
   filterGroups: [FilterGroupInput!]
   sort: [SortFieldInput!]
+}
+
+"""
+A person's photo, a worker's or a user's, as two signed links: the picture, at most 1024 pixels
+on its longest side, and a thumbnail at most 256. The links expire, so read them again rather
+than storing them.
+"""
+type PersonPhoto {
+  url: String!
+  thumbnailUrl: String!
 }
 
 type PageInfo {
@@ -33158,6 +33203,8 @@ type CapacityUnit {
   acceptancePercent: Float
   driveRemainingMs: Int
   tractorId: ID
+  "The driver's photo, signed for a short while; null for a carrier or a driver with none."
+  photo: PersonPhoto
 }
 
 type DriverCapacitySummary {
@@ -33211,6 +33258,8 @@ type DriverCoverageSuggestion {
   driveRemainingMs: Int
   "What this driver taking the move costs the plan, in cents: empty miles, lateness, waiting and preferences."
   costCents: Int
+  "The driver's photo, signed for a short while; null when they have none."
+  photo: PersonPhoto
 }
 
 type CarrierCoverageSuggestion {
@@ -34254,8 +34303,8 @@ type User {
   username: String!
   timeFormat: TimeFormat!
   emailAddress: String
-  profilePicUrl: String!
-  thumbnailUrl: String!
+  "The user's picture, signed for a short while; null when they have none."
+  photo: PersonPhoto
   timezone: String!
   isLocked: Boolean!
   mustChangePassword: Boolean!
@@ -36303,7 +36352,8 @@ type Worker {
   Set while a leave of absence is open on the timeline.
   """
   leaveType: WorkerLeaveType
-  profilePicUrl: String!
+  "The worker's photo, signed for a short while; null when they have none."
+  photo: PersonPhoto
   firstName: String!
   lastName: String!
   wholeName: String!
@@ -37187,6 +37237,12 @@ input RecordEmploymentVerificationInput {
   status: EmploymentVerificationStatus
   method: EmploymentVerificationMethod
   requestedAt: Timestamp
+  responseReceivedAt: Timestamp
+  drugAlcoholResponseReceivedAt: Timestamp
+  hadAccidents: Boolean
+  accidentCount: Int
+  hadDrugAlcoholViolations: Boolean
+  findings: String
   notes: String
 }
 

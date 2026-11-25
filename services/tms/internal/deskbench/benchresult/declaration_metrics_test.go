@@ -27,7 +27,7 @@ func TestMeasureCase_CountsTheCacheReadOfEveryCallButATurnsFirst(t *testing.T) {
 		FinishedAt: time.Unix(10, 0),
 		Steps: []*StepResult{{Turns: []*benchrecord.TurnRecord{
 			turnWithCalls(
-				[]string{"find_tools", "equipment_list_trailers"},
+				[]string{"search_tools", "equipment_list_trailers"},
 				benchrecord.CallSummary{
 					Kind:        benchrecord.ModelCallChat,
 					InputTokens: 900,
@@ -75,12 +75,12 @@ func TestOpeningTools_LeavesOutWhatIsDeclaredDeferred(t *testing.T) {
 	turn := &benchrecord.TurnRecord{
 		ModelCalls: []*benchrecord.ModelCall{{Chat: &llmports.ChatCompletionRequest{
 			Tools: []kernelports.ToolSpec{
-				{Name: "find_tools"},
+				{Name: "search_tools"},
 				{Name: "shipment_get"},
 				{Name: "equipment_list_trailers", Deferred: true},
 			},
 		}}},
 	}
 
-	assert.Equal(t, []string{"find_tools", "shipment_get"}, openingTools(turn))
+	assert.Equal(t, []string{"search_tools", "shipment_get"}, openingTools(turn))
 }

@@ -1,7 +1,7 @@
-import { CropResult } from "@/components/image-upload/crop-result";
-import { MAX_IMAGE_MEGABYTES } from "@/components/image-upload/image-file";
-import type { ImageSpec } from "@/components/image-upload/image-spec";
-import { useImageUpload } from "@/components/image-upload/use-image-upload";
+import { CropResult } from "@trenova/shared/components/image-upload/crop-result";
+import { MAX_IMAGE_MEGABYTES } from "@trenova/shared/components/image-upload/image-file";
+import type { ImageSpec } from "@trenova/shared/components/image-upload/image-spec";
+import { useImageUpload } from "@trenova/shared/components/image-upload/use-image-upload";
 import {
   SettingsReadout,
   SettingsSection,

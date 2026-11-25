@@ -89,6 +89,7 @@ func NewListEquipmentManufacturersTool(
 						Name:        item.Name,
 						Description: item.Description,
 						Status:      string(item.Status),
+						CreatedAt:   querytool.RecordedDate(item.CreatedAt),
 					}
 				},
 			), nil

@@ -19,12 +19,11 @@ import {
   AgentDefinitionCardFieldsFragmentDoc,
   AgentDefinitionCardsDocument,
 } from "@trenova/graphql/generated/documents/agent/definitions";
-import {
-  DataTablePageInfoFieldsFragmentDoc,
-} from "@trenova/graphql/generated/documents/equipment/table";
+import { DataTablePageInfoFieldsFragmentDoc } from "@trenova/graphql/generated/documents/equipment/table";
 import { getFragmentData } from "@trenova/graphql/fragment-data";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import { rootField } from "@trenova/shared/lib/reference-access";
+import { toAgentScope, type AgentScope } from "@/lib/agent-scope";
 
 type AgentDefinitionCardFields = Omit<AgentDefinitionCardFieldsFragment, " $fragmentName">;
 type AgentDefinitionCardDelegate = AgentDefinitionCardFields["delegates"][number];
@@ -37,8 +36,9 @@ type AgentDefinitionCardDelegate = AgentDefinitionCardFields["delegates"][number
  */
 export type AgentDefinitionRow = Omit<
   AgentDefinitionCardFields,
-  "accessMode" | "description" | "enabled" | "systemKey" | "delegates"
+  "accessMode" | "description" | "enabled" | "systemKey" | "delegates" | "scope"
 > & {
+  scope: AgentScope;
   accessMode: AgentAccessMode;
   description: string;
   enabled: boolean;
@@ -49,6 +49,7 @@ export type AgentDefinitionRow = Omit<
 export function toAgentDefinitionRow(fields: AgentDefinitionCardFields): AgentDefinitionRow {
   return {
     ...fields,
+    scope: toAgentScope(fields.scope),
     accessMode: rootField(fields.accessMode, "AgentDefinition.accessMode"),
     description: rootField(fields.description, "AgentDefinition.description"),
     enabled: rootField(fields.enabled, "AgentDefinition.enabled"),
@@ -120,7 +121,9 @@ type MyAgentFields = Omit<MyAgentFieldsFragment, " $fragmentName">;
  */
 export type AgentDelegateMark = MyAgentFields["delegates"][number];
 
-export type AgentChoice = Omit<MyAgentFields, "delegates"> & {
+export type AgentChoice = Omit<MyAgentFields, "delegates" | "scope"> & {
+  /** What the agent may do; see `lib/agent-scope.ts`. */
+  scope: AgentScope;
   /**
    * The agents this one may hand a task to that the person may use, in the
    * order configured, so an old hand-off in its conversation still draws the
@@ -178,10 +181,15 @@ function toAgentChoice(fields: AgentChoiceFieldsFragment): AgentChoice {
     template: fields.template,
     icon: fields.icon,
     accent: fields.accent,
-    toolNames: fields.toolNames,
+    scope: toAgentScope(fields.scope),
     systemKey: rootField(fields.systemKey, "AgentDefinition.systemKey"),
     starters: fields.starters,
   };
+}
+
+/** An agent from `myAgents`, its scope's lists never null. */
+function toMyAgentChoice(fields: MyAgentFields): AgentChoice {
+  return { ...fields, scope: toAgentScope(fields.scope) };
 }
 
 /** The most agents `myAgents` returns in one page, and the most ids it takes. */
@@ -239,7 +247,9 @@ async function requestMyAgents(
   const pageInfo = getFragmentData(DataTablePageInfoFieldsFragmentDoc, connection.pageInfo);
 
   return {
-    items: connection.edges.map((edge) => getFragmentData(MyAgentFieldsFragmentDoc, edge.node)),
+    items: connection.edges.map((edge) =>
+      toMyAgentChoice(getFragmentData(MyAgentFieldsFragmentDoc, edge.node)),
+    ),
     endCursor: pageInfo.endCursor ?? null,
     hasNextPage: pageInfo.hasNextPage,
     totalCount: connection.totalCount ?? null,
@@ -428,7 +438,9 @@ export async function fetchAgentMatch(
 
   return {
     outcome: match.outcome,
-    agent: match.agent ? getFragmentData(MyAgentFieldsFragmentDoc, match.agent) : null,
+    agent: match.agent
+      ? toMyAgentChoice(getFragmentData(MyAgentFieldsFragmentDoc, match.agent))
+      : null,
     tools: match.tools.map((tool) => ({ name: tool.name, summary: tool.summary })),
   };
 }

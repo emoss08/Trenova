@@ -40,7 +40,7 @@ func TestRun_EndsTheTurnOnceABoardIsInTheConversation(t *testing.T) {
 	showing.InputTokens = 1200
 	result, completion := runWithObserver(t, observer.observe,
 		[]agenttoolports.AgentQueryTool{listedShipments(id)},
-		runtimetest.ToolTurn("shipment_list", map[string]any{"query": "late"}),
+		runtimetest.ToolTurn("shipment_list_view", map[string]any{"query": "late"}),
 		showing,
 		runtimetest.TextTurn("This is never asked for."),
 	)
@@ -69,7 +69,7 @@ func TestRun_KeepsWorkingAfterABoardBesideTheConversation(t *testing.T) {
 	observer := &boardObserver{shown: shown}
 	result, completion := runWithObserver(t, observer.observe,
 		[]agenttoolports.AgentQueryTool{listedShipments(id)},
-		runtimetest.ToolTurn("shipment_list", map[string]any{"query": "late"}),
+		runtimetest.ToolTurn("shipment_list_view", map[string]any{"query": "late"}),
 		runtimetest.ToolTurn("show_board", runtimetest.ShipmentBoard(id)),
 		runtimetest.TextTurn("The board is beside the conversation."),
 	)
@@ -96,7 +96,7 @@ func TestRun_SaysWhyABoardAskedForInTheConversationWentBeside(t *testing.T) {
 	observer := &boardObserver{shown: shownBoard("beside")}
 	result, completion := runWithObserver(t, observer.observe,
 		[]agenttoolports.AgentQueryTool{listedShipments(id)},
-		runtimetest.ToolTurn("shipment_list", map[string]any{"query": "late"}),
+		runtimetest.ToolTurn("shipment_list_view", map[string]any{"query": "late"}),
 		runtimetest.ToolTurn("show_board", args),
 		runtimetest.TextTurn("It is beside the conversation."),
 	)
@@ -118,7 +118,7 @@ func TestRun_AFailedBoardEndsNothing(t *testing.T) {
 	}}
 	result, completion := runWithObserver(t, observer.observe,
 		[]agenttoolports.AgentQueryTool{listedShipments(id)},
-		runtimetest.ToolTurn("shipment_list", map[string]any{"query": "late"}),
+		runtimetest.ToolTurn("shipment_list_view", map[string]any{"query": "late"}),
 		runtimetest.ToolTurn("show_board", runtimetest.ShipmentBoard(id)),
 		runtimetest.TextTurn("I could not show the board."),
 	)
@@ -135,7 +135,7 @@ func TestRun_ARefusedBoardEndsNothing(t *testing.T) {
 	observer := &boardObserver{shown: shownBoard("conversation")}
 	result, completion := runWithObserver(t, observer.observe,
 		[]agenttoolports.AgentQueryTool{listedShipments(read)},
-		runtimetest.ToolTurn("shipment_list", map[string]any{"query": "late"}),
+		runtimetest.ToolTurn("shipment_list_view", map[string]any{"query": "late"}),
 		runtimetest.ToolTurn("show_board", runtimetest.ShipmentBoard(read, invented)),
 		runtimetest.TextTurn("Sorry."),
 	)
@@ -159,7 +159,7 @@ func TestRun_ABoardAndAQuestionInOneStepEndOnTheBoard(t *testing.T) {
 	})
 	result, completion := runWithObserver(t, observer.observe,
 		[]agenttoolports.AgentQueryTool{listedShipments(id)},
-		runtimetest.ToolTurn("shipment_list", map[string]any{"query": "late"}),
+		runtimetest.ToolTurn("shipment_list_view", map[string]any{"query": "late"}),
 		both,
 		runtimetest.TextTurn("This is never asked for."),
 	)
@@ -183,7 +183,7 @@ func TestRun_EndsTheTurnOnAShownAnswer(t *testing.T) {
 	observer := &boardObserver{shown: shown}
 	result, completion := runWithObserver(t, observer.observe,
 		[]agenttoolports.AgentQueryTool{listedShipments(first, second)},
-		runtimetest.ToolTurn("shipment_list", map[string]any{"query": "late"}),
+		runtimetest.ToolTurn("shipment_list_view", map[string]any{"query": "late"}),
 		runtimetest.ToolTurn("show_answer", map[string]any{
 			"title":   "Late shipments on the Dallas lanes",
 			"answer":  "There are {count} late loads, the furthest {largest} behind.",
@@ -212,7 +212,7 @@ func TestRun_PutsABoardWithNoPlaceBeside(t *testing.T) {
 	observer := &boardObserver{shown: shownBoard("beside")}
 	runWithObserver(t, observer.observe,
 		[]agenttoolports.AgentQueryTool{listedShipments(id)},
-		runtimetest.ToolTurn("shipment_list", map[string]any{"query": "late"}),
+		runtimetest.ToolTurn("shipment_list_view", map[string]any{"query": "late"}),
 		runtimetest.ToolTurn("show_board", runtimetest.ShipmentBoard(id)),
 		runtimetest.TextTurn("It is beside the conversation."),
 	)

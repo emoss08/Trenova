@@ -33,9 +33,9 @@ func TestDelegateReport_HandsBackWhatTheLookupsReadWordForWord(t *testing.T) {
 				{
 					Role:       conversation.RoleTool,
 					ToolCallID: "call_d3",
-					ToolName:   "find_tools",
+					ToolName:   "search_tools",
 					Content: toolresult.Fence(
-						"find_tools",
+						"search_tools",
 						"These tools are now callable",
 					),
 				},

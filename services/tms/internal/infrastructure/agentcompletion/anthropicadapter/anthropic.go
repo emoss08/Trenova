@@ -158,7 +158,9 @@ func applyThinking(params *anthropic.BetaMessageNewParams, call *modeladapter.Ca
 		params.Thinking = adaptiveThinking(anthropic.BetaThinkingConfigAdaptiveDisplaySummarized)
 		params.OutputConfig.Effort = anthropicEffort(effort)
 	case model.thinksAlways || model.disableRefused || model.declared:
-		params.Thinking = adaptiveThinking(anthropic.BetaThinkingConfigAdaptiveDisplaySummarized)
+		// The model cannot stop thinking, but nobody asked to read it: only
+		// the signature comes back, which is all a replay needs.
+		params.Thinking = adaptiveThinking(anthropic.BetaThinkingConfigAdaptiveDisplayOmitted)
 		params.OutputConfig.Effort = anthropic.BetaOutputConfigEffortLow
 	case model.thinksUnasked:
 		params.Thinking = anthropic.BetaThinkingConfigParamUnion{

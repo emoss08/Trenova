@@ -90,9 +90,12 @@ func (s *Service) admit(
 ) (agentguard.Decision, *agentruntimeports.RunRequest, *agentguard.EvaluateRequest) {
 	var decision agentguard.Decision
 	var check *agentguard.EvaluateRequest
-	if req.TrenovaWritten {
+	switch {
+	case req.TrenovaWritten:
 		decision = trenovaWrittenDecision()
-	} else {
+	case !s.guard.TopicGuardEnabled():
+		decision = agentguard.Unguarded()
+	default:
 		evaluate := agentguard.EvaluateRequest{
 			TenantInfo: req.Actor.TenantInfo(),
 			Input:      req.Input,

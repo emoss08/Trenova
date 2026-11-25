@@ -4,12 +4,8 @@ import { PlanFeature } from "@/lib/plan-feature";
 import { assignmentService } from "@/services/assignment";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronRightIcon, User01Icon, UserPlus01Icon } from "@trenova/shared/components/icons";
-import {
-  Avatar,
-  AvatarBadge,
-  AvatarFallback,
-  AvatarImage,
-} from "@trenova/shared/components/ui/avatar";
+import { Avatar, AvatarBadge, AvatarFallback } from "@trenova/shared/components/ui/avatar";
+import { WorkerAvatar } from "@trenova/shared/components/worker-avatar";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import type { TranslateFn } from "@trenova/shared/i18n/runtime";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -61,22 +57,13 @@ function tenderStatusText(status: CarrierAssignment["status"], t: TranslateFn): 
 }
 
 /**
- * Who covers the move, as a small tile: their photo, or their initials, with a dot on its corner
- * for where a carrier's tender stands, explained on hover.
+ * The carrier covering the move, as a small tile: its initials, with a dot on its corner for where
+ * its tender stands, explained on hover.
  */
-function CoverageAvatar({
-  name,
-  imageUrl,
-  tender,
-}: {
-  name: string;
-  imageUrl?: string | null;
-  tender?: CarrierAssignment["status"];
-}) {
+function CoverageAvatar({ name, tender }: { name: string; tender?: CarrierAssignment["status"] }) {
   const t = useT();
   return (
     <Avatar size="sm" className="rounded-full after:rounded-full">
-      {imageUrl ? <AvatarImage src={imageUrl} alt="" className="rounded-full" /> : null}
       <AvatarFallback className="text-2xs rounded-full font-medium">
         {getNameInitials(name, "?")}
       </AvatarFallback>
@@ -265,7 +252,13 @@ function DriverCoverage({ assignment }: { assignment: Assignment }) {
 
   return (
     <div className="animate-rise flex items-center gap-2.5 border-t px-4 py-2.5 [animation-delay:120ms]">
-      <CoverageAvatar name={primary || driver} imageUrl={summary.primaryWorker?.profilePicUrl} />
+      <WorkerAvatar
+        size="sm"
+        firstName={summary.primaryWorker?.firstName}
+        lastName={summary.primaryWorker?.lastName}
+        photo={summary.primaryWorker?.photo}
+        fallbackClassName="text-2xs"
+      />
       <span className="flex min-w-0 flex-1 flex-col">
         <span className="truncate text-xs font-medium">{driver}</span>
         <span className="text-foreground-muted text-2xs truncate tabular-nums">

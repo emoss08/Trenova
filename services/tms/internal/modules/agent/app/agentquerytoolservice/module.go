@@ -30,6 +30,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/oversightquerytools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/ratequerytools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/receivablequerytools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/recordquerytools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/reportquerytools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/scriptquerytools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/shipmentquerytools"
@@ -103,6 +104,9 @@ func ToolProviders() []any {
 
 func coreToolProviders() []any {
 	return []any{
+		recordquerytools.NewQueryTool,
+		recordquerytools.NewGetTool,
+		recordquerytools.NewDescribeTool,
 		shipmentreadquerytools.ProvideGetShipmentTool,
 		shipmentquerytools.ProvideShipmentListTool,
 		memoryquerytools.NewRecallMemoryTool,

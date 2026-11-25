@@ -33,6 +33,7 @@ type usageLister interface {
 type Params struct {
 	fx.In
 
+	Photos        kernelports.Photos
 	Logger        *zap.Logger
 	DB            kernelports.Transactor
 	Repo          ratematrixports.RateMatrixRepository
@@ -46,6 +47,7 @@ type Params struct {
 }
 
 type Service struct {
+	photos        kernelports.Photos
 	l             *zap.Logger
 	db            kernelports.Transactor
 	repo          ratematrixports.RateMatrixRepository
@@ -61,6 +63,7 @@ type Service struct {
 //nolint:gocritic // fx param structs are passed by value
 func New(p Params) *Service {
 	return &Service{
+		photos:        p.Photos,
 		l:             p.Logger.Named("service.rate-matrix"),
 		db:            p.DB,
 		repo:          p.Repo,

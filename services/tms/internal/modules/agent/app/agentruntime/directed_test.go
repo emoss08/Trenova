@@ -122,9 +122,9 @@ func TestDriveDirected_TakesACallIDTheConversationDoesNotHold(t *testing.T) {
 		{Role: conversation.RoleUser, Content: "Where is it?"},
 		{
 			Role:      conversation.RoleAssistant,
-			ToolCalls: []conversation.ToolCallRecord{{ID: "call_old", Name: "shipment_get"}},
+			ToolCalls: []conversation.ToolCallRecord{{ID: "call_old", Name: "shipment_get_view"}},
 		},
-		{Role: conversation.RoleTool, ToolCallID: "call_old", ToolName: "shipment_get"},
+		{Role: conversation.RoleTool, ToolCallID: "call_old", ToolName: "shipment_get_view"},
 		{Role: conversation.RoleAssistant, Content: "It delivered."},
 	}
 

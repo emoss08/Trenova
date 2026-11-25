@@ -179,6 +179,57 @@ type Mailbox struct {
 	require.NotContains(t, output, "import")
 }
 
+func TestRun_AlwaysSelectsAColumnTheJSONHides(t *testing.T) {
+	t.Parallel()
+
+	fixture := newGeneratorFixture(t, generatorFixture{
+		Schema: `
+type Mailbox {
+  id: ID!
+  senderName: String!
+  avatar: String
+}
+
+type Query {
+  mailbox: Mailbox
+}
+`,
+		Gqlgen: `
+models:
+  Mailbox:
+    model:
+      - example.com/app/internal/core/domain/mailbox.Mailbox
+`,
+		Manifest: `
+virtuals:
+  Mailbox:
+    - avatar
+always:
+  Mailbox:
+    - avatarKey
+`,
+		DomainFiles: map[string]string{
+			"mailbox/mailbox.go": `
+package mailbox
+
+import "github.com/emoss08/keel"
+
+type Mailbox struct {
+	keel.Table ` + "`keel:\"mailboxes\"`" + `
+
+	ID string ` + "`json:\"id\" keel:\"id\"`" + `
+	SenderName string ` + "`json:\"senderName\" keel:\"from_name\"`" + `
+	AvatarKey string ` + "`json:\"-\" keel:\"avatar_key\"`" + `
+}
+`,
+		},
+	})
+
+	output := runFixture(t, fixture)
+
+	require.Contains(t, output, "\"avatar_key\"", "a hidden column is selected when always names it")
+}
+
 func TestRun_SkipsBoundStructThatIsNotAKeelTable(t *testing.T) {
 	t.Parallel()
 
@@ -428,6 +479,47 @@ type Bravo struct {
 
 	require.ErrorContains(t, err, "ambiguous Go model matches")
 	require.ErrorContains(t, err, "add modelOverrides.Ambiguous")
+}
+
+func TestRun_ANotProjectedOverrideSkipsAnAmbiguousDTO(t *testing.T) {
+	t.Parallel()
+
+	fixture := newGeneratorFixture(t, generatorFixture{
+		Schema: `
+type Ambiguous {
+  id: ID!
+  name: String!
+}
+`,
+		Manifest: `
+modelOverrides:
+  Ambiguous: "-"
+`,
+		DomainFiles: map[string]string{
+			"alpha/alpha.go": `
+package alpha
+
+type Alpha struct {
+	keel.Table ` + "`keel:\"alphas\"`" + `
+
+	ID string ` + "`json:\"id\" keel:\"id\"`" + `
+	Name string ` + "`json:\"name\" keel:\"name\"`" + `
+}
+`,
+			"bravo/bravo.go": `
+package bravo
+
+type Bravo struct {
+	keel.Table ` + "`keel:\"bravos\"`" + `
+
+	ID string ` + "`json:\"id\" keel:\"id\"`" + `
+	Name string ` + "`json:\"name\" keel:\"name\"`" + `
+}
+`,
+		},
+	})
+
+	require.NoError(t, run(fixture.options()))
 }
 
 func TestRun_FailsForOldVirtualMapShape(t *testing.T) {

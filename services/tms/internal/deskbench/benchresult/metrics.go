@@ -90,7 +90,7 @@ func MeasureCase(result *CaseResult) CaseMetrics {
 		}
 		if first := firstOwnTool(turn); first != "" {
 			metrics.ToolTurns++
-			if first == "find_tools" {
+			if first == "search_tools" {
 				metrics.FindFirstTurns++
 			}
 		}

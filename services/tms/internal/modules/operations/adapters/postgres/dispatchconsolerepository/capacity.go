@@ -79,7 +79,6 @@ func (r *repository) ListBoardDrivers(
 					text(w.City),
 					text(us.Abbreviation),
 					enumText(w.PostalCode),
-					text(w.ProfilePicURL),
 					text(w.AssignmentBlocked),
 					w.AvailableForDispatch,
 					text(wt.ID),

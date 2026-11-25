@@ -6,7 +6,7 @@ import {
   type WorkerPolicyRow,
 } from "@/lib/graphql/self-service";
 import { useQuery } from "@tanstack/react-query";
-import { Avatar, AvatarFallback } from "@trenova/shared/components/ui/avatar";
+import { WorkerAvatar } from "@trenova/shared/components/worker-avatar";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Input } from "@trenova/shared/components/ui/input";
 import { RingGauge } from "@trenova/shared/components/ui/ring-gauge";
@@ -21,7 +21,6 @@ import {
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { formatShiftDate } from "@trenova/shared/lib/scheduling";
 import { compliancePercent } from "@trenova/shared/lib/self-service";
-import { initials } from "@trenova/shared/lib/utils";
 import {
   CheckIcon,
   FileEditIcon,
@@ -168,11 +167,13 @@ export function PolicyComplianceDialog({ policy, onOpenChange }: PolicyComplianc
                   const done = Boolean(row.acknowledgedAt);
                   return (
                     <li key={row.workerId} className="flex items-center gap-3 py-2 text-xs">
-                      <Avatar className="size-7">
-                        <AvatarFallback className="text-2xs font-medium">
-                          {initials(first, last)}
-                        </AvatarFallback>
-                      </Avatar>
+                      <WorkerAvatar
+                        firstName={first}
+                        lastName={last}
+                        photo={row.photo}
+                        className="size-7"
+                        fallbackClassName="text-2xs"
+                      />
                       <span className="flex min-w-0 flex-1 flex-col">
                         <span className="truncate font-medium">{row.workerName}</span>
                         <span className="text-muted-foreground truncate tabular-nums">

@@ -84,7 +84,7 @@ type readScenario struct {
 }
 
 // driveReads runs one reply's calls through the loop against a recorder, with
-// worker_list, search_customer and shipment_get held as reads and
+// worker_list_view, search_customer and shipment_get_view held as reads and
 // record_case held as a write.
 func driveReads(
 	t *testing.T,
@@ -98,9 +98,9 @@ func driveReads(
 			runtimetest.TextTurn("Done."),
 		}},
 		&stubQueryRegistry{Tools: []agenttoolports.AgentQueryTool{
-			queryTool("worker_list", map[string]any{"results": []any{}}, nil),
+			queryTool("worker_list_view", map[string]any{"results": []any{}}, nil),
 			queryTool("search_customer", map[string]any{"results": []any{}}, nil),
-			queryTool("shipment_get", map[string]any{"id": "shp_1"}, nil),
+			queryTool("shipment_get_view", map[string]any{"id": "shp_1"}, nil),
 		}},
 		&stubActionRegistry{Tools: []agenttoolports.AgentTool{
 			actionTool("record_case", agent.TierAutoExecute, nil),
@@ -108,9 +108,9 @@ func driveReads(
 		nil,
 	)
 	definition := runtimetest.Definition(
-		"worker_list",
+		"worker_list_view",
 		"search_customer",
-		"shipment_get",
+		"shipment_get_view",
 		"record_case",
 	)
 	if scenario.budget > 0 {
@@ -158,9 +158,9 @@ func TestDrive_RunsAReplysReadsTogether(t *testing.T) {
 	t.Parallel()
 
 	fx, result := driveReads(t, readScenario{calls: []llmports.ToolCall{
-		readCall("c1", "worker_list", map[string]any{"status": "Active"}),
+		readCall("c1", "worker_list_view", map[string]any{"status": "Active"}),
 		readCall("c2", "search_customer", map[string]any{"query": "Acme"}),
-		readCall("c3", "shipment_get", map[string]any{"id": "shp_1"}),
+		readCall("c3", "shipment_get_view", map[string]any{"id": "shp_1"}),
 	}})
 
 	assert.Equal(t, []string{"together c1 c2 c3"}, fx.steps)
@@ -178,10 +178,10 @@ func TestDrive_AWriteRunsBetweenTheReadsAroundIt(t *testing.T) {
 	t.Parallel()
 
 	fx, result := driveReads(t, readScenario{calls: []llmports.ToolCall{
-		readCall("c1", "worker_list", map[string]any{"status": "Active"}),
+		readCall("c1", "worker_list_view", map[string]any{"status": "Active"}),
 		readCall("c2", "search_customer", map[string]any{"query": "Acme"}),
 		readCall("c3", "record_case", map[string]any{"subject": "late"}),
-		readCall("c4", "worker_list", map[string]any{"status": "Inactive"}),
+		readCall("c4", "worker_list_view", map[string]any{"status": "Inactive"}),
 		readCall("c5", "search_customer", map[string]any{"query": "Globex"}),
 	}})
 
@@ -198,9 +198,9 @@ func TestDrive_FetchesOfOneKindRunApartAndStillBunch(t *testing.T) {
 	t.Parallel()
 
 	fx, _ := driveReads(t, readScenario{calls: []llmports.ToolCall{
-		readCall("c1", "shipment_get", map[string]any{"id": "shp_1"}),
-		readCall("c2", "shipment_get", map[string]any{"id": "shp_2"}),
-		readCall("c3", "worker_list", map[string]any{"status": "Active"}),
+		readCall("c1", "shipment_get_view", map[string]any{"id": "shp_1"}),
+		readCall("c2", "shipment_get_view", map[string]any{"id": "shp_2"}),
+		readCall("c3", "worker_list_view", map[string]any{"status": "Active"}),
 	}})
 
 	assert.Equal(t, []string{"alone c1", "together c2 c3"}, fx.steps)
@@ -212,22 +212,22 @@ func TestDrive_AnswersARepeatedReadInOneReplyFromTheFirst(t *testing.T) {
 
 	args := map[string]any{"status": "Active"}
 	fx, result := driveReads(t, readScenario{calls: []llmports.ToolCall{
-		readCall("c1", "worker_list", args),
-		readCall("c2", "worker_list", args),
+		readCall("c1", "worker_list_view", args),
+		readCall("c2", "worker_list_view", args),
 	}})
 
 	assert.Equal(t, []string{"alone c1"}, fx.steps)
 	require.Equal(t, []string{"c1", "c2"}, resultCallIDs(result))
-	assert.Equal(t, loopguard.RepeatedRead("worker_list"), resultContent(result, "c2"))
+	assert.Equal(t, loopguard.RepeatedRead("worker_list_view"), resultContent(result, "c2"))
 }
 
 func TestDrive_HoldsAReadBatchToTheToolBudget(t *testing.T) {
 	t.Parallel()
 
 	fx, result := driveReads(t, readScenario{budget: 2, calls: []llmports.ToolCall{
-		readCall("c1", "worker_list", map[string]any{"status": "Active"}),
+		readCall("c1", "worker_list_view", map[string]any{"status": "Active"}),
 		readCall("c2", "search_customer", map[string]any{"query": "Acme"}),
-		readCall("c3", "shipment_get", map[string]any{"id": "shp_1"}),
+		readCall("c3", "shipment_get_view", map[string]any{"id": "shp_1"}),
 	}})
 
 	assert.Equal(t, []string{"together c1 c2"}, fx.steps)
@@ -243,7 +243,7 @@ func TestDrive_RunsAtMostEightReadsAtOnce(t *testing.T) {
 	for idx := range 10 {
 		id := "c" + string(rune('a'+idx))
 		ids = append(ids, id)
-		calls = append(calls, readCall(id, "worker_list", map[string]any{"page": idx}))
+		calls = append(calls, readCall(id, "worker_list_view", map[string]any{"page": idx}))
 	}
 
 	fx, _ := driveReads(t, readScenario{budget: 20, calls: calls})
@@ -262,7 +262,7 @@ func TestRestoreTurn_BatchesOnlyTheReadsTheTurnOpenedWith(t *testing.T) {
 	rt := newRuntime(
 		nil,
 		&stubQueryRegistry{Tools: []agenttoolports.AgentQueryTool{
-			queryTool("worker_list", map[string]any{"results": []any{}}, nil),
+			queryTool("worker_list_view", map[string]any{"results": []any{}}, nil),
 			queryTool("search_customer", map[string]any{"results": []any{}}, nil),
 		}},
 		&stubActionRegistry{Tools: []agenttoolports.AgentTool{
@@ -271,12 +271,12 @@ func TestRestoreTurn_BatchesOnlyTheReadsTheTurnOpenedWith(t *testing.T) {
 		nil,
 	)
 	request := &agentruntimeports.RunRequest{
-		Definition: runtimetest.Definition("worker_list", "search_customer", "record_case"),
+		Definition: runtimetest.Definition("worker_list_view", "search_customer", "record_case"),
 		Actor:      runtimetest.Actor(),
 		Input:      "Who is free?",
 	}
 	state := rt.OpenTurn(t.Context(), request).State()
-	assert.Equal(t, []string{"search_customer", "worker_list"}, state.Reads,
+	assert.Equal(t, []string{"search_customer", "worker_list_view"}, state.Reads,
 		"a write is never a read, whatever it is held with")
 
 	encoded, err := sonic.Marshal(state)
@@ -289,7 +289,7 @@ func TestRestoreTurn_BatchesOnlyTheReadsTheTurnOpenedWith(t *testing.T) {
 		rewire(rt, func(p *runtimeParts) {
 			p.Completion = &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
 				callsTurn(
-					readCall("c1", "worker_list", map[string]any{"status": "Active"}),
+					readCall("c1", "worker_list_view", map[string]any{"status": "Active"}),
 					readCall("c2", "search_customer", map[string]any{"query": "Acme"}),
 				),
 				runtimetest.TextTurn("Done."),

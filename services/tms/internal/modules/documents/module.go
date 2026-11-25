@@ -58,6 +58,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/app/triageworkservice"
 	"github.com/emoss08/trenova/internal/modules/documents/app/workspaceemail"
 	"github.com/emoss08/trenova/internal/modules/documents/jobs/triagewakejobs/triagewakecontract"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/contentscanports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentuploadports"
@@ -75,6 +76,7 @@ func SharedOptions() fx.Option {
 		fx.Decorate(documentrepository.Observe),
 		fx.Provide(
 			contentscanservice.New,
+			contentscanports.NewUploadScanner,
 			thumbnailservice.NewGenerator,
 			pagerender.New,
 			capturereleaseservice.New,

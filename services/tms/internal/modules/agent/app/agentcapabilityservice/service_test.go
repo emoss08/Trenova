@@ -71,7 +71,6 @@ func (f *fakeAgents) Patch(
 	if err := req.Edit(&updated); err != nil {
 		return nil, err
 	}
-	updated.ForgetReheldTools()
 	updated.PruneDelegateTopics()
 	multiErr := errortypes.NewMultiError()
 	updated.Validate(multiErr)
@@ -124,13 +123,15 @@ func newFixture() *fixture {
 		Description:     "Billing",
 		Enabled:         true,
 		AutonomyCeiling: agent.TierAutoExecute,
-		ToolNames:       []string{"invoice_list", "assign_biller", "invoice_post"},
+		Scope: agentdefinition.Scope{
+			Capabilities:     []string{"invoice_find_duplicates", "assign_biller", "invoice_post"},
+			DenyCapabilities: []string{"invoice_void"},
+		},
 		ToolTiers: map[string]agent.AutonomyTier{
 			"assign_biller": agent.TierAutoExecute,
 		},
-		DisabledToolNames: []string{"invoice_void"},
-		DelegateIDs:       []pulid.ID{delegate.ID},
-		Version:           3,
+		DelegateIDs: []pulid.ID{delegate.ID},
+		Version:     3,
 	}
 	agentDef.ApplyDefaults()
 
@@ -152,7 +153,7 @@ func newFixture() *fixture {
 			&agenttest.StubActionTool{ToolName: "invoice_void", Tier: agent.TierActWithApproval},
 		}},
 		QueryTools: &agenttest.StubQueryRegistry{Tools: []agenttoolports.AgentQueryTool{
-			&agenttest.StubQueryTool{ToolName: "invoice_list"},
+			&agenttest.StubQueryTool{ToolName: "invoice_find_duplicates"},
 		}},
 		Permissions: permissions,
 		Budgets:     &agenttest.StubMoneyBudgets{},
@@ -206,7 +207,7 @@ func TestGet_MapsTiersToTheModesAPersonReads(t *testing.T) {
 
 	require.Len(t, caps.ReadTools, 1)
 	read := caps.ReadTools[0]
-	assert.Equal(t, "List invoices", read.Label)
+	assert.Equal(t, "Find invoice duplicates", read.Label)
 	assert.Equal(t, agentcapabilityports.AgentCapabilityAllowed, read.Mode)
 	assert.Equal(t, []agentcapabilityports.AgentCapabilityMode{
 		agentcapabilityports.AgentCapabilityAllowed, agentcapabilityports.AgentCapabilityOff,
@@ -303,7 +304,7 @@ func TestUpdate_ChangesModesAndLimits(t *testing.T) {
 		Enabled: &off,
 		Tools: []agentcapabilityports.AgentCapabilityToolChange{
 			{Key: "assign_biller", Mode: agentcapabilityports.AgentCapabilityAskFirst},
-			{Key: "invoice_list", Mode: agentcapabilityports.AgentCapabilityOff},
+			{Key: "invoice_find_duplicates", Mode: agentcapabilityports.AgentCapabilityOff},
 			{Key: "invoice_void", Mode: agentcapabilityports.AgentCapabilityAllowed},
 		},
 		DailyRequestLimit: &limit,
@@ -317,9 +318,9 @@ func TestUpdate_ChangesModesAndLimits(t *testing.T) {
 	assert.False(t, saved.Enabled)
 	assert.Equal(t, agent.TierActWithApproval, saved.ToolTiers["assign_biller"])
 	assert.Equal(t, agent.TierAutoExecute, saved.ToolTiers["invoice_void"])
-	assert.NotContains(t, saved.ToolNames, "invoice_list", "Off takes the tool from the grant")
-	assert.Contains(t, saved.ToolNames, "invoice_void")
-	assert.Equal(t, []string{"invoice_list"}, saved.DisabledToolNames)
+	assert.False(t, saved.AllowsTool("invoice_find_duplicates"), "Off takes the tool out of the scope")
+	assert.True(t, saved.AllowsTool("invoice_void"))
+	assert.Equal(t, []string{"invoice_find_duplicates"}, saved.Scope.Denied())
 	assert.Equal(t, 150, saved.DailyRunLimit)
 	assert.Equal(t, 40, saved.MaxChangeItems)
 	assert.True(t, saved.BusinessHoursOnly)
@@ -327,7 +328,7 @@ func TestUpdate_ChangesModesAndLimits(t *testing.T) {
 	assert.Equal(
 		t,
 		agentcapabilityports.AgentCapabilityOff,
-		toolByKey(caps.ReadTools, "invoice_list").Mode,
+		toolByKey(caps.ReadTools, "invoice_find_duplicates").Mode,
 	)
 	assert.Equal(t, "Pay rates, people records", caps.Handoffs[0].Topic)
 }
@@ -346,7 +347,7 @@ func TestUpdate_RefusesAModeTheRowDoesNotOffer(t *testing.T) {
 			}},
 		{"a read cannot ask first",
 			agentcapabilityports.AgentCapabilityToolChange{
-				Key:  "invoice_list",
+				Key:  "invoice_find_duplicates",
 				Mode: agentcapabilityports.AgentCapabilityAskFirst,
 			}},
 		{"a tool the agent never had",
@@ -401,8 +402,11 @@ func TestGet_ListsTheWritesAHeldToolBrings(t *testing.T) {
 	t.Parallel()
 
 	f := newFixture()
-	f.agent.ToolNames = []string{"shipment_create"}
-	f.agent.DisabledToolNames = []string{"masterdata_create_commodity"}
+	f.agent.Scope = agentdefinition.Scope{
+		Capabilities:     []string{"shipment_create", "customer_create"},
+		DenyCapabilities: []string{"masterdata_create_commodity"},
+	}
+	f.agent.PinnedTools = []string{"shipment_create"}
 	f.svc.tools = &agenttest.StubActionRegistry{Tools: []agenttoolports.AgentTool{
 		bringingTool{
 			StubActionTool: &agenttest.StubActionTool{

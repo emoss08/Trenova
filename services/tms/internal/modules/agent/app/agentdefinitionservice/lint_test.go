@@ -3,6 +3,7 @@ package agentdefinitionservice
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/stretchr/testify/assert"
@@ -25,8 +26,10 @@ func TestLintRegistryHoldsWhatTheDraftReaches(t *testing.T) {
 	}
 
 	tools := lintRegistry(catalog, &agentdefinitionports.LintAgentInstructionsRequest{
-		ToolNames:         []string{"update_invoice", "shipment_cancel"},
-		DisabledToolNames: []string{"shipment_cancel"},
+		Scope: agentdefinition.Scope{
+			Capabilities:     []string{"update_invoice"},
+			DenyCapabilities: []string{"shipment_cancel"},
+		},
 	})
 
 	held := make(map[string]bool, len(tools))

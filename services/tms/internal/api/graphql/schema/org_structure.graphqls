@@ -168,6 +168,8 @@ type PositionHolder {
   status: String!
   "The terminal for a worker, the email address for a user."
   detail: String!
+  "The worker's or user's photo, signed for a short while; null when they have none."
+  photo: PersonPhoto
 }
 
 "One person on a manager's team."
@@ -197,6 +199,8 @@ type TeamMember {
   safetyRating: String!
   hireDate: Timestamp!
   terminationDate: Timestamp
+  "The worker's photo, signed for a short while; null when they have none."
+  photo: PersonPhoto
 }
 
 extend type Query {

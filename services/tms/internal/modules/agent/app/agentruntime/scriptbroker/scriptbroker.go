@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/toolaccess"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/tooldispatch"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentcapability"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/codemode"
@@ -112,7 +113,7 @@ func New(
 
 // scriptIndex is every read the turn holds that a script may call, with the
 // schema the model reads for it, in name order: the agent's own and those the
-// turn reached from other desks through find_tools, which the model may call.
+// turn reached from other desks through search_tools, which the model may call.
 func scriptIndex(
 	ctx context.Context,
 	s *tooldispatch.Dispatcher,
@@ -120,6 +121,11 @@ func scriptIndex(
 	reach map[string]agent.AutonomyTier,
 ) []codemode.Read {
 	held := slices.Concat(s.Access().HeldTools(req.Definition), toolaccess.BeyondNames(reach))
+	for _, reader := range agentcapability.Backings() {
+		if req.Definition != nil && req.Definition.AllowsTool(reader) {
+			held = append(held, reader)
+		}
+	}
 	candidates := make([]string, 0, len(held))
 	for _, name := range held {
 		tool, ok := s.QueryTools().Get(name)
@@ -137,7 +143,7 @@ func scriptIndex(
 		tool, _ := s.QueryTools().Get(name)
 		index = append(index, codemode.Read{
 			Name:        name,
-			Description: tool.Description(),
+			Description: agenttoolports.ModelDescription(tool),
 			Parameters:  toolschema.ForModel(tool.ParamSchema()),
 		})
 	}

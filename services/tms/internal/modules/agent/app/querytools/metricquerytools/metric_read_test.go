@@ -249,7 +249,7 @@ func TestReadRefusesAMetricItDoesNotKnow(t *testing.T) {
 
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "not a metric Trenova keeps")
-	assert.Contains(t, err.Error(), "find_tools")
+	assert.Contains(t, err.Error(), "search_tools")
 	assert.Empty(t, boards.checked)
 }
 

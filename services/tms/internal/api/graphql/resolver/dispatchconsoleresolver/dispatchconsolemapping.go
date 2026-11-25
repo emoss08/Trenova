@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchboardports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchplanports"
 	"github.com/emoss08/trenova/pkg/authctx"
+	"github.com/emoss08/trenova/shared/pulid"
 )
 
 func mapDispatchBoard(board *dispatchconsoleservice.Board) *gqlmodel.DispatchBoard {
@@ -41,6 +42,31 @@ func mapDispatchBoard(board *dispatchconsoleservice.Board) *gqlmodel.DispatchBoa
 		WindowEnd:        int(board.WindowEnd),
 		GeneratedAt:      int(board.GeneratedAt),
 	}
+}
+
+func (r *QueryResolver) attachDriverPhotos(
+	ctx context.Context,
+	authCtx *authctx.AuthContext,
+	drivers []*dispatchconsoleservice.BoardDriver,
+	mapped []*gqlmodel.DispatchBoardDriver,
+) error {
+	ids := make([]pulid.ID, 0, len(drivers))
+	for _, driver := range drivers {
+		if driver != nil && driver.BoardDriver != nil {
+			ids = append(ids, driver.WorkerID)
+		}
+	}
+	photos, err := r.WorkerPhotoService.URLsByWorker(ctx, resolvercore.TenantInfo(authCtx), ids)
+	if err != nil {
+		return err
+	}
+	for i, driver := range drivers {
+		if driver == nil || driver.BoardDriver == nil || i >= len(mapped) || mapped[i] == nil {
+			continue
+		}
+		mapped[i].Photo = photos[driver.WorkerID]
+	}
+	return nil
 }
 
 func (r *QueryResolver) attachCoverageProposals(
@@ -344,7 +370,6 @@ func mapDispatchBoardDriver(
 		City:                 driver.City,
 		StateAbbreviation:    driver.StateAbbr,
 		PostalCode:           driver.PostalCode,
-		ProfilePicURL:        driver.ProfilePicURL,
 		AssignmentBlocked:    driver.AssignmentNote,
 		AvailableForDispatch: driver.AvailableForDispatch,
 

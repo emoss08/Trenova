@@ -13,7 +13,7 @@ import {
   type AgentExtensionCatalogItem,
   type AgentExtensionConfigResponse,
 } from "@/types/agent-extension";
-import { lazyComponent } from "@/lib/lazy-component";
+import { lazyComponent } from "@trenova/shared/lib/lazy-component";
 import { LazyComponent } from "@trenova/shared/components/error-boundary";
 import { PortalRunsSkeleton } from "./portal-runs-skeleton";
 import { PortalSitesSkeleton } from "./portal-sites-skeleton";
@@ -176,7 +176,7 @@ export function ExtensionDetail({
         agent.id,
         toSaveRequest({
           ...toAgentPanelRow(agent),
-          toolNames: withExtensionTools(agent.toolNames, item.tools, !holds),
+          scope: withExtensionTools(agent.scope, item.tools, !holds),
         }),
       ),
     onSuccess: async () => {
@@ -394,7 +394,7 @@ export function ExtensionDetail({
           {availability === "SelectedAgents" ? (
             <div className="ex-ag">
               {agents.map((agent) => {
-                const holds = holdsExtension(agent.toolNames, item.tools);
+                const holds = holdsExtension(agent.scope, item.tools);
                 return (
                   <button
                     key={agent.id}

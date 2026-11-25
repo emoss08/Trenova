@@ -9,6 +9,7 @@ import (
 	shipmentboardports "github.com/emoss08/trenova/internal/modules/operations/ports/shipmentboardports"
 	shipmentcapacityports "github.com/emoss08/trenova/internal/modules/operations/ports/shipmentcapacityports"
 	shipmentsuggestionports "github.com/emoss08/trenova/internal/modules/operations/ports/shipmentsuggestionports"
+	workerphotoservice "github.com/emoss08/trenova/internal/modules/workforce/app/workerphotoservice"
 )
 
 type Deps struct {
@@ -25,6 +26,7 @@ type Deps struct {
 	BoardStageSummaries    shipmentboardports.ShipmentStageSummaryReader
 	BoardGroups            shipmentboardports.ShipmentBoardGroupSummarizer
 	BoardCapabilities      shipmentboardports.ShipmentBoardCapabilitiesReader
+	WorkerPhotoService     *workerphotoservice.Service
 }
 
 type MutationResolver struct{ *Deps }

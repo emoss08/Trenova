@@ -2,7 +2,7 @@ import { TestRouter } from "@trenova/shared/testing/test-router";
 import type { AgentChoice } from "@/lib/graphql/agent-definition";
 import type { AssistantThread } from "@/types/assistant";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { useCommandPaletteStore } from "@/stores/command-palette-store";
 import { useDeskMarginStore } from "@/stores/desk-margin-store";
@@ -45,6 +45,7 @@ function renderBar(
     onRename: vi.fn(),
     onDelete: vi.fn(),
     onOpenRail: vi.fn(),
+    onAsk: vi.fn(),
   };
   const queryClient = new QueryClient();
   const bar = (changes: Partial<AssistantThread>) => (
@@ -295,6 +296,7 @@ describe("DeskTop rename", () => {
             onDelete={vi.fn()}
             onRename={vi.fn()}
             onOpenRail={vi.fn()}
+            onAsk={vi.fn()}
           />
         </TestRouter>
       </QueryClientProvider>,
@@ -305,7 +307,7 @@ describe("DeskTop rename", () => {
   });
 });
 
-function renderPlace(place: "today" | "needs" | "handled", path = "/desk") {
+function renderPlace(place: "today" | "needs" | "handled", path = "/desk", onAsk = vi.fn()) {
   render(
     <QueryClientProvider client={new QueryClient()}>
       <TestRouter initialEntries={[path]}>
@@ -327,6 +329,7 @@ function renderPlace(place: "today" | "needs" | "handled", path = "/desk") {
           onDelete={vi.fn()}
           onRename={vi.fn()}
           onOpenRail={vi.fn()}
+          onAsk={onAsk}
         />
       </TestRouter>
     </QueryClientProvider>,
@@ -370,15 +373,17 @@ describe("DeskTop places", () => {
     expect(useCommandPaletteStore.getState().open).toBe(true);
   });
 
-  it("opens Nova's margin from Ask and shows it pressed", () => {
+  it("asks for a new conversation from Ask, and shows Ask pressed while one sits beside the page", () => {
     useDeskMarginStore.getState().closeMargin();
-    renderPlace("today");
+    const onAsk = vi.fn();
+    renderPlace("today", "/desk", onAsk);
     const ask = screen.getByRole("button", { name: "Ask Nova" });
 
     expect(ask).toHaveAttribute("aria-pressed", "false");
     fireEvent.click(ask);
+    expect(onAsk).toHaveBeenCalledTimes(1);
 
-    expect(useDeskMarginStore.getState().margin).not.toBeNull();
+    act(() => useDeskMarginStore.getState().showThread("ath_beside", null));
     expect(ask).toHaveAttribute("aria-pressed", "true");
   });
 });

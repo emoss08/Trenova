@@ -1,3 +1,4 @@
+import { personPhotoSchema } from "@trenova/shared/types/person-photo";
 import { z } from "zod";
 import {
   fieldFilterSchema,
@@ -184,7 +185,7 @@ export type TableConfigurationFormValues = z.input<typeof tableConfigurationForm
 export const tableConfigurationUserSchema = z.object({
   id: z.string(),
   name: z.string(),
-  profilePicUrl: z.string().nullish(),
+  photo: personPhotoSchema.nullish(),
 });
 
 export type TableConfigurationUser = z.infer<typeof tableConfigurationUserSchema>;

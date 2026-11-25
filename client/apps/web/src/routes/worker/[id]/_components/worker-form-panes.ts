@@ -1,4 +1,4 @@
-import { preloadable } from "@/lib/lazy-component";
+import { preloadable } from "@trenova/shared/lib/lazy-component";
 import type { WorkerForm } from "@/routes/worker/use-worker-state";
 
 /**

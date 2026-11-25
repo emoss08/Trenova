@@ -247,7 +247,7 @@ func TestNoteToolMemories_AToolsMemoriesAreUsedOnceItIsCalled(t *testing.T) {
 	)
 	fx := &memoryEvents{}
 
-	turnmemory.NoteTool(turn, fx, "shipment_list")
+	turnmemory.NoteTool(turn, fx, "shipment_list_view")
 	assert.Empty(t, fx.events, "a call to another tool uses nothing")
 
 	turnmemory.NoteTool(turn, fx, "dispatch_assign_move")

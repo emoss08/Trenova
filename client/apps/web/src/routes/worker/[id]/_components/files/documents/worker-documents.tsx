@@ -12,7 +12,7 @@ import { useOpenedOnce } from "@/hooks/use-opened-once";
 import { usePermission } from "@/hooks/use-permission";
 import { canApproveDocument, canRejectDocument } from "@/lib/document-review";
 import { documentNeedsSignature } from "@/lib/document-signature";
-import { lazyComponent } from "@/lib/lazy-component";
+import { lazyComponent } from "@trenova/shared/lib/lazy-component";
 import { PlanFeature } from "@/lib/plan-feature";
 import { user as userQueries } from "@/lib/queries/user";
 import type { WorkerTabProps } from "@/routes/worker/use-worker-state";

@@ -1,3 +1,4 @@
+import { personPhotoSchema } from "@trenova/shared/types/person-photo";
 import { z } from "zod";
 import { createLimitOffsetResponse } from "@trenova/shared/types/server";
 
@@ -35,8 +36,7 @@ export type CommentSource = z.infer<typeof commentSourceEnum>;
 const commentUserSchema = z.object({
   id: z.string(),
   name: z.string(),
-  profilePicUrl: z.string().nullish(),
-  thumbnailUrl: z.string().nullish(),
+  photo: personPhotoSchema.nullish(),
 });
 
 export type CommentUser = z.infer<typeof commentUserSchema>;

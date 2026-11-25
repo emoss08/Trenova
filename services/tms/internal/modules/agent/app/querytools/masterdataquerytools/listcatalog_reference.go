@@ -59,11 +59,12 @@ way to get one.
 // codedRow is the shape almost every reference table reduces to: something to
 // say, something to match, and whether it is still in use.
 type codedRow struct {
-	ID          string `json:"id"`
-	Code        string `json:"code,omitempty"`
-	Name        string `json:"name,omitempty"`
-	Description string `json:"description,omitempty"`
-	Status      string `json:"status,omitempty"`
+	ID          string                 `json:"id"`
+	Code        string                 `json:"code,omitempty"`
+	Name        string                 `json:"name,omitempty"`
+	Description string                 `json:"description,omitempty"`
+	Status      string                 `json:"status,omitempty"`
+	CreatedAt   querytool.OptionalDate `json:"createdAt"`
 }
 
 // codedFields are the filters every status/code/description table shares.
@@ -117,6 +118,7 @@ func NewListEquipmentTypesTool(
 					Description: item.Description,
 					Status:      string(item.Status),
 					Name:        string(item.Class),
+					CreatedAt:   querytool.RecordedDate(item.CreatedAt),
 				}
 			})
 		},
@@ -147,6 +149,7 @@ func NewListFleetCodesTool(repo fleetcodeports.FleetCodeRepository) agenttoolpor
 					Code:        item.Code,
 					Description: item.Description,
 					Status:      string(item.Status),
+					CreatedAt:   querytool.RecordedDate(item.CreatedAt),
 				}
 			}), nil
 		},
@@ -179,6 +182,7 @@ func NewListServiceTypesTool(
 					Code:        item.Code,
 					Description: item.Description,
 					Status:      string(item.Status),
+					CreatedAt:   querytool.RecordedDate(item.CreatedAt),
 				}
 			}), nil
 		},
@@ -211,6 +215,7 @@ func NewListShipmentTypesTool(
 					Code:        item.Code,
 					Description: item.Description,
 					Status:      string(item.Status),
+					CreatedAt:   querytool.RecordedDate(item.CreatedAt),
 				}
 			}), nil
 		},
@@ -218,14 +223,15 @@ func NewListShipmentTypesTool(
 }
 
 type commodityRow struct {
-	ID            string `json:"id"`
-	Name          string `json:"name"`
-	Status        string `json:"status"`
-	FreightClass  string `json:"freightClass,omitempty"`
-	Hazardous     bool   `json:"hazardous"`
-	Stackable     bool   `json:"stackable"`
-	Fragile       bool   `json:"fragile"`
-	TemperatureOK bool   `json:"temperatureControlled"`
+	ID            string                 `json:"id"`
+	Name          string                 `json:"name"`
+	Status        string                 `json:"status"`
+	FreightClass  string                 `json:"freightClass,omitempty"`
+	Hazardous     bool                   `json:"hazardous"`
+	Stackable     bool                   `json:"stackable"`
+	Fragile       bool                   `json:"fragile"`
+	TemperatureOK bool                   `json:"temperatureControlled"`
+	CreatedAt     querytool.OptionalDate `json:"createdAt"`
 }
 
 func NewListCommoditiesTool(repo commodityports.CommodityRepository) agenttoolports.AgentQueryTool {
@@ -273,6 +279,7 @@ func NewListCommoditiesTool(repo commodityports.CommodityRepository) agenttoolpo
 					Stackable:     item.Stackable,
 					Fragile:       item.Fragile,
 					TemperatureOK: item.MinTemperature != nil || item.MaxTemperature != nil,
+					CreatedAt:     querytool.RecordedDate(item.CreatedAt),
 				}
 			}), nil
 		},
@@ -280,15 +287,16 @@ func NewListCommoditiesTool(repo commodityports.CommodityRepository) agenttoolpo
 }
 
 type hazmatRow struct {
-	ID               string `json:"id"`
-	Code             string `json:"code"`
-	Name             string `json:"name"`
-	Class            string `json:"class,omitempty"`
-	UNNumber         string `json:"unNumber,omitempty"`
-	PackingGroup     string `json:"packingGroup,omitempty"`
-	PlacardRequired  bool   `json:"placardRequired"`
-	MarinePollutant  bool   `json:"marinePollutant"`
-	InhalationHazard bool   `json:"inhalationHazard"`
+	ID               string                 `json:"id"`
+	Code             string                 `json:"code"`
+	Name             string                 `json:"name"`
+	Class            string                 `json:"class,omitempty"`
+	UNNumber         string                 `json:"unNumber,omitempty"`
+	PackingGroup     string                 `json:"packingGroup,omitempty"`
+	PlacardRequired  bool                   `json:"placardRequired"`
+	MarinePollutant  bool                   `json:"marinePollutant"`
+	InhalationHazard bool                   `json:"inhalationHazard"`
+	CreatedAt        querytool.OptionalDate `json:"createdAt"`
 }
 
 func NewListHazardousMaterialsTool(
@@ -338,6 +346,7 @@ func NewListHazardousMaterialsTool(
 						PlacardRequired:  item.PlacardRequired,
 						MarinePollutant:  item.MarinePollutant,
 						InhalationHazard: item.InhalationHazard,
+						CreatedAt:        querytool.RecordedDate(item.CreatedAt),
 					}
 				},
 			), nil
@@ -346,12 +355,13 @@ func NewListHazardousMaterialsTool(
 }
 
 type accessorialRow struct {
-	ID          string `json:"id"`
-	Code        string `json:"code"`
-	Description string `json:"description,omitempty"`
-	Status      string `json:"status"`
-	Method      string `json:"method,omitempty"`
-	Amount      string `json:"amount,omitempty"`
+	ID          string                 `json:"id"`
+	Code        string                 `json:"code"`
+	Description string                 `json:"description,omitempty"`
+	Status      string                 `json:"status"`
+	Method      string                 `json:"method,omitempty"`
+	Amount      string                 `json:"amount,omitempty"`
+	CreatedAt   querytool.OptionalDate `json:"createdAt"`
 }
 
 func NewListAccessorialChargesTool(
@@ -396,6 +406,7 @@ func NewListAccessorialChargesTool(
 						Status:      string(item.Status),
 						Method:      string(item.Method),
 						Amount:      item.Amount.String(),
+						CreatedAt:   querytool.RecordedDate(item.CreatedAt),
 					}
 				},
 			), nil
@@ -439,6 +450,7 @@ func NewListDocumentTypesTool(
 					Code:        item.Code,
 					Name:        item.Name,
 					Description: item.Description,
+					CreatedAt:   querytool.RecordedDate(item.CreatedAt),
 				}
 			}), nil
 		},
@@ -482,6 +494,7 @@ func NewListLocationCategoriesTool(
 						ID:          item.ID.String(),
 						Name:        item.Name,
 						Description: item.Description,
+						CreatedAt:   querytool.RecordedDate(item.CreatedAt),
 					}
 				},
 			), nil

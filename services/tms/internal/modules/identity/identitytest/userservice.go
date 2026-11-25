@@ -1,7 +1,6 @@
 package identitytest
 
 import (
-	"github.com/emoss08/trenova/internal/infrastructure/config/storageconfig"
 	"github.com/emoss08/trenova/internal/modules/identity/app/accountguard"
 	"github.com/emoss08/trenova/internal/modules/identity/app/userservice"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -10,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/permtest"
+	"github.com/emoss08/trenova/internal/testutil/phototest"
 	"github.com/emoss08/trenova/internal/testutil/securityaudittest"
 	"github.com/emoss08/trenova/internal/testutil/sessiontest"
 	"go.uber.org/zap"
@@ -35,7 +35,7 @@ func NewUserServiceForTest(deps UserServiceDeps) *userservice.Service {
 		AuditService:   deps.Audit,
 		Auditor:        &securityaudittest.Recorder{},
 		Realtime:       &mocks.NoopRealtimeService{},
-		StorageConfig:  &storageconfig.Config{},
+		Photos:         &phototest.Fake{},
 		Validator:      userservice.NewValidator(userservice.ValidatorParams{Repo: deps.Users}),
 		DB:             dbtest.NopConnection{},
 		Roles:          deps.Roles,

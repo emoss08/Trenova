@@ -25,7 +25,10 @@ function user(t, id) {
     id: u.id,
     name: u.name,
     emailAddress: u.emailAddress,
-    thumbnailUrl: `${MOCK_ORIGIN}/__mock/avatar/${u.id}.svg`,
+    photo: {
+      url: `${MOCK_ORIGIN}/__mock/avatar/${u.id}.svg`,
+      thumbnailUrl: `${MOCK_ORIGIN}/__mock/avatar/${u.id}.svg`,
+    },
   };
 }
 
@@ -892,7 +895,12 @@ const AGENTS = [
     template: "DispatchAssistant",
     icon: "truck",
     accent: "blue",
-    toolNames: ["shipment_create", "tender_shipment", "search_carriers"],
+    scope: {
+      areas: null,
+      capabilities: ["shipment_create", "tender_shipment", "search_carriers"],
+      denyAreas: null,
+      denyCapabilities: null,
+    },
     starters: [{ label: "Build a load", prompt: "Build the load this email describes." }],
   },
   {
@@ -902,7 +910,12 @@ const AGENTS = [
     template: "BillingAssistant",
     icon: "receipt",
     accent: "teal",
-    toolNames: ["file_document", "detention_waive", "queue_carrier_pay"],
+    scope: {
+      areas: null,
+      capabilities: ["file_document", "detention_waive", "queue_carrier_pay"],
+      denyAreas: null,
+      denyCapabilities: null,
+    },
     starters: [
       {
         label: "Check detention",
@@ -917,7 +930,12 @@ const AGENTS = [
     template: "EDIDesk",
     icon: "file",
     accent: "violet",
-    toolNames: ["edi_draft_connection", "edi_apply_connection_draft", "edi_inspect_x12"],
+    scope: {
+      areas: null,
+      capabilities: ["edi_draft_connection", "edi_apply_connection_draft", "edi_inspect_x12"],
+      denyAreas: null,
+      denyCapabilities: null,
+    },
     starters: [
       { label: "Set up a partner", prompt: "Set this trading partner up from their EDI guide." },
     ],
@@ -929,7 +947,12 @@ const AGENTS = [
     template: "CustomerAssistant",
     icon: "message",
     accent: "amber",
-    toolNames: ["shipment_eta", "draft_reply"],
+    scope: {
+      areas: null,
+      capabilities: ["shipment_eta", "draft_reply"],
+      denyAreas: null,
+      denyCapabilities: null,
+    },
     starters: [{ label: "Send an ETA", prompt: "Draft the ETA reply for this customer." }],
   },
 ];

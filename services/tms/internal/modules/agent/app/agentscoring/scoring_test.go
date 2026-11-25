@@ -49,7 +49,7 @@ func goodInput() *Input {
 		Case:  holdCase(),
 		Reply: "S-100 is on hold until the $12,400.50 invoice is paid.",
 		Calls: []agentevaluation.ObservedCall{
-			{ToolName: "find_tools"},
+			{ToolName: "search_tools"},
 			{ToolName: "shipment_get", Arguments: map[string]any{"proNumber": "S-100"}},
 			{
 				ToolName:  "shipment_place_hold",

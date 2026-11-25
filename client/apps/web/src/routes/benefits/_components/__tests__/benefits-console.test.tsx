@@ -41,14 +41,14 @@ const ADA = {
   id: "wrk_ada",
   firstName: "Ada",
   lastName: "Byrne",
-  profilePicUrl: "",
+  photo: null,
   fleetCode: { id: "fc_1", code: "SOUTH", color: "#2563eb" },
 };
 const BEN = {
   id: "wrk_ben",
   firstName: "Ben",
   lastName: "Cole",
-  profilePicUrl: "",
+  photo: null,
   fleetCode: null,
 };
 

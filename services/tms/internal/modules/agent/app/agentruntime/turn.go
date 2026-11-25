@@ -22,6 +22,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/turntaint"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/worldwatch"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentcapability"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmessage"
@@ -129,8 +130,8 @@ type TurnEffects interface {
 	// DispatchReads runs reads the loop has decided to make, which may run
 	// at the same time, and returns their outcomes in the order given.
 	DispatchReads(t *Turn, calls []toolcall.Call) []toolcall.Outcome
-	// Find answers find_tools and loads what it found into the turn.
-	Find(t *Turn, arguments map[string]any) toolaccess.FindAnswer
+	// Find answers search_tools and loads what it found into the turn.
+	Search(t *Turn, arguments map[string]any) toolaccess.SearchAnswer
 	Emit(event kernelports.StreamEvent)
 	// Observe hands a finished call to whatever shows it to the person, and
 	// returns the outcome with what it showed folded into what the model
@@ -162,9 +163,12 @@ func (t *Turn) Holds(name string) bool {
 	if slices.Contains(t.held, name) {
 		return true
 	}
-	_, reached := t.beyond[name]
+	if _, reached := t.beyond[name]; reached {
+		return true
+	}
 
-	return reached
+	return agentcapability.IsBacking(name) && t.req.Definition != nil &&
+		t.req.Definition.AllowsTool(name)
 }
 
 func (t *Turn) beyondTier(name string) agent.AutonomyTier {
@@ -294,11 +298,11 @@ func (t *Turn) State() TurnState {
 	}
 }
 
-// ToolsState is the turn's current tool set as data, for answering find_tools
+// ToolsState is the turn's current tool set as data, for answering search_tools
 // somewhere that may check permissions.
 func (t *Turn) ToolsState() toolaccess.ToolSetState { return t.tools.State() }
 
-// LoadTools makes the named tools callable, as a find_tools answered elsewhere
+// LoadTools makes the named tools callable, as a search_tools answered elsewhere
 // found them. A name the turn may not call is ignored.
 func (t *Turn) LoadTools(names []string) {
 	for _, name := range names {
@@ -307,7 +311,7 @@ func (t *Turn) LoadTools(names []string) {
 }
 
 // RestoreTurn rebuilds a Turn from its state. The rebuilt tool set cannot check
-// permissions, so whatever answers its find_tools must: see TurnEffects.Find.
+// permissions, so whatever answers its search_tools must: see TurnEffects.Find.
 func (s *Service) RestoreTurn(req *agentruntimeports.RunRequest, state *TurnState) *Turn {
 	result := state.Result
 	questions := make(map[string]struct{}, len(state.Questions))
@@ -425,6 +429,7 @@ func (s *Service) OpenTurn(ctx context.Context, req *agentruntimeports.RunReques
 	messages = append(messages, asked)
 	taint, opened := turntaint.Open(req, &runtimeContext, now)
 
+	runtimeContext.OpenTopics = !s.topicGuard
 	prompt := agentprompt.BuildSystemPromptParts(definition, &runtimeContext)
 
 	return &Turn{
@@ -678,8 +683,8 @@ func (fx *localEffects) DispatchReads(
 	return outcomes
 }
 
-func (fx *localEffects) Find(t *Turn, arguments map[string]any) toolaccess.FindAnswer {
-	answer := fx.s.access.ResolveFind(fx.ctx, t.tools, t.req.Actor, arguments)
+func (fx *localEffects) Search(t *Turn, arguments map[string]any) toolaccess.SearchAnswer {
+	answer := fx.s.access.ResolveSearch(fx.ctx, t.tools, t.req.Actor, arguments)
 	fx.s.access.NoteFound(fx.ctx, t.req, t.tools, arguments, &answer)
 
 	return answer
@@ -836,11 +841,10 @@ func withAuditSource(ctx context.Context, req *agentruntimeports.RunRequest) con
 	return ctx
 }
 
-// FindFor answers find_tools for a turn held as data, and names the tools it
-// made callable so the turn can load the same ones. An empty search names what
-// exists beyond the agent only when the actor could use it, which takes a
-// permission check, so this runs where permissions can be read.
-func (s *Service) FindFor(
+// SearchFor answers search_tools for a turn held as data, and names the tools
+// it made callable so the turn can load the same ones. Statuses take permission
+// checks, so this runs where permissions can be read.
+func (s *Service) SearchFor(
 	ctx context.Context,
 	req *agentruntimeports.RunRequest,
 	state *toolaccess.ToolSetState,
@@ -853,7 +857,7 @@ func (s *Service) FindFor(
 	}
 
 	set.Pending = nil
-	answer := s.access.ResolveFind(ctx, set, req.Actor, arguments)
+	answer := s.access.ResolveSearch(ctx, set, req.Actor, arguments)
 	s.access.NoteFound(ctx, req, set, arguments, &answer)
 	loaded := set.TakeLoaded()
 

@@ -1,4 +1,4 @@
-import { ApiRequestError, api } from "@trenova/shared/lib/api";
+import { api } from "@trenova/shared/lib/api";
 import { safeParse } from "@trenova/shared/lib/parse";
 import {
   switchOrganizationResponseSchema,
@@ -20,12 +20,10 @@ import {
   type UpdateMyProfile,
   bulkUpdateUserStatusResponseSchema,
   userOrganizationMembershipsResponseSchema,
-  profilePictureUrlResponseSchema,
   userSchema,
   type BulkUpdateUserStatusRequest,
   type BulkUpdateUserStatusResponse,
   type ChangeMyPassword,
-  type ProfilePictureUrlResponse,
   type ReplaceOrganizationMembershipsRequest,
   type UpdateMySettings,
   type User,
@@ -175,27 +173,6 @@ export class UserService {
   public async deleteMyProfilePicture() {
     const response = await api.delete<User>(`${this.base_url}/me/profile-picture/`);
     return safeParse(userSchema, response, "User Profile Picture");
-  }
-
-  public async getProfilePictureURL(
-    userId: User["id"],
-    variant: "thumbnail" | "full" = "thumbnail",
-  ) {
-    try {
-      const response = await api.get<ProfilePictureUrlResponse>(
-        `${this.base_url}/${userId}/profile-picture/?variant=${variant}`,
-      );
-
-      return (
-        await safeParse(profilePictureUrlResponseSchema, response, "User Profile Picture URL")
-      ).url;
-    } catch (error) {
-      if (error instanceof ApiRequestError && error.isNotFoundError()) {
-        return null;
-      }
-
-      throw error;
-    }
   }
 }
 

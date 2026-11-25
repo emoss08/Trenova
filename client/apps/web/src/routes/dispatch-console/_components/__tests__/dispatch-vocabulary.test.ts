@@ -8,7 +8,6 @@ import {
   severityMeta,
   urgencyMeta,
   verdictMeta,
-  workerInitials,
 } from "../dispatch-vocabulary";
 
 describe("urgency", () => {
@@ -136,16 +135,6 @@ describe("value formatting", () => {
 
   it("rounds miles for scanning", () => {
     expect(formatMiles(123.7)).toBe("124 mi");
-  });
-});
-
-describe("workerInitials", () => {
-  it("takes the first letter of each name", () => {
-    expect(workerInitials("Jane", "Doe")).toBe("JD");
-  });
-
-  it("falls back to a placeholder when both names are empty", () => {
-    expect(workerInitials("", "")).toBe("?");
   });
 });
 

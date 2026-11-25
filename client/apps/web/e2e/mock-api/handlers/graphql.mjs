@@ -442,6 +442,7 @@ function driverUnits(state) {
       acceptancePercent: null,
       driveRemainingMs: state.scenario.hos ? Math.round(d.hosHours * HOUR * 1000) : null,
       tractorId: d.tractorId,
+      photo: null,
     }));
 }
 
@@ -594,6 +595,7 @@ function carrierUnits(state) {
       acceptancePercent: c.acceptance,
       driveRemainingMs: null,
       tractorId: null,
+      photo: null,
     }));
 }
 
@@ -689,6 +691,7 @@ function coverageSuggestions(state, shipmentId) {
             unitLabel: u.unitLabel,
             distanceMiles: state.drivers.find((d) => d.id === u.id).deadheadMiles,
             driveRemainingMs: u.driveRemainingMs,
+            photo: u.photo,
             fitPercent: state.scenario.ai ? (k ? 81 : 96) : null,
           }));
   const carriers =
@@ -1095,7 +1098,7 @@ function assignMoves(state, input) {
         firstName: driver.firstName,
         lastName: driver.lastName,
         wholeName: name(driver),
-        profilePicUrl: null,
+        photo: null,
       },
       secondaryWorker: null,
     };

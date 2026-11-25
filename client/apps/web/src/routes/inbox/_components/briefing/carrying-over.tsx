@@ -16,7 +16,7 @@ function UserMark({ user, size }: { user: TriageUser; size: "sm" | "xs" }) {
     <ResolvedUserAvatar
       userId={user.id}
       name={user.name}
-      thumbnailUrl={user.thumbnailUrl}
+      photo={user.photo}
       className={size === "sm" ? "size-4.5" : "size-4"}
       fallbackClassName="text-3xs"
     />

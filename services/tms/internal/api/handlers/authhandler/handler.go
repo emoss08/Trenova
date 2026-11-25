@@ -17,6 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/sso"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/sessionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -34,6 +35,7 @@ type Params struct {
 	SecurityConfig *securityconfig.Config
 	ServerConfig   *serverconfig.Config
 	ErrorHandler   *helpers.ErrorHandler
+	Photos         kernelports.Photos
 }
 
 type Handler struct {
@@ -43,6 +45,7 @@ type Handler struct {
 	securityConfig *securityconfig.Config
 	serverConfig   *serverconfig.Config
 	eh             *helpers.ErrorHandler
+	photos         kernelports.Photos
 }
 
 func New(p Params) *Handler {
@@ -53,6 +56,7 @@ func New(p Params) *Handler {
 		securityConfig: p.SecurityConfig,
 		serverConfig:   p.ServerConfig,
 		eh:             p.ErrorHandler,
+		photos:         p.Photos,
 	}
 }
 
@@ -175,6 +179,17 @@ func (h *Handler) completeLogin(c *gin.Context, resp *tenantports.LoginResponse)
 
 	h.setSessionCookie(c, resp.SessionToken, resp.ExpiresAt)
 	resp.CSRFToken = csrf.Token(resp.SessionID, h.securityConfig.Session.Secret)
+
+	photo, err := h.photos.Sign(c.Request.Context(), kernelports.UserPhotoKeys(
+		resp.User.ID,
+		resp.User.ProfilePicURL,
+		resp.User.ThumbnailURL,
+	))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	resp.User.Photo = photo
 
 	helpers.JSON(c, http.StatusOK, resp)
 }

@@ -6,8 +6,10 @@ fragment UserTableRowFields on User {
   name
   username
   emailAddress
-  profilePicUrl
-  thumbnailUrl
+  photo {
+    url
+    thumbnailUrl
+  }
   timezone
   isLocked
   mustChangePassword

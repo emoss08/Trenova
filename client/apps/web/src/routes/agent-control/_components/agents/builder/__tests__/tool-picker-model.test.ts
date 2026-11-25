@@ -1,10 +1,11 @@
-import type { AutonomyTier, ToolCatalogEntry } from "@/types/assistant";
+import type { AgentScope } from "@/lib/agent-scope";
+import type { ToolCatalogEntry } from "@/types/assistant";
 import { describe, expect, it } from "vitest";
 import {
   checkState,
   pickerGroups,
   pickerRows,
-  setTools,
+  setHeld,
   type PickerFilter,
 } from "../tool-picker-model";
 
@@ -130,46 +131,68 @@ describe("pickerRows", () => {
   });
 });
 
-describe("setTools", () => {
-  const tierFor = (entry: ToolCatalogEntry): AutonomyTier =>
-    entry.name === "shipment_cancel" ? "Propose" : "ActWithApproval";
+describe("setHeld", () => {
+  const scope = (over: Partial<AgentScope> = {}): AgentScope => ({
+    areas: [],
+    capabilities: [],
+    denyAreas: [],
+    denyCapabilities: [],
+    ...over,
+  });
 
-  it("adds the missing tools in order and gives only the new changes a tier", () => {
-    const next = setTools(
-      ["update_worker"],
-      { update_worker: "AutoExecute" },
-      [byName("shipment_get"), byName("shipment_cancel"), byName("update_worker")],
+  it("names the tools a narrowed agent is given, once each, in order", () => {
+    const next = setHeld(
+      scope({ capabilities: ["update_worker"] }),
+      [
+        byName("shipment_get"),
+        byName("shipment_cancel"),
+        byName("update_worker"),
+        byName("shipment_get"),
+      ],
       true,
-      tierFor,
     );
-    expect(next.selected).toEqual(["update_worker", "shipment_get", "shipment_cancel"]);
-    expect(next.tiers).toEqual({ update_worker: "AutoExecute", shipment_cancel: "Propose" });
+    expect(next.capabilities).toEqual(["update_worker", "shipment_get", "shipment_cancel"]);
+    expect(next.denyCapabilities).toEqual([]);
   });
 
-  it("removes the given tools and their tiers, leaving every other choice alone", () => {
-    const next = setTools(
-      ["shipment_get", "shipment_cancel", "update_worker", "worker_approve_pto"],
-      { shipment_cancel: "Propose", update_worker: "AutoExecute", worker_approve_pto: "Propose" },
-      [byName("shipment_cancel"), byName("update_worker"), byName("worker_list")],
-      false,
-      tierFor,
+  it("names nothing an area already gives, and lifts a switch-off instead", () => {
+    const next = setHeld(
+      scope({ areas: ["shipment"], denyCapabilities: ["shipment_cancel"] }),
+      [byName("shipment_get"), byName("shipment_cancel")],
+      true,
     );
-    expect(next.selected).toEqual(["shipment_get", "worker_approve_pto"]);
-    expect(next.tiers).toEqual({ worker_approve_pto: "Propose" });
+    expect(next).toEqual(scope({ areas: ["shipment"] }));
   });
 
-  it("clearing what a filter shows leaves the hidden chosen tools untouched", () => {
-    const selected = ["shipment_get", "shipment_cancel", "worker_list"];
-    const shown = pickerGroups(catalog, selected, { ...ALL, kind: "read" }).flatMap(
+  it("drops a named tool and switches off one an area or everything still gives", () => {
+    expect(
+      setHeld(
+        scope({ areas: ["shipment"], capabilities: ["update_worker"] }),
+        [byName("update_worker"), byName("shipment_cancel")],
+        false,
+      ),
+    ).toEqual(scope({ areas: ["shipment"], denyCapabilities: ["shipment_cancel"] }));
+    expect(setHeld(scope(), [byName("shipment_cancel")], false)).toEqual(
+      scope({ denyCapabilities: ["shipment_cancel"] }),
+    );
+  });
+
+  it("treats a scope being narrowed that names nothing as holding nothing", () => {
+    expect(setHeld(scope(), [byName("shipment_get")], true, true)).toEqual(
+      scope({ capabilities: ["shipment_get"] }),
+    );
+    expect(
+      setHeld(scope({ capabilities: ["shipment_get"] }), [byName("shipment_get")], false, true),
+    ).toEqual(scope());
+  });
+
+  it("clearing what a filter shows leaves the hidden tools untouched", () => {
+    const held = ["shipment_get", "shipment_cancel", "worker_list"];
+    const shown = pickerGroups(catalog, held, { ...ALL, kind: "read" }).flatMap(
       (group) => group.tools,
     );
-    const next = setTools(selected, { shipment_cancel: "Propose" }, shown, false, tierFor);
-    expect(next.selected).toEqual(["shipment_cancel"]);
-    expect(next.tiers).toEqual({ shipment_cancel: "Propose" });
-  });
-
-  it("does not repeat a tool named twice", () => {
-    const next = setTools([], {}, [byName("shipment_get"), byName("shipment_get")], true, tierFor);
-    expect(next.selected).toEqual(["shipment_get"]);
+    expect(setHeld(scope({ capabilities: held }), shown, false)).toEqual(
+      scope({ capabilities: ["shipment_cancel"] }),
+    );
   });
 });

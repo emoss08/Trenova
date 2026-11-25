@@ -11,7 +11,10 @@ query WorkerRecord($id: ID!) {
     type
     driverType
     leaveType
-    profilePicUrl
+    photo {
+      url
+      thumbnailUrl
+    }
     firstName
     lastName
     wholeName

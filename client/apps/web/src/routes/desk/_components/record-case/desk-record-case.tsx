@@ -53,12 +53,8 @@ import { CaseOptions } from "./case-options";
 import { CasePlan, CasePlanDrafting, CasePlanNone } from "./case-plan";
 import { CaseAwayNotice, CasePutAway } from "./case-put-away";
 import { CaseSkeleton } from "./case-skeleton";
-import {
-  CASE_TRANSITION_CLASS,
-  casePageContext,
-  caseThreadOf,
-  threadSubjectOf,
-} from "./case-subject";
+import { startAbout } from "../today/ask-new";
+import { CASE_TRANSITION_CLASS, caseThreadOf } from "./case-subject";
 import { useCaseDecision } from "./use-case-decision";
 import "./case.css";
 
@@ -296,15 +292,13 @@ export function DeskRecordCase({ kind, id }: { kind: string; id: string }) {
       return;
     }
     const subject = { kind, id, label, agentId: caseAgentId ?? undefined };
-    const caseType = threadSubjectOf(kind);
     const existing = caseThreadOf(desk.threads, kind, id, caseAgentId);
-    const margin = useDeskMarginStore.getState();
-    // The margin may be holding another conversation (another agent's, or
-    // another record's); only the case's own is continued.
+    // The case's own conversation is continued beside the case; the margin may
+    // be holding another (another agent's, or another record's), which is not.
     const open = existing?.id ?? null;
     if (open !== null && (extras?.files.length ?? 0) === 0) {
       useDeskStore.getState().askAgent(open, trimmed);
-      margin.showThread(open, subject);
+      useDeskMarginStore.getState().showThread(open, subject);
       return;
     }
     // The agent on the case is the only one asked about it, whether it is
@@ -315,24 +309,12 @@ export function DeskRecordCase({ kind, id }: { kind: string; id: string }) {
       agentId ??
       desk.agents.find((choice) => choice.id === preferredAgent)?.id ??
       desk.agents[0]?.id;
-    margin.openMargin(subject);
     if (!target) {
       return;
     }
-    desk.startInMargin(
-      target,
-      trimmed,
-      {
-        files: extras?.files ?? [],
-        providerId: extras?.providerId ?? "",
-        mentions: [{ type: kind, id, label }, ...(extras?.mentions ?? [])],
-      },
-      {
-        subjectType: caseType ?? undefined,
-        subjectId: caseType ? id : undefined,
-        page: casePageContext(casePath(kind, id), kind, id, label),
-      },
-    );
+    // A new conversation about the case opens full width, bound to the case.
+    const start = startAbout(subject, extras);
+    desk.start(target, trimmed, start.extras, start.binding);
   };
 
   /** "Change values" is said in words: the box at the foot takes it to the agent. */

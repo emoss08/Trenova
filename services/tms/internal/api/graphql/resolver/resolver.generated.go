@@ -576,6 +576,7 @@ func FromServices(s *Services) *Resolver {
 	dispatchconsoleDeps := &dispatchconsoleresolver.Deps{
 		Core:                      s.Core,
 		CarrierAssignmentService:  s.CarrierAssignmentService,
+		WorkerPhotoService:        s.WorkerPhotoService,
 		DispatchConsoleService:    s.DispatchConsoleService,
 		DispatchAutoAssignService: s.DispatchAutoAssignService,
 		DemandForecastService:     s.DemandForecastService,
@@ -991,6 +992,7 @@ func FromServices(s *Services) *Resolver {
 		BoardStageSummaries:    s.BoardStageSummaries,
 		BoardGroups:            s.BoardGroups,
 		BoardCapabilities:      s.BoardCapabilities,
+		WorkerPhotoService:     s.WorkerPhotoService,
 	}
 	shipmenttypeDeps := &shipmenttyperesolver.Deps{
 		Core:                s.Core,
@@ -1065,8 +1067,9 @@ func FromServices(s *Services) *Resolver {
 		WatchtowerPlays:      s.WatchtowerPlays,
 	}
 	workerDeps := &workerresolver.Deps{
-		Core:          s.Core,
-		WorkerService: s.WorkerService,
+		Core:               s.Core,
+		WorkerService:      s.WorkerService,
+		WorkerPhotoService: s.WorkerPhotoService,
 	}
 	workerchecklistDeps := &workerchecklistresolver.Deps{
 		Core:                   s.Core,
@@ -1453,8 +1456,10 @@ func FromServices(s *Services) *Resolver {
 	performancereviewPerformanceReview := &performancereviewresolver.PerformanceReviewResolver{Deps: performancereviewDeps}
 	performancereviewPerformanceReviewTemplate := &performancereviewresolver.PerformanceReviewTemplateResolver{Deps: performancereviewDeps}
 	ptopolicyPlannedPTOAccrual := &ptopolicyresolver.PlannedPTOAccrualResolver{Deps: ptopolicyDeps}
+	selfservicePolicyComplianceRow := &selfserviceresolver.PolicyComplianceRowResolver{Deps: selfserviceDeps}
 	driverportalPortalCredential := &driverportalresolver.PortalCredentialResolver{Deps: driverportalDeps}
 	workertrainingPortalTraining := &workertrainingresolver.PortalTrainingResolver{Deps: workertrainingDeps}
+	orgstructurePositionHolder := &orgstructureresolver.PositionHolderResolver{Deps: orgstructureDeps}
 	accessorialchargeQuery := &accessorialchargeresolver.QueryResolver{Deps: accessorialchargeDeps}
 	accountingsyncQuery := &accountingsyncresolver.QueryResolver{Deps: accountingsyncDeps}
 	accountsreceivableQuery := &accountsreceivableresolver.QueryResolver{Deps: accountsreceivableDeps}
@@ -1602,6 +1607,7 @@ func FromServices(s *Services) *Resolver {
 	performancereviewReviewRating := &performancereviewresolver.ReviewRatingResolver{Deps: performancereviewDeps}
 	securityactivityRiskDecision := &securityactivityresolver.RiskDecisionResolver{Deps: securityactivityDeps}
 	roleRole := &roleresolver.RoleResolver{Deps: roleDeps}
+	schedulingRotaRow := &schedulingresolver.RotaRowResolver{Deps: schedulingDeps}
 	routingguideRoutingGuideEntry := &routingguideresolver.RoutingGuideEntryResolver{Deps: routingguideDeps}
 	workersafetySafetyScorecard := &workersafetyresolver.SafetyScorecardResolver{Deps: workersafetyDeps}
 	servicefailureServiceFailure := &servicefailureresolver.ServiceFailureResolver{Deps: servicefailureDeps}
@@ -1618,6 +1624,7 @@ func FromServices(s *Services) *Resolver {
 	shipmentShipmentRatingReviewApproval := &shipmentresolver.ShipmentRatingReviewApprovalResolver{Deps: shipmentDeps}
 	tablechangealertTCASubscription := &tablechangealertresolver.TCASubscriptionResolver{Deps: tablechangealertDeps}
 	tableconfigurationTableConfiguration := &tableconfigurationresolver.TableConfigurationResolver{Deps: tableconfigurationDeps}
+	orgstructureTeamMember := &orgstructureresolver.TeamMemberResolver{Deps: orgstructureDeps}
 	tenderTender := &tenderresolver.TenderResolver{Deps: tenderDeps}
 	tenderTenderOffer := &tenderresolver.TenderOfferResolver{Deps: tenderDeps}
 	tractorTractor := &tractorresolver.TractorResolver{Deps: tractorDeps}
@@ -2020,8 +2027,10 @@ func FromServices(s *Services) *Resolver {
 			"PerformanceReview@performancereview":                  performancereviewPerformanceReview,
 			"PerformanceReviewTemplate@performancereview":          performancereviewPerformanceReviewTemplate,
 			"PlannedPTOAccrual@ptopolicy":                          ptopolicyPlannedPTOAccrual,
+			"PolicyComplianceRow@selfservice":                      selfservicePolicyComplianceRow,
 			"PortalCredential@driverportal":                        driverportalPortalCredential,
 			"PortalTraining@workertraining":                        workertrainingPortalTraining,
+			"PositionHolder@orgstructure":                          orgstructurePositionHolder,
 			"Query@accessorialcharge":                              accessorialchargeQuery,
 			"Query@accountingsync":                                 accountingsyncQuery,
 			"Query@accountsreceivable":                             accountsreceivableQuery,
@@ -2169,6 +2178,7 @@ func FromServices(s *Services) *Resolver {
 			"ReviewRating@performancereview":                       performancereviewReviewRating,
 			"RiskDecision@securityactivity":                        securityactivityRiskDecision,
 			"Role@role":                                            roleRole,
+			"RotaRow@scheduling":                                   schedulingRotaRow,
 			"RoutingGuideEntry@routingguide":                       routingguideRoutingGuideEntry,
 			"SafetyScorecard@workersafety":                         workersafetySafetyScorecard,
 			"ServiceFailure@servicefailure":                        servicefailureServiceFailure,
@@ -2185,6 +2195,7 @@ func FromServices(s *Services) *Resolver {
 			"ShipmentRatingReviewApproval@shipment":                shipmentShipmentRatingReviewApproval,
 			"TCASubscription@tablechangealert":                     tablechangealertTCASubscription,
 			"TableConfiguration@tableconfiguration":                tableconfigurationTableConfiguration,
+			"TeamMember@orgstructure":                              orgstructureTeamMember,
 			"Tender@tender":                                        tenderTender,
 			"TenderOffer@tender":                                   tenderTenderOffer,
 			"Tractor@tractor":                                      tractorTractor,
@@ -2592,8 +2603,10 @@ var (
 	_ performancereviewexec.PerformanceReviewResolver                  = (*performancereviewresolver.PerformanceReviewResolver)(nil)
 	_ performancereviewexec.PerformanceReviewTemplateResolver          = (*performancereviewresolver.PerformanceReviewTemplateResolver)(nil)
 	_ ptopolicyexec.PlannedPTOAccrualResolver                          = (*ptopolicyresolver.PlannedPTOAccrualResolver)(nil)
+	_ selfserviceexec.PolicyComplianceRowResolver                      = (*selfserviceresolver.PolicyComplianceRowResolver)(nil)
 	_ driverportalexec.PortalCredentialResolver                        = (*driverportalresolver.PortalCredentialResolver)(nil)
 	_ workertrainingexec.PortalTrainingResolver                        = (*workertrainingresolver.PortalTrainingResolver)(nil)
+	_ orgstructureexec.PositionHolderResolver                          = (*orgstructureresolver.PositionHolderResolver)(nil)
 	_ accessorialchargeexec.QueryResolver                              = (*accessorialchargeresolver.QueryResolver)(nil)
 	_ accountingsyncexec.QueryResolver                                 = (*accountingsyncresolver.QueryResolver)(nil)
 	_ accountsreceivableexec.QueryResolver                             = (*accountsreceivableresolver.QueryResolver)(nil)
@@ -2741,6 +2754,7 @@ var (
 	_ performancereviewexec.ReviewRatingResolver                       = (*performancereviewresolver.ReviewRatingResolver)(nil)
 	_ securityactivityexec.RiskDecisionResolver                        = (*securityactivityresolver.RiskDecisionResolver)(nil)
 	_ roleexec.RoleResolver                                            = (*roleresolver.RoleResolver)(nil)
+	_ schedulingexec.RotaRowResolver                                   = (*schedulingresolver.RotaRowResolver)(nil)
 	_ routingguideexec.RoutingGuideEntryResolver                       = (*routingguideresolver.RoutingGuideEntryResolver)(nil)
 	_ workersafetyexec.SafetyScorecardResolver                         = (*workersafetyresolver.SafetyScorecardResolver)(nil)
 	_ servicefailureexec.ServiceFailureResolver                        = (*servicefailureresolver.ServiceFailureResolver)(nil)
@@ -2757,6 +2771,7 @@ var (
 	_ shipmentexec.ShipmentRatingReviewApprovalResolver                = (*shipmentresolver.ShipmentRatingReviewApprovalResolver)(nil)
 	_ tablechangealertexec.TCASubscriptionResolver                     = (*tablechangealertresolver.TCASubscriptionResolver)(nil)
 	_ tableconfigurationexec.TableConfigurationResolver                = (*tableconfigurationresolver.TableConfigurationResolver)(nil)
+	_ orgstructureexec.TeamMemberResolver                              = (*orgstructureresolver.TeamMemberResolver)(nil)
 	_ tenderexec.TenderResolver                                        = (*tenderresolver.TenderResolver)(nil)
 	_ tenderexec.TenderOfferResolver                                   = (*tenderresolver.TenderOfferResolver)(nil)
 	_ tractorexec.TractorResolver                                      = (*tractorresolver.TractorResolver)(nil)

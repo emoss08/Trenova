@@ -261,9 +261,9 @@ func TestRun_TellsTheModelWhatThePersonAlreadySees(t *testing.T) {
 	observer := &recordingObserver{shown: &agentruntimeports.ShownArtifact{
 		ID: pulid.MustNew("art_"), Kind: "table_view", Title: "Shipments", Rows: 25,
 	}}
-	tool := queryTool("shipment_list", map[string]any{"items": []any{}}, nil)
+	tool := queryTool("shipment_list_view", map[string]any{"items": []any{}}, nil)
 	result, _ := runWithObserver(t, observer.observe, []agenttoolports.AgentQueryTool{tool},
-		runtimetest.ToolTurn("shipment_list", map[string]any{"query": ""}),
+		runtimetest.ToolTurn("shipment_list_view", map[string]any{"query": ""}),
 		runtimetest.TextTurn("Twenty-five shipments; two are delayed."),
 	)
 
@@ -291,9 +291,9 @@ func TestRun_ShortListsAreAnsweredInTheReply(t *testing.T) {
 	observer := &recordingObserver{shown: &agentruntimeports.ShownArtifact{
 		ID: pulid.MustNew("art_"), Kind: "table_view", Title: "Billing queue items", Rows: 9,
 	}}
-	tool := queryTool("billing_list_queue_items", map[string]any{"items": []any{}}, nil)
+	tool := queryTool("billing_list_queue_items_view", map[string]any{"items": []any{}}, nil)
 	result, _ := runWithObserver(t, observer.observe, []agenttoolports.AgentQueryTool{tool},
-		runtimetest.ToolTurn("billing_list_queue_items", map[string]any{"query": ""}),
+		runtimetest.ToolTurn("billing_list_queue_items_view", map[string]any{"query": ""}),
 		runtimetest.TextTurn("Nine items."),
 	)
 
@@ -317,9 +317,9 @@ func TestRun_AnActionableTableIsPointedToHoweverShort(t *testing.T) {
 		ID: pulid.MustNew("art_"), Kind: "table_view", Title: "Billing queue items", Rows: 2,
 		Actionable: true,
 	}}
-	tool := queryTool("billing_list_queue_items", map[string]any{"items": []any{}}, nil)
+	tool := queryTool("billing_list_queue_items_view", map[string]any{"items": []any{}}, nil)
 	result, _ := runWithObserver(t, observer.observe, []agenttoolports.AgentQueryTool{tool},
-		runtimetest.ToolTurn("billing_list_queue_items", map[string]any{"query": ""}),
+		runtimetest.ToolTurn("billing_list_queue_items_view", map[string]any{"query": ""}),
 		runtimetest.TextTurn("Two items."),
 	)
 
@@ -341,9 +341,9 @@ func TestRun_ATableOfRecordsToOpenIsPointedToHoweverShort(t *testing.T) {
 		ID: pulid.MustNew("art_"), Kind: "table_view", Title: "Formula templates", Rows: 3,
 		OpensRecords: true,
 	}}
-	tool := queryTool("formula_list_templates", map[string]any{"items": []any{}}, nil)
+	tool := queryTool("formula_list_templates_view", map[string]any{"items": []any{}}, nil)
 	result, _ := runWithObserver(t, observer.observe, []agenttoolports.AgentQueryTool{tool},
-		runtimetest.ToolTurn("formula_list_templates", map[string]any{"query": ""}),
+		runtimetest.ToolTurn("formula_list_templates_view", map[string]any{"query": ""}),
 		runtimetest.TextTurn("Three templates."),
 	)
 

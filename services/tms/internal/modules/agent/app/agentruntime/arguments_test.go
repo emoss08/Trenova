@@ -58,19 +58,19 @@ func TestRun_ValidatesAQueryToolsArguments(t *testing.T) {
 	t.Parallel()
 
 	tool := &agenttest.StubQueryTool{
-		ToolName: "shipment_list",
+		ToolName: "shipment_list_view",
 		Result:   map[string]any{"items": []any{}},
 		Schema:   runtimetest.ClosedSchema("status"),
 	}
 	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
-		runtimetest.ToolTurn("shipment_list", map[string]any{"status": "New", "customer": "Acme"}),
+		runtimetest.ToolTurn("shipment_list_view", map[string]any{"status": "New", "customer": "Acme"}),
 		runtimetest.TextTurn("I could not list them."),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{Tools: []agenttoolports.AgentQueryTool{tool}},
 		&stubActionRegistry{}, nil)
 
 	result, err := rt.Run(t.Context(), &agentruntimeports.RunRequest{
-		Definition: runtimetest.Definition("shipment_list"),
+		Definition: runtimetest.Definition("shipment_list_view"),
 		Actor:      runtimetest.Actor(),
 		Input:      "Acme's new loads",
 	})

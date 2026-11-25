@@ -12,35 +12,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-/*
-A template that fills the tool cap leaves an organization nothing to add. The
-billing assistant sat at 63 of 64, so invoice_share and its candidate read were
-registered and on no template: the only way to use them was to build an agent by
-hand. Every starter keeps room for a handful of tools of the organization's own.
-*/
-const templateToolHeadroom = 8
-
-func TestTemplates_LeaveRoomForAnOrganizationsOwnTools(t *testing.T) {
-	t.Parallel()
-
-	for _, template := range agenttemplate.AllTemplates() {
-		require.LessOrEqualf(
-			t,
-			len(
-				agentpreset.StarterTools(template),
-			),
-			agentdefinition.MaxTools-templateToolHeadroom,
-			"%s holds %d tools, leaving fewer than %d of the %d an agent may hold",
-
-			template.Label(),
-
-			len(agentpreset.StarterTools(template)),
-			templateToolHeadroom,
-			agentdefinition.MaxTools,
-		)
-	}
-}
-
 func TestTemplates_TheMoneyAssistantsTalkToAPersonAndActAsThem(t *testing.T) {
 	t.Parallel()
 

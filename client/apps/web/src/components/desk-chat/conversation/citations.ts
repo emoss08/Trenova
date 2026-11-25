@@ -18,7 +18,7 @@ const UNCITED = new Set([
   "web_search",
   "web_read",
   "ask_user",
-  "find_tools",
+  "search_tools",
   "agent_list_memories",
   "agent_create_memory",
   "agent_edit_memory",

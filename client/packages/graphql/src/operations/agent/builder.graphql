@@ -64,7 +64,13 @@ mutation DraftAgentFromDescription($description: String!) {
     cronTimezone
     eventKinds
     intervalSeconds
-    toolNames
+    scope {
+      areas
+      capabilities
+      denyAreas
+      denyCapabilities
+    }
+    pinnedTools
     toolTiers
     autonomyCeiling
     dataAccessCeiling

@@ -631,7 +631,8 @@ var workersTable = schema.Table{
 		{Name: "type", Quoted: `"type"`, Field: "Type", Kind: schema.KindString, Flags: 0, Label: `Type`, JSON: `type`, Enum: enumWorkerType[:], Report: &reportDimEnum},
 		{Name: "driver_type", Quoted: `"driver_type"`, Field: "DriverType", Kind: schema.KindString, Flags: 0, Label: `Driver Type`, JSON: `driverType`, Enum: enumDriverType[:], Report: &reportDimEnum},
 		{Name: "leave_type", Quoted: `"leave_type"`, Field: "LeaveType", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Leave Type`, JSON: `leaveType`, Enum: enumLeaveType[:], Report: &reportDimEnum},
-		{Name: "profile_pic_url", Quoted: `"profile_pic_url"`, Field: "ProfilePicURL", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Profile Pic URL`, JSON: `profilePicUrl`, Report: &reportDimString},
+		{Name: "photo_key", Quoted: `"photo_key"`, Field: "PhotoKey", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Photo Key`, Report: &reportDimStringHidden},
+		{Name: "photo_thumbnail_key", Quoted: `"photo_thumbnail_key"`, Field: "PhotoThumbnailKey", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Photo Thumbnail Key`, Report: &reportDimStringHidden},
 		{Name: "first_name", Quoted: `"first_name"`, Field: "FirstName", Kind: schema.KindString, Flags: 0, Label: `First Name`, JSON: `firstName`, Report: &reportDimString},
 		{Name: "last_name", Quoted: `"last_name"`, Field: "LastName", Kind: schema.KindString, Flags: 0, Label: `Last Name`, JSON: `lastName`, Report: &reportDimString},
 		{Name: "whole_name", Quoted: `"whole_name"`, Field: "WholeName", Kind: schema.KindString, Flags: schema.FlagReadOnly, Label: `Full Name`, JSON: `wholeName`, Report: &reportDimString},
@@ -671,14 +672,14 @@ var workersTable = schema.Table{
 	},
 	PK:           []int32{0, 1, 2},
 	Tenant:       []int32{1, 2},
-	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37},
-	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 16, 17, 18, 19, 20, 21, 22, 23, 24, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37},
-	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 16, 17, 18, 19, 20, 21, 22, 23, 24, 27, 28, 29, 30, 31, 32, 33, 34, 37},
-	Returning:    []int32{15},
-	Version:      35,
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 17, 18, 19, 20, 21, 22, 23, 24, 25, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 17, 18, 19, 20, 21, 22, 23, 24, 25, 28, 29, 30, 31, 32, 33, 34, 35, 38},
+	Returning:    []int32{16},
+	Version:      36,
 	AutoID:       0,
-	AutoCreate:   36,
-	AutoUpdate:   37,
+	AutoCreate:   37,
+	AutoUpdate:   38,
 	IDPrefix:     "wrk_",
 	New:          newWorker,
 	NewN:         newNWorker,
@@ -707,7 +708,8 @@ type WorkersTable struct {
 	Type                  WorkerTypeCol
 	DriverType            DriverTypeCol
 	LeaveType             LeaveTypeCol
-	ProfilePicURL         keel.StringCol
+	PhotoKey              keel.StringCol
+	PhotoThumbnailKey     keel.StringCol
 	FirstName             keel.StringCol
 	LastName              keel.StringCol
 	WholeName             keel.StringCol
@@ -750,32 +752,33 @@ var Workers = &WorkersTable{
 	Type:                  WorkerTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workersRef, Index: 9}}},
 	DriverType:            DriverTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workersRef, Index: 10}}},
 	LeaveType:             LeaveTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workersRef, Index: 11}}},
-	ProfilePicURL:         keel.StringCol{Col: keel.Col{Ref: &workersRef, Index: 12}},
-	FirstName:             keel.StringCol{Col: keel.Col{Ref: &workersRef, Index: 13}},
-	LastName:              keel.StringCol{Col: keel.Col{Ref: &workersRef, Index: 14}},
-	WholeName:             keel.StringCol{Col: keel.Col{Ref: &workersRef, Index: 15}},
-	AddressLine1:          keel.StringCol{Col: keel.Col{Ref: &workersRef, Index: 16}},
-	AddressLine2:          keel.StringCol{Col: keel.Col{Ref: &workersRef, Index: 17}},
-	City:                  keel.StringCol{Col: keel.Col{Ref: &workersRef, Index: 18}},
-	PostalCode:            keel.StringCol{Col: keel.Col{Ref: &workersRef, Index: 19}},
-	Email:                 keel.StringCol{Col: keel.Col{Ref: &workersRef, Index: 20}},
-	PhoneNumber:           keel.StringCol{Col: keel.Col{Ref: &workersRef, Index: 21}},
-	EmergencyContactName:  keel.StringCol{Col: keel.Col{Ref: &workersRef, Index: 22}},
-	EmergencyContactPhone: keel.StringCol{Col: keel.Col{Ref: &workersRef, Index: 23}},
-	ExternalID:            keel.StringCol{Col: keel.Col{Ref: &workersRef, Index: 24}},
-	SearchVector:          keel.TSVectorCol{Col: keel.Col{Ref: &workersRef, Index: 25}},
-	Rank:                  keel.StringCol{Col: keel.Col{Ref: &workersRef, Index: 26}},
-	AssignmentBlocked:     keel.StringCol{Col: keel.Col{Ref: &workersRef, Index: 27}},
-	Gender:                GenderCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workersRef, Index: 28}}},
-	CanBeAssigned:         keel.BoolCol{Col: keel.Col{Ref: &workersRef, Index: 29}},
-	AvailableForDispatch:  keel.BoolCol{Col: keel.Col{Ref: &workersRef, Index: 30}},
-	HomeLatitude:          keel.Float64Col{Col: keel.Col{Ref: &workersRef, Index: 31}},
-	HomeLongitude:         keel.Float64Col{Col: keel.Col{Ref: &workersRef, Index: 32}},
-	HomePlaceID:           keel.StringCol{Col: keel.Col{Ref: &workersRef, Index: 33}},
-	LastHomeAt:            keel.Int64Col{Col: keel.Col{Ref: &workersRef, Index: 34}},
-	Version:               keel.Int64Col{Col: keel.Col{Ref: &workersRef, Index: 35}},
-	CreatedAt:             keel.Int64Col{Col: keel.Col{Ref: &workersRef, Index: 36}},
-	UpdatedAt:             keel.Int64Col{Col: keel.Col{Ref: &workersRef, Index: 37}},
+	PhotoKey:              keel.StringCol{Col: keel.Col{Ref: &workersRef, Index: 12}},
+	PhotoThumbnailKey:     keel.StringCol{Col: keel.Col{Ref: &workersRef, Index: 13}},
+	FirstName:             keel.StringCol{Col: keel.Col{Ref: &workersRef, Index: 14}},
+	LastName:              keel.StringCol{Col: keel.Col{Ref: &workersRef, Index: 15}},
+	WholeName:             keel.StringCol{Col: keel.Col{Ref: &workersRef, Index: 16}},
+	AddressLine1:          keel.StringCol{Col: keel.Col{Ref: &workersRef, Index: 17}},
+	AddressLine2:          keel.StringCol{Col: keel.Col{Ref: &workersRef, Index: 18}},
+	City:                  keel.StringCol{Col: keel.Col{Ref: &workersRef, Index: 19}},
+	PostalCode:            keel.StringCol{Col: keel.Col{Ref: &workersRef, Index: 20}},
+	Email:                 keel.StringCol{Col: keel.Col{Ref: &workersRef, Index: 21}},
+	PhoneNumber:           keel.StringCol{Col: keel.Col{Ref: &workersRef, Index: 22}},
+	EmergencyContactName:  keel.StringCol{Col: keel.Col{Ref: &workersRef, Index: 23}},
+	EmergencyContactPhone: keel.StringCol{Col: keel.Col{Ref: &workersRef, Index: 24}},
+	ExternalID:            keel.StringCol{Col: keel.Col{Ref: &workersRef, Index: 25}},
+	SearchVector:          keel.TSVectorCol{Col: keel.Col{Ref: &workersRef, Index: 26}},
+	Rank:                  keel.StringCol{Col: keel.Col{Ref: &workersRef, Index: 27}},
+	AssignmentBlocked:     keel.StringCol{Col: keel.Col{Ref: &workersRef, Index: 28}},
+	Gender:                GenderCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workersRef, Index: 29}}},
+	CanBeAssigned:         keel.BoolCol{Col: keel.Col{Ref: &workersRef, Index: 30}},
+	AvailableForDispatch:  keel.BoolCol{Col: keel.Col{Ref: &workersRef, Index: 31}},
+	HomeLatitude:          keel.Float64Col{Col: keel.Col{Ref: &workersRef, Index: 32}},
+	HomeLongitude:         keel.Float64Col{Col: keel.Col{Ref: &workersRef, Index: 33}},
+	HomePlaceID:           keel.StringCol{Col: keel.Col{Ref: &workersRef, Index: 34}},
+	LastHomeAt:            keel.Int64Col{Col: keel.Col{Ref: &workersRef, Index: 35}},
+	Version:               keel.Int64Col{Col: keel.Col{Ref: &workersRef, Index: 36}},
+	CreatedAt:             keel.Int64Col{Col: keel.Col{Ref: &workersRef, Index: 37}},
+	UpdatedAt:             keel.Int64Col{Col: keel.Col{Ref: &workersRef, Index: 38}},
 }
 
 // BuildWorkers builds the table of workers for ref. Generated relation and alias methods call it.
@@ -794,32 +797,33 @@ func BuildWorkers(r *keel.Ref) *WorkersTable {
 		Type:                  WorkerTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 9}}},
 		DriverType:            DriverTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 10}}},
 		LeaveType:             LeaveTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 11}}},
-		ProfilePicURL:         keel.StringCol{Col: keel.Col{Ref: r, Index: 12}},
-		FirstName:             keel.StringCol{Col: keel.Col{Ref: r, Index: 13}},
-		LastName:              keel.StringCol{Col: keel.Col{Ref: r, Index: 14}},
-		WholeName:             keel.StringCol{Col: keel.Col{Ref: r, Index: 15}},
-		AddressLine1:          keel.StringCol{Col: keel.Col{Ref: r, Index: 16}},
-		AddressLine2:          keel.StringCol{Col: keel.Col{Ref: r, Index: 17}},
-		City:                  keel.StringCol{Col: keel.Col{Ref: r, Index: 18}},
-		PostalCode:            keel.StringCol{Col: keel.Col{Ref: r, Index: 19}},
-		Email:                 keel.StringCol{Col: keel.Col{Ref: r, Index: 20}},
-		PhoneNumber:           keel.StringCol{Col: keel.Col{Ref: r, Index: 21}},
-		EmergencyContactName:  keel.StringCol{Col: keel.Col{Ref: r, Index: 22}},
-		EmergencyContactPhone: keel.StringCol{Col: keel.Col{Ref: r, Index: 23}},
-		ExternalID:            keel.StringCol{Col: keel.Col{Ref: r, Index: 24}},
-		SearchVector:          keel.TSVectorCol{Col: keel.Col{Ref: r, Index: 25}},
-		Rank:                  keel.StringCol{Col: keel.Col{Ref: r, Index: 26}},
-		AssignmentBlocked:     keel.StringCol{Col: keel.Col{Ref: r, Index: 27}},
-		Gender:                GenderCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 28}}},
-		CanBeAssigned:         keel.BoolCol{Col: keel.Col{Ref: r, Index: 29}},
-		AvailableForDispatch:  keel.BoolCol{Col: keel.Col{Ref: r, Index: 30}},
-		HomeLatitude:          keel.Float64Col{Col: keel.Col{Ref: r, Index: 31}},
-		HomeLongitude:         keel.Float64Col{Col: keel.Col{Ref: r, Index: 32}},
-		HomePlaceID:           keel.StringCol{Col: keel.Col{Ref: r, Index: 33}},
-		LastHomeAt:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 34}},
-		Version:               keel.Int64Col{Col: keel.Col{Ref: r, Index: 35}},
-		CreatedAt:             keel.Int64Col{Col: keel.Col{Ref: r, Index: 36}},
-		UpdatedAt:             keel.Int64Col{Col: keel.Col{Ref: r, Index: 37}},
+		PhotoKey:              keel.StringCol{Col: keel.Col{Ref: r, Index: 12}},
+		PhotoThumbnailKey:     keel.StringCol{Col: keel.Col{Ref: r, Index: 13}},
+		FirstName:             keel.StringCol{Col: keel.Col{Ref: r, Index: 14}},
+		LastName:              keel.StringCol{Col: keel.Col{Ref: r, Index: 15}},
+		WholeName:             keel.StringCol{Col: keel.Col{Ref: r, Index: 16}},
+		AddressLine1:          keel.StringCol{Col: keel.Col{Ref: r, Index: 17}},
+		AddressLine2:          keel.StringCol{Col: keel.Col{Ref: r, Index: 18}},
+		City:                  keel.StringCol{Col: keel.Col{Ref: r, Index: 19}},
+		PostalCode:            keel.StringCol{Col: keel.Col{Ref: r, Index: 20}},
+		Email:                 keel.StringCol{Col: keel.Col{Ref: r, Index: 21}},
+		PhoneNumber:           keel.StringCol{Col: keel.Col{Ref: r, Index: 22}},
+		EmergencyContactName:  keel.StringCol{Col: keel.Col{Ref: r, Index: 23}},
+		EmergencyContactPhone: keel.StringCol{Col: keel.Col{Ref: r, Index: 24}},
+		ExternalID:            keel.StringCol{Col: keel.Col{Ref: r, Index: 25}},
+		SearchVector:          keel.TSVectorCol{Col: keel.Col{Ref: r, Index: 26}},
+		Rank:                  keel.StringCol{Col: keel.Col{Ref: r, Index: 27}},
+		AssignmentBlocked:     keel.StringCol{Col: keel.Col{Ref: r, Index: 28}},
+		Gender:                GenderCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 29}}},
+		CanBeAssigned:         keel.BoolCol{Col: keel.Col{Ref: r, Index: 30}},
+		AvailableForDispatch:  keel.BoolCol{Col: keel.Col{Ref: r, Index: 31}},
+		HomeLatitude:          keel.Float64Col{Col: keel.Col{Ref: r, Index: 32}},
+		HomeLongitude:         keel.Float64Col{Col: keel.Col{Ref: r, Index: 33}},
+		HomePlaceID:           keel.StringCol{Col: keel.Col{Ref: r, Index: 34}},
+		LastHomeAt:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 35}},
+		Version:               keel.Int64Col{Col: keel.Col{Ref: r, Index: 36}},
+		CreatedAt:             keel.Int64Col{Col: keel.Col{Ref: r, Index: 37}},
+		UpdatedAt:             keel.Int64Col{Col: keel.Col{Ref: r, Index: 38}},
 	}
 }
 
@@ -1274,56 +1278,58 @@ func ptrWorker(p unsafe.Pointer, c int32) any {
 	case 11:
 		return (*string)(unsafe.Pointer(&r.LeaveType))
 	case 12:
-		return &r.ProfilePicURL
+		return &r.PhotoKey
 	case 13:
-		return &r.FirstName
+		return &r.PhotoThumbnailKey
 	case 14:
-		return &r.LastName
+		return &r.FirstName
 	case 15:
-		return &r.WholeName
+		return &r.LastName
 	case 16:
-		return &r.AddressLine1
+		return &r.WholeName
 	case 17:
-		return &r.AddressLine2
+		return &r.AddressLine1
 	case 18:
-		return &r.City
+		return &r.AddressLine2
 	case 19:
-		return &r.PostalCode
+		return &r.City
 	case 20:
-		return &r.Email
+		return &r.PostalCode
 	case 21:
-		return &r.PhoneNumber
+		return &r.Email
 	case 22:
-		return &r.EmergencyContactName
+		return &r.PhoneNumber
 	case 23:
-		return &r.EmergencyContactPhone
+		return &r.EmergencyContactName
 	case 24:
-		return &r.ExternalID
+		return &r.EmergencyContactPhone
 	case 25:
-		return &r.SearchVector
+		return &r.ExternalID
 	case 26:
-		return &r.Rank
+		return &r.SearchVector
 	case 27:
-		return &r.AssignmentBlocked
+		return &r.Rank
 	case 28:
-		return (*string)(unsafe.Pointer(&r.Gender))
+		return &r.AssignmentBlocked
 	case 29:
-		return &r.CanBeAssigned
+		return (*string)(unsafe.Pointer(&r.Gender))
 	case 30:
-		return &r.AvailableForDispatch
+		return &r.CanBeAssigned
 	case 31:
-		return &r.HomeLatitude
+		return &r.AvailableForDispatch
 	case 32:
-		return &r.HomeLongitude
+		return &r.HomeLatitude
 	case 33:
-		return &r.HomePlaceID
+		return &r.HomeLongitude
 	case 34:
-		return &r.LastHomeAt
+		return &r.HomePlaceID
 	case 35:
-		return &r.Version
+		return &r.LastHomeAt
 	case 36:
-		return &r.CreatedAt
+		return &r.Version
 	case 37:
+		return &r.CreatedAt
+	case 38:
 		return &r.UpdatedAt
 	}
 	return nil
@@ -1372,92 +1378,97 @@ func valueWorker(p unsafe.Pointer, c int32) any {
 		}
 		return string(r.LeaveType)
 	case 12:
-		if r.ProfilePicURL == "" {
+		if r.PhotoKey == "" {
 			return nil
 		}
-		return r.ProfilePicURL
+		return r.PhotoKey
 	case 13:
-		return r.FirstName
+		if r.PhotoThumbnailKey == "" {
+			return nil
+		}
+		return r.PhotoThumbnailKey
 	case 14:
-		return r.LastName
+		return r.FirstName
 	case 15:
-		return r.WholeName
+		return r.LastName
 	case 16:
-		return r.AddressLine1
+		return r.WholeName
 	case 17:
+		return r.AddressLine1
+	case 18:
 		if r.AddressLine2 == "" {
 			return nil
 		}
 		return r.AddressLine2
-	case 18:
-		return r.City
 	case 19:
-		return r.PostalCode
+		return r.City
 	case 20:
+		return r.PostalCode
+	case 21:
 		if r.Email == "" {
 			return nil
 		}
 		return r.Email
-	case 21:
+	case 22:
 		if r.PhoneNumber == "" {
 			return nil
 		}
 		return r.PhoneNumber
-	case 22:
+	case 23:
 		if r.EmergencyContactName == "" {
 			return nil
 		}
 		return r.EmergencyContactName
-	case 23:
+	case 24:
 		if r.EmergencyContactPhone == "" {
 			return nil
 		}
 		return r.EmergencyContactPhone
-	case 24:
+	case 25:
 		if r.ExternalID == "" {
 			return nil
 		}
 		return r.ExternalID
-	case 25:
-		return r.SearchVector
 	case 26:
-		return r.Rank
+		return r.SearchVector
 	case 27:
+		return r.Rank
+	case 28:
 		if r.AssignmentBlocked == "" {
 			return nil
 		}
 		return r.AssignmentBlocked
-	case 28:
-		return string(r.Gender)
 	case 29:
-		return r.CanBeAssigned
+		return string(r.Gender)
 	case 30:
-		return r.AvailableForDispatch
+		return r.CanBeAssigned
 	case 31:
+		return r.AvailableForDispatch
+	case 32:
 		if r.HomeLatitude == nil {
 			return nil
 		}
 		return *r.HomeLatitude
-	case 32:
+	case 33:
 		if r.HomeLongitude == nil {
 			return nil
 		}
 		return *r.HomeLongitude
-	case 33:
+	case 34:
 		if r.HomePlaceID == "" {
 			return nil
 		}
 		return r.HomePlaceID
-	case 34:
+	case 35:
 		if r.LastHomeAt == nil {
 			return nil
 		}
 		return *r.LastHomeAt
-	case 35:
-		return r.Version
 	case 36:
-		return r.CreatedAt
+		return r.Version
 	case 37:
+		return r.CreatedAt
+	case 38:
 		return r.UpdatedAt
 	}
 	return nil

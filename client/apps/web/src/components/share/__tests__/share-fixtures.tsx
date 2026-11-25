@@ -27,8 +27,7 @@ export const dana: RecordShareUser = {
   name: "Dana Whitfield",
   username: "dana",
   emailAddress: "dana@example.com",
-  profilePicUrl: "",
-  thumbnailUrl: "",
+  photo: null,
 };
 
 export const priya: RecordShareUser = {
@@ -36,8 +35,7 @@ export const priya: RecordShareUser = {
   name: "Priya Nair",
   username: "priya",
   emailAddress: "priya@example.com",
-  profilePicUrl: "",
-  thumbnailUrl: "",
+  photo: null,
 };
 
 export function share(overrides: Partial<RecordShare> = {}): RecordShare {

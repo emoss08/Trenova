@@ -1,6 +1,7 @@
 import { translate } from "@trenova/shared/i18n/runtime";
-import { z } from "zod/v4";
+import { z } from "zod";
 import { optionalIdSchema } from "./helpers";
+import { personPhotoSchema } from "./person-photo";
 import { roleSchema } from "./role";
 
 const stringArraySchema = z
@@ -397,6 +398,7 @@ export const securityUnenrolledMemberSchema = z.object({
     .number()
     .nullish()
     .transform((value) => value ?? null),
+  photo: personPhotoSchema.nullish().transform((value) => value ?? null),
 });
 
 export type SecurityUnenrolledMember = z.infer<typeof securityUnenrolledMemberSchema>;
