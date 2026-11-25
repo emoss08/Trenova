@@ -16,10 +16,9 @@ import {
   AgentInstructionLintDocument,
   AgentShadowReportDocument,
 } from "@trenova/graphql/generated/documents/agent/builder";
-import {
-  AgentDefinitionCardFieldsFragmentDoc,
-} from "@trenova/graphql/generated/documents/agent/definitions";
+import { AgentDefinitionCardFieldsFragmentDoc } from "@trenova/graphql/generated/documents/agent/definitions";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
+import { toAgentScopeInput, type AgentScope } from "@/lib/agent-scope";
 import { toAgentDefinitionRow, type AgentDefinitionRow } from "./agent-definition";
 
 type RequestOptions = { signal?: AbortSignal };
@@ -33,7 +32,7 @@ export const AGENT_VERSIONS_SHOWN = 20;
 
 export type InstructionLintRequest = {
   instructions: string;
-  toolNames: readonly string[];
+  scope: AgentScope;
 };
 
 /** What a draft's instructions ask for that none of its tools can do. Saves nothing. */
@@ -45,7 +44,7 @@ export async function fetchInstructionLint(
     document: AgentInstructionLintDocument,
     operationName: "AgentInstructionLint",
     variables: {
-      input: { instructions: request.instructions, toolNames: [...request.toolNames] },
+      input: { instructions: request.instructions, scope: toAgentScopeInput(request.scope) },
     },
     signal: options?.signal,
   });

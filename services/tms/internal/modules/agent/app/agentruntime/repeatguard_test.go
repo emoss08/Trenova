@@ -131,10 +131,10 @@ func TestRun_AnswersARepeatedReadFromTheFirst(t *testing.T) {
 	t.Parallel()
 
 	args := map[string]any{"status": "Completed"}
-	tool := queryTool("shipment_list", map[string]any{"results": []any{}}, nil)
+	tool := queryTool("shipment_list_view", map[string]any{"results": []any{}}, nil)
 	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
-		runtimetest.ToolTurn("shipment_list", args),
-		runtimetest.ToolTurn("shipment_list", args),
+		runtimetest.ToolTurn("shipment_list_view", args),
+		runtimetest.ToolTurn("shipment_list_view", args),
 		runtimetest.TextTurn("nothing found"),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{
@@ -142,7 +142,7 @@ func TestRun_AnswersARepeatedReadFromTheFirst(t *testing.T) {
 	}, &stubActionRegistry{}, nil)
 
 	result, err := rt.Run(t.Context(), &agentruntimeports.RunRequest{
-		Definition: runtimetest.Definition("shipment_list"),
+		Definition: runtimetest.Definition("shipment_list_view"),
 		Actor:      runtimetest.Actor(),
 		Input:      "anything",
 	})

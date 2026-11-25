@@ -20,7 +20,7 @@ func TestOpenTurn_RanksTheOpeningToolsOnTheWrittenNeed(t *testing.T) {
 		Actor:      runtimetest.Actor(),
 		Input:      "which ones are due?",
 	}
-	require.False(t, service.OpenTurn(t.Context(), vague).tools.Offers("equipment_list_trailers"),
+	require.False(t, service.OpenTurn(t.Context(), vague).tools.Offers("equipment_list_trailers_view"),
 		"the bare follow-up names nothing a tool covers")
 
 	framed := *vague
@@ -30,7 +30,7 @@ func TestOpenTurn_RanksTheOpeningToolsOnTheWrittenNeed(t *testing.T) {
 	}
 	turn := service.OpenTurn(t.Context(), &framed)
 
-	assert.True(t, turn.tools.Offers("equipment_list_trailers"), "the need names what the work is")
+	assert.True(t, turn.tools.Offers("equipment_list_trailers_view"), "the need names what the work is")
 	assert.Equal(
 		t,
 		"list trailers by inspection date\nwhich ones are due?",

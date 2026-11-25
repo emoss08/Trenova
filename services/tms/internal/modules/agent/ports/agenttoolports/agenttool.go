@@ -5,6 +5,8 @@ import (
 	"errors"
 	"slices"
 
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentcapability"
+
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
@@ -169,7 +171,7 @@ type CompanionTool interface {
 // its arguments in the order the work is done, the tool itself, and what
 // follows it. A model handed shipment_create with eight id parameters and
 // no order went looking for them one at a time, or guessed; the recipe is
-// told with the tool wherever it is named, in the prompt and in a find_tools
+// told with the tool wherever it is named, in the prompt and in a search_tools
 // answer, so one call does what three round trips used to.
 type RecipeTool interface {
 	Recipe() []string
@@ -184,6 +186,18 @@ const SelfScopeOwnerParam = "_owner"
 
 // DescribeTool builds a tool's descriptor, reading the optional interfaces
 // both registries share.
+func ModelDescription(tool interface {
+	Name() string
+	Description() string
+},
+) string {
+	return agentcapability.RewriteReaders(agentcapability.Describe(tool.Name(), tool.Description()))
+}
+
+func ModelSchema(tool interface{ ParamSchema() map[string]any }) map[string]any {
+	return agentcapability.RewriteSchema(tool.ParamSchema())
+}
+
 func DescribeTool(
 	tool interface {
 		Name() string
@@ -196,14 +210,15 @@ func DescribeTool(
 	descriptor := AgentToolDescriptor{
 		Name:         tool.Name(),
 		Namespace:    NamespaceOf(tool.Name()),
-		Description:  tool.Description(),
-		Parameters:   tool.ParamSchema(),
+		Description:  ModelDescription(tool),
+		Parameters:   ModelSchema(tool),
 		AutonomyTier: tier,
 		Query:        query,
 	}
 	if searchable, ok := tool.(SearchableTool); ok {
 		descriptor.SearchTerms = searchable.SearchTerms()
 	}
+	descriptor.SearchTerms = agentcapability.SearchTermsFor(descriptor.Name, descriptor.SearchTerms)
 	if dependent, ok := tool.(PrerequisiteTool); ok {
 		descriptor.Prerequisites = dependent.Prerequisites()
 	}

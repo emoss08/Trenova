@@ -171,7 +171,7 @@ func accessPreviewRequest(
 ) (*agentdefinitionports.PreviewAgentAudienceRequest, error) {
 	req := &agentdefinitionports.PreviewAgentAudienceRequest{
 		TenantInfo: tenant,
-		ToolNames:  input.ToolNames,
+		Scope:      *input.Scope,
 		Mode:       input.AccessMode,
 	}
 	if input.AgentID == nil || *input.AgentID == "" {

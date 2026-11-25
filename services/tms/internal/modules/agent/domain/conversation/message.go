@@ -93,7 +93,7 @@ type Message struct {
 	ToolSummary string                    `json:"summary,omitempty"     keel:"tool_summary,nullzero"`
 	ToolAsked   string                    `json:"asked,omitempty"       keel:"tool_asked,nullzero"`
 	FoundTools  []string                  `json:"foundTools,omitempty"  keel:"found_tools,jsonb,nullzero"`
-	// HandOffAgents are the person's other agents a find_tools answer named
+	// HandOffAgents are the person's other agents a search_tools answer named
 	// as holding what this agent could not call, set only on that call's
 	// result, so the Desk's hand-off menu offers them first.
 	HandOffAgents []pulid.ID `json:"handOffAgents,omitempty" keel:"hand_off_agents,jsonb,nullzero"`

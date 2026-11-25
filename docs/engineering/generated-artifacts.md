@@ -219,7 +219,7 @@ Add `-update` to pin its floors (`*retrieval.floors.json`). With
 `TRENOVA_EVAL_REQUIRE_FLOORS=true` and `TRENOVA_EVAL_REQUIRE_HYBRID=true` it fails rather than
 skips when floors, pgvector or the fixture are missing.
 
-A tool description edit can also move `find_tools` ranking below its floors
+A tool description edit can also move `search_tools` ranking below its floors
 (`agentevalgate/evals/toolselection.floors.json`); the failure lists the requests that no
 longer find their tool. Fix the description rather than the floor. The flag goes after the
 package. Unit Tests also runs the prompt-injection red-team suite; see

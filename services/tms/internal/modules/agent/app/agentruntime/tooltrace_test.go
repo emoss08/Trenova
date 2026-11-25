@@ -335,18 +335,18 @@ func TestRun_TotalsWhatEveryModelCallUsed(t *testing.T) {
 
 	first := decimal.RequireFromString("0.010")
 	second := decimal.RequireFromString("0.025")
-	read := runtimetest.ToolTurn("shipment_get", map[string]any{"proNumber": "12345"})
+	read := runtimetest.ToolTurn("shipment_get_view", map[string]any{"proNumber": "12345"})
 	read.InputTokens, read.OutputTokens, read.CostUSD = 1000, 40, &first
 	answer := runtimetest.TextTurn("It is in Memphis.")
 	answer.InputTokens, answer.OutputTokens, answer.CostUSD = 1200, 12, &second
 
 	rt := newRuntime(&scriptedCompletion{Turns: []*llmports.ChatCompletionResult{read, answer}},
 		&stubQueryRegistry{Tools: []agenttoolports.AgentQueryTool{
-			queryTool("shipment_get", map[string]any{"city": "Memphis"}, nil),
+			queryTool("shipment_get_view", map[string]any{"city": "Memphis"}, nil),
 		}}, &stubActionRegistry{}, nil)
 
 	result, err := rt.Run(t.Context(), &agentruntimeports.RunRequest{
-		Definition: runtimetest.Definition("shipment_get"),
+		Definition: runtimetest.Definition("shipment_get_view"),
 		Actor:      runtimetest.Actor(),
 		Input:      "Where is 12345?",
 	})

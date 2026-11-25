@@ -28,8 +28,8 @@ type heldRuntime struct {
 func (heldRuntime) ToolSummaries(
 	definition *agentdefinition.Definition,
 ) []agentturn.ToolSummary {
-	out := make([]agentturn.ToolSummary, 0, len(definition.ToolNames))
-	for _, name := range definition.ToolNames {
+	out := make([]agentturn.ToolSummary, 0, len(definition.Scope.Capabilities))
+	for _, name := range definition.Scope.Capabilities {
 		out = append(out, agentturn.ToolSummary{Name: name})
 	}
 
@@ -101,7 +101,7 @@ func newPreviewFixture(t *testing.T) *previewFixture {
 			Egress:   []agent.EgressClass{agent.EgressExternalRecipient},
 		},
 	}
-	f.agent.ToolNames = []string{"shipment_get"}
+	f.agent.Scope = agentdefinition.Scope{Capabilities: []string{"shipment_get"}}
 	f.agent.AccessMode = agentdefinition.AccessRoles
 
 	return &previewFixture{fixture: f, coverage: coverage, grants: grants}
@@ -124,7 +124,7 @@ func TestPreviewAudience_ReadsTheFormNotTheSavedAgent(t *testing.T) {
 		&agentdefinitionports.PreviewAgentAudienceRequest{
 			TenantInfo: f.tenant,
 			AgentID:    f.agent.ID,
-			ToolNames:  []string{"shipment_get", "customer_send_email"},
+			Scope:      agentdefinition.Scope{Capabilities: []string{"shipment_get", "customer_send_email"}},
 			Mode:       agentdefinition.AccessEveryone,
 		},
 	)
@@ -144,7 +144,7 @@ func TestPreviewAudience_ReadsTheFormNotTheSavedAgent(t *testing.T) {
 	)
 	require.NoError(t, err)
 	assert.Equal(t, agentdefinition.AccessRoles, stored.AccessMode, "a preview changes nothing")
-	assert.Equal(t, []string{"shipment_get"}, stored.ToolNames)
+	assert.Equal(t, []string{"shipment_get"}, stored.Scope.Capabilities)
 	assert.Empty(t, f.definitions.modeSets)
 
 	restricted, err := f.service.PreviewAudience(
@@ -152,7 +152,7 @@ func TestPreviewAudience_ReadsTheFormNotTheSavedAgent(t *testing.T) {
 		&agentdefinitionports.PreviewAgentAudienceRequest{
 			TenantInfo: f.tenant,
 			AgentID:    f.agent.ID,
-			ToolNames:  []string{"shipment_get", "customer_send_email"},
+			Scope:      agentdefinition.Scope{Capabilities: []string{"shipment_get", "customer_send_email"}},
 			Mode:       agentdefinition.AccessRoles,
 		},
 	)
@@ -171,7 +171,7 @@ func TestPreviewAudience_WorksForAnAgentNotYetSaved(t *testing.T) {
 		t.Context(),
 		&agentdefinitionports.PreviewAgentAudienceRequest{
 			TenantInfo: f.tenant,
-			ToolNames:  []string{" customer_send_email ", "customer_send_email", "", "not_a_tool"},
+			Scope:      agentdefinition.Scope{Capabilities: []string{" customer_send_email ", "customer_send_email", "", "not_a_tool"}},
 			Mode:       agentdefinition.AccessEveryone,
 		},
 	)
@@ -199,7 +199,7 @@ func TestPreviewAudience_ASystemAgentStaysOpen(t *testing.T) {
 		&agentdefinitionports.PreviewAgentAudienceRequest{
 			TenantInfo: f.tenant,
 			AgentID:    f.system.ID,
-			ToolNames:  []string{"customer_send_email"},
+			Scope:      agentdefinition.Scope{Capabilities: []string{"customer_send_email"}},
 			Mode:       agentdefinition.AccessRoles,
 		},
 	)
@@ -232,12 +232,12 @@ func TestPreviewAudience_RefusesABadRequest(t *testing.T) {
 		t.Context(),
 		&agentdefinitionports.PreviewAgentAudienceRequest{
 			TenantInfo: f.tenant,
-			ToolNames:  tooMany,
+			Scope:      agentdefinition.Scope{Capabilities: tooMany},
 			Mode:       agentdefinition.AccessEveryone,
 		},
 	)
 	require.ErrorAs(t, err, &invalid)
-	assert.Equal(t, "toolNames", invalid.Field())
+	assert.Equal(t, "scope", invalid.Field())
 
 	_, err = f.service.PreviewAudience(
 		t.Context(),

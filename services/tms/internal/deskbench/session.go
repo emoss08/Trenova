@@ -25,7 +25,7 @@ const (
 )
 
 var defaultAgentTemplates = []agenttemplate.Template{
-	agenttemplate.TemplateGeneralAssistant,
+	agenttemplate.TemplateUniversal,
 	agenttemplate.TemplateDispatchAssistant,
 }
 

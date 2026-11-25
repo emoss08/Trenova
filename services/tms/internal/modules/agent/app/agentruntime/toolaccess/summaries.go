@@ -24,7 +24,7 @@ func (s *Access) Summarize(
 		if tool, ok := s.queryTools.Get(name); ok {
 			summaries = append(summaries, agentturn.ToolSummary{
 				Name:        tool.Name(),
-				Description: tool.Description(),
+				Description: agenttoolports.ModelDescription(tool),
 				Query:       true,
 				Lookup:      agenttoolports.EffectOf(tool) == agenttooltrust.ToolEffectLookup,
 				Recipe:      recipeOf(tool),
@@ -40,7 +40,7 @@ func (s *Access) Summarize(
 		policy := tool.Policy()
 		summaries = append(summaries, agentturn.ToolSummary{
 			Name:                tool.Name(),
-			Description:         tool.Description(),
+			Description:         agenttoolports.ModelDescription(tool),
 			Tier:                agenttoolpolicy.StaticTier(definition, &policy),
 			PersonalRunsUnasked: policy.PersonalRunsUnasked && !tierSetFor(definition, name),
 			AlwaysProposes:      agenttoolpolicy.AlwaysProposes(definition, &policy),

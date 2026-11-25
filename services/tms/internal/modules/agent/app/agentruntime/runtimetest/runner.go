@@ -23,7 +23,7 @@ func Definition(tools ...string) *agentdefinition.Definition {
 		Name:            "Dispatch helper",
 		Instructions:    "Help dispatch.",
 		AutonomyCeiling: agent.TierPropose,
-		ToolNames:       tools,
+		Scope:           agentdefinition.Scope{Capabilities: tools},
 		Enabled:         true,
 	}
 	d.ApplyDefaults()

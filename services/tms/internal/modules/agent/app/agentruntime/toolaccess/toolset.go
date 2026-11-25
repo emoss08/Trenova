@@ -18,7 +18,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreset"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aianalytics"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
@@ -47,14 +46,14 @@ const (
 	DisclosureThreshold = aiconfig.DefaultToolDisclosureThreshold
 
 	// PreselectedTools is how many the turn opens with once disclosure is on.
-	PreselectedTools = 8
+	PreselectedTools = 3
 
-	// foundToolsLimit bounds one find_tools answer. A search that returns
+	// foundToolsLimit bounds one search_tools answer. A search that returns
 	// fifteen tools has re-created the problem it was added to solve.
 	foundToolsLimit = 6
 )
 
-// MaxFindCalls bounds find_tools per turn. A search is not charged against
+// MaxFindCalls bounds search_tools per turn. A search is not charged against
 // the tool budget — looking for the right tool is not doing work — so a model
 // that searches in a loop has to be stopped by something else.
 const MaxFindCalls = 4
@@ -126,6 +125,7 @@ type ToolSet struct {
 	Loaded     map[string]struct{}
 	Allowed    []string
 	Beyond     []string
+	Scope      agentdefinition.Scope
 	Disclosed  bool
 	unattended bool
 	FindCalls  int
@@ -187,6 +187,7 @@ func (s *Access) openToolSet(ctx context.Context, req *ToolSetRequest) *ToolSet 
 		},
 		Self:       req.Definition.ID,
 		DataAccess: req.Definition.DataAccessSensitivity(),
+		Scope:      req.Definition.Scope,
 	}
 	s.readPlan(ctx, set)
 
@@ -204,7 +205,7 @@ func (s *Access) openToolSet(ctx context.Context, req *ToolSetRequest) *ToolSet 
 			s.Load(set, name)
 		}
 		if searchable {
-			set.add(runtimetools.FindToolsSpec())
+			set.add(runtimetools.SearchToolsSpec())
 		}
 		s.declare(set, req)
 		s.openCoreTools(set, waiting, text)
@@ -217,15 +218,10 @@ func (s *Access) openToolSet(ctx context.Context, req *ToolSetRequest) *ToolSet 
 
 	set.Disclosed = true
 	set.held = len(selected)
-	for _, name := range agentpreset.StandingTools(req.Definition.Template) {
+	for _, name := range req.Definition.PinnedTools {
 		s.Load(set, name)
 	}
-	// Whether a question needs many reads is the model's to judge once it
-	// sees the first result, which is after the turn's tools are fixed, so
-	// the script tool rides on every turn that may run one rather than
-	// waiting on a search the model would not think to make.
-	s.Load(set, "analysis_run")
-	set.add(runtimetools.FindToolsSpec())
+	set.add(runtimetools.SearchToolsSpec())
 	s.declare(set, req)
 
 	s.openCoreTools(set, waiting, text)
@@ -294,6 +290,12 @@ func (s *Access) openCoreTools(set *ToolSet, waiting []string, text string) {
 }
 
 var deferredCoreTools = []string{
+	"agent_list_memories",
+	"agent_create_memory",
+	"agent_edit_memory",
+	"agent_find_page",
+	"agent_open_page",
+	"describe_entity",
 	"agent_cancel_wait",
 	"agent_guide_profile",
 	"agent_raise_exception",
@@ -410,7 +412,7 @@ func (s *Access) freeze(set *ToolSet) {
 	slices.SortFunc(set.Specs, func(a, b kernelports.ToolSpec) int {
 		return strings.Compare(a.Name, b.Name)
 	})
-	if set.Offers("find_tools") {
+	if set.Offers(runtimetools.SearchToolsName) {
 		reachable := slices.Concat(set.Allowed, set.Beyond)
 		deferred := make([]string, 0, len(reachable))
 		for _, name := range reachable {
@@ -438,7 +440,7 @@ func (t *ToolSet) TakeLoaded() []string {
 // is one. A lookup that exists to hand one write its arguments brings the
 // write: shipment_match_records was loaded on its own, its answer said to
 // call shipment_create next, and the model went looking for shipment_create
-// with find_tools first. A lookup many recipes start from (shipment_list,
+// with search_tools first. A lookup many recipes start from (shipment_list,
 // shipment_get) brings none of them.
 func soleFed(allowed, fed []string) string {
 	held := ""
@@ -478,20 +480,9 @@ func (s *Access) carryOver(set *ToolSet, history []conversation.Message) {
 				"request_decision",
 				"withdraw_proposal",
 				"name_plan":
-			case "find_tools":
-				if names, stored := found[call.ID]; stored {
-					for _, name := range names {
-						s.Load(set, name)
-					}
-					continue
-				}
-				need, _ := call.Arguments["need"].(string)
-				if strings.TrimSpace(need) == "" {
-					continue
-				}
-				matched := s.catalog.Find(set.Allowed, need, foundToolsLimit)
-				for idx := range matched {
-					s.Load(set, matched[idx].Name)
+			case runtimetools.SearchToolsName:
+				for _, name := range found[call.ID] {
+					s.Load(set, name)
 				}
 			default:
 				s.Load(set, call.Name)
@@ -523,161 +514,6 @@ func rankingText(input string, history []conversation.Message) string {
 	return retrievalports.TurnQueryText(input, history)
 }
 
-// ResolveFind answers a find_tools call and reports what it loaded.
-//
-// The answer names the tools in the same words the model will see them in, so a
-// model that cannot infer from a bare list still has the description in front of
-// it on the next turn.
-func (s *Access) ResolveFind(
-	ctx context.Context,
-	set *ToolSet,
-	actor *permissionports.RequestActor,
-	arguments map[string]any,
-) FindAnswer {
-	need, _ := arguments["need"].(string)
-	if strings.TrimSpace(need) == "" {
-		return FindAnswer{
-			Content: "Say what you need in a few words — the tools are matched against it.",
-		}
-	}
-	metrics := s.findMetrics(ctx, set, actor, need)
-	// A turn that was sent everything has nothing left to load; the answer
-	// can still say what exists beyond the agent.
-	if !set.Searchable() {
-		content, handOff := s.nothingLoaded(ctx, set, actor, need)
-
-		return FindAnswer{Content: metrics.WithTools(content), HandOff: handOff}
-	}
-
-	found := s.withNamedTools(set.Allowed, need, s.catalog.FindHybrid(agenttoolcatalog.Query{
-		Allowed:      set.Allowed,
-		Text:         need,
-		Limit:        foundToolsLimit,
-		Semantic:     s.ToolSemantic(ctx, actorTenant(actor), set.Query),
-		SkipSemantic: set.Loaded,
-	}))
-	load := s.loadFound(set, found)
-	names, callable, added, alongside := load.names, load.callable, load.added, load.alongside
-
-	reached := s.reachBeyond(ctx, set, actor, need, s.strongestMatch(need, callable, added))
-	for idx := range reached {
-		names = append(names, reached[idx].Name)
-	}
-
-	if len(added) == 0 && len(callable) == 0 && len(reached) == 0 {
-		if metrics.Text != "" {
-			return FindAnswer{Content: metrics.Text, Found: metrics.Names(names)}
-		}
-		content, handOff := s.nothingLoaded(ctx, set, actor, need)
-
-		return FindAnswer{Content: content, Found: names, HandOff: handOff}
-	}
-
-	var b strings.Builder
-	if len(callable) > 0 {
-		b.WriteString("These tools you already hold match, are already loaded and can be " +
-			"called now:\n")
-		writeToolLines(&b, callable)
-	}
-	if len(added) > 0 {
-		if b.Len() > 0 {
-			b.WriteByte('\n')
-		}
-		b.WriteString("These tools are now callable:\n")
-		writeToolLines(&b, added)
-		if len(alongside) > 0 {
-			fmt.Fprintf(&b, "Loaded with them, because their ids come from these: %s.\n",
-				strings.Join(alongside, ", "))
-		}
-	}
-	if len(reached) > 0 {
-		if b.Len() > 0 {
-			b.WriteByte('\n')
-		}
-		b.WriteString(BeyondLead)
-		writeToolLines(&b, reached)
-	}
-	if len(added) == 0 && len(reached) == 0 {
-		fmt.Fprintf(&b, "\nNothing new matched %q beyond those.", need)
-	}
-
-	return FindAnswer{
-		Content: metrics.WithTools(strings.TrimRight(b.String(), "\n")),
-		Found:   metrics.Names(names),
-	}
-}
-
-type foundLoad struct {
-	names     []string
-	callable  []agenttoolports.AgentToolDescriptor
-	added     []agenttoolports.AgentToolDescriptor
-	alongside []string
-}
-
-func (s *Access) loadFound(
-	set *ToolSet,
-	found []agenttoolports.AgentToolDescriptor,
-) foundLoad {
-	load := foundLoad{
-		names:     make([]string, 0, len(found)),
-		callable:  make([]agenttoolports.AgentToolDescriptor, 0, len(found)),
-		added:     make([]agenttoolports.AgentToolDescriptor, 0, len(found)),
-		alongside: make([]string, 0, 4),
-	}
-	for idx := range found {
-		descriptor := &found[idx]
-		load.names = append(load.names, descriptor.Name)
-		if set.Offers(descriptor.Name) {
-			load.callable = append(load.callable, *descriptor)
-			continue
-		}
-		before := len(set.Pending)
-		if s.Load(set, descriptor.Name) {
-			load.added = append(load.added, *descriptor)
-			for _, name := range set.Pending[before:] {
-				if name != descriptor.Name {
-					load.alongside = append(load.alongside, name)
-				}
-			}
-		}
-	}
-
-	return load
-}
-
-const BeyondLead = "These come from the desks of the person's other agents and are now " +
-	"callable here, under the same approvals as on those desks:\n"
-
-func (s *Access) reachBeyond(
-	ctx context.Context,
-	set *ToolSet,
-	actor *permissionports.RequestActor,
-	need string,
-	ownScore int,
-) []agenttoolports.AgentToolDescriptor {
-	if len(set.Beyond) == 0 {
-		return nil
-	}
-	found := s.withNamedTools(set.Beyond, need, s.catalog.FindHybrid(agenttoolcatalog.Query{
-		Allowed:    set.Beyond,
-		Text:       need,
-		Limit:      foundToolsLimit,
-		Semantic:   s.ToolSemantic(ctx, actorTenant(actor), set.Query),
-		StrongOnly: true,
-	}))
-	reached := make([]agenttoolports.AgentToolDescriptor, 0, len(found))
-	for idx := range found {
-		if ownScore > 0 && s.catalog.StrongScore(found[idx].Name, need) <= ownScore {
-			continue
-		}
-		if set.Offers(found[idx].Name) || s.Load(set, found[idx].Name) {
-			reached = append(reached, found[idx])
-		}
-	}
-
-	return reached
-}
-
 func (s *Access) strongestMatch(
 	need string,
 	matches ...[]agenttoolports.AgentToolDescriptor,
@@ -693,7 +529,7 @@ func (s *Access) strongestMatch(
 }
 
 // withNamedTools puts first the tools a need names outright. The prompt lists
-// what find_tools can load by name, and a model that asked for "worker_list"
+// what search_tools can load by name, and a model that asked for "worker_list"
 // by name was handed six other tools ranked above it and searched again.
 func (s *Access) withNamedTools(
 	allowed []string,
@@ -772,8 +608,8 @@ func (s *Access) unheldStrongMatches(set *ToolSet, need string) []string {
 
 // unheldRefusal answers a call to a tool the agent does not hold.
 //
-// The old answer told the model to call find_tools on turns where find_tools
-// was not offered, and find_tools could not have loaded the tool anyway. This
+// The old answer told the model to call search_tools on turns where search_tools
+// was not offered, and search_tools could not have loaded the tool anyway. This
 // says which of the two it is — not enabled, or no such tool — and hands over
 // the nearest tools the agent does hold, loaded, so the next call can work.
 func (s *Access) unheldRefusal(set *ToolSet, name string, exists bool) string {
@@ -802,8 +638,8 @@ func (s *Access) unheldRefusal(set *ToolSet, name string, exists bool) string {
 		return b.String()
 	}
 
-	if set.Offers("find_tools") {
-		b.WriteString(" Call find_tools with what you are trying to do.")
+	if set.Offers(runtimetools.SearchToolsName) {
+		b.WriteString(" Call search_tools with what you are trying to do.")
 	} else {
 		b.WriteString(" Use one of the tools you have, or tell the person what is missing.")
 	}
@@ -844,18 +680,16 @@ func (s *Access) UnheldOutcome(set *ToolSet, name string) toolcall.Result {
 // holds the tool that runs a script over its tools, unless an administrator switched it off
 // for the agent; whether a turn is shown it is the code-mode gate's to decide.
 func (s *Access) HeldTools(definition *agentdefinition.Definition) []string {
-	names := definition.EffectiveToolNames()
-
-	selected := len(names)
-	for idx := range selected {
+	names := definition.Holds(s.catalog.Names())
+	held := len(names)
+	for idx := range held {
 		for _, companion := range s.catalog.Companions(names[idx]) {
-			if !slices.Contains(names, companion) &&
-				!slices.Contains(definition.DisabledToolNames, companion) {
+			if !slices.Contains(names, companion) && definition.AllowsTool(companion) {
 				names = append(names, companion)
 			}
 		}
 	}
-	held := len(names)
+	held = len(names)
 	for idx := range held {
 		for _, prerequisite := range s.catalog.Prerequisites(names[idx]) {
 			if s.catalog.IsQuery(prerequisite) && !slices.Contains(names, prerequisite) {
@@ -870,8 +704,8 @@ func (s *Access) HeldTools(definition *agentdefinition.Definition) []string {
 func (s *Access) withScripts(definition *agentdefinition.Definition, names []string) []string {
 	if !s.LooksUp("analysis_run") ||
 		slices.Contains(names, "analysis_run") ||
-		slices.Contains(definition.DisabledToolNames, "analysis_run") ||
-		!slices.ContainsFunc(names, scriptable) {
+		slices.Contains(definition.Scope.DenyCapabilities, "analysis_run") ||
+		slices.Contains(definition.Scope.DenyAreas, agentdefinition.AllAreas) {
 		return names
 	}
 
@@ -887,70 +721,6 @@ func scriptable(name string) bool {
 
 func (s *Access) holds(definition *agentdefinition.Definition, name string) bool {
 	return slices.Contains(s.HeldTools(definition), name)
-}
-
-// nothingLoaded explains an empty search without overstating it.
-//
-// Searching only what the agent holds is correct — find_tools must never reach
-// past its configuration — but the old answer turned that into "this system
-// does not track it", and a model repeated it as fact. Asked four times whether
-// a reports tool existed, it said no four times, growing more certain each
-// time, while report_list sat in the catalog unassigned to that agent.
-//
-// So the catalog is searched a second time with no allowlist, and the answer
-// distinguishes the two cases it was conflating: nothing like this exists, or
-// it exists and this agent was not given it. The second names the tools, because
-// "ask an administrator to enable something" is not actionable without the name
-// — the person ended up supplying it from their side of the conversation.
-//
-// Naming them widens nothing. The specs are not loaded and the guard still
-// refuses a call to anything outside the allowlist. The person's other agents
-// that hold them are returned beside the answer, for the hand-off menu.
-func (s *Access) nothingLoaded(
-	ctx context.Context,
-	set *ToolSet,
-	actor *permissionports.RequestActor,
-	need string,
-) (string, []pulid.ID) {
-	unheld := s.unheldStrongMatches(set, need)
-	elsewhere := make([]agenttoolports.AgentToolDescriptor, 0, len(unheld))
-	for _, name := range unheld {
-		if set.Usable != nil && !set.Usable(name) {
-			continue
-		}
-		if descriptor, ok := s.catalog.Descriptor(name); ok {
-			elsewhere = append(elsewhere, descriptor)
-		}
-	}
-
-	if len(elsewhere) == 0 {
-		return fmt.Sprintf(
-			"Nothing further matched %q, and everything that did is already loaded. "+
-				"Use what you have. If this system genuinely does not track it, say so "+
-				"— but only about the data, not about tools you cannot see.",
-			need,
-		), nil
-	}
-
-	var b strings.Builder
-	fmt.Fprintf(&b, "Nothing you can call matched %q. These exist in this system but "+
-		"are not enabled for this agent:\n", need)
-	writeToolLines(&b, elsewhere)
-	names := make([]string, 0, len(elsewhere))
-	for idx := range elsewhere {
-		names = append(names, elsewhere[idx].Name)
-	}
-	if note, holders := s.handOffNote(ctx, actor, set.Self, names); note != "" {
-		b.WriteString("\nYou cannot call them. " + note +
-			" Do not say the system has no such capability.")
-
-		return b.String(), holders
-	}
-	b.WriteString("\nYou cannot call them. Tell the person these exist and that an " +
-		"administrator can add them to this agent in AI Control, naming them exactly " +
-		"as above. Do not say the system has no such capability.")
-
-	return b.String(), nil
 }
 
 // PermittedTools keeps the names whose tool the actor may use: read for a
@@ -1136,15 +906,15 @@ func (s *Access) SpecFor(name string) (kernelports.ToolSpec, bool) {
 	if tool, ok := s.queryTools.Get(name); ok {
 		return kernelports.ToolSpec{
 			Name:        tool.Name(),
-			Description: tool.Description(),
-			Parameters:  tool.ParamSchema(),
+			Description: agenttoolports.ModelDescription(tool),
+			Parameters:  agenttoolports.ModelSchema(tool),
 		}, true
 	}
 	if tool, ok := s.actionTools.Get(name); ok {
 		return kernelports.ToolSpec{
 			Name:        tool.Name(),
-			Description: tool.Description(),
-			Parameters:  tool.ParamSchema(),
+			Description: agenttoolports.ModelDescription(tool),
+			Parameters:  agenttoolports.ModelSchema(tool),
 		}, true
 	}
 
@@ -1214,9 +984,9 @@ func (s *Access) NoteFound(
 	req *agentruntimeports.RunRequest,
 	set *ToolSet,
 	arguments map[string]any,
-	answer *FindAnswer,
+	answer *SearchAnswer,
 ) {
-	need, _ := arguments["need"].(string)
+	need, _ := arguments[searchQueryParam].(string)
 
 	s.disclosures.Found(ctx, &agenttoolports.ToolDisclosure{
 		Attribution: TurnAttribution(req),

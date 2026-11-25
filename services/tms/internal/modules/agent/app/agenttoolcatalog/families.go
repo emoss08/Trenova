@@ -4,7 +4,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 )
 
-// maxFamilySize bounds a family. A find_tools answer is kept short on
+// maxFamilySize bounds a family. A search_tools answer is kept short on
 // purpose, and a family that drags in ten tools re-creates the list it was
 // narrowed from.
 const maxFamilySize = 4
@@ -14,7 +14,7 @@ const maxFamilySize = 4
 //
 // A search matches words, and a model that asked for "run the report" was
 // handed report_run alone. Its first move with it was to look the report up,
-// which took a second find_tools for report_list and a third for
+// which took a second search_tools for report_list and a third for
 // report_get: three round trips for one step of work. A family is not a
 // grant — a member the agent does not hold is still never offered — it only
 // saves the model from searching for something it will need next.

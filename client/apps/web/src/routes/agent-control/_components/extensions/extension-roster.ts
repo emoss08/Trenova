@@ -1,3 +1,10 @@
+import {
+  allowTool,
+  denyTool,
+  scopeAllows,
+  type AgentScope,
+  type AgentScopeLike,
+} from "@/lib/agent-scope";
 import type { AgentExtensionCatalogItem } from "@/types/agent-extension";
 
 export const extensionStatusFilters = ["all", "on", "off"] as const;
@@ -144,26 +151,22 @@ export function dailyUsageShare(item: AgentExtensionCatalogItem): number {
 
 type ExtensionTools = readonly { name: string }[];
 
-/** Whether an agent holds an extension: every tool the extension adds is among its own. */
-export function holdsExtension(toolNames: readonly string[], tools: ExtensionTools): boolean {
-  return tools.length > 0 && tools.every((tool) => toolNames.includes(tool.name));
+/** Whether an agent holds an extension: its scope allows every tool the extension adds. */
+export function holdsExtension(scope: AgentScopeLike, tools: ExtensionTools): boolean {
+  return tools.length > 0 && tools.every((tool) => scopeAllows(scope, tool.name));
 }
 
 /**
- * An agent's tools with an extension given or taken away: giving adds the tools it lacks
- * after its own, taking removes only the extension's.
+ * An agent's scope with an extension given or taken away: giving allows each of its tools by
+ * name unless an area already allows it, taking switches off only the extension's.
  */
 export function withExtensionTools(
-  toolNames: readonly string[],
+  scope: AgentScope,
   tools: ExtensionTools,
   give: boolean,
-): string[] {
-  const names = new Set(tools.map((tool) => tool.name));
-  if (!give) {
-    return toolNames.filter((name) => !names.has(name));
-  }
-  return [
-    ...toolNames,
-    ...tools.map((tool) => tool.name).filter((name) => !toolNames.includes(name)),
-  ];
+): AgentScope {
+  return tools.reduce(
+    (next, tool) => (give ? allowTool(next, tool.name) : denyTool(next, tool.name)),
+    scope,
+  );
 }

@@ -1032,8 +1032,8 @@ export type AgentAccessPreviewInput = {
   accessMode: AgentAccessMode;
   /** The agent being edited, so each role says whether it is granted now. Absent for a new one. */
   agentId?: string | number | null | undefined;
-  /** The tools the form has chosen. Core tools every agent holds need not be listed. At most 200. */
-  toolNames: Array<string>;
+  /** The scope the form has chosen. */
+  scope: AgentScopeInput;
 };
 
 /** How much of an agent a role could use. */
@@ -1235,12 +1235,11 @@ export type AgentExternalRead =
   | 'Marked'
   | 'Never';
 
-/** Instructions as the builder holds them, with the tools the draft holds. */
+/** Instructions as the builder holds them, with the scope the draft holds. */
 export type AgentInstructionLintInput = {
-  disabledToolNames?: Array<string> | null | undefined;
   /** At most 20000 characters. */
   instructions: string;
-  toolNames: Array<string>;
+  scope: AgentScopeInput;
 };
 
 /** How well the chat agents a person may use fit a question. */
@@ -1535,6 +1534,13 @@ export type AgentRunTrigger =
   | 'Scheduled'
   | 'Wait';
 
+export type AgentScopeInput = {
+  areas?: Array<string> | null | undefined;
+  capabilities?: Array<string> | null | undefined;
+  denyAreas?: Array<string> | null | undefined;
+  denyCapabilities?: Array<string> | null | undefined;
+};
+
 export type AgentScorecardInput = {
   agentDefinitionId: string | number;
   window?: AgentScorecardWindow | null | undefined;
@@ -1647,7 +1653,6 @@ export type AgentTemplate =
   | 'FactoringClerk'
   | 'FormulaAssistant'
   | 'FuelTaxClerk'
-  | 'GeneralAssistant'
   | 'ImportAssistant'
   | 'InsightAnalyst'
   | 'IntakeDesk'
@@ -1659,6 +1664,7 @@ export type AgentTemplate =
   | 'ServiceFailureDesk'
   | 'SettlementsClerk'
   | 'ShipmentIntake'
+  | 'Universal'
   | 'WorkforceCoordinator';
 
 export type AgentToolEffect =
@@ -11359,7 +11365,7 @@ export type AgentScorecardQueryVariables = Exact<{
 
 export type AgentScorecardQuery = { agentScorecard: { ' $fragmentRefs'?: { 'AgentScorecardFieldsFragment': AgentScorecardFieldsFragment } } };
 
-export type MyAgentFieldsFragment = { id: string, name: string, description: string, template: AgentTemplate | null, icon: string, accent: string, toolNames: Array<string>, systemKey: string, starters: Array<{ label: string, prompt: string }>, delegates: Array<{ id: string, name: string, icon: string, accent: string, template: AgentTemplate | null }> } & { ' $fragmentName'?: 'MyAgentFieldsFragment' };
+export type MyAgentFieldsFragment = { id: string, name: string, description: string, template: AgentTemplate | null, icon: string, accent: string, systemKey: string, scope: { areas: Array<string> | null, capabilities: Array<string> | null, denyAreas: Array<string> | null, denyCapabilities: Array<string> | null }, starters: Array<{ label: string, prompt: string }>, delegates: Array<{ id: string, name: string, icon: string, accent: string, template: AgentTemplate | null }> } & { ' $fragmentName'?: 'MyAgentFieldsFragment' };
 
 export type MyAgentsQueryVariables = Exact<{
   input: MyAgentsInput;
@@ -11716,7 +11722,7 @@ export type DraftAgentFromDescriptionMutationVariables = Exact<{
 }>;
 
 
-export type DraftAgentFromDescriptionMutation = { draftAgentFromDescription: { name: string, description: string, icon: string, accent: string, instructions: string, guardrails: Array<string>, triggerMode: AgentTriggerMode, cronExpression: string, cronTimezone: string, eventKinds: Array<string>, intervalSeconds: number, toolNames: Array<string>, toolTiers: unknown, autonomyCeiling: AgentAutonomyTier, dataAccessCeiling: AgentDataAccessCeiling, outputMode: AgentOutputMode, enabled: boolean, shadowMode: boolean, decisionTimeoutSeconds: number, runTimeoutSeconds: number, maxToolCalls: number, maxConcurrentRuns: number, notes: Array<{ field: string, value: string, reason: string }> } };
+export type DraftAgentFromDescriptionMutation = { draftAgentFromDescription: { name: string, description: string, icon: string, accent: string, instructions: string, guardrails: Array<string>, triggerMode: AgentTriggerMode, cronExpression: string, cronTimezone: string, eventKinds: Array<string>, intervalSeconds: number, pinnedTools: Array<string>, toolTiers: unknown, autonomyCeiling: AgentAutonomyTier, dataAccessCeiling: AgentDataAccessCeiling, outputMode: AgentOutputMode, enabled: boolean, shadowMode: boolean, decisionTimeoutSeconds: number, runTimeoutSeconds: number, maxToolCalls: number, maxConcurrentRuns: number, scope: { areas: Array<string> | null, capabilities: Array<string> | null, denyAreas: Array<string> | null, denyCapabilities: Array<string> | null }, notes: Array<{ field: string, value: string, reason: string }> } };
 
 export type TightenAgentInstructionsMutationVariables = Exact<{
   instructions: string;
@@ -11810,7 +11816,7 @@ export type RecentDecisionsQuery = { recentDecisions: Array<{ id: string, decisi
       & { ' $fragmentRefs'?: { 'PendingProposalFieldsFragment': PendingProposalFieldsFragment } }
     ) }> };
 
-export type AgentDefinitionCardFieldsFragment = { id: string, organizationId: string, businessUnitId: string, name: string, description: string | null, template: AgentTemplate | null, icon: string, accent: string, instructions: string, guardrails: Array<string>, toolNames: Array<string>, toolTiers: unknown, autonomyCeiling: AgentAutonomyTier, dataAccessCeiling: AgentDataAccessCeiling, enabled: boolean | null, shadowMode: boolean, decisionTimeoutSeconds: number, triggerMode: AgentTriggerMode, cronExpression: string, cronTimezone: string, eventKinds: Array<string>, intervalSeconds: number, endsAt: number | null, maxConcurrentRuns: number, runTimeoutSeconds: number, maxToolCalls: number, monthlyBudgetUsd: string | null, dailyRunLimit: number, toolDailyLimits: unknown, simulationMode: boolean, memoryTokenBudget: number | null, learningOff: boolean, contextProviders: Array<AgentContextProvider>, outputMode: AgentOutputMode, preferredProviderId: string, systemKey: string | null, delegateIds: Array<string>, accessMode: AgentAccessMode | null, unattendedRoleId: string | null, lastRunAt: number | null, nextRunAt: number | null, pendingProposals: number, openRuns: number, version: number, createdAt: number, updatedAt: number, starters: Array<{ label: string, prompt: string }>, delegates: Array<{ id: string, name: string, icon: string, accent: string, enabled: boolean | null, triggerMode: AgentTriggerMode }>, accessRoles: Array<{ id: string, name: string }> } & { ' $fragmentName'?: 'AgentDefinitionCardFieldsFragment' };
+export type AgentDefinitionCardFieldsFragment = { id: string, organizationId: string, businessUnitId: string, name: string, description: string | null, template: AgentTemplate | null, icon: string, accent: string, instructions: string, guardrails: Array<string>, pinnedTools: Array<string>, toolTiers: unknown, autonomyCeiling: AgentAutonomyTier, dataAccessCeiling: AgentDataAccessCeiling, enabled: boolean | null, shadowMode: boolean, decisionTimeoutSeconds: number, triggerMode: AgentTriggerMode, cronExpression: string, cronTimezone: string, eventKinds: Array<string>, intervalSeconds: number, endsAt: number | null, maxConcurrentRuns: number, runTimeoutSeconds: number, maxToolCalls: number, monthlyBudgetUsd: string | null, dailyRunLimit: number, toolDailyLimits: unknown, simulationMode: boolean, memoryTokenBudget: number | null, learningOff: boolean, contextProviders: Array<AgentContextProvider>, outputMode: AgentOutputMode, preferredProviderId: string, systemKey: string | null, delegateIds: Array<string>, accessMode: AgentAccessMode | null, unattendedRoleId: string | null, lastRunAt: number | null, nextRunAt: number | null, pendingProposals: number, openRuns: number, version: number, createdAt: number, updatedAt: number, scope: { areas: Array<string> | null, capabilities: Array<string> | null, denyAreas: Array<string> | null, denyCapabilities: Array<string> | null }, starters: Array<{ label: string, prompt: string }>, delegates: Array<{ id: string, name: string, icon: string, accent: string, enabled: boolean | null, triggerMode: AgentTriggerMode }>, accessRoles: Array<{ id: string, name: string }> } & { ' $fragmentName'?: 'AgentDefinitionCardFieldsFragment' };
 
 export type AgentDefinitionCardsQueryVariables = Exact<{
   input: DataTableConnectionInput;
@@ -11820,7 +11826,7 @@ export type AgentDefinitionCardsQueryVariables = Exact<{
 
 export type AgentDefinitionCardsQuery = { agentDefinitions: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'AgentDefinitionCardFieldsFragment': AgentDefinitionCardFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
-export type AgentChoiceFieldsFragment = { id: string, name: string, description: string | null, template: AgentTemplate | null, icon: string, accent: string, toolNames: Array<string>, systemKey: string | null, starters: Array<{ label: string, prompt: string }> } & { ' $fragmentName'?: 'AgentChoiceFieldsFragment' };
+export type AgentChoiceFieldsFragment = { id: string, name: string, description: string | null, template: AgentTemplate | null, icon: string, accent: string, systemKey: string | null, scope: { areas: Array<string> | null, capabilities: Array<string> | null, denyAreas: Array<string> | null, denyCapabilities: Array<string> | null }, starters: Array<{ label: string, prompt: string }> } & { ' $fragmentName'?: 'AgentChoiceFieldsFragment' };
 
 export type AgentChoicesQueryVariables = Exact<{
   input: DataTableConnectionInput;

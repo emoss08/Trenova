@@ -984,8 +984,8 @@ type AgentAccessPreview struct {
 type AgentAccessPreviewInput struct {
 	// The agent being edited, so each role says whether it is granted now. Absent for a new one.
 	AgentID *string `json:"agentId,omitempty"`
-	// The tools the form has chosen. Core tools every agent holds need not be listed. At most 200.
-	ToolNames []string `json:"toolNames"`
+	// The scope the form has chosen.
+	Scope *agentdefinition.Scope `json:"scope"`
 	// Who the form says may use it. A system agent is always Everyone.
 	AccessMode agentdefinition.AccessMode `json:"accessMode"`
 }
@@ -1225,12 +1225,11 @@ type AgentFingerprintChange struct {
 	To    string `json:"to"`
 }
 
-// Instructions as the builder holds them, with the tools the draft holds.
+// Instructions as the builder holds them, with the scope the draft holds.
 type AgentInstructionLintInput struct {
 	// At most 20000 characters.
-	Instructions      string   `json:"instructions"`
-	ToolNames         []string `json:"toolNames"`
-	DisabledToolNames []string `json:"disabledToolNames,omitempty"`
+	Instructions string                 `json:"instructions"`
+	Scope        *agentdefinition.Scope `json:"scope"`
 }
 
 // A tool that matched a question.

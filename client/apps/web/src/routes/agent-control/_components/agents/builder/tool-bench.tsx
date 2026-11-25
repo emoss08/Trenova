@@ -6,8 +6,9 @@ import { SearchLgIcon, XCloseIcon } from "@trenova/shared/components/icons";
 import { Input } from "@trenova/shared/components/ui/input";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
+import { denyTool, MAX_PINNED_TOOLS } from "@/lib/agent-scope";
 import { lazy, Suspense, useMemo, useState, type CSSProperties } from "react";
-import { useFormContext } from "react-hook-form";
+import { useFormContext, useFormState } from "react-hook-form";
 import { TOOL_PICKER_PARAM, toolPickerParser } from "../../../ai-control-tabs";
 import { useAddressedFlag } from "../../../use-addressed-flag";
 import { Callout } from "../../edit/callout";
@@ -16,14 +17,15 @@ import { Ic } from "../../kit/ic";
 import { tierWithin, type AgentFormValues } from "../agent-form-schema";
 import {
   TIER_ORDER,
+  defaultTier,
   groupToolsByResource,
   impliedReads,
   splitCoreTools,
-  toggleTool,
   toolTitle,
 } from "../tool-catalog";
 import { useDraftField } from "./block";
-import { aboveCeiling, capToCeiling, changeTiers } from "./builder-model";
+import { aboveCeiling, capToCeiling, changeTiers, chosenTools } from "./builder-model";
+import { ScopePanel } from "./scope-panel";
 import { egressLabel, furthest, tierName } from "./tool-picker-model";
 import { Button } from "@trenova/shared/components/ui/button";
 
@@ -64,13 +66,16 @@ type ToolBenchProps = {
 const NAMED_ABOVE_CEILING = 3;
 
 /**
- * What the agent can read and change, how much freedom each change gets, and the limits
- * that hold however each tool is set: the ceiling, data access and how long a proposal
- * waits.
+ * What the agent may do, the tools that gives it and how much freedom each change gets, and
+ * the limits that hold however each tool is set: the ceiling, data access and how long a
+ * proposal waits. A tool's freedom is only ever set stricter than its default; more is earned
+ * from approvals, so a tier above the default is offered only where it was already saved.
  */
 export function ToolBench({ catalog, rules }: ToolBenchProps) {
   const t = useT();
-  const [toolNames, setToolNames] = useDraftField("toolNames");
+  const [scope, setScope] = useDraftField("scope");
+  const [limited] = useDraftField("limited");
+  const [pinned, setPinned] = useDraftField("pinnedTools");
   const [toolTiers, setToolTiers] = useDraftField("toolTiers");
   const [limits, setLimits] = useDraftField("toolDailyLimits");
   const [ceiling, setCeiling] = useDraftField("autonomyCeiling");
@@ -81,26 +86,27 @@ export function ToolBench({ catalog, rules }: ToolBenchProps) {
   const [picking, setPicking] = useAddressedFlag(TOOL_PICKER_PARAM, toolPickerParser);
   const [pickerLoaded, setPickerLoaded] = useState(false);
   const { control } = useFormContext<AgentFormValues>();
+  const { defaultValues } = useFormState({ control });
+  const savedTiers = (defaultValues?.toolTiers ?? {}) as Record<string, AutonomyTier | undefined>;
   const [alsoOpen, setAlsoOpen] = useState(false);
 
   const { core, selectable } = useMemo(() => splitCoreTools(catalog), [catalog]);
-  const held = useMemo(() => {
-    const chosen = new Set(toolNames);
-    return selectable.filter((tool) => chosen.has(tool.name));
-  }, [selectable, toolNames]);
+  const held = useMemo(() => chosenTools({ scope, limited }, catalog), [catalog, limited, scope]);
+  const heldNames = useMemo(() => held.map((tool) => tool.name), [held]);
   const changes = held.filter((tool) => tool.kind === "action");
   const reads = held.filter((tool) => tool.kind === "query");
   const visible = held.filter((tool) =>
     filter === "act" ? tool.kind === "action" : filter === "read" ? tool.kind === "query" : true,
   );
   const groups = useMemo(
-    () => groupToolsByResource(visible, toolNames, query),
-    [query, toolNames, visible],
+    () => groupToolsByResource(visible, heldNames, query),
+    [query, heldNames, visible],
   );
-  const implied = useMemo(() => impliedReads(toolNames, catalog), [catalog, toolNames]);
-  const { byTier } = changeTiers({ toolNames, toolTiers, autonomyCeiling: ceiling }, catalog);
+  const implied = useMemo(() => impliedReads(heldNames, catalog), [catalog, heldNames]);
+  const draft = { scope, limited, toolTiers, autonomyCeiling: ceiling };
+  const { byTier } = changeTiers(draft, catalog);
   const counts = TIER_ORDER.map((tier) => byTier[tier]);
-  const over = aboveCeiling({ toolNames, toolTiers, autonomyCeiling: ceiling }, catalog);
+  const over = aboveCeiling(draft, catalog);
   const overTitles = over.tools.map((name) => {
     const tool = catalog.find((entry) => entry.name === name);
     return tool ? toolTitle(tool) : name;
@@ -112,10 +118,20 @@ export function ToolBench({ catalog, rules }: ToolBenchProps) {
     setPickerLoaded(true);
     setPicking(true);
   };
-  const remove = (name: string) => {
-    const next = toggleTool(toolNames, toolTiers, name, false);
-    setToolNames(next.selected);
-    setToolTiers(next.tiers);
+  const switchOff = (name: string) => {
+    setScope(denyTool(scope, name, limited));
+    if (pinned.includes(name)) setPinned(pinned.filter((entry) => entry !== name));
+  };
+  const togglePin = (name: string) => {
+    if (pinned.includes(name)) {
+      setPinned(pinned.filter((entry) => entry !== name));
+    } else if (pinned.length < MAX_PINNED_TOOLS) {
+      setPinned([...pinned, name]);
+    }
+  };
+  const setTier = (tool: ToolCatalogEntry, tier: AutonomyTier) => {
+    const { [tool.name]: _previous, ...rest } = toolTiers;
+    setToolTiers(tier === defaultTier(tool) ? rest : { ...rest, [tool.name]: tier });
   };
   const setLimit = (name: string, raw: string) => {
     const digits = raw.replace(/\D/g, "");
@@ -185,10 +201,11 @@ export function ToolBench({ catalog, rules }: ToolBenchProps) {
       )}
       <div className="bench">
         <div className="bench-l">
+          <ScopePanel selectable={selectable} catalog={catalog} onChoose={openPicker} />
           <div className="bench-tb">
             <Button type="button" variant="outline" size="sm" onClick={openPicker}>
               <Ic n="plus" s={12} />
-              {t("Add tools")}
+              {t("Choose capabilities")}
             </Button>
             <Input
               value={query}
@@ -258,8 +275,12 @@ export function ToolBench({ catalog, rules }: ToolBenchProps) {
                   )
                   .map((tool) => {
                     const change = tool.kind === "action";
-                    const own = (toolTiers[tool.name] as AutonomyTier | undefined) ?? ceiling;
+                    const standard = defaultTier(tool);
+                    const own =
+                      (toolTiers[tool.name] as AutonomyTier | undefined) ?? standard ?? ceiling;
                     const top = maxTier(tool);
+                    const earned = savedTiers[tool.name];
+                    const isPinned = pinned.includes(tool.name);
                     const rule = rules.get(tool.name);
                     const egress = furthest(rule);
                     const outside = rule ? rule.readsExternal !== "Never" : false;
@@ -283,7 +304,11 @@ export function ToolBench({ catalog, rules }: ToolBenchProps) {
                             aria-label={t("Freedom for {0}", title)}
                           >
                             {TIER_ORDER.map((tier) => {
-                              const over = !tierWithin(tier, top);
+                              const unearned =
+                                standard !== undefined &&
+                                !tierWithin(tier, standard) &&
+                                earned !== tier;
+                              const over = !tierWithin(tier, top) || unearned;
                               const above = !tierWithin(tier, ceiling);
                               return (
                                 <button
@@ -294,13 +319,21 @@ export function ToolBench({ catalog, rules }: ToolBenchProps) {
                                   disabled={over}
                                   className={cn(own === tier && "on", above && "above")}
                                   title={
-                                    over
-                                      ? t("This tool can't go past {0}", tierName(top, t))
-                                      : above
-                                        ? t("Above the ceiling — runs as {0}", tierName(ceiling, t))
-                                        : undefined
+                                    unearned && standard
+                                      ? t(
+                                          "Runs at {0} by default. More freedom is earned from approvals.",
+                                          tierName(standard, t),
+                                        )
+                                      : over
+                                        ? t("This tool can't go past {0}", tierName(top, t))
+                                        : above
+                                          ? t(
+                                              "Above the ceiling — runs as {0}",
+                                              tierName(ceiling, t),
+                                            )
+                                          : undefined
                                   }
-                                  onClick={() => setToolTiers({ ...toolTiers, [tool.name]: tier })}
+                                  onClick={() => setTier(tool, tier)}
                                 >
                                   {over && <Ic n="lock" s={9} />}
                                   {tierName(tier, t)}
@@ -323,17 +356,41 @@ export function ToolBench({ catalog, rules }: ToolBenchProps) {
                         ) : (
                           <span className="br-rd dim">—</span>
                         )}
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon-xs"
-                          className="text-muted-foreground hover:text-foreground br-x"
-                          title={t("Remove {0}", title)}
-                          aria-label={t("Remove {0}", title)}
-                          onClick={() => remove(tool.name)}
-                        >
-                          <Ic n="x" s={11} />
-                        </Button>
+                        <span className="br-a">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon-xs"
+                            className={cn(
+                              "br-x text-muted-foreground hover:text-foreground",
+                              isPinned && "on",
+                            )}
+                            aria-pressed={isPinned}
+                            disabled={!isPinned && pinned.length >= MAX_PINNED_TOOLS}
+                            title={
+                              isPinned
+                                ? t("Unpin {0}", title)
+                                : pinned.length >= MAX_PINNED_TOOLS
+                                  ? t("At most {0} tools are kept at hand", MAX_PINNED_TOOLS)
+                                  : t("Keep {0} at hand on every turn", title)
+                            }
+                            aria-label={isPinned ? t("Unpin {0}", title) : t("Pin {0}", title)}
+                            onClick={() => togglePin(tool.name)}
+                          >
+                            <Ic n="bookmark" s={11} />
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon-xs"
+                            className="br-x text-muted-foreground hover:text-foreground"
+                            title={t("Switch off {0}", title)}
+                            aria-label={t("Switch off {0}", title)}
+                            onClick={() => switchOff(tool.name)}
+                          >
+                            <Ic n="x" s={11} />
+                          </Button>
+                        </span>
                       </div>
                     );
                   })}
@@ -342,10 +399,14 @@ export function ToolBench({ catalog, rules }: ToolBenchProps) {
             {held.length === 0 && (
               <div className="bench-e">
                 <b>{t("No tools yet")}</b>
-                <span>{t("Without tools it can only explain how Trenova works.")}</span>
+                <span>
+                  {t(
+                    "Choose an area above or capabilities one by one. Until then it can only explain how Trenova works.",
+                  )}
+                </span>
                 <Button type="button" variant="default" size="sm" onClick={openPicker}>
                   <Ic n="plus" s={12} />
-                  {t("Add tools")}
+                  {t("Choose capabilities")}
                 </Button>
               </div>
             )}

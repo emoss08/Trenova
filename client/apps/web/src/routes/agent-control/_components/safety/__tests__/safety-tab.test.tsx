@@ -101,7 +101,14 @@ const summary: AgentSafetySummary = {
 };
 
 const agents = [
-  definition("agdef_1", "Customer desk", { toolNames: ["customer_send_email"] }),
+  definition("agdef_1", "Customer desk", {
+    scope: {
+      areas: [],
+      capabilities: ["customer_send_email"],
+      denyAreas: [],
+      denyCapabilities: [],
+    },
+  }),
   definition("agdef_2", "Dispatch desk"),
   definition("agdef_3", "Billing desk", { enabled: false }),
   definition("agdef_4", "Rates desk"),

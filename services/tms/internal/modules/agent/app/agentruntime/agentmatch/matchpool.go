@@ -106,8 +106,8 @@ func (s *Matcher) recommendableTools(
 	agents []*agentdefinition.Definition,
 ) (held []map[string]struct{}, union []string) {
 	held = make([]map[string]struct{}, len(agents))
-	seen := make(map[string]struct{}, agentdefinition.MaxTools)
-	union = make([]string, 0, agentdefinition.MaxTools)
+	seen := make(map[string]struct{}, agentdefinition.MaxPinnedTools)
+	union = make([]string, 0, agentdefinition.MaxPinnedTools)
 	for idx, definition := range agents {
 		names := agentdefinition.WithoutCoreTools(s.access.HeldTools(definition))
 		held[idx] = make(map[string]struct{}, len(names))

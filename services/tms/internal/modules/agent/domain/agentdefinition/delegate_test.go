@@ -20,7 +20,7 @@ func delegateErrors(t *testing.T, d *agentdefinition.Definition) []string {
 
 	messages := make([]string, 0, len(multiErr.Errors))
 	for _, e := range multiErr.Errors {
-		if strings.HasPrefix(e.Field, "delegateIds") {
+		if strings.HasPrefix(e.Field(), "delegateIds") {
 			messages = append(messages, e.Message)
 		}
 	}
@@ -199,7 +199,7 @@ func TestBuildSystemPrompt_ADelegatedTurnReportsToTheAgentThatAsked(t *testing.T
 	assert.NotContains(t, prompt, "## Agents you can ask")
 }
 
-func TestBuildSystemPrompt_SaysFindToolsReachesThePersonsOtherAgents(t *testing.T) {
+func TestBuildSystemPrompt_SaysSearchToolsSearchesEveryCapability(t *testing.T) {
 	t.Parallel()
 
 	d := validDefinition()
@@ -216,9 +216,11 @@ func TestBuildSystemPrompt_SaysFindToolsReachesThePersonsOtherAgents(t *testing.
 		ReachesBeyond:  true,
 	})
 
-	assert.Contains(t, reaching, "find_tools also reaches the tools of the person's other agents")
+	assert.Contains(t, reaching, "search_tools searches every capability Trenova has")
+	assert.Contains(t, reaching, "not_in_this_agent")
 	assert.NotContains(t, reaching, "are the only ones you have")
 	assert.Contains(t, alone, "are the only ones you have")
-	assert.NotContains(t, alone, "other agents")
-	assert.Contains(t, disclosed, "find_tools also reaches the tools of the person's other agents")
+	assert.NotContains(t, alone, "search_tools")
+	assert.Contains(t, disclosed, "You hold more capabilities than are loaded on this turn")
+	assert.Contains(t, disclosed, "run search_tools with the specific need")
 }

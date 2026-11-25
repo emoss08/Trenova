@@ -8,13 +8,14 @@ import {
 import { z } from "zod";
 import { pageDraftEditSchema, pageDraftSchema } from "./page-draft";
 import { translate } from "@trenova/shared/i18n/runtime";
+import { MAX_PINNED_TOOLS } from "@/lib/agent-scope";
 
 export const agentTemplateKindSchema = z.enum([
   "DispatchAssistant",
   "BillingAssistant",
   "ComplianceAssistant",
   "CustomerAssistant",
-  "GeneralAssistant",
+  "Universal",
   "BillingException",
   "DispatchAssignment",
   "ImportAssistant",
@@ -189,6 +190,20 @@ const nullableList = <T extends z.ZodType>(item: T) =>
   z.preprocess((value) => value ?? [], z.array(item));
 
 /**
+ * What an agent may do: areas and capabilities allowed or denied. Both allowed lists empty is
+ * everything the person may do. See `lib/agent-scope.ts`.
+ */
+export const agentScopeSchema = z.preprocess(
+  (value) => value ?? {},
+  z.object({
+    areas: nullableList(z.string()),
+    capabilities: nullableList(z.string()),
+    denyAreas: nullableList(z.string()),
+    denyCapabilities: nullableList(z.string()),
+  }),
+);
+
+/**
  * An enum-typed Go string the server leaves unset. A plain string field
  * marshals as `""`, which is not one of the enum's values.
  *
@@ -279,7 +294,8 @@ export const agentDefinitionSchema = z.object({
   /** Organization-authored instructions, placed after Trenova's safety preamble. */
   instructions: z.string().optional().default(""),
   guardrails: nullableList(z.string()),
-  toolNames: nullableList(z.string()),
+  scope: agentScopeSchema,
+  pinnedTools: nullableList(z.string()),
   toolTiers: toolTiersSchema,
   autonomyCeiling: autonomyTierSchema,
   dataAccessCeiling: dataAccessCeilingSchema.default("Internal"),
@@ -441,7 +457,22 @@ export const saveAgentDefinitionRequestSchema = z.object({
     .optional()
     .default(""),
   guardrails: z.array(z.string()).default([]),
-  toolNames: z.array(z.string()).default([]),
+  scope: z
+    .object({
+      areas: z.array(z.string()).default([]),
+      capabilities: z.array(z.string()).default([]),
+      denyAreas: z.array(z.string()).default([]),
+      denyCapabilities: z.array(z.string()).default([]),
+    })
+    .default({ areas: [], capabilities: [], denyAreas: [], denyCapabilities: [] }),
+  /** Capabilities loaded on every turn. */
+  pinnedTools: z
+    .array(z.string())
+    .max(MAX_PINNED_TOOLS, {
+      error: () =>
+        translate("An agent can keep at most {0} capabilities at hand", MAX_PINNED_TOOLS),
+    })
+    .default([]),
   toolTiers: z.record(z.string(), autonomyTierSchema).default({}),
   autonomyCeiling: autonomyTierSchema,
   dataAccessCeiling: dataAccessCeilingSchema.default("Internal"),
@@ -960,7 +991,7 @@ export const assistantMessageSchema = z.object({
   /** On a tool result: how the runtime judged the call; absent from a result saved before it was kept. */
   toolVerdict: optionalToolVerdict,
   /**
-   * On a find_tools result: the person's other agents it named as holding what
+   * On a search_tools result: the person's other agents it named as holding what
    * this agent could not call, which the hand-off menu offers first.
    */
   handOffAgents: z.array(z.string()).nullish().catch(null),
@@ -1216,7 +1247,7 @@ export const pageAgentSchema = z.object({
   icon: z.string().optional().default(""),
   accent: z.string().optional().default(""),
   systemKey: z.string().optional().default(""),
-  toolNames: z.preprocess((value) => value ?? [], z.array(z.string())),
+  scope: agentScopeSchema,
   starters: z.preprocess(
     (value) => value ?? [],
     z.array(z.object({ label: z.string(), prompt: z.string() })),
@@ -1904,7 +1935,7 @@ export const assistantToolFinishedEventSchema = z.object({
   summary: z.string().optional(),
   asked: z.string().optional(),
   verdict: optionalToolVerdict,
-  /** The person's other agents a find_tools answer named as holding what this agent lacks. */
+  /** The person's other agents a search_tools answer named as holding what this agent lacks. */
   handOffAgents: z.array(z.string()).nullish().catch(null),
   /** The records the call's result described, in the order the result named them. */
   records: z.array(entityRefSchema).nullish().catch(null),

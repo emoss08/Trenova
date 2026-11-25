@@ -39,7 +39,6 @@ func (s *Service) Patch(
 			return nil, err
 		}
 	}
-	updated.ForgetReheldTools()
 	updated.PruneDelegateTopics()
 	updated.NoteEnabledChange(previous.Enabled, actorUser(actor), timeutils.NowUnix())
 

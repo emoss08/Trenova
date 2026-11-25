@@ -359,7 +359,7 @@ func TestRun_AReplayedStepShowsWhatTheOriginalCallShowed(t *testing.T) {
 	t.Parallel()
 
 	ledger := runtimetest.NewKeyedLedger()
-	search := queryTool("worker_list", map[string]any{
+	search := queryTool("worker_list_view", map[string]any{
 		"results": []any{map[string]any{"name": "Maria Ortiz"}},
 	}, nil)
 	runID := pulid.MustNew("ar_")
@@ -368,7 +368,7 @@ func TestRun_AReplayedStepShowsWhatTheOriginalCallShowed(t *testing.T) {
 	shown := make([]any, 0, 2)
 	for attempt := 1; attempt <= 2; attempt++ {
 		completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
-			runtimetest.ToolTurn("worker_list", map[string]any{"query": "Maria"}),
+			runtimetest.ToolTurn("worker_list_view", map[string]any{"query": "Maria"}),
 			runtimetest.TextTurn("Maria Ortiz."),
 		}}
 		rt := newRuntime(completion,
@@ -376,7 +376,7 @@ func TestRun_AReplayedStepShowsWhatTheOriginalCallShowed(t *testing.T) {
 			&stubActionRegistry{}, nil)
 
 		_, err := rt.Run(t.Context(), &agentruntimeports.RunRequest{
-			Definition: runtimetest.Definition("worker_list"),
+			Definition: runtimetest.Definition("worker_list_view"),
 			Actor:      runtimetest.Actor(),
 			Input:      "Who is Maria?",
 			RunID:      runID,
@@ -414,7 +414,7 @@ func TestRun_TheObserverIsToldTheArgumentsTheToolRanWith(t *testing.T) {
 	t.Parallel()
 
 	ledger := runtimetest.NewKeyedLedger()
-	list := queryTool("shipment_list", map[string]any{
+	list := queryTool("shipment_list_view", map[string]any{
 		"items": []any{map[string]any{"proNumber": "S-1001"}},
 	}, nil)
 	list.Schema = map[string]any{
@@ -429,7 +429,7 @@ func TestRun_TheObserverIsToldTheArgumentsTheToolRanWith(t *testing.T) {
 	ranWith := make([]map[string]any, 0, 2)
 	for attempt := 1; attempt <= 2; attempt++ {
 		completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
-			runtimetest.ToolTurn("shipment_list", map[string]any{"ids": "shp_1"}),
+			runtimetest.ToolTurn("shipment_list_view", map[string]any{"ids": "shp_1"}),
 			runtimetest.TextTurn("One shipment."),
 		}}
 		rt := newRuntime(completion,
@@ -437,7 +437,7 @@ func TestRun_TheObserverIsToldTheArgumentsTheToolRanWith(t *testing.T) {
 			&stubActionRegistry{}, nil)
 
 		_, err := rt.Run(t.Context(), &agentruntimeports.RunRequest{
-			Definition: runtimetest.Definition("shipment_list"),
+			Definition: runtimetest.Definition("shipment_list_view"),
 			Actor:      runtimetest.Actor(),
 			Input:      "Show shipment shp_1",
 			RunID:      runID,

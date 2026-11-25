@@ -220,14 +220,19 @@ describe("pageThreadSchema", () => {
         icon: "",
         accent: "",
         systemKey: "import_assistant",
-        toolNames: null,
+        scope: { areas: null, capabilities: ["formula.list"], denyAreas: null, denyCapabilities: null },
         starters: null,
       },
     });
 
     expect(parsed.thread.origin).toBe("Import");
     expect(parsed.thread.taintedAt).toBe(10);
-    expect(parsed.agent.toolNames).toEqual([]);
+    expect(parsed.agent.scope).toEqual({
+      areas: [],
+      capabilities: ["formula.list"],
+      denyAreas: [],
+      denyCapabilities: [],
+    });
     expect(parsed.agent.starters).toEqual([]);
   });
 });

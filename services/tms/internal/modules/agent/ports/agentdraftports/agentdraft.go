@@ -37,7 +37,8 @@ type AgentDraft struct {
 	CronTimezone           string                            `json:"cronTimezone"`
 	EventKinds             []agenttrigger.EventKind          `json:"eventKinds"`
 	IntervalSeconds        int                               `json:"intervalSeconds"`
-	ToolNames              []string                          `json:"toolNames"`
+	Scope                  agentdefinition.Scope             `json:"scope"`
+	PinnedTools            []string                          `json:"pinnedTools"`
 	ToolTiers              map[string]agent.AutonomyTier     `json:"toolTiers"`
 	AutonomyCeiling        agent.AutonomyTier                `json:"autonomyCeiling"`
 	DataAccessCeiling      agentdefinition.DataAccessCeiling `json:"dataAccessCeiling"`

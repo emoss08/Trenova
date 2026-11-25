@@ -467,7 +467,7 @@ type AssistantToolFinishedEvent struct {
 	// values, with every record by its name and never its id.
 	Asked   string `json:"asked,omitempty"`
 	Verdict string `json:"verdict,omitempty"`
-	// HandOffAgents are the person's other agents a find_tools answer named
+	// HandOffAgents are the person's other agents a search_tools answer named
 	// as holding what this agent could not load, the same ids the saved
 	// tool message keeps, so a reader can offer the hand-off while the turn
 	// is still running.

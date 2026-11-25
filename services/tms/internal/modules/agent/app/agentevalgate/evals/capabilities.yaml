@@ -1,0 +1,193 @@
+# Realistic requests and the capability that should answer each one first. A capability is an
+# entity read (<entity>.list or <entity>.get, answered by records_query or record_get) or a
+# specialized capability by name. The harness (capability_harness_test.go) scores search,
+# calls per request, schema tokens per turn, false "not available" answers and proposals
+# where a read was expected, and prints the table in docs/engineering/agent-capabilities.md.
+#
+# agent: universal (everything the person may do), dispatch, billing or safety (dedicated
+# desks). denied: permissions the person lacks. status: what search must say about the
+# expected capability (available, not_permitted, not_in_this_agent).
+# includes: the related sections the answer needs from a get.
+cases:
+  # Short and vague
+  - {request: invoice list, kind: vague, expect: invoice.list, args: {entity: invoice}, shape: list}
+  - {request: invoices, kind: vague, expect: invoice.list, args: {entity: invoice}, shape: list}
+  - {request: unpaid invoices, kind: vague, expect: invoice.list, args: {entity: invoice}, shape: list}
+  - {request: bills for a customer, kind: vague, expect: invoice.list, args: {entity: invoice}, shape: list}
+  - {request: open bills Sunbelt, kind: vague, expect: invoice.list, args: {entity: invoice}, shape: list}
+  - {request: past due invoices, kind: vague, expect: invoice.list, args: {entity: invoice}, shape: list}
+  - {request: who's free, kind: vague, expect: dispatch_rank_candidates, shape: list}
+  - {request: late loads, kind: vague, expect: shipment.list, args: {entity: shipment}, shape: list}
+  - {request: shipment list, kind: vague, expect: shipment.list, args: {entity: shipment}, shape: list}
+  - {request: loads, kind: vague, expect: shipment.list, args: {entity: shipment}, shape: list}
+  - {request: driver list, kind: vague, expect: worker.list, args: {entity: worker}, shape: list}
+  - {request: drivers, kind: vague, expect: worker.list, args: {entity: worker}, shape: list}
+  - {request: trucks, kind: vague, expect: tractor.list, args: {entity: tractor}, shape: list}
+  - {request: trailers, kind: vague, expect: trailer.list, args: {entity: trailer}, shape: list}
+  - {request: reefers, kind: vague, expect: trailer.list, args: {entity: trailer}, shape: list}
+  - {request: customers, kind: vague, expect: customer.list, args: {entity: customer}, shape: list}
+  - {request: carriers, kind: vague, expect: carrier.list, args: {entity: carrier}, shape: list}
+  - {request: locations, kind: vague, expect: location.list, args: {entity: location}, shape: list}
+  - {request: orders, kind: vague, expect: order.list, args: {entity: order}, shape: list}
+  - {request: ready to bill, kind: vague, expect: billing_queue_item.list, args: {entity: billing_queue_item}, shape: list}
+  - {request: billing queue, kind: vague, expect: billing_queue_item.list, args: {entity: billing_queue_item}, shape: list}
+  - {request: open ar, kind: vague, expect: receivable_open_item.list, args: {entity: receivable_open_item}, shape: list}
+  - {request: aging, kind: vague, expect: receivable_get_aging, shape: record}
+  - {request: driver pay, kind: vague, expect: driver_settlement.list, args: {entity: driver_settlement}, shape: list}
+  - {request: carrier pay, kind: vague, expect: carrier_settlement.list, args: {entity: carrier_settlement}, shape: list}
+  - {request: fuel purchases, kind: vague, expect: fuel_purchase.list, args: {entity: fuel_purchase}, shape: list}
+  - {request: ifta, kind: vague, expect: ifta_return.list, args: {entity: ifta_return}, shape: list}
+  - {request: edi tenders, kind: vague, expect: edi_transfer.list, args: {entity: edi_transfer}, shape: list}
+  - {request: edi messages, kind: vague, expect: edi_message.list, args: {entity: edi_message}, shape: list}
+  - {request: expiring licenses, kind: vague, expect: worker_credential.list, args: {entity: worker_credential}, shape: list}
+  - {request: pto, kind: vague, expect: worker_time_off.list, args: {entity: worker_time_off}, shape: list}
+  - {request: exceptions, kind: vague, expect: watchtower_item.list, args: {entity: watchtower_item}, shape: list}
+  - {request: service failures, kind: vague, expect: service_failure.list, args: {entity: service_failure}, shape: list}
+  - {request: detention, kind: vague, expect: detention_occurrence.list, args: {entity: detention_occurrence}, shape: list}
+  - {request: inbox, kind: vague, expect: inbound_message.list, args: {entity: inbound_message}, shape: list}
+  - {request: reports, kind: vague, expect: report.list, args: {entity: report}, shape: list}
+  - {request: dashboards, kind: vague, expect: dashboard.list, args: {entity: dashboard}, shape: list}
+  - {request: journal entries, kind: vague, expect: journal_entry.list, args: {entity: journal_entry}, shape: list}
+  - {request: rate agreements, kind: vague, expect: rate_agreement.list, args: {entity: rate_agreement}, shape: list}
+  - {request: rate cons, kind: vague, expect: rate_confirmation.list, args: {entity: rate_confirmation}, shape: list}
+  - {request: payments received, kind: vague, expect: customer_payment.list, args: {entity: customer_payment}, shape: list}
+  - {request: safety events, kind: vague, expect: worker_safety_event.list, args: {entity: worker_safety_event}, shape: list}
+  - {request: memories, kind: vague, expect: agent_memory.list, args: {entity: agent_memory}, shape: list}
+  - {request: dispatch board, kind: vague, expect: dispatch_get_board, shape: record}
+
+  # Specific reads
+  - {request: list the invoices for Acme that are past due by more than 30 days, kind: specific, expect: invoice.list, args: {entity: invoice}, shape: list}
+  - {request: how many invoices did we post last month, kind: specific, expect: invoice.list, args: {entity: invoice, countOnly: true}, shape: count}
+  - {request: show invoice 10442, kind: specific, expect: invoice.get, args: {entity: invoice}, shape: record}
+  - {request: which shipments are picking up today, kind: specific, expect: shipment.list, args: {entity: shipment}, shape: list}
+  - {request: how many loads are on hold right now, kind: specific, expect: shipment.list, args: {entity: shipment, countOnly: true}, shape: count}
+  - {request: unassigned loads delivering tomorrow, kind: specific, expect: shipment.list, args: {entity: shipment}, shape: list}
+  - {request: new reefer loads for Sunbelt picking up in Los Angeles this week with comments and tracking, kind: specific, expect: shipment.list, args: {entity: shipment}, shape: list, includes: [comments, tracking]}
+  - {request: loads delivering in Texas this week, kind: specific, expect: shipment.list, args: {entity: shipment}, shape: list}
+  - {request: shipments assigned to driver Maria Lopez, kind: specific, expect: shipment.list, args: {entity: shipment}, shape: list}
+  - {request: which loads is tractor 512 pulling, kind: specific, expect: shipment.list, args: {entity: shipment}, shape: list}
+  - {request: loads covered by carrier Swift this month, kind: specific, expect: shipment.list, args: {entity: shipment}, shape: list}
+  - {request: shipments carrying frozen chicken, kind: specific, expect: shipment.list, args: {entity: shipment}, shape: list}
+  - {request: count loads by status, kind: specific, expect: shipment.list, args: {entity: shipment}, shape: groups}
+  - {request: everything about load 4471, kind: specific, expect: shipment.get, args: {entity: shipment}, shape: record, includes: [stops, moves, comments, rating, tracking, documents]}
+  - {request: who is driving pro 123, kind: specific, expect: shipment.get, args: {entity: shipment}, shape: record, includes: [assignments]}
+  - {request: where is load 4471 right now, kind: specific, expect: shipment.get, args: {entity: shipment}, shape: record, includes: [tracking]}
+  - {request: what documents are missing on shipment 8812, kind: specific, expect: shipment.get, args: {entity: shipment}, shape: record, includes: [documents]}
+  - {request: comments on load 7710, kind: specific, expect: shipment.get, args: {entity: shipment}, shape: record, includes: [comments]}
+  - {request: active drivers at the Dallas terminal, kind: specific, expect: worker.list, args: {entity: worker}, shape: list}
+  - {request: how many hours does driver 2231 have left, kind: specific, expect: worker.get, args: {entity: worker}, shape: record, includes: [hos]}
+  - {request: which driver medical cards expire this month, kind: specific, expect: worker_credential.list, args: {entity: worker_credential}, shape: list}
+  - {request: drivers out on vacation next week, kind: specific, expect: worker_time_off.list, args: {entity: worker_time_off}, shape: list}
+  - {request: tractors out of service, kind: specific, expect: tractor.list, args: {entity: tractor}, shape: list}
+  - {request: trailers due for registration renewal, kind: specific, expect: trailer.list, args: {entity: trailer}, shape: list}
+  - {request: where are my trucks right now, kind: specific, expect: equipment_list_positions, shape: list}
+  - {request: customers on credit hold, kind: specific, expect: customer.list, args: {entity: customer}, shape: list}
+  - {request: carriers whose insurance expires this month, kind: specific, expect: carrier.list, args: {entity: carrier}, shape: list}
+  - {request: driver settlements waiting for approval, kind: specific, expect: driver_settlement.list, args: {entity: driver_settlement}, shape: list}
+  - {request: carrier settlements unpaid over 30 days, kind: specific, expect: carrier_settlement.list, args: {entity: carrier_settlement}, shape: list}
+  - {request: fuel purchases over 300 gallons last week, kind: specific, expect: fuel_purchase.list, args: {entity: fuel_purchase}, shape: list}
+  - {request: ifta return for the third quarter, kind: specific, expect: ifta_return.list, args: {entity: ifta_return}, shape: list}
+  - {request: edi transfers that failed today, kind: specific, expect: edi_transfer.list, args: {entity: edi_transfer}, shape: list}
+  - {request: x12 214 messages that were rejected, kind: specific, expect: edi_message.list, args: {entity: edi_message}, shape: list}
+  - {request: journal entries posted to fuel expense this month, kind: specific, expect: journal_entry.list, args: {entity: journal_entry}, shape: list}
+  - {request: accounting sync records that failed, kind: specific, expect: accounting_sync_record.list, args: {entity: accounting_sync_record}, shape: list}
+  - {request: factoring submissions rejected by the factor, kind: specific, expect: factoring_submission.list, args: {entity: factoring_submission}, shape: list}
+  - {request: detention occurrences at the Walmart DC, kind: specific, expect: detention_occurrence.list, args: {entity: detention_occurrence}, shape: list}
+  - {request: late delivery service failures for Acme, kind: specific, expect: service_failure.list, args: {entity: service_failure}, shape: list}
+  - {request: unread emails from shippers, kind: specific, expect: inbound_message.list, args: {entity: inbound_message}, shape: list}
+  - {request: the payments Acme sent last week, kind: specific, expect: customer_payment.list, args: {entity: customer_payment}, shape: list}
+  - {request: bank deposits that did not reconcile, kind: specific, expect: bank_receipt_exception.list, args: {entity: bank_receipt_exception}, shape: list}
+  - {request: billing queue items on hold, kind: specific, expect: billing_queue_item.list, args: {entity: billing_queue_item}, shape: list}
+  - {request: rate agreements expiring this quarter, kind: specific, expect: rate_agreement.list, args: {entity: rate_agreement}, shape: list}
+  - {request: what is the doe diesel price this week, kind: specific, expect: fuel_index_price.list, args: {entity: fuel_index_price}, shape: list}
+  - {request: hazmat commodities, kind: specific, expect: commodity.list, args: {entity: commodity}, shape: list}
+  - {request: accessorial charge codes, kind: specific, expect: accessorial_charge.list, args: {entity: accessorial_charge}, shape: list}
+  - {request: hold reasons we use, kind: specific, expect: hold_reason.list, args: {entity: hold_reason}, shape: list}
+  - {request: pay profiles for owner operators, kind: specific, expect: pay_profile.list, args: {entity: pay_profile}, shape: list}
+  - {request: advances issued to drivers this month, kind: specific, expect: pay_advance.list, args: {entity: pay_advance}, shape: list}
+  - {request: dot random draws this year, kind: specific, expect: worker_dot_random_draw.list, args: {entity: worker_dot_random_draw}, shape: list}
+  - {request: injuries reported last quarter, kind: specific, expect: worker_injury.list, args: {entity: worker_injury}, shape: list}
+  - {request: performance reviews due, kind: specific, expect: performance_review.list, args: {entity: performance_review}, shape: list}
+  - {request: what agent runs failed today, kind: specific, expect: agent_run.list, args: {entity: agent_run}, shape: list}
+  - {request: insights about late deliveries, kind: specific, expect: insight.list, args: {entity: insight}, shape: list}
+  - {request: scheduled reports, kind: specific, expect: report_schedule.list, args: {entity: report_schedule}, shape: list}
+  - {request: invoice runs that have not been committed, kind: specific, expect: invoice_run.list, args: {entity: invoice_run}, shape: list}
+  - {request: disputed invoices, kind: specific, expect: invoice_dispute.list, args: {entity: invoice_dispute}, shape: list}
+  - {request: tenders the carriers have not answered, kind: specific, expect: tender.list, args: {entity: tender}, shape: list}
+  - {request: what is the morning briefing, kind: specific, expect: insight_get_daily_briefing, shape: record}
+  - {request: driver week hours over 60, kind: specific, expect: worker_list_week_hours, shape: list}
+  - {request: which settlements are blocked from the batch, kind: specific, expect: settlement_list_batch_blockers, shape: list}
+  - {request: compare revenue by customer for the last two quarters, kind: specific, expect: analysis_run, shape: answer}
+
+  # Writes
+  - {request: put load 4471 on hold for missing paperwork, kind: write, expect: shipment_place_hold, shape: proposal}
+  - {request: leave a comment on load 4471 that the shipper called, kind: write, expect: shipment_add_comment, shape: proposal}
+  - {request: email the customer a delay notice, kind: write, expect: customer_send_email, shape: proposal}
+  - {request: text the driver that the pickup moved to 3pm, kind: write, expect: worker_send_message, shape: proposal}
+  - {request: post invoice 1042, kind: write, expect: invoice_post, shape: proposal}
+  - {request: send invoice 1042 to the customer, kind: write, expect: invoice_send, shape: proposal}
+  - {request: void invoice 1042, kind: write, expect: invoice_void, shape: proposal}
+  - {request: record the ACH payment Acme sent, kind: write, expect: receivable_post_customer_payment, shape: proposal}
+  - {request: approve the driver settlement for Maria, kind: write, expect: settlement_approve_driver, shape: proposal}
+  - {request: issue a $200 advance to driver 2231, kind: write, expect: settlement_issue_advance, shape: proposal}
+  - {request: mark tractor 512 out of service, kind: write, expect: equipment_set_tractor_status, shape: proposal}
+  - {request: create a new customer called Sunbelt Foods, kind: write, expect: customer_create, shape: proposal}
+  - {request: cancel the tender to Swift, kind: write, expect: dispatch_cancel_tender, shape: proposal}
+  - {request: approve Maria's pto request, kind: write, expect: worker_approve_pto, shape: proposal}
+  - {request: record a fuel purchase of 120 gallons in Ohio, kind: write, expect: fuel_record_purchase, shape: proposal}
+  - {request: rerate shipment 4471, kind: write, expect: shipment_rerate, shape: proposal}
+  - {request: remember that Acme wants calls not emails, kind: write, expect: agent_create_memory, shape: proposal}
+  - {request: approve the billing queue item for load 4471, kind: write, expect: billing_approve_queue_item, shape: proposal}
+
+  # Chains
+  - {request: assign a driver to load 4471, kind: chain, expect: shipment.get, args: {entity: shipment}, shape: record, chain: [shipment.get, dispatch_rank_candidates, dispatch_assign_move]}
+  - {request: find a driver for the Dallas load and dispatch it, kind: chain, expect: dispatch_rank_candidates, shape: list, chain: [dispatch_rank_candidates, dispatch_assign_move]}
+  - {request: tender load 4471 to a carrier over edi, kind: chain, expect: shipment.get, args: {entity: shipment}, shape: record, chain: [shipment.get, carrier_shop, edi_send_tender]}
+  - {request: find a carrier for this lane and send them a rate con, kind: chain, expect: carrier_shop, shape: list, chain: [carrier_shop, rate_generate_confirmation, rate_send_confirmation]}
+  - {request: bill load 4471 and email the invoice, kind: chain, expect: billing_queue_item.list, args: {entity: billing_queue_item}, shape: list, chain: [billing_queue_item.list, billing_approve_queue_item, invoice_send]}
+  - {request: apply Acme's check to their open invoices, kind: chain, expect: invoice.list, args: {entity: invoice}, shape: list, chain: [invoice.list, receivable_post_customer_payment]}
+  - {request: renew the driver's medical card, kind: chain, expect: worker_credential.list, args: {entity: worker_credential}, shape: list, chain: [worker_credential.list, worker_request_credential_renewal]}
+  - {request: generate this week's driver settlements and approve them, kind: chain, expect: settlement_generate_driver_batch, shape: proposal, chain: [settlement_generate_driver_batch, settlement_approve_driver]}
+  - {request: accept the edi tender from Acme and create the load, kind: chain, expect: edi_transfer.list, args: {entity: edi_transfer}, shape: list, chain: [edi_transfer.list, edi_accept_tender]}
+  - {request: dispute the short pay on invoice 1042, kind: chain, expect: invoice.get, args: {entity: invoice}, shape: record, chain: [invoice.get, invoice_open_dispute]}
+
+  # Dedicated desks reaching their own work
+  - {request: unassigned loads, kind: desk, agent: dispatch, expect: shipment.list, args: {entity: shipment}, shape: list}
+  - {request: who's free, kind: desk, agent: dispatch, expect: dispatch_rank_candidates, shape: list}
+  - {request: invoice list, kind: desk, agent: billing, expect: invoice.list, args: {entity: invoice}, shape: list}
+  - {request: ready to bill, kind: desk, agent: billing, expect: billing_queue_item.list, args: {entity: billing_queue_item}, shape: list}
+  - {request: expiring licenses, kind: desk, agent: safety, expect: worker_credential.list, args: {entity: worker_credential}, shape: list}
+  - {request: safety events this month, kind: desk, agent: safety, expect: worker_safety_event.list, args: {entity: worker_safety_event}, shape: list}
+
+  # Out of scope: a desk finds the capability, says it is outside its scope and offers a hand-off
+  - {request: unpaid invoices, kind: handoff, agent: dispatch, expect: invoice.list, status: not_in_this_agent, shape: handoff}
+  - {request: driver settlements waiting for approval, kind: handoff, agent: dispatch, expect: driver_settlement.list, status: not_in_this_agent, shape: handoff}
+  - {request: journal entries this month, kind: handoff, agent: safety, expect: journal_entry.list, status: not_in_this_agent, shape: handoff}
+  - {request: assign a driver to load 4471, kind: handoff, agent: billing, expect: dispatch_assign_move, status: not_in_this_agent, shape: handoff}
+  - {request: edi tenders, kind: handoff, agent: safety, expect: edi_transfer.list, status: not_in_this_agent, shape: handoff}
+  - {request: fuel purchases last week, kind: handoff, agent: billing, expect: fuel_purchase.list, status: not_in_this_agent, shape: handoff}
+
+  # Permission denied: search names the capability and the permission, and nothing runs
+  - {request: invoice list, kind: denied, denied: ["invoice:read"], expect: invoice.list, status: not_permitted, shape: refusal}
+  - {request: unpaid invoices, kind: denied, agent: billing, denied: ["invoice:read"], expect: invoice.list, status: not_permitted, shape: refusal}
+  - {request: driver pay, kind: denied, denied: ["driver_settlement:read"], expect: driver_settlement.list, status: not_permitted, shape: refusal}
+  - {request: post invoice 1042, kind: denied, denied: ["invoice:post"], expect: invoice_post, status: not_permitted, shape: refusal}
+  - {request: journal entries, kind: denied, denied: ["journal_entry:read"], expect: journal_entry.list, status: not_permitted, shape: refusal}
+  - {request: drivers, kind: denied, denied: ["worker:read"], expect: worker.list, status: not_permitted, shape: refusal}
+
+  # Paraphrases people actually type
+  - {request: what do we have going out of LA tomorrow, kind: vague, expect: shipment.list, args: {entity: shipment}, shape: list}
+  - {request: any loads stuck, kind: vague, expect: shipment.list, args: {entity: shipment}, shape: list}
+  - {request: whos running late, kind: vague, expect: shipment.list, args: {entity: shipment}, shape: list}
+  - {request: what does Acme owe us, kind: vague, expect: receivable_open_item.list, args: {entity: receivable_open_item}, shape: list}
+  - {request: money coming in this week, kind: vague, expect: customer_payment.list, args: {entity: customer_payment}, shape: list}
+  - {request: who needs a drug test, kind: vague, expect: worker_dot_test.list, args: {entity: worker_dot_test}, shape: list}
+  - {request: which units are in the shop, kind: vague, expect: tractor.list, args: {entity: tractor}, shape: list}
+  - {request: problem loads, kind: vague, expect: watchtower_item.list, args: {entity: watchtower_item}, shape: list}
+  - {request: paperwork for load 4471, kind: vague, expect: shipment.get, args: {entity: shipment}, shape: record, includes: [documents]}
+  - {request: tracking for pro 123, kind: vague, expect: shipment.get, args: {entity: shipment}, shape: record, includes: [tracking]}
+  - {request: payroll this week, kind: vague, expect: driver_settlement.list, args: {entity: driver_settlement}, shape: list}
+  - {request: gl postings, kind: vague, expect: journal_entry.list, args: {entity: journal_entry}, shape: list}
+  - {request: quickbooks errors, kind: vague, expect: accounting_sync_record.list, args: {entity: accounting_sync_record}, shape: list}
+  - {request: wait time at shippers, kind: vague, expect: detention_stay.list, args: {entity: detention_stay}, shape: list}
+  - {request: scans to file, kind: vague, expect: capture_batch.list, args: {entity: capture_batch}, shape: list}

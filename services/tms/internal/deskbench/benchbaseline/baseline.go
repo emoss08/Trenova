@@ -217,7 +217,7 @@ func (r *SweepReport) Render() string {
 		r.FinishedAt.Sub(r.StartedAt).Round(time.Second))
 	out.WriteString("Each point holds the agent to N tools: the ones the scenario needs and the " +
 		"agent's others up to N. \"all\" sends every held tool on every call; \"disclosed\" sends " +
-		"the 8 ranked for the request and find_tools. Set disclosureThreshold " +
+		"the 8 ranked for the request and search_tools. Set disclosureThreshold " +
 		"(ai.toolDisclosureThreshold) to the largest N at which \"all\" is at least as good.\n\n")
 
 	rows := make([]sweepRow, 0, len(r.Points)*2)

@@ -73,7 +73,7 @@ export const TEMPLATE_ICON: Partial<Record<string, AgentIconName>> = {
   BillingAssistant: "receipt",
   ComplianceAssistant: "shield",
   CustomerAssistant: "headset",
-  GeneralAssistant: "bot",
+  Universal: "bot",
   BillingException: "receipt",
   DispatchAssignment: "route",
   ImportAssistant: "file",

@@ -28,7 +28,7 @@ function agent(id: string, delegates: string[] = []): AgentChoice {
     template: null,
     icon: "",
     accent: "",
-    toolNames: [],
+    scope: { areas: [], capabilities: [], denyAreas: [], denyCapabilities: [] },
     systemKey: "",
     starters: [],
     delegates: delegates.map((delegate) => ({
@@ -101,10 +101,8 @@ describe("handoffSuggestion", () => {
     return { role: "Tool", kind, handOffAgents: ids };
   }
 
-  it("reads the newest find_tools result that named agents since the person last wrote", () => {
-    const pages = [
-      { results: [user(), found(["cash"]), found(["billing", "cash"]), reply()] },
-    ];
+  it("reads the newest search_tools result that named agents since the person last wrote", () => {
+    const pages = [{ results: [user(), found(["cash"]), found(["billing", "cash"]), reply()] }];
 
     expect(handoffSuggestion(pages)).toEqual(["billing", "cash"]);
   });
@@ -166,17 +164,17 @@ describe("handoffSuggestion", () => {
 
     const namedCash = [
       wire("accepted", { content: "Mark it ready to invoice" }),
-      wire("tool_started", { callId: "c1", name: "find_tools", arguments: {} }),
+      wire("tool_started", { callId: "c1", name: "search_tools", arguments: {} }),
       wire("tool_finished", {
         callId: "c1",
-        name: "find_tools",
+        name: "search_tools",
         content: "{}",
         handOffAgents: ["cash", "billing"],
       }),
       wire("delta", { text: "The cash assistant can do that." }),
     ];
 
-    it("offers what the reply's own find_tools named before anything is saved", () => {
+    it("offers what the reply's own search_tools named before anything is saved", () => {
       const live = liveTurn(namedCash);
 
       expect(handoffSuggestion([], live)).toEqual(["cash", "billing"]);
@@ -202,7 +200,7 @@ describe("handoffSuggestion", () => {
       expect(handoffSuggestion(saved, null)).toEqual(["billing"]);
     });
 
-    it("passes over a find_tools answer another agent gave on a task it was handed", () => {
+    it("passes over a search_tools answer another agent gave on a task it was handed", () => {
       const live = liveTurn([
         wire("accepted", { content: "Build it" }),
         wire("tool_started", {
@@ -212,7 +210,7 @@ describe("handoffSuggestion", () => {
         }),
         wire("tool_finished", {
           callId: "c9",
-          name: "find_tools",
+          name: "search_tools",
           content: "{}",
           handOffAgents: ["cash"],
           agentId: "agdef_other",

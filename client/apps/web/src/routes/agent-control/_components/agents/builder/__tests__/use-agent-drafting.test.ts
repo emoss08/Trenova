@@ -15,7 +15,8 @@ function draft(patch: Partial<AgentDraft> = {}): AgentDraft {
     cronTimezone: "",
     eventKinds: ["shipment.stop.arrived"],
     intervalSeconds: 0,
-    toolNames: [],
+    scope: { areas: null, capabilities: null, denyAreas: null, denyCapabilities: null },
+    pinnedTools: [],
     toolTiers: {},
     autonomyCeiling: "ActWithApproval",
     dataAccessCeiling: "Internal",
@@ -46,5 +47,38 @@ describe("draftedValues", () => {
     expect(values.triggerMode).toBe("Event");
     expect(values.eventKinds).toEqual(["shipment.stop.arrived"]);
     expect(values.toolTiers).toEqual({ agent_raise_exception: "Propose" });
+  });
+
+  it("opens a drafted agent that may do everything as unlimited", () => {
+    const values = draftedValues(draft());
+    expect(values.limited).toBe(false);
+    expect(values.scope).toEqual({
+      areas: [],
+      capabilities: [],
+      denyAreas: [],
+      denyCapabilities: [],
+    });
+  });
+
+  it("opens a drafted agent held to areas and capabilities as limited, with its pins", () => {
+    const values = draftedValues(
+      draft({
+        scope: {
+          areas: ["detention"],
+          capabilities: ["shipment.get"],
+          denyAreas: null,
+          denyCapabilities: ["detention_waive"],
+        },
+        pinnedTools: ["detention_get_charge"],
+      }),
+    );
+    expect(values.limited).toBe(true);
+    expect(values.scope).toEqual({
+      areas: ["detention"],
+      capabilities: ["shipment.get"],
+      denyAreas: [],
+      denyCapabilities: ["detention_waive"],
+    });
+    expect(values.pinnedTools).toEqual(["detention_get_charge"]);
   });
 });

@@ -7,6 +7,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"maps"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -344,7 +346,7 @@ func (s *Service) Status(
 		status.MonthlyBudget = &budget
 	}
 
-	for _, tool := range definition.EffectiveToolNames() {
+	for _, tool := range slices.Sorted(maps.Keys(definition.ToolDailyLimits)) {
 		limit := definition.ToolDailyLimit(tool)
 		if limit <= 0 {
 			continue

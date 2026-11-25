@@ -34,7 +34,7 @@ type handOffParams struct {
 	args     map[string]any
 }
 
-// handOff drives a turn that reads a shipment with shipment_get (call_read)
+// handOff drives a turn that reads a shipment with shipment_get_view (call_read)
 // and then hands a task over with the given arguments (call_hand).
 func handOff(t *testing.T, p handOffParams) (*agentruntimeports.RunResult, *delegateRecorder) {
 	t.Helper()
@@ -42,7 +42,7 @@ func handOff(t *testing.T, p handOffParams) (*agentruntimeports.RunResult, *dele
 	lookup := p.lookup
 	if lookup == nil {
 		lookup = &agenttest.StubQueryTool{
-			ToolName: "shipment_get",
+			ToolName: "shipment_get_view",
 			Result:   map[string]any{"proNumber": "PRO-1001", "bol": "BOL-77"},
 		}
 	}
@@ -99,7 +99,7 @@ func TestDelegate_HandsOverTheRecordsAndTheResultsItNames(t *testing.T) {
 	assert.Equal(t, []agentrecord.RecordRef{{EntityType: "shipment", ID: "shp_1"}}, handed.Records)
 	require.Len(t, handed.Results, 1)
 	assert.Equal(t, "call_read", handed.Results[0].CallID)
-	assert.Equal(t, "shipment_get", handed.Results[0].ToolName)
+	assert.Equal(t, "shipment_get_view", handed.Results[0].ToolName)
 	assert.Contains(t, handed.Results[0].Content, "PRO-1001")
 	assert.NotContains(t, handed.Results[0].Content, toolresult.UntrustedOpenTag,
 		"the result is handed over as the tool returned it, not in the model's fence")
@@ -171,7 +171,7 @@ func TestDelegate_RefusesWhatItCannotHandOver(t *testing.T) {
 		"a result too long to hand over": {
 			args: map[string]any{"shareResults": []any{"call_read"}},
 			lookup: &agenttest.StubQueryTool{
-				ToolName: "shipment_get",
+				ToolName: "shipment_get_view",
 				Result:   map[string]any{"notes": big},
 			},
 			want: "KiB",
@@ -206,7 +206,7 @@ func TestDelegate_RefusesToShareAFailedCall(t *testing.T) {
 		delegate: delegate,
 		args:     map[string]any{"shareResults": []any{"call_read"}},
 		lookup: &agenttest.StubQueryTool{
-			ToolName: "shipment_get",
+			ToolName: "shipment_get_view",
 			Err:      fmt.Errorf("shipment not found"),
 		},
 	})

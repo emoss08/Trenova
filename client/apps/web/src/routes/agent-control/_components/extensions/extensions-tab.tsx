@@ -1,5 +1,6 @@
 import { useSearchState } from "@trenova/shared/hooks/use-search-state";
 import { usePermission } from "@/hooks/use-permission";
+import { isSwitchedOff } from "@/lib/agent-scope";
 import { agentExtension } from "@/lib/queries/agent-extension";
 import { assistant } from "@/lib/queries/assistant";
 import { useQuery } from "@tanstack/react-query";
@@ -119,7 +120,7 @@ export default function ExtensionsTab() {
     (webWatch ? webWatchServer(items) : null);
   const control = useExtensionControl(open);
   const demoAgent =
-    deskAgents.find((agent) => agent.enabled && agent.toolNames.length > 0)?.name ??
+    deskAgents.find((agent) => agent.enabled && !isSwitchedOff(agent.scope))?.name ??
     t("Dispatch desk");
   const shelfTitle =
     shelf === "all"

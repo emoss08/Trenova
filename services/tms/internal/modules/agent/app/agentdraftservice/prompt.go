@@ -207,7 +207,7 @@ func draftSchema() map[string]any {
 		},
 		"tools": map[string]any{
 			"type":     "array",
-			"maxItems": agentdefinition.MaxTools,
+			"maxItems": maxDraftedCapabilities,
 			"items": map[string]any{
 				"type":                 "object",
 				"additionalProperties": false,

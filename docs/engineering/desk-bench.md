@@ -108,7 +108,7 @@ trenova desk run --provider claude-haiku-5-5@low --provider claude-haiku-5-5@med
 trenova desk run --provider claude-haiku-5-5@low --provider claude-haiku-5-5@low+advisor  # advisor cell
 trenova desk run --split held-out --pass-k 4 --repeat 4         # one split, pass^4
 trenova desk run --tag unattended                               # fired event and schedule runs
-trenova desk run --tool-threshold 0                             # always disclose (8 + find_tools)
+trenova desk run --tool-threshold 0                             # always disclose (8 + search_tools)
 trenova desk baseline                                           # the Phase 0 matrix, deskbench/baseline.yaml
 trenova desk sweep --held 8,12 --mode all,disclosed             # part of the tool-count sweep
 task desk-baseline
@@ -256,9 +256,9 @@ Each case, and each cell (a provider at an effort, split by scenario split), rep
   model call of a turn but its first, which writes the cache. A stable prefix shows here first:
   the rebuild of context assembly is held to above 80%.
 - **Opens with find** (`findFirstShare`): the share of turns that called a tool whose first call
-  was `find_tools`, the step a missed preselection costs.
+  was `search_tools`, the step a missed preselection costs.
 - **Tool selection**, against the scenario's labels: precision, recall, the position of the
-  first expected call, and calls to forbidden tools. Core and runtime tools (`find_tools`,
+  first expected call, and calls to forbidden tools. Core and runtime tools (`search_tools`,
   `withdraw_proposal`, …) are left out unless a label names them.
 - **Argument validity**: the share of a trial's tool calls whose arguments the tool's schema
   accepted, that is every call but those refused as `invalid` (`ARGS VALID`). A denied,
@@ -283,7 +283,7 @@ Each case, and each cell (a provider at an effort, split by scenario split), rep
 - **Retrieval**, on disclosed turns, against the tools the turn actually used. Preselection
   recall is the share the turn opened with loaded (the 8 ranked plus the companions,
   followers, fed and carried-over tools loaded beside them; a tool declared deferred is not
-  one the turn opened with). `find_tools` recall is scored
+  one the turn opened with). `search_tools` recall is scored
   per answer, the share of the used tools the turn did not open with that one answer
   loaded, averaged over answers; `findUnionRecall` is the same against every answer of the
   turn together.
@@ -298,7 +298,7 @@ passes in n trials and averaged over scenarios, so it needs `--repeat` of at lea
 `--compare` compares means per trial, so a run with a different `--repeat` still compares. Each
 model's cell is also set beside its cell in the earlier run, before → after, on pass^k, recall,
 preselection recall, model and tool calls, time to first token, the cache share of later calls,
-the share that opens with `find_tools` and cost per task (`CompareCells`).
+the share that opens with `search_tools` and cost per task (`CompareCells`).
 
 ### Counting cache misses
 
@@ -337,7 +337,7 @@ scale from what it spent.
 `trenova desk sweep` (`task desk-sweep`) sets `ai.toolDisclosureThreshold` from data. For each
 held count N (8, 12, 20, 30) the scenario's agent is copied as `Bench · Sweep · <name>` holding
 the tools the scenario's labels need plus the agent's others up to N, and every scenario runs
-once with every held tool sent (`all`) and once disclosed (the 8 ranked plus `find_tools`). A
+once with every held tool sent (`all`) and once disclosed (the 8 ranked plus `search_tools`). A
 scenario needing more than N tools, or an agent holding fewer, is skipped at that point. Each
 point is a run under `.deskbench/sweeps/<time>/<mode>-<N>/`, repeated twice (`sweep.repeat`; two
 trials leave pass^4 unreported, and the threshold reads the pass rate), and `sweep.md` /
@@ -592,7 +592,7 @@ assigned by a fixed rule (`internal/modules/agent/domain/evalsplit`):
    answer for the same names whatever order the files are read in, and loading one file assigns
    what loading them all would (the loader ranks every scenario in the file's directory).
 
-The `find_tools` cases of the eval gate (`agentevalgate/evals/toolselection*.yaml`) are split by
+The `search_tools` cases of the eval gate (`agentevalgate/evals/toolselection*.yaml`) are split by
 the same rule over the two suites together, keyed by the request. A case's desk is the template
 that lists its first expected tool among its starter tools, the one with the fewest starter tools
 when several do, and its mode is that template's trigger (chat, or event and schedule for
@@ -612,7 +612,7 @@ may have been tuned against: write a new scenario for that desk instead of keepi
 cases, traces and `findings.yaml`, never against a held-out case. `trenova desk run` reports every
 cell by split (`--split held-out` runs only that split), so pass rate, pass^k, tool-selection
 precision and recall, and argument validity are given for held-out scenarios apart from the
-rest. The eval gate logs `find_tools` recall@5 and top-1 on held-out cases apart, and gates them
+rest. The eval gate logs `search_tools` recall@5 and top-1 on held-out cases apart, and gates them
 on their own floors (`heldOut` in `toolselection.floors.json`) beside the floors over every case.
 It prints the misses of development cases only; a held-out miss is printed only when the held-out
 floor fails. Test Go's Unit Tests job writes both to the run's summary.
@@ -755,7 +755,7 @@ left it with (`selectedProfile`), and `routing.md` opens with their confusion ma
 expected and columns selected, with each profile's recall and precision. A case whose
 expectation allows several profiles counts on the diagonal when it passes. Since a
 conversation reaches the tools of the person's other agents, an off-diagonal cell is a
-question that starts on a near neighbour and finds the tools with `find_tools`, not one that
+question that starts on a near neighbour and finds the tools with `search_tools`, not one that
 cannot be done; the matrix shows which neighbours the match confuses.
 
 Each run writes `routing.md` (the score, the confusion matrix, the cases that changed since

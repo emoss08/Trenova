@@ -321,7 +321,8 @@ function buildAgents(anchor, { paused }) {
           "Never change a record a person is editing.",
           "Never send anything outside the company without approval.",
         ],
-        toolNames,
+        scope: { areas: null, capabilities: toolNames, denyAreas: null, denyCapabilities: null },
+        pinnedTools: [],
         toolTiers: tiersFor(toolNames, spec.tiers),
         autonomyCeiling: spec.tiers[2] > 0 ? "AutoExecute" : "ActWithApproval",
         dataAccessCeiling: "Internal",
@@ -835,7 +836,7 @@ function buildTuneUps(anchor, agents, providers) {
     {
       lastRunAt: anchor - 14 * 24 * HOUR,
       idleSince: anchor - 14 * 24 * HOUR,
-      tools: steward.node.toolNames.length,
+      tools: steward.node.scope.capabilities.length,
     },
   );
   return out;

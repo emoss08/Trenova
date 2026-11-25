@@ -75,14 +75,14 @@ func liveBindingTools(grown bool) []modeladapter.ToolSpec {
 
 func findToolsLiveSpec() modeladapter.ToolSpec {
 	return modeladapter.ToolSpec{
-		Name:        "find_tools",
+		Name:        "search_tools",
 		Description: "Load more tools when nothing you hold does the job.",
 		Parameters: map[string]any{
 			"type": "object",
 			"properties": map[string]any{
-				"need": map[string]any{"type": "string"},
+				"query": map[string]any{"type": "string"},
 			},
-			"required":             []any{"need"},
+			"required":             []any{"query"},
 			"additionalProperties": false,
 		},
 	}
@@ -248,6 +248,6 @@ func TestLiveAnthropic_HaikuThinkingBindingOnAMidTurnToolChange(t *testing.T) {
 			"see a tool added mid-turn as an edit on %s", model)
 	}
 	require.NoError(t, asSent.Err,
-		"%s refuses the request Desk sends after find_tools loads a tool: set "+
+		"%s refuses the request Desk sends after search_tools loads a tool: set "+
 			"bindsPrefix for it in anthropicTraits", model)
 }

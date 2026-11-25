@@ -1,8 +1,9 @@
 import type { AgentIconName } from "@/components/agent-identity/agent-identity";
 import { cronRunsBetween, parseCronSchedule, wallClockAt } from "@/lib/cron";
+import { formScope } from "@/lib/agent-scope";
 import type { AutonomyTier, ToolCatalogEntry, TriggerMode } from "@/types/assistant";
 import { agentFormDefaults, tierWithin, type AgentFormValues } from "../agent-form-schema";
-import { effectiveTier, splitCoreTools, TIER_ORDER } from "../tool-catalog";
+import { defaultTier, effectiveTier, heldTools } from "../tool-catalog";
 
 import type { BuilderStart } from "../../../ai-control-tabs";
 
@@ -22,11 +23,14 @@ const START_ICON: Record<BuilderStart, AgentIconName> = {
   blank: "bot",
 };
 
-/** A tool each start begins with, when the catalog offers it. */
+/**
+ * A capability each start keeps at hand, when the catalog offers it, at the tier it starts at.
+ * A tier is only ever set stricter than the tool's default, so Propose is always one it may take.
+ */
 const START_TOOLS: Record<BuilderStart, { name: string; tier: AutonomyTier }[]> = {
   chat: [],
   scheduled: [{ name: "schedule_report_email", tier: "Propose" }],
-  event: [{ name: "agent_raise_exception", tier: "AutoExecute" }],
+  event: [],
   blank: [],
 };
 
@@ -42,9 +46,10 @@ export const DEFAULT_SCHEDULE = "0 6 * * 1-5";
 export const DEFAULT_INTERVAL_SECONDS = 300;
 
 /**
- * What a new agent starts as: live, asking a person before any change, with the trigger
- * and the one tool its start implies. Nothing is chosen that the catalog lacks. Shadow and
- * simulation are a choice made in the builder's mode menu, never a default.
+ * What a new agent starts as: live, asking a person before any change, able to do everything
+ * the person may, with the trigger its start implies and the tool it implies kept at hand.
+ * Nothing is pinned that the catalog lacks. Shadow and simulation are a choice made in the
+ * builder's mode menu, never a default.
  */
 export function startValues(
   start: BuilderStart,
@@ -65,7 +70,7 @@ export function startValues(
     simulationMode: false,
     dailyRunLimit: 100,
     maxToolCalls: 10,
-    toolNames: tools.map((tool) => tool.name),
+    pinnedTools: tools.map((tool) => tool.name),
     toolTiers: Object.fromEntries(tools.map((tool) => [tool.name, tool.tier])),
   };
 }
@@ -92,14 +97,12 @@ export function triggerProblem(
   }
 }
 
-/** The tools a person chose, leaving out those every agent holds anyway. */
+/** The tools the agent's scope gives it, leaving out those every agent holds anyway. */
 export function chosenTools(
-  values: Pick<AgentFormValues, "toolNames">,
+  values: Pick<AgentFormValues, "scope" | "limited">,
   catalog: readonly ToolCatalogEntry[],
 ): ToolCatalogEntry[] {
-  const { selectable } = splitCoreTools(catalog);
-  const held = new Set(values.toolNames);
-  return selectable.filter((tool) => held.has(tool.name));
+  return heldTools(formScope(values.scope, values.limited), catalog);
 }
 
 export type CheckStatus = "ok" | "warn" | "todo";
@@ -148,7 +151,7 @@ export function readiness(status: Record<CheckKey, CheckStatus>): { done: number
 
 /** Change tools by the tier they would run at, after the ceiling: propose, ask first, on its own. */
 export function changeTiers(
-  values: Pick<AgentFormValues, "toolNames" | "toolTiers" | "autonomyCeiling">,
+  values: Pick<AgentFormValues, "scope" | "limited" | "toolTiers" | "autonomyCeiling">,
   catalog: readonly ToolCatalogEntry[],
 ): { reads: number; byTier: Record<AutonomyTier, number> } {
   const byTier: Record<AutonomyTier, number> = { Propose: 0, ActWithApproval: 0, AutoExecute: 0 };
@@ -158,7 +161,8 @@ export function changeTiers(
       reads += 1;
       continue;
     }
-    byTier[effectiveTier(tool.name, values.toolTiers, values.autonomyCeiling)] += 1;
+    byTier[effectiveTier(tool.name, values.toolTiers, values.autonomyCeiling, defaultTier(tool))] +=
+      1;
   }
   return { reads, byTier };
 }
@@ -247,17 +251,15 @@ export function calendarDateOf(date: Date): string {
 
 /** The held action tools set above the ceiling, and the highest tier any of them asks for. */
 export function aboveCeiling(
-  values: Pick<AgentFormValues, "toolNames" | "toolTiers" | "autonomyCeiling">,
+  values: Pick<AgentFormValues, "scope" | "limited" | "toolTiers" | "autonomyCeiling">,
   catalog: readonly ToolCatalogEntry[],
 ): { tools: string[]; highest: AutonomyTier | null } {
-  const actions = new Set(
-    catalog.filter((tool) => tool.kind === "action").map((tool) => tool.name),
-  );
   const tools: string[] = [];
   let highest: AutonomyTier | null = null;
-  for (const name of values.toolNames) {
+  for (const tool of chosenTools(values, catalog)) {
+    const name = tool.name;
     const tier = values.toolTiers[name] as AutonomyTier | undefined;
-    if (!tier || !actions.has(name) || tierWithin(tier, values.autonomyCeiling)) continue;
+    if (!tier || tool.kind !== "action" || tierWithin(tier, values.autonomyCeiling)) continue;
     tools.push(name);
     if (!highest || !tierWithin(tier, highest)) highest = tier;
   }
@@ -275,10 +277,4 @@ export function capToCeiling(
       tierWithin(tier, ceiling) ? tier : ceiling,
     ]),
   );
-}
-
-/** Where a newly given tool starts: the lower of the most it may do and the ceiling. */
-export function startingTier(most: AutonomyTier | undefined, ceiling: AutonomyTier): AutonomyTier {
-  if (!most) return ceiling;
-  return TIER_ORDER.indexOf(most) < TIER_ORDER.indexOf(ceiling) ? most : ceiling;
 }

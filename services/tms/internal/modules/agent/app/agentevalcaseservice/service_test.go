@@ -407,7 +407,7 @@ func newWorld(t *testing.T, decision *agentdecision.AgentDecision) *world {
 		BusinessUnitID: tenantInfo.BuID,
 		Name:           "Billing desk",
 		Instructions:   "Clear the billing queue.",
-		ToolNames:      []string{"customer_get", "update_rate"},
+		Scope:          agentdefinition.Scope{Capabilities: []string{"customer_get", "update_rate"}},
 		Version:        4,
 	}
 	thread := &conversation.Thread{
@@ -455,7 +455,7 @@ func newWorld(t *testing.T, decision *agentdecision.AgentDecision) *world {
 					Name:      "customer_get",
 					Arguments: map[string]any{"name": "Acme Foods"},
 				},
-				{ID: "call_2", Name: "find_tools"},
+				{ID: "call_2", Name: "search_tools"},
 			},
 			CreatedAt: 201,
 		},
@@ -470,9 +470,9 @@ func newWorld(t *testing.T, decision *agentdecision.AgentDecision) *world {
 		{
 			ID:         pulid.MustNew("amsg_"),
 			Role:       conversation.RoleTool,
-			ToolName:   "find_tools",
+			ToolName:   "search_tools",
 			ToolCallID: "call_2",
-			Content:    toolresult.Fence("find_tools", `{"tools":[]}`),
+			Content:    toolresult.Fence("search_tools", `{"tools":[]}`),
 			CreatedAt:  202,
 		},
 		{
@@ -679,7 +679,7 @@ func TestCreateFromProposal_FreezesTheTurnWithTheCorrectedParameters(t *testing.
 		expected.Params["rate"],
 		"the case expects what the person approved",
 	)
-	assert.ElementsMatch(t, w.definition.EffectiveToolNames(), evalCase.HeldTools)
+	assert.ElementsMatch(t, w.definition.StarterTools(), evalCase.HeldTools)
 	require.NotNil(t, evalCase.CapturedFingerprint)
 	assert.Equal(t, int64(4), evalCase.CapturedFingerprint.DefinitionVersion)
 	assert.NotEmpty(t, evalCase.ContentHash)
@@ -1067,7 +1067,7 @@ func TestCaptureCandidates_ATurnThatUsedAToolTheAgentDoesNotHoldStaysACandidate(
 
 	w := newWorld(t, &agentdecision.AgentDecision{Decision: agentdecision.DecisionAccepted})
 	w.settings.control.AutoActivate = true
-	w.definition.ToolNames = []string{"update_rate"}
+	w.definition.Scope = agentdefinition.Scope{Capabilities: []string{"update_rate"}}
 	w.cases.candidates = []agentqualityports.EvalCaseCaptureCandidate{w.candidate()}
 
 	result, err := w.service.CaptureCandidates(
@@ -1091,12 +1091,14 @@ func TestCaptureCandidates_ATurnThatUsedAToolTheAgentDoesNotHoldStaysACandidate(
 func TestBeyondHeld_NamesEachToolTheAgentDoesNotHoldOnce(t *testing.T) {
 	t.Parallel()
 
-	definition := &agentdefinition.Definition{ToolNames: []string{"worker_get"}}
+	definition := &agentdefinition.Definition{
+		Scope: agentdefinition.Scope{Capabilities: []string{"worker_get"}},
+	}
 
 	assert.Equal(t,
 		[]string{"shipment_add_comment", "customer_list"},
 		beyondHeld(definition, "shipment_add_comment", []string{
-			"worker_get", "customer_list", "find_tools", "customer_list",
+			"worker_get", "customer_list", "search_tools", "customer_list",
 		}),
 		"the agent's own tools and the runtime's are not beyond it",
 	)

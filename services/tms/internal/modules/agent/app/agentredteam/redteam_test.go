@@ -156,7 +156,7 @@ func TestDefinitionForHoldsEveryToolAutomatically(t *testing.T) {
 		MainAgentID, Tenant{OrganizationID: OrganizationID, BusinessUnitID: BusinessUnitID})
 
 	assert.Equal(t, agent.TierAutoExecute, definition.AutonomyCeiling)
-	for _, name := range definition.EffectiveToolNames() {
+	for _, name := range definition.Holds(definition.Scope.Capabilities) {
 		assert.Equal(t, agent.TierAutoExecute, definition.ToolTiers[name], name)
 	}
 	assert.Contains(t, definition.ToolTiers, "agent_create_memory")

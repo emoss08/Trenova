@@ -43,33 +43,33 @@ func callsTurn(calls ...llmports.ToolCall) *llmports.ChatCompletionResult {
 func TestRun_TheLoopsOwnRefusalsCarryAVerdict(t *testing.T) {
 	t.Parallel()
 
-	registered := queryTool("worker_list", map[string]any{}, nil)
-	broken := queryTool("shipment_get", nil, errors.New("connection reset"))
+	registered := queryTool("worker_list_view", map[string]any{}, nil)
+	broken := queryTool("shipment_get_view", nil, errors.New("connection reset"))
 	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
 		callsTurn(
 			llmports.ToolCall{ID: "unknown", Name: "delete_everything"},
-			llmports.ToolCall{ID: "unheld", Name: "worker_list"},
+			llmports.ToolCall{ID: "unheld", Name: "worker_list_view"},
 			llmports.ToolCall{
 				ID:             "cut_off",
-				Name:           "shipment_get",
+				Name:           "shipment_get_view",
 				Arguments:      map[string]any{},
 				ArgumentsError: "unexpected end of JSON input",
 			},
 			llmports.ToolCall{
 				ID:        "first",
-				Name:      "shipment_get",
+				Name:      "shipment_get_view",
 				Arguments: map[string]any{"id": "shp_1"},
 			},
 		),
 		callsTurn(
 			llmports.ToolCall{
 				ID:        "repeat",
-				Name:      "shipment_get",
+				Name:      "shipment_get_view",
 				Arguments: map[string]any{"id": "shp_1"},
 			},
 			llmports.ToolCall{
 				ID:        "spent",
-				Name:      "shipment_get",
+				Name:      "shipment_get_view",
 				Arguments: map[string]any{"id": "shp_2"},
 			},
 		),
@@ -78,7 +78,7 @@ func TestRun_TheLoopsOwnRefusalsCarryAVerdict(t *testing.T) {
 	rt := newRuntime(completion, &stubQueryRegistry{
 		Tools: []agenttoolports.AgentQueryTool{registered, broken},
 	}, &stubActionRegistry{}, nil)
-	definition := runtimetest.Definition("shipment_get")
+	definition := runtimetest.Definition("shipment_get_view")
 	definition.MaxToolCalls = 5
 
 	req := &agentruntimeports.RunRequest{
@@ -129,11 +129,11 @@ func TestRun_AnUnattendedQuestionIsDenied(t *testing.T) {
 func TestRun_ACallThatRanCarriesNoRefusalVerdict(t *testing.T) {
 	t.Parallel()
 
-	tool := queryTool("shipment_get", map[string]any{"id": "shp_1"}, nil)
+	tool := queryTool("shipment_get_view", map[string]any{"id": "shp_1"}, nil)
 	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
 		callsTurn(llmports.ToolCall{
 			ID:        "read",
-			Name:      "shipment_get",
+			Name:      "shipment_get_view",
 			Arguments: map[string]any{"id": "shp_1"},
 		}),
 		runtimetest.TextTurn("Found it."),
@@ -142,7 +142,7 @@ func TestRun_ACallThatRanCarriesNoRefusalVerdict(t *testing.T) {
 		Tools: []agenttoolports.AgentQueryTool{tool},
 	}, &stubActionRegistry{}, nil)
 	req := &agentruntimeports.RunRequest{
-		Definition: runtimetest.Definition("shipment_get"),
+		Definition: runtimetest.Definition("shipment_get_view"),
 		Actor:      runtimetest.Actor(),
 		Input:      "Look it up.",
 	}
@@ -157,23 +157,23 @@ func TestRun_ACallThatRanCarriesNoRefusalVerdict(t *testing.T) {
 func TestRun_EachToolMessageKeepsTheVerdictTheStreamCarried(t *testing.T) {
 	t.Parallel()
 
-	tool := queryTool("shipment_get", map[string]any{"id": "shp_1"}, nil)
+	tool := queryTool("shipment_get_view", map[string]any{"id": "shp_1"}, nil)
 	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
 		callsTurn(
-			llmports.ToolCall{ID: "unheld", Name: "worker_list"},
+			llmports.ToolCall{ID: "unheld", Name: "worker_list_view"},
 			llmports.ToolCall{
 				ID:        "read",
-				Name:      "shipment_get",
+				Name:      "shipment_get_view",
 				Arguments: map[string]any{"id": "shp_1"},
 			},
 		),
 		runtimetest.TextTurn("Found it."),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{
-		Tools: []agenttoolports.AgentQueryTool{tool, queryTool("worker_list", nil, nil)},
+		Tools: []agenttoolports.AgentQueryTool{tool, queryTool("worker_list_view", nil, nil)},
 	}, &stubActionRegistry{}, nil)
 	req := &agentruntimeports.RunRequest{
-		Definition: runtimetest.Definition("shipment_get"),
+		Definition: runtimetest.Definition("shipment_get_view"),
 		Actor:      runtimetest.Actor(),
 		Input:      "Look it up.",
 	}

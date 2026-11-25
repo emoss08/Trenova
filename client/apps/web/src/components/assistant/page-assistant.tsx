@@ -69,7 +69,7 @@ function pageAgentChoice(agent: PageAgent): AgentChoice {
     template: agent.template ?? null,
     icon: agent.icon,
     accent: agent.accent,
-    toolNames: agent.toolNames,
+    scope: agent.scope,
     systemKey: agent.systemKey,
     starters: agent.starters,
   };

@@ -13,7 +13,7 @@ import (
 )
 
 func coreTools() []string {
-	return (&agentdefinition.Definition{}).EffectiveToolNames()
+	return (&agentdefinition.Definition{}).Holds(nil)
 }
 
 /*
@@ -29,7 +29,7 @@ func TestDefinition_HoldsTheCoreToolsWithoutSelectingThem(t *testing.T) {
 	t.Parallel()
 
 	definition := validDefinition()
-	definition.ToolNames = []string{"report_list"}
+	definition.Scope = agentdefinition.Scope{Capabilities: []string{"report_list"}}
 
 	for _, tool := range coreTools() {
 		assert.Truef(t, definition.AllowsTool(tool), "an agent must hold %s", tool)
@@ -39,17 +39,30 @@ func TestDefinition_HoldsTheCoreToolsWithoutSelectingThem(t *testing.T) {
 
 	assert.Equal(t,
 		append(coreTools(), "report_list"),
-		definition.EffectiveToolNames(),
+		definition.Holds([]string{"report_list", "report_create_dashboard"}),
 	)
 }
 
-func TestDefinition_EffectiveToolNamesDoesNotRepeatACoreToolAlsoSelected(t *testing.T) {
+func TestDefinition_HoldsTheCoreToolsEvenWhenEverythingIsDenied(t *testing.T) {
 	t.Parallel()
 
 	definition := validDefinition()
-	definition.ToolNames = []string{"agent_create_memory", "report_list"}
+	definition.Scope = agentdefinition.Scope{DenyAreas: []string{agentdefinition.AllAreas}}
 
-	names := definition.EffectiveToolNames()
+	for _, tool := range coreTools() {
+		assert.Truef(t, definition.AllowsTool(tool), "an agent must hold %s", tool)
+	}
+	assert.False(t, definition.AllowsTool("report_list"))
+	assert.Equal(t, coreTools(), definition.Holds([]string{"report_list"}))
+}
+
+func TestDefinition_HoldsDoesNotRepeatACoreToolAlsoInTheCatalog(t *testing.T) {
+	t.Parallel()
+
+	definition := validDefinition()
+	definition.Scope = agentdefinition.Scope{Capabilities: []string{"report_list"}}
+
+	names := definition.Holds([]string{"agent_create_memory", "report_list"})
 	seen := make(map[string]int, len(names))
 	for _, name := range names {
 		seen[name]++
@@ -64,7 +77,7 @@ func TestDefinition_AcceptsTiersAndLimitsOnACoreTool(t *testing.T) {
 	t.Parallel()
 
 	definition := validDefinition()
-	definition.ToolNames = nil
+	definition.Scope = agentdefinition.Scope{DenyAreas: []string{agentdefinition.AllAreas}}
 	definition.AutonomyCeiling = agent.TierAutoExecute
 	definition.ToolTiers = map[string]agent.AutonomyTier{
 		"agent_create_memory": agent.TierAutoExecute,

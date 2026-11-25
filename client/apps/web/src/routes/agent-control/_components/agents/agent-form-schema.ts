@@ -1,3 +1,4 @@
+import { coversEverything, scopeAllows, toAgentScope } from "@/lib/agent-scope";
 import type { AgentAccess } from "@/lib/graphql/agent-access";
 import type { AgentDefinitionRow } from "@/lib/graphql/agent-definition";
 import {
@@ -54,6 +55,11 @@ export const agentFormSchema = saveAgentDefinitionRequestSchema
       .default([]),
     /** The agent looks back over its work and keeps what it learned; saved as its opposite, learningOff. */
     learnsFromWork: z.boolean().default(true),
+    /**
+     * The agent is held to the areas and capabilities its scope names rather than everything
+     * the person may do. Never saved: a scope that names none is everything.
+     */
+    limited: z.boolean().default(false),
   })
   .omit({ learningOff: true })
   .superRefine((values, ctx) => {
@@ -67,6 +73,27 @@ export const agentFormSchema = saveAgentDefinitionRequestSchema
         });
       }
       seen.add(id);
+    }
+
+    if (values.limited && coversEverything(values.scope)) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["scope"],
+        message: translate(
+          "Choose an area or a capability, or let it do everything the person may do",
+        ),
+      });
+    }
+    const seenPinned = new Set<string>();
+    for (const [index, name] of values.pinnedTools.entries()) {
+      if (seenPinned.has(name)) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["pinnedTools", index],
+          message: translate("This capability is already kept at hand"),
+        });
+      }
+      seenPinned.add(name);
     }
 
     if (values.triggerMode === "Scheduled" && values.cronExpression.trim() === "") {
@@ -110,7 +137,9 @@ export const agentFormDefaults: AgentFormValues = {
   accent: "",
   instructions: "",
   guardrails: [],
-  toolNames: [],
+  scope: { areas: [], capabilities: [], denyAreas: [], denyCapabilities: [] },
+  limited: false,
+  pinnedTools: [],
   toolTiers: {},
   autonomyCeiling: "Propose",
   dataAccessCeiling: "Internal",
@@ -150,8 +179,9 @@ export function accessOf(
 
 /**
  * What goes over the wire: trigger fields that belong to other modes are
- * cleared so a switched agent does not carry a stale schedule, and tiers for
- * tools that were unselected go with them.
+ * cleared so a switched agent does not carry a stale schedule, an agent let
+ * do everything sends no areas or capabilities, and a pinned capability or a
+ * tier or limit on a tool switched off goes with it.
  *
  * Who may use the agent rides along only when `access` is given, and then in
  * the same transaction as the rest. Left out, the server keeps it as it is,
@@ -170,19 +200,26 @@ export function toSaveRequest(
     accessMode: _mode,
     accessRoleIds: _roleIds,
     learnsFromWork,
+    limited,
     ...form
   } = values;
-  const selected = new Set(form.toolNames);
+  const scope = toAgentScope(form.scope);
+  if (!limited) {
+    scope.areas = [];
+    scope.capabilities = [];
+  }
+  const off = new Set(scope.denyCapabilities);
   const toolTiers = Object.fromEntries(
-    Object.entries(form.toolTiers).filter(([tool]) => selected.has(tool)),
+    Object.entries(form.toolTiers).filter(([tool]) => !off.has(tool)),
   );
-  // A limit of zero is no limit, and a limit on a tool the agent no longer
-  // holds is a leftover; neither goes over the wire.
+  // A limit of zero is no limit, and a limit on a tool switched off is a
+  // leftover; neither goes over the wire.
   const toolDailyLimits = Object.fromEntries(
     Object.entries(form.toolDailyLimits).filter(
-      (entry): entry is [string, number] => selected.has(entry[0]) && hasLimit(entry[1]),
+      (entry): entry is [string, number] => !off.has(entry[0]) && hasLimit(entry[1]),
     ),
   );
+  const pinnedTools = [...new Set(form.pinnedTools)].filter((name) => scopeAllows(scope, name));
   const scheduled = form.triggerMode === "Scheduled";
   const event = form.triggerMode === "Event";
   const continuous = form.triggerMode === "Continuous";
@@ -191,6 +228,8 @@ export function toSaveRequest(
     ...form,
     learningOff: !learnsFromWork,
     name: form.name.trim(),
+    scope,
+    pinnedTools,
     toolTiers,
     toolDailyLimits,
     cronExpression: scheduled ? form.cronExpression.trim() : "",
@@ -256,7 +295,9 @@ export function toAgentPanelRow(agent: AgentDefinitionRow): AgentPanelRow {
     accent: agent.accent,
     instructions: agent.instructions,
     guardrails: [...agent.guardrails],
-    toolNames: [...agent.toolNames],
+    scope: toAgentScope(agent.scope),
+    limited: !coversEverything(agent.scope),
+    pinnedTools: [...agent.pinnedTools],
     toolTiers: tiersOf(agent.toolTiers),
     autonomyCeiling: agent.autonomyCeiling,
     dataAccessCeiling: agent.dataAccessCeiling,

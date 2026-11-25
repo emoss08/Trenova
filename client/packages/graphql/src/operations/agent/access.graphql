@@ -5,7 +5,12 @@ fragment MyAgentFields on MyAgent {
   template
   icon
   accent
-  toolNames
+  scope {
+    areas
+    capabilities
+    denyAreas
+    denyCapabilities
+  }
   systemKey
   starters {
     label

@@ -83,7 +83,7 @@ function pageThread(overrides: Partial<PageThread["thread"]> = {}): PageThread {
       icon: "",
       accent: "",
       systemKey: "import_assistant",
-      toolNames: [],
+      scope: { areas: [], capabilities: [], denyAreas: [], denyCapabilities: [] },
       starters: [],
     },
   };

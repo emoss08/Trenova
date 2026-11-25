@@ -231,7 +231,7 @@ func TestGeneralAssistant_IsChosenOnlyWhenThePersonMayUseIt(t *testing.T) {
 	t.Parallel()
 
 	svc := &Service{logger: zap.NewNop()}
-	general := assistanttest.ChatDefinition("Assistant", agenttemplate.TemplateGeneralAssistant)
+	general := assistanttest.ChatDefinition("Assistant", agenttemplate.TemplateUniversal)
 	general.AccessMode = agentdefinition.AccessRoles
 	dispatch := assistanttest.ChatDefinition("Dispatch", agenttemplate.TemplateDispatchAssistant)
 	definitions := &assistanttest.StubDefinitionList{

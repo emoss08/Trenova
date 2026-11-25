@@ -231,7 +231,7 @@ func TestRun_ACommandTurnOffersItsToolsAndAsksForItsExtension(t *testing.T) {
 			assert.Contains(
 				t,
 				offered,
-				"find_tools",
+				"search_tools",
 				"the agent holds enough tools to be narrowed",
 			)
 			for _, name := range tc.held {
@@ -460,13 +460,13 @@ func TestAvailableCommands_AreTheOnesTheAgentAndThePersonCanUse(t *testing.T) {
 		{
 			name:       "the agent was not chosen for the tools",
 			gate:       everyCapabilityGate(agentextension.AvailabilitySelectedAgents),
-			definition: []string{"worker_list"},
+			definition: []string{"worker_list_view"},
 			want:       []agentextension.Command{},
 		},
 		{
 			name:       "every agent is given the tools",
 			gate:       everyCapabilityGate(agentextension.AvailabilityAllAgents),
-			definition: []string{"worker_list"},
+			definition: []string{"worker_list_view"},
 			want:       every,
 		},
 		{

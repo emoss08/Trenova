@@ -778,7 +778,7 @@ func TestBestCandidate_KeepsTheCurrentAgentWhenItHoldsTheBestMatch(t *testing.T)
 
 	best := bestCandidate(
 		[]*agentdefinition.Definition{current, wide},
-		heldSets(current.ToolNames, wide.ToolNames),
+		heldSets(current.Scope.Capabilities, wide.Scope.Capabilities),
 		names(ranked),
 		ranked,
 		current.ID,
@@ -805,7 +805,7 @@ func TestBestCandidate_SuggestsOnlyAnAgentHoldingTheBestMatch(t *testing.T) {
 
 	best := bestCandidate(
 		[]*agentdefinition.Definition{current, wide, billing},
-		heldSets(current.ToolNames, wide.ToolNames, billing.ToolNames),
+		heldSets(current.Scope.Capabilities, wide.Scope.Capabilities, billing.Scope.Capabilities),
 		names(ranked),
 		ranked,
 		current.ID,
@@ -845,7 +845,7 @@ func TestBestCandidate_KeepsTheCurrentAgentWhenItHoldsAToolTiedForTheBestMatch(t
 
 	best := bestCandidate(
 		[]*agentdefinition.Definition{writer, current},
-		heldSets(writer.ToolNames, current.ToolNames),
+		heldSets(writer.Scope.Capabilities, current.Scope.Capabilities),
 		names(ranked),
 		ranked,
 		current.ID,
@@ -876,7 +876,7 @@ func TestBestCandidate_WeighsToolsTiedOnScoreEqually(t *testing.T) {
 
 	best := bestCandidate(
 		[]*agentdefinition.Definition{builder, reader, current},
-		heldSets(builder.ToolNames, reader.ToolNames, current.ToolNames),
+		heldSets(builder.Scope.Capabilities, reader.Scope.Capabilities, current.Scope.Capabilities),
 		names(ranked),
 		ranked,
 		current.ID,

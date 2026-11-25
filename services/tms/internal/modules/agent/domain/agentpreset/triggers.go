@@ -35,7 +35,7 @@ func StarterTrigger(t agenttemplate.Template) agentdefinition.TriggerMode {
 		agenttemplate.TemplateBillingAssistant,
 		agenttemplate.TemplateComplianceAssistant,
 		agenttemplate.TemplateCustomerAssistant,
-		agenttemplate.TemplateGeneralAssistant,
+		agenttemplate.TemplateUniversal,
 		agenttemplate.TemplateImportAssistant,
 		agenttemplate.TemplateFormulaAssistant,
 		agenttemplate.TemplateSettlementsClerk,
@@ -118,7 +118,7 @@ func StarterEvents(t agenttemplate.Template) []agenttrigger.EventKind {
 		agenttemplate.TemplateBillingAssistant,
 		agenttemplate.TemplateComplianceAssistant,
 		agenttemplate.TemplateCustomerAssistant,
-		agenttemplate.TemplateGeneralAssistant,
+		agenttemplate.TemplateUniversal,
 		agenttemplate.TemplateImportAssistant,
 		agenttemplate.TemplateLoadMonitor,
 		agenttemplate.TemplateFormulaAssistant,
@@ -152,7 +152,7 @@ func StarterCeiling(t agenttemplate.Template) agent.AutonomyTier {
 	// answered by a tool that always stops at a proposal a person decides.
 	case agenttemplate.TemplateIntakeDesk:
 		return agent.TierAutoExecute
-	case agenttemplate.TemplateGeneralAssistant,
+	case agenttemplate.TemplateUniversal,
 		agenttemplate.TemplateCustomerAssistant,
 		agenttemplate.TemplateCustomerUpdateDesk,
 		agenttemplate.TemplateCarrierRiskDesk,

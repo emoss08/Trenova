@@ -130,6 +130,11 @@ function outcome(kind, agent, tools) {
   return { myAgentMatch: { outcome: kind, agent, tools: matchTools(tools) } };
 }
 
+/** The tools an agent names in its scope; the mock agents all name theirs. */
+function namedTools(agent) {
+  return agent.scope?.capabilities ?? [];
+}
+
 export function matchAgent(state, variables, agents) {
   if (state.scenario.agentMatch === "hold") return HOLD;
   const text = String(variables.input?.text ?? "").trim();
@@ -137,7 +142,7 @@ export function matchAgent(state, variables, agents) {
 
   const wide = rankTools(text, Object.keys(TOOLS));
   if (wide.length === 0) return outcome("NoMatch", null, []);
-  const held = new Set(agents.flatMap((agent) => agent.toolNames ?? []));
+  const held = new Set(agents.flatMap(namedTools));
   if (state.scenario.agentMatch === "nobody" || !wide.some((name) => held.has(name))) {
     return outcome(
       "NoAgent",
@@ -151,7 +156,7 @@ export function matchAgent(state, variables, agents) {
   const top = ranked[0];
   const candidates = agents
     .map((agent) => {
-      const tools = ranked.filter((name) => (agent.toolNames ?? []).includes(name));
+      const tools = ranked.filter((name) => namedTools(agent).includes(name));
       const score = tools.reduce((sum, name) => sum + 1 / (ranked.indexOf(name) + 1), 0);
       return { agent, tools, score, current: agent.id === currentId };
     })
@@ -161,7 +166,7 @@ export function matchAgent(state, variables, agents) {
   candidates.sort(
     (a, b) =>
       b.score - a.score ||
-      (a.agent.toolNames?.length ?? 0) - (b.agent.toolNames?.length ?? 0) ||
+      namedTools(a.agent).length - namedTools(b.agent).length ||
       a.agent.name.localeCompare(b.agent.name),
   );
   const best = candidates[0];

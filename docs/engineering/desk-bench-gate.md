@@ -191,7 +191,7 @@ handed over. Held-out cases are read only as summary figures.
 - it was refused `invalid` at least twice for the same reason;
 - it was expected and not called in at least two trials, or called where another was expected;
 - it was called while labelled forbidden; or
-- `find_tools` or preselection missed it in at least two turns, or the eval gate misses it on a
+- `search_tools` or preselection missed it in at least two turns, or the eval gate misses it on a
   development case.
 
 **Method.** This follows DRAFT:

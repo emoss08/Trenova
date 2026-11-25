@@ -31,7 +31,7 @@ const (
 	floorsCommand = "go test -count=1 -run 'AgainstFloors|Splits' " +
 		"./internal/modules/agent/app/agentevalgate/ -update"
 
-	selectionSplitsHeader = "# The held-out find_tools cases, by desk and by chat or unattended. Generated from\n" +
+	selectionSplitsHeader = "# The held-out search_tools cases, by desk and by chat or unattended. Generated from\n" +
 		"# the rule in docs/engineering/desk-bench.md (Labels and splits) by running, in\n" +
 		"# services/tms:\n" +
 		"#   " + floorsCommand + "\n" +
@@ -293,14 +293,14 @@ func TestToolSelectionAgainstFloors(t *testing.T) {
 
 	floors := readFloors(t, selectionFloors)
 	enforce(t, gate{
-		label:  "find_tools by keyword",
+		label:  "search_tools by keyword",
 		report: keyword,
 		floors: &floors.Keyword,
 		held:   split.HeldOut,
 	})
 	held := heldOutFloors(floors)
 	enforce(t, gate{
-		label:  "find_tools by keyword, held-out",
+		label:  "search_tools by keyword, held-out",
 		report: heldOut,
 		floors: &held.Keyword,
 		quiet:  true,
@@ -323,13 +323,13 @@ func TestToolSelectionAgainstFloorsHybrid(t *testing.T) {
 
 	floors := readFloors(t, selectionFloors)
 	enforce(t, gate{
-		label:  "find_tools by keyword and meaning",
+		label:  "search_tools by keyword and meaning",
 		report: evaluate(t, combined, kit.HybridFinder(fixture)),
 		floors: floors.Hybrid,
 		held:   split.HeldOut,
 	})
 	enforce(t, gate{
-		label:  "find_tools by keyword and meaning, held-out",
+		label:  "search_tools by keyword and meaning, held-out",
 		report: evaluate(t, heldCombined, kit.HybridFinder(fixture)),
 		floors: heldOutFloors(floors).Hybrid,
 		quiet:  true,

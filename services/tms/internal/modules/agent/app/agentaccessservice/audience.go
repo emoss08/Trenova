@@ -46,8 +46,7 @@ func (s *Service) PreviewAudience(
 	ctx context.Context,
 	req *agentdefinitionports.PreviewAgentAudienceRequest,
 ) (*agentdefinitionports.AgentAudienceSuggestion, error) {
-	toolNames, err := previewToolNames(req.ToolNames)
-	if err != nil {
+	if err := previewScope(&req.Scope); err != nil {
 		return nil, err
 	}
 	if !req.Mode.IsValid() {
@@ -76,20 +75,22 @@ func (s *Service) PreviewAudience(
 		copied := *existing
 		preview = &copied
 	}
-	preview.ToolNames = agentdefinition.WithoutCoreTools(toolNames)
+	preview.Scope = req.Scope
 	preview.AccessMode = req.Mode
 
 	return s.audience(ctx, req.TenantInfo, preview, saved)
 }
 
-func previewToolNames(names []string) ([]string, error) {
-	if len(names) > maxPreviewTools {
-		return nil, errortypes.NewValidationError(
-			"toolNames", errortypes.ErrInvalid, "At most 200 tools can be previewed at once",
+func previewScope(scope *agentdefinition.Scope) error {
+	if len(scope.Capabilities)+len(scope.DenyCapabilities)+len(scope.Areas)+len(scope.DenyAreas) >
+		maxPreviewTools {
+		return errortypes.NewValidationError(
+			"scope", errortypes.ErrInvalid, "At most 200 scope entries can be previewed at once",
 		)
 	}
+	scope.Capabilities = sliceutils.DedupeStrings(scope.Capabilities)
 
-	return sliceutils.DedupeStrings(names), nil
+	return nil
 }
 
 // audience is every role in the tenant with its coverage of what the agent

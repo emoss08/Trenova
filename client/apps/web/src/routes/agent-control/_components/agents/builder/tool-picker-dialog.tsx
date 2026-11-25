@@ -1,7 +1,8 @@
 "use no memo";
 import { Dialog } from "@base-ui/react/dialog";
 import type { AgentToolPolicy } from "@/lib/graphql/agent-safety";
-import type { AutonomyTier, ToolCatalogEntry } from "@/types/assistant";
+import { formScope, scopeAllows } from "@/lib/agent-scope";
+import type { ToolCatalogEntry } from "@/types/assistant";
 import { SearchLgIcon, XCloseIcon } from "@trenova/shared/components/icons";
 import { Input } from "@trenova/shared/components/ui/input";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
@@ -12,16 +13,15 @@ import { useCallback, useMemo, useRef, useState, type MouseEvent } from "react";
 import { aicFieldTrigger } from "../../edit/field-trigger";
 import { Ic } from "../../kit/ic";
 import { Seg } from "../../kit/layout";
-import { groupToolsByResource, toolTitle } from "../tool-catalog";
+import { defaultTier, groupToolsByResource, toolTitle } from "../tool-catalog";
 import { useDraftField } from "./block";
-import { startingTier } from "./builder-model";
 import {
   checkState,
   egressLabel,
   furthest,
   pickerGroups,
   pickerRows,
-  setTools,
+  setHeld,
   tierName,
   type CheckState,
   type KindFilter,
@@ -41,8 +41,10 @@ type ToolPickerDialogProps = {
 
 /**
  * Every tool an agent may be given, grouped by the record it works on, in one virtual
- * list. Narrow it by search, record, kind or what is already chosen, then take or drop
- * everything shown, a group at a time, or one by one. Writes through to the draft at once.
+ * list, ticked where the agent's scope gives it. Narrow it by search, record, kind or what
+ * it already holds, then give or take everything shown, a group at a time, or one by one:
+ * a tool given is allowed by name, and a tool taken that an area still gives is switched
+ * off. Writes through to the draft at once.
  */
 export function ToolPickerDialog({
   open,
@@ -52,20 +54,23 @@ export function ToolPickerDialog({
   rules,
 }: ToolPickerDialogProps) {
   const t = useT();
-  const [toolNames, setToolNames] = useDraftField("toolNames");
-  const [toolTiers, setToolTiers] = useDraftField("toolTiers");
-  const [ceiling] = useDraftField("autonomyCeiling");
+  const [scope, setScope] = useDraftField("scope");
+  const [limited] = useDraftField("limited");
   const [query, setQuery] = useState("");
   const [group, setGroup] = useState("all");
   const [kind, setKind] = useState<KindFilter>("all");
   const [chosenOnly, setChosenOnly] = useState(false);
   const listRef = useRef<HTMLDivElement>(null);
 
-  const chosen = useMemo(() => new Set(toolNames), [toolNames]);
-  const rail = useMemo(() => groupToolsByResource(tools, toolNames), [toolNames, tools]);
+  const heldNames = useMemo(() => {
+    const held = formScope(scope, limited);
+    return tools.filter((tool) => scopeAllows(held, tool.name)).map((tool) => tool.name);
+  }, [limited, scope, tools]);
+  const chosen = useMemo(() => new Set(heldNames), [heldNames]);
+  const rail = useMemo(() => groupToolsByResource(tools, heldNames), [heldNames, tools]);
   const groups = useMemo(
-    () => pickerGroups(tools, toolNames, { query, group, kind, chosenOnly }),
-    [chosenOnly, group, kind, query, toolNames, tools],
+    () => pickerGroups(tools, heldNames, { query, group, kind, chosenOnly }),
+    [chosenOnly, group, kind, query, heldNames, tools],
   );
   const rows = useMemo(() => pickerRows(groups, chosen), [chosen, groups]);
   const shown = useMemo(() => groups.flatMap((entry) => entry.tools), [groups]);
@@ -88,21 +93,11 @@ export function ToolPickerDialog({
     initialRect: { width: 560, height: 480 },
   });
 
-  const tierFor = useCallback(
-    (tool: ToolCatalogEntry) =>
-      startingTier(
-        (rules.get(tool.name)?.promotableTier as AutonomyTier | undefined) ?? "AutoExecute",
-        ceiling,
-      ),
-    [ceiling, rules],
-  );
   const apply = useCallback(
     (subset: readonly ToolCatalogEntry[], on: boolean) => {
-      const next = setTools(toolNames, toolTiers, subset, on, tierFor);
-      setToolNames(next.selected);
-      setToolTiers(next.tiers);
+      setScope(setHeld(scope, subset, on, limited));
     },
-    [setToolNames, setToolTiers, tierFor, toolNames, toolTiers],
+    [limited, scope, setScope],
   );
 
   const pickGroup = (resource: string) => {
@@ -122,9 +117,11 @@ export function ToolPickerDialog({
             <div className="tpk">
               <header className="tpk-h">
                 <div>
-                  <Dialog.Title render={<b />}>{t("Add tools")}</Dialog.Title>
+                  <Dialog.Title render={<b />}>{t("Choose capabilities")}</Dialog.Title>
                   <Dialog.Description render={<span />}>
-                    {t("Pick what this agent can read and change. Tiers are set on the agent.")}
+                    {t(
+                      "Tick what this agent may read and change. Clearing one an area gives switches it off.",
+                    )}
                   </Dialog.Description>
                 </div>
                 <Button
@@ -181,7 +178,7 @@ export function ToolPickerDialog({
                     onClick={() => setChosenOnly((only) => !only)}
                   >
                     <Ic n={chosenOnly ? "check" : "filter"} s={11} w={2.2} />
-                    {t("Chosen only")}
+                    {t("Held only")}
                   </button>
                   <span className="sp" />
                   <Button
@@ -260,7 +257,7 @@ export function ToolPickerDialog({
                       {query.trim()
                         ? t("No tools match “{0}”.", query.trim())
                         : chosenOnly
-                          ? t("None chosen here yet.")
+                          ? t("None held here yet.")
                           : t("No tools here.")}
                     </div>
                   )}
@@ -268,7 +265,7 @@ export function ToolPickerDialog({
               </div>
               <footer className="tpk-f">
                 <span>
-                  <b className="mono">{picked}</b> {t("chosen · {0} always on", coreCount)}
+                  <b className="mono">{picked}</b> {t("held · {0} always on", coreCount)}
                 </span>
                 <span className="sp" />
                 <Button type="button" variant="default" onClick={onClose}>
@@ -315,7 +312,7 @@ function Row({ row, on, rule, onToggle }: RowProps) {
   }
 
   const { tool } = row;
-  const top = (rule?.promotableTier as AutonomyTier | undefined) ?? "AutoExecute";
+  const runs = defaultTier(tool) ?? "Propose";
   return (
     <button
       type="button"
@@ -330,9 +327,9 @@ function Row({ row, on, rule, onToggle }: RowProps) {
         <em>
           {tool.kind === "action"
             ? t(
-                "Changes · {0} · up to {1}",
+                "Changes · {0} · {1} by default",
                 egressLabel(furthest(rule), t),
-                tierName(top, t).toLowerCase(),
+                tierName(runs, t).toLowerCase(),
               )
             : t("Reads")}
           {rule && rule.readsExternal !== "Never" ? ` · ${t("returns outside text")}` : ""}

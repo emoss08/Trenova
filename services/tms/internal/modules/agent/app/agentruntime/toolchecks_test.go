@@ -87,10 +87,10 @@ func TestPermittedTools_ChecksDistinctPermissionsTogetherAndAnswersTheSame(t *te
 	rt := newRuntime(
 		&scriptedCompletion{},
 		&stubQueryRegistry{Tools: []agenttoolports.AgentQueryTool{
-			queryTool("shipment_get", map[string]any{}, nil),
-			queryTool("shipment_list", map[string]any{}, nil),
+			queryTool("shipment_get_view", map[string]any{}, nil),
+			queryTool("shipment_list_view", map[string]any{}, nil),
 			&agenttest.StubQueryTool{
-				ToolName: "customer_get",
+				ToolName: "customer_get_view",
 				Result:   map[string]any{},
 				Resource: permission.ResourceCustomer,
 			},
@@ -101,10 +101,10 @@ func TestPermittedTools_ChecksDistinctPermissionsTogetherAndAnswersTheSame(t *te
 	rewire(rt, func(p *runtimeParts) { p.Permissions = permissions })
 
 	permitted := rt.access.PermittedTools(t.Context(), runtimetest.Actor(), []string{
-		"shipment_get", "customer_get", "shipment_list",
+		"shipment_get_view", "customer_get_view", "shipment_list_view",
 	})
 
-	assert.Equal(t, []string{"shipment_get", "shipment_list"}, permitted)
+	assert.Equal(t, []string{"shipment_get_view", "shipment_list_view"}, permitted)
 	assert.EqualValues(t, 2, permissions.met.Load(), "the checks ran one after the other")
 	assert.Len(t, permissions.Requests, 2, "one check per resource and operation")
 }

@@ -237,7 +237,7 @@ func readGroundedWith(
 	t.Helper()
 
 	turns := []*llmports.ChatCompletionResult{
-		runtimetest.ToolTurn("report_get_run", map[string]any{}),
+		runtimetest.ToolTurn("report_get_run_view", map[string]any{}),
 	}
 	for _, reply := range replies {
 		turns = append(turns, runtimetest.TextTurn(reply))
@@ -273,7 +273,7 @@ func readGroundedWith(
 func TestGroundingGuard_RewritesAShareNothingRead(t *testing.T) {
 	t.Parallel()
 
-	run := readGrounded(t, []string{"report_get_run", "analysis_run"},
+	run := readGrounded(t, []string{"report_get_run_view", "analysis_run"},
 		"About 52.3% of the $87,310.40 billed is still open.",
 		"Of the $87,310.40 billed, $45,662.16 is still open.",
 	)
@@ -296,7 +296,7 @@ func TestGroundingGuard_RewritesAShareNothingRead(t *testing.T) {
 func TestGroundingGuard_WithoutAnalysisAShareIsLeftOut(t *testing.T) {
 	t.Parallel()
 
-	run := readGrounded(t, []string{"report_get_run"},
+	run := readGrounded(t, []string{"report_get_run_view"},
 		"About 52.3% is still open.",
 		"Of the $87,310.40 billed, $45,662.16 is still open.",
 	)
@@ -310,7 +310,7 @@ func TestGroundingGuard_WithoutAnalysisAShareIsLeftOut(t *testing.T) {
 func TestGroundingGuard_NamesTheFiguresWhenTheRewriteStillStatesThem(t *testing.T) {
 	t.Parallel()
 
-	run := readGrounded(t, []string{"report_get_run"},
+	run := readGrounded(t, []string{"report_get_run_view"},
 		"About 52.3% is still open.",
 		"Roughly 52.3% is still open.",
 	)
@@ -328,7 +328,7 @@ func TestGroundingGuard_NamesTheFiguresWhenTheRewriteStillStatesThem(t *testing.
 func TestGroundingGuard_AcceptsWhatTheConversationRead(t *testing.T) {
 	t.Parallel()
 
-	run := readGrounded(t, []string{"report_get_run"},
+	run := readGrounded(t, []string{"report_get_run_view"},
 		"Of about $87.3k billed, $45,662.16 is still open, and 91.4% delivered on time "+
 			"across 31 days.",
 	)
@@ -353,20 +353,20 @@ func TestGroundingGuard_AFileOnlyTheModelReadsIsNotHeldAgainstIt(t *testing.T) {
 	t.Parallel()
 
 	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
-		runtimetest.ToolTurn("report_get_run", map[string]any{}),
+		runtimetest.ToolTurn("report_get_run_view", map[string]any{}),
 		runtimetest.TextTurn(
 			"The confirmation totals $3,610.00: $3,200.00 line haul and $410.00 fuel.",
 		),
 	}}
 	registry := &stubQueryRegistry{Tools: []agenttoolports.AgentQueryTool{
-		&agenttest.StubQueryTool{ToolName: "report_get_run", Result: map[string]any{}},
+		&agenttest.StubQueryTool{ToolName: "report_get_run_view", Result: map[string]any{}},
 	}}
 	rt := newRuntime(completion, registry, &stubActionRegistry{}, nil)
 	fx := &groundingEffects{}
 	fx.localEffects = &localEffects{s: rt, ctx: t.Context(), emit: func(kernelports.StreamEvent) {}}
 
 	turn := rt.OpenTurn(t.Context(), &agentruntimeports.RunRequest{
-		Definition: runtimetest.Definition("report_get_run"),
+		Definition: runtimetest.Definition("report_get_run_view"),
 		Actor:      runtimetest.Actor(),
 		Input:      "what's the total rate on it?",
 	})
@@ -450,21 +450,21 @@ func TestGroundingGuard_ADifferenceOfThePersonsOwnFiguresIsStated(t *testing.T) 
 	t.Parallel()
 
 	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
-		runtimetest.ToolTurn("invoice_get", map[string]any{}),
+		runtimetest.ToolTurn("invoice_get_view", map[string]any{}),
 		runtimetest.TextTurn(
 			"The $3,200 check leaves $500 open on the $3,700 invoice; a $517.40 fee would not.",
 		),
 		runtimetest.TextTurn("The $3,200 check leaves $500 open on the $3,700 invoice."),
 	}}
 	registry := &stubQueryRegistry{Tools: []agenttoolports.AgentQueryTool{
-		&agenttest.StubQueryTool{ToolName: "invoice_get", Result: map[string]any{"total": "3700"}},
+		&agenttest.StubQueryTool{ToolName: "invoice_get_view", Result: map[string]any{"total": "3700"}},
 	}}
 	rt := newRuntime(completion, registry, &stubActionRegistry{}, nil)
 	fx := &groundingEffects{}
 	fx.localEffects = &localEffects{s: rt, ctx: t.Context(), emit: func(kernelports.StreamEvent) {}}
 
 	_, err := rt.Drive(rt.OpenTurn(t.Context(), &agentruntimeports.RunRequest{
-		Definition: runtimetest.Definition("invoice_get"),
+		Definition: runtimetest.Definition("invoice_get_view"),
 		Actor:      runtimetest.Actor(),
 		Input:      "peak sent a check for 3,200 but their invoice was 3,700. what do we do with it",
 	}), fx)
@@ -509,7 +509,7 @@ func TestGroundingGuard_AnOfferBesideAClaimStillChecksTheClaim(t *testing.T) {
 func TestGroundingGuard_AcceptsArithmeticOnFiguresTheReplyGives(t *testing.T) {
 	t.Parallel()
 
-	run := readGrounded(t, []string{"report_get_run"},
+	run := readGrounded(t, []string{"report_get_run_view"},
 		"Of the $87,310.40 billed, $45,662.16 is still open: 52.3%, leaving $41,648.24 paid.",
 	)
 
@@ -520,7 +520,7 @@ func TestGroundingGuard_AcceptsArithmeticOnFiguresTheReplyGives(t *testing.T) {
 func TestGroundingGuard_WrongArithmeticOnGivenFiguresIsStillRewritten(t *testing.T) {
 	t.Parallel()
 
-	run := readGrounded(t, []string{"report_get_run"},
+	run := readGrounded(t, []string{"report_get_run_view"},
 		"Of the $87,310.40 billed, $45,662.16 is still open: 61.4%.",
 		"Of the $87,310.40 billed, $45,662.16 is still open.",
 	)
@@ -620,7 +620,7 @@ func runTransfer(t *testing.T, replies ...string) groundingRun {
 		{
 			ToolCalls: []llmports.ToolCall{{
 				ID:        "call_read",
-				Name:      "shipment_get",
+				Name:      "shipment_get_view",
 				Arguments: map[string]any{"id": "shp_1"},
 			}},
 			ModelIdentifier: "test-model",
@@ -642,7 +642,7 @@ func runTransfer(t *testing.T, replies ...string) groundingRun {
 	}
 	completion := &scriptedCompletion{Turns: turns}
 	rt := newRuntime(completion, &stubQueryRegistry{Tools: []agenttoolports.AgentQueryTool{
-		queryTool("shipment_get", map[string]any{
+		queryTool("shipment_get_view", map[string]any{
 			"id":         "shp_1",
 			"proNumber":  "SEED-DET-010",
 			"status":     "Completed",
@@ -661,7 +661,7 @@ func runTransfer(t *testing.T, replies ...string) groundingRun {
 	fx.localEffects = &localEffects{s: rt, ctx: t.Context(), emit: func(kernelports.StreamEvent) {}}
 
 	result, err := rt.Drive(rt.OpenTurn(t.Context(), &agentruntimeports.RunRequest{
-		Definition: runtimetest.Definition("shipment_get", "billing_transfer"),
+		Definition: runtimetest.Definition("shipment_get_view", "billing_transfer"),
 		Actor:      runtimetest.Actor(),
 		Input:      "acme's last delivered load that hasn't gone to billing yet, send it over",
 	}), fx)
@@ -720,20 +720,20 @@ func readFigures(
 ) groundingRun {
 	t.Helper()
 
-	turns := []*llmports.ChatCompletionResult{runtimetest.ToolTurn("record_get", map[string]any{})}
+	turns := []*llmports.ChatCompletionResult{runtimetest.ToolTurn("record_lookup_view", map[string]any{})}
 	for _, reply := range replies {
 		turns = append(turns, runtimetest.TextTurn(reply))
 	}
 	completion := &scriptedCompletion{Turns: turns}
 	registry := &stubQueryRegistry{Tools: []agenttoolports.AgentQueryTool{
-		&agenttest.StubQueryTool{ToolName: "record_get", Result: read},
+		&agenttest.StubQueryTool{ToolName: "record_lookup_view", Result: read},
 	}}
 	rt := newRuntime(completion, registry, &stubActionRegistry{}, nil)
 	fx := &groundingEffects{}
 	fx.localEffects = &localEffects{s: rt, ctx: t.Context(), emit: func(kernelports.StreamEvent) {}}
 
 	result, err := rt.Drive(rt.OpenTurn(t.Context(), &agentruntimeports.RunRequest{
-		Definition: runtimetest.Definition("record_get"),
+		Definition: runtimetest.Definition("record_lookup_view"),
 		Actor:      runtimetest.Actor(),
 		Input:      input,
 	}), fx)

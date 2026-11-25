@@ -2,6 +2,7 @@ package agentsafetyservice
 
 import (
 	"context"
+	"slices"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentaccessservice"
@@ -57,8 +58,9 @@ type fakeHolder struct{}
 func (fakeHolder) ToolSummaries(
 	definition *agentdefinition.Definition,
 ) []agentturn.ToolSummary {
-	out := make([]agentturn.ToolSummary, 0, len(definition.ToolNames)+1)
-	for _, name := range append(definition.ToolNames, definition.ToolNames...) {
+	held := definition.Scope.Capabilities
+	out := make([]agentturn.ToolSummary, 0, 2*len(held)+1)
+	for _, name := range append(slices.Clone(held), held...) {
 		out = append(out, agentturn.ToolSummary{Name: name})
 	}
 
@@ -170,7 +172,7 @@ func agentWith(name string, tools ...string) *agentdefinition.Definition {
 	return &agentdefinition.Definition{
 		ID:              pulid.MustNew("agdef_"),
 		Name:            name,
-		ToolNames:       tools,
+		Scope:           agentdefinition.Scope{Capabilities: tools},
 		AutonomyCeiling: agent.TierAutoExecute,
 		TriggerMode:     agentdefinition.TriggerChat,
 		AccessMode:      agentdefinition.AccessEveryone,

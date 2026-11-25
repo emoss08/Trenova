@@ -58,7 +58,7 @@ func (s *AgentDefinitionSeed) Run(ctx context.Context, sr *seed.Run) error {
 		// otherwise stays unable to answer what it was created for. The
 		// compliance agent shipped holding worker_get and the worker name
 		// search and could not look up an expiring medical card.
-		if err = s.reconcileToolNames(ctx, db, org.ID, org.BusinessUnitID); err != nil {
+		if err = s.reconcileScopes(ctx, db, org.ID, org.BusinessUnitID); err != nil {
 			return err
 		}
 
@@ -121,14 +121,8 @@ func (s *AgentDefinitionSeed) insertDefinitions(
 	return nil
 }
 
-// reconcileToolNames adds any tool a definition's template has gained.
-//
-// Strictly additive: a tool already present keeps its position, and one a
-// developer removed by hand comes back, which is the accepted cost of a seeder
-// whose job is to reflect the current templates. It never removes, so a tool
-// picked by hand survives, and it runs only here — in the development seeds —
-// so no organization's configured agent is touched by it.
-func (s *AgentDefinitionSeed) reconcileToolNames(
+// reconcileScopes keeps each templated agent on its template's scope and pins.
+func (s *AgentDefinitionSeed) reconcileScopes(
 	ctx context.Context,
 	db *keel.DB,
 	orgID, buID pulid.ID,
@@ -143,22 +137,15 @@ func (s *AgentDefinitionSeed) reconcileToolNames(
 	}
 
 	for _, definition := range existing {
-		merged, toolsChanged := mergeToolNames(
-			definition.ToolNames,
-			agentpreset.StarterTools(definition.Template),
-		)
-		access, accessRaised := raisedDataAccess(
+		access, _ := raisedDataAccess(
 			definition.DataAccessCeiling,
 			agentpreset.StarterDataAccess(definition.Template),
 		)
-		if !toolsChanged && !accessRaised {
-			continue
-		}
-
 		d := agentdefinitiondb.Definitions
-		definition.ToolNames = merged
+		definition.Scope = agentpreset.ScopeFor(definition.Template)
+		definition.PinnedTools = agentpreset.PinnedFor(definition.Template)
 		definition.DataAccessCeiling = access
-		if err := d.Save(ctx, db, definition, d.ToolNames, d.DataAccessCeiling); err != nil {
+		if err := d.Save(ctx, db, definition, d.Scope, d.PinnedTools, d.DataAccessCeiling); err != nil {
 			return fmt.Errorf("reconcile agent %s: %w", definition.Name, err)
 		}
 	}
@@ -174,33 +161,6 @@ func raisedDataAccess(
 	}
 
 	return starter, true
-}
-
-// mergeToolNames appends the starters a definition is missing, preserving the
-// order it already had so a developer's arrangement is not reshuffled. It stops
-// at the tool cap: nothing is removed, so a template that moved tools elsewhere
-// and gained others would otherwise grow an agent past what it may hold.
-func mergeToolNames(current, starters []string) ([]string, bool) {
-	held := make(map[string]struct{}, len(current))
-	for _, tool := range current {
-		held[tool] = struct{}{}
-	}
-
-	merged := current
-	changed := false
-	for _, tool := range starters {
-		if len(merged) >= agentdefinition.MaxTools {
-			break
-		}
-		if _, ok := held[tool]; ok {
-			continue
-		}
-		merged = append(merged, tool)
-		held[tool] = struct{}{}
-		changed = true
-	}
-
-	return merged, changed
 }
 
 func (s *AgentDefinitionSeed) definitions(orgID, buID pulid.ID) []*agentdefinition.Definition {
@@ -219,11 +179,8 @@ func (s *AgentDefinitionSeed) definitions(orgID, buID pulid.ID) []*agentdefiniti
 				"We run mostly reefer freight out of the Los Angeles terminal. When a driver is " +
 				"asked about, check hours of service before anything else.",
 			Guardrails: []string{"Promise a delivery time to a customer", "Change a rate"},
-			ToolNames: append(
-				agentpreset.StarterTools(agenttemplate.TemplateDispatchAssistant),
-				"dispatch_get_board",
-				"worker_send_message",
-			),
+			Scope:       agentpreset.ScopeFor(agenttemplate.TemplateDispatchAssistant),
+			PinnedTools: agentpreset.PinnedFor(agenttemplate.TemplateDispatchAssistant),
 			AutonomyCeiling: agent.TierActWithApproval,
 			DataAccessCeiling: agentpreset.StarterDataAccess(
 				agenttemplate.TemplateDispatchAssistant,
@@ -252,7 +209,8 @@ func (s *AgentDefinitionSeed) definitions(orgID, buID pulid.ID) []*agentdefiniti
 			) + "\n\n" +
 				"Never propose a rate change. If a rate looks wrong, flag it for a person and say " +
 				"which document you would want to see.",
-			ToolNames:       agentpreset.StarterTools(agenttemplate.TemplateBillingAssistant),
+			Scope:       agentpreset.ScopeFor(agenttemplate.TemplateBillingAssistant),
+			PinnedTools: agentpreset.PinnedFor(agenttemplate.TemplateBillingAssistant),
 			AutonomyCeiling: agent.TierPropose,
 			DataAccessCeiling: agentpreset.StarterDataAccess(
 				agenttemplate.TemplateBillingAssistant,
@@ -279,7 +237,8 @@ func (s *AgentDefinitionSeed) definitions(orgID, buID pulid.ID) []*agentdefiniti
 			Instructions: agentinstructions.StarterInstructions(
 				agenttemplate.TemplateSettlementsClerk,
 			),
-			ToolNames: agentpreset.StarterTools(agenttemplate.TemplateSettlementsClerk),
+			Scope: agentpreset.ScopeFor(agenttemplate.TemplateSettlementsClerk),
+			PinnedTools: agentpreset.PinnedFor(agenttemplate.TemplateSettlementsClerk),
 			AutonomyCeiling: agentpreset.StarterCeiling(
 				agenttemplate.TemplateSettlementsClerk,
 			),
@@ -308,7 +267,8 @@ func (s *AgentDefinitionSeed) definitions(orgID, buID pulid.ID) []*agentdefiniti
 			Instructions: agentinstructions.StarterInstructions(
 				agenttemplate.TemplateReceivables,
 			),
-			ToolNames:         agentpreset.StarterTools(agenttemplate.TemplateReceivables),
+			Scope:         agentpreset.ScopeFor(agenttemplate.TemplateReceivables),
+			PinnedTools: agentpreset.PinnedFor(agenttemplate.TemplateReceivables),
 			AutonomyCeiling:   agentpreset.StarterCeiling(agenttemplate.TemplateReceivables),
 			DataAccessCeiling: agentpreset.StarterDataAccess(agenttemplate.TemplateReceivables),
 			TriggerMode:       agentdefinition.TriggerChat,
@@ -333,9 +293,8 @@ func (s *AgentDefinitionSeed) definitions(orgID, buID pulid.ID) []*agentdefiniti
 			Instructions: agentinstructions.StarterInstructions(
 				agenttemplate.TemplateMasterDataSteward,
 			),
-			ToolNames: agentpreset.StarterTools(
-				agenttemplate.TemplateMasterDataSteward,
-			),
+			Scope: agentpreset.ScopeFor(agenttemplate.TemplateMasterDataSteward),
+			PinnedTools: agentpreset.PinnedFor(agenttemplate.TemplateMasterDataSteward),
 			AutonomyCeiling: agentpreset.StarterCeiling(
 				agenttemplate.TemplateMasterDataSteward,
 			),
@@ -364,9 +323,8 @@ func (s *AgentDefinitionSeed) definitions(orgID, buID pulid.ID) []*agentdefiniti
 			Instructions: agentinstructions.StarterInstructions(
 				agenttemplate.TemplateWorkforceCoordinator,
 			),
-			ToolNames: agentpreset.StarterTools(
-				agenttemplate.TemplateWorkforceCoordinator,
-			),
+			Scope: agentpreset.ScopeFor(agenttemplate.TemplateWorkforceCoordinator),
+			PinnedTools: agentpreset.PinnedFor(agenttemplate.TemplateWorkforceCoordinator),
 			AutonomyCeiling: agentpreset.StarterCeiling(
 				agenttemplate.TemplateWorkforceCoordinator,
 			),
@@ -395,7 +353,8 @@ func (s *AgentDefinitionSeed) definitions(orgID, buID pulid.ID) []*agentdefiniti
 			Instructions: agentinstructions.StarterInstructions(
 				agenttemplate.TemplateFuelTaxClerk,
 			),
-			ToolNames:       agentpreset.StarterTools(agenttemplate.TemplateFuelTaxClerk),
+			Scope:       agentpreset.ScopeFor(agenttemplate.TemplateFuelTaxClerk),
+			PinnedTools: agentpreset.PinnedFor(agenttemplate.TemplateFuelTaxClerk),
 			AutonomyCeiling: agentpreset.StarterCeiling(agenttemplate.TemplateFuelTaxClerk),
 			DataAccessCeiling: agentpreset.StarterDataAccess(
 				agenttemplate.TemplateFuelTaxClerk,
@@ -422,7 +381,8 @@ func (s *AgentDefinitionSeed) definitions(orgID, buID pulid.ID) []*agentdefiniti
 			Instructions: agentinstructions.StarterInstructions(
 				agenttemplate.TemplateReportAnalyst,
 			),
-			ToolNames:       agentpreset.StarterTools(agenttemplate.TemplateReportAnalyst),
+			Scope:       agentpreset.ScopeFor(agenttemplate.TemplateReportAnalyst),
+			PinnedTools: agentpreset.PinnedFor(agenttemplate.TemplateReportAnalyst),
 			AutonomyCeiling: agentpreset.StarterCeiling(agenttemplate.TemplateReportAnalyst),
 			DataAccessCeiling: agentpreset.StarterDataAccess(
 				agenttemplate.TemplateReportAnalyst,
@@ -450,9 +410,8 @@ func (s *AgentDefinitionSeed) definitions(orgID, buID pulid.ID) []*agentdefiniti
 				agenttemplate.TemplateComplianceAssistant,
 			) + "\n\n" +
 				"Medical cards and hazmat endorsements are the two we most often miss.",
-			ToolNames: agentpreset.StarterTools(
-				agenttemplate.TemplateComplianceAssistant,
-			),
+			Scope: agentpreset.ScopeFor(agenttemplate.TemplateComplianceAssistant),
+			PinnedTools: agentpreset.PinnedFor(agenttemplate.TemplateComplianceAssistant),
 			AutonomyCeiling: agent.TierPropose,
 			DataAccessCeiling: agentpreset.StarterDataAccess(
 				agenttemplate.TemplateComplianceAssistant,
@@ -479,9 +438,8 @@ func (s *AgentDefinitionSeed) definitions(orgID, buID pulid.ID) []*agentdefiniti
 			Instructions: agentinstructions.StarterInstructions(
 				agenttemplate.TemplateCustomerAssistant,
 			),
-			ToolNames: agentpreset.StarterTools(
-				agenttemplate.TemplateCustomerAssistant,
-			),
+			Scope: agentpreset.ScopeFor(agenttemplate.TemplateCustomerAssistant),
+			PinnedTools: agentpreset.PinnedFor(agenttemplate.TemplateCustomerAssistant),
 			AutonomyCeiling: agent.TierPropose,
 			DataAccessCeiling: agentpreset.StarterDataAccess(
 				agenttemplate.TemplateCustomerAssistant,
@@ -505,13 +463,13 @@ func (s *AgentDefinitionSeed) definitions(orgID, buID pulid.ID) []*agentdefiniti
 			Accent:         agentmark.AccentSlate,
 			Description: "Explains how to do things in Trenova and answers quick questions from " +
 				"the command palette. Reads what the person may read; changes nothing.",
-			Template: agenttemplate.TemplateGeneralAssistant,
+			Template: agenttemplate.TemplateUniversal,
 			Instructions: agentinstructions.StarterInstructions(
-				agenttemplate.TemplateGeneralAssistant,
+				agenttemplate.TemplateUniversal,
 			),
 			AutonomyCeiling: agent.TierPropose,
 			DataAccessCeiling: agentpreset.StarterDataAccess(
-				agenttemplate.TemplateGeneralAssistant,
+				agenttemplate.TemplateUniversal,
 			),
 			TriggerMode: agentdefinition.TriggerChat,
 			Enabled:     true,
@@ -537,12 +495,12 @@ func (s *AgentDefinitionSeed) definitions(orgID, buID pulid.ID) []*agentdefiniti
 			// No template, so this one names its own tools — and has to be read
 			// whenever the catalog grows, which is exactly the maintenance the
 			// templated definitions above no longer need.
-			ToolNames: []string{
-				"shipment_list",
-				"worker_list",
-				"worker_list_time_off",
-				"worker_list_credentials",
-			},
+			Scope: agentdefinition.Scope{Capabilities: []string{
+				"shipment.list",
+				"worker.list",
+				"worker_time_off.list",
+				"worker_credential.list",
+			}},
 			AutonomyCeiling: agent.TierPropose,
 			TriggerMode:     agentdefinition.TriggerScheduled,
 			CronExpression:  "0 6 * * 1-5",
@@ -571,7 +529,8 @@ func (s *AgentDefinitionSeed) definitions(orgID, buID pulid.ID) []*agentdefiniti
 			Instructions: agentinstructions.StarterInstructions(
 				agenttemplate.TemplateIntakeDesk,
 			),
-			ToolNames:       agentpreset.StarterTools(agenttemplate.TemplateIntakeDesk),
+			Scope:       agentpreset.ScopeFor(agenttemplate.TemplateIntakeDesk),
+			PinnedTools: agentpreset.PinnedFor(agenttemplate.TemplateIntakeDesk),
 			AutonomyCeiling: agentpreset.StarterCeiling(agenttemplate.TemplateIntakeDesk),
 			TriggerMode:     agentpreset.StarterTrigger(agenttemplate.TemplateIntakeDesk),
 			EventKinds:      agentpreset.StarterEvents(agenttemplate.TemplateIntakeDesk),
@@ -630,7 +589,8 @@ func watchtowerDesk(
 		Description:     template.Description(),
 		Template:        template,
 		Instructions:    agentinstructions.StarterInstructions(template),
-		ToolNames:       agentpreset.StarterTools(template),
+		Scope:       agentpreset.ScopeFor(template),
+			PinnedTools: agentpreset.PinnedFor(template),
 		AutonomyCeiling: agentpreset.StarterCeiling(template),
 		TriggerMode:     agentpreset.StarterTrigger(template),
 		EventKinds:      agentpreset.StarterEvents(template),

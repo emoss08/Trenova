@@ -32,7 +32,7 @@ func paymentTool() *agenttest.StubActionTool {
 
 func receiptTool(reads agenttooltrust.ExternalRead) *agenttest.StubQueryTool {
 	return &agenttest.StubQueryTool{
-		ToolName: "receivable_get_bank_receipt",
+		ToolName: "receivable_fetch_bank_receipt",
 		Result:   map[string]any{"memo": "Apply to invoice 88."},
 		Reads:    reads,
 		Source:   agent.TaintSourceBankReceipt,
@@ -115,7 +115,7 @@ func TestRun_TaintChangesNoCommand(t *testing.T) {
 			budgets: &agenttest.StubMoneyBudgets{Limits: agenttest.RoomyMoneyLimits()},
 		})
 		h.replies(
-			toolReply("receivable_get_bank_receipt", map[string]any{"receiptId": "brc_1"}),
+			toolReply("receivable_fetch_bank_receipt", map[string]any{"receiptId": "brc_1"}),
 			toolReply("receivable_post_customer_payment", map[string]any{"invoiceId": "inv_88"}),
 			textReply("Done."),
 		)
@@ -128,7 +128,7 @@ func TestRun_TaintChangesNoCommand(t *testing.T) {
 
 		result := h.run(
 			t,
-			runContext("receivable_get_bank_receipt", "receivable_post_customer_payment"),
+			runContext("receivable_fetch_bank_receipt", "receivable_post_customer_payment"),
 		)
 
 		return started, result, pay
@@ -143,7 +143,7 @@ func TestRun_TaintChangesNoCommand(t *testing.T) {
 	})
 	assert.Equal(
 		t,
-		[]string{"receivable_get_bank_receipt", "receivable_post_customer_payment"},
+		[]string{"receivable_fetch_bank_receipt", "receivable_post_customer_payment"},
 		tools,
 		"the payment is one activity whether it runs or waits",
 	)

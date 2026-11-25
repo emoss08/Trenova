@@ -303,7 +303,7 @@ func TestStartGeneralThread_OpensADeskConversationWithTheGeneralAssistant(t *tes
 		&assistanttest.StubActionRegistry{},
 	)
 	dispatch := assistanttest.ChatDefinition("Dispatch", agenttemplate.TemplateDispatchAssistant)
-	general := assistanttest.ChatDefinition("Assistant", agenttemplate.TemplateGeneralAssistant)
+	general := assistanttest.ChatDefinition("Assistant", agenttemplate.TemplateUniversal)
 	definitions := &assistanttest.StubDefinitionList{
 		Definitions: []*agentdefinition.Definition{dispatch, general},
 	}
@@ -324,7 +324,7 @@ func TestStartGeneralThread_OpensADeskConversationWithTheGeneralAssistant(t *tes
 	assert.Equal(t, "template", definitions.Last.Filter.FieldFilters[0].Field)
 	assert.Equal(
 		t,
-		string(agenttemplate.TemplateGeneralAssistant),
+		string(agenttemplate.TemplateUniversal),
 		definitions.Last.Filter.FieldFilters[0].Value,
 	)
 	require.NotNil(t, conversations.Created)

@@ -18,13 +18,13 @@ type runtimePolicySpec struct {
 
 var runtimePolicySpecs = []runtimePolicySpec{
 	{
-		name:      "find_tools",
+		name:      SearchToolsName,
 		operation: permission.OpRead,
 		scope:     agenttooltrust.ToolScopeRun,
 		egress:    agent.EgressNone,
 		effect:    agenttooltrust.ToolEffectDiscover,
-		rationale: "Loads more of the agent's own tools into the turn; it reads the " +
-			"catalog and changes nothing.",
+		rationale: "Searches the capability registry and loads matching capabilities the " +
+			"agent may use into the turn; it reads the registry and changes nothing.",
 	},
 	{
 		name:      "ask_user",

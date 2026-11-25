@@ -43,7 +43,7 @@ type Call struct {
 	ScriptPosition  int             `json:"scriptPosition,omitempty"`
 	ScriptContinues map[string]any  `json:"scriptContinues,omitempty"`
 	// ScriptReach is, for the call that runs a script, the reads the turn
-	// reached beyond the agent's own through find_tools, each with its tier:
+	// reached beyond the agent's own through search_tools, each with its tier:
 	// the script may call them as the model may.
 	ScriptReach map[string]agent.AutonomyTier `json:"scriptReach,omitempty"`
 }

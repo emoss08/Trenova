@@ -74,7 +74,7 @@ func TestRun_AsksOnceForABoardThenEndsTheTurnOnIt(t *testing.T) {
 
 	run := runBoardAsk(t, observer.observe, nil,
 		[]agenttoolports.AgentQueryTool{listedShipments(first, second)},
-		runtimetest.ToolTurn("shipment_list", map[string]any{"query": "late"}),
+		runtimetest.ToolTurn("shipment_list_view", map[string]any{"query": "late"}),
 		runtimetest.TextTurn(prose),
 		runtimetest.ToolTurn("show_board", runtimetest.ShipmentBoard(first, second)),
 		runtimetest.TextTurn("This is never asked for."),
@@ -114,7 +114,7 @@ func TestRun_TakesASecondProseReplyAsItIs(t *testing.T) {
 
 	run := runBoardAsk(t, observer.observe, nil,
 		[]agenttoolports.AgentQueryTool{listedShipments(first, second)},
-		runtimetest.ToolTurn("shipment_list", map[string]any{"query": "late"}),
+		runtimetest.ToolTurn("shipment_list_view", map[string]any{"query": "late"}),
 		runtimetest.TextTurn(prose),
 		runtimetest.TextTurn(again),
 	)
@@ -134,7 +134,7 @@ func tableObserver(
 		if _, boards := observation.Data.(agentruntimeports.BoardRequest); boards {
 			return board, nil
 		}
-		if observation.Call.Name == "shipment_list" {
+		if observation.Call.Name == "shipment_list_view" {
 			return table, nil
 		}
 
@@ -152,7 +152,7 @@ func TestRun_LeavesAReplyThatLinksTheTable(t *testing.T) {
 
 	run := runBoardAsk(t, tableObserver(&table, nil), nil,
 		[]agenttoolports.AgentQueryTool{listedShipments(first, second)},
-		runtimetest.ToolTurn("shipment_list", map[string]any{"query": "late"}),
+		runtimetest.ToolTurn("shipment_list_view", map[string]any{"query": "late"}),
 		runtimetest.TextTurn(reply),
 	)
 
@@ -174,7 +174,7 @@ func TestRun_LeavesAReplyThatGivesACountAndLinksTheList(t *testing.T) {
 
 	run := runBoardAsk(t, tableObserver(&table, nil), nil,
 		[]agenttoolports.AgentQueryTool{listedShipments(first, second)},
-		runtimetest.ToolTurn("shipment_list", map[string]any{"query": "late"}),
+		runtimetest.ToolTurn("shipment_list_view", map[string]any{"query": "late"}),
 		runtimetest.TextTurn(reply),
 	)
 
@@ -198,7 +198,7 @@ func TestRun_LeavesAReplyAboutAProposedChange(t *testing.T) {
 	run := runBoardAsk(t, (&boardObserver{}).observe,
 		[]agenttoolports.AgentTool{comment},
 		[]agenttoolports.AgentQueryTool{listedShipments(first, second)},
-		runtimetest.ToolTurn("shipment_list", map[string]any{"query": "late"}),
+		runtimetest.ToolTurn("shipment_list_view", map[string]any{"query": "late"}),
 		runtimetest.ToolTurn("shipment_add_comment", map[string]any{
 			"shipmentId": first, "comment": "Call before delivery",
 		}),

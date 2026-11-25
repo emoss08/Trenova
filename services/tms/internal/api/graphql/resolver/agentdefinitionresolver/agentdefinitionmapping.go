@@ -42,7 +42,7 @@ func definitionColumns(
 
 	d := agentdefinitiondb.Definitions
 	columns := selection.Columns
-	for _, column := range projection.ColumnNames(d.Template.Col, d.ToolNames.Col) {
+	for _, column := range projection.ColumnNames(d.Template.Col, d.Scope.Col, d.PinnedTools.Col) {
 		columns = sliceutils.AppendIfMissing(columns, column)
 	}
 

@@ -206,7 +206,7 @@ func TestRedactor_RuntimeToolsPassThrough(t *testing.T) {
 
 	out := &redaction{}
 	value := testRedactor(t).value(
-		"find_tools",
+		"search_tools",
 		map[string]any{"tools": []any{"customer_get"}},
 		out,
 	)

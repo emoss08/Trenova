@@ -38,7 +38,7 @@ type Result struct {
 	// Taint is the outside content the call read.
 	Taint []agent.TaintMark
 	Found []string
-	// HandOff names the person's other agents a find_tools answer named as
+	// HandOff names the person's other agents a search_tools answer named as
 	// holding what it matched, for the Desk's hand-off menu.
 	HandOff []pulid.ID
 	Verdict string

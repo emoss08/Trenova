@@ -279,14 +279,14 @@ func definitionFor(
 		BusinessUnitID:  tenant.BusinessUnitID,
 		Name:            name,
 		Instructions:    instructions,
-		ToolNames:       slices.Clone(spec.Tools),
+		Scope:           agentdefinition.Scope{Capabilities: slices.Clone(spec.Tools)},
 		AutonomyCeiling: agent.TierActWithApproval,
 		TriggerMode:     trigger,
 		Enabled:         true,
 	}
 	if spec.Autonomy != AutonomyDefault {
 		definition.AutonomyCeiling = agent.TierAutoExecute
-		names := definition.EffectiveToolNames()
+		names := definition.Holds(slices.Clone(spec.Tools))
 		definition.ToolTiers = make(map[string]agent.AutonomyTier, len(names))
 		for _, tool := range names {
 			definition.ToolTiers[tool] = agent.TierAutoExecute
@@ -360,7 +360,7 @@ func contextFor(
 			rc.Delegates = append(rc.Delegates, agentturn.RuntimeDelegate{
 				ID:    delegate.ID,
 				Name:  delegate.Name,
-				Tools: slices.Clone(delegate.ToolNames),
+				Tools: delegate.StarterTools(),
 			})
 		}
 	}
@@ -472,12 +472,12 @@ func (fx *effects) Dispatch(
 	return outcome
 }
 
-func (fx *effects) Find(t *agentruntime.Turn, arguments map[string]any) toolaccess.FindAnswer {
+func (fx *effects) Search(t *agentruntime.Turn, arguments map[string]any) toolaccess.SearchAnswer {
 	state := t.ToolsState()
-	found := fx.rt.FindFor(fx.ctx, t.Request(), &state, arguments)
+	found := fx.rt.SearchFor(fx.ctx, t.Request(), &state, arguments)
 	t.LoadTools(found.Loaded)
 
-	return toolaccess.FindAnswer{
+	return toolaccess.SearchAnswer{
 		Content: found.Content,
 		Found:   found.Found,
 		HandOff: found.HandOff,

@@ -55,7 +55,7 @@ func definition(template agenttemplate.Template, tools ...string) *agentdefiniti
 		Name:            "Test",
 		Template:        template,
 		AutonomyCeiling: agent.TierPropose,
-		ToolNames:       tools,
+		Scope:           agentdefinition.Scope{Capabilities: tools},
 	}
 	d.ApplyDefaults()
 
@@ -96,7 +96,7 @@ func TestValidateToolSelection_AcceptsAnyRegisteredToolOnAnyTemplate(t *testing.
 		t,
 		validate(
 			t,
-			definition(agenttemplate.TemplateGeneralAssistant, "reassign_move", "shipment_get"),
+			definition(agenttemplate.TemplateUniversal, "reassign_move", "shipment_get"),
 		),
 	)
 	assert.Empty(t, validate(t, definition("", "customer_update")))
@@ -106,7 +106,7 @@ func TestValidateToolSelection_RefusesUnknownTools(t *testing.T) {
 	t.Parallel()
 
 	errs := validate(t, definition(agenttemplate.TemplateDispatchAssistant, "exec_shell"))
-	assert.True(t, errs["toolNames[0]"], "a tool that does not exist cannot be configured")
+	assert.True(t, errs["scope.capabilities[0]"], "a tool that does not exist cannot be configured")
 }
 
 func TestValidateToolSelection_ReportsEachOffendingToolByIndex(t *testing.T) {
@@ -120,10 +120,10 @@ func TestValidateToolSelection_ReportsEachOffendingToolByIndex(t *testing.T) {
 		"run_sql",
 	))
 
-	assert.False(t, errs["toolNames[0]"])
-	assert.False(t, errs["toolNames[1]"])
-	assert.True(t, errs["toolNames[2]"])
-	assert.True(t, errs["toolNames[3]"])
+	assert.False(t, errs["scope.capabilities[0]"])
+	assert.False(t, errs["scope.capabilities[1]"])
+	assert.True(t, errs["scope.capabilities[2]"])
+	assert.True(t, errs["scope.capabilities[3]"])
 }
 
 func TestBuildToolCatalog_ListsEveryRegisteredToolWithItsKind(t *testing.T) {
@@ -233,7 +233,8 @@ func TestApply_ClearsTriggerFieldsThatDoNotBelongToTheMode(t *testing.T) {
 		CronExpression:  "* * * * *",
 		IntervalSeconds: 300,
 		EventKinds:      []agenttrigger.EventKind{agenttrigger.EventShipmentCreated},
-		ToolNames:       []string{" shipment_get "},
+		Scope:           agentdefinition.Scope{Capabilities: []string{"shipment_get"}},
+		PinnedTools:     []string{" shipment_get "},
 		ToolTiers:       map[string]agent.AutonomyTier{"shipment_get": agent.TierAutoExecute},
 	})
 
@@ -241,7 +242,8 @@ func TestApply_ClearsTriggerFieldsThatDoNotBelongToTheMode(t *testing.T) {
 	assert.Empty(t, d.CronExpression)
 	assert.Zero(t, d.IntervalSeconds)
 	assert.Equal(t, []agenttrigger.EventKind{agenttrigger.EventShipmentCreated}, d.EventKinds)
-	assert.Equal(t, []string{"shipment_get"}, d.ToolNames)
+	assert.Equal(t, []string{"shipment_get"}, d.Scope.Capabilities)
+	assert.Equal(t, []string{"shipment_get"}, d.PinnedTools)
 	assert.Equal(t, agentdefinition.DefaultMaxToolCalls, d.MaxToolCalls)
 	assert.Equal(t, agentdefinition.OutputConversational, d.OutputMode)
 }
@@ -255,7 +257,7 @@ func TestApply_StoresNoCoreTool(t *testing.T) {
 	d := &agentdefinition.Definition{}
 	apply(d, &agentdefinitionports.SaveAgentDefinitionRequest{
 		Name: "Report builder",
-		ToolNames: []string{
+		PinnedTools: []string{
 			"agent_list_memories",
 			" report_list ",
 			"agent_create_memory",
@@ -263,7 +265,7 @@ func TestApply_StoresNoCoreTool(t *testing.T) {
 		},
 	})
 
-	assert.Equal(t, []string{"report_list", "report_create"}, d.ToolNames)
+	assert.Equal(t, []string{"report_list", "report_create"}, d.PinnedTools)
 }
 
 func TestBuildToolCatalog_MarksTheCoreTools(t *testing.T) {
@@ -381,6 +383,7 @@ func TestValidateToolSelection_ExplainsTheCapWithTheToolsRationale(t *testing.T)
 	}}
 	booking.policy = booking.StubActionTool.Policy()
 	booking.policy.MaxTier = agent.TierActWithApproval
+	booking.policy.DefaultTier = agent.TierActWithApproval
 	booking.policy.Rationale = "A new load commits a customer's freight."
 
 	mail := policyStubTool{StubActionTool: &agenttest.StubActionTool{
@@ -388,6 +391,7 @@ func TestValidateToolSelection_ExplainsTheCapWithTheToolsRationale(t *testing.T)
 	}}
 	mail.policy = mail.StubActionTool.Policy()
 	mail.policy.Egress = []agent.EgressClass{agent.EgressExternalRecipient}
+	mail.policy.DefaultTier = agent.TierActWithApproval
 	mail.policy.Rationale = "Emails the customer's contacts a message the model wrote."
 
 	booked := tierMessages(t, booking, agent.TierAutoExecute)["toolTiers.shipment_create"]
@@ -463,4 +467,33 @@ func TestCatalogEntry_SendsNoPrerequisitesAsAnEmptyList(t *testing.T) {
 		require.NoError(t, err)
 		assert.Contains(t, string(encoded), `"prerequisites":[]`, tool.Name())
 	}
+}
+
+// A tier above the tool's default is earned from approvals, not set by hand:
+// it is refused unless the saved agent already ran the tool at that tier.
+func TestValidateToolSelection_AFreerTierIsKeptOnlyWhenEarned(t *testing.T) {
+	t.Parallel()
+
+	booking := policyStubTool{StubActionTool: &agenttest.StubActionTool{
+		ToolName: "shipment_create",
+	}}
+	booking.policy = booking.StubActionTool.Policy()
+	booking.policy.DefaultTier = agent.TierPropose
+
+	set := tierMessages(t, booking, agent.TierActWithApproval)["toolTiers.shipment_create"]
+	assert.Contains(t, set, "an override can only be stricter")
+
+	actions := &agenttest.StubActionRegistry{Tools: []agenttoolports.AgentTool{booking}}
+	d := definition("", booking.ToolName)
+	d.ToolTiers = map[string]agent.AutonomyTier{booking.ToolName: agent.TierActWithApproval}
+	previous := definition("", booking.ToolName)
+	previous.ToolTiers = map[string]agent.AutonomyTier{booking.ToolName: agent.TierActWithApproval}
+	multiErr := errortypes.NewMultiError()
+	validateToolSelection(toolSelection{
+		definition: d,
+		previous:   previous,
+		actions:    actions,
+		queries:    &agenttest.StubQueryRegistry{},
+	}, multiErr)
+	assert.False(t, multiErr.HasErrors(), multiErr.Error())
 }

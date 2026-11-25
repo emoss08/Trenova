@@ -168,7 +168,7 @@ func runContext(tools ...string) RunContext {
 		Name:            "Dispatch helper",
 		Instructions:    "Help dispatch.",
 		AutonomyCeiling: agent.TierAutoExecute,
-		ToolNames:       tools,
+		Scope:           agentdefinition.Scope{Capabilities: tools},
 		Enabled:         true,
 	}
 	definition.ApplyDefaults()
@@ -227,12 +227,12 @@ func TestRunCallsAToolAsItsOwnActivity(t *testing.T) {
 	t.Parallel()
 
 	lookup := &agenttest.StubQueryTool{
-		ToolName: "shipment_get",
+		ToolName: "shipment_fetch",
 		Result:   map[string]any{"status": "InTransit", "city": "Memphis"},
 	}
 	h := newHarness(t, harnessParams{query: []agenttoolports.AgentQueryTool{lookup}})
 	h.replies(
-		toolReply("shipment_get", map[string]any{"proNumber": "12345"}),
+		toolReply("shipment_fetch", map[string]any{"proNumber": "12345"}),
 		textReply("It is in transit near Memphis."),
 	)
 
@@ -243,12 +243,12 @@ func TestRunCallsAToolAsItsOwnActivity(t *testing.T) {
 		},
 	)
 
-	result := h.run(t, runContext("shipment_get"))
+	result := h.run(t, runContext("shipment_fetch"))
 
 	require.Empty(t, result.Err)
 	assert.Equal(t, 1, lookup.Calls)
 	assert.Equal(t, "12345", lookup.LastParams.Params["proNumber"])
-	assert.Contains(t, started, "shipment_get",
+	assert.Contains(t, started, "shipment_fetch",
 		"the tool is scheduled under its own name, so it reads as itself in the UI")
 	assert.Equal(t, "It is in transit near Memphis.", result.Outcome.Result.Reply)
 	assert.Equal(t, 1, result.Outcome.Result.ToolCallsUsed)
@@ -271,16 +271,16 @@ func TestRunToolBindsTheRunsTenantForTheDatabase(t *testing.T) {
 	t.Parallel()
 
 	lookup := &agenttest.StubQueryTool{
-		ToolName: "shipment_get",
+		ToolName: "shipment_fetch",
 		Result:   map[string]any{"status": "InTransit"},
 	}
 	h := newHarness(t, harnessParams{query: []agenttoolports.AgentQueryTool{lookup}})
 	h.replies(
-		toolReply("shipment_get", map[string]any{"proNumber": "12345"}),
+		toolReply("shipment_fetch", map[string]any{"proNumber": "12345"}),
 		textReply("It is in transit."),
 	)
 
-	rc := runContext("shipment_get")
+	rc := runContext("shipment_fetch")
 	result := h.run(t, rc)
 
 	require.Empty(t, result.Err)
@@ -293,14 +293,14 @@ func TestRunToolBindsTheRunsTenantForTheDatabase(t *testing.T) {
 func TestRunToolRefusesACallWithNoTenant(t *testing.T) {
 	t.Parallel()
 
-	lookup := &agenttest.StubQueryTool{ToolName: "shipment_get"}
+	lookup := &agenttest.StubQueryTool{ToolName: "shipment_fetch"}
 	h := newHarness(t, harnessParams{query: []agenttoolports.AgentQueryTool{lookup}})
 	h.replies(
-		toolReply("shipment_get", map[string]any{"proNumber": "12345"}),
+		toolReply("shipment_fetch", map[string]any{"proNumber": "12345"}),
 		textReply("I could not look that up."),
 	)
 
-	rc := runContext("shipment_get")
+	rc := runContext("shipment_fetch")
 	rc.Actor.OrganizationID = pulid.Nil
 	result := h.run(t, rc)
 
@@ -314,7 +314,7 @@ func TestRunToolRefusesACallWithNoTenant(t *testing.T) {
 func TestRunTellsTheModelWhenAToolCouldNotBeRun(t *testing.T) {
 	t.Parallel()
 
-	lookup := &agenttest.StubQueryTool{ToolName: "shipment_get"}
+	lookup := &agenttest.StubQueryTool{ToolName: "shipment_fetch"}
 	attempts := 0
 	h := newHarness(t, harnessParams{
 		query: []agenttoolports.AgentQueryTool{lookup},
@@ -328,11 +328,11 @@ func TestRunTellsTheModelWhenAToolCouldNotBeRun(t *testing.T) {
 		},
 	})
 	h.replies(
-		toolReply("shipment_get", map[string]any{"proNumber": "12345"}),
+		toolReply("shipment_fetch", map[string]any{"proNumber": "12345"}),
 		textReply("I could not look that up just now."),
 	)
 
-	result := h.run(t, runContext("shipment_get"))
+	result := h.run(t, runContext("shipment_fetch"))
 
 	require.Empty(t, result.Err)
 	assert.Equal(t, 3, attempts, "the tool is retried before it is given up on")
@@ -365,14 +365,14 @@ func TestUnsettledToolOutcome_NeverSaysAStoppedWriteDidNotHappen(t *testing.T) {
 func TestRunReturnsWhatTheTurnDidWhenTheModelFails(t *testing.T) {
 	t.Parallel()
 
-	lookup := &agenttest.StubQueryTool{ToolName: "shipment_get", Result: "found"}
+	lookup := &agenttest.StubQueryTool{ToolName: "shipment_fetch", Result: "found"}
 	h := newHarness(t, harnessParams{query: []agenttoolports.AgentQueryTool{lookup}})
-	h.replies(toolReply("shipment_get", map[string]any{"proNumber": "12345"}))
+	h.replies(toolReply("shipment_fetch", map[string]any{"proNumber": "12345"}))
 	h.env.OnActivity(h.activities.ModelCallActivity, mock.Anything, mock.Anything).
 		Return(nil, temporal.NewNonRetryableApplicationError("bad request", modelcall.ErrTypeModelRejected, nil)).
 		Once()
 
-	result := h.run(t, runContext("shipment_get"))
+	result := h.run(t, runContext("shipment_fetch"))
 
 	assert.Contains(t, result.Err, "bad request")
 	require.NotNil(t, result.Outcome.Result)
@@ -539,7 +539,7 @@ func TestToolActivityRefusesWhatIsNotATool(t *testing.T) {
 			call:     "SomeMisspelledActivity",
 			errType:  ErrTypeUnknownTool,
 		},
-		{name: "a call to a different tool", activity: "dispatch_assign_move", call: "shipment_get",
+		{name: "a call to a different tool", activity: "dispatch_assign_move", call: "shipment_fetch",
 			errType: ErrTypeBadToolInput},
 	}
 
@@ -614,10 +614,10 @@ func TestRunAsksACutOffCallAgainWithMoreRoom(t *testing.T) {
 func TestRunNamesEachModelCallForTheLedger(t *testing.T) {
 	t.Parallel()
 
-	lookup := &agenttest.StubQueryTool{ToolName: "shipment_get", Result: "found"}
+	lookup := &agenttest.StubQueryTool{ToolName: "shipment_fetch", Result: "found"}
 	h := newHarness(t, harnessParams{query: []agenttoolports.AgentQueryTool{lookup}})
 	replies := []*llmports.ChatCompletionResult{
-		toolReply("shipment_get", map[string]any{"proNumber": "12345"}),
+		toolReply("shipment_fetch", map[string]any{"proNumber": "12345"}),
 		textReply("It is in Memphis."),
 	}
 	var (
@@ -633,7 +633,7 @@ func TestRunNamesEachModelCallForTheLedger(t *testing.T) {
 			return &modelstream.Reply{Completion: replies[len(steps)-1]}, nil
 		}).Times(2)
 
-	rc := runContext("shipment_get")
+	rc := runContext("shipment_fetch")
 	rc.RunID = pulid.MustNew("arun_")
 	rc.StepOwner = agentruntimeports.RunStepOwner{
 		Kind: agentruntimeports.RunStepOwnerAgentRun,
@@ -847,7 +847,7 @@ func TestModelCallKeepsEachReplyInTheLedger(t *testing.T) {
 
 	rows := newStepRows()
 	completion := &agenttest.ScriptedCompletion{Turns: []*llmports.ChatCompletionResult{
-		toolReply("shipment_get", map[string]any{"proNumber": "12345"}),
+		toolReply("shipment_fetch", map[string]any{"proNumber": "12345"}),
 		textReply("Load 12345 is in Memphis."),
 	}}
 	acts, env := modelCallActivities(t, rows, completion)
@@ -882,7 +882,7 @@ func TestModelCallReplaysAReplyAnEarlierAttemptKept(t *testing.T) {
 
 	rows := newStepRows()
 	in := modelCallInput()
-	answered := toolReply("shipment_get", map[string]any{"proNumber": "12345"})
+	answered := toolReply("shipment_fetch", map[string]any{"proNumber": "12345"})
 	answered.Text = "Looking it up."
 	answered.InputTokens = 1200
 	answered.OutputTokens = 40
@@ -902,7 +902,7 @@ func TestModelCallReplaysAReplyAnEarlierAttemptKept(t *testing.T) {
 	assert.Equal(t, "Looking it up.", replayed.Completion.Text)
 	assert.Equal(t, "test-model", replayed.Completion.ModelIdentifier)
 	require.Len(t, replayed.Completion.ToolCalls, 1)
-	assert.Equal(t, "shipment_get", replayed.Completion.ToolCalls[0].Name)
+	assert.Equal(t, "shipment_fetch", replayed.Completion.ToolCalls[0].Name)
 	assert.Equal(t, "12345", replayed.Completion.ToolCalls[0].Arguments["proNumber"])
 	assert.Equal(t, original.TotalUsage(), replayed.TotalUsage())
 	assert.Len(t, rows.completions(), 1)

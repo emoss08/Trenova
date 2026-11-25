@@ -78,7 +78,7 @@ func (s *Session) syncAgent(
 				Description:       spec.Description,
 				Template:          agenttemplate.Template(spec.Template),
 				Instructions:      spec.Instructions,
-				ToolNames:         tools,
+				Scope:             agentdefinition.Scope{Capabilities: tools},
 				AutonomyCeiling:   ceiling,
 				DataAccessCeiling: spec.DataAccessCeiling(),
 				Enabled:           true,
@@ -110,7 +110,7 @@ func (s *Session) syncAgent(
 			definition.Description = spec.Description
 			definition.Template = agenttemplate.Template(spec.Template)
 			definition.Instructions = spec.Instructions
-			definition.ToolNames = tools
+			definition.Scope = agentdefinition.Scope{Capabilities: tools}
 			definition.AutonomyCeiling = ceiling
 			definition.DataAccessCeiling = spec.DataAccessCeiling()
 			definition.Enabled = true

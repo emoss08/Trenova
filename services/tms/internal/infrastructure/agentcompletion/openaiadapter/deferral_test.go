@@ -18,12 +18,12 @@ func TestLoadedTools_SendsWhatIsLoadedInTheOrderDeclared(t *testing.T) {
 	messages := modeladaptertest.DeferredWireRequest().Messages
 
 	assert.Equal(t,
-		[]string{"get_shipment", "find_tools", "list_trailers"},
+		[]string{"get_shipment", "search_tools", "list_trailers"},
 		toolNamesOf(modeladapter.LoadedTools(tools, messages)),
 		"a deferred tool a result loaded is sent, one nothing loaded is not",
 	)
 	assert.Equal(t,
-		[]string{"get_shipment", "find_tools"},
+		[]string{"get_shipment", "search_tools"},
 		toolNamesOf(modeladapter.LoadedTools(tools, messages[:1])),
 	)
 	for _, tool := range modeladapter.LoadedTools(tools, messages) {
@@ -99,14 +99,14 @@ func TestOpenAIResponses_RunsFindToolsAsAClientToolSearchOnOpenAI(t *testing.T) 
 		assert.False(t, tool.DeferLoading)
 	}
 	assert.ElementsMatch(t, []string{"function:get_shipment", "tool_search:"}, types,
-		"deferred tools are not declared; the search stands in for find_tools")
+		"deferred tools are not declared; the search stands in for search_tools")
 
 	items := encodedItems(t, body.Input)
 	require.Len(t, items, 5)
 	assert.Equal(t, "tool_search_call", items[2]["type"])
 	assert.Equal(t, "client", items[2]["execution"])
 	assert.Equal(t, "call_find", items[2]["call_id"])
-	assert.Equal(t, map[string]any{"need": "trailers due inspection"}, items[2]["arguments"],
+	assert.Equal(t, map[string]any{"query": "trailers due inspection"}, items[2]["arguments"],
 		"a search's arguments are an object, not encoded text")
 	assert.Equal(t, "tool_search_output", items[3]["type"])
 	assert.Equal(t, "call_find", items[3]["call_id"])
@@ -134,7 +134,7 @@ func TestOpenAIResponses_SendsWhatIsLoadedWhereToolSearchIsNotTaken(t *testing.T
 			assert.Equal(t, "function", tool.Type, tc.model)
 			names = append(names, tool.Name)
 		}
-		assert.Equal(t, []string{"get_shipment", "find_tools", "list_trailers"}, names, tc.model)
+		assert.Equal(t, []string{"get_shipment", "search_tools", "list_trailers"}, names, tc.model)
 		items := encodedItems(t, body.Input)
 		assert.Equal(t, "function_call", items[2]["type"], tc.model)
 		assert.Equal(t, "function_call_output", items[3]["type"], tc.model)
@@ -149,7 +149,7 @@ func TestSplitResponsesOutput_ReadsAToolSearchCallAsTheSearchTool(t *testing.T) 
 			Type:      "tool_search_call",
 			CallID:    "call_s",
 			Execution: "client",
-			Arguments: map[string]any{"need": "trailers"},
+			Arguments: map[string]any{"query": "trailers"},
 		},
 		{
 			Type:      "function_call",
@@ -159,11 +159,11 @@ func TestSplitResponsesOutput_ReadsAToolSearchCallAsTheSearchTool(t *testing.T) 
 		},
 	}}
 
-	_, calls, _ := splitResponsesOutput(envelope, "find_tools")
+	_, calls, _ := splitResponsesOutput(envelope, "search_tools")
 
 	require.Len(t, calls, 2)
-	assert.Equal(t, modeladapter.ToolCall{ID: "call_s", Name: "find_tools",
-		Arguments: map[string]any{"need": "trailers"}}, calls[0])
+	assert.Equal(t, modeladapter.ToolCall{ID: "call_s", Name: "search_tools",
+		Arguments: map[string]any{"query": "trailers"}}, calls[0])
 	assert.Equal(t, map[string]any{"number": "S1"}, calls[1].Arguments)
 
 	_, unsearched, _ := splitResponsesOutput(envelope, "")

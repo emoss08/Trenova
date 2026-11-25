@@ -440,7 +440,7 @@ func TestAnthropicAdapter_DefersToolsAndLoadsThemByReference(t *testing.T) {
 	require.NotContains(t, byName["get_shipment"], "defer_loading")
 	require.NotContains(t, byName["list_trailers"], "cache_control",
 		"a deferred tool cannot carry the cache mark")
-	require.Contains(t, byName["find_tools"], "cache_control",
+	require.Contains(t, byName["search_tools"], "cache_control",
 		"the mark is on the last tool sent in full")
 	require.NotContains(t, byName["get_shipment"], "cache_control")
 
@@ -459,7 +459,7 @@ func TestAnthropicAdapter_DefersToolsAndLoadsThemByReference(t *testing.T) {
 	require.Equal(t, "text", note["type"])
 	require.Equal(
 		t,
-		"find_tools (call_find):\nThese tools are now callable:\n- list_trailers: List trailers",
+		"search_tools (call_find):\nThese tools are now callable:\n- list_trailers: List trailers",
 		note["text"],
 	)
 }
@@ -472,13 +472,13 @@ func TestAnthropicConversation_PutsLoadedToolsTextAfterEveryResult(t *testing.T)
 		{
 			Role: modeladapter.RoleAssistant,
 			ToolCalls: []modeladapter.ToolCall{
-				{ID: "call_find", Name: "find_tools"},
+				{ID: "call_find", Name: "search_tools"},
 				{ID: "call_ship", Name: "get_shipment"},
-				{ID: "call_quiet", Name: "find_tools"},
+				{ID: "call_quiet", Name: "search_tools"},
 			},
 		},
 		{
-			Role: modeladapter.RoleTool, ToolCallID: "call_find", ToolName: "find_tools",
+			Role: modeladapter.RoleTool, ToolCallID: "call_find", ToolName: "search_tools",
 			Content:        "These tools are now callable:\n- list_trailers: List trailers",
 			ToolReferences: []string{"list_trailers"},
 		},
@@ -489,7 +489,7 @@ func TestAnthropicConversation_PutsLoadedToolsTextAfterEveryResult(t *testing.T)
 			Content:    "S-1",
 		},
 		{
-			Role: modeladapter.RoleTool, ToolCallID: "call_quiet", ToolName: "find_tools",
+			Role: modeladapter.RoleTool, ToolCallID: "call_quiet", ToolName: "search_tools",
 			ToolReferences: []string{"list_workers"},
 		},
 	}, nil, false, false)
@@ -504,7 +504,7 @@ func TestAnthropicConversation_PutsLoadedToolsTextAfterEveryResult(t *testing.T)
 	require.Equal(t, "call_quiet", blocks[2].OfToolResult.ToolUseID)
 	require.Len(t, blocks[2].OfToolResult.Content, 1)
 	require.Equal(t, "list_workers", blocks[2].OfToolResult.Content[0].OfToolReference.ToolName)
-	require.Contains(t, blocks[3].OfText.Text, "find_tools (call_find):")
+	require.Contains(t, blocks[3].OfText.Text, "search_tools (call_find):")
 }
 
 func TestAnthropicConversation_KeepsAnErrorResultsTextInside(t *testing.T) {
@@ -514,11 +514,11 @@ func TestAnthropicConversation_KeepsAnErrorResultsTextInside(t *testing.T) {
 		{Role: modeladapter.RoleUser, Content: "find trailers"},
 		{
 			Role:      modeladapter.RoleAssistant,
-			ToolCalls: []modeladapter.ToolCall{{ID: "call_find", Name: "find_tools"}},
+			ToolCalls: []modeladapter.ToolCall{{ID: "call_find", Name: "search_tools"}},
 		},
 		{
-			Role: modeladapter.RoleTool, ToolCallID: "call_find", ToolName: "find_tools", IsError: true,
-			Content: "find_tools failed", ToolReferences: []string{"list_trailers"},
+			Role: modeladapter.RoleTool, ToolCallID: "call_find", ToolName: "search_tools", IsError: true,
+			Content: "search_tools failed", ToolReferences: []string{"list_trailers"},
 		},
 	}, nil, false, false)
 
@@ -526,7 +526,7 @@ func TestAnthropicConversation_KeepsAnErrorResultsTextInside(t *testing.T) {
 	require.Len(t, blocks, 1)
 	content := blocks[0].OfToolResult.Content
 	require.Len(t, content, 1)
-	require.Equal(t, "find_tools failed", content[0].OfText.Text)
+	require.Equal(t, "search_tools failed", content[0].OfText.Text)
 }
 
 func TestAnthropicAdapter_OnFoundrySendsWhatIsLoaded(t *testing.T) {
@@ -552,7 +552,7 @@ func TestAnthropicAdapter_OnFoundrySendsWhatIsLoaded(t *testing.T) {
 		require.NotContains(t, tool, "defer_loading")
 		names = append(names, tool["name"].(string))
 	}
-	require.ElementsMatch(t, []string{"get_shipment", "find_tools", "list_trailers"}, names,
+	require.ElementsMatch(t, []string{"get_shipment", "search_tools", "list_trailers"}, names,
 		"a loaded tool is sent, an unloaded deferred one is not")
 	messages := body["messages"].([]any)
 	result := messages[len(messages)-1].(map[string]any)["content"].([]any)[0].(map[string]any)

@@ -7,7 +7,7 @@ import {
   impliedReads,
   splitCoreTools,
   summarizeSelection,
-  toggleTool,
+  heldTools,
 } from "../tool-catalog";
 
 function tool(overrides: Partial<ToolCatalogEntry>): ToolCatalogEntry {
@@ -84,18 +84,40 @@ describe("summarizeSelection", () => {
     expect(effectiveTier("x", { x: "AutoExecute" }, "Propose")).toBe("Propose");
     expect(effectiveTier("x", { x: "Propose" }, "AutoExecute")).toBe("Propose");
     expect(effectiveTier("x", {}, "ActWithApproval")).toBe("ActWithApproval");
+    expect(effectiveTier("x", {}, "AutoExecute", "Propose")).toBe("Propose");
+    expect(effectiveTier("x", {}, "Propose", "AutoExecute")).toBe("Propose");
   });
 });
 
-describe("toggleTool", () => {
-  it("adds once and drops the tier with the tool", () => {
-    const added = toggleTool(["a"], { a: "Propose" }, "b", true);
-    expect(added.selected).toEqual(["a", "b"]);
-    expect(toggleTool(added.selected, added.tiers, "b", true).selected).toEqual(["a", "b"]);
+describe("heldTools", () => {
+  const catalog = [
+    tool({ name: "shipment_get" }),
+    tool({ name: "shipment_cancel", kind: "action" }),
+    tool({ name: "invoice_send", kind: "action", resource: "invoice" }),
+    tool({ name: "agent_list_memories", core: true }),
+  ];
+  const names = (scope: Parameters<typeof heldTools>[0]) =>
+    heldTools(scope, catalog).map((entry) => entry.name);
 
-    const removed = toggleTool(["a", "b"], { a: "Propose", b: "AutoExecute" }, "b", false);
-    expect(removed.selected).toEqual(["a"]);
-    expect(removed.tiers).toEqual({ a: "Propose" });
+  it("gives an agent let do everything every chosen tool but those switched off", () => {
+    expect(names({})).toEqual(["shipment_get", "shipment_cancel", "invoice_send"]);
+    expect(names({ denyCapabilities: ["shipment_cancel"] })).toEqual([
+      "shipment_get",
+      "invoice_send",
+    ]);
+  });
+
+  it("gives an agent its areas and named capabilities, with denials winning", () => {
+    expect(names({ areas: ["shipment"] })).toEqual(["shipment_get", "shipment_cancel"]);
+    expect(names({ capabilities: ["invoice_send"] })).toEqual(["invoice_send"]);
+    expect(names({ areas: ["shipment", "invoice"], denyAreas: ["invoice"] })).toEqual([
+      "shipment_get",
+      "shipment_cancel",
+    ]);
+  });
+
+  it("gives a switched-off agent nothing", () => {
+    expect(names({ denyAreas: ["*"] })).toEqual([]);
   });
 });
 
@@ -154,7 +176,10 @@ describe("impliedReads", () => {
   ];
 
   it("names each read a chosen tool depends on, with every tool that needs it", () => {
-    const implied = impliedReads(["report_create_dashboard", "report_add_dashboard_tile"], withDependencies);
+    const implied = impliedReads(
+      ["report_create_dashboard", "report_add_dashboard_tile"],
+      withDependencies,
+    );
 
     expect(implied.map((entry) => entry.tool.name)).toEqual(["report_list"]);
     expect(implied[0].neededBy.map((entry) => entry.name)).toEqual([

@@ -1,8 +1,9 @@
 import type { InboundClassification } from "@/lib/graphql/inbox";
 import type { AgentChoice } from "@/lib/graphql/agent-definition";
+import { scopeWords } from "@/lib/agent-scope";
 
 /** What the Desk hand-off reads of an agent to choose one. */
-export type AgentLike = Pick<AgentChoice, "id" | "name" | "description" | "template" | "toolNames">;
+export type AgentLike = Pick<AgentChoice, "id" | "name" | "description" | "template" | "scope">;
 
 /** The kind of work a message needs, which decides the kind of agent it goes to first. */
 export type AgentRole = "dispatch" | "billing" | "service";
@@ -25,7 +26,7 @@ export function agentRoleFor(classification: InboundClassification | null): Agen
 /**
  * Word stems that say what an agent is for. An organization names its own
  * agents, so the hand-off reads their names, descriptions, templates and
- * tools rather than any id: "Carrier desk" is dispatch-like and "AR team" is
+ * the areas and capabilities they may use rather than any id: "Carrier desk" is dispatch-like and "AR team" is
  * billing-like without either being configured as such.
  */
 const ROLE_STEMS: Record<AgentRole, readonly string[]> = {
@@ -54,7 +55,7 @@ function score(agent: AgentLike, stems: readonly string[]): number {
     hits(agent.name, stems) * WEIGHTS.name +
     hits(agent.template ?? "", stems) * WEIGHTS.template +
     hits(agent.description ?? "", stems) * WEIGHTS.description +
-    hits((agent.toolNames ?? []).join(" "), stems) * WEIGHTS.tools
+    hits(scopeWords(agent.scope).join(" "), stems) * WEIGHTS.tools
   );
 }
 

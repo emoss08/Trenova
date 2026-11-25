@@ -9,7 +9,7 @@
       "match": ["e2e-artifact"],
       "tools": [
         {
-          "name": "find_tools",
+          "name": "search_tools",
           "arguments": { "need": "look up a driver's profile and a shipment by id" },
           "delay": 0.4
         },
@@ -30,7 +30,7 @@
       "match": ["e2e-approval"],
       "tools": [
         {
-          "name": "find_tools",
+          "name": "search_tools",
           "arguments": { "need": "set a shipment move's status to in transit" },
           "delay": 0.4
         },
@@ -46,7 +46,7 @@
       "match": ["e2e-email"],
       "tools": [
         {
-          "name": "find_tools",
+          "name": "search_tools",
           "arguments": {
             "need": "email a customer asking for missing paperwork, and the email profiles to send from"
           },

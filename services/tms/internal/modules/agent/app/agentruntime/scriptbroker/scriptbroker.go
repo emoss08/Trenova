@@ -112,7 +112,7 @@ func New(
 
 // scriptIndex is every read the turn holds that a script may call, with the
 // schema the model reads for it, in name order: the agent's own and those the
-// turn reached from other desks through find_tools, which the model may call.
+// turn reached from other desks through search_tools, which the model may call.
 func scriptIndex(
 	ctx context.Context,
 	s *tooldispatch.Dispatcher,
@@ -137,7 +137,7 @@ func scriptIndex(
 		tool, _ := s.QueryTools().Get(name)
 		index = append(index, codemode.Read{
 			Name:        name,
-			Description: tool.Description(),
+			Description: agenttoolports.ModelDescription(tool),
 			Parameters:  toolschema.ForModel(tool.ParamSchema()),
 		})
 	}

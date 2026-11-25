@@ -90,7 +90,8 @@ func (s *Session) createUnattended(ctx context.Context, want *agentdefinition.De
 		Description:       want.Description,
 		Template:          want.Template,
 		Instructions:      want.Instructions,
-		ToolNames:         want.ToolNames,
+		Scope:             want.Scope,
+		PinnedTools:       want.PinnedTools,
 		AutonomyCeiling:   want.AutonomyCeiling,
 		DataAccessCeiling: want.DataAccessCeiling,
 		Enabled:           false,
@@ -119,7 +120,8 @@ func (s *Session) reshapeUnattended(
 			definition.Description = want.Description
 			definition.Template = want.Template
 			definition.Instructions = want.Instructions
-			definition.ToolNames = want.ToolNames
+			definition.Scope = want.Scope
+			definition.PinnedTools = want.PinnedTools
 			definition.AutonomyCeiling = want.AutonomyCeiling
 			definition.DataAccessCeiling = want.DataAccessCeiling
 			definition.TriggerMode = want.TriggerMode

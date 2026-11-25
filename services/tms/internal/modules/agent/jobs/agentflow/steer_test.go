@@ -34,7 +34,7 @@ func TestRunReadsASteerAtItsNextStep(t *testing.T) {
 	t.Parallel()
 
 	lookup := &agenttest.StubQueryTool{
-		ToolName: "shipment_get",
+		ToolName: "shipment_fetch",
 		Result:   map[string]any{"status": "InTransit"},
 	}
 	h := newHarness(t, harnessParams{query: []agenttoolports.AgentQueryTool{lookup}})
@@ -52,14 +52,14 @@ func TestRunReadsASteerAtItsNextStep(t *testing.T) {
 					},
 				})
 				return &modelstream.Reply{
-					Completion: toolReply("shipment_get", map[string]any{"shipmentId": "shp_1"}),
+					Completion: toolReply("shipment_fetch", map[string]any{"shipmentId": "shp_1"}),
 				}, nil
 			}
 
 			return &modelstream.Reply{Completion: textReply("Switched to Werner.")}, nil
 		}).Times(2)
 
-	result := h.run(t, runContext("shipment_get"))
+	result := h.run(t, runContext("shipment_fetch"))
 
 	require.Empty(t, result.Err)
 	require.Len(t, asked, 2)

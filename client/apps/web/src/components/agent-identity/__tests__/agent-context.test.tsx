@@ -52,7 +52,7 @@ describe("useDelegateIdentity", () => {
       template: null,
       icon: "",
       accent: "",
-      toolNames: [],
+      scope: { areas: [], capabilities: [], denyAreas: [], denyCapabilities: [] },
       systemKey: "",
       starters: [],
       delegates: [

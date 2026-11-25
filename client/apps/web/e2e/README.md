@@ -83,7 +83,7 @@ Reports land in `e2e/.report`, traces of failures in `e2e/.results`
   (`"{{id:emlprof_}}"`). With no profile, or a sender that cannot send, the
   preview refuses the draft.
 - **A tool step never happens.** The runtime offers an agent only some of its
-  tools per turn; each rule asks `find_tools` first, and the mock skips any
+  tools per turn; each rule asks `search_tools` first, and the mock skips any
   step whose tool is still not offered. `offered.log` shows what each request
   offered.
 - **The ids in `script.json` do not exist.** They are the development seed's

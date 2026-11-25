@@ -80,7 +80,7 @@ func delegateDefinition(tools ...string) *agentdefinition.Definition {
 		Name:            "Shipment Desk",
 		Instructions:    "Look shipments up.",
 		AutonomyCeiling: agent.TierAutoExecute,
-		ToolNames:       tools,
+		Scope:           agentdefinition.Scope{Capabilities: tools},
 		Enabled:         true,
 	}
 	definition.ApplyDefaults()
@@ -107,7 +107,7 @@ func (h *harness) delegatingRun(
 	req.Context.Delegates = []agentturn.RuntimeDelegate{{
 		ID:    delegate.ID,
 		Name:  delegate.Name,
-		Tools: delegate.ToolNames,
+		Tools: delegate.Scope.Capabilities,
 	}}
 
 	return rc, h.runtime.OpenTurn(t.Context(), req).State()
@@ -152,10 +152,10 @@ func TestRunDrivesADelegatesTurnInTheSameWorkflow(t *testing.T) {
 	t.Parallel()
 
 	lookup := &agenttest.StubQueryTool{
-		ToolName: "shipment_get",
+		ToolName: "shipment_fetch",
 		Result:   map[string]any{"city": "Memphis"},
 	}
-	delegate := delegateDefinition("shipment_get")
+	delegate := delegateDefinition("shipment_fetch")
 	opener := &scriptedOpener{definition: delegate}
 	h := newHarness(t, harnessParams{
 		query:     []agenttoolports.AgentQueryTool{lookup},
@@ -176,7 +176,7 @@ func TestRunDrivesADelegatesTurnInTheSameWorkflow(t *testing.T) {
 		textReply("The Shipment Desk found it in Memphis."),
 	)
 	h.scopedReplies(delegateScope,
-		toolReply("shipment_get", map[string]any{"proNumber": "12345"}),
+		toolReply("shipment_fetch", map[string]any{"proNumber": "12345"}),
 		textReply("Load 12345 is in Memphis."),
 	)
 

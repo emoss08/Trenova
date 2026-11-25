@@ -1,7 +1,8 @@
 import type { AgentDefinitionRow } from "@/lib/graphql/agent-definition";
 import type { AgentFilter } from "../../ai-control-tabs";
 import type { AutonomyTier, ToolCatalogEntry } from "@/types/assistant";
-import { summarizeSelection } from "./tool-catalog";
+import { scopeAllows, type AgentScopeLike } from "@/lib/agent-scope";
+import { heldTools, summarizeSelection } from "./tool-catalog";
 
 export type RosterCounts = Record<AgentFilter, number>;
 
@@ -49,15 +50,15 @@ export function filterRoster(
 }
 
 /**
- * An agent's chosen tools split three ways: what only reads, what proposes, and what
+ * An agent's tools split three ways: what only reads, what proposes, and what
  * acts (with a person's approval or on its own), each change at the tier it would run at.
  */
 export function tierSplit(
-  agent: Pick<AgentDefinitionRow, "toolNames" | "toolTiers" | "autonomyCeiling">,
+  agent: Pick<AgentDefinitionRow, "scope" | "toolTiers" | "autonomyCeiling">,
   catalog: readonly ToolCatalogEntry[],
 ): [number, number, number] {
   const summary = summarizeSelection(
-    agent.toolNames,
+    heldTools(agent.scope, catalog).map((tool) => tool.name),
     catalog,
     (agent.toolTiers ?? {}) as Record<string, AutonomyTier>,
     agent.autonomyCeiling as AutonomyTier,
@@ -79,10 +80,7 @@ export type RowFact =
  * The one fact a row's second line starts with: when a scheduled agent runs next, what
  * wakes an event agent, or which roles may ask a chat agent that is not open to everyone.
  */
-export function rowFact(
-  agent: AgentDefinitionRow,
-  eventLabel: (kind: string) => string,
-): RowFact {
+export function rowFact(agent: AgentDefinitionRow, eventLabel: (kind: string) => string): RowFact {
   if (agent.triggerMode === "Scheduled" || agent.triggerMode === "Continuous") {
     return agent.nextRunAt ? { kind: "schedule", nextRunAt: agent.nextRunAt } : null;
   }
@@ -99,7 +97,9 @@ export function rowFact(
 
 export type AgentMode = "live" | "shadow" | "sim";
 
-export function agentMode(agent: Pick<AgentDefinitionRow, "shadowMode" | "simulationMode">): AgentMode {
+export function agentMode(
+  agent: Pick<AgentDefinitionRow, "shadowMode" | "simulationMode">,
+): AgentMode {
   if (agent.simulationMode) return "sim";
   if (agent.shadowMode) return "shadow";
   return "live";
@@ -118,12 +118,11 @@ export type LeadingStreak = { toolName: string; streak: number };
  */
 export function leadingStreak(
   trust: readonly { toolName: string; streak: number }[],
-  held: readonly string[],
+  scope: AgentScopeLike,
 ): LeadingStreak | null {
-  const holding = new Set(held);
   let best: LeadingStreak | null = null;
   for (const entry of trust) {
-    if (!holding.has(entry.toolName) || entry.streak <= 0) {
+    if (!scopeAllows(scope, entry.toolName) || entry.streak <= 0) {
       continue;
     }
     if (

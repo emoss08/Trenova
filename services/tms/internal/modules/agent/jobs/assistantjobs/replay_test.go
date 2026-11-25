@@ -73,7 +73,7 @@ func replayPlan(
 		Name:            "Recorded desk",
 		Instructions:    "Help dispatch.",
 		AutonomyCeiling: agent.TierPropose,
-		ToolNames:       []string{replayToolName},
+		Scope:           agentdefinition.Scope{Capabilities: []string{replayToolName}},
 		Enabled:         true,
 	}
 	definition.ApplyDefaults()

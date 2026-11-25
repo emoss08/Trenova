@@ -129,7 +129,8 @@ func TestEnsureSystem_CreatesTheAgentFromItsTemplateOnce(t *testing.T) {
 	template := agenttemplate.TemplateImportAssistant
 	assert.Equal(t, template.Label(), first.Name)
 	assert.Equal(t, template, first.Template)
-	assert.Equal(t, agentpreset.StarterTools(template), first.ToolNames)
+	assert.Equal(t, agentpreset.ScopeFor(template), first.Scope)
+	assert.Equal(t, agentpreset.PinnedFor(template), first.PinnedTools)
 	assert.Equal(t, agentinstructions.StarterInstructions(template), first.Instructions)
 	assert.Equal(t, agentpreset.StarterCeiling(template), first.AutonomyCeiling)
 	assert.Equal(t, agentdefinition.TriggerChat, first.TriggerMode)

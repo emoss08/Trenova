@@ -5,11 +5,13 @@ import (
 	"strings"
 
 	"github.com/emoss08/keel"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate/usstatedb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmenthold/shipmentholddb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/places/domain/location/locationdb"
 	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -72,8 +74,62 @@ func OptionPredicates(opts *shipmentports.ShipmentOptions) []keel.Pred {
 	if len(opts.ShipmentTypeIDs) > 0 {
 		preds = append(preds, sp.ShipmentTypeID.In(opts.ShipmentTypeIDs...))
 	}
+	if opts.Unassigned {
+		preds = append(preds, UnassignedPredicate())
+	}
+	for idx := range opts.StopPlaces {
+		if pred := stopPlacePredicate(&opts.StopPlaces[idx]); pred != nil {
+			preds = append(preds, pred)
+		}
+	}
 
 	return preds
+}
+
+func stopPlacePredicate(place *shipmentports.ShipmentStopPlace) keel.Pred {
+	if len(place.Cities) == 0 && len(place.States) == 0 && len(place.Types) == 0 {
+		return nil
+	}
+	m := shipmentdb.Shipments.Moves()
+	st := m.Stops()
+	stopPreds := []keel.Pred{st.Status.Ne(shipmentvocab.StopStatusCanceled)}
+	if len(place.Types) > 0 {
+		stopPreds = append(stopPreds, st.Type.In(place.Types...))
+	}
+	if len(place.Cities) > 0 || len(place.States) > 0 {
+		loc := locationdb.Locations
+		locPreds := make([]keel.Pred, 0, 2)
+		if len(place.Cities) > 0 {
+			locPreds = append(locPreds, loc.City.Lower().In(lowered(place.Cities)...))
+		}
+		if len(place.States) > 0 {
+			us := usstatedb.UsStates
+			locPreds = append(locPreds, loc.StateID.InQuery(
+				us.Pick(us.ID).Where(us.Abbreviation.Upper().In(uppered(place.States)...)),
+			))
+		}
+		stopPreds = append(stopPreds, st.LocationID.InQuery(loc.Pick(loc.ID).Where(locPreds...)))
+	}
+
+	return m.Any(m.Status.Ne(shipmentvocab.MoveStatusCanceled), st.Any(stopPreds...))
+}
+
+func lowered(values []string) []string {
+	out := make([]string, 0, len(values))
+	for _, value := range values {
+		out = append(out, strings.ToLower(strings.TrimSpace(value)))
+	}
+
+	return out
+}
+
+func uppered(values []string) []string {
+	out := make([]string, 0, len(values))
+	for _, value := range values {
+		out = append(out, strings.ToUpper(strings.TrimSpace(value)))
+	}
+
+	return out
 }
 
 func partyGroupPredicate(group *shipmentports.ShipmentPartyGroup) keel.Pred {
@@ -128,6 +184,9 @@ func commodityPredicate(commodityIDs []pulid.ID) keel.Pred {
 func activeHoldPredicate(opts *shipmentports.ShipmentOptions) keel.Pred {
 	sh := shipmentholddb.ShipmentHolds
 	held := sh.Pick(sh.ShipmentID).Where(sh.ReleasedAt.IsNull())
+	if opts.HeldBefore > 0 {
+		held = held.Where(sh.StartedAt.Lt(opts.HeldBefore))
+	}
 	if codes := holdReasonCodes(opts.HoldReasonCodes); len(codes) > 0 {
 		held = held.Where(sh.ReasonCode.Lower().In(codes...))
 	}

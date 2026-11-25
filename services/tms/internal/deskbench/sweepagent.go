@@ -32,7 +32,7 @@ func (s *Session) SweepAgent(
 				Description:       base.Description,
 				Template:          base.Template,
 				Instructions:      base.Instructions,
-				ToolNames:         tools,
+				Scope:             agentdefinition.Scope{Capabilities: tools},
 				AutonomyCeiling:   base.AutonomyCeiling,
 				DataAccessCeiling: base.DataAccessCeiling,
 				Enabled:           true,
@@ -48,7 +48,7 @@ func (s *Session) SweepAgent(
 	}
 
 	existing := agents[idx]
-	if existing.Enabled && slices.Equal(sortedCopy(existing.ToolNames), tools) &&
+	if existing.Enabled && slices.Equal(sortedCopy(existing.StarterTools()), tools) &&
 		existing.Instructions == base.Instructions && existing.Template == base.Template {
 		return existing, nil
 	}
@@ -61,7 +61,7 @@ func (s *Session) SweepAgent(
 			definition.Template = base.Template
 			definition.Instructions = base.Instructions
 			definition.Description = base.Description
-			definition.ToolNames = tools
+			definition.Scope = agentdefinition.Scope{Capabilities: tools}
 			definition.AutonomyCeiling = base.AutonomyCeiling
 			definition.DataAccessCeiling = base.DataAccessCeiling
 			definition.MaxToolCalls = base.MaxToolCalls

@@ -172,7 +172,7 @@ function templateSuggestions(template: AgentTemplateKind): Suggestion[] | undefi
         ),
       },
     ],
-    GeneralAssistant: [
+    Universal: [
       {
         label: translate("Create a rate matrix"),
         prompt: translate("How do I create a rate matrix for a customer?"),

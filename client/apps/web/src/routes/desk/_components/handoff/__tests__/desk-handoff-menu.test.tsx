@@ -26,7 +26,7 @@ function agent(id: string, name: string, delegates: string[] = []): AgentChoice 
     template: null,
     icon: "",
     accent: "",
-    toolNames: [],
+    scope: { areas: [], capabilities: [], denyAreas: [], denyCapabilities: [] },
     systemKey: "",
     starters: [],
     delegates: delegates.map((delegate) => ({
@@ -110,7 +110,7 @@ describe("DeskHandoffMenu", () => {
     renderMenu(shipments, agents, [
       message(1, { role: "User", content: "Mark it ready to invoice" }),
       message(2, { role: "Assistant" }),
-      message(3, { role: "Tool", toolName: "find_tools", handOffAgents: ["billing"] }),
+      message(3, { role: "Tool", toolName: "search_tools", handOffAgents: ["billing"] }),
       message(4, { role: "Assistant", content: "The billing assistant can do that." }),
     ]);
 
@@ -139,7 +139,7 @@ describe("DeskHandoffMenu", () => {
   it("follows the reply as it names an agent, and renders again only when the suggestion changes", () => {
     const { client, renders } = renderMenu(shipments, agents, [
       message(1, { role: "User", content: "Mark it ready to invoice" }),
-      message(2, { role: "Tool", toolName: "find_tools", handOffAgents: ["billing"] }),
+      message(2, { role: "Tool", toolName: "search_tools", handOffAgents: ["billing"] }),
       message(3, { role: "Assistant", content: "The billing assistant can do that." }),
     ]);
     const first = renders();
@@ -154,7 +154,7 @@ describe("DeskHandoffMenu", () => {
         assistant.messages(THREAD_ID).queryKey,
         history([
           message(1, { role: "User", content: "Mark it ready to invoice" }),
-          message(2, { role: "Tool", toolName: "find_tools", handOffAgents: ["billing"] }),
+          message(2, { role: "Tool", toolName: "search_tools", handOffAgents: ["billing"] }),
           message(3, { role: "Assistant", content: "The billing assistant can do that." }),
           message(4, { role: "Assistant", content: "Anything else?" }),
         ]),
@@ -176,7 +176,7 @@ describe("DeskHandoffMenu", () => {
 
   it("keeps the usual order once the person has asked something else", async () => {
     renderMenu(shipments, agents, [
-      message(1, { role: "Tool", toolName: "find_tools", handOffAgents: ["billing"] }),
+      message(1, { role: "Tool", toolName: "search_tools", handOffAgents: ["billing"] }),
       message(2, { role: "Assistant" }),
       message(3, { role: "User", content: "Never mind, where is load 1042?" }),
     ]);

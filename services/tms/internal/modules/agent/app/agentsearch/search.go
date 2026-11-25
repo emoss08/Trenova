@@ -234,3 +234,11 @@ func Singularize(token string) string {
 
 	return token
 }
+
+func Synonyms(token string) []string {
+	if synonyms, ok := vocabulary[token]; ok {
+		return synonyms
+	}
+
+	return vocabulary[Singularize(token)]
+}

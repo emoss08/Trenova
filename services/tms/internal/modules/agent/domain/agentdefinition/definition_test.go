@@ -2,6 +2,7 @@ package agentdefinition_test
 
 import (
 	"slices"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -25,7 +26,7 @@ func validDefinition() *agentdefinition.Definition {
 		Name:            "Night dispatch helper",
 		Instructions:    "You help the night dispatch desk. Check hours of service first.",
 		AutonomyCeiling: agent.TierPropose,
-		ToolNames:       []string{"shipment_get", "agent_raise_exception"},
+		Scope:           agentdefinition.Scope{Capabilities: []string{"shipment_get"}},
 		TriggerMode:     agentdefinition.TriggerChat,
 		Enabled:         true,
 	}
@@ -42,7 +43,7 @@ func fieldErrors(t *testing.T, d *agentdefinition.Definition) map[string]bool {
 
 	fields := make(map[string]bool)
 	for _, e := range multiErr.Errors {
-		fields[e.Field] = true
+		fields[e.Field()] = true
 	}
 
 	return fields
@@ -101,34 +102,67 @@ func TestValidate_AllowsToolsOnAnyTemplate(t *testing.T) {
 	t.Parallel()
 
 	d := validDefinition()
-	d.Template = agenttemplate.TemplateGeneralAssistant
-	d.ToolNames = []string{"billing_correct_charge_codes"}
+	d.Template = agenttemplate.TemplateUniversal
+	d.Scope = agentdefinition.Scope{Capabilities: []string{"billing_correct_charge_codes"}}
 
-	assert.False(t, fieldErrors(t, d)["toolNames"],
+	assert.Empty(t, fieldErrors(t, d),
 		"a template is a starting point, not a bound on what an organization may enable")
 }
 
-func TestValidate_RejectsDuplicateAndEmptyTools(t *testing.T) {
+func TestValidate_RejectsDuplicateAndEmptyScopeEntries(t *testing.T) {
 	t.Parallel()
 
 	d := validDefinition()
-	d.ToolNames = []string{"a", "a", "  "}
+	d.Scope.Capabilities = []string{"a", "a", "  "}
 
 	errs := fieldErrors(t, d)
-	assert.True(t, errs["toolNames[1]"], "duplicate tool should be reported")
-	assert.True(t, errs["toolNames[2]"], "empty tool name should be reported")
+	assert.True(t, errs["scope.capabilities[1]"], "duplicate entry should be reported")
+	assert.True(t, errs["scope.capabilities[2]"], "empty entry should be reported")
 }
 
-func TestValidate_RejectsTooManyTools(t *testing.T) {
+func TestValidate_RejectsAnEntryBothAllowedAndDenied(t *testing.T) {
 	t.Parallel()
 
 	d := validDefinition()
-	d.ToolNames = make([]string, 0, 65)
-	for i := range 65 {
-		d.ToolNames = append(d.ToolNames, string(rune('a'+i%26))+string(rune('0'+i/26)))
+	d.Scope.Areas = []string{"billing"}
+	d.Scope.DenyAreas = []string{"billing"}
+	d.Scope.DenyCapabilities = []string{"shipment_get"}
+
+	errs := fieldErrors(t, d)
+	assert.True(t, errs["scope.areas[0]"])
+	assert.True(t, errs["scope.capabilities[0]"])
+}
+
+func TestValidate_BoundsPinnedTools(t *testing.T) {
+	t.Parallel()
+
+	d := validDefinition()
+	d.Scope = agentdefinition.Scope{}
+	d.PinnedTools = make([]string, 0, agentdefinition.MaxPinnedTools+1)
+	for i := range agentdefinition.MaxPinnedTools + 1 {
+		d.PinnedTools = append(d.PinnedTools, string(rune('a'+i))+"_tool")
+	}
+	assert.True(t, fieldErrors(t, d)["pinnedTools"])
+
+	d = validDefinition()
+	d.PinnedTools = []string{"shipment_get", "shipment_get", " ", "invoice_post"}
+	errs := fieldErrors(t, d)
+	assert.False(t, errs["pinnedTools[0]"])
+	assert.True(t, errs["pinnedTools[1]"], "a duplicate pin should be reported")
+	assert.True(t, errs["pinnedTools[2]"], "an empty pin should be reported")
+	assert.True(t, errs["pinnedTools[3]"], "a pin outside the scope should be reported")
+}
+
+func TestValidate_BoundsScopeLists(t *testing.T) {
+	t.Parallel()
+
+	d := validDefinition()
+	d.Scope.Capabilities = make([]string, 0, agentdefinition.MaxScopeEntries+1)
+	for i := range agentdefinition.MaxScopeEntries + 1 {
+		d.Scope.Capabilities = append(d.Scope.Capabilities, "tool_"+strconv.Itoa(i))
 	}
 
-	assert.True(t, fieldErrors(t, d)["toolNames"])
+	assert.True(t, fieldErrors(t, d)["scope.capabilities"])
 }
 
 func TestValidate_RejectsToolTiersForToolsNotEnabled(t *testing.T) {
@@ -424,7 +458,7 @@ func TestTemplates_DescribeEveryStarter(t *testing.T) {
 		agentpreset.StarterEvents(agenttemplate.TemplateBillingException),
 		agenttrigger.EventBillingQueueItemException,
 	)
-	assert.Empty(t, agentpreset.StarterTools(agenttemplate.TemplateGeneralAssistant))
+	assert.Empty(t, agentpreset.StarterTools(agenttemplate.TemplateUniversal))
 }
 
 /*

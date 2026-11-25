@@ -274,7 +274,7 @@ func (s *Service) CreateCurated(
 	}
 	heldTools := req.HeldTools
 	if len(heldTools) == 0 {
-		heldTools = definition.EffectiveToolNames()
+		heldTools = definition.StarterTools()
 	}
 
 	evalCase := &agentquality.EvalCase{

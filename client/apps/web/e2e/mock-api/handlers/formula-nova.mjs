@@ -36,7 +36,9 @@ const AGENT = {
   icon: "sparkle",
   accent: "violet",
   systemKey: "formula_assistant",
-  toolNames: [
+  scope: {
+    areas: null,
+    capabilities: [
     "formula_describe_language",
     "formula_check",
     "formula_run_tests",
@@ -48,6 +50,9 @@ const AGENT = {
     "formula_list_libraries",
     "formula_get_library",
   ],
+    denyAreas: null,
+    denyCapabilities: null,
+  },
   starters: [
     { label: "Explain this tariff", prompt: "Explain this tariff, statement by statement" },
     { label: "Add a weekend fee", prompt: "Add a weekend pickup fee" },
