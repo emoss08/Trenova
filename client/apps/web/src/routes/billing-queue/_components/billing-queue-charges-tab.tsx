@@ -64,6 +64,7 @@ import { formatTariffValue } from "@trenova/shared/lib/tariff-value";
 import type { TariffWireValue } from "@trenova/shared/types/tariff";
 import {
   AlertTriangleIcon,
+  ClockStopwatchIcon,
   Edit02Icon,
   InfoCircleIcon,
   PlusIcon,
@@ -73,6 +74,7 @@ import {
 import { AnimatePresence, m, useIsPresent, type Variants } from "motion/react";
 import { useRef, useState, type ReactNode } from "react";
 import { toast } from "@trenova/shared/components/ui/toast";
+import { BillingQueueDetentionChargeDialog } from "./billing-queue-detention-charge-dialog";
 import { BillingQueueReassignChargeDialog } from "./billing-queue-reassign-charge-dialog";
 import { BillingQueueRerateDialog } from "./billing-queue-rerate-dialog";
 import { useAfterReassignment } from "./use-after-reassignment";
@@ -142,6 +144,8 @@ type LineRow = {
   editable?: { index: number; charge: AdditionalCharge };
   reassign?: PayerShareLine;
   muted?: boolean;
+  /** The line bills the shipment's detention, decided stop by stop rather than edited. */
+  detention?: boolean;
 };
 
 /**
@@ -163,6 +167,7 @@ export function BillingQueueChargesTab({ item }: { item: BillingQueueItem }) {
   const canReassign = canUpdate && isChargeReassignable(item.status);
 
   const [adding, setAdding] = useState(false);
+  const [detentionOpen, setDetentionOpen] = useState(false);
   const [rerateOpen, setRerateOpen] = useState(false);
   const [editingKey, setEditingKey] = useState<string | null>(null);
   const [editingFrom, setEditingFrom] = useState(0);
@@ -347,7 +352,14 @@ export function BillingQueueChargesTab({ item }: { item: BillingQueueItem }) {
     key: `charge-${charge.id ?? index}`,
     chargeId: charge.id ?? undefined,
     name: chargeName(charge, t("Charge")),
-    source: charge.isTariff ? t("Tariff") : charge.isSystemGenerated ? t("Rule") : t("Added"),
+    source: charge.isTariff
+      ? t("Tariff")
+      : isDetentionLine(charge)
+        ? t("Detention")
+        : charge.isSystemGenerated
+          ? t("Rule")
+          : t("Added"),
+    detention: isDetentionLine(charge),
     basis: chargeBasis(charge),
     qty: charge.isTariff ? quantityText(charge.quantity) : quantityText(charge.unit ?? 1),
     rate:
@@ -575,6 +587,9 @@ export function BillingQueueChargesTab({ item }: { item: BillingQueueItem }) {
                     : undefined
                 }
                 onReassign={row.reassign ? () => setReassignLine(row.reassign!) : undefined}
+                onReviewDetention={
+                  row.detention && item.shipmentId ? () => setDetentionOpen(true) : undefined
+                }
               />
             ),
           )}
@@ -742,8 +757,19 @@ export function BillingQueueChargesTab({ item }: { item: BillingQueueItem }) {
           line={reassignLine}
         />
       ) : null}
+      {item.shipmentId ? (
+        <BillingQueueDetentionChargeDialog
+          shipmentId={item.shipmentId}
+          open={detentionOpen}
+          onOpenChange={setDetentionOpen}
+        />
+      ) : null}
     </section>
   );
+}
+
+function isDetentionLine(charge: AdditionalCharge): boolean {
+  return Boolean(charge.isSystemGenerated && charge.isDetention);
 }
 
 function Chip({
@@ -806,6 +832,7 @@ function ViewRow({
   onEntered,
   onEdit,
   onReassign,
+  onReviewDetention,
 }: {
   row: LineRow;
   busy: boolean;
@@ -815,6 +842,8 @@ function ViewRow({
   /** Opens the line's editor, told the height the line stands at so it unfolds from there. */
   onEdit?: (height: number) => void;
   onReassign?: () => void;
+  /** Opens the stops behind a detention line, where each charge is approved or waived. */
+  onReviewDetention?: () => void;
 }) {
   const t = useT();
   const rowRef = useRef<HTMLDivElement>(null);
@@ -874,7 +903,17 @@ function ViewRow({
           ) : null}
         </span>
         <span className="flex justify-end opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100">
-          {onEdit ? (
+          {onReviewDetention ? (
+            <Button
+              size="icon-xs"
+              variant="ghost"
+              aria-label={t("Review the detention on {0}", row.name)}
+              disabled={busy}
+              onClick={onReviewDetention}
+            >
+              <ClockStopwatchIcon className="size-3" />
+            </Button>
+          ) : onEdit ? (
             <Button
               size="icon-xs"
               variant="ghost"

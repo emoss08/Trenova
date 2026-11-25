@@ -1,14 +1,24 @@
 import { Link } from "@trenova/shared/components/link";
 import { recordPath } from "@/config/record-links";
+import { WaiveDialog } from "@/components/detention/occurrence-action-dialogs";
+import { useApiMutation } from "@/hooks/use-api-mutation";
+import { usePermission } from "@/hooks/use-permission";
+import { detention } from "@/lib/queries/detention";
+import { detentionService } from "@/services/detention";
+import { useQueryClient } from "@tanstack/react-query";
 import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
 import { AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
+import { Button } from "@trenova/shared/components/ui/button";
 import { formatCurrency } from "@trenova/shared/lib/utils";
 import type { DetentionHold } from "@trenova/shared/types/billing-queue";
-import type { BillingHoldReason } from "@trenova/shared/types/detention";
+import type { BillingHoldReason, DetentionOccurrence } from "@trenova/shared/types/detention";
+import { Operation, Resource } from "@trenova/shared/types/permission";
 import { ClockStopwatchIcon } from "@trenova/shared/components/icons";
 import { LockedReference } from "@trenova/shared/components/withheld-value";
 import { useCanReadKind } from "@trenova/shared/hooks/use-can-read-kind";
+import { useState } from "react";
 import { BillingQueueNotice } from "./billing-queue-notice";
+import { useInvalidateBillingQueue } from "./use-billing-queue-invalidate";
 
 function holdReasonLabel(t: TranslateFn, reason: BillingHoldReason): string {
   switch (reason) {
@@ -22,14 +32,14 @@ function holdReasonLabel(t: TranslateFn, reason: BillingHoldReason): string {
 }
 
 /**
- * The detention charges keeping this item from being approved. Each links to
- * the charge on the detention desk, where it is approved or waived; the approve
- * action stays off until none is left.
+ * The detention charges keeping this item from being approved, each decided where it is
+ * listed: approving bills it, waiving takes it off the shipment and the invoice. Without
+ * the right to decide detention, each still links to the charge on the detention desk.
  */
 export function BillingQueueDetentionHolds({ holds }: { holds: DetentionHold[] }) {
   const t = useT();
-  // A detention charge opens on the detention desk, which needs detention's read.
   const canReadDetention = useCanReadKind("detention");
+  const { allowed: canDecide } = usePermission(Resource.Detention, Operation.Update);
 
   if (holds.length === 0) {
     return null;
@@ -46,38 +56,106 @@ export function BillingQueueDetentionHolds({ holds }: { holds: DetentionHold[] }
       </AlertTitle>
       <AlertDescription>
         <p>
-          {t(
-            "This item cannot be approved until each charge is approved or waived on the detention desk.",
-          )}
-        </p>
-        <ul className="grid w-full gap-0.5">
-          {holds.map((hold) => (
-            <li
-              key={hold.occurrenceId}
-              className="flex flex-wrap items-baseline justify-between gap-x-3"
-            >
-              {canReadDetention ? (
-                <Link
-                  to={recordPath("detention_occurrence", hold.occurrenceId)}
-                  className="ui-focus-ring text-brand rounded-control underline-offset-2 hover:underline"
-                >
-                  {hold.locationName || t("Detention charge")}
-                </Link>
-              ) : (
-                <LockedReference kind="detention">
-                  {hold.locationName || t("Detention charge")}
-                </LockedReference>
+          {canDecide
+            ? t(
+                "This item cannot be approved until each charge is approved or waived. A waived charge comes off the shipment and the invoice.",
+              )
+            : t(
+                "This item cannot be approved until each charge is approved or waived by someone who decides detention.",
               )}
-              <span className="flex items-baseline gap-2">
-                <span className="tabular-nums">
-                  {formatCurrency(hold.billableAmount ?? 0, hold.currency)}
-                </span>
-                <span>{holdReasonLabel(t, hold.reason)}</span>
-              </span>
-            </li>
+        </p>
+        <ul className="grid w-full gap-1.5">
+          {holds.map((hold) => (
+            <HoldRow
+              key={hold.occurrenceId}
+              hold={hold}
+              canReadDetention={canReadDetention}
+              canDecide={canDecide}
+            />
           ))}
         </ul>
       </AlertDescription>
     </BillingQueueNotice>
+  );
+}
+
+function HoldRow({
+  hold,
+  canReadDetention,
+  canDecide,
+}: {
+  hold: DetentionHold;
+  canReadDetention: boolean;
+  canDecide: boolean;
+}) {
+  const t = useT();
+  const queryClient = useQueryClient();
+  const invalidateQueue = useInvalidateBillingQueue();
+  const [waiveOpen, setWaiveOpen] = useState(false);
+  const name = hold.locationName || t("Detention charge");
+
+  const refresh = () => {
+    invalidateQueue();
+    void queryClient.invalidateQueries({ queryKey: detention._def });
+  };
+
+  const approve = useApiMutation<DetentionOccurrence, undefined>({
+    scope: { id: `detention-decide:${hold.occurrenceId}` },
+    mutationFn: () => detentionService.approve(hold.occurrenceId),
+    onSuccess: refresh,
+    resourceName: "Detention Occurrence",
+  });
+
+  return (
+    <li
+      className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1"
+      data-testid="billing-queue-detention-hold"
+    >
+      {canReadDetention ? (
+        <Link
+          to={recordPath("detention_occurrence", hold.occurrenceId)}
+          className="ui-focus-ring text-brand rounded-control underline-offset-2 hover:underline"
+        >
+          {name}
+        </Link>
+      ) : (
+        <LockedReference kind="detention">{name}</LockedReference>
+      )}
+      <span className="flex flex-wrap items-center gap-2">
+        <span className="tabular-nums">
+          {formatCurrency(hold.billableAmount ?? 0, hold.currency)}
+        </span>
+        <span>{holdReasonLabel(t, hold.reason)}</span>
+        {canDecide ? (
+          <>
+            <Button
+              size="xs"
+              variant="outline"
+              isLoading={approve.isPending}
+              loadingText={t("Approving")}
+              onClick={() => void approve.mutateAsync(undefined).catch(() => undefined)}
+            >
+              {t("Approve")}
+            </Button>
+            <Button
+              size="xs"
+              variant="outline"
+              disabled={approve.isPending}
+              onClick={() => setWaiveOpen(true)}
+            >
+              {t("Waive")}
+            </Button>
+          </>
+        ) : null}
+      </span>
+      {canDecide ? (
+        <WaiveDialog
+          occurrenceId={hold.occurrenceId}
+          open={waiveOpen}
+          onOpenChange={setWaiveOpen}
+          onDone={refresh}
+        />
+      ) : null}
+    </li>
   );
 }

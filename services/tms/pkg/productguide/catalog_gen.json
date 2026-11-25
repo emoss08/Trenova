@@ -1,5 +1,5 @@
 {
-  "version": "sha256:c91e7e278f6ed262abd2af639e36da394b6229a68ac43cbe96380dff806255c7",
+  "version": "sha256:dbaa13844a6532fb300acdc9ff048ddf029220ef8adddbad6a47a510ceeb5e50",
   "modules": [
     {
       "id": "home",
@@ -9130,13 +9130,28 @@
             "held detention",
             "detention needs approval",
             "detention blocking approval",
-            "approve detention charge"
+            "approve detention charge",
+            "waive detention in billing"
           ],
           "steps": [
             "Open [Billing queue](/billing/queue) and select the item. A notice above the tabs lists each detention charge on the shipment that still needs approval, with its amount and why it is held: over the policy's approval threshold, a required notice not sent in time, or escalated for review.",
-            "Select a charge in the notice to open it on the [Detention desk](/detention/desk).",
-            "Check the evidence, then select **Approve charge** if it supports the charge, or **Waive** with a coded **Reason** and a **Note** if it does not.",
-            "Go back to the item. Once no charge is held, the notice goes away and **Approve** is available again."
+            "To check the evidence first, select the charge's name to open it on the [Detention desk](/detention/desk).",
+            "Select **Approve** beside a charge to bill it, or **Waive** to forgive it with a coded **Reason** and a **Note**. A waived charge comes off the shipment's detention line and the invoice straight away, and the shipment's comments record what was taken off and why.",
+            "Once no charge is held, the notice goes away and **Approve** is available again."
+          ]
+        },
+        {
+          "title": "Waive detention that is not holding the item",
+          "keywords": [
+            "remove detention charge",
+            "take detention off invoice",
+            "waive detention in billing",
+            "detention line locked"
+          ],
+          "steps": [
+            "On the **Charges** tab, hover the line marked **Detention** and select the clock button beside it. The line bills every detained stop on the shipment, so it is changed stop by stop rather than edited by hand.",
+            "The list shows each detained stop with where its charge stands. Select **Approve** for a charge still waiting on approval, or **Waive** with a coded **Reason** and a **Note** to forgive it.",
+            "The line drops by the waived amount, or leaves the sheet when nothing on it is still billed."
           ]
         },
         {
@@ -18430,7 +18445,7 @@
         "Settlement batches"
       ],
       "description": "Generate pay-period batches, monitor exceptions, and export payroll files.",
-      "summary": "Settlement batches are driver payroll runs. Each batch groups the settlements generated for one pay period, and this page is where payroll staff generate a batch for the current period, check how many settlements it holds and how many have exceptions, and download the payroll file.\n\nThe table shows each batch's **Status**, **Batch** name, **Period**, **Pay date**, number of **Settlements**, number of **Exceptions**, **Total gross** and **Total net**.",
+      "summary": "Settlement batches are driver payroll runs. Each batch groups the settlements generated for one pay period, and this page is where payroll staff generate a batch for the current period, check how many settlements it holds and how many have exceptions, and download the payroll file.\n\nThe table shows each batch's **Status**, **Batch** name, **Period**, **Pay date**, number of **Settlements**, number of **Exceptions**, how many are **On hold**, **Total gross** and **Total net**.",
       "requires": [
         {
           "resource": "driver_settlement",
@@ -18471,8 +18486,8 @@
           ],
           "steps": [
             "Open [Settlement batches](/payroll/settlement-batches).",
-            "Select a batch to see its period and pay date, its **Settlements**, **Exceptions**, **Total gross** and **Total net**, and every settlement in it with driver, status, gross and net.",
-            "Settlements flagged with exceptions are marked with a warning icon. Work them in the [Workspace](/payroll/workspace)."
+            "Select a batch to see its period and pay date, its **Settlements**, **Exceptions**, **On hold**, **Total gross** and **Total net**, and every settlement in it with driver, status, gross and net.",
+            "Settlements flagged with exceptions are marked with a warning icon, and settlements a person holds out of the pay run are marked **On hold**. Work them in the [Workspace](/payroll/workspace)."
           ]
         },
         {
@@ -18488,7 +18503,7 @@
           ]
         }
       ],
-      "notes": "Needs read access to driver settlements to open the page, and the page is only available when the organization has the Asset operations capability.\n\nClean settlements can be approved automatically, depending on your settlement control policy; anything with exceptions stays in review.",
+      "notes": "Needs read access to driver settlements to open the page, and the page is only available when the organization has the Asset operations capability.\n\nClean settlements can be approved automatically, depending on your settlement control policy; anything with exceptions stays in review.\n\nA settlement on hold stays in its batch and in the batch's totals; it waits out of the pay run until someone releases the hold, and the batch says how many are held and what they net.",
       "related": [
         "/payroll/workspace",
         "/payroll/settlements",
@@ -18507,7 +18522,7 @@
         "Settlement history"
       ],
       "description": "Read-only record of every driver and owner-operator settlement across pay periods — process active settlements in the workspace.",
-      "summary": "Settlement history is the read-only record of every driver and owner-operator settlement across all pay periods. Payroll and accounting staff use it to look up a past settlement, see its earnings, deductions, net pay and history, and find settlements from earlier periods that are no longer in the workspace queue.\n\nThe table shows **Status**, **Settlement #**, **Driver**, **Type**, **Period end**, **Pay date**, **Loads**, **Gross**, **Deductions** and **Net pay**. Settlements are created in the workspace, not here.",
+      "summary": "Settlement history is the read-only record of every driver and owner-operator settlement across all pay periods. Payroll and accounting staff use it to look up a past settlement, see its earnings, deductions, net pay and history, and find settlements from earlier periods that are no longer in the workspace queue.\n\nThe table shows **Status** (with **On hold** beside it for a settlement a person holds out of the pay run), **Settlement #**, **Driver**, **Type**, **Period end**, **Pay date**, **Loads**, **Gross**, **Deductions** and **Net pay**. Settlements are created in the workspace, not here.",
       "requires": [
         {
           "resource": "driver_settlement",
@@ -18559,7 +18574,7 @@
           "steps": [
             "Open [Settlement history](/payroll/settlements).",
             "Tick the settlements to act on.",
-            "In the bar that appears, choose **Lifecycle action** and pick **Submit for approval**, **Approve** or **Post to GL**; settlements not in an eligible status are skipped.",
+            "In the bar that appears, choose **Lifecycle action** and pick **Submit for approval**, **Approve** or **Post to GL**; settlements not in an eligible status are skipped, and settlements on hold are left out of approving and posting.",
             "To record payment, select **Mark paid**, choose the **Payment method**, optionally enter a **Batch reference**, and confirm with **Mark paid**. Only posted settlements can be marked paid."
           ]
         }
@@ -18584,7 +18599,7 @@
         "Workspace"
       ],
       "description": "Everything needed to run a pay period from one screen — review the queue, transfer pay, manage deductions, and process settlements one at a time or in bulk.",
-      "summary": "The settlement workspace is where payroll staff run the current driver pay period from one screen. The top strip shows the pay period and pay date and counts what is **In pipeline**, what **Needs review**, what is **Posted / paid**, the **Period net pay**, **Unsettled pay** not yet on a settlement, and pay events **On hold**.\n\nBelow it, the queue on the left lists every settlement in the period, the middle pane shows the selected settlement's earnings, deductions and history with the actions for its current status, and the right rail shows the selected driver's unsettled pay, recurring earnings, recurring deductions, advances and escrow.",
+      "summary": "The settlement workspace is where payroll staff run the current driver pay period from one screen. The top strip shows the pay period and pay date and counts what is **In pipeline**, what **Needs review**, **Settlements on hold**, what is **Posted / paid**, the **Period net pay**, **Unsettled pay** not yet on a settlement, and **Pay events on hold**.\n\nBelow it, the queue on the left lists every settlement in the period, the middle pane shows the selected settlement's earnings, deductions and history with the actions for its current status, and the right rail shows the selected driver's unsettled pay, recurring earnings, recurring deductions, advances and escrow.",
       "requires": [
         {
           "resource": "driver_settlement",
@@ -18600,7 +18615,9 @@
         "run payroll",
         "pay period",
         "driver settlements",
-        "process settlements"
+        "process settlements",
+        "hold settlement",
+        "settlement on hold"
       ],
       "tasks": [
         {
@@ -18625,7 +18642,7 @@
           ],
           "steps": [
             "Open [Workspace](/payroll/workspace).",
-            "Find the driver in the queue with **Search driver or number**, or narrow it with the chips (**All**, **Needs review**, **Draft**, **Pending**, **Approved**, **Posted**, **Paid**).",
+            "Find the driver in the queue with **Search driver or number**, or narrow it with the chips (**All**, **Needs review**, **On hold**, **Draft**, **Pending**, **Approved**, **Posted**, **Paid**).",
             "Select the settlement. If it shows **Review required before approval**, read the listed exceptions first.",
             "On a draft, select **Add adjustment** to add or deduct pay, **Recalculate** to rebuild it from current pay events, or remove a pay event line to return it to the unsettled pool.",
             "Select **Submit for approval**, then **Approve** (or **Reject** with a reason to send it back to draft).",
@@ -18642,7 +18659,22 @@
           "steps": [
             "Open [Workspace](/payroll/workspace).",
             "Tick the settlements in the queue, or tick the box above the list to select all visible ones.",
-            "Use **Submit**, **Approve**, **Post** or Mark Paid in the bar at the bottom of the queue. Each button shows how many selected settlements are in a status it applies to; the rest are skipped."
+            "Use **Submit**, **Approve**, **Post** or Mark Paid in the bar at the bottom of the queue. Each button shows how many selected settlements are in a status it applies to; the rest are skipped. Settlements on hold are left out of approving, posting and paying, and the bar says how many."
+          ]
+        },
+        {
+          "title": "Hold a settlement out of the pay run",
+          "keywords": [
+            "hold settlement",
+            "keep out of pay run",
+            "stop a settlement",
+            "release settlement hold"
+          ],
+          "steps": [
+            "Open [Workspace](/payroll/workspace) and select a draft, pending or approved settlement.",
+            "Select **Hold**, choose **Why** (Rate dispute, Missing paperwork, Negative net, Deduction under review or Other), write a **Note** saying what the hold waits on (required for Other), and select **Hold settlement**.",
+            "The settlement keeps its status and its place in the batch and shows **On hold** with the reason. Approving, posting and paying it are refused until the hold is released.",
+            "When what it waited on is settled, select **Release hold** on the settlement."
           ]
         },
         {
@@ -18683,7 +18715,7 @@
           ]
         }
       ],
-      "notes": "Needs read access to driver settlements, and the page is only available when the organization has the Asset operations capability.\n\nVoiding releases the settlement's pay events back to the unsettled pool and reverses any GL postings. Paid and voided settlements cannot be voided.\n\n**Add adjustment** takes dollars, not cents: a positive amount adds pay and a negative amount deducts it.\n\nTo create or edit recurring earnings, recurring deductions or advances, use **Manage** in the right rail, which opens [Recurring earnings](/payroll/earnings), [Recurring deductions](/payroll/deductions) or [Pay advances](/payroll/advances). **View ledger** in the **Escrow** section opens [Escrow accounts](/payroll/escrow-accounts).",
+      "notes": "Needs read access to driver settlements, and the page is only available when the organization has the Asset operations capability.\n\nVoiding releases the settlement's pay events back to the unsettled pool and reverses any GL postings. Paid and voided settlements cannot be voided.\n\nHolding or releasing a settlement needs the Hold permission on driver settlements, which every role that could approve settlements was given. A posted settlement cannot be held: it is paid through its journal, so void it instead. Holding a settlement is not the same as holding a pay event: a held pay event stays off every settlement, while a held settlement keeps its pay and waits out of the pay run. The driver is not told about a settlement hold.\n\n**Add adjustment** takes dollars, not cents: a positive amount adds pay and a negative amount deducts it.\n\nTo create or edit recurring earnings, recurring deductions or advances, use **Manage** in the right rail, which opens [Recurring earnings](/payroll/earnings), [Recurring deductions](/payroll/deductions) or [Pay advances](/payroll/advances). **View ledger** in the **Escrow** section opens [Escrow accounts](/payroll/escrow-accounts).",
       "related": [
         "/payroll/settlements",
         "/payroll/settlement-batches",

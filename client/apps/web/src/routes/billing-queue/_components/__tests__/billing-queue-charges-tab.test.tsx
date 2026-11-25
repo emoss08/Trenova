@@ -13,6 +13,7 @@ import { useQuery } from "@tanstack/react-query";
 import {
   ACME_SHARE_JSON,
   DETENTION_ID,
+  SHIPMENT_JSON,
   LUMPER_ID,
   acmeItemWithLumper,
   acmeItemWithoutDetention,
@@ -48,6 +49,15 @@ vi.mock("@/lib/graphql/shipment", async (importOriginal) => ({
   getShipmentProfitabilityGraphQL,
 }));
 vi.mock("../billing-queue-rerate-dialog", () => ({ BillingQueueRerateDialog: () => null }));
+vi.mock("../billing-queue-detention-charge-dialog", () => ({
+  BillingQueueDetentionChargeDialog: ({
+    open,
+    shipmentId,
+  }: {
+    open: boolean;
+    shipmentId: string;
+  }) => (open ? <p>Reviewing the detention on {shipmentId}</p> : null),
+}));
 vi.mock("../billing-queue-reassign-charge-dialog", () => ({
   BillingQueueReassignChargeDialog: ({
     open,
@@ -889,5 +899,41 @@ describe("BillingQueueChargesTab rated by", () => {
     renderTab(queueItem({ payer: "acme" }));
 
     expect(screen.queryByText(/Rated by/u)).not.toBeInTheDocument();
+  });
+});
+
+describe("BillingQueueChargesTab detention line", () => {
+  function detentionItem(): BillingQueueItem {
+    return queueItem({
+      payer: "acme",
+      shipment: {
+        ...SHIPMENT_JSON,
+        additionalCharges: SHIPMENT_JSON.additionalCharges.map((charge) => ({
+          ...charge,
+          isSystemGenerated: true,
+          isDetention: true,
+        })),
+      },
+    });
+  }
+
+  it("marks the shipment's detention line and keeps it out of hand edits", () => {
+    renderTab(detentionItem());
+
+    const row = screen.getByTestId(`payer-line-${DETENTION_ID}`);
+    expect(within(row).getByText("Detention")).toBeInTheDocument();
+    expect(
+      within(row).queryByRole("button", { name: "Edit Detention Fee" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("opens the stops behind the detention line, where each is approved or waived", async () => {
+    renderTab(detentionItem());
+
+    await userEvent.click(
+      screen.getByRole("button", { name: "Review the detention on Detention Fee" }),
+    );
+
+    expect(screen.getByText("Reviewing the detention on shp_1")).toBeInTheDocument();
   });
 });

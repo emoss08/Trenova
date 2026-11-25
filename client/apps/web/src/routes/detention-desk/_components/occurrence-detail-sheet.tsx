@@ -35,7 +35,7 @@ import { m } from "motion/react";
 import type { ReactNode } from "react";
 import { useState } from "react";
 import { CalculationReceipt } from "./calculation-receipt";
-import { DisputeDialog, WaiveDialog } from "./occurrence-action-dialogs";
+import { DisputeDialog, WaiveDialog } from "@/components/detention/occurrence-action-dialogs";
 import { useInvalidateDetention, useSendDetentionNotice } from "./use-detention-actions";
 import { KpiStrip, KpiStripItem } from "@/components/kpi/kpi-strip";
 

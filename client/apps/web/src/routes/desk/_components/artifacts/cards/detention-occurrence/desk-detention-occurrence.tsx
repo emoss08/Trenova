@@ -5,10 +5,7 @@ import { useNowSeconds } from "@/hooks/use-now-seconds";
 import { usePermission } from "@/hooks/use-permission";
 import type { DeskDetention } from "@/lib/graphql/detention-card";
 import { detention } from "@/lib/queries/detention";
-import {
-  DisputeDialog,
-  WaiveDialog,
-} from "@/routes/detention-desk/_components/occurrence-action-dialogs";
+import { DisputeDialog, WaiveDialog } from "@/components/detention/occurrence-action-dialogs";
 import {
   useInvalidateDetention,
   useSendDetentionNotice,

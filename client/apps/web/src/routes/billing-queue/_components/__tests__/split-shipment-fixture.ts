@@ -89,7 +89,7 @@ export const PEAK_SHARE_JSON = {
   resolutionError: "",
 };
 
-const shipment = {
+export const SHIPMENT_JSON = {
   id: "shp_1",
   proNumber: "SEED-DET-001",
   customerId: "cus_acme",
@@ -156,7 +156,7 @@ export function queueItem({
   payer,
   status = "InReview",
   share,
-  shipment: shipmentJson = shipment,
+  shipment: shipmentJson = SHIPMENT_JSON,
   allocatedTotalAmount,
 }: {
   payer: "acme" | "peak";
@@ -204,7 +204,7 @@ export function acmeItemWithoutDetention(): BillingQueueItem {
       shipmentTotal: "2850",
     },
     shipment: {
-      ...shipment,
+      ...SHIPMENT_JSON,
       additionalCharges: [],
       otherChargeAmount: 0,
       totalChargeAmount: 2850,
@@ -237,9 +237,9 @@ export function acmeItemWithLumper(): BillingQueueItem {
       shipmentTotal: "4189.38",
     },
     shipment: {
-      ...shipment,
+      ...SHIPMENT_JSON,
       additionalCharges: [
-        ...shipment.additionalCharges,
+        ...SHIPMENT_JSON.additionalCharges,
         {
           id: LUMPER_ID,
           accessorialChargeId: "acc_lump",
