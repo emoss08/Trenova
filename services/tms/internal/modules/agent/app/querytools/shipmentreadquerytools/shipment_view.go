@@ -53,6 +53,7 @@ type shipmentHoldRow struct {
 type shipmentActivity struct {
 	ActiveHolds      []shipmentHoldRow    `json:"activeHolds"`
 	RecentComments   []shipmentCommentRow `json:"recentComments,omitempty"`
+	CommentCount     int                  `json:"commentCount"`
 	CommentsNote     string               `json:"commentsNote,omitempty"`
 	LeftOutForAccess string               `json:"leftOutForAccess,omitempty"`
 
@@ -85,11 +86,16 @@ func newShipmentActivity(
 		}
 		activity.RecentComments = append(activity.RecentComments, row)
 	}
+	activity.CommentCount = len(activity.RecentComments)
 	if len(activity.outside) > 0 {
 		activity.CommentsNote = outsideCommentsNote
 	}
 
 	return activity
+}
+
+func (a *shipmentActivity) countComments(total int) {
+	a.CommentCount = max(total, len(a.RecentComments))
 }
 
 func (a *shipmentActivity) TaintedRecords() []agentrecord.RecordRef { return a.outside }

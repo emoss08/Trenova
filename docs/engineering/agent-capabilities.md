@@ -27,11 +27,17 @@ configuration marks filterable, including paths through its relations (`customer
 `equipment.type`), or an entity filter the reader declares (`querytool.WhereExtender`). An unknown
 field or operator is refused naming the valid ones. Up to 50 conditions and 10 groups.
 
-Shipments add `stops.city`, `stops.state`, `stops.type`, `stops.locationId`, `driverId`,
-`tractorId`, `trailerId`, `carrierId`, `commodityId`, `unassigned`, `late`, `onHold`,
-`hold.reasonCode`, `hold.ageDays` and `billingReady` (`shipmentquerytools/shipment_where.go`,
+Shipments add `stops.city`, `stops.state`, `stops.type`, `stops.scheduledFrom`,
+`stops.scheduledTo`, `stops.locationId`, `driverId`, `tractorId`, `trailerId`, `carrierId`,
+`commodityId`, `commodity`, `equipment`, `unassigned`, `late`, `onHold`, `hold.reasonCode`,
+`hold.ageDays`, `status.ageDays` and `billingReady` (`shipmentquerytools/shipment_where.go`,
 `shipmentpredicate`), and include `stops, moves, assignments, commodities, charges, rating, holds,
-comments` from the shipment's own read and `tracking, documents, permits` from theirs.
+comments` from the shipment's own read and `tracking, documents, permits` from theirs. The stop
+filters (city, state, type and the scheduled window) describe one stop, so a pickup in Los Angeles
+tomorrow is never a pickup elsewhere tomorrow and a delivery in Los Angeles. `unassigned` reads
+drivers and carriers; `status.ageDays` reads `shipments.status_changed_at`, which a trigger keeps.
+An entity filter given a value it cannot read (an id that is not one, a day that is not a date) is
+refused, never dropped. `shipment_get` reads many ids as the same record it gives for one.
 
 `countOnly` asks the reader for its total; `groupBy` pages at most 500 rows and says so in
 `truncated` when there are more. `include` on a list reads related sections for at most 25 rows,

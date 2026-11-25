@@ -74,20 +74,17 @@ func OptionPredicates(opts *shipmentports.ShipmentOptions) []keel.Pred {
 	if len(opts.ShipmentTypeIDs) > 0 {
 		preds = append(preds, sp.ShipmentTypeID.In(opts.ShipmentTypeIDs...))
 	}
-	if opts.Unassigned {
-		preds = append(preds, UnassignedPredicate())
-	}
 	for idx := range opts.StopPlaces {
 		if pred := stopPlacePredicate(&opts.StopPlaces[idx]); pred != nil {
 			preds = append(preds, pred)
 		}
 	}
 
-	return preds
+	return append(preds, attributePredicates(opts)...)
 }
 
 func stopPlacePredicate(place *shipmentports.ShipmentStopPlace) keel.Pred {
-	if len(place.Cities) == 0 && len(place.States) == 0 && len(place.Types) == 0 {
+	if !place.Set() {
 		return nil
 	}
 	m := shipmentdb.Shipments.Moves()
@@ -110,6 +107,7 @@ func stopPlacePredicate(place *shipmentports.ShipmentStopPlace) keel.Pred {
 		}
 		stopPreds = append(stopPreds, st.LocationID.InQuery(loc.Pick(loc.ID).Where(locPreds...)))
 	}
+	stopPreds = append(stopPreds, stopWindowPredicates(st, place)...)
 
 	return m.Any(m.Status.Ne(shipmentvocab.MoveStatusCanceled), st.Any(stopPreds...))
 }
@@ -284,7 +282,9 @@ func activityWindowPredicates(opts *shipmentports.ShipmentOptions) []keel.Pred {
 
 	return []keel.Pred{
 		liveStop(st.ScheduledWindowStart.Lte(opts.ActivityWindowEnd)),
-		liveStop(st.ScheduledWindowEnd.Coalesce(st.ScheduledWindowStart).Gte(opts.ActivityWindowStart)),
+		liveStop(
+			st.ScheduledWindowEnd.Coalesce(st.ScheduledWindowStart).Gte(opts.ActivityWindowStart),
+		),
 	}
 }
 

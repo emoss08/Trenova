@@ -3311,6 +3311,7 @@ var shipmentsTable = schema.Table{
 		{Name: "transferred_to_billing_at", Quoted: `"transferred_to_billing_at"`, Field: "TransferredToBillingAt", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Transferred To Billing At`, JSON: `transferredToBillingAt`, Report: &reportDimEpoch},
 		{Name: "marked_ready_to_bill_at", Quoted: `"marked_ready_to_bill_at"`, Field: "MarkedReadyToBillAt", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Ready to Bill At`, JSON: `markedReadyToBillAt`, Report: &reportDimEpoch},
 		{Name: "billed_at", Quoted: `"billed_at"`, Field: "BilledAt", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Billed At`, JSON: `billedAt`, Report: &reportDimEpoch},
+		{Name: "status_changed_at", Quoted: `"status_changed_at"`, Field: "StatusChangedAt", Kind: schema.KindInt64, Flags: schema.FlagReadOnly, Label: `Status Changed At`, JSON: `statusChangedAt`, Report: &reportDimEpochHidden},
 		{Name: "fuel_surcharge_locked", Quoted: `"fuel_surcharge_locked"`, Field: "FuelSurchargeLocked", Kind: schema.KindBool, Flags: 0, Label: `Fuel Surcharge Locked`, JSON: `fuelSurchargeLocked`, Report: &reportDimBool},
 		{Name: "rating_detail", Quoted: `"rating_detail"`, Field: "RatingDetail", Kind: schema.KindJSON, Flags: schema.FlagNullable | schema.FlagJSONB, Label: `Rating Detail`, JSON: `ratingDetail`, Report: &reportDimJsonb},
 		{Name: "rate_quote_id", Quoted: `"rate_quote_id"`, Field: "RateQuoteID", Kind: schema.KindString, Flags: schema.FlagNullable, Label: `Rate Quote ID`, JSON: `rateQuoteId`, Report: &reportDimString},
@@ -3339,7 +3340,7 @@ var shipmentsTable = schema.Table{
 		{Name: "ShipmentType", Alias: "st", Kind: schema.BelongsTo, Local: []int32{4}, Remote: []int32{0}, Label: `Shipment Type`, JSON: `shipmentType`},
 		{Name: "ServiceType", Alias: "st", Kind: schema.BelongsTo, Local: []int32{3}, Remote: []int32{0}, Label: `Service Type`, JSON: `serviceType`},
 		{Name: "Customer", Alias: "c", Kind: schema.BelongsTo, Local: []int32{5}, Remote: []int32{0}, Label: `Customer`, JSON: `customer`},
-		{Name: "BillToCustomer", Alias: "btc", Kind: schema.BelongsTo, Local: []int32{55}, Remote: []int32{0}, Label: `Bill To Customer`, JSON: `billToCustomer`},
+		{Name: "BillToCustomer", Alias: "btc", Kind: schema.BelongsTo, Local: []int32{56}, Remote: []int32{0}, Label: `Bill To Customer`, JSON: `billToCustomer`},
 		{Name: "TractorType", Alias: "tt", Kind: schema.BelongsTo, Local: []int32{6}, Remote: []int32{0}, Label: `Tractor Equipment Type`, JSON: `tractorType`},
 		{Name: "TrailerType", Alias: "tt", Kind: schema.BelongsTo, Local: []int32{7}, Remote: []int32{0}, Label: `Trailer Equipment Type`, JSON: `trailerType`},
 		{Name: "CanceledBy", Alias: "cb", Kind: schema.BelongsTo, Local: []int32{10}, Remote: []int32{0}, Label: `Canceled By`, JSON: `canceledBy`, NoReport: true},
@@ -3360,14 +3361,14 @@ var shipmentsTable = schema.Table{
 	},
 	PK:           []int32{0, 1, 2},
 	Tenant:       []int32{1, 2},
-	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 59, 60, 61},
-	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 59, 60, 61},
-	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 61},
-	Returning:    []int32{15},
-	Version:      59,
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 60, 61, 62},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 60, 61, 62},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 62},
+	Returning:    []int32{15, 43},
+	Version:      60,
 	AutoID:       0,
-	AutoCreate:   60,
-	AutoUpdate:   61,
+	AutoCreate:   61,
+	AutoUpdate:   62,
 	IDPrefix:     "shp_",
 	New:          newShipment,
 	NewN:         newNShipment,
@@ -3427,6 +3428,7 @@ type ShipmentsTable struct {
 	TransferredToBillingAt    keel.Int64Col
 	MarkedReadyToBillAt       keel.Int64Col
 	BilledAt                  keel.Int64Col
+	StatusChangedAt           keel.Int64Col
 	FuelSurchargeLocked       keel.BoolCol
 	RatingDetail              keel.JSONBCol
 	RateQuoteID               keelkinds.PulidIDCol
@@ -3498,29 +3500,30 @@ var Shipments = &ShipmentsTable{
 	TransferredToBillingAt:    keel.Int64Col{Col: keel.Col{Ref: &shipmentsRef, Index: 40}},
 	MarkedReadyToBillAt:       keel.Int64Col{Col: keel.Col{Ref: &shipmentsRef, Index: 41}},
 	BilledAt:                  keel.Int64Col{Col: keel.Col{Ref: &shipmentsRef, Index: 42}},
-	FuelSurchargeLocked:       keel.BoolCol{Col: keel.Col{Ref: &shipmentsRef, Index: 43}},
-	RatingDetail:              keel.JSONBCol{Col: keel.Col{Ref: &shipmentsRef, Index: 44}},
-	RateQuoteID:               keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &shipmentsRef, Index: 45}}},
-	RateAgreementID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &shipmentsRef, Index: 46}}},
-	RateAgreementRuleID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &shipmentsRef, Index: 47}}},
-	RateOverrideAmount:        keelkinds.DecimalNullDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &shipmentsRef, Index: 48}}},
-	RateOverrideReason:        keel.StringCol{Col: keel.Col{Ref: &shipmentsRef, Index: 49}},
-	RateOverrideByID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &shipmentsRef, Index: 50}}},
-	RateOverrideAt:            keel.Int64Col{Col: keel.Col{Ref: &shipmentsRef, Index: 51}},
-	RateLocked:                keel.BoolCol{Col: keel.Col{Ref: &shipmentsRef, Index: 52}},
-	AutoRated:                 keel.BoolCol{Col: keel.Col{Ref: &shipmentsRef, Index: 53}},
-	AutoRatedAt:               keel.Int64Col{Col: keel.Col{Ref: &shipmentsRef, Index: 54}},
-	BillToCustomerID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &shipmentsRef, Index: 55}}},
-	FreightTerms:              keelkinds.ShipmentvocabFreightTermsCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &shipmentsRef, Index: 56}}},
-	SearchVector:              keel.TSVectorCol{Col: keel.Col{Ref: &shipmentsRef, Index: 57}},
-	Rank:                      keel.StringCol{Col: keel.Col{Ref: &shipmentsRef, Index: 58}},
-	Version:                   keel.Int64Col{Col: keel.Col{Ref: &shipmentsRef, Index: 59}},
-	CreatedAt:                 keel.Int64Col{Col: keel.Col{Ref: &shipmentsRef, Index: 60}},
-	UpdatedAt:                 keel.Int64Col{Col: keel.Col{Ref: &shipmentsRef, Index: 61}},
-	LastDeliveryArrivalAt:     keel.Int64Col{Col: keel.Col{Ref: &shipmentsRef, Index: 62}},
-	PickupAt:                  keel.Int64Col{Col: keel.Col{Ref: &shipmentsRef, Index: 63}},
-	DeliveryAt:                keel.Int64Col{Col: keel.Col{Ref: &shipmentsRef, Index: 64}},
-	HasActiveAssignment:       keel.BoolCol{Col: keel.Col{Ref: &shipmentsRef, Index: 65}},
+	StatusChangedAt:           keel.Int64Col{Col: keel.Col{Ref: &shipmentsRef, Index: 43}},
+	FuelSurchargeLocked:       keel.BoolCol{Col: keel.Col{Ref: &shipmentsRef, Index: 44}},
+	RatingDetail:              keel.JSONBCol{Col: keel.Col{Ref: &shipmentsRef, Index: 45}},
+	RateQuoteID:               keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &shipmentsRef, Index: 46}}},
+	RateAgreementID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &shipmentsRef, Index: 47}}},
+	RateAgreementRuleID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &shipmentsRef, Index: 48}}},
+	RateOverrideAmount:        keelkinds.DecimalNullDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &shipmentsRef, Index: 49}}},
+	RateOverrideReason:        keel.StringCol{Col: keel.Col{Ref: &shipmentsRef, Index: 50}},
+	RateOverrideByID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &shipmentsRef, Index: 51}}},
+	RateOverrideAt:            keel.Int64Col{Col: keel.Col{Ref: &shipmentsRef, Index: 52}},
+	RateLocked:                keel.BoolCol{Col: keel.Col{Ref: &shipmentsRef, Index: 53}},
+	AutoRated:                 keel.BoolCol{Col: keel.Col{Ref: &shipmentsRef, Index: 54}},
+	AutoRatedAt:               keel.Int64Col{Col: keel.Col{Ref: &shipmentsRef, Index: 55}},
+	BillToCustomerID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &shipmentsRef, Index: 56}}},
+	FreightTerms:              keelkinds.ShipmentvocabFreightTermsCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &shipmentsRef, Index: 57}}},
+	SearchVector:              keel.TSVectorCol{Col: keel.Col{Ref: &shipmentsRef, Index: 58}},
+	Rank:                      keel.StringCol{Col: keel.Col{Ref: &shipmentsRef, Index: 59}},
+	Version:                   keel.Int64Col{Col: keel.Col{Ref: &shipmentsRef, Index: 60}},
+	CreatedAt:                 keel.Int64Col{Col: keel.Col{Ref: &shipmentsRef, Index: 61}},
+	UpdatedAt:                 keel.Int64Col{Col: keel.Col{Ref: &shipmentsRef, Index: 62}},
+	LastDeliveryArrivalAt:     keel.Int64Col{Col: keel.Col{Ref: &shipmentsRef, Index: 63}},
+	PickupAt:                  keel.Int64Col{Col: keel.Col{Ref: &shipmentsRef, Index: 64}},
+	DeliveryAt:                keel.Int64Col{Col: keel.Col{Ref: &shipmentsRef, Index: 65}},
+	HasActiveAssignment:       keel.BoolCol{Col: keel.Col{Ref: &shipmentsRef, Index: 66}},
 }
 
 // BuildShipments builds the table of shipments for ref. Generated relation and alias methods call it.
@@ -3570,29 +3573,30 @@ func BuildShipments(r *keel.Ref) *ShipmentsTable {
 		TransferredToBillingAt:    keel.Int64Col{Col: keel.Col{Ref: r, Index: 40}},
 		MarkedReadyToBillAt:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 41}},
 		BilledAt:                  keel.Int64Col{Col: keel.Col{Ref: r, Index: 42}},
-		FuelSurchargeLocked:       keel.BoolCol{Col: keel.Col{Ref: r, Index: 43}},
-		RatingDetail:              keel.JSONBCol{Col: keel.Col{Ref: r, Index: 44}},
-		RateQuoteID:               keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 45}}},
-		RateAgreementID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 46}}},
-		RateAgreementRuleID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 47}}},
-		RateOverrideAmount:        keelkinds.DecimalNullDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 48}}},
-		RateOverrideReason:        keel.StringCol{Col: keel.Col{Ref: r, Index: 49}},
-		RateOverrideByID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 50}}},
-		RateOverrideAt:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 51}},
-		RateLocked:                keel.BoolCol{Col: keel.Col{Ref: r, Index: 52}},
-		AutoRated:                 keel.BoolCol{Col: keel.Col{Ref: r, Index: 53}},
-		AutoRatedAt:               keel.Int64Col{Col: keel.Col{Ref: r, Index: 54}},
-		BillToCustomerID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 55}}},
-		FreightTerms:              keelkinds.ShipmentvocabFreightTermsCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 56}}},
-		SearchVector:              keel.TSVectorCol{Col: keel.Col{Ref: r, Index: 57}},
-		Rank:                      keel.StringCol{Col: keel.Col{Ref: r, Index: 58}},
-		Version:                   keel.Int64Col{Col: keel.Col{Ref: r, Index: 59}},
-		CreatedAt:                 keel.Int64Col{Col: keel.Col{Ref: r, Index: 60}},
-		UpdatedAt:                 keel.Int64Col{Col: keel.Col{Ref: r, Index: 61}},
-		LastDeliveryArrivalAt:     keel.Int64Col{Col: keel.Col{Ref: r, Index: 62}},
-		PickupAt:                  keel.Int64Col{Col: keel.Col{Ref: r, Index: 63}},
-		DeliveryAt:                keel.Int64Col{Col: keel.Col{Ref: r, Index: 64}},
-		HasActiveAssignment:       keel.BoolCol{Col: keel.Col{Ref: r, Index: 65}},
+		StatusChangedAt:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 43}},
+		FuelSurchargeLocked:       keel.BoolCol{Col: keel.Col{Ref: r, Index: 44}},
+		RatingDetail:              keel.JSONBCol{Col: keel.Col{Ref: r, Index: 45}},
+		RateQuoteID:               keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 46}}},
+		RateAgreementID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 47}}},
+		RateAgreementRuleID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 48}}},
+		RateOverrideAmount:        keelkinds.DecimalNullDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 49}}},
+		RateOverrideReason:        keel.StringCol{Col: keel.Col{Ref: r, Index: 50}},
+		RateOverrideByID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 51}}},
+		RateOverrideAt:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 52}},
+		RateLocked:                keel.BoolCol{Col: keel.Col{Ref: r, Index: 53}},
+		AutoRated:                 keel.BoolCol{Col: keel.Col{Ref: r, Index: 54}},
+		AutoRatedAt:               keel.Int64Col{Col: keel.Col{Ref: r, Index: 55}},
+		BillToCustomerID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 56}}},
+		FreightTerms:              keelkinds.ShipmentvocabFreightTermsCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 57}}},
+		SearchVector:              keel.TSVectorCol{Col: keel.Col{Ref: r, Index: 58}},
+		Rank:                      keel.StringCol{Col: keel.Col{Ref: r, Index: 59}},
+		Version:                   keel.Int64Col{Col: keel.Col{Ref: r, Index: 60}},
+		CreatedAt:                 keel.Int64Col{Col: keel.Col{Ref: r, Index: 61}},
+		UpdatedAt:                 keel.Int64Col{Col: keel.Col{Ref: r, Index: 62}},
+		LastDeliveryArrivalAt:     keel.Int64Col{Col: keel.Col{Ref: r, Index: 63}},
+		PickupAt:                  keel.Int64Col{Col: keel.Col{Ref: r, Index: 64}},
+		DeliveryAt:                keel.Int64Col{Col: keel.Col{Ref: r, Index: 65}},
+		HasActiveAssignment:       keel.BoolCol{Col: keel.Col{Ref: r, Index: 66}},
 	}
 }
 
@@ -4161,50 +4165,52 @@ func ptrShipment(p unsafe.Pointer, c int32) any {
 	case 42:
 		return &r.BilledAt
 	case 43:
-		return &r.FuelSurchargeLocked
+		return &r.StatusChangedAt
 	case 44:
-		return &r.RatingDetail
+		return &r.FuelSurchargeLocked
 	case 45:
-		return (**string)(unsafe.Pointer(&r.RateQuoteID))
+		return &r.RatingDetail
 	case 46:
-		return (**string)(unsafe.Pointer(&r.RateAgreementID))
+		return (**string)(unsafe.Pointer(&r.RateQuoteID))
 	case 47:
-		return (**string)(unsafe.Pointer(&r.RateAgreementRuleID))
+		return (**string)(unsafe.Pointer(&r.RateAgreementID))
 	case 48:
-		return &r.RateOverrideAmount
+		return (**string)(unsafe.Pointer(&r.RateAgreementRuleID))
 	case 49:
-		return &r.RateOverrideReason
+		return &r.RateOverrideAmount
 	case 50:
-		return (**string)(unsafe.Pointer(&r.RateOverrideByID))
+		return &r.RateOverrideReason
 	case 51:
-		return &r.RateOverrideAt
+		return (**string)(unsafe.Pointer(&r.RateOverrideByID))
 	case 52:
-		return &r.RateLocked
+		return &r.RateOverrideAt
 	case 53:
-		return &r.AutoRated
+		return &r.RateLocked
 	case 54:
-		return &r.AutoRatedAt
+		return &r.AutoRated
 	case 55:
-		return (**string)(unsafe.Pointer(&r.BillToCustomerID))
+		return &r.AutoRatedAt
 	case 56:
-		return (*string)(unsafe.Pointer(&r.FreightTerms))
+		return (**string)(unsafe.Pointer(&r.BillToCustomerID))
 	case 57:
-		return &r.SearchVector
+		return (*string)(unsafe.Pointer(&r.FreightTerms))
 	case 58:
-		return &r.Rank
+		return &r.SearchVector
 	case 59:
-		return &r.Version
+		return &r.Rank
 	case 60:
-		return &r.CreatedAt
+		return &r.Version
 	case 61:
-		return &r.UpdatedAt
+		return &r.CreatedAt
 	case 62:
-		return &r.LastDeliveryArrivalAt
+		return &r.UpdatedAt
 	case 63:
-		return &r.PickupAt
+		return &r.LastDeliveryArrivalAt
 	case 64:
-		return &r.DeliveryAt
+		return &r.PickupAt
 	case 65:
+		return &r.DeliveryAt
+	case 66:
 		return &r.HasActiveAssignment
 	}
 	return nil
@@ -4393,86 +4399,88 @@ func valueShipment(p unsafe.Pointer, c int32) any {
 		}
 		return *r.BilledAt
 	case 43:
-		return r.FuelSurchargeLocked
+		return r.StatusChangedAt
 	case 44:
+		return r.FuelSurchargeLocked
+	case 45:
 		if r.RatingDetail == nil {
 			return nil
 		}
 		return *r.RatingDetail
-	case 45:
+	case 46:
 		if r.RateQuoteID == nil {
 			return nil
 		}
 		return string(*r.RateQuoteID)
-	case 46:
+	case 47:
 		if r.RateAgreementID == nil {
 			return nil
 		}
 		return string(*r.RateAgreementID)
-	case 47:
+	case 48:
 		if r.RateAgreementRuleID == nil {
 			return nil
 		}
 		return string(*r.RateAgreementRuleID)
-	case 48:
-		return r.RateOverrideAmount
 	case 49:
+		return r.RateOverrideAmount
+	case 50:
 		if r.RateOverrideReason == "" {
 			return nil
 		}
 		return r.RateOverrideReason
-	case 50:
+	case 51:
 		if r.RateOverrideByID == nil {
 			return nil
 		}
 		return string(*r.RateOverrideByID)
-	case 51:
+	case 52:
 		if r.RateOverrideAt == nil {
 			return nil
 		}
 		return *r.RateOverrideAt
-	case 52:
-		return r.RateLocked
 	case 53:
-		return r.AutoRated
+		return r.RateLocked
 	case 54:
+		return r.AutoRated
+	case 55:
 		if r.AutoRatedAt == nil {
 			return nil
 		}
 		return *r.AutoRatedAt
-	case 55:
+	case 56:
 		if r.BillToCustomerID == nil {
 			return nil
 		}
 		return string(*r.BillToCustomerID)
-	case 56:
-		return string(r.FreightTerms)
 	case 57:
-		return r.SearchVector
+		return string(r.FreightTerms)
 	case 58:
-		return r.Rank
+		return r.SearchVector
 	case 59:
-		return r.Version
+		return r.Rank
 	case 60:
-		return r.CreatedAt
+		return r.Version
 	case 61:
-		return r.UpdatedAt
+		return r.CreatedAt
 	case 62:
+		return r.UpdatedAt
+	case 63:
 		if r.LastDeliveryArrivalAt == nil {
 			return nil
 		}
 		return *r.LastDeliveryArrivalAt
-	case 63:
+	case 64:
 		if r.PickupAt == nil {
 			return nil
 		}
 		return *r.PickupAt
-	case 64:
+	case 65:
 		if r.DeliveryAt == nil {
 			return nil
 		}
 		return *r.DeliveryAt
-	case 65:
+	case 66:
 		return r.HasActiveAssignment
 	}
 	return nil
