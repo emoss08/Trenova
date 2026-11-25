@@ -55,6 +55,10 @@ const (
 	// short page: its words, and blocks that each read their figures, rows and
 	// checks live from the records, analyses and metrics they name.
 	KindBoard Kind = "board"
+	// KindDispatchPlan is the dispatch optimizer's plan for a set of loads:
+	// which driver takes each and what it costs, what stopped the rest, read
+	// live for which loads are covered now, and the assignments ready to make.
+	KindDispatchPlan Kind = "dispatch_plan"
 )
 
 // AllKinds is the whole set, in the order they were added.
@@ -84,6 +88,7 @@ func AllKinds() []Kind {
 		KindAnalysis,
 		KindPortalTask,
 		KindBoard,
+		KindDispatchPlan,
 	}
 }
 

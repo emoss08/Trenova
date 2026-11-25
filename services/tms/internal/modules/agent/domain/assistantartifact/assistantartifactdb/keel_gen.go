@@ -675,6 +675,7 @@ var enumKind = [...]schema.EnumValue{
 	{Value: `analysis`, Label: `Analysis`, Doc: `KindAnalysis is code an agent ran over report results and attached files: what it answers, the figures, the charts it drew and the code.`},
 	{Value: `portal_task`, Label: `Portal Task`, Doc: `KindPortalTask is a portal task an agent ran in a cloud browser: the site, what it was asked, and the run as it goes, with the way to enter a sign-in code or sign in in the live browser while it waits.`},
 	{Value: `board`, Label: `Board`, Doc: `KindBoard is an agent's answer to a question across records, laid out as a short page: its words, and blocks that each read their figures, rows and checks live from the records, analyses and metrics they name.`},
+	{Value: `dispatch_plan`, Label: `Dispatch Plan`, Doc: `KindDispatchPlan is the dispatch optimizer's plan for a set of loads: which driver takes each and what it costs, what stopped the rest, read live for which loads are covered now, and the assignments ready to make.`},
 }
 
 var enumStatus = [...]schema.EnumValue{

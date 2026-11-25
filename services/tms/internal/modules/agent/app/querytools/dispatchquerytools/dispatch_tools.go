@@ -326,7 +326,10 @@ type plannedLineView struct {
 	ProNumber    string                 `json:"proNumber"`
 	Lane         string                 `json:"lane,omitempty"`
 	PickupOpens  querytool.OptionalDate `json:"pickupOpens"`
+	PickupAt     int64                  `json:"pickupAt,omitempty"`
+	WorkerID     string                 `json:"workerId"`
 	WorkerName   string                 `json:"workerName"`
+	DriveHours   *float64               `json:"driveRemainingHours,omitempty"`
 	Cost         string                 `json:"cost"`
 	Confidence   string                 `json:"confidence"`
 	Rationale    string                 `json:"rationale"`
@@ -468,6 +471,8 @@ func plannedLineOf(
 		ProNumber:   line.ProNumber,
 		Lane:        laneOf(line.OriginLabel, line.DestinationLabel),
 		PickupOpens: querytool.ExpectedDate(line.PickupOpens, "unknown"),
+		PickupAt:    line.PickupOpens,
+		WorkerID:    candidate.WorkerID.String(),
 		WorkerName:  candidate.WorkerName,
 		Cost:        dispatcheconomics.Dollars(candidate.Cost.TotalCents),
 		Confidence:  line.Confidence.String(),
@@ -475,7 +480,10 @@ func plannedLineOf(
 		Deadhead:    candidate.DeadheadMiles,
 		Findings:    findingViews(candidate.Findings),
 	}
-	if !candidate.HOSKnown {
+	if candidate.HOSKnown {
+		drive := hoursOf(candidate.DriveRemainingMs)
+		planned.DriveHours = &drive
+	} else {
 		planned.Hours = "No ELD has reported this driver's hours, so they are unknown, not " +
 			"zero. Say so beside the assignment rather than holding it back."
 	}
