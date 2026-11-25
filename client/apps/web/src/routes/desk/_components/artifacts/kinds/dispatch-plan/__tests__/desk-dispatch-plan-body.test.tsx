@@ -62,7 +62,9 @@ describe("DeskDispatchPlanBody", () => {
     draw();
 
     expect(await screen.findByText("Adam Stephens")).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Drivers for 3 loads", level: 2 })).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Drivers for 3 loads", level: 2 }),
+    ).toBeInTheDocument();
     expect(screen.getByText("$1,602")).toBeInTheDocument();
     expect(screen.getByText("Planned, nothing assigned")).toBeInTheDocument();
     expect(screen.getByText("2 of 3")).toBeInTheDocument();
@@ -74,19 +76,35 @@ describe("DeskDispatchPlanBody", () => {
     expect(screen.getByText("Cynthia Daniels")).toBeInTheDocument();
     expect(screen.getByText("No driver can take it")).toBeInTheDocument();
     expect(screen.getByText("60/70-hour cycle exhausted")).toBeInTheDocument();
+    expect(screen.getAllByText(/cycle exhausted/)).toHaveLength(1);
     expect(
-      screen.getByText("1 load you named was not planned: it is covered, closed or picks up later."),
+      screen.getByText(
+        "1 load you named was not planned: it is covered, closed or picks up later.",
+      ),
     ).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Adam Stephens" })).toHaveAttribute("href", "/hr/workers/wrk_1");
+    expect(screen.getByRole("link", { name: "Adam Stephens" })).toHaveAttribute(
+      "href",
+      "/hr/workers/wrk_1",
+    );
   });
 
   it("assigns every open planned load in one call and redraws them from the moves", async () => {
     grant(true);
-    fetchers.moves.mockResolvedValueOnce(openMoves).mockResolvedValue([
-      boardMove("smv_1", "S-1", { isCovered: true, assignedWorkerId: "wrk_1", moveStatus: "Assigned" } as never),
-      boardMove("smv_2", "S-2", { isCovered: true, assignedWorkerId: "wrk_2", moveStatus: "Assigned" } as never),
-      boardMove("smv_3", "S-3"),
-    ]);
+    fetchers.moves
+      .mockResolvedValueOnce(openMoves)
+      .mockResolvedValue([
+        boardMove("smv_1", "S-1", {
+          isCovered: true,
+          assignedWorkerId: "wrk_1",
+          moveStatus: "Assigned",
+        } as never),
+        boardMove("smv_2", "S-2", {
+          isCovered: true,
+          assignedWorkerId: "wrk_2",
+          moveStatus: "Assigned",
+        } as never),
+        boardMove("smv_3", "S-3"),
+      ]);
     fetchers.assign.mockResolvedValue({
       succeeded: 2,
       failed: 0,
@@ -99,13 +117,17 @@ describe("DeskDispatchPlanBody", () => {
 
     fireEvent.click(await screen.findByRole("button", { name: "Assign 2 loads" }));
 
-    await waitFor(() => expect(screen.getByText("Assigned", { selector: ".dk-rec-st *, .dk-rec-st" })).toBeInTheDocument());
+    await waitFor(() =>
+      expect(
+        screen.getByText("Assigned", { selector: ".dk-rec-st *, .dk-rec-st" }),
+      ).toBeInTheDocument(),
+    );
     expect(fetchers.assign).toHaveBeenCalledTimes(1);
     expect(fetchers.assign).toHaveBeenCalledWith([
       { moveId: "smv_1", primaryWorkerId: "wrk_1", tractorId: "trc_1", trailerId: null },
       { moveId: "smv_2", primaryWorkerId: "wrk_2", tractorId: "trc_2", trailerId: "trl_2" },
     ]);
-    expect(screen.getByRole("button", { name: "Assign 0 loads" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Assign loads" })).toBeDisabled();
   });
 
   it("says which loads the service refused, by PRO number and never by id", async () => {
@@ -139,14 +161,20 @@ describe("DeskDispatchPlanBody", () => {
     fetchers.moves.mockResolvedValue(openMoves);
     draw();
 
-    expect(await screen.findByText("Assigning drivers takes the move assign permission.")).toBeInTheDocument();
+    expect(
+      await screen.findByText("Assigning drivers takes the move assign permission."),
+    ).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /Assign/ })).toBeNull();
   });
 
   it("names who covers a load now when someone else took it", async () => {
     grant(true);
     fetchers.moves.mockResolvedValue([
-      boardMove("smv_1", "S-1", { isCovered: true, assignedWorkerId: "wrk_7", assignedWorkerName: "Lee Park" } as never),
+      boardMove("smv_1", "S-1", {
+        isCovered: true,
+        assignedWorkerId: "wrk_7",
+        assignedWorkerName: "Lee Park",
+      } as never),
       boardMove("smv_2", "S-2"),
       boardMove("smv_3", "S-3"),
     ]);
@@ -162,7 +190,9 @@ describe("DeskDispatchPlanBody", () => {
     draw();
 
     expect(
-      await screen.findByText("Which loads are covered now could not be read; this is the plan as it was made."),
+      await screen.findByText(
+        "Which loads are covered now could not be read; this is the plan as it was made.",
+      ),
     ).toBeInTheDocument();
     expect(screen.getByText("Adam Stephens")).toBeInTheDocument();
   });

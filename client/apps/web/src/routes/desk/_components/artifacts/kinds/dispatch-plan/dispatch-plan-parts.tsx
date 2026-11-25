@@ -9,7 +9,15 @@ import { cardMoment } from "../../record-card/record-card-values";
 import { type LoadState, needsCheck, takenBy } from "./dispatch-plan-model";
 
 /** The load as a ticket: its PRO number, its lane and when it picks up. */
-function LoadTicket({ proNumber, lane, pickupAt }: { proNumber: string; lane: string; pickupAt: number | null }) {
+function LoadTicket({
+  proNumber,
+  lane,
+  pickupAt,
+}: {
+  proNumber: string;
+  lane: string;
+  pickupAt: number | null;
+}) {
   const t = useT();
   return (
     <div className="dk-dpl-load">
@@ -62,16 +70,18 @@ export function PlanPair({
     line.deadheadMiles === null
       ? null
       : t("{0, plural, one {# mile empty} other {# miles empty}}", Math.round(line.deadheadMiles)),
-    line.driveHours === null
-      ? t("hours unknown")
-      : t("{0} h to drive", line.driveHours.toFixed(1)),
+    line.driveHours === null ? t("hours unknown") : t("{0} h to drive", line.driveHours.toFixed(1)),
   ].filter((part): part is string => part !== null);
   const warnings = [
     ...line.findings
       .filter((finding) => finding.severity === "Warn" || finding.severity === "Block")
       .map((finding) => finding.message),
-    ...(line.hoursNote === "" ? [] : [t("No ELD has reported this driver's hours; they are unknown, not zero.")]),
-    ...(line.notSendable === "" ? [] : [t("The driver has no tractor on file, so this load cannot be assigned from here.")]),
+    ...(line.hoursNote === ""
+      ? []
+      : [t("No ELD has reported this driver's hours; they are unknown, not zero.")]),
+    ...(line.notSendable === ""
+      ? []
+      : [t("The driver has no tractor on file, so this load cannot be assigned from here.")]),
   ];
   const coveredBy = state === "taken" ? takenBy(move) : "";
 
@@ -120,7 +130,13 @@ export function PlanPair({
 }
 
 /** A load nobody can take as things stand, beside the reason. */
-export function PlanGap({ gap, move }: { gap: DispatchPlanGap; move: DispatchBoardMove | undefined }) {
+export function PlanGap({
+  gap,
+  move,
+}: {
+  gap: DispatchPlanGap;
+  move: DispatchBoardMove | undefined;
+}) {
   const t = useT();
   const coveredBy = takenBy(move);
   const lane =
@@ -143,9 +159,11 @@ export function PlanGap({ gap, move }: { gap: DispatchPlanGap; move: DispatchBoa
           <>
             <b>{t("No driver can take it")}</b>
             <p>{gap.reason}</p>
-            {gap.findings.map((finding) => (
-              <p key={finding.code + finding.message}>{finding.message}</p>
-            ))}
+            {gap.findings
+              .filter((finding) => !gap.reason.includes(finding.message))
+              .map((finding) => (
+                <p key={finding.code + finding.message}>{finding.message}</p>
+              ))}
           </>
         ) : (
           <b>{t("Now covered by {0}", coveredBy)}</b>

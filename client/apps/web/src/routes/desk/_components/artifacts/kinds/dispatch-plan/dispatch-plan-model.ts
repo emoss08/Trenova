@@ -18,7 +18,10 @@ export type LoadState = "planned" | "proposed" | "assigned" | "taken" | "closed"
 
 const CLOSED_MOVE_STATUSES: ReadonlySet<string> = new Set(["Completed", "Canceled"]);
 
-export function loadStateOf(line: DispatchPlanLine, move: DispatchBoardMove | undefined): LoadState {
+export function loadStateOf(
+  line: DispatchPlanLine,
+  move: DispatchBoardMove | undefined,
+): LoadState {
   if (move === undefined) {
     return "unread";
   }
@@ -45,7 +48,9 @@ export function takenBy(move: DispatchBoardMove | undefined): string {
 
 /** The moves the card reads back: every planned load and every gap, each once. */
 export function planMoveIds(plan: DispatchPlanArtifact): string[] {
-  return [...new Set([...plan.lines.map((line) => line.moveId), ...plan.gaps.map((gap) => gap.moveId)])];
+  return [
+    ...new Set([...plan.lines.map((line) => line.moveId), ...plan.gaps.map((gap) => gap.moveId)]),
+  ];
 }
 
 /**
@@ -113,7 +118,8 @@ export function planTally(plan: DispatchPlanArtifact): PlanTally {
     loads: plan.lines.length + plan.gaps.length,
     covered: plan.lines.length,
     gaps: plan.gaps.length,
-    emptyMiles: miles.length === 0 ? null : Math.round(miles.reduce((sum, value) => sum + value, 0)),
+    emptyMiles:
+      miles.length === 0 ? null : Math.round(miles.reduce((sum, value) => sum + value, 0)),
     toCheck: plan.lines.filter(needsCheck).length,
   };
 }

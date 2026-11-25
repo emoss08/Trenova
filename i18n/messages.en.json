@@ -38687,6 +38687,15 @@
       "routes/desk"
     ]
   },
+  "Assign loads": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Assign manually": {
     "sites": 1,
     "scope": [

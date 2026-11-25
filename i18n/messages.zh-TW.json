@@ -4043,6 +4043,7 @@
   "Assign each email purpose to an active sender profile. Clearing a purpose removes its assignment on save.": "為每個郵件用途指派一個啟用中的寄件者設定檔。清除某用途後，儲存時即移除其指派。",
   "Assign it so the driver can complete it.": "請指派，以便駕駛員完成。",
   "Assign it to the driver or tractor that carries it": "將它指派給持有它的駕駛員或牽引車",
+  "Assign loads": "指派貨物",
   "Assign manually": "以人工方式指派",
   "Assign me and approve {0}": "指派給我並核准 {0}",
   "Assign messages to other people and hand the queue off": "將訊息指派給其他人並移交佇列",

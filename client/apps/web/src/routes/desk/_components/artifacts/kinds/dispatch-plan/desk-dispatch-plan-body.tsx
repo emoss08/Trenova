@@ -5,10 +5,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useMemo, useRef } from "react";
 import { usePermission } from "@/hooks/use-permission";
-import {
-  assignDispatchMovesGraphQL,
-  type DispatchBoardMove,
-} from "@/lib/graphql/dispatch-console";
+import { assignDispatchMovesGraphQL, type DispatchBoardMove } from "@/lib/graphql/dispatch-console";
 import { DISPATCH_BOARD_KEY, dispatchConsoleQueries } from "@/lib/queries/dispatch-console";
 import { withoutRecordIds } from "@/lib/record-ids";
 import type { AssistantArtifact } from "@/types/assistant";
@@ -235,7 +232,9 @@ function DispatchPlanCard({
               refused.length,
             )}{" "}
             {refused
-              .map((result) => t("{0}: {1}", proOf(result.moveId), withoutRecordIds(result.error ?? t("refused"))))
+              .map((result) =>
+                t("{0}: {1}", proOf(result.moveId), withoutRecordIds(result.error ?? t("refused"))),
+              )
               .join("; ")}
           </CardSectionError>
         )}
@@ -253,7 +252,9 @@ function DispatchPlanCard({
             isLoading={assign.isPending}
             onClick={assignAll}
           >
-            {t("{0, plural, one {Assign # load} other {Assign # loads}}", assignable.length)}
+            {assignable.length === 0
+              ? t("Assign loads")
+              : t("{0, plural, one {Assign # load} other {Assign # loads}}", assignable.length)}
           </CardActionButton>
         )}
       </CardBar>

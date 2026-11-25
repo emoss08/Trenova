@@ -4043,6 +4043,7 @@
   "Assign each email purpose to an active sender profile. Clearing a purpose removes its assignment on save.": "Asigne cada propósito de correo a un perfil de remitente activo. Borrar un propósito elimina su asignación al guardar.",
   "Assign it so the driver can complete it.": "Asígnelo para que el conductor pueda completarlo.",
   "Assign it to the driver or tractor that carries it": "Asígnala al conductor o al tractocamión que la lleva",
+  "Assign loads": "Asignar cargas",
   "Assign manually": "Asignar manualmente",
   "Assign me and approve {0}": "Asignarme y aprobar {0}",
   "Assign messages to other people and hand the queue off": "Asignar mensajes a otras personas y transferir la cola",

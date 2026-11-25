@@ -7,6 +7,7 @@ import { DESK_CARD_HANDLERS } from "./deskcards.mjs";
 import { DESK_REPORT_HANDLERS } from "./deskreport.mjs";
 import { DESK_BOARD_HANDLERS } from "./deskboard.mjs";
 import { EDI_DRAFT_HANDLERS } from "./deskedidraft.mjs";
+import { assignDispatchPlanMoves, DESK_DISPATCH_PLAN_HANDLERS } from "./deskdispatchplan.mjs";
 import { DESK_PLAN_HANDLERS } from "./deskplan.mjs";
 import {
   matchAgent,
@@ -1196,6 +1197,7 @@ const HANDLERS = {
   ...DESK_BOARD_HANDLERS,
   ...EDI_DRAFT_HANDLERS,
   ...DESK_PLAN_HANDLERS,
+  ...DESK_DISPATCH_PLAN_HANDLERS,
   ...FORMULA_HANDLERS,
   ...FORMULA_LIBRARY_HANDLERS,
   ...ACCOUNTING_HANDLERS,
@@ -1297,7 +1299,8 @@ const HANDLERS = {
       .filter((e) => !v.input?.shipmentId || e.shipmentId === v.input.shipmentId)
       .slice(0, v.input?.limit ?? 50),
   }),
-  DispatchAssignMoves: (state, v) => ({ dispatchAssignMoves: assignMoves(state, v.input) }),
+  DispatchAssignMoves: (state, v) =>
+    assignDispatchPlanMoves(state, v.input) ?? { dispatchAssignMoves: assignMoves(state, v.input) },
   TenderShipments: (state, v) => ({ tenderShipments: tender(state, v.input) }),
   DecideShipmentSuggestion: (state, v) => {
     state.decisions.set(v.input.key, v.input.decision);
