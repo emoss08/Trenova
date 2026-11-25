@@ -46,6 +46,7 @@ type listPage struct {
 	total int
 	more  bool
 	table pulid.ID
+	kind  recordkind.Kind
 }
 
 type Swap struct {
@@ -101,6 +102,7 @@ func Of(results []string) Read {
 			partsIn(payload, 0, read.parents)
 			page.total, page.more = longer(payload)
 			page.table = keptTable(content)
+			page.kind = pageKind(payload, page.ids)
 		}
 		if page.more && len(page.ids) > 0 {
 			read.pages = append(read.pages, page)

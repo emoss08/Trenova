@@ -5,6 +5,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/boardrecords"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/toolresult"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -58,4 +60,45 @@ func TestWholeOf_FindsTheTableALongerListWasKeptAs(t *testing.T) {
 
 	_, ok = boardrecords.Of([]string{page("", note)}).WholeOf(ids)
 	assert.False(t, ok, "a list that reported no total has no number to read again")
+}
+
+const (
+	workerOne  = "wrk_01M7V48DVVQGDF0KG409BJH1FJ"
+	workerList = "art_01M861HFM3CMMC4RFVB9KTAFWK"
+)
+
+func workerPage() string {
+	return toolresult.Fence("records_query", `{"count":1,"hasMore":true,"total":372,`+
+		`"items":[{"id":"`+workerOne+`","name":"Ana Ruiz"}]}`) +
+		"\n\n[This result is kept as a table titled \"Workers\" beside the conversation. " +
+		"To point to it, write [Workers](artifact:" + workerList + ") as part of the sentence.]"
+}
+
+func TestAllNamed_ReadsTheListOfTheKindTheNounAfterAllCounts(t *testing.T) {
+	t.Parallel()
+
+	note := "\n\n[This result is kept as a table titled \"Shipments\" beside the " +
+		"conversation. To point to it, write [Shipments](artifact:" + kept + ") as part of " +
+		"the sentence.]"
+	read := boardrecords.Of([]string{page(`"total":159,`, note), workerPage()})
+	held := recordkind.Kind(permission.ResourceWorker)
+	ids := []pulid.ID{workerOne}
+
+	for words, want := range map[string]pulid.ID{
+		"There are {all} new shipments waiting.":        kept,
+		"{all} loads are new.":                          kept,
+		"{all} drivers are active.":                     pulid.Nil,
+		"{all} are waiting for a driver.":               pulid.Nil,
+		"{all} of the shipments are new.":               kept,
+		"All {all} of them fit; these drivers lead.":    pulid.Nil,
+		"{all} new shipments, and {all} more shipments": kept,
+	} {
+		whole, elsewhere, refusal := read.AllNamed("show_answer", words, held, ids)
+		require.Empty(t, refusal, words)
+		assert.Equal(t, want.IsNotNil(), elsewhere, words)
+		assert.Equal(t, want, whole.Table, words)
+	}
+
+	_, _, refusal := read.AllNamed("show_answer", "{all} invoices are open.", held, ids)
+	assert.Contains(t, refusal, "which are workers (372 read), but the words count invoices")
 }

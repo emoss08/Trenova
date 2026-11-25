@@ -37,7 +37,7 @@ func countedWhole(
 	if out.refusal = groupCounts(read, out.answer); out.refusal != "" {
 		return out
 	}
-	listed, table, refused := wholeList(read, &out.answer.Board)
+	listed, table, refused := wholeList(read, out.answer)
 	if out.refusal = refused; out.refusal != "" {
 		return out
 	}
@@ -112,13 +112,18 @@ func sumOfAPage(read boardrecords.Read, layout *board.Board) string {
 
 func wholeList(
 	read boardrecords.Read,
-	layout *board.Board,
+	answer *boardanswer.Answer,
 ) (listed bool, table pulid.ID, refusal string) {
-	all := layout.Reading(boardanswer.NameAll)
+	all := answer.Board.Reading(boardanswer.NameAll)
 	if all == nil || all.Records == nil {
 		return false, pulid.Nil, ""
 	}
 	ids := all.Records.IDs
+	named, elsewhere, refusal := read.AllNamed(ShowAnswerTool, answer.Words, all.Records.Kind,
+		ids)
+	if refusal != "" || elsewhere {
+		return elsewhere, named.Table, refusal
+	}
 	whole, kept := read.WholeOf(ids)
 	if !kept {
 		if _, longer := read.Longer(ids); longer {
