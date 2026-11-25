@@ -186,7 +186,11 @@ type Condition struct {
 	DocumentID            pulid.ID `json:"documentId,omitempty"`
 	WebWatchID            pulid.ID `json:"webWatchId,omitempty"`
 	RecordID              pulid.ID `json:"recordId,omitempty"`
-	ReportRunID           pulid.ID `json:"reportRunId,omitempty"`
+	// UntilStatus narrows a RecordChanged wait to the changes that leave the
+	// record in one of these statuses: "the shipment is Completed", not
+	// "someone touched the shipment".
+	UntilStatus []string `json:"untilStatus,omitempty"`
+	ReportRunID pulid.ID `json:"reportRunId,omitempty"`
 	// RecordKind and RecordLabel name the watched record as it was when the
 	// wait was set, for what the work and the Desk say about it.
 	RecordKind        string `json:"recordKind,omitempty"`
@@ -346,11 +350,29 @@ func validateText(multiErr *errortypes.MultiError, field, value string, limit in
 	}
 }
 
+const MaxUntilStatuses = 6
+
+// ReachedStatus reports whether a record in this status ends the wait: any
+// status does when the wait names none.
+func (c *Condition) ReachedStatus(status string) bool {
+	if len(c.UntilStatus) == 0 {
+		return true
+	}
+
+	return slices.ContainsFunc(c.UntilStatus, func(want string) bool {
+		return strings.EqualFold(strings.TrimSpace(want), strings.TrimSpace(status))
+	})
+}
+
 func (c *Condition) validate(kind Kind, multiErr *errortypes.MultiError) {
 	require := func(field string, id pulid.ID) {
 		if id.IsNil() {
 			multiErr.Add(field, errortypes.ErrRequired, "This wait needs "+field)
 		}
+	}
+	if kind != KindRecordChanged && len(c.UntilStatus) > 0 {
+		multiErr.Add("untilStatus", errortypes.ErrInvalid,
+			"untilStatus narrows a RecordChanged wait only")
 	}
 	minutes := func(field string, value, limit int) {
 		if value < 0 || value > limit {
@@ -392,6 +414,16 @@ func (c *Condition) validate(kind Kind, multiErr *errortypes.MultiError) {
 		require("webWatchId", c.WebWatchID)
 	case KindRecordChanged:
 		require("recordId", c.RecordID)
+		if len(c.UntilStatus) > MaxUntilStatuses {
+			multiErr.Add("untilStatus", errortypes.ErrInvalid,
+				fmt.Sprintf("Name at most %d statuses", MaxUntilStatuses))
+		}
+		for _, status := range c.UntilStatus {
+			if strings.TrimSpace(status) == "" {
+				multiErr.Add("untilStatus", errortypes.ErrInvalid, "A status cannot be empty")
+				break
+			}
+		}
 	case KindReportRun:
 		require("reportRunId", c.ReportRunID)
 	case KindHOSDriveBelow:

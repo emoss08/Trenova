@@ -65,6 +65,26 @@ func (s *Service) checkRecord(
 	c.RecordKind = string(kind)
 	c.RecordLabel = found.Label
 
+	return checkUntilStatus(c, kind, found)
+}
+
+func checkUntilStatus(
+	c *agentwait.Condition,
+	kind recordkind.Kind,
+	found *agentwaitports.FoundRecord,
+) error {
+	if len(c.UntilStatus) == 0 {
+		return nil
+	}
+	if !found.HasStatus {
+		return errortypes.NewValidationError("untilStatus", errortypes.ErrInvalid, fmt.Sprintf(
+			"A %s has no status a wait can name. Leave untilStatus out to pick the work up on "+
+				"any change.", kind.Noun()))
+	}
+	if c.ReachedStatus(found.Status) {
+		return alreadyTrue("%s %s is %s.", kind.Noun(), c.RecordLabel, found.Status)
+	}
+
 	return nil
 }
 
@@ -248,17 +268,47 @@ func (s *Service) recordChanged(
 	if !s.ownerMayStillRead(ctx, wait) {
 		return
 	}
+	reached, status := s.reachedStatus(ctx, wait)
+	if !reached {
+		return
+	}
 	described := *change
 	described.Label = watchedLabel(wait.Condition)
 	owner := &permissionports.RequestActor{UserID: wait.UserID}
 	detail := fmt.Sprintf("%s Seen at %s.",
 		worldwatch.DescribeChange(&described, owner, names), stamp(change.At))
+	if status != "" {
+		detail += fmt.Sprintf(" It is now %s, the status you waited for.", status)
+	}
 
 	s.meetWith(ctx, wait, agentwaitcontract.Met{
 		Detail: detail,
 		At:     change.At,
 		Key:    change.RecordID,
 	})
+}
+
+// reachedStatus reads the watched record's status when the wait names the
+// statuses it waits for. A change that leaves the record short of them is not
+// the one the work waits on, so the wait stays open; a read that fails picks
+// the work up rather than leave it waiting on a record it cannot see.
+func (s *Service) reachedStatus(ctx context.Context, wait *agentwait.Wait) (bool, string) {
+	c := wait.Condition
+	if len(c.UntilStatus) == 0 {
+		return true, ""
+	}
+	resource := recordkind.Kind(c.RecordKind).Resource()
+	found, err := s.records.Find(ctx, tenantOf(wait), resource, c.RecordID)
+	if err != nil {
+		s.l.Debug("could not read the watched record's status; picking the work up",
+			zap.String("wait", wait.ID.String()), zap.Error(err))
+		return true, ""
+	}
+	if !found.HasStatus || c.ReachedStatus(found.Status) {
+		return true, found.Status
+	}
+
+	return false, ""
 }
 
 // ownerMayStillRead checks a conversation's owner may still read the kind of

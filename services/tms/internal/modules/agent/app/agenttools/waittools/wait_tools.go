@@ -96,7 +96,9 @@ func (t *waitUntilTool) ParamSchema() map[string]any {
 				"to be changed by a person or the system: use it when a person must fix "+
 				"something on a record before you can go on (a missing POD on the shipment an "+
 				"invoice bills), naming it in recordId, so you pick the work up once they have "+
-				"changed it rather than asking them to come back and tell you.", waitKinds),
+				"changed it rather than asking them to come back and tell you. To wait for a "+
+				"record to reach a status (a shipment to be completed), use RecordChanged with "+
+				"untilStatus.", waitKinds),
 			toolparams.ParamDescription: map[string]any{
 				toolschema.KeyType: toolschema.TypeString,
 				toolschema.KeyDescription: "What you are waiting for, in a few words a person reads " +
@@ -129,6 +131,17 @@ func (t *waitUntilTool) ParamSchema() map[string]any {
 			"recordId": agenttoolschema.IDText("For RecordChanged: the record that holds what " +
 				"must be fixed, by the id shipment_get, invoice_get, billing_get_queue_item or " +
 				"another tool returned, not the record you will change afterwards."),
+			"untilStatus": map[string]any{
+				toolschema.KeyType:     toolschema.TypeArray,
+				toolschema.KeyItems:    map[string]any{toolschema.KeyType: toolschema.TypeString},
+				toolschema.KeyMaxItems: agentwait.MaxUntilStatuses,
+				toolschema.KeyDescription: "For RecordChanged on a shipment, billing queue item, " +
+					"invoice, order or detention occurrence: the statuses that end the wait, " +
+					"as the record reads them (shipment [\"Completed\", \"ReadyToInvoice\"]). " +
+					"Changes that leave it in any other status do not wake you, so \"tell me " +
+					"when it is completed\" is one wait, not one per edit. Leave it out to " +
+					"pick the work up on any change.",
+			},
 			"detentionOccurrenceId": agenttoolschema.KindID(
 				"For FreeTimeEnding: the detention record, from detention_list_occurrences or the "+
 					"run subject (detention.occurrence_opened names it).",
@@ -310,6 +323,13 @@ func waitCondition(
 		}
 	}
 	condition.MinutesBefore = int(toolparams.OptionalInt64(params.Params, "minutesBefore"))
+	if raw, ok := params.Params["untilStatus"].([]any); ok {
+		for _, entry := range raw {
+			if status, isText := entry.(string); isText && strings.TrimSpace(status) != "" {
+				condition.UntilStatus = append(condition.UntilStatus, strings.TrimSpace(status))
+			}
+		}
+	}
 	if hours, ok := params.Params["driveHoursBelow"].(float64); ok {
 		condition.DriveMinutesBelow = int(math.Round(hours * 60))
 	}
