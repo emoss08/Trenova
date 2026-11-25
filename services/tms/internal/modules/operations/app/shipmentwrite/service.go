@@ -28,6 +28,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmenteffects"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmenteventservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentvalidator"
+	"github.com/emoss08/trenova/internal/modules/operations/app/stopactualnotice"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentnormalize"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentrating"
@@ -459,6 +460,7 @@ func (s *Service) Update(
 	if err != nil {
 		return nil, err
 	}
+	stopTimes := stopactualnotice.TakeAll(original.Moves)
 
 	control, err := s.effects.GetShipmentControl(ctx, pagination.TenantInfo{
 		OrgID: entity.OrganizationID,
@@ -535,6 +537,7 @@ func (s *Service) Update(
 		updated:    updatedEntity,
 		actor:      actor,
 		advisories: advisories,
+		stopTimes:  stopTimes,
 		log:        log,
 	})
 }
@@ -613,6 +616,7 @@ type shipmentUpdate struct {
 	updated    *shipment.Shipment
 	actor      *permissionports.RequestActor
 	advisories []*errortypes.AdvisoryError
+	stopTimes  map[pulid.ID]stopactualnotice.Snapshot
 	log        *zap.Logger
 }
 
@@ -662,6 +666,7 @@ func (s *Service) finishShipmentUpdate(
 
 	s.effects.EmitStatusChangeEvent(ctx, original, updatedEntity, auditActor)
 	s.effects.EmitUpdatedEvent(ctx, original, updatedEntity, auditActor)
+	s.announceStopActuals(ctx, updatedEntity, p.stopTimes, auditActor)
 	if err := s.effects.RecomputeOrdersForShipments(
 		ctx,
 		pagination.TenantInfo{
