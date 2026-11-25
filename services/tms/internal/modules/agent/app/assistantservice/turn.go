@@ -228,6 +228,7 @@ func (s *Service) prepareTurn(
 	s.showAttachments(ctx, thread, actor, req.TenantInfo, runtimeAttachments)
 
 	outsideText := false
+	openQuestion := ""
 	var resumed resumedWaitNote
 	if resumesWait {
 		var noteErr error
@@ -251,6 +252,7 @@ func (s *Service) prepareTurn(
 		}
 		content = followed.Note +
 			s.showWritten(ctx, thread, actor, req.TenantInfo, followed.Decided)
+		openQuestion = followed.OpenQuestion
 		checks.anchors = s.notes().AnchorChanged(
 			ctx, checks.anchors, followed.Changed, actor, req.TenantInfo,
 		)
@@ -280,6 +282,7 @@ func (s *Service) prepareTurn(
 		Anchors:             checks.anchors,
 		TrenovaWritten:      followUp || resumesWait,
 		Asked:               asked,
+		OpenQuestion:        openQuestion,
 		OpenWaits:           OpenWaitsFor(definition, checks.waits),
 		EarlierFiles:        checks.earlierFiles,
 		OutsideText:         outsideText,

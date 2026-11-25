@@ -174,7 +174,12 @@ type RunRequest struct {
 	// Asked is then the last thing the person did type, from LastAsked.
 	TrenovaWritten bool
 	Asked          string
-	Emit           kernelports.AssistantStreamEmitter
+	// OpenQuestion is, on a decision follow-up, the question the person was
+	// asked and has not answered yet. The turn only reports the decision:
+	// every tool call it makes is refused, so it cannot take the approval
+	// for the answer and start the work the question asks about.
+	OpenQuestion string
+	Emit         kernelports.AssistantStreamEmitter
 	// PreferredProviderID is the reader's own choice for this turn, which wins
 	// over the definition's. An administrator pins a default for everyone on
 	// the agent; a person picking a model in the composer is overriding that

@@ -186,6 +186,53 @@ func AskedQuestions(history []conversation.Message) map[string]struct{} {
 	return asked
 }
 
+// OpenQuestion is the newest question put to the person that nothing they
+// said since has answered, or empty when there is none. It reads the thread
+// as the conversation shows it: only a message the person typed answers a
+// question, so a decision note, a wait picked up or a record changing leaves
+// it open.
+//
+// A decision follow-up started while the person was still being asked read
+// the approval as their answer: "You chose 'Yes, start with batch 1 of 50'",
+// and it started the work the question asked about before they had picked.
+func OpenQuestion(history []conversation.Message) string {
+	refused := make(map[string]struct{})
+	for idx := len(history) - 1; idx >= 0; idx-- {
+		message := &history[idx]
+		switch message.Role {
+		case conversation.RoleUser:
+			if message.Kind == "" || message.Kind == conversation.MessageKindMessage ||
+				message.Kind == conversation.MessageKindCompaction {
+				return ""
+			}
+		case conversation.RoleTool:
+			if message.ToolFailed && message.ToolName == "ask_user" && message.ToolCallID != "" {
+				refused[message.ToolCallID] = struct{}{}
+			}
+		case conversation.RoleAssistant:
+			if message.Refused {
+				continue
+			}
+			for callIdx := len(message.ToolCalls) - 1; callIdx >= 0; callIdx-- {
+				call := message.ToolCalls[callIdx]
+				if call.Name != "ask_user" {
+					continue
+				}
+				if _, wasRefused := refused[call.ID]; wasRefused {
+					continue
+				}
+				if question := strings.TrimSpace(
+					argcheck.String(call.Arguments, "question"),
+				); question != "" {
+					return question
+				}
+			}
+		}
+	}
+
+	return ""
+}
+
 // ComparableQuestion folds the differences that do not make a question new:
 // case, punctuation and spacing.
 func ComparableQuestion(question string) string {

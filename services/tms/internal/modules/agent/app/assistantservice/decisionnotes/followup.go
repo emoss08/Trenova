@@ -111,6 +111,43 @@ type decisionFollowUp struct {
 	Note    string
 	Decided []*agent.AgentProposal
 	Changed []agentpagecontext.EntityRef
+	// OpenQuestion is the question the person was asked and has not
+	// answered, when there is one. The turn only reports the decision, and
+	// runs no tool, until they answer.
+	OpenQuestion string
+}
+
+// openQuestionInstruction holds a decision follow-up to the report while the
+// person still has a question in front of them. A follow-up told to take the
+// next step read the approval as the answer to the question asked in the
+// same turn, said "You chose 'Yes, start with batch 1 of 50'" and started
+// planning drivers before the person had picked anything.
+const openQuestionInstruction = "Before this decision you asked the person %s. That " +
+	"question is still waiting for them and their answer has not arrived: this decision is " +
+	"not their answer to it. Tell the person in one or two sentences what this note says " +
+	"happened, then say the question is still waiting for their answer. Do not answer it " +
+	"for them, do not say or assume which option they chose, do not ask it again and do " +
+	"not take the next step of the work it asks about: this turn runs no tools. Report " +
+	"only what this note holds about what ran: do not describe a value, a record or an " +
+	"effect that it does not name. " + saidBefore
+
+// openQuestionAsk is the instruction for a follow-up that arrives while a
+// question is open, after the person's note when they left one.
+func openQuestionAsk(question string, declined bool, note string) string {
+	instruction := fmt.Sprintf(openQuestionInstruction, toolresult.FenceInline(question))
+	if note == "" {
+		return instruction
+	}
+
+	header := decisionNoteHeader
+	if declined {
+		header = declinedNoteHeader
+	}
+
+	return toolresult.FenceUntrusted(
+		header,
+		stringutils.TruncateRunes(note, agentdecision.MaxDecisionNoteLength),
+	) + "\n" + personNoteGuard + " Answer what they said as well. " + instruction
 }
 
 type DecisionNoteParams struct {

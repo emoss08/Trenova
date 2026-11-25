@@ -422,6 +422,10 @@ func (s *Service) runToolCalls(
 	loop *driveLoop,
 	completion *llmports.ChatCompletionResult,
 ) bool {
+	if t.openQuestion != "" {
+		s.refuseWhileAsked(t, effects, completion.ToolCalls)
+		return false
+	}
 	result := t.result
 	batch := &tooldispatch.ReadBatch{}
 	shownNow := false
@@ -465,6 +469,35 @@ func (s *Service) runToolCalls(
 	s.settleReads(t, effects, batch)
 
 	return shownNow
+}
+
+// openQuestionRefusal answers a tool call made by a decision follow-up while
+// the person still has a question in front of them. The instruction alone
+// did not hold: a follow-up read the approval as the answer, said which
+// option the person chose and started the work the question asked about.
+const openQuestionRefusal = "Tool %q was not run: this turn only reports the decision " +
+	"above. Your question %s is still waiting for the person and their answer has not " +
+	"arrived, so do not act on it, choose for them or start the work it asks about. Reply " +
+	"with what the decision note says happened and that the question is still waiting " +
+	"for their answer."
+
+// refuseWhileAsked answers every call of a completion made while a question
+// is open, none of them run. Each counts against the budget, so a model that
+// keeps calling still reaches the end of its turn.
+func (s *Service) refuseWhileAsked(t *Turn, effects TurnEffects, calls []llmports.ToolCall) {
+	question := toolresult.FenceInline(t.openQuestion)
+	for idx := range calls {
+		call := &calls[idx]
+		s.emitToolStarted(effects, call)
+		outcome := toolcall.Refused(
+			aitrace.OutcomeDenied,
+			"the person has not answered the question the turn arrived under",
+			openQuestionRefusal,
+			call.Name, question,
+		)
+		t.result.ToolCallsUsed++
+		s.recordToolResult(t, effects, call, &outcome)
+	}
 }
 
 // runToolCall answers one tool call the loop runs on its own, and reports

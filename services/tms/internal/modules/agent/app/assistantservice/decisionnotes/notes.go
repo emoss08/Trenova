@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"slices"
 
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/askuser"
 	"github.com/emoss08/trenova/internal/modules/agent/app/assistantservice/proposalstores"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
@@ -95,10 +96,15 @@ func (s *Notes) DecisionNote(
 		return decisionFollowUp{}, err
 	}
 	note := noteFrom(decisions, []pulid.ID{proposal.ID})
-	ask := followUpAsk(proposal.Status == agent.ProposalStatusRejected, note)
+	declined := proposal.Status == agent.ProposalStatusRejected
+	ask := followUpAsk(declined, note)
 	refused := refusedOverChange([]*agent.AgentProposal{proposal})
 	if len(refused) > 0 {
 		ask = refusedAsk(note)
+	}
+	question := askuser.OpenQuestion(p.History)
+	if question != "" {
+		ask = openQuestionAsk(question, declined, note)
 	}
 
 	return decisionFollowUp{
@@ -106,8 +112,9 @@ func (s *Notes) DecisionNote(
 			decisionLine(proposal), ranWith(proposal, decisions), proposal.ID, proposal.ToolName,
 			liftedHold(p.History, proposal), cardNote(p.History, proposal),
 			producedNote(proposal), ask),
-		Decided: []*agent.AgentProposal{proposal},
-		Changed: changedTargets(refused),
+		Decided:      []*agent.AgentProposal{proposal},
+		Changed:      changedTargets(refused),
+		OpenQuestion: question,
 	}, nil
 }
 
@@ -238,7 +245,8 @@ func (s *Notes) planDecisionNote(
 		return decisionFollowUp{}, err
 	}
 	line := planDecisionLine(plan, steps)
-	ask := followUpAsk(plan.Status == agentplan.PlanStatusRejected, note)
+	declined := plan.Status == agentplan.PlanStatusRejected
+	ask := followUpAsk(declined, note)
 	refused := refusedOverChange(steps)
 	if len(refused) > 0 {
 		ask = refusedAsk(note)
@@ -246,12 +254,17 @@ func (s *Notes) planDecisionNote(
 			line = planRefusedLine(plan, refused)
 		}
 	}
+	question := askuser.OpenQuestion(p.History)
+	if question != "" {
+		ask = openQuestionAsk(question, declined, note)
+	}
 
 	return decisionFollowUp{
 		Note: fmt.Sprintf("%s\nDecision on plan %s (%d steps). %s%s",
 			line, plan.ID, plan.StepCount, stepsProducedNote(steps), ask),
-		Decided: steps,
-		Changed: changedTargets(refused),
+		Decided:      steps,
+		Changed:      changedTargets(refused),
+		OpenQuestion: question,
 	}, nil
 }
 

@@ -56,8 +56,11 @@ type TurnRequest struct {
 	Anchors        []agentturn.RuntimeAnchor
 	TrenovaWritten bool
 	Asked          string
-	OpenWaits      []agentturn.OpenWait
-	EarlierFiles   map[string]string
+	// OpenQuestion is the question a decision follow-up arrives under, which
+	// the person has not answered yet: the turn only reports the decision.
+	OpenQuestion string
+	OpenWaits    []agentturn.OpenWait
+	EarlierFiles map[string]string
 	// OutsideText says the turn's input carries text written outside the
 	// organization, such as a portal's answer a wait picked up.
 	OutsideText bool
@@ -123,6 +126,7 @@ func (s *Service) admit(
 		Input:               req.Input,
 		TrenovaWritten:      req.TrenovaWritten,
 		Asked:               req.Asked,
+		OpenQuestion:        req.OpenQuestion,
 		PreferredProviderID: req.PreferredProviderID,
 		// A model the person picked is the model they get; an administrator's
 		// default on the agent is only where the order starts.

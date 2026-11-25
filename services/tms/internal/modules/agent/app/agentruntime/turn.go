@@ -117,6 +117,10 @@ type Turn struct {
 	artifacts    []agentruntimeports.ShownArtifact
 	providerKind aiprovider.Kind
 	reask        string
+	// openQuestion is the question a decision follow-up opened under that
+	// the person has not answered. While it is set the turn only reports:
+	// every tool call is refused.
+	openQuestion string
 }
 
 // TurnEffects is everything a turn does outside itself.
@@ -259,6 +263,9 @@ type TurnState struct {
 	Continuing  map[string]string                `json:"continuing,omitempty"`
 
 	ProviderKind aiprovider.Kind `json:"providerKind,omitempty"`
+	// OpenQuestion is the unanswered question a decision follow-up opened
+	// under; the turn refuses every tool call while it is set.
+	OpenQuestion string `json:"openQuestion,omitempty"`
 }
 
 // State captures the turn as data.
@@ -295,6 +302,7 @@ func (t *Turn) State() TurnState {
 		Continuable:     maps.Clone(t.scripts.Continuable),
 		Continuing:      maps.Clone(t.scripts.Continuing),
 		ProviderKind:    t.providerKind,
+		OpenQuestion:    t.openQuestion,
 	}
 }
 
@@ -364,6 +372,7 @@ func (s *Service) RestoreTurn(req *agentruntimeports.RunRequest, state *TurnStat
 			Continuing:  maps.Clone(state.Continuing),
 		},
 		providerKind: state.ProviderKind,
+		openQuestion: state.OpenQuestion,
 	}
 }
 
@@ -471,7 +480,19 @@ func (s *Service) OpenTurn(ctx context.Context, req *agentruntimeports.RunReques
 		external:     req.AfterExternalContent || toolaccess.CarriesExternalContent(taint),
 		world:        s.watchWorld(ctx, req, now),
 		toolMemories: toolMemories,
+		openQuestion: openQuestionOf(req),
 	}
+}
+
+// openQuestionOf is the unanswered question a turn Trenova opened arrives
+// under. A turn the person opened answers whatever they asked, so it holds
+// none.
+func openQuestionOf(req *agentruntimeports.RunRequest) string {
+	if !req.TrenovaWritten {
+		return ""
+	}
+
+	return req.OpenQuestion
 }
 
 type turnTools struct {
