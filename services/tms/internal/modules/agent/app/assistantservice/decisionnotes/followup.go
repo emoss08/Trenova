@@ -304,6 +304,32 @@ func liftedHold(history []conversation.Message, proposal *agent.AgentProposal) s
 	return ""
 }
 
+// supersededReview retires what the call that filed the proposal returned.
+// The model read "awaiting a person's review" there, and after an approved
+// memory had run it told the person the memory still needed an
+// administrator's approval.
+func supersededReview(proposal *agent.AgentProposal) string {
+	const filed = "The result of the call that filed it, that it was awaiting a person's " +
+		"review, is out of date: "
+	switch proposal.Status {
+	case agent.ProposalStatusExecuted:
+		return filed + "the person approved it and it ran. Do not say it still waits for " +
+			"approval; only where the first line says what it made is itself waiting on " +
+			"someone, such as a memory offered for an administrator to accept, say that. "
+	case agent.ProposalStatusExecutionFailed:
+		return filed + "the person approved it, and the first line says how running it went. "
+	case agent.ProposalStatusRejected:
+		return filed + "the person rejected it, and it will not run. "
+	case agent.ProposalStatusPending, agent.ProposalStatusApproving,
+		agent.ProposalStatusAccepted, agent.ProposalStatusModified,
+		agent.ProposalStatusExpired, agent.ProposalStatusSuperseded,
+		agent.ProposalStatusSkipped, agent.ProposalStatusSimulated:
+		return ""
+	default:
+		return ""
+	}
+}
+
 // producedNote names the ids an executed proposal's write produced, for the
 // agent rather than the person, so it is on the note's second line. Without
 // it the only id the agent held was the proposal's, and it passed that to
