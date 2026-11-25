@@ -3,12 +3,10 @@ package shipmentmoveservice
 import (
 	"context"
 	"fmt"
-	"time"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agenteventports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmenteventservice"
+	"github.com/emoss08/trenova/internal/modules/operations/app/stopactualnotice"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentstate"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
@@ -16,7 +14,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/zap"
 )
@@ -42,7 +39,7 @@ func (s *service) RecordStopActual(
 			return err
 		}
 		previousStatus = move.Status
-		before := snapshotStopActuals(move)
+		before := stopactualnotice.Take(move)
 
 		plan, err := s.planStopActual(txCtx, req, move)
 		if err != nil {
@@ -339,30 +336,19 @@ func deriveMoveStatusFromStops(move *shipment.ShipmentMove) shipmentvocab.MoveSt
 	}
 }
 
-// publishStopActualEvent wakes the agents that watch arrivals and departures.
-// The publisher is optional and the event carries only ids: an agent that
-// wants the stop reads it back, so nothing here can go stale in transit.
 func (s *service) publishStopActualEvent(
 	ctx context.Context,
 	req *shipmentmoveports.RecordStopActualRequest,
 ) {
-	kind := agenttrigger.EventShipmentMoveArrived
-	verb := "Arrived at"
-	if req.Action == shipmentmoveports.StopActualActionDepart {
-		kind = agenttrigger.EventShipmentMoveDeparted
-		verb = "Left"
-	}
 	at := timeutils.NowUnix()
 	if req.OccurredAt != nil {
 		at = *req.OccurredAt
 	}
 
-	agenteventports.PublishAgentEvent(ctx, s.publisher, agenteventports.AgentEvent{
-		Kind:       kind,
-		SubjectID:  req.MoveID,
-		TenantInfo: req.TenantInfo,
-		Related:    []pulid.ID{req.StopID},
-		Detail: fmt.Sprintf("%s stop %s at %s.", verb, req.StopID,
-			time.Unix(at, 0).UTC().Format("Mon Jan 2 15:04 MST")),
+	stopactualnotice.Publish(ctx, s.publisher, req.TenantInfo, stopactualnotice.Visit{
+		MoveID:   req.MoveID,
+		StopID:   req.StopID,
+		Departed: req.Action == shipmentmoveports.StopActualActionDepart,
+		At:       at,
 	})
 }
