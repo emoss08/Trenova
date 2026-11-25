@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/querytool"
@@ -179,6 +180,43 @@ func TestRecordsQuery_CountOnlyReturnsATotalAndNoRows(t *testing.T) {
 	require.Len(t, list.calls, 1)
 	assert.True(t, list.calls[0].IncludeTotal)
 	assert.Equal(t, 1, list.calls[0].Params[querytool.ParamLimit])
+}
+
+/*
+A count of the New shipments came back with the fifteen column names of the
+page read to count them and an empty items list beside the total, which read
+as a result with no rows. A count carries the filters and the total alone.
+*/
+func TestRecordsQuery_CountOnlyCarriesNoColumnsOrRows(t *testing.T) {
+	t.Parallel()
+
+	all, list, _, _ := shipmentReaders()
+	list.result = map[string]any{
+		"items":   []any{map[string]any{"id": "shp_1", "proNumber": "PRO-1"}},
+		"columns": []any{"proNumber", "status", "customer"},
+		"hasMore": true,
+		"total":   114,
+	}
+	tool := recordquerytools.NewQueryTool()
+	tool.(recordquerytools.Linker).Link(all)
+
+	result, err := tool.Query(t.Context(), params(map[string]any{
+		"entity":    "shipment",
+		"where":     []any{map[string]any{"field": "status", "op": "eq", "value": "New"}},
+		"countOnly": true,
+	}))
+	require.NoError(t, err)
+
+	encoded, err := sonic.Marshal(result)
+	require.NoError(t, err)
+	var decoded map[string]any
+	require.NoError(t, sonic.Unmarshal(encoded, &decoded))
+	assert.Equal(t, float64(114), decoded["total"])
+	assert.Equal(t, false, decoded["hasMore"])
+	assert.NotEmpty(t, decoded["appliedFilters"])
+	assert.NotContains(t, decoded, "columns")
+	assert.NotContains(t, decoded, "items")
+	assert.NotContains(t, decoded, "nextCursor")
 }
 
 func TestRecordsQuery_AnUnknownFieldNamesTheValidOnes(t *testing.T) {

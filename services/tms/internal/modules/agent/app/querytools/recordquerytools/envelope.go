@@ -29,7 +29,7 @@ type Group struct {
 
 type Envelope struct {
 	Entity           string            `json:"entity"`
-	Items            any               `json:"items"`
+	Items            any               `json:"items,omitempty"`
 	Total            *int              `json:"total,omitempty"`
 	TotalEstimated   bool              `json:"totalEstimated,omitempty"`
 	HasMore          bool              `json:"hasMore"`

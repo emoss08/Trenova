@@ -221,14 +221,21 @@ func (t *QueryTool) count(
 	applied := envelope.AppliedFilters
 	fill(envelope, inner)
 	envelope.AppliedFilters = applied
-	envelope.Items = []any{}
-	envelope.HasMore = false
-	envelope.NextCursor = ""
 	if envelope.Total == nil {
 		return t.group(ctx, reader, params, values, "", envelope)
 	}
+	countedOnly(envelope)
 
 	return envelope, nil
+}
+
+// countedOnly leaves a count the filters and the total: the page read to
+// count is not the answer, and its columns and empty rows read as one.
+func countedOnly(envelope *Envelope) {
+	envelope.Items = nil
+	envelope.Columns = nil
+	envelope.HasMore = false
+	envelope.NextCursor = ""
 }
 
 func (t *QueryTool) group(
@@ -266,8 +273,7 @@ func (t *QueryTool) group(
 	}
 	total := rows
 	envelope.Total = &total
-	envelope.Items = []any{}
-	envelope.HasMore = false
+	countedOnly(envelope)
 	if more {
 		envelope.TotalEstimated = true
 		envelope.Truncated = &Truncation{Reason: fmt.Sprintf(
