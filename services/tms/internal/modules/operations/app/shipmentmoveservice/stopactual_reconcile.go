@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/stopactual"
 
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/operations/app/stopactualnotice"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentstate"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
@@ -35,7 +36,7 @@ func (s *service) ReconcileStopActuals(
 			return err
 		}
 		previousStatus = move.Status
-		before := snapshotStopActuals(move)
+		before := stopactualnotice.Take(move)
 
 		touched, changes, err := settleStopActuals(txCtx, move, req.Plan)
 		if err != nil {
