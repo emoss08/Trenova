@@ -37,7 +37,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
 
       - name: Set up Go
         uses: ./.github/actions/setup-go
@@ -58,7 +58,7 @@ jobs:
 
       - name: Upload the conform report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: conform-report
           path: ${{ runner.temp }}/conform-report.json
