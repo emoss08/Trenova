@@ -262,7 +262,7 @@ services:
     networks: [data, edge]
 
   meilisearch:
-    image: getmeili/meilisearch:v1.16@sha256:c0c45cb82a96221d7c855d1cc36ca04ff4b3ce6330fbd8df5ba82e86e632a053
+    image: getmeili/meilisearch:v1.57@sha256:91bf09897482c17205c8faeca8daa8d57999fb9de20d862763cdfa92ba4ec790
     environment:
       MEILI_MASTER_KEY: ${TRENOVA_MEILI_MASTER_KEY:?set TRENOVA_MEILI_MASTER_KEY in .env}
       MEILI_ENV: production
@@ -380,7 +380,7 @@ services:
   # for why each flag is there. Every route but /health needs the password in
   # .env, which the TMS sends.
   gotenberg:
-    image: gotenberg/gotenberg:8@sha256:13672f317b443c793e972b1bd2155ec62a3e7b6891b411e8196442cc053ee5f5
+    image: gotenberg/gotenberg:8@sha256:53073e798c8ef39ea2187e44cb67bab77894ea2509100b94c4fe3b461f7b2996
     command:
       - gotenberg
       - --chromium-disable-javascript=true
@@ -434,7 +434,7 @@ services:
   # worker reports extraction as not configured until it has one; see
   # "Upgrades" in docs/self-hosting/README.md for adding it.
   docling:
-    image: ghcr.io/docling-project/docling-serve-cpu:v1.36.0@sha256:225c8586e20d5d0fc6811a9e0e044fa602bcc4393f00389009bad42d6787b58f
+    image: ghcr.io/docling-project/docling-serve-cpu:v1.39.0@sha256:ee8cfe61c8e1bc3beef20dfc09d223699eed5364d9ac54bd1c5f2265c018ac68
     entrypoint: &docling-entrypoint
       - /bin/sh
       - -c
@@ -489,7 +489,7 @@ services:
   # docling_vlm_models volume, which you fill once (it cannot download).
   docling-gpu:
     profiles: [gpu]
-    image: ghcr.io/docling-project/docling-serve-cu128:v1.36.0@sha256:68f9c77470225a154622b7a05c2660a22ab74ac12ccf3efee1a92588d0213b41
+    image: ghcr.io/docling-project/docling-serve-cu128:v1.39.0@sha256:16085398144b51996062d664a7a2420da80d08d1bcce12b2dac2f5513db8b797
     entrypoint: *docling-entrypoint
     environment:
       <<: *docling-environment
@@ -523,7 +523,7 @@ services:
 
   docling-vlm:
     profiles: [gpu]
-    image: vllm/vllm-openai:v0.30.0@sha256:8a69ffad015f138d7170c4ddc429e230a3bc1c1719f67e14324749df200a4b90
+    image: vllm/vllm-openai:v0.34.0@sha256:20fdb089454afbb324efa4110a2c025ff7b27cc1a086e07aa580b18df8ad1ce1
     command:
       - --model=/models/granite-docling-258M
       - --served-model-name=ibm-granite/granite-docling-258M
