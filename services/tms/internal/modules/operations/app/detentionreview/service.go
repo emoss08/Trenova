@@ -7,22 +7,41 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/detentioneffects"
 	"github.com/emoss08/trenova/internal/modules/operations/app/detentionengine"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detentioncollectability"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionevidence"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/orderports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentcommentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/fx"
+	"go.uber.org/zap"
 )
 
+type shipmentCharges interface {
+	GetByID(
+		ctx context.Context,
+		req *shipmentports.GetShipmentByIDRequest,
+	) (*shipment.Shipment, error)
+	UpdateDerivedState(ctx context.Context, entity *shipment.Shipment) (*shipment.Shipment, error)
+}
+
 type Service struct {
+	l              *zap.Logger
+	db             kernelports.Transactor
 	occurrenceRepo detentionports.DetentionOccurrenceRepository
 	stays          detentionports.DetentionStayRepository
+	shipments      shipmentCharges
+	orders         orderports.OrderDerivationService
+	comments       shipmentcommentports.ShipmentCommentRepository
 	now            func() int64
 	effects        *detentioneffects.Effects
 }
@@ -30,17 +49,28 @@ type Service struct {
 type Params struct {
 	fx.In
 
+	Logger         *zap.Logger
+	DB             kernelports.Transactor
 	OccurrenceRepo detentionports.DetentionOccurrenceRepository
 	Stays          detentionports.DetentionStayRepository
+	Shipments      shipmentports.ShipmentRepository
+	Orders         orderports.OrderDerivationService
+	Comments       shipmentcommentports.ShipmentCommentRepository
 	Now            timeutils.Clock
 	Effects        *detentioneffects.Effects
 }
 
+//nolint:gocritic // fx requires an fx.In parameter struct to be passed by value.
 func New(p Params) *Service {
 	now := p.Now
 	return &Service{
+		l:              p.Logger.Named("service.detention-review"),
+		db:             p.DB,
 		occurrenceRepo: p.OccurrenceRepo,
 		stays:          p.Stays,
+		shipments:      p.Shipments,
+		orders:         p.Orders,
+		comments:       p.Comments,
 		now:            now,
 		effects:        p.Effects,
 	}
@@ -426,25 +456,44 @@ func (s *Service) saveWaiver(
 	change *OccurrenceChange,
 	released bool,
 ) (*detention.DetentionOccurrence, error) {
-	saved, err := s.occurrenceRepo.Update(ctx, change.After)
+	var saved *detention.DetentionOccurrence
+	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
+		var err error
+		saved, err = s.occurrenceRepo.Update(txCtx, change.After)
+		if err != nil {
+			return err
+		}
+		change.After = saved
+
+		if released {
+			s.effects.AppendEvidence(txCtx, saved, detentionevidence.EvidenceKindStatusChange,
+				detentionevidence.EvidenceSourceSystem,
+				"Billing released: no standing invoice bills this charge",
+				change.Now)
+		}
+		s.effects.AppendEvidence(txCtx, saved, detentionevidence.EvidenceKindWaiver,
+			detentionevidence.EvidenceSourceManual,
+			fmt.Sprintf("Waived %s %s as %s: %s",
+				saved.WaivedAmount.StringFixed(2), saved.Currency, p.Reason, p.Note),
+			change.Now)
+
+		if err = s.settleShipmentCharges(txCtx, &decision{
+			change:   change,
+			userID:   p.UserID,
+			headline: fmt.Sprintf("Waived as %s", p.Reason),
+			detail:   p.Note,
+		}); err != nil {
+			return err
+		}
+
+		s.effects.Audit(txCtx, change.Before, saved, p.UserID, "Detention charge waived")
+		s.effects.PublishBillingQueueChange(txCtx, saved, p.UserID)
+
+		return nil
+	})
 	if err != nil {
 		return nil, err
 	}
-
-	if released {
-		s.effects.AppendEvidence(ctx, saved, detentionevidence.EvidenceKindStatusChange,
-			detentionevidence.EvidenceSourceSystem,
-			"Billing released: no standing invoice bills this charge",
-			change.Now)
-	}
-	s.effects.AppendEvidence(ctx, saved, detentionevidence.EvidenceKindWaiver,
-		detentionevidence.EvidenceSourceManual,
-		fmt.Sprintf("Waived %s %s as %s: %s",
-			saved.WaivedAmount.StringFixed(2), saved.Currency, p.Reason, p.Note),
-		change.Now)
-
-	s.effects.Audit(ctx, change.Before, saved, p.UserID, "Detention charge waived")
-	s.effects.PublishBillingHoldChange(ctx, change.Before, saved, p.UserID)
 
 	return saved, nil
 }
@@ -487,19 +536,38 @@ func (s *Service) Dispute(
 	if err != nil {
 		return nil, err
 	}
-	original, occurrence, now := change.Before, change.After, change.Now
+	original, now := change.Before, change.Now
 
-	saved, err := s.occurrenceRepo.Update(ctx, occurrence)
+	var saved *detention.DetentionOccurrence
+	err = s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
+		var uErr error
+		saved, uErr = s.occurrenceRepo.Update(txCtx, change.After)
+		if uErr != nil {
+			return uErr
+		}
+		change.After = saved
+
+		s.effects.AppendEvidence(txCtx, saved, detentionevidence.EvidenceKindDispute,
+			detentionevidence.EvidenceSourceManual,
+			"Customer disputed the charge: "+p.Note, now)
+
+		if uErr = s.settleShipmentCharges(txCtx, &decision{
+			change:   change,
+			userID:   p.UserID,
+			headline: "Held off the invoice while the customer disputes it",
+			detail:   p.Note,
+		}); uErr != nil {
+			return uErr
+		}
+
+		s.effects.Audit(txCtx, original, saved, p.UserID, "Detention charge disputed")
+		s.effects.PublishBillingQueueChange(txCtx, saved, p.UserID)
+
+		return nil
+	})
 	if err != nil {
 		return nil, err
 	}
-
-	s.effects.AppendEvidence(ctx, saved, detentionevidence.EvidenceKindDispute,
-		detentionevidence.EvidenceSourceManual,
-		"Customer disputed the charge: "+p.Note, now)
-
-	s.effects.Audit(ctx, original, saved, p.UserID, "Detention charge disputed")
-	s.effects.PublishBillingHoldChange(ctx, original, saved, p.UserID)
 
 	return saved, nil
 }

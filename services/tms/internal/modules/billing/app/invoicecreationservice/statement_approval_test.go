@@ -50,6 +50,7 @@ type approvalHarness struct {
 	customerID  pulid.ID
 	orgID, buID pulid.ID
 	userID      pulid.ID
+	item        *billingqueue.BillingQueueItem
 }
 
 // newApprovalHarness wires the approve-to-invoice path with a customer whose
@@ -95,6 +96,7 @@ func newApprovalHarness(
 		Number:         "INV-1001",
 		Shipment:       queueShipment,
 	}
+	h.item = queueItem
 
 	repo := invoiceportsmock.NewMockInvoiceRepository(t)
 	repo.EXPECT().
@@ -165,6 +167,10 @@ func newApprovalHarness(
 	}
 
 	return h
+}
+
+func (h *approvalHarness) queueShipment() *shipment.Shipment {
+	return h.item.Shipment
 }
 
 func (h *approvalHarness) approve(

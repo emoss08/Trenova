@@ -164,6 +164,63 @@ func (_c *MockDetentionBillingService_HoldsForShipments_Call) RunAndReturn(run f
 	return _c
 }
 
+// SettleCharges provides a mock function for the type MockDetentionBillingService
+func (_mock *MockDetentionBillingService) SettleCharges(ctx context.Context, req *detentionports.SettleDetentionChargesRequest) error {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for SettleCharges")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *detentionports.SettleDetentionChargesRequest) error); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockDetentionBillingService_SettleCharges_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SettleCharges'
+type MockDetentionBillingService_SettleCharges_Call struct {
+	*mock.Call
+}
+
+// SettleCharges is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *services.SettleDetentionChargesRequest
+func (_e *MockDetentionBillingService_Expecter) SettleCharges(ctx any, req any) *MockDetentionBillingService_SettleCharges_Call {
+	return &MockDetentionBillingService_SettleCharges_Call{Call: _e.mock.On("SettleCharges", ctx, req)}
+}
+
+func (_c *MockDetentionBillingService_SettleCharges_Call) Run(run func(ctx context.Context, req *detentionports.SettleDetentionChargesRequest)) *MockDetentionBillingService_SettleCharges_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *detentionports.SettleDetentionChargesRequest
+		if args[1] != nil {
+			arg1 = args[1].(*detentionports.SettleDetentionChargesRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockDetentionBillingService_SettleCharges_Call) Return(err error) *MockDetentionBillingService_SettleCharges_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockDetentionBillingService_SettleCharges_Call) RunAndReturn(run func(ctx context.Context, req *detentionports.SettleDetentionChargesRequest) error) *MockDetentionBillingService_SettleCharges_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // SyncInvoiceBilling provides a mock function for the type MockDetentionBillingService
 func (_mock *MockDetentionBillingService) SyncInvoiceBilling(ctx context.Context, req *detentionports.SyncDetentionInvoiceBillingRequest) error {
 	ret := _mock.Called(ctx, req)

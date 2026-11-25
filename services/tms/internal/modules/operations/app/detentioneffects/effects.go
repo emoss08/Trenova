@@ -109,7 +109,20 @@ func (s *Effects) PublishBillingHoldChange(
 		return
 	}
 
-	orgID, buID, shipmentID := saved.OrganizationID, saved.BusinessUnitID, saved.ShipmentID
+	s.PublishBillingQueueChange(ctx, saved, actorUserID)
+}
+
+func (s *Effects) PublishBillingQueueChange(
+	ctx context.Context,
+	occurrence *detention.DetentionOccurrence,
+	actorUserID pulid.ID,
+) {
+	if occurrence == nil {
+		return
+	}
+
+	orgID, buID := occurrence.OrganizationID, occurrence.BusinessUnitID
+	occurrenceID, shipmentID := occurrence.ID, occurrence.ShipmentID
 	kernelports.AfterCommit(ctx, func(runCtx context.Context) {
 		if err := realtimeinvalidation.Publish(
 			runCtx,
@@ -123,8 +136,8 @@ func (s *Effects) PublishBillingHoldChange(
 				Entity:         map[string]string{"shipmentId": shipmentID.String()},
 			},
 		); err != nil {
-			s.l.Warn("failed to publish billing queue invalidation for a detention hold",
-				zap.String("occurrenceId", saved.ID.String()), zap.Error(err))
+			s.l.Warn("failed to publish billing queue invalidation for a detention decision",
+				zap.String("occurrenceId", occurrenceID.String()), zap.Error(err))
 		}
 	})
 }

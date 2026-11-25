@@ -46,6 +46,24 @@ func (s *Service) guardItemDetentionHolds(
 	return s.guardDetentionHolds(ctx, tenantInfo, []pulid.ID{item.ShipmentID})
 }
 
+func (s *Service) settleDetentionCharges(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	item *billingqueue.BillingQueueItem,
+	shp *shipment.Shipment,
+	purpose draftPurpose,
+) error {
+	if shp == nil || item.BillType == billingvocab.BillTypeCreditMemo {
+		return nil
+	}
+
+	return s.detentionBilling.SettleCharges(ctx, &detentionports.SettleDetentionChargesRequest{
+		TenantInfo: tenantInfo,
+		Shipment:   shp,
+		Persist:    purpose == draftToCreate,
+	})
+}
+
 func guardItemRatingReview(item *billingqueue.BillingQueueItem, entity *shipment.Shipment) error {
 	if item == nil || item.BillType == billingvocab.BillTypeCreditMemo || entity == nil {
 		return nil

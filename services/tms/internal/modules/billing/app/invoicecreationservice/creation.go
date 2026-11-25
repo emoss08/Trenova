@@ -196,7 +196,7 @@ func (s *Service) planDraftFromItem(
 	item *billingqueue.BillingQueueItem,
 	purpose draftPurpose,
 ) (*invoiceDraft, error) {
-	dependencies, err := s.getInvoiceDependencies(ctx, req, item)
+	dependencies, err := s.getInvoiceDependencies(ctx, req, item, purpose)
 	if err != nil {
 		return nil, err
 	}
@@ -398,9 +398,13 @@ func (s *Service) getInvoiceDependencies(
 	ctx context.Context,
 	req *invoiceports.CreateInvoiceFromBillingQueueRequest,
 	item *billingqueue.BillingQueueItem,
+	purpose draftPurpose,
 ) (*invoiceDependencies, error) {
 	shp, customerID, err := s.resolveDependencyShipment(ctx, req.TenantInfo, item)
 	if err != nil {
+		return nil, err
+	}
+	if err = s.settleDetentionCharges(ctx, req.TenantInfo, item, shp, purpose); err != nil {
 		return nil, err
 	}
 	if err = invoicelines.HydrateAccessorials(

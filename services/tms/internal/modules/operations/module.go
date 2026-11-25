@@ -385,7 +385,11 @@ func SharedOptions() fx.Option {
 			detentionsimulation.New,
 			detentionintelligence.New,
 			detentionnoticeservice.New,
-			detentionreview.New,
+			fx.Annotate(
+				detentionreview.New,
+				fx.As(fx.Self()),
+				fx.As(new(detentionports.DetentionChargeSettler)),
+			),
 			shipmentquickfilterservice.New,
 			shipmentsuggestionservice.New,
 			shipmentsuggestionservice.NewReader,

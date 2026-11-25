@@ -16,7 +16,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/app/detentionsimulation"
 	"github.com/emoss08/trenova/internal/modules/operations/app/detentionsync"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/orderports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentcommentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/rateagreementports"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/accessorialchargeports"
@@ -53,6 +55,9 @@ type wiring struct {
 	Senders           emailports.EmailSenderResolver
 	DocumentStore     documentports.DocumentStore
 	Documents         documentports.DocumentRepository
+	DB                kernelports.Transactor
+	Shipments         shipmentports.ShipmentRepository
+	Orders            orderports.OrderDerivationService
 	Now               func() int64
 }
 
@@ -114,7 +119,12 @@ func wire(p *wiring) services {
 		Effects:          effects,
 	})
 	review := detentionreview.New(detentionreview.Params{
+		Logger:         l,
+		DB:             p.DB,
 		OccurrenceRepo: p.OccurrenceRepo,
+		Shipments:      p.Shipments,
+		Orders:         p.Orders,
+		Comments:       p.CommentRepo,
 		Now:            p.Now,
 		Effects:        effects,
 	})
