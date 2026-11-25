@@ -107,7 +107,12 @@ func ReplayHistoryWithFiles(
 	for start < len(history) && history[start].Role != conversation.RoleUser {
 		start++
 	}
+	failed := newFailedCalls(answeredCalls(history))
+	for idx := range history[:start] {
+		failed.note(&history[idx])
+	}
 	history = history[start:]
+	messages = failed.flush(messages, turnOutOfView)
 
 	recent := recentTurnStart(history, RecentToolTurns)
 	whole := wholeResults(history, recent)
@@ -137,14 +142,16 @@ func ReplayHistoryWithFiles(
 				shortened = append(shortened, original)
 			}
 			messages = append(messages, replayed)
-		case conversation.RoleUser:
-			messages = append(messages, replayPersonMessage(msg, files, idx >= recent)...)
 		default:
+			if msg.Role == conversation.RoleUser && !msg.Refused && opensTurn(msg.Kind) {
+				messages = failed.flush(messages, turnAbove)
+			}
 			messages = append(messages, replayPersonMessage(msg, files, idx >= recent)...)
 		}
+		failed.note(msg)
 	}
 
-	return messages, shortened
+	return failed.flush(messages, turnAbove), shortened
 }
 
 func replayAssistantMessage(

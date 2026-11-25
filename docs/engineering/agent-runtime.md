@@ -2939,6 +2939,13 @@ them up. Once the text is in, the replay carries the text instead. The figures o
 every shortened result travel with the turn (`TurnState.Evidence`), so the
 grounding guard above still counts them as read.
 
+Every earlier turn with a call that failed, was refused or never got a result
+closes with one notice (`failedcalls.go`) naming each such call and its reason, grouped by
+tool and reason, at most eight lines and 200 characters a reason. It holds even for a call
+a later retry superseded, a runtime tool like `show_answer`, and a turn the 120-message
+window cut through (its notice opens the replay). A person who asked "four tools did not go
+through, why?" was told the fourth was not in the transcript.
+
 ### The clock
 
 The system prompt names today's date only, so its cached prefix is the same all

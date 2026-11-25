@@ -60,7 +60,7 @@ func TestProposalRationale_FallsBackToTheSummaryInTheArguments(t *testing.T) {
 			"subjectId":      "shp_1",
 			"attemptSummary": "  The shipment completed without a signed BOL.  ",
 		},
-		Ask:   "flag these for review",
+		Ask: "flag these for review",
 	})
 
 	assert.Equal(t, "The shipment completed without a signed BOL.", rationale)
@@ -334,7 +334,8 @@ func TestToAdapterMessages_LeavesShortOldResultsAlone(t *testing.T) {
 // A turn that died between issuing a tool call and recording its result
 // leaves a call nothing answers, and a provider rejects the conversation
 // for it as surely as for an orphaned result. The call is left out of the
-// replay; the words around it are kept.
+// replay; the words around it are kept, and a notice after the turn names
+// the call that never finished.
 func TestToAdapterMessages_DropsCallsNothingAnswered(t *testing.T) {
 	t.Parallel()
 
@@ -362,14 +363,18 @@ func TestToAdapterMessages_DropsCallsNothingAnswered(t *testing.T) {
 	require.Len(
 		t,
 		messages,
-		5,
+		7,
 		"the assistant turn with nothing but an unanswered call is left out",
 	)
 	require.Len(t, messages[1].ToolCalls, 1)
 	assert.Equal(t, "c1", messages[1].ToolCalls[0].ID)
 	assert.Equal(t, "Looking.", messages[1].Content)
 	assert.Equal(t, llmports.RoleTool, messages[2].Role)
-	assert.Equal(t, llmports.RoleUser, messages[4].Role)
+	assert.Equal(t, llmports.RoleSystem, messages[4].Role)
+	assert.Contains(t, messages[4].Content, "worker_get")
+	assert.Equal(t, llmports.RoleUser, messages[5].Role)
+	assert.Equal(t, llmports.RoleSystem, messages[6].Role)
+	assert.Contains(t, messages[6].Content, "shipment_get")
 }
 
 // What a provider attached to a call is stored with the call and replayed
