@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/assistantservice/proposalstores"
 	"github.com/emoss08/trenova/internal/modules/agent/app/assistantservice/toolartifacts"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentcapability"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/analysis"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
@@ -129,12 +130,13 @@ func (r *Recorder) bunch(
 		return r.keep(card)
 	}
 
-	parts := toolartifacts.PartsOf(earlier, observation.Call.Name)
+	reader := agentcapability.ReaderOf(observation.Call.Name, observation.Call.Arguments)
+	parts := toolartifacts.PartsOf(earlier, reader)
 	if parts.Table == nil && len(parts.Cards) == 0 {
 		return r.keep(card)
 	}
 
-	table := toolartifacts.BunchTable(observation.Call.Name, parts, card)
+	table := toolartifacts.BunchTable(reader, parts, card)
 	r.noteReader(table)
 	saved, err := r.save(table)
 	if err != nil {

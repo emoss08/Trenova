@@ -68,10 +68,15 @@ which no consolidation touches. `ask_user` alone is about 1,580 tokens.
 - **Autonomy stays earned.** Writes still run at their policy's tier; a tool a person keeps
   approving is promoted by the trust ledger (the owner asked for this). Only a person-set override
   is held to "stricter than the default".
-- **Readers stay, as internals.** The per-entity list and get tools were not deleted: they are the
+- **Readers stay, unlisted.** The per-entity list and get tools were not deleted: they are the
   readers `records_query` and `record_get` run through, with their tested permission, field
-  gating, paging and totals. They are no longer offered to the model, cannot be called by name,
-  and no longer appear in prompts, templates or starter lists. Their Go names remain in code.
+  gating, paging and totals. They are not offered on every turn and not in prompts, templates
+  or starter lists, but a model or a script that names one (`shipment_list`,
+  `trenova.shipment.list`) reads through it when the agent's scope covers the entity, past the
+  same plan and permission gates. Refusing them by name refused work the agent was allowed to do.
+- **Artifacts follow the reader.** The Desk draws a records_query result as the entity's table and
+  a single record_get result as its card (`agentcapability.ReaderOf`); the table pages and sorts
+  by re-running records_query, its sort passed in records_query's own form.
 - **Write capabilities keep their names.** They are registry entries now and their names already
   follow the conventions; renaming 425 writes would change nothing a model or a person sees.
 - **No `legacy/` directory.** The owner asked to delete rather than move; Git history is the

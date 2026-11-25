@@ -12,10 +12,10 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// An entity's reader is internal to records_query and record_get, so a direct
-// call is refused with the way to read those records, even when the registry
-// still resolves it.
-func TestDispatch_RefusesADirectCallToAnEntityReader(t *testing.T) {
+// An entity's reader is not offered on every turn, but a model that names it
+// still reads through it: the agent's scope, plan and permission decide, as
+// they do for records_query.
+func TestDispatch_RunsADirectCallToAnEntityReaderInScope(t *testing.T) {
 	t.Parallel()
 
 	tool := &agenttest.StubQueryTool{ToolName: "invoice_list"}
@@ -32,10 +32,30 @@ func TestDispatch_RefusesADirectCallToAnEntityReader(t *testing.T) {
 		taint: &agent.RunTaint{},
 	})
 
+	assert.False(t, outcome.Failed)
+	assert.Equal(t, 1, tool.Calls)
+}
+
+func TestDispatch_RefusesAnEntityReaderOutsideTheAgentsScope(t *testing.T) {
+	t.Parallel()
+
+	tool := &agenttest.StubQueryTool{ToolName: "invoice_list"}
+	d := testDispatcher(DispatcherParams{
+		QueryTools: &agenttest.StubQueryRegistry{Tools: []agenttoolports.AgentQueryTool{tool}},
+	})
+
+	outcome := d.dispatch(t.Context(), &DispatchParams{
+		req: &agentruntimeports.RunRequest{
+			Definition: runtimetest.Definition("report_list"),
+			Actor:      runtimetest.Actor(),
+		},
+		call:  llmports.ToolCall{ID: "call-1", Name: tool.ToolName},
+		taint: &agent.RunTaint{},
+	})
+
 	assert.True(t, outcome.Failed)
 	assert.Zero(t, tool.Calls)
-	assert.Contains(t, outcome.Content, `"invoice_list" is not a tool`)
-	assert.Contains(t, outcome.Content, "records_query or record_get")
+	assert.Contains(t, outcome.Content, "outside this agent's scope")
 }
 
 func TestDispatch_RefusesAToolOutsideTheAgentsScope(t *testing.T) {

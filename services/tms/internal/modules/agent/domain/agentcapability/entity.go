@@ -125,3 +125,26 @@ func Backings() []string {
 
 	return out
 }
+
+func ReaderOf(tool string, arguments map[string]any) string {
+	if tool != RecordsQuery && tool != RecordGet {
+		return tool
+	}
+	raw, _ := arguments["entity"].(string)
+	entity, ok := EntityNamed(strings.TrimSpace(raw))
+	if !ok {
+		return tool
+	}
+	if tool == RecordGet {
+		if entity.Get != "" {
+			return entity.Get
+		}
+
+		return tool
+	}
+	if entity.List != "" {
+		return entity.List
+	}
+
+	return tool
+}

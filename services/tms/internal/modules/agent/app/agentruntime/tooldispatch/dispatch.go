@@ -85,14 +85,6 @@ func (s *Dispatcher) dispatch(ctx context.Context, p *DispatchParams) toolcall.R
 	req := p.req
 	call := p.call
 	ctx = permissionports.BindActorSession(ctx, req.Actor)
-	// The loop refuses a tool the agent does not hold before it gets here, with
-	// the nearest tools it does hold; this is the backstop for any other caller.
-	if agentcapability.IsBacking(call.Name) && p.caller != aitrace.CallerScript {
-		entity, _, _ := agentcapability.EntityBacking(call.Name)
-		return toolcall.Refused(aitrace.OutcomeInvalid, aianalytics.ReasonUnregistered,
-			"%q is not a tool. Read %s records with records_query or record_get, entity %q.",
-			call.Name, entity.Title, entity.Name)
-	}
 	gate := call.Name
 	resolved, backing, err := s.resolveRecords(&call)
 	if err != nil {

@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/toolaccess"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/tooldispatch"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentcapability"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/codemode"
@@ -120,6 +121,11 @@ func scriptIndex(
 	reach map[string]agent.AutonomyTier,
 ) []codemode.Read {
 	held := slices.Concat(s.Access().HeldTools(req.Definition), toolaccess.BeyondNames(reach))
+	for _, reader := range agentcapability.Backings() {
+		if req.Definition != nil && req.Definition.AllowsTool(reader) {
+			held = append(held, reader)
+		}
+	}
 	candidates := make([]string, 0, len(held))
 	for _, name := range held {
 		tool, ok := s.QueryTools().Get(name)

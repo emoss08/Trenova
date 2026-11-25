@@ -22,6 +22,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/turntaint"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/worldwatch"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentcapability"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmessage"
@@ -162,9 +163,12 @@ func (t *Turn) Holds(name string) bool {
 	if slices.Contains(t.held, name) {
 		return true
 	}
-	_, reached := t.beyond[name]
+	if _, reached := t.beyond[name]; reached {
+		return true
+	}
 
-	return reached
+	return agentcapability.IsBacking(name) && t.req.Definition != nil &&
+		t.req.Definition.AllowsTool(name)
 }
 
 func (t *Turn) beyondTier(name string) agent.AutonomyTier {
