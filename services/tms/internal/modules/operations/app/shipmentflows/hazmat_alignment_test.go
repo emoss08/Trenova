@@ -96,7 +96,7 @@ func TestHazmatSegregationValidationAndServiceStayAligned(t *testing.T) {
 		coordinator:    newStateCoordinator(),
 	})
 
-	validationErr := v.ValidateCreate(t.Context(), entity)
+	_, validationErr := v.ValidateCreateWithAdvisories(t.Context(), entity)
 	require.NotNil(t, validationErr)
 
 	serviceErr := svc.loading.CheckHazmatSegregation(
