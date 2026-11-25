@@ -44,7 +44,7 @@ You hold more capabilities than are loaded on this turn. The loaded ones are on 
 
 What search_tools can find, by area of Trenova:
 - AI & agents (4 tools): agent exception, agent run
-- Accounting (19 tools): accounting integration, accounting reconciliation, accounting sync, fiscal period
+- Accounting (27 tools): accounting integration, accounting reconciliation, accounting sync, fiscal period, journal entry
 - Desk (7 tools): desk
 
 What a change you call does:

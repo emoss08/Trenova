@@ -44,13 +44,15 @@ You hold more capabilities than are loaded on this turn. The loaded ones are on 
 
 What search_tools can find, by area of Trenova:
 - AI & agents (4 tools): agent exception, agent run
-- Billing (4 tools): customer, rate quote
+- Billing (6 tools): customer, invoice, rate quote
 - Carriers (1 tool): carrier intelligence
 - Desk (6 tools): desk
 - Detention (1 tool): detention
-- Dispatch (2 tools): location
-- EDI (4 tools): edi
-- Shipments (25 tools): commodity, order, recurring shipment, service failure, shipment, shipment comment
+- Dispatch (3 tools): location
+- EDI (8 tools): edi
+- Organization settings (1 tool): email profile
+- Reports (2 tools): insight
+- Shipments (37 tools): commodity, order, oversize permit, recurring shipment, service failure, service type and 2 more
 - Triage (1 tool): customer communication
 
 What a change you call does:

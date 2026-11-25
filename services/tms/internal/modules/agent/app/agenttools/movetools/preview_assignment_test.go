@@ -17,6 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/assignmentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchplanports"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -82,6 +83,15 @@ type checkingConsole struct {
 	dispatchconsoleports.DispatchConsoleService
 
 	preview *dispatchconsoleservice.AssignmentPreview
+	moves   []*dispatchconsoleservice.BoardMove
+}
+
+func (f *checkingConsole) GetMoves(
+	context.Context,
+	pagination.TenantInfo,
+	[]pulid.ID,
+) ([]*dispatchconsoleservice.BoardMove, error) {
+	return f.moves, nil
 }
 
 func (f *checkingConsole) PreviewAssignment(

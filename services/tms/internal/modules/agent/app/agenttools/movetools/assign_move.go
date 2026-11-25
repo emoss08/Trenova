@@ -7,11 +7,13 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/dispatchconsoleports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/assignmentports"
+	"github.com/emoss08/trenova/shared/pulid"
 )
 
 type AssignMoveTool struct {
@@ -106,27 +108,73 @@ func (t *AssignMoveTool) Policy() agenttoolports.ToolPolicy {
 		Effect:        agenttooltrust.ToolEffectChange,
 		Reversible:    true,
 		ReadsExternal: agenttooltrust.ExternalReadNever,
+		Artifact:      artifactShipment,
 		Rationale: "Assigns a driver and tractor to a move; the driver sees the assignment " +
 			"but no text the model wrote.",
 	}
 }
 
+// Execute assigns the move and reads nothing back: a batch runs each move
+// through it and reads every move back once at the end.
 func (t *AssignMoveTool) Execute(
 	ctx context.Context,
 	params *agenttoolports.ToolExecuteParams,
 ) error {
+	_, err := t.assign(ctx, params)
+
+	return err
+}
+
+func (t *AssignMoveTool) assign(
+	ctx context.Context,
+	params *agenttoolports.ToolExecuteParams,
+) (*assignmentports.AssignShipmentMoveRequest, error) {
 	if err := toolguard.GuardExecute(t, params); err != nil {
-		return err
+		return nil, err
 	}
 
 	req, err := t.request(params)
 	if err != nil {
-		return err
+		return nil, err
+	}
+	if _, err = t.assignments.AssignToMove(ctx, req); err != nil {
+		return nil, err
 	}
 
-	_, err = t.assignments.AssignToMove(ctx, req)
+	return req, nil
+}
 
-	return err
+// ExecuteWithResult assigns the move and reads it back, so the agent says who
+// is on it and with what equipment, and links its shipment, without reading
+// the shipment again to confirm.
+func (t *AssignMoveTool) ExecuteWithResult(
+	ctx context.Context,
+	params *agenttoolports.ToolExecuteParams,
+) (*agentrecord.ToolExecutionResult, error) {
+	req, err := t.assign(ctx, params)
+	if err != nil {
+		return nil, err
+	}
+
+	result := &agentrecord.ToolExecutionResult{Action: pastAssign, Kind: nounMove}
+	if t.console == nil {
+		return result, nil
+	}
+	moves, readErr := t.console.GetMoves(ctx, req.TenantInfo, []pulid.ID{req.ShipmentMoveID})
+	if readErr != nil || len(moves) == 0 || moves[0] == nil || moves[0].BoardMove == nil {
+		result.State = "assigned, but the move could not be read back to confirm who is on it"
+
+		return result, nil
+	}
+	move := moves[0]
+	result.Name = move.ProNumber
+	result.State = assignedState(move)
+	result.Record = &agentrecord.RecordRef{
+		EntityType: artifactShipment,
+		ID:         move.ShipmentID.String(),
+	}
+
+	return result, nil
 }
 
 func (t *AssignMoveTool) request(

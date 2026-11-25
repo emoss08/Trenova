@@ -14513,6 +14513,13 @@ export type DispatchMoveQueryVariables = Exact<{
 
 export type DispatchMoveQuery = { dispatchMove: { ' $fragmentRefs'?: { 'DispatchBoardMoveFieldsFragment': DispatchBoardMoveFieldsFragment } } };
 
+export type DispatchMovesByIdsQueryVariables = Exact<{
+  moveIds: Array<string | number> | string | number;
+}>;
+
+
+export type DispatchMovesByIdsQuery = { dispatchMovesByIds: Array<{ ' $fragmentRefs'?: { 'DispatchBoardMoveFieldsFragment': DispatchBoardMoveFieldsFragment } }> };
+
 export type DispatchBoardQueryVariables = Exact<{
   input: DispatchBoardInput;
 }>;
@@ -22282,7 +22289,7 @@ export { DeskDetentionFacilityWaitsDocument } from "./documents/detention/desk-f
 export { DeskDetentionStaysDocument } from "./documents/detention/desk-stays";
 export { DetentionPolicyTierFieldsFragmentDoc, DetentionPolicyRowFieldsFragmentDoc, DetentionPolicyTableDocument, DetentionPolicyDocument, CreateDetentionPolicyDocument, UpdateDetentionPolicyDocument, DeleteDetentionPolicyDocument } from "./documents/detention/table";
 export { DispatchForecastQualityFieldsFragmentDoc, DispatchFreightAreaFieldsFragmentDoc, DispatchFreightMoveFieldsFragmentDoc, DispatchFreightPaceFieldsFragmentDoc, DispatchPositioningFieldsFragmentDoc, DispatchFreightOutlookDocument, DispatchFreightAreaDocument, DispatchForecastQualityDocument, DispatchPositionDriverDocument, DispatchCallOffPositioningDocument } from "./documents/dispatch-console/freight-forecast";
-export { DispatchBoardMoveFieldsFragmentDoc, DispatchCandidateFieldsFragmentDoc, DispatchMoveDocument, DispatchBoardDocument, DispatchMoveCandidatesDocument, DispatchDriverMovesDocument, DispatchAssignmentPreviewDocument, DispatchAssignMovesDocument, DispatchUnassignMovesDocument, DispatchCarrierAssignmentPreviewDocument, DispatchAssignMoveToCarrierDocument, DispatchCancelCarrierAssignmentDocument, DispatchPlanAutoAssignDocument } from "./documents/dispatch-console/page";
+export { DispatchBoardMoveFieldsFragmentDoc, DispatchCandidateFieldsFragmentDoc, DispatchMoveDocument, DispatchMovesByIdsDocument, DispatchBoardDocument, DispatchMoveCandidatesDocument, DispatchDriverMovesDocument, DispatchAssignmentPreviewDocument, DispatchAssignMovesDocument, DispatchUnassignMovesDocument, DispatchCarrierAssignmentPreviewDocument, DispatchAssignMoveToCarrierDocument, DispatchCancelCarrierAssignmentDocument, DispatchPlanAutoAssignDocument } from "./documents/dispatch-console/page";
 export { DispatchStyleDocument, ResetDispatchStyleDocument } from "./documents/dispatch-control/dispatch-style";
 export { DistanceOverrideLocationFieldsFragmentDoc, DistanceOverrideTableRowFieldsFragmentDoc, DistanceOverrideTableDocument } from "./documents/distance-override/table";
 export { DistanceProfileTableRowFieldsFragmentDoc, DistanceProfileTableDocument } from "./documents/distance-profile/table";

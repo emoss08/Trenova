@@ -233,10 +233,14 @@ func TestRecordPlan_ProposesTheAssignToolWithThePlannedCrew(t *testing.T) {
 	assert.Equal(t, req.TenantInfo.BuID, proposal.BusinessUnitID)
 	assert.Equal(t, assignMoveTool, proposal.ToolName)
 	assert.Equal(t, map[string]any{
-		"shipmentMoveId":  planned.Candidate.MoveID.String(),
-		"primaryWorkerId": planned.Candidate.WorkerID.String(),
-		"tractorId":       planned.Candidate.TractorID.String(),
-		"trailerId":       planned.Candidate.TrailerID.String(),
+		"shipmentMoveIds": []any{planned.Candidate.MoveID.String()},
+		"assignments": []any{map[string]any{
+			"shipmentMoveId":  planned.Candidate.MoveID.String(),
+			"primaryWorkerId": planned.Candidate.WorkerID.String(),
+			"tractorId":       planned.Candidate.TractorID.String(),
+			"trailerId":       planned.Candidate.TrailerID.String(),
+			"reason":          planned.Rationale,
+		}},
 	}, proposal.ToolParams)
 	assert.True(t, proposal.Confidence.Equal(decimal.RequireFromString("0.92")))
 	assert.Equal(t, planned.Rationale, proposal.Rationale)

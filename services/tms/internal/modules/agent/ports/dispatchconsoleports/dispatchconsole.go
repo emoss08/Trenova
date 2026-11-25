@@ -40,6 +40,7 @@ type DispatchPlanRequest struct {
 	WindowEnd    int64
 	FleetCodeIDs []pulid.ID
 	MoveIDs      []pulid.ID
+	ShipmentIDs  []pulid.ID
 	Apply        bool
 	Trigger      agent.RunTrigger
 }
@@ -88,6 +89,7 @@ type MoveCoverageProposals struct {
 
 type DispatchAutoAssignService interface {
 	Plan(ctx context.Context, req *DispatchPlanRequest) (*DispatchPlan, error)
+	Preview(ctx context.Context, req *DispatchPlanRequest) (*DispatchPlan, error)
 	CoverageProposals(
 		ctx context.Context,
 		req *CoverageProposalsRequest,
@@ -108,6 +110,11 @@ type DispatchConsoleService interface {
 		tenantInfo pagination.TenantInfo,
 		moveID pulid.ID,
 	) (*dispatchconsoleservice.BoardMove, error)
+	GetMoves(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+		moveIDs []pulid.ID,
+	) ([]*dispatchconsoleservice.BoardMove, error)
 	GetMoveCandidates(
 		ctx context.Context,
 		req *dispatchconsoleservice.MoveCandidatesRequest,

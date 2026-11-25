@@ -150,7 +150,7 @@ func ToolProviders() []any {
 		alerttools.NewCreateTableChangeAlertTool,
 		qualificationtools.NewRequestMissingDocsTool,
 		provideAttachDocumentTool,
-		movetools.NewAssignMoveTool,
+		movetools.NewAssignMovesTool,
 		exceptiontools.NewRaiseExceptionTool,
 		waittools.NewWaitUntilTool,
 		waittools.NewCancelWaitTool,

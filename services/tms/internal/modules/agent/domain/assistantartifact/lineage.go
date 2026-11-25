@@ -15,6 +15,7 @@ var versionedKinds = map[Kind]bool{
 	KindRunDiff:            true,
 	KindExtraction:         true,
 	KindEDIConnectionDraft: true,
+	KindDispatchPlan:       true,
 }
 
 // hasLineage says a kind keeps versions: every lookup's view, and an analysis,

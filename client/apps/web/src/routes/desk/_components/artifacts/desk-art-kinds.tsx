@@ -472,6 +472,7 @@ export function deskArtKind(artifact: Pick<AssistantArtifact, "kind" | "payload"
     case "inbound_message":
       return "email";
     case "plan":
+    case "dispatch_plan":
       return "plan";
     case "run_diff":
       return "diff";

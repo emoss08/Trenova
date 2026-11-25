@@ -463,6 +463,7 @@ func (a *ShownArtifact) MustBeLinked() bool {
 		a.Kind == string(assistantartifact.KindAnalysis),
 		a.Kind == string(assistantartifact.KindPortalTask),
 		a.Kind == string(assistantartifact.KindBoard),
+		a.Kind == string(assistantartifact.KindDispatchPlan),
 		a.Written != "":
 		return true
 	case a.Tabular():

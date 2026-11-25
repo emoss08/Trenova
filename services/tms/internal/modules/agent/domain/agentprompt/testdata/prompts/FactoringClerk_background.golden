@@ -44,7 +44,7 @@ You hold more capabilities than are loaded on this turn. The loaded ones are on 
 
 What search_tools can find, by area of Trenova:
 - AI & agents (4 tools): agent exception, agent run
-- Billing (12 tools): factoring remittance, factoring reserve, factoring schedule, notice of assignment
+- Billing (22 tools): factoring agreement, factoring remittance, factoring reserve, factoring schedule, invoice, notice of assignment
 - Desk (6 tools): desk
 - Triage (1 tool): customer communication
 

@@ -346,6 +346,14 @@ to argue about — you either are a thing that floats, in which case one of thre
 names fits, or you are not, in which case none of them do. A table row with a
 lift is still the defect the rule above was written against.
 
+### No accent bars
+
+A component never marks itself with a thick coloured bar down one edge (a
+`border-left: 3px solid …` on a card, a row, a ticket or a callout). Say what a thing
+is with its own words, a status pill, an icon or the tone of its text, and keep every
+side of its border the same hairline. A connector or a timeline's line between two
+things is not an accent bar: it joins them rather than decorating one.
+
 ## Floating surfaces are inverted
 
 Everything that floats from a trigger is dark in light mode: dropdown and context

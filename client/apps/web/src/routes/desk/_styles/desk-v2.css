@@ -18778,3 +18778,205 @@ a.dk-bd-work-row:hover {
   min-height: 0;
   overflow: hidden;
 }
+
+/* The dispatch plan (kinds/dispatch-plan): each load beside the driver the plan put on it */
+.dk-dpl {
+  container: dkdpl / inline-size;
+}
+.dk-dpl-tally {
+  border-bottom: 1px solid var(--dsk-b-sub);
+}
+.dk-dpl-ledger {
+  list-style: none;
+  margin: 0;
+  padding: 4px 0 0;
+}
+.dk-dpl-pair {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 72px minmax(0, 1fr);
+  align-items: stretch;
+  padding: 6px 0;
+}
+.dk-dpl-pair + .dk-dpl-pair {
+  border-top: 1px dashed var(--dsk-b-sub);
+}
+.dk-dpl-load,
+.dk-dpl-drv {
+  min-width: 0;
+  padding: 8px 10px;
+  border: 1px solid var(--dsk-b);
+  border-radius: var(--radius-label);
+  background: var(--dsk-card);
+}
+.dk-dpl-pro {
+  font: 600 12px var(--dk-plex);
+  color: var(--dsk-fg);
+}
+.dk-dpl-lane {
+  margin-top: 3px;
+  font-size: 13px;
+  font-weight: 500;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.dk-dpl-when {
+  margin-top: 2px;
+  font-size: 11.5px;
+  color: var(--dsk-subtle);
+}
+.dk-dpl-link {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.dk-dpl-link::before {
+  content: "";
+  position: absolute;
+  inset: 50% 0 auto;
+  border-top: 2px solid var(--dsk-success);
+}
+.dk-dpl-link > span {
+  position: relative;
+  padding: 1px 6px;
+  border-radius: var(--radius-label);
+  font: 600 10.5px var(--dk-plex);
+  background: var(--dsk-success-sub);
+  color: var(--dsk-success-fg);
+}
+.dk-dpl-pair.dk-warn .dk-dpl-link::before {
+  border-top-color: var(--dsk-warn);
+}
+.dk-dpl-pair.dk-warn .dk-dpl-link > span {
+  background: var(--dsk-warn-sub);
+  color: var(--dsk-warn-fg);
+}
+.dk-dpl-pair.dk-bad .dk-dpl-link::before {
+  border-top: 2px dashed var(--dsk-b-strong);
+}
+.dk-dpl-pair.dk-bad .dk-dpl-link > span,
+.dk-dpl-pair.dk-done .dk-dpl-link > span {
+  background: var(--dsk-sunken);
+  color: var(--dsk-fg2);
+}
+.dk-dpl-pair.dk-done .dk-dpl-link::before {
+  border-top-color: var(--dsk-b-strong);
+}
+.dk-dpl-drv {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: start;
+}
+.dk-dpl-who {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.dk-dpl-nm {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--dsk-fg);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.dk-dpl-nm:hover {
+  text-decoration: underline;
+}
+.dk-dpl-sub {
+  font-size: 11.5px;
+  color: var(--dsk-subtle);
+}
+.dk-dpl-cost {
+  text-align: right;
+  font: 600 13px var(--dk-plex);
+}
+.dk-dpl-cost small {
+  display: block;
+  font-size: 10.5px;
+  font-weight: 500;
+  color: var(--dsk-subtle);
+}
+.dk-dpl-note {
+  grid-column: 2 / -1;
+  margin: 2px 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 11.5px;
+  color: var(--dsk-warn-fg);
+}
+.dk-dpl-none {
+  display: block;
+  border-style: dashed;
+  background: var(--dsk-sunken);
+}
+.dk-dpl-none b {
+  font-size: 12.5px;
+  font-weight: 600;
+}
+.dk-dpl-none p {
+  margin: 2px 0 0;
+  font-size: 11.5px;
+  color: var(--dsk-subtle);
+}
+.dk-dpl-alts {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  margin-top: 6px;
+  font-size: 11.5px;
+  color: var(--dsk-subtle);
+}
+.dk-dpl-alt {
+  padding: 2px 8px;
+  border: 1px solid var(--dsk-b);
+  border-radius: var(--radius-label);
+  color: var(--dsk-fg2);
+}
+.dk-dpl-alt b {
+  margin-left: 4px;
+  font: 600 11.5px var(--dk-plex);
+}
+.dk-dpl-pair.dk-done .dk-dpl-load,
+.dk-dpl-pair.dk-done .dk-dpl-drv {
+  opacity: 0.72;
+}
+.dk-dpl-left {
+  margin: 8px 0 0;
+  font-size: 12px;
+  color: var(--dsk-subtle);
+}
+@container dkdpl (max-width: 640px) {
+  .dk-dpl-pair {
+    grid-template-columns: 1fr;
+  }
+  .dk-dpl-link {
+    height: 22px;
+    justify-content: flex-start;
+    padding-left: 18px;
+  }
+  .dk-dpl-link::before {
+    inset: 0 auto 0 18px;
+    border-top: 0;
+    border-left: 2px solid var(--dsk-success);
+  }
+  .dk-dpl-pair.dk-warn .dk-dpl-link::before {
+    border-top: 0;
+    border-left-color: var(--dsk-warn);
+  }
+  .dk-dpl-pair.dk-bad .dk-dpl-link::before {
+    border-top: 0;
+    border-left: 2px dashed var(--dsk-b-strong);
+  }
+  .dk-dpl-pair.dk-done .dk-dpl-link::before {
+    border-top: 0;
+    border-left-color: var(--dsk-b-strong);
+  }
+  .dk-dpl-link > span {
+    margin-left: 10px;
+  }
+}

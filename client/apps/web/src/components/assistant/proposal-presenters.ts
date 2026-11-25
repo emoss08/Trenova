@@ -79,6 +79,23 @@ export function namedRef(value: string): string {
   return isOpaqueId(trimmed) ? "" : trimmed;
 }
 
+/**
+ * The moves a dispatch_assign_move call covers, each with its driver: every row
+ * of `assignments`, or only those whose move is still in `shipmentMoveIds` once
+ * the approver has dropped some.
+ */
+function assignmentRows(args: Args): Args[] {
+  const rows = Array.isArray(args.assignments)
+    ? args.assignments.filter(
+        (row): row is Args => typeof row === "object" && row !== null && !Array.isArray(row),
+      )
+    : [];
+  if (!Array.isArray(args.shipmentMoveIds)) return rows;
+  const kept = new Set(list(args.shipmentMoveIds));
+
+  return rows.filter((row) => kept.has(text(row.shipmentMoveId)));
+}
+
 /** Splits `MissingBOL` into `Missing BOL` without breaking the initialism. */
 function humanizeEnum(value: string): string {
   return translateLabel(
@@ -613,12 +630,26 @@ const PRESENTERS: Record<string, Presenter> = {
   }),
 
   dispatch_assign_move: (args) => {
-    const driver = namedRef(text(args.primaryWorkerId));
-    const tractor = namedRef(text(args.tractorId));
-    const trailer = namedRef(text(args.trailerId));
+    const rows = assignmentRows(args);
+    if (rows.length !== 1) {
+      return {
+        title: translate("Assign drivers"),
+        summary: translate(
+          "{0, plural, one {Put a driver on # move. The driver sees the load.} other {Put a driver on each of # moves. Each driver sees their own load.}}",
+          rows.length,
+        ),
+        covered: ["shipmentMoveIds", "assignments"],
+        reversible: true,
+      };
+    }
+
+    const [row] = rows;
+    const driver = namedRef(text(row.primaryWorkerId));
+    const tractor = namedRef(text(row.tractorId));
+    const trailer = namedRef(text(row.trailerId));
 
     return {
-      title: "Assign a driver",
+      title: translate("Assign a driver"),
       summary:
         driver === ""
           ? tractor
@@ -629,11 +660,11 @@ const PRESENTERS: Record<string, Presenter> = {
             : translate("Put driver {0} on this move.", driver),
       highlights: facts(
         fact("Driver", driver),
-        fact("Second driver", namedRef(text(args.secondaryWorkerId))),
+        fact("Second driver", namedRef(text(row.secondaryWorkerId))),
         fact("Tractor", tractor),
         fact("Trailer", trailer),
       ),
-      covered: ["shipmentMoveId", "primaryWorkerId", "secondaryWorkerId", "tractorId", "trailerId"],
+      covered: ["shipmentMoveIds", "assignments"],
       reversible: true,
     };
   },

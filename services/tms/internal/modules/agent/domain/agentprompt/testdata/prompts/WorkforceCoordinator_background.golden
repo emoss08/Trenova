@@ -45,8 +45,8 @@ You hold more capabilities than are loaded on this turn. The loaded ones are on 
 What search_tools can find, by area of Trenova:
 - AI & agents (4 tools): agent exception, agent run
 - Desk (7 tools): desk
-- Human resources (36 tools): drug & alcohol testing, injury & illness, leave & fmla, performance review, qualification, random testing pool and 6 more
-- Shipments (2 tools): oversize permit
+- Human resources (52 tools): drug & alcohol testing, injury & illness, leave & fmla, performance review, qualification, random testing pool and 8 more
+- Shipments (7 tools): oversize permit, shipment
 
 What a change you call does:
 - Changes that always record a proposal for a person to decide: shipment_record_permit, shipment_update_permit, worker_adjust_pto_balance, worker_approve_pto, worker_archive_credential, worker_attach_training_document, worker_cancel_checklist, worker_cancel_dot_random_draw, worker_cancel_dot_test, worker_cancel_pto, worker_close_leave_case, worker_close_training, worker_delete_employment_verification, worker_delete_injury, worker_delete_leave_day, worker_delete_performance_review, worker_delete_recognition, worker_delete_safety_event, worker_delete_safety_violation, worker_finalize_dot_random_draw, worker_open_leave_case, worker_record_injury, worker_record_leave_day, worker_record_recognition, worker_reject_pto, worker_request_leave_certification, worker_request_pto, worker_run_dot_random_draw, worker_start_checklist, worker_start_performance_review, worker_update_checklist_item, worker_update_injury, worker_update_leave_case, worker_update_leave_day, worker_update_performance_review, worker_update_pto, worker_update_safety_event, worker_update_safety_violation

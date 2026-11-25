@@ -7617,55 +7617,83 @@
     },
     {
       "name": "dispatch_assign_move",
-      "description": "Assign a driver and equipment to a shipment move that has no driver yet. Use it once a driver is chosen, usually from dispatch_rank_candidates or dispatch_plan, which hand back the move, driver, tractor and trailer ids together. The move must be unassigned; use reassignment for a move that already has a driver.\nUse this when you have chosen a driver, tractor and trailer for a move and want them assigned.",
+      "description": "Assign a driver and equipment to one shipment move or to many in one call the person decides once, each move with its own driver. Use it once each driver is chosen: dispatch_plan hands back an assignments list ready to send for a set of shipments or moves, and dispatch_rank_candidates gives the choices for one. Send every move you want covered in one call rather than a call per move; the person approving may drop any of them. Each move must have no driver yet; one the service would refuse is reported and the rest still go. The same driver or tractor on two moves of one call is flagged for the person to check. Once it runs, its result says who is on each move with what equipment, so no read is needed to confirm it.\nUse this when you have chosen a driver, tractor and trailer for a move and want them assigned.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
-          "primaryWorkerId": {
-            "description": "The driver to put on the move, from dispatch_rank_candidates, dispatch_plan or records_query (entity worker).",
-            "type": "string",
-            "x-recordOf": "worker"
+          "assignments": {
+            "description": "One entry per move to cover: the move, the driver, the tractor and, when the move needs one, the trailer, with why this driver. Take each from dispatch_plan's assignments or from dispatch_rank_candidates; never send a shipment id for a move id.",
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "primaryWorkerId": {
+                  "description": "The driver to put on the move, from dispatch_rank_candidates, dispatch_plan or records_query (entity worker).",
+                  "type": "string",
+                  "x-recordOf": "worker"
+                },
+                "reason": {
+                  "description": "Why this driver, in one or two sentences the dispatcher reads with the proposal: the cost, empty miles, hours or fit that decided it over the others ranked. The driver never sees it.",
+                  "maxLength": 600,
+                  "type": "string"
+                },
+                "secondaryWorkerId": {
+                  "description": "A second driver for a team move, from records_query (entity worker).",
+                  "type": "string",
+                  "x-recordOf": "worker"
+                },
+                "shipmentMoveId": {
+                  "description": "The move to cover, from dispatch_get_board (moveId), record_get (entity shipment) (its moves) or dispatch_plan.",
+                  "type": "string",
+                  "x-recordOf": "shipment_move"
+                },
+                "tractorId": {
+                  "description": "The tractor the driver will use, from dispatch_rank_candidates or records_query (entity tractor).",
+                  "type": "string",
+                  "x-recordOf": "tractor"
+                },
+                "trailerId": {
+                  "description": "The trailer, when the move needs one, from dispatch_rank_candidates or records_query (entity trailer).",
+                  "type": "string",
+                  "x-recordOf": "trailer"
+                }
+              },
+              "required": [
+                "shipmentMoveId",
+                "primaryWorkerId",
+                "tractorId",
+                "reason"
+              ],
+              "type": "object"
+            },
+            "maxItems": 50,
+            "minItems": 1,
+            "type": "array"
           },
-          "reason": {
-            "description": "Why this driver, in one or two sentences the dispatcher reads with the proposal: the cost, empty miles, hours or fit that decided it over the others ranked. The driver never sees it.",
-            "maxLength": 600,
-            "type": "string"
-          },
-          "secondaryWorkerId": {
-            "description": "A second driver for a team move, from records_query (entity worker).",
-            "type": "string",
-            "x-recordOf": "worker"
-          },
-          "shipmentMoveId": {
-            "description": "The move to cover, from dispatch_get_board (moveId), record_get (entity shipment) (its moves) or dispatch_plan.",
-            "type": "string",
-            "x-recordOf": "shipment_move"
-          },
-          "tractorId": {
-            "description": "The tractor the driver will use, from dispatch_rank_candidates or records_query (entity tractor).",
-            "type": "string",
-            "x-recordOf": "tractor"
-          },
-          "trailerId": {
-            "description": "The trailer, when the move needs one, from dispatch_rank_candidates or records_query (entity trailer).",
-            "type": "string",
-            "x-recordOf": "trailer"
+          "shipmentMoveIds": {
+            "description": "The moves this call covers, one for each entry in assignments, which come from dispatch_plan or dispatch_rank_candidates. Leave it out: the runtime fills it from assignments, and the person approving may drop moves from it.",
+            "items": {
+              "type": "string",
+              "x-recordOf": "shipment_move"
+            },
+            "maxItems": 50,
+            "minItems": 1,
+            "type": "array",
+            "x-subsetOf": "shipment_move"
           }
         },
         "required": [
-          "shipmentMoveId",
-          "primaryWorkerId",
-          "tractorId",
-          "reason"
+          "assignments"
         ],
         "type": "object"
       },
       "searchTerms": [
+        "bulk",
         "assign driver",
         "dispatch the load",
         "put a driver on"
       ],
       "prerequisites": [
+        "dispatch_plan",
         "shipment_get",
         "dispatch_rank_candidates",
         "worker_list",
@@ -7684,9 +7712,11 @@
           "internal"
         ],
         "classifiesEachCall": false,
+        "condition": "Only a call covering one move may run without a decision; several moves always wait for a person, who may drop any of them.",
         "personalRunsUnasked": false,
         "heldWhenTainted": false,
         "effect": "change",
+        "artifact": "shipment",
         "reversible": true,
         "idempotent": false,
         "readsExternal": "never",
@@ -8221,7 +8251,7 @@
     },
     {
       "name": "dispatch_plan",
-      "description": "Dry-run the dispatch optimizer over a window's uncovered moves: the driver it would put on each move and why, and what blocked the rest. Nothing is assigned. Use dispatch_assign_move on the lines you agree with, and raise what stays uncovered.",
+      "description": "Plan which driver takes each uncovered move of a set of shipments or a window, pricing every driver against every move at once so none is planned twice. Pass the shipments a list just read (shipmentIds) rather than looking up their moves. Returns each move's driver, cost, confidence and the next best drivers, what stopped the rest, and assignments ready to send to dispatch_assign_move as they are. Nothing is assigned or proposed.\nUse this when you need drivers for several shipments at once, such as the ones a list just showed: the optimizer plans them together so no driver is used twice.\nUse dispatch_rank_candidates instead when you are weighing drivers for one move.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -8234,20 +8264,35 @@
             "type": "array"
           },
           "hoursAhead": {
-            "description": "How far ahead to plan, from now; defaults to 24, at most 168.",
+            "description": "How far ahead to plan, from now; at most 168. Defaults to 24 for a window, and to 168 when shipments or moves are named.",
             "type": "integer"
           },
+          "shipmentIds": {
+            "description": "Plan every open move of these shipments, by id from records_query (entity shipment) or record_get (entity shipment). The usual way to plan the loads a person was just shown.",
+            "items": {
+              "type": "string",
+              "x-recordOf": "shipment"
+            },
+            "maxItems": 50,
+            "type": "array"
+          },
           "shipmentMoveIds": {
-            "description": "Plan only these moves, by moveId from dispatch_get_board. Empty means every uncovered move in the window.",
+            "description": "Plan only these moves, by moveId from dispatch_get_board or a move's id from record_get (entity shipment).",
             "items": {
               "type": "string",
               "x-recordOf": "shipment_move"
             },
+            "maxItems": 50,
             "type": "array"
           }
         },
         "type": "object"
       },
+      "searchTerms": [
+        "dispatch plan",
+        "plan drivers",
+        "auto assign"
+      ],
       "policy": {
         "kind": "query",
         "resource": "shipment_move",

@@ -139,7 +139,7 @@ type fakePlanner struct {
 	lastReq *dispatchconsoleports.DispatchPlanRequest
 }
 
-func (f *fakePlanner) Plan(
+func (f *fakePlanner) Preview(
 	_ context.Context,
 	req *dispatchconsoleports.DispatchPlanRequest,
 ) (*dispatchconsoleports.DispatchPlan, error) {
@@ -217,19 +217,24 @@ func TestPlanDispatch_IsAlwaysADryRunOverTheWindow(t *testing.T) {
 	view := result.(*planView)
 	assert.Equal(t, "Immediate", view.PlanningMode)
 	assert.Equal(t, "$123", view.Cost)
-	require.Len(t, view.Assignments, 1, "a nil line is skipped")
-	assert.Equal(t, plannedAssignmentView{
-		MoveID:     assignedMoveID.String(),
-		ProNumber:  "S1",
-		WorkerID:   chosen.WorkerID.String(),
-		WorkerName: "Dana Ortiz",
-		TractorID:  chosen.TractorID.String(),
-		TrailerID:  chosen.TrailerID.String(),
-		Cost:       "$89",
-		Confidence: "0.9",
-		Rationale:  "Dana Ortiz costs $89 to cover S1, which is worth $1200.",
-		Deadhead:   &deadhead,
-	}, view.Assignments[0])
+	require.Len(t, view.Lines, 1, "a nil line is skipped")
+	line := view.Lines[0]
+	assert.Equal(t, assignedMoveID.String(), line.MoveID)
+	assert.Equal(t, "S1", line.ProNumber)
+	assert.Equal(t, "Dana Ortiz", line.WorkerName)
+	assert.Equal(t, "$89", line.Cost)
+	assert.Equal(t, "0.9", line.Confidence)
+	assert.Equal(t, &deadhead, line.Deadhead)
+	assert.Contains(t, line.Hours, "unknown, not zero")
+	assert.Empty(t, line.NotSendable)
+	require.Len(t, view.Assignments, 1)
+	assert.Equal(t, assignmentRow{
+		MoveID:    assignedMoveID.String(),
+		WorkerID:  chosen.WorkerID.String(),
+		TractorID: chosen.TractorID.String(),
+		TrailerID: chosen.TrailerID.String(),
+		Reason:    "Dana Ortiz costs $89 to cover S1, which is worth $1200.",
+	}, view.Assignments[0], "an assignment is a dispatch_assign_move row as it stands")
 
 	require.Len(t, view.Uncovered, 2)
 	assert.Equal(t, "S2", view.Uncovered[0].ProNumber)
@@ -242,7 +247,9 @@ func TestPlanDispatch_IsAlwaysADryRunOverTheWindow(t *testing.T) {
 	assert.Equal(t, dispatchfinding.CodeHOSNoDriveTime, view.Uncovered[0].Findings[0].Code)
 	assert.Equal(t, "No driver could take this move.", view.Uncovered[1].Reason)
 	assert.Empty(t, view.Uncovered[1].Findings)
-	assert.Contains(t, view.Note, "dry run")
+	assert.Contains(t, view.Note, "nothing was assigned or proposed")
+	require.Len(t, view.NotPlanned, 1, "a named move the plan left out is said")
+	assert.Contains(t, view.NotPlanned[0], moveID.String())
 
 	assert.False(t, planner.lastReq.Apply, "the planner never applies from a tool")
 	assert.Equal(t, agent.RunTriggerChat, planner.lastReq.Trigger)
@@ -288,4 +295,59 @@ func TestOptionalPulidSlice_RefusesJunk(t *testing.T) {
 		1,
 	)
 	require.ErrorContains(t, err, "more than 1")
+}
+
+func TestPlanDispatch_PlansShipmentsByIDOverTheLongestHorizon(t *testing.T) {
+	t.Parallel()
+
+	shipmentID := pulid.MustNew("shp_")
+	skipped := pulid.MustNew("shp_")
+	moveID := pulid.MustNew("smv_")
+	planner := &fakePlanner{plan: &dispatchconsoleports.DispatchPlan{
+		Assignments: []*dispatchconsoleports.DispatchPlannedAssignment{{
+			Pairing: &dispatchplanports.Pairing{
+				MoveID:           moveID,
+				ShipmentID:       shipmentID,
+				ProNumber:        "S1",
+				OriginLabel:      "Omaha, NE",
+				DestinationLabel: "Dayton, OH",
+				Candidate: &dispatchplanports.CandidateScore{
+					WorkerID:   pulid.MustNew("wrk_"),
+					WorkerName: "Adam Stephens",
+					HOSKnown:   true,
+				},
+				Alternatives: []dispatchplanprice.Alternative{
+					{WorkerName: "Cynthia Daniels", ExtraCents: 12_600},
+				},
+			},
+		}},
+	}}
+	tool := NewPlanDispatchTool(planner)
+
+	result, err := tool.Query(t.Context(), querytooltest.TestParams(map[string]any{
+		"shipmentIds": []any{shipmentID.String(), skipped.String()},
+	}))
+	require.NoError(t, err)
+
+	assert.Equal(t, []pulid.ID{shipmentID, skipped}, planner.lastReq.ShipmentIDs)
+	assert.Equal(
+		t,
+		int64(maxPlanHours*3600),
+		planner.lastReq.WindowEnd-planner.lastReq.WindowStart,
+		"named loads are planned over the longest horizon",
+	)
+	assert.False(t, planner.lastReq.Apply)
+
+	view := result.(*planView)
+	require.Len(t, view.Lines, 1)
+	line := view.Lines[0]
+	assert.Equal(t, "Omaha, NE to Dayton, OH", line.Lane)
+	assert.Empty(t, line.Hours)
+	assert.Equal(t, []alternativeView{{WorkerName: "Cynthia Daniels", Extra: "$126"}}, line.Alternatives)
+	assert.Contains(t, line.NotSendable, "no tractor")
+	assert.Empty(t, view.Assignments, "a driver with no tractor is not sendable")
+	assert.Contains(t, view.Note, "No line can be sent")
+	require.Len(t, view.NotPlanned, 1)
+	assert.Contains(t, view.NotPlanned[0], skipped.String())
+	assert.Contains(t, view.NotPlanned[0], "168 hours")
 }

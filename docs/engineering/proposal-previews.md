@@ -430,6 +430,7 @@ approves exactly the set that remains:
 | `settlement_post_driver` | `settlementIds` (driver settlement) | the driver settlement's post decision |
 | `settlement_approve_carrier` | `settlementIds` (carrier settlement) | the carrier settlement's approve decision |
 | `settlement_post_carrier` | `settlementIds` (carrier settlement) | the carrier settlement's post decision |
+| `dispatch_assign_move` | `assignments` (one row per move: its driver, tractor, trailer and reason), `shipmentMoveIds` (filled from the rows) | `AssignMoveTool` |
 
 Each such tool wraps a single-record tool (`agenttools/recordbatch/bulk_records.go`) and copies its
 policy: the same class, permission and floor. Phase 3 merged each of them with its
@@ -449,6 +450,21 @@ go carries `would_fail`, which is also what `Validate` refuses. Execution runs o
 person's approval, as the approver, record by record through the single tool (so every
 single-record guard, including `ApprovedFromProposal`, still applies), on the approved ids
 only, and reports "N of M posted; refused: …". A run in which every record was refused fails.
+
+**Records that each take their own arguments.** A batch whose records share their arguments
+names them in one id list. One whose records each take their own (each move its own driver)
+sets `RecordBatch.Rows`: the model sends one row per record, keyed by the single tool's id
+parameter, and the runtime writes the ids into the list (`ResolveSelection` through
+`RecordBatch.PinSelection`), so the approver still unticks records and a row whose record they
+dropped is not run. Every listed record needs its row, and a record named twice is refused.
+`dispatch_assign_move` (`agenttools/movetools/assign_moves.go`) is the first: one move runs as
+the single tool may, several always wait for a person, a driver or tractor on two moves of one
+call is warned as `double_booked` naming the loads, and a move that could not be assigned is
+reported as its shipment under its PRO number (`RecordBatch.Owners`), since a move has no page.
+Once it runs it reads its moves back in one read (`dispatchconsoleservice.GetMoves`) and says in
+the result's `State` who is on each load, with what equipment and where it stands, so the
+decision note the agent reads next ("Approved …, and it ran. … Now: …") answers "did it work"
+without a `shipment_get` per load. `State` holds up to 2000 characters for that reason.
 
 The settlement tools (`agenttools/settlementtools/settlement_bulk_tools.go`) build their
 single-settlement decision from the same lifecycle text and ledger, so each settlement is

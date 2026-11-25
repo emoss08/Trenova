@@ -115,6 +115,7 @@ const (
 	PreviewWarningRateCoverage        = PreviewWarningCode("rate_coverage")
 	PreviewWarningRecipientSkipped    = PreviewWarningCode("recipient_skipped")
 	PreviewWarningEquipmentInUse      = PreviewWarningCode("equipment_in_use")
+	PreviewWarningDoubleBooked        = PreviewWarningCode("double_booked")
 )
 
 func AllPreviewWarningCodes() []PreviewWarningCode {
@@ -134,6 +135,7 @@ func AllPreviewWarningCodes() []PreviewWarningCode {
 		PreviewWarningRateCoverage,
 		PreviewWarningRecipientSkipped,
 		PreviewWarningEquipmentInUse,
+		PreviewWarningDoubleBooked,
 	}
 }
 

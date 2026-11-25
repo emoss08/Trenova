@@ -18,11 +18,14 @@ type Request struct {
 	WindowEnd    int64
 	FleetCodeIDs []pulid.ID
 	MoveIDs      []pulid.ID
+	// ShipmentIDs plans every open move of these shipments.
+	ShipmentIDs []pulid.ID
 }
 
 type Pairing struct {
 	MoveID               pulid.ID                        `json:"moveId"`
 	MoveVersion          int64                           `json:"moveVersion"`
+	ShipmentID           pulid.ID                        `json:"shipmentId"`
 	ProNumber            string                          `json:"proNumber"`
 	OriginLabel          string                          `json:"originLabel"`
 	DestinationLabel     string                          `json:"destinationLabel"`

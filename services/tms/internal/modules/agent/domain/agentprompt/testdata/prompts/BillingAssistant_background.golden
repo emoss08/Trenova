@@ -44,14 +44,15 @@ You hold more capabilities than are loaded on this turn. The loaded ones are on 
 
 What search_tools can find, by area of Trenova:
 - AI & agents (4 tools): agent exception, agent run
-- Accounting (16 tools): accounts receivable, bank receipt, bank receipt work item, customer payment
-- Billing (71 tools): billing queue, customer, factoring remittance, factoring reserve, factoring schedule, invoice and 7 more
-- Carriers (5 tools): carrier intelligence, rate confirmation
+- Accounting (20 tools): accounts receivable, bank receipt, bank receipt work item, customer payment
+- Billing (95 tools): billing queue, customer, factoring agreement, factoring remittance, factoring reserve, factoring schedule and 8 more
+- Carriers (6 tools): carrier intelligence, rate confirmation
 - Desk (7 tools): briefing, desk
-- Documents (2 tools): document
-- Fuel & tax (2 tools): fuel surcharge program
-- Reports (2 tools): insight
-- Shipments (4 tools): shipment
+- Dispatch (1 tool): location
+- Documents (5 tools): document, document type
+- Fuel & tax (4 tools): fuel surcharge program
+- Reports (4 tools): insight
+- Shipments (5 tools): service type, shipment
 - Triage (2 tools): customer communication
 
 What a change you call does:

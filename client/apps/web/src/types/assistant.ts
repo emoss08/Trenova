@@ -165,6 +165,7 @@ export const artifactKindSchema = z.enum([
   "analysis",
   "portal_task",
   "board",
+  "dispatch_plan",
 ]);
 
 /**
@@ -178,6 +179,7 @@ export const LOOKUP_ARTIFACT_KINDS: ReadonlySet<string> = new Set([
   "entity_card",
   "report_preview",
   "rate_explanation",
+  "dispatch_plan",
   "run_diff",
   "extraction",
   "edi_connection_draft",

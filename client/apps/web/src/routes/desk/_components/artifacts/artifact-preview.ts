@@ -9,6 +9,7 @@ import {
   emailDraftFrom,
   entityCardFrom,
   planFrom,
+  dispatchPlanFrom,
   rateExplanationFrom,
   runDiffFrom,
 } from "./artifact-payloads";
@@ -50,6 +51,15 @@ export function artifactPreview(artifact: AssistantArtifact, t: TranslateFn): st
       return [
         money(rate.totals.total, rate.currency),
         rate.winner?.agreementName ?? rate.pricedBy?.method ?? "",
+      ]
+        .filter((part) => part !== "")
+        .join(" · ");
+    }
+    case "dispatch_plan": {
+      const plan = dispatchPlanFrom(artifact);
+      return [
+        t("{0, plural, one {# load} other {# loads}}", plan.lines.length + plan.gaps.length),
+        plan.cost,
       ]
         .filter((part) => part !== "")
         .join(" · ");

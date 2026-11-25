@@ -44,12 +44,15 @@ You hold more capabilities than are loaded on this turn. The loaded ones are on 
 
 What search_tools can find, by area of Trenova:
 - AI & agents (3 tools): agent run
-- Billing (1 tool): rate quote
+- Billing (4 tools): customer, rate quote
+- Carriers (2 tools): carrier
 - Desk (11 tools): desk
-- Documents (4 tools): document
-- EDI (2 tools): edi
-- Shipments (3 tools): shipment, shipment comment, shipment hold
-- Triage (19 tools): customer communication, triage
+- Dispatch (1 tool): location
+- Documents (7 tools): document, document type
+- EDI (5 tools): edi
+- Organization settings (1 tool): email profile
+- Shipments (9 tools): oversize permit, service type, shipment, shipment comment, shipment hold
+- Triage (21 tools): customer communication, triage
 
 What a change you call does:
 - Changes that always record a proposal for a person to decide: agent_create_schedule, edi_accept_tender, edi_decline_tender, inbox_assign_inbound_message, inbox_assign_queue, inbox_await_reply, inbox_block_sender, inbox_create_load, inbox_discard_reply_draft, inbox_reopen_inbound_message, inbox_resolve_conflict, inbox_send_reply, inbox_snooze_inbound_message, inbox_unblock_sender, inbox_unfile_attachment

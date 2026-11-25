@@ -515,6 +515,12 @@ extend type Query {
   outside the window on screen still opens. Carries its pending proposal like the board.
   """
   dispatchMove(moveId: ID!): DispatchBoardMove!
+  """
+  Up to 50 moves as the board draws them, in one read, whatever window they fall in and
+  whatever their status: a dispatch plan's card reads which of its loads are covered now. A
+  move the organization does not hold is left out.
+  """
+  dispatchMovesByIds(moveIds: [ID!]!): [DispatchBoardMove!]!
   dispatchMoveCandidates(input: DispatchMoveCandidatesInput!): [DispatchCandidate!]!
   dispatchDriverMoves(input: DispatchDriverMovesInput!): [DispatchDriverMoveMatch!]!
   dispatchAssignmentPreview(

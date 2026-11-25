@@ -110,9 +110,18 @@ var guidance = map[string]Guidance{
 		Examples:  []string{"who's free", "who can cover load 4471", "available drivers near Atlanta"},
 		Chain:     []string{"shipment.get", "dispatch_rank_candidates", "dispatch_assign_move"},
 	},
+	"dispatch_plan": {
+		UseWhen: "You need drivers for several shipments at once, such as the ones a list just " +
+			"showed: the optimizer plans them together so no driver is used twice.",
+		InsteadOf: []Instead{
+			{Capability: "dispatch_rank_candidates", When: "you are weighing drivers for one move"},
+		},
+		Synonyms: []string{"dispatch plan", "plan drivers", "auto assign"},
+		Chain:    []string{"shipment.list", "dispatch_plan", "dispatch_assign_move"},
+	},
 	"dispatch_assign_move": {
 		UseWhen:  "You have chosen a driver, tractor and trailer for a move and want them assigned.",
-		Chain:    []string{"shipment.get", "dispatch_rank_candidates", "dispatch_assign_move"},
+		Chain:    []string{"shipment.list", "dispatch_plan", "dispatch_assign_move"},
 		Synonyms: []string{"assign driver", "dispatch the load", "put a driver on"},
 	},
 	"dispatch_get_board": {

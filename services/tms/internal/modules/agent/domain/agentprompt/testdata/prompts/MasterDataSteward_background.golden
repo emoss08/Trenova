@@ -44,15 +44,15 @@ You hold more capabilities than are loaded on this turn. The loaded ones are on 
 
 What search_tools can find, by area of Trenova:
 - AI & agents (4 tools): agent exception, agent run
-- Billing (3 tools): customer
-- Carriers (3 tools): carrier
-- Desk (7 tools): desk, watchtower
-- Dispatch (3 tools): location
-- Documents (2 tools): document
-- Equipment (8 tools): tractor, trailer
-- Intake (3 tools): intake
-- Organization settings (4 tools): table change alert
-- Shipments (6 tools): commodity, hazardous material
+- Billing (6 tools): customer
+- Carriers (5 tools): carrier
+- Desk (8 tools): desk, watchtower
+- Dispatch (7 tools): fleet code, location, location category
+- Documents (5 tools): document, document type
+- Equipment (14 tools): equipment manufacturer, equipment type, tractor, trailer
+- Intake (4 tools): intake
+- Organization settings (5 tools): table change alert
+- Shipments (9 tools): commodity, hazardous material, shipment
 
 What a change you call does:
 - Changes that always record a proposal for a person to decide: carrier_create, carrier_set_status, carrier_update, customer_create, customer_set_status, customer_update, document_delete, document_restore_version, equipment_create_tractor, equipment_create_trailer, equipment_set_tractor_location, equipment_set_tractor_status, equipment_set_trailer_location, equipment_set_trailer_status, equipment_update_tractor, equipment_update_trailer, exception_dismiss_watchtower_item, inbox_discard_capture_batch, inbox_discard_capture_item, inbox_file_capture_item, location_create, location_set_status, location_update, masterdata_create_commodity, masterdata_create_hazardous_material, masterdata_set_commodity_status, masterdata_set_hazardous_material_status, masterdata_update_commodity, masterdata_update_hazardous_material, report_create_table_change_alert, report_delete_table_change_alert, report_set_table_change_alert_status, report_update_table_change_alert

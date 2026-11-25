@@ -32,6 +32,7 @@ type DispatchBoardFilter struct {
 	MoveStatuses   []shipmentvocab.MoveStatus
 	WorkerIDs      []pulid.ID
 	MoveIDs        []pulid.ID
+	ShipmentIDs    []pulid.ID
 	Query          string
 	IncludeCovered bool
 	Limit          int

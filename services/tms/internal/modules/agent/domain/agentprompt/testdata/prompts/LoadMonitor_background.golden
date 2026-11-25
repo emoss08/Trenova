@@ -44,11 +44,14 @@ You hold more capabilities than are loaded on this turn. The loaded ones are on 
 
 What search_tools can find, by area of Trenova:
 - AI & agents (4 tools): agent exception, agent run
-- Desk (12 tools): desk, watchtower
+- Desk (13 tools): desk, watchtower
+- Detention (2 tools): detention
 - Dispatch (6 tools): driver message, shipment move
 - EDI (1 tool): edi
 - Equipment (1 tool): tractor
-- Shipments (4 tools): service failure, shipment, shipment comment
+- Human resources (3 tools): schedule, worker
+- Organization settings (1 tool): email profile
+- Shipments (10 tools): oversize permit, service failure, service failure reason code, shipment, shipment comment
 - Triage (2 tools): customer communication
 
 What a change you call does:

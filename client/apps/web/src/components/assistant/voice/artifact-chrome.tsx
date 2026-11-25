@@ -63,6 +63,7 @@ export const ARTIFACT_KINDS: Record<
   analysis: { label: "Analysis", icon: LineChartUp01Icon },
   board: { label: "Board", icon: LayoutAlt04Icon },
   portal_task: { label: "Portal task", icon: BrowserIcon },
+  dispatch_plan: { label: "Dispatch plan", icon: ListChecksIcon, source: "Dispatch" },
 };
 
 /** Where an artifact is, as a tone: severity, not category. */

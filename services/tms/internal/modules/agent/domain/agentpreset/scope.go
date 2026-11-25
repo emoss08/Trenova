@@ -25,7 +25,8 @@ var deskAreas = map[agenttemplate.Template][]string{
 
 var deskPins = map[agenttemplate.Template][]string{
 	agenttemplate.TemplateDispatchAssistant: {
-		"dispatch_get_board", "dispatch_rank_candidates", "dispatch_assign_move", "shipment_add_comment",
+		"dispatch_get_board", "dispatch_plan", "dispatch_rank_candidates", "dispatch_assign_move",
+		"shipment_add_comment",
 	},
 	agenttemplate.TemplateBillingAssistant: {
 		"billing_approve_queue_item", "invoice_post", "invoice_send",

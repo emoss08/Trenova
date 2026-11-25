@@ -43,13 +43,20 @@ You hold more capabilities than are loaded on this turn. The loaded ones are on 
 - Read records with records_query (every record matching conditions, a count or groups) or record_get with include (everything about one record), rather than chaining calls.
 
 What search_tools can find, by area of Trenova:
-- Billing (4 tools): rate matrix, rate quote
-- Carriers (1 tool): carrier
-- Desk (6 tools): briefing, desk
-- Dispatch (3 tools): shipment move
-- EDI (4 tools): edi
-- Equipment (1 tool): tractor
-- Shipments (2 tools): shipment
+- Billing (10 tools): accessorial charge, customer, formula template, rate agreement, rate matrix, rate quote
+- Carrier settlements (2 tools): carrier invoice match
+- Carriers (8 tools): carrier, carrier capacity posting, carrier intelligence, carrier tender, rate confirmation
+- Desk (7 tools): briefing, desk, watchtower
+- Detention (4 tools): detention
+- Dispatch (7 tools): fleet code, location, location category, shipment move
+- Documents (3 tools): document, document type
+- EDI (14 tools): edi
+- Equipment (7 tools): equipment manufacturer, equipment type, tractor, trailer
+- Fuel & tax (2 tools): fuel surcharge program
+- Human resources (1 tool): worker
+- Organization settings (1 tool): email profile
+- Reports (2 tools): insight
+- Shipments (18 tools): commodity, hazardous material, hold reason, order, oversize permit, recurring shipment and 5 more
 
 How a task is done with these, in order, each step's result feeding the next; skip a step whose answer you already have:
 - rate_quote: customer_list → masterdata_list_service_types → location_list → rate_quote

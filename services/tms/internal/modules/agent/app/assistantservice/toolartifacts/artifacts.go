@@ -524,6 +524,8 @@ func namedToolArtifact(
 	switch {
 	case call.Name == "rate_explain":
 		return rateArtifact(call.ID, result), true
+	case call.Name == "dispatch_plan":
+		return dispatchPlanArtifact(call.ID, result), true
 	case call.Name == "report_compare_runs":
 		return runDiffArtifact(call.ID, result), true
 	case call.Name == "agent_open_page":

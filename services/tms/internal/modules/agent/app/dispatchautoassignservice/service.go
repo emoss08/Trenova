@@ -20,6 +20,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchplanports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/shopspring/decimal"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -104,12 +105,62 @@ func (s *Service) Plan(
 		return nil, err
 	}
 
+	plan, err := s.solve(ctx, req, control.ConfidenceThreshold(), policy)
+	if err != nil {
+		return nil, err
+	}
+
+	proposals, err := s.recordPlan(ctx, req, policy, plan)
+	if err != nil {
+		return nil, err
+	}
+	if req.Apply {
+		s.applyAutoExecutable(ctx, req, plan, proposals)
+	}
+
+	return plan, nil
+}
+
+// Preview is the plan as the optimizer would make it, for a person or an
+// agent to read: it files no proposal, starts no run and assigns nothing, so
+// it needs the planner but not automatic assignment. Each line's confidence
+// and rationale are the ones Plan would file it with.
+func (s *Service) Preview(
+	ctx context.Context,
+	req *dispatchconsoleports.DispatchPlanRequest,
+) (*dispatchconsoleports.DispatchPlan, error) {
+	if err := s.requirePlanner(ctx); err != nil {
+		return nil, err
+	}
+
+	control, err := s.dispatchControlRepo.GetOrCreate(
+		ctx,
+		req.TenantInfo.OrgID,
+		req.TenantInfo.BuID,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return s.solve(ctx, req, control.ConfidenceThreshold(), Policy{
+		Tier:       agent.TierPropose,
+		ShadowMode: true,
+	})
+}
+
+func (s *Service) solve(
+	ctx context.Context,
+	req *dispatchconsoleports.DispatchPlanRequest,
+	threshold decimal.Decimal,
+	policy Policy,
+) (*dispatchconsoleports.DispatchPlan, error) {
 	planned, err := s.planner.Plan(ctx, &dispatchplanports.Request{
 		TenantInfo:   req.TenantInfo,
 		WindowStart:  req.WindowStart,
 		WindowEnd:    req.WindowEnd,
 		FleetCodeIDs: req.FleetCodeIDs,
 		MoveIDs:      req.MoveIDs,
+		ShipmentIDs:  req.ShipmentIDs,
 	})
 	if err != nil {
 		return nil, err
@@ -130,7 +181,6 @@ func (s *Service) Plan(
 		ShadowMode:     policy.ShadowMode,
 		AutonomyTier:   policy.Tier,
 	}
-	threshold := control.ConfidenceThreshold()
 	for _, pairing := range planned.Pairings {
 		plan.Assignments = append(plan.Assignments, plannedAssignmentFor(&plannedAssignmentParams{
 			Pairing:    pairing,
@@ -138,14 +188,6 @@ func (s *Service) Plan(
 			Threshold:  threshold,
 			ShadowMode: policy.ShadowMode,
 		}))
-	}
-
-	proposals, err := s.recordPlan(ctx, req, policy, plan)
-	if err != nil {
-		return nil, err
-	}
-	if req.Apply {
-		s.applyAutoExecutable(ctx, req, plan, proposals)
 	}
 
 	return plan, nil
@@ -193,7 +235,7 @@ func (s *Service) recordPlan(
 
 	proposals := make([]*agent.AgentProposal, 0, len(plan.Assignments))
 	for _, planned := range plan.Assignments {
-		toolParams, paramsErr := toolParamsFor(planned.Candidate)
+		toolParams, paramsErr := toolParamsFor(planned.Candidate, planned.Rationale)
 		if paramsErr != nil {
 			return nil, paramsErr
 		}
@@ -285,29 +327,46 @@ func (s *Service) applyAutoExecutable(
 	}
 }
 
+// assignMoveToolParams is one move's row of a dispatch_assign_move call.
 type assignMoveToolParams struct {
 	ShipmentMoveID  string `json:"shipmentMoveId"`
 	PrimaryWorkerID string `json:"primaryWorkerId"`
 	TractorID       string `json:"tractorId"`
 	TrailerID       string `json:"trailerId,omitempty"`
+	Reason          string `json:"reason,omitempty"`
 }
 
-func toolParamsFor(candidate *dispatchplanports.CandidateScore) (map[string]any, error) {
-	params := assignMoveToolParams{
+// assignMovesCall is a dispatch_assign_move call covering one move: the plan
+// files a proposal per move, so a dispatcher decides each on the board.
+type assignMovesCall struct {
+	ShipmentMoveIDs []string               `json:"shipmentMoveIds"`
+	Assignments     []assignMoveToolParams `json:"assignments"`
+}
+
+func toolParamsFor(
+	candidate *dispatchplanports.CandidateScore,
+	rationale string,
+) (map[string]any, error) {
+	row := assignMoveToolParams{
 		ShipmentMoveID:  candidate.MoveID.String(),
 		PrimaryWorkerID: candidate.WorkerID.String(),
 		TractorID:       candidate.TractorID.String(),
+		Reason:          rationale,
 	}
 	if !candidate.TrailerID.IsNil() {
-		params.TrailerID = candidate.TrailerID.String()
+		row.TrailerID = candidate.TrailerID.String()
+	}
+	call := assignMovesCall{
+		ShipmentMoveIDs: []string{row.ShipmentMoveID},
+		Assignments:     []assignMoveToolParams{row},
 	}
 
-	raw, err := sonic.Marshal(params)
+	raw, err := sonic.Marshal(call)
 	if err != nil {
 		return nil, fmt.Errorf("marshal assign move tool params: %w", err)
 	}
 
-	out := make(map[string]any, 4)
+	out := make(map[string]any, 2)
 	if err = sonic.Unmarshal(raw, &out); err != nil {
 		return nil, fmt.Errorf("unmarshal assign move tool params: %w", err)
 	}

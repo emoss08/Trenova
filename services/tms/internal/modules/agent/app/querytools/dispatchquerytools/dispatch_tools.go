@@ -2,6 +2,7 @@ package dispatchquerytools
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatcheconomics"
 
@@ -13,10 +14,16 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/dispatchconsoleports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/modules/operations/app/dispatchconsoleservice"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchfinding"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchplanports"
 	"github.com/emoss08/trenova/shared/pulid"
+)
+
+const (
+	paramShipmentIDs     = "shipmentIds"
+	paramShipmentMoveIDs = "shipmentMoveIds"
 )
 
 const (
@@ -239,7 +246,7 @@ func hoursOf(millis int64) float64 {
 }
 
 type dispatchPlanner interface {
-	Plan(
+	Preview(
 		ctx context.Context,
 		req *dispatchconsoleports.DispatchPlanRequest,
 	) (*dispatchconsoleports.DispatchPlan, error)
@@ -256,25 +263,38 @@ func NewPlanDispatchTool(planner dispatchPlanner) agenttoolports.AgentQueryTool 
 func (t *planDispatchTool) Name() string { return "dispatch_plan" }
 
 func (t *planDispatchTool) Description() string {
-	return "Dry-run the dispatch optimizer over a window's uncovered moves: the driver it " +
-		"would put on each move and why, and what blocked the rest. Nothing is assigned. Use dispatch_assign_move " +
-		"on the lines you agree with, and raise what stays uncovered."
+	return "Plan which driver takes each uncovered move of a set of shipments or a window, " +
+		"pricing every driver against every move at once so none is planned twice. Pass " +
+		"the shipments a list just read (shipmentIds) rather than looking up their moves. " +
+		"Returns each move's driver, cost, confidence and the next best drivers, what " +
+		"stopped the rest, and assignments ready to send to dispatch_assign_move as they " +
+		"are. Nothing is assigned or proposed."
 }
 
 func (t *planDispatchTool) ParamSchema() map[string]any {
 	return map[string]any{
 		"type": "object",
 		"properties": map[string]any{
-			paramHoursAhead: map[string]any{
-				"type":        "integer",
-				"description": "How far ahead to plan, from now; defaults to 24, at most 168.",
-			},
-			"shipmentMoveIds": agenttoolschema.OfResource(map[string]any{
-				"type":  "array",
-				"items": map[string]any{"type": "string"},
-				"description": "Plan only these moves, by moveId from dispatch_get_board. " +
-					"Empty means every uncovered move in the window.",
+			paramShipmentIDs: agenttoolschema.OfResource(map[string]any{
+				"type":     "array",
+				"items":    map[string]any{"type": "string"},
+				"maxItems": maxPlanMoves,
+				"description": "Plan every open move of these shipments, by id from " +
+					"shipment_list or shipment_get. The usual way to plan the loads a " +
+					"person was just shown.",
+			}, permission.ResourceShipment),
+			paramShipmentMoveIDs: agenttoolschema.OfResource(map[string]any{
+				"type":     "array",
+				"items":    map[string]any{"type": "string"},
+				"maxItems": maxPlanMoves,
+				"description": "Plan only these moves, by moveId from dispatch_get_board or a " +
+					"move's id from shipment_get.",
 			}, permission.ResourceShipmentMove),
+			paramHoursAhead: map[string]any{
+				"type": "integer",
+				"description": "How far ahead to plan, from now; at most 168. Defaults to 24 " +
+					"for a window, and to 168 when shipments or moves are named.",
+			},
 			"fleetCodeIds": agenttoolschema.OfResource(map[string]any{
 				"type":        "array",
 				"items":       map[string]any{"type": "string"},
@@ -288,21 +308,46 @@ func (t *planDispatchTool) ParamSchema() map[string]any {
 func (t *planDispatchTool) Policy() agenttoolports.ToolPolicy {
 	return querytool.ReadPolicy(t.Name(), &querytool.ReadSpec{
 		Resource: permission.ResourceShipmentMove,
+		Feature:  platformcatalog.FeatureDispatchIntelligence,
 		Effect:   agenttooltrust.ToolEffectPresent,
 	})
 }
 
-type plannedAssignmentView struct {
-	MoveID     string   `json:"shipmentMoveId"`
-	ProNumber  string   `json:"proNumber"`
-	WorkerID   string   `json:"workerId"`
-	WorkerName string   `json:"workerName"`
-	TractorID  string   `json:"tractorId,omitempty"`
-	TrailerID  string   `json:"trailerId,omitempty"`
-	Cost       string   `json:"cost"`
-	Confidence string   `json:"confidence"`
-	Rationale  string   `json:"rationale"`
-	Deadhead   *float64 `json:"deadheadMiles,omitempty"`
+// alternativeView is a driver the plan passed over for a move, and what
+// taking them instead would add to the plan's cost.
+type alternativeView struct {
+	WorkerName string `json:"workerName"`
+	Extra      string `json:"extraCost"`
+}
+
+// plannedLineView is a move the plan covers, as a dispatcher weighs it.
+type plannedLineView struct {
+	MoveID       string                 `json:"shipmentMoveId"`
+	ProNumber    string                 `json:"proNumber"`
+	Lane         string                 `json:"lane,omitempty"`
+	PickupOpens  querytool.OptionalDate `json:"pickupOpens"`
+	PickupAt     int64                  `json:"pickupAt,omitempty"`
+	WorkerID     string                 `json:"workerId"`
+	WorkerName   string                 `json:"workerName"`
+	DriveHours   *float64               `json:"driveRemainingHours,omitempty"`
+	Cost         string                 `json:"cost"`
+	Confidence   string                 `json:"confidence"`
+	Rationale    string                 `json:"rationale"`
+	Deadhead     *float64               `json:"deadheadMiles,omitempty"`
+	Hours        string                 `json:"hours,omitempty"`
+	Findings     []findingView          `json:"findings,omitempty"`
+	Alternatives []alternativeView      `json:"nextBest,omitempty"`
+	NotSendable  string                 `json:"notSendable,omitempty"`
+}
+
+// assignmentRow is one entry of a dispatch_assign_move call, in that tool's
+// own words, so the model sends the plan's lines without rewriting them.
+type assignmentRow struct {
+	MoveID    string `json:"shipmentMoveId"`
+	WorkerID  string `json:"primaryWorkerId"`
+	TractorID string `json:"tractorId"`
+	TrailerID string `json:"trailerId,omitempty"`
+	Reason    string `json:"reason"`
 }
 
 type uncoveredMoveView struct {
@@ -313,11 +358,13 @@ type uncoveredMoveView struct {
 }
 
 type planView struct {
-	PlanningMode string                  `json:"planningMode"`
-	Cost         string                  `json:"cost"`
-	Assignments  []plannedAssignmentView `json:"assignments"`
-	Uncovered    []uncoveredMoveView     `json:"uncovered"`
-	Note         string                  `json:"note"`
+	PlanningMode string              `json:"planningMode"`
+	Cost         string              `json:"cost"`
+	Lines        []plannedLineView   `json:"lines"`
+	Uncovered    []uncoveredMoveView `json:"uncovered"`
+	NotPlanned   []string            `json:"notPlanned,omitempty"`
+	Assignments  []assignmentRow     `json:"assignments"`
+	Note         string              `json:"note"`
 }
 
 func (t *planDispatchTool) Query(
@@ -328,11 +375,11 @@ func (t *planDispatchTool) Query(
 		return nil, err
 	}
 
-	hours := querytool.OptionalInt(params.Params, paramHoursAhead, defaultPlanHours)
-	if hours <= 0 || hours > maxPlanHours {
-		hours = defaultPlanHours
+	moveIDs, err := querytool.OptionalPulidSlice(params.Params, paramShipmentMoveIDs, maxPlanMoves)
+	if err != nil {
+		return nil, err
 	}
-	moveIDs, err := querytool.OptionalPulidSlice(params.Params, "shipmentMoveIds", maxPlanMoves)
+	shipmentIDs, err := querytool.OptionalPulidSlice(params.Params, paramShipmentIDs, maxPlanMoves)
 	if err != nil {
 		return nil, err
 	}
@@ -345,54 +392,59 @@ func (t *planDispatchTool) Query(
 		return nil, err
 	}
 
+	named := len(moveIDs) > 0 || len(shipmentIDs) > 0
+	hours := planHours(querytool.OptionalInt(params.Params, paramHoursAhead, 0), named)
 	now := querytool.ClockFor(params).Instant()
-	plan, err := t.planner.Plan(ctx, &dispatchconsoleports.DispatchPlanRequest{
+	plan, err := t.planner.Preview(ctx, &dispatchconsoleports.DispatchPlanRequest{
 		TenantInfo:   querytool.TenantOf(params),
 		WindowStart:  now,
 		WindowEnd:    now + int64(hours)*3600,
 		FleetCodeIDs: fleetCodeIDs,
 		MoveIDs:      moveIDs,
-		Apply:        false,
+		ShipmentIDs:  shipmentIDs,
 		Trigger:      agent.RunTriggerChat,
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	return planViewOf(plan), nil
+	view := planViewOf(plan)
+	view.NotPlanned = notPlanned(plan, moveIDs, shipmentIDs, hours)
+
+	return view, nil
+}
+
+// planHours is the horizon to plan over: what was asked when it is in range,
+// else a day for a window and the longest horizon for named records, whose
+// pickups a day would leave out without a word.
+func planHours(asked int, named bool) int {
+	switch {
+	case asked > 0 && asked <= maxPlanHours:
+		return asked
+	case named:
+		return maxPlanHours
+	default:
+		return defaultPlanHours
+	}
 }
 
 func planViewOf(plan *dispatchconsoleports.DispatchPlan) *planView {
 	view := &planView{
 		PlanningMode: plan.Mode.String(),
 		Cost:         dispatcheconomics.Dollars(plan.CostCents),
-		Assignments:  make([]plannedAssignmentView, 0, len(plan.Assignments)),
+		Lines:        make([]plannedLineView, 0, len(plan.Assignments)),
 		Uncovered:    make([]uncoveredMoveView, 0, len(plan.Uncovered)),
-		Note: "This is a dry run: nothing was assigned. Use dispatch_assign_move for each " +
-			"line you want to act on.",
+		Assignments:  make([]assignmentRow, 0, len(plan.Assignments)),
 	}
 	for _, line := range plan.Assignments {
-		if line == nil {
+		if line == nil || line.Pairing == nil || line.Candidate == nil {
 			continue
 		}
-		candidate := line.Candidate
-		out := plannedAssignmentView{
-			MoveID:     line.MoveID.String(),
-			ProNumber:  line.ProNumber,
-			WorkerID:   candidate.WorkerID.String(),
-			WorkerName: candidate.WorkerName,
-			Cost:       dispatcheconomics.Dollars(candidate.Cost.TotalCents),
-			Confidence: line.Confidence.String(),
-			Rationale:  line.Rationale,
-			Deadhead:   candidate.DeadheadMiles,
+		planned, row := plannedLineOf(line)
+		view.Lines = append(view.Lines, planned)
+		if row != nil {
+			view.Assignments = append(view.Assignments, *row)
 		}
-		if candidate.TractorID.IsNotNil() {
-			out.TractorID = candidate.TractorID.String()
-		}
-		if candidate.TrailerID.IsNotNil() {
-			out.TrailerID = candidate.TrailerID.String()
-		}
-		view.Assignments = append(view.Assignments, out)
 	}
 	for _, move := range plan.Uncovered {
 		if move == nil {
@@ -405,8 +457,129 @@ func planViewOf(plan *dispatchconsoleports.DispatchPlan) *planView {
 			Findings:  findingViews(blockingFindings(move.BestCandidate)),
 		})
 	}
+	view.Note = planNote(len(view.Assignments), len(view.Lines))
 
 	return view
+}
+
+func plannedLineOf(
+	line *dispatchconsoleports.DispatchPlannedAssignment,
+) (plannedLineView, *assignmentRow) {
+	candidate := line.Candidate
+	planned := plannedLineView{
+		MoveID:      line.MoveID.String(),
+		ProNumber:   line.ProNumber,
+		Lane:        laneOf(line.OriginLabel, line.DestinationLabel),
+		PickupOpens: querytool.ExpectedDate(line.PickupOpens, "unknown"),
+		PickupAt:    line.PickupOpens,
+		WorkerID:    candidate.WorkerID.String(),
+		WorkerName:  candidate.WorkerName,
+		Cost:        dispatcheconomics.Dollars(candidate.Cost.TotalCents),
+		Confidence:  line.Confidence.String(),
+		Rationale:   line.Rationale,
+		Deadhead:    candidate.DeadheadMiles,
+		Findings:    findingViews(candidate.Findings),
+	}
+	if candidate.HOSKnown {
+		drive := hoursOf(candidate.DriveRemainingMs)
+		planned.DriveHours = &drive
+	} else {
+		planned.Hours = "No ELD has reported this driver's hours, so they are unknown, not " +
+			"zero. Say so beside the assignment rather than holding it back."
+	}
+	for _, alternative := range line.Alternatives {
+		planned.Alternatives = append(planned.Alternatives, alternativeView{
+			WorkerName: alternative.WorkerName,
+			Extra:      dispatcheconomics.Dollars(alternative.ExtraCents),
+		})
+	}
+	if candidate.TractorID.IsNil() {
+		planned.NotSendable = "The driver has no tractor on file; find one with " +
+			"equipment_list_tractors before assigning."
+
+		return planned, nil
+	}
+
+	row := &assignmentRow{
+		MoveID:    line.MoveID.String(),
+		WorkerID:  candidate.WorkerID.String(),
+		TractorID: candidate.TractorID.String(),
+		Reason:    line.Rationale,
+	}
+	if candidate.TrailerID.IsNotNil() {
+		row.TrailerID = candidate.TrailerID.String()
+	}
+
+	return planned, row
+}
+
+func laneOf(origin, destination string) string {
+	if origin == "" || destination == "" {
+		return ""
+	}
+
+	return origin + " to " + destination
+}
+
+func planNote(sendable, planned int) string {
+	note := "This is a plan: nothing was assigned or proposed. "
+	switch {
+	case sendable == 0:
+		return note + "No line can be sent to dispatch_assign_move as it stands."
+	case sendable < planned:
+		return note + "To act on it, send assignments to dispatch_assign_move in one call; " +
+			"a line with notSendable needs a tractor first."
+	default:
+		return note + "To act on it, send assignments to dispatch_assign_move in one call, " +
+			"leaving out any line the person does not want."
+	}
+}
+
+// notPlanned names each move or shipment the call asked for that the plan
+// neither covers nor reports uncovered: already covered, closed, or with a
+// pickup past the horizon. Without it a named load just went missing.
+func notPlanned(
+	plan *dispatchconsoleports.DispatchPlan,
+	moveIDs, shipmentIDs []pulid.ID,
+	hours int,
+) []string {
+	if len(moveIDs) == 0 && len(shipmentIDs) == 0 {
+		return nil
+	}
+
+	seenMoves := make(map[pulid.ID]struct{}, len(plan.Assignments)+len(plan.Uncovered))
+	seenShipments := make(map[pulid.ID]struct{}, len(plan.Assignments)+len(plan.Uncovered))
+	for _, line := range plan.Assignments {
+		if line != nil && line.Pairing != nil {
+			seenMoves[line.MoveID] = struct{}{}
+			seenShipments[line.ShipmentID] = struct{}{}
+		}
+	}
+	for _, move := range plan.Uncovered {
+		if move != nil {
+			seenMoves[move.MoveID] = struct{}{}
+			seenShipments[move.ShipmentID] = struct{}{}
+		}
+	}
+
+	why := fmt.Sprintf(
+		"has no open move picking up in the next %d hours: it is covered, closed, or "+
+			"picks up later",
+		hours,
+	)
+	out := make([]string, 0)
+	for _, id := range moveIDs {
+		if _, ok := seenMoves[id]; !ok {
+			out = append(out, "Move "+id.String()+" "+why)
+		}
+	}
+	for _, id := range shipmentIDs {
+		if _, ok := seenShipments[id]; !ok {
+			out = append(out, "Shipment "+id.String()+" "+why)
+		}
+	}
+
+	return out
 }
 
 func blockingFindings(candidate *dispatchplanports.CandidateScore) []dispatchfinding.Finding {

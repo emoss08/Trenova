@@ -45,11 +45,11 @@ You hold more capabilities than are loaded on this turn. The loaded ones are on 
 What search_tools can find, by area of Trenova:
 - AI & agents (4 tools): agent exception, agent run
 - Desk (7 tools): briefing, desk
-- Dispatch (2 tools): driver dispatch hold, driver message
-- Documents (2 tools): document
-- Equipment (9 tools): tractor, trailer
-- Human resources (59 tools): drug & alcohol testing, injury & illness, leave & fmla, performance review, qualification, random testing pool and 9 more
-- Reports (2 tools): insight
+- Dispatch (3 tools): driver dispatch hold, driver message, location
+- Documents (5 tools): document, document type
+- Equipment (15 tools): equipment manufacturer, equipment type, tractor, trailer
+- Human resources (78 tools): drug & alcohol testing, injury & illness, leave & fmla, performance review, qualification, random testing pool and 12 more
+- Reports (4 tools): insight
 - Shipments (1 tool): shipment
 
 What a change you call does:

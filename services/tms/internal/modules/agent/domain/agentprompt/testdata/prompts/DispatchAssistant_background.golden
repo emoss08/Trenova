@@ -44,18 +44,20 @@ You hold more capabilities than are loaded on this turn. The loaded ones are on 
 
 What search_tools can find, by area of Trenova:
 - AI & agents (4 tools): agent exception, agent run
-- Billing (16 tools): rate agreement, rate matrix, rate quote, rate simulation
-- Carrier settlements (5 tools): carrier invoice match
-- Carriers (23 tools): carrier, carrier capacity posting, carrier intelligence, carrier sourcing, carrier tender, equipment verification and 1 more
-- Desk (15 tools): briefing, desk, watchtower
-- Detention (5 tools): detention
-- Dispatch (17 tools): location, shipment move
-- Documents (3 tools): document
-- EDI (16 tools): edi
-- Equipment (9 tools): tractor, trailer
-- Fuel & tax (2 tools): fuel surcharge program
-- Reports (2 tools): insight
-- Shipments (49 tools): commodity, hazardous material, order, oversize permit, recurring shipment, service failure and 3 more
+- Billing (22 tools): accessorial charge, customer, formula template, rate agreement, rate matrix, rate quote and 1 more
+- Carrier settlements (7 tools): carrier invoice match
+- Carriers (30 tools): carrier, carrier capacity posting, carrier intelligence, carrier sourcing, carrier tender, equipment verification and 1 more
+- Desk (16 tools): briefing, desk, watchtower
+- Detention (9 tools): detention
+- Dispatch (21 tools): fleet code, location, location category, shipment move
+- Documents (6 tools): document, document type
+- EDI (26 tools): edi
+- Equipment (15 tools): equipment manufacturer, equipment type, tractor, trailer
+- Fuel & tax (4 tools): fuel surcharge program
+- Human resources (1 tool): worker
+- Organization settings (1 tool): email profile
+- Reports (4 tools): insight
+- Shipments (65 tools): commodity, hazardous material, hold reason, order, oversize permit, recurring shipment and 7 more
 - Triage (2 tools): customer communication
 
 What a change you call does:
@@ -74,7 +76,7 @@ How a task is done with these, in order, each step's result feeding the next; sk
 - detention_resolve_dispute: inbox_get_inbound_message → detention_get_occurrence → detention_resolve_dispute
 - detention_send_notice: detention_get_occurrence → detention_send_notice
 - detention_waive: detention_list_occurrences → detention_get_occurrence → detention_waive
-- dispatch_assign_move: shipment_get → dispatch_rank_candidates → dispatch_assign_move
+- dispatch_assign_move: shipment_list → dispatch_plan → dispatch_assign_move
 - dispatch_create_carrier_assignment: shipment_get → carrier_shop → dispatch_create_carrier_assignment
 - dispatch_record_check_call: shipment_list → shipment_get → dispatch_record_check_call
 - dispatch_record_stop_actual: shipment_list → shipment_get → dispatch_record_stop_actual

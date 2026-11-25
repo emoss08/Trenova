@@ -44,9 +44,11 @@ You hold more capabilities than are loaded on this turn. The loaded ones are on 
 
 What search_tools can find, by area of Trenova:
 - AI & agents (3 tools): agent run
-- Accounting (12 tools): accounts receivable, customer payment
-- Billing (7 tools): invoice, invoice dispute
+- Accounting (14 tools): accounts receivable, customer payment
+- Billing (16 tools): customer, invoice, invoice dispute
 - Desk (12 tools): desk
+- Documents (2 tools): document
+- Shipments (4 tools): oversize permit, shipment
 
 What a change you call does:
 - Changes that always record a proposal for a person to decide: agent_create_schedule, invoice_open_dispute, invoice_resolve_dispute, invoice_send, invoice_share, invoice_withdraw_dispute, receivable_apply_credit_memo, receivable_apply_customer_payment, receivable_assess_late_charges, receivable_assign_collector, receivable_record_collection_activity, receivable_reverse_customer_payment, receivable_schedule_follow_up, receivable_send_payment_reminder, receivable_send_statement, receivable_unapply_credit_memo

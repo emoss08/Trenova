@@ -163,6 +163,7 @@ func moveFilters(filter *dispatchboardports.DispatchBoardFilter) []keel.Pred {
 	preds := []keel.Pred{
 		sm.Status.In(statuses...),
 		keel.When(len(filter.MoveIDs) > 0, sm.ID.In(filter.MoveIDs...)),
+		keel.When(len(filter.ShipmentIDs) > 0, sm.ShipmentID.In(filter.ShipmentIDs...)),
 		keel.When(len(filter.CustomerIDs) > 0, sp.CustomerID.In(filter.CustomerIDs...)),
 		keel.When(len(filter.ServiceTypeIDs) > 0, sp.ServiceTypeID.In(filter.ServiceTypeIDs...)),
 	}

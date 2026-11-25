@@ -47,6 +47,7 @@ import { DeskDiffBody } from "./kinds/diff/desk-diff-body";
 import { DeskEmailBody } from "./kinds/email/desk-email-body";
 import { DeskPlanBody } from "./kinds/plan/desk-plan-body";
 import { PlanSkeleton } from "./kinds/plan/plan-skeleton";
+import { DeskDispatchPlanBody } from "./kinds/dispatch-plan/desk-dispatch-plan-body";
 import { DeskRateBody } from "./kinds/rate/desk-rate-body";
 import { DeskRecordBody } from "./kinds/record/desk-record-body";
 import { DeskReportRunBody } from "./kinds/report/desk-report-run-body";
@@ -357,6 +358,8 @@ export function ArtifactBody({
       return <DeskRecordBody artifact={artifact} />;
     case "rate_explanation":
       return <DeskRateBody artifact={artifact} />;
+    case "dispatch_plan":
+      return <DeskDispatchPlanBody artifact={artifact} />;
     case "email_draft":
       return <DeskEmailBody artifact={artifact} />;
     case "plan":
